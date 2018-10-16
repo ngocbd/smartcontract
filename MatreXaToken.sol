@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MatreXaToken at 0x686a14ed7bc2f404f4a0394eaf0102220cb42d18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MatreXaToken at 0xf95730d1901c9ee02994091e28839eb1a5d3b3e2
 */
 pragma solidity ^0.4.12;
+/* MatreXa Token contracts. version 2017-09-11 */
 
 //======  OpenZeppelin libraray =====
 
@@ -391,6 +392,7 @@ contract BurnableToken is StandardToken {
         //assert(totalSupply >= 0); //Check is not needed because totalSupply.sub(value) will already throw if this condition is not met
         
         _from.transfer(reward);
+        Transfer(_from, 0x0, _amount);
         Burn(_from, _amount);
         return true;
     }
@@ -439,14 +441,33 @@ contract MatreXaToken is BurnableToken, MintableToken, HasNoContracts, HasNoToke
     string public symbol = "MTRX";
     uint256 public decimals = 18;
 
+    address public founder;
     uint256 public allowTransferTimestamp = 0;
 
+    /**
+    * We dissable token transfer during ICO and some time after ICO.
+    * But we allow founder to transfer his tokens to pay bounties, etc.
+    */
     modifier canTransfer() {
-        require(mintingFinished);
-        require(now > allowTransferTimestamp);
+        if(msg.sender != founder) {
+            require(mintingFinished);
+            require(now > allowTransferTimestamp);
+        }
         _;
     }
-
+    /**
+    * @dev set Founder address
+    * Only owner allowed to do this
+    */
+    function setFounder(address _founder) onlyOwner {
+        founder = _founder;
+    }    
+    
+    /**
+    * @dev set the timestamp when trasfers will be allowed
+    * Only owner allowed to do this
+    * This is allowed only once to prevent owner to pause transfers at will
+    */
     function setAllowTransferTimestamp(uint256 _allowTransferTimestamp) onlyOwner {
         require(allowTransferTimestamp == 0);
         allowTransferTimestamp = _allowTransferTimestamp;
