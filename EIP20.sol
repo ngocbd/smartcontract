@@ -1,15 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x2175a02ac6c744f68d1a74d5556fbec8828d05d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x6c0369cb6cb8b8a82f3c5264e6e82587c54909a8
 */
 /*
-Implements EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
+Implements EIP20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
 .*/
 
 
-pragma solidity ^0.4.18;
-
 // Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+pragma solidity ^0.4.18;
 
 
 contract EIP20Interface {
@@ -59,6 +58,7 @@ contract EIP20Interface {
 }
 
 
+
 contract EIP20 is EIP20Interface {
 
     uint256 constant private MAX_UINT256 = 2**256 - 1;
@@ -74,12 +74,8 @@ contract EIP20 is EIP20Interface {
     uint8 public decimals;                //How many decimals to show.
     string public symbol;                 //An identifier: eg SBX
 
-    function EIP20(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-    ) public {
+    function EIP20(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public 
+    {
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         totalSupply = _initialAmount;                        // Update total supply
         name = _tokenName;                                   // Set the name for display purposes
