@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xaf146FBD319CA7aE178cAA2C9D80a2db6B944350
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x87c8d6da29c030aae4d8ecb77b2f488f529de1f5
 */
-pragma solidity ^0.4.4;
-
 contract Token {
 
     /// @return total amount of tokens
@@ -106,9 +104,9 @@ contract ERC20Token is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "PXToken";                   //fancy name: eg Simon Bucks
-    uint8 public decimals = 18;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol = "PXT";                 //An identifier: eg SBX
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
@@ -119,11 +117,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 50000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 50000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "PXToken";                                   // Set the name for display purposes
+        balances[msg.sender] = 20000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 20000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "HunterCoin";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "PXT";                               // Set the symbol for display purposes
+        symbol = "HTC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
