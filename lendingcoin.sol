@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lendingcoin at 0xb98938e3c5fedca69d67cd95814fd295d642a97b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LendingCoin at 0x673b027257798b05023248d6dcf321dace0aab6d
 */
-contract lendingcoin {
+contract LendingCoin{
     /* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
@@ -16,12 +16,12 @@ contract lendingcoin {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function lendingcoin() {
+    function LendingCoin() {
 
-         initialSupply = 7777777;
-        name ="lendingcoin";
-        decimals = 0;
-        symbol = "ldg";
+         initialSupply = 777777700000000;
+        name ="LendingCoin";
+        decimals = 8;
+        symbol = "LDG";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
