@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ASTRICOPreSale at 0xff3b832855a9193b224ce0522da53ca8aecad813
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ASTRICOPreSale at 0xacd9be214dabf111db504334800e06d61d1e478e
 */
 pragma solidity ^0.4.18;
 
@@ -97,7 +97,7 @@ contract ASTRICOPreSale is Ownable {
   // 10MIL 4dCP 100000000000
 
   uint internal BASIC_RATE        = 75 * decimalsConversion; // based on the price of ether at 330 USD
-  uint internal PRICE_STAGE_PS    = 431 * decimalsConversion; 
+  uint internal PRICE_STAGE_PS    = 625 * decimalsConversion; 
   uint internal STAGE_PS_TIME_END = 60 minutes; // THIS IS TO BE SET PROPERLY
   uint internal PRICE_VARIABLE    = 0 * decimalsConversion;
   uint256 public astrSold         = 0;
@@ -119,8 +119,6 @@ contract ASTRICOPreSale is Ownable {
     *
     *     *
 
-0x80E7a4d750aDe616Da896C49049B7EdE9e04C191
-
 
 1510911600
 2017-11-17 17:40:00
@@ -135,12 +133,12 @@ contract ASTRICOPreSale is Ownable {
 
     crowdsaleClosed = false;
     halted          = false;
-    startTime       = 1510911600; //1510563716; //_startTime;  make it +20 minutes for it to work
-    endTime         = 1511758800; //_startTime + STAGE_FOUR_TIME_END; set start and end the same :/
-    wallet          = ERC20(0x3baDA155408AB1C9898FDF28e545b51f2f9a65CC); // This wallet needs to give permission for the ICO to transfer Tokens  Ropsten 0xeA173bf22d7fF1ad9695652432b8759A331d668b
-    ownerAddress    = ERC20(0x3EFAe2e152F62F5cc12cc0794b816d22d416a721);  // This is bad in theory but does fix the 2300 gas problem Ropsten 0xeA173bf22d7fF1ad9695652432b8759A331d668b
+    startTime       = 1511758800; // Monday, November 27, 2017 1:00:00 PM GMT+08:00
+    endTime         = 1511798400; // Tuesday, November 28, 2017 12:00:00 AM GMT+08:00
+    wallet          = ERC20(0x3baDA155408AB1C9898FDF28e545b51f2f9a65CC); // This wallet needs to give permission for the ICO to transfer Tokens 
+    ownerAddress    = ERC20(0x3EFAe2e152F62F5cc12cc0794b816d22d416a721);  // This is bad in theory but does fix the 2300 gas problem 
     token           = ERC20(0x80E7a4d750aDe616Da896C49049B7EdE9e04C191); // Ropsten we have pregenerated thiss
-  }
+  }  // 0xff3b832855A9193B224Ce0522Da53cA8AECad813
 
         // fallback function can be used to buy tokens
   function () public payable {
