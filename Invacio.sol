@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Invacio at 0xfd8861f451b19179de8b5f6dfcbe3e9013d67027
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Invacio at 0xece83617db208ad255ad4f45daf81e25137535bb
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
  
 /*
-   ?2017 Invacio Coin
-
-Invacio Coin [INV] is a Cryptocurrency (private digital currency), that has a value based on the current market.
+   ?2017 INVACIO
+   INV Coin | Phase 1 ERC20 | Phase 2 Vadgama Chain | Invacio.com 
+   Invacio Coin [INV] is a Cryptocurrency (private digital currency), that has a value based on the current market.
 
  */
 contract ERC20Basic {
@@ -67,14 +67,8 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
  
   mapping(address => uint256) balances;
-      modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
  
- function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool) {
+ function transfer(address _to, uint256 _value) returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -144,7 +138,8 @@ contract StandardToken is ERC20, BasicToken {
    */
   function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
-}
+  }
+ 
 }
  
 /*
@@ -155,8 +150,9 @@ contract Ownable {
     
   address public owner;
  
+ 
   function Ownable() {
-    owner = 0x5eD4EC6e970222997D850C82543E30C9291c1065;
+    owner = 0xD5483f02d8bEd6A1D9deAb9B425aDa80cd1ed645;
   }
  
   /*
@@ -177,6 +173,8 @@ contract Ownable {
   }
  
 }
+ 
+
     
 contract Invacio is StandardToken, Ownable {
   string public constant name = "Invacio Coin";
@@ -185,10 +183,10 @@ contract Invacio is StandardToken, Ownable {
   uint256 public initialSupply;
     
   function Invacio () { 
-     totalSupply = 450000000 * 10 ** decimals;
-      balances[0x5eD4EC6e970222997D850C82543E30C9291c1065] = totalSupply;
+     totalSupply = 60000000 * 10 ** decimals;
+      balances[0xD5483f02d8bEd6A1D9deAb9B425aDa80cd1ed645] = totalSupply;
       initialSupply = totalSupply; 
         Transfer(0, this, totalSupply);
-        Transfer(this, 0x5eD4EC6e970222997D850C82543E30C9291c1065, totalSupply);
+        Transfer(this, 0xD5483f02d8bEd6A1D9deAb9B425aDa80cd1ed645, totalSupply);
   }
 }
