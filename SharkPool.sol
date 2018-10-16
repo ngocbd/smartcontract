@@ -1,37 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharkPool at 0x4c13184721de2d1b47a8875775ba3ce0b2e00ee0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharkPool at 0x29aa20fB9b23421E310BDB8a7cfB81d7fbB4a1b3
 */
 pragma solidity ^0.4.13;
-
-/**
- * @title Helps contracts guard agains rentrancy attacks.
- * @author Remco Bloemen <remco@2?.com>
- * @notice If you mark a function `nonReentrant`, you should also
- * mark it `external`.
- */
-contract ReentrancyGuard {
-
-  /**
-   * @dev We use a single lock for the whole contract.
-   */
-  bool private rentrancy_lock = false;
-
-  /**
-   * @dev Prevents a contract from calling itself, directly or indirectly.
-   * @notice If you mark a function `nonReentrant`, you should also
-   * mark it `external`. Calling one nonReentrant function from
-   * another is not supported. Instead, you can implement a
-   * `private` function doing the actual work, and a `external`
-   * wrapper marked as `nonReentrant`.
-   */
-  modifier nonReentrant() {
-    require(!rentrancy_lock);
-    rentrancy_lock = true;
-    _;
-    rentrancy_lock = false;
-  }
-
-}
 
 /**
  * @title Ownable
@@ -72,6 +42,38 @@ contract Ownable {
 
 }
 
+
+/**
+ * @title Helps contracts guard agains rentrancy attacks.
+ * @author Remco Bloemen <remco@2?.com>
+ * @notice If you mark a function `nonReentrant`, you should also
+ * mark it `external`.
+ */
+contract ReentrancyGuard {
+
+  /**
+   * @dev We use a single lock for the whole contract.
+   */
+  bool private rentrancy_lock = false;
+
+  /**
+   * @dev Prevents a contract from calling itself, directly or indirectly.
+   * @notice If you mark a function `nonReentrant`, you should also
+   * mark it `external`. Calling one nonReentrant function from
+   * another is not supported. Instead, you can implement a
+   * `private` function doing the actual work, and a `external`
+   * wrapper marked as `nonReentrant`.
+   */
+  modifier nonReentrant() {
+    require(!rentrancy_lock);
+    rentrancy_lock = true;
+    _;
+    rentrancy_lock = false;
+  }
+
+}
+
+
 // Minimal Bitcoineum interface for proxy mining
 contract BitcoineumInterface {
    function mine() payable;
@@ -83,16 +85,17 @@ contract BitcoineumInterface {
    function currentDifficultyWei() constant public returns (uint256);
    }
 
+
 // Sharkpool is a rolling window Bitcoineum miner
 // Smart contract based virtual mining
 // http://www.bitcoineum.com/
 
 contract SharkPool is Ownable, ReentrancyGuard {
 
-    string constant public pool_name = "SharkPool 200";
+    string constant public pool_name = "SharkPool 100";
 
     // Percentage of BTE pool takes for operations
-    uint256 public pool_percentage = 5;
+    uint256 public pool_percentage = 0;
 
     // Limiting users because of gas limits
     // I would not increase this value it could make the pool unstable
@@ -129,7 +132,7 @@ contract SharkPool is Ownable, ReentrancyGuard {
 
     function set_pool_percentage(uint8 _percentage) external nonReentrant onlyOwner {
        // Just in case owner is compromised
-       require(_percentage < 11);
+       require(_percentage < 6);
        pool_percentage = _percentage;
     }
 
