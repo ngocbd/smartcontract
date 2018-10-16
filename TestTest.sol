@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestTest at 0xd0066c571eae6f36908b076e29bc62a0b31dd56a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestTest at 0x0d53f391d949405350ede7a66c4dd8c034e6c747
 */
 pragma solidity ^0.4.20;
 
@@ -85,6 +85,7 @@ contract TestTest {
     mapping(address => uint256) internal adminsFriendAccumulatedQuota_;
     uint256 internal tokenSupply_ = 0;
     uint256 internal profitPerShare_;
+	address address0x0 = msg.sender;
     mapping(address => bool) public administrator;
     bool public onlyAdminsFriends = true;
     
@@ -120,7 +121,7 @@ contract TestTest {
         payable
         public
     {
-        purchaseTokens(msg.value, 0x0);
+        purchaseTokens(msg.value, address0x0);
     }
     
     /**
