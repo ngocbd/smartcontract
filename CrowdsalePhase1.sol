@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsalePhase1 at 0x1Db10d198C2D66A8767e7aDde7FA5E5Bf2D57604
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsalePhase1 at 0x979b0e3110a54e2c69265a27fc3afbc5269ff13e
 */
 pragma solidity ^0.4.18;
 
@@ -550,7 +550,7 @@ contract GenbbyToken is UpgradableToken {
 
 /**
  * @title Crowdsale Phase 1
- * @dev Crowdsale phase 1 smart contract used by https://genbby.com/
+ * @dev Crowdsale phase 1 smart contract used by https://ico.genbby.com/
  */
 contract CrowdsalePhase1 is Pausable {
 
@@ -558,26 +558,18 @@ contract CrowdsalePhase1 is Pausable {
 
     GenbbyToken public token;
 
-    struct Round {
-        uint256 start;
-        uint256 finish;
-        uint256 total_tokens;
-        uint256 tokens_sold;
-    }
-
-    Round public round1;
-    Round public round2;
-    Round public round3;
-    Round public round4;
+    uint256 public start;
+    uint256 public finish;
+    uint256 public tokens_sold;
     uint256 public constant decimals = 18;
     uint256 public constant factor = 10 ** decimals;
-    uint256 public constant crowdsaleHardCap = 5 * (10 ** 7) * factor;
+    uint256 public constant total_tokens = 37500000 * factor; // 75% 5 % hard cap
 
-    function CrowdsalePhase1(uint256 _startCrowdsale) public {
-        round1 = Round(_startCrowdsale, _startCrowdsale + 6 days, crowdsaleHardCap.mul(40).div(100), 0);
-        round2 = Round(round1.start + 1 weeks, round1.finish + 1 weeks, crowdsaleHardCap.mul(25).div(100), 0);
-        round3 = Round(round2.start + 1 weeks, round2.finish + 1 weeks, crowdsaleHardCap.mul(20).div(100), 0);
-        round4 = Round(round3.start + 1 weeks, round3.finish + 1 weeks, crowdsaleHardCap.mul(15).div(100), 0);
+    event TokensGiven(address to, uint256 amount);
+
+    function CrowdsalePhase1(uint256 _start) public {
+        start = _start;
+        finish = start + 4 weeks;
     }
 
     /**
@@ -588,15 +580,11 @@ contract CrowdsalePhase1 is Pausable {
     }
 
     /**
-     * @dev Funtion to determine the number of the current round
-     * @return the number of the current round or 0 in if no round is running
+     * @dev Throws if called when the crowdsale is not running 
      */
-    function numberOfRound() public view returns (uint8) {
-        if (round1.start <= now && now <= round1.finish) return 1;
-        if (round2.start <= now && now <= round2.finish) return 2;
-        if (round3.start <= now && now <= round3.finish) return 3;
-        if (round4.start <= now && now <= round4.finish) return 4;
-        return 0;
+    modifier whenRunning() {
+        require(start <= now && now <= finish);
+        _;
     }
 
     /**
@@ -605,18 +593,11 @@ contract CrowdsalePhase1 is Pausable {
      * @param _amount The amount of tokens to give
      * @return A boolean that indicates if the operation was successful
      */
-    function giveTokens(address _to, uint256 _amount) onlyOwner whenNotPaused public returns (bool) {
-        uint8 n_round = numberOfRound();
-        require (n_round != 0);
-        if (n_round == 1) require (round1.tokens_sold.add(_amount) <= round1.total_tokens);
-        if (n_round == 2) require (round2.tokens_sold.add(_amount) <= round2.total_tokens);
-        if (n_round == 3) require (round3.tokens_sold.add(_amount) <= round3.total_tokens);
-        if (n_round == 4) require (round4.tokens_sold.add(_amount) <= round4.total_tokens);
+    function giveTokens(address _to, uint256 _amount) onlyOwner whenNotPaused whenRunning public returns (bool) {
+        require (tokens_sold.add(_amount) <= total_tokens);
         token.mint(_to, _amount);
-        if (n_round == 1) round1.tokens_sold = round1.tokens_sold.add(_amount);
-        if (n_round == 2) round2.tokens_sold = round2.tokens_sold.add(_amount);
-        if (n_round == 3) round3.tokens_sold = round3.tokens_sold.add(_amount);
-        if (n_round == 4) round4.tokens_sold = round4.tokens_sold.add(_amount);
+        tokens_sold = tokens_sold.add(_amount);
+        TokensGiven(_to, _amount);
         return true;
     }
 
