@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xd40775e917492a9f8afd740d52770d27682be02d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x5aa24fb102c6b7b13ba353922746223348a4a8b3
 */
 pragma solidity ^0.4.19;
 
-// Wolf Crypto pooling contract for Electrify.Asia
+// Wolf Crypto pooling contract for TE-Foods
 // written by @iamdefinitelyahuman
 
 library SafeMath {
@@ -77,8 +77,6 @@ contract PresalePool {
   uint public nextCapTime;
   // pending contribution caps
   uint [] public nextContributionCaps;
-  // block number of the last change to the receiving address (set if receiving address is changed, stage 1 or 2)
-  uint public addressChangeBlock;
   // amount of eth (in wei) present in the contract when it was submitted
   uint public finalBalance;
   // array containing eth amounts to be refunded in stage 3
@@ -125,7 +123,6 @@ contract PresalePool {
   // Events triggered throughout contract execution
   // These can be watched via geth filters to keep up-to-date with the contract
   event ContributorBalanceChanged (address contributor, uint totalBalance);
-  event ReceiverAddressSet ( address _addr);
   event PoolSubmitted (address receiver, uint amount);
   event WithdrawalsOpen (address tokenAddr);
   event TokensWithdrawn (address receiver, uint amount);
@@ -440,19 +437,6 @@ contract PresalePool {
     require (contractStage == 2);
     contractStage = 1;
   }
-  
-  // This function sets the receiving address that the contract will send the pooled eth to.
-  // It can only be called by the contract owner if the receiver address has not already been set.
-  // After making this call, the contract will be unable to send the pooled eth for 6000 blocks.
-  // This limitation is so that if the owner acts maliciously in making the change, all whitelisted
-  // addresses have ~24 hours to withdraw their eth from the contract.
-  function setReceiverAddress (address addr) public onlyOwner {
-    require (addr != 0x00 && receiverAddress == 0x00);
-    require (contractStage < 3);
-    receiverAddress = addr;
-    addressChangeBlock = block.number;
-    ReceiverAddressSet(addr);
-  }
 
   // This function sends the pooled eth to the receiving address, calculates the % of unused eth to be returned,
   // and advances the contract to stage three. It can only be called by the contract owner during stages one or two.
@@ -460,8 +444,6 @@ contract PresalePool {
   // it is VERY IMPORTANT not to get the amount wrong.
   function submitPool (uint amountInWei) public onlyOwner noReentrancy {
     require (contractStage < 3);
-    require (receiverAddress != 0x00);
-    require (block.number >= addressChangeBlock.add(6000));
     require (contributionMin <= amountInWei && amountInWei <= this.balance);
     finalBalance = this.balance;
     require (receiverAddress.call.value(amountInWei).gas(msg.gas.sub(5000))());
