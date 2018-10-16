@@ -1,44 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract store at 0xd39fe1cffd8f070429169b416b7e07f486d553cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Store at 0xd6ec04c0f9587cb822c315f662954af8c2174d66
 */
-contract store {
+pragma solidity ^0.4.2;
 
-    address owner;
+contract Store {
+    address[] owners;
+    mapping(address => uint) ownerBalances;
 
-    uint public contentCount = 0;
-    
-    event content(string datainfo, uint indexed version, address indexed sender, uint indexed datatype, uint timespan, uint payment);
-    modifier onlyowner { if (msg.sender == owner) _ } 
-    
-    function store() public { owner = msg.sender; }
-    
-    ///TODO: remove in release
-    function kill() onlyowner { suicide(owner); }
-
-    function flush() onlyowner {
-        owner.send(this.balance);
+    function Store(address[] _owners) {
+        owners = _owners;
     }
-
-    function add(string datainfo, uint version, uint datatype, uint timespan) {
-        //item listing
-        if(datatype == 1) {
-          //2 weeks listing costs 0,04 USD = 0,004 ether
-          if(timespan <= 1209600) {
-            if(msg.value < (4 finney)) return;
-          //4 weeks listing costs 0,06 USD = 0,006 ether
-          } else if(timespan <= 2419200) {
-            if(msg.value < (6 finney)) return;
-          //limit 4 weeks max
-          } else {
-            timespan = 2419200;
-            if(msg.value < (6 finney)) return;
-          }
+    
+    function deposit() payable {
+        uint ownerShare = msg.value / owners.length;
+        ownerBalances[owners[0]] += msg.value % owners.length;
+        
+        for (uint i = 0; i < owners.length; i++) {
+            ownerBalances[owners[i]] += ownerShare;
         }
-
-        //revert higher payment transactions
-        if(msg.value > (6 finney)) throw;
-
-        contentCount++;
-        content(datainfo, version, msg.sender, datatype, timespan, msg.value);
     }
+    
+    function payout() returns (uint) {
+        uint amount = ownerBalances[msg.sender];
+        ownerBalances[msg.sender] = 0;
+
+        if (msg.sender.send(amount)) {
+            return amount;
+        } else {
+            ownerBalances[msg.sender] = amount;
+            return 0;
+        }
+    }
+
+    
+    
+    
 }
