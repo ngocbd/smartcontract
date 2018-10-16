@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crypted_RPS at 0x155999f23ba40f22B24863d9C21cd8b9Ab192cc9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crypted_RPS at 0x231c7510f24d1c8b9578558bcb7fa6c659b4ca98
 */
 //                       , ; ,   .-'"""'-.   , ; ,
 //                       \\|/  .'          '.  \|//
@@ -24,8 +24,8 @@
 //          STAKE : 0.1 ETH
 //          DRAW : Full refund
 //          WIN : 0.198 ETH (house : 0.002)
-//          EXPIRATION TIME : 24 hour after duel starts (refreshed when one player reveals)
-//          If only one player reveals, he wins after 24 hour if the other doesn't reveal
+//          EXPIRATION TIME : 1hour after duel starts (refreshed when one player reveals)
+//          If only one player reveals, he wins after 1 hour if the other doesn't reveal
 //          he will be paid automatically when other ppl play the game.
 //          If both player don't reveal and forget the bet, it is refunded (-house)
 
@@ -132,7 +132,7 @@ contract Crypted_RPS
 	owner= msg.sender;
 	gambleValue = 100000 szabo;
         house = 1000 szabo;
-        expirationTime = 86400;   //24 hour
+        expirationTime = 7200;   //2 hour
         payoffMatrix["rock"]["rock"] = 0;
         payoffMatrix["rock"]["paper"] = 2;
         payoffMatrix["rock"]["scissors"] = 1;
