@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Nova at 0x3c26efbfa80c61839fe2da8b0f7b8ce05187c8a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Nova at 0x432bbc9e977d2700e15333c792e846751c03f81b
 */
 pragma solidity ^0.4.17;
 
@@ -29,6 +29,64 @@ contract NovaAccessControl {
   function updateCfo(address newCfoAddress) external onlyManager {
     require(newCfoAddress != address(0));
     cfoAddress = newCfoAddress;
+  }
+}
+
+contract NovaCoin is NovaAccessControl {
+  string public name;
+  string public symbol;
+  uint256 public totalSupply;
+  address supplier;
+  // 1:1 convert with currency, so to cent
+  uint8 public decimals = 2;
+  mapping (address => uint256) public balanceOf;
+  address public novaContractAddress;
+
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Burn(address indexed from, uint256 value);
+  event NovaCoinTransfer(address indexed to, uint256 value);
+
+  function NovaCoin(uint256 initialSupply, string tokenName, string tokenSymbol) public {
+    totalSupply = initialSupply * 10 ** uint256(decimals);
+    supplier = msg.sender;
+    balanceOf[supplier] = totalSupply;
+    name = tokenName;
+    symbol = tokenSymbol;
+  }
+
+  function _transfer(address _from, address _to, uint _value) internal {
+    require(_to != 0x0);
+    require(balanceOf[_from] >= _value);
+    require(balanceOf[_to] + _value > balanceOf[_to]);
+    balanceOf[_from] -= _value;
+    balanceOf[_to] += _value;
+  }
+
+  // currently only permit NovaContract to consume
+  function transfer(address _to, uint256 _value) external {
+    _transfer(msg.sender, _to, _value);
+    Transfer(msg.sender, _to, _value);
+  }
+
+  function novaTransfer(address _to, uint256 _value) external onlyManager {
+    _transfer(supplier, _to, _value);
+    NovaCoinTransfer(_to, _value);
+  }
+
+  function updateNovaContractAddress(address novaAddress) external onlyManager {
+    novaContractAddress = novaAddress;
+  }
+
+  // This is function is used for sell Nova properpty only
+  // coin can only be trasfered to invoker, and invoker must be Nova contract
+  function consumeCoinForNova(address _from, uint _value) external {
+    require(msg.sender == novaContractAddress);
+    require(balanceOf[_from] >= _value);
+    var _to = novaContractAddress;
+    require(balanceOf[_to] + _value > balanceOf[_to]);
+    uint previousBalances = balanceOf[_from] + balanceOf[_to];
+    balanceOf[_from] -= _value;
+    balanceOf[_to] += _value;
   }
 }
 
@@ -68,11 +126,6 @@ contract NovaLabInterface {
 contract FamedStarInterface {
   function bornFamedStar(address userAddress, uint mass) external returns(uint id, bytes32 name) {}
   function updateFamedStarOwner(uint id, address newOwner) external {}
-}
-
-contract NovaCoinInterface {
-  function consumeCoinForNova(address _from, uint _value) external {}
-  function balanceOf(address _owner) public view returns (uint256 balance) {}
 }
 
 contract Nova is NovaAccessControl,ERC721 {
@@ -587,7 +640,7 @@ contract Nova is NovaAccessControl,ERC721 {
   // Purchase action only permit manager to use
   function purchaseSupernova(address targetAddress, uint price) external onlyManager {
     require(superNovaSupply >= 1);
-    NovaCoinInterface novaCoinContract = NovaCoinInterface(novaCoinAddress);
+    NovaCoin novaCoinContract = NovaCoin(novaCoinAddress);
     require(novaCoinContract.balanceOf(targetAddress) >= price);
     novaCoinContract.consumeCoinForNova(targetAddress, price);
 
@@ -674,7 +727,7 @@ contract Nova is NovaAccessControl,ERC721 {
 
   function mergeAstros(address userAddress, uint novaCoinCentCost, uint[] astroIDs) external onlyManager {
     // check nova coin balance
-    NovaCoinInterface novaCoinContract = NovaCoinInterface(novaCoinAddress);
+    NovaCoin novaCoinContract = NovaCoin(novaCoinAddress);
     require(novaCoinContract.balanceOf(userAddress) >= novaCoinCentCost);
     // check astros
     require(astroIDs.length > 1 && astroIDs.length <= 10);
@@ -694,7 +747,7 @@ contract Nova is NovaAccessControl,ERC721 {
 
   function _attractBalanceCheck(address userAddress, uint novaCoinCentCost) internal {
     // check balance
-    NovaCoinInterface novaCoinContract = NovaCoinInterface(novaCoinAddress);
+    NovaCoin novaCoinContract = NovaCoin(novaCoinAddress);
     require(novaCoinContract.balanceOf(userAddress) >= novaCoinCentCost);
 
     // consume coin
