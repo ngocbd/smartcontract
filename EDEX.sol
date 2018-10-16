@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EDEX at 0x16dfa86c1f3ae293fa01915718df563b26952408
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EDEX at 0xf6268188a46f47551fcfe664f3665c25bf697f52
 */
 pragma solidity ^0.4.16;
 
@@ -313,11 +313,11 @@ contract EDEX is StandardToken{
         uint256 icoDuration = safeSub(block.number, icoStartBlock);
         uint256 bottomInteger;
         // icoDuration < 115,200 blocks = 20 days
-        if (icoDuration < 100){
+        if (icoDuration < 115200){
             return currentPrice.bottomInteger;
         }
         // icoDuration < 230,400 blocks = 40 days
-        else if (icoDuration < 200 ){
+        else if (icoDuration < 230400 ){
             bottomInteger = safeMul(currentPrice.bottomInteger, 110) / 100;
             return bottomInteger;
         }
