@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LocusOne at 0x92f67e6069e64b28f2cb183b325d30ee7e9736db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LocusOne at 0x47db0cf6c09be1aaf0490cf0086ab5c7814fa755
 */
 pragma solidity ^0.4.20;
+    
+// Simple contract to split stakes coming into Locus | One Puzzle. 
+// 80% of buy in goes to the jackpot, and the remaining 20% goes 
+// to a dev wallet to support future puzzle development.    
     
 contract LocusOne {
 
@@ -16,13 +20,13 @@ contract LocusOne {
     }
 
     function _split(uint _stake) internal {
-        if (msg.value < 0.05 ether || msg.value > 1000000 ether)
+        // protects users from staking less than the required amount to claim the bounty
+        if (msg.value < 0.1 ether || msg.value > 1000000 ether)
             revert();
         // Define the Locus dev account
         devAcct = 0x1daa0BFDEDfB133ec6aEd2F66D64cA88BeC3f0B4;
         // Define the Locus Pot account (what you're all playing for)      
-        potAcct = 0x708294833AEF21a305200b3463A832Ac97852f2e;        
-        // msg.sender is the address of the caller.
+        potAcct = 0x708294833AEF21a305200b3463A832Ac97852f2e;
 
         // 20% of the total Ether sent will be used to pay devs/support project.
         fee = div(_stake, 5);
