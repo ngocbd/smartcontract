@@ -1,7 +1,61 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccessoryData at 0x971822dcd2852e3f65918f3571dace0abfe98d14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccessoryData at 0x466c44812835f57b736ef9f63582b8a6693a14d0
 */
 pragma solidity ^0.4.17;
+
+
+
+
+  
+
+   
+	
+
+contract SafeMath {
+    function safeAdd(uint x, uint y) pure internal returns(uint) {
+      uint z = x + y;
+      assert((z >= x) && (z >= y));
+      return z;
+    }
+
+    function safeSubtract(uint x, uint y) pure internal returns(uint) {
+      assert(x >= y);
+      uint z = x - y;
+      return z;
+    }
+
+    function safeMult(uint x, uint y) pure internal returns(uint) {
+      uint z = x * y;
+      assert((x == 0)||(z/x == y));
+      return z;
+    }
+
+    function getRandomNumber(uint16 maxRandom, uint8 min, address privateAddress) constant public returns(uint8) {
+        uint256 genNum = uint256(block.blockhash(block.number-1)) + uint256(privateAddress);
+        return uint8(genNum % (maxRandom - min + 1)+min);
+    }
+}
+
+contract Enums {
+    enum ResultCode {
+        SUCCESS,
+        ERROR_CLASS_NOT_FOUND,
+        ERROR_LOW_BALANCE,
+        ERROR_SEND_FAIL,
+        ERROR_NOT_OWNER,
+        ERROR_NOT_ENOUGH_MONEY,
+        ERROR_INVALID_AMOUNT
+    }
+
+    enum AngelAura { 
+        Blue, 
+        Yellow, 
+        Purple, 
+        Orange, 
+        Red, 
+        Green 
+    }
+}
 
 
 
@@ -53,52 +107,6 @@ contract AccessControl {
 
   
 } 
-
-contract SafeMath {
-    function safeAdd(uint x, uint y) pure internal returns(uint) {
-      uint z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
-    }
-
-    function safeSubtract(uint x, uint y) pure internal returns(uint) {
-      assert(x >= y);
-      uint z = x - y;
-      return z;
-    }
-
-    function safeMult(uint x, uint y) pure internal returns(uint) {
-      uint z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
-    }
-
-    function getRandomNumber(uint16 maxRandom, uint8 min, address privateAddress) constant public returns(uint8) {
-        uint256 genNum = uint256(block.blockhash(block.number-1)) + uint256(privateAddress);
-        return uint8(genNum % (maxRandom - min + 1)+min);
-    }
-}
-
-contract Enums {
-    enum ResultCode {
-        SUCCESS,
-        ERROR_CLASS_NOT_FOUND,
-        ERROR_LOW_BALANCE,
-        ERROR_SEND_FAIL,
-        ERROR_NOT_OWNER,
-        ERROR_NOT_ENOUGH_MONEY,
-        ERROR_INVALID_AMOUNT
-    }
-
-    enum AngelAura { 
-        Blue, 
-        Yellow, 
-        Purple, 
-        Orange, 
-        Red, 
-        Green 
-    }
-}
 contract IAccessoryData is AccessControl, Enums {
     uint8 public totalAccessorySeries;    
     uint32 public totalAccessories;
@@ -111,6 +119,8 @@ contract IAccessoryData is AccessControl, Enums {
    function addAccessoryIdMapping(address _owner, uint64 _accessoryId) private;
 	function transferAccessory(address _from, address _to, uint64 __accessoryId) onlySERAPHIM public returns(ResultCode);
     function ownerAccessoryTransfer (address _to, uint64 __accessoryId)  public;
+    function updateAccessoryLock (uint64 _accessoryId, bool newValue) public;
+    function removeCreator() onlyCREATOR external;
     
     //*** Read Access ***//
     function getAccessorySeries(uint8 _accessorySeriesId) constant public returns(uint8 accessorySeriesId, uint32 currentTotal, uint32 maxTotal, uint price) ;
@@ -119,14 +129,8 @@ contract IAccessoryData is AccessControl, Enums {
 	function getAccessoryByIndex(address _owner, uint _index) constant public returns(uint) ;
     function getTotalAccessorySeries() constant public returns (uint8) ;
     function getTotalAccessories() constant public returns (uint);
+    function getAccessoryLockStatus(uint64 _acessoryId) constant public returns (bool);
 }
-
-
-  
-
-   
-	
-
 
 contract AccessoryData is IAccessoryData, SafeMath {
     /*** EVENTS ***/
@@ -145,6 +149,7 @@ contract AccessoryData is IAccessoryData, SafeMath {
         uint32 accessoryId;
         uint8 accessorySeriesId;
         address owner;
+        bool ownerLock;
     }
 
 
@@ -162,8 +167,8 @@ contract AccessoryData is IAccessoryData, SafeMath {
     //*** Accessories***/
     function createAccessorySeries(uint8 _AccessorySeriesId, uint32 _maxTotal, uint _price) onlyCREATOR public returns(uint8) {
         
-        if ((now > 1516642200) || (totalAccessorySeries >= 18)) {revert();}
-        //This confirms that no one, even the develoopers, can create any accessorySeries after JAN/22/2018 @ 05:30pm (UTC) or more than the original 18 series. 
+        if ((now > 1517189201) || (totalAccessorySeries >= 18)) {revert();}
+        //This confirms that no one, even the develoopers, can create any accessorySeries after JAN/29/2018 @ 1:26 am (UTC) or more than the original 18 series. 
         AccessorySeries storage accessorySeries = AccessorySeriesCollection[_AccessorySeriesId];
         accessorySeries.AccessorySeriesId = _AccessorySeriesId;
         accessorySeries.maxTotal = _maxTotal;
@@ -183,6 +188,7 @@ contract AccessoryData is IAccessoryData, SafeMath {
         accessory.accessoryId = totalAccessories;
        accessory.accessorySeriesId = _seriesIDtoCreate;
         accessory.owner = _owner;
+        accessory.ownerLock = true;
         uint64[] storage owners = ownerAccessoryCollection[_owner];
         owners.push(accessory.accessoryId);
        }
@@ -206,6 +212,7 @@ contract AccessoryData is IAccessoryData, SafeMath {
             return ResultCode.ERROR_NOT_OWNER;
         }
         if (_from == _to) {revert();}
+        if (accessory.ownerLock == true) {revert();}
      addAccessoryIdMapping(_to, __accessoryId);
         return ResultCode.SUCCESS;
     }
@@ -220,6 +227,18 @@ contract AccessoryData is IAccessoryData, SafeMath {
         accessory.owner = _to;
       addAccessoryIdMapping(_to, __accessoryId);
         }
+    }
+    
+       function updateAccessoryLock (uint64 _accessoryId, bool newValue) public {
+        if ((_accessoryId > totalAccessories) || (_accessoryId == 0)) {revert();}
+        Accessory storage accessory = AccessoryCollection[_accessoryId];
+        if (accessory.owner != msg.sender) { revert();}
+        accessory.ownerLock = newValue;
+    }
+    
+       function removeCreator() onlyCREATOR external {
+        //this function is meant to be called once all modules for the game are in place. It will remove our ability to add any new modules and make the game fully decentralized. 
+        creatorAddress = address(0);
     }
 
     //*** Read Access ***//
@@ -256,5 +275,10 @@ contract AccessoryData is IAccessoryData, SafeMath {
 
     function getTotalAccessories() constant public returns (uint) {
         return totalAccessories;
+    }
+      function getAccessoryLockStatus(uint64 _acessoryId) constant public returns (bool) {
+        if ((_acessoryId > totalAccessories) || (_acessoryId == 0)) {revert();}
+       Accessory storage accessory = AccessoryCollection[_acessoryId];
+       return accessory.ownerLock;
     }
 }
