@@ -1,12 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fund at 0xd31bc89fe1adf71c2a7d9c8fe4e0f94cf20ca15e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fund at 0x6f35804a4261da644f0bcc74338e418339f7c23f
 */
 pragma solidity ^0.4.17;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a * b;
@@ -15,9 +11,7 @@ library SafeMath {
     }
 
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
@@ -33,34 +27,18 @@ library SafeMath {
     }
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
     address public owner;
 
-    /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
     function Ownable() {
         owner = msg.sender;
     }
 
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner The address to transfer ownership to.
-    */
     function transferOwnership(address newOwner) onlyOwner {
         if (newOwner != address(0)) {
             owner = newOwner;
@@ -69,19 +47,19 @@ contract Ownable {
 
 }
 
-contract Fund is Ownable  {
+contract Fund is Ownable {
     using SafeMath for uint256;
     
     string public name = "Slot Token";
     uint8 public decimals = 0;
     string public symbol = "SLOT";
-    string public version = "0.7";
+    string public version = "0.8";
     
     uint8 constant TOKENS = 0;
-    uint8 constant BALANCE = 1;
+    uint8 constant TOTALSTAKE = 1;
     
-    uint256 totalWithdrawn;     // of Ether
-    uint256 public totalSupply; // of Tokens
+    uint256 totalWithdrawn;
+    uint256 public totalSupply;
     
     mapping(address => uint256[2][]) balances;
     mapping(address => uint256) withdrawals;
@@ -116,54 +94,43 @@ contract Fund is Ownable  {
     function() payable {}
     
     function getEtherBalance(address _owner) constant public returns (uint256 _balance) {
-        uint256[2][] memory snapshots = balances[_owner];
+        uint256[2][] memory snps = balances[_owner];
         
-        if (snapshots.length == 0) { return 0; } // no data
+        if (snps.length == 0) { return 0; }
+        if (snps.length == 1) {
+            uint256 bal = snps[0][TOKENS].mul(getTotalStake()).div(totalSupply);
+            return bal.sub(withdrawals[_owner]);
+        }
 
         uint256 balance = 0;
-        uint256 previousSnapTotalStake = 0;
+        uint256 prevSnTotalSt = 0;
         
-        // add up all snapshots
-        for (uint256 i = 0 ; i < snapshots.length ; i++) {
-            // each snapshot has amount of tokens and totalBalance at the time except last, which should be calculated with current stake
-            
-            if (i == snapshots.length-1) {
-                // add current data
-                uint256 currentTokens = snapshots[i][TOKENS];
-                uint256 b = currentTokens.mul( getTotalStake().sub(previousSnapTotalStake) ).div(totalSupply);
-                balance = balance.add(b);
-        
-                // reduce withdrawals
-                return balance.sub(withdrawals[_owner]);
-            }
-            
-            uint256 snapTotalStake = snapshots[i][BALANCE];
-            // if it's the first element, nothing is substracted from snapshot's total stake, hence previous stake will be 0
-            uint256 spanBalance = snapshots[i][TOKENS].mul(snapTotalStake.sub(previousSnapTotalStake)).div(totalSupply);
+        for (uint256 i = 0 ; i < snps.length-1 ; i++) {
+            uint256 snapTotalStake = snps[i][TOTALSTAKE];
+            uint256 spanBalance = snps[i][TOKENS].mul(snapTotalStake.sub(prevSnTotalSt)).div(totalSupply);
             balance = balance.add(spanBalance);
-            
-            previousSnapTotalStake = previousSnapTotalStake.add(snapTotalStake); // for the next loop and next code, needs to be += 
+            prevSnTotalSt = snapTotalStake;
         }
+        
+        uint256 b = snps[snps.length-1][TOKENS].mul(getTotalStake().sub(prevSnTotalSt)).div(totalSupply);
+        return balance.add(b).sub(withdrawals[_owner]);
     }
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
-        uint256[2][] memory snapshots = balances[_owner];
-        if (snapshots.length == 0) { return 0; }
+        uint256[2][] memory snps = balances[_owner];
+        if (snps.length == 0) { return 0; }
         
-        return snapshots[snapshots.length-1][TOKENS];
+        return snps[snps.length-1][TOKENS];
     }
     
-    function getTotalStake() constant public returns (uint256 _totalStake) {
-        // the total size of the pie, unaffected by withdrawals
+    function getTotalStake() constant returns (uint256 _totalStake) {
         return this.balance + totalWithdrawn;
     }
     
-    function withdrawBalance(address _to, uint256 _value) public {
+    function withdrawEther(address _to, uint256 _value) public {
         require(getEtherBalance(msg.sender) >= _value);
-        
         withdrawals[msg.sender] = withdrawals[msg.sender].add(_value);
         totalWithdrawn = totalWithdrawn.add(_value);
-        
         _to.transfer(_value);
         Withdrawn(msg.sender, _to, _value);
     }
@@ -174,32 +141,28 @@ contract Fund is Ownable  {
     
     function transferFromPrivate(address _from, address _to, uint256 _value) private returns (bool) {
         require(balanceOf(msg.sender) >= _value);
-        
         uint256 fromTokens = balanceOf(msg.sender);
-        pushSnapshot(msg.sender, fromTokens-_value);
-        
+        pushSnp(msg.sender, fromTokens-_value);
         uint256 toTokens = balanceOf(_to);
-        pushSnapshot(_to, toTokens+_value);
-        
+        pushSnp(_to, toTokens+_value);
         Transfer(_from, _to, _value);
         return true;
     }
     
-    function pushSnapshot(address _beneficiary, uint256 _amount) private {
-        balances[_beneficiary].push([_amount, 0]);
-        
-        if (balances[_beneficiary].length > 1) {
-            // update previous snapshot balance
-            uint256 lastIndex = balances[msg.sender].length-1;
-            balances[_beneficiary][lastIndex-1][BALANCE] = getTotalStake();
+    function pushSnp(address _beneficiary, uint256 _amount) private {
+        if (balances[_beneficiary].length > 0) {
+            uint256 length = balances[_beneficiary].length;
+            assert(balances[_beneficiary][length-1][TOTALSTAKE] == 0);
+            balances[_beneficiary][length-1][TOTALSTAKE] = getTotalStake();
         }
+        balances[_beneficiary].push([_amount, 0]);
     }
 
     function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
-        pushSnapshot(_to, _amount.add(balanceOf(_to)));
+        pushSnp(_to, _amount.add(balanceOf(_to)));
         totalSupply = totalSupply.add(_amount);
         Mint(_to, _amount);
-        Transfer(0x0, _to, _amount); // so it is displayed properly on EtherScan
+        Transfer(0x0, _to, _amount);
         return true;
     }
     
@@ -212,13 +175,7 @@ contract Fund is Ownable  {
     
     
     function approve(address _spender, uint256 _value) returns (bool) {
-
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender, 0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
         require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -230,53 +187,34 @@ contract Fund is Ownable  {
     
     function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
         uint256 _allowance = allowed[_from][msg.sender];
-
         transferFromPrivate(_from, _to, _value);
-        
         allowed[_from][msg.sender] = _allowance.sub(_value);
         return true;
     }
     
 }
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
 
   bool public paused = false;
 
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
   modifier whenNotPaused() {
     require(!paused);
     _;
   }
-
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
+  
   modifier whenPaused {
     require(paused);
     _;
   }
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
   function pause() onlyOwner whenNotPaused returns (bool) {
     paused = true;
     Pause();
     return true;
   }
 
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
   function unpause() onlyOwner whenPaused returns (bool) {
     paused = false;
     Unpause();
@@ -284,108 +222,97 @@ contract Pausable is Ownable {
   }
 }
 
-
-/**
-* @title SlotCrowdsale
-*/
 contract SlotCrowdsale is Ownable, Pausable {
     using SafeMath for uint256;
 
-    Fund public fund;
-
-    uint256 constant ETHER_CAP   = 4715 ether;   // ether
-    uint256 constant TOKEN_CAP   = 10000000;     // tokens
-    uint256 constant PRICE       = 1 ether;      // ether
-    uint256 constant BOUNTY      = 250000;       // tokens
-    uint256 constant OWNERS_STAKE = 3750000;     // tokens
-    uint256 constant OWNERS_LOCK = 200000;       // blocks
+    uint256 constant PRICE        =    1 ether;
+    uint256 constant TOKEN_CAP    =   10000000;
+    uint256 constant BOUNTY       =     250000;
+    uint256 constant OWNERS_STAKE =    3750000;
+    uint256 constant OWNERS_LOCK  =     200000;
+    
     address public bountyWallet;
     address public ownersWallet;
     uint256 public lockBegunAtBlock;
-    
     bool public bountyDistributed = false;
     bool public ownershipDistributed = false;
     
-    uint256[10] outcomes = [1000000,    // 0
-                             250000,    // 1
-                             100000,    // 2 
-                              20000,    // 3
-                              10000,    // 4
-                               4000,    // 5
-                               2000,    // 6
-                               1250,    // 7
-                               1000,    // 8
-                                500];   // 9
-                               
-                            //   0  1   2   3    4    5    6     7     8     9  
-    uint16[10] chances =        [1, 4, 10, 50, 100, 250, 500,  800, 1000, 2000];
-    uint16[10] addedUpChances = [1, 5, 15, 65, 165, 415, 915, 1715, 2715, 4715];
+    Fund public fund;
+    
+    uint256[10] outcomes = [1000000,
+                             250000,
+                             100000,
+                              20000,
+                              10000,
+                               4000,
+                               2000,
+                               1250,
+                               1000,
+                                500];
+
+    uint16[10] outcomesChances = [1, 4, 10, 50, 100, 250, 500,  800, 1000, 2000];
+    uint16[10] addedUpChances =  [1, 5, 15, 65, 165, 415, 915, 1715, 2715, 4715];
     
     event OwnershipDistributed();
     event BountyDistributed();
 
-    function SlotCrowdsale() payable {
-        // fund = Fund(_fundAddress); // still need to change ownership
+    function SlotCrowdsale() public payable {
         fund = new Fund();
         bountyWallet = 0x00deF93928A3aAD581F39049a3BbCaaB9BbE36C8;
         ownersWallet = 0x0001619153d8FE15B3FA70605859265cb0033c1a;
     }
 
-    function() payable {
-        // fallback function to buy tickets
+    function() public payable {
         buyTokenFor(msg.sender);
     }
-    
-    function correctedIndex(uint8 _index) constant private returns (uint8 _newIndex) {
-        require(_index < chances.length);
-        // if the chance is 0, return the next index
-        
-        if (chances[_index] != 0) {
-            return _index;
-        } else {
-            return correctedIndex(uint8((_index + 1) % chances.length));
-        }
-    }
-    
-    function getRateIndex(uint256 _randomNumber) constant private returns (uint8 _rateIndex) {
-        for (uint8 i = 0 ; i < uint8(chances.length) ; i++) {
-            if (_randomNumber < addedUpChances[i]) { 
-                return correctedIndex(i); 
-            }
-        }
-    }
 
-    function buyTokenFor(address _beneficiary) whenNotPaused() payable {
+    function buyTokenFor(address _beneficiary) public whenNotPaused() payable {
         require(_beneficiary != 0x0);
         require(msg.value >= PRICE);
         
         uint256 change = msg.value%PRICE;
-        uint256 numberOfTokens = msg.value.sub(change).div(PRICE);
-        
-        mintTokens(_beneficiary, numberOfTokens);
-        
-        // Return change to msg.sender
+        uint256 value = msg.value.sub(change);
+
         msg.sender.transfer(change);
+        ownersWallet.transfer(value);
+        fund.mint(_beneficiary, getAmount(value.div(PRICE)));
     }
     
-    function mintTokens(address _beneficiary, uint256 _numberOfTokens) private {
-        uint16 totalChances = addedUpChances[9];
-
-        for (uint16 i=1 ; i <= _numberOfTokens; i++) {
-            
-            uint256 randomNumber = uint256(keccak256(block.blockhash(block.number-1)))%totalChances;
-            uint8 rateIndex = getRateIndex(randomNumber);
-            
-            // rate shouldn't be 0 because of correctedIndex function
-            assert(chances[rateIndex] != 0);
-            chances[rateIndex]--;
-            
-            uint256 amount = outcomes[rateIndex];
-            fund.mint(_beneficiary, amount);
+    function correctedIndex(uint8 _index, uint8 i) private constant returns (uint8) {
+        require(i < outcomesChances.length);        
+        if (outcomesChances[_index] > 0) {
+            return uint8((_index + i)%outcomesChances.length);
+        } else {
+            return correctedIndex(_index, i+1);
         }
     }
     
-    function crowdsaleEnded() constant private returns (bool ended) {
+    function getIndex(uint256 _randomNumber) private returns (uint8) {
+        for (uint8 i = 0 ; i < uint8(outcomesChances.length) ; i++) {
+            if (_randomNumber < addedUpChances[i]) {
+                uint8 index = correctedIndex(i, 0);
+                assert(outcomesChances[index] != 0);
+                outcomesChances[index]--;
+                return index; 
+            } else { 
+                continue; 
+            }
+        }
+    }
+
+    function getAmount(uint256 _numberOfTries) private returns (uint256) {
+        uint16 totalChances = addedUpChances[addedUpChances.length-1];
+        uint256 amount = 0;
+
+        for (uint16 i = 0 ; i < _numberOfTries; i++) {
+            uint256 rand = uint256(keccak256(block.blockhash(block.number-1),i)) % totalChances;
+            amount = amount.add(outcomes[getIndex(rand)]);
+        }
+        
+        return amount;
+    }
+    
+    function crowdsaleEnded() constant private returns (bool) {
         if (fund.totalSupply() >= TOKEN_CAP) { 
             return true;
         } else {
@@ -393,7 +320,7 @@ contract SlotCrowdsale is Ownable, Pausable {
         }
     }
     
-    function lockEnded() constant private returns (bool ended) {
+    function lockEnded() constant private returns (bool) {
         if (block.number.sub(lockBegunAtBlock) > OWNERS_LOCK) {
             return true; 
         } else {
@@ -401,16 +328,16 @@ contract SlotCrowdsale is Ownable, Pausable {
         }
         
     }
-    
-    /* public onlyOwner */
-    
+        
     function distributeBounty() public onlyOwner {
         require(!bountyDistributed);
         require(crowdsaleEnded());
         
+        fund.mint(bountyWallet, BOUNTY);
+        
         bountyDistributed = true;
-        bountyWallet.transfer(BOUNTY);
         lockBegunAtBlock = block.number;
+        
         BountyDistributed();
     }
     
@@ -419,8 +346,8 @@ contract SlotCrowdsale is Ownable, Pausable {
         require(crowdsaleEnded());
         require(lockEnded());
         
+        fund.mint(ownersWallet, OWNERS_STAKE);
         ownershipDistributed = true;
-        ownersWallet.transfer(OWNERS_STAKE);
         
         OwnershipDistributed();
     }
@@ -435,9 +362,18 @@ contract SlotCrowdsale is Ownable, Pausable {
         bountyWallet = _newWallet;
     }
     
-    function changeFundOwner(address _newOwner) {
+    function changeFundOwner(address _newOwner) public onlyOwner {
         require(_newOwner != 0x0);
         fund.transferOwnership(_newOwner);
+    }
+
+    function changeFund(address _newFund) public onlyOwner {
+        require(_newFund != 0x0);
+        fund = Fund(_newFund);
+    }
+
+    function destroy() public onlyOwner {
+        selfdestruct(msg.sender);
     }
 
 }
