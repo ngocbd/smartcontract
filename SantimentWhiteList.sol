@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SantimentWhiteList at 0x92e55c6ee3171779174cebb27211120b730c155c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SantimentWhiteList at 0x3375D3d9df8C67b3D7EBcE220c3DDa4BE03dCE31
 */
 pragma solidity ^0.4.11;
 
@@ -33,7 +33,7 @@ pragma solidity ^0.4.11;
 /// @title Santiment WhiteList contract
 contract SantimentWhiteList {
 
-    string constant public VERSION = "0.3.0";
+    string constant public VERSION = "0.3.1";
 
     function () { throw; }   //explicitly unpayable
 
@@ -86,7 +86,7 @@ contract SantimentWhiteList {
         recordNum+=len;
     }
 
-    ///@dev disable setup mode
+    ///@notice switch off setup mode
     function start()
     adminOnly
     public {
@@ -102,13 +102,5 @@ contract SantimentWhiteList {
         if (msg.sender != admin) throw;
         _;
     }
-
-    //=== for better debug ====
-    function ping()
-    adminOnly
-    public {
-        log("pong");
-    }
-    event log(string);
 
 }
