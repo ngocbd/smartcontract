@@ -1,50 +1,86 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PandaCapitalfund at 0x944a2a11fe34514af896f957af4d16c03d5d6c4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PandaCapitalFund at 0xC3d243271052D01a847ED8533d4452f43060cEab
 */
-contract PandaCapitalfund {
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public initialSupply;
-    uint256 public totalSupply;
-
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-  
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function PandaCapitalfund() {
-
-         initialSupply = 10000000000000000;
-         name ="Panda Capital fund";
-        decimals = 8;
-         symbol = "PFX";
-        
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-                                   
-    }
-
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-      
-    }
-
+pragma solidity ^0.4.11;
+ 
+contract PandaCapitalFund {
+    string public symbol = "Panda Capital";
+    string public name = "PFXC";
+    uint8 public constant decimals = 8;
+    uint256 _totalSupply = 10000000000000000;
+    address owner = 0xb09574438BfCcB96E71eDE6f92FB1749DfCF3A05;
+    bool setupDone = false;
    
-
-    
-
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ 
+    mapping(address => uint256) balances;
+ 
+    mapping(address => mapping (address => uint256)) allowed;
+ 
+    function PandaCapitalFund(address adr) {
+        owner = adr;        
+    }
    
-
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
+    function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
+    {
+        if (msg.sender == owner && setupDone == false)
+        {
+            symbol = tokenSymbol;
+            name = tokenName;
+            _totalSupply = tokenSupply * 10000000000000000;
+            balances[owner] = _totalSupply;
+            setupDone = true;
+        }
+    }
+ 
+    function totalSupply() constant returns (uint256 totalSupply) {        
+        return _totalSupply;
+    }
+ 
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+ 
+    function transfer(address _to, uint256 _amount) returns (bool success) {
+        if (balances[msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+ 
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+ 
+    function approve(address _spender, uint256 _amount) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+ 
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 }
