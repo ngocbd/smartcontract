@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MBEToken at 0x8a46126dc294a8f1bf94ca2ce9019e4642083c64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MBEToken at 0xbef13efdb393e714c8b3e24a6b3bffd5a4b3c70c
 */
 pragma solidity ^0.4.19;
 
@@ -227,7 +227,7 @@ contract MBEToken is BurnableToken {
   address public tokenWallet;
   address public founderWallet;
   address public bountyWallet;
-  address public multisig=0xa74246dc71c0849accd564976b3093b0b2a522c3;
+  address public multisig = 0xA74246dC71c0849acCd564976b3093B0B2a522C3;
   uint public currentFundrise = 0;
   uint public raisedEthers = 0;
 
@@ -274,7 +274,7 @@ contract MBEToken is BurnableToken {
 
   function sellManually(address _to, uint amount) public onlyOwner returns(bool) {
     uint tokens = calcTokens(amount);
-    uint256 balance = balanceOf(owner);
+    uint256 balance = balanceOf(tokenWallet);
     if (balance < tokens) {
       sendTokens(_to, balance);
     } else {
@@ -347,7 +347,7 @@ contract MBEToken is BurnableToken {
   }
 
   function safeSend(uint tokens) private {
-    uint256 balance = balanceOf(owner);
+    uint256 balance = balanceOf(tokenWallet);
     if (balance < tokens) {
       uint toReturn = tokenRate.mul(tokens.sub(balance));
       sendTokens(msg.sender, balance);
@@ -362,9 +362,9 @@ contract MBEToken is BurnableToken {
   }
 
   function sendTokens(address _to, uint tokens) private {
-    balances[owner] = balances[owner].sub(tokens);
+    balances[tokenWallet] = balances[tokenWallet].sub(tokens);
     balances[_to] += tokens;
-    Transfer(owner, _to, tokens);
+    Transfer(tokenWallet, _to, tokens);
     currentFundrise += tokens;
   }
 }
