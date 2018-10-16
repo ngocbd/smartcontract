@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vemus at 0xd747726c19c131b4e2c8a13f9e673d9f245bd2e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vemus at 0xa07e1b455ba90f42055447cd35948e8503c3b413
 */
 pragma solidity ^0.4.6;
 
@@ -9,7 +9,7 @@ contract tokenRecipient {function receiveApproval(address _from, uint256 _value,
 
 contract Vemus {
     /* Public variables of the token */
-    string public standard = 'VEMS 1.0';
+    string public standard = 'VMS 1.0';
     
     string public name;
 
