@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0x68202b08b503a5d586f2b4380b5bf18e3cf8a8fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0x33d93307df7b88b3c68c345771aaba6ed560b7b0
 */
 pragma solidity ^0.4.19;
 
@@ -11,7 +11,7 @@ interface CornFarm
 
 interface JGWentworth
 {
-    function claimFunds(address) public;
+    function claimFunds() public;
 }
 
 
@@ -41,7 +41,7 @@ address public farmer = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
 
     function getMoney(address soil)external
     {
-    JGWentworth(soil).claimFunds(this);
+    JGWentworth(soil);
     }
     
     function sowCorn(address soil, uint8 seeds) external
