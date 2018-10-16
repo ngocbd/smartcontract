@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IpsxToken at 0x564c8f68c1564916936328d09e16d3c09f7c4ab3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IpsxToken at 0x001f0aa5da15585e5b2305dbab2bac425ea71007
 */
 pragma solidity ^0.4.19;
 
@@ -268,9 +268,30 @@ contract StandardToken is ERC20, BasicToken {
 
 /**
  * @title IpsxToken
- * @author Bit-Sentinel SRL: https://bit-sentinel.com
+ * @author https://bit-sentinel.com
  */
 contract IpsxToken is StandardToken, Ownable {
+  /**
+   * @dev event for logging token burns
+   * @dev burner address of the burner
+   * @dev value of tokens burned
+   */
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev event for logging enablement of transfers
+   */
+  event EnabledTransfers();
+
+  /**
+   * @dev event for logging crowdsale address set
+   * @param crowdsale address of the crowdsale
+   */
+  event SetCrowdsaleAddress(address indexed crowdsale);
+
+  // Address of the crowdsale.
+  address public crowdsale;
+
 
   // Public variables of the Token.
   string public name = "IPSX"; 
@@ -281,11 +302,71 @@ contract IpsxToken is StandardToken, Ownable {
   // after the contract will be initialized.
   uint256 public totalSupply = 1800000000e18;
 
+  // If the token is transferable or not.
+  bool public transferable = false;
+
   /**
    * @dev Initialize the IpsxToken and transfers the totalSupply to the
    *      contract creator. 
    */
   function IpsxToken() public {
     balances[msg.sender] = totalSupply;
+  }
+
+  /**
+   * @dev Ensure the transfer is valid.
+   */
+  modifier canTransfer() {
+    require(transferable || (crowdsale != address(0) && crowdsale == msg.sender));
+    _; 
+  }
+
+  /**
+   * @dev Enable the transfers of this token. Can only be called once.
+   */
+  function enableTransfers() external onlyOwner {
+    require(!transferable);
+    transferable = true;
+    EnabledTransfers();
+  }
+
+  /**
+   * @dev Set the crowdsale address.
+   * @param _addr address
+   */
+  function setCrowdsaleAddress(address _addr) external onlyOwner {
+    require(_addr != address(0));
+    crowdsale = _addr;
+    SetCrowdsaleAddress(_addr);
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public canTransfer returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public canTransfer returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public onlyOwner {
+    require(_value <= balances[owner]);
+    balances[owner] = balances[owner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(owner, _value);
   }
 }
