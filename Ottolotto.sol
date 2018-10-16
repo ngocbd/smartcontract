@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ottolotto at 0x922bcf2a9bd398a3ca942bc66436d8c4de57b83d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ottolotto at 0xabe81f5338ef23a50fccf0c1f214397c6f8e8ab1
 */
+pragma solidity ^0.4.13;
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -140,6 +142,8 @@ contract Ottolotto is OwnableExtended {
     mapping(address => address) partner;
     mapping(address => address[]) partners;
 
+    uint256[] public allGames;
+
     uint256 public jackpot;
     
     uint256 public gameNext;
@@ -148,7 +152,8 @@ contract Ottolotto is OwnableExtended {
 
     bool public gamePlayedStatus = false;
     
-    uint64  public ticketPrice = 0.001 ether;
+    uint256 public ticketPrice = 0.001 ether;
+    uint256 public newPrice = 0 ether;
     
     function Ottolotto() {}
     
@@ -164,6 +169,16 @@ contract Ottolotto is OwnableExtended {
         percents[6] = 35;
 
         champion = iChampion(_champion);
+    }
+
+    function getLastGames() constant returns (uint256[10] lastGames) {
+        uint256 j = 0;
+        for (uint256 i = allGames.length - 11; i < allGames.length; i++) {
+            lastGames[j] = allGames[i];
+            j++;
+        }
+
+        return lastGames;
     }
 
     function getGamePrize(uint256 _game)
@@ -302,6 +317,11 @@ contract Ottolotto is OwnableExtended {
 
         jackpot += weiRaised[gamePlayed].mul(percents[6]).div(100);
         StartedGame(gamePlayed, gameNext);
+        
+        if (newPrice != 0) {
+            ticketPrice = newPrice;
+            newPrice = 0;
+        }
 
         return true;
     }
@@ -358,6 +378,7 @@ contract Ottolotto is OwnableExtended {
     }
 
     function updateGameToCalculated(uint256 _game) internal {
+        allGames.push(_game);
         gameCalculated[_game] = true;
         gamePlayedStatus = false;
     }
@@ -418,6 +439,10 @@ contract Ottolotto is OwnableExtended {
                 jackpot += weiRaised[_game].mul(percents[i]).div(100);
             }
         }
+    }
+
+    function changeTicketPrice(uint256 _newPrice) onlyAdmin {
+        newPrice = _newPrice * 1000000000000000000;
     }
 
     function distributeFunds(uint256 weiWin, uint256 _game, uint8 matched, address _player) 
@@ -489,7 +514,6 @@ contract Ottolotto is OwnableExtended {
         return true;
     }
 
-    // champion
     function startChampionGame() onlyAdmin {
         champion.startGame();
 
