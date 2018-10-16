@@ -1,42 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x8b807cf49ca593c4678811211df2992e64f2f3ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x5d39fcebe89ab0397947881539fd6dc7d99c6a87
 */
 pragma solidity ^0.4.6;
 
 // Presale Smart Contract
 //
-// **** START:  WORK IN PROGRESS DISCLAIMER ****
-// This is a work in progress and not intended for reuse.
-// So don't reuse unless you know exactly what are you doing! 
-// **** END:  WORK IN PROGRESS DISCLAIMER ****
-//
 // **** START:  PARANOIA DISCLAIMER ****
-// A careful reader will find here some unnecessary checks and excessive code consuming some extra valuable gas. It is intentionally. 
-// Even contract will works without these parts, they make the code more secure in production as well for future refactoring.
+// A carefull reader will find here some unnecessary checks and excessive code consuming some extra valueable gas. It is intentionally. 
+// Even contract will works without these parts, they make the code more secure in production as well for future refactorings.
 // Additionally it shows more clearly what we have took care of.
 // You are welcome to discuss that places.
 // **** END OF: PARANOIA DISCLAIMER *****
-//
 //
 // @author ethernian
 //
 
 contract Presale {
 
-    string public constant VERSION = "0.1.3-beta";
+	function cleanUp() onlyOwner {
+		selfdestruct(OWNER);
+	}
+
+    string public constant VERSION = "0.1.3-[min1,max5]";
 
 	/* ====== configuration START ====== */
-
-	uint public constant PRESALE_START  = 3044593;    /* approx. 22.01.2017 20:00 CET */
-	uint public constant PRESALE_END    = 3048913;    /* approx. 23.01.2017 14:00 CET */
-	uint public constant WITHDRAWAL_END = 3049873;    /* approx. 23.01.2017 18:00 CET */
-
-	address public constant OWNER = 0x45d5426471D12b21C3326dD0cF96f6656F7d14b1;
-	
     uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
     uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 5;
     uint public constant MIN_ACCEPTED_AMOUNT_FINNEY = 1;
-
+	uint public constant PRESALE_START = 3044444;
+	uint public constant PRESALE_END = 3044555;
+	uint public constant WITHDRAWAL_END = 3044666;
+	address public constant OWNER = 0xF55DFd2B02Cf3282680C94BD01E9Da044044E6A2;
     /* ====== configuration END ====== */
 	
     string[5] private stateNames = ["BEFORE_START",  "PRESALE_RUNNING", "WITHDRAWAL_RUNNING", "REFUND_RUNNING", "CLOSED" ];
