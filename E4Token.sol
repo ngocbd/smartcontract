@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Token at 0x47d822fcf7d242d4e6f22ab70b63fabab36922c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Token at 0x7f37472ee88062acc82f14ccfe6e7bf5f469dd05
 */
 pragma solidity ^0.4.8;
 
@@ -181,9 +181,8 @@ contract E4Token is Token, E4RowRewards {
                 lastPayoutIndex = 0;
                 remunerationStage = 0;
                 remunerationBalance = 0;
+
                 auxPartnerBalance = 0;
-                developersGranted = false;
-                lastPayoutTime = 0;
 
                 if (this.balance > 0) {
                         if (!owner.call.gas(rfGas).value(this.balance)())
