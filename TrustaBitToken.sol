@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustaBitToken at 0x52a31d995ae29a5d34bc573b3458971050637f39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustaBitToken at 0x4ddaf983302f451a5a6dc95af102335bf280d9a7
 */
 pragma solidity ^0.4.18;
 
@@ -12,7 +12,7 @@ pragma solidity ^0.4.18;
  **/
 contract FallbackToken {
 
-  function isContract(address _addr) internal constant returns (bool) {
+  function isContract(address _addr) internal view returns (bool) {
     uint length;
     _addr = _addr;
     assembly {length := extcodesize(_addr)}
@@ -329,22 +329,8 @@ contract TrustaBitToken is MintableToken, FallbackToken {
     * http://vessenes.com/the-erc20-short-address-attack-explained/
     */
   modifier onlyPayloadSize(uint size) {
-    if (msg.data.length != size + 4) {
-      revert();
-    }
+    require(msg.data.length != size + 4);
     _;
-  }
-
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.K
-   */
-  /// function TrustaBitsToken() public {}
-
-  /**
-   * @dev Fallback method will buyout tokens
-   */
-  function() public payable {
-    revert();
   }
 
   function release() onlyOwner public returns (bool) {
