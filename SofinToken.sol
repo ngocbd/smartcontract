@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SofinToken at 0xd51ef370830dd8a04a6131f1e4b7b9ee2b8dbd26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SofinToken at 0x9e091594a5fa0f3039a0fc25bd21c6151bb3521e
 */
 pragma solidity 0.4.19;
 
@@ -215,7 +215,7 @@ contract BurnableToken is StandardToken {
 // File: src/SofinToken.sol
 
 contract SofinToken is BurnableToken {
-  string public constant name = 'SOFIN';
+  string public constant name = 'SOFIN ICO';
   string public constant symbol = 'SOFIN';
   uint256 public constant decimals = 18;
 
@@ -226,7 +226,7 @@ contract SofinToken is BurnableToken {
 
   bool public active = true;
 
-  uint256 public oneTokenInWei = 200000000000000;
+  uint256 public oneTokenInWei = 153846153846200;
 
   modifier onlyOwner {
     if (owner != msg.sender) {
