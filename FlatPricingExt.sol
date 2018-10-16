@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x8DC32658062efe751c93c19839c0B0186C181C5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xCDA7efECEb3849235441012788EA0a4e6625bc73
 */
 pragma solidity ^0.4.11;
 
