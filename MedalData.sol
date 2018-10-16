@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MedalData at 0xcbc2fb817bc0e434978e16f96950d84c38c77bde
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MedalData at 0xcd3627f4024509fce76461188a86bdceea53dfc8
 */
 pragma solidity ^0.4.18;
 
@@ -236,7 +236,7 @@ contract MedalData is ERC721, AccessControl, SafeMath {
   * @param _to The address that will own the minted token
   */
   
-  function _createMedal(address _to, uint8 _seriesID) public onlySERAPHIM {
+  function _createMedal(address _to, uint8 _seriesID) public  {
     require(_to != address(0));
    if (currentTokenNumbers[_seriesID] <= maxTokenNumbers[_seriesID]) {
     medalType[totalTokens] = _seriesID;
@@ -258,7 +258,7 @@ contract MedalData is ERC721, AccessControl, SafeMath {
   * @dev Burns a specific token
   * @param _tokenId uint256 ID of the token being burned by the msg.sender
   */
-  function _burn(uint256 _tokenId) onlyOwnerOf(_tokenId) external {
+  function _burn(uint256 _tokenId) onlyOwnerOf(_tokenId) internal {
     if (approvedFor(_tokenId) != 0) {
       clearApproval(msg.sender, _tokenId);
     }
