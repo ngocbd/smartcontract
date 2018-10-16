@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateCityTokens at 0x0d2d64c2c4ba21d08252661c3ca159982579b640
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateCityTokens at 0x009f0e67dbaf4644603c0660e974cf5e34726481
 */
 pragma solidity ^0.4.13;
 contract SafeMath {
@@ -106,7 +106,8 @@ contract PrivateCityTokens is StandardToken {
   string public name = "Private City Tokens";
   string public symbol = "PCT";
   uint256 public decimals = 18;
-  uint256 public INITIAL_SUPPLY = 267000000 * 1 ether;
+  uint256 public INITIAL_SUPPLY = 16000000 * 1 ether;
+  
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
