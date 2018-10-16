@@ -1,43 +1,48 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x0bd6e76d1262b9e8ac056eca3f695167efbdd297
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0xc8e3aa7718cf72f927b845d834be0b93c66b34e1
 */
 pragma solidity ^0.4.4;
 
 
 // ERC20 token interface is implemented only partially.
-
-//  some functions are left undefined:
+// Token transfer is prohibited due to spec (see PRESALE-SPEC.md),
+// hence some functions are left undefined:
 //  - transfer, transferFrom,
 //  - approve, allowance.
-// hence  an economical incentive to increase the value of the token, and investors protection from the risk of immediate token dumping following ICO
 
 contract PresaleToken {
 
-    
-    function PresaleToken(address _tokenManager) {
+    /// @dev Constructor
+    /// @param _tokenManager Token manager address.
+    function PresaleToken(address _tokenManager, address _escrow) {
         tokenManager = _tokenManager;
+        escrow = _escrow;
     }
 
 
-   
+    /*/
+     *  Constants
+    /*/
 
-    string public name = "Dobi Presale Token";
-    string public symbol = "Dobi";
-    uint   public decimals = 18;
+    string public constant name = "SONM Presale Token";
+    string public constant symbol = "SPT";
+    uint   public constant decimals = 18;
+
+    uint public constant PRICE = 606; // 606 SPT per Ether
+
+    //  price
+    // Cup is 10 000 ETH
+    // 1 eth = 606 presale tokens
+    // ETH price ~50$ for 28.03.2017
+    // Cup in $ is ~ 500 000$
+
+    uint public constant TOKEN_SUPPLY_LIMIT = 606 * 10000 * (1 ether / 1 wei);
 
 
 
-    //Presale Cup is ~ 1 800 ETH
-    ///During Presale Phase : 1 eth = 17 presale tokens
-    //Presale Cup in $ is ~ 75 600$
-
-    uint public PRICE = 17; 
-
-    uint public TOKEN_SUPPLY_LIMIT = 30000 * (1 ether / 1 wei);
-
-
-
-    
+    /*/
+     *  Token state
+    /*/
 
     enum Phase {
         Created,
@@ -48,13 +53,15 @@ contract PresaleToken {
     }
 
     Phase public currentPhase = Phase.Created;
-
-    // amount of tokens already sold
-    uint public totalSupply = 0; 
+    uint public totalSupply = 0; // amount of tokens already sold
 
     // Token manager has exclusive priveleges to call administrative
     // functions on this contract.
     address public tokenManager;
+
+    // Gathered funds can be withdrawn only to escrow's address.
+    address public escrow;
+
     // Crowdsale manager has exclusive priveleges to burn presale tokens.
     address public crowdsaleManager;
 
@@ -65,22 +72,26 @@ contract PresaleToken {
     modifier onlyCrowdsaleManager() { if(msg.sender != crowdsaleManager) throw; _; }
 
 
-    
+    /*/
+     *  Events
+    /*/
 
     event LogBuy(address indexed owner, uint value);
     event LogBurn(address indexed owner, uint value);
     event LogPhaseSwitch(Phase newPhase);
 
 
-    
+    /*/
+     *  Public functions
+    /*/
 
     function() payable {
         buyTokens(msg.sender);
     }
 
-   
+    /// @dev Lets buy you some tokens.
     function buyTokens(address _buyer) public payable {
-        // Available only if presale is in progress.
+        // Available only if presale is running.
         if(currentPhase != Phase.Running) throw;
 
         if(msg.value == 0) throw;
@@ -92,7 +103,8 @@ contract PresaleToken {
     }
 
 
-   
+    /// @dev Returns number of tokens owned by given address.
+    /// @param _owner Address of token owner.
     function burnTokens(address _owner) public
         onlyCrowdsaleManager
     {
@@ -113,13 +125,16 @@ contract PresaleToken {
     }
 
 
-   
+    /// @dev Returns number of tokens owned by given address.
+    /// @param _owner Address of token owner.
     function balanceOf(address _owner) constant returns (uint256) {
         return balance[_owner];
     }
 
 
-    
+    /*/
+     *  Administrative functions
+    /*/
 
     function setPresalePhase(Phase _nextPhase) public
         onlyTokenManager
@@ -147,7 +162,7 @@ contract PresaleToken {
     {
         // Available at any phase.
         if(this.balance > 0) {
-            if(!tokenManager.send(this.balance)) throw;
+            if(!escrow.send(this.balance)) throw;
         }
     }
 
