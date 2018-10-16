@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConunToken at 0x6b7290527ab68d72158cecaef27b0db6238b6fc5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CONUNToken at 0x2e22dce89b364869a9f60ed488e39559c8eb58e1
 */
 /*
 Implements EIP20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
@@ -56,7 +56,7 @@ contract EIP20Interface {
 }
 
 
-contract ConunToken is EIP20Interface {
+contract CONUNToken is EIP20Interface {
 
     uint256 constant private MAX_UINT256 = 2**256 - 1;
     mapping (address => uint256) public balances;
@@ -71,7 +71,7 @@ contract ConunToken is EIP20Interface {
     uint8 public decimals;                //How many decimals to show.
     string public symbol;                 //An identifier: eg SBX
 
-    function ConunToken(
+    function CONUNToken(
         uint256 _initialAmount,
         string _tokenName,
         uint8 _decimalUnits,
@@ -88,7 +88,7 @@ contract ConunToken is EIP20Interface {
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;
         balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -98,9 +98,9 @@ contract ConunToken is EIP20Interface {
         balances[_to] += _value;
         balances[_from] -= _value;
         if (allowance < MAX_UINT256) {
-            allowed[_from][msg.sender] -= _value;
+        allowed[_from][msg.sender] -= _value;
         }
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -110,7 +110,7 @@ contract ConunToken is EIP20Interface {
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
