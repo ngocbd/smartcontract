@@ -1,33 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeToken at 0xb45893bd77830bec7c305aded041bd74f0343bd1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeToken at 0x1a3B341D22C3bC84304C86ed3D6e6A53A6EEa2b8
 */
 pragma solidity ^0.4.18;
-
-/*
-    Copyright 2016, Jordi Baylina
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/// @title MiniMeToken Contract
-/// @author Jordi Baylina
-/// @dev This token contract's goal is to make it easy for anyone to clone this
-///  token using the token distribution at a given block, this will allow DAO's
-///  and DApps to upgrade their features in a decentralized manner without
-///  affecting the original token
-/// @dev It is ERC20 compliant, but still needs to under go further testing.
-
 
 contract Controlled {
     /// @notice The address of the controller is the only address that can call
@@ -45,7 +19,7 @@ contract Controlled {
     }
 }
 
-/// @dev The token controller contract must implement these functions
+
 contract TokenController {
     /// @notice Called when `_owner` sends ether to the MiniMe Token contract
     /// @param _owner The address that sent the ether to create tokens
@@ -69,6 +43,7 @@ contract TokenController {
     function onApprove(address _owner, address _spender, uint _amount) public
         returns(bool);
 }
+
 
 contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
@@ -172,8 +147,7 @@ contract MiniMeToken is Controlled {
     /// @return Whether the transfer was successful or not
     function transfer(address _to, uint256 _amount) public returns (bool success) {
         require(transfersEnabled);
-        doTransfer(msg.sender, _to, _amount);
-        return true;
+        return doTransfer(msg.sender, _to, _amount);
     }
 
     /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
@@ -193,11 +167,10 @@ contract MiniMeToken is Controlled {
             require(transfersEnabled);
 
             // The standard ERC 20 transferFrom functionality
-            require(allowed[_from][msg.sender] >= _amount);
+            if (allowed[_from][msg.sender] < _amount) return false;
             allowed[_from][msg.sender] -= _amount;
         }
-        doTransfer(_from, _to, _amount);
-        return true;
+        return doTransfer(_from, _to, _amount);
     }
 
     /// @dev This is the actual transfer function in the token contract, it can
@@ -207,11 +180,10 @@ contract MiniMeToken is Controlled {
     /// @param _amount The amount of tokens to be transferred
     /// @return True if the transfer was successful
     function doTransfer(address _from, address _to, uint _amount
-    ) internal {
+    ) internal returns(bool) {
 
            if (_amount == 0) {
-               Transfer(_from, _to, _amount);    // Follow the spec to louch the event when transfer 0
-               return;
+               return true;
            }
 
            require(parentSnapShotBlock < block.number);
@@ -220,10 +192,11 @@ contract MiniMeToken is Controlled {
            require((_to != 0) && (_to != address(this)));
 
            // If the amount being transfered is more than the balance of the
-           //  account the transfer throws
+           //  account the transfer returns false
            var previousBalanceFrom = balanceOfAt(_from, block.number);
-
-           require(previousBalanceFrom >= _amount);
+           if (previousBalanceFrom < _amount) {
+               return false;
+           }
 
            // Alerts the token controller of the transfer
            if (isContract(controller)) {
@@ -243,6 +216,7 @@ contract MiniMeToken is Controlled {
            // An event to make the transfer easy to find on the blockchain
            Transfer(_from, _to, _amount);
 
+           return true;
     }
 
     /// @param _owner The address that's balance is being requested
@@ -603,4 +577,649 @@ contract MiniMeTokenFactory {
         newToken.changeController(msg.sender);
         return newToken;
     }
+}
+
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
+
+contract WhiteList is Ownable {
+
+  mapping (address => bool) public whiteListed;
+  address[] public investors;
+  address[] public contracts;
+
+  // Address early participation whitelist status changed
+  event WhiteListed(address addr, bool status);
+
+  modifier areWhiteListed(address[] addrs) {
+    for (uint i=0; i<addrs.length; i++) {
+        if (!whiteListed[addrs[i]] || addrs[i] == 0)
+            revert();
+    }
+    _;
+  }
+
+  modifier areNotWhiteListed(address[] addrs) {
+    for (uint i=0; i<addrs.length; i++) {
+        if (whiteListed[addrs[i]] || addrs[i] == 0)
+            revert();
+    }
+    _;
+  }
+
+  function WhiteList(address[] addrs) public {
+    for (uint i=0; i<addrs.length; i++) {
+        if(isContract(addrs[i])){
+            contracts.push(addrs[i]);
+        } else {
+            investors.push(addrs[i]);
+        }
+        if (whiteListed[addrs[i]] || addrs[i] == 0) {
+            revert();
+        }
+        whiteListed[addrs[i]] = true;
+    }
+
+  }
+
+  function addAddress(address[] addrs) public onlyOwner areNotWhiteListed(addrs) {
+    for (uint i=0; i<addrs.length; i++) {
+        whiteListed[addrs[i]] = true;
+        if(isContract(addrs[i])){
+            contracts.push(addrs[i]);
+        } else {
+            investors.push(addrs[i]);
+        }
+        WhiteListed(addrs[i], true);
+    }
+  }
+
+  function removeAddress(address addr) public onlyOwner {
+    require(whiteListed[addr]);
+    if (isContract(addr)) {
+        for (uint i=0; i<contracts.length - 1; i++) {
+            if (contracts[i] == addr) {
+                contracts[i] = contracts[contracts.length - 1];
+                break;
+            }
+        }
+        contracts.length -= 1;
+    } else {
+        for (uint j=0; j<investors.length - 1; j++) {
+            if (investors[j] == addr) {
+                investors[j] = investors[investors.length - 1];
+                break;
+            }
+        }
+        investors.length -= 1;
+    }
+    whiteListed[addr] = false;
+    WhiteListed(addr, false);
+  }
+
+  /// @dev Internal function to determine if an address is a contract
+  /// @param _addr The address being queried
+  /// @return True if `_addr` is a contract
+  function isContract(address _addr) constant internal returns(bool) {
+    uint size;
+    if (_addr == 0) return false;
+    assembly {
+        size := extcodesize(_addr)
+    }
+    return size>0;
+  }
+
+
+  // web3 function call
+  function getInvestors() public constant returns (address[]) {
+    return investors;
+  }
+
+  function getContracts() public constant returns (address[]) {
+    return contracts;
+  }
+
+  function isWhiteListed(address addr) public constant returns (bool) {
+    return whiteListed[addr];
+  }
+
+}
+
+
+contract MultiSigWallet {
+
+    /*
+     *  Events
+     */
+    event Confirmation(address indexed sender, uint indexed transactionId);
+    event Revocation(address indexed sender, uint indexed transactionId);
+    event Submission(uint indexed transactionId);
+    event Execution(uint indexed transactionId);
+    event ExecutionFailure(uint indexed transactionId);
+    event Deposit(address indexed sender, uint value);
+    event OwnerAddition(address indexed owner);
+    event OwnerRemoval(address indexed owner);
+    event RequirementChange(uint required);
+
+    /*
+     *  Constants
+     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
+    /*
+     *  Storage
+     */
+    mapping (uint => Transaction) public transactions;
+    mapping (uint => mapping (address => bool)) public confirmations;
+    mapping (address => bool) public isOwner;
+    address[] public owners;
+    uint public required;
+    uint public transactionCount;
+
+    struct Transaction {
+        address destination;
+        uint value;
+        bytes data;
+        bool executed;
+    }
+
+
+    /*
+     *  Modifiers
+     */
+    modifier onlyWallet() {
+        if (msg.sender != address(this))
+            revert();
+        _;
+    }
+
+    modifier onlyOwner() {
+        if(!isOwner[msg.sender]) 
+            revert();
+        _;
+    }
+
+    modifier ownerDoesNotExist(address owner) {
+        if (isOwner[owner])
+            revert();
+        _;
+    }
+
+    modifier ownerExists(address owner) {
+        if (!isOwner[owner])
+            revert();
+        _;
+    }
+
+    modifier transactionExists(uint transactionId) {
+        if (transactions[transactionId].destination == 0)
+            revert();
+        _;
+    }
+
+    modifier confirmed(uint transactionId, address owner) {
+        if (!confirmations[transactionId][owner])
+            revert();
+        _;
+    }
+
+    modifier notConfirmed(uint transactionId, address owner) {
+        if (confirmations[transactionId][owner])
+            revert();
+        _;
+    }
+
+    modifier notExecuted(uint transactionId) {
+        if (transactions[transactionId].executed)
+            revert();
+        _;
+    }
+
+    modifier notNull(address _address) {
+        if (_address == 0)
+            revert();
+        _;
+    }
+
+    modifier validRequirement(uint ownerCount, uint _required) {
+        if (   ownerCount > MAX_OWNER_COUNT
+            || _required > ownerCount
+            || _required == 0
+            || ownerCount == 0)
+            revert();
+        _;
+    }
+
+    /// @dev Fallback function allows to deposit ether.
+    function() public payable
+    {
+        if (msg.value > 0)
+            Deposit(msg.sender, msg.value);
+    }
+
+    function MultiSigWallet(address[] _owners, uint _required)
+        public
+        validRequirement(_owners.length, _required)
+    {
+        for (uint i=0; i<_owners.length; i++) {
+            if (isOwner[_owners[i]] || _owners[i] == 0)
+                revert();
+            isOwner[_owners[i]] = true;
+        }
+        owners = _owners;
+        required = _required;
+    }
+
+    /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
+    /// @param owner Address of new owner.
+    function addOwner(address owner)
+        public
+        onlyWallet
+        ownerDoesNotExist(owner)
+        notNull(owner)
+        validRequirement(owners.length + 1, required)
+    {
+        isOwner[owner] = true;
+        owners.push(owner);
+        OwnerAddition(owner);
+    }
+
+    /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
+    /// @param owner Address of owner.
+    function removeOwner(address owner)
+        public
+        onlyWallet
+        ownerExists(owner)
+    {
+        isOwner[owner] = false;
+        for (uint i=0; i<owners.length - 1; i++)
+            if (owners[i] == owner) {
+                owners[i] = owners[owners.length - 1];
+                break;
+            }
+        owners.length -= 1;
+        if (required > owners.length)
+            changeRequirement(owners.length);
+        OwnerRemoval(owner);
+    }
+
+    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
+    /// @param owner Address of owner to be replaced.
+    /// @param newOwner Address of new owner.
+    function replaceOwner(address owner, address newOwner)
+        public
+        onlyWallet
+        ownerExists(owner)
+        ownerDoesNotExist(newOwner)
+    {
+        for (uint i=0; i<owners.length; i++)
+            if (owners[i] == owner) {
+                owners[i] = newOwner;
+                break;
+            }
+        isOwner[owner] = false;
+        isOwner[newOwner] = true;
+        OwnerRemoval(owner);
+        OwnerAddition(newOwner);
+    }
+
+    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
+    /// @param _required Number of required confirmations.
+    function changeRequirement(uint _required)
+        public
+        onlyWallet
+        validRequirement(owners.length, _required)
+    {
+        required = _required;
+        RequirementChange(_required);
+    }
+
+    /// @dev Allows an owner to submit and confirm a transaction.
+    /// @param destination Transaction target address.
+    /// @param value Transaction ether value.
+    /// @param data Transaction data payload.
+    /// @return Returns transaction ID.
+    function submitTransaction(address destination, uint value, bytes data)
+        public
+        returns (uint transactionId)
+    {
+        transactionId = addTransaction(destination, value, data);
+        confirmTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to confirm a transaction.
+    /// @param transactionId Transaction ID.
+    function confirmTransaction(uint transactionId)
+        public
+        ownerExists(msg.sender)
+        transactionExists(transactionId)
+        notConfirmed(transactionId, msg.sender)
+    {
+        confirmations[transactionId][msg.sender] = true;
+        Confirmation(msg.sender, transactionId);
+        executeTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to revoke a confirmation for a transaction.
+    /// @param transactionId Transaction ID.
+    function revokeConfirmation(uint transactionId)
+        public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
+        notExecuted(transactionId)
+    {
+        confirmations[transactionId][msg.sender] = false;
+        Revocation(msg.sender, transactionId);
+    }
+
+    /// @dev Allows anyone to execute a confirmed transaction.
+    /// @param transactionId Transaction ID.
+    function executeTransaction(uint transactionId)
+        public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
+        notExecuted(transactionId)
+    {
+        if (isConfirmed(transactionId)) {
+
+            transactions[transactionId].executed = true;
+            if (transactions[transactionId].destination.call.value(transactions[transactionId].value)(transactions[transactionId].data))
+                Execution(transactionId);
+            else {
+                ExecutionFailure(transactionId);
+                transactions[transactionId].executed = false;
+            }
+        }
+    }
+
+    /// @dev Returns the confirmation status of a transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Confirmation status.
+    function isConfirmed(uint transactionId)
+        public
+        constant
+        returns (bool)
+    {
+        uint count = 0;
+        for (uint i=0; i<owners.length; i++) {
+            if (confirmations[transactionId][owners[i]])
+                count += 1;
+            if (count == required)
+                return true;
+        }
+    }
+
+    /*
+     * Internal functions
+     */
+    /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
+    /// @param destination Transaction target address.
+    /// @param value Transaction ether value.
+    /// @param data Transaction data payload.
+    /// @return Returns transaction ID.
+    function addTransaction(address destination, uint value, bytes data)
+        internal
+        notNull(destination)
+        returns (uint transactionId)
+    {
+        transactionId = transactionCount;
+        transactions[transactionId] = Transaction({
+            destination: destination,
+            value: value,
+            data: data,
+            executed: false
+        });
+        transactionCount += 1;
+        Submission(transactionId);
+    }
+
+    /*
+     * Web3 call functions
+     */
+    /// @dev Returns number of confirmations of a transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Number of confirmations.
+    function getConfirmationCount(uint transactionId)
+        public
+        constant
+        returns (uint count)
+    {
+        for (uint i=0; i<owners.length; i++)
+            if (confirmations[transactionId][owners[i]])
+                count += 1;
+    }
+
+    /// @dev Returns total number of transactions after filers are applied.
+    /// @param pending Include pending transactions.
+    /// @param executed Include executed transactions.
+    /// @return Total number of transactions after filters are applied.
+    function getTransactionCount(bool pending, bool executed)
+        public
+        constant
+        returns (uint count)
+    {
+        for (uint i=0; i<transactionCount; i++)
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
+                count += 1;
+    }
+
+    /// @dev Returns list of owners.
+    /// @return List of owner addresses.
+    function getOwners()
+        public
+        constant
+        returns (address[])
+    {
+        return owners;
+    }
+
+    /// @dev Returns array with owner addresses, which confirmed transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Returns array of owner addresses.
+    function getConfirmations(uint transactionId)
+        public
+        constant
+        returns (address[] _confirmations)
+    {
+        address[] memory confirmationsTemp = new address[](owners.length);
+        uint count = 0;
+        uint i;
+        for (i=0; i<owners.length; i++)
+            if (confirmations[transactionId][owners[i]]) {
+                confirmationsTemp[count] = owners[i];
+                count += 1;
+            }
+        _confirmations = new address[](count);
+        for (i=0; i<count; i++)
+            _confirmations[i] = confirmationsTemp[i];
+    }
+
+    /// @dev Returns list of transaction IDs in defined range.
+    /// @param from Index start position of transaction array.
+    /// @param to Index end position of transaction array.
+    /// @param pending Include pending transactions.
+    /// @param executed Include executed transactions.
+    /// @return Returns array of transaction IDs.
+    function getTransactionIds(uint from, uint to, bool pending, bool executed)
+        public
+        constant
+        returns (uint[] _transactionIds)
+    {
+        uint[] memory transactionIdsTemp = new uint[](transactionCount);
+        uint count = 0;
+        uint i;
+        for (i=0; i<transactionCount; i++)
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
+            {
+                transactionIdsTemp[count] = i;
+                count += 1;
+            }
+        _transactionIds = new uint[](to - from);
+        for (i=from; i<to; i++)
+            _transactionIds[i - from] = transactionIdsTemp[i];
+    }
+}
+
+
+contract Market is TokenController, MultiSigWallet {
+
+	uint public totalTokenCollected;
+
+	MiniMeToken public tokenContract;
+    WhiteList public MyWhiteList;
+
+	uint public basePrice;
+	uint public marketCap;
+
+	uint public startFundingTime;
+	uint public endFundingTime;
+	// market duration 6 hour. 6 * 60 * 60
+	uint public constant DURATION = 21600;
+
+    modifier beforeStart {
+        require(!saleStarted());
+        _;
+    }
+
+    modifier inProgress {
+        require(saleStarted() && ! saleEnded());
+        _;
+    }
+
+	/// @return true if sale has started, false otherwise.
+    function saleStarted() public constant returns (bool) {
+        return (startFundingTime > 0 && now >= startFundingTime);
+    }
+
+	/// @return true if sale is due when the last phase is finished.
+    function saleEnded() public constant returns (bool) {
+        return now >= endFundingTime;
+    }
+
+
+	function Market(
+		address _whiteListAddress,
+		address _tokenAddress,
+		address[] _owners,
+		uint _required
+	) public MultiSigWallet(_owners, _required) {
+		MyWhiteList = WhiteList(_whiteListAddress);
+		tokenContract = MiniMeToken(_tokenAddress);
+	}
+
+	function startAndSetParams(uint _basePrice, uint _marketCap) onlyWallet beforeStart public {
+		basePrice = _basePrice;
+		marketCap = _marketCap;
+		startFundingTime = now;
+		endFundingTime = startFundingTime + DURATION;
+	}
+
+	function onTransfer(address _from, address _to, uint _amount) public returns(bool) {
+		require (MyWhiteList.isWhiteListed(_from));
+		require (MyWhiteList.isWhiteListed(_to));
+		if(address(this) == _to) {
+			uint ethAmount = computeEtherAmount(_amount);
+			require(this.balance > ethAmount);
+			totalTokenCollected = totalTokenCollected + _amount;
+			_from.transfer(ethAmount);
+		}
+		return true;
+	}
+
+	function onApprove(address _owner, address _spender, uint) public returns(bool) {
+		require (MyWhiteList.isWhiteListed(_owner));
+        require (MyWhiteList.isWhiteListed(_spender));
+		return true;
+	}
+
+	function deposit() public onlyOwner payable {
+		// deposit ether in this contract but do not get any token;
+		if (msg.value > 0) {
+			Deposit(msg.sender, msg.value);
+		}
+	}
+
+	function() public payable {
+	    require (MyWhiteList.isWhiteListed(msg.sender));
+		doPayment(msg.sender);
+	}
+
+	function proxyPayment(address _owner) public payable returns(bool) {
+		require (MyWhiteList.isWhiteListed(_owner));
+		doPayment(_owner);
+		return true;
+	}
+
+	function doPayment(address _owner) inProgress internal {
+		require((tokenContract.controller() != 0) && (msg.value != 0));
+
+		uint tokenAmount = computeTokenAmount(msg.value);
+		uint generateTokenAmount = tokenAmount - totalTokenCollected;
+		uint currentSupply = tokenContract.totalSupply();
+		// total supply must not exceed marketCap after execution
+		require(currentSupply + generateTokenAmount <= marketCap);
+
+		// transfer collected token first. only generate token when necessary.
+		if (tokenAmount >= totalTokenCollected) {
+			if(totalTokenCollected !=0) {
+				tokenContract.transfer(_owner, totalTokenCollected);
+				totalTokenCollected = 0;
+			}
+			require(tokenContract.generateTokens(_owner, generateTokenAmount));
+		} else {
+			tokenContract.transfer(_owner, tokenAmount);
+			totalTokenCollected = totalTokenCollected - tokenAmount;
+		}
+
+		return;
+	}
+
+	function updateBasePriceAndMarketCap(uint _basePrice, uint _marketCap) onlyWallet public {
+		basePrice = _basePrice;
+    marketCap = _marketCap; 
+	}
+
+	function computeTokenAmount(uint ethAmount) view internal returns (uint tokens) {
+		tokens = ethAmount * basePrice;
+	}
+
+	function computeEtherAmount(uint tokenAmount) view internal returns (uint eth) {
+		eth = tokenAmount / basePrice;
+	}
 }
