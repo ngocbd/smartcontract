@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SSENTE at 0xb622fa46001b8ab78350ea25d6cf17349510102b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SSENTE at 0x6b14c373c24556165002a00cba4174fd96fe28f0
 */
 pragma solidity ^0.4.16;
 
@@ -15,7 +15,7 @@ pragma solidity ^0.4.16;
  }
   
   contract SSENTE is ERC20 {
-     string public constant symbol = "sse";
+     string public constant symbol = "ssn";
      string public constant name = "SSENTE";
      uint8 public constant decimals = 8;
      uint256 _totalSupply = 18000000 * 10**8;
