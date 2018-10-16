@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x60Aa80fe41B43c180870a137c7A87334e5C3cb5D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x09D4b4014Db27DdFbC73393af4F0A8f444E539eA
 */
 // <ORACLIZE_API>
 /*
@@ -598,7 +598,7 @@ contract Dice is usingOraclize {
         uint betValue = msg.value - oraclizeFee;
         if ((((betValue * ((10000 - edge) - pwin)) / pwin ) <= (maxWin * getBankroll()) / 10000) && (betValue >= minBet)) {
             // encrypted arg: '\n{"jsonrpc":2.0,"method":"generateSignedIntegers","params":{"apiKey":"YOUR_API_KEY","n":1,"min":1,"max":10000},"id":1}'
-            bytes32 myid = oraclize_query("URL", "json(https://api.random.org/json-rpc/1/invoke).result.random.data.0","BDuFfch3GDcmDNoW5Oa6s9VxBG9ZewOoQdP6NLoFPp3hmXhJYXYd/Q/1vipAWIXTkLixowgJrrUvQiFjpFKG5cFdmCXJfM40G9hlAP/O4OfIYKnrHLJ6osW22N1Re1YyJeBYGyBNK5oJ/DLRSMToR490oJODPJkvwMa8wA60EBJHrYwP+Pg6MwnQleekgOe2KyDitAgRJ07W68TTRLFXsrhFDcUiWeMGY+ATYdWCewIQbgdBxGnSF4MG/Lz4vNCYLex37poEqHX6OFdnRXlwgGBKfrka0zkketZsji5IhE8=", ORACLIZE_GAS_LIMIT + safeGas);
+            bytes32 myid = oraclize_query("URL", "json(https://api.random.org/json-rpc/1/invoke).result.random.data.0","BK+rmSbo3sio5tjcOIXtPF0iYT1uQQcQpwf5JF9DKv/MpFNt35msnfl+AhZEHxYlZ0/p6s87HG10jRoS0coGTzMOBtpbB5iYU6i7mD7St0QvcCXkUvS7apB5O4eQFAkWwGTgEz1RJ9tbSkXilpgurZ+B+ig9s4g+kwPdsKuWx3+1KVDgNlK8a8DG7KfnIp1QZlDGfZ6wge39cY3BXkFXeoO3ZvUSbBAtyG8f36wx6rwhogQBeBQF6a9HHHlj9AFMj7D2nbf24aMfLyhWri7LIQitVHRs976j8F3T7RHp0gc=", ORACLIZE_GAS_LIMIT + safeGas);
             bets[myid] = Bet(msg.sender, betValue, 0);
             betsKeys.push(myid);
         }
