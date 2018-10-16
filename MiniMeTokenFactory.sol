@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0x003ea7f54b6dcf6cee86986edc18143a35f15505
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0x01aeac2635c607137318e217c0c29360c91cbddc
 */
 pragma solidity ^0.4.18;
 
 /*
-    Copyright 2016, Jordi Baylina
+    Based on the work of Jordi Baylina with a slight modification about the approve function by Clément Lesaege.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,21 +20,6 @@ pragma solidity ^0.4.18;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// @title MiniMeToken Contract
-/// @author Jordi Baylina
-/// @dev This token contract's goal is to make it easy for anyone to clone this
-///  token using the token distribution at a given block, this will allow DAO's
-///  and DApps to upgrade their features in a decentralized manner without
-///  affecting the original token
-/// @dev It is ERC20 compliant, but still needs to under go further testing.
-
-/// CHANGE LOG: Will Harborne (Ethfinex)  - 07/10/2017
-/// `transferFrom` edited to allow infinite approvals
-/// New function `pledgeFees` for Controller to update balance owned by token holders
-/// New getter functions `totalPledgedFeesAt` and `totalPledgedFees`
-/// New Checkpoint[] totalPledgedFeesHistory;
-/// Addition of onBurn function to Controller, called when user tries to burn tokens
-/// Version 'MMT_0.2' bumped to 'EFX_0.1'
 
 /// @dev The token controller contract must implement these functions
 contract TokenController {
@@ -59,13 +44,8 @@ contract TokenController {
     /// @return False if the controller does not authorize the approval
     function onApprove(address _owner, address _spender, uint _amount) public
         returns(bool);
-
-    /// @notice Notifies the controller about a token burn
-    /// @param _owner The address of the burner
-    /// @param _amount The amount to burn
-    /// @return False if the controller does not authorize the burn
-    function onBurn(address _owner, uint _amount) public returns(bool);
 }
+
 
 contract Controlled {
     /// @notice The address of the controller is the only address that can call
@@ -83,6 +63,7 @@ contract Controlled {
     }
 }
 
+
 contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
 }
@@ -95,7 +76,7 @@ contract MiniMeToken is Controlled {
     string public name;                //The Token's name: e.g. DigixDAO Tokens
     uint8 public decimals;             //Number of decimals of the smallest unit
     string public symbol;              //An identifier: e.g. REP
-    string public version = 'EFX_0.1'; //An arbitrary versioning scheme
+    string public version = 'MMT_0.2'; //An arbitrary versioning scheme
 
 
     /// @dev `Checkpoint` is the structure that attaches a block number to a
@@ -134,9 +115,6 @@ contract MiniMeToken is Controlled {
 
     // Flag that determines if the token is transferable or not.
     bool public transfersEnabled;
-
-    // Tracks the history of the `pledgedFees` belonging to token holders
-    Checkpoint[] totalPledgedFeesHistory; // in wei
 
     // The factory used to create new clone tokens
     MiniMeTokenFactory public tokenFactory;
@@ -182,8 +160,6 @@ contract MiniMeToken is Controlled {
 // ERC20 Methods
 ///////////////////
 
-    uint constant MAX_UINT = 2**256 - 1;
-
     /// @notice Send `_amount` tokens to `_to` from `msg.sender`
     /// @param _to The address of the recipient
     /// @param _amount The amount of tokens to be transferred
@@ -211,10 +187,8 @@ contract MiniMeToken is Controlled {
             require(transfersEnabled);
 
             // The standard ERC 20 transferFrom functionality
-            if (allowed[_from][msg.sender] < MAX_UINT) {
-                require(allowed[_from][msg.sender] >= _amount);
-                allowed[_from][msg.sender] -= _amount;
-            }
+            require(allowed[_from][msg.sender] >= _amount);
+            allowed[_from][msg.sender] -= _amount;
         }
         doTransfer(_from, _to, _amount);
         return true;
@@ -271,29 +245,18 @@ contract MiniMeToken is Controlled {
         return balanceOfAt(_owner, block.number);
     }
 
-    /// @notice `msg.sender` approves `_spender` to spend `_amount` tokens on
-    ///  its behalf. This is a modified version of the ERC20 approve function
-    ///  to be a little bit safer
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _amount The amount of tokens to be approved for transfer
-    /// @return True if the approval was successful
+    /** @notice `msg.sender` approves `_spender` to spend `_amount` tokens on its behalf.
+      * This is a ERC20 compliant version.
+      * @param _spender The address of the account able to transfer the tokens
+      * @param _amount The amount of tokens to be approved for transfer
+      * @return True if the approval was successful
+      */
     function approve(address _spender, uint256 _amount) public returns (bool success) {
         require(transfersEnabled);
-
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender,0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
-
         // Alerts the token controller of the approve function call
         if (isContract(controller)) {
             require(TokenController(controller).onApprove(msg.sender, _spender, _amount));
         }
-
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
     }
 
     /// @dev This function makes it easy to read the `allowed[]` map
@@ -388,62 +351,6 @@ contract MiniMeToken is Controlled {
             return getValueAt(totalSupplyHistory, _blockNumber);
         }
     }
-
-////////////////
-// Query pledgedFees // in wei
-////////////////
-
-   /// @dev This function makes it easy to get the total pledged fees
-   /// @return The total number of fees belonging to token holders
-   function totalPledgedFees() public constant returns (uint) {
-       return totalPledgedFeesAt(block.number);
-   }
-
-   /// @notice Total amount of fees at a specific `_blockNumber`.
-   /// @param _blockNumber The block number when the totalPledgedFees is queried
-   /// @return The total amount of pledged fees at `_blockNumber`
-   function totalPledgedFeesAt(uint _blockNumber) public constant returns(uint) {
-
-       // These next few lines are used when the totalPledgedFees of the token is
-       //  requested before a check point was ever created for this token, it
-       //  requires that the `parentToken.totalPledgedFeesAt` be queried at the
-       //  genesis block for this token as that contains totalPledgedFees of this
-       //  token at this block number.
-       if ((totalPledgedFeesHistory.length == 0)
-           || (totalPledgedFeesHistory[0].fromBlock > _blockNumber)) {
-           if (address(parentToken) != 0) {
-               return parentToken.totalPledgedFeesAt(min(_blockNumber, parentSnapShotBlock));
-           } else {
-               return 0;
-           }
-
-       // This will return the expected totalPledgedFees during normal situations
-       } else {
-           return getValueAt(totalPledgedFeesHistory, _blockNumber);
-       }
-   }
-
-////////////////
-// Pledge Fees To Token Holders or Reduce Pledged Fees // in wei
-////////////////
-
-   /// @notice Pledges fees to the token holders, later to be claimed by burning
-   /// @param _value The amount sent to the vault by controller, reserved for token holders
-   function pledgeFees(uint _value) public onlyController returns (bool) {
-       uint curTotalFees = totalPledgedFees();
-       require(curTotalFees + _value >= curTotalFees); // Check for overflow
-       updateValueAtNow(totalPledgedFeesHistory, curTotalFees + _value);
-       return true;
-   }
-
-   /// @notice Reduces pledged fees to the token holders, i.e. during upgrade or token burning
-   /// @param _value The amount of pledged fees which are being distributed to token holders, reducing liability
-   function reducePledgedFees(uint _value) public onlyController returns (bool) {
-       uint curTotalFees = totalPledgedFees();
-       require(curTotalFees >= _value);
-       updateValueAtNow(totalPledgedFeesHistory, curTotalFees - _value);
-       return true;
-   }
 
 ////////////////
 // Clone Token Method
