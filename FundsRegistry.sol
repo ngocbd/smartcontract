@@ -1,7 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsRegistry at 0xe716209f5d62efa8ca4cacdda1284bfff8df9e42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsRegistry at 0xf2c4497e74cd2aff31a8d4e5168f720c061eb218
 */
-pragma solidity 0.4.15;
+/*************************************************************************
+ * This contract has been merged with solidify
+ * https://github.com/tiesnetwork/solidify
+ *************************************************************************/
+ 
+ pragma solidity 0.4.15;
+
+/*************************************************************************
+ * import "../ownership/MultiownedControlled.sol" : start
+ *************************************************************************/
+
+/*************************************************************************
+ * import "./multiowned.sol" : start
+ *************************************************************************/// Code taken from https://github.com/ethereum/dapp-bin/blob/master/wallet/wallet.sol
+// Audit, refactoring and improvements by github.com/Eenae
+
+// @authors:
+// Gav Wood <g@ethdev.com>
+// inheritable "property" contract that enables methods to be protected by requiring the acquiescence of either a
+// single, or, crucially, each of a number of, designated owners.
+// usage:
+// use modifiers onlyowner (just own owned) or onlymanyowners(hash), whereby the same hash must be provided by
+// some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
+// interior is executed.
+
+
+
 
 /// note: during any ownership changes all pending operations (waiting for more signatures) are cancelled
 // TODO acceptOwnership
@@ -106,7 +132,9 @@ contract multiowned {
         assertOwnersAreConsistent();
     }
 
-    // Replaces an owner `_from` with another `_to`.
+    /// @notice replaces an owner `_from` with another `_to`.
+    /// @param _from address of owner to replace
+    /// @param _to address of new owner
     // All pending operations will be canceled!
     function changeOwner(address _from, address _to)
         external
@@ -126,6 +154,8 @@ contract multiowned {
         OwnerChanged(_from, _to);
     }
 
+    /// @notice adds an owner
+    /// @param _owner address of new owner
     // All pending operations will be canceled!
     function addOwner(address _owner)
         external
@@ -144,6 +174,8 @@ contract multiowned {
         OwnerAdded(_owner);
     }
 
+    /// @notice removes an owner
+    /// @param _owner address of owner to remove
     // All pending operations will be canceled!
     function removeOwner(address _owner)
         external
@@ -165,6 +197,8 @@ contract multiowned {
         OwnerRemoved(_owner);
     }
 
+    /// @notice changes the required number of owner signatures
+    /// @param _newRequired new number of signatures required
     // All pending operations will be canceled!
     function changeRequirement(uint _newRequired)
         external
@@ -176,11 +210,14 @@ contract multiowned {
         RequirementChanged(_newRequired);
     }
 
-    // Gets an owner by 0-indexed position
+    /// @notice Gets an owner by 0-indexed position
+    /// @param ownerIndex 0-indexed owner position
     function getOwner(uint ownerIndex) public constant returns (address) {
         return m_owners[ownerIndex + 1];
     }
 
+    /// @notice Gets owners
+    /// @return memory array of owners
     function getOwners() public constant returns (address[]) {
         address[] memory result = new address[](m_numOwners);
         for (uint i = 0; i < m_numOwners; i++)
@@ -189,18 +226,23 @@ contract multiowned {
         return result;
     }
 
+    /// @notice checks if provided address is an owner address
+    /// @param _addr address to check
+    /// @return true if it's an owner
     function isOwner(address _addr) public constant returns (bool) {
         return m_ownerIndex[_addr] > 0;
     }
 
-    // Tests ownership of the current caller.
+    /// @notice Tests ownership of the current caller.
+    /// @return true if it's an owner
     // It's advisable to call it by new owner to make sure that the same erroneous address is not copy-pasted to
     // addOwner/changeOwner and to isOwner.
     function amIOwner() external constant onlyowner returns (bool) {
         return true;
     }
 
-    // Revokes a prior confirmation of the given operation
+    /// @notice Revokes a prior confirmation of the given operation
+    /// @param _operation operation value, typically sha3(msg.data)
     function revoke(bytes32 _operation)
         external
         multiOwnedOperationIsActive(_operation)
@@ -219,6 +261,9 @@ contract multiowned {
         Revoke(msg.sender, _operation);
     }
 
+    /// @notice Checks if owner confirmed given operation
+    /// @param _operation operation value, typically sha3(msg.data)
+    /// @param _owner an owner address
     function hasConfirmed(bytes32 _operation, address _owner)
         external
         constant
@@ -305,6 +350,7 @@ contract multiowned {
 
     function clearPending() private onlyowner {
         uint length = m_multiOwnedPendingIndex.length;
+        // TODO block gas limit
         for (uint i = 0; i < length; ++i) {
             if (m_multiOwnedPendingIndex[i] != 0)
                 delete m_multiOwnedPending[m_multiOwnedPendingIndex[i]];
@@ -366,6 +412,9 @@ contract multiowned {
     mapping(bytes32 => MultiOwnedOperationPendingState) internal m_multiOwnedPending;
     bytes32[] internal m_multiOwnedPendingIndex;
 }
+/*************************************************************************
+ * import "./multiowned.sol" : end
+ *************************************************************************/
 
 
 /**
@@ -397,13 +446,13 @@ contract MultiownedControlled is multiowned {
         ControllerSet(m_controller);
     }
 
-    /// @notice sets the controller
+    /// @dev sets the controller
     function setController(address _controller) external onlymanyowners(sha3(msg.data)) {
         m_controller = _controller;
         ControllerSet(m_controller);
     }
 
-    /// @notice ability for controller to step down
+    /// @dev ability for controller to step down
     function detachController() external onlyController {
         address was = m_controller;
         m_controller = address(0);
@@ -416,6 +465,36 @@ contract MultiownedControlled is multiowned {
     /// @notice address of entity entitled to mint new tokens
     address public m_controller;
 }
+/*************************************************************************
+ * import "../ownership/MultiownedControlled.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "../security/ArgumentsChecker.sol" : start
+ *************************************************************************/
+
+
+/// @title utility methods and modifiers of arguments validation
+contract ArgumentsChecker {
+
+    /// @dev check which prevents short address attack
+    modifier payloadSizeIs(uint size) {
+       require(msg.data.length == size + 4 /* function selector */);
+       _;
+    }
+
+    /// @dev check that address is valid
+    modifier validAddress(address addr) {
+        require(addr != address(0));
+        _;
+    }
+}
+/*************************************************************************
+ * import "../security/ArgumentsChecker.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "zeppelin-solidity/contracts/math/SafeMath.sol" : start
+ *************************************************************************/
+
 
 /**
  * @title SafeMath
@@ -446,6 +525,12 @@ library SafeMath {
     return c;
   }
 }
+/*************************************************************************
+ * import "zeppelin-solidity/contracts/math/SafeMath.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "zeppelin-solidity/contracts/ReentrancyGuard.sol" : start
+ *************************************************************************/
 
 /**
  * @title Helps contracts guard agains rentrancy attacks.
@@ -476,11 +561,13 @@ contract ReentrancyGuard {
   }
 
 }
-
+/*************************************************************************
+ * import "zeppelin-solidity/contracts/ReentrancyGuard.sol" : end
+ *************************************************************************/
 
 
 /// @title registry of funds sent by investors
-contract FundsRegistry is MultiownedControlled, ReentrancyGuard {
+contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuard {
     using SafeMath for uint256;
 
     enum State {
@@ -547,19 +634,21 @@ contract FundsRegistry is MultiownedControlled, ReentrancyGuard {
         Invested(_investor, amount);
     }
 
-    /// @dev Send `value` of ether to address `to`
+    /// @notice owners: send `value` of ether to address `to`, can be called if crowdsale succeeded
+    /// @param to where to send ether
+    /// @param value amount of wei to send
     function sendEther(address to, uint value)
         external
+        validAddress(to)
         onlymanyowners(sha3(msg.data))
         requiresState(State.SUCCEEDED)
     {
-        require(0 != to);
         require(value > 0 && this.balance >= value);
         to.transfer(value);
         EtherSent(to, value);
     }
 
-    /// @notice withdraw accumulated balance, called by payee.
+    /// @notice withdraw accumulated balance, called by payee in case crowdsale failed
     function withdrawPayments()
         external
         nonReentrant
