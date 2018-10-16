@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x134decfcc18a98f721496d83a4622e57e54f0c6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xe58b65d1c0c8e8b2a0e3a3acec633271531084ed
 */
 pragma solidity ^0.4.21;
 
@@ -192,10 +192,6 @@ contract IronHands is Owned {
     uint256 public backlog = 0;
     //The creditor line
     Participant[] public participants;
-    //The people who have been skipped
-    mapping(address => uint256[]) public appeals;
-    //Their position in line to skip
-    mapping(address => uint256) public appealPosition;
     //How much each person is owed
     mapping(address => uint256) public creditRemaining;
     //What we will be buying
@@ -223,8 +219,8 @@ contract IronHands is Owned {
      * then pay out who we owe and buy more tokens.
      */ 
     function deposit() payable public {
-        //You have to send more than 10 wei.
-        require(msg.value > 10);
+        //You have to send more than 1000000 wei.
+        require(msg.value > 1000000);
         //Compute how much to pay them
         uint256 amountCredited = (msg.value * multiplier) / 100;
         //Get in line to be paid back.
@@ -269,18 +265,26 @@ contract IronHands is Owned {
             uint payoutToSend = balance < participants[payoutOrder].payout ? balance : participants[payoutOrder].payout;
             //if we have something to pay them
             if(payoutToSend > 0){
-                //credit their account the amount they are being paid
-                participants[payoutOrder].payout -= payoutToSend;
                 //subtract how much we've spent
                 balance -= payoutToSend;
                 //subtract the amount paid from the amount owed
                 backlog -= payoutToSend;
                 //subtract the amount remaining they are owed
                 creditRemaining[participants[payoutOrder].etherAddress] -= payoutToSend;
-                //Try and pay them
-                participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)();
-                //Record that they were paid
-                emit Payout(payoutToSend, participants[payoutOrder].etherAddress);
+                //credit their account the amount they are being paid
+                participants[payoutOrder].payout -= payoutToSend;
+                //Try and pay them, making best effort. But if we fail? Run out of gas? That's not our problem any more.
+                if(participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)()){
+                    //Record that they were paid
+                    emit Payout(payoutToSend, participants[payoutOrder].etherAddress);
+                }else{
+                    //undo the accounting, they are being skipped because they are not payable.
+                    balance += payoutToSend;
+                    backlog += payoutToSend;
+                    creditRemaining[participants[payoutOrder].etherAddress] += payoutToSend;
+                    participants[payoutOrder].payout += payoutToSend;
+                }
+
             }
             //If we still have balance left over
             if(balance > 0){
@@ -383,38 +387,4 @@ contract IronHands is Owned {
         return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
     }
     
-    /**
-     * This function is potentially dangerous and should never be used except in extreme cases.
-     * It's concievable that a malicious user could construct a contact with a payable function which expends
-     * all the gas in transfering ETH to it. Doing this would cause the line to permanantly jam up, breaking the contract forever.
-     * Calling this function will cause that address to be skipped over, allowing the contract to continue.
-     * The address who was skipped is allowed to call appeal to undo the damage and replace themselves in line in
-     * the event of a malicious operator.
-     */
-    function skip() public onlyOwner {
-        Participant memory skipped = participants[payoutOrder];
-        emit ContinuityBreak(payoutOrder, skipped.etherAddress, skipped.payout);
-        if(appeals[skipped.etherAddress].length == appealPosition[skipped.etherAddress]){
-            appeals[skipped.etherAddress].push(payoutOrder);
-        }else{
-            appeals[skipped.etherAddress][appealPosition[skipped.etherAddress]] = payoutOrder;
-        }
-        appealPosition[skipped.etherAddress] += 1;
-        payoutOrder += 1;
-    }
-
-    /**
-     * It's concievable that a malicious user could construct a contact with a payable function which expends
-     * all the gas in transfering ETH to it. Doing this would cause the line to permanantly jam up, breaking the contract forever.
-     * Calling this function will cause the line to be backed up to the skipped person's position.
-     * It can only be done by the person who was skipped.
-     */
-    function appealSkip() public {
-        require(appealPosition[msg.sender] > 0);
-        appealPosition[msg.sender] -= 1;
-        uint appeal = appeals[msg.sender][appealPosition[msg.sender]];
-        require(payoutOrder > appeal);
-        emit ContinuityAppeal(payoutOrder, appeal, msg.sender);
-        payoutOrder = appeal;
-    }
 }
