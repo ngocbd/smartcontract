@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NameRegistry at 0xd181c1808e3f010f0f0aabc6fe1bce2025db7bb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NameRegistry at 0xf16af7f69697465f92ff469a837a2b4a82c77423
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -162,6 +162,14 @@ contract NameRegistry {
         Participant storage addressSet = participantMap[id];
         feeRecipient = addressSet.feeRecipient;
         signer = addressSet.signer;
+    }
+    function getFeeRecipientById(uint id)
+        external
+        view
+        returns (address feeRecipient)
+    {
+        Participant storage addressSet = participantMap[id];
+        feeRecipient = addressSet.feeRecipient;
     }
     function getParticipantIds(string name, uint start, uint count)
         external
