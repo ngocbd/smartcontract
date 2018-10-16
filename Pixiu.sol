@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pixiu at 0x3f4dd010fbbc9a9b6d95f1f53837d7e9f3befac8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pixiu at 0xd92d62ce8504e5c61aa17d9a9b13c65dbd77c268
 */
 pragma solidity ^0.4.9;
 
@@ -206,9 +206,9 @@ contract Pixiu is StandardToken {
     *1-4 ?? 0xFFFFFFFF 
     *5-8 ????
     *9-11 ??? ???? 0x000000-0xFFFFFF
-    *12-16 ???? 4?=8? 0-F
-    *17-18 ??
-    *19 :0x20 +4bit???
+    *12-15 ???? 4?=8? 0-F
+    *16-18 ??
+    *19 :0x30 +4bit???
     * ? BYTE19 = 00  12-18 ?????
     *20 ??? 
     */
@@ -239,17 +239,26 @@ contract Pixiu is StandardToken {
          
     }
     
-    function get_orderAddress(address _address,uint _expire_day,uint _userdata,uint _amount ,uint _zero) constant returns (uint256){
+    function get_orderAddress(address _address,uint _expire_day,uint _userdata,uint _amount) constant returns (address){
+        
         uint256 storeid = shopStoreId[_address];
         uint160 result = uint152(0xffffffff<<120) + uint120((_expire_day * 86400 + now)<<88) + uint88(storeid<<64); 
+        uint _zero = 0;
+        uint256 _amount2 = _amount * 10 ** 6;
+        while(_amount2 % 10 == 0){
+            
+            _amount2 /= 10;
+            _zero++;
+            
+        }
         
-            _userdata = _userdata<<16;
-            _userdata += _amount;
+        _userdata = _userdata<<16;
+        _userdata += _amount;
         
         result += uint64(_userdata<<8);
-        result += uint8(0x20+_zero);
+        result += uint8(0x30+_zero);
         uint8 crc = uint8(sha256(uint152(result) ));
-        return (result << 8) + crc;
+        return address((result << 8) + crc);
     }
     
     function isLeading4FF(address _sender ) private  returns(bool){
@@ -332,20 +341,42 @@ contract Pixiu is StandardToken {
         
     }
     
-    function admin_deposit(uint xEth) onlyAdmin{
+    function admin_deposit(int _Eth, int _Wei) onlyAdmin{
         
-        uint256 xwei = xEth * 10**18;
-        deposit_amount += xwei;
+        int xWei = _Eth * 10 ** 18 + _Wei;
+        if(xWei > 0){
+            
+            deposit_amount += uint256(xWei);
+            
+        }else{
+            
+            deposit_amount -= uint256(xWei * -1);
+            
+        } 
+        
         
     }
     
     /**	*	???????	*	??????? 	*	*/
-    function admin_dividend(uint xEth) onlyAdmin{
+    function admin_dividend(int _Eth, int _Wei) onlyAdmin {
         
-		uint256 xwei = xEth * 10**18;
-		require(xwei <= (deposit_amount-dividend_amount) ); 
+        int xWei = _Eth * 10 ** 18 + _Wei;
+		bool is_add = true;
 
-		dividend_amount += xwei;
+        if(xWei > 0){
+            
+            require(uint256(xWei) <= (deposit_amount-dividend_amount) ); 
+            dividend_amount += uint256(xWei);
+            
+        }else{
+            
+            xWei *= -1;
+            is_add = false;
+            require(uint256(xWei) <= deposit_amount); 
+            dividend_amount -= uint256(xWei * -1);
+            
+        } 
+        
         uint256 len = memberArray.length;	
         uint i = 0;
         address _member;
@@ -354,17 +385,21 @@ contract Pixiu is StandardToken {
         for( i = 0; i < len; i++){            
             _member = memberArray[i];
 			if(members[_member].isDividend){
-				total_balance_dividened = balances[_member]; 
+				total_balance_dividened += balances[_member]; 
 			}            
         }
-		uint256 perTokenWei = xwei / (total_balance_dividened / 10 ** 6);
             
         for( i = 0; i < len; i++){            
             _member = memberArray[i];
 			if(members[_member].isDividend){
-				uint256 thisWei = (balances[_member] / 10 ** 6) * perTokenWei;
-				members[_member].dividend += thisWei; 
-				total_devidend += thisWei;
+				uint256 thisWei = balances[_member] * uint256(xWei) / total_balance_dividened;
+				if(is_add){
+				    members[_member].dividend += thisWei; 
+				    total_devidend += thisWei;
+				}else{
+				    members[_member].dividend -= thisWei; 
+				    total_devidend -= thisWei;
+				}
 			}            
         }
     
@@ -386,15 +421,13 @@ contract Pixiu is StandardToken {
         
     }
     
-    
-    
     function admin_set_shopStoreRegister(address _address) onlyAdmin{
         
         shopStoreRegister = _address;
         
     }
     
-    function admin_set_exchange_rate(uint256 exchangeRates) onlyAdmin{
+    function admin_set_ExchangeRateInWei(uint256 exchangeRates) onlyAdmin{
         
         tokenExchangeRateInWei = exchangeRates;
         
@@ -422,7 +455,7 @@ contract Pixiu is StandardToken {
 	function admin_set_min_pay(uint256 _min_pay) onlyAdmin{
 	    
 	    require(_min_pay >= 0);
-	    min_pay_wei = _min_pay * 10 ** 18;
+	    min_pay_wei = _min_pay;
 	    
 	}
     
@@ -468,51 +501,27 @@ contract Pixiu is StandardToken {
         
     }
     
-    function admin_active_payable() onlyAdmin{
+    function admin_set_payable(bool _payable) onlyAdmin{
     
-        isPayable = true;
+        isPayable = _payable;
         
     }
     
-    function admin_inactive_payable() onlyAdmin{
+    function admin_set_withdrawable(bool _withdrawable) onlyAdmin{
         
-        isPayable = false;
-        
-    }
-    
-    function admin_active_withdrawable() onlyAdmin{
-        
-        isWithdrawable = true;
+        isWithdrawable = _withdrawable;
         
     }
     
-    function admin_inactive_withdrawable() onlyAdmin{
+    function admin_set_dividend(address _member, bool _dividend) onlyAdmin memberExists(_member){
         
-        isWithdrawable = false;
-        
-    }
-    
-    function admin_active_dividend(address _member) onlyAdmin memberExists(_member){
-        
-        members[_member].isDividend = true;
+        members[_member].isDividend = _dividend;
         
     }
     
-    function admin_inactive_dividend(address _member) onlyAdmin memberExists(_member){
+    function admin_set_withdraw(address _member, bool _withdraw) onlyAdmin memberExists(_member){
         
-        members[_member].isDividend = false;
-        
-    }
-    
-    function admin_active_withdraw(address _member) onlyAdmin memberExists(_member){
-        
-        members[_member].isWithdraw = true;
-        
-    }
-    
-    function admin_inactive_withdraw(address _member) onlyAdmin memberExists(_member){
-        
-        members[_member].isWithdraw = false;
+        members[_member].isWithdraw = _withdraw;
         
     }
     
@@ -546,9 +555,9 @@ contract Pixiu is StandardToken {
 
     }
 
-    function admin_withdraw(uint xEth) onlyDeposit{
+    function admin_withdraw(uint xWei) onlyDeposit{
 
-        uint256 _withdraw = xEth * 10**18;
+        uint256 _withdraw = xWei;
 		require( msg.sender == deposit_address );
 
 		require(this.balance > _withdraw);
@@ -590,40 +599,54 @@ contract Pixiu is StandardToken {
     }
  
 	function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32)     {
+	    
 		require(_to != msg.sender);
         require(isPayable);
 		balances[msg.sender] = balances[msg.sender].sub(_value);
 		
 		if(_to == deposit_address){
+		    
 		    require(_value == shopStorePrice);
 		    shopStoreNextId++;
 		    shopStoreId[msg.sender] = shopStoreNextId;
 		    shopStoreAddress[shopStoreNextId] = msg.sender;
 		
-		} else if(isLeading4FF(_to)){
-		    uint256 to256 = uint256(_to);
-            uint32 expire = uint32(to256>>96);
-            uint32 storeid = uint24(to256>>72);
-            uint8 crc8 = uint8(to256);
-            require(uint32(now)<expire || expire==0);
-            
-            uint8 crc20 = uint8(sha256(uint152(to256>>8)));
-            require(crc20==crc8);
-            
-            _to = shopStoreAddress[uint(storeid)];
-            require(uint(_to)>0);
-
-            uint56 userdata = uint56(to256>>96);
-    		
-    		balances[_to] = balances[_to].add(_value);
-    		if (members[_to].isExists != true) {		
-    			members[_to].isExists = true;
-    			members[_to].isDividend = true;
-    			members[_to].isWithdraw = true; 
-    			memberArray.push(_to);		
-    		}  
-		
 		} else { 
+		    
+		    if(isLeading4FF(_to)){
+		    
+    		    uint256 to256 = uint256(_to);
+                uint32 expire = uint32(to256>>96);
+                uint32 storeid = uint24(to256>>72);
+                //uint8 crc8 = uint8(to256);
+                //uint8 byte19 = uint8(to256>>8);
+                uint8 byte19_1 = uint8(uint8(to256>>8)>>4);
+                uint8 byte19_2 = uint8(uint8(to256>>8)<<4);
+                byte19_2 = byte19_2>>4;
+                uint56 byte1218 = uint56(to256>>16);
+                uint32 byte1215 = uint32(to256>>40);
+                uint24 byte1618 = uint24(to256>>16);
+                
+                require(uint32(now)<expire || expire==0);
+                
+                //uint8 crc20 = uint8(sha256(uint152(to256>>8)));
+                require(uint8(sha256(uint152(to256>>8)))==uint8(to256));
+                
+                _to = shopStoreAddress[uint(storeid)];
+                require(uint(_to)>0);
+    
+                if(byte19_1 == 3){
+                
+                    for(int i = 0; i < byte19_2; i++){
+                        byte1618 *= 10;
+                    }
+                    
+                    require(byte1618 == _value);
+                
+                }
+    		
+    		}
+		    
     		balances[_to] = balances[_to].add(_value);
     		if (members[_to].isExists != true) {		
     			members[_to].isExists = true;
