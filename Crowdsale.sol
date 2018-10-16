@@ -1,16 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb27fb7274307ff3b4638118d6c1b27f28f4eb063
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x42ebb2fd690bbfd4a8d818830b7e884b9b62f249
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// Set values before deploy
-// ----------------------------
-// ADDRESS_FOR_TOKENS
-// ADDRESS_FOR_ETH
-// RATE
-// START_DATETIME
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+contract AbstractTRMBalances {
+    mapping(address => bool) public oldBalances;
+}
+
 
 /**
  * @title ERC20Basic
@@ -197,111 +193,266 @@ contract Ownable {
 }
 
 /**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-contract BurnableToken is StandardToken {
+
+contract MintableToken is StandardToken, Ownable {
+    
+  event Mint(address indexed to, uint256 amount);
+  
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
 
   /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
+   * @dev Function to mint tokens
+   * @param _to The address that will recieve the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
    */
-  function burn(uint _value) public {
-    require(_value > 0);
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-    Burn(burner, _value);
+  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    //Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
   }
 
-  event Burn(address indexed burner, uint indexed value);
-
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+  
 }
 
-contract Tincoin is BurnableToken {
+contract TRM2TokenCoin is MintableToken {
     
-  string public constant name = "Tincoin";
-   
-  string public constant symbol = "TIN";
+    string public constant name = "TerraMiner";
     
-  uint8 public constant decimals = 18;
-
-  uint256 public INITIAL_SUPPLY = 100000000 * 1 ether;
-
-  function Tincoin  () {
-    totalSupply = INITIAL_SUPPLY;
-    balances[0x2ff19Ce720e19d0F010f953CE3FAFd3E3A0A55a4] = INITIAL_SUPPLY;
-  }
+    string public constant symbol = "TRM2";
+    
+    uint32 public constant decimals = 8;
     
 }
 
-contract Crowdsale is Ownable {
+
+
+contract Crowdsale is Ownable, AbstractTRMBalances {
+    event NewContribution(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
     
-  using SafeMath for uint;
+    using SafeMath for uint;
     
-  address multisig;
-
-  Tincoin public token = new Tincoin ();
-
-
-  uint start;
+    uint public ETHUSD;
     
-    function Start() constant returns (uint) {
-        return start;
-    }
-  
-    function setStart(uint newStart) onlyOwner {
-        start = newStart;
-    }
+    address multisig;
     
-  uint period;
-  
-   function Period() constant returns (uint) {
-        return period;
-    }
-  
-    function setPeriod(uint newPeriod) onlyOwner {
-        period = newPeriod;
-    }
+    address manager;
 
-  uint rate;
-  
-    function Rate() constant returns (uint) {
-        return rate;
-    }
-  
-    function setRate(uint newRate) onlyOwner {
-        rate = newRate * (10**18);
-    }
+    TRM2TokenCoin public token = new TRM2TokenCoin();
 
-  function Crowdsale() {
-    multisig = 0xF743a32Af0402d1202aedc1d6c1A5A9e0610FAa7;
-    rate = 10000000000000000000;
-    start = 1514037565;
-    period = 365;
-  }
-  
-  modifier saleIsOn() {
-    require(now > start && now < start + period * 1 days);
-    _;
-  }
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // @10000000000000000 - 16 null = 0.01 min payment ETH.
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  modifier limitation() {
-    require(msg.value >= 10000000000000000);
-    _;
-  }
-
-  function createTokens() limitation saleIsOn payable {
-    multisig.transfer(msg.value);
-    uint tokens = rate.mul(msg.value).div(1 ether);
-    token.transfer(msg.sender, tokens);
-  }
- 
-  function() external payable {
-    createTokens();
-  }
+    uint public startPreSale;
+    uint public endPreSale;
     
+    uint public startPreICO;
+    uint public endPreICO;
+    
+    uint public startICO;
+    uint public endICO;
+    
+    uint public startPostICO;
+    uint public endPostICO;    
+    
+    uint hardcap;
+    
+    bool pause;
+    
+    AbstractTRMBalances oldBalancesP1;
+    AbstractTRMBalances oldBalancesP2;   
+    
+
+    function Crowdsale() {
+        //??????? ?? ??????? ??????????? ????????
+        multisig = 0xc2CDcE18deEcC1d5274D882aEd0FB082B813FFE8;
+        //????? ???????? ???????????? ??????????
+        manager = 0xf5c723B7Cc90eaA3bEec7B05D6bbeBCd9AFAA69a;
+        //???? ????? ? ??????? 
+        ETHUSD = 70000;
+        
+        //?????   
+        startPreSale = now;
+        endPreSale = 1515974400; //Mon, 15 Jan 2018 00:00:00 GMT
+        
+        startPreICO = 1514332800; // Wed, 27 Dec 2017 00:00:00 GMT
+        endPreICO = 1517443200; // Thu, 01 Feb 2018 00:00:00 GMT
+
+        startICO = 1517443200; // Thu, 01 Feb 2018 00:00:00 GMT
+        endICO = 1519862400; // Thu, 01 Mar 2018 00:00:00 GMT
+        
+        startPostICO = 1519862400; // Thu, 01 Mar 2018 00:00:00 GMT
+        endPostICO = 1522540800; // Sun, 01 Apr 2018 00:00:00 GMT
+		
+        //???????????? ????? ????? ? ???????
+        hardcap = 250000000 * 100000000;
+        //?????  
+        pause = false;
+        
+        oldBalancesP1 = AbstractTRMBalances(0xfcc6C3C19dcD67c282fFE27Ea79F1181693dA194);
+        oldBalancesP2 = AbstractTRMBalances(0x4B7a1c77323c1e2ED6BcE44152b30092CAA9B1D3);
+    }
+
+    modifier saleIsOn() {
+        require((now >= startPreSale && now < endPreSale) || (now >= startPreICO && now < endPreICO) || (now >= startICO && now < endICO) || (now >= startPostICO && now < endPostICO));
+    	require(pause!=true);
+    	_;
+    }
+	
+    modifier isUnderHardCap() {
+        require(token.totalSupply() < hardcap);
+        _;
+    }
+
+    function finishMinting() public {
+        require(msg.sender == manager);
+        token.finishMinting();
+        token.transferOwnership(manager);
+    }
+
+    function createTokens() isUnderHardCap saleIsOn payable {
+
+        uint256 sum = msg.value;
+        uint256 sumUSD = msg.value.mul(ETHUSD).div(100);
+
+       //require(msg.value > 0);
+        require(sumUSD.div(1000000000000000000) > 100);
+        
+        uint256 totalSupply = token.totalSupply();
+        
+        uint256 numTokens = 0;
+        
+        uint256 tokenRest = 0;
+        uint256 tokenPrice = 8 * 1000000000000000000;
+        
+        
+        //PreSale
+        //------------------------------------
+        if( (now >= startPreSale && now < endPreSale ) && ((oldBalancesP1.oldBalances(msg.sender) == true)||(oldBalancesP2.oldBalances(msg.sender) == true)) ){
+            
+            tokenPrice = 35 * 100000000000000000; 
+
+            numTokens = sumUSD.mul(100000000).div(tokenPrice);
+            
+        } else {
+            //------------------------------------
+            
+            //PreICO
+            //------------------------------------
+            if(now >= startPreICO && now < endPreICO){
+                
+                tokenPrice = 7 ether; 
+                if(sum >= 151 ether){
+                   tokenPrice = 35 * 100000000000000000;
+                } else if(sum >= 66 ether){
+                   tokenPrice = 40 * 100000000000000000;
+                } else if(sum >= 10 ether){
+                   tokenPrice = 45 * 100000000000000000;
+                } else if(sum >= 5 ether){
+                   tokenPrice = 50 * 100000000000000000;
+                }
+                
+                numTokens = sumUSD.mul(100000000).div(tokenPrice);
+                
+            }
+            //------------------------------------        
+            
+            //ICO
+            //------------------------------------
+            if(now >= startICO && now < endICO){
+                
+                tokenPrice = 7 ether; 
+                if(sum >= 151 ether){
+                   tokenPrice = 40 * 100000000000000000;
+                } else if(sum >= 66 ether){
+                   tokenPrice = 50 * 100000000000000000;
+                } else if(sum >= 10 ether){
+                   tokenPrice = 55 * 100000000000000000;
+                } else if(sum >= 5 ether){
+                   tokenPrice = 60 * 100000000000000000;
+                } 
+                
+                numTokens = sumUSD.mul(100000000).div(tokenPrice);
+                
+            }
+            //------------------------------------
+            
+            //PostICO
+            //------------------------------------
+            if(now >= startPostICO && now < endPostICO){
+                
+                tokenPrice = 8 ether; 
+                if(sum >= 151 ether){
+                   tokenPrice = 45 * 100000000000000000;
+                } else if(sum >= 66 ether){
+                   tokenPrice = 55 * 100000000000000000;
+                } else if(sum >= 10 ether){
+                   tokenPrice = 60 * 100000000000000000;
+                } else if(sum >= 5 ether){
+                   tokenPrice = 65 * 100000000000000000;
+                } 
+                
+                numTokens = sumUSD.mul(100000000).div(tokenPrice);
+                
+            }
+            //------------------------------------  
+        }
+
+        require(msg.value > 0);
+        require(numTokens > 0);
+        
+        tokenRest = hardcap.sub(totalSupply);
+        require(tokenRest >= numTokens);
+        
+        token.mint(msg.sender, numTokens);
+        multisig.transfer(msg.value);
+        
+        NewContribution(msg.sender, numTokens, msg.value);
+        
+        
+    }
+
+    function() external payable {
+        createTokens();
+    }
+
+    function mint(address _to, uint _value) {
+        require(msg.sender == manager);
+        uint256 tokenRest = hardcap.sub(token.totalSupply());
+        require(tokenRest > 0);
+        if(_value > tokenRest)
+            _value = tokenRest;
+        token.mint(_to, _value);   
+    }    
+    
+    function setETHUSD( uint256 _newPrice ) {
+        require(msg.sender == manager);
+        ETHUSD = _newPrice;
+    }    
+    
+    function setPause( bool _newPause ) {
+        require(msg.sender == manager);
+        pause = _newPause;
+    }
+
 }
