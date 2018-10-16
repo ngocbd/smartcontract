@@ -1,20 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GATTokenSale at 0x5703f9eaC1256E4DD00f7c91A787512EF2193313
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GATTokenSale at 0x687174f8c49ceb7729d925c3a961507ea4ac7b28
 */
 pragma solidity ^0.4.17;
 
 // ----------------------------------------------------------------------------
-// GAT Ownership Contract
-//
-// Copyright (c) 2017 GAT Systems Ltd.
+// Copyright (c) 2017 GAT International Limited.
 // http://www.gatcoin.io/
 //
 // The MIT Licence.
 // ----------------------------------------------------------------------------
-
-
-// Implementation of a simple ownership model with transfer acceptance.
-//
 contract Owned {
 
     address public owner;
@@ -56,13 +50,38 @@ contract Owned {
 }
 
 
-pragma solidity ^0.4.17;
+contract GATTokenSaleConfig {
 
+    string  public constant SYMBOL                  = "GAT";
+    string  public constant NAME                    = "GAT Token";
+    uint256 public constant DECIMALS                = 18;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+    uint256 public constant DECIMALSFACTOR          = 10**uint256(DECIMALS);
+    uint256 public constant START_TIME              = 1513512000; // 2017-12-17T12:00:00Z
+    uint256 public constant END_TIME                = 1515326399; // 2018-01-07T11:59:59Z
+    uint256 public constant CONTRIBUTION_MIN        = 2 ether;
+    uint256 public constant TOKEN_TOTAL_CAP         = 1000000000  * DECIMALSFACTOR;
+    uint256 public constant TOKEN_PRIVATE_SALE_CAP  =   54545172  * DECIMALSFACTOR; // past presale
+    uint256 public constant TOKEN_PRESALE_CAP       =  145454828  * DECIMALSFACTOR; // 200000000 - what was raised in round 1
+    uint256 public constant TOKEN_PUBLIC_SALE_CAP   =  445454828  * DECIMALSFACTOR; // This also includes presale
+    uint256 public constant TOKEN_FOUNDATION_CAP    =          0  * DECIMALSFACTOR;
+    uint256 public constant TOKEN_RESERVE1_CAP      =  100000000  * DECIMALSFACTOR;
+    uint256 public constant TOKEN_RESERVE2_CAP      =          0  * DECIMALSFACTOR;
+    uint256 public constant TOKEN_FUTURE_CAP        =  400000000  * DECIMALSFACTOR;
+
+    // Default bonus amount for the presale.
+    // 100 = no bonus
+    // 120 = 20% bonus.
+    // Note that the owner can change the amount of bonus given.
+    uint256 public constant PRESALE_BONUS      = 120;
+
+    // Default value for tokensPerKEther based on ETH at 300 USD.
+    // The owner can update this value before the sale starts based on the
+    // price of ether at that time.
+    // E.g. 300 USD/ETH -> 300,000 USD/KETH / 0.2 USD/TOKEN = 1,500,000
+    uint256 public constant TOKENS_PER_KETHER = 14800000;
+}
+
 library SafeMath {
 
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -90,25 +109,6 @@ library SafeMath {
   }
 }
 
-
-
-pragma solidity ^0.4.17;
-
-// ----------------------------------------------------------------------------
-// GAT Token ERC20 Interface
-//
-// Copyright (c) 2017 GAT Systems Ltd.
-// http://www.gatcoin.io/
-//
-// The MIT Licence.
-// ----------------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------------
-// ERC20 Standard Interface as specified at:
-// https://github.com/ethereum/EIPs/issues/20
-// ----------------------------------------------------------------------------
-
 contract ERC20Interface {
 
     uint256 public totalSupply;
@@ -122,21 +122,6 @@ contract ERC20Interface {
     function approve(address _spender, uint256 _value) public returns (bool success);
     function allowance(address _owner, address _spender) public view returns (uint256 remaining);
 }
-
-
-pragma solidity ^0.4.17;
-
-// ----------------------------------------------------------------------------
-// GAT Token Implementation
-//
-// Copyright (c) 2017 GAT Systems Ltd.
-// http://www.gatcoin.io/
-//
-// The MIT Licence.
-// ----------------------------------------------------------------------------
-
-
-
 
 // Implementation of standard ERC20 token with ownership.
 //
@@ -205,66 +190,6 @@ contract GATToken is ERC20Interface, Owned {
 }
 
 
-pragma solidity ^0.4.17;
-
-// ----------------------------------------------------------------------------
-// GAT Token Sale Configuration
-//
-// Copyright (c) 2017 GAT Systems Ltd.
-// http://www.gatcoin.io/
-//
-// The MIT Licence.
-// ----------------------------------------------------------------------------
-
-
-contract GATTokenSaleConfig {
-
-    string  public constant SYMBOL                  = "GAT";
-    string  public constant NAME                    = "GAT Token";
-    uint256 public constant DECIMALS                = 18;
-
-    uint256 public constant DECIMALSFACTOR          = 10**uint256(DECIMALS);
-    uint256 public constant START_TIME              = 1509192000; // 28-Oct-2017, 12:00:00 UTC
-    uint256 public constant END_TIME                = 1511870399; // 28-Nov-2017, 11:59:59 UTC
-    uint256 public constant CONTRIBUTION_MIN        = 0.1 ether;
-    uint256 public constant TOKEN_TOTAL_CAP         = 1000000000  * DECIMALSFACTOR;
-    uint256 public constant TOKEN_PRIVATE_SALE_CAP  =   70000000  * DECIMALSFACTOR;
-    uint256 public constant TOKEN_PRESALE_CAP       =   15000000  * DECIMALSFACTOR;
-    uint256 public constant TOKEN_PUBLIC_SALE_CAP   =  130000000  * DECIMALSFACTOR; // This also includes presale
-    uint256 public constant TOKEN_FOUNDATION_CAP    =  100000000  * DECIMALSFACTOR;
-    uint256 public constant TOKEN_RESERVE1_CAP      =   50000000  * DECIMALSFACTOR;
-    uint256 public constant TOKEN_RESERVE2_CAP      =   50000000  * DECIMALSFACTOR;
-    uint256 public constant TOKEN_FUTURE_CAP        =  600000000  * DECIMALSFACTOR;
-
-    // Default bonus amount for the presale.
-    // 100 = no bonus
-    // 120 = 20% bonus.
-    // Note that the owner can change the amount of bonus given.
-    uint256 public constant PRESALE_BONUS      = 120;
-
-    // Default value for tokensPerKEther based on ETH at 300 USD.
-    // The owner can update this value before the sale starts based on the
-    // price of ether at that time.
-    // E.g. 300 USD/ETH -> 300,000 USD/KETH / 0.2 USD/TOKEN = 1,500,000
-    uint256 public constant TOKENS_PER_KETHER = 1500000;
-}
-
-
-pragma solidity ^0.4.17;
-
-// ----------------------------------------------------------------------------
-// GAT Token Sample Implementation
-//
-// Copyright (c) 2017 GAT Systems Ltd.
-// http://www.gatcoin.io/
-//
-// The MIT Licence.
-// ----------------------------------------------------------------------------
-
-
-
-
-
 // This is the main contract that drives the GAT token sale.
 // It exposes the ERC20 interface along with various sale-related functions.
 //
@@ -294,6 +219,9 @@ contract GATTokenSale is GATToken, GATTokenSaleConfig {
     // Total number of tokens that have been sold through the sale contract so far.
     uint256 public totalTokensSold;
 
+    // Minimum contribution value
+    uint256 public contributionMinimum;
+
     // Keep track of start time and end time for the sale. These have default
     // values when the contract is deployed but can be changed by owner as needed.
     uint256 public startTime;
@@ -303,6 +231,7 @@ contract GATTokenSale is GATToken, GATTokenSaleConfig {
     // Events
     event TokensPurchased(address indexed beneficiary, uint256 cost, uint256 tokens);
     event TokensPerKEtherUpdated(uint256 newAmount);
+    event ContributionMinimumUpdated(uint256 newAmount);
     event BonusAmountUpdated(uint256 newAmount);
     event TimeWindowUpdated(uint256 newStartTime, uint256 newEndTime);
     event SaleSuspended();
@@ -310,7 +239,7 @@ contract GATTokenSale is GATToken, GATTokenSaleConfig {
     event TokenFinalized();
     event ContractTokensReclaimed(uint256 amount);
 
-
+// "0x1a4FBba7231Ec0707925c52b047b951a0BeAA325", "0xa85b419eee304563d3587fe934e932f056ca3c14", "0xa85b419eee304563d3587fe934e932f056ca3c14", "0x587d06eb855811ee987cc842880b9255a3aab45b", 
     function GATTokenSale(address _bankAddress, address _fundingAddress, address _reserve1Address, address _reserve2Address) public
         GATToken(SYMBOL, NAME, DECIMALS, 0)
     {
@@ -341,6 +270,9 @@ contract GATTokenSale is GATToken, GATTokenSaleConfig {
 
         // Initial pricing
         tokensPerKEther = TOKENS_PER_KETHER;
+
+        // Initial contribution minimum
+        contributionMinimum = CONTRIBUTION_MIN;
 
         // Bonus for contributions
         bonus = PRESALE_BONUS;
@@ -396,6 +328,18 @@ contract GATTokenSale is GATToken, GATTokenSaleConfig {
         return true;
     }
 
+    // Allows the owner to change the minimum contribution amount
+    //
+    function setContributionMinimum(uint256 _contributionMinimum) external onlyOwner returns(bool) {
+        require(_contributionMinimum > 0);
+
+        // Set the tokensPerKEther amount for any new sale.
+        contributionMinimum = _contributionMinimum;
+
+        ContributionMinimumUpdated(_contributionMinimum);
+
+        return true;
+    }
 
     // Allows the owner to change the bonus amount applied to purchases.
     //
@@ -475,7 +419,7 @@ contract GATTokenSale is GATToken, GATTokenSaleConfig {
         require(beneficiary != address(this));
         require(currentTime() >= startTime);
         require(currentTime() <= endTime);
-        require(msg.value >= CONTRIBUTION_MIN);
+        require(msg.value >= contributionMinimum);
         require(msg.sender != fundingAddress);
 
         // Check if the sale contract still has tokens for sale.
@@ -513,10 +457,8 @@ contract GATTokenSale is GATToken, GATTokenSaleConfig {
 
         // Transfer the contributed ether to the crowdsale wallets.
         uint256 contribution      = msg.value.sub(refund);
-        uint256 reserveAllocation = contribution.div(20);
 
-        fundingAddress.transfer(contribution.sub(reserveAllocation));
-        reserve1Address.transfer(reserveAllocation);
+        fundingAddress.transfer(contribution);
 
         TokensPurchased(beneficiary, cost, tokens);
 
