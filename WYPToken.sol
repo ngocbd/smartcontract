@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WYPToken at 0xf035e77d56028fc72a587f1314418545a8b0e792
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WYPToken at 0x75094d99ffbffac7865161f281e1b0c27e1905a9
 */
 pragma solidity ^0.4.4;
 
@@ -121,9 +121,9 @@ contract WYPToken is StandardToken {
         ) {
         balances[msg.sender] = 300000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 300000000;                        // Update total supply (100000 for example)
-        name = "Inc1234token";                                   // Set the name for display purposes
+        name = "Inc123token";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "inc";                               // Set the symbol for display purposes
+        symbol = "include";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
