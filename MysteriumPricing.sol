@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MysteriumPricing at 0xd2b34de9882923df7a97fbe37f15ba7c2e3deefd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MysteriumPricing at 0xfa6735dd9e7972c3e1659f86c1cd41a568c2a73b
 */
 /**
  * Interface for defining crowdsale pricing.
