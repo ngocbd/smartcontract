@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharderToken at 0x41235b5522ea33092c7a4e4a8d70e1b26fed8633
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharderToken at 0xb15fe5a123e647ba594cea7a1e648646f95eb4aa
 */
 /*
   Copyright 2017 Sharder Foundation.
@@ -16,7 +16,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.18;
 
 /**
  * Math operations with safety checks
