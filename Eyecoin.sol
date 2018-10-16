@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eyecoin at 0x156da34af47576af491a43069700576ebfd6b29f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eyecoin at 0x5d1ea88a139af4f0d6dbb14e8e06b6008c2f9ca3
 */
 pragma solidity ^ 0.4.2;
 
 contract Eyecoin {
     /* Public variables of the token */
-    string public standard;
+    string public standard = 'Token 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -42,6 +42,7 @@ contract Eyecoin {
    
 
     
+
    
 
     /* This unnamed function is called whenever someone tries to send ether to it */
