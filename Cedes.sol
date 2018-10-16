@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cedes at 0xfdd71fdbac00bb17203ed0af2f3b83d87eaaa4b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cedes at 0xb28c3811ca96ca9e7ffd7e136645c32cd2912614
 */
 pragma solidity ^0.4.16;
 
@@ -8,7 +8,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract Cedes {
     string public name;
     string public symbol;
-    uint8 public decimals = 0;
+    uint8 public decimals = 18;
     uint256 public totalSupply;
 
     // This creates an array with all balances
