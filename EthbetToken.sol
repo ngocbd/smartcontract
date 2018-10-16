@@ -1,12 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthbetToken at 0x7D5Edcd23dAa3fB94317D32aE253eE1Af08Ba14d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthbetToken at 0xfAa43312350161043BF739063a9e439ff1DA11c1
 */
 pragma solidity ^0.4.11;
-/**
- * This is the official Ethbet Token smart contract (EBET) - https://ethbet.io/
- */
 
-
+/* Official Ethbet (EBET) Token Contract */
 
 
 /**
@@ -55,7 +52,7 @@ contract ERC20Basic {
 
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
+ * @dev Basic version of StandardToken, with no allowances. 
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -79,7 +76,7 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
+  * @param _owner The address to query the the balance of. 
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -193,6 +190,9 @@ contract StandardToken is ERC20, BasicToken {
 
 /**
  * @title EthbetToken
+ * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
+ * Note they can later distribute these tokens as they wish using `transfer` and other
+ * `StandardToken` functions.
  */
 contract EthbetToken is StandardToken {
 
