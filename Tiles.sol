@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tiles at 0x103992432927f7ed1a5b3dc0e34186f80b16d93c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tiles at 0xca9b7047a30b48942f61a729ecb1905e4b2a98dc
 */
 pragma solidity ^0.4.13;
 
 contract Tiles {
 
-    uint public constant NUM_TILES = 256;
-    uint constant SIDE_LENGTH = 16;
+    uint public constant NUM_TILES = 64;
+    uint constant SIDE_LENGTH = 8;
     uint private constant STARTING_GAME_NUMBER = 1;
     uint public DEFAULT_GAME_COST = 5000000000000000;
 
@@ -15,7 +15,7 @@ contract Tiles {
     uint public currentGameNumber;
     uint public currentGameBalance;
     uint public numTilesClaimed;
-    Tile[16][16] public tiles;
+    Tile[8][8] public tiles;
     bool public gameStopped;
     uint public gameEarnings;
     bool public willChangeCost;
@@ -81,8 +81,8 @@ contract Tiles {
     function determineWinner() private {
         bytes32 winningHash = block.blockhash(block.number - 1);
         byte winningPair = winningHash[31];
-        uint256 winningX = getRightCoordinate(winningPair);
-        uint256 winningY = getLeftCoordinate(winningPair);
+        uint256 winningX = getRightCoordinate(winningPair) % 8;
+        uint256 winningY = getLeftCoordinate(winningPair) % 8;
         address winner = tiles[winningX][winningY].claimedBy;
         PrintWinningInfo(winningHash, winningX, winningY);
         GameWon(currentGameNumber, winner);
