@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfExistence at 0x6d9aeea69207b186e67e24cc8ae05fe3ed1e0fbb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfExistence at 0x5ecf22fd1c54f4c01df5da427929c14a1090815f
 */
 pragma solidity ^0.4.2;
+
 contract DateTime {
         /*
          *  Date and Time utilities for ethereum contracts
@@ -252,7 +253,7 @@ contract ProofOfExistence {
         return string(bytesStringTrimmed);
     }
     
-    function uintToString(uint16 x) constant returns (string) {
+    function bytes32ToString(uint16 x) constant returns (string) {
         bytes32 a = uintToBytes(x);
         return bytes32ToString(a);
     }
@@ -302,10 +303,10 @@ function strConcat(string _a, string _b) internal returns (string) {
   }
   
   // Input sha256 hash string to check
-  function verify(string sha256) constant returns (uint16,uint16,uint16,uint16,uint16,uint16) {
+  function verify(string sha256) constant returns (string) {
     var timestamp =  proofs[sha256];
     if ( timestamp == 0 ){
-        return (0,0,0,0,0,0);
+        return "No data found";
     }else{
         DateTime dt = DateTime(msg.sender);
         
@@ -315,21 +316,17 @@ function strConcat(string _a, string _b) internal returns (string) {
         uint16 hour = dt.getHour(timestamp);
         uint16 minute = dt.getMinute(timestamp);
         uint16 second = dt.getSecond(timestamp);
-        return  (year, month,day,hour,minute,second);
         
-        // string  memory result = strConcat(bytes32ToString(year) , "-" , bytes32ToString(month),"-",bytes32ToString(day));
-        // result = strConcat(result," ");
-        // result = strConcat( bytes32ToString(hour) , ":" , bytes32ToString(minute),":",bytes32ToString(second));
-        // result = strConcat(result," UTC") ;
-        
-        
-        
+        string  memory result = strConcat(bytes32ToString(year) , "-" , bytes32ToString(month),"-",bytes32ToString(day));
+        result = strConcat(result," ");
+        result = strConcat( bytes32ToString(hour) , ":" , bytes32ToString(minute),":",bytes32ToString(second));
+        result = strConcat(result," UTC");
         
 
 
-        // //UTC Format: 2013-10-26 14:37:48 UTC
+        //UTC Format: 2013-10-26 14:37:48 UTC
 
-        // return result;
+        return result;
     }
   }
   
