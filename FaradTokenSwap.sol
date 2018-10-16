@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FaradTokenSwap at 0x2ca70f6f8ebd683d5afc20d426839ef40e063f02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FaradTokenSwap at 0x3329f8d4e675a457697e9c00a41f027eaeb0ddcc
 */
 /**
  * Copyright (C) Virtue Fintech FZ-LLC, Dubai
@@ -125,7 +125,7 @@ contract FaradTokenSwap is Guarded, Ownable {
     uint256 public weiRaised = 0;                       // wei raised in this ICO
     uint256 public minContrib = 0.05 ether;             // min contribution accepted
 
-    address public wallet = 0x82bF3620e9c73AC57C3b9bA4F7d89E1A40641E6e;
+    address public wallet = 0x0727c7cb599D84792331273952BDA62F0bA77c12;
 
     event Contribution(address indexed _contributor, uint256 _amount);
 
