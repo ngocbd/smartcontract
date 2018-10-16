@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x3fe5c9023142c8799865a12dc2fa77e4382dc074
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x3458c28c6fe01c9e7640eaa8911f74334b57af25
 */
 pragma solidity ^0.4.18;
 /** ----------------------------------------------------------------------------------------------
@@ -256,7 +256,7 @@ contract TokenERC20 is ERC20, Ownable{
 
 contract PowerToken is TokenERC20 {
 
-    function PowerToken() TokenERC20(100000000, "ZhouLei Token", "ZLT", 18) public {
+    function PowerToken() TokenERC20(1000000000, "LuJia Token", "QZB", 18) public {
 
     }
 }
