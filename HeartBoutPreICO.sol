@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeartBoutPreICO at 0x0d62442a4b931ac1243997d96bfe37fef4fb03e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeartBoutPreICO at 0xc258a94789cd6f50bdc76ce51de9e7b3c4ffb125
 */
 pragma solidity ^0.4.18;
 /**
@@ -28,38 +28,20 @@ library SafeMath {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-  address public owner;
-  address public oldOwner;
+  address public admin;
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
   function Ownable() public {
-    owner = msg.sender;
+    admin = msg.sender;
   }
   /**
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(msg.sender == admin);
     _;
-  }
-  modifier onlyOldOwner() {
-    require(msg.sender == oldOwner || msg.sender == owner);
-    _;
-  }
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    oldOwner = owner;
-    owner = newOwner;
-  }
-  function backToOldOwner() onlyOldOwner public {
-    require(oldOwner != address(0));
-    owner = oldOwner;
   }
 }
 /**
@@ -89,7 +71,7 @@ contract Ownable {
     startTime = _startTime;
     endTime = _endTime;
     rate = _rate;
-    wallet = 0x00B95A5D838F02b12B75BE562aBF7Ee0100410922b;
+    wallet = 0x00b95a5d838f02b12b75be562abf7ee0100410922b;
   }
   // @return true if the transaction can buy tokens
   function validPurchase() internal constant returns (bool) {
@@ -128,58 +110,37 @@ contract Ownable {
     return super.hasEnded() || capReached;
   }
 }
+contract HeartBoutToken {
+   function mint(address _to, uint256 _amount, string _account) public returns (bool);
+}
 contract HeartBoutPreICO is CappedCrowdsale, Ownable {
     using SafeMath for uint256;
     
     // The token address
     address public token;
     uint256 public minCount;
-    // Bind User Account and Address Wallet
-    mapping(string => address) bindAccountsAddress;
-    mapping(address => string) bindAddressAccounts;
-    string[] accounts;
-    event GetBindTokensAccountEvent(address _address, string _account);
     function HeartBoutPreICO(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, uint256 _cap, uint256 _minCount) public
     CappedCrowdsale(_startTime, _endTime, _rate, _wallet, _cap)
     {
-        token = 0x00305cB299cc82a8A74f8da00AFA6453741d9a15Ed;
+        token = 0x00A4E53EBCdd4360d9f7C367623B43a92F6E41Ef9E;
         minCount = _minCount;
     }
     // fallback function can be used to buy tokens
-    function () payable public {
-    }
+    function () payable public {}
     // low level token purchase function
     function buyTokens(string _account) public payable {
         require(!stringEqual(_account, ""));
         require(validPurchase());
         require(msg.value >= minCount);
-        // throw if address was bind with another account
-        if(!stringEqual(bindAddressAccounts[msg.sender], "")) {
-            require(stringEqual(bindAddressAccounts[msg.sender], _account));
-        }
         uint256 weiAmount = msg.value;
         // calculate token amount to be created
         uint256 tokens = weiAmount.mul(rate);
         // Mint only message sender address
-        require(token.call(bytes4(keccak256("mint(address,uint256)")), msg.sender, tokens));
-        bindAccountsAddress[_account] = msg.sender;
-        bindAddressAccounts[msg.sender] = _account;
-        accounts.push(_account);
+        HeartBoutToken token_contract = HeartBoutToken(token);
+        token_contract.mint(msg.sender, tokens, _account);
         // update state
         weiRaised = weiRaised.add(weiAmount);
         forwardFunds();
-    }
-    function getEachBindAddressAccount() onlyOwner public {
-        // get transfered account and addresses
-        for (uint i = 0; i < accounts.length; i++) {
-            GetBindTokensAccountEvent(bindAccountsAddress[accounts[i]], accounts[i]);
-        }
-    }
-    function getBindAccountAddress(string _account) public constant returns (address) {
-        return bindAccountsAddress[_account];
-    }
-    function getBindAddressAccount(address _accountAddress) public constant returns (string) {
-        return bindAddressAccounts[_accountAddress];
     }
     // send ether to the fund collection wallet
     // override to create custom fund forwarding mechanisms
