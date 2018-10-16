@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArtexToken at 0x3F500A7e3783FBd228DDB894DE2Db110eED83A5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArtexToken at 0x7705FaA34B16EB6d77Dfc7812be2367ba6B0248e
 */
 pragma solidity ^ 0.4.13;
 
@@ -8,9 +8,25 @@ contract MigrationAgent {
 }
 
 contract PreArtexToken {
-    function balanceOf(address _owner) constant returns(uint256 balance);
-    mapping(address => uint) public deposits;
-    uint public tokenPriceUSDWEI;
+    struct Investor {
+        uint amountTokens;
+        uint amountWei;
+    }
+
+    uint public etherPriceUSDWEI;
+    address public beneficiary;
+    uint public totalLimitUSDWEI;
+    uint public minimalSuccessUSDWEI;
+    uint public collectedUSDWEI;
+
+    uint public state;
+
+    uint public crowdsaleStartTime;
+    uint public crowdsaleFinishTime;
+
+    mapping(address => Investor) public investors;
+    mapping(uint => address) public investorsIter;
+    uint public numberOfInvestors;
 }
 
 contract Owned {
@@ -115,6 +131,8 @@ contract Crowdsale is Owned, Stateful {
     uint public crowdsaleStartTime;
     uint public crowdsaleFinishTime;
 
+    uint public tokenPriceUSDWEI = 100000000000000000;
+
     struct Investor {
         uint amountTokens;
         uint amountWei;
@@ -138,7 +156,7 @@ contract Crowdsale is Owned, Stateful {
     function Crowdsale() payable Owned() {}
 
     //abstract methods
-    function emitTokens(address _investor, uint _tokenPriceUSDWEI, uint _usdwei) internal returns(uint tokensToEmit);
+    function emitTokens(address _investor, uint _usdwei) internal returns(uint tokensToEmit);
 
     function emitAdditionalTokens() internal;
 
@@ -147,7 +165,6 @@ contract Crowdsale is Owned, Stateful {
     function() payable crowdsaleState limitNotExceeded crowdsaleNotFinished {
         uint valueWEI = msg.value;
         uint valueUSDWEI = valueWEI * etherPriceUSDWEI / 1 ether;
-        uint tokenPriceUSDWEI = getTokenPriceUSDWEI();
         if (collectedUSDWEI + valueUSDWEI > totalLimitUSDWEI) { // don't need so much ether
             valueUSDWEI = totalLimitUSDWEI - collectedUSDWEI;
             valueWEI = valueUSDWEI * 1 ether / etherPriceUSDWEI;
@@ -158,29 +175,27 @@ contract Crowdsale is Owned, Stateful {
         } else {
             collectedUSDWEI += valueUSDWEI;
         }
-        emitTokensFor(msg.sender, tokenPriceUSDWEI, valueUSDWEI, valueWEI);
+        emitTokensFor(msg.sender, valueUSDWEI, valueWEI);
     }
 
     function depositUSD(address _to, uint _amountUSDWEI) external onlyOwner crowdsaleState limitNotExceeded crowdsaleNotFinished {
-        uint tokenPriceUSDWEI = getTokenPriceUSDWEI();
         collectedUSDWEI += _amountUSDWEI;
-        emitTokensFor(_to, tokenPriceUSDWEI, _amountUSDWEI, 0);
+        emitTokensFor(_to, _amountUSDWEI, 0);
     }
 
     function depositBTC(address _to, uint _amountBTCWEI, uint _btcPriceUSDWEI, bytes32 _btcTxId) external onlyOwnerOrBtcOracle crowdsaleState limitNotExceeded crowdsaleNotFinished {
         uint valueUSDWEI = _amountBTCWEI * _btcPriceUSDWEI / 1 ether;
-        uint tokenPriceUSDWEI = getTokenPriceUSDWEI();
         BtcDeposit storage btcDep = btcDeposits[_btcTxId];
         require(btcDep.amountBTCWEI == 0);
         btcDep.amountBTCWEI = _amountBTCWEI;
         btcDep.btcPriceUSDWEI = _btcPriceUSDWEI;
         btcDep.investor = _to;
         collectedUSDWEI += valueUSDWEI;
-        emitTokensFor(_to, tokenPriceUSDWEI, valueUSDWEI, 0);
+        emitTokensFor(_to, valueUSDWEI, 0);
     }
 
-    function emitTokensFor(address _investor, uint _tokenPriceUSDWEI, uint _valueUSDWEI, uint _valueWEI) internal {
-        var emittedTokens = emitTokens(_investor, _tokenPriceUSDWEI, _valueUSDWEI);
+    function emitTokensFor(address _investor, uint _valueUSDWEI, uint _valueWEI) internal {
+        var emittedTokens = emitTokens(_investor, _valueUSDWEI);
         Investor storage inv = investors[_investor];
         if (inv.amountTokens == 0) { // new investor
             investorsIter[numberOfInvestors++] = _investor;
@@ -188,24 +203,6 @@ contract Crowdsale is Owned, Stateful {
         inv.amountTokens += emittedTokens;
         if (state == State.Sale) {
             inv.amountWei += _valueWEI;
-        }
-    }
-
-    function getTokenPriceUSDWEI() internal returns(uint tokenPriceUSDWEI) {
-        tokenPriceUSDWEI = 0;
-        if (state == State.PreSale) {
-            tokenPriceUSDWEI = 76923076923076900;
-        }
-        if (state == State.Sale) {
-            if (now < crowdsaleStartTime + 1 days) {
-                tokenPriceUSDWEI = 86956521730000000;
-            } else if (now < crowdsaleStartTime + 1 weeks) {
-                tokenPriceUSDWEI = 90909090900000000;
-            } else if (now < crowdsaleStartTime + 2 weeks) {
-                tokenPriceUSDWEI = 95238095230000000;
-            } else {
-                tokenPriceUSDWEI = 100000000000000000;
-            }
         }
     }
 
@@ -367,7 +364,6 @@ contract Token is Crowdsale, ERC20 {
     mapping(address => mapping(address => uint)) public allowed;
     uint8 public constant decimals = 8;
 
-
     function Token() payable Crowdsale() {}
 
     function balanceOf(address who) constant returns(uint) {
@@ -411,6 +407,7 @@ contract MigratableToken is Token {
 
     function MigratableToken() payable Token() {}
 
+    bool stateMigrated = false;
     address public migrationAgent;
     uint public totalMigrated;
     address public migrationHost;
@@ -423,39 +420,73 @@ contract MigratableToken is Token {
         migrationHost = _address;
     }
 
-    //manual migration by owner
-    function migrateInvestorFromHost(address _address) external onlyOwner {
-        require(migrationHost != 0 &&
-            state != State.SaleFailed &&
-            etherPriceUSDWEI != 0 &&
-            migratedInvestors[_address] == false);
+    function migrateStateFromHost() external onlyOwner {
+        require(stateMigrated == false && migrationHost != 0);
 
         PreArtexToken preArtex = PreArtexToken(migrationHost);
-        uint tokensDecimals = preArtex.balanceOf(_address);
-        require(tokensDecimals > 0);
-        uint depositWEI = preArtex.deposits(_address);
-        uint preArtexTokenPriceUSDWEI = preArtex.tokenPriceUSDWEI();
-        uint tokensToTransfer = 0;
 
-        if (tokensDecimals != 0 && depositWEI == 0) {
-            tokensToTransfer = tokensDecimals * 140 / 130;
-        } else {
-            var preArtexEtherPriceUSDWEI = ((tokensDecimals * preArtexTokenPriceUSDWEI * 1 ether) / (depositWEI * (10 ** uint(decimals))));
-            if (etherPriceUSDWEI > preArtexEtherPriceUSDWEI) {
-                tokensToTransfer = (tokensDecimals * etherPriceUSDWEI * 140) / (preArtexEtherPriceUSDWEI * 130);
-            } else {
-                tokensToTransfer = tokensDecimals * 140 / 130;
+        state = Stateful.State.PreSale;
+
+        etherPriceUSDWEI = preArtex.etherPriceUSDWEI();
+        beneficiary = preArtex.beneficiary();
+        totalLimitUSDWEI = preArtex.totalLimitUSDWEI();
+        minimalSuccessUSDWEI = preArtex.minimalSuccessUSDWEI();
+        collectedUSDWEI = preArtex.collectedUSDWEI();
+
+        crowdsaleStartTime = preArtex.crowdsaleStartTime();
+        crowdsaleFinishTime = preArtex.crowdsaleFinishTime();
+
+        stateMigrated = true;
+    }
+
+    function migrateInvestorsFromHost(uint batchSize) external onlyOwner {
+        require(migrationHost != 0);
+
+        PreArtexToken preArtex = PreArtexToken(migrationHost);
+
+        uint numberOfInvestorsToMigrate = preArtex.numberOfInvestors();
+        uint currentNumberOfInvestors = numberOfInvestors;
+
+        require(currentNumberOfInvestors < numberOfInvestorsToMigrate);
+
+        for (uint i = 0; i < batchSize; i++) {
+            uint index = currentNumberOfInvestors + i;
+            if (index < numberOfInvestorsToMigrate) {
+                address investor = preArtex.investorsIter(index);
+                migrateInvestorsFromHostInternal(investor, preArtex);                
             }
+            else
+                break;
         }
+    }
+
+    function migrateInvestorFromHost(address _address) external onlyOwner {
+        require(migrationHost != 0);
+
+        PreArtexToken preArtex = PreArtexToken(migrationHost);
+
+        migrateInvestorsFromHostInternal(_address, preArtex);
+    }
+
+    function migrateInvestorsFromHostInternal(address _address, PreArtexToken preArtex) internal {
+        require(state != State.SaleFailed && migratedInvestors[_address] == false);
+
+        var (tokensToTransfer, weiToTransfer) = preArtex.investors(_address);
+
+        require(tokensToTransfer > 0);
 
         balances[_address] = tokensToTransfer;
         totalSupply += tokensToTransfer;
         migratedInvestors[_address] = true;
 
         if (state != State.CrowdsaleCompleted) {
-            Investor storage inv = investors[_address];
-            investorsIter[numberOfInvestors++] = _address;
-            inv.amountTokens += tokensToTransfer;
+            Investor storage investor = investors[_address];
+            investorsIter[numberOfInvestors] = _address;
+            
+            numberOfInvestors++;
+
+            investor.amountTokens += tokensToTransfer;
+            investor.amountWei += weiToTransfer;
         }
 
         Transfer(this, _address, tokensToTransfer);
@@ -481,7 +512,7 @@ contract MigratableToken is Token {
 
 contract ArtexToken is MigratableToken {
 
-    string public constant symbol = "ART";
+    string public constant symbol = "ARX";
 
     string public constant name = "Artex Token";
 
@@ -489,13 +520,35 @@ contract ArtexToken is MigratableToken {
 
     function ArtexToken() payable MigratableToken() {}
 
-    function emitTokens(address _investor, uint _tokenPriceUSDWEI, uint _valueUSDWEI) internal returns(uint tokensToEmit) {
-        tokensToEmit = (_valueUSDWEI * (10 ** uint(decimals))) / _tokenPriceUSDWEI;
+    function emitTokens(address _investor, uint _valueUSDWEI) internal returns(uint tokensToEmit) {
+        tokensToEmit = getTokensToEmit(_valueUSDWEI);
         require(balances[_investor] + tokensToEmit > balances[_investor]); // overflow
         require(tokensToEmit > 0);
         balances[_investor] += tokensToEmit;
         totalSupply += tokensToEmit;
         Transfer(this, _investor, tokensToEmit);
+    }
+
+    function getTokensToEmit(uint _valueUSDWEI) internal constant returns (uint) {
+        uint percentWithBonus;
+        if (state == State.PreSale) {
+            percentWithBonus = 130;
+        } else if (state == State.Sale) {
+            if (_valueUSDWEI < 1000 * 1 ether)
+                percentWithBonus = 100;
+            else if (_valueUSDWEI < 5000 * 1 ether)
+                percentWithBonus = 103;
+            else if (_valueUSDWEI < 10000 * 1 ether)
+                percentWithBonus = 105;
+            else if (_valueUSDWEI < 50000 * 1 ether)
+                percentWithBonus = 110;
+            else if (_valueUSDWEI < 100000 * 1 ether)
+                percentWithBonus = 115;
+            else
+                percentWithBonus = 120;
+        }
+
+        return (_valueUSDWEI * percentWithBonus * (10 ** uint(decimals))) / (tokenPriceUSDWEI * 100);
     }
 
     function emitAdditionalTokens() internal {
