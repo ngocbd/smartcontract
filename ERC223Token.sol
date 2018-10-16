@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x172d8c42ff89e91026b06057c889abda3056e6aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0xb288449e31394a0ba813850c0144a3718a327bb1
 */
 pragma solidity ^0.4.23;
 /**
@@ -87,8 +87,8 @@ contract ERC223Token is ERC223Interface {
 	
 	
 	
-	 string public name = "COOPAY COIN";
-     string public symbol = "COO";
+	 string public name = "COOPAY COIN TEST";
+     string public symbol = "COOTEST";
      uint8 public decimals = 18;
      uint256 public totalSupply = 265200000 * (10**18);
 	
