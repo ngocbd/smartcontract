@@ -1,33 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xdd1ac79efafbe76f75ce46231525eca0a6cef342
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x290a5ffdcd13b7d371ecfd8d2d54f2afe2cb21fc
 */
-pragma solidity ^0.4.15;
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+pragma solidity ^0.4.13;
 
 contract Ownable {
   address public owner;
@@ -103,6 +77,63 @@ contract Pausable is Ownable {
   }
 }
 
+contract Controllable {
+  address public controller;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+   */
+  function Controllable() public {
+    controller = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyController() {
+    require(msg.sender == controller);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newController The address to transfer ownership to.
+   */
+  function transferControl(address newController) public onlyController {
+    if (newController != address(0)) {
+      controller = newController;
+    }
+  }
+
+}
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 contract TokenSale is Pausable {
 
   using SafeMath for uint256;
@@ -119,6 +150,7 @@ contract TokenSale is Pausable {
   uint256 public allocatedTokens;
 
   bool public finalized;
+
   bool public proofTokensAllocated;
   address public proofMultiSig = 0x99892Ac6DA1b3851167Cb959fE945926bca89f09;
 
@@ -257,6 +289,7 @@ contract TokenSale is Pausable {
   * @param _newController {address} New Proof Token controller
   */
   function changeController(address _newController) public {
+    require(isContract(_newController));
     proofToken.transferControl(_newController);
   }
 
@@ -286,7 +319,7 @@ contract TokenSale is Pausable {
   }
 
   function allocateProofTokens() public onlyOwner whenNotFinalized {
-    require(!proofTokensAllocated);
+    require(proofTokensAllocated = false);
     proofToken.mint(proofMultiSig, TOKENS_ALLOCATED_TO_PROOF);
     proofTokensAllocated = true;
   }
@@ -316,37 +349,6 @@ contract TokenSale is Pausable {
   modifier whenNotFinalized() {
     require(!finalized);
     _;
-  }
-
-}
-
-contract Controllable {
-  address public controller;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
-   */
-  function Controllable() public {
-    controller = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyController() {
-    require(msg.sender == controller);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newController The address to transfer ownership to.
-   */
-  function transferControl(address newController) public onlyController {
-    if (newController != address(0)) {
-      controller = newController;
-    }
   }
 
 }
