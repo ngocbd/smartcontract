@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Congress at 0x19397c7fde68a3b33503d491cac89011a5d9a61f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Congress at 0xa33c0ca78283a247560587200c6d33e18cf54eaa
 */
 pragma solidity ^0.4.16;
 
@@ -116,7 +116,7 @@ contract Congress is owned, tokenRecipient {
             memberId[targetMember] = members.length;
             id = members.length++;
         }
-
+    
         members[id] = Member({member: targetMember, memberSince: now, name: memberName});
         MembershipChanged(targetMember, true);
     }
