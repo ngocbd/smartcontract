@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCheque at 0x82c6c051adf60a8f4a00a313277763938a0ae29d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCheque at 0x4f75836e2d0ff46513532d276e0475543b43d308
 */
 pragma solidity ^0.4.11;
 
 // copyright contact@ethercheque.com
 
 contract EtherCheque {
-    enum Status { NONE, CREATED, LOCKED, EXPIRED }
+    enum Status { NONE, CREATED, LOCKED, EXPIRED, USED}
     enum ResultCode { 
         SUCCESS,
         ERROR_MAX,
@@ -16,7 +16,8 @@ contract EtherCheque {
         ERROR_INVALID_STATUS,
         ERROR_LOCKED,
         ERROR_EXPIRED,
-        ERROR_INVALID_AMOUNT
+        ERROR_INVALID_AMOUNT,
+        ERROR_USED
     }
     struct Cheque {
         bytes32 pinHash; // we only save sha3 of cheque signature
@@ -33,7 +34,8 @@ contract EtherCheque {
     uint public totalChequeValue = 0;
     uint public totalRedeemedCheque = 0;
     uint public totalRedeemedValue = 0;
-    uint public commissionFee = 10; // div 1000
+    uint public commissionRate = 10; // div 1000
+    uint public minFee = 0.005 ether;
     uint public minChequeValue = 0.01 ether;
     uint public maxChequeValue = 0; // optional, 0 mean no limit
     uint8 public maxAttempt = 3;
@@ -111,8 +113,12 @@ contract EtherCheque {
     }
     
     // moderator function
-    function SetCommissionValue(uint _commissionFee) onlyModerators {
-        commissionFee = _commissionFee;
+    function SetCommissionRate(uint _commissionRate) onlyModerators {
+        commissionRate = _commissionRate;
+    }
+    
+    function SetMinFee(uint _minFee) onlyModerators {
+        minFee = _minFee;
     }
     
     function SetMinChequeValue(uint _minChequeValue) onlyModerators {
@@ -147,42 +153,56 @@ contract EtherCheque {
     // only when creator wants to get the money back
     // only can refund back to creator
     function RefundChequeById(string _chequeId) onlyModerators returns(ResultCode) {
-        bytes32 hashChequeId = sha3(_chequeId);
-        Cheque cheque = items[hashChequeId];
+        bytes32 chequeIdHash = sha3(_chequeId);
+        Cheque cheque = items[chequeIdHash];
         if (cheque.status == Status.NONE) {
-            LogRefundCheque(hashChequeId, ResultCode.ERROR_NOT_EXIST);
+            LogRefundCheque(chequeIdHash, ResultCode.ERROR_NOT_EXIST);
             return ResultCode.ERROR_NOT_EXIST;
+        }
+        if (cheque.status == Status.USED) {
+            LogRefundCheque(chequeIdHash, ResultCode.ERROR_USED);
+            return ResultCode.ERROR_USED;
         }
         
         totalRedeemedCheque += 1;
         totalRedeemedValue += cheque.value;
         uint sendAmount = cheque.value;
-        delete items[hashChequeId];
+        
+        cheque.status = Status.USED;
+        cheque.value = 0;
+        
         cheque.creator.transfer(sendAmount);
-        LogRefundCheque(hashChequeId, ResultCode.SUCCESS);
+        LogRefundCheque(chequeIdHash, ResultCode.SUCCESS);
         return ResultCode.SUCCESS;
     }
 
     function RefundChequeByHash(uint256 _chequeIdHash) onlyModerators returns(ResultCode) {
-        bytes32 hashChequeId = bytes32(_chequeIdHash);
-        Cheque cheque = items[hashChequeId];
+        bytes32 chequeIdHash = bytes32(_chequeIdHash);
+        Cheque cheque = items[chequeIdHash];
         if (cheque.status == Status.NONE) {
-            LogRefundCheque(hashChequeId, ResultCode.ERROR_NOT_EXIST);
+            LogRefundCheque(chequeIdHash, ResultCode.ERROR_NOT_EXIST);
             return ResultCode.ERROR_NOT_EXIST;
+        }
+        if (cheque.status == Status.USED) {
+            LogRefundCheque(chequeIdHash, ResultCode.ERROR_USED);
+            return ResultCode.ERROR_USED;
         }
         
         totalRedeemedCheque += 1;
         totalRedeemedValue += cheque.value;
         uint sendAmount = cheque.value;
-        delete items[hashChequeId];
+        
+        cheque.status = Status.USED;
+        cheque.value = 0;
+        
         cheque.creator.transfer(sendAmount);
-        LogRefundCheque(hashChequeId, ResultCode.SUCCESS);
+        LogRefundCheque(chequeIdHash, ResultCode.SUCCESS);
         return ResultCode.SUCCESS;
     }
 
     function GetChequeInfoByHash(uint256 _chequeIdHash) onlyModerators constant returns(Status, uint, uint, uint) {
-        bytes32 hashChequeId = bytes32(_chequeIdHash);
-        Cheque cheque = items[hashChequeId];
+        bytes32 chequeIdHash = bytes32(_chequeIdHash);
+        Cheque cheque = items[chequeIdHash];
         if (cheque.status == Status.NONE) 
             return (Status.NONE, 0, 0, 0);
 
@@ -206,6 +226,9 @@ contract EtherCheque {
         Cheque cheque = items[chequeIdHash];
         if (cheque.status == Status.NONE) {
             return (ResultCode.ERROR_NOT_EXIST, Status.NONE, 0, 0, 0);
+        }
+        if (cheque.status == Status.USED) {
+            return (ResultCode.ERROR_USED, Status.USED, 0, 0, 0);
         }
         if (cheque.pinHash != sha3(_chequeId, _pin)) {
             return (ResultCode.ERROR_INVALID_STATUS, Status.NONE, 0, 0, 0);
@@ -244,24 +267,35 @@ contract EtherCheque {
         bytes32 chequeIdHash = bytes32(_chequeIdHash);
         bytes32 pinHash = bytes32(_pinHash);
         uint chequeValue = 0;
-        if (msg.value < minChequeValue) {
+        
+        // deduct commission
+        uint commissionFee = (msg.value / 1000) * commissionRate;
+        if (commissionFee < minFee) {
+            commissionFee = minFee;
+        }
+        if (msg.value < commissionFee) {
+            msg.sender.transfer(msg.value);
+            LogCreate(chequeIdHash, uint(ResultCode.ERROR_INVALID_AMOUNT), chequeValue);
+            return ResultCode.ERROR_INVALID_AMOUNT;
+        }
+        chequeValue = msg.value - commissionFee;
+        
+        if (chequeValue < minChequeValue) {
             msg.sender.transfer(msg.value);
             LogCreate(chequeIdHash, uint(ResultCode.ERROR_MIN), chequeValue);
             return ResultCode.ERROR_MIN;
         }
-        if (maxChequeValue > 0 && msg.value > maxChequeValue) {
+        if (maxChequeValue > 0 && chequeValue > maxChequeValue) {
             msg.sender.transfer(msg.value);
             LogCreate(chequeIdHash, uint(ResultCode.ERROR_MAX), chequeValue);
             return ResultCode.ERROR_MAX;
         }
-        if (items[chequeIdHash].status != Status.NONE) {
+        if (items[chequeIdHash].status != Status.NONE && items[chequeIdHash].status != Status.USED) {
             msg.sender.transfer(msg.value);
             LogCreate(chequeIdHash, uint(ResultCode.ERROR_EXIST), chequeValue);
             return ResultCode.ERROR_EXIST;
         }
-        
-        // deduct commission
-        chequeValue = (msg.value / 1000) * (1000 - commissionFee);
+
         totalCheque += 1;
         totalChequeValue += chequeValue;
         items[chequeIdHash] = Cheque({
@@ -289,6 +323,10 @@ contract EtherCheque {
             LogRedeem(chequeIdHash, ResultCode.ERROR_NOT_EXIST, 0, _sendTo);
             return ResultCode.ERROR_NOT_EXIST;
         }
+        if (cheque.status == Status.USED) {
+            LogRedeem(chequeIdHash, ResultCode.ERROR_USED, 0, _sendTo);
+            return ResultCode.ERROR_USED;
+        }
         if (msg.sender != cheque.creator) {
             if (cheque.status != Status.CREATED) {
                 LogRedeem(chequeIdHash, ResultCode.ERROR_INVALID_STATUS, 0, _sendTo);
@@ -314,7 +352,10 @@ contract EtherCheque {
         totalRedeemedCheque += 1;
         totalRedeemedValue += cheque.value;
         uint sendMount = cheque.value;
-        delete items[chequeIdHash];
+        
+        cheque.status = Status.USED;
+        cheque.value = 0;
+        
         _sendTo.transfer(sendMount);
         LogRedeem(chequeIdHash, ResultCode.SUCCESS, sendMount, _sendTo);
         return ResultCode.SUCCESS;
