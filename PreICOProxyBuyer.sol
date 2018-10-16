@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x0e412af67f6c41e9209da8b8638d65bb883ddf5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x2d85707324dd03251ef928d5d8325f28c686ecc9
 */
 /**
  * Math operations with safety checks
@@ -888,6 +888,9 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   /** What is the minimum buy in */
   uint public weiMinimumLimit;
 
+  /** What is the maximum buy in */
+  uint public weiMaximumLimit;
+
   /** How many weis total we are allowed to collect. */
   uint public weiCap;
 
@@ -920,7 +923,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   /**
    * Create presale contract where lock up period is given days
    */
-  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiCap) {
+  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiMaximumLimit, uint _weiCap) {
 
     owner = _owner;
 
@@ -934,7 +937,12 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       throw;
     }
 
+    if(_weiMaximumLimit == 0) {
+      throw;
+    }
+
     weiMinimumLimit = _weiMinimumLimit;
+    weiMaximumLimit = _weiMaximumLimit;
     weiCap = _weiCap;
     freezeEndsAt = _freezeEndsAt;
   }
@@ -966,8 +974,8 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
     balances[investor] = safeAdd(balances[investor], msg.value);
 
-    // Need to fulfill minimum limit
-    if(balances[investor] < weiMinimumLimit) {
+    // Need to satisfy minimum and maximum limits
+    if(balances[investor] < weiMinimumLimit || balances[investor] > weiMaximumLimit) {
       throw;
     }
 
