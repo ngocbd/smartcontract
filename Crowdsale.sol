@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xe6aa4bfed63309ce503771e7f644f24cf14633b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x610d5ba8e28c0e7ea150e449a9cc57eb616ac36b
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.13;
 
 contract CrowdsaleLimit {
   using SafeMath for uint256;
