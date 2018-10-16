@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenState at 0x5b1b5fEa1b99D83aD479dF0C222F0492385381dD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenState at 0x68dacdae221182d1a24e4a31f8203466b1f7d856
 */
 /*
 -----------------------------------------------------------------
@@ -8,16 +8,22 @@ FILE HEADER
 
 file:       TokenState.sol
 version:    1.0
-author:     Dominic Romanowski
-            Anton Jurisevic
+authors:    Anton Jurisevic
+            Dominic Romanowski
 
-date:       2018-2-24
-checked:    Anton Jurisevic
+date:       2018-04-03
+checked:    Mike Spain
 approved:   Samuel Brooks
 
 repo:       https://github.com/Havven/havven
-commit:     34e66009b98aa18976226c139270970d105045e3
+commit:     fa705dd2feabc9def03bce135f6a153a4b70b111
 
+-----------------------------------------------------------------
+*/
+
+pragma solidity ^0.4.21;
+
+/*
 -----------------------------------------------------------------
 CONTRACT DESCRIPTION
 -----------------------------------------------------------------
@@ -30,10 +36,9 @@ To change owner, the current owner must nominate the next owner,
 who then has to accept the nomination. The nomination can be
 cancelled before it is accepted by the new owner by having the
 previous owner change the nomination (setting it to 0).
+
 -----------------------------------------------------------------
 */
-
-pragma solidity ^0.4.20;
 
 contract Owned {
     address public owner;
@@ -103,7 +108,7 @@ contract TokenState is Owned {
 
     // ERC20 fields.
     mapping(address => uint) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
+    mapping(address => mapping(address => uint)) public allowance;
 
     function TokenState(address _owner, address _associatedContract)
         Owned(_owner)
@@ -151,27 +156,3 @@ contract TokenState is Owned {
 
     event AssociatedContractUpdated(address _associatedContract);
 }
-
-/*
-MIT License
-
-Copyright (c) 2018 Havven
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
