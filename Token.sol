@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x139759b6Cfada56ccf5B3536f21EAC209140A9d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xe601d4981FA105fEC023622bddE3f07C774b421F
 */
 pragma solidity ^0.4.2;
 contract Token {
@@ -7,8 +7,8 @@ contract Token {
     mapping (address => uint) public balances;
 
     function Token() {
-        issuer = msg.sender;
-        balances[issuer] = 1000000;
+        issuer = tx.origin;
+        balances[issuer] = 10000000;
     }
 
     function transfer(address _to, uint _amount) {
