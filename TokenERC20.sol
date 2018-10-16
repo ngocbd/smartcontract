@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xc02653381ed1aabd7b1e3a63f815ae69953aa8a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x4d2c05109a1309c6de0d3b7f06f397c9c41b8fae
 */
 pragma solidity ^0.4.16;
 
@@ -7,11 +7,12 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
+    string public name = "Value Promise Protocol token";
+    string public symbol = "VPP";
+    uint256 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply = 50*10**(18+8);
+    
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -28,11 +29,9 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        totalSupply = 1000000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+    function TokenERC20(
+    ) public {
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "VBC?radr)";                                   // Set the name for display purposes
-        symbol = "VBC";                               // Set the symbol for display purposes
     }
 
     /**
