@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x281fb767f700c1035204295d37aa83d7864253ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x3c5bed7eb1481e706fc7f564375211cc5de7a958
 */
 pragma solidity ^0.4.16;
 
@@ -54,7 +54,7 @@ contract AirDrop is Ownable {
   function sendTokens(address[] dests, uint256[] values) whenDropIsActive onlyOwner external {
     uint256 i = 0;
     while (i < dests.length) {
-        uint256 toSend = values[i] * 10**8;
+        uint256 toSend = values[i] * 10**18;
         sendInternally(dests[i] , toSend, values[i]);
         i++;
     }
@@ -63,7 +63,7 @@ contract AirDrop is Ownable {
   // this function can be used when you want to send same number of tokens to all the recipients
   function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
     uint256 i = 0;
-    uint256 toSend = value * 10**8;
+    uint256 toSend = value * 10**18;
     while (i < dests.length) {
         sendInternally(dests[i] , toSend, value);
         i++;
