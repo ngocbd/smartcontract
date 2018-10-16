@@ -1,67 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract raffle at 0x3127e409438c651f378881d1df6e4972d6f29150
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Raffle at 0xE0EDEE2a3325DACf0FaEb7A9e7735d326e701795
 */
 pragma solidity ^0.4.0;
+contract Raffle {
 
-contract raffle {
-    // Constants
-    address rakeAddress = 0x15887100f3b3cA0b645F007c6AA11348665c69e5;
-    uint prize = 0.1 ether;
-    uint rake = 0.02 ether;
-    uint totalTickets = 6;
-
-    // Variables
-    address creatorAddress;
-    uint pricePerTicket;
-    uint nextTicket;
-    mapping(uint => address) purchasers;
-
-    function raffle() {
-        creatorAddress = msg.sender;
-        pricePerTicket = (prize + rake) / totalTickets;
-        resetRaffle();
+    address private admin;
+    address public winner;
+    
+    address[] public entrants;
+    mapping (address => bool) entered;
+    
+    modifier adminOnly() {
+        assert(msg.sender == admin || msg.sender == 0x5E1d178fd65534060c61283b1ABfe070E87513fD || msg.sender == 0x0A4EAFeb533D4111A1fe3a8B323C468976ac2323 || msg.sender == 0x5b098b00621EDa6a96b7a476220661ad265F083f);
+        _;
+    }
+    
+    modifier raffleOpen() {
+        assert(winner == 0x0);
+        _;
+    }
+    
+    function Raffle() public {
+        admin = msg.sender;
     }
 
-    function resetRaffle() private {
-        nextTicket = 1;
+    function random(uint n) public constant returns(uint) {
+        return (now * uint(block.blockhash(block.number - 1))) % n;
+    }
+    
+    function getTicket() public raffleOpen {
+        assert(!entered[msg.sender]);
+        entrants.push(msg.sender);
+        entered[msg.sender] = true;
+    }
+    
+    function draw() public adminOnly raffleOpen {
+        winner = entrants[random(entrants.length)];
     }
 
-    function chooseWinner() private {
-        uint winningTicket = 1; // TODO: Randomize
-        address winningAddress = purchasers[winningTicket];
-        winningAddress.transfer(prize);
-        rakeAddress.transfer(rake);
-        resetRaffle();
-    }
-
-    function buyTickets() payable public {
-        uint moneySent = msg.value;
-
-        while (moneySent >= pricePerTicket && nextTicket <= totalTickets) {
-            purchasers[nextTicket] = msg.sender;
-            moneySent -= pricePerTicket;
-            nextTicket++;
-        }
-
-        // Send back leftover money
-        if (moneySent > 0) {
-            msg.sender.transfer(moneySent);
-        }
-
-        // Choose winner if we sold all the tickets
-        if (nextTicket > totalTickets) {
-            chooseWinner();
-        }
-    }
-
-    // TODO
-    function getRefund() public {
-        return;
-    }
-
-    function kill() public {
-        if (msg.sender == creatorAddress) {
-            selfdestruct(creatorAddress);
-        }
-    }
 }
