@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FidcomToken at 0x8fb34a3c46e7f864943b7a387ace65d5593577cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FidcomToken at 0x7a2ea17b835cfd9272cec08ee0d40a5719557843
 */
 pragma solidity ^0.4.16;
 
@@ -281,9 +281,9 @@ contract Pausable is Ownable {
 
 contract FidcomToken is MintableToken {
     
-  string public constant name = "Fidcom Test";
+  string public constant name = "Fidcom";
    
-  string public constant symbol = "FIDCT";
+  string public constant symbol = "FIDC";
     
   uint32 public constant decimals = 18;
 
@@ -497,8 +497,8 @@ contract Crowdsale is StagedCrowdsale, Pausable {
     uint summaryTokensPercent = bountyPercent + foundersPercent;
     uint summaryFoundersTokens = issuedTokenSupply.mul(summaryTokensPercent).div(percentRate - summaryTokensPercent);
     uint totalSupply = summaryFoundersTokens + issuedTokenSupply;
-    uint foundersTokens = totalSupply.div(percentRate).mul(foundersPercent);
-    uint bountyTokens = totalSupply.div(percentRate).mul(bountyPercent);
+    uint foundersTokens = totalSupply.mul(foundersPercent).div(percentRate);
+    uint bountyTokens = totalSupply.mul(bountyPercent).div(percentRate);
     token.mint(foundersTokensWallet, foundersTokens);
     token.mint(bountyTokensWallet, bountyTokens);
     token.finishMinting();
@@ -512,7 +512,7 @@ contract Crowdsale is StagedCrowdsale, Pausable {
     Stage storage stage = stages[stageIndex];
     multisigWallet.transfer(msg.value);
     uint price = stage.price;
-    uint tokens = msg.value.div(price).mul(1 ether);
+    uint tokens = msg.value.mul(1 ether).div(price);
     updateStageWithInvested();
     token.mint(msg.sender, tokens);
   }
