@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x1ca570d64e4a86cd5eee82b221f61d627d4d88de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd8040f783344244906f4ecefa04d9c976b53820b
 */
 pragma solidity ^0.4.18;
 
@@ -347,9 +347,9 @@ pragma solidity ^0.4.19;
 
 contract Token is PausableToken {
 	string public name = "CCC"; // Token ??
-	string public symbol = "EC3T"; // Token ?? ???ETH/EOS
-	uint public decimals = 0;
-	uint public INITIAL_SUPPLY = 50000 * (10 ** 4); // ?????
+	string public symbol = "ECT"; // Token ?? ???ETH/EOS
+	uint public decimals = 4; // ?????1 ether == 10000 ccc
+	uint public INITIAL_SUPPLY = 50000 * (10 ** decimals); // ?????
 
 	function Token() public {
 		totalSupply_ = INITIAL_SUPPLY; // ???????
@@ -363,8 +363,11 @@ contract Token is PausableToken {
     }
 
     event Burn(address indexed burner, uint256 value);
+
     function burn(uint256 _value) public {
         require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
@@ -374,6 +377,7 @@ contract Token is PausableToken {
     }
 
     event Mint(address indexed to, uint256 amount);
+
     function mint(address _to, uint256 _amount) onlyOwner public {
         totalSupply_ = totalSupply_.add(_amount);
         balances[_to] = balances[_to].add(_amount);
