@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract preSale2 at 0xfafbb19945fc2d79828e4c5813a619d5683074ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract preSale2 at 0x62451d37ca2ec1f0499996bc3c7e2baf258e9729
 */
 pragma solidity ^0.4.18;
  
@@ -270,9 +270,9 @@ contract preSale2 is Ownable {
 	    token = AgroTechFarmToken(0xa55ffAeA5c8cf32B550F663bf17d4F7b739534ff); 
 		multisig = 0x227917ac3C1F192874d43031cF4D40fd40Ae6127;
 		rate = 83333333333000000000; 
-		tokenCap =  25000000000000000000000; 
-		start = 1518739200; 
-		period = 8; 
+		tokenCap =  60000000000000000000000; 
+		start = 1519430400; 
+		period = 14; 
 	    hardcap = 500000000000000000000;
 	    restricted = 0xbcCd749ecCCee5B4898d0E38D2a536fa84Ea9Ef6;   
 	    restrictedPercent = 35;
@@ -305,12 +305,7 @@ contract preSale2 is Ownable {
  
    function createTokens() public isUnderHardCap saleIsOn payable {
         uint tokens = rate.mul(msg.value).div(1 ether);      
-        uint bonusTokens = 0;        
-        uint totalSupply = token.totalSupply();
-       
-        if (totalSupply <= tokenCap) {
-            bonusTokens = tokens.div(2); 
-        } else bonusTokens = tokens.mul(40).div(100); 
+        uint bonusTokens = tokens.mul(40).div(100);        
 
         
         tokens += bonusTokens;     
