@@ -1,11 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Congress at 0x1c5d0d571f6fccfef54d5275c5660f8a6d0971c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Congress at 0xa37302dd56c5b51f886c062c97cc3f6ca50226a8
 */
 pragma solidity ^0.4.16;
-
-/**
- * PornTokenV2 DAO
- */
 
 contract owned {
     address public owner;
@@ -29,7 +25,7 @@ contract tokenRecipient {
     event receivedTokens(address _from, uint256 _value, address _token, bytes _extraData);
 
     function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public {
-        PornTokenV2 t = PornTokenV2(_token);
+        Token t = Token(_token);
         require(t.transferFrom(_from, this, _value));
         receivedTokens(_from, _value, _token, _extraData);
     }
@@ -39,7 +35,7 @@ contract tokenRecipient {
     }
 }
 
-interface PornTokenV2 {
+interface Token {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 }
 
@@ -145,7 +141,7 @@ contract Congress is owned, tokenRecipient {
     /**
      * Change voting rules
      *
-     * Make so that proposals need tobe discussed for at least `minutesForDebate/60` hours,
+     * Make so that proposals need to be discussed for at least `minutesForDebate/60` hours,
      * have at least `minimumQuorumForProposals` votes, and have 50% + `marginOfVotesForMajority` votes to be executed
      *
      * @param minimumQuorumForProposals how many members must vote on a proposal for it to be executed
