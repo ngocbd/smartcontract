@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheraffleLOTPromo at 0xcca9fc3289157a3197ce467e253d99e23c2cb19b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheraffleLOTPromo at 0x7be09720d0561615f2383860de0129bbd93bb808
 */
 pragma solidity^0.4.21;
 /*
  *      ##########################################
  *      ##########################################
- *      ###                                    ###
- *      ###          ???? & ??? ?????          ###
- *      ###                 at                 ###
- *      ###          ??????????.???          ###
- *      ###                                    ###
+ *      ###                                                                                         ###
+ *      ###                             ???? & ??? ?????                             ###
+ *      ###                                          at                                            ###
+ *      ###                            ??????????.???                            ###
+ *      ###                                                                                         ###
  *      ##########################################
  *      ##########################################
  *
@@ -46,7 +46,7 @@ contract EtheraffleLOTPromo {
     uint    constant public TIER1END   = 1523491200; // Thur 12th April 2018
     uint    constant public TIER2END   = 1525305600; // Thur 3rd May 2018
     uint    constant public TIER3END   = 1527724800; // Thur 31st May 2018
-    address constant public ETHERAFFLE = 0x97f535e98cf250CDd7Ff0cb9B29E4548b609A0bd; // ER multisig wallet address
+    address constant public ETHERAFFLE = 0x97f535e98cf250CDd7Ff0cb9B29E4548b609A0bd;
     
     LOTInterface LOTContract;
     EtheraffleInterface etheraffleContract;
@@ -68,16 +68,12 @@ contract EtheraffleLOTPromo {
     /*
      * @dev     Constructor - sets promo running and instantiates required
      *          contracts.
-     *
-     * @param _LOT      Address of the LOT token contract
-     * @param _ER       Address of the Etheraffle contract
      */
-    function EtheraffleLOTPromo(address _LOT, address _ER) public {
+    function EtheraffleLOTPromo() public {
         isActive           = true;
-        LOTContract        = LOTInterface(_LOT);
-        etheraffleContract = EtheraffleInterface(_ER);
+        LOTContract        = LOTInterface(0xAfD9473dfe8a49567872f93c1790b74Ee7D92A9F);
+        etheraffleContract = EtheraffleInterface(0x45c58bbd535b8661110ef5296e6987573d0c8276);
     }
-    
     /*
      * @dev     Function used to redeem promotional LOT owed. Use weekNo of 
      *          0 to get current week number. Requires user not to have already 
@@ -190,17 +186,6 @@ contract EtheraffleLOTPromo {
      */
     function getPromoLOTEarnt(uint _entries) public view returns (uint) {
         return (_entries * getRate() * getTktPrice()) / (1 * 10 ** 18);
-    }
-    /*
-     * @dev     Allows contract addresses to be changed in the event of 
-     *          future contract upgrades.
-     *
-     * @param _LOT      Address of the LOT token contract
-     * @param _ER       Address of the Etheraffle contract
-     */
-    function updateAddresses(address _LOT, address _ER) external onlyEtheraffle {
-        LOTContract        = LOTInterface(_LOT);
-        etheraffleContract = EtheraffleInterface(_ER);
     }
     /*
      * @dev     Scuttles contract, sending any remaining LOT tokens back 
