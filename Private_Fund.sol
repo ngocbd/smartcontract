@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Private_Fund at 0x2d6cb85e108326a8bbb72ca6f3c9f0f3c7f53638
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Private_Fund at 0x8526f3df4ab4093650b7cf734a839580ee29f6de
 */
 contract Private_Fund{
     
@@ -38,17 +38,13 @@ contract Private_Fund{
        deadline = _start + _duration * 1 days; 
     }
     
-    function beneficiary_modify  (address _beneficiary) onlyCreator{
-        beneficiary = _beneficiary;
-    }
-    
     /*  at initialization, setup the owner */
-    function Private_Fund(address _creator, uint256 _duration) {
+    function Private_Fund(address _creator, address _beneficiary, uint256 _duration) {
         creator = _creator;
-        beneficiary = 0xfaC1D48E61353D49D8E234C27943A7b58cd94FD6;
+        beneficiary = _beneficiary;
         start = now;
-        deadline = start + _duration * 1 days;
-        //deadline = start + _duration * 1 minutes;
+        //deadline = _start + _duration * 1 days;
+        deadline = start + _duration * 1 minutes;
     }   
     
     /* The function without name is the default function that is called whenever anyone sends funds to a contract */
