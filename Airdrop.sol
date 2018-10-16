@@ -1,37 +1,596 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xd49d8d5272ff352beeb46f73ee5c8e244929b0f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x4d4377ef856e89cbf76f8e994ab3065445d82f4f
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-interface UNetworkToken {
-    function transfer(address _to, uint256 _value) public;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) return 0;
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
 }
 
 
-contract AirDrop {
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
 
-	UNetworkToken UUU;
-	address public owner;
+    uint256 public totalSupply;
 
-	address[] public recipients = [0xF2faAf764a1242f9A3aEF4B16c51a94866e72736, 0x8b3cca78ef51036e79d36fe2c347063718be0f3a, 0xC936d7d520797E709769Be29Bb7C37416E22Cc1a, 0x95168D0562546B2cdf2f7E9E4d495F0104E6913E, 0x5cba194c8195E3eD3Af90fD966f7e85D271E327e, 0x092f1720a51efdbfc931f6feb45eafeae69a0e24, 0x5f69e771bbd486ab44ff2cd8f00da487506fc1c2, 0xa6870754C96b0c910ceBB672948e7D950e1881df, 0x5f69e771bbd486ab44ff2cd8f00da487506fc1c2, 0xB536f4a39601f8Aa1181788dE9E6512b6bF84b2D, 0x4f19a1323d162f43fb711e8940e38c1b498ab4ea, 0xfBC359D242d3932874fcf56fa9d9441deA253519, 0x93a6ddf4340247a1d63ebc7435740788da735ee3, 0xfA712645B206B5c98E51e73a3A47fde9D0a2790c, 0xdD52a6Cf8184FD79F87d4Cc4517ED81880158f89, 0x60005b2c5e07418454E0abbdF15d4bDF89c223F5, 0x9897f36A653a6120dd873af6F1Eaebc9ea8EE102, 0xA7b541e73bce8e5c54B836A9421AbBe987BA14fB, 0xfaACca5Fc2a50e42c7766F47224afb6039165B68, 0x5433C0b207498222e7C9620014FF83eB3A0200B7, 0x5ae2D866502cc3710CDbFb8a777BE45c3C6Ce71E, 0xe3095b09c20BaC630505D112CAE90C63d87a53F9, 0xC5aE48f1D214C36f4694d92B4aCBE75a058D4cfd, 0x8Bd4De5649B8F66D13863aF0C3ADf236C43fee8A, 0x22C0170Eb6D9d1584577365f5D998B7013d4A1F8, 0x16156E96Df6eb9288af81D054ffa1Ad0fbdf9E1F, 0xFD792c7A456Cb7EFF171162C3D1065c5bCEf0626, 0x7a44E6FbAEc596A29D33812936235446F4A1914b, 0xd58AEA894e84C36e31fD95b6961BE41982248339, 0x97a9ecca6aae169e268a0c4b9de5c337f0a1bf28, 0xAC4683c18b1411E800A0846dACAF2ce3338138b6, 0x4E0AEEd4d4dfF270C4E55C5B2e63D287A9B52239, 0x4B716ffeE0e5bC9B7166c2C50707E46b0Dc4f582, 0x38bEAfdB8Ff5C30BAB350b5056344cA317fD561B, 0xba3CbE5543711Dd0A3738e8e77904d7b6a6Eb648, 0x97f68aC10fC9EA64dfde84a86c9f270402D33b81, 0x82Ee6Fb50Beb746427e70f3C2F81B8F43D2b26f1, 0xc0724eA6D70FB600D0231646976CA80104a18002, 0x5ebE6914e5457AB8e16457CdB4277254ba6fC122, 0xFE259F787cF6e2B168015ae4E79794C8E6377c03, 0xFe9401c32b859A2496B1479399E2119bD3EFB403, 0x037819d479875490Fd4450EeB011416d75dDc74E, 0xD31c92C091F62BA6057034544191b56f0f51A22a, 0xb2DBe4Ec53A8Ad62DC8B8ef5d91FdE1c320de88E, 0xd6A884870456aE7d67dc886468c5C689abCDd1C1, 0xcb700331ec50b8deDb4A8C7e0a35ea09f90462E0, 0xfAd1DDf91439da87De8Cccf2C2b74e278a723a89, 0xa6Fe12D6f968a3a1628D2bD3a267217f47481E59, 0xCca48AA0243088Fb59cdF283D59054A8feD90E5A, 0xff59EFB99162aEd2bb9bA402b3cb3923745cA84F, 0x033599a2ACda11C9ebB422d4A26E60288e22263A, 0xBE76645B387946cA0d91A2C3321bbC276081f025, 0x38a2C5Fb895bE61a9F17C54fE73b840cD3167289, 0xcd049a5eeb063f47dd4a13b90ccd6c71c1b72998, 0xde21aFc49A8506C0fA9DcCB8A0F6BBD366A92446, 0xb5153C64aC416f506199c9D7022C70966940e4aa, 0x6E9197b05a65f4796D185212Ac301FeA093DE28c, 0xEDde17CAfB0aB34D869c3A5767F99386954710C0, 0x1CE1B6baFeCab7133C93Ee34E76DEaf9737C317A, 0x0cbBB4522d1F43b8e7eEa31d78A926Fc9141a5D4, 0xF8E4862B9d31b122eA4e61Fc00cE98098c307d6b, 0x88dEf01a8c8F2e8f3016D09BAD1F92E42c046Af8, 0x2aC40571e39868C72d1Df1ff1B9f0840c38C6194, 0xE913c0f42fB60F85Bd43bDdDAf4e004135eF318c];
-	uint256[] public values = [1500, 1500, 1500, 1500, 1500, 1500, 1500, 5000, 1500, 1500, 2500, 1500, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 3500, 2000, 2000, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 2500, 1500, 1500, 2000, 2000, 3500, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 3500, 3500, 3500, 3500, 3500, 3500, 3500, 3500, 3500, 6500, 1500, 1500, 1500, 2500, 1500, 1500, 1500, 1500, 1500, 1500, 1500];
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-	function AirDrop() public {
-		require(values.length == recipients.length);
-		UUU = UNetworkToken(0x3543638eD4a9006E4840B105944271Bcea15605D);
-		owner = msg.sender;
-	}
+}
 
-	function drop() public {
-		require(msg.sender == owner);	
-	    for (uint256 i = 0; i < recipients.length; i++) {
-	    	UUU.transfer(recipients[i], values[i] * 10 ** 18);
-	    }
-	}
 
-	// in case of balance surplus. Return remaining UUU.
-	function refund() public {
-		require (msg.sender == owner);
-		UUU.transfer(owner, 100000 * 10**18);
-	}
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+}
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+
+    /**
+     * @dev transfer token for a specified address
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Gets the balance of the specified address.
+     * @param _owner The address to query the the balance of.
+     * @return An uint256 representing the amount owned by the passed address.
+     */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+
+    address public owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+}
+
+
+/**
+ * @title Standard ERC20 token
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+    mapping (address => mapping (address => uint256)) internal allowed;
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+    */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        }
+        else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+}
+
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+
+    bool public paused = false;
+
+    event Pause();
+    event Unpause();
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        Pause();
+    }
+
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        Unpause();
+    }
+
+}
+
+
+/**
+ * @title Pausable token
+ *
+ * @dev StandardToken modified with pausable transfers.
+ **/
+contract PausableToken is StandardToken, Pausable {
+
+    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+        return super.approve(_spender, _value);
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+        return super.increaseApproval(_spender, _addedValue);
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+        return super.decreaseApproval(_spender, _subtractedValue);
+    }
+
+}
+
+
+/**
+ * @title Capped Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+contract CappedMintableToken is PausableToken {
+
+    uint256 public hard_cap;
+    // List of agents that are allowed to create new tokens
+    mapping (address => bool) mintAgents;
+
+    event MintingAgentChanged(address addr, bool state);
+    event Mint(address indexed to, uint256 amount);
+
+    /*
+     * @dev Modifier to check if `msg.sender` is an agent allowed to create new tokens
+     */
+    modifier onlyMintAgent() {
+        require(mintAgents[msg.sender]);
+        _;
+    }
+
+    /**
+     * @dev Owner can allow a crowdsale contract to mint new tokens
+     */
+    function setMintAgent(address addr, bool state) onlyOwner whenNotPaused  public {
+        mintAgents[addr] = state;
+        MintingAgentChanged(addr, state);
+    }
+
+    /**
+     * @dev Function to mint tokens
+     * @param _to The address that will receive the minted tokens.
+     * @param _amount The amount of tokens to mint.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address _to, uint256 _amount) onlyMintAgent whenNotPaused public returns (bool) {
+        require (totalSupply.add(_amount) <= hard_cap);
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
+        return true;
+    }
+
+    /**
+     * @dev Gets if an specified address is allowed to mint tokens
+     * @param _user The address to query if is allowed to mint tokens
+     * @return An bool representing if the address passed is allowed to mint tokens 
+     */
+    function isMintAgent(address _user) public view returns (bool state) {
+        return mintAgents[_user];
+    }
+
+}
+
+
+/**
+ * @title Platform Token
+ * @dev Contract that allows the Genbby platform to work properly and being scalable
+ */
+contract PlatformToken is CappedMintableToken {
+
+    mapping (address => bool) trustedContract;
+
+    event TrustedContract(address addr, bool state);
+
+    /**
+     * @dev Modifier that check that `msg.sender` is an trusted contract
+     */
+    modifier onlyTrustedContract() {
+        require(trustedContract[msg.sender]);
+        _;
+    }
+
+    /**
+     * @dev The owner can set a contract as a trusted contract
+     */
+    function setTrustedContract(address addr, bool state) onlyOwner whenNotPaused public {
+        trustedContract[addr] = state;
+        TrustedContract(addr, state);
+    }
+
+    /**
+     * @dev Function that trusted contracts can use to perform any buying that users do in the platform
+     */
+    function buy(address who, uint256 amount) onlyTrustedContract whenNotPaused public {
+        require (balances[who] >= amount);
+        balances[who] = balances[who].sub(amount);
+        totalSupply = totalSupply.sub(amount);
+    }
+
+    /**
+     * @dev Function to check if a contract is marked as a trusted one
+     * @param _contract The address of the contract to query of
+     * @return A bool indicanting if the passed contract is considered as a trusted one
+     */
+    function isATrustedContract(address _contract) public view returns (bool state) {
+        return trustedContract[_contract];
+    }
+
+}
+
+
+/**
+ * @title UpgradeAgent
+ * @dev Interface of a contract that transfers tokens to itself
+ * Inspired by Lunyr
+ */
+contract UpgradeAgent {
+
+    function upgradeBalance(address who, uint256 amount) public;
+    function upgradeAllowance(address _owner, address _spender, uint256 amount) public;
+    function upgradePendingExchange(address _owner, uint256 amount) public;
+
+}
+
+
+/**
+ * @title UpgradableToken
+ * @dev Allows users to transfers their tokens to a new contract when the token is paused and upgrading 
+ * It is like a guard for unexpected situations 
+ */
+contract UpgradableToken is PlatformToken {
+
+    // The next contract where the tokens will be migrated
+    UpgradeAgent public upgradeAgent;
+    uint256 public totalSupplyUpgraded;
+    bool public upgrading = false;
+
+    event UpgradeBalance(address who, uint256 amount);
+    event UpgradeAllowance(address owner, address spender, uint256 amount);
+    event UpgradePendingExchange(address owner, uint256 value);
+    event UpgradeStateChange(bool state);
+
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is upgrading
+     */
+    modifier whenUpgrading() {
+        require(upgrading);
+        _;
+    }
+
+    /**
+     * @dev Function that allows the `owner` to set the upgrade agent
+     */
+    function setUpgradeAgent(address addr) onlyOwner public {
+        upgradeAgent = UpgradeAgent(addr);
+    }
+
+    /**
+     * @dev called by the owner when token is paused, triggers upgrading state
+     */
+    function startUpgrading() onlyOwner whenPaused public {
+        upgrading = true;
+        UpgradeStateChange(true);
+    }
+
+    /**
+     * @dev called by the owner then token is paused and upgrading, returns to a non-upgrading state
+     */
+    function stopUpgrading() onlyOwner whenPaused whenUpgrading public {
+        upgrading = false;
+        UpgradeStateChange(false);
+    }
+
+    /**
+     * @dev Allows anybody to upgrade tokens from these contract to the new one
+     */
+    function upgradeBalanceOf(address who) whenUpgrading public {
+        uint256 value = balances[who];
+        require (value != 0);
+        balances[who] = 0;
+        totalSupply = totalSupply.sub(value);
+        totalSupplyUpgraded = totalSupplyUpgraded.add(value);
+        upgradeAgent.upgradeBalance(who, value);
+        UpgradeBalance(who, value);
+    }
+
+    /**
+     * @dev Allows anybody to upgrade allowances from these contract to the new one
+     */
+    function upgradeAllowance(address _owner, address _spender) whenUpgrading public {
+        uint256 value = allowed[_owner][_spender];
+        require (value != 0);
+        allowed[_owner][_spender] = 0;
+        upgradeAgent.upgradeAllowance(_owner, _spender, value);
+        UpgradeAllowance(_owner, _spender, value);
+    }
+
+}
+
+/**
+ * @title Genbby Token
+ * @dev Token setting
+ */
+contract GenbbyToken is UpgradableToken {
+
+    string public contactInformation;
+    string public name = "Genbby Token";
+    string public symbol = "GG";
+    uint256 public constant decimals = 18;
+    uint256 public constant factor = 10 ** decimals;
+
+    event UpgradeTokenInformation(string newName, string newSymbol);
+
+    function GenbbyToken() public {
+        hard_cap = (10 ** 9) * factor;
+        contactInformation = 'https://genbby.com/';
+    }
+
+    function setTokenInformation(string _name, string _symbol) onlyOwner public {
+        name = _name;
+        symbol = _symbol;
+        UpgradeTokenInformation(name, symbol);
+    }
+
+    function setContactInformation(string info) onlyOwner public {
+         contactInformation = info;
+    }
+
+    /*
+     * @dev Do not allow direct deposits
+     */
+    function () public payable {
+        revert();
+    }
+
+}
+
+/**
+ * @title Airdrop
+ * @dev Airdrop smart contract used by https://ico.genbby.com/
+ */
+contract Airdrop is Pausable {
+
+    using SafeMath for uint256;
+
+    GenbbyToken public token;
+
+    uint256 public tokens_sold;
+    uint256 public constant decimals = 18;
+    uint256 public constant factor = 10 ** decimals;
+    uint256 public constant total_tokens = 500000 * factor; // 1% 5 % hard cap
+
+    event Drop(address to, uint256 amount);
+
+    /**
+     * @dev The `owner` can set the token that uses the crowdsale
+     */
+    function setToken(address tokenAddress) onlyOwner public {
+        token = GenbbyToken(tokenAddress);
+    }
+
+    /**
+     * @dev Function to give tokens to Airdrop participants
+     * @param _to The address that will receive the tokens
+     * @param _amount The amount of tokens to give
+     * @return A boolean that indicates if the operation was successful
+     */
+    function drop(address _to, uint256 _amount) onlyOwner whenNotPaused public returns (bool) {
+        require (tokens_sold.add(_amount) <= total_tokens);
+        token.mint(_to, _amount);
+        tokens_sold = tokens_sold.add(_amount);
+        Drop(_to, _amount);
+        return true;
+    }
+
+    /*
+     * @dev Do not allow direct deposits
+     */
+    function () public payable {
+        revert();
+    }
+
 }
