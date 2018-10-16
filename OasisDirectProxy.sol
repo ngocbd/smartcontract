@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OasisDirectProxy at 0x8bb69cb26480d452d4d2254f59ccd0b9953ee9b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OasisDirectProxy at 0xa0fefbecb3f5c36b683d03f280f2294e4b0eb5f4
 */
 /*   
  *    Exodus adaptation of OasisDirectProxy by MakerDAO.
  *    Edited by Konnor Klashinsky (kklash).
- *    Work in progress, first Mainnet iteration.
+ *    Work in progress; Second Mainnet iteration.
  */
 pragma solidity ^0.4.24;
 
@@ -61,11 +61,67 @@ contract DSMath {
     }
 }
 
+
+contract DSAuthority {
+    function canCall(
+        address src, address dst, bytes4 sig
+    ) public view returns (bool);
+}
+
+contract DSAuthEvents {
+    event LogSetAuthority (address indexed authority);
+    event LogSetOwner     (address indexed owner);
+}
+
+contract DSAuth is DSAuthEvents {
+    DSAuthority  public  authority;
+    address      public  owner;
+
+    constructor() public {
+        owner = msg.sender;
+        emit LogSetOwner(msg.sender);
+    }
+
+    function setOwner(address owner_)
+        public
+        auth
+    {
+        owner = owner_;
+        emit LogSetOwner(owner);
+    }
+
+    function setAuthority(DSAuthority authority_)
+        public
+        auth
+    {
+        authority = authority_;
+        emit LogSetAuthority(authority);
+    }
+
+    modifier auth {
+        require(isAuthorized(msg.sender, msg.sig));
+        _;
+    }
+
+    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
+        if (src == address(this)) {
+            return true;
+        } else if (src == owner) {
+            return true;
+        } else if (authority == DSAuthority(0)) {
+            return false;
+        } else {
+            return authority.canCall(src, this, sig);
+        }
+    }
+}
+
 contract OtcInterface {
     function sellAllAmount(address, uint, address, uint) public returns (uint);
     function buyAllAmount(address, uint, address, uint) public returns (uint);
     function getPayAmount(address, address, uint) public constant returns (uint);
 }
+
 
 contract TokenInterface {
     function balanceOf(address) public returns (uint);
@@ -77,33 +133,16 @@ contract TokenInterface {
     function withdraw(uint) public;
 }
 
-contract Control {
-/* TODO: convert to DSAuth if needed */
-    address owner;
-    
-    modifier auth {
-         require(msg.sender == owner);
-         _; /* func body goes here */
-    }
-
-    function withdrawTo(address _to, uint amt) public auth {
-        _to.transfer(amt);
-    }
-    
-    function withdrawTokenTo(TokenInterface token, address _to, uint amt) public auth {
-        require(token.transfer(_to, amt));
-    }
-
+contract Mortal is DSAuth {
     function kill() public auth {
         selfdestruct(owner);
     }
 }
 
-contract OasisDirectProxy is Control, DSMath {
+contract OasisDirectProxy is Mortal, DSMath {
     uint feePercentageWad;
     
     constructor() public {
-        owner = msg.sender;
         feePercentageWad = 0.01 ether; /* set initial fee to 1% */
     }
 
@@ -114,7 +153,7 @@ contract OasisDirectProxy is Control, DSMath {
 
     function takeFee(uint amt) public view returns (uint fee, uint remaining) {
        /* shave the fee off of an amount */
-        fee = wmul(amt*WAD, feePercentageWad) / WAD;
+        fee = mul(amt, feePercentageWad) / WAD;
         remaining = sub(amt, fee);
     }
     
@@ -122,6 +161,10 @@ contract OasisDirectProxy is Control, DSMath {
         wethToken.withdraw(wethAmt);
         require(msg.sender.call.value(wethAmt)());
     }
+    
+    /* 
+     *   Public functions start here
+     */
     
     function sellAllAmount(
         OtcInterface otc,
@@ -190,8 +233,9 @@ contract OasisDirectProxy is Control, DSMath {
             payToken.approve(otc, uint(-1));
         } 
         payAmt = otc.buyAllAmount(buyToken, buyAmt, payToken, payAmtNow);
-        require(buyToken.transfer(msg.sender, min(buyAmt, buyToken.balanceOf(this)))); // To avoid rounding issues we check the minimum value
-                                /* TODO: Find out what this is for, before touching it */
+        (uint feeAmt, uint buyAmtRemainder) = takeFee(min(buyAmt, buyToken.balanceOf(this)));
+        require(buyToken.transfer(owner, feeAmt)); /* fee is taken */
+        require(buyToken.transfer(msg.sender, buyAmtRemainder)); // To avoid rounding issues we check the minimum value
     }
 
     function buyAllAmountPayEth(
@@ -206,8 +250,10 @@ contract OasisDirectProxy is Control, DSMath {
             wethToken.approve(otc, uint(-1));
         }
         wethAmt = otc.buyAllAmount(buyToken, buyAmt, wethToken, msg.value);
-        require(buyToken.transfer(msg.sender, min(buyAmt, buyToken.balanceOf(this)))); // To avoid rounding issues we check the minimum value
-                                                       /* TODO: Find out what this is for, before touching it */
+        (uint feeAmt, uint finalRemainder) = takeFee(min(buyAmt, buyToken.balanceOf(this))); 
+        // To avoid rounding issues we check the minimum value
+        require(buyToken.transfer(owner, feeAmt)); /* fee is taken */
+        require(buyToken.transfer(msg.sender, finalRemainder)); 
         withdrawAndSend(wethToken, sub(msg.value, wethAmt));
     }
 
@@ -230,5 +276,5 @@ contract OasisDirectProxy is Control, DSMath {
         withdrawAndSend(wethToken, wethAmtRemainder);
     }
 
-    function() public payable {}
+    function() public payable {} /* fallback function */
 }
