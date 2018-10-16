@@ -1,54 +1,50 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BullionExchangeToken at 0x84e8a50ca43e8f26094799ba60705475cf2b9832
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BullionExchangeToken at 0x57ed8d567de5552275c03d7c1f449a34f07cc79d
 */
-pragma solidity ^ 0.4 .2;
-contract BullionExchangeToken  {
+contract BullionExchangeToken {
+    /* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
+    uint256 public initialSupply;
     uint256 public totalSupply;
-    address public owner;
-    address[] public users;
-    mapping(address => uint256) public balanceOf;
-    string public filehash;
-    mapping(address => mapping(address => uint256)) public allowance;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    modifier onlyOwner() {
-        if (owner != msg.sender) {
-            throw;
-        } else {
-            _;
-        }
-    }
 
-    function BullionExchangeToken () {
-        owner = 0xcef47255b0a73f23f3bc54050a52fcabf2cc323d;
-        address firstOwner = owner;
-        balanceOf[firstOwner] = 100000000000000000;
-        totalSupply = 100000000000000000;
-        name = 'BullionExchangeToken ';
-        symbol = 'eBLX';
-        filehash = '';
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+  
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function BullionExchangeToken() {
+
+         initialSupply = 100000000000000000;
+         name ="BullionExchangeToken";
         decimals = 8;
-        msg.sender.send(msg.value);
+         symbol = "eBLX";
+        
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+                                   
     }
 
+    /* Send coins */
     function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+      
     }
 
-    function approve(address _spender, uint256 _value) returns(bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
+   
 
-    function collectExcess() onlyOwner {
-    }
+    
 
-    function() {}
+   
+
+    /* This unnamed function is called whenever someone tries to send ether to it */
+    function () {
+        throw;     // Prevents accidental sending of ether
+    }
 }
