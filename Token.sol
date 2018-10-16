@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xdf4b22695eeb4a7a1cf9a42162285ce782b8427a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x623afe103fb8d189b56311e4ce9956ec0989b412
 */
 pragma solidity ^0.4.18;
 
@@ -197,7 +197,7 @@ contract Token is TokenI {
     using SafeMath for uint256;
 
     string public techProvider = "WeYii Tech";
-    //string public officialSite = "http://www.beautybloc.io";
+    string public officialSite = "http://www.beautybloc.io";
 
     address public owner;
 
