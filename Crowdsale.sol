@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa987a1fb978abb7c17201a84efbe828d5c66264d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xd8c3427412911b39e184cd47f1d58dd8c85e270d
 */
 pragma solidity ^0.4.18;
 
@@ -155,7 +155,7 @@ contract Crowdsale is Ownable{
     rate = 5000000000000000; // price in wei
     wallet = 0xF615Ac471E066b5ae4BD211CC5044c7a31E89C4e;
     token = DragonToken(0x814F67fA286f7572B041D041b1D99b432c9155Ee);
-    tokenReserve = 0xF615Ac471E066b5ae4BD211CC5044c7a31E89C4e;
+    tokenReserve = 0xdd870fa1b7c4700f2bd7f44238821c26f7392148;
   }
 
   // fallback function can be used to buy tokens
@@ -230,7 +230,7 @@ contract Crowdsale is Ownable{
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner].div(100000000);
+    return balances[_owner];
   }
   
 
