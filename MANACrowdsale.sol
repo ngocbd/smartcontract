@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MANACrowdsale at 0x5019066b46ae4b8673085b609be366400f53871b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MANACrowdsale at 0xd9c7a2ccc6fb89dc0528a98143fc7ae8ddeebc39
 */
 pragma solidity ^0.4.11;
 
@@ -640,7 +640,7 @@ contract MANACrowdsale is WhitelistedCrowdsale, CappedCrowdsale, FinalizableCrow
         CappedCrowdsale(86206 ether)
         WhitelistedCrowdsale()
         FinalizableCrowdsale()
-        Crowdsale(4170650, 4170680, 12083, 0x000fb8369677b3065de5821a86bc9551d5e5eab9)
+        Crowdsale(4170600, 4202097, 12083, 0x000fb8369677b3065de5821a86bc9551d5e5eab9)
     {
         initialRate = 12083;
         endRate = 7250;
