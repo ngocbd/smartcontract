@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTorch at 0xc67a3da58b43b0652a22c6f50826c9ebe7b78e49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTorch at 0xf11ba5135e3b02d01b149a410e689833536f208a
 */
 // CryptoTorch Source code
 // copyright 2018 CryptoTorch <https://cryptotorch.io>
@@ -144,25 +144,6 @@ contract ReentrancyGuard {
 
 
 /**
- * DateTime Contract Interface
- * see https://github.com/pipermerriam/ethereum-datetime
- * Live Contract Address: 0x1a6184CD4C5Bea62B0116de7962EE7315B7bcBce
- */
-contract DateTime {
-    function getMonth(uint timestamp) public pure returns (uint8);
-    function getDay(uint timestamp) public pure returns (uint8);
-}
-
-
-/**
- * OwnTheDay Contract Interface
- */
-contract OwnTheDayContract {
-    function ownerOf(uint256 _tokenId) public view returns (address);
-}
-
-
-/**
  * @title CryptoTorchToken
  */
 contract CryptoTorchToken {
@@ -184,7 +165,7 @@ contract CryptoTorchToken {
 
 
 /**
- * @title Crypto-Torch Contract
+ * @title Crypto-Torch Contract v1.2
  */
 contract CryptoTorch is Pausable, ReentrancyGuard {
     using SafeMath for uint256;
@@ -219,46 +200,37 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
         string coords;
         uint256 dividends; // earnings waiting to be paid out
         uint256 profits;   // earnings already paid out
-        bool champion;     // ran the torch while owning the day?
     }
 
     //
     // Payout Structure
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //
-    //  Dev Fee               - 5%
-    //  Token Pool            - 75%
-    //    - Referral                - 10%
-    //  Remaining             - 20%
-    //    - Day Owner               - 10-25%
-    //    - Remaining               - 75-90%
-    //        - Last Runner             - 60%
-    //        - Second Last Runner      - 30%
-    //        - Third Last Runner       - 10%
+    //  Special Olympics Donations  - 10%
+    //  Token Pool                  - 90%
+    //    - Referral                    - 10% of Token Pool
     //
 
     //
     // Player Data
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //
+    bool private migrationFinished = false;
     uint8 public constant maxLeaders = 3; // Gold, Silver, Bronze
 
     uint256 private _lowestHighPrice;
     uint256 private _lowestHighMiles;
+    uint256 public totalDistanceRun;
     uint256 public whaleIncreaseLimit = 2 ether;
     uint256 public whaleMax = 20 ether;
 
     HighPrice[maxLeaders] private _highestPrices;
     HighMileage[maxLeaders] private _highestMiles;
 
-    address[maxLeaders] public torchRunners;
-    address internal donationsReceiver_;
+    address public torchRunner;
+    address public donationsReceiver_;
     mapping (address => PlayerData) private playerData_;
 
-    DateTime internal DateTimeLib_;
     CryptoTorchToken internal CryptoTorchToken_;
-    OwnTheDayContract internal OwnTheDayContract_;
-    string[3] internal holidayMap_;
 
     //
     // Modifiers
@@ -277,34 +249,61 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
         _;
     }
 
+    modifier onlyDuringMigration() {
+        require(!migrationFinished);
+        _;
+    }
+
     //
     // Contract Initialization
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //
-    /**
-     * Set the Owner to the First Torch Runner
-     */
-    function CryptoTorch() public {
-        torchRunners[0] = msg.sender;
-    }
+    function CryptoTorch() public {}
 
     /**
      * Initializes the Contract Dependencies as well as the Holiday Mapping for OwnTheDay.io
      */
-    function initialize(address _dateTimeAddress, address _tokenAddress, address _otdAddress) public onlyOwner {
-        DateTimeLib_ = DateTime(_dateTimeAddress);
+    function initialize(address _torchRunner, address _tokenAddress) public onlyOwner {
+        torchRunner = _torchRunner;
         CryptoTorchToken_ = CryptoTorchToken(_tokenAddress);
-        OwnTheDayContract_ = OwnTheDayContract(_otdAddress);
-        holidayMap_[0] = "10000110000001100000000000000101100000000011101000000000000011000000000000001001000010000101100010100110000100001000110000";
-        holidayMap_[1] = "10111000100101000111000000100100000100010001001000100000000010010000000001000000110000000000000100000000010001100001100000";
-        holidayMap_[2] = "01000000000100000101011000000110000001100000000100000000000011100001000100000000101000000000100000000000000000010011000001";
     }
 
     /**
-     * Sets the external contract address of the DateTime Library
+     * Migrate Leader Prices
      */
-    function setDateTimeLib(address _dateTimeAddress) public onlyOwner {
-        DateTimeLib_ = DateTime(_dateTimeAddress);
+    function migratePriceLeader(uint8 _leaderIndex, address _leaderAddress, uint256 _leaderPrice) public onlyOwner onlyDuringMigration {
+        require(_leaderIndex >= 0 && _leaderIndex < maxLeaders);
+        _highestPrices[_leaderIndex].owner = _leaderAddress;
+        _highestPrices[_leaderIndex].price = _leaderPrice;
+        if (_leaderIndex == maxLeaders-1) {
+            _lowestHighPrice = _leaderPrice;
+        }
+    }
+
+    /**
+     * Migrate Leader Miles
+     */
+    function migrateMileageLeader(uint8 _leaderIndex, address _leaderAddress, uint256 _leaderMiles) public onlyOwner onlyDuringMigration {
+        require(_leaderIndex >= 0 && _leaderIndex < maxLeaders);
+        _highestMiles[_leaderIndex].owner = _leaderAddress;
+        _highestMiles[_leaderIndex].miles = _leaderMiles;
+        if (_leaderIndex == maxLeaders-1) {
+            _lowestHighMiles = _leaderMiles;
+        }
+    }
+
+    /**
+     *
+     */
+    function finishMigration() public onlyOwner onlyDuringMigration {
+        migrationFinished = true;
+    }
+
+    /**
+     *
+     */
+    function isMigrationFinished() public view returns (bool) {
+        return migrationFinished;
     }
 
     /**
@@ -315,14 +314,8 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
     }
 
     /**
-     * Sets the external contract address of OwnTheDay.io
-     */
-    function setOwnTheDayContract(address _otdAddress) public onlyOwner {
-        OwnTheDayContract_ = OwnTheDayContract(_otdAddress);
-    }
-
-    /**
      * Set the Contract Donations Receiver
+     * - Set to the Special Olympics Donations Address
      */
     function setDonationsReceiver(address _receiver) public onlyOwner {
         donationsReceiver_ = _receiver;
@@ -342,56 +335,10 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
         whaleIncreaseLimit = _limit;
     }
 
-    /**
-     * Updates the Holiday Mappings in case of updates/changes at OwnTheDay.io
-     */
-    function updateHolidayState(uint8 _listIndex, string _holidayMap) public onlyOwner {
-        require(_listIndex >= 0 && _listIndex < 3);
-        holidayMap_[_listIndex] = _holidayMap;
-    }
-
     //
     // Public Functions
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //
-    /**
-     * Checks if a specific day is a holiday at OwnTheDay.io
-     */
-    function isHoliday(uint256 _dayIndex) public view returns (bool) {
-        require(_dayIndex >= 0 && _dayIndex < 366);
-        return (getHolidayByIndex_(_dayIndex) == 1);
-    }
-
-    /**
-     * Checks if Today is a holiday at OwnTheDay.io
-     */
-    function isHolidayToday() public view returns (bool) {
-        uint256 _dayIndex = getDayIndex_(now);
-        return (getHolidayByIndex_(_dayIndex) == 1);
-    }
-
-    /**
-     * Gets the Day-Index of Today at OwnTheDay.io
-     */
-    function getTodayIndex() public view returns (uint256) {
-        return getDayIndex_(now);
-    }
-
-    /**
-     * Gets the Owner Name of the Day at OwnTheDay.io
-     */
-    function getTodayOwnerName() public view returns (string) {
-        address dayOwner = OwnTheDayContract_.ownerOf(getTodayIndex());
-        return playerData_[dayOwner].name; // Get Name from THIS contract
-    }
-
-    /**
-     * Gets the Owner Address of the Day at OwnTheDay.io
-     */
-    function getTodayOwnerAddress() public view returns (address) {
-        return OwnTheDayContract_.ownerOf(getTodayIndex());
-    }
-
     /**
      * Sets the Nickname for an Account Address
      */
@@ -439,13 +386,6 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
     }
 
     /**
-     * Gets the Note for an Account Address
-     */
-    function isChampionAccount(address _playerAddress) public view returns (bool) {
-        return playerData_[_playerAddress].champion;
-    }
-
-    /**
      * Take the Torch!
      *  The Purchase Price is Paid to the Previous Torch Holder, and is also used
      *  as the Purchasers Mileage Multiplier
@@ -455,8 +395,8 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
     }
 
     /**
-     * Do not make payments directly to this contract (unless it is a donation! :)
-     *  - payments made directly to the contract do not receive tokens.  Tokens
+     * Payments made directly to this contract are treated as direct Donations to the Special Olympics.
+     *  - Note: payments made directly to the contract do not receive tokens.  Tokens
      *    are only available via "takeTheTorch()" or through the Dapp at https://cryptotorch.io
      */
     function() payable public {
@@ -559,7 +499,7 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
      * Function for the frontend to dynamically retrieve the price scaling of buy orders.
      */
     function calculateTokensReceived(uint256 _etherToSpend) public view returns(uint256) {
-        uint256 forTokens = _etherToSpend.sub(_etherToSpend.div(4));
+        uint256 forTokens = _etherToSpend.sub(_etherToSpend.div(10)); // 90% for Tokens
         return CryptoTorchToken_.calculateTokensReceived(forTokens);
     }
 
@@ -619,82 +559,33 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
      */
     function takeTheTorch_(uint256 _amountPaid, address _takenBy, address _referredBy) internal antiWhalePrice(_amountPaid) returns (uint256) {
         require(_takenBy != address(0));
-        require(_amountPaid >= 5 finney);
-        require(_takenBy != torchRunners[0]); // Torch must be passed on
+        require(_amountPaid >= 1 finney);
+        require(_takenBy != torchRunner); // Torch must be passed on
         if (_referredBy == address(this)) { _referredBy = address(0); }
 
-        // Pass the Torch
-        address previousLast = torchRunners[2];
-        torchRunners[2] = torchRunners[1];
-        torchRunners[1] = torchRunners[0];
-        torchRunners[0] = _takenBy;
-
-        // Get the Current Day Owner at OwnTheDay
-        address dayOwner = OwnTheDayContract_.ownerOf(getDayIndex_(now));
-
         // Calculate Portions
-        uint256 forDev = _amountPaid.mul(5).div(100);
-        uint256 forTokens = _amountPaid.sub(_amountPaid.div(4));
-        uint256 forPayout = _amountPaid.sub(forDev).sub(forTokens);
-        uint256 forDayOwner = calculateDayOwnerCut_(forPayout);
-        if (dayOwner == _takenBy) {
-            forTokens = forTokens.add(forDayOwner);
-            forPayout = _amountPaid.sub(forDev).sub(forTokens);
-            playerData_[_takenBy].champion = true;
-        } else {
-            forPayout = forPayout.sub(forDayOwner);
-        }
+        uint256 forDonations = _amountPaid.div(10);
+        uint256 forTokens = _amountPaid.sub(forDonations);
 
-        // Fire Events
-        onTorchPassed(torchRunners[1], _takenBy, _amountPaid);
+        // Pass the Torch
+        onTorchPassed(torchRunner, _takenBy, _amountPaid);
+        torchRunner = _takenBy;
 
         // Grant Mileage Tokens to Torch Holder
-        uint256 mintedTokens = CryptoTorchToken_.mint.value(forTokens)(_takenBy, forTokens, _referredBy);
+        uint256 mintedTokens = CryptoTorchToken_.mint.value(forTokens)(torchRunner, forTokens, _referredBy);
+        if (totalDistanceRun < CryptoTorchToken_.totalSupply()) {
+            totalDistanceRun = CryptoTorchToken_.totalSupply();
+        }
 
         // Update LeaderBoards
-        updateLeaders_(_takenBy, _amountPaid);
+        updateLeaders_(torchRunner, _amountPaid);
 
         // Handle Payouts
-        handlePayouts_(forDev, forPayout, forDayOwner, _takenBy, previousLast, dayOwner);
+        playerData_[donationsReceiver_].profits = playerData_[donationsReceiver_].profits.add(forDonations);
+        donationsReceiver_.transfer(forDonations);
         return mintedTokens;
     }
 
-    /**
-     * Payouts to the last 3 Torch Runners, the Day Owner & Dev
-     */
-    function handlePayouts_(uint256 _forDev, uint256 _forPayout, uint256 _forDayOwner, address _takenBy, address _previousLast, address _dayOwner) internal {
-        uint256[] memory runnerPortions = new uint256[](3);
-
-        // Determine Runner Portions
-        //  Note, torch has already been passed, so torchRunners[0]
-        //  is the current torch runner
-        if (_previousLast != address(0)) {
-            runnerPortions[2] = _forPayout.mul(10).div(100);
-        }
-        if (torchRunners[2] != address(0)) {
-            runnerPortions[1] = _forPayout.mul(30).div(100);
-        }
-        runnerPortions[0] = _forPayout.sub(runnerPortions[1]).sub(runnerPortions[2]);
-
-        // Update Player Dividends
-        playerData_[_previousLast].dividends = playerData_[_previousLast].dividends.add(runnerPortions[2]);
-        playerData_[torchRunners[2]].dividends = playerData_[torchRunners[2]].dividends.add(runnerPortions[1]);
-        playerData_[torchRunners[1]].dividends = playerData_[torchRunners[1]].dividends.add(runnerPortions[0]);
-
-        // Track Profits
-        playerData_[owner].profits = playerData_[owner].profits.add(_forDev);
-        if (_dayOwner != _takenBy) {
-            playerData_[_dayOwner].profits = playerData_[_dayOwner].profits.add(_forDayOwner);
-        }
-
-        // Transfer Funds
-        //  - Transfer directly since these accounts are not, or may not be, existing
-        //    Torch-Runners and therefore cannot "exit" this contract
-        owner.transfer(_forDev);
-        if (_dayOwner != _takenBy) {
-            _dayOwner.transfer(_forDayOwner);
-        }
-    }
 
     /**
      * Withdraw the earned Torch Dividends to Ether
@@ -713,61 +604,19 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
     /**
      * Update the Medal Leader Boards
      */
-    function updateLeaders_(address _takenBy, uint256 _amountPaid) internal {
+    function updateLeaders_(address _torchRunner, uint256 _amountPaid) internal {
         // Owner can't be leader; conflict of interest
-        if (_takenBy == owner || _takenBy == donationsReceiver_) { return; }
+        if (_torchRunner == owner) { return; }
 
         // Update Highest Prices
         if (_amountPaid > _lowestHighPrice) {
-            updateHighestPrices_(_amountPaid, _takenBy);
+            updateHighestPrices_(_amountPaid, _torchRunner);
         }
 
         // Update Highest Mileage
-        uint256 tokenBalance = CryptoTorchToken_.balanceOf(_takenBy);
+        uint256 tokenBalance = CryptoTorchToken_.balanceOf(_torchRunner);
         if (tokenBalance > _lowestHighMiles) {
-            updateHighestMiles_(tokenBalance, _takenBy);
-        }
-    }
-
-    /**
-     * Calculate the amount of Payout for the Day Owner (Holidays receive extra)
-     */
-    function calculateDayOwnerCut_(uint256 _price) internal view returns (uint256) {
-        if (getHolidayByIndex_(getDayIndex_(now)) == 1) {
-            return _price.mul(25).div(100);
-        }
-        return _price.mul(10).div(100);
-    }
-
-    /**
-     * Get the Day-Index of the current Day for Mapping with OwnTheDay.io
-     */
-    function getDayIndex_(uint timestamp) internal view returns (uint256) {
-        uint8 day = DateTimeLib_.getDay(timestamp);
-        uint8 month = DateTimeLib_.getMonth(timestamp);
-        // OwnTheDay always includes Feb 29
-        uint16[12] memory offset = [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
-        return offset[month-1] + day;
-    }
-
-    /**
-     * Determine if Day-Index is a Holiday or not
-     */
-    function getHolidayByIndex_(uint256 _dayIndex) internal view returns (uint result) {
-        if (_dayIndex < 122) {
-            return getFromList_(0, _dayIndex);
-        }
-        if (_dayIndex < 244) {
-            return getFromList_(1, _dayIndex-122);
-        }
-        return getFromList_(2, _dayIndex-244);
-    }
-    function getFromList_(uint8 _idx, uint256 _dayIndex) internal view returns (uint result) {
-        result = parseInt_(uint(bytes(holidayMap_[_idx])[_dayIndex]));
-    }
-    function parseInt_(uint c) internal pure returns (uint result) {
-        if (c >= 48 && c <= 57) {
-            result = result * 10 + (c - 48);
+            updateHighestMiles_(tokenBalance, _torchRunner);
         }
     }
 
