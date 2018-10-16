@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xe98c56cbdd15b8fa7c6cf18e8b34dbfb673c2a69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x72eec7bbb905295425ad11ef02a2e0cf5416515f
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT97115' token contract
+    // 'ACT86376' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT97115
-    // Name        : ADZbuzz Naturetreat.bid Community Token
+    // Symbol      : ACT86376
+    // Name        : ADZbuzz Cryptohistory.club Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT97115";
-            name = "ADZbuzz Naturetreat.bid Community Token";
+            symbol = "ACT86376";
+            name = "ADZbuzz Cryptohistory.club Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
