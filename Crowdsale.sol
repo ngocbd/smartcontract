@@ -1,10 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x9F06b7263A24c48F284c3E25c28DfD63CEA24AC6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x8f6be35a2cacd597a58feb60d26eef827b1f4940
 */
 pragma solidity ^0.4.18;
+/**
+* @title ICO CONTRACT
+* @dev ERC-20 Token Standard Compliant
+* @author Fares A. Akel C. f.antonio.akel@gmail.com
+*/
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    
-   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
     }
@@ -12,287 +21,250 @@ library SafeMath {
     assert(c / a == b);
     return c;
   }
- 
+
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
- 
+
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
- 
+
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-  function percent(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = (a * b)/100;
-    uint256 k = a * b;
-    assert(a == 0 || k / a == b);
-    return c;
-  }
-  
 }
 
 contract Ownable {
-address public owner;
-function Ownable() public {    owner = msg.sender;  }
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public{
+    owner = msg.sender;
+  }
 
-event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-modifier onlyOwner() {    require(msg.sender == owner);    _;  }
-
-function transferOwnership(address newOwner) public onlyOwner {
-require(newOwner != address(0));
-OwnershipTransferred(owner, newOwner);
-owner = newOwner;
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
 }
 
-contract ERC20Basic {
-  uint256 public totalSupply=1000000;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
- 
-}
-contract BasicToken is ERC20Basic, Ownable {
-    using SafeMath for uint256;
-    mapping (address => uint) public Account_balances;
-    mapping (address => uint) public Account_frozen;
-    mapping (address => uint) public Account_timePayout; 
-    
-    event FrozenAccount_event(address target, uint frozen);
+contract token {
 
-
-  function transfer(address _toaddress, uint256 _value) public returns (bool) {
-    require(Account_frozen[msg.sender]==0 );
-    require(Account_frozen[_toaddress]==0 );
-    Account_timePayout[_toaddress]=Account_timePayout[msg.sender];
-    Account_balances[msg.sender] = Account_balances[msg.sender].sub(_value);
-    Account_balances[_toaddress] = Account_balances[_toaddress].add(_value);
-    Transfer(msg.sender, _toaddress, _value);
-    return true;
-  }
- 
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return Account_balances[_owner];
-     }
-  
- function BasicToken()    public {   
-     Account_balances[msg.sender] =   totalSupply;    
-          }
- }
-contract AESconstants is BasicToken {
-    string public constant name = "Adept Ethereum Stocks";
-    string public constant symbol = "AES";
-    string public constant tagline = "AES - when resoluteness is rewarded!";
-    uint32 public constant decimals = 0;
-}
-contract Freeze_contract is AESconstants {
-   
-function Freeze(address _address, uint _uint)   private {
-Account_frozen[_address] = _uint;
-FrozenAccount_event(_address, _uint);
-}    
-    
-// mapping (address => uint) public frozenAccount;
-// 0 NO FREEZE
-// 1 Freeze onlyOwner
-// 2 Freeze user    
-
-//Freeze user //this is done to freeze your account. To avoid an attack: a block of dividend payments using spam transactions.
-function user_on_freeze() public  {     require(Account_frozen[msg.sender]==0);  Freeze(msg.sender,2);   }
-function user_off_freeze() public {    require(Account_frozen[msg.sender]==2);   Freeze(msg.sender,0);   }
-//Freeze used bounty company
-
-
-function pay_Bounty(address _address, uint _sum_pay )  onlyOwner public {
-transfer(_address, _sum_pay); 
-Freeze(_address, 1);
-} 
-
-function offFreeze_Bounty(address _address) onlyOwner public { Freeze(_address, 0); }     
-   
-}
-
-
-contract AES_token_contract is Freeze_contract {
-using SafeMath for uint;
-
-uint public next_payout=now + 90 days;
-uint public payout = 0; // ?????? ??????????
-
-//--------??????? ????  
-function Take_payout() public {
-//???????? ????? ?? ???????????? ???????????
-require(Account_timePayout[msg.sender] < now);
-//???????? ???????, ???? ?????? ?????? ?????????  ?????? ??????
-if(next_payout<now){
-payout=this.balance; 
-next_payout=now + 90 days;
-}   
-
-msg.sender.transfer(payout.mul(Account_balances[msg.sender]).div(totalSupply));
-Account_timePayout[msg.sender]=next_payout;
-      }
-
-function() external payable {} 
-   
- }
-contract Hype is Ownable {
-using SafeMath for uint;  
-address public investors;
-function Hype(address _addres)  onlyOwner public {investors=_addres;    }
-    mapping (uint => address) public level;    
-    uint private price=5000000000000000;      // in wei    1000 finney in 1 ether
-    uint public step_level=0;
-    uint public step_pay=0;
-    uint private constant percent_hype=10;
-    uint private constant percent_investors=3;
-    uint private bonus=price.percent(100+percent_hype);
-    
-function() external payable {
-require(msg.value > 4999999999999999);
-uint amt_deposit=msg.value.div(price); // ?????????? ????? // ??????????? ????? ???????? ??????????
-investors.transfer(msg.value.percent(percent_investors));       //????????? ??????? ??????????
-
- for (  uint i= 0; i < amt_deposit; i++) { 
-        if (level[step_pay].send(bonus)==true){
-          step_pay++;
-                                              }
-     level[step_level]=msg.sender;
-     step_level++;
-                                              }
-                                              }
-
-   
-}
-contract BigHype is Ownable {
-using SafeMath for uint;  
-address public investors;
-function BigHype(address _addres)  onlyOwner public {investors=_addres;      }
-
-struct info {
-        address i_address;
-        uint i_balance;
-            }
-
-    mapping (uint => info) public level;    
-    uint public step_level=0;
-    uint public step_pay=0;
-    uint private constant percent_hype=10;
-    uint private constant percent_investors=3;
- 
-function() external payable {
-require(msg.value > 4999999999999999); 
-investors.transfer(msg.value.percent(percent_investors));       
-uint bonus=(level[step_pay].i_balance).percent(100+percent_hype);  
- if (step_level>0 && level[step_pay].i_address.send(bonus)==true){
-          step_pay++;
-                                                                 }
-     level[step_level].i_address=msg.sender;
-     level[step_level].i_balance=msg.value;
-     step_level++;
-}
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) public returns (bool success);
 
 }
 
 
 contract Crowdsale is Ownable {
+  using SafeMath for uint256;
+  // The token being sold
+  token public token_reward;
+  // start and end timestamps where investments are allowed (both inclusive
   
-address private	multisig = msg.sender; 
-bool private share_team_AES=false;
+  //uint256 public start_time = now; //for testing
+  uint256 public start_time = 1517846400; //02/05/2018 @ 4:00pm (UTC) or 5 PM (UTC + 1)
+  uint256 public end_Time = 1519563600; // 02/25/2018 @ 1:00pm (UTC) or 2 PM (UTC + 1)
+  uint256 public phase_1_remaining_tokens  = 50000000 * (10 ** uint256(18));
+  uint256 public phase_2_remaining_tokens  = 25000000 * (10 ** uint256(18));
+  uint256 public phase_3_remaining_tokens  = 15000000 * (10 ** uint256(18));
+  uint256 public phase_4_remaining_tokens  = 10000000 * (10 ** uint256(18));
+
+  uint256 public phase_1_token_price  = 5;// 5 cents
+  uint256 public phase_2_token_price  = 6;// 6 cents
+  uint256 public phase_3_token_price  = 7;// 7 cents
+  uint256 public phase_4_token_price  = 8;// 8 cents
+
+  // address where funds are collected
+  address public wallet;
+  // Ether to $ price
+  uint256 public eth_to_usd = 1000;
+  // amount of raised money in wei
+  uint256 public weiRaised;
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  // rate change event
+  event EthToUsdChanged(address indexed owner, uint256 old_eth_to_usd, uint256 new_eth_to_usd);
+  
+  // constructor
+  function Crowdsale(address tokenContractAddress) public{
+    wallet = 0x8716Be0540Fa6882CB0C05a804cC286B3CEb4a35;//wallet where ETH will be transferred
+    token_reward = token(tokenContractAddress);
+  }
+  
+ function tokenBalance() constant public returns (uint256){
+    return token_reward.balanceOf(this);
+  }
+
+  function phase_1_rate() constant public returns (uint256){
+    return eth_to_usd.mul(100).div(phase_1_token_price);
+  }
+
+  function phase_2_rate() constant public returns (uint256){
+    return eth_to_usd.mul(100).div(phase_2_token_price);
+  }
+
+  function phase_3_rate() constant public returns (uint256){
+    return eth_to_usd.mul(100).div(phase_3_token_price);
+  }
+
+  function phase_4_rate() constant public returns (uint256){
+    return eth_to_usd.mul(100).div(phase_4_token_price);
+  }
+
+  // return specific rate
+  function getRate() constant public returns (uint256){
+    if(phase_1_remaining_tokens > 0){
+      return phase_1_rate();
+    }else if(phase_2_remaining_tokens > 0){
+      return phase_2_rate();
+    }else if(phase_3_remaining_tokens > 0){
+      return phase_3_rate();
+    }else if(phase_4_remaining_tokens > 0){
+      return phase_4_rate();
+    }else{
+      return 0;
+    }
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = now >= start_time && now <= end_Time;
+    bool allPhaseFinished = phase_4_remaining_tokens > 0;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase && allPhaseFinished;
+  }
 
 
-using SafeMath for uint;
+  // check token availibility for current phase and max allowed token balance
+  function transferIfTokenAvailable(uint256 _tokens, uint256 _weiAmount, address _beneficiary) internal returns (bool){
 
-AES_token_contract   public AEStoken  = new AES_token_contract(); 
-Hype     public hype    = new Hype(AEStoken);
-BigHype  public bighype = new BigHype(AEStoken);
-
-uint public Time_Start_Crowdsale= 1518210000; // 1518210000  - 10 February 2018
-
-// ??????? ??????? ? ??????
-function Take_share_team_AES() onlyOwner public {
-require(share_team_AES == false);
-AEStoken.transfer(multisig,500000); 
-share_team_AES=true;
-}
-
-// ?????
-function For_admin() onlyOwner public {
-AEStoken.transferOwnership(multisig); 
-hype.transferOwnership(multisig); 
-bighype.transferOwnership(multisig); 
-}
-
-
-function getTokensSale() public  view returns(uint){  return AEStoken.balanceOf(this);  }
-function getBalance_in_token() public view returns(uint){  return AEStoken.balanceOf(msg.sender); }
- 
-modifier isSaleTime() {  require(Time_Start_Crowdsale<now);  _;  } 
- 
- // ????? 1 000 000 ??????? AES
- // 400 000 ??????          40%
- // 100 000 ??????? ??????? 10%
- // 500 000 SALE IN ICO     50%
-
- 
-   function createTokens() isSaleTime private  {
+    uint256 total_token_to_transfer = 0;
+    uint256 wei_amount_remaining = 0;
+    if(phase_1_remaining_tokens > 0){
+      if(_tokens > phase_1_remaining_tokens){
+        wei_amount_remaining = _weiAmount.sub(_weiAmount.div(phase_1_rate()));
+        uint256 tokens_from_phase_2 = wei_amount_remaining.mul(phase_2_rate());
+        total_token_to_transfer = phase_1_remaining_tokens.add(tokens_from_phase_2);
+        phase_1_remaining_tokens = 0;
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(tokens_from_phase_2);
+      }else{
+        phase_1_remaining_tokens = phase_1_remaining_tokens.sub(_tokens);
+        total_token_to_transfer = _tokens;
+      }
+    }else if(phase_2_remaining_tokens > 0){
+      if(_tokens > phase_2_remaining_tokens){
+        wei_amount_remaining = _weiAmount.sub(_weiAmount.div(phase_2_rate()));
+        uint256 tokens_from_phase_3 = wei_amount_remaining.mul(phase_3_rate());
+        total_token_to_transfer = phase_2_remaining_tokens.add(tokens_from_phase_3);
+        phase_2_remaining_tokens = 0;
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(tokens_from_phase_3);
+      }else{
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(_tokens);
+        total_token_to_transfer = _tokens;
+      }
       
-        uint Tokens_on_Sale = AEStoken.balanceOf(this);      
-        uint CenaTokena=1000000000000000; //1 finney= 1000 Szabo =0.002 Ether  //   1000 Szabo= 1 finney
-        
-        uint Discount=0;
-        
-      // ?????? ?? ??????? ??? ??????????
-            if(Tokens_on_Sale>400000)   {Discount+=20;}   //Szabo
-       else if(Tokens_on_Sale>300000)   {Discount+=15; }   //Szabo
-       else if(Tokens_on_Sale>200000)   {Discount+=10; }   //2000 Szabo   1000 Szabo= 1 finney
-       else if(Tokens_on_Sale>100000)   {Discount+=5; } 
-       
-       // ?????? ?? ??????
-            if(msg.value> 1000000000000000000 && Tokens_on_Sale>2500 )  {Discount+=20; }   // ???? ??????? ?????? ??? ?? 1 ?????? 
-       else if(msg.value>  900000000000000000 && Tokens_on_Sale>1500 )  {Discount+=15;  }   // ???? ??????? ?????? ??? ?? 0.9 ?????? 
-       else if(msg.value>  600000000000000000 && Tokens_on_Sale>500  )  {Discount+=10;  }   // ???? ??????? ?????? ??? ?? 0.6 ????? 
-       else if(msg.value>  300000000000000000 && Tokens_on_Sale>250  )  {Discount+=5;  }   // ???? ??????? ?????? ??? ?? 0.3 ???? 
-       
-       //?????? ?? ???????
-     uint256   Time_Discount=now-Time_Start_Crowdsale;
-             if(Time_Discount < 3 days)   {Discount+=20; }
-        else if(Time_Discount < 5 days)   {Discount+=15; }       
-        else if(Time_Discount < 10 days)  {Discount+=10; }
-        else if(Time_Discount < 20 days)  {Discount+=5;  } 
-         
-     CenaTokena=CenaTokena.percent(100-Discount); // ?????? ??????
-     uint256 Tokens=msg.value.div(CenaTokena); // ?????? ??????? ??????? ??????
-       
-        if (Tokens_on_Sale>=Tokens)   {         
-            multisig.transfer(msg.value);
-          }
-     else {
-        multisig.transfer(msg.value.mul(Tokens_on_Sale.div(Tokens)));   // ?????? ??????? ??????? ??????
-        msg.sender.transfer(msg.value.mul(Tokens-Tokens_on_Sale).div(Tokens));  // ??? ?? ?????? ?????
-        Tokens=Tokens_on_Sale;
-        }
-        
-       AEStoken.transfer(msg.sender, Tokens);
-        
-        }
-       
- 
-    function() external payable {
-     
-      if (AEStoken.balanceOf(this)>0)  { createTokens(); }
-      else { AEStoken.transfer(msg.value); }// ????? ????????? ICO ????????? ?????????????
-        
+    }else if(phase_3_remaining_tokens > 0){
+      if(_tokens > phase_3_remaining_tokens){
+        wei_amount_remaining = _weiAmount.sub(_weiAmount.div(phase_3_rate()));
+        uint256 tokens_from_phase_4 = wei_amount_remaining.mul(phase_4_rate());
+        total_token_to_transfer = phase_3_remaining_tokens.add(tokens_from_phase_4);
+        phase_3_remaining_tokens = 0;
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(tokens_from_phase_4);
+      }else{
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(_tokens);
+        total_token_to_transfer = _tokens;
+      }
+      
+    }else if(phase_4_remaining_tokens > 0){
+      if(_tokens > phase_3_remaining_tokens){
+        total_token_to_transfer = 0;
+      }else{
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(_tokens);
+        total_token_to_transfer = _tokens;
+      }
+    }else{
+      total_token_to_transfer = 0;
+    }
+    if(total_token_to_transfer > 0){
+      token_reward.transfer(_beneficiary, total_token_to_transfer);
+      TokenPurchase(msg.sender, _beneficiary, _weiAmount, total_token_to_transfer);
+      return true;
+    }else{
+      return false;
     }
     
+  }
+
+  // fallback function can be used to buy tokens
+  function () payable public{
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+    uint256 weiAmount = msg.value;
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(getRate());
+    // Check is there are enough token available for current phase and per person  
+    require(transferIfTokenAvailable(tokens, weiAmount, beneficiary));
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+    
+    forwardFunds();
+  }
+  
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+  
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    return now > end_Time;
+  }
+  // function to transfer token back to owner
+  function transferBack(uint256 tokens) onlyOwner public returns (bool){
+    token_reward.transfer(owner, tokens);
+    return true;
+  }
+  // function to change rate
+  function changeEth_to_usd(uint256 _eth_to_usd) onlyOwner public returns (bool){
+    EthToUsdChanged(msg.sender, eth_to_usd, _eth_to_usd);
+    eth_to_usd = _eth_to_usd;
+    return true;
+  }
 }
