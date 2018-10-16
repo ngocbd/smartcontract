@@ -1,303 +1,232 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OnePay at 0x93d550983a908e87abfa7f98ae034bfc2d340bbc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ONEPAY at 0xb2458f815aa3d0279f2bc456b7db95b13dfa5ed4
 */
-// ERC Token Standard #20 Interface
-interface ERC20 {
-    // Get the total token supply
-    function totalSupply() public constant returns (uint _totalSupply);
-    // Get the account balance of another account with address _owner
-    function balanceOf(address _owner) public constant returns (uint balance);
-    // Send _value amount of tokens to address _to
-    function transfer(address _to, uint _value) public returns (bool success);
-    // Send _value amount of tokens from address _from to address _to
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    // this function is required for some DEX functionality
-    function approve(address _spender, uint _value) public returns (bool success);
-    // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) public constant returns (uint remaining);
-    // Triggered when tokens are transferred.
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    // Triggered whenever approve(address _spender, uint256 _value) is called.
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
+pragma solidity ^0.4.18;
 
+// ----------------------------------------------------------------------------
+// 'ONEPAY' token contract
+//
+// Symbol      : ONEPAY
+// Name        : ONEPAY
+// Total supply: 60,000,000
+// Decimals    : 18
+// Sale Only   : 30,000,000
+// 50% distribute token administration for 15 years to 3 department : WEB Department, Android Department, Market Department
+// business focus : Cloud mining, OnlineShop, Ticket Shop, Games Shop, and many Sponsoring in invasion For 15 years 
+// we take all exchange in the world for one payment processor that's ONEPAY
+// Price for sale 1000 token = 1 ETH
+// Owner Address = 0xF862E808D28B68c58D61eAB4Eaf65086ECB7b971
+// WEB Dev       = 0x99303515E8825C11E650F76eDE08f9f427FcA958
+// Mobile Dev    = 0xe3ea4474de9195E974fF2EE5cDc2D660D524E978
+// Market        = 0x1d327b8a7234df17434B349b1a075F73497772BA
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
 
-contract OnePay is ERC20 {
 
-    // Ability to call SafeMath functions on uints.
-    using SafeMath for uint256;
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    // Token basic information
-    string public constant name = "OnePay";
-    string public constant symbol = "1PAY";
-    uint256 public constant decimals = 18;
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-    // Director address
-    address public director;
 
-    // Balances for each account
-    mapping(address => uint256) balances;
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
 
-    // Owner of account approves the transfer of an amount to another account
-    mapping(address => mapping(address => uint256)) allowed;
 
-    // Public sale control
-    bool public saleClosed;
-    uint256 public currentSalePhase;
-    uint256 public SALE = 9090;  // Pre-Sale tokens per eth
-    uint256 public PRE_SALE = 16667; // Sale tokens per eth
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
 
-    // Total supply of tokens
-    uint256 public totalSupply;
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    // Total funds received
-    uint256 public totalReceived;
+    function Owned() public {
+        owner = msg.sender;
+    }
 
-    // Total amount of coins minted
-    uint256 public mintedCoins;
-
-    // Hard Cap for the sale
-    uint256 public hardCapSale;
-
-    // Token Cap
-    uint256 public tokenCap;
-
-    /**
-      * Functions with this modifier can only be executed by the owner
-      */
-    modifier onlyDirector()
-    {
-        assert(msg.sender == director);
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
 
-    /**
-      * Constructor
-      */
-    function OnePay() public
-    {
-        // Create the initial director
-        director = msg.sender;
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
 
-        // setting the hardCap for sale
-        hardCapSale = 100000000 * 10 ** uint256(decimals);
 
-        // token Cap
-        tokenCap = 500000000 * 10 ** uint256(decimals);
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and an
+// initial ONEPAY supply
+// ----------------------------------------------------------------------------
+contract ONEPAY is ERC20Interface, Owned {
+    using SafeMath for uint;
 
-        // Set the total supply
-        totalSupply = 0;
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
 
-        // Initial sale phase is presale
-        currentSalePhase = PRE_SALE;
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
 
-        // total coins minted so far
-        mintedCoins = 0;
 
-        // total funds raised
-        totalReceived = 0;
-
-        saleClosed = true;
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function ONEPAY() public {
+        symbol = "ONEPAY";
+        name = "ONEPAY";
+        decimals = 18;
+        _totalSupply = 60000000 * 10**uint(decimals);
+        balances[owner] = _totalSupply;
+        Transfer(address(0), owner, _totalSupply);
     }
 
-    /**
-      * Fallback function to be invoked when a value is sent without a function call.
-      */
-    function() public payable
-    {
-        // Make sure the sale is active
-        require(!saleClosed);
 
-        // Minimum amount is 0.02 eth
-        require(msg.value >= 0.02 ether);
-
-        // If 1400 eth is received switch the sale price
-        if (totalReceived >= 1500 ether) {
-            currentSalePhase = SALE;
-        }
-
-        // Calculate tokens to mint based on the "current sale phase"
-        uint256 amount = msg.value.mul(currentSalePhase);
-
-        // Make sure that mintedCoins don't exceed the hardcap sale
-        require(mintedCoins + amount <= hardCapSale);
-
-        // Check for totalSupply max amount
-        balances[msg.sender] = balances[msg.sender].add(amount);
-
-        // Increase the number of minted coins
-        mintedCoins += amount;
-
-        //Increase totalSupply by amount
-        totalSupply += amount;
-
-        // Track of total value received
-        totalReceived += msg.value;
-
-        Transfer(this, msg.sender, amount);
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
     }
 
-    /**
-      * Get Tokens for the company
-      */
-    function getCompanyToken(uint256 amount) public onlyDirector returns (bool success)
-    {
-        amount = amount * 10 ** uint256(decimals);
 
-        require((totalSupply + amount) <= tokenCap);
+    // ------------------------------------------------------------------------
+    // Get the token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
 
-        balances[director] = amount;
 
-        totalSupply += amount;
-
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to `to` account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        Transfer(msg.sender, to, tokens);
         return true;
     }
 
-    /**
-	  * Lock the crowdsale
-	  */
-    function closeSale() public onlyDirector returns (bool success)
-    {
-        saleClosed = true;
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
         return true;
     }
 
-    /**
-      * Unlock the crowd sale.
-      */
-    function openSale() public onlyDirector returns (bool success)
-    {
-        saleClosed = false;
+
+    // ------------------------------------------------------------------------
+    // Transfer `tokens` from the `from` account to the `to` account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the `from` account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = balances[from].sub(tokens);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        Transfer(from, to, tokens);
         return true;
     }
 
-    /**
-      * Set the price to pre-sale
-      */
-    function setPriceToPreSale() public onlyDirector returns (bool success)
-    {
-        currentSalePhase = PRE_SALE;
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
         return true;
     }
 
-    /**
-      * Set the price to reg sale.
-      */
-    function setPriceToRegSale() public onlyDirector returns (bool success)
-    {
-        currentSalePhase = SALE;
-        return true;
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
     }
 
-    /**
-      * Withdraw funds from the contract
-      */
-    function withdrawFunds() public onlyDirector
-    {
-        director.transfer(this.balance);
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
-
-    /**
-      * Transfers the director to a new address
-      */
-    function transferDirector(address newDirector) public onlyDirector
-    {
-        director = newDirector;
-    }
-
-    /**
-      * Returns total
-      */
-    function totalSupply() public view returns (uint256)
-    {
-        return totalSupply;
-    }
-
-    /**
-      * Balance of a particular account
-      */
-    function balanceOf(address _owner) public constant returns (uint256)
-    {
-        return balances[_owner];
-    }
-
-    /**
-      * Transfer balance from sender's account to receiver's account
-      */
-    function transfer(address _to, uint256 _value) public returns (bool success)
-    {
-        // Make sure the sender has enough value in their account
-        assert(balances[msg.sender] >= _value && _value > 0);
-        // Subtract value from sender's account
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        // Add value to receiver's account
-        balances[_to] = balances[_to].add(_value);
-
-        // Log
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-      * Allow spender to spend the value amount on your behalf.
-      * If this function is called again it overwrites the current allowance with _value.
-      */
-    function approve(address _spender, uint256 _value) public returns (bool)
-    {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-      * Spend value from a different account granted you have allowance to use the value amount.
-      * If this function is called again it overwrites the current allowance with _value.
-      */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)
-    {
-        assert(allowed[_from][msg.sender] >= _value && balances[_from] >= _value && _value > 0);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-      * Returns the amount which _spender is still allowed to withdraw from _owner
-      */
-    function allowance(address _owner, address _spender) public constant returns (uint256)
-    {
-        return allowed[_owner][_spender];
-    }
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
