@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundCruToken at 0x59F64e9069ea4628168e4E58B9fE5b4aC3712B85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundCruToken at 0xf04F6Fab54e9223a26abc3260d67C040b95bC49c
 */
 pragma solidity ^0.4.18;
 
@@ -220,8 +220,8 @@ contract MintableToken is StandardToken, Ownable {
 
 contract FundCruToken is MintableToken {
   // token identity
-  string public constant name = "SANTA CLARA";
-  string public constant symbol = "CLARA";
+  string public constant name = "FundCru";
+  string public constant symbol = "FUND";
   uint256 public constant decimals = 18;
   bytes4 public constant magic = 0x46554E44;    // "FUND"
 
