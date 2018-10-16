@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TinyProxyFactory at 0xb94c06b81d11bf68cbafe3694272bfc1d4edd9f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TinyProxyFactory at 0xbd2e5ea5aacfde4bac35d5871e1842911f835018
 */
 pragma solidity ^0.4.17;
 
@@ -12,9 +12,12 @@ contract TinyProxy {
     gasBudget = proxyGas;
   }
 
-  function () payable public { }
-
+  event FundsReceived(uint amount);
   event FundsReleased(address to, uint amount);
+
+  function () payable public {
+    emit FundsReceived(msg.value);
+  }
 
   function release() public {
     uint balance = address(this).balance;
@@ -23,20 +26,31 @@ contract TinyProxy {
     } else {
       require(receiver.send(balance));
     }
-    FundsReleased(receiver, balance);
+    emit FundsReleased(receiver, balance);
   }
 }
 
 contract TinyProxyFactory {
-  mapping(address => mapping(address => address)) public proxyFor;
+  mapping(address => mapping(uint => address)) public proxyFor;
   mapping(address => address[]) public userProxies;
 
+  event ProxyDeployed(address to, uint gas);
   function make(address to, uint gas, bool track) public returns(address proxy){
-    proxy = new TinyProxy(to, gas);
+    proxy = proxyFor[to][gas];
+    if(proxy == 0x0) {
+      proxy = new TinyProxy(to, gas);
+      proxyFor[to][gas] = proxy;
+      emit ProxyDeployed(to, gas);
+    }
     if(track) {
-      proxyFor[msg.sender][to] = proxy;
       userProxies[msg.sender].push(proxy);
     }
     return proxy;
+  }
+
+  function untrack(uint index) public {
+    uint lastProxy = userProxies[msg.sender].length - 1;
+    userProxies[msg.sender][index] = userProxies[msg.sender][lastProxy];
+    delete userProxies[msg.sender][lastProxy];
   }
 }
