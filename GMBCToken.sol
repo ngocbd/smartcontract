@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMBCToken at 0x58870bcbc4b0001d99ecc84adf8736d6193b8af6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMBCToken at 0xb1361343464493d8a64ce67ed978acff5beb7cc8
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
-// File: source\zeppelin-solidity\contracts\math\SafeMath.sol
+// File: source\openzeppelin-solidity\contracts\math\SafeMath.sol
 
 /**
  * @title SafeMath
@@ -14,11 +14,11 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -28,13 +28,13 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -44,14 +44,14 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-// File: source\zeppelin-solidity\contracts\ownership\Ownable.sol
+// File: source\openzeppelin-solidity\contracts\ownership\Ownable.sol
 
 /**
  * @title Ownable
@@ -62,6 +62,7 @@ contract Ownable {
   address public owner;
 
 
+  event OwnershipRenounced(address indexed previousOwner);
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
@@ -86,14 +87,21 @@ contract Ownable {
    * @param newOwner The address to transfer ownership to.
    */
   function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));    
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;    
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
 }
 
-// File: source\zeppelin-solidity\contracts\token\ERC20\ERC20Basic.sol
+// File: source\openzeppelin-solidity\contracts\token\ERC20\ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -107,7 +115,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: source\zeppelin-solidity\contracts\token\ERC20\BasicToken.sol
+// File: source\openzeppelin-solidity\contracts\token\ERC20\BasicToken.sol
 
 /**
  * @title Basic token
@@ -136,10 +144,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -148,13 +155,13 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
 }
 
-// File: source\zeppelin-solidity\contracts\token\ERC20\ERC20.sol
+// File: source\openzeppelin-solidity\contracts\token\ERC20\ERC20.sol
 
 /**
  * @title ERC20 interface
@@ -167,7 +174,7 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: source\zeppelin-solidity\contracts\token\ERC20\StandardToken.sol
+// File: source\openzeppelin-solidity\contracts\token\ERC20\StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -195,7 +202,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -211,7 +218,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -237,7 +244,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -258,7 +265,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -267,9 +274,8 @@ contract StandardToken is ERC20, BasicToken {
 // File: source\CappedMintableToken.sol
 
 /**
- * @title Mintable token with an end-of-mint date and token cap
- * Also transfer / transferFrom is available only after end-of-mint date
- * Based on zeppelin-solidity MintableToken & CappedToken
+ * @title Mintable token with an end-of-mint mechanism and token cap
+ * Based on openzeppelin-solidity MintableToken & CappedToken
  */
 contract CappedMintableToken is StandardToken, Ownable {
   using SafeMath for uint256;
@@ -277,7 +283,7 @@ contract CappedMintableToken is StandardToken, Ownable {
   event Mint(address indexed to, uint256 amount);
 
   modifier canMint() {
-    require(now <= publicSaleEnd);
+    require(mintEnabled);
     _;
   }
 
@@ -286,27 +292,22 @@ contract CappedMintableToken is StandardToken, Ownable {
     _;
   }
 
-  uint256 public publicSaleEnd;
+  bool public mintEnabled;
+  bool public transferEnabled;
   uint256 public cap;
   address public crowdsale;
+  
 
 	function setCrowdsale(address _crowdsale) public onlyOwner {
 		crowdsale = _crowdsale;
 	}
 
-  
-
-  function CappedMintableToken(uint256 _cap, uint256 _publicSaleEnd) public {
-    require(_publicSaleEnd > now);
+  function CappedMintableToken(uint256 _cap) public {    
     require(_cap > 0);
 
-    publicSaleEnd = _publicSaleEnd;
+    mintEnabled = true;
+    transferEnabled = false;
     cap = _cap;
-  }
-
-  /* StartICO integration, lockTime is ignored (ignore the warning) */
-  function send(address target, uint256 mintedAmount, uint256 lockTime) public onlyOwnerOrCrowdsale {
-    mint(target, mintedAmount);
   }
 
   /**
@@ -328,31 +329,71 @@ contract CappedMintableToken is StandardToken, Ownable {
 
   
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(now > publicSaleEnd);
+    require(transferEnabled);
 
     return super.transfer(_to, _value);
   }
 
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(now > publicSaleEnd);
+    require(transferEnabled);
 
     return super.transferFrom(_from, _to, _value);
   }
   
 }
 
-// File: source\zeppelin-solidity\contracts\ownership\HasNoEther.sol
+// File: source\GMBCTokenBuyable.sol
+
+contract GMBCTokenBuyable is CappedMintableToken {  
+  bool public payableEnabled; // payable function enabled
+  uint256 public minPurchase; // minimum purchase in wei
+
+  function () external payable {    
+    buyTokens(msg.sender);
+  }
+
+  function setPayableEnabled(bool _payableEnabled) onlyOwner external {
+    payableEnabled = _payableEnabled;
+  }
+
+  function setMinPurchase(uint256 _minPurchase) onlyOwner external {
+    minPurchase = _minPurchase;
+  }
+
+  function buyTokens(address _beneficiary) public payable {
+    require(payableEnabled);
+
+    uint256 weiAmount = msg.value;
+    require(_beneficiary != address(0));
+    require(weiAmount >= minPurchase);
+
+    // calculate token amount to be created
+    uint256 tokens = getTokenAmount(weiAmount);
+    mint(_beneficiary, tokens);
+  }
+
+  function getTokenAmount(uint256 _weiAmount) public view returns (uint256);
+
+   /**
+   * @dev Transfer all Ether held by the contract to the owner.
+   */
+  function claimEther(uint256 _weiAmount) external onlyOwner {    
+    owner.transfer(_weiAmount);
+  }
+}
+
+// File: source\openzeppelin-solidity\contracts\ownership\HasNoEther.sol
 
 /**
  * @title Contracts that should not own Ether
  * @author Remco Bloemen <remco@2?.com>
  * @dev This tries to block incoming ether to prevent accidental loss of Ether. Should Ether end up
  * in the contract, it will allow the owner to reclaim this ether.
- * @notice Ether can still be send to this contract by:
+ * @notice Ether can still be sent to this contract by:
  * calling functions labeled `payable`
  * `selfdestruct(contract_address)`
  * mining directly to the contract address
-*/
+ */
 contract HasNoEther is Ownable {
 
   /**
@@ -376,31 +417,22 @@ contract HasNoEther is Ownable {
    * @dev Transfer all Ether held by the contract to the owner.
    */
   function reclaimEther() external onlyOwner {
-    assert(owner.send(this.balance));
+    owner.transfer(this.balance);
   }
 }
 
 // File: source\GMBCToken.sol
 
-// in order for this to be flattened & compiled: zeppelin-solidity from /node_modules should be copied to source/ before hand
-// TODO: automate this process
-
-
-
-
-contract GMBCToken is HasNoEther, CappedMintableToken {
+contract GMBCToken is GMBCTokenBuyable {
 	using SafeMath for uint256;
 
-	string public constant name = "Official Gamblica Coin";
+	string public constant name = "Gamblica Token";
 	string public constant symbol = "GMBC";
 	uint8 public constant decimals = 18;
 
-	uint256 public TOKEN_SALE_CAP = 600000000 * (10 ** uint256(decimals));
-	uint256 public END_OF_MINT_DATE = 1527811200;	// Fri, 01 Jun 2018 00:00:00 +0000 in RFC 822, 1036, 1123, 2822
-
 	bool public finalized = false;
-
-	
+	uint8 public bonus = 0;				// bonus value in % (0 - 100)
+	uint256 public basePrice = 10000;	// base GMBC per 1 ETH
 
 	/**
 	 * GMBCToken
@@ -408,9 +440,29 @@ contract GMBCToken is HasNoEther, CappedMintableToken {
 	 * Official Gamblica Coin (Token)
 	 */
 	function GMBCToken() public 
-		CappedMintableToken(TOKEN_SALE_CAP, END_OF_MINT_DATE)
-	{
-		
+		CappedMintableToken( 600000000 * (10 ** uint256(decimals)) ) // 60%, 40% will be minted on finalize
+	{}
+
+	/**
+	 * Sets current bonus (%)
+	 */
+	function setBonus(uint8 _bonus) onlyOwnerOrCrowdsale external {		
+		require(_bonus >= 0 && _bonus <= 100);
+		bonus = _bonus;
+	}
+
+	function setBasePrice(uint256 _basePrice) onlyOwner external {
+		require(_basePrice > 0);
+		basePrice = _basePrice;
+	}
+
+	/**
+	 * Returns token amount for wei investment
+	 */
+	function getTokenAmount(uint256 _weiAmount) public view returns (uint256) {		
+		require(decimals == 18);
+		uint256 gmbc = _weiAmount.mul(basePrice);
+		return gmbc.add(gmbc.mul(bonus).div(100));
 	}
 
 	/**
@@ -420,16 +472,18 @@ contract GMBCToken is HasNoEther, CappedMintableToken {
 		(20% game fund, 10% team, 5% advisory board, 3% bounty, 2% founders)
 	*/
 	function finalize(address _fund) public onlyOwner returns (bool) {
-		require(!finalized && now > publicSaleEnd);		
+		require(!finalized);		
 		require(_fund != address(0));
 
 		uint256 amount = totalSupply_.mul(4).div(6);	// +40% 
 
 		totalSupply_ = totalSupply_.add(amount);
     	balances[_fund] = balances[_fund].add(amount);
-    	Mint(_fund, amount);
-    	Transfer(address(0), _fund, amount);
+    	emit Mint(_fund, amount);
+    	emit Transfer(address(0), _fund, amount);
     
+		mintEnabled = false;
+		transferEnabled = true;
 		finalized = true;
 
 		return true;
