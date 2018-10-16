@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Plutoneum at 0xf1224514aeb298dc7402948452245a16a1d1886b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Plutoneum at 0x203cd33614a46e365221c173fd9470aa8f5f7df7
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -38,11 +38,11 @@ contract Plutoneum {
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
     function Plutoneum () {
-        totalSupply = 100000000.00;
+        totalSupply = 100000000;
         symbol = 'PTN';
         owner = 0x69e28e8Ad75acdCA3058B7e2d93DBb9d3237De79;
         balances[owner] = totalSupply;
-        decimals = 2;
+        decimals = 8;
     }
 
     function balanceOf(address _owner) constant returns(uint256 balance) {
