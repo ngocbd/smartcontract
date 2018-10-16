@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x00c85C226A7899aE3c87AD2e8684d352dC83F180
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x08Aa34Bf39BD001940EC3FFdAC34d694984BC325
 */
 pragma solidity ^0.4.13;
 contract Token {
@@ -17,11 +17,11 @@ contract Token {
 	event Transfer(address indexed from, address indexed to, uint256 value);
 
 	function Token() {
-	    totalSupply = 1*(10**8)*(10**3);
-		balanceOf[msg.sender] = 1*(10**8)*(10**3);              // Give the creator all initial tokens
-		name = "catcoin";                                   // Set the name for display purposes
-		symbol = "CAB";                               // Set the symbol for display purposes
-		decimals = 3;                            // Amount of decimals for display purposes
+	    totalSupply = 5*(10**8)*(10**18);
+		balanceOf[msg.sender] = 5*(10**8)*(10**18);              // Give the creator all initial tokens
+		name = "ChainTraining";                                   // Set the name for display purposes
+		symbol = "CTT";                               // Set the symbol for display purposes
+		decimals = 18;                            // Amount of decimals for display purposes
 	}
 
 	function transfer(address _to, uint256 _value) {
