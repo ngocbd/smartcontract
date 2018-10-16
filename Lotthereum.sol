@@ -1,11 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotthereum at 0x8eca2366e8ad2051a14af338620f6dd101c231e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotthereum at 0xd64ad4eefaacb96a0865687cfeef4c4a2cfbfef2
 */
 pragma solidity ^0.4.11;
 
-
 contract SafeMath {
-
     function add(uint x, uint y) internal constant returns (uint z) {
         assert((z = x + y) >= x);
     }
@@ -75,7 +73,6 @@ contract Mortal is Owned {
 
 
 contract Lotthereum is Mortal, SafeMath {
-
     Game[] private games;
     mapping (address => uint) private balances;  // balances per address
 
@@ -152,51 +149,54 @@ contract Lotthereum is Mortal, SafeMath {
     }
 
     function createGameRound(uint gameId) internal returns (uint id) {
+        Game game = games[gameId];
         id = games[gameId].rounds.length;
-        games[gameId].rounds.length += 1;
-        games[gameId].rounds[id].id = id;
-        games[gameId].rounds[id].open = true;
+        game.rounds.length += 1;
+        game.rounds[id].id = id;
+        game.rounds[id].open = true;
         RoundOpen(gameId, id);
     }
 
     function payout(uint gameId) internal {
-        address[] winners = games[gameId].rounds[games[gameId].currentRound].winners;
-        for (uint i = 0; i < games[gameId].maxNumberOfBets -1; i++) {
-            if (games[gameId].rounds[games[gameId].currentRound].bets[i].bet == games[gameId].rounds[games[gameId].currentRound].number) {
+        Game game = games[gameId];
+        Round round = game.rounds[game.currentRound];
+        Bet[] bets = round.bets;
+        address[] winners = round.winners;
+        for (uint i = 0; i < bets.length; i++) {
+            if (bets[i].bet == round.number) {
                 uint id = winners.length;
                 winners.length += 1;
-                winners[id] = games[gameId].rounds[games[gameId].currentRound].bets[i].origin;
+                winners[id] = bets[i].origin;
             }
         }
 
         if (winners.length > 0) {
-            uint prize = divide(games[gameId].prize, winners.length);
+            uint prize = divide(game.prize, winners.length);
             for (i = 0; i < winners.length; i++) {
                 balances[winners[i]] = add(balances[winners[i]], prize);
-                RoundWinner(gameId, games[gameId].currentRound, winners[i], prize);
+                RoundWinner(game.id, game.currentRound, winners[i], prize);
             }
         }
     }
 
     function closeRound(uint gameId) constant internal {
-        games[gameId].rounds[games[gameId].currentRound].open = false;
-        games[gameId].rounds[games[gameId].currentRound].hash = getBlockHash(games[gameId].pointer);
-        games[gameId].rounds[games[gameId].currentRound].number = getNumber(games[gameId].rounds[games[gameId].currentRound].hash);
-        // games[gameId].pointer = games[gameId].rounds[games[gameId].currentRound].number;
+        Game game = games[gameId];
+        Round round = game.rounds[game.currentRound];
+        round.open = false;
+        round.hash = getBlockHash(game.pointer);
+        round.number = getNumber(game.rounds[game.currentRound].hash);
+        game.pointer = game.rounds[game.currentRound].number;
         payout(gameId);
-        RoundClose(
-            gameId,
-            games[gameId].rounds[games[gameId].currentRound].id,
-            games[gameId].rounds[games[gameId].currentRound].number
-        );
-        games[gameId].currentRound = createGameRound(gameId);
+        RoundClose(game.id, round.id, round.number);
+        game.currentRound = createGameRound(game.id);
     }
 
     function getBlockHash(uint i) constant returns (bytes32 blockHash) {
         if (i > 255) {
             i = 255;
         }
-        blockHash = block.blockhash(block.number - i);
+        uint blockNumber = block.number - i;
+        blockHash = block.blockhash(blockNumber);
     }
 
     function getNumber(bytes32 _a) constant returns (uint8) {
@@ -223,27 +223,29 @@ contract Lotthereum is Mortal, SafeMath {
     }
 
     function placeBet(uint gameId, uint8 bet) public payable returns (bool) {
-        if (!games[gameId].rounds[games[gameId].currentRound].open) {
+        Game game = games[gameId];
+        Round round = game.rounds[game.currentRound];
+        Bet[] bets = round.bets;
+
+        if (!round.open) {
             return false;
         }
 
-        if (msg.value < games[gameId].minAmountByBet) {
+        if (msg.value < game.minAmountByBet) {
             return false;
         }
 
-        if (games[gameId].rounds[games[gameId].currentRound].bets.length < games[gameId].maxNumberOfBets) {
-            uint id = games[gameId].rounds[games[gameId].currentRound].bets.length;
-            games[gameId].rounds[games[gameId].currentRound].bets.length += 1;
-            games[gameId].rounds[games[gameId].currentRound].bets[id].id = id;
-            games[gameId].rounds[games[gameId].currentRound].bets[id].round = games[gameId].rounds[games[gameId].currentRound].id;
-            games[gameId].rounds[games[gameId].currentRound].bets[id].bet = bet;
-            games[gameId].rounds[games[gameId].currentRound].bets[id].origin = msg.sender;
-            games[gameId].rounds[games[gameId].currentRound].bets[id].amount = msg.value;
-            BetPlaced(gameId, games[gameId].rounds[games[gameId].currentRound].id, msg.sender, id);
-        }
+        uint id = bets.length;
+        bets.length += 1;
+        bets[id].id = id;
+        bets[id].round = round.id;
+        bets[id].bet = bet;
+        bets[id].origin = msg.sender;
+        bets[id].amount = msg.value;
+        BetPlaced(game.id, round.id, msg.sender, id);
 
-        if (games[gameId].rounds[games[gameId].currentRound].bets.length >= games[gameId].maxNumberOfBets) {
-            closeRound(gameId);
+        if (bets.length == game.maxNumberOfBets) {
+            closeRound(game.id);
         }
 
         return true;
@@ -260,8 +262,9 @@ contract Lotthereum is Mortal, SafeMath {
     }
 
     function getBalance() constant returns (uint) {
-        if ((balances[msg.sender] > 0) && (balances[msg.sender] < this.balance)) {
-            return balances[msg.sender];
+        uint amount = balances[msg.sender];
+        if ((amount > 0) && (amount < this.balance)) {
+            return amount;
         }
         return 0;
     }
