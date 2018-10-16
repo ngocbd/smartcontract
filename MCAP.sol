@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MCAP at 0x4c9fdc0cc6d3bd27e454ac9074642106fe28b644
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MCAP at 0x80b20c979bd807472e70f29124fafed8e78791ea
 */
 contract MCAP {
     /* Public variables of the token */
-    string public standard = 'Token 0.1 ';
+    string public standard = 'MCAP 1.0';
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -20,8 +20,8 @@ contract MCAP {
 
          initialSupply = 50000000;
          name ="MCAP";
-        decimals = 2;
-         symbol = "MCAP";
+        decimals = 8;
+         symbol = "^";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
