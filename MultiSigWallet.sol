@@ -1,16 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x2a07af7adc26be293f20115c9d5b0340e44ed5cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x093b989c2035e9d19b33778d256b0b8e12e50fc8
 */
-pragma solidity 0.4.15;
+pragma solidity 0.4.10;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    /*
-     *  Events
-     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -21,14 +20,6 @@ contract MultiSigWallet {
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
-    /*
-     *  Constants
-     */
-    uint constant public MAX_OWNER_COUNT = 50;
-
-    /*
-     *  Storage
-     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -43,9 +34,6 @@ contract MultiSigWallet {
         bool executed;
     }
 
-    /*
-     *  Modifiers
-     */
     modifier onlyWallet() {
         if (msg.sender != address(this))
             throw;
@@ -165,7 +153,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param newOwner Address of new owner.
+    /// @param owner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -236,8 +224,6 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
