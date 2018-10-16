@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract livepayToken at 0x3687fa8ed163308745284fc85ec7f5c3f79c466c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract livepayToken at 0x026eb3120e81270dd7aeb0c240851c0b82407693
 */
 pragma solidity ^0.4.16;
 
@@ -10,7 +10,7 @@ contract livepayToken {
     string public name = "LivepayToken";
     string public symbol = "LPT";
     uint8 public decimals = 18;
-    uint256 public totalSupply = 208888888.000000000000000000 * 10 ** uint256(decimals);
+    uint256 public totalSupply = 8888888888.000000000000000000 * 10 ** uint256(decimals);
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
