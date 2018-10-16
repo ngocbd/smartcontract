@@ -1,27 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iGnite at 0x569cbdcc684edcc589939cc8f6b96e6abd9eb0f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iGnite at 0xe075793215ddbd61b513309febec8fd67e2d3ba7
 */
-contract SafeMath {
-    uint256 constant public MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
- 
-    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x > MAX_UINT256 - y) throw;
-        return x + y;
-    }
- 
-    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x < y) throw;
-        return x - y;
-    }
- 
-    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (y == 0) return 0;
-        if (x > MAX_UINT256 / y) throw;
-        return x * y;
-    }
-}
-
 contract ERC223ReceivingContract {
      
     struct iGn {
@@ -42,6 +21,28 @@ contract ERC223ReceivingContract {
     }
 }
 
+
+contract SafeMath {
+    uint256 constant public MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+ 
+    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x > MAX_UINT256 - y) throw;
+        return x + y;
+    }
+ 
+    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x < y) throw;
+        return x - y;
+    }
+ 
+    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (y == 0) return 0;
+        if (x > MAX_UINT256 / y) throw;
+        return x * y;
+    }
+}
+ 
 contract iGnite is SafeMath { 
 
     string public name;
@@ -50,6 +51,7 @@ contract iGnite is SafeMath {
     uint256 public rewardPerBlockPerAddress;
     uint256 public totalGenesisAddresses;
     address public genesisCallerAddress;
+    uint256 public initialSupplyPerAddress;
     uint256 public genesisBlockCount;
     uint256 private minedBlocks;
     uint256 private iGnited;
@@ -77,7 +79,7 @@ contract iGnite is SafeMath {
         genesisBlockCount = 4498200; 
         rewardPerBlockPerAddress = 135;
         totalGenesisAddresses = 1000;
-        genesisSupply = genesisSupplyPerAddress * totalGenesisAddresses; 
+        genesisSupply = initialSupplyPerAddress * totalGenesisAddresses; 
 
         genesisCallerAddress = 0x0000000000000000000000000000000000000000;
     }
