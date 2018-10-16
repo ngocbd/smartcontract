@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STQToken at 0x5c3a228510d246b78a3765c20221cbf3082b44a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STQToken at 0x1b15ce8f94e202da8c261bb99a67397c27bd93fa
 */
 pragma solidity 0.4.15;
 
@@ -727,7 +727,7 @@ contract MintableMultiownedToken is MultiownedControlled, StandardToken {
     function mintInternal(address _to, uint256 _amount) internal {
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
-        Transfer(this, _to, _amount);
+        //Transfer(this, _to, _amount);
         Mint(_to, _amount);
     }
 
@@ -740,7 +740,7 @@ contract MintableMultiownedToken is MultiownedControlled, StandardToken {
         if (0 != dividends) {
             balances[dividendsPool] = balances[dividendsPool].sub(dividends);
             balances[_to] = balances[_to].add(dividends);
-            Transfer(dividendsPool, _to, dividends);
+            //Transfer(dividendsPool, _to, dividends);
         }
         m_lastAccountEmission[_to] = getLastEmissionNum();
     }
