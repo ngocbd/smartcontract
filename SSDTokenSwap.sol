@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SSDTokenSwap at 0xd4eeEdEAF7E896691ab959ac5ABd2842a9A8E062
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SSDTokenSwap at 0x07eFd6E390222A45aF4A25D0CE31C7710Bf605Bd
 */
 /**
  * Copyright (C) Siousada.io
@@ -159,7 +159,7 @@ contract SSDTokenSwap is Guarded, Ownable {
 
     // @return true if token swap event has ended
     function hasEnded() public constant returns (bool) {
-        return now > EndTime;
+        return now <= EndTime;
     }
 
     // @return true if the token swap contract is active.
