@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zakat at 0x3b559104e92b493fc152ba460fcf020a7b2d29f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zakat at 0xe3d1748b5bfead13d58f1acfe8692faa2a4a64c4
 */
 pragma solidity ^0.4.18;
 
@@ -8,13 +8,13 @@ pragma solidity ^0.4.18;
 //
 // Deployed to : 0x2DbFF826739090C3fBB1BDc3107601E785b288c6
 // Symbol      : Zakah
-// Name        : Zakat Token
+// Name        : Zakat token
 // Total supply: 200000000
 // Decimals    : 18
 //
-// "Alms are for the poor and the needy, and those employed to administer the (funds); for those whose hearts have been (recently) reconciled (to Truth); for those in bondage and in debt; in the cause of Allah; and for the wayfarer: (thus is it) ordained by Allah, and Allah is full of knowledge and wisdom."
-// —?Qur'an, Sura 9 (Al-Tawba), ayat 60
-// (c) by Moritz Neto & Daniel Bar with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// “Indeed, [prescribed] charitable offerings are only [to be given] to the poor and the indigent, and to those who work on [administering] it, and to those whose hearts are to be reconciled, and to [free] those in bondage, and to the debt-ridden, and for the cause of God, and to the wayfarer. [This is] an obligation from God. And God is all-knowing, all-wise.”
+// – Al-Tawbah, 9:60
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -22,19 +22,19 @@ pragma solidity ^0.4.18;
 // Safe maths
 // ----------------------------------------------------------------------------
 contract SafeMath {
-    function safeAdd(uint a, uint b) internal pure returns (uint c) {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) internal pure returns (uint c) {
+    function safeSub(uint a, uint b) public pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) internal pure returns (uint c) {
+    function safeMul(uint a, uint b) public pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) internal pure returns (uint c) {
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -107,9 +107,6 @@ contract Zakat is ERC20Interface, Owned, SafeMath {
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
-    uint public startDate;
-    uint public bonusEnds;
-    uint public endDate;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -120,11 +117,11 @@ contract Zakat is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function Zakat() public {
         symbol = "Zakah";
-        name = "Zakat Token";
+        name = "Zakat token";
         decimals = 18;
-        bonusEnds = now + 5 weeks;
-        endDate = now + 52 weeks;
-
+        _totalSupply = 200000000000000000000000000;
+        balances[0x2DbFF826739090C3fBB1BDc3107601E785b288c6] = _totalSupply;
+        Transfer(address(0), 0x2DbFF826739090C3fBB1BDc3107601E785b288c6, _totalSupply);
     }
 
 
@@ -137,7 +134,7 @@ contract Zakat is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
+    // Get the token balance for account tokenOwner
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -145,7 +142,7 @@ contract Zakat is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
+    // Transfer the balance from token owner's account to to account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
@@ -158,12 +155,12 @@ contract Zakat is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // Token owner can approve for spender to transferFrom(...) tokens
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces
+    // as this should be implemented in user interfaces 
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -173,10 +170,10 @@ contract Zakat is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
-    //
+    // Transfer tokens from the from account to the to account
+    // 
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
+    // for spending from the from account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
@@ -200,9 +197,9 @@ contract Zakat is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -211,23 +208,13 @@ contract Zakat is ERC20Interface, Owned, SafeMath {
         return true;
     }
 
+
     // ------------------------------------------------------------------------
-    // 1200 Zakah Tokens per 1 ETH
+    // Don't accept ETH
     // ------------------------------------------------------------------------
     function () public payable {
-        require(now >= startDate && now <= endDate);
-        uint tokens;
-        if (now <= bonusEnds) {
-            tokens = msg.value * 1400;
-        } else {
-            tokens = msg.value * 1200;
-        }
-        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
-        _totalSupply = safeAdd(_totalSupply, tokens);
-        Transfer(address(0), msg.sender, tokens);
-        owner.transfer(msg.value);
+        revert();
     }
-
 
 
     // ------------------------------------------------------------------------
