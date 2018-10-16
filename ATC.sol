@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATC at 0x2c6c596cfd4c2c3b039db90fd3c8acb564e13251
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATC at 0x24a585b4f3db4b852ce8810524401591c408ef82
 */
 pragma solidity ^0.4.18;
 /*
@@ -519,7 +519,7 @@ contract ATC is MiniMeToken {
               _tokenFactory,
               0x0,                     // no parent token
               0,                       // no snapshot block number from parent
-              "ATCon Token",  // Token name
+              "Aston Token",  // Token name
               18,                      // Decimals
               "ATC",                   // Symbol
               false                     // Enable transfers
