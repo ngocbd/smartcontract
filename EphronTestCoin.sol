@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EphronTestCoin at 0xe773916b78b7b9c5a26a998f4698ec36212f5ec3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EphronTestCoin at 0xad8922ae880e7fabfe4c81bb8141f0b06a1d76fb
 */
 pragma solidity ^0.4.23;
 
@@ -108,8 +108,8 @@ contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract n
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function EphronTestCoin() {
-        balances[msg.sender] = 1000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 1000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 100000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 100000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "EphronTestCoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 0;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "EPHTCN";                                             // Set the symbol for display purposes (CHANGE THIS)
