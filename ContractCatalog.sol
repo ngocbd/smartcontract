@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContractCatalog at 0xa46aaf1b1f69e78d67fcb6c343e1701f835292e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContractCatalog at 0xd6a36640e10db11e78fe2ae452c0787811e36a02
 */
 pragma solidity ^0.4.15;
 
@@ -22,7 +22,7 @@ contract Versionable {
 }
 
 contract ContractCatalog {
-    uint256 public constant VERSION = 2;
+    uint256 public constant VERSION = 1;
     string public constant SEPARATOR = "-";
 
     Token public token;
@@ -33,10 +33,10 @@ contract ContractCatalog {
     event UnregisteredPrefix(string _prefix, address _from);
     event NewPrefixPrice(uint256 _length, uint256 _price);
     event RegisteredContract(string _version, address _by);
-
+    
     struct ContractType {
         string code;
-        address sample;
+        bytes bytecode;
     }
 
     function ContractCatalog() {
@@ -62,7 +62,7 @@ contract ContractCatalog {
     mapping(string => address) prefixes;
     mapping(uint256 => uint256) prefixesPrices;
 
-    string[] public forgivedChars;
+    string[] private forgivedChars;
 
     function transfer(address to) {
         require(to != address(0));
@@ -83,7 +83,7 @@ contract ContractCatalog {
         NewPrefixPrice(lenght, price);
     }
 
-    function loadVersion(Versionable from) private returns (string) {
+    function loadVersion(Versionable from) constant returns (string) {
         uint size = from.getVersionLength();
         bytes memory out = new bytes(size);
         for (uint i = 0; i < size; i++) {
@@ -97,12 +97,8 @@ contract ContractCatalog {
         return prefixes[prefix];
     }
 
-    function getContractSample(string code) constant returns (address) {
-        return types[code].sample;
-    }
-
     function getContractBytecode(string code) constant returns (bytes) {
-        return getContractCode(types[code].sample);
+        return types[code].bytecode;
     }
 
     function hasForgivedChar(string s) constant returns (bool) {
@@ -157,12 +153,12 @@ contract ContractCatalog {
         UnregisteredPrefix(prefix, msg.sender);
     }
 
-    function registerContract(string code, address sample) {
+    function registerContract(string code, bytes bytecode) {
         var prefix = splitFirst(code, SEPARATOR);
         require(prefixes[prefix] == msg.sender);
-        require(types[code].sample == address(0));
-        require(getContractCode(sample).length != 0);
-        types[code] = ContractType(code, sample);
+        require(types[code].bytecode.length == 0);
+        require(bytecode.length != 0);
+        types[code] = ContractType(code, bytecode);
         RegisteredContract(code, msg.sender);
     }
 
@@ -172,9 +168,8 @@ contract ContractCatalog {
 
     function validateContractWithCode(address target, string code) constant returns (bool) {
         require(stringEquals(types[code].code, code)); // Sanity check
-        bytes memory expected = getContractCode(types[code].sample);
+        bytes memory expected = types[code].bytecode;
         bytes memory bytecode = getContractCode(target);
-        require(expected.length != 0);
         if (bytecode.length != expected.length) return false;
         for (uint i = 0; i < expected.length; i++) {
             if (bytecode[i] != expected[i]) return false;
@@ -182,7 +177,7 @@ contract ContractCatalog {
         return true;
     }
 
-    function getContractCode(address _addr) private returns (bytes o_code) {
+    function getContractCode(address _addr) constant returns (bytes o_code) {
         assembly {
           let size := extcodesize(_addr)
           o_code := mload(0x40)
@@ -193,7 +188,7 @@ contract ContractCatalog {
     }
 
     // @dev Returns the first slice of a split
-    function splitFirst(string source, string point) private returns (string) {
+    function splitFirst(string source, string point) constant returns (string) {
         bytes memory s = bytes(source);
         if (s.length == 0) {
             return "";
@@ -211,7 +206,7 @@ contract ContractCatalog {
         }
     }
 
-    function stringToBytes32(string memory source) private returns (bytes32 result) {
+    function stringToBytes32(string memory source) returns (bytes32 result) {
         assembly {
             result := mload(add(source, 32))
         }
@@ -222,7 +217,7 @@ contract ContractCatalog {
      * @param self The value to find the length of.
      * @return The length of the string, from 0 to 32.
      */
-    function stringLen(string s) private returns (uint) {
+    function stringLen(string s) internal returns (uint) {
         var self = stringToBytes32(s);
         uint ret;
         if (self == 0)
@@ -250,7 +245,7 @@ contract ContractCatalog {
     }
 
     /// @dev Finds the index of the first occurrence of _needle in _haystack
-    function stringIndexOf(string _haystack, string _needle) private returns (int) {
+    function stringIndexOf(string _haystack, string _needle) returns (int) {
     	bytes memory h = bytes(_haystack);
     	bytes memory n = bytes(_needle);
     	if (h.length < 1 || n.length < 1 || (n.length > h.length)) {
@@ -273,7 +268,7 @@ contract ContractCatalog {
     	}	
     }
 
-    function stringEquals(string _a, string _b) private returns (bool) {
+    function stringEquals(string _a, string _b) returns (bool) {
     	bytes memory a = bytes(_a);
     	bytes memory b = bytes(_b);
         if (a.length != b.length) return false;
@@ -283,7 +278,7 @@ contract ContractCatalog {
         return true;
     }
 
-    function stringContains(string self, string needle) private returns (bool) {
+    function stringContains(string self, string needle) returns (bool) {
         return stringIndexOf(self, needle) != int(-1);
     }
 }
