@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitlagio at 0x7df648324237224b5bea874477b2e450c9044c94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitlagio at 0xfa65bb26b28e7f923f73248a9a47a5466d9cc7ec
 */
 pragma solidity ^0.4.17;
 /**
@@ -1039,12 +1039,10 @@ contract usingOraclize {
 // </ORACLIZE_API>
 contract Bitlagio is Ownable, usingOraclize {
   using SafeMath for uint;
-  uint constant SAFE_GAS = 2300;
-  uint constant ORACLIZE_GAS_LIMIT = 175000;
   uint constant N = 4;
   uint constant MODULO = 100;
   uint constant HOUSE_EDGE = 10;
-  uint constant MIN_BET = 0.1 ether;
+  uint minBet = 0.01 ether;
   struct Bet {
     address playerAddress;
     uint amountBet;
@@ -1059,8 +1057,8 @@ contract Bitlagio is Ownable, usingOraclize {
   event LOG_BetLost(address playerAddress, uint numberRolled, uint amountLost);
   event LOG_OwnerDeposit(uint amount);
   event LOG_OwnerWithdraw(address destination, uint amount);
-  modifier onlyIfBetSizeAllowed(uint betSize) {
-    if (betSize > maxBetAllowed || betSize < MIN_BET) throw;
+  modifier onlyIfBetSizeAllowed() {
+    if (msg.value <= minBet) throw;
     _;
   }
   modifier onlyIfBetExist(bytes32 betId) {
@@ -1076,9 +1074,7 @@ contract Bitlagio is Ownable, usingOraclize {
     _;
   }
   function Bitlagio() public {
-    oraclize_setNetwork(networkID_auto);
-    /* use TLSNotary for oraclize call */
-    oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
+    oraclize_setProof(proofType_Ledger);
   }
   function adjustMaxBetAllowed() internal {
     maxBetAllowed = this.balance.div(10);
@@ -1087,35 +1083,35 @@ contract Bitlagio is Ownable, usingOraclize {
     }
   }
   function () payable external {
-    adjustMaxBetAllowed();
     if (msg.sender != owner) {
-      makeBet(msg.value);
+      makeBet();
     } else {
       LOG_OwnerDeposit(msg.value);
     }
   }
-  function makeBet(uint betSize) onlyIfBetSizeAllowed(betSize) {
+  function makeBet() onlyIfBetSizeAllowed {
+    var betSize = msg.value;
+    adjustMaxBetAllowed();
+    if (betSize >= maxBetAllowed) {
+      betSize = maxBetAllowed;
+      msg.sender.send(msg.value - betSize);  // refund better of his ether over limit
+    }
     LOG_NewBet(msg.sender, betSize);
     uint delay = 0; // number of seconds to wait before the execution takes place
     uint callbackGas = 200000; // amount of gas we want Oraclize to set for the callback function
-    bytes32 betId =
-      oraclize_query(
-        "nested",
-        "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BH/dtQ8XAz4lyFCzf4aAhI2mGO1GOCdtOLR2T2mBD/4mdQI+d6KT11xpL/m+vPDmTLp9LIX0NTlwsVkYf5p17BIPAruzez/uIctZLwuV/rT48i1sHw4UOW40R8Rsc+F3Wsv6dbKA8b7Qj1uPmgumSmG9gu4U},\"n\":1,\"min\":1,\"max\":100${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
-        ORACLIZE_GAS_LIMIT + SAFE_GAS
-      );
-    bets[betId] = Bet(msg.sender, msg.value, 0);
+    bytes32 betId = oraclize_newRandomDSQuery(delay, N, callbackGas);
+    bets[betId] = Bet(msg.sender, betSize, 0);
     betsKeys.push(betId);
   }
   function __callback(bytes32 betId, string result, bytes proof) public
     onlyOraclize
     onlyIfBetExist(betId)
     onlyIfNotProcessed(betId)
+    oraclize_randomDS_proofVerify(betId, result, proof)
   {
-    bets[betId].numberRolled = parseInt(result);
+    bets[betId].numberRolled = uint(sha3(result)) % MODULO;
     Bet thisBet = bets[betId];
-    require(thisBet.numberRolled >= 1 && thisBet.numberRolled <= 100);
-    if (betWon(thisBet)) {
+    if (betWon(betId)) {
       LOG_BetWon(thisBet.playerAddress, thisBet.numberRolled, thisBet.amountBet);
       thisBet.playerAddress.send(thisBet.amountBet.mul(2));
     } else {
@@ -1123,8 +1119,8 @@ contract Bitlagio is Ownable, usingOraclize {
       thisBet.playerAddress.send(1);  // sending 1 wei just to let player know he didn't win
     }
   }
-  function betWon(Bet bet) internal returns(bool) {
-    if (bet.numberRolled > (MODULO.div(2).add(HOUSE_EDGE))) {
+  function betWon(bytes32 betId) internal returns(bool) {
+    if (bets[betId].numberRolled > MODULO.div(2).add(HOUSE_EDGE)) {
       return true;
     }
     return false;
@@ -1132,5 +1128,8 @@ contract Bitlagio is Ownable, usingOraclize {
   function withdrawFromPot(uint amount) onlyOwner {
     LOG_OwnerWithdraw(owner, amount);
     owner.send(amount);
+  }
+  function setMinBet(uint _minBet) onlyOwner {
+    minBet = _minBet;
   }
 }
