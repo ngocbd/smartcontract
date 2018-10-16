@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x3365845e915fb3ba57d8901de971ae9ec8223d90
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x1b693a49a2fba5d5c814ffdf7f695c3ed9764534
 */
 pragma solidity ^0.4.2;
 
@@ -222,9 +222,7 @@ contract CryptoSprites is ERC721 {
             _ownerCut = ((priceIfAny / 1000) * ownerCut) * priceMultiplier / priceDivider;
             _charityCut = ((priceIfAny / 1000) * charityCut) * priceMultiplier / priceDivider;
             
-            // Crypto Kitty prices decrease every few seconds by a fractional amount, so use >=
-            
-            require (msg.value >= (priceIfAny * priceMultiplier / priceDivider) + _ownerCut + _charityCut);
+            require (msg.value == (priceIfAny * priceMultiplier / priceDivider) + _ownerCut + _charityCut);
             
             address kittyOwner = KittyCore(KittyCoreAddress).ownerOf(spriteId);
             
