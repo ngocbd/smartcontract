@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vineyard at 0x66593d57b26ed56fd7881a016fcd0af66636a9f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vineyard at 0x293438bc8656C99abB4Fce8b08A5f40fB3b8C931
 */
 pragma solidity ^0.4.18;
 
@@ -55,16 +55,11 @@ contract Vineyard{
         }
         uint256 grapesUsed = getMyGrapes();
         uint256 newVines = SafeMath.div(grapesUsed, GRAPE_SECS_TO_GROW_VINE);
-        if (SafeMath.add(vineyardVines[msg.sender], newVines) > totalVineCapacity[msg.sender]) {
-            purchasedGrapes[msg.sender] = SafeMath.mul(SafeMath.sub(SafeMath.add(vineyardVines[msg.sender], newVines), totalVineCapacity[msg.sender]), GRAPE_SECS_TO_GROW_VINE);
-            vineyardVines[msg.sender] = totalVineCapacity[msg.sender];
-            grapesUsed = grapesUsed - purchasedGrapes[msg.sender];
+        vineyardVines[msg.sender] = SafeMath.add(vineyardVines[msg.sender], newVines);
+        if (vineyardVines[msg.sender] > totalVineCapacity[msg.sender]) {
+          vineyardVines[msg.sender] = totalVineCapacity[msg.sender];
         }
-        else
-        {
-            vineyardVines[msg.sender] = SafeMath.add(vineyardVines[msg.sender], newVines);
-            purchasedGrapes[msg.sender] = 0;
-        }
+        purchasedGrapes[msg.sender] = 0;
         lastHarvest[msg.sender] = now;
 
         //send referral grapes (add to purchase talley)
@@ -113,8 +108,6 @@ contract Vineyard{
 
     function buyGrapes() initializedMarket public payable{
         require(msg.value <= SafeMath.sub(this.balance,msg.value));
-        require(vineyardVines[msg.sender] > 0);
-
         uint256 grapesBought = calculateGrapeBuy(msg.value, SafeMath.sub(this.balance, msg.value));
         grapesBought = SafeMath.sub(grapesBought, devFee(grapesBought));
         marketGrapes = SafeMath.sub(marketGrapes, grapesBought);
