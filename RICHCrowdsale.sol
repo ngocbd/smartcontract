@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RICHCrowdsale at 0x0710714a1e30c70aea2dc1254e24292bea7943f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RICHCrowdsale at 0x105004337129304b9073c5079f443e61fcd00349
 */
 /**
  * @title SafeMath
@@ -54,8 +54,8 @@ contract RICHCrowdsale {
     uint256 public percentageBuyBackFund = 49; // Percentage goes to Buy-back fund
 
     // Eth to token rate
-    uint256 public currentMarketRate = 1; // Current market price ETH/RCH. Will be updated before each ico
-    uint256 public minimumIcoRate = 240; // ETH/dollar rate. Minimum rate at wich will be issued RICH token, 1$ = 1RCH
+    uint256 public currentMarketRate = 400; // Current market price RICH/ETH. Will be updated before each ico
+    uint256 public maximumIcoRate = 330; // Maximum rate at wich will be issued RICH token
     uint256 public minAcceptedEthAmount = 4 finney; // 0.004 ether
 
     // ICOs specification
@@ -188,16 +188,6 @@ contract RICHCrowdsale {
     }
 
     /**
-     * Set minimum ICO rate (ETH/dollar) in order to achieve max price of 1$ for 1 RCH.
-     * Will be called by creator before each ICO
-     *
-     * @param _minimumIcoRate current ETH/dollar rate at the market
-     */
-    function setMinimumIcoRate(uint256 _minimumIcoRate) onlyCreator returns (uint256) {
-        minimumIcoRate = _minimumIcoRate;
-    }
-
-    /**
      * Set humanity fund address
      *
      * @param _humanityFund Humanity fund address
@@ -221,11 +211,11 @@ contract RICHCrowdsale {
      * @return rate How many tokens will be issued for one ETH
      */
     function getRate() returns (uint256 rate) {
-        if (currentMarketRate * 12 / 10 < minimumIcoRate) {
-            return minimumIcoRate;
+        if (currentMarketRate * 8 / 10 > maximumIcoRate) {
+            return maximumIcoRate;
         }
 
-        return currentMarketRate * 12 / 10;
+        return currentMarketRate * 8 / 10;
     }
 
     /**
