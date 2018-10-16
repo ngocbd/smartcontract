@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpareCurrencyToken at 0x7e2555d31f75a34a6a5604ac04a7ee8fe769731d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpareCurrencyToken at 0x12bfe10a68950b728f1847e7e776becbe175670c
 */
 pragma solidity ^0.4.13;
 
@@ -26,7 +26,6 @@ contract SpareCurrencyToken {
       && balances[_to] + _amount > balances[_to]) {
         balances[msg.sender] -= _amount;
         balances[_to] += _amount;
-        Transfer(msg.sender, _to, _amount);
         return true;
     } else {
       return false;
@@ -50,7 +49,6 @@ contract SpareCurrencyToken {
            balances[_from] -= _amount;
            allowed[_from][msg.sender] -= _amount;
            balances[_to] += _amount;
-           Transfer(_from, _to, _amount);
            return true;
       } else {
            return false;
