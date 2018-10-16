@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0xea0c348a297084bffbddad7f89216f24a2106e58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0x4ae5aee119a6ea4c849ce0d757b2c203a35e1555
 */
 pragma solidity ^0.4.15;
 
@@ -32,7 +32,6 @@ library SafeMath {
     return c;
   }
 }
-
 
 contract ERC20 {
   /// @notice Send `_amount` tokens to `_to` from `msg.sender`
@@ -84,7 +83,6 @@ contract ERC20 {
   /// @return The total number of tokens
   function totalSupply() constant returns (uint);
 }
-
 
 /*
     Copyright 2016, Jordi Baylina
@@ -688,6 +686,7 @@ contract MiniMeTokenFactory {
     }
 }
 
+
 /**
  * @title Aigang Contribution contract
  *
@@ -695,6 +694,7 @@ contract MiniMeTokenFactory {
  *  https://github.com/AigangNetwork/aigang-crowdsale-contracts/Aigang-T&Cs(171020_clean).docx
  *
  */
+
 
 contract Contribution is Controlled, TokenController {
   using SafeMath for uint256;
@@ -978,9 +978,7 @@ contract Contribution is Controlled, TokenController {
     require(msg.sender == controller || getBlockTimestamp() > endTime || weiToCollect() == 0);
 
     // remainder will be minted and locked for 1 year.
-    // This was decided to be removed.
-    // aix.generateTokens(remainderHolder, weiToCollect().mul(2000));
-
+    aix.generateTokens(remainderHolder, weiToCollect().mul(2000));
     // AIX generated so far is 51% of total
     uint256 tokenCap = aix.totalSupply().mul(100).div(51);
     // dev Wallet will have 20% of the total Tokens and will be able to retrieve quarterly.
