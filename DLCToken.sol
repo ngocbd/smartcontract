@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DLCToken at 0x3dbab99e01d467d8771bff4f6c0ceb9170d73314
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DLCToken at 0x5fea306c80e1dff426bbe4966853f0e32c2f6161
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
 contract ERC20Basic {
     uint256 public totalSupply;
@@ -443,10 +443,6 @@ contract Sale is Configurable, Bonuses{
         return withinPeriod && nonZeroPurchase && minimalPriceChecked && activated && !closed;
     }
 
-    function isStarted() public constant returns (bool) {
-        return now > startTime;
-    }
-
     function isEnded() public constant returns (bool) {
         return now > endTime;
     }
@@ -535,8 +531,8 @@ contract DoubleLandICO_TEST is Ownable {
         require(!isDeployed);
         isDeployed = true;
 
-        softCap = 8000 ether;
-        hardCap = 40000 ether;
+        softCap = 6000 ether;
+        hardCap = 25000 ether;
         maxActivatedSalesTotalCount = 5;
 
         setGlobalMultisigWallet(0xcC6E23E740FBc50e242B6B90f0BcaF64b83BF813);
