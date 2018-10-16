@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pray4Prey at 0xc5c49c5f57d9f1635dde956c6858146717879600
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pray4Prey at 0xe648ae88a6d9b3373e115e3414be91b7cf12de4c
 */
 pragma solidity ^0.4.8;
 
@@ -1037,8 +1037,6 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 	uint128[] public values;
 	/** the fee to be paid each time an animal is bought in percent*/
 	uint8 fee;
-	/** the address of the old contract version. animals may be transfered from this address */
-	address lastP4P;
 
 	/** total number of animals in the game (uint32 because of multiplication issues) */
 	uint32 public numAnimals;
@@ -1071,9 +1069,9 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 
 
 	/** initializes the contract parameters	 (would be constructor if it wasn't for the gas limit)*/
-	function init(address oldContract) {
+	function init() {
 		if(msg.sender != owner) throw;
-		costs = [100000000000000000, 200000000000000000, 500000000000000000, 1000000000000000000, 5000000000000000000];
+		costs = [10000000000000000, 20000000000000000, 50000000000000000, 100000000000000000, 500000000000000000];
 		fee = 5;
 		for (uint8 i = 0; i < costs.length; i++) {
 			values.push(costs[i] - costs[i] / 100 * fee);
@@ -1081,10 +1079,9 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 		maxAnimals = 300;
 		randomQuery = "10 random numbers between 1 and 1000";
 		queryType = "WolframAlpha";
-		oraclizeGas = 700000;
-		lastP4P = oldContract; //allow transfer from old contract
-		nextId = 500;
-		oldest = 500;
+		oraclizeGas = 300000;
+		nextId = 1;
+		oldest = 1;
 	}
 
 	/** The fallback function runs whenever someone sends ether
@@ -1324,55 +1321,6 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 		replaceAnimal(animalIndex);
 		if (!msg.sender.send(val)) throw;
 		newSell(animalId, msg.sender, val);
-	}
-
-	/** transfers animals from one contract to another.
-	 *   for easier contract update.
-	 * */
-	function transfer(address contractAddress) {
-		transferable newP4P = transferable(contractAddress);
-		uint8[] memory numXType = new uint8[](costs.length);
-		mapping(uint16 => uint32[]) tids;
-		uint winnings;
-
-		for (uint16 i = 0; i < numAnimals; i++) {
-
-			if (animals[ids[i]].owner == msg.sender) {
-				Animal a = animals[ids[i]];
-				numXType[a.animalType]++;
-				winnings += a.value - values[a.animalType];
-				tids[a.animalType].push(ids[i]);
-				replaceAnimal(i);
-				i--;
-			}
-		}
-		for (i = 0; i < costs.length; i++){
-			if(numXType[i]>0){
-				newP4P.receive.value(numXType[i]*values[i])(msg.sender, uint8(i), tids[i]);
-				delete tids[i];
-			}
-			
-		}
-			
-		if(winnings>0 && !msg.sender.send(winnings)) throw;
-	}
-	
-	/**
-	*	receives animals from an old contract version.
-	* */
-	function receive(address receiver, uint8 animalType, uint32[] oldids) payable {
-		if(msg.sender!=lastP4P) throw;
-		if (msg.value < oldids.length * values[animalType]) throw;
-		for (uint8 i = 0; i < oldids.length; i++) {
-			if (animals[oldids[i]].value == 0) {
-				addAnimal(animalType, receiver, oldids[i]);
-				if(oldids[i]<oldest) oldest = oldids[i];
-			} else {
-				addAnimal(animalType, receiver, nextId);
-				nextId++;
-			}
-		}
-		numAnimalsXType[animalType] += uint16(oldids.length);
 	}
 
 	
