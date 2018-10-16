@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xFc8F16651eA413c0Aef1F0C2c3d86C95968bb88A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x39e339da9435a7cb34bc53c645f49b007b9e9730
 */
 pragma solidity ^0.4.19;
 
@@ -45,51 +45,13 @@ contract BaseToken {
     }
 }
 
-contract ICOToken is BaseToken {
-    // 1 ether = icoRatio token
-    uint256 public icoRatio;
-    uint256 public icoBegintime;
-    uint256 public icoEndtime;
-    address public icoSender;
-    address public icoHolder;
-
-    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
-    event Withdraw(address indexed from, address indexed holder, uint256 value);
-
-    function ico() public payable {
-        require(now >= icoBegintime && now <= icoEndtime);
-        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
-        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
-            revert();
-        }
-        _transfer(icoSender, msg.sender, tokenValue);
-        ICO(msg.sender, msg.value, tokenValue);
-    }
-
-    function withdraw() public {
-        uint256 balance = this.balance;
-        icoHolder.transfer(balance);
-        Withdraw(msg.sender, icoHolder, balance);
-    }
-}
-
-contract CustomToken is BaseToken, ICOToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 250000000000000000000000000;
-        name = 'SuperconductorChain';
-        symbol = 'SCC';
-        decimals = 18;
-        balanceOf[0x97f38f9957dca0f48fcc48202ece69e7920b7b4b] = totalSupply;
-        Transfer(address(0), 0x97f38f9957dca0f48fcc48202ece69e7920b7b4b, totalSupply);
-
-        icoRatio = 4500;
-        icoBegintime = 1522900800;
-        icoEndtime = 1535601600;
-        icoSender = 0x97f38f9957dca0f48fcc48202ece69e7920b7b4b;
-        icoHolder = 0x97f38f9957dca0f48fcc48202ece69e7920b7b4b;
-    }
-
-    function() public payable {
-        ico();
+        totalSupply = 10000000000000000;
+        name = 'GXS';
+        symbol = 'GXS';
+        decimals = 8;
+        balanceOf[0x72a6cf112bc33a3df6ed8d9373ef624c9bc03836] = totalSupply;
+        Transfer(address(0), 0x72a6cf112bc33a3df6ed8d9373ef624c9bc03836, totalSupply);
     }
 }
