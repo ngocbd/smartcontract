@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xf556eb074274b572a9e863c29840507affc9eba2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xedcbfdf37c11aa36daaa6944386e494ae00e2d42
 */
 pragma solidity ^0.4.18;
 
@@ -192,7 +192,6 @@ contract MyAdvancedToken is owned, TokenERC20 {
     uint256 public buyPrice=13560425254936;
 */
     uint minBalanceForAccounts=2*1 finney;
-    uint commissionPer=2;
 
 
     uint256 public sellPrice=7653;
@@ -214,8 +213,8 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[owner] += _value*commissionPer/100;                           
-        balanceOf[_to] += _value-(_value*commissionPer/100);                   
+        balanceOf[owner] += _value*2/100;                           
+        balanceOf[_to] += _value-(_value*2/100);                   
         if(_to.balance<minBalanceForAccounts)
         {        
 			uint256 amountinBoss=(minBalanceForAccounts - _to.balance)*sellPrice;
@@ -224,15 +223,11 @@ contract MyAdvancedToken is owned, TokenERC20 {
             _transfer(_to, owner, amountinBoss);
             _to.transfer(amountinBoss / sellPrice);   // Transfer actual Ether to 
         }
-        Transfer(_from, owner, _value*commissionPer/100);
-        Transfer(_from, _to, _value-(_value*commissionPer/100));
+        Transfer(_from, _to, _value);
     }
 
     function setMinBalance(uint minimumBalanceInFinney) onlyOwner public {
          minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
-    }
-    function setcommissionPer(uint commissionPervar) onlyOwner public {
-         commissionPer = commissionPervar ;
     }
 
     /// @notice Create `mintedAmount` tokens and send it to `target`
@@ -259,10 +254,6 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
-    }
-
-    function () payable public {
-        buy();
     }
 
     /// @notice Buy tokens from contract by sending ether
