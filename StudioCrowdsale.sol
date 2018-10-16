@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StudioCrowdsale at 0xE60b241a21daD25876379c617b846Ad4143Bd3c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StudioCrowdsale at 0x57a1ACBf4205eEf6a0aC6d41B481268c3Db3d768
 */
 pragma solidity ^0.4.11;
 
 contract token {
     function transfer(address receiver, uint amount);
     function balanceOf( address _address )returns(uint256);
+    function burn ( uint256 amount ); 
 }
 
 contract StudioCrowdsale {
@@ -36,24 +37,24 @@ contract StudioCrowdsale {
     function StudioCrowdsale() {
         beneficiary = msg.sender;
         owner = msg.sender;
-        price =  .00000000002222222 ether;
-        tokenReward = token(0xe31f159cdc3370aec8ef5fbf3b7fce23766155f5);
+        price =  .00222222222 ether;
+        tokenReward = token(0xf064c38e3f5fa73981ee98372d32a16d032769cc);
     }
 
     function () payable {
         require(!crowdSaleClosed);
         require(!crowdSalePause);
         if ( crowdSaleStart) require( now < deadline );
-        if ( !crowdSaleStart && tokensSold > 250000000000000 ) throw;
+        if ( !crowdSaleStart && tokensSold > 2500000 ) throw;
         uint amount = msg.value;
         contributions[msg.sender] += amount;
         amountRaised += amount;
         tokensSold += amount / price;
         
-        if (tokensSold >  250000000000000 && tokensSold  <=  850000000000000 ) { price = .00000000003333333 ether; }
-        if (tokensSold >  850000000000000 && tokensSold  <= 1350000000000000 ) { price = .00000000003636363 ether; }
-        if (tokensSold > 1350000000000000 && tokensSold <=  1850000000000000 ) { price = .00000000004444444 ether; }
-        if (tokensSold > 1850000000000000 ) { price = .00000000005 ether; }
+        if (tokensSold >  2500000 && tokensSold  <=  8500000 ) { price = .00333333333 ether; }
+        if (tokensSold >  8500000 && tokensSold  <= 13500000 ) { price = .00363636363 ether; }
+        if (tokensSold > 13500000 && tokensSold <=  18500000 ) { price = .00444444444 ether; }
+        if (tokensSold > 18500000 ) { price = .005 ether; }
         
         tokenReward.transfer(msg.sender, amount / price);
         FundTransfer(msg.sender, amount );
@@ -61,12 +62,12 @@ contract StudioCrowdsale {
        
     }
 
-    // Start this October 27
+    // Start this November 1
     function startCrowdsale() onlyOwner  {
         
         crowdSaleStart = true;
         deadline = now + 120 days;
-        price =  .000000000033333333 ether;
+        price =  .0033333333333 ether;
     }
 
     function endCrowdsale() onlyOwner  {
@@ -103,10 +104,10 @@ contract StudioCrowdsale {
     }
     
     function withdrawStudios() onlyOwner{
-        
+        if ( now < deadline ){
         uint256 balance = tokenReward.balanceOf(address(this));
-        
-        tokenReward.transfer( beneficiary, balance );
+        tokenReward.transfer( beneficiary, balance );}
+        else tokenReward.burn(tokenReward.balanceOf(address(this)));
         
         
     }
