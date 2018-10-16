@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCoin at 0x6a691ae563524b705a8accf1646bcac100d9bb0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jcoin at 0x314d25c8322372ef63eac9654ded3d87494c3233
 */
 pragma solidity ^0.4.21;
 
@@ -344,9 +344,9 @@ contract MintableToken is StandardToken, OwnedByContract {
     }
 }
 
-contract JCoin is MintableToken {
-    string public name = "JCoin";
-    string public symbol = "JPC";
+contract Jcoin is MintableToken {
+    string public name = "Jcoin";
+    string public symbol = "JCO";
     uint8 public decimals = 18;
     
     address private constant COMPANY_ADDRESS = 0x695e23819F9F307318c471Ea698Bb1aa0C40Df25;
@@ -354,7 +354,7 @@ contract JCoin is MintableToken {
     address private constant ADVISORS_ADDRESS = 0x82d39148389837B7F5f9eC8B425EdaBc8F0edFA5;
     address private constant TEAM_ADDRESS = 0x83426931a7986D590b4B8633217EBf95c13Fa655;
     address private constant PRE_ICO_ADDRESS = 0x535FC3d183C7feCDB730F11cc276000880b373Cc;
-    address private constant ICO_ADDRESS = 0x7F01Db7b913ba7E949A68D42Eb0DffBfA12d2DC8;
+    address private constant ICO_ADDRESS = 0xa17536ae64eb311cfdD9DB8bDf1c1997C691c383;
     
     uint256 private constant COMPANY_AMOUNT = 13860000;
     uint256 private constant REWARDS_AMOUNT = 6300000;
@@ -364,7 +364,7 @@ contract JCoin is MintableToken {
     uint256 private constant ICO_AMOUNT = 21000000;
     uint256 private constant SUPPLY_AMOUNT = 63000000;
     
-    function JCoin() public {
+    function Jcoin() public {
         uint256 decimalPlace = 10 ** uint(decimals);
         
         totalSupply_ = SUPPLY_AMOUNT * decimalPlace;
