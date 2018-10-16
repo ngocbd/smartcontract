@@ -1,122 +1,131 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xb0c80fc8435f47e9a9f00598fab38cc8fbe8c51a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x80248B05a810F685B12C78e51984f808293e57D3
 */
 pragma solidity ^0.4.8;
-
-  // ----------------------------------------------------------------------------------------------
-  //  ?????????FAC2323 ,??????????????????????????????
-  // Sample fixed supply token contract
-  // Enjoy. (c) BokkyPooBah 2017. The MIT Licence.
-  // ----------------------------------------------------------------------------------------------
-
-   // ERC Token Standard #20 Interface
-  // https://github.com/ethereum/EIPs/issues/20
-  contract ERC20Interface {
-
-      function totalSupply() constant returns (uint256 totalSupply);
-
-
-      function balanceOf(address _owner) constant returns (uint256 balance);
-
-      function transfer(address _to, uint256 _value) returns (bool success);
-
+ 
+// ----------------------------------------------------------------------------------------------
+// Sample fixed supply token contract
+// Enjoy. (c) BokkyPooBah 2017. The MIT Licence.
+// ----------------------------------------------------------------------------------------------
+ 
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/issues/20
+contract ERC20Interface {
+     // Get the total token supply
+     function totalSupply() constant returns (uint256 totalSupply);
+  
+     // Get the account balance of another account with address _owner
+     function balanceOf(address _owner) constant returns (uint256 balance);
+  
+     // Send _value amount of tokens to address _to
+     function transfer(address _to, uint256 _value) returns (bool success);
+   
+      // Send _value amount of tokens from address _from to address _to
       function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+  
+     // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+     // If this function is called again it overwrites the current allowance with _value.
+     // this function is required for some DEX functionality
+     function approve(address _spender, uint256 _value) returns (bool success);
+  
+     // Returns the amount which _spender is still allowed to withdraw from _owner
+     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+  
+     // Triggered when tokens are transferred.
+     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-
-      function approve(address _spender, uint256 _value) returns (bool success);
-
-
-      function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-
-      event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
+     // Triggered whenever approve(address _spender, uint256 _value) is called.
+     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ }
+  
+ contract FixedSupplyToken is ERC20Interface {
+     string public constant symbol = "RTO";
+     string public constant name = "Rentarto.de Coin";
+     uint8 public constant decimals = 3;
+     uint256 _totalSupply = 10* 1000 * 100000 * (10**uint256(decimals));
      
-      event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-  }
+  
+     
+     // Owner of this contract
+     address public owner;
+  
+     // Balances for each account
+     mapping(address => uint256) balances;
+  
+     // Owner of account approves the transfer of an amount to another account
+     mapping(address => mapping (address => uint256)) allowed;
+  
+     // Functions with this modifier can only be executed by the owner
+     modifier onlyOwner() {
+         if (msg.sender != owner) {
+             throw;
+         }
+         _;
+     }
+  
+     // Constructor
+     function FixedSupplyToken() {
+         owner = msg.sender;
+         balances[owner] = _totalSupply;
+     }
+  
+     function totalSupply() constant returns (uint256 totalSupply) {
+         totalSupply = _totalSupply;
+     }
 
-
-   contract FixedSupplyToken is ERC20Interface {
-      string public constant symbol = "EHD";
-      string public constant name = "????"; 
-      uint8 public constant decimals = 18; 
-      uint256 _totalSupply = 55000000000000000000000000; 
-
-
-      address public owner;
-
-
-      mapping(address => uint256) balances;
-
-
-      mapping(address => mapping (address => uint256)) allowed;
-
-
-      modifier onlyOwner() {
-          if (msg.sender != owner) {
-              throw;
-          }
-          _;
-      }
-
-
-      function FixedSupplyToken() {
-          owner = msg.sender;
-          balances[owner] = _totalSupply;
-      }
-
-      function totalSupply() constant returns (uint256 totalSupply) {
-          totalSupply = _totalSupply;
-      }
-
-
-      function balanceOf(address _owner) constant returns (uint256 balance) {
-          return balances[_owner];
-      }
-
-
-      function transfer(address _to, uint256 _amount) returns (bool success) {
-          if (balances[msg.sender] >= _amount 
-              && _amount > 0
-              && balances[_to] + _amount > balances[_to]) {
-              balances[msg.sender] -= _amount;
-              balances[_to] += _amount;
-              Transfer(msg.sender, _to, _amount);
-              return true;
-          } else {
-              return false;
-          }
-      }
-
-
-      function transferFrom(
-          address _from,
-          address _to,
-          uint256 _amount
-      ) returns (bool success) {
-          if (balances[_from] >= _amount
-              && allowed[_from][msg.sender] >= _amount
-              && _amount > 0
-              && balances[_to] + _amount > balances[_to]) {
-              balances[_from] -= _amount;
-              allowed[_from][msg.sender] -= _amount;
-              balances[_to] += _amount;
-              Transfer(_from, _to, _amount);
-              return true;
-          } else {
-              return false;
-          }
-      }
-
-
-      function approve(address _spender, uint256 _amount) returns (bool success) {
-          allowed[msg.sender][_spender] = _amount;
-          Approval(msg.sender, _spender, _amount);
-          return true;
-      }
-
-      //????????????
-      function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-          return allowed[_owner][_spender];
-      }
-  }
+     // What is the balance of a particular account?
+     function balanceOf(address _owner) constant returns (uint256 balance) {
+         return balances[_owner];
+     }
+  
+     // Transfer the balance from owner's account to another account
+     function transfer(address _to, uint256 _amount) returns (bool success) {
+         if (balances[msg.sender] >= _amount 
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(msg.sender, _to, _amount);
+             return true;
+         } else {
+             return false;
+         }
+     }
+  
+     // Send _value amount of tokens from address _from to address _to
+     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+     // fees in sub-currencies; the command should fail unless the _from account has
+     // deliberately authorized the sender of the message via some mechanism; we propose
+     // these standardized APIs for approval:
+     function transferFrom(
+         address _from,
+         address _to,
+         uint256 _amount
+     ) returns (bool success) {
+         if (balances[_from] >= _amount
+             && allowed[_from][msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[_from] -= _amount;
+             allowed[_from][msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(_from, _to, _amount);
+             return true;
+         } else {
+             return false;
+         }
+     }
+  
+     // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+     // If this function is called again it overwrites the current allowance with _value.
+     function approve(address _spender, uint256 _amount) returns (bool success) {
+         allowed[msg.sender][_spender] = _amount;
+         Approval(msg.sender, _spender, _amount);
+         return true;
+     }
+  
+     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+         return allowed[_owner][_spender];
+     }
+ }
