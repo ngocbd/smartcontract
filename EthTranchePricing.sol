@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x7384c268c27c21654a6eb5629d36330367c910fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0xb6951dba8d2aa5156440bcc4ba1af82f12c55159
 */
 /**
  * Interface for defining crowdsale pricing.
@@ -617,6 +617,9 @@ contract Crowdsale is Haltable {
 
   /**
    * Investors can claim refund.
+   *
+   * Note that any refunds from proxy buyers should be handled separately,
+   * and not through this contract.
    */
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
@@ -628,7 +631,7 @@ contract Crowdsale is Haltable {
   }
 
   /**
-   * @return true if the crowdsale has raised enough money to be a succes
+   * @return true if the crowdsale has raised enough money to be a successful.
    */
   function isMinimumGoalReached() public constant returns (bool reached) {
     return weiRaised >= minimumFundingGoal;
