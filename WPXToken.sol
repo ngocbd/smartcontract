@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WPXToken at 0xd64f93182d37df63d53567b2ccad9a0f308570c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WPXToken at 0x49ab5a64b3eaed6c2e2e46adc8ee7974e8e88de3
 */
 pragma solidity ^0.4.11;
 /**
@@ -481,17 +481,17 @@ contract VestedToken is StandardToken, LimitedTransferToken {
 
 contract WPXToken is VestedToken {
   //FIELDS
-  string public name = "Test"; //(important input)
-  string public symbol = "TST";    //(important input)
+  string public name = "WorkPress"; //(important input)
+  string public symbol = "WPX";    //(important input)
   uint public decimals = 4;        //(important input)
 // Multiplier for the decimals
   uint private constant DECIMALS = 10000;
   uint public totalSupply = 98000000*DECIMALS; //(important input)
   //CONSTANTS
   //Time limits
-  uint public constant STAGE_ONE_TIME_END = 10 minutes; // first day bonus (important input)
-  uint public constant STAGE_TWO_TIME_END = 15 minutes; // first week bonus (important input)
-  uint public constant STAGE_THREE_TIME_END = 30 minutes; //(important input)
+  uint public constant STAGE_ONE_TIME_END = 38 days; // first day bonus (important input)
+  uint public constant STAGE_TWO_TIME_END = 58 days; // first week bonus (important input)
+  uint public constant STAGE_THREE_TIME_END = 69 days; //(important input)
   
 
   //Prices of WPX
@@ -589,7 +589,7 @@ contract WPXToken is VestedToken {
     ownerAddress = msg.sender;
     publicStartTime = _publicStartTime;
     privateStartTime = _privateStartTime;
-    publicEndTime = _publicStartTime + 30 minutes; // (important input)
+    publicEndTime = _publicStartTime + 69 days; // (important input)
     multisigAddress = _multisig;
     wpxTeamAddress = _wpxTeam;
 
