@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x6846b938f9be9f1eeeb9bfd853636c805f8f54d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0xf77ac34cd0ed42f2b5d8cfcf4fa0f4bb1b80b9d8
 */
 pragma solidity ^0.4.6;
 
@@ -95,13 +95,13 @@ contract SwarmRedistribution is RES {
     }
 
     function buy() isOpen public payable {
-      balanceOf[msg.sender] += msg.value;
+      balanceOf[msg.sender] = msg.value;
       totalSupply += msg.value;
       Bought(msg.sender, msg.value);
     }  
 
     function buyViaJohan() isOpen public payable {
-      balanceOf[msg.sender] += msg.value;
+      balanceOf[msg.sender] = msg.value;
       totalSupply += msg.value;  
 
       /* Create the dividend pathway */
