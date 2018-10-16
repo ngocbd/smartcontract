@@ -1,11 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0x735ba26f91e1275fa4b504649b19ef74739fe7e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0x973c2178b09225d1de3ab037d40b3f24af696255
 */
 contract SHA3_512 {
    function hash(uint64[8]) pure public returns(uint32[16]) {}
 }
 
 contract TeikhosBounty {
+
+    address public bipedaljoe = 0x4c5D24A7Ca972aeA90Cc040DA6770A13Fc7D4d9A; // In case no one submits the correct solution, the bounty is sent to me
 
     SHA3_512 public sha3_512 = SHA3_512(0xbD6361cC42fD113ED9A9fdbEDF7eea27b325a222); // Mainnet: 0xbD6361cC42fD113ED9A9fdbEDF7eea27b325a222, 
                                                                                      // Rinkeby: 0x2513CF99E051De22cEB6cf5f2EaF0dc4065c8F1f
@@ -43,18 +45,8 @@ contract TeikhosBounty {
     }
 
     // Proof-of-public-key in format 2xbytes32, to support xor operator and ecrecover r, s v format
-
-    struct PoPk {
-      bytes32 half1;
-      bytes32 half2;
-    }
-
-    PoPk public proof_of_public_key;
-    
-    function TeikhosBounty() public { // Constructor funciton, runs when contract is deployed
-        proof_of_public_key.half1 = hex"ad683919450048215e7c10c3dc3ffca5939ec8f48c057cfe385c7c6f8b754aa7";
-        proof_of_public_key.half2 = hex"4ce337445bdc24ee86d6c2460073e5b307ae54cdef4b196c660d5ee03f878e81";
-    }
+    bytes32 public proof_of_public_key1 = hex"7b5f8ddd34df50d24e492bbee1a888122c1579e898eaeb6e0673156a1b97c24b";
+    bytes32 public proof_of_public_key2 = hex"26d64a34756bd684766dce3e6a8e8695a14a2b16d001559f4ae3a0849ac127fe";
 
     function commit(bytes _signature) public inState(State.Commit) {
         require(commitment[msg.sender].timestamp == 0);
@@ -62,7 +54,7 @@ contract TeikhosBounty {
         commitment[msg.sender].timestamp = now;
     }
 
-    function reveal() public inState(State.Reveal) returns (bool success) {
+    function reveal() public inState(State.Reveal) {
         bytes memory signature = commitment[msg.sender].signature;
         require(signature.length != 0);
 
@@ -79,25 +71,24 @@ contract TeikhosBounty {
         if (v < 27) v += 27;
 
         if(ecrecover(isSolved.msgHash, v, r, s) == msg.sender) {
-
-            success = true; // The correct solution was submitted
-
             if(winner.timestamp == 0 || commitment[msg.sender].timestamp < winner.timestamp) {
                 winner.winner = msg.sender;
                 winner.timestamp = commitment[msg.sender].timestamp;
             }
         }
         delete commitment[msg.sender];
-
-        return success;
     }
 
     function reward() public inState(State.Payout) {
-        selfdestruct(winner.winner);
+        if(winner.winner != 0) selfdestruct(winner.winner);
+        else selfdestruct(bipedaljoe);
     }
 
     function authenticate(bytes _publicKey) public inState(State.Commit) {
-                
+        
+        // Remind people to commit before submitting the solution
+        require(commitment[msg.sender].timestamp != 0);
+        
         bytes memory keyHash = getHash(_publicKey);
          
         // Split hash of public key in 2xbytes32, to support xor operator and ecrecover r, s v format
@@ -111,8 +102,8 @@ contract TeikhosBounty {
         }
 
         // Use xor (reverse cipher) to get signature in r, s v format
-        bytes32 r = proof_of_public_key.half1 ^ hash1;
-        bytes32 s = proof_of_public_key.half2 ^ hash2;
+        bytes32 r = proof_of_public_key1 ^ hash1;
+        bytes32 s = proof_of_public_key2 ^ hash2;
 
         // Get msgHash for use with ecrecover
         bytes32 msgHash = keccak256("\x19Ethereum Signed Message:\n64", _publicKey);
@@ -125,9 +116,6 @@ contract TeikhosBounty {
             isSolved.timestamp = now;
             isSolved.publicKey = _publicKey; 
             isSolved.msgHash = msgHash;
-
-            require(reveal() == true); // The correct solution has to have been commited, 
-                                       // prevents funds from getting locked in the contract
         }
     }
 
