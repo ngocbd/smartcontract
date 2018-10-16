@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BICODE at 0x56e7f2cd7d5382506aab084a67d70e603cdb23f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BICODE at 0xff94570323eac530802f8c301be6c2f272a24a60
 */
 pragma solidity ^0.4.4;
 
@@ -62,9 +62,9 @@ contract BICODE is BicodeBIC {
         ) {
         balances[msg.sender] = 10000000000000;
         totalSupply = 10000000000000;
-        name = "BiCode";
+        name = "Bicode";
         decimals = 8;                          
-        symbol = "CODE";                               
+        symbol = "ORG";                               
     }
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
