@@ -1,160 +1,282 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BPToken at 0xcbbe432d9f844e5548e9053af0348e3779259fd1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BPToken at 0x63e07355131D163a3Dc59Ec643a5091b3F1a35ee
 */
-contract ERC20Token {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
+pragma solidity ^0.4.20;
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
+/*
+ * ERC20 interface
+ * see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+    uint public totalSupply;
+    function balanceOf(address who) constant returns (uint);
+    function allowance(address owner, address spender) constant returns (uint);
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function transfer(address to, uint value) returns (bool ok);
+    function transferFrom(address from, address to, uint value) returns (bool ok);
+    function approve(address spender, uint value) returns (bool ok);
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-contract Owned {
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner) ;
-        _;
+
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+    function safeMul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
+    function safeDiv(uint a, uint b) internal returns (uint) {
+        assert(b > 0);
+        uint c = a / b;
+        assert(a == b * c + a % b);
+        return c;
+    }
+
+    function safeSub(uint a, uint b) internal returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function safeAdd(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        assert(c >= a && c >= b);
+        return c;
+    }
+
+    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    function assert(bool assertion) internal {
+        if (!assertion) {
+            throw;
+        }
+    }
+
+}
+
+/**
+ * Owned contract
+ */
+contract Owned {
     address public owner;
 
-    /// @notice The Constructor assigns the message sender to be `owner`
     function Owned() {
         owner = msg.sender;
     }
 
-    address public newOwner;
-
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    ///  an unowned neutral vault, however that cannot be undone
-    function changeOwner(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 
-    function acceptOwnership() {
-        if (msg.sender == newOwner) {
-            owner = newOwner;
+    function isOwner(address _owner) internal returns (bool){
+        if (_owner == owner){
+            return true;
         }
+        return false;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner {
+        owner = newOwner;
     }
 }
-contract StandardToken is ERC20Token {
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else {
-            return false;
+
+/**
+ * BP crowdsale contract
+*/
+contract BPToken is SafeMath, Owned, ERC20 {
+    string public constant name = "Backpack Travel Token";
+    string public constant symbol = "BP";
+    uint256 public constant decimals = 18;  
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+
+    function BPToken() {
+        totalSupply = 2000000000 * 10 ** uint256(decimals);
+        balances[msg.sender] = totalSupply;
+    }
+    
+    event Issue(uint16 role, address indexed to, uint256 value);
+
+    /// roles
+    enum Roles { Default, Angel, PrivateSale, Partner, Fans, Team, Foundation, Backup }
+    mapping (address => uint256) addressHold;
+    mapping (address => uint16) addressRole;
+
+    uint perMonthSecond = 2592000;
+    
+    /// lock rule
+    struct LockRule {
+        uint baseLockPercent;
+        uint startLockTime;
+        uint stopLockTime;
+        uint linearRelease;
+    }
+    mapping (uint16 => LockRule) roleRule;
+
+    /// set the rule for special role
+    function setRule(uint16 _role, uint _baseLockPercent, uint _startLockTime, uint _stopLockTime,uint _linearRelease) onlyOwner {
+        assert(_startLockTime > block.timestamp);
+        assert(_stopLockTime > _startLockTime);
+        
+        roleRule[_role] = LockRule({
+            baseLockPercent: _baseLockPercent,
+            startLockTime: _startLockTime,
+            stopLockTime: _stopLockTime,
+            linearRelease: _linearRelease
+        });
+    }
+    
+    /// assign BP token to another address
+    function assign(uint16 role, address to, uint256 amount) onlyOwner returns (bool) {
+        assert(role <= uint16(Roles.Backup));
+        assert(balances[msg.sender] > amount);
+        
+        /// one address only belong to one role
+        if ((addressRole[to] != uint16(Roles.Default)) && (addressRole[to] != role)) throw;
+
+        if (role != uint16(Roles.Default)) {
+            addressRole[to] = role;
+            addressHold[to] = safeAdd(addressHold[to],amount);
         }
-    }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
+        if (transfer(to,amount)) {
+            Issue(role, to, amount);
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    function isRole(address who) internal returns(uint16) {
+        uint16 role = addressRole[who];
+        if (role != 0) {
+            return role;
+        }
+        return 100;
+    }
+    
+    /// calc the balance that the user shuold hold
+    function shouldHadBalance(address who) internal returns (uint){
+        uint16 currentRole = isRole(who);
+        if (isOwner(who) || (currentRole == 100)) {
+            return 0;
+        }
+        
+        // base lock amount 
+        uint256 baseLockAmount = safeDiv(safeMul(addressHold[who], roleRule[currentRole].baseLockPercent),100);
+        
+        /// will not linear release
+        if (roleRule[currentRole].linearRelease == 0) {
+            if (block.timestamp < roleRule[currentRole].stopLockTime) {
+                return baseLockAmount;
+            } else {
+                return 0;
+            }
+        }
+        /// will linear release 
+
+        /// now timestamp before start lock time 
+        if (block.timestamp < roleRule[currentRole].startLockTime + perMonthSecond) {
+            return baseLockAmount;
+        }
+        // total lock months
+        uint lockMonth = safeDiv(safeSub(roleRule[currentRole].stopLockTime,roleRule[currentRole].startLockTime),perMonthSecond);
+        // unlock amount of every month
+        uint256 monthUnlockAmount = safeDiv(baseLockAmount,lockMonth);
+        // current timestamp passed month 
+        uint hadPassMonth = safeDiv(safeSub(block.timestamp,roleRule[currentRole].startLockTime),perMonthSecond);
+
+        return safeSub(baseLockAmount,safeMul(hadPassMonth,monthUnlockAmount));
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender,0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require ((_value==0) || (allowed[msg.sender][_spender] ==0));
+    /// get balance of the special address
+    function balanceOf(address who) constant returns (uint) {
+        return balances[who];
+    }
 
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /// @notice Transfer `value` BP tokens from sender's account
+    /// `msg.sender` to provided account address `to`.
+    /// @notice This function is disabled during the funding.
+    /// @dev Required state: Success
+    /// @param to The address of the recipient
+    /// @param value The number of BPs to transfer
+    /// @return Whether the transfer was successful or not
+    function transfer(address to, uint256 value) returns (bool) {
+        if (safeSub(balances[msg.sender],value) < shouldHadBalance(msg.sender)) throw;
+
+        uint256 senderBalance = balances[msg.sender];
+        if (senderBalance >= value && value > 0) {
+            senderBalance = safeSub(senderBalance, value);
+            balances[msg.sender] = senderBalance;
+            balances[to] = safeAdd(balances[to], value);
+            Transfer(msg.sender, to, value);
+            return true;
+        }
+        return false;
+    }
+
+    /// @notice Transfer `value` BP tokens from sender 'from'
+    /// to provided account address `to`.
+    /// @notice This function is disabled during the funding.
+    /// @dev Required state: Success
+    /// @param from The address of the sender
+    /// @param to The address of the recipient
+    /// @param value The number of BPs to transfer
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address from, address to, uint256 value) returns (bool) {
+        // Abort if not in Success state.
+        // protect against wrapping uints
+        if (balances[from] >= value &&
+        allowed[from][msg.sender] >= value &&
+        safeAdd(balances[to], value) > balances[to])
+        {
+            balances[to] = safeAdd(balances[to], value);
+            balances[from] = safeSub(balances[from], value);
+            allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], value);
+            Transfer(from, to, value);
+            return true;
+        }
+        else {return false;}
+    }
+
+    /// @notice `msg.sender` approves `spender` to spend `value` tokens
+    /// @param spender The address of the account able to transfer the tokens
+    /// @param value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address spender, uint256 value) returns (bool) {
+        if (safeSub(balances[msg.sender],value) < shouldHadBalance(msg.sender)) throw;
+        
+        // Abort if not in Success state.
+        allowed[msg.sender][spender] = value;
+        Approval(msg.sender, spender, value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-contract BPToken is StandardToken, Owned {
-    // metadata
-    string public constant name = "Bilur Panax Token";
-    string public constant symbol = "BPT";
-    string public version = "1.0";
-    uint256 public constant decimals = 8;
-    bool public disabled = false;
-    uint256 public constant MILLION = (10**6 * 10**decimals);
-    // constructor
-    function BPToken(uint256 _amount) {
-        totalSupply = 10000 * MILLION; 
-        balances[msg.sender] = _amount;
-    }
-
-    function getOTCTotalSupply() external constant returns(uint256) {
-        return totalSupply;
-    }
-
-    function setDisabled(bool flag) external onlyOwner {
-        disabled = flag;
-    }
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        require(!disabled);
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(!disabled);
-        return super.transferFrom(_from, _to, _value);
-    }
-    function kill() external onlyOwner {
-        selfdestruct(owner);
+    /// @param owner The address of the account owning tokens
+    /// @param spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address owner, address spender) constant returns (uint) {
+        uint allow = allowed[owner][spender];
+        return allow;
     }
 }
