@@ -1,42 +1,74 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VaraToken at 0x4b3ecc8c6af161a0ca7cee21e76bda404489e798
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VaraToken at 0x9ebaf4b35a247411e6bf5c6c0d3f3ca707c65e8a
 */
 pragma solidity ^0.4.16;
 
 contract VaraToken {
 
-    string public name = "Vara";
-    string public symbol = "VAR";
+    string public name;
+    string public symbol;
     uint8 public decimals = 18;
-    uint256 public initialSupply = 100000000;
 
-    uint256 totalSupply;
-    address public owner;
+    uint256 public totalSupply;
+
 
     mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Burn(address indexed from, uint256 value);
 
     function VaraToken() public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);
-        owner = 0x86f8001374eeCA3530158334198637654B81f702;
-        balanceOf[owner] = totalSupply;
+        totalSupply = 100000000 * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
+        name = "Vara";
+        symbol = "VAR";
+    }
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     function transfer(address _to, uint256 _value) public {
-        require(balanceOf[msg.sender] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
+        _transfer(msg.sender, _to, _value);
     }
-
-    function () payable public {
-        require(msg.value > 0 ether);
-        require(now > 1514678400);              // 12/12/2017
-        require(now < 1519776000);              // 28/2/2018
-        uint256 amount = msg.value * 750;
-        require(balanceOf[owner] >= amount);
-        require(balanceOf[msg.sender] < balanceOf[msg.sender] + amount);
-        balanceOf[owner] -= amount;
-        balanceOf[msg.sender] += amount;
-        owner.transfer(msg.value);
+     
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+     
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+     
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   
+        balanceOf[msg.sender] -= _value;            
+        totalSupply -= _value;                      
+        Burn(msg.sender, _value);
+        return true;
+    }
+     
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                
+        require(_value <= allowance[_from][msg.sender]);    
+        balanceOf[_from] -= _value;                         
+        allowance[_from][msg.sender] -= _value;             
+        totalSupply -= _value;                              
+        Burn(_from, _value);
+        return true;
     }
 }
