@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Randao at 0xfe7e9141d1ec8d30a37f9908cd93eadd7a2d9d9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Randao at 0xacefc159db3ea5fd87b7a9b474ad1854c8b6ed7c
 */
 pragma solidity 0.4.19;
+
 
 // version 1.1
 contract Randao {
