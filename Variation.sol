@@ -1,23 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Variation at 0xa1539118245664ad16ac4f93cada2286a59b50cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Variation at 0x499ee8d548d76e763615878708b8ebfe6ae41afd
 */
 pragma solidity ^0.4.18;
 
-
 contract Ownable {
-    address public owner;
 
+    address public owner;
 
     function Ownable() public {
         owner = msg.sender;
     }
 
-
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-
 
     function transferOwnership(address newOwner) public onlyOwner {
         if (newOwner != address(0)) {
@@ -46,6 +43,8 @@ contract DogCoreInterface {
     function cfoAddress() public returns(address);
 
     function cooAddress() public returns(address);
+    
+    function getAvailableBlance() external view returns(uint256);
 }
 
 contract LotteryInterface {
@@ -84,28 +83,24 @@ contract Variation is Ownable{
         return randomValue;
     }
 
-
     struct CVariation {
-
+        
         uint256         totalAmount;
-
+        
         address[]       luckyAccounts;
-
+        
         uint256[]       luckyDogs;
-
+        
         uint256         withdrawBlock;
     }
-
+    
     CVariation[] public cVariations;
-
 
     event CallBackVariations(uint256[] dogs, address[] owners, uint256 totalAmount, uint256 blockNumber);
     
-
     uint256 public variationProbably = 1;
 
     uint256 public variationCycle = 10;
-
 
     function setVariationProbably(uint256 _value) public onlyOwner{
         require(_value > 0);
@@ -125,7 +120,6 @@ contract Variation is Ownable{
 
         setLotteryAddress(_lottery);
 
-
         CVariation memory newCVariation;
         newCVariation.totalAmount = uint256(0);
         newCVariation.withdrawBlock = uint256(block.number + variationCycle);
@@ -142,7 +136,7 @@ contract Variation is Ownable{
         require(msg.sender == address(dogCore) || msg.sender == owner);
         
         randomSeed = uint256(randomSeed * _gene);
-
+        
         uint256 variationRandom = random();
         uint256 totalRandom = _totalSupply >= 20000 ? _totalSupply : 20000;
         return uint256(variationRandom % uint256(totalRandom * variationProbably)) == 1 ? 1 : 0;
@@ -158,7 +152,6 @@ contract Variation is Ownable{
         
     function callBackVariations() public {
         uint256 index = 0;
-
         if (block.number < cVariations[cVariations.length - 1].withdrawBlock) {
             require(cVariations.length > 1);
             CallBackVariations(
@@ -171,12 +164,10 @@ contract Variation is Ownable{
         }
         require(msg.sender == dogCore.cooAddress() || msg.sender == owner);
 
-        CVariation storage currentCVariation = cVariations[cVariations.length - 1];    
-
+        CVariation storage currentCVariation = cVariations[cVariations.length - 1];   
         currentCVariation.withdrawBlock = block.number;
-
         var(,,,,,,,spoolAmount,) = lottery.getCLottery();
-        uint256 luckyAmount = (address(dogCore).balance - spoolAmount) * 3 / 100;
+        uint256 luckyAmount = (dogCore.getAvailableBlance() - spoolAmount) * 3 / 100;
         require(luckyAmount > 0);
         currentCVariation.totalAmount = luckyAmount;
         
@@ -224,13 +215,11 @@ contract Variation is Ownable{
         uint256 reward = currentCVariation.totalAmount * 9 / (10 * luckySize);
         
         for (index = 0; index < luckySize; index++) {
-
             address owner = currentCVariation.luckyAccounts[index];
             dogCore.sendMoney(owner, reward);
         }
 
         dogCore.sendMoney(dogCore.cfoAddress(),  currentCVariation.totalAmount / 10);
-
 
         CallBackVariations(
             currentCVariation.luckyDogs, 
