@@ -1,511 +1,376 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherToken at 0xd6031f24a7cc5d5ce33d763b66bc4b0c5f22936b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherToken at 0x47423b0fdb181ecab813c908307e9795c0272db7
 */
-pragma solidity 0.4.15;
+pragma solidity ^0.4.18;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 
-/// @title Math library - Allows calculation of logarithmic and exponential functions
-/// @author Alan Lu - <alan.lu@gnosis.pm>
-/// @author Stefan George - <stefan@gnosis.pm>
-library Math {
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    /*
-     *  Constants
-     */
-    // This is equal to 1 in our calculations
-    uint public constant ONE =  0x10000000000000000;
-    uint public constant LN2 = 0xb17217f7d1cf79ac;
-    uint public constant LOG2_E = 0x171547652b82fe177;
 
-    /*
-     *  Public functions
-     */
-    /// @dev Returns natural exponential function value of given x
-    /// @param x x
-    /// @return e**x
-    function exp(int x)
-        public
-        constant
-        returns (uint)
-    {
-        // revert if x is > MAX_POWER, where
-        // MAX_POWER = int(mp.floor(mp.log(mpf(2**256 - 1) / ONE) * ONE))
-        require(x <= 2454971259878909886679);
-        // return 0 if exp(x) is tiny, using
-        // MIN_POWER = int(mp.floor(mp.log(mpf(1) / ONE) * ONE))
-        if (x < -818323753292969962227)
-            return 0;
-        // Transform so that e^x -> 2^x
-        x = x * int(ONE) / int(LN2);
-        // 2^x = 2^whole(x) * 2^frac(x)
-        //       ^^^^^^^^^^ is a bit shift
-        // so Taylor expand on z = frac(x)
-        int shift;
-        uint z;
-        if (x >= 0) {
-            shift = x / int(ONE);
-            z = uint(x % int(ONE));
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256) {
+    return balances[_owner];
+  }
+
+}
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+    
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+
+/*
+ * Ownable
+ * Base contract with an owner.
+ * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+ */
+contract Ownable {
+    address public owner;
+
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert();
         }
-        else {
-            shift = x / int(ONE) - 1;
-            z = ONE - uint(-x % int(ONE));
+        _;
+    }
+
+    function transferOwnership(address newOwner) internal onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
         }
-        // 2^x = 1 + (ln 2) x + (ln 2)^2/2! x^2 + ...
-        //
-        // Can generate the z coefficients using mpmath and the following lines
-        // >>> from mpmath import mp
-        // >>> mp.dps = 100
-        // >>> ONE =  0x10000000000000000
-        // >>> print('\n'.join(hex(int(mp.log(2)**i / mp.factorial(i) * ONE)) for i in range(1, 7)))
-        // 0xb17217f7d1cf79ab
-        // 0x3d7f7bff058b1d50
-        // 0xe35846b82505fc5
-        // 0x276556df749cee5
-        // 0x5761ff9e299cc4
-        // 0xa184897c363c3
-        uint zpow = z;
-        uint result = ONE;
-        result += 0xb17217f7d1cf79ab * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x3d7f7bff058b1d50 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0xe35846b82505fc5 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x276556df749cee5 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x5761ff9e299cc4 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0xa184897c363c3 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0xffe5fe2c4586 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x162c0223a5c8 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x1b5253d395e * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x1e4cf5158b * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x1e8cac735 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x1c3bd650 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x1816193 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x131496 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0xe1b7 * zpow / ONE;
-        zpow = zpow * z / ONE;
-        result += 0x9c7 * zpow / ONE;
-        if (shift >= 0) {
-            if (result >> (256-shift) > 0)
-                return (2**256-1);
-            return result << shift;
-        }
-        else
-            return result >> (-shift);
-    }
-
-    /// @dev Returns natural logarithm value of given x
-    /// @param x x
-    /// @return ln(x)
-    function ln(uint x)
-        public
-        constant
-        returns (int)
-    {
-        require(x > 0);
-        // binary search for floor(log2(x))
-        int ilog2 = floorLog2(x);
-        int z;
-        if (ilog2 < 0)
-            z = int(x << uint(-ilog2));
-        else
-            z = int(x >> uint(ilog2));
-        // z = x * 2^-?log?x?
-        // so 1 <= z < 2
-        // and ln z = ln x - ?log?x?/log?e
-        // so just compute ln z using artanh series
-        // and calculate ln x from that
-        int term = (z - int(ONE)) * int(ONE) / (z + int(ONE));
-        int halflnz = term;
-        int termpow = term * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 3;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 5;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 7;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 9;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 11;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 13;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 15;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 17;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 19;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 21;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 23;
-        termpow = termpow * term / int(ONE) * term / int(ONE);
-        halflnz += termpow / 25;
-        return (ilog2 * int(ONE)) * int(ONE) / int(LOG2_E) + 2 * halflnz;
-    }
-
-    /// @dev Returns base 2 logarithm value of given x
-    /// @param x x
-    /// @return logarithmic value
-    function floorLog2(uint x)
-        public
-        constant
-        returns (int lo)
-    {
-        lo = -64;
-        int hi = 193;
-        // I use a shift here instead of / 2 because it floors instead of rounding towards 0
-        int mid = (hi + lo) >> 1;
-        while((lo + 1) < hi) {
-            if (mid < 0 && x << uint(-mid) < ONE || mid >= 0 && x >> uint(mid) < ONE)
-                hi = mid;
-            else
-                lo = mid;
-            mid = (hi + lo) >> 1;
-        }
-    }
-
-    /// @dev Returns maximum of an array
-    /// @param nums Numbers to look through
-    /// @return Maximum number
-    function max(int[] nums)
-        public
-        constant
-        returns (int max)
-    {
-        require(nums.length > 0);
-        max = -2**255;
-        for (uint i = 0; i < nums.length; i++)
-            if (nums[i] > max)
-                max = nums[i];
-    }
-
-    /// @dev Returns whether an add operation causes an overflow
-    /// @param a First addend
-    /// @param b Second addend
-    /// @return Did no overflow occur?
-    function safeToAdd(uint a, uint b)
-        public
-        constant
-        returns (bool)
-    {
-        return a + b >= a;
-    }
-
-    /// @dev Returns whether a subtraction operation causes an underflow
-    /// @param a Minuend
-    /// @param b Subtrahend
-    /// @return Did no underflow occur?
-    function safeToSub(uint a, uint b)
-        public
-        constant
-        returns (bool)
-    {
-        return a >= b;
-    }
-
-    /// @dev Returns whether a multiply operation causes an overflow
-    /// @param a First factor
-    /// @param b Second factor
-    /// @return Did no overflow occur?
-    function safeToMul(uint a, uint b)
-        public
-        constant
-        returns (bool)
-    {
-        return b == 0 || a * b / b == a;
-    }
-
-    /// @dev Returns sum if no overflow occurred
-    /// @param a First addend
-    /// @param b Second addend
-    /// @return Sum
-    function add(uint a, uint b)
-        public
-        constant
-        returns (uint)
-    {
-        require(safeToAdd(a, b));
-        return a + b;
-    }
-
-    /// @dev Returns difference if no overflow occurred
-    /// @param a Minuend
-    /// @param b Subtrahend
-    /// @return Difference
-    function sub(uint a, uint b)
-        public
-        constant
-        returns (uint)
-    {
-        require(safeToSub(a, b));
-        return a - b;
-    }
-
-    /// @dev Returns product if no overflow occurred
-    /// @param a First factor
-    /// @param b Second factor
-    /// @return Product
-    function mul(uint a, uint b)
-        public
-        constant
-        returns (uint)
-    {
-        require(safeToMul(a, b));
-        return a * b;
-    }
-
-    /// @dev Returns whether an add operation causes an overflow
-    /// @param a First addend
-    /// @param b Second addend
-    /// @return Did no overflow occur?
-    function safeToAdd(int a, int b)
-        public
-        constant
-        returns (bool)
-    {
-        return (b >= 0 && a + b >= a) || (b < 0 && a + b < a);
-    }
-
-    /// @dev Returns whether a subtraction operation causes an underflow
-    /// @param a Minuend
-    /// @param b Subtrahend
-    /// @return Did no underflow occur?
-    function safeToSub(int a, int b)
-        public
-        constant
-        returns (bool)
-    {
-        return (b >= 0 && a - b <= a) || (b < 0 && a - b > a);
-    }
-
-    /// @dev Returns whether a multiply operation causes an overflow
-    /// @param a First factor
-    /// @param b Second factor
-    /// @return Did no overflow occur?
-    function safeToMul(int a, int b)
-        public
-        constant
-        returns (bool)
-    {
-        return (b == 0) || (a * b / b == a);
-    }
-
-    /// @dev Returns sum if no overflow occurred
-    /// @param a First addend
-    /// @param b Second addend
-    /// @return Sum
-    function add(int a, int b)
-        public
-        constant
-        returns (int)
-    {
-        require(safeToAdd(a, b));
-        return a + b;
-    }
-
-    /// @dev Returns difference if no overflow occurred
-    /// @param a Minuend
-    /// @param b Subtrahend
-    /// @return Difference
-    function sub(int a, int b)
-        public
-        constant
-        returns (int)
-    {
-        require(safeToSub(a, b));
-        return a - b;
-    }
-
-    /// @dev Returns product if no overflow occurred
-    /// @param a First factor
-    /// @param b Second factor
-    /// @return Product
-    function mul(int a, int b)
-        public
-        constant
-        returns (int)
-    {
-        require(safeToMul(a, b));
-        return a * b;
     }
 }
 
 
+/*
+  Copyright 2017 ZeroEx Intl.
 
-/// @title Abstract token contract - Functions to be implemented by token contracts
-contract Token {
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-    /*
-     *  Events
-     */
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
+    http://www.apache.org/licenses/LICENSE-2.0
 
-    /*
-     *  Public functions
-     */
-    function transfer(address to, uint value) public returns (bool);
-    function transferFrom(address from, address to, uint value) public returns (bool);
-    function approve(address spender, uint value) public returns (bool);
-    function balanceOf(address owner) public constant returns (uint);
-    function allowance(address owner, address spender) public constant returns (uint);
-    function totalSupply() public constant returns (uint);
-}
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
 
-
-
-/// @title Standard token contract with overflow protection
-contract StandardToken is Token {
-    using Math for *;
-
-    /*
-     *  Storage
-     */
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowances;
-    uint totalTokens;
-
-    /*
-     *  Public functions
-     */
-    /// @dev Transfers sender's tokens to a given address. Returns success
-    /// @param to Address of token receiver
-    /// @param value Number of tokens to transfer
-    /// @return Was transfer successful?
-    function transfer(address to, uint value)
-        public
-        returns (bool)
-    {
-        if (   !balances[msg.sender].safeToSub(value)
-            || !balances[to].safeToAdd(value))
-            return false;
-        balances[msg.sender] -= value;
-        balances[to] += value;
-        Transfer(msg.sender, to, value);
+*/
+/**
+ * @title Unlimited Allowance Token
+ * @dev Unlimited allowance for exchange transfers. Modfied the base zeroEX code with latest compile features
+ * @author Dinesh
+ */
+contract UnlimitedAllowanceToken is StandardToken {
+    
+    //  MAX_UINT represents an unlimited allowance
+    uint256 constant MAX_UINT = 2**256 - 1;
+    
+    /**
+     * @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited allowance.
+     * @param _from Address to transfer from
+     * @param _to Address to transfer to
+     * @param _value Amount to transfer
+     * @return Success of transfer
+     */ 
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        uint allowance = allowed[_from][msg.sender];
+        require(balances[_from] >= _value);
+        require(allowance >= _value);
+        require(balances[_to].add(_value) >= balances[_to]);
+        
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        if (allowance < MAX_UINT) {
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        }  
+        Transfer(_from, _to, _value);
+        
         return true;
-    }
-
-    /// @dev Allows allowed third party to transfer tokens from one address to another. Returns success
-    /// @param from Address from where tokens are withdrawn
-    /// @param to Address to where tokens are sent
-    /// @param value Number of tokens to transfer
-    /// @return Was transfer successful?
-    function transferFrom(address from, address to, uint value)
-        public
-        returns (bool)
-    {
-        if (   !balances[from].safeToSub(value)
-            || !allowances[from][msg.sender].safeToSub(value)
-            || !balances[to].safeToAdd(value))
-            return false;
-        balances[from] -= value;
-        allowances[from][msg.sender] -= value;
-        balances[to] += value;
-        Transfer(from, to, value);
-        return true;
-    }
-
-    /// @dev Sets approved amount of tokens for spender. Returns success
-    /// @param spender Address of allowed account
-    /// @param value Number of approved tokens
-    /// @return Was approval successful?
-    function approve(address spender, uint value)
-        public
-        returns (bool)
-    {
-        allowances[msg.sender][spender] = value;
-        Approval(msg.sender, spender, value);
-        return true;
-    }
-
-    /// @dev Returns number of allowed tokens for given address
-    /// @param owner Address of token owner
-    /// @param spender Address of token spender
-    /// @return Remaining allowance for spender
-    function allowance(address owner, address spender)
-        public
-        constant
-        returns (uint)
-    {
-        return allowances[owner][spender];
-    }
-
-    /// @dev Returns number of tokens owned by given address
-    /// @param owner Address of token owner
-    /// @return Balance of owner
-    function balanceOf(address owner)
-        public
-        constant
-        returns (uint)
-    {
-        return balances[owner];
-    }
-
-    /// @dev Returns total supply of tokens
-    /// @return Total supply
-    function totalSupply()
-        public
-        constant
-        returns (uint)
-    {
-        return totalTokens;
     }
 }
 
-
-
-/// @title Token contract - Token exchanging Ether 1:1
-/// @author Stefan George - <stefan@gnosis.pm>
-contract EtherToken is StandardToken {
-    using Math for *;
-
-    /*
-     *  Events
+/**
+ * @title Tokenized Ether
+ * @dev ERC20 tokenization for Ether to allow exchange transfer and smoother handling of ether.
+ *      Modified the base zerox contract to use latest language features and made it more secure
+ *      and fault tolerant
+ * @author Dinesh
+ */
+contract EtherToken is UnlimitedAllowanceToken, Ownable{
+    using SafeMath for uint256; 
+    
+    string constant public name = "Ether Token";
+    string constant public symbol = "WXETH";
+    uint256 constant public decimals = 18; 
+    
+    // triggered when the total supply is increased
+    event Issuance(uint256 _amount);
+    
+    // triggered when the total supply is decreased
+    event Destruction(uint256 _amount);
+    
+    // in case of emergency, block all transactions
+    bool public enabled;
+    
+    // In case emergencies, all the funds will be moved to a safety Wallet. Normally Owner of the contract
+    address public safetyWallet; 
+    
+    /** 
+     * @dev constructor
      */
-    event Deposit(address indexed sender, uint value);
-    event Withdrawal(address indexed receiver, uint value);
-
-    /*
-     *  Constants
-     */
-    string public constant name = "Ether Token";
-    string public constant symbol = "ETH";
-    uint8 public constant decimals = 18;
-
-    /*
-     *  Public functions
-     */
-    /// @dev Buys tokens with Ether, exchanging them 1:1
-    function deposit()
-        public
-        payable
-    {
-        balances[msg.sender] = balances[msg.sender].add(msg.value);
-        totalTokens = totalTokens.add(msg.value);
-        Deposit(msg.sender, msg.value);
+    function EtherToken() public {
+        enabled = true;
+        safetyWallet = msg.sender;
     }
-
-    /// @dev Sells tokens in exchange for Ether, exchanging them 1:1
-    /// @param value Number of tokens to sell
-    function withdraw(uint value)
-        public
-    {
-        // Balance covers value
-        balances[msg.sender] = balances[msg.sender].sub(value);
-        totalTokens = totalTokens.sub(value);
-        msg.sender.transfer(value);
-        Withdrawal(msg.sender, value);
+    
+    /**
+     * @dev function to enable/disable contract operations
+     * @param _disableTx tell whethere the tx needs to be blocked or allowed
+     */
+    function blockTx(bool _disableTx) public onlyOwner { 
+        enabled = !_disableTx;
+    }
+    
+    /**
+     * @dev fucntion only executes if there is an emergency and only contract owner can do it 
+     *      CAUTION: This moves all the funds in the contract to owner's Wallet and to be called
+     *      most extreme cases only
+     */
+    function moveToSafetyWallet() public onlyOwner {
+        require(!enabled); 
+        require(totalSupply > 0);
+        require(safetyWallet != 0x0);
+        
+        //Empty Total Supply
+        uint256 _amount = totalSupply;
+        totalSupply = totalSupply.sub(totalSupply); 
+        
+        //Fire the events
+        Transfer(safetyWallet, this, totalSupply);
+        Destruction(totalSupply);
+        
+        // send the amount to the target account
+        safetyWallet.transfer(_amount);  
+    }
+    
+    /** 
+     * @dev fallback function can be used to get ether tokens foe ether
+     */
+    function () public payable {
+        require(enabled);
+        deposit(msg.sender);
+    }
+    
+    /**
+     * @dev function Buys tokens with Ether, exchanging them 1:1. Simliar to a Deposit function
+     * @param beneficiary is the senders account
+     */
+    function deposit(address beneficiary) public payable {
+        require(enabled);
+        require(beneficiary != 0x0);  
+        require(msg.value != 0);  
+        
+        balances[beneficiary] = balances[beneficiary].add(msg.value);
+        totalSupply = totalSupply.add( msg.value);
+        
+        //Fire th events
+        Issuance(msg.value);
+        Transfer(this, beneficiary, msg.value);
+    }
+    
+    /**
+     * @dev withdraw ether from the account
+     * @param _amount  amount of ether to withdraw
+     */
+    function withdraw(uint256 _amount) public {
+        require(enabled);
+        withdrawTo(msg.sender, _amount);
+    }
+    
+    /**
+     * @dev withdraw ether from the account to a target account
+     * @param _to account to receive the ether
+     * @param _amount of ether to withdraw
+     */
+    function withdrawTo(address _to, uint _amount) public { 
+        require(enabled);
+        require(_to != 0x0);
+        require(_amount != 0);  
+        require(_amount <= balances[_to]); 
+        require(this != _to);
+        
+        balances[_to] = balances[_to].sub(_amount);
+        totalSupply = totalSupply.sub(_amount); 
+        
+        //Fire the events
+        Transfer(msg.sender, this, _amount);
+        Destruction(_amount);
+        
+         // send the amount to the target account
+        _to.transfer(_amount);  
     }
 }
