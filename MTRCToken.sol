@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MTRCToken at 0xb1bd1bbe4104ae6ccef15039ad938026e622a5e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MTRCToken at 0x1e49ff77c355a3e38d6651ce8404af0e48c5395f
 */
 pragma solidity ^0.4.13;
+
+contract Receiver {
+    function tokenFallback(address from, uint value, bytes data);
+}
 
 /*
  * ERC20 interface
@@ -17,11 +21,6 @@ contract ERC20 {
   function approve(address spender, uint value) public returns (bool ok);
   event Transfer(address indexed from, address indexed to, uint value);
   event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-// ERC223
-contract ContractReceiver {
-  function tokenFallback(address from, uint value) public;
 }
 
 /**
@@ -84,6 +83,7 @@ contract SafeMath {
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, SafeMath {
+  event Transfer(address indexed from, address indexed to, uint indexed value, bytes data);
 
   /* Token supply got increased and a new owner received these tokens */
   event Minted(address receiver, uint amount);
@@ -108,13 +108,19 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) public returns (bool success) {
+      bytes memory _empty;
+
+      return transfer(_to, _value, _empty);
+  }
+
+  function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
+    Transfer(msg.sender, _to, _value, _data);
     Transfer(msg.sender, _to, _value);
 
     if (isContract(_to)) {
-      ContractReceiver rx = ContractReceiver(_to);
-      rx.tokenFallback(msg.sender, _value);
+      Receiver(_to).tokenFallback(msg.sender, _value, _data);
     }
 
     return true;
@@ -402,6 +408,11 @@ contract MTRCToken is BurnableToken, UpgradeableToken {
     _;
   }
 
+  modifier onlyNotSame(address _from, address _to) {
+    if(_from == _to) revert();
+    _;
+  }
+
   function transferOwnership(address newOwner) public onlyOwner {
     if (newOwner != address(0)) {
       owner = newOwner;
@@ -411,14 +422,18 @@ contract MTRCToken is BurnableToken, UpgradeableToken {
   function MTRCToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals) public UpgradeableToken(_owner) {
     name = _name;
     symbol = _symbol;
-    totalSupply = _totalSupply;
     decimals = _decimals;
+    totalSupply = _totalSupply * 10 ** uint(decimals);
 
     // Allocate initial balance to the owner
-    balances[_owner] = _totalSupply;
+    balances[_owner] = totalSupply;
 
     // save the owner
     owner = _owner;
+  }
+
+  function mintingFinish() public onlyOwner {
+    mintingFinished = true;
   }
 
   // privileged transfer
@@ -436,7 +451,7 @@ contract MTRCToken is BurnableToken, UpgradeableToken {
   }
 
   // admin only can transfer from the privileged accounts
-  function transferFromPrivileged(address _from, address _to, uint _value) public onlyOwner returns (bool success) {
+  function transferFromPrivileged(address _from, address _to, uint _value) public onlyOwner onlyNotSame(_from, _to) returns (bool success) {
     uint availablePrevilegedBalance = previligedBalances[_from];
 
     balances[_from] = safeSub(balances[_from], _value);
@@ -452,6 +467,7 @@ contract MTRCToken is BurnableToken, UpgradeableToken {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
+    amount *= 10 ** uint(decimals);
     totalSupply = safeAdd(totalSupply, amount);
     balances[receiver] = safeAdd(balances[receiver], amount);
 
