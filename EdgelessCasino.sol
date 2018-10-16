@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdgelessCasino at 0xb442e7315d24bb120ddfc778612116dd5c90dc46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdgelessCasino at 0x15f08079310e2c9dacaa73c0e450368185724aea
 */
 /**
  * The edgeless casino contract holds the players's funds and provides state channel functionality.
@@ -304,7 +304,7 @@ contract EdgelessCasino is CasinoBank{
     //deposit, withdrawFor, updateChannel
     bytes4[3] memory signatures = [bytes4(0x3edd1128),0x9607610a, 0x713d30c6];
     //amount of gas consumed by the above methods in GWei
-    uint[3] memory gasUsage = [uint(85),95,60];
+    uint[3] memory gasUsage = [uint(141),95,60];
     setGasUsage(signatures, gasUsage);
     setGasPrice(kGasPrice);
   }
