@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa4A6C92Eb83966Fedd8f88c673f73E18C7192b69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xB238A9ee9410Ba93A49A917Acaf8fF280C999423
 */
 contract Token {
     
@@ -16,10 +16,10 @@ contract Token {
 	event Transfer(address indexed from, address indexed to, uint256 value);
 
 	function Token() {
-	    totalSupply = 10*(10**8)*(10**18);
-		balanceOf[msg.sender] = 10*(10**8)*(10**18);              // Give the creator all initial tokens
-		name = "LockCoin";                                   // Set the name for display purposes
-		symbol = "LOCK";                               // Set the symbol for display purposes
+	    totalSupply = 2100*(10**4)*(10**18);
+		balanceOf[msg.sender] = 2100*(10**4)*(10**18);             // Give the creator all initial tokens
+		name = "xingancoin";                                   // Set the name for display purposes
+		symbol = "XAC";                               // Set the symbol for display purposes
 		decimals = 18;                            // Amount of decimals for display purposes
 	}
 
