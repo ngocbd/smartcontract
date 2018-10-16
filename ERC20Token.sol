@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x6e7cf33736bafee311a73093741f93ab8cd6530c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x1C6b16f415e7F35f0eC5D84bb53612421D90c832
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 
@@ -183,16 +183,18 @@ contract ERC20Token is ERC20Interface, Owned {
     // Constructor 
 
     // ------------------------------------------------------------------------
+	//20000000000000000     ????2?
+    //200000000.00000000 
 
     function ERC20Token() public {
 
-        symbol = "DIPS";
+        symbol = "GBC";
 
-        name = "Decentralized Intellectual Property System";
+        name = "Global Brand Coin";
 
-        decimals = 18;
+        decimals = 8;
 
-        _totalSupply = 200 * (10**8) * 10**uint(decimals);
+        _totalSupply = 20000000000000000;
 
         balances[owner] = _totalSupply;
 
