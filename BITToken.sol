@@ -1,32 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITToken at 0xa290e66bB8A30Ae333260f9E7753118c5Aa8fee3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITToken at 0xab43b67b8fe55546f554855b16a7cac2e048c5d3
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.13;
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -35,7 +48,9 @@ library SafeMath {
 contract Ownable {
   address public owner;
 
+
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -59,19 +74,72 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+
+}
+
+contract BITVesting is Ownable {
+
+    BITToken public token;
+    uint256 public releaseDate;
+
+    function BITVesting (
+        BITToken _token,
+        address _beneficiary,
+        uint256 _releaseDate
+        ) public {
+
+        token = _token;
+        releaseDate = _releaseDate;
+        owner = _beneficiary;
+    }
+
+    /* After vesting period, this function transfers all available tokens
+     * from it's account to `_recipient` address. This address could either be
+     * a wallet or another smart contract. If the transfer was successful, it
+     * selfdestructs the contract.
+     */
+    function claim (
+        address _recipient,
+        bytes _data
+        ) external onlyOwner returns (bool success) {
+
+        require(_recipient != address(0));
+        require(block.timestamp > releaseDate);
+        uint256 funds = token.balanceOf(this);
+        require(token.transfer(_recipient, funds));
+        // require(token.transfer(_recipient, funds, _data)); // ERC-20 compatible string
+        selfdestruct(msg.sender);
+        return true;
+    }
+
+    /* From: https://github.com/ethereum/EIPs/issues/223
+     *
+     * A function for handling token transfers, which is called from the token
+     * contract, when a token holder sends tokens. `_from` is the address of the
+     * sender of the token, `_value` is the amount of incoming tokens, and
+     * `_data` is attached data similar to `msg.data` of Ether transactions.
+     * It works by analogy with the fallback function of Ether transactions and
+     * returns nothing.
+     */
+    function tokenFallback(
+        address _from,
+        uint _value,
+        bytes _data
+        ) external view {
+
+        require(msg.sender == address(token));
+    }
 }
 
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
 
-  /**
-   * set initial value to paused.
-   */
   bool public paused = false;
+
 
   /**
    * @dev Modifier to make a function callable only when the contract is not paused.
@@ -94,7 +162,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    Pause();
+    emit Pause();
   }
 
   /**
@@ -102,12 +170,12 @@ contract Pausable is Ownable {
    */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    Unpause();
+    emit Unpause();
   }
 }
 
 contract ERC20Basic {
-  uint256 public totalSupply;
+  function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -118,6 +186,15 @@ contract BasicToken is ERC20Basic {
 
   mapping(address => uint256) balances;
 
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
@@ -127,10 +204,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -171,7 +247,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -187,7 +263,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -202,17 +278,31 @@ contract StandardToken is ERC20, BasicToken {
   }
 
   /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
   function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -220,31 +310,47 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
 }
 
-contract BurnableToken is StandardToken {
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
 
-    event Burn(address indexed burner, uint256 value);
+  bool public mintingFinished = false;
 
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value > 0);
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
 }
 
 contract PausableToken is StandardToken, Pausable {
@@ -270,32 +376,56 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
-contract BITToken is PausableToken, BurnableToken {
+contract BITToken is MintableToken, PausableToken {
 
-    string public constant name = "Basic Intelligence Token";
-    string public constant url = "https://cen.ai";
-    string public constant symbol = "BIT";
-    uint8 public constant decimals = 8;
-    string public version = 'BIT_0.1';  //An arbitrary versioning scheme
-    uint256 public constant INITIAL_SUPPLY = 20000000000 * 10**uint256(decimals);
-    
+    event Vested(address indexed beneficiary, address indexed vestingContract, uint256 releaseDate, uint256 amount);
+    event BITTransfer(address indexed _from, address indexed _to, uint256 _value, bytes32 data);
+
+    uint256 public constant decimals = 18;
+    string public constant name = "TmpToken3";
+    string public constant symbol = "TMP3";
+
     /**
-    * @dev BITToken Constructor
-    */
+     * This function creates vesting fund for `_beneficiary` and mints
+     * `_amount` tokens to its account. Minted tokens will remain frozen
+     * for `_releaseDate` blocks.
+     */
 
-    function BITToken() public {
-        Pause();
-        totalSupply = INITIAL_SUPPLY;   
-        balances[msg.sender] = INITIAL_SUPPLY;
+    function BITToken () public MintableToken() {
+
     }
 
-    function transferTokens(address beneficiary, uint256 amount) public onlyOwner returns (bool) {
-        require(amount > 0);
 
-        balances[owner] = balances[owner].sub(amount);
-        balances[beneficiary] = balances[beneficiary].add(amount);
-        Transfer(owner, beneficiary, amount);
+    function transfer (address _to, uint256 _value, bytes32 _data) public returns(bool res) {
+        if (PausableToken.transfer(_to, _value)) {
+            emit BITTransfer(msg.sender, _to, _value, _data);
+            return true;
+        }
+    }
 
-        return true;
+    function transferFrom (address _from, address _to, uint256 _value, bytes32 _data) public returns(bool res) {
+        if (PausableToken.transferFrom(_from, _to, _value)) {
+            emit BITTransfer(_from, _to, _value, _data);
+            return true;
+        }
+    }
+
+
+    function vest(
+        address _beneficiary,
+        uint256 _releaseDate,
+        uint256 _amount
+    )
+        public onlyOwner canMint returns (address)
+    {
+        address vestingContract = new BITVesting(
+            this,
+            _beneficiary,
+            _releaseDate
+        );
+        assert (vestingContract != 0x0);
+        require(mint(vestingContract, _amount));
+        emit Vested(_beneficiary, address(vestingContract), _releaseDate, _amount);
+        return vestingContract;
     }
 }
