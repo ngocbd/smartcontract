@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x3637dB679447EF6850Ce8EBE6b610b1F6c8304Bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x37d2747E7841e5784fc75b0Cc41dAc0b62Ac4747
 */
 pragma solidity ^0.4.11;
 
