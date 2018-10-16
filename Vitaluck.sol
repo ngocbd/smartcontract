@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vitaluck at 0xef7c7254c290df3d167182356255cdfd8d3b400b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vitaluck at 0x51da145cd7b6e6bd8b334d6a5e663dee1d8937fa
 */
 pragma solidity ^0.4.18;
 
@@ -161,6 +161,18 @@ contract Vitaluck {
             bets.push(Bet(_finalRandomNumber, false, msg.sender, uint32(now), 0));
             NewPlay(msg.sender, _finalRandomNumber, false);
         }
+    }
+    
+    function TestRandomNumber() public view returns (uint, uint, uint) {
+        uint _randomNumber1;
+        uint _randomNumber2;
+        uint _randomNumber3;
+        
+        _randomNumber1 = (uint(now) - 1 * randomNumber * randomNumber2 + uint(now))%1000 + 1;
+        _randomNumber2 = (uint(now) - 2 * _randomNumber1 * randomNumber2 + uint(now))%1000 + 1;
+        _randomNumber3 = (uint(now) - 3 * _randomNumber2 * randomNumber2 + uint(now))%1000 + 1;
+        
+        return(_randomNumber1,_randomNumber2,_randomNumber3);
     }
 
     /*
