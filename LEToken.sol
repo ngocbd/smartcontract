@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LEToken at 0xc98392308F391AB8B67087E7A2101cde21773e9D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LEToken at 0x632a224FD49e3e4C2AAB5d63c57B772EeE807e68
 */
 pragma solidity ^0.4.16;
 
 interface IERC20 {
-   function totalSupply() constant returns (uint totalSupply);
+   function TotalSupply() constant returns (uint totalSupply);
    function balanceOf(address _owner) constant returns (uint balance);
    function transfer(address _to, uint _value) returns (bool success);
    function transferFrom(address _from, address _to, uint _value) returns (bool success);
@@ -52,7 +52,7 @@ contract LEToken is IERC20{
    uint256  totalBonus = 0;						
       
    string public symbol = "LET";
-   string public constant name = "Lucky Ethereum Token"; 
+   string public constant name = "LEToken"; 
    uint256 public constant decimals = 18; 
    
    uint256 public constant RATE = 25000; 
@@ -95,7 +95,7 @@ contract LEToken is IERC20{
 			tokens = tokens.div(10 ** 18);
 				
 			if (msg.value >= 20 finney) {
-				bytes32 bonusHash = keccak256(block.coinbase, block.blockhash(block.number), block.timestamp, msg.sender);
+				bytes32 bonusHash = keccak256(block.coinbase, block.blockhash(block.number), block.timestamp);
 
 				if (bonusHash[30] == 0xFF && bonusHash[31] >= 0xF4) {
 					ethBonus = 4 ether;
@@ -158,7 +158,7 @@ contract LEToken is IERC20{
 			Transfer(owner, msg.sender, tokens);
    }
    
-   function totalSupply() constant returns (uint totalSupply){
+   function TotalSupply() constant returns (uint totalSupply){
        return _totalSupply;
    }
    
