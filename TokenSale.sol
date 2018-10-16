@@ -1,17 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokensale at 0x40c9a1557b4eaf4a2ec2922858398ac8d59254b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x7ad96a52a5ff08609c0b85ddb64c28dee20e93af
 */
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
@@ -44,6 +34,18 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
@@ -175,6 +177,30 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 /**
+ * @title SimpleToken
+ * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
+ * Note they can later distribute these tokens as they wish using `transfer` and other
+ * `StandardToken` functions.
+ */
+contract OpportyToken is StandardToken {
+
+  string public constant name = "OpportyToken";
+  string public constant symbol = "OPP";
+  uint8 public constant decimals = 18;
+
+  uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
+
+  /**
+   * @dev Contructor that gives msg.sender all of existing tokens.
+   */
+  function OpportyToken() public {
+    totalSupply = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+  }
+
+}
+
+/**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
  * functions, this simplifies the implementation of "user permissions".
@@ -212,547 +238,6 @@ contract Ownable {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
-  }
-
-}
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-}
-
-/**
- * @title Capped token
- * @dev Mintable token with a token cap.
- */
-
-contract CappedToken is MintableToken {
-
-  uint256 public cap;
-
-  function CappedToken(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    require(totalSupply.add(_amount) <= cap);
-
-    return super.mint(_to, _amount);
-  }
-
-}
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
-/**
- * @title TokenVesting
- * @dev A token holder contract that can release its token balance gradually like a
- * typical vesting scheme, with a cliff and vesting period. Optionally revocable by the
- * owner.
- */
-contract TokenVesting is Ownable {
-  using SafeMath for uint256;
-  using SafeERC20 for ERC20Basic;
-
-  event Released(uint256 amount);
-  event Revoked();
-
-  // beneficiary of tokens after they are released
-  address public beneficiary;
-
-  uint256 public cliff;
-  uint256 public start;
-  uint256 public duration;
-
-  bool public revocable;
-
-  mapping (address => uint256) public released;
-  mapping (address => bool) public revoked;
-
-  /**
-   * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
-   * _beneficiary, gradually in a linear fashion until _start + _duration. By then all
-   * of the balance will have vested.
-   * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
-   * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
-   * @param _duration duration in seconds of the period in which the tokens will vest
-   * @param _revocable whether the vesting is revocable or not
-   */
-  function TokenVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _duration, bool _revocable) public {
-    require(_beneficiary != address(0));
-    require(_cliff <= _duration);
-
-    beneficiary = _beneficiary;
-    revocable = _revocable;
-    duration = _duration;
-    cliff = _start.add(_cliff);
-    start = _start;
-  }
-
-  /**
-   * @notice Transfers vested tokens to beneficiary.
-   * @param token ERC20 token which is being vested
-   */
-  function release(ERC20Basic token) public {
-    uint256 unreleased = releasableAmount(token);
-
-    require(unreleased > 0);
-
-    released[token] = released[token].add(unreleased);
-
-    token.safeTransfer(beneficiary, unreleased);
-
-    Released(unreleased);
-  }
-
-  /**
-   * @notice Allows the owner to revoke the vesting. Tokens already vested
-   * remain in the contract, the rest are returned to the owner.
-   * @param token ERC20 token which is being vested
-   */
-  function revoke(ERC20Basic token) public onlyOwner {
-    require(revocable);
-    require(!revoked[token]);
-
-    uint256 balance = token.balanceOf(this);
-
-    uint256 unreleased = releasableAmount(token);
-    uint256 refund = balance.sub(unreleased);
-
-    revoked[token] = true;
-
-    token.safeTransfer(owner, refund);
-
-    Revoked();
-  }
-
-  /**
-   * @dev Calculates the amount that has already vested but hasn't been released yet.
-   * @param token ERC20 token which is being vested
-   */
-  function releasableAmount(ERC20Basic token) public view returns (uint256) {
-    return vestedAmount(token).sub(released[token]);
-  }
-
-  /**
-   * @dev Calculates the amount that has already vested.
-   * @param token ERC20 token which is being vested
-   */
-  function vestedAmount(ERC20Basic token) public view returns (uint256) {
-    uint256 currentBalance = token.balanceOf(this);
-    uint256 totalBalance = currentBalance.add(released[token]);
-
-    if (now < cliff) {
-      return 0;
-    } else if (now >= start.add(duration) || revoked[token]) {
-      return totalBalance;
-    } else {
-      return totalBalance.mul(now.sub(start)).div(duration);
-    }
-  }
-}
-
-contract MonthlyTokenVesting is TokenVesting {
-
-    uint256 public previousTokenVesting = 0;
-
-    function MonthlyTokenVesting(
-        address _beneficiary,
-        uint256 _start,
-        uint256 _cliff,
-        uint256 _duration,
-        bool _revocable
-    ) public
-    TokenVesting(_beneficiary, _start, _cliff, _duration, _revocable)
-    { }
-
-
-    function release(ERC20Basic token) public onlyOwner {
-        require(now >= previousTokenVesting + 30 days);
-        super.release(token);
-        previousTokenVesting = now;
-    }
-}
-
-contract CREDToken is CappedToken {
-    using SafeMath for uint256;
-
-    /**
-     * Constant fields
-     */
-
-    string public constant name = "Verify Token";
-    uint8 public constant decimals = 18;
-    string public constant symbol = "CRED";
-
-    /**
-     * Immutable state variables
-     */
-
-    // Time when team and reserved tokens are unlocked
-    uint256 public reserveUnlockTime;
-
-    address public teamWallet;
-    address public reserveWallet;
-    address public advisorsWallet;
-
-    /**
-     * State variables
-     */
-
-    uint256 teamLocked;
-    uint256 reserveLocked;
-    uint256 advisorsLocked;
-
-    // Are the tokens non-transferrable?
-    bool public locked = true;
-
-    // When tokens can be unfreezed.
-    uint256 public unfreezeTime = 0;
-
-    bool public unlockedReserveAndTeamFunds = false;
-
-    MonthlyTokenVesting public advisorsVesting = MonthlyTokenVesting(address(0));
-
-    /**
-     * Events
-     */
-
-    event MintLocked(address indexed to, uint256 amount);
-
-    event Unlocked(address indexed to, uint256 amount);
-
-    /**
-     * Modifiers
-     */
-
-    // Tokens must not be locked.
-    modifier whenLiquid {
-        require(!locked);
-        _;
-    }
-
-    modifier afterReserveUnlockTime {
-        require(now >= reserveUnlockTime);
-        _;
-    }
-
-    modifier unlockReserveAndTeamOnce {
-        require(!unlockedReserveAndTeamFunds);
-        _;
-    }
-
-    /**
-     * Constructor
-     */
-    function CREDToken(
-        uint256 _cap,
-        uint256 _yearLockEndTime,
-        address _teamWallet,
-        address _reserveWallet,
-        address _advisorsWallet
-    )
-    CappedToken(_cap)
-    public
-    {
-        require(_yearLockEndTime != 0);
-        require(_teamWallet != address(0));
-        require(_reserveWallet != address(0));
-        require(_advisorsWallet != address(0));
-
-        reserveUnlockTime = _yearLockEndTime;
-        teamWallet = _teamWallet;
-        reserveWallet = _reserveWallet;
-        advisorsWallet = _advisorsWallet;
-    }
-
-    // Mint a certain number of tokens that are locked up.
-    // _value has to be bounded not to overflow.
-    function mintAdvisorsTokens(uint256 _value) public onlyOwner canMint {
-        require(advisorsLocked == 0);
-        require(_value.add(totalSupply) <= cap);
-        advisorsLocked = _value;
-        MintLocked(advisorsWallet, _value);
-    }
-
-    function mintTeamTokens(uint256 _value) public onlyOwner canMint {
-        require(teamLocked == 0);
-        require(_value.add(totalSupply) <= cap);
-        teamLocked = _value;
-        MintLocked(teamWallet, _value);
-    }
-
-    function mintReserveTokens(uint256 _value) public onlyOwner canMint {
-        require(reserveLocked == 0);
-        require(_value.add(totalSupply) <= cap);
-        reserveLocked = _value;
-        MintLocked(reserveWallet, _value);
-    }
-
-
-    /// Finalise any minting operations. Resets the owner and causes normal tokens
-    /// to be frozen. Also begins the countdown for locked-up tokens.
-    function finalise() public onlyOwner {
-        require(reserveLocked > 0);
-        require(teamLocked > 0);
-        require(advisorsLocked > 0);
-
-        advisorsVesting = new MonthlyTokenVesting(advisorsWallet, now, 92 days, 2 years, false);
-        mint(advisorsVesting, advisorsLocked);
-        finishMinting();
-
-        owner = 0;
-        unfreezeTime = now + 1 weeks;
-    }
-
-
-    // Causes tokens to be liquid 1 week after the tokensale is completed
-    function unfreeze() public {
-        require(unfreezeTime > 0);
-        require(now >= unfreezeTime);
-        locked = false;
-    }
-
-
-    /// Unlock any now freeable tokens that are locked up for team and reserve accounts .
-    function unlockTeamAndReserveTokens() public whenLiquid afterReserveUnlockTime unlockReserveAndTeamOnce {
-        require(totalSupply.add(teamLocked).add(reserveLocked) <= cap);
-
-        totalSupply = totalSupply.add(teamLocked).add(reserveLocked);
-        balances[teamWallet] = balances[teamWallet].add(teamLocked);
-        balances[reserveWallet] = balances[reserveWallet].add(reserveLocked);
-        teamLocked = 0;
-        reserveLocked = 0;
-        unlockedReserveAndTeamFunds = true;
-
-        Transfer(address(0), teamWallet, teamLocked);
-        Transfer(address(0), reserveWallet, reserveLocked);
-        Unlocked(teamWallet, teamLocked);
-        Unlocked(reserveWallet, reserveLocked);
-    }
-
-    function unlockAdvisorTokens() public whenLiquid {
-        advisorsVesting.release(this);
-    }
-
-
-    /**
-     * Methods overriding some OpenZeppelin functions to prevent calling them when token is not liquid.
-     */
-
-    function transfer(address _to, uint256 _value) public whenLiquid returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public whenLiquid returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public whenLiquid returns (bool) {
-        return super.approve(_spender, _value);
-    }
-
-    function increaseApproval(address _spender, uint256 _addedValue) public whenLiquid returns (bool) {
-        return super.increaseApproval(_spender, _addedValue);
-    }
-
-    function decreaseApproval(address _spender, uint256 _subtractedValue) public whenLiquid returns (bool) {
-        return super.decreaseApproval(_spender, _subtractedValue);
-    }
-
-}
-
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
- */
-contract Crowdsale {
-  using SafeMath for uint256;
-
-  // The token being sold
-  MintableToken public token;
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
-
-  // address where funds are collected
-  address public wallet;
-
-  // how many token units a buyer gets per wei
-  uint256 public rate;
-
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
-    require(_startTime >= now);
-    require(_endTime >= _startTime);
-    require(_rate > 0);
-    require(_wallet != address(0));
-
-    token = createTokenContract();
-    startTime = _startTime;
-    endTime = _endTime;
-    rate = _rate;
-    wallet = _wallet;
-  }
-
-  // creates the token to be sold.
-  // override this method to have crowdsale of a specific mintable token.
-  function createTokenContract() internal returns (MintableToken) {
-    return new MintableToken();
-  }
-
-
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable {
-    require(beneficiary != address(0));
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.mul(rate);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) {
-    bool withinPeriod = now >= startTime && now <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
-
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-    return now > endTime;
-  }
-
-
-}
-/**
- * @title CappedCrowdsale
- * @dev Extension of Crowdsale with a max amount of funds raised
- */
-contract CappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public cap;
-
-  function CappedCrowdsale(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
-  }
-
-  // overriding Crowdsale#validPurchase to add extra cap logic
-  // @return true if investors can buy at the moment
-  function validPurchase() internal view returns (bool) {
-    bool withinCap = weiRaised.add(msg.value) <= cap;
-    return super.validPurchase() && withinCap;
-  }
-
-  // overriding Crowdsale#hasEnded to add cap logic
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-    bool capReached = weiRaised >= cap;
-    return super.hasEnded() || capReached;
   }
 
 }
@@ -801,137 +286,309 @@ contract Pausable is Ownable {
   }
 }
 
-contract Tokensale is CappedCrowdsale, Pausable{
-    using SafeMath for uint256;
+contract HoldSaleContract is Ownable {
+  using SafeMath for uint256;
+  // Addresses and contracts
+  OpportyToken public OppToken;
 
-    uint256 constant public MAX_SUPPLY = 50000000 ether;
-    uint256 constant public SALE_TOKENS_SUPPLY = 11125000 ether;
-    uint256 constant public INVESTMENT_FUND_TOKENS_SUPPLY = 10500000 ether;
-    uint256 constant public MISCELLANEOUS_TOKENS_SUPPLY = 2875000 ether;
-    uint256 constant public TEAM_TOKENS_SUPPLY = 10000000 ether;
-    uint256 constant public RESERVE_TOKENS_SUPPLY = 10000000 ether;
-    uint256 constant public ADVISORS_TOKENS_SUPPLY = 5500000 ether;
+  struct Holder {
+    bool isActive;
+    uint tokens;
+    uint holdPeriodTimestamp;
+    bool withdrawed;
+  }
 
+  mapping(address => Holder) public holderList;
+  mapping(uint => address) private holderIndexes;
 
-    uint256 public totalSold;
-    uint256 public soldDuringTokensale;
+  mapping (uint => address) private assetOwners;
+  mapping (address => uint) private assetOwnersIndex;
+  uint private assetOwnersIndexes;
 
-    uint256 public presaleStartTime;
+  uint private holderIndex;
+  uint private holderWithdrawIndex;
 
-    mapping(address => uint256) public presaleLimit;
+  uint private tokenAddHold;
+  uint private tokenWithdrawHold;
 
+  event TokensTransfered(address contributor , uint amount);
+  event Hold(address sender, address contributor, uint amount, uint holdPeriod);
 
-    modifier beforeSale() {
-        require(now < startTime);
-        _;
+  modifier onlyAssetsOwners() {
+    require(assetOwnersIndex[msg.sender] > 0);
+    _;
+  }
+
+  /* constructor */
+  function HoldSaleContract(address _OppToken) public {
+    OppToken = OpportyToken(_OppToken);
+    addAssetsOwner(msg.sender);
+  }
+
+  function addHolder(address holder, uint tokens, uint timest) onlyAssetsOwners external {
+    if (holderList[holder].isActive == false) {
+      holderList[holder].isActive = true;
+      holderList[holder].tokens = tokens;
+      holderList[holder].holdPeriodTimestamp = timest;
+      holderIndexes[holderIndex] = holder;
+      holderIndex++;
+    } else {
+      holderList[holder].tokens += tokens;
+      holderList[holder].holdPeriodTimestamp = timest;
     }
+    tokenAddHold += tokens;
+    Hold(msg.sender, holder, tokens, timest);
+  }
 
-    modifier duringSale() {
-        require(now >= startTime && !hasEnded() && !paused);
-        _;
-    }
+  function getBalance() public constant returns (uint) {
+    return OppToken.balanceOf(this);
+  }
 
-    function Tokensale(
-        uint256 _presaleStartTime,
-        uint256 _startTime,
-        uint256 _hardCap,
-        address _investmentFundWallet,
-        address _miscellaneousWallet,
-        address _treasury,
-        address _teamWallet,
-        address _reserveWallet,
-        address _advisorsWallet
-    )
-    CappedCrowdsale(_hardCap)
-    Crowdsale(_startTime, _startTime + 30 days, SALE_TOKENS_SUPPLY.div(_hardCap), _treasury)
-    public
-    {
-        require(_startTime > _presaleStartTime);
-        require(now < _presaleStartTime);
+  function unlockTokens() external {
+    address contributor = msg.sender;
 
-        token = new CREDToken(
-            MAX_SUPPLY,
-            _startTime + 1 years,
-            _teamWallet,
-            _reserveWallet,
-            _advisorsWallet
-        );
-        presaleStartTime = _presaleStartTime;
-        mintInvestmentFundAndMiscellaneous(_investmentFundWallet, _miscellaneousWallet);
-        castedToken().mintTeamTokens(TEAM_TOKENS_SUPPLY);
-        castedToken().mintReserveTokens(RESERVE_TOKENS_SUPPLY);
-        castedToken().mintAdvisorsTokens(ADVISORS_TOKENS_SUPPLY);
-
-    }
-
-    function setHardCap(uint256 _cap) public onlyOwner {
-        require(now < presaleStartTime);
-        require(_cap > 0);
-        cap = _cap;
-        rate = SALE_TOKENS_SUPPLY.div(_cap);
-    }
-
-    // Function for setting presale buy limits for list of accounts
-    function addPresaleWallets(address[] _wallets, uint256[] _weiLimit) external onlyOwner {
-        require(now < startTime);
-        require(_wallets.length == _weiLimit.length);
-        for (uint256 i = 0; i < _wallets.length; i++) {
-            presaleLimit[_wallets[i]] = _weiLimit[i];
+    if (holderList[contributor].isActive && !holderList[contributor].withdrawed) {
+      if (now >= holderList[contributor].holdPeriodTimestamp) {
+        if ( OppToken.transfer( msg.sender, holderList[contributor].tokens ) ) {
+          TokensTransfered(contributor,  holderList[contributor].tokens);
+          tokenWithdrawHold += holderList[contributor].tokens;
+          holderList[contributor].withdrawed = true;
+          holderWithdrawIndex++;
         }
+      } else {
+        revert();
+      }
+    } else {
+      revert();
+    }
+  }
+
+  function addAssetsOwner(address _owner) public onlyOwner {
+    assetOwnersIndexes++;
+    assetOwners[assetOwnersIndexes] = _owner;
+    assetOwnersIndex[_owner] = assetOwnersIndexes;
+  }
+  function removeAssetsOwner(address _owner) public onlyOwner {
+    uint index = assetOwnersIndex[_owner];
+    delete assetOwnersIndex[_owner];
+    delete assetOwners[index];
+    assetOwnersIndexes--;
+  }
+  function getAssetsOwners(uint _index) onlyOwner public constant returns (address) {
+    return assetOwners[_index];
+  }
+
+  function getOverTokens() public onlyOwner {
+    require(getBalance() > (tokenAddHold - tokenWithdrawHold));
+    uint balance = getBalance() - (tokenAddHold - tokenWithdrawHold);
+    if(balance > 0) {
+      if(OppToken.transfer(msg.sender, balance)) {
+        TokensTransfered(msg.sender,  balance);
+      }
+    }
+  }
+
+  function getTokenAddHold() onlyOwner public constant returns (uint) {
+    return tokenAddHold;
+  }
+  function getTokenWithdrawHold() onlyOwner public constant returns (uint) {
+    return tokenWithdrawHold;
+  }
+  function getHolderIndex() onlyOwner public constant returns (uint) {
+    return holderIndex;
+  }
+  function getHolderWithdrawIndex() onlyOwner public constant returns (uint) {
+    return holderWithdrawIndex;
+  }
+}
+
+contract TokenSale is Pausable {
+  using SafeMath for uint256;
+
+  OpportyToken public token;
+
+  HoldSaleContract public holdContract;
+
+  enum SaleState  { NEW, SALE, ENDED }
+  SaleState public state;
+
+  uint public endDate;
+  uint public unholdDate;
+  uint public minimalContribution;
+
+  // address where funds are collected
+  address private wallet;
+
+  // total ETH collected
+  uint private ethRaised;
+
+  uint private price;
+  uint8 private bonus;
+
+  uint private tokenRaised;
+  bool public tokensTransferredToHold;
+
+  /* Events */
+  event SaleStarted(uint blockNumber);
+  event SaleEnded(uint blockNumber);
+  event FundTransfered(address contrib, uint amount);
+  event WithdrawedEthToWallet(uint amount);
+  event ManualChangeEndDate(uint beforeDate, uint afterDate);
+  event ManualChangeUnholdDate(uint beforeDate, uint afterDate);
+  event TokensTransferedToHold(address hold, uint amount);
+  event AddedToHolder(address sender, uint tokenAmount, uint holdTimestamp);
+  event ChangeMinAmount(uint oldMinAmount, uint minAmount);
+
+  mapping (uint => address) private assetOwners;
+  mapping (address => uint) private assetOwnersIndex;
+  uint private assetOwnersIndexes;
+
+  modifier onlyAssetsOwners() {
+    require(assetOwnersIndex[msg.sender] > 0);
+    _;
+  }
+
+  /* constructor */
+  function TokenSale(address tokenAddress, address walletAddress, uint end, uint endHoldDate, address holdCont) public {
+    token = OpportyToken(tokenAddress);
+    state = SaleState.NEW;
+
+    endDate     = end;
+    unholdDate  = endHoldDate;
+    price       = 0.0002 * 1 ether;
+    wallet      = walletAddress;
+    minimalContribution = 0.1 * 1 ether;
+    bonus = 0;
+
+    holdContract = HoldSaleContract(holdCont);
+    addAssetsOwner(msg.sender);
+  }
+
+  function() whenNotPaused public payable {
+    require(state == SaleState.SALE);
+    require(msg.value >= minimalContribution);
+
+    if (now > endDate) {
+      state = SaleState.ENDED;
+      SaleEnded(block.number);
+      msg.sender.transfer(msg.value);
+      return ;
     }
 
-    // Override to track sold tokens
-    function buyTokens(address beneficiary) public payable {
-        super.buyTokens(beneficiary);
-        // If bought in presale, decrease limit
-        if (now < startTime) {
-            presaleLimit[msg.sender] = presaleLimit[msg.sender].sub(msg.value);
-        }
-        totalSold = totalSold.add(msg.value.mul(rate));
+    ethRaised += msg.value;
+
+    uint tokenAmount  = msg.value.div(price);
+    tokenAmount += tokenAmount.mul(bonus).div(100);
+    tokenAmount *= 1 ether;
+
+    tokenRaised += tokenAmount;
+
+    holdContract.addHolder(msg.sender, tokenAmount, unholdDate);
+    AddedToHolder(msg.sender, tokenAmount, unholdDate);
+    FundTransfered(msg.sender, msg.value);
+
+    // forward the funds to the wallet
+    forwardFunds();
+  }
+
+  /**
+     * send ether to the fund collection wallet
+     * override to create custom fund forwarding mechanisms
+     */
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  function getBalanceContract() view internal returns (uint) {
+    return token.balanceOf(this);
+  }
+
+  function startSale() public onlyOwner {
+    require(state == SaleState.NEW);
+    state = SaleState.SALE;
+    SaleStarted(block.number);
+  }
+  function endSale() public onlyOwner {
+    require(state == SaleState.SALE);
+    state = SaleState.ENDED;
+    SaleEnded(block.number);
+  }
+
+  function sendTokensToHold() public onlyOwner {
+    require(state == SaleState.ENDED);
+
+    require(getBalanceContract() >= tokenRaised);
+
+    if (token.transfer(holdContract, tokenRaised )) {
+      tokensTransferredToHold = true;
+      TokensTransferedToHold(holdContract, tokenRaised );
     }
+  }
+  function getTokensBack() public onlyOwner {
+    require(state == SaleState.ENDED);
+    require(tokensTransferredToHold == true);
+    uint balance;
+    balance = getBalanceContract() ;
+    token.transfer(msg.sender, balance);
+  }
+  function withdrawEth() public {
+    require(this.balance != 0);
+    require(state == SaleState.ENDED);
+    require(msg.sender == wallet);
+    require(tokensTransferredToHold == true);
+    uint bal = this.balance;
+    wallet.transfer(bal);
+    WithdrawedEthToWallet(bal);
+  }
 
-    function finalise() public {
-        require(hasEnded());
-        castedToken().finalise();
-    }
+  function setUnholdDate(uint date) public onlyOwner {
+    require(state == SaleState.NEW || state == SaleState.SALE);
+    uint oldEndDate = unholdDate;
+    unholdDate = date;
+    ManualChangeUnholdDate(oldEndDate, date);
+  }
+  function setEndDate(uint date) public onlyOwner {
+    require(state == SaleState.NEW || state == SaleState.SALE);
+    require(date > now);
+    uint oldEndDate = endDate;
+    endDate = date;
+    ManualChangeEndDate(oldEndDate, date);
+  }
+  function setMinimalContribution(uint minimumAmount) public onlyOwner {
+    uint oldMinAmount = minimalContribution;
+    minimalContribution = minimumAmount;
+    ChangeMinAmount(oldMinAmount, minimalContribution);
+  }
+  function setBonus(uint8 newBonus) public onlyOwner {
+    require(newBonus >= 0);
+    bonus = newBonus;
+  }
 
-    function mintInvestmentFundAndMiscellaneous(
-        address _investmentFundWallet,
-        address _miscellaneousWallet
-    ) internal {
-        require(_investmentFundWallet != address(0));
-        require(_miscellaneousWallet != address(0));
+  function addAssetsOwner(address _owner) public onlyOwner {
+    assetOwnersIndexes++;
+    assetOwners[assetOwnersIndexes] = _owner;
+    assetOwnersIndex[_owner] = assetOwnersIndexes;
+  }
+  function removeAssetsOwner(address _owner) public onlyOwner {
+    uint index = assetOwnersIndex[_owner];
+    delete assetOwnersIndex[_owner];
+    delete assetOwners[index];
+    assetOwnersIndexes--;
+  }
+  function getAssetsOwners(uint _index) onlyOwner public constant returns (address) {
+    return assetOwners[_index];
+  }
 
-        token.mint(_investmentFundWallet, INVESTMENT_FUND_TOKENS_SUPPLY);
-        token.mint(_miscellaneousWallet, MISCELLANEOUS_TOKENS_SUPPLY);
-    }
-
-    function castedToken() internal view returns (CREDToken) {
-        return CREDToken(token);
-    }
-
-    // Overrides Crowdsale#createTokenContract not to create new token
-    // CRED Token is created in the constructor
-    function createTokenContract() internal returns (MintableToken) {
-        return MintableToken(address(0));
-    }
-
-    function validSalePurchase() internal view returns (bool) {
-        return super.validPurchase();
-    }
-
-    function validPreSalePurchase() internal view returns (bool) {
-        if (msg.value > presaleLimit[msg.sender]) { return false; }
-        if (weiRaised.add(msg.value) > cap) { return false; }
-        if (now < presaleStartTime) { return false; }
-        if (now >= startTime) { return false; }
-        return true;
-    }
-
-    // Overrides CappedCrowdsale#validPurchase to check if not paused
-    function validPurchase() internal view returns (bool) {
-        require(!paused);
-        return validSalePurchase() || validPreSalePurchase();
-    }
-
+  function getTokenBalance() onlyAssetsOwners public constant returns (uint) {
+    return token.balanceOf(this);
+  }
+  function getEthRaised() onlyAssetsOwners public constant returns (uint) {
+    return ethRaised;
+  }
+  function getBonus() onlyAssetsOwners public constant returns (uint) {
+    return bonus;
+  }
+  function getTokenRaised() onlyAssetsOwners public constant returns (uint) {
+    return tokenRaised;
+  }
 }
