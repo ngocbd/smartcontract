@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnitedfansTokenCrowdsale at 0x2E84E0639eA1f1cf9b6125B3AC7A19d8A405ed70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnitedfansTokenCrowdsale at 0xa1ade4e22a2543d74bf35cb61148b5530bc778a8
 */
 pragma solidity 0.4.21;
 
@@ -275,16 +275,14 @@ contract UnitedfansToken is MintableToken {
     address public admin;
     address public crowdSaleAddress;
     uint256 public totalMigrated;
-    string public name = "UnitedFans";
-    string public symbol = "UFN";
+    string public name = "Goal Coin";
+    string public symbol = "GC";
     uint256 public decimals = 18;
     bool public locked = true; // Lock the transfer of tokens during the crowdsale
 
     event Migrate(address indexed _from, address indexed _to, uint256 _value);
 
     event Locked();
-
-    event Error(address adrs1, address adrs2, address adrs3);
 
     event Unlocked();
 
@@ -502,14 +500,14 @@ contract UnitedfansTokenCrowdsale is Ownable, Crowdsale {
 
     uint256 public startTimeNumber = 1500000000;
 
-    uint256 public endTimeNumber = 1527724800;// Wed, 31 May 2018 12:00:00 +0000
+    uint256 public endTimeNumber = 1530316800;// Wed, 31 May 2018 12:00:00 +0000
 
     event Finalized();
 
     function UnitedfansTokenCrowdsale(address _admin)
     Crowdsale(
         now + 10, // 2018-02-01T00:00:00+00:00 - 1517443200
-        endTimeNumber, // 2018-08-01T00:00:00+00:00 - 
+        endTimeNumber, // 2018-06-30T00:00:00+00:00 - 
         12000,/* start rate - 1000 */
         _admin
     )  
@@ -536,7 +534,9 @@ contract UnitedfansTokenCrowdsale is Ownable, Crowdsale {
 
     function buyTokensUpdateState() internal {
         if(state == State.BeforeSale && now >= startTimeNumber) { state = State.NormalSale; }
-        require(state != State.ShouldFinalize && state != State.SaleOver && msg.value >= 25 * toDec);
+        require(state != State.ShouldFinalize && state != State.SaleOver && msg.value >= toDec.div(10));
+        if(msg.value < toDec.mul(25)) { rate = 6000; }
+        else { rate = 12000; }
         if(msg.value.mul(rate) >= tokensLeft) { state = State.ShouldFinalize; }
     }
 
@@ -555,7 +555,9 @@ contract UnitedfansTokenCrowdsale is Ownable, Crowdsale {
 
     function buyCoinsUpdateState(uint256 amount) internal {
         if(state == State.BeforeSale && now >= startTimeNumber) { state = State.NormalSale; }
-        require(state != State.ShouldFinalize && state != State.SaleOver && amount >= 25 * toDec);
+        require(state != State.ShouldFinalize && state != State.SaleOver);
+        if(amount < 25) { rate = 6000; }
+        else { rate = 12000; }
         if(amount.mul(rate) >= tokensLeft) { state = State.ShouldFinalize; }
     }
 
