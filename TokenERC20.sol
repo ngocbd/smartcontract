@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x76634fe3327b86bbab0d3eb14843eaf40acc0505
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x8e129510f8e281357be602fb6c55c3f2f186973c
 */
 pragma solidity ^0.4.16;
 
@@ -9,7 +9,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 8;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
