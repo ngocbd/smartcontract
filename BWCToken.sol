@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BWCToken at 0xf02904cbf8e5134aeaf45626e96b782ed233fe04
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BWCToken at 0x6d402b714df85f7fa3d257f1e6a86b62d099a4f3
 */
 pragma solidity ^0.4.16;
 
@@ -48,7 +48,7 @@ contract BWCToken is Ownable{
     string public constant symbol = "BWC";
     uint32 public constant decimals = 4;
 
-    uint constant start = 1517418000;
+    uint constant start = 1517418000000;
     uint constant period = 87;
     uint256 public constant hardcap = 25 * 1000000 * (10 ** uint256(decimals));
 
