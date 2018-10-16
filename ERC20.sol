@@ -1,95 +1,73 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x20d4d553491be14e341bb155f615a2bdf295756b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x12a35383ca24ceb44cdcbbecbeb7baccb5f3754a
 */
-pragma solidity ^0.4.8;
+pragma solidity ^ 0.4.2;
 
-/// @title ERC20 Token
-/// @author Melonport AG <team@melonport.com>
-/// @notice Original taken from https://github.com/ethereum/EIPs/issues/20
-/// @notice Checked against integer overflow
+contract tokenRecipient {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData);
+}
+
 contract ERC20 {
+    /* Public variables of the token */
+    string public standard = 'CREDITS';
+    string public name = 'CREDITS';
+    string public symbol = 'CS';
+    uint8 public decimals = 6;
+    uint256 public totalSupply = 1000000000000000;
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    /* This creates an array with all balances */
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+
+    function ERC20() {
+        balanceOf[msg.sender] = totalSupply;
+    }
+    /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) throw; // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value; // Subtract from the sender
+        balanceOf[_to] += _value; // Add the same to the recipient
+        Transfer(msg.sender, _to, _value); // Notify anyone listening that this transfer took place
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /* Allow another contract to spend some tokens in your behalf */
+    function approve(address _spender, uint256 _value)
+    returns(bool success) {
+        allowance[msg.sender][_spender] = _value;
+        tokenRecipient spender = tokenRecipient(_spender);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-
-    mapping (address => mapping (address => uint256)) allowed;
-
-    uint256 public totalSupply;
-
-    address public owner;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    modifier onlyowner(address _requester) {
-        if (_requester != owner) {
-            throw;
+    /* Approve and then comunicate the approved contract in a single tx */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+    returns(bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
         }
-        _;
     }
 
-    event Mint(address indexed _owner, uint256 _value, uint256 _totalSupply);
-    event Burn(address indexed _owner, uint256 _value, uint256 _totalSupply);
-    event ChangeOwner(address indexed _oldOwner, address indexed _newOwner);
-
-    function ERC20() {
-        owner = msg.sender;
+    /* A contract attempts to get the coins */
+    function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
+        if (balanceOf[_from] < _value) throw; // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        if (_value > allowance[_from][msg.sender]) throw; // Check allowance
+        balanceOf[_from] -= _value; // Subtract from the sender
+        balanceOf[_to] += _value; // Add the same to the recipient
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
     }
 
-    function mint(uint _value) onlyowner(msg.sender) {
-        if (balances[owner] + _value < balances[owner]) {
-            // overflow
-            throw;
-        }
-        balances[owner] += _value;
-        totalSupply += _value;
-        Mint(owner, _value, totalSupply);
+    /* This unnamed function is called whenever someone tries to send ether to it */
+    function () {
+        throw; // Prevents accidental sending of ether
     }
-
-    function burn(uint _value) onlyowner(msg.sender) {
-        if (balances[owner] < _value) {
-            throw;
-        }
-        balances[owner] -= _value;
-        totalSupply -= _value;
-        Burn(owner, _value, totalSupply);
-    }
-
-    function changeOwner(address _owner) onlyowner(msg.sender) {
-        owner = _owner;
-        ChangeOwner(msg.sender, owner);
-    }
-
 }
