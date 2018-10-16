@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoonTrail at 0x896dd11b47003e145df352e4653a3f6a2d61490d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOONTRAIL at 0xf4d15fd3ffd3caa1506132e28340159375ce146a
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'Moon' Trail contract
+// 'MoonTrail'  contract
 //
-// Deployed to : 0x26F124a923449DEAAC3Fdf0367b93f9D058cd98B
-// Symbol      : MTL
-// Name        : MoonTrail
-// Total supply: 1000000000
+// Deployed to : 0xCd4f73EF30D163675aCce1ef7be367D6D593CBb2
+// Symbol      : MONT
+// Name        : MOONTRAIL
+// Total supply: 100000000000
 // Decimals    : 0
 //
 // Enjoy.
 //
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// (c) by Gilead  with Dwayne / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -102,7 +102,7 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract MoonTrail is ERC20Interface, Owned, SafeMath {
+contract MOONTRAIL is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -115,13 +115,13 @@ contract MoonTrail is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function MoonTrail() public {
-        symbol = "MTL";
-        name = "MoonTrail";
+    function MOONTRAIL() public {
+        symbol = "MONT";
+        name = "MOONTRAIL";
         decimals = 0;
-        _totalSupply = 1000000000;
-        balances[0x26F124a923449DEAAC3Fdf0367b93f9D058cd98B] = _totalSupply;
-        Transfer(address(0), 0x26F124a923449DEAAC3Fdf0367b93f9D058cd98B, _totalSupply);
+        _totalSupply = 100000000000;
+        balances[0xCd4f73EF30D163675aCce1ef7be367D6D593CBb2] = _totalSupply;
+        Transfer(address(0), 0xCd4f73EF30D163675aCce1ef7be367D6D593CBb2, _totalSupply);
     }
 
 
