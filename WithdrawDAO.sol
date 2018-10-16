@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithdrawDAO at 0x817b0a0855fa6e1e0b9a994979b3d5bf864d9560
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithdrawDAO at 0x755cdba6ae4f479f7164792b318b2a06c759833b
 */
-// Refund contract for trust DAO #16
+// Refund contract for extraBalance
+// Amounts to be paid are tokenized in another contract and allow using the same refund contract as for theDAO
+// Though it may be misleading, the names 'DAO', 'mainDAO' are kept here for the ease of code review
 
 contract DAO {
     function balanceOf(address addr) returns (uint);
@@ -10,8 +12,8 @@ contract DAO {
 }
 
 contract WithdrawDAO {
-    DAO constant public mainDAO = DAO(0x200450f06520bdd6c527622a273333384d870efb);
-    address public trustee = 0x7c81d252d9d1295058cd3620835f37e0eedd8840;
+    DAO constant public mainDAO = DAO(0x5c40ef6f527f4fba68368774e6130ce6515123f2);
+    address constant public trustee = 0xda4a4626d3e16e094de3225a751aab7128e96526;
 
     function withdraw(){
         uint balance = mainDAO.balanceOf(msg.sender);
@@ -20,7 +22,11 @@ contract WithdrawDAO {
             throw;
     }
 
-    function trusteeWithdraw() {
-        trustee.send((this.balance + mainDAO.balanceOf(this)) - mainDAO.totalSupply());
+    /**
+    * Return funds back to the curator.
+    */
+    function clawback() external {
+        if (msg.sender != trustee) throw;
+        if (!trustee.send(this.balance)) throw;
     }
 }
