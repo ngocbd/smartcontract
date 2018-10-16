@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x31a4b0e204cd8f6f26b3112cf9e89a5c2a24a174
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xbf1d160fb60a6ef595fd2feaf48952af47aae597
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract TokenERC20 {
+contract TokenERC20{
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 2;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -37,7 +37,6 @@ contract TokenERC20 {
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
-        emit Transfer(address(this), msg.sender, totalSupply);
     }
 
     /**
@@ -49,7 +48,7 @@ contract TokenERC20 {
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
