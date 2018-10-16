@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WSKYToken at 0x8e6d1a5db39a3c418e2a8ad12ec777dde42ad6ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WSKYToken at 0x6fdbcd375f348325d4b8c1fac374753ec1b07c92
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'WSKY' 'Whiskey Token' token contract
+// 'WSKY-test-1' 'Whiskey test #1 Token' token contract
 //
-// Symbol      : WSKY
-// Name        : Whiskey Token
+// Symbol      : WSKY-test-1
+// Name        : Whiskey test #1 Token
 // Total supply: 9,600,000.000000
 // Decimals    : 6
 //
@@ -112,8 +112,8 @@ contract WSKYToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     function WSKYToken() public {
-        symbol = "WSKY";
-        name = "Whiskey Token";
+        symbol = "WSKY-test-1";
+        name = "Whiskey test #1 Token";
         decimals = 6;
         _totalSupply = 9600000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
