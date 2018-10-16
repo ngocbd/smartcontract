@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLinkToken at 0x76272a4b4c133edbf90aa9522fffed41ae38d627
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLinkToken at 0x0c9dbc3442f73c92c43bb7805358673839edd631
 */
 pragma solidity ^0.4.20;
 /**
@@ -154,7 +154,7 @@ contract StandardToken is ERC20, BasicToken {
 }
 contract EtherLinkToken is StandardToken {
 	string public name = "EtherLink Token";
-  string public symbol = "ELT";
+  string public symbol = "ETL";
   uint256 public decimals = 18;
   uint256 public constant INITIAL_SUPPLY = 5000000 * (10 ** uint256(decimals));
   /**
