@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GRO at 0x4a479d44678c68Ee7f193610B53DEC6Cc514d643
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GRO at 0x4ec46a41f2ec90f718dca2e94d123eda9ffb7619
 */
 pragma solidity 0.4.18;
 
@@ -13,13 +13,6 @@ contract Token { // ERC20 standard
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-
-
-/**
- * Overflow aware uint math functions.
- *
- * Inspired by https://github.com/makerdao/maker-otc/blob/master/src/simple_market.sol
- */
 
 contract SafeMath {
 
@@ -119,8 +112,9 @@ contract GRO is StandardToken {
     string public name = "Gron Digital";
     string public symbol = "GRO";
     uint256 public decimals = 18;
-    string public version = "9.0";
+    string public version = "10.0";
 
+    // Nine Hundred and Fifty million with support for 18 decimals
     uint256 public tokenCap = 950000000 * 10**18;
 
     // crowdsale parameters
@@ -148,7 +142,7 @@ contract GRO is StandardToken {
 
     uint256 public previousUpdateTime = 0;
     Price public currentPrice;
-    uint256 public minAmount = 0.05 ether; // 500 GRO
+    uint256 public minAmount; // Minimum amount of ether to accept for GRO purchases
 
     // map participant address to a withdrawal request
     mapping (address => Withdrawal) public withdrawals;
@@ -172,7 +166,8 @@ contract GRO is StandardToken {
 
     event Buy(address indexed participant, address indexed beneficiary, uint256 weiValue, uint256 amountTokens);
     event AllocatePresale(address indexed participant, uint256 amountTokens);
-    event BonusAllocation(address indexed participant, string participant_addr, uint256 bonusTokens);    
+    event BonusAllocation(address indexed participant, string participant_addr, string txnHash, uint256 bonusTokens);
+    event Mint(address indexed to, uint256 amount);
     event Whitelist(address indexed participant);
     event PriceUpdate(uint256 numerator);
     event AddLiquidity(uint256 ethAmount);
@@ -233,6 +228,7 @@ contract GRO is StandardToken {
       fundingStartBlock = startBlockInput;
       fundingEndBlock = endBlockInput;
       previousUpdateTime = currentTime();
+      minAmount = 0.05 ether; // 500 GRO
     }
 
     // METHODS
@@ -270,17 +266,17 @@ contract GRO is StandardToken {
         require(percentage_diff <= 20);
     }
 
-    function allocateTokens(address participant, uint256 amountTokens) private {
+    function mint(address participant, uint256 amountTokens) private {
         require(vestingSet);
         // 40% of total allocated for Founders, Team incentives & Bonuses.
 
 	// Solidity v0.4.18 - floating point is not fully supported,
-	// so often integer division results in truncated values.
-	// Therefore we are multiplying out by 1000000 for
+	// integer division results in truncated values
+	// Therefore we are multiplying out by 1000000... for
 	// precision. This allows ratios values up to 0.0000x or 0.00x percent
 	uint256 precision = 10**18;
-	uint256 allocationRatio = safeMul(amountTokens, precision) / 570000000;
-        uint256 developmentAllocation = safeMul(allocationRatio, 380000000) / precision;
+	uint256 allocationRatio = safeMul(amountTokens, precision) / safeMul(570000000, precision);
+        uint256 developmentAllocation = safeMul(allocationRatio, safeMul(380000000, precision)) / precision;
         // check that token cap is not exceeded
         uint256 newTokens = safeAdd(amountTokens, developmentAllocation);
         require(safeAdd(totalSupply, newTokens) <= tokenCap);
@@ -288,8 +284,14 @@ contract GRO is StandardToken {
         totalSupply = safeAdd(totalSupply, newTokens);
         balances[participant] = safeAdd(balances[participant], amountTokens);
         balances[vestingContract] = safeAdd(balances[vestingContract], developmentAllocation);
+
+	Mint(fundWallet, newTokens);
+	Transfer(fundWallet, participant, amountTokens);
+	Transfer(fundWallet, vestingContract, developmentAllocation);
     }
-    
+
+    // amountTokens is supplied in major units, not subunits / decimal
+    // units.
     function allocatePresaleTokens(
 			       address participant_address,
 			       string participant_str,
@@ -302,7 +304,7 @@ contract GRO is StandardToken {
       require(participant_address != address(0));
      
       uint256 bonusTokens = 0;
-      uint256 totalTokens = amountTokens;
+      uint256 totalTokens = safeMul(amountTokens, 10**18); // scale to subunit
 
       if (firstDigit(txnHash) == firstDigit(participant_str)) {
 	  // Calculate 10% bonus
@@ -311,14 +313,15 @@ contract GRO is StandardToken {
       }
 
         whitelist[participant_address] = true;
-        allocateTokens(participant_address, totalTokens);
+        mint(participant_address, totalTokens);
+	// Events
         Whitelist(participant_address);
         AllocatePresale(participant_address, totalTokens);
-	BonusAllocation(participant_address, participant_str, bonusTokens);
+	BonusAllocation(participant_address, participant_str, txnHash, bonusTokens);
     }
 
-    // returns the first character as a byte in a given string address
-    // Given 0x1abcd... returns 1 
+    // returns the first character as a byte in a given hex string
+    // address Given 0x1abcd... returns 1
     function firstDigit(string s) pure public returns(byte){
 	bytes memory strBytes = bytes(s);
 	return strBytes[2];
@@ -334,16 +337,22 @@ contract GRO is StandardToken {
     }
 
     function buyTo(address participant) public payable onlyWhitelist {
-        require(!halted);
-        require(participant != address(0));
-        require(msg.value >= minAmount);
-        require(currentBlock() >= fundingStartBlock && currentBlock() < fundingEndBlock);
-	// msg.value in wei - scale to ether after applying price numerator
-        uint256 tokensToBuy = safeMul(msg.value, currentPrice.numerator) / (1 ether);
-        allocateTokens(participant, tokensToBuy);
-        // send ether to fundWallet
-        fundWallet.transfer(msg.value);
-        Buy(msg.sender, participant, msg.value, tokensToBuy);
+      require(!halted);
+      require(participant != address(0));
+      require(msg.value >= minAmount);
+      require(currentBlock() >= fundingStartBlock && currentBlock() < fundingEndBlock);
+      // msg.value in wei - scale to GRO
+      uint256 baseAmountTokens = safeMul(msg.value, currentPrice.numerator);
+      // calc lottery amount excluding potential ico bonus
+      uint256 lotteryAmount = blockLottery(baseAmountTokens);
+      uint256 icoAmount = safeMul(msg.value, icoNumeratorPrice());
+
+      uint256 tokensToBuy = safeAdd(icoAmount, lotteryAmount);
+      mint(participant, tokensToBuy);
+      // send ether to fundWallet
+      fundWallet.transfer(msg.value);
+      // Events
+      Buy(msg.sender, participant, msg.value, tokensToBuy);
     }
 
     // time based on blocknumbers, assuming a blocktime of 15s
@@ -377,7 +386,19 @@ contract GRO is StandardToken {
 
     function currentTime() private constant returns(uint256 _currentTime) {
       return now;
-    }      
+    }
+
+    function blockLottery(uint256 _amountTokens) private constant returns(uint256) {
+      uint256 divisor = 10;
+      uint256 winning_digit = 0;
+      uint256 tokenWinnings = 0;
+
+      if (currentBlock() % divisor == winning_digit) {
+	tokenWinnings = safeMul(_amountTokens, 10) / 100;
+      }
+      
+      return tokenWinnings;	
+    }
 
     function requestWithdrawal(uint256 amountTokensToWithdraw) external isTradeable onlyWhitelist {
       require(currentBlock() > fundingEndBlock);
@@ -398,13 +419,15 @@ contract GRO is StandardToken {
         // obtain the next price that was set after the request
         Price price = prices[requestTime];
         require(price.numerator > 0); // price must have been set
-        uint256 withdrawValue = safeMul(tokens, price.numerator);
+        uint256 withdrawValue = tokens / price.numerator;
         // if contract ethbal > then send + transfer tokens to fundWallet, otherwise give tokens back
         withdrawals[participant].tokens = 0;
-        if (this.balance >= withdrawValue)
+        if (this.balance >= withdrawValue) {
             enact_withdrawal_greater_equal(participant, withdrawValue, tokens);
-        else
+	}
+        else {
             enact_withdrawal_less(participant, withdrawValue, tokens);
+	}
     }
 
     function enact_withdrawal_greater_equal(address participant, uint256 withdrawValue, uint256 tokens)
@@ -423,11 +446,13 @@ contract GRO is StandardToken {
         Withdraw(participant, tokens, 0); // indicate a failed withdrawal
     }
 
-
-    function checkWithdrawValue(uint256 amountTokensToWithdraw) public constant returns (uint256 etherValue) {
-        require(amountTokensToWithdraw > 0);
-        require(balanceOf(msg.sender) >= amountTokensToWithdraw);
-        uint256 withdrawValue = safeMul(amountTokensToWithdraw, currentPrice.numerator);
+    // Returns the ether value (in wei units) for the amount of tokens
+    // in subunits for decimal support, at the current GRO exchange
+    // rate
+    function checkWithdrawValue(uint256 amountTokensInSubunit) public constant returns (uint256 weiValue) {
+        require(amountTokensInSubunit > 0);
+        require(balanceOf(msg.sender) >= amountTokensInSubunit);
+        uint256 withdrawValue = amountTokensInSubunit / currentPrice.numerator;
         require(this.balance >= withdrawValue);
         return withdrawValue;
     }
@@ -459,6 +484,11 @@ contract GRO is StandardToken {
         waitTime = newWaitTime;
     }
 
+    // specified in wei
+    function changeMinAmount(uint256 newMinAmount) external onlyFundWallet {
+      minAmount = newMinAmount;
+    }
+
     function updateFundingStartBlock(uint256 newFundingStartBlock) external onlyFundWallet {
       require(currentBlock() < fundingStartBlock);
         require(currentBlock() < newFundingStartBlock);
@@ -481,12 +511,6 @@ contract GRO is StandardToken {
     function enableTrading() external onlyFundWallet {
         require(currentBlock() > fundingEndBlock);
         tradeable = true;
-    }
-
-    // fallback function
-    function() payable public {
-        require(tx.origin == msg.sender);
-        buyTo(msg.sender);
     }
 
     function claimTokens(address _token) external onlyFundWallet {
