@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethery at 0xd9fa8ca8e4c9d8089861640f384b42f66db4cc15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethery at 0x7b26fc24bdb49cbcb5256e8bc8809705ac223a8c
 */
 pragma solidity ^0.4.18;
 
@@ -183,7 +183,7 @@ contract Ethery is Pausable, ReentrancyGuard{
     NewBet(id, msg.sender, msg.value, _targetBlock);
   }
   
-  function resolveBet(uint _betId) public nonReentrant returns (BetStatus) {
+  function resolveBet(uint _betId) public nonReentrant {
     Bet storage myBet = bets[_betId];  
     require(
       myBet.status == BetStatus.Pending &&    // only resolve pending bets
@@ -206,7 +206,6 @@ contract Ethery is Pausable, ReentrancyGuard{
     }
     msg.sender.transfer(resolverFee);
     BetResolved(_betId, myBet.status);
-    return myBet.status;
   }
   
   function isCorrectGuess(bytes32 _blockHash, bytes32 _guess, uint _digits) public pure returns (bool) {
