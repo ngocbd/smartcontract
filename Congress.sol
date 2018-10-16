@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Congress at 0xa33c0ca78283a247560587200c6d33e18cf54eaa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Congress at 0x1c5d0d571f6fccfef54d5275c5660f8a6d0971c0
 */
 pragma solidity ^0.4.16;
+
+/**
+ * PornTokenV2 DAO
+ */
 
 contract owned {
     address public owner;
@@ -25,7 +29,7 @@ contract tokenRecipient {
     event receivedTokens(address _from, uint256 _value, address _token, bytes _extraData);
 
     function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public {
-        Token t = Token(_token);
+        PornTokenV2 t = PornTokenV2(_token);
         require(t.transferFrom(_from, this, _value));
         receivedTokens(_from, _value, _token, _extraData);
     }
@@ -35,7 +39,7 @@ contract tokenRecipient {
     }
 }
 
-interface Token {
+interface PornTokenV2 {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 }
 
@@ -116,7 +120,7 @@ contract Congress is owned, tokenRecipient {
             memberId[targetMember] = members.length;
             id = members.length++;
         }
-    
+
         members[id] = Member({member: targetMember, memberSince: now, name: memberName});
         MembershipChanged(targetMember, true);
     }
