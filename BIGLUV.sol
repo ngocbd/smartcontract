@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIGLUV at 0x4d9412b6c12b2e2bf0da15416b71f33c846e635b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIGLUV at 0x0c37198ba896a0988f1ae289cd9d2b28428b038c
 */
 pragma solidity ^0.4.18;
 
