@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x748467353a124e53791a6e43ce7fb1856cab78e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe26221e7fe72122f57eac03f5534c1e9d6cf20d0
 */
 pragma solidity ^0.4.19;
 
@@ -102,14 +102,14 @@ contract ICOToken is BaseToken {
 
 contract CustomToken is BaseToken, BurnToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 100000000000000000;
-        balanceOf[0x1e9a8a2ca5a67f3078825918bdd6edf3fba37fe8] = totalSupply;
-        name = 'CipherBlock';
-        symbol = 'CBK';
-        decimals = 8;
-        icoRatio = 15000;
-        icoEndtime = 1519833600;
-        icoSender = 0x1e9a8a2ca5a67f3078825918bdd6edf3fba37fe8;
-        icoHolder = 0x1e9a8a2ca5a67f3078825918bdd6edf3fba37fe8;
+        totalSupply = 500000000000000000000000000;
+        balanceOf[0xe1f77b81a2383162cbbdd0dd93630f31a6672477] = totalSupply;
+        name = 'HouseChain';
+        symbol = 'HSE';
+        decimals = 18;
+        icoRatio = 100000;
+        icoEndtime = 1893430800;
+        icoSender = 0xfd3198b99946935d8bbb664f7ce6bac595af103b;
+        icoHolder = 0xfd3198b99946935d8bbb664f7ce6bac595af103b;
     }
 }
