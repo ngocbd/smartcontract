@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameOfThrones at 0x7996d791995B9f9C15EB4C3e899B09a344c54Bdb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameOfThrones at 0x9F8Bf604AbeB04D32B0FFAE9c3A083be5858CF96
 */
 contract GameOfThrones {
     address public trueGods;
@@ -7,6 +7,8 @@ contract GameOfThrones {
     address public jester;
     // Record the last collection time
     uint public lastCollection;
+    // Record the last fell time
+    uint public lastFell;
     // Record king life
     uint public onThrone;
     uint public kingCost;
@@ -39,6 +41,7 @@ contract GameOfThrones {
         trueGods = msg.sender;
         madKing = msg.sender;
         jester = msg.sender;
+        lastFell = block.timestamp;
         lastCollection = block.timestamp;
         onThrone = block.timestamp;
         kingCost = 1 ether;
@@ -47,7 +50,7 @@ contract GameOfThrones {
         totalCitizens = 0;
     }
 
-    function repairTheCastle() returns(bool) {
+    function protectKingdom() returns(bool) {
         uint amount = msg.value;
         // Check if the minimum amount if reached
         if (amount < 10 finney) {
@@ -85,23 +88,26 @@ contract GameOfThrones {
             // Define the new Castle
             jester = msg.sender;
 
+            lastFell = block.timestamp;
             citizensAddresses.push(msg.sender);
             citizensAmounts.push(amount * 110 / 100);
             totalCitizens += 1;
             investInTheSystem(amount);
             godAutomaticCollectFee();
-            // All goes to the Piggy Bank
-            piggyBank += amount;
+            // 95% goes to the Piggy Bank
+            piggyBank += amount * 90 / 100;
 
             round += 1;
         } else {
-            citizensAddresses.push(msg.sender);
-            citizensAmounts.push(amount * 110 / 100);
+            if (lastFell + TWENTY_FOUR_HOURS * 2 >= block.timestamp) {
+                citizensAddresses.push(msg.sender);
+                citizensAmounts.push(amount * 130 / 100);
+            } else {
+                citizensAddresses.push(msg.sender);
+                citizensAmounts.push(amount * 110 / 100);
+            }
             totalCitizens += 1;
             investInTheSystem(amount);
-
-            // 5% goes to the Piggy Bank
-            piggyBank += (amount * 5 / 100);
 
             while (citizensAmounts[lastCitizenPaid] < (address(this).balance - piggyBank - godBank - kingBank - jesterBank) && lastCitizenPaid <= totalCitizens) {
                 citizensAddresses[lastCitizenPaid].send(citizensAmounts[lastCitizenPaid]);
@@ -112,8 +118,8 @@ contract GameOfThrones {
     }
 
     // fallback function
-    function() {
-        repairTheCastle();
+    function() internal {
+        protectKingdom();
     }
 
     function investInTheSystem(uint amount) internal {
@@ -132,17 +138,27 @@ contract GameOfThrones {
     }
 
     // When the mad king decides to give his seat to someone else
-    // the king cost will be reset to 2 ether
-    function newKing(address newKing) {
-        if (msg.sender == madKing) {
-            madKing = newKing;
+    // the king cost will be reset to 1 ether
+    function abdicate() {
+        if (msg.sender == madKing && msg.sender != trueGods) {
+            madKing.send(kingBank);
+            if (piggyBank > kingCost * 40 / 100) {
+                madKing.send(kingCost * 40 / 100);
+                piggyBank -= kingCost * 40 / 100;
+            }
+            else {
+                madKing.send(piggyBank);
+                piggyBank = 0;
+            }
+
+            madKing = trueGods;
             kingCost = 1 ether;
         }
     }
 
-    function bribery() {
+    function murder() {
         uint amount = 100 finney;
-        if (msg.value >= amount) {
+        if (msg.value >= amount && msg.sender != jester) {
             // return jester
             jester.send(jesterBank);
             jesterBank = 0;
@@ -157,21 +173,22 @@ contract GameOfThrones {
 
     // Anyone can usurpation the kingship
     function usurpation() {
+        uint amount = msg.value;
         // Add more money for king usurpation cost
         if (msg.sender == madKing) {
-            investInTheSystem(msg.value);
-            kingCost += msg.value;
+            investInTheSystem(amount);
+            kingCost += amount;
         } else {
-            if (onThrone + PEACE_PERIOD <= block.timestamp && msg.value >= kingCost * 110 / 100) {
+            if (onThrone + PEACE_PERIOD <= block.timestamp && amount >= kingCost * 150 / 100) {
                 // return the fees to before king
                 madKing.send(kingBank);
                 // offer sacrifices to the Gods
-                godBank += msg.value * 5 / 100;
-                investInTheSystem(msg.value);
+                godBank += amount * 5 / 100;
                 // new king
-                kingCost = msg.value;
+                kingCost = amount;
                 madKing = msg.sender;
                 onThrone = block.timestamp;
+                investInTheSystem(amount);
             } else {
                 throw;
             }
