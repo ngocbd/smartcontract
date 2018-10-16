@@ -1,197 +1,176 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestmentToken at 0x9742fa8cb51d294c8267ddfead8582e16f18e421
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestmentToken at 0xc7836a42559499cf6aa4e057c010ef09b89f97b3
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.17;
 
-/* 
-   High value, community controlled token.
-   */
-   contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) constant returns (uint256);
-    function transfer(address to, uint256 value) returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-  }
+library SafeMathMod {// Partial SafeMath Library
 
-/*
-   ERC20 interface
-  see https://github.com/ethereum/EIPs/issues/20
-  */
-  contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) returns (bool);
-    function approve(address spender, uint256 value) returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-  }
-
-/*  SafeMath - the lowest gas library
-  Math operations with safety checks that throw on error
-  */
-  library SafeMath {
-
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-      uint256 c = a * b;
-      assert(a == 0 || c / a == b);
-      return c;
+    function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((c = a - b) < a);
     }
 
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-      // assert(b > 0); // Solidity automatically throws when dividing by 0
-      uint256 c = a / b;
-      // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-      return c;
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((c = a + b) > a);
     }
-
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-      assert(b <= a);
-      return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-      uint256 c = a + b;
-      assert(c >= a);
-      return c;
-    }
-
-  }
-
-/*
-Basic token
- Basic version of StandardToken, with no allowances. 
- */
- contract BasicToken is ERC20Basic {
-
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /*
-  Gets the balance of the specified address.
-   param _owner The address to query the the balance of. 
-   return An uint256 representing the amount owned by the passed address.
-   */
-   function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
 }
 
-/* Implementation of the basic standard token.
-  https://github.com/ethereum/EIPs/issues/20
-  */
-  contract StandardToken is ERC20, BasicToken {
+contract InvestmentToken {//is inherently ERC20
+    using SafeMathMod for uint256;
 
-    mapping (address => mapping (address => uint256)) allowed;
-
-  /*
-    Transfer tokens from one address to another
-    param _from address The address which you want to send tokens from
-    param _to address The address which you want to transfer to
-    param _value uint256 the amout of tokens to be transfered
+    /**
+    * @constant name The name of the token
+    * @constant symbol  The symbol used to display the currency
+    * @constant decimals  The number of decimals used to dispay a balance
+    * @constant totalSupply The total number of tokens times 10^ of the number of decimals
+    * @constant MAX_UINT256 Magic number for unlimited allowance
+    * @storage balanceOf Holds the balances of all token holders
+    * @storage allowed Holds the allowable balance to be transferable by another address.
     */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-      var _allowance = allowed[_from][msg.sender];
 
-      // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-      // require (_value <= _allowance);
+    string constant public name = "Investment Token";
 
-      balances[_to] = balances[_to].add(_value);
-      balances[_from] = balances[_from].sub(_value);
-      allowed[_from][msg.sender] = _allowance.sub(_value);
-      Transfer(_from, _to, _value);
-      return true;
+    string constant public symbol = "INVEST";
+
+    uint8 constant public decimals = 8;
+
+    uint256 constant public totalSupply = 150000000e8;
+
+    uint256 constant private MAX_UINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+    mapping (address => uint256) public balanceOf;
+
+    mapping (address => mapping (address => uint256)) public allowed;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    event TransferFrom(address indexed _spender, address indexed _from, address indexed _to, uint256 _value);
+
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    function InvestmentToken() public {balanceOf[msg.sender] = totalSupply;}
+
+    /**
+    * @notice send `_value` token to `_to` from `msg.sender`
+    *
+    * @param _to The address of the recipient
+    * @param _value The amount of token to be transferred
+    * @return Whether the transfer was successful or not
+    */
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        /* Ensures that tokens are not sent to address "0x0" */
+        require(_to != address(0));
+        /* Prevents sending tokens directly to contracts. */
+        require(isNotContract(_to));
+
+        /* SafeMathMOd.sub will throw if there is not enough balance and if the transfer value is 0. */
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
-  /*
-  Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   param _spender The address which will spend the funds.
-   param _value The amount of Roman Lanskoj's tokens to be spent.
-   */
-   function approve(address _spender, uint256 _value) returns (bool) {
+    /**
+    * @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    *
+    * @param _from The address of the sender
+    * @param _to The address of the recipient
+    * @param _value The amount of token to be transferred
+    * @return Whether the transfer was successful or not
+    */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        /* Ensures that tokens are not sent to address "0x0" */
+        require(_to != address(0));
+        /* Ensures tokens are not sent to this contract */
+        require(_to != address(this));
+        
+        uint256 allowance = allowed[_from][msg.sender];
+        /* Ensures sender has enough available allowance OR sender is balance holder allowing single transsaction send to contracts*/
+        require(_value <= allowance || _from == msg.sender);
 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        /* Use SafeMathMod to add and subtract from the _to and _from addresses respectively. Prevents under/overflow and 0 transfers */
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        balanceOf[_from] = balanceOf[_from].sub(_value);
 
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /*
-  Function to check the amount of tokens that an owner allowed to a spender.
-  param _owner address The address which owns the funds.
-  param _spender address The address which will spend the funds.
-  return A uint256 specifing the amount of tokens still available for the spender.
-  */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-}
-
-/*
-The Ownable contract has an owner address, and provides basic authorization control
- functions, this simplifies the implementation of "user permissions".
- */
- contract Ownable {
-
-  address public owner;
-
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  /*
-  Throws if called by any account other than the owner.
-  */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /*
-  Allows the current owner to transfer control of the contract to a newOwner.
-  param newOwner The address to transfer ownership to.
-  */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
-
-}
-
-contract InvestmentToken is StandardToken, Ownable {
-  string public constant name = "10MT Investment token";
-  string public constant symbol = "10MTI";
-  uint public constant decimals = 10;
-  uint256 public initialSupply;
-
-  function MToken () { 
-   totalSupply = 50000000 * 10 ** decimals;
-   balances[msg.sender] = totalSupply;
-   initialSupply = totalSupply; 
-   Transfer(0, this, totalSupply);
-   Transfer(this, msg.sender, totalSupply);
-  }
-
-  function distribute10MTI(address[] addresses) onlyOwner {
-    // totalSupply = 50M
-    // distributing: 45% = 22.5M
-    // to 3431 shares (3376 in the list and 11 5x off the list): (22.5M * 10**10) / 3389 = 65578548528125
-    for (uint i = 0; i < addresses.length; i++) {
-      balances[owner] -= 65578548528125;
-      balances[addresses[i]] += 65578548528125;
-      Transfer(owner, addresses[i], 65578548528125);
+        /* Only reduce allowance if not MAX_UINT256 in order to save gas on unlimited allowance */
+        /* Balance holder does not need allowance to send from self. */
+        if (allowed[_from][msg.sender] != MAX_UINT256 && _from != msg.sender) {
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        }
+        Transfer(_from, _to, _value);
+        return true;
     }
-  }
+
+    /**
+    * @dev Transfer the specified amounts of tokens to the specified addresses.
+    * @dev Be aware that there is no check for duplicate recipients.
+    *
+    * @param _toAddresses Receiver addresses.
+    * @param _amounts Amounts of tokens that will be transferred.
+    */
+    function multiPartyTransfer(address[] _toAddresses, uint256[] _amounts) public {
+        /* Ensures _toAddresses array is less than or equal to 255 */
+        require(_toAddresses.length <= 255);
+        /* Ensures _toAddress and _amounts have the same number of entries. */
+        require(_toAddresses.length == _amounts.length);
+
+        for (uint8 i = 0; i < _toAddresses.length; i++) {
+            transfer(_toAddresses[i], _amounts[i]);
+        }
+    }
+
+    /**
+    * @dev Transfer the specified amounts of tokens to the specified addresses from authorized balance of sender.
+    * @dev Be aware that there is no check for duplicate recipients.
+    *
+    * @param _from The address of the sender
+    * @param _toAddresses The addresses of the recipients (MAX 255)
+    * @param _amounts The amounts of tokens to be transferred
+    */
+    function multiPartyTransferFrom(address _from, address[] _toAddresses, uint256[] _amounts) public {
+        /* Ensures _toAddresses array is less than or equal to 255 */
+        require(_toAddresses.length <= 255);
+        /* Ensures _toAddress and _amounts have the same number of entries. */
+        require(_toAddresses.length == _amounts.length);
+
+        for (uint8 i = 0; i < _toAddresses.length; i++) {
+            transferFrom(_from, _toAddresses[i], _amounts[i]);
+        }
+    }
+
+    /**
+    * @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    *
+    * @param _spender The address of the account able to transfer the tokens
+    * @param _value The amount of tokens to be approved for transfer
+    * @return Whether the approval was successful or not
+    */
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        /* Ensures address "0x0" is not assigned allowance. */
+        require(_spender != address(0));
+
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+    * @param _owner The address of the account owning tokens
+    * @param _spender The address of the account able to transfer the tokens
+    * @return Amount of remaining tokens allowed to spent
+    */
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        remaining = allowed[_owner][_spender];
+    }
+
+    function isNotContract(address _addr) private view returns (bool) {
+        uint length;
+        assembly {
+        /* retrieve the size of the code on target address, this needs assembly */
+        length := extcodesize(_addr)
+        }
+        return (length == 0);
+    }
+
+    // revert on eth transfers to this contract
+    function() public payable {revert();}
 }
