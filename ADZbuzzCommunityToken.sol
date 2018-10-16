@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x26a54e3740275229628672d777a90065f25957ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x219c920b0c8b2eb4278ad2e273a4d12c1158e0e7
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT395408' token contract
+    // 'ACT237580' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT395408
-    // Name        : ADZbuzz Brainpickings.org Community Token
+    // Symbol      : ACT237580
+    // Name        : ADZbuzz Bothsidesofthetable.com Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT395408";
-            name = "ADZbuzz Brainpickings.org Community Token";
+            symbol = "ACT237580";
+            name = "ADZbuzz Bothsidesofthetable.com Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
