@@ -1,77 +1,125 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnimatixToken at 0x66d725e68a6bc01b6e59d7921994144e5de02f88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnimatixToken at 0x0cd161ef9eb19a95fefa69c36f9cf552c19e6b8f
 */
 pragma solidity ^0.4.20;
 
-contract AToken {
-    function balanceOf(address _owner) constant returns (uint256);
-    function transfer(address _to, uint256 _value) returns (bool);
+
+contract AMXToken {
+    function balanceOf(address _owner) public constant returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
 }
 
-contract AnimatixToken {
-    address owner = msg.sender;
 
-    bool public purchasingAllowed = false;
+contract ERC20Basic {
+
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+
+}
+
+
+
+contract ERC20 is ERC20Basic {
+
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+}
+
+
+contract AnimatixToken is ERC20 {
+    
+    address owner = msg.sender;
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
-
-    uint256 public totalContribution = 0;
-
-    uint256 public totalSupply = 2.5*10**25; // 25 million
-    uint256 public maxTotalSupply = 6.0*10**25; // 60 million
-
-    function name() constant returns (string) { return "ANIMATIX TOKEN"; }
-    function symbol() constant returns (string) { return "ANIM"; }
-    function decimals() constant returns (uint8) { return 18; }
     
-    function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
+    uint256 public totalSupply = 0.1*10**25;
+
+    function name() public constant returns (string) { return "ANIMATIX"; }
+    function symbol() public constant returns (string) { return "AMX"; }
+    function decimals() public constant returns (uint8) { return 18; }
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    event DistrFinished();
+
+    bool public distributionFinished = false;
+
+    modifier canDistr() {
+    require(!distributionFinished);
+    _;
+    }
+
+    function AnimatixToken() public {
+        owner = msg.sender;
+        balances[msg.sender] = totalSupply;
+    }
+
+    modifier onlyOwner { 
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
+
     
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        // mitigates the ERC20 short address attack
-        if(msg.data.length < (2 * 32) + 4) { throw; }
+    function distributeToken(address[] addresses, uint256 _value) onlyOwner {
+     for (uint i = 0; i < addresses.length; i++) {
+         balances[owner] -= _value;
+         balances[addresses[i]] += _value;
+         Transfer(owner, addresses[i], _value);
+     }
+}
+    
+    function balanceOf(address _owner) constant public returns (uint256) {
+	 return balances[_owner];
+    }
 
-        if (_value == 0) { return false; }
-
-        uint256 fromBalance = balances[msg.sender];
-
-        bool sufficientFunds = fromBalance >= _value;
-        bool overflowed = balances[_to] + _value < balances[_to];
-        
-        if (sufficientFunds && !overflowed) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
     }
     
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        // mitigates the ERC20 short address attack
-        if(msg.data.length < (3 * 32) + 4) { throw; }
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
 
-        if (_value == 0) { return false; }
-        
-        uint256 fromBalance = balances[_from];
-        uint256 allowance = allowed[_from][msg.sender];
-
-        bool sufficientFunds = fromBalance <= _value;
-        bool sufficientAllowance = allowance <= _value;
-        bool overflowed = balances[_to] + _value > balances[_to];
-
-        if (sufficientFunds && sufficientAllowance && !overflowed) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            
-            allowed[_from][msg.sender] -= _value;
-            
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+         if (balances[msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(msg.sender, _to, _amount);
+             return true;
+         } else {
+             return false;
+         }
     }
     
-    function approve(address _spender, uint256 _value) returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+
+         if (balances[_from] >= _amount
+             && allowed[_from][msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[_from] -= _amount;
+             allowed[_from][msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(_from, _to, _amount);
+             return true;
+         } else {
+            return false;
+         }
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         // mitigates the ERC20 spend/approval race condition
         if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
         
@@ -81,56 +129,22 @@ contract AnimatixToken {
         return true;
     }
     
-    function AnimatixToken(
-        ) {
-        balances[msg.sender] = 0.25*10**25; // Team Reserve, 2.5 million tokens
-    }
-    
-    function allowance(address _owner, address _spender) constant returns (uint256) {
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
         return allowed[_owner][_spender];
     }
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-    //Ico start and stop
-
-    function startIco() {
-        if (msg.sender != owner) { throw; }
-
-        purchasingAllowed = true;
+    function finishDistribution() onlyOwner public returns (bool) {
+    distributionFinished = true;
+    DistrFinished();
+    return true;
     }
 
-    function stopIco() {
-        if (msg.sender != owner) { throw; }
-
-        purchasingAllowed = false;
-    }
-
-    function withdrawATokens(address _tokenContract) returns (bool) {
-        if (msg.sender != owner) { throw; }
-
-        AToken token = AToken(_tokenContract);
-
+    function withdrawGxTokens(address _tokenContract) public returns (bool) {
+        require(msg.sender == owner);
+        AMXToken token = AMXToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
 
-    function getStats() constant returns (uint256, uint256, bool) {
-        return (totalContribution, totalSupply, purchasingAllowed);
-    }
 
-    function() payable {
-        if (!purchasingAllowed) { throw; }
-        
-        if (msg.value == 0) { return; }
-
-        owner.transfer(msg.value);
-        totalContribution += msg.value;
-
-        uint256 tokensIssued = (msg.value * 20000);
-        balances[msg.sender] += tokensIssued;
-        
-        Transfer(address(this), msg.sender, tokensIssued);
-    }
 }
