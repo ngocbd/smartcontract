@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BobCoin at 0x3Ef65B52E2238E9F4D56Bd725104Dea6Df19B9E5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BobCoin at 0x250279d95438D130fBbCe6c1B57C56ddD776765b
 */
 pragma solidity ^0.4.18;
 
@@ -53,11 +53,11 @@ contract BobCoin is IERC20{
     
     using SafeMath for uint256;
     
-    uint256 public constant _totalSupply = 1000000000;
+    uint256 public constant _totalSupply = 10000000000000;
     
     string public constant symbol = "BOB";
     string public constant name = "BobCoin";
-    uint8 public constant decimals = 3;
+    uint8 public constant decimals =6;
     
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
