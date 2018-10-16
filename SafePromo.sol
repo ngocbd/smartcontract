@@ -1,53 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafePromo at 0x31a240648e2baf4f9f17225987f6f53fceb1699a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafePromo at 0xca18498e5720122e726068f2a6a90138a35476c8
 */
-/*                   -:////:-.                    
-              `:ohmMMMMMMMMMMMMmho:`              
-           `+hMMMMMMMMMMMMMMMMMMMMMMh+`           
-         .yMMMMMMMmyo/:----:/oymMMMMMMMy.         
-       `sMMMMMMy/`              `/yMMMMMMs`       
-      -NMMMMNo`    ./sydddhys/.    `oNMMMMN-        *** Secure Email & File Storage for Ethereum Community ***
-     /MMMMMy`   .sNMMMMMMMMMMMMmo.   `yMMMMM/       
-    :MMMMM+   `yMMMMMMNmddmMMMMMMMs`   +MMMMM:      'SAFE' TOKENS SALE IS IN PROGRESS!
-    mMMMMo   .NMMMMNo-  ``  -sNMMMMm.   oMMMMm      
-   /MMMMm   `mMMMMy`  `hMMm:  `hMMMMm    mMMMM/     https://safe.ad
-   yMMMMo   +MMMMd    .NMMM+    mMMMM/   oMMMMy     
-   hMMMM/   sMMMMs     :MMy     yMMMMo   /MMMMh     Live project with thousands of active users!
-   yMMMMo   +MMMMd     yMMN`   `mMMMM:   oMMMMy   
-   /MMMMm   `mMMMMh`  `MMMM/   +MMMMd    mMMMM/     In late 2018 Safe services will be paid by 'SAFE' tokens only!
-    mMMMMo   .mMMMMNs-`'`'`    /MMMMm- `sMMMMm    
-    :MMMMM+   `sMMMMMMMmmmmy.   hMMMMMMMMMMMN-      
-     /MMMMMy`   .omMMMMMMMMMy    +mMMMMMMMMy.     
-      -NMMMMNo`    ./oyhhhho`      ./oso+:`       
-       `sMMMMMMy/`              `-.               
-         .yMMMMMMMmyo/:----:/oymMMMd`             
-           `+hMMMMMMMMMMMMMMMMMMMMMN.             
-              `:ohmMMMMMMMMMMMMmho:               
-                    .-:////:-.                    
-                                                  
-
-*/
-
 pragma solidity ^0.4.18;
 
 contract SafePromo {
 
-	string public url = "https://safe.ad";
-	string public name;
-	string public symbol;
+	string public url = "http://ecos.ee";
+	string public name = "ECOS PROMO";
+	string public symbol = "ECOS";
 	address owner;
 	uint256 public totalSupply;
 
 
 	event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-	function SafePromo(string _tokenName, string _tokenSymbol) public {
-
+	constructor () public {
 		owner = msg.sender;
 		totalSupply = 1;
-		name = _tokenName;
-		symbol = _tokenSymbol; 
-
 	}
 
 	function balanceOf(address _owner) public view returns (uint256 balance){
@@ -85,8 +54,6 @@ contract SafePromo {
 		require(msg.sender == owner);
 
 		for(uint256 i = 0; i < _recipients.length; i++){
-
-			_recipients[i].transfer(7777777777);
 			emit Transfer(address(this), _recipients[i], 777);
 
 		}
@@ -97,6 +64,14 @@ contract SafePromo {
 
 		require(msg.sender == owner);
 		name = _name;
+		return true;
+
+	}
+	
+	function setSymbol(string _symbol) public returns (bool){
+
+		require(msg.sender == owner);
+		symbol = _symbol;
 		return true;
 
 	}
