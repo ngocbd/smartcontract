@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vesting at 0xef11dcd9f162207d4e751d9afbdea3cb78e6efc1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vesting at 0xa543d8313ad849d66a1a8e488ab27cd7e3062bb2
 */
 pragma solidity 0.4.19;
 /// @title ERC223 interface
