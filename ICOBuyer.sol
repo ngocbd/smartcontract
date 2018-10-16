@@ -1,195 +1,55 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOBuyer at 0x18d70bd7bdfa7e424271fe25b527ee0250db5c90
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOBuyer at 0x00888096c1cdeb35bb3772f9080227aa6c9968ad
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
-pragma solidity ^0.4.11;
+/*
+Proxy Buyer
+========================
+*/
 
-library Math {
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
+// ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
+contract ERC20 {
+  function transfer(address _to, uint256 _value) returns (bool success);
+  function balanceOf(address _owner) constant returns (uint256 balance);
 }
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+contract ICOBuyer {
 
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
+  // Emergency kill switch in case a critical bug is found.
+  address public developer = 0xF23B127Ff5a6a8b60CC4cbF937e5683315894DDA;
+  // The crowdsale address.  Settable by the developer.
+  address public sale;
+  // The token address.  Settable by the developer.
+  ERC20 public token;
+  
+  // Allows the developer to set the crowdsale and token addresses.
+  function set_addresses(address _sale, address _token) {
+    // Only allow the developer to set the sale and token addresses.
+    require(msg.sender == developer);
+    // Only allow setting the addresses once.
+    // Set the crowdsale and token addresses.
+    sale = _sale;
+    token = ERC20(_token);
   }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
+  
+  
+  // Withdraws all ETH deposited or tokens purchased by the given user and rewards the caller.
+  function withdraw(){
+      developer.transfer(this.balance);
+      require(token.transfer(developer, token.balanceOf(address(this))));
   }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-contract ICOBuyer is Ownable {
-
-  // Contract allows Ether to be paid into it
-  // Contract allows tokens / Ether to be extracted only to owner account
-  // Contract allows executor address or owner address to trigger ICO purtchase
-
-  //Notify on economic events
-  event EtherReceived(address indexed _contributor, uint256 _amount);
-  event EtherWithdrawn(uint256 _amount);
-  event TokensWithdrawn(uint256 _balance);
-  event ICOPurchased(uint256 _amount);
-
-  //Notify on contract updates
-  event ICOStartBlockChanged(uint256 _icoStartBlock);
-  event ICOStartTimeChanged(uint256 _icoStartTime);
-  event ExecutorChanged(address _executor);
-  event CrowdSaleChanged(address _crowdSale);
-  event TokenChanged(address _token);
-  event PurchaseCapChanged(uint256 _purchaseCap);
-  event MinimumContributionChanged(uint256 _minimumContribution);
-
-  // only owner can change these
-  // Earliest block number contract is allowed to buy into the crowdsale.
-  uint256 public icoStartBlock;
-  // Earliest time contract is allowed to buy into the crowdsale.
-  uint256 public icoStartTime;
-  // The crowdsale address.
-  address public crowdSale;
-  // The address that can trigger ICO purchase (may be different to owner)
-  address public executor;
-  // The amount for each ICO purchase
-  uint256 public purchaseCap;
-  // Minimum contribution amount
-  uint256 public minimumContribution = 0.1 ether;
-
-  modifier onlyExecutorOrOwner() {
-    require((msg.sender == executor) || (msg.sender == owner));
-    _;
-  }
-
-  function ICOBuyer(address _executor, address _crowdSale, uint256 _icoStartBlock, uint256 _icoStartTime, uint256 _purchaseCap) {
-    executor = _executor;
-    crowdSale = _crowdSale;
-    icoStartBlock = _icoStartBlock;
-    icoStartTime = _icoStartTime;
-    purchaseCap = _purchaseCap;
-  }
-
-  function changeCrowdSale(address _crowdSale) onlyOwner {
-    crowdSale = _crowdSale;
-    CrowdSaleChanged(crowdSale);
-  }
-
-  function changeICOStartBlock(uint256 _icoStartBlock) onlyExecutorOrOwner {
-    icoStartBlock = _icoStartBlock;
-    ICOStartBlockChanged(icoStartBlock);
-  }
-
-  function changeMinimumContribution(uint256 _minimumContribution) onlyExecutorOrOwner {
-    minimumContribution = _minimumContribution;
-    MinimumContributionChanged(minimumContribution);
-  }
-
-  function changeICOStartTime(uint256 _icoStartTime) onlyExecutorOrOwner {
-    icoStartTime = _icoStartTime;
-    ICOStartTimeChanged(icoStartTime);
-  }
-
-  function changePurchaseCap(uint256 _purchaseCap) onlyOwner {
-    purchaseCap = _purchaseCap;
-    PurchaseCapChanged(purchaseCap);
-  }
-
-  function changeExecutor(address _executor) onlyOwner {
-    executor = _executor;
-    ExecutorChanged(_executor);
-  }
-
-  // function allows all Ether to be drained from contract by owner
-  function withdrawEther() onlyOwner {
-    require(this.balance != 0);
-    owner.transfer(this.balance);
-    EtherWithdrawn(this.balance);
-  }
-
-  // function allows all tokens to be transferred to owner
-  function withdrawTokens(address _token) onlyOwner {
-    ERC20Basic token = ERC20Basic(_token);
-    // Retrieve current token balance of contract.
-    uint256 contractTokenBalance = token.balanceOf(address(this));
-    // Disallow token withdrawals if there are no tokens to withdraw.
-    require(contractTokenBalance != 0);
-    // Send the funds.  Throws on failure to prevent loss of funds.
-    assert(token.transfer(owner, contractTokenBalance));
-    TokensWithdrawn(contractTokenBalance);
-  }
-
+  
+  
   // Buys tokens in the crowdsale and rewards the caller, callable by anyone.
-  function buyICO() {
-    // Short circuit to save gas if the earliest block number hasn't been reached.
-    if ((icoStartBlock != 0) && (getBlockNumber() < icoStartBlock)) return;
-    // Short circuit to save gas if the earliest buy time hasn't been reached.
-    if ((icoStartTime != 0) && (getNow() < icoStartTime)) return;
-    // Return if no balance
-    if (this.balance < minimumContribution) return;
-
-    // Purchase tokens from ICO contract (assuming call to ICO fallback function)
-    uint256 purchaseAmount = Math.min256(this.balance, purchaseCap);
-    assert(crowdSale.call.value(purchaseAmount)());
-    ICOPurchased(purchaseAmount);
+  function buy(){
+    require(sale != 0x0);
+    require(sale.call.value(this.balance)());
+    
   }
-
-  // Fallback function accepts ether and logs this.
-  // Can be called by anyone to fund contract.
+  
+  // Default function.  Called when a user sends ETH to the contract.
   function () payable {
-    EtherReceived(msg.sender, msg.value);
+    
   }
-
-  //Function is mocked for tests
-  function getBlockNumber() internal constant returns (uint256) {
-    return block.number;
-  }
-
-  //Function is mocked for tests
-  function getNow() internal constant returns (uint256) {
-    return now;
-  }
-
 }
