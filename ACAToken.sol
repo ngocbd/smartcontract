@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACAToken at 0x18f0fce09b6e5c8e1d48269b530041838ae5c8cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACAToken at 0x830fA4f66044FbA350c0359c0c81Da1916be5211
 */
 pragma solidity ^0.4.19;
 
@@ -103,6 +103,7 @@ contract ACAToken is ERC20 {
 
     address public owner;
     address public admin;
+    address public saleAddress;
 
     string public name = "ACA Network Token";
     string public symbol = "ACA";
@@ -146,24 +147,34 @@ contract ACAToken is ERC20 {
     }
 
     // constructor
-    function ACAToken(uint256 _totalSupply, address _newAdmin) public {
+    function ACAToken(uint256 _totalSupply, address _saleAddress, address _admin) public {
         require(_totalSupply > 0);
-        require(_newAdmin != address(0x0));
-        require(_newAdmin != msg.sender);
-
         owner = msg.sender;
-        admin = _newAdmin;
+        require(_saleAddress != address(0x0));
+        require(_saleAddress != address(this));
+        require(_saleAddress != owner);
+
+        require(_admin != address(0x0));
+        require(_admin != address(this));
+        require(_admin != owner);
+
+        require(_admin != _saleAddress);
+
+        admin = _admin;
+        saleAddress = _saleAddress;
 
         totalSupply_ = _totalSupply;
 
         balances[owner] = totalSupply_;
-        approve(admin, totalSupply_);
+        approve(saleAddress, totalSupply_);
+
         emit Genesis(owner, totalSupply_);
     }
 
     // permission related
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
+        require(newOwner != address(this));
         require(newOwner != admin);
 
         owner = newOwner;
@@ -193,7 +204,7 @@ contract ACAToken is ERC20 {
         return true;
     }
 
-    function manageTransferLock(address _target, bool _value) public onlyOwner returns (bool) {
+    function manageTransferLock(address _target, bool _value) public onlyAdmin returns (bool) {
         transferLocked[_target] = _value;
         emit TransferLock(_target, _value);
         return true;
