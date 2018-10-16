@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YeedToken at 0xa045bc889662964fb9890156241d7e1432526a20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YeedToken at 0x6f7a4bac3315b5082f793161a22e26666d22717f
 */
 pragma solidity ^0.4.11;
 /**
@@ -18,7 +18,6 @@ contract ERC20 {
     event Transfer( address indexed from, address indexed to, uint value);
     event Approval( address indexed owner, address indexed spender, uint value);
 }
-
 /**
     LOCKABLE TOKEN
     @author DongOk Peter Ryu - <odin@yggdrash.io>
@@ -89,7 +88,6 @@ contract Lockable {
     }
 }
 
-
 library SafeMath {
   function mul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
@@ -132,12 +130,17 @@ library SafeMath {
   }
 
 }
-
 /**
     YGGDRASH Token
     @author DongOk Peter Ryu - <odin@yggdrash.io>
 */
 contract YeedToken is ERC20, Lockable {
+
+    // ADD INFORMATION
+    string public constant name = "YGGDRASH";
+    string public constant symbol = "YEED";
+    uint8 public constant decimals = 18;  // 18 is the most common number of decimal places
+
     using SafeMath for uint;
 
     mapping( address => uint ) _balances;
