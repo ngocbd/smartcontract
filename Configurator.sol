@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x4dbd16920b3f55f6f8f4c9189ec2c69fc1a22bd7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x0a18fcacf80a205119f6dace51e9119f2f1c0e5f
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.17;
 
 /**
  * @title ERC20Basic
@@ -209,12 +209,6 @@ contract MintableToken is StandardToken, Ownable {
     saleAgent = newSaleAgnet;
   }
 
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
   function mint(address _to, uint256 _amount) returns (bool) {
     require(msg.sender == saleAgent && !mintingFinished);
     totalSupply = totalSupply.add(_amount);
@@ -228,11 +222,12 @@ contract MintableToken is StandardToken, Ownable {
    * @return True if the operation was successful.
    */
   function finishMinting() returns (bool) {
-    require(msg.sender == saleAgent || msg.sender == owner && !mintingFinished);
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
     mintingFinished = true;
     MintFinished();
     return true;
   }
+
   
 }
 
@@ -282,125 +277,135 @@ contract Pausable is Ownable {
   
 }
 
-contract TlindToken is MintableToken {	
+contract CovestingToken is MintableToken {	
     
-  string public constant name = "Tlind";
+  string public constant name = "Covesting";
    
-  string public constant symbol = "TDT";
+  string public constant symbol = "COV";
     
   uint32 public constant decimals = 18;
-    
-}
 
+  mapping (address => uint) public locked;
+
+  function transfer(address _to, uint256 _value) returns (bool) {
+    require(locked[msg.sender] < now);
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    require(locked[_from] < now);
+    return super.transferFrom(_from, _to, _value);
+  }
+  
+  function lock(address addr, uint periodInDays) {
+    require(locked[addr] < now && (msg.sender == saleAgent || msg.sender == addr));
+    locked[addr] = now + periodInDays * 1 days;
+  }
+
+  function () payable {
+    revert();
+  }
+
+}
 
 contract StagedCrowdsale is Pausable {
 
   using SafeMath for uint;
 
-  struct Milestone {
-    uint period;
-    uint bonus;
+  struct Stage {
+    uint hardcap;
+    uint price;
+    uint invested;
+    uint closed;
   }
 
   uint public start;
 
-  uint public totalPeriod;
+  uint public period;
 
-  uint public invested;
-
-  uint public hardCap;
+  uint public totalHardcap;
  
-  Milestone[] public milestones;
+  uint public totalInvested;
 
-  function milestonesCount() constant returns(uint) {
-    return milestones.length;
+  Stage[] public stages;
+
+  function stagesCount() public constant returns(uint) {
+    return stages.length;
   }
 
-  function setStart(uint newStart) onlyOwner {
+  function setStart(uint newStart) public onlyOwner {
     start = newStart;
   }
 
-  function setHardcap(uint newHardcap) onlyOwner {
-    hardCap = newHardcap;
+  function setPeriod(uint newPeriod) public onlyOwner {
+    period = newPeriod;
   }
 
-  function addMilestone(uint period, uint bonus) onlyOwner {
-    require(period > 0);
-    milestones.push(Milestone(period, bonus));
-    totalPeriod = totalPeriod.add(period);
+  function addStage(uint hardcap, uint price) public onlyOwner {
+    require(hardcap > 0 && price > 0);
+    Stage memory stage = Stage(hardcap.mul(1 ether), price, 0, 0);
+    stages.push(stage);
+    totalHardcap = totalHardcap.add(stage.hardcap);
   }
 
-  function removeMilestones(uint8 number) onlyOwner {
-    require(number < milestones.length);
-    Milestone storage milestone = milestones[number];
-    totalPeriod = totalPeriod.sub(milestone.period);
-
-    delete milestones[number];
-
-    for (uint i = number; i < milestones.length - 1; i++) {
-      milestones[i] = milestones[i+1];
+  function removeStage(uint8 number) public onlyOwner {
+    require(number >=0 && number < stages.length);
+    Stage storage stage = stages[number];
+    totalHardcap = totalHardcap.sub(stage.hardcap);    
+    delete stages[number];
+    for (uint i = number; i < stages.length - 1; i++) {
+      stages[i] = stages[i+1];
     }
-
-    milestones.length--;
+    stages.length--;
   }
 
-  function changeMilestone(uint8 number, uint period, uint bonus) onlyOwner {
-    require(number < milestones.length);
-    Milestone storage milestone = milestones[number];
-
-    totalPeriod = totalPeriod.sub(milestone.period);    
-
-    milestone.period = period;
-    milestone.bonus = bonus;
-
-    totalPeriod = totalPeriod.add(period);    
+  function changeStage(uint8 number, uint hardcap, uint price) public onlyOwner {
+    require(number >= 0 &&number < stages.length);
+    Stage storage stage = stages[number];
+    totalHardcap = totalHardcap.sub(stage.hardcap);    
+    stage.hardcap = hardcap.mul(1 ether);
+    stage.price = price;
+    totalHardcap = totalHardcap.add(stage.hardcap);    
   }
 
-  function insertMilestone(uint8 numberAfter, uint period, uint bonus) onlyOwner {
-    require(numberAfter < milestones.length);
-
-    totalPeriod = totalPeriod.add(period);
-
-    milestones.length++;
-
-    for (uint i = milestones.length - 2; i > numberAfter; i--) {
-      milestones[i + 1] = milestones[i];
+  function insertStage(uint8 numberAfter, uint hardcap, uint price) public onlyOwner {
+    require(numberAfter < stages.length);
+    Stage memory stage = Stage(hardcap.mul(1 ether), price, 0, 0);
+    totalHardcap = totalHardcap.add(stage.hardcap);
+    stages.length++;
+    for (uint i = stages.length - 2; i > numberAfter; i--) {
+      stages[i + 1] = stages[i];
     }
-
-    milestones[numberAfter + 1] = Milestone(period, bonus);
+    stages[numberAfter + 1] = stage;
   }
 
-  function clearMilestones() onlyOwner {
-    require(milestones.length > 0);
-    for (uint i = 0; i < milestones.length; i++) {
-      delete milestones[i];
+  function clearStages() public onlyOwner {
+    for (uint i = 0; i < stages.length; i++) {
+      delete stages[i];
     }
-    milestones.length -= milestones.length;
-    totalPeriod = 0;
+    stages.length -= stages.length;
+    totalHardcap = 0;
+  }
+
+  function lastSaleDate() public constant returns(uint) {
+    return start + period * 1 days;
   }
 
   modifier saleIsOn() {
-    require(milestones.length > 0 && now >= start && now < lastSaleDate());
+    require(stages.length > 0 && now >= start && now < lastSaleDate());
     _;
   }
   
-  modifier isUnderHardCap() {
-    require(invested <= hardCap);
+  modifier isUnderHardcap() {
+    require(totalInvested <= totalHardcap);
     _;
-  }
-  
-  function lastSaleDate() constant returns(uint) {
-    require(milestones.length > 0);
-    return start + totalPeriod * 1 days;
   }
 
-  function currentMilestone() saleIsOn constant returns(uint) {
-    uint previousDate = start;
-    for(uint i=0; i < milestones.length; i++) {
-      if(now >= previousDate && now < previousDate + milestones[i].period * 1 days) {
+  function currentStage() public saleIsOn isUnderHardcap constant returns(uint) {
+    for(uint i=0; i < stages.length; i++) {
+      if(stages[i].closed == 0) {
         return i;
       }
-      previousDate = previousDate.add(milestones[i].period * 1 days);
     }
     revert();
   }
@@ -410,116 +415,38 @@ contract StagedCrowdsale is Pausable {
 contract CommonSale is StagedCrowdsale {
 
   address public multisigWallet;
+
+  uint public minPrice;
+
+  uint public totalTokensMinted;
+
+  CovestingToken public token;
   
-  address public foundersTokensWallet;
-  
-  address public bountyTokensWallet;
-
-  uint public foundersTokensPercent;
-  
-  uint public bountyTokensPercent;
- 
-  uint public price;
-
-  uint public percentRate = 100;
-
-  uint public softcap;
-
-  bool public refundOn = false;
-
-  bool public isSoftcapOn = false;
-
-  mapping (address => uint) balances;
-
-  CommonSale public nextSale;
-  
-  MintableToken public token;
-
-  function setSoftcap(uint newSoftcap) onlyOwner {
-    isSoftcapOn = true;
-    softcap = newSoftcap;
+  function setMinPrice(uint newMinPrice) public onlyOwner {
+    minPrice = newMinPrice;
   }
 
-  function setToken(address newToken) onlyOwner {
-    token = MintableToken(newToken);
-  }
-
-  function setNextSale(address newNextSale) onlyOwner {
-    nextSale = CommonSale(newNextSale);
-  }
-
-  function setPrice(uint newPrice) onlyOwner {
-    price = newPrice;
-  }
-
-  function setPercentRate(uint newPercentRate) onlyOwner {
-    percentRate = newPercentRate;
-  }
-
-  function setFoundersTokensPercent(uint newFoundersTokensPercent) onlyOwner {
-    foundersTokensPercent = newFoundersTokensPercent;
-  }
-  
-  function setBountyTokensPercent(uint newBountyTokensPercent) onlyOwner {
-    bountyTokensPercent = newBountyTokensPercent;
-  }
-  
-  function setMultisigWallet(address newMultisigWallet) onlyOwner {
+  function setMultisigWallet(address newMultisigWallet) public onlyOwner {
     multisigWallet = newMultisigWallet;
   }
-
-  function setFoundersTokensWallet(address newFoundersTokensWallet) onlyOwner {
-    foundersTokensWallet = newFoundersTokensWallet;
+  
+  function setToken(address newToken) public onlyOwner {
+    token = CovestingToken(newToken);
   }
 
-  function setBountyTokensWallet(address newBountyTokensWallet) onlyOwner {
-    bountyTokensWallet = newBountyTokensWallet;
-  }
-
-  function createTokens() whenNotPaused isUnderHardCap saleIsOn payable {
-    require(msg.value >= 100000000000000000);
-    uint milestoneIndex = currentMilestone();
-    Milestone storage milestone = milestones[milestoneIndex];
-    if(!isSoftcapOn) {
-      multisigWallet.transfer(msg.value);
-    }
-    invested = invested.add(msg.value);
-    uint tokens = msg.value.mul(1 ether).div(price);
-    uint bonusTokens = tokens.mul(milestone.bonus).div(percentRate);
-    uint tokensWithBonus = tokens.add(bonusTokens);
-    token.mint(this, tokensWithBonus);
-    token.transfer(msg.sender, tokensWithBonus);
-    balances[msg.sender] = balances[msg.sender].add(msg.value);
-  }
-
-  function refund() whenNotPaused {
-    require(now > start && refundOn && balances[msg.sender] > 0);
-    msg.sender.transfer(balances[msg.sender]);
-  } 
-
-  function finishMinting() public whenNotPaused onlyOwner {
-    if(isSoftcapOn && invested < softcap) {
-      refundOn = true;
-      token.finishMinting();
-    } else {
-      if(isSoftcapOn) {
-        multisigWallet.transfer(invested);
-      }
-      uint issuedTokenSupply = token.totalSupply();
-      uint summaryTokensPercent = bountyTokensPercent + foundersTokensPercent;
-      uint summaryFoundersTokens = issuedTokenSupply.mul(summaryTokensPercent).div(percentRate - summaryTokensPercent);
-      uint totalSupply = summaryFoundersTokens + issuedTokenSupply;
-      uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
-      uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
-      token.mint(this, foundersTokens);
-      token.transfer(foundersTokensWallet, foundersTokens);
-      token.mint(this, bountyTokens);
-      token.transfer(bountyTokensWallet, bountyTokens);
-      if(nextSale == address(0)) {
-        token.finishMinting();
-      } else {
-        token.setSaleAgent(nextSale);
-      }
+  function createTokens() public whenNotPaused payable {
+    require(msg.value >= minPrice);
+    uint stageIndex = currentStage();
+    multisigWallet.transfer(msg.value);
+    Stage storage stage = stages[stageIndex];
+    uint tokens = msg.value.mul(stage.price);
+    token.mint(this, tokens);
+    token.transfer(msg.sender, tokens);
+    totalTokensMinted = totalTokensMinted.add(tokens);
+    totalInvested = totalInvested.add(msg.value);
+    stage.invested = stage.invested.add(msg.value);
+    if(stage.invested >= stage.hardcap) {
+      stage.closed = now;
     }
   }
 
@@ -534,63 +461,127 @@ contract CommonSale is StagedCrowdsale {
 
 }
 
+contract Presale is CommonSale {
+
+  Mainsale public mainsale;
+
+  function setMainsale(address newMainsale) public onlyOwner {
+    mainsale = Mainsale(newMainsale);
+  }
+
+  function setMultisigWallet(address newMultisigWallet) public onlyOwner {
+    multisigWallet = newMultisigWallet;
+  }
+
+  function finishMinting() public whenNotPaused onlyOwner {
+    token.setSaleAgent(mainsale);
+  }
+
+  function() external payable {
+    createTokens();
+  }
+
+  function retrieveTokens(address anotherToken) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(multisigWallet, token.balanceOf(this));
+  }
+
+}
+
+
+contract Mainsale is CommonSale {
+
+  address public foundersTokensWallet;
+  
+  address public bountyTokensWallet;
+  
+  uint public foundersTokensPercent;
+  
+  uint public bountyTokensPercent;
+  
+  uint public percentRate = 100;
+
+  uint public lockPeriod;
+
+  function setLockPeriod(uint newLockPeriod) public onlyOwner {
+    lockPeriod = newLockPeriod;
+  }
+
+  function setFoundersTokensPercent(uint newFoundersTokensPercent) public onlyOwner {
+    foundersTokensPercent = newFoundersTokensPercent;
+  }
+
+  function setBountyTokensPercent(uint newBountyTokensPercent) public onlyOwner {
+    bountyTokensPercent = newBountyTokensPercent;
+  }
+
+  function setFoundersTokensWallet(address newFoundersTokensWallet) public onlyOwner {
+    foundersTokensWallet = newFoundersTokensWallet;
+  }
+
+  function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
+    bountyTokensWallet = newBountyTokensWallet;
+  }
+
+  function finishMinting() public whenNotPaused onlyOwner {
+    uint summaryTokensPercent = bountyTokensPercent + foundersTokensPercent;
+    uint mintedTokens = token.totalSupply();
+    uint summaryFoundersTokens = mintedTokens.mul(summaryTokensPercent).div(percentRate - summaryTokensPercent);
+    uint totalSupply = summaryFoundersTokens + mintedTokens;
+    uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
+    uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
+    token.mint(this, foundersTokens);
+    token.lock(foundersTokensWallet, lockPeriod * 1 days);
+    token.transfer(foundersTokensWallet, foundersTokens);
+    token.mint(this, bountyTokens);
+    token.transfer(bountyTokensWallet, bountyTokens);
+    totalTokensMinted = totalTokensMinted.add(foundersTokens).add(bountyTokens);
+    token.finishMinting();
+  }
+
+}
+
 contract Configurator is Ownable {
 
-  MintableToken public token; 
+  CovestingToken public token; 
 
-  CommonSale public presale;
+  Presale public presale;
 
-  CommonSale public mainsale;
+  Mainsale public mainsale;
 
-  function deploy() {
-    address presaleMultisigWallet = 0x675cf930aefA144dA7e10ddBACC02f902A233eFC;
-    address presaleBountyTokensWallet = 0x06B8fF8476425E45A3D2878e0a27BB79efd4Dde1;
-    address presaleFoundersWallet = 0x27F1Ac3E29CBec9D225d98fF95B6933bD30E3F71;
-    uint presaleSoftcap = 50000000000000000000;
-    uint presaleHardcap = 2000000000000000000000;
+  function deploy() public onlyOwner {
+    token = new CovestingToken();
 
-    address mainsaleMultisigWallet = 0xFb72502E9c56497BAC3B1c21DE434b371891CC05;
-    address mainsaleBountyTokensWallet = 0xd08112054C8e01E33fAEE176531dEB087809CbB2;
-    address mainsaleFoundersWallet = 0xDeFAE9a126bA5aA2537AaC481D9335827159D33B;
-    uint mainsaleHardcap = 25000000000000000000000000;
-
-    token = new TlindToken();
-
-    presale = new CommonSale();
+    presale = new Presale();
 
     presale.setToken(token);
-    presale.setSoftcap(presaleSoftcap);
-    presale.setHardcap(presaleHardcap);
-    presale.setMultisigWallet(presaleMultisigWallet);
-    presale.setFoundersTokensWallet(presaleFoundersWallet);
-    presale.setBountyTokensWallet(presaleBountyTokensWallet);
-    presale.setStart(1506344400);
-    presale.setFoundersTokensPercent(15);
-    presale.setBountyTokensPercent(5);
-    presale.setPrice(10000000000000000);
-    presale.addMilestone(8,300);
-    presale.addMilestone(8,200);
+    presale.addStage(5000,300);
+    presale.setMultisigWallet(0x6245C05a6fc205d249d0775769cfE73CB596e57D);
+    presale.setStart(1508504400);
+    presale.setPeriod(30);
+    presale.setMinPrice(100000000000000000);
     token.setSaleAgent(presale);	
 
-    mainsale = new CommonSale();
+    mainsale = new Mainsale();
 
     mainsale.setToken(token);
-    mainsale.setHardcap(mainsaleHardcap);
-    mainsale.setMultisigWallet(mainsaleMultisigWallet);
-    mainsale.setFoundersTokensWallet(mainsaleFoundersWallet);
-    mainsale.setBountyTokensWallet(mainsaleBountyTokensWallet);
-    mainsale.setStart(1510318800);
-    mainsale.setFoundersTokensPercent(15);
+    mainsale.addStage(5000,200);
+    mainsale.addStage(5000,180);
+    mainsale.addStage(10000,170);
+    mainsale.addStage(20000,160);
+    mainsale.addStage(20000,150);
+    mainsale.addStage(40000,130);
+    mainsale.setMultisigWallet(0x15A071B83396577cCbd86A979Af7d2aBa9e18970);
+    mainsale.setFoundersTokensWallet(0x25ED4f0D260D5e5218D95390036bc8815Ff38262);
+    mainsale.setBountyTokensWallet(0x717bfD30f039424B049D918F935DEdD069B66810);
+    mainsale.setStart(1511528400);
+    mainsale.setPeriod(30);
+    mainsale.setLockPeriod(90);
+    mainsale.setMinPrice(100000000000000000);
+    mainsale.setFoundersTokensPercent(13);
     mainsale.setBountyTokensPercent(5);
-    mainsale.setPrice(10000000000000000);
-    mainsale.addMilestone(1,50);
-    mainsale.addMilestone(6,30);
-    mainsale.addMilestone(14,15);
-    mainsale.addMilestone(14,10);
-    mainsale.addMilestone(14,5);
-    mainsale.addMilestone(7,0);
-    
-    presale.setNextSale(mainsale);
+
+    presale.setMainsale(mainsale);
 
     token.transferOwnership(owner);
     presale.transferOwnership(owner);
