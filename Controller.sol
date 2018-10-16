@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x23033dc17657845d6f79f1582feb01cc774e70b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0xEdcE883162179D4eD5Eb9BB2e7dccF494d75B3a0
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.4;
 
 //copyright 2017 NewAlchemy
 //Written by Dennis Peterson
