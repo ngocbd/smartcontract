@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0x06483d0742a254fcc92f7240b92a9e728da377b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0x39dd0ac05016b2d4f82fdb3b70d011239abffa8b
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
 // PepeFarmer 2.0
 // Anti-bot 50 Starting.
 // Anti-whale 25% reduction in shrimp eggs when selling shrimp.
-// Combat inflation as people Sell by not adding to total marketEggs.
+// Combat inflation as people Hatch and Sell by not adding or subtracting from total marketEggs.
 
 // 50 Tokens, seeded market of 8640000000 Eggs
 contract ShrimpFarmer{
@@ -52,7 +52,8 @@ contract ShrimpFarmer{
         claimedEggs[referrals[msg.sender]]=SafeMath.add(claimedEggs[referrals[msg.sender]],SafeMath.div(eggsUsed,5));
         
         //boost market to nerf shrimp hoarding
-        marketEggs=SafeMath.add(marketEggs,eggsUsed);
+        // Original had adding to eggmarket on sell and was going to try sub but let's not do either this time.
+        //marketEggs=SafeMath.sub(marketEggs,eggsUsed);
     }
     function sellEggs() public{
         require(initialized);
@@ -62,8 +63,8 @@ contract ShrimpFarmer{
         hatcheryShrimp[msg.sender]=SafeMath.mul(SafeMath.div(hatcheryShrimp[msg.sender],4),3);
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
-        // Instead of adding marketEggs let's not adding marketEggs
-        // marketEggs=SafeMath.add(marketEggs,hasEggs);
+        // Instead of adding marketEggs let's not add or subtract
+        // marketEggs=SafeMath.sub(marketEggs,hasEggs);
         // To save on fees put devFee in a pot to be removed by ceo instead of per transaction
         // Old function: ceoAddress.transfer(fee);
         ceoDevfund += fee;
