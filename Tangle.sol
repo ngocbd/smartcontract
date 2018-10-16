@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tangle at 0xd1eba2334b86022d2ac3f507f0c4e78f1916ce39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tangle at 0xc2c94f4abdf088324fb0e2b4daf38db93819d0f2
 */
 pragma solidity ^0.4.18;
 
@@ -58,8 +58,7 @@ contract Tangle is Own {
     
     
     function Tangle() public {
-        totalSupply = totalSupply * 10 ** uint(decimals);
-        balances[owner] = totalSupply;
+        balances[owner] = totalSupply * 10 ** uint(decimals);
     }
     
     function balanceOf(address _owner) public constant returns (uint balance) {
