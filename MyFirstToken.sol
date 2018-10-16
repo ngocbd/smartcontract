@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyFirstToken at 0x645b6d66a07479bca259aaaaf0066d415e1d4b44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyFirstToken at 0x70d75096a9817ff2abf2d569a9c0627ba7d06982
 */
 pragma solidity ^0.4.0;
 
@@ -81,7 +81,7 @@ library SafeMath {
   }
 }
 
-contract MyFirstToken is Token("ORO", "Caona", 18, 200000000000000000000000000), ERC20, ERC223 {
+contract MyFirstToken is Token("LLIU", "LLIURE", 18, 200000000000000000000000000), ERC20, ERC223 {
 
     using SafeMath for uint;
 
