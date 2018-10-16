@@ -1,15 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x78b29e7f87cd3e040b0bc1c3708c49022a31e441
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x5df9b36adc69dfaeeff71efa2f5e1e44e4b3c9c4
 */
 pragma solidity ^0.4.4;
 
 contract Token {
-
-    /// Token-Info:
-    /// Bux
-    /// BUX
-    /// 0
-    /// 1.806.000.000
 
     /// @return total amount of tokens
     function totalSupply() constant returns (uint256 supply) {}
@@ -46,6 +40,8 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
 }
+
+
 
 contract StandardToken is Token {
 
@@ -123,17 +119,17 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 1806000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1806000000;                        // Update total supply (100000 for example)
-        name = "Bux";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "BUX";                               // Set the symbol for display purposes
+        balances[msg.sender] = 3000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 3000000000000000;                        // Update total supply (100000 for example)
+        name = "hypnosis";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "hyp";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);  
 
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
