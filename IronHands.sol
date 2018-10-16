@@ -1,14 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x711b615e714a6b61c61cebba48d12cf97d7a3d0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xd69b75d5dc270e4f6cd664ac2354d12423c5ae9e
 */
-pragma solidity 0.4.23;
+pragma solidity ^0.4.21;
 
-/*
+/**
+ * 
+ * 
+ *                
+ *
  * ATTENTION!
  * 
  * This code? IS NOT DESIGNED FOR ACTUAL USE.
  * 
- * The author of this code really wishes you wouldn't send your ETH to it.
+ * The author of this code really wishes you wouldn't send your ETH to it, but it's been
+ * done with P3D and there are very happy users because of it.
  * 
  * No, seriously. It's probablly illegal anyway. So don't do it.
  * 
@@ -27,7 +32,6 @@ pragma solidity 0.4.23;
  * sleep with your wife, kidnap your children and sell them into slavery,
  * make you forget to file your taxes, and give you cancer.
  * 
- * So.... tl;dr: This contract sucks, don't send money to it.
  * 
  * What it does:
  * 
@@ -38,9 +42,9 @@ pragma solidity 0.4.23;
  * The tokens collect dividends, which in turn pay into the payout pool
  * to be split 50/50.
  * 
- * If your seeing this contract in it's initial configuration, it should be
- * set to 200% (double deposits), and pointed at FART:
- * 0xAF6DE38Ffc92E0d52857f864048D7af2f345A3CF
+ * If you're seeing this contract in it's initial configuration, it should be
+ * set to 200% (double deposits), and pointed at PoWH:
+ * 0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe
  * 
  * But you should verify this for yourself.
  *  
@@ -51,7 +55,7 @@ contract ERC20Interface {
     function transfer(address to, uint256 tokens) public returns (bool success);
 }
 
-contract FART {
+contract POOH {
     
     function buy(address) public payable returns(uint256);
     function withdraw() public;
@@ -92,7 +96,7 @@ contract IronHands is Owned {
     /**
      * Only owners are allowed.
      */
-    modifier onlyOwner() {
+    modifier onlyOwner(){
         require(msg.sender == owner);
         _;
     }
@@ -100,8 +104,8 @@ contract IronHands is Owned {
     /**
      * The tokens can never be stolen.
      */
-    modifier notFart(address aContract) {
-        require(aContract != address(fart));
+    modifier notPooh(address aContract){
+        require(aContract != address(weak_hands));
         _;
     }
    
@@ -112,9 +116,7 @@ contract IronHands is Owned {
     event Purchase(uint256 amountSpent, uint256 tokensReceived);
     event Payout(uint256 amount, address creditor);
     event Dividends(uint256 amount);
-    event ContinuityBreak(uint256 position, address skipped, uint256 amount);
-    event ContinuityAppeal(uint256 oldPosition, uint256 newPosition, address appealer);
-
+   
     /**
      * Structs
      */
@@ -138,17 +140,14 @@ contract IronHands is Owned {
     //How much each person is owed
     mapping(address => uint256) public creditRemaining;
     //What we will be buying
-    FART fart;
-    
-    address sender;
+    POOH weak_hands;
 
     /**
      * Constructor
      */
-    function IronHands(uint multiplierPercent, address fartAddress) public {
+    function IronHands(uint multiplierPercent, address pooh) public {
         multiplier = multiplierPercent;
-        fart = FART(fartAddress);
-        sender = msg.sender;
+        weak_hands = POOH(pooh);
     }
     
     
@@ -157,9 +156,6 @@ contract IronHands is Owned {
      * goes into the pool. Used by withdraw/dividend payouts so it has to be cheap.
      */
     function() payable public {
-        if (msg.sender != address(fart)) {
-            deposit();
-        }
     }
     
     /**
@@ -173,13 +169,13 @@ contract IronHands is Owned {
         //Compute how much to pay them
         uint256 amountCredited = (msg.value * multiplier) / 100;
         //Get in line to be paid back.
-        participants.push(Participant(sender, amountCredited));
+        participants.push(Participant(msg.sender, amountCredited));
         //Increase the backlog by the amount owed
         backlog += amountCredited;
         //Increase the amount owed to this address
-        creditRemaining[sender] += amountCredited;
+        creditRemaining[msg.sender] += amountCredited;
         //Emit a deposit event.
-        emit Deposit(msg.value, sender);
+        emit Deposit(msg.value, msg.sender);
         //If I have dividends
         if(myDividends() > 0){
             //Withdraw dividends
@@ -201,11 +197,11 @@ contract IronHands is Owned {
         //Increase our total throughput
         throughput += balance;
         //Split it into two parts
-        uint investment = balance / 2 ether + 1 finney; // avoid rounding issues
+        uint investment = balance / 2;
         //Take away the amount we are investing from the amount to send
         balance -= investment;
         //Invest it in more tokens.
-        uint256 tokens = fart.buy.value(investment).gas(1000000)(msg.sender);
+        uint256 tokens = weak_hands.buy.value(investment).gas(1000000)(msg.sender);
         //Record that tokens were purchased
         emit Purchase(investment, tokens);
         //While we still have money to send
@@ -213,7 +209,7 @@ contract IronHands is Owned {
             //Either pay them what they are owed or however much we have, whichever is lower.
             uint payoutToSend = balance < participants[payoutOrder].payout ? balance : participants[payoutOrder].payout;
             //if we have something to pay them
-            if(payoutToSend > 0) {
+            if(payoutToSend > 0){
                 //subtract how much we've spent
                 balance -= payoutToSend;
                 //subtract the amount paid from the amount owed
@@ -223,10 +219,10 @@ contract IronHands is Owned {
                 //credit their account the amount they are being paid
                 participants[payoutOrder].payout -= payoutToSend;
                 //Try and pay them, making best effort. But if we fail? Run out of gas? That's not our problem any more.
-                if(participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)()) {
+                if(participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)()){
                     //Record that they were paid
                     emit Payout(payoutToSend, participants[payoutOrder].etherAddress);
-                } else {
+                }else{
                     //undo the accounting, they are being skipped because they are not payable.
                     balance += payoutToSend;
                     backlog += payoutToSend;
@@ -236,12 +232,12 @@ contract IronHands is Owned {
 
             }
             //If we still have balance left over
-            if(balance > 0) {
+            if(balance > 0){
                 // go to the next person in line
                 payoutOrder += 1;
             }
             //If we've run out of people to pay, stop
-            if(payoutOrder >= participants.length) {
+            if(payoutOrder >= participants.length){
                 return;
             }
         }
@@ -250,21 +246,21 @@ contract IronHands is Owned {
     /**
      * Number of tokens the contract owns.
      */
-    function myTokens() public view returns(uint256) {
-        return fart.myTokens();
+    function myTokens() public view returns(uint256){
+        return weak_hands.myTokens();
     }
     
     /**
      * Number of dividends owed to the contract.
      */
-    function myDividends() public view returns(uint256) {
-        return fart.myDividends(true);
+    function myDividends() public view returns(uint256){
+        return weak_hands.myDividends(true);
     }
     
     /**
      * Number of dividends received by the contract.
      */
-    function totalDividends() public view returns(uint256) {
+    function totalDividends() public view returns(uint256){
         return dividends;
     }
     
@@ -274,7 +270,7 @@ contract IronHands is Owned {
      */
     function withdraw() public {
         uint256 balance = address(this).balance;
-        fart.withdraw.gas(1000000)();
+        weak_hands.withdraw.gas(1000000)();
         uint256 dividendsPaid = address(this).balance - balance;
         dividends += dividendsPaid;
         emit Dividends(dividendsPaid);
@@ -283,28 +279,28 @@ contract IronHands is Owned {
     /**
      * Number of participants who are still owed.
      */
-    function backlogLength() public view returns (uint256) {
+    function backlogLength() public view returns (uint256){
         return participants.length - payoutOrder;
     }
     
     /**
      * Total amount still owed in credit to depositors.
      */
-    function backlogAmount() public view returns (uint256) {
+    function backlogAmount() public view returns (uint256){
         return backlog;
     } 
     
     /**
      * Total number of deposits in the lifetime of the contract.
      */
-    function totalParticipants() public view returns (uint256) {
+    function totalParticipants() public view returns (uint256){
         return participants.length;
     }
     
     /**
      * Total amount of ETH that the contract has delt with so far.
      */
-    function totalSpent() public view returns (uint256) {
+    function totalSpent() public view returns (uint256){
         return throughput;
     }
     
@@ -318,14 +314,14 @@ contract IronHands is Owned {
      /**
       * Amount owed to this person.
       */
-    function amountIAmOwed() public view returns (uint256) {
+    function amountIAmOwed() public view returns (uint256){
         return amountOwed(msg.sender);
     }
     
     /**
      * A trap door for when someone sends tokens other than the intended ones so the overseers can decide where to send them.
      */
-    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner notFart(tokenAddress) returns (bool success) {
+    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner notPooh(tokenAddress) returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
     }
     
