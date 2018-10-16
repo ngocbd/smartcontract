@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMPToken at 0x276f5da0f6c7b55129570ac7195e6e65122a4cd0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMPToken at 0x18B64C3537cd861EdBd54f62b83B99b942A66dF3
 */
 pragma solidity ^0.4.15;
 
@@ -73,8 +73,8 @@ contract GMPToken is Ownable, ERC20Interface {
   /* Public variables of the token */
   string public constant name = "GMP Coin";
   string public constant symbol = "GMP";
-  uint public constant decimals = 0;
-  uint256 public constant initialSupply = 220000000;
+  uint public constant decimals = 18;
+  uint256 public constant initialSupply = 220000000 * 1 ether;
   uint256 public totalSupply;
 
   /* This creates an array with all balances */
@@ -163,7 +163,7 @@ contract Crowdsale is Ownable {
   // address where funds are collected
   address public wallet;
 
-  // Price for 1 token in wei. i.e. 562218890554723
+  // Number of tokents for 1 ETH, i.e. 683 tokens for 1 ETH
   uint256 public rate;
 
   // amount of raised money in wei
@@ -201,7 +201,7 @@ contract Crowdsale is Ownable {
 
   //Transfer token to
   function transferToAddress(address _targetWallet, uint256 _tokenAmount) onlyOwner {
-    token.transfer(_targetWallet, _tokenAmount);
+    token.transfer(_targetWallet, _tokenAmount * 1 ether);
   }
 
 
@@ -231,7 +231,7 @@ contract Crowdsale is Ownable {
 
     require(msg.sender != 0x0);
     require(saleIsActive);
-    require(msg.value > rate);
+    require(msg.value > 0.01 * 1 ether);
 
     uint256 weiAmount = msg.value;
 
@@ -239,7 +239,7 @@ contract Crowdsale is Ownable {
     weiRaised = weiRaised.add(weiAmount);
 
     //Calc number of tokents
-    uint256 tokenAmount = weiAmount.div(rate);
+    uint256 tokenAmount = weiAmount.mul(rate);
 
     //Forward wei to wallet account
     wallet.transfer(weiAmount);
