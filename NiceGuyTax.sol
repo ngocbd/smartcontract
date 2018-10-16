@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NiceGuyTax at 0x9d3899df1d9f030a32dd5571fe3c7ef72d6ae566
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NiceGuyTax at 0x56467e038871dc7f2a6180cdebe1702cef77285f
 */
 contract NiceGuyTax {
     
@@ -34,6 +34,7 @@ contract NiceGuyTax {
         
         //If your investment is NOT 9 ether, the smartcontract rejects it and you get it back.
         if (msg.value != 9 ether) {
+            msg.sender.send(msg.value);
             throw;
         }
         
@@ -71,7 +72,7 @@ contract NiceGuyTax {
         
         //If the contract balance reaches at least 10 ether, the next investor in the pay-out queue in the round gets paid out.
         //The contract balance is ALWAYS ZERO in the beginning of each round.
-        while (this.balance > 9 ether) {
+        while (this.balance >= 10 ether) {
             investors[payoutIndex].addr.send(10 ether);
             payoutIndex += 1;
         }
