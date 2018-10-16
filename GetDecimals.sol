@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GetDecimals at 0x7bfd2c0b917c1154aa3af1e85e1632f038950fd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GetDecimals at 0xfa1ba4ee3163b97f78307516d77ce28daac99d2d
 */
 pragma solidity ^0.4.23;
 
@@ -18,13 +18,4 @@ contract GetDecimals {
             return token.decimals();
         }
     }
-    
-    function testRevert() public pure returns(string) {
-        revert("ilan is the king");
-        return "hello world";
-    }
-    
-    function testRevertTx() public returns(string) {
-        return testRevert();
-    }    
 }
