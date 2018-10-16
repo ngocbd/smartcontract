@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotthereum at 0x5a2a454675c1b659caa58b5675ee759b992b84b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotthereum at 0x8eca2366e8ad2051a14af338620f6dd101c231e1
 */
 pragma solidity ^0.4.11;
 
@@ -81,7 +81,6 @@ contract Lotthereum is Mortal, SafeMath {
 
     struct Game {
         uint id;
-        bool open;
         uint pointer;
         uint maxNumberOfBets;
         uint minAmountByBet;
@@ -135,12 +134,6 @@ contract Lotthereum is Mortal, SafeMath {
         address indexed winnerAddress,
         uint amount
     );
-    event GameOpened(
-        uint indexed gameId
-    );
-    event GameClosed(
-        uint indexed gameId
-    );
 
     function createGame(
         uint pointer,
@@ -155,20 +148,7 @@ contract Lotthereum is Mortal, SafeMath {
         games[id].maxNumberOfBets = maxNumberOfBets;
         games[id].minAmountByBet = minAmountByBet;
         games[id].prize = prize;
-        games[id].open = true;
         games[id].currentRound = createGameRound(id);
-    }
-
-    function closeGame(uint gameId) onlyowner returns (bool) {
-        games[gameId].open = false;
-        GameClosed(gameId);
-        return true;
-    }
-
-    function openGame(uint gameId) onlyowner returns (bool) {
-        games[gameId].open = true;
-        GameOpened(gameId);
-        return true;
     }
 
     function createGameRound(uint gameId) internal returns (uint id) {
@@ -286,22 +266,10 @@ contract Lotthereum is Mortal, SafeMath {
         return 0;
     }
 
-    function numberOfClosedGames() constant returns(uint numberOfClosedGames) {
-        numberOfClosedGames = 0;
-        for (uint i = 0; i < games.length; i++) {
-            if (games[i].open != true) {
-                numberOfClosedGames++;
-            }
-        }
-        return numberOfClosedGames;
-    }
-
     function getGames() constant returns(uint[] memory ids) {
-        ids = new uint[](games.length - numberOfClosedGames());
+        ids = new uint[](games.length);
         for (uint i = 0; i < games.length; i++) {
-            if (games[i].open == true) {
-                ids[i] = games[i].id;
-            }
+            ids[i] = games[i].id;
         }
     }
 
