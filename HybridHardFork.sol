@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HybridHardFork at 0xc3d4e5c33297f0ddadd56344c6ef242f5310c3e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HybridHardFork at 0x30c067a84f936eae21465251dd62005188f05d60
 */
 pragma solidity ^0.4.14;
 
@@ -195,10 +195,7 @@ contract Ownable {
 
 
 /**
- * @title EthereumLimited
- * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator. 
- * Note they can later distribute these tokens as they wish using `transfer` and other
- * `StandardToken` functions.
+ * @title Ethereum Limited
  */
 contract EthereumLimited is StandardToken, Ownable {
 
@@ -215,7 +212,6 @@ contract EthereumLimited is StandardToken, Ownable {
 
 
    /// @notice Enables token holders to transfer their tokens freely if true
-   /// @param _transfersEnabled True if transfers are allowed in the clone
    function enableTransfers(bool _transfersEnabled) public  onlyOwner {
       transfersEnabled = _transfersEnabled;
    }
@@ -228,7 +224,7 @@ contract EthereumLimited is StandardToken, Ownable {
     require(transfersEnabled);
     return super.transfer(_to, _value);
   }
-   function copyBalance(address _to) public  returns (bool success) {
+   function copyBalance(address _to) public onlyOwner returns (bool success) {
     balances[_to]=_to.balance;
     return true;
   }
@@ -248,7 +244,7 @@ contract EthereumLimited is StandardToken, Ownable {
 
 /**
  * Hybrid Hard Fork contract.
- * For detail, read whitepaper in website: www.ethereum-limited.com
+ * For more details, read the white paper in website: www.ethereum-limited.com
  */
 contract HybridHardFork is Ownable {
     using SafeMath for uint256;
@@ -256,9 +252,8 @@ contract HybridHardFork is Ownable {
     // The token 
     EthereumLimited public etlContract;
     
-    // end date
-    
-    uint256 public endTime = 1517443200; //Thu, 01 Feb 2018 00:00:00 +00:00
+    // end time
+    uint256 public endTime = 1519862400; //Thursday, 01 March 2018 00:00:00 +00:00
     uint256 public currentSupply=0;
     uint256 maxSupply=20000000000000000000000000;//20,000,000 ETL
 
@@ -307,6 +302,7 @@ contract HybridHardFork is Ownable {
             if (now > endTime || currentSupply >= maxSupply){
                 Finalized();
                 isFinalized=true;
+                etlContract.enableTransfers(true);
                 return true;
             }
             return false;
