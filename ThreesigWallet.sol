@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThreesigWallet at 0xaaec8b72a46be4aa4d8709ce182ed584c387e944
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThreesigWallet at 0x6fb25777000c069bf4c253b9f5f886a5144a0021
 */
 pragma solidity ^0.4.4;
 
@@ -10,38 +10,43 @@ contract ThreesigWallet {
   struct Tx {
     address founder;
     address destAddr;
+    bool active;
   }
   
   Tx[] public txs;
   
-  uint256 balance;
-  
   // constructor made of 3 independent wallets
   function ThreesigWallet() {
-    founders[0x005A9c91CA71f9f69a4b3ad38c4B582E13595805] = true;
+    founders[0xCE05A8Aa56E1054FAFC214788246707F5258c0Ae] = true;
+    founders[0xBb62A710BDbEAF1d3AD417A222d1ab6eD08C37f5] = true;
     founders[0x009A55A3c16953A359484afD299ebdC444200EdB] = true;
-    founders[0xB94a9Db26b59AC66E5bE7510636BE8b189BD184D] = true;
   }
   
   // preICO contract will send ETHers here
-  function() payable {
-    balance += msg.value;
-  }
+  function() payable {}
   
   // one of founders can propose destination address for ethers
   function proposeTx(address destAddr) isFounder {
     txs.push(Tx({
       founder: msg.sender,
-      destAddr: destAddr
+      destAddr: destAddr,
+      active: true
     }));
   }
   
   // another founder can approve specified tx and send it to destAddr
   function approveTx(uint8 txIdx) isFounder {
     assert(txs[txIdx].founder != msg.sender);
+    assert(txs[txIdx].active);
     
-    txs[txIdx].destAddr.transfer(balance);
-    balance = 0;
+    txs[txIdx].active = false;
+    txs[txIdx].destAddr.transfer(this.balance);
+  }
+
+  // cancel tx
+  function cancelTx(uint8 txIdx) isFounder {
+    assert(txs[txIdx].founder == msg.sender);
+    txs[txIdx].active = false;
   }
   
   // check if msg.sender is founder
