@@ -1,24 +1,34 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonBallZ at 0x4727829190b9867f6d01aacfbcbb8271e20c20f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonBallZ at 0x7c6b64ea75faae3ca4b223f7e5dea700acebc77e
 */
 pragma solidity ^0.4.18;
 
 /*
-Game: Dragon Ball Z
+Game: Dragon Ball Super ( Tournament of Power )
 Domain: EtherDragonBall.com
 */
 
 contract DragonBallZ {
-
-	address contractCreator = 0x23B385c822381BE63C9f45a3E45266DD32D52c43;
-    address devFeeAddress = 0x3bdC0D871731D08D1c1c793735372AB16397Cd61;
+    
+    //The contract creator and dev fee addresses are defined here
+	address contractCreator = 0x606A19ea257aF8ED76D160Ad080782C938660A33;
+    address devFeeAddress = 0xAe406d5900DCe1bB7cF3Bc5e92657b5ac9cBa34B;
 
 	struct Hero {
 		string heroName;
 		address ownerAddress;
+		address DBZHeroOwnerAddress;
 		uint256 currentPrice;
+		uint currentLevel;
 	}
 	Hero[] heroes;
+	
+	//The number of heroes in Tournament of Power
+	uint256 heroMax = 55;
+	
+	//The array defined for winner variable
+    uint256[] winners;
+
 
 	modifier onlyContractCreator() {
         require (msg.sender == contractCreator);
@@ -38,36 +48,63 @@ contract DragonBallZ {
         isPaused = false;
     }
     function GetGamestatus() public view returns(bool) {
-       return(isPaused);
+        return(isPaused);
     }
 
     /*
-    This function allows users to purchase Dragon Ball Z hero. 
+    This function allows users to purchase Tournament of Power heroes 
     The price is automatically multiplied by 2 after each purchase.
     Users can purchase multiple heroes.
     */
 	function purchaseHero(uint _heroId) public payable {
+	    //Check if current price of hero is equal with the price entered to purchase the hero
 		require(msg.value == heroes[_heroId].currentPrice);
+		
+		//Check if the game is not PAUSED
 		require(isPaused == false);
+		
+		// Calculate the 10% of Tournament of Power prize fee
+		uint256 TournamentPrizeFee = (msg.value / 10); // => 10%
+	    
+		// Calculate the 5% - Dev fee
+		uint256 devFee = ((msg.value / 10)/2);  // => 5%
+		
+		// Calculate the 10% commission - Dragon Ball Z Hero Owner
+		uint256 DBZHeroOwnerCommission = (msg.value / 10); // => 10%
 
-		// Calculate the 10% value
-		uint256 devFee = (msg.value / 10);
+		// Calculate the current hero owner commission on this sale & transfer the commission to the owner.		
+		uint256 commissionOwner = (msg.value - (devFee + TournamentPrizeFee + DBZHeroOwnerCommission)); 
+		heroes[_heroId].ownerAddress.transfer(commissionOwner); // => 75%
 
-		// Calculate the hero owner commission on this sale & transfer the commission to the owner.		
-		uint256 commissionOwner = msg.value - devFee; // => 90%
-		heroes[_heroId].ownerAddress.transfer(commissionOwner);
+		// Transfer the 10% commission to the DBZ Hero Owner
+		heroes[_heroId].DBZHeroOwnerAddress.transfer(DBZHeroOwnerCommission); // => 10% 								
 
-		// Transfer the 10% commission to the developer
-		devFeeAddress.transfer(devFee); // => 10% 						
+		
+		// Transfer the 5% commission to the Dev
+		devFeeAddress.transfer(devFee); // => 5% 
+		
+		//The hero will be leveled up after new purchase
+		heroes[_heroId].currentLevel +=1;
 
-		// Update the hero owner and set the new price
+		// Update the hero owner and set the new price (2X)
 		heroes[_heroId].ownerAddress = msg.sender;
 		heroes[_heroId].currentPrice = mul(heroes[_heroId].currentPrice, 2);
 	}
 	
 	/*
+	This function will be used to update the details of DBZ hero details by the contract creator
+	*/
+	function updateDBZHeroDetails(uint _heroId, string _heroName,address _ownerAddress, address _newDBZHeroOwnerAddress, uint _currentLevel) public onlyContractCreator{
+	    require(heroes[_heroId].ownerAddress != _newDBZHeroOwnerAddress);
+		heroes[_heroId].heroName = _heroName;		
+		heroes[_heroId].ownerAddress = _ownerAddress;
+	    heroes[_heroId].DBZHeroOwnerAddress = _newDBZHeroOwnerAddress;
+	    heroes[_heroId].currentLevel = _currentLevel;
+	}
+	
+	/*
 	This function can be used by the owner of a hero to modify the price of its hero.
-	He can make the price lesser than the current price only.
+	The hero owner can make the price lesser than the current price only.
 	*/
 	function modifyCurrentHeroPrice(uint _heroId, uint256 _newPrice) public {
 	    require(_newPrice > 0);
@@ -76,17 +113,21 @@ contract DragonBallZ {
 	    heroes[_heroId].currentPrice = _newPrice;
 	}
 	
-	// This function will return all of the details of the Dragon Ball Z heroes
+	// This function will return all of the details of the Tournament of Power heroes
 	function getHeroDetails(uint _heroId) public view returns (
         string heroName,
         address ownerAddress,
-        uint256 currentPrice
+        address DBZHeroOwnerAddress,
+        uint256 currentPrice,
+        uint currentLevel
     ) {
         Hero storage _hero = heroes[_heroId];
 
         heroName = _hero.heroName;
         ownerAddress = _hero.ownerAddress;
+        DBZHeroOwnerAddress = _hero.DBZHeroOwnerAddress;
         currentPrice = _hero.currentPrice;
+        currentLevel = _hero.currentLevel;
     }
     
     // This function will return only the price of a specific hero
@@ -94,11 +135,25 @@ contract DragonBallZ {
         return(heroes[_heroId].currentPrice);
     }
     
+    // This function will return only the price of a specific hero
+    function getHeroCurrentLevel(uint _heroId) public view returns(uint256) {
+        return(heroes[_heroId].currentLevel);
+    }
+    
     // This function will return only the owner address of a specific hero
     function getHeroOwner(uint _heroId) public view returns(address) {
         return(heroes[_heroId].ownerAddress);
     }
     
+    // This function will return only the DBZ owner address of a specific hero
+    function getHeroDBZHeroAddress(uint _heroId) public view returns(address) {
+        return(heroes[_heroId].DBZHeroOwnerAddress);
+    }
+    
+    // This function will return only Tournament of Power total prize
+    function getTotalPrize() public view returns(uint256) {
+        return this.balance;
+    }
     
     /**
     @dev Multiplies two numbers, throws on overflow. => From the SafeMath library
@@ -123,8 +178,53 @@ contract DragonBallZ {
     }
     
 	// This function will be used to add a new hero by the contract creator
-	function addHero(string heroName, address ownerAddress, uint256 currentPrice) public onlyContractCreator {
-        heroes.push(Hero(heroName,ownerAddress,currentPrice));
+	function addHero(string _heroName, address _ownerAddress, address _DBZHeroOwnerAddress, uint256 _currentPrice, uint _currentLevel) public onlyContractCreator {
+        heroes.push(Hero(_heroName,_ownerAddress,_DBZHeroOwnerAddress,_currentPrice,_currentLevel));
     }
-	
+     
+    /*
+	This function will be used by the contract creator to generate 5 heroes ID randomly out of 55 heroes
+	and it can be generated only once and cannot be altered at all even by contractCreator
+	*/   
+    function getWinner() public onlyContractCreator returns (uint256[]) {
+        uint i;
+		
+		//Loop to generate 5 random hero IDs from 55 heroes	
+		for(i=0;i<=4;i++){
+		    //Block timestamp and number used to generate the random number
+			winners.push(uint256(sha256(block.timestamp, block.number-i-1)) % heroMax);
+		}
+		
+		return winners;
+    }
+
+    // This function will return only the winner's hero id
+    function getWinnerDetails(uint _winnerId) public view returns(uint256) {
+        return(winners[_winnerId]);
+    }
+    
+    /*
+	This function can be used by the contractCreator to start the payout to the lucky 5 winners
+	The payout will be initiated in a week time
+	*/
+    function payoutWinners() public onlyContractCreator {
+        //Assign 20% of total contract eth
+        uint256 TotalPrize20PercentShare = (this.balance/5);
+        uint i;
+			for(i=0;i<=4;i++){
+			    // Get the hero ID from getWinnerDetails function - Randomly generated
+			    uint _heroID = getWinnerDetails(i);
+			    // Assign the owner address of hero ID - Randomly generated
+			    address winner = heroes[_heroID].ownerAddress;
+			    
+			    if(winner != address(0)){
+			     // Transfer the 20% of total contract eth to each winner (5 winners in total)  
+                 winner.transfer(TotalPrize20PercentShare);			       
+			    }
+			    
+			    // Reset the winner's address after payout for next loop
+			    winner = address(0);
+			}
+    }
+    
 }
