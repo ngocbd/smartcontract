@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eyecoin at 0xb4b7b5d03ada718c7d20a75f6c28118f133f3fa0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eyecoin at 0x156da34af47576af491a43069700576ebfd6b29f
 */
 pragma solidity ^ 0.4.2;
 
@@ -22,7 +22,7 @@ contract Eyecoin {
 
          initialSupply = 5000000;
          name ="Eyecoin";
-        decimals = 2;
+        decimals = 18;
          symbol = "EYC";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
