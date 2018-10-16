@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ForniteCoinSelling at 0xc0fe84429fa6e3d146881168ad8393c2ded9cd64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ForniteCoinSelling at 0xc9562864566b08b1801ad287675911144e34c7d0
 */
 pragma solidity ^0.4.15;
 
@@ -52,7 +52,7 @@ contract ForniteCoinSelling {
     
     function() public payable {
         uint256 numberOfCoin = msg.value/pricePerCoin;
-        if(numberOfCoin>=0) revert();
+        if(numberOfCoin<=0) revert();
         if(coin.balanceOf(coinOwner) < numberOfCoin) revert();
         if(!coin.transferFrom(coinOwner, msg.sender, numberOfCoin)) revert();
     }
