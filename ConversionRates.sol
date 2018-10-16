@@ -1,17 +1,62 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConversionRates at 0xd4AF09F41C674141e9F8c1ce2883F08ECAfd6649
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConversionRates at 0x91aa9212c69df5c175891d36f4756eadd709966a
 */
 pragma solidity 0.4.18;
+
+interface ERC20 {
+    function totalSupply() public view returns (uint supply);
+    function balanceOf(address _owner) public view returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    function decimals() public view returns(uint digits);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+interface ConversionRatesInterface {
+
+    function recordImbalance(
+        ERC20 token,
+        int buyAmount,
+        uint rateUpdateBlock,
+        uint currentBlock
+    )
+        public;
+
+    function getRate(ERC20 token, uint currentBlockNumber, bool buy, uint qty) public view returns(uint);
+}
 
 contract Utils {
 
     ERC20 constant internal ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     uint  constant internal PRECISION = (10**18);
-    uint  constant internal MAX_QTY   = (10**28); // 1B tokens
+    uint  constant internal MAX_QTY   = (10**28); // 10B tokens
     uint  constant internal MAX_RATE  = (PRECISION * 10**6); // up to 1M tokens per ETH
     uint  constant internal MAX_DECIMALS = 18;
+    uint  constant internal ETH_DECIMALS = 18;
+    mapping(address=>uint) internal decimals;
+
+    function setDecimals(ERC20 token) internal {
+        if (token == ETH_TOKEN_ADDRESS) decimals[token] = ETH_DECIMALS;
+        else decimals[token] = token.decimals();
+    }
+
+    function getDecimals(ERC20 token) internal view returns(uint) {
+        if (token == ETH_TOKEN_ADDRESS) return ETH_DECIMALS; // save storage access
+        uint tokenDecimals = decimals[token];
+        // technically, there might be token with decimals 0
+        // moreover, very possible that old tokens have decimals 0
+        // these tokens will just have higher gas fees.
+        if(tokenDecimals == 0) return token.decimals();
+
+        return tokenDecimals;
+    }
 
     function calcDstQty(uint srcQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
+        require(srcQty <= MAX_QTY);
+        require(rate <= MAX_RATE);
+
         if (dstDecimals >= srcDecimals) {
             require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
             return (srcQty * rate * (10**(dstDecimals - srcDecimals))) / PRECISION;
@@ -22,6 +67,9 @@ contract Utils {
     }
 
     function calcSrcQty(uint dstQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
+        require(dstQty <= MAX_QTY);
+        require(rate <= MAX_RATE);
+
         //source quantity is rounded up. to avoid dest quantity being too low.
         uint numerator;
         uint denominator;
@@ -36,17 +84,6 @@ contract Utils {
         }
         return (numerator + denominator - 1) / denominator; //avoid rounding down errors
     }
-}
-
-interface ERC20 {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf(address _owner) public view returns (uint balance);
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint remaining);
-    function decimals() public view returns(uint digits);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
 contract PermissionGroups {
@@ -384,7 +421,7 @@ contract VolumeImbalanceRecorder is Withdrawable {
     }
 }
 
-contract ConversionRates is VolumeImbalanceRecorder, Utils {
+contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, Utils {
 
     // bps - basic rate steps. one step is 1 / 10000 of the rate.
     struct StepFunction {
@@ -448,6 +485,8 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
         numTokensInCurrentCompactData = (numTokensInCurrentCompactData + 1) % NUM_TOKENS_IN_COMPACT_DATA;
 
         setGarbageToVolumeRecorder(token);
+
+        setDecimals(token);
     }
 
     function setCompactData(bytes14[] buy, bytes14[] sell, uint blockNumber, uint[] indices) public onlyOperator {
@@ -641,6 +680,8 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
     }
 
     function getCompactData(ERC20 token) public view returns(uint, uint, byte, byte) {
+        require(tokenData[token].listed);
+
         uint arrayIndex = tokenData[token].compactDataArrayIndex;
         uint fieldOffset = tokenData[token].compactDataFieldIndex;
 
@@ -692,8 +733,8 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
     }
 
     function getTokenQty(ERC20 token, uint ethQty, uint rate) internal view returns(uint) {
-        uint dstDecimals = token.decimals();
-        uint srcDecimals = 18;
+        uint dstDecimals = getDecimals(token);
+        uint srcDecimals = ETH_DECIMALS;
 
         return calcDstQty(ethQty, srcDecimals, dstDecimals, rate);
     }
