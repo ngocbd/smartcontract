@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x9FADbDaC1B57b08381E74A3591b84a138102Dc23
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0xB7177696646A98A70520c37740d4a7659362f5b3
 */
 pragma solidity ^0.4.0;
 
@@ -48,7 +48,6 @@ contract Ethraffle {
     uint public nextTicket = 1;
     mapping (uint => Contestant) public contestants;
     uint[] public gaps;
-    bool public paused = false;
 
     // Initialization
     function Ethraffle() public {
@@ -61,11 +60,6 @@ contract Ethraffle {
     }
 
     function buyTickets() payable public {
-        if (paused) {
-            msg.sender.transfer(msg.value);
-            return;
-        }
-
         uint moneySent = msg.value;
 
         while (moneySent >= pricePerTicket && nextTicket <= totalTickets) {
@@ -121,7 +115,6 @@ contract Ethraffle {
         rakeAddress.transfer(rake);
     }
 
-    // Get your money back before the raffle occurs
     function getRefund() public {
         uint refunds = 0;
         for (uint i = 1; i <= totalTickets; i++) {
@@ -135,31 +128,6 @@ contract Ethraffle {
 
         if (refunds > 0) {
             msg.sender.transfer(refunds * pricePerTicket);
-        }
-    }
-
-    // Refund everyone's money, start a new raffle, then pause it
-    function endRaffle() public {
-        if (msg.sender == rakeAddress) {
-            paused = true;
-
-            for (uint i = 1; i <= totalTickets; i++) {
-                if (raffleId == contestants[i].raffleId) {
-                    TicketRefund(raffleId, contestants[i].addr, i);
-                    contestants[i].addr.transfer(pricePerTicket);
-                }
-            }
-
-            RaffleResult(raffleId, 0, address(0), 0, 0, 0, 0, 0, 0, address(0), address(0), 0);
-            raffleId++;
-            nextTicket = 1;
-            gaps.length = 0;
-        }
-    }
-
-    function togglePause() public {
-        if (msg.sender == rakeAddress) {
-            paused = !paused;
         }
     }
 
