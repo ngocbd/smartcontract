@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HBXToken at 0xf631fced4f29e4449b31020e6c9d2cd225400391
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HBXToken at 0xc9c2dca767ba14499d825ee06bc7143d05aa800f
 */
 pragma solidity ^0.4.18;
 
@@ -294,7 +294,7 @@ contract BurnableToken is BasicToken {
   event Burn(address indexed burner, uint256 value);
 
   /**
-   * @dev Burns a specific amount of tokens. Allowed for owner only
+   * @dev Burns a specific amount of tokens.
    * @param _value The amount of token to be burned.
    */
   function burn(uint256 _value) public {
@@ -314,26 +314,26 @@ contract BurnableToken is BasicToken {
 contract HBXToken is StandardToken, BurnableToken, Ownable {
 
   // Constants
-  string  public constant name = "HashBX";
-  string  public constant symbol = "HBX";
+  string  public constant name = "TestHashBX";
+  string  public constant symbol = "THBX";
   uint8   public constant decimals = 18;
   uint256 public constant INITIAL_SUPPLY = 1000000 * (10 ** uint256(decimals));
 
   // Properties
-  address public creatorAddress;
+  address public createrAddress;
 
   /**
-   * Constructor - instantiates token supply and allocates balance of
+   * Constructor - instantiates token supply and allocates balanace of
    * to the admin (msg.sender).
   */
-  function HBXToken(address _creator) public {
+  function HBXToken(address _creater) public {
 
-    // Mint all token to creator
+    // Mint all token to admin
     balances[msg.sender] = INITIAL_SUPPLY;
     totalSupply_ = INITIAL_SUPPLY;
 
-    // Set creator address
-    creatorAddress = _creator;
+    // Set admin address
+    createrAddress = _creater;
   }
 
 }
