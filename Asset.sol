@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0xa089c8335D6e3C8e85413A5BB40D08a14a8e92D3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x9cdF0b3B0B35d0EE593D68C55da1cC79585335bC
 */
 pragma solidity ^0.4.18;
 /**
@@ -203,7 +203,7 @@ contract Asset is ERC20Token {
 
     function Asset() public {
         totalSupply = 2000000000 * (10**uint256(decimals)); //2.000.000.000 initial token creation
-        balances[0x72046e44d7a3A92bE433E7bFD08cDb49B0A39e43] = 1000000000 * (10**uint256(decimals)); //1.000.000.000 To Dev Address
+        balances[0x1789bD78712815e7Fc955DbbA6803303f4Ef15AC] = 1000000000 * (10**uint256(decimals)); //1.000.000.000 To Dev Address
         balances[0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6] = 4000000 * (10**uint256(decimals)); //0.2% for contract writer
         balances[msg.sender] = 996000000 * (10**uint256(decimals)); //Tokens for sale
         
