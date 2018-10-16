@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MonteLabsMS at 0x0bddc964f4e8983f6c5e53a3a41c0ee78c0356ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MonteLabsMS at 0x9fe932c142260f215acc81560a315fb45863b17c
 */
 pragma solidity ^0.4.24;
 
@@ -23,16 +23,12 @@ contract Audit {
   
   // Returns code audit level, 0 if not present
   function isVerifiedAddress(address _auditorAddr, address _contractAddr) public view returns(uint) {
-    bytes32 codeHash = getCodeHash(_contractAddr);
+    bytes32 codeHash = keccak256(codeAt(_contractAddr));
     return auditedContracts[_auditorAddr][codeHash].level;
   }
 
   function isVerifiedCode(address _auditorAddr, bytes32 _codeHash) public view returns(uint) {
     return auditedContracts[_auditorAddr][_codeHash].level;
-  }
-  
-  function getCodeHash(address _contractAddr) public view returns(bytes32) {
-      return keccak256(codeAt(_contractAddr));
   }
   
   // Add audit information
