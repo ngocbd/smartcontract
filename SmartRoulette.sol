@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartRoulette at 0x460f5BF9f5ccfc99243AA4145E4E40C6a6fD9624
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartRoulette at 0x1a70Fe4C8A7bA52Fd4b14a207928df42Cf9D7dAa
 */
 pragma solidity ^0.4.8;
 
@@ -12,7 +12,6 @@ contract WinMatrix
 contract SmartRouletteToken 
 {
    function emission(address player, address partner, uint256 value_bet, uint16 coef_player, uint16 coef_partner) external returns(uint256);
-   function isOperationBlocked() external constant returns (bool);
 }
 
 contract SmartAffiliate 
@@ -23,31 +22,34 @@ contract SmartAffiliate
 
 contract SmartRoulette
 {
-  address developer;
-  address operator;
+    address developer;
+    address operator;
 
-  // Wait BlockDelay blocks before spin the wheel 
-  uint8 BlockDelay;
+    // Wait BlockDelay blocks before spin the wheel 
+    uint8 BlockDelay;
 
-  // Maximum bet value for game
-  uint256 currentMaxBet;    
+    // Maximum bet value for game
+    uint256 currentMaxBet;    
 
-  // maximum games count per block
-  uint64 maxGamblesPerBlock;
+    // maximum games count per block
+    uint64 maxGamblesPerBlock;
         
-  // Enable\disable to place new bets
-  bool ContractState;
+    // Enable\disable to place new bets
+    bool ContractState;
 
-  // table with winner coefficients
-  WinMatrix winMatrix;
+    // table with winner coefficients
+    WinMatrix winMatrix;
 
-  SmartRouletteToken smartToken;
+    SmartRouletteToken smartToken;
 
-  address profitDistributionContract;
+    address profitDistributionContract;
 
-  SmartAffiliate smartAffiliateContract;
+    SmartAffiliate smartAffiliateContract;
 
-  uint16 constant maxTypeBets = 157;
+    uint16 constant maxTypeBets = 157;
+      
+   // last game index for player (used for fast access)
+   //mapping (address => uint64) private gambleIndex;   
    
    uint16 coef_player;   
    // 
@@ -92,10 +94,10 @@ contract SmartRoulette
         developer  = msg.sender;
         operator   = msg.sender;
         
-        winMatrix = WinMatrix(0x073D6621E9150bFf9d1D450caAd3c790b6F071F2);
+        winMatrix = WinMatrix(0x073D6621E9150bFf9d1D450caAd3c790b6F071F2 );
         if (winMatrix.getBetsProcessed() != maxTypeBets) throw;
         
-        smartToken = SmartRouletteToken(0x2a650356bd894370cc1d6aba71b36c0ad6b3dc18);
+        smartToken = SmartRouletteToken(0x7dD8D4c556d2005c5bafc3d5449A99Fb46279E6b);
 
         currentMaxBet = 2560 finney; // 2.56 ether
         BlockDelay = 1;        
@@ -328,14 +330,7 @@ contract SmartRoulette
          ErrorLog(msg.sender, "ContractDisabled");
          if (msg.sender.send(msg.value) == false) throw;
          return;
-       }
-
-       if (smartToken.isOperationBlocked())
-       {
-         ErrorLog(msg.sender, "EmissionBlocked");
-         if (msg.sender.send(msg.value) == false) throw;
-         return;
-       }
+       } 
 
        var gamblesLength = gambles.length;
 
@@ -401,7 +396,7 @@ contract SmartRoulette
        {
          (affiliate, coef_affiliate) = smartAffiliateContract.getAffiliateInfo(msg.sender);   
        }
-
+       
        uint256 playerTokens = smartToken.emission(msg.sender, affiliate, msg.value, coef_player, coef_affiliate);            
 
        PlayerBet(gamblesLength, playerTokens); 
@@ -461,7 +456,7 @@ contract SmartRoulette
       {            
          gambles[index].wheelResult = getRandomNumber(g.player, g.blockNumber);
                  
-         uint256 playerWinnings = getGameResult(gambles[index]);
+         uint256 playerWinnings = getGameResult(uint64(index));
          if (playerWinnings > 0) 
          {
             if (g.player.send(playerWinnings) == false) throw;
@@ -507,18 +502,17 @@ contract SmartRoulette
       GameInfo memory gamble = gambles[gambleId];
       if (gamble.wheelResult != 200) throw;
 
-      gambles[gambleId].wheelResult = calculateRandomNumberByBlockhash(blockHash, gamble.player);      
+      gambles[gambleId].wheelResult = calculateRandomNumberByBlockhash(blockHash, gamble.player);
+      //gambles[gambleId].blockSpinned = block.number;
 
-      uint256 playerWinnings = getGameResult(gambles[gambleId]);
-      if (playerWinnings > 0)
-      {
-        if (gamble.player.send(playerWinnings) == false) throw;
-      }      
+      if (gamble.player.send(getGameResult(gambleId)) == false) throw;
 
       EndGame(gamble.player, gamble.wheelResult, gambleId);
     }
 
 
+    
+    //
     function checkGamesReadyForSpinning() constant returns (int256[256] ret) 
     { 
       uint16 index = 0;    
@@ -545,9 +539,10 @@ contract SmartRoulette
       }
       throw;      
     }
-    
-    function getGameResult(GameInfo memory game) private constant returns (uint256 totalWin) 
+
+    function getGameResult(uint64 index) private constant returns (uint256 totalWin) 
     {
+        GameInfo memory game = gambles[index];
         totalWin = 0;
         uint8 nPlayerBetNo = 0;
         // we sent count bets at last byte 
@@ -571,7 +566,7 @@ contract SmartRoulette
     {
         gambleId = index;
         player = gambles[index].player;
-        totalWin = getGameResult(gambles[index]);
+        totalWin = getGameResult(index);
         blockNumber = gambles[index].blockNumber;        
         wheelResult = gambles[index].wheelResult;
         nTotalBetValue = totalBetValue(gambles[index]);
