@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grid at 0xae89c8d6b98432df28242899b3688cc8e3d45ea3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grid at 0x9d6cde970c30e45311cff3d1f3f9a8dd24ff70f1
 */
 pragma solidity ^0.4.11;
 
@@ -7,9 +7,6 @@ contract Grid {
   // The account address with admin privilege to this contract
   // This is also the default owner of all unowned pixels
   address admin;
-
-  // The size in number of pixels of the square grid on each side
-  uint16 public size;
 
   // The default price of unowned pixels
   uint public defaultPrice;
@@ -23,17 +20,6 @@ contract Grid {
   // The price increment rate used in the following formula:
   //   price = prevPrice + (prevPrice * incrementRate / 100);
   uint public incrementRate;
-
-  // A record of a user who may at any time be an owner of pixels or simply has
-  // unclaimed withdrawal from a failed purchase or a successful sale
-  struct User {
-    // Number of Wei that can be withdrawn by the user
-    uint pendingWithdrawal;
-
-    // Number of Wei in total ever credited to the user as a result of a
-    // successful sale
-    uint totalSales;
-  }
 
   struct Pixel {
     // User with permission to modify the pixel. A successful sale of the
@@ -50,10 +36,11 @@ contract Grid {
   }
 
   // The state of the pixel grid
-  mapping(uint32 => Pixel) pixels;
+  /*mapping(uint32 => Pixel) pixels;*/
+  Pixel[1000][1000] pixels;
 
   // The state of all users who have transacted with this contract
-  mapping(address => User) users;
+  mapping(address => uint) pendingWithdrawals;
 
   // An optional message that is shown in some parts of the UI and in the
   // details pane of every owned pixel
@@ -66,21 +53,18 @@ contract Grid {
   event PixelTransfer(uint16 row, uint16 col, uint price, address prevOwner, address newOwner);
   event PixelColor(uint16 row, uint16 col, address owner, uint24 color);
   event PixelPrice(uint16 row, uint16 col, address owner, uint price);
-  event UserMessage(address user, string message);
 
   //============================================================================
   // Basic API and helper functions
   //============================================================================
 
   function Grid(
-    uint16 _size,
     uint _defaultPrice,
     uint _feeRatio,
     uint _incrementRate) {
     admin = msg.sender;
     defaultPrice = _defaultPrice;
     feeRatio = _feeRatio;
-    size = _size;
     incrementRate = _incrementRate;
   }
 
@@ -94,9 +78,9 @@ contract Grid {
     _;
   }
 
-  function getKey(uint16 row, uint16 col) constant returns (uint32) {
-    require(row < size && col < size);
-    return uint32(SafeMath.add(SafeMath.mul(row, size), col));
+  modifier validPixel(uint16 row, uint16 col) {
+    require(row < 1000 && col < 1000);
+    _;
   }
 
   function() payable {}
@@ -121,33 +105,29 @@ contract Grid {
   // Public Querying API
   //============================================================================
 
-  function getPixelColor(uint16 row, uint16 col) constant returns (uint24) {
-    uint32 key = getKey(row, col);
-    return pixels[key].color;
+  function getPixelColor(uint16 row, uint16 col) constant
+    validPixel(row, col) returns (uint24) {
+    return pixels[row][col].color;
   }
 
-  function getPixelOwner(uint16 row, uint16 col) constant returns (address) {
-    uint32 key = getKey(row, col);
-    if (pixels[key].owner == 0) {
+  function getPixelOwner(uint16 row, uint16 col) constant
+    validPixel(row, col) returns (address) {
+    if (pixels[row][col].owner == 0) {
       return admin;
     }
-    return pixels[key].owner;
+    return pixels[row][col].owner;
   }
 
-  function getPixelPrice(uint16 row, uint16 col) constant returns (uint) {
-    uint32 key = getKey(row, col);
-    if (pixels[key].owner == 0) {
+  function getPixelPrice(uint16 row, uint16 col) constant
+    validPixel(row,col) returns (uint) {
+    if (pixels[row][col].owner == 0) {
       return defaultPrice;
     }
-    return pixels[key].price;
+    return pixels[row][col].price;
   }
 
   function getUserMessage(address user) constant returns (string) {
     return messages[user];
-  }
-
-  function getUserTotalSales(address user) constant returns (uint) {
-    return users[user].totalSales;
   }
 
   //============================================================================
@@ -155,51 +135,49 @@ contract Grid {
   //============================================================================
 
   function checkPendingWithdrawal() constant returns (uint) {
-    return users[msg.sender].pendingWithdrawal;
+    return pendingWithdrawals[msg.sender];
   }
 
   function withdraw() {
-    if (users[msg.sender].pendingWithdrawal > 0) {
-      uint amount = users[msg.sender].pendingWithdrawal;
-      users[msg.sender].pendingWithdrawal = 0;
+    if (pendingWithdrawals[msg.sender] > 0) {
+      uint amount = pendingWithdrawals[msg.sender];
+      pendingWithdrawals[msg.sender] = 0;
       msg.sender.transfer(amount);
     }
   }
 
   function buyPixel(uint16 row, uint16 col, uint24 newColor) payable {
-    uint balance = users[msg.sender].pendingWithdrawal;
+    uint balance = pendingWithdrawals[msg.sender];
     // Return instead of letting getKey throw here to correctly refund the
     // transaction by updating the user balance in user.pendingWithdrawal
-    if (row >= size || col >= size) {
-      users[msg.sender].pendingWithdrawal = SafeMath.add(balance, msg.value);
+    if (row >= 1000 || col >= 1000) {
+      pendingWithdrawals[msg.sender] = SafeMath.add(balance, msg.value);
       return;
     }
 
-    uint32 key = getKey(row, col);
     uint price = getPixelPrice(row, col);
     address owner = getPixelOwner(row, col);
 
     // Return instead of throw here to correctly refund the transaction by
     // updating the user balance in user.pendingWithdrawal
     if (msg.value < price) {
-      users[msg.sender].pendingWithdrawal = SafeMath.add(balance, msg.value);
+      pendingWithdrawals[msg.sender] = SafeMath.add(balance, msg.value);
       return;
     }
 
     uint fee = SafeMath.div(msg.value, feeRatio);
     uint payout = SafeMath.sub(msg.value, fee);
 
-    uint adminBalance = users[admin].pendingWithdrawal;
-    users[admin].pendingWithdrawal = SafeMath.add(adminBalance, fee);
+    uint adminBalance = pendingWithdrawals[admin];
+    pendingWithdrawals[admin] = SafeMath.add(adminBalance, fee);
 
-    uint ownerBalance = users[owner].pendingWithdrawal;
-    users[owner].pendingWithdrawal = SafeMath.add(ownerBalance, payout);
-    users[owner].totalSales = SafeMath.add(users[owner].totalSales, payout);
+    uint ownerBalance = pendingWithdrawals[owner];
+    pendingWithdrawals[owner] = SafeMath.add(ownerBalance, payout);
 
     // Increase the price automatically based on the global incrementRate
     uint increase = SafeMath.div(SafeMath.mul(price, incrementRate), 100);
-    pixels[key].price = SafeMath.add(price, increase);
-    pixels[key].owner = msg.sender;
+    pixels[row][col].price = SafeMath.add(price, increase);
+    pixels[row][col].owner = msg.sender;
 
     PixelTransfer(row, col, price, owner, msg.sender);
     setPixelColor(row, col, newColor);
@@ -209,31 +187,22 @@ contract Grid {
   // Owner Management API
   //============================================================================
 
-  function transferPixel(uint16 row, uint16 col, address newOwner) onlyOwner(row, col) {
-    uint32 key = getKey(row, col);
-    address owner = pixels[key].owner;
-    if (owner != newOwner) {
-      pixels[key].owner = newOwner;
-      PixelTransfer(row, col, 0, owner, newOwner);
+  function setPixelColor(uint16 row, uint16 col, uint24 color)
+    validPixel(row, col) onlyOwner(row, col) {
+    if (pixels[row][col].color != color) {
+      pixels[row][col].color = color;
+      PixelColor(row, col, pixels[row][col].owner, color);
     }
   }
 
-  function setPixelColor(uint16 row, uint16 col, uint24 color) onlyOwner(row, col) {
-    uint32 key = getKey(row, col);
-    if (pixels[key].color != color) {
-      pixels[key].color = color;
-      PixelColor(row, col, pixels[key].owner, color);
-    }
-  }
-
-  function setPixelPrice(uint16 row, uint16 col, uint newPrice) onlyOwner(row, col) {
-    uint32 key = getKey(row, col);
+  function setPixelPrice(uint16 row, uint16 col, uint newPrice)
+    validPixel(row, col) onlyOwner(row, col) {
     // The owner can only lower the price. Price increases are determined by
     // the global incrementRate
-    require(pixels[key].price > newPrice);
+    require(pixels[row][col].price > newPrice);
 
-    pixels[key].price = newPrice;
-    PixelPrice(row, col, pixels[key].owner, newPrice);
+    pixels[row][col].price = newPrice;
+    PixelPrice(row, col, pixels[row][col].owner, newPrice);
   }
 
   //============================================================================
@@ -242,7 +211,6 @@ contract Grid {
 
   function setUserMessage(string message) {
     messages[msg.sender] = message;
-    UserMessage(msg.sender, message);
   }
 }
 
