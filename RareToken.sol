@@ -1,195 +1,178 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RareToken at 0x5ddab66da218fb05dfeda07f1afc4ea0738ee234
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RareToken at 0xe7df28376f0c44b58396fda253132321021e08cf
 */
-pragma solidity ^0.4.9;
+pragma solidity ^0.4.11;
 
-// ----------------------------------------------------------------------------------------------
-// The new RARE token contract
-//
-// https://github.com/bokkypoobah/RAREPeperiumToken
-//
-// Enjoy. (c) BokkyPooBah / Bok Consulting Pty Ltd 2017 for Michael C. The MIT Licence.
-// ----------------------------------------------------------------------------------------------
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
-contract Owned {
-    address public owner;
-    address public newOwner;
-    event OwnershipTransferred(address indexed _from, address indexed _to);
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function Owned() {
-        owner = msg.sender;
-    }
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function transferOwnership(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
-    }
-
-    function acceptOwnership() {
-        if (msg.sender == newOwner) {
-            OwnershipTransferred(owner, newOwner);
-            owner = newOwner;
-        }
-    }
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
 
-contract ERC20Token is Owned {
-    string public symbol;
-    string public name;
-    uint8 public decimals;
-    uint256 public totalSupply;
-
-    // ------------------------------------------------------------------------
-    // Balances for each account
-    // ------------------------------------------------------------------------
-    mapping (address => uint256) balances;
-
-    // ------------------------------------------------------------------------
-    // Owner of account approves the transfer of an amount to another account
-    // ------------------------------------------------------------------------
-    mapping (address => mapping (address => uint256)) allowed;
-
-    // ------------------------------------------------------------------------
-    // Events
-    // ------------------------------------------------------------------------
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    // ------------------------------------------------------------------------
-    // Constructor
-    // ------------------------------------------------------------------------
-    function ERC20Token(string _symbol, string _name, uint8 _decimals, uint256 _totalSupply) {
-        symbol = _symbol;
-        name = _name;
-        decimals = _decimals;
-        totalSupply = _totalSupply;
-        balances[msg.sender] = _totalSupply;
-    }
-
-    // ------------------------------------------------------------------------
-    // Get the account balance of another account with address _owner
-    // ------------------------------------------------------------------------
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    // ------------------------------------------------------------------------
-    // Transfer the balance from owner's account to another account
-    // ------------------------------------------------------------------------
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-        if (balances[msg.sender] >= _amount             // User has balance
-            && _amount > 0                              // Non-zero transfer
-            && balances[_to] + _amount > balances[_to]  // Overflow check
-        ) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // ------------------------------------------------------------------------
-    // Allow _spender to withdraw from your account, multiple times, up to the
-    // _value amount. If this function is called again it overwrites the
-    // current allowance with _value.
-    // ------------------------------------------------------------------------
-    function approve(address _spender, uint256 _amount) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
-    }
-
-    // ------------------------------------------------------------------------
-    // Spender of tokens transfer an amount of tokens from the token owner's
-    // balance to another account. The owner of the tokens must already
-    // have approve(...)-d this transfer
-    // ------------------------------------------------------------------------
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) returns (bool success) {
-        if (balances[_from] >= _amount                  // From a/c has balance
-            && allowed[_from][msg.sender] >= _amount    // Transfer approved
-            && _amount > 0                              // Non-zero transfer
-            && balances[_to] + _amount > balances[_to]  // Overflow check
-        ) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // ------------------------------------------------------------------------
-    // Returns the amount of tokens approved by the owner that can be
-    // transferred to the spender's account
-    // ------------------------------------------------------------------------
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    // ------------------------------------------------------------------------
-    // Don't accept ethers
-    // ------------------------------------------------------------------------
-    function () {
-        throw;
-    }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+// File: zeppelin-solidity/contracts/token/BasicToken.sol
 
-contract RareToken is ERC20Token {
-    // ------------------------------------------------------------------------
-    // 100,000,000 tokens that will be populated by the fill, 8 decimal places
-    // ------------------------------------------------------------------------
-    function RareToken() ERC20Token ("RARE", "RARE", 8, 0) {
-    }
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-    function burnTokens(uint256 value) onlyOwner {
-        if (balances[owner] < value) throw;
-        balances[owner] -= value;
-        totalSupply -= value;
-        Transfer(owner, 0, value);
-    }
+  mapping(address => uint256) balances;
 
-    // ------------------------------------------------------------------------
-    // Fill - to populate tokens from the old token contract
-    // ------------------------------------------------------------------------
-    // From https://github.com/BitySA/whetcwithdraw/tree/master/daobalance
-    bool public sealed;
-    // The compiler will warn that this constant does not match the address checksum
-    uint256 constant D160 = 0x010000000000000000000000000000000000000000;
-    // The 160 LSB is the address of the balance
-    // The 96 MSB is the balance of that address.
-    function fill(uint256[] data) onlyOwner {
-        if (sealed) throw;
-        for (uint256 i = 0; i < data.length; i++) {
-            address account = address(data[i] & (D160-1));
-            uint256 amount = data[i] / D160;
-            // Prevent duplicates
-            if (balances[account] == 0) {
-                balances[account] = amount;
-                totalSupply += amount;
-                Transfer(0x0, account, amount);
-            }
-        }
-    }
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-    // ------------------------------------------------------------------------
-    // After sealing, no more filling is possible
-    // ------------------------------------------------------------------------
-    function seal() onlyOwner {
-        if (sealed) throw;
-        sealed = true;
-    }
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+}
+
+// File: contracts/RareToken.sol
+
+contract RareToken is StandardToken {
+
+	address owner;
+
+	string public name = 'Rare Token';
+	string public symbol = 'RARE';
+	uint public decimals = 18;
+	uint public INITIAL_SUPPLY = 100000000000000000000000000;
+
+	function RareToken() payable {
+		totalSupply = INITIAL_SUPPLY;
+	  balances[msg.sender] = INITIAL_SUPPLY;
+		owner = msg.sender;
+  }
 }
