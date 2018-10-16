@@ -1,37 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x15eac74d043d9945823afd171677ab2f72215003
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xdd1ac79efafbe76f75ce46231525eca0a6cef342
 */
 pragma solidity ^0.4.15;
 
-contract Controllable {
-  address public controller;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
-   */
-  function Controllable() public {
-    controller = msg.sender;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
   }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyController() {
-    require(msg.sender == controller);
-    _;
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newController The address to transfer ownership to.
-   */
-  function transferControl(address newController) public onlyController {
-    if (newController != address(0)) {
-      controller = newController;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 contract Ownable {
@@ -105,32 +100,6 @@ contract Pausable is Ownable {
     paused = false;
     Unpause();
     return true;
-  }
-}
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
   }
 }
 
@@ -287,49 +256,42 @@ contract TokenSale is Pausable {
   * Change the Proof Token controller
   * @param _newController {address} New Proof Token controller
   */
-  function changeController(address _newController) onlyOwner public returns (bool) {
+  function changeController(address _newController) public {
     proofToken.transferControl(_newController);
-    return true;
   }
 
 
-  function enableTransfers() public returns (bool) {
+  function enableTransfers() public {
     if (now < endTime) {
       require(msg.sender == owner);
     }
     proofToken.enableTransfers(true);
-    return true;
   }
 
-  function lockTransfers() public onlyOwner returns (bool) {
+  function lockTransfers() public onlyOwner {
     require(now < endTime);
     proofToken.enableTransfers(false);
-    return true;
   }
 
-  function enableMasterTransfers() public onlyOwner returns (bool) {
+  function enableMasterTransfers() public onlyOwner {
     proofToken.enableMasterTransfers(true);
-    return true;
   }
 
-  function lockMasterTransfers() public onlyOwner returns (bool) {
+  function lockMasterTransfers() public onlyOwner {
     proofToken.enableMasterTransfers(false);
-    return true;
   }
 
-  function forceStart() public onlyOwner returns (bool) {
+  function forceStart() public onlyOwner {
     started = true;
-    return true;
   }
 
-  function allocateProofTokens() public onlyOwner whenNotFinalized returns (bool) {
+  function allocateProofTokens() public onlyOwner whenNotFinalized {
     require(!proofTokensAllocated);
     proofToken.mint(proofMultiSig, TOKENS_ALLOCATED_TO_PROOF);
     proofTokensAllocated = true;
-    return true;
   }
 
-  function finalize() public onlyOwner returns (bool) {
+  function finalize() public onlyOwner {
     require(paused);
     require(proofTokensAllocated);
 
@@ -338,11 +300,10 @@ contract TokenSale is Pausable {
     Finalized();
 
     finalized = true;
-    return true;
   }
 
 
-  function isContract(address _addr) constant internal returns (bool) {
+  function isContract(address _addr) constant internal returns(bool) {
     uint size;
     if (_addr == 0)
       return false;
@@ -355,6 +316,37 @@ contract TokenSale is Pausable {
   modifier whenNotFinalized() {
     require(!finalized);
     _;
+  }
+
+}
+
+contract Controllable {
+  address public controller;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+   */
+  function Controllable() public {
+    controller = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyController() {
+    require(msg.sender == controller);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newController The address to transfer ownership to.
+   */
+  function transferControl(address newController) public onlyController {
+    if (newController != address(0)) {
+      controller = newController;
+    }
   }
 
 }
