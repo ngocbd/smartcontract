@@ -1,32 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueToken at 0x6704e83fac5fc347efbdba61728e62389ab54367
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueToken at 0xa3cb3de83874e3b13ebfb3375bc713f8fd698ad3
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.23;
 
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
             return 0;
         }
-        uint256 c = a * b;
+        c = a * b;
         assert(c / a == b);
         return c;
     }
@@ -36,13 +26,13 @@ library SafeMath {
     */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
+        // uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
+        return a / b;
     }
 
     /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
     */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
@@ -52,34 +42,262 @@ library SafeMath {
     /**
     * @dev Adds two numbers, throws on overflow.
     */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
         assert(c >= a);
         return c;
     }
 }
 
-contract ERC223 {
-    function transfer(address _to, uint256 _value, bytes _data) public returns (bool success);
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+    event OwnershipRenounced(
+        address indexed previousOwner
+    );
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
-contract ERC223Receiver {
 /**
- * @dev Standard ERC223 function that will handle incoming token transfers.
- *
- * @param _from  Token sender address.
- * @param _value Amount of tokens.
- * @param _data  Transaction metadata.
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
+
+    bool public paused = false;
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        emit Pause();
+    }
+
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        emit Unpause();
+    }
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+}
+
+contract ERC223Interface {
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    function transfer(address to, uint256 value, bytes data) public returns (bool);
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value,
+        bytes data
+    );
+}
+
+contract ERC223ReceivingContract {
+    /**
+     * @dev Standard ERC223 function that will handle incoming token transfers.
+     *
+     * @param _from  Token sender address.
+     * @param _value Amount of tokens.
+     * @param _data  Transaction metadata.
+     */
     function tokenFallback(address _from, uint256 _value, bytes _data) public;
 }
 
-contract BasicToken is ERC20Basic {
+/**
+ * @title PoSTokenStandard
+ * @dev the interface of PoSTokenStandard
+ */
+contract PoSTokenStandard {
+    uint256 public stakeStartTime;
+    uint256 public stakeMinAge;
+    uint256 public stakeMaxAge;
+    function mint() public returns (bool);
+    function coinAge() public view returns (uint256);
+    function annualInterest() public view returns (uint256);
+    function calculateReward() public view returns (uint256);
+    function calculateRewardAt(uint256 _now) public view returns (uint256);
+    event Mint(
+        address indexed _address,
+        uint256 _reward
+    );
+}
+
+/**
+ * @title TRUE Token
+ * @dev ERC20, ERC223, PoS Token for TrueDeck Platform
+ */
+contract TrueToken is ERC20, ERC223Interface, PoSTokenStandard, Pausable {
     using SafeMath for uint256;
 
-    mapping(address => uint256) balances;
+    event CoinAgeRecordEvent(
+        address indexed who,
+        uint256 value,
+        uint64 time
+    );
+    event CoinAgeResetEvent(
+        address indexed who,
+        uint256 value,
+        uint64 time
+    );
+
+    string public constant name = "TRUE Token";
+    string public constant symbol = "TRUE";
+    uint8 public constant decimals = 18;
+
+    mapping (address => uint256) balances;
+
+    mapping (address => mapping (address => uint256)) internal allowed;
 
     uint256 totalSupply_;
+
+    /**
+    * @dev Total Number of TRUE tokens that can ever be created.
+    *      200M TRUE Tokens
+    */
+    uint256 public MAX_TOTAL_SUPPLY = 200000000 *  10 ** uint256(decimals);
+
+    /**
+    * @dev Initial supply of TRUE tokens.
+    *      70M TRUE Tokens
+    *      35% of Maximum Total Supply
+    *      Will be distributed as follows:
+    *           5% : Platform Partners
+    *           1% : Pre-Airdrop
+    *          15% : Mega-Airdrop
+    *           4% : Bounty (Vested over 6 months)
+    *          10% : Development (Vested over 12 months)
+    */
+    uint256 public INITIAL_SUPPLY = 70000000 *  10 ** uint256(decimals);
+
+    /**
+    * @dev Time at which the contract was deployed
+    */
+    uint256 public chainStartTime;
+
+    /**
+    * @dev Ethereum Blockchain Block Number at time the contract was deployed
+    */
+    uint256 public chainStartBlockNumber;
+
+    /**
+    * @dev To keep the record of a single incoming token transfer
+    */
+    struct CoinAgeRecord {
+        uint256 amount;
+        uint64 time;
+    }
+
+    /**
+    * @dev To keep the coin age record for all addresses
+    */
+    mapping(address => CoinAgeRecord[]) coinAgeRecordMap;
+
+    /**
+     * @dev Modifier to make contract mint new tokens only
+     *      - Staking has started.
+     *      - When total supply has not reached MAX_TOTAL_SUPPLY.
+     */
+    modifier canMint() {
+        require(stakeStartTime > 0 && now >= stakeStartTime && totalSupply_ < MAX_TOTAL_SUPPLY);
+        _;
+    }
+
+    constructor() public {
+        chainStartTime = now;
+        chainStartBlockNumber = block.number;
+
+        stakeMinAge = 3 days;
+        stakeMaxAge = 60 days;
+
+        balances[msg.sender] = INITIAL_SUPPLY;
+        totalSupply_ = INITIAL_SUPPLY;
+    }
 
     /**
     * @dev total number of tokens in existence
@@ -89,35 +307,73 @@ contract BasicToken is ERC20Basic {
     }
 
     /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
+    * @dev Transfer the specified amount of tokens to the specified address.
+    *      - Invokes the `tokenFallback` function if the recipient is a contract.
+    *        The token transfer fails if the recipient is a contract
+    *        but does not implement the `tokenFallback` function
+    *        or the fallback function to receive funds.
+    *      - Records coin age if the recipient is not a contract
+    *
+    * @param _to    Receiver address.
+    * @param _value Amount of tokens that will be transferred.
+    * @param _data  Transaction metadata.
     */
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function transfer(address _to, uint256 _value, bytes _data) public whenNotPaused returns (bool) {
         require(_to != address(0));
+
+        if (msg.sender == _to) {
+            return mint();
+        }
+
         require(_value <= balances[msg.sender]);
 
-        // SafeMath.sub will throw if there is not enough balance.
+        bool flag = isContract(_to);
+
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        if (flag) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(msg.sender, _value, _data);
+        }
+        emit Transfer(msg.sender, _to, _value, _data);
+
+        logCoinAgeRecord(msg.sender, _to, _value, flag);
+
         return true;
     }
 
     /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
+    * @dev Transfer the specified amount of tokens to the specified address.
+    *      This function works the same with the previous one
+    *      but doesn't contain `_data` param.
+    *      Added due to backwards compatibility reasons.
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
     */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
+    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+        require(_to != address(0));
+
+        if (msg.sender == _to) {
+            return mint();
+        }
+
+        require(_value <= balances[msg.sender]);
+
+        bytes memory empty;
+        bool flag = isContract(_to);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if (flag) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(msg.sender, _value, empty);
+        }
+        emit Transfer(msg.sender, _to, _value, empty);
+
+        logCoinAgeRecord(msg.sender, _to, _value, flag);
+
+        return true;
     }
-
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) internal allowed;
 
 
     /**
@@ -126,7 +382,7 @@ contract StandardToken is ERC20, BasicToken {
      * @param _to address The address which you want to transfer to
      * @param _value uint256 the amount of tokens to be transferred
      */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
         require(_to != address(0));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
@@ -134,7 +390,13 @@ contract StandardToken is ERC20, BasicToken {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
+
+        // Coin age should not be recorded if receiver is the sender.
+        if (_from != _to) {
+            logCoinAgeRecord(_from, _to, _value, isContract(_to));
+        }
+
         return true;
     }
 
@@ -148,9 +410,10 @@ contract StandardToken is ERC20, BasicToken {
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
      */
-    function approve(address _spender, uint256 _value) public returns (bool) {
+    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+        require(_spender != address(0));
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -174,9 +437,10 @@ contract StandardToken is ERC20, BasicToken {
      * @param _spender The address which will spend the funds.
      * @param _addedValue The amount of tokens to increase the allowance by.
      */
-    function increaseApproval(address _spender, uint256 _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    function increaseApproval(address _spender, uint256 _addedValue) public whenNotPaused returns (bool) {
+        require(_spender != address(0));
+        allowed[msg.sender][_spender] = (allowed[msg.sender][_spender].add(_addedValue));
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -190,126 +454,258 @@ contract StandardToken is ERC20, BasicToken {
      * @param _spender The address which will spend the funds.
      * @param _subtractedValue The amount of tokens to decrease the allowance by.
      */
-    function decreaseApproval(address _spender, uint256 _subtractedValue) public returns (bool) {
+    function decreaseApproval(address _spender, uint256 _subtractedValue) public whenNotPaused returns (bool) {
+        require(_spender != address(0));
         uint256 oldValue = allowed[msg.sender][_spender];
         if (_subtractedValue > oldValue) {
             allowed[msg.sender][_spender] = 0;
         } else {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
-}
-
-contract Standard223Token is StandardToken, ERC223 {
-    using SafeMath for uint256;
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public view returns (uint256) {
+        return balances[_owner];
+    }
 
     /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `tokenFallback` function if the recipient is a contract.
-     *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `tokenFallback` function
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     * @param _data  Transaction metadata.
+    * @dev Mints new TRUE token and rewards to caller as per the coin age.
+    *      Deletes all previous coinage records and resets with new coin age record.
     */
-    function transfer(address _to, uint256 _value, bytes _data) public returns (bool success) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
+    function mint() public whenNotPaused canMint returns (bool) {
+        if (balances[msg.sender] <= 0) {
+            return false;
+        }
 
-        if(isContract(_to)) {
-            return transferToContract(_to, _value, _data);
+        if (coinAgeRecordMap[msg.sender].length <= 0) {
+            return false;
+        }
+
+        uint256 reward = calculateRewardInternal(msg.sender, now);
+        if (reward <= 0) {
+            return false;
+        }
+
+        if (reward > MAX_TOTAL_SUPPLY.sub(totalSupply_)) {
+            reward = MAX_TOTAL_SUPPLY.sub(totalSupply_);
+        }
+
+        totalSupply_ = totalSupply_.add(reward);
+        balances[msg.sender] = balances[msg.sender].add(reward);
+        emit Mint(msg.sender, reward);
+
+        uint64 _now = uint64(now);
+        delete coinAgeRecordMap[msg.sender];
+        coinAgeRecordMap[msg.sender].push(CoinAgeRecord(balances[msg.sender], _now));
+        emit CoinAgeResetEvent(msg.sender, balances[msg.sender], _now);
+
+        return true;
+    }
+
+    /**
+    * @dev Returns coinage for the caller address
+    */
+    function coinAge() public view returns (uint256) {
+         return getCoinAgeInternal(msg.sender, now);
+    }
+
+    /**
+    * @dev Returns current annual interest
+    */
+    function annualInterest() public view returns(uint256) {
+        return getAnnualInterest(now);
+    }
+
+    /**
+    * @dev Calculates and returns proof-of-stake reward
+    */
+    function calculateReward() public view returns (uint256) {
+        return calculateRewardInternal(msg.sender, now);
+    }
+
+    /**
+    * @dev Calculates and returns proof-of-stake reward for provided time
+    *
+    * @param _now timestamp The time for which the reward will be calculated
+    */
+    function calculateRewardAt(uint256 _now) public view returns (uint256) {
+        return calculateRewardInternal(msg.sender, _now);
+    }
+
+    /**
+    * @dev Returns coinage record for the given address and index
+    *
+    * @param _address address The address for which coinage record will be fetched
+    * @param _index index The index of coinage record for that address
+    */
+    function coinAgeRecordForAddress(address _address, uint256 _index) public view onlyOwner returns (uint256, uint64) {
+        if (coinAgeRecordMap[_address].length > _index) {
+            return (coinAgeRecordMap[_address][_index].amount, coinAgeRecordMap[_address][_index].time);
         } else {
-            return transferToAddress(_to, _value);
+            return (0, 0);
         }
     }
 
     /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `_custom_fallback` function if the recipient is a contract.
-     *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `_custom_fallback` function
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     * @param _data  Transaction metadata.
+    * @dev Returns coinage for the caller address
+    *
+    * @param _address address The address for which coinage will be calculated
     */
-    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        if(isContract(_to)) {
-            balances[msg.sender] = balances[msg.sender].sub(_value);
-            balances[_to] = balances[_to].add(_value);
-            /* solium-disable-next-line */
-            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else {
-            return transferToAddress(_to, _value);
-        }
+    function coinAgeForAddress(address _address) public view onlyOwner returns (uint256) {
+         return getCoinAgeInternal(_address, now);
     }
 
     /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Added due to backwards compatibility reasons.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
+    * @dev Returns coinage for the caller address
+    *
+    * @param _address address The address for which coinage will be calculated
+    * @param _now timestamp The time for which the coinage will be calculated
     */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        return transfer(_to, _value, new bytes(0));
-    }
-
-    function transferToAddress(address _to, uint _value) private returns (bool success) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        ERC223Receiver reciever = ERC223Receiver(_to);
-        reciever.tokenFallback(msg.sender, _value, _data);
-        Transfer(msg.sender, _to, _value);
-        return true;
+    function coinAgeForAddressAt(address _address, uint256 _now) public view onlyOwner returns (uint256) {
+         return getCoinAgeInternal(_address, _now);
     }
 
     /**
-    * @dev Retrieve the size of the code on target address, this needs assembly.
+    * @dev Calculates and returns proof-of-stake reward for provided address and time
     *
-    * @param _addr  The address to check if it's a contract.
-    *
-    * @return is_contract   TRUE if it's a contract else false.
+    * @param _address address The address for which reward will be calculated
     */
-    function isContract(address _addr) private view returns (bool is_contract) {
+    function calculateRewardForAddress(address _address) public view onlyOwner returns (uint256) {
+        return calculateRewardInternal(_address, now);
+    }
+
+    /**
+    * @dev Calculates and returns proof-of-stake reward for provided address and time
+    *
+    * @param _address address The address for which reward will be calculated
+    * @param _now timestamp The time for which the reward will be calculated
+    */
+    function calculateRewardForAddressAt(address _address, uint256 _now) public view onlyOwner returns (uint256) {
+        return calculateRewardInternal(_address, _now);
+    }
+
+    /**
+    * @dev Sets the stake start time
+    */
+    function startStakingAt(uint256 timestamp) public onlyOwner {
+        require(stakeStartTime <= 0 && timestamp >= chainStartTime && timestamp > now);
+        stakeStartTime = timestamp;
+    }
+
+    /**
+    * @dev Returns true if the given _address is a contract, false otherwise.
+    */
+    function isContract(address _address) private view returns (bool) {
         uint256 length;
-        /* solium-disable-next-line */
         assembly {
-            length := extcodesize(_addr)
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_address)
         }
-        return length > 0;
+        return (length>0);
     }
-}
 
-contract TrueToken is Standard223Token {
+    /**
+    * @dev Logs coinage record for sender and receiver.
+    *      Deletes sender's previous coinage records if any.
+    *
+    * @param _from address The address which you want to send tokens from
+    * @param _to address The address which you want to transfer to
+    * @param _value uint256 the amount of tokens to be transferred
+    * @param _isContract bool if the receiver is a contract
+    */
+    function logCoinAgeRecord(address _from, address _to, uint256 _value, bool _isContract) private returns (bool) {
+        if (coinAgeRecordMap[_from].length > 0) {
+            delete coinAgeRecordMap[_from];
+        }
 
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public INITIAL_SUPPLY = 25000000;   // 25 million
+        uint64 _now = uint64(now);
 
-    function TrueToken() public {
-        name = "TRUE";
-        symbol = "TRUE";
-        decimals = 18;
+        if (balances[_from] != 0) {
+            coinAgeRecordMap[_from].push(CoinAgeRecord(balances[_from], _now));
+            emit CoinAgeResetEvent(_from, balances[_from], _now);
+        }
 
-        totalSupply_ = INITIAL_SUPPLY * 10 ** uint256(decimals);
-        balances[msg.sender] = totalSupply_;
+        if (_value != 0 && !_isContract) {
+            coinAgeRecordMap[_to].push(CoinAgeRecord(_value, _now));
+            emit CoinAgeRecordEvent(_to, _value, _now);
+        }
+
+        return true;
+    }
+
+    /**
+    * @dev Calculates and returns proof-of-stake reward for provided address
+    *
+    * @param _address address The address for which reward will be calculated
+    * @param _now timestamp The time for which the reward will be calculated
+    */
+    function calculateRewardInternal(address _address, uint256 _now) private view returns (uint256) {
+        uint256 _coinAge = getCoinAgeInternal(_address, _now);
+        if (_coinAge <= 0) {
+            return 0;
+        }
+
+        uint256 interest = getAnnualInterest(_now);
+
+        return (_coinAge.mul(interest)).div(365 * 100);
+    }
+
+    /**
+    * @dev Calculates the coin age for given address and time.
+    *
+    * @param _address address The address for which coinage will be calculated
+    * @param _now timestamp The time for which the coinage will be calculated
+    */
+    function getCoinAgeInternal(address _address, uint256 _now) private view returns (uint256 _coinAge) {
+        if (coinAgeRecordMap[_address].length <= 0) {
+            return 0;
+        }
+
+        for (uint256 i = 0; i < coinAgeRecordMap[_address].length; i++) {
+            if (_now < uint256(coinAgeRecordMap[_address][i].time).add(stakeMinAge)) {
+                continue;
+            }
+
+            uint256 secondsPassed = _now.sub(uint256(coinAgeRecordMap[_address][i].time));
+            if (secondsPassed > stakeMaxAge ) {
+                secondsPassed = stakeMaxAge;
+            }
+
+            _coinAge = _coinAge.add((coinAgeRecordMap[_address][i].amount).mul(secondsPassed.div(1 days)));
+        }
+    }
+
+    /**
+    * @dev Returns the annual interest rate for given time
+    *
+    * @param _now timestamp The time for which the annual interest will be calculated
+    */
+    function getAnnualInterest(uint256 _now) private view returns(uint256 interest) {
+        if (stakeStartTime > 0 && _now >= stakeStartTime && totalSupply_ < MAX_TOTAL_SUPPLY) {
+            uint256 secondsPassed = _now.sub(stakeStartTime);
+            // 1st Year = 30% annually
+            if (secondsPassed <= 365 days) {
+                interest = 30;
+            } else if (secondsPassed <= 547 days) {  // 2nd Year, 1st Half = 25% annually
+                interest = 25;
+            } else if (secondsPassed <= 730 days) {  // 2nd Year, 2nd Half = 20% annually
+                interest = 20;
+            } else if (secondsPassed <= 911 days) {  // 3rd Year, 1st Half = 15% annually
+                interest = 15;
+            } else if (secondsPassed <= 1094 days) {  // 3rd Year, 2nd Half = 10% annually
+                interest = 10;
+            } else {  // 4th Year Onwards = 5% annually
+                interest = 5;
+            }
+        } else {
+            interest = 0;
+        }
     }
 }
