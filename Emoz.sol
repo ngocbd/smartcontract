@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Emoz at 0x1b9c123c28dcef6f91f55b38743d9958661f84aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Emoz at 0x24c689d29c4d778507e1b42dba97dc9203557f43
 */
 pragma solidity ^0.4.15;
 contract Emoz {
