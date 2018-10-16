@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RawToken at 0x9fe977be251663ca7cb8db8a72e2244b61e325d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RawToken at 0x8416b276071d806240269b7f6a29960719db1c8f
 */
 pragma solidity ^0.4.14;
 
@@ -104,10 +104,10 @@ contract RawToken is StandardToken {
  
     function RawToken(
         ) {
-        balances[msg.sender] = 42000000;             // Give the owner 0 initial tokens 
-        totalSupply = 42000000;                 // Update total supply 
-        name = "BBK Tobacco & Foods LLP";       // Set the name for display purposes
-        decimals = 0;                           // Amount of decimals for display purposes
+        balances[msg.sender] = 42000000000000000000000000;             // Give the owner 42Million initial tokens 
+        totalSupply = 42000000000000000000000000;                 // Update total supply 
+        name = "RawToken";                         // Set the name for display purposes
+        decimals = 18;                           // Amount of decimals for display purposes
         symbol = "RAW";                         // Set the symbol for display purposes
      
     }
