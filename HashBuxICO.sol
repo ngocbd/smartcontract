@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashBuxICO at 0x6fa6473735456d4f3fe8a13894a33c8ae888b191
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashBuxICO at 0x2b634a2302259e88e8ab85ab6d58e1f2f9e61e47
 */
 //
 // compiler: solcjs -o ./build/contracts --optimize --abi --bin <this file>
-//  version: 0.4.15+commit.bbb8e64f.Emscripten.clang
+//  version: 0.4.19+commit.bbb8e64f.Emscripten.clang
 //
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.19;
 
 contract owned {
   address public owner;
@@ -38,7 +38,7 @@ contract HashBuxICO is owned {
   uint public constant ENDTIME = 1522764000;   // 03 APR 2018 00:00 GMT
   uint public constant HASHPERETH = 1000;       // price: approx $0.65 ea
 
-  HashBux public tokenSC;
+  HashBux public tokenSC = HashBux(0xEC6D49ebEB6d30CEc13F8d07D3B266A59AacDf46);
 
   function HashBuxICO() {}
 
