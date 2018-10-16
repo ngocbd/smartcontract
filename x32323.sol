@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xd5906d707e223679395ceb6098dd1da8878b6919
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x6947c40ba3fa0e0b2689ea3983e57b746d4568a1
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.24;
+
+//?????//
+
 contract owned {
     address public owner;
 
@@ -17,13 +20,12 @@ contract owned {
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract x32323 is owned{
-
+    
 //?????//
 
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
     mapping (address => bool) public frozenAccount;
-    mapping (address => bool) initialized;
 
     event FrozenFunds(address target, bool frozen);
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -33,16 +35,10 @@ contract x32323 is owned{
         FrozenFunds(target, freeze);
     }
 
-    // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 2;
     uint256 public totalSupply;
-    uint256 public maxSupply = 2300000000;
-    uint256 totalairdrop = 600000000;
-    uint256 airdrop1 = 1700008000; //1900000000;
-    uint256 airdrop2 = 1700011000; //2100000000;
-    uint256 airdrop3 = 1700012500; //2300000000;
     
 //???//
 
@@ -51,89 +47,80 @@ contract x32323 is owned{
         string tokenName,
         string tokenSymbol
     ) public {
-	initialSupply = maxSupply - totalairdrop;
-    balanceOf[msg.sender] = initialSupply;
-    totalSupply = initialSupply;
-        name = "??16";
-        symbol = "??16";         
-    }
-
-//??//
-    function initialize(address _address) internal returns (bool success) {
-
-        if (!initialized[_address]) {
-            initialized[_address] = true ;
-            if(totalSupply < airdrop1){
-                balanceOf[_address] += 2000;
-                totalSupply += 2000;
-            }
-            if(airdrop1 <= totalSupply && totalSupply < airdrop2){
-                balanceOf[_address] += 800;
-                totalSupply += 800;
-            }
-            if(airdrop2 <= totalSupply && totalSupply <= airdrop3-3){
-                balanceOf[_address] += 300;
-                totalSupply += 300;    
-            }
-	    
-        }
-        return true;
+	totalSupply = 1000000000 * 100 ;
+    	balanceOf[msg.sender] = totalSupply ;
+        name = "Leimen coin";
+        symbol = "Lem";         
     }
     
-    function reward(address _address) internal returns (bool success) {
-	    if (totalSupply < maxSupply) {
-	        initialized[_address] = true ;
-            if(totalSupply < airdrop1){
-                balanceOf[_address] += 1000;
-                totalSupply += 1000;
-            }
-            if(airdrop1 <= totalSupply && totalSupply < airdrop2){
-                balanceOf[_address] += 300;
-                totalSupply += 300;
-            }
-            if(airdrop2 <= totalSupply && totalSupply < airdrop3){
-                balanceOf[_address] += 100;
-                totalSupply += 100;    
-            }
-		
-	    }
-	    return true;
+//????//
+
+    uint256 minBalance ;
+    uint256 price ;
+    bool stopped ;
+    bool selling;
+
+
+    function set_prices(uint256 price_wei) onlyOwner {
+        price = price_wei  ;
     }
+
+    function withdrawal_Lem(uint256 amount)  onlyOwner {
+        require(balanceOf[this] >= amount) ;
+        balanceOf[this] -= amount ;
+        balanceOf[msg.sender] += amount ;
+    }
+    
+    function withdrawal_Eth(uint amount_wei) onlyOwner {
+        msg.sender.transfer(amount_wei) ;
+    }
+    
+    function set_Name(string _name) onlyOwner {
+        name = _name;
+    }
+    
+    function set_symbol(string _symbol) onlyOwner {
+        symbol = _symbol;
+    }
+    
+    function set_sell(bool _selling) onlyOwner {
+        selling = _selling;
+    }
+    
+    function stop() onlyOwner {
+        stopped = true;
+    }
+
+    function start() onlyOwner {
+        stopped = false;
+    }
+
 //??//
 
     function _transfer(address _from, address _to, uint _value) internal {
-    	require(!frozenAccount[_from]);
+	    require(!frozenAccount[_from]);
+	    require(!stopped);
         require(_to != 0x0);
-
+        
+        require(_value >= 0);
         require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
 
-        //uint previousBalances = balanceOf[_from] + balanceOf[_to];
-	   
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-
         Transfer(_from, _to, _value);
 
-        //assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-
-	initialize(_from);
-	reward(_from);
-	initialize(_to);
-        
-        
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     function transfer(address _to, uint256 _value) public {
-        
-	if(msg.sender.balance < minBalanceForAccounts)
-            sell((minBalanceForAccounts - msg.sender.balance) / sellPrice);
         _transfer(msg.sender, _to, _value);
-    }
-
+	    }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        require(_value <= allowance[_from][msg.sender]); 
         allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
@@ -155,40 +142,20 @@ contract x32323 is owned{
         }
     }
 
-//??//
+//??
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
+    function () payable {
+        buy();
     }
 
     function buy() payable returns (uint amount){
-        amount = msg.value / buyPrice;                    // calculates the amount
-        require(balanceOf[this] >= amount);               // checks if it has enough to sell
-        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[this] -= amount;                        // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);               // execute an event reflecting the change
-        return amount;                                    // ends function and returns
+        require(price != 0);
+	    require(selling);
+        amount = msg.value / price * 100 ;
+        require(balanceOf[this] > amount);           
+        balanceOf[msg.sender] += amount;           
+        balanceOf[this] -= amount; 
+        Transfer(this, msg.sender, amount);         
+        return amount;    
     }
-
-    function sell(uint amount) returns (uint revenue){
-        require(balanceOf[msg.sender] >= amount);         // checks if the sender has enough to sell
-        balanceOf[this] += amount;                        // adds the amount to owner's balance
-        balanceOf[msg.sender] -= amount;                  // subtracts the amount from seller's balance
-        revenue = amount * sellPrice;
-        msg.sender.transfer(revenue);                     // sends ether to the seller: it's important to do this last to prevent recursion attacks
-        Transfer(msg.sender, this, amount);               // executes an event reflecting on the change
-        return revenue;                                   // ends function and returns
-    }
-
-
-    uint minBalanceForAccounts;
-    
-    function setMinBalance(uint minimumBalanceInFinney) onlyOwner {
-         minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
-    }
-
 }
