@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0xaBeBf8931C4fFE1b996398d6cB3e86510726E713
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0xe96515328832c2453bcf7499eef54d6ef80dacd2
 */
 pragma solidity 0.4.18;
 
@@ -18,6 +18,25 @@ interface KyberReserveInterface {
         returns(bool);
 
     function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint);
+}
+
+interface ERC20 {
+    function totalSupply() public view returns (uint supply);
+    function balanceOf(address _owner) public view returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    function decimals() public view returns(uint digits);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+interface FeeBurnerInterface {
+    function handleFees (uint tradeWeiAmount, address reserve, address wallet) public returns(bool);
+}
+
+contract WhiteListInterface {
+    function getUserCapInWei(address user) external view returns (uint userCapWei);
 }
 
 contract Utils {
@@ -79,25 +98,6 @@ contract Utils {
     }
 }
 
-interface FeeBurnerInterface {
-    function handleFees (uint tradeWeiAmount, address reserve, address wallet) public returns(bool);
-}
-
-interface ERC20 {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf(address _owner) public view returns (uint balance);
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint remaining);
-    function decimals() public view returns(uint digits);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
-
-contract WhiteListInterface {
-    function getUserCapInWei(address user) external view returns (uint userCapWei);
-}
-
 contract PermissionGroups {
 
     address public admin;
@@ -106,6 +106,7 @@ contract PermissionGroups {
     mapping(address=>bool) internal alerters;
     address[] internal operatorsGroup;
     address[] internal alertersGroup;
+    uint constant internal MAX_GROUP_SIZE = 50;
 
     function PermissionGroups() public {
         admin = msg.sender;
@@ -146,6 +147,17 @@ contract PermissionGroups {
         pendingAdmin = newAdmin;
     }
 
+    /**
+     * @dev Allows the current admin to set the admin in one tx. Useful initial deployment.
+     * @param newAdmin The address to transfer ownership to.
+     */
+    function transferAdminQuickly(address newAdmin) public onlyAdmin {
+        require(newAdmin != address(0));
+        TransferAdminPending(newAdmin);
+        AdminClaimed(newAdmin, admin);
+        admin = newAdmin;
+    }
+
     event AdminClaimed( address newAdmin, address previousAdmin);
 
     /**
@@ -162,6 +174,8 @@ contract PermissionGroups {
 
     function addAlerter(address newAlerter) public onlyAdmin {
         require(!alerters[newAlerter]); // prevent duplicates.
+        require(alertersGroup.length < MAX_GROUP_SIZE);
+
         AlerterAdded(newAlerter, true);
         alerters[newAlerter] = true;
         alertersGroup.push(newAlerter);
@@ -185,6 +199,8 @@ contract PermissionGroups {
 
     function addOperator(address newOperator) public onlyAdmin {
         require(!operators[newOperator]); // prevent duplicates.
+        require(operatorsGroup.length < MAX_GROUP_SIZE);
+
         OperatorAdded(newOperator, true);
         operators[newOperator] = true;
         operatorsGroup.push(newOperator);
@@ -229,59 +245,6 @@ contract Withdrawable is PermissionGroups {
     }
 }
 
-interface ExpectedRateInterface {
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) public view
-        returns (uint expectedRate, uint slippageRate);
-}
-
-contract ExpectedRate is Withdrawable, ExpectedRateInterface {
-
-    KyberNetwork public kyberNetwork;
-    uint public quantityFactor = 2;
-    uint public minSlippageFactorInBps = 50;
-
-    function ExpectedRate(KyberNetwork _kyberNetwork, address _admin) public {
-        require(_admin != address(0));
-        require(_kyberNetwork != address(0));
-        kyberNetwork = _kyberNetwork;
-        admin = _admin;
-    }
-
-    event QuantityFactorSet (uint newFactor, uint oldFactor, address sender);
-
-    function setQuantityFactor(uint newFactor) public onlyOperator {
-        QuantityFactorSet(quantityFactor, newFactor, msg.sender);
-        quantityFactor = newFactor;
-    }
-
-    event MinSlippageFactorSet (uint newMin, uint oldMin, address sender);
-
-    function setMinSlippageFactor(uint bps) public onlyOperator {
-        MinSlippageFactorSet(bps, minSlippageFactorInBps, msg.sender);
-        minSlippageFactorInBps = bps;
-    }
-
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty)
-        public view
-        returns (uint expectedRate, uint slippageRate)
-    {
-        require(quantityFactor != 0);
-
-        uint bestReserve;
-        uint minSlippage;
-
-        (bestReserve, expectedRate) = kyberNetwork.findBestRate(src, dest, srcQty);
-        (bestReserve, slippageRate) = kyberNetwork.findBestRate(src, dest, (srcQty * quantityFactor));
-
-        minSlippage = ((10000 - minSlippageFactorInBps) * expectedRate) / 10000;
-        if (slippageRate >= minSlippage) {
-            slippageRate = minSlippage;
-        }
-
-        return (expectedRate, slippageRate);
-    }
-}
-
 contract KyberNetwork is Withdrawable, Utils {
 
     uint public negligibleRateDiff = 10; // basic rate steps will be in 0.01%
@@ -292,6 +255,7 @@ contract KyberNetwork is Withdrawable, Utils {
     FeeBurnerInterface    public feeBurnerContract;
     uint                  public maxGasPrice = 50 * 1000 * 1000 * 1000; // 50 gwei
     bool                  public enabled = false; // network is enabled
+    uint                  public networkState; // this is only a field for UI.
     mapping(address=>mapping(bytes32=>bool)) public perReserveListedPairs;
 
     function KyberNetwork(address _admin) public {
@@ -447,6 +411,10 @@ contract KyberNetwork is Withdrawable, Utils {
             require(expectedRateContract != address(0));
         }
         enabled = _enable;
+    }
+
+    function setNetworkState(uint _networkState) public onlyOperator {
+        networkState = _networkState;
     }
 
     /// @dev returns number of reserves
@@ -663,5 +631,58 @@ contract KyberNetwork is Withdrawable, Utils {
         }
 
         return true;
+    }
+}
+
+interface ExpectedRateInterface {
+    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) public view
+        returns (uint expectedRate, uint slippageRate);
+}
+
+contract ExpectedRate is Withdrawable, ExpectedRateInterface {
+
+    KyberNetwork public kyberNetwork;
+    uint public quantityFactor = 2;
+    uint public minSlippageFactorInBps = 50;
+
+    function ExpectedRate(KyberNetwork _kyberNetwork, address _admin) public {
+        require(_admin != address(0));
+        require(_kyberNetwork != address(0));
+        kyberNetwork = _kyberNetwork;
+        admin = _admin;
+    }
+
+    event QuantityFactorSet (uint newFactor, uint oldFactor, address sender);
+
+    function setQuantityFactor(uint newFactor) public onlyOperator {
+        QuantityFactorSet(quantityFactor, newFactor, msg.sender);
+        quantityFactor = newFactor;
+    }
+
+    event MinSlippageFactorSet (uint newMin, uint oldMin, address sender);
+
+    function setMinSlippageFactor(uint bps) public onlyOperator {
+        MinSlippageFactorSet(bps, minSlippageFactorInBps, msg.sender);
+        minSlippageFactorInBps = bps;
+    }
+
+    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty)
+        public view
+        returns (uint expectedRate, uint slippageRate)
+    {
+        require(quantityFactor != 0);
+
+        uint bestReserve;
+        uint minSlippage;
+
+        (bestReserve, expectedRate) = kyberNetwork.findBestRate(src, dest, srcQty);
+        (bestReserve, slippageRate) = kyberNetwork.findBestRate(src, dest, (srcQty * quantityFactor));
+
+        minSlippage = ((10000 - minSlippageFactorInBps) * expectedRate) / 10000;
+        if (slippageRate >= minSlippage) {
+            slippageRate = minSlippage;
+        }
+
+        return (expectedRate, slippageRate);
     }
 }
