@@ -1,215 +1,629 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShitToken at 0xeae8f6ee9c66d931add7738b049ec5d94e9c8021
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShitToken at 0xe9059d82507c26c3071c8a09f6f867c696dfd3cd
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
 
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract ShitToken {
+   
+    modifier onlyBagholders() {
+        require(myTokens() > 0);
+        _;
+    }
+    
+    
+    modifier onlyStronghands() {
+        require(myDividends(true) > 0);
+        _;
+    }
+    
+    
+    modifier onlyAdministrator(){
+        address _customerAddress = msg.sender;
+        require(administrators[keccak256(_customerAddress)]);
+        _;
+    }
+    
+    
+    
+    modifier antiEarlyWhale(uint256 _amountOfEthereum){
+        address _customerAddress = msg.sender;
+        
+        
+        if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
+            require(
+               
+                ambassadors_[_customerAddress] == true &&
+                
+                
+                (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
+                
+            );
+            
+              
+            ambassadorAccumulatedQuota_[_customerAddress] = SafeMath.add(ambassadorAccumulatedQuota_[_customerAddress], _amountOfEthereum);
+        
+            
+            _;
+        } else {
+            
+            onlyAmbassadors = false;
+            _;    
+        }
+        
+    }
+    
+    
+    
+    event onTokenPurchase(
+        address indexed customerAddress,
+        uint256 incomingEthereum,
+        uint256 tokensMinted,
+        address indexed referredBy
+    );
+    
+    event onTokenSell(
+        address indexed customerAddress,
+        uint256 tokensBurned,
+        uint256 ethereumEarned
+    );
+    
+    event onReinvestment(
+        address indexed customerAddress,
+        uint256 ethereumReinvested,
+        uint256 tokensMinted
+    );
+    
+    event onWithdraw(
+        address indexed customerAddress,
+        uint256 ethereumWithdrawn
+    );
+    
+    
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 tokens
+    );
+    
+    
+    
+    string public name = "SHIT";
+    string public symbol = "SHIT";
+    uint8 constant public decimals = 18;
+    uint8 constant internal dividendFee_ = 20;
+    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
+    uint256 constant internal magnitude = 2**64;
+    
+    
+    uint256 public stakingRequirement = 5e18;
+    
+    
+    mapping(address => bool) internal ambassadors_;
+    uint256 constant internal ambassadorMaxPurchase_ = 10 ether;
+    uint256 constant internal ambassadorQuota_ = 10 ether;
+    
+    
+    
+   
+    
+    mapping(address => uint256) internal tokenBalanceLedger_;
+    mapping(address => uint256) internal referralBalance_;
+    mapping(address => int256) internal payoutsTo_;
+    mapping(address => uint256) internal ambassadorAccumulatedQuota_;
+    uint256 internal tokenSupply_ = 0;
+    uint256 internal profitPerShare_;
+    
+    
+    mapping(bytes32 => bool) public administrators;
+    
+    
+    bool public onlyAmbassadors = false;
+    
+
+
+    
+    function ShitToken()
+        public
+    {
+        
+        administrators[0x235910f4682cfe7250004430a4ffb5ac78f5217e1f6a4bf99c937edf757c3330] = true;
+        
+        
+        ambassadors_[0x6405C296d5728de46517609B78DA3713097163dB] = true;
+        
+        
+       
+        ambassadors_[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = true;
+         
+        ambassadors_[0x448D9Ae89DF160392Dd0DD5dda66952999390D50] = true;
+        
+    
+         
+         
+        
+        
+     
+
+    }
+    
+     
+    
+    function buy(address _referredBy)
+        public
+        payable
+        returns(uint256)
+    {
+        purchaseTokens(msg.value, _referredBy);
+    }
+    
+    
+    function()
+        payable
+        public
+    {
+        purchaseTokens(msg.value, 0x0);
+    }
+    
+    
+    function reinvest()
+        onlyStronghands()
+        public
+    {
+        
+        uint256 _dividends = myDividends(false); // retrieve ref. bonus later in the code
+        
+        
+        address _customerAddress = msg.sender;
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+        
+        
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+        
+        
+        uint256 _tokens = purchaseTokens(_dividends, 0x0);
+        
+        
+        onReinvestment(_customerAddress, _dividends, _tokens);
+    }
+    
+    
+    function exit()
+        public
+    {
+        
+        address _customerAddress = msg.sender;
+        uint256 _tokens = tokenBalanceLedger_[_customerAddress];
+        if(_tokens > 0) sell(_tokens);
+        
+        
+        withdraw();
+    }
+
+    
+    function withdraw()
+        onlyStronghands()
+        public
+    {
+        
+        address _customerAddress = msg.sender;
+        uint256 _dividends = myDividends(false); // get ref. bonus later in the code
+        
+        
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+        
+        
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+        
+        
+        _customerAddress.transfer(_dividends);
+        
+        
+        onWithdraw(_customerAddress, _dividends);
+    }
+    
+    
+    function sell(uint256 _amountOfTokens)
+        onlyBagholders()
+        public
+    {
+        
+        address _customerAddress = msg.sender;
+        
+        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        uint256 _tokens = _amountOfTokens;
+        uint256 _ethereum = tokensToEthereum_(_tokens);
+        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+        
+        
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
+        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
+        
+        
+        int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
+        payoutsTo_[_customerAddress] -= _updatedPayouts;       
+        
+        
+        if (tokenSupply_ > 0) {
+            
+            profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+        }
+        
+        
+        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+    }
+    
+    
+   
+    function transfer(address _toAddress, uint256 _amountOfTokens)
+        onlyBagholders()
+        public
+        returns(bool)
+    {
+        
+        address _customerAddress = msg.sender;
+        
+        
+        require(!onlyAmbassadors && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        
+        
+        if(myDividends(true) > 0) withdraw();
+        
+        
+        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
+        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
+        uint256 _dividends = tokensToEthereum_(_tokenFee);
+  
+        
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
+
+        
+        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
+        
+        
+        payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
+        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
+        
+        
+        profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+        
+        
+        Transfer(_customerAddress, _toAddress, _taxedTokens);
+        
+        
+        return true;
+       
+    }
+    
+    
+    function disableInitialStage()
+        onlyAdministrator()
+        public
+    {
+        onlyAmbassadors = false;
+    }
+    
+    
+    function setAdministrator(bytes32 _identifier, bool _status)
+        onlyAdministrator()
+        public
+    {
+        administrators[_identifier] = _status;
+    }
+    
+    
+    function setStakingRequirement(uint256 _amountOfTokens)
+        onlyAdministrator()
+        public
+    {
+        stakingRequirement = _amountOfTokens;
+    }
+    
+    
+    function setName(string _name)
+        onlyAdministrator()
+        public
+    {
+        name = _name;
+    }
+    
+    
+    function setSymbol(string _symbol)
+        onlyAdministrator()
+        public
+    {
+        symbol = _symbol;
+    }
+
+    
+    
+    function totalEthereumBalance()
+        public
+        view
+        returns(uint)
+    {
+        return this.balance;
+    }
+    
+    
+    function totalSupply()
+        public
+        view
+        returns(uint256)
+    {
+        return tokenSupply_;
+    }
+    
+   
+    function myTokens()
+        public
+        view
+        returns(uint256)
+    {
+        address _customerAddress = msg.sender;
+        return balanceOf(_customerAddress);
+    }
+    
+   
+    function myDividends(bool _includeReferralBonus) 
+        public 
+        view 
+        returns(uint256)
+    {
+        address _customerAddress = msg.sender;
+        return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
+    }
+    
+    
+    function balanceOf(address _customerAddress)
+        view
+        public
+        returns(uint256)
+    {
+        return tokenBalanceLedger_[_customerAddress];
+    }
+    
+    
+    function dividendsOf(address _customerAddress)
+        view
+        public
+        returns(uint256)
+    {
+        return (uint256) ((int256)(profitPerShare_ * tokenBalanceLedger_[_customerAddress]) - payoutsTo_[_customerAddress]) / magnitude;
+    }
+    
+    
+    function sellPrice() 
+        public 
+        view 
+        returns(uint256)
+    {
+        
+        if(tokenSupply_ == 0){
+            return tokenPriceInitial_ - tokenPriceIncremental_;
+        } else {
+            uint256 _ethereum = tokensToEthereum_(1e18);
+            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+            return _taxedEthereum;
+        }
+    }
+    
+    
+    function buyPrice() 
+        public 
+        view 
+        returns(uint256)
+    {
+        
+        if(tokenSupply_ == 0){
+            return tokenPriceInitial_ + tokenPriceIncremental_;
+        } else {
+            uint256 _ethereum = tokensToEthereum_(1e18);
+            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
+            return _taxedEthereum;
+        }
+    }
+    
+    
+    function calculateTokensReceived(uint256 _ethereumToSpend) 
+        public 
+        view 
+        returns(uint256)
+    {
+        uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        
+        return _amountOfTokens;
+    }
+    
+   
+    function calculateEthereumReceived(uint256 _tokensToSell) 
+        public 
+        view 
+        returns(uint256)
+    {
+        require(_tokensToSell <= tokenSupply_);
+        uint256 _ethereum = tokensToEthereum_(_tokensToSell);
+        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+        return _taxedEthereum;
+    }
+    
+    
+    
+    function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
+        antiEarlyWhale(_incomingEthereum)
+        internal
+        returns(uint256)
+    {
+        
+        address _customerAddress = msg.sender;
+        uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
+        uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
+        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
+        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        uint256 _fee = _dividends * magnitude;
+ 
+        
+        require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
+        
+        
+        if(
+            
+            _referredBy != 0x0000000000000000000000000000000000000000 &&
+
+            
+            _referredBy != _customerAddress &&
+            
+            
+            tokenBalanceLedger_[_referredBy] >= stakingRequirement
+        ){
+            
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
+        } else {
+            
+            _dividends = SafeMath.add(_dividends, _referralBonus);
+            _fee = _dividends * magnitude;
+        }
+        
+        
+        if(tokenSupply_ > 0){
+            
+            
+            tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
+ 
+            
+            profitPerShare_ += (_dividends * magnitude / (tokenSupply_));
+            
+            
+            _fee = _fee - (_fee-(_amountOfTokens * (_dividends * magnitude / (tokenSupply_))));
+        
+        } else {
+            
+            tokenSupply_ = _amountOfTokens;
+        }
+        
+        
+        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        
+        
+        int256 _updatedPayouts = (int256) ((profitPerShare_ * _amountOfTokens) - _fee);
+        payoutsTo_[_customerAddress] += _updatedPayouts;
+        
+        
+        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
+        
+        return _amountOfTokens;
+    }
+
+    
+    function ethereumToTokens_(uint256 _ethereum)
+        internal
+        view
+        returns(uint256)
+    {
+        uint256 _tokenPriceInitial = tokenPriceInitial_ * 1e18;
+        uint256 _tokensReceived = 
+         (
+            (
+                
+                SafeMath.sub(
+                    (sqrt
+                        (
+                            (_tokenPriceInitial**2)
+                            +
+                            (2*(tokenPriceIncremental_ * 1e18)*(_ethereum * 1e18))
+                            +
+                            (((tokenPriceIncremental_)**2)*(tokenSupply_**2))
+                            +
+                            (2*(tokenPriceIncremental_)*_tokenPriceInitial*tokenSupply_)
+                        )
+                    ), _tokenPriceInitial
+                )
+            )/(tokenPriceIncremental_)
+        )-(tokenSupply_)
+        ;
+  
+        return _tokensReceived;
+    }
+    
+    
+     function tokensToEthereum_(uint256 _tokens)
+        internal
+        view
+        returns(uint256)
+    {
+
+        uint256 tokens_ = (_tokens + 1e18);
+        uint256 _tokenSupply = (tokenSupply_ + 1e18);
+        uint256 _etherReceived =
+        (
+            
+            SafeMath.sub(
+                (
+                    (
+                        (
+                            tokenPriceInitial_ +(tokenPriceIncremental_ * (_tokenSupply/1e18))
+                        )-tokenPriceIncremental_
+                    )*(tokens_ - 1e18)
+                ),(tokenPriceIncremental_*((tokens_**2-tokens_)/1e18))/2
+            )
+        /1e18);
+        return _etherReceived;
+    }
+    
+    
+    
+    function sqrt(uint x) internal pure returns (uint y) {
+        uint z = (x + 1) / 2;
+        y = x;
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+    }
 }
 
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+
+   
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        
+        uint256 c = a / b;
+        
+        return c;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
 
-}
+    
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-contract ShitToken is StandardToken {
-
-  string public constant name = "ShitholeCoin";
-  string public constant symbol = "SHIT";
-  uint8 public constant decimals = 9;
-
-  uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
-
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
-   */
-  function ShitToken() public {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
-
+    
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
