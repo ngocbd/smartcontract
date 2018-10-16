@@ -1,264 +1,180 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Team at 0xd6e1ad11dbcb329bfa1584a7958d1e65aa8ded41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Team at 0x0b3a0edd51ee5e7900666bbfdf139ea55ccf0ca0
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.21;
 
-contract PlayerToken {
-    function totalSupply() public view returns (uint256 total);
-    function balanceOf(address _owner) public view returns (uint balance);
-    function ownerOf(uint256 _tokenId) public view returns (address owner);
-    function approve(address _to, uint256 _tokenId) external;
-    function transfer(address _to, uint256 _tokenId) external;
-    function tokensOfOwner(address _owner) external view returns (uint256[] ownerTokens);
-    function createPlayer(uint32[7] _skills, uint256 _position, address _owner) public returns (uint256);
-    function getPlayer(uint256 playerId) public view returns(uint32 talent, uint32 tactics, uint32 dribbling, uint32 kick,
-       uint32 speed, uint32 pass, uint32 selection);
-    function getPosition(uint256 _playerId) public view returns(uint256);
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
 
-contract FMWorldAccessControl {
-    address public ceoAddress;
-    address public cooAddress;
+contract Ownable {
 
-    bool public pause = false;
+    address public owner;
 
-    modifier onlyCEO() {
-        require(msg.sender == ceoAddress);
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
 
-    modifier onlyCOO() {
-        require(msg.sender == cooAddress);
-        _;
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        owner = newOwner;
     }
-
-    modifier onlyC() {
-        require(
-            msg.sender == cooAddress ||
-            msg.sender == ceoAddress
-        );
-        _;
-    }
-
-    modifier notPause() {
-        require(!pause);
-        _;
-    }
-
-    function setCEO(address _newCEO) external onlyCEO {
-        require(_newCEO != address(0));
-
-        ceoAddress = _newCEO;
-    }
-
-    function setCOO(address _newCOO) external onlyCEO {
-        require(_newCOO != address(0));
-
-        cooAddress = _newCOO;
-    }
-
-
-    function setPause(bool _pause) external onlyC {
-        pause = _pause;
-    }
-
-
 }
 
+interface smartContract {
+    function transfer(address _to, uint256 _value) payable external;
+    function approve(address _spender, uint256 _value) external returns (bool success);
+}
 
-contract Team is FMWorldAccessControl
-{
-    struct TeamStruct {
-        string name;
-        string logo;
-        uint256[] playersIds;
-        uint256 minSkills;
-        uint256 minTalent;
-        mapping(uint256 => uint256) countPositions;
+contract Basic is Ownable {
+    using SafeMath for uint256;
+
+    // This creates an array with all balances
+    mapping(address => uint256) public totalAmount;
+    mapping(address => uint256) public availableAmount;
+    mapping(address => uint256) public withdrawedAmount;
+    uint[] public periods;
+    uint256 public currentPeriod;
+    smartContract public contractAddress;
+    uint256 public ownerWithdrawalDate;
+
+    // fix for short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length == size + 4);
+        _;
     }
 
-    uint256 public countPlayersInPosition;
-
-    mapping(uint256 => TeamStruct) public teams;
-
-    uint256[] public teamsIds;
-
-    mapping (uint256 => uint256) mapPlayerTeam;
-
-    mapping (address => uint256) mapOwnerTeam;
-
-    address public playerTokenAddress;
-
-    function Team(address _playerTokenAddress) public {
-        countPlayersInPosition = 4;
-        playerTokenAddress = _playerTokenAddress;
-
-        ceoAddress = msg.sender;
-        cooAddress = msg.sender;
+    /**
+     * Constructor function
+     *
+     * transfer tokens to the smart contract here
+     */
+    function Basic(address _contractAddress) public onlyOwner {
+        contractAddress = smartContract(_contractAddress);
     }
 
-    function setName(uint256 _teamId, string _name) external onlyCEO {
-        teams[_teamId].name = _name;
-    }
-
-    function setLogo(uint256 _teamId, string _logo) external onlyCEO {
-        teams[_teamId].logo = _logo;
-    }
-
-
-    function getTeamSumSkills(uint256 _teamId) public view returns(uint256 sumSkills) {
-        PlayerToken playerToken = PlayerToken(playerTokenAddress);
-        uint256 l = teams[_teamId].playersIds.length;
-        for (uint256 _playerIndex = 0; _playerIndex < l; _playerIndex++) {
-            var (_talent, _tactics, _dribbling, _kick, _speed, _pass, _selection) = playerToken.getPlayer(teams[_teamId].playersIds[_playerIndex]);
-            sumSkills +=  _tactics + _dribbling + _kick + _speed + _pass + _selection;
+    function _recalculateAvailable(address _addr) internal {
+        _updateCurrentPeriod();
+        uint256 available;
+        uint256 calcPeriod = currentPeriod + 1;
+        if (calcPeriod < periods.length) {
+            available = totalAmount[_addr].div(periods.length).mul(calcPeriod);
+            //you don't have anything to withdraw
+            require(available > withdrawedAmount[_addr]);
+            //remove already withdrawed tokens
+            available = available.sub(withdrawedAmount[_addr]);
+        } else {
+            available = totalAmount[_addr].sub(withdrawedAmount[_addr]);
         }
+        availableAmount[_addr] = available;
     }
 
-    function setPlayerTokenAddress(address _playerTokenAddress) public onlyCEO {
-        playerTokenAddress = _playerTokenAddress;
+    function addRecipient(address _from, uint256 _amount) external onlyOwner onlyPayloadSize(2 * 32) {
+        require(_from != 0x0);
+        require(totalAmount[_from] == 0);
+        totalAmount[_from] = _amount;
+        availableAmount[_from] = 0;
+        withdrawedAmount[_from] = 0;
     }
 
-    function getPlayerIdOfIndex(uint256 _teamId, uint256 index) public view returns (uint256) {
-        return teams[_teamId].playersIds[index];
+    function withdraw() public payable {
+        _withdraw(msg.sender);
     }
 
-    function getCountTeams() public view returns(uint256) {
-        return teamsIds.length;
+    function _withdraw(address _addr) internal {
+        require(_addr != 0x0);
+        require(totalAmount[_addr] > 0);
+
+        //Recalculate available balance if time has come
+        _recalculateAvailable(_addr);
+        require(availableAmount[_addr] > 0);
+        uint256 available = availableAmount[_addr];
+        withdrawedAmount[_addr] = withdrawedAmount[_addr].add(available);
+        availableAmount[_addr] = 0;
+
+        contractAddress.transfer(_addr, available);
     }
 
-    function getAllTeamsIds() public view returns(uint256[]) {
-        return teamsIds;
+    function triggerWithdraw(address _addr) public payable onlyOwner {
+        _withdraw(_addr);
     }
 
-    function setCountPlayersInPosition(uint256 _countPlayersInPosition) public onlyCEO {
-        countPlayersInPosition = _countPlayersInPosition;
-    }
-    
-    function getMinSkills(uint256 _teamId) public view returns(uint256) {
-        return teams[_teamId].minSkills;
-    }
-    
-    function getMinTalent(uint256 _teamId)  public view returns(uint256) {
-        return teams[_teamId].minTalent;
+    // owner may withdraw funds after some period of time
+    function withdrawToOwner(uint256 _amount) external onlyOwner {
+        // no need to create modifier for one case
+        require(now > ownerWithdrawalDate);
+        contractAddress.transfer(msg.sender, _amount);
     }
 
-    function getTeam(uint256 _teamId) public view returns(string _name, string _logo, uint256 _minSkills, uint256 _minTalent,
-        uint256 _countPlayers, uint256 _countPositionsGk, uint256 _countPositionsDf, uint256 _countPositionsMd, uint256 _countPositionsFw) {
-        _name = teams[_teamId].name;
-        _logo = teams[_teamId].logo;
-        _minSkills = teams[_teamId].minSkills;
-        _minTalent = teams[_teamId].minTalent;
-        _countPlayers = teams[_teamId].playersIds.length;
-        _countPositionsGk = teams[_teamId].countPositions[1];
-        _countPositionsDf = teams[_teamId].countPositions[2];
-        _countPositionsMd = teams[_teamId].countPositions[3];
-        _countPositionsFw = teams[_teamId].countPositions[4];
-    }
-
-    function createTeam(string _name, string _logo, uint256 _minTalent, uint256 _minSkills, address _owner, uint256 _playerId) public onlyCOO returns(uint256 _teamId) {
-        _teamId = teamsIds.length + 1;
-        PlayerToken playerToken = PlayerToken(playerTokenAddress);
-        uint256 _position = playerToken.getPosition(_playerId);
-        teams[_teamId].name = _name;
-        teams[_teamId].minSkills = _minSkills;
-        teams[_teamId].minTalent = _minTalent;
-        teams[_teamId].logo = _logo;
-        teamsIds.push(_teamId);
-        _addOwnerPlayerToTeam(_teamId, _owner, _playerId, _position);
-    }
-
-    function getPlayerTeam(uint256 _playerId) public view returns(uint256) {
-        return mapPlayerTeam[_playerId];
-    }
-
-    function getOwnerTeam(address _owner) public view returns(uint256) {
-        return mapOwnerTeam[_owner];
-    }
-
-    function isTeam(uint256 _teamId) public view returns(bool) {
-        if (teams[_teamId].minTalent == 0) {
-            return false;
-        }
-        return true;
-    }
-
-    function getTeamPlayers(uint256 _teamId) public view returns(uint256[]) {
-        return teams[_teamId].playersIds;
-    }
-
-    function getCountPlayersOfOwner(uint256 _teamId, address _owner) public view returns(uint256 count) {
-        PlayerToken playerToken = PlayerToken(playerTokenAddress);
-        for (uint256 i = 0; i < teams[_teamId].playersIds.length; i++) {
-            if (playerToken.ownerOf(teams[_teamId].playersIds[i]) == _owner) {
-                count++;
+    function _updateCurrentPeriod() internal {
+        require(periods.length >= 1);
+        for (uint i = 0; i < periods.length; i++) {
+            if (periods[i] <= now && i >= currentPeriod) {
+                currentPeriod = i;
             }
         }
     }
+}
 
-    function getCountPlayersOfTeam(uint256 _teamId) public view returns(uint256) {
-        return teams[_teamId].playersIds.length;
+contract Team is Basic{
+    function Team(address _contractAddress) Basic(_contractAddress) public{
+        periods = [
+            now + 213 days,
+            now + 244 days,
+            now + 274 days,
+            now + 305 days,
+            now + 335 days,
+            now + 365 days
+        ];
+        ownerWithdrawalDate = now + 395 days;
     }
-
-    function getCountPosition(uint256 _teamId, uint256 _position) public view returns(uint256) {
-        return teams[_teamId].countPositions[_position];
-    }
-
-
-    function _addOwnerPlayerToTeam(uint256 _teamId, address _owner, uint256 _playerId, uint256 _position) internal {
-        teams[_teamId].playersIds.push(_playerId);
-        teams[_teamId].countPositions[_position] += 1;
-        mapOwnerTeam[_owner] = _teamId;
-        mapPlayerTeam[_playerId] = _teamId;
-    }
-
-    function joinTeam(uint256 _teamId, address _owner, uint256 _playerId, uint256 _position) public onlyCOO {
-        _addOwnerPlayerToTeam(_teamId, _owner, _playerId, _position);
-    }
-
-    function leaveTeam(uint256 _teamId, address _owner, uint256 _playerId, uint256 _position) public onlyCOO {
-        PlayerToken playerToken = PlayerToken(playerTokenAddress);
-
-        delete mapPlayerTeam[_playerId];
-        //
-
-        teams[_teamId].countPositions[_position] -= 1;
-        //
-
-        for (uint256 i = 0; i < teams[_teamId].playersIds.length; i++) {
-            if (teams[_teamId].playersIds[i] == _playerId) {
-                _removePlayer(_teamId, i);
-                break;
-            }
-        }
-
-        bool isMapOwnerTeamDelete = true;
-        for (uint256 pl = 0; pl < teams[_teamId].playersIds.length; pl++) {
-            if (_owner == playerToken.ownerOf(teams[_teamId].playersIds[pl])) {
-                isMapOwnerTeamDelete = false;
-                break;
-            }
-        }
-
-        if (isMapOwnerTeamDelete) {
-            delete mapOwnerTeam[_owner];
-        }
-    }
-
-    function _removePlayer(uint256 _teamId, uint256 index) internal {
-        if (index >= teams[_teamId].playersIds.length) return;
-
-        for (uint i = index; i<teams[_teamId].playersIds.length-1; i++){
-            teams[_teamId].playersIds[i] = teams[_teamId].playersIds[i+1];
-        }
-        delete teams[_teamId].playersIds[teams[_teamId].playersIds.length-1];
-        teams[_teamId].playersIds.length--;
-    }
-
-
-
 }
