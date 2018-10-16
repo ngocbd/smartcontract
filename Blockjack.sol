@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Blockjack at 0x25b7dbaf654718171892f39357af75e060b2db5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Blockjack at 0x36b14bae0989f65f80892b99a55378d3e1a80c81
 */
 library ArrayLib {
   // Inserts to keep array sorted (assumes input array is sorted)
@@ -18,7 +18,6 @@ library ArrayLib {
 		self[insertingIndex] = n;
 	}
 }
-
 
 library DeckLib {
 	using ArrayLib for uint8[];
@@ -89,6 +88,14 @@ library DeckLib {
 	}
 }
 
+contract AbstractBlockjackLogs {
+  event GameEnded(uint256 gameID, address player, uint gameResult, uint256 payout, uint8 playerHand, uint8 houseHand);
+  event GameNeedsTick(uint256 gameID, address player, uint256 actionBlock);
+
+  function recordLog(uint256 gameID, address player, uint gameResult, uint256 payout, uint8 playerHand, uint8 houseHand);
+  function tickRequiredLog(uint256 gameID, address player, uint256 actionBlock);
+}
+
 library GameLib {
   using DeckLib for *;
 
@@ -96,7 +103,7 @@ library GameLib {
   uint8 constant target = 21;
 
   enum ComparaisonResult { First, Second, Tie }
-  enum GameState { InitialCards, Waiting, Hit, Stand, Finished }
+  enum GameState { InitialCards, Waiting, Hit, Stand, DoubleDown, Finished }
   enum GameResult { Ongoing, House, Tie, Player, PlayerNatural }
 
   struct Game {
@@ -132,7 +139,7 @@ library GameLib {
     self.deck.init(gameID);
   }
 
-  function tick(Game storage self)  returns (bool) {
+  function tick(Game storage self) returns (bool) {
     if (block.number <= self.actionBlock) return false; // Can't tick yet
     if (self.actionBlock + 255 < block.number) {
       endGame(self, GameResult.House);
@@ -142,6 +149,12 @@ library GameLib {
 
     if (self.state == GameState.InitialCards) dealInitialCards(self);
     if (self.state == GameState.Hit) dealHitCard(self);
+    if (self.state == GameState.DoubleDown) {
+      if (!canDoubleDown(self)) throw;
+      self.bet += msg.value;
+      dealHitCard(self);
+      forceStand(self);
+    }
 
     if (self.state == GameState.Stand) {
       dealHouseCards(self);
@@ -178,11 +191,22 @@ library GameLib {
     if (playerHand > target) return endGame(self, GameResult.House); // Player busted
     if (playerHand == target) {
       // Player is forced to stand with 21
-      uint256 currentActionBlock = self.actionBlock;
-      playerDecision(self, GameState.Stand);
-      self.actionBlock = currentActionBlock;
+      forceStand(self);
       if (!tick(self)) throw; // Forces tick, commitment to play actually happened past block
     }
+  }
+
+  function forceStand(Game storage self) {
+    uint256 currentActionBlock = self.actionBlock;
+    playerDecision(self, GameState.Stand);
+    self.actionBlock = currentActionBlock;
+  }
+
+  function canDoubleDown(Game storage self) returns (bool) {
+    if (self.playerCards.length > 2) return false;
+    uint8 totalPlayer = countHand(self.playerCards);
+    if (totalPlayer < 9 || totalPlayer > 11) return false;
+    if (msg.value != self.bet) return false;
   }
 
   function playerDecision(Game storage self, GameState decision)  {
@@ -294,14 +318,6 @@ library GameLib {
   }
 }
 
-contract AbstractBlockjackLogs {
-  event GameEnded(uint256 gameID, address player, uint gameResult, uint256 payout, uint8 playerHand, uint8 houseHand);
-  event GameNeedsTick(uint256 gameID, address player, uint256 actionBlock);
-
-  function recordLog(uint256 gameID, address player, uint gameResult, uint256 payout, uint8 playerHand, uint8 houseHand);
-  function tickRequiredLog(uint256 gameID, address player, uint256 actionBlock);
-}
-
 contract Blockjack {
   AbstractBlockjackLogs blockjacklogs;
 
@@ -320,8 +336,17 @@ contract Blockjack {
   mapping (uint256 => uint256) blockActions;
 
   // Admin
-  address public DX =       0x296Ae1d2D9A8701e113EcdF6cE986a4a7D0A6dC5;
-  address public DEV =      0xBC4343B11B7cfdd6dD635f61039b8a66aF6E73Bb;
+
+  //kovan
+  //  address public DX =       0x0006426a1057cbc60762802FFb5FBdc55D008fAf;
+  //  address public DEV =      0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2;
+
+  //main
+  address public DX = 0x296Ae1d2D9A8701e113EcdF6cE986a4a7D0A6dC5;
+  address public DEV = 0xBC4343B11B7cfdd6dD635f61039b8a66aF6E73Bb;
+
+
+
   address public ADMIN_CONTRACT;
 
   uint256 public BANKROLL_LOCK_PERIOD = 30 days;
@@ -401,15 +426,8 @@ contract Blockjack {
   function doubleDown(uint256 gameID) onlyPlayer(gameID) blockActionProtected payable {
     GameLib.Game game = games[gameID];
 
-    if (msg.value != game.bet) throw;
     if (!game.tick()) throw;
-
-    uint8 totalPlayer = GameLib.countHand(game.playerCards);
-    if (totalPlayer < 9 || totalPlayer > 11) throw;
-    if (game.bet > maxBet) throw;
-
-    game.bet += msg.value;
-    game.playerDecision(GameLib.GameState.Hit);
+    game.playerDecision(GameLib.GameState.DoubleDown);
     tickRequiredLog(game);
   }
 
@@ -430,7 +448,11 @@ contract Blockjack {
 
   function recordEndedGame(uint gameID) private {
     GameLib.Game openedGame = games[gameID];
-    currentBankroll = currentBankroll + openedGame.bet - openedGame.payout;
+
+    //vs potential overflow when croupier is not ticking frequently enough
+    if(currentBankroll + openedGame.bet > openedGame.payout){
+      currentBankroll = currentBankroll + openedGame.bet - openedGame.payout;
+    }
 
     blockjacklogs.recordLog(
 			    openedGame.gameID,
