@@ -1,22 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArrayLib at 0xbeac5df5f1c56f949852c8589314036042c1d603
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArrayLib at 0x5bfa4582b0c48cb375b9e8322b57ac025965c148
 */
-pragma solidity ^0.4.8;
-
-library ArrayLib {
-  // Inserts to keep array sorted (assumes input array is sorted)
-	function insertInPlace(uint8[] storage self, uint8 n) {
-		uint8 insertingIndex = 0;
-
-		while (self.length > 0 && insertingIndex < self.length && self[insertingIndex] < n) {
-			insertingIndex += 1;
-		}
-
-		self.length += 1;
-		for (uint8 i = uint8(self.length) - 1; i > insertingIndex; i--) {
-			self[i] = self[i - 1];
-		}
-
-		self[insertingIndex] = n;
-	}
+pragma solidity 0.4.8;
+library ArrayLib{
+  function findAddress(address a, address[] storage arry) returns (int){
+    for (uint i = 0 ; i < arry.length ; i++){
+      if(arry[i] == a){return int(i);}
+    }
+    return -1;
+  }
+  function removeAddress(uint i, address[] storage arry){
+    uint lengthMinusOne = arry.length - 1;
+    arry[i] = arry[lengthMinusOne];
+    delete arry[lengthMinusOne];
+    arry.length = lengthMinusOne;
+  }
 }
