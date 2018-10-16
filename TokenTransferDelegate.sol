@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegate at 0x6EEE3497d91ED600646f4e31000329ef2e5d210E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegate at 0xaf7ef25C997A5121459122308a84A032D4A16868
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -14,9 +14,8 @@
   limitations under the License.
 */
 pragma solidity 0.4.18;
-/// @title UintUtil
+/// @title Utility Functions for uint
 /// @author Daniel Wang - <daniel@loopring.org>
-/// @dev uint utility functions
 library MathUint {
     function mul(uint a, uint b) internal pure returns (uint c) {
         c = a * b;
@@ -55,12 +54,14 @@ library MathUint {
             return 0;
         }
         uint cvs = 0;
-        uint s = 0;
+        uint s;
+        uint item;
         for (i = 0; i < len; i++) {
-            s = arr[i] > avg ? arr[i] - avg : avg - arr[i];
+            item = arr[i];
+            s = item > avg ? item - avg : avg - item;
             cvs += mul(s, s);
         }
-        return (mul(mul(cvs, scale) / avg, scale) / avg) / (len - 1);
+        return ((mul(mul(cvs, scale), scale) / avg) / avg) / (len - 1);
     }
 }
 /*
@@ -87,8 +88,9 @@ library MathUint {
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-/// @title ERC20 interface
+/// @title ERC20 Token Interface
 /// @dev see https://github.com/ethereum/EIPs/issues/20
+/// @author Daniel Wang - <daniel@loopring.org>
 contract ERC20 {
     uint public totalSupply;
 	
@@ -112,12 +114,28 @@ contract ERC20 {
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+/*
+  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 /// @title Ownable
 /// @dev The Ownable contract has an owner address, and provides basic
 ///      authorization control functions, this simplifies the implementation of
 ///      "user permissions".
 contract Ownable {
     address public owner;
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
     /// @dev The Ownable constructor sets the original `owner` of the contract
     ///      to the sender.
     function Ownable() public {
@@ -132,16 +150,39 @@ contract Ownable {
     ///      newOwner.
     /// @param newOwner The address to transfer ownership to.
     function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
+        require(newOwner != 0x0);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
     }
 }
-/// @title TokenTransferDelegate - Acts as a middle man to transfer ERC20 tokens
-/// on behalf of different versions of Loopring protocol to avoid ERC20
-/// re-authorization.
+/// @title Claimable
+/// @dev Extension for the Ownable contract, where the ownership needs
+///      to be claimed. This allows the new owner to accept the transfer.
+contract Claimable is Ownable {
+    address public pendingOwner;
+    /// @dev Modifier throws if called by any account other than the pendingOwner.
+    modifier onlyPendingOwner() {
+        require(msg.sender == pendingOwner);
+        _;
+    }
+    /// @dev Allows the current owner to set the pendingOwner address.
+    /// @param newOwner The address to transfer ownership to.
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != 0x0 && newOwner != owner);
+        pendingOwner = newOwner;
+    }
+    /// @dev Allows the pendingOwner address to finalize the transfer.
+    function claimOwnership() onlyPendingOwner public {
+        OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = 0x0;
+    }
+}
+/// @title TokenTransferDelegate
+/// @dev Acts as a middle man to transfer ERC20 tokens on behalf of different
+/// versions of Loopring protocol to avoid ERC20 re-authorization.
 /// @author Daniel Wang - <daniel@loopring.org>.
-contract TokenTransferDelegate is Ownable {
+contract TokenTransferDelegate is Claimable {
     using MathUint for uint;
     ////////////////////////////////////////////////////////////////////////////
     /// Variables                                                            ///
@@ -160,9 +201,7 @@ contract TokenTransferDelegate is Ownable {
     /// Modifiers                                                            ///
     ////////////////////////////////////////////////////////////////////////////
     modifier onlyAuthorized() {
-        if (isAddressAuthorized(msg.sender) == false) {
-            revert();
-        }
+        require(addressInfos[msg.sender].authorized);
         _;
     }
     ////////////////////////////////////////////////////////////////////////////
@@ -179,7 +218,7 @@ contract TokenTransferDelegate is Ownable {
         onlyOwner
         external
     {
-        AddressInfo storage addrInfo = addressInfos[addr];
+        var addrInfo = addressInfos[addr];
         if (addrInfo.index != 0) { // existing
             if (addrInfo.authorized == false) { // re-authorize
                 addrInfo.authorized = true;
@@ -187,7 +226,7 @@ contract TokenTransferDelegate is Ownable {
             }
         } else {
             address prev = latestAddress;
-            if (prev == address(0)) {
+            if (prev == 0x0) {
                 addrInfo.index = 1;
                 addrInfo.authorized = true;
             } else {
@@ -227,7 +266,7 @@ contract TokenTransferDelegate is Ownable {
         address addr = latestAddress;
         AddressInfo memory addrInfo;
         uint count = 0;
-        while (addr != address(0) && max < count) {
+        while (addr != 0x0 && count < max) {
             addrInfo = addressInfos[addr];
             if (addrInfo.index == 0) {
                 break;
@@ -256,53 +295,48 @@ contract TokenTransferDelegate is Ownable {
         }
     }
     function batchTransferToken(
-        uint ringSize, 
         address lrcTokenAddress,
         address feeRecipient,
         bytes32[] batch)
         onlyAuthorized
         external
     {
-        require(batch.length == ringSize * 6);
-        uint p = ringSize * 2;
+        uint len = batch.length;
+        require(len % 6 == 0);
         var lrc = ERC20(lrcTokenAddress);
-        for (uint i = 0; i < ringSize; i++) {
-            uint prev = ((i + ringSize - 1) % ringSize);
-            address tokenS = address(batch[i]);
-            address owner = address(batch[ringSize + i]);
-            address prevOwner = address(batch[ringSize + prev]);
+        for (uint i = 0; i < len; i += 6) {
+            address owner = address(batch[i]);
+            address prevOwner = address(batch[(i + len - 6) % len]);
             
-            // Pay tokenS to previous order, or to miner as previous order's
+            // Pay token to previous order, or to miner as previous order's
             // margin split or/and this order's margin split.
-            ERC20 _tokenS;
-            // Try to create ERC20 instances only once per token.
-            if (owner != prevOwner || owner != feeRecipient && batch[p+1] != 0) {
-                _tokenS = ERC20(tokenS);
-            }
-            // Here batch[p] has been checked not to be 0.
+            var token = ERC20(address(batch[i + 1]));
+            // Here batch[i+2] has been checked not to be 0.
             if (owner != prevOwner) {
                 require(
-                    _tokenS.transferFrom(owner, prevOwner, uint(batch[p]))
+                    token.transferFrom(owner, prevOwner, uint(batch[i + 2]))
                 );
             }
             if (owner != feeRecipient) {
-                if (batch[p+1] != 0) {
+                bytes32 item = batch[i + 3];
+                if (item != 0) {
                     require(
-                        _tokenS.transferFrom(owner, feeRecipient, uint(batch[p+1]))
+                        token.transferFrom(owner, feeRecipient, uint(item))
                     );
                 } 
-                if (batch[p+2] != 0) {
+                item = batch[i + 4];
+                if (item != 0) {
                     require(
-                        lrc.transferFrom(feeRecipient, owner, uint(batch[p+2]))
+                        lrc.transferFrom(feeRecipient, owner, uint(item))
                     );
                 }
-                if (batch[p+3] != 0) {
+                item = batch[i + 5];
+                if (item != 0) {
                     require(
-                        lrc.transferFrom(owner, feeRecipient, uint(batch[p+3]))
+                        lrc.transferFrom(owner, feeRecipient, uint(item))
                     );
                 }
             }
-            p += 4;
         }
     }
 }
