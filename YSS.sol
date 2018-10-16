@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YSS at 0x01b1ccae68dc41d8a2a0f48e8f0d38b0c064ef43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YSS at 0xDc72AbBE397460f54f0D95B4A20328D4b6bA0937
 */
 pragma solidity ^0.4.18;
+
 
 contract Owned {
     address public owner;
@@ -32,7 +33,6 @@ contract YSS is Owned {
     uint minBalanceForAccounts;
 
     mapping (address => uint256) public balanceOf;
-
     mapping (address => bool) public frozenAccount;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -51,6 +51,7 @@ contract YSS is Owned {
         minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
     }
 
+    /* Internal transfer, can only be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);                // Check if the sender has enough
@@ -63,13 +64,11 @@ contract YSS is Owned {
     }
     function transfer(address _to, uint256 _value) public {
         require(!frozenAccount[msg.sender]);
-
         if (msg.sender.balance<minBalanceForAccounts) {
             sell((minBalanceForAccounts-msg.sender.balance)/sellPrice);
         }
         _transfer(msg.sender, _to, _value);
     }
-
 
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
@@ -83,7 +82,6 @@ contract YSS is Owned {
         frozenAccount[target] = freeze;
         emit FrozenFunds(target, freeze);
     }
-
 
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
         sellPrice = newSellPrice;
@@ -99,7 +97,6 @@ contract YSS is Owned {
         emit Transfer(this, msg.sender, amount);
         return amount;
     }
-
 
     function sell(uint amount) public returns (uint revenue) {
         require(balanceOf[msg.sender] >= amount);
