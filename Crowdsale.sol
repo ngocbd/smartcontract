@@ -1,7 +1,53 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x78b78cfb7f90edab1ddb0bb3be75cb228bb15d0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x11b8269162ffbf73a9b3d9e73a89dd47833bdffd
 */
 pragma solidity ^0.4.18;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 /**
  * @title ERC20Basic
@@ -26,317 +72,265 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract DetailedERC20 is ERC20 {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-  function DetailedERC20(string _name, string _symbol, uint8 _decimals) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
   }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
 /**
- * Crowdsale has a life span during which investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to beneficiary
- * as they arrive.
- *
- * A crowdsale is defined by:
- *	offset (required) - crowdsale start, unix timestamp
- *	length (required) - crowdsale length in seconds
- *  price (required) - token price in wei
- *	soft cap (optional) - minimum amount of funds required for crowdsale success, can be zero (if not used)
- *	hard cap (optional) - maximum amount of funds crowdsale can accept, can be zero (unlimited)
- *  quantum (optional) - enables value accumulation effect to reduce value transfer costs, usually is not used (set to zero)
- *    if non-zero value passed specifies minimum amount of wei to transfer to beneficiary
- *
- * This crowdsale doesn't own tokens and doesn't perform any token emission.
- * It expects enough tokens to be available on its address:
- * these tokens are used for issuing them to investors.
- * Token redemption is done in opposite way: tokens accumulate back on contract's address
- * Beneficiary is specified by its address.
- * This implementation can be used to make several crowdsales with the same token being sold.
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
-contract Crowdsale {
-	/**
-	* Descriptive name of this Crowdsale. There could be multiple crowdsales for same Token.
-	*/
-	string public name;
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
 
-	// contract creator, owner of the contract
-	// creator is also supplier of tokens
-	address private creator;
+  bool public paused = false;
 
-	// crowdsale start (unix timestamp)
-	uint public offset;
 
-	// crowdsale length in seconds
-	uint public length;
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
 
-	// one token price in wei
-	uint public price;
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
 
-	// crowdsale minimum goal in wei
-	uint public softCap;
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
 
-	// crowdsale maximum goal in wei
-	uint public hardCap;
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
 
-	// minimum amount of value to transfer to beneficiary in automatic mode
-	uint private quantum;
+contract Crowdsale is Pausable {
+  using SafeMath for uint256;
 
-	// how much value collected (funds raised)
-	uint public collected;
+  // The token being sold
+  ERC20 public token;
 
-	// how many different addresses made an investment
-	uint public investorsCount;
+  // Address where funds are collected
+  address public wallet;
 
-	// how much value refunded (if crowdsale failed)
-	uint public refunded;
+  // How many token units a buyer gets per wei
+  uint256 public rate;
 
-	// how much tokens issued to investors
-	uint public tokensIssued;
+  // Amount of wei raised
+  uint256 public weiRaised;
+  
+  // Crowdsale opening time
+  uint256 public openingTime;
+  
+  // Crowdsale closing time
+  uint256 public closingTime;
 
-	// how much tokens redeemed and refunded (if crowdsale failed)
-	uint public tokensRedeemed;
+  // Crowdsale duration in days
+  uint256 public duration;
 
-	// how many successful transactions (with tokens being send back) do we have
-	uint public transactions;
+  /**
+   * Event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-	// how many refund transactions (in exchange for tokens) made (if crowdsale failed)
-	uint public refunds;
+  constructor() public {
+    rate = 4000;
+    wallet = 0x3CB0F6d4Fc022348Cf75Cdb2C2E04492975e4d30;
+    token = ERC20(0x0c537C661B28a4EF16AB27BEd46111473a6bd08d);
+    duration = 120 days;
+    openingTime = now;  // Determined by start()
+    closingTime = openingTime + duration;  // Determined by start()
+  }
 
-	// The token being sold
-	DetailedERC20 private token;
+  /**
+   * @dev Returns the rate of tokens per wei at the present time.
+   * Note that, as price _increases_ with time, the rate _decreases_.
+   * @return The number of tokens a buyer gets per wei at a given time
+   */
+  function getCurrentRate() public view returns (uint256) {
+        if (now <= openingTime.add(30 days)) return rate.add(rate*4/10);   // bonus 40% first 30 days
+        if (now > openingTime.add(30 days) && now <= openingTime.add(60 days)) return rate.add(rate/5);   // bonus 20% first 30 days
+        if (now > openingTime.add(60 days) && now <= openingTime.add(90 days)) return rate.add(rate/2);   // bonus 10% first 30 days
+  }
 
-	// decimal coefficient (k) enables support for tokens with non-zero decimals
-	uint k;
+  // -----------------------------------------
+  // Crowdsale external interface
+  // -----------------------------------------
 
-	// address where funds are collected
-	address public beneficiary;
+  /**
+   * @dev fallback function ***DO NOT OVERRIDE***
+   */
+  function () external payable {
+    buyTokens(msg.sender);
+  }
 
-	// investor's mapping, required for token redemption in a failed crowdsale
-	// making this field public allows to extend investor-related functionality in the future
-	mapping(address => uint) public balances;
+  /**
+   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @param _beneficiary Address performing the token purchase
+   */
+  function buyTokens(address _beneficiary) public payable {
 
-	// events to log
-	event InvestmentAccepted(address indexed holder, uint tokens, uint value);
-	event RefundIssued(address indexed holder, uint tokens, uint value);
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
 
-	// a crowdsale is defined by a set of parameters passed here
-	// make sure _end timestamp is in the future in order for crowdsale to be operational
-	// _price must be positive, this is a price of one token in wei
-	// _hardCap must be greater then _softCap or zero, zero _hardCap means unlimited crowdsale
-	// _quantum may be zero, in this case there will be no value accumulation on the contract
-	function Crowdsale(
-		string _name,
-		uint _offset,
-		uint _length,
-		uint _price,
-		uint _softCap,
-		uint _hardCap,
-		uint _quantum,
-		address _beneficiary,
-		address _token
-	) public {
+    // calculate token amount to be created
+    uint256 tokens = _getTokenAmount(weiAmount);
 
-		// validate crowdsale settings (inputs)
-		// require(_offset > 0); // we don't really care
-		require(_length > 0);
-		require(now < _offset + _length); // crowdsale must not be already finished
-		// softCap can be anything, zero means crowdsale doesn't fail
-		require(_hardCap > _softCap || _hardCap == 0);
-		// hardCap must be greater then softCap
-		// quantum can be anything, zero means no accumulation
-		require(_price > 0);
-		require(_beneficiary != address(0));
-		require(_token != address(0));
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
 
-		name = _name;
+    _processPurchase(_beneficiary, tokens);
+    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
 
-		// setup crowdsale settings
-		offset = _offset;
-		length = _length;
-		softCap = _softCap;
-		hardCap = _hardCap;
-		quantum = _quantum;
-		price = _price;
-		creator = msg.sender;
+    _forwardFunds();
+  }
 
-		// define beneficiary
-		beneficiary = _beneficiary;
+  // -----------------------------------------
+  // Internal interface (extensible)
+  // -----------------------------------------
 
-		// allocate tokens: link and init coefficient
-		__allocateTokens(_token);
-	}
+  /**
+   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal whenNotPaused {
+    require(_beneficiary != address(0));
+    require(block.timestamp >= openingTime && block.timestamp <= closingTime);
+  }
 
-	// accepts crowdsale investment, requires
-	// crowdsale to be running and not reached its goal
-	function invest() public payable {
-		// perform validations
-		assert(now >= offset && now < offset + length); // crowdsale is active
-		assert(collected + price <= hardCap || hardCap == 0); // its still possible to buy at least 1 token
-		require(msg.value >= price); // value sent is enough to buy at least one token
+  /**
+   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
+   * @param _beneficiary Address performing the token purchase
+   * @param _tokenAmount Number of tokens to be emitted
+   */
+  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    token.transfer(_beneficiary, _tokenAmount);
+  }
 
-		// call 'sender' nicely - investor
-		address investor = msg.sender;
+  /**
+   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
+   * @param _beneficiary Address receiving the tokens
+   * @param _tokenAmount Number of tokens to be purchased
+   */
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    _deliverTokens(_beneficiary, _tokenAmount);
+  }
 
-		// how much tokens we must send to investor
-		uint tokens = msg.value / price;
+  /**
+   * @dev Override to extend the way in which ether is converted to tokens.
+   * @param _weiAmount Value in wei to be converted into tokens
+   * @return Number of tokens that can be purchased with the specified _weiAmount
+   */
+  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+    uint256 currentRate = getCurrentRate();
+    return currentRate.mul(_weiAmount);
+  }
 
-		// how much value we must send to beneficiary
-		uint value = tokens * price;
+  /**
+   * @dev Determines how ETH is stored/forwarded on purchases.
+   */
+  function _forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+  
+  /**
+   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
+   * @return Whether crowdsale period has elapsed
+   */
+  function hasClosed() public view returns (bool) {
+    return block.timestamp > closingTime;
+  }
 
-		// ensure we are not crossing the hardCap
-		if (value + collected > hardCap || hardCap == 0) {
-			value = hardCap - collected;
-			tokens = value / price;
-			value = tokens * price;
-		}
+  /**
+   * @dev called by the owner to withdraw unsold tokens
+   */
+  function unsoldTokens() public onlyOwner {
+    uint256 unsold = token.balanceOf(this);
+    token.transfer(owner, unsold);
+  }
 
-		// update crowdsale status
-		collected += value;
-		tokensIssued += tokens;
+}
 
-		// transfer tokens to investor
-		__issueTokens(investor, tokens);
+contract PostDeliveryCrowdsale is Crowdsale {
+  using SafeMath for uint256;
 
-		// transfer the change to investor
-		investor.transfer(msg.value - value);
+  mapping(address => uint256) public balances;
 
-		// accumulate the value or transfer it to beneficiary
-		if (collected >= softCap && this.balance >= quantum) {
-			// transfer all the value to beneficiary
-			__beneficiaryTransfer(this.balance);
-		}
+  /**
+   * @dev Withdraw tokens only after crowdsale ends.
+   */
+  function withdrawTokens() public {
+    require(hasClosed());
+    uint256 amount = balances[msg.sender];
+    require(amount > 0);
+    balances[msg.sender] = 0;
+    _deliverTokens(msg.sender, amount);
+  }
 
-		// log an event
-		InvestmentAccepted(investor, tokens, value);
-	}
+  /**
+   * @dev Overrides parent by storing balances instead of issuing tokens right away.
+   * @param _beneficiary Token purchaser
+   * @param _tokenAmount Amount of tokens purchased
+   */
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    balances[_beneficiary] = balances[_beneficiary].add(_tokenAmount);
+  }
 
-	// refunds an investor of failed crowdsale,
-	// requires investor to allow token transfer back
-	function refund() public payable {
-		// perform validations
-		assert(now >= offset + length); // crowdsale ended
-		assert(collected < softCap); // crowdsale failed
-
-		// call 'sender' nicely - investor
-		address investor = msg.sender;
-
-		// find out how much tokens should be refunded
-		uint tokens = __redeemAmount(investor);
-
-		// calculate refund amount
-		uint refundValue = tokens * price;
-
-		// additional validations
-		require(tokens > 0);
-
-		// update crowdsale status
-		refunded += refundValue;
-		tokensRedeemed += tokens;
-		refunds++;
-
-		// transfer the tokens back
-		__redeemTokens(investor, tokens);
-
-		// make a refund
-		investor.transfer(refundValue + msg.value);
-
-		// log an event
-		RefundIssued(investor, tokens, refundValue);
-	}
-
-	// sends all the value to the beneficiary
-	function withdraw() public {
-		// perform validations
-		assert(creator == msg.sender || beneficiary == msg.sender); // only creator or beneficiary can initiate this call
-		assert(collected >= softCap); // crowdsale must be successful
-		assert(this.balance > 0); // there should be something to transfer
-
-		// how much to withdraw (entire balance obviously)
-		uint value = this.balance;
-
-		// perform the transfer
-		__beneficiaryTransfer(value);
-	}
-
-	// performs an investment, refund or withdrawal,
-	// depending on the crowdsale status
-	function() public payable {
-		// started or finished
-		require(now >= offset);
-
-		if(now < offset + length) {
-			// crowdsale is running, invest
-			invest();
-		}
-		else if(collected < softCap) {
-			// crowdsale failed, try to refund
-			refund();
-		}
-		else {
-			// crowdsale is successful, investments are not accepted anymore
-			// but maybe poor beneficiary is begging for change...
-			withdraw();
-		}
-	}
-
-	// ----------------------- internal section -----------------------
-
-	// allocates token source (basically links token)
-	function __allocateTokens(address _token) internal {
-		// link tokens, tokens are not owned by a crowdsale
-		// should be transferred to crowdsale after the deployment
-		token = DetailedERC20(_token);
-
-		// obtain decimals and calculate coefficient k
-		k = 10 ** uint(token.decimals());
-	}
-
-	// transfers tokens to investor, validations are not required
-	function __issueTokens(address investor, uint tokens) internal {
-		// if this is a new investor update investor count
-		if (balances[investor] == 0) {
-			investorsCount++;
-		}
-
-		// for open crowdsales we track investors balances
-		balances[investor] += tokens;
-
-		// issue tokens, taking into account decimals
-		token.transferFrom(creator, investor, tokens * k);
-	}
-
-	// calculates amount of tokens available to redeem from investor, validations are not required
-	function __redeemAmount(address investor) internal view returns (uint amount) {
-		// round down allowance taking into account token decimals
-		uint allowance = token.allowance(investor, this) / k;
-
-		// for open crowdsales we check previously tracked investor balance
-		uint balance = balances[investor];
-
-		// return allowance safely by checking also the balance
-		return balance < allowance ? balance : allowance;
-	}
-
-	// transfers tokens from investor, validations are not required
-	function __redeemTokens(address investor, uint tokens) internal {
-		// for open crowdsales we track investors balances
-		balances[investor] -= tokens;
-
-		// redeem tokens, taking into account decimals coefficient
-		token.transferFrom(investor, creator, tokens * k);
-	}
-
-	// transfers a value to beneficiary, validations are not required
-	function __beneficiaryTransfer(uint value) internal {
-		beneficiary.transfer(value);
-	}
-
-	// !---------------------- internal section ----------------------!
 }
