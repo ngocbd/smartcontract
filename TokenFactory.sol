@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactory at 0x36B86289ccCE0984251CCCA62871b589B0F52d68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactory at 0x1393F1fb2E243Ee68Efe172eBb6831772633A926
 */
 pragma solidity ^0.4.21;
 
@@ -19,32 +19,36 @@ interface Baliv {
     function getPrice(address fromToken_, address toToken_) external view returns(uint256);
 }
 
+contract TokenRecipient {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external;
+}
+
 contract SafeMath {
     function safeAdd(uint x, uint y)
         internal
         pure
     returns(uint) {
-      uint256 z = x + y;
-      require((z >= x) && (z >= y));
-      return z;
+        uint256 z = x + y;
+        require((z >= x) && (z >= y));
+        return z;
     }
 
     function safeSub(uint x, uint y)
         internal
         pure
     returns(uint) {
-      require(x >= y);
-      uint256 z = x - y;
-      return z;
+        require(x >= y);
+        uint256 z = x - y;
+        return z;
     }
 
     function safeMul(uint x, uint y)
         internal
         pure
     returns(uint) {
-      uint z = x * y;
-      require((x == 0) || (z / x == y));
-      return z;
+        uint z = x * y;
+        require((x == 0) || (z / x == y));
+        return z;
     }
     
     function safeDiv(uint x, uint y)
@@ -59,8 +63,8 @@ contract SafeMath {
         internal
         view
     returns(uint) {
-      bytes32 hash = keccak256(block.number, msg.sender, salt);
-      return uint(hash) % N;
+        bytes32 hash = keccak256(block.number, msg.sender, salt);
+        return uint(hash) % N;
     }
 }
 
@@ -204,6 +208,20 @@ contract StandardToken is SafeMath {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
+    }
+
+    /* Approve and then communicate the approved contract in a single tx */
+    function approveAndCall(
+        address _spender,
+        uint256 _value,
+        bytes _extraData
+    )
+        public
+    returns (bool success) {    
+        if (approve(_spender, _value)) {
+            TokenRecipient(_spender).receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
     }
 
     function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
@@ -382,6 +400,15 @@ contract TokenFactory is Authorization {
     uint256 public candidateTillExchange = 0;
     address public XPA = 0x0090528aeb3a2b736b780fd1b6c478bb7e1d643170;
     address public ETH = address(0);
+
+     /* constructor */
+    function TokenFactory(
+        address XPAAddr, 
+        address balivAddr
+    ) public {
+        XPA = XPAAddr;
+        exchange = balivAddr;
+    }
 
     function createToken(
         string symbol_,
