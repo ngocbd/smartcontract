@@ -1,39 +1,60 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gamble at 0xa57A1377dF22F3e6d9a520943E96FB3ccD2209BC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gamble at 0x2f58b31ecad8f1a60375a0c9968556283e6ce41a
 */
-contract Gamble {
-    address owner;
-    Bet[] bets;
-    address[] winners;
+pragma solidity ^0.4.21;
 
-    struct Bet {
-        address sender;
-        int8 range;
+contract Owned {
+
+  address owner;
+  uint last_blocknumber;
+
+  
+  function Owned() public {
+    owner = msg.sender;
+  }
+  
+  modifier onlyOwner {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function getBalance() public view returns (uint) {
+    return address(this).balance;
+
+  }
+
+  function close() public onlyOwner {
+    selfdestruct(msg.sender);
+  }
+}
+
+contract Gamble is Owned {
+  uint constant magic = 5;
+  
+  function getMaxBet() public view returns (uint) {
+    return getBalance()/magic;
+  }
+  
+  function Play() public payable protect protect_mining {
+    require(msg.value <= getMaxBet());
+    if (now % magic != 0) {
+      msg.sender.transfer(msg.value + msg.value/magic);
     }
+    last_blocknumber = block.number;
+  }
 
-    function Gamble() {
-        owner = msg.sender;
-    }
+  modifier protect {
+    require(tx.origin == msg.sender);
+    _;
+  }
 
-    function place (int8 range) public payable {
-        if (msg.value >= 50 finney && range <= 100) {
-            bets[bets.length++] = Bet({sender: msg.sender, range: range});
-        }
-    }
+  modifier protect_mining {
+    //very simple protection against miners
+    require (block.number != last_blocknumber);
+    _;
+  }
 
-    function solve (int8 range) public {
-        if (msg.sender == owner && range <= 100) {
-            for (uint i = 0; i < bets.length; ++i) {
-                if (bets[i].range == range) {
-                    winners[winners.length++] = bets[i].sender;
-                }
-            }
-
-            for (uint j = 0; j < winners.length; ++j) {
-                winners[j].send(winners.length / this.balance);
-            }
-
-            selfdestruct(owner);
-        }
-    }
+  function () public payable {
+    Play();
+  }
 }
