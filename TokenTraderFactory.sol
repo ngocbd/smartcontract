@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0x3398080b81a1cff1429af347ce2b17fc28de3937
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0xe3282094d332d26f7Dfca853899eC1736f0295ce
 */
 pragma solidity ^0.4.0;
 
@@ -135,7 +135,7 @@ contract TokenTrader is owned {
             }
             UpdateEvent();
         }
-        else if(!msg.sender.send(msg.value)) throw;  // return user funds if the contract is not selling
+        else throw;  // return user funds if the contract is not selling
     }
 
     // user sells token for ETH
@@ -173,33 +173,8 @@ contract TokenTraderFactory {
     event TradeListing(bytes32 bookid, address owner, address addr);
     event NewBook(bytes32 bookid, address asset, uint256 units);
 
-    mapping( address => bool ) _verify;
+    mapping( address => bool ) public verify;
     mapping( bytes32 => bool ) pairExits;
-    
-    function verify(address tradeContract)  constant returns (
-        bool valid,
-        address asset, 
-        uint256 buyPrice, 
-        uint256 sellPrice, 
-        uint256 units,
-        bool    sellsTokens,
-        bool    buysTokens       
-        ) {
-            
-            valid = _verify[tradeContract];
-            
-            if(valid) {
-                TokenTrader t = TokenTrader(tradeContract);
-                
-                asset = t.asset();
-                buyPrice =t.buyPrice();
-                sellPrice = t.sellPrice();
-                units = t.units();
-                sellsTokens = t.sellsTokens();
-                buysTokens = t.buysTokens();
-            }
-        
-    }
 
     function createTradeContract(       
         address _asset, 
@@ -223,7 +198,7 @@ contract TokenTraderFactory {
 
         var bookid = sha3(_asset,_units);
 
-        _verify[trader] = true; // record that this factory created the trader
+        verify[trader] = true; // record that this factory created the trader
 
         TokenTrader(trader).transferOwnership(msg.sender); // set the owner to whoever called the function
 
