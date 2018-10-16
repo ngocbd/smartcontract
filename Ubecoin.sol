@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ubecoin at 0x9544b6a2f02e7be2ae53734e64811475d053d5ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ubecoin at 0x484fe52e206665039d66f8098102d3299d243e26
 */
 pragma solidity ^0.4.19;
 //   Ubecoin. All Rights Reserved
