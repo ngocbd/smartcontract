@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookRevToken at 0x21ae23b882a340a22282162086bc98d3e2b73018
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookRevToken at 0x2d4b1cc9a2d7417a9689bbcfefb224876cda7923
 */
 pragma solidity ^0.4.11;
 
@@ -162,35 +162,40 @@ contract LookRevToken is StandardToken {
     string public constant name = "LookRev";
     string public constant symbol = "LOK";
     uint8 public constant decimals = 18;
-    string public VERSION = 'LOK1.0';
+    string public VERSION = 'LOK1.2';
     bool public finalised = false;
     
     address public wallet = 0x0;
 
     mapping(address => bool) public kycRequired;
 
-    // Start - Wednesday, August 30, 2017 10:00:00 AM GMT-07:00 DST
-    // End - Saturday, September 30, 2017 10:00:00 AM GMT-07:00 DST
-    uint public constant START_DATE = 1504112400;
-    uint public constant END_DATE = 1506790800;
+    // Start - Friday, September 8, 2017 3:00:00 PM UTC (8:00:00 AM PDT GMT-07:00 DST)
+    uint public constant START_DATE = 1504882800;
+    // 3000 LOK Per ETH for the 1st 24 Hours - Till Saturday, September 9, 2017 3:00:00 PM UTC (8:00:00 AM PDT GMT-07:00 DST)
+    uint public constant BONUSONE_DATE = 1504969200;
+    // 2700 LOK Per ETH for the Next 48 Hours - Till Monday, September 11, 2017 3:00:00 PM UTC (8:00:00 AM PDT GMT-07:00 DST)
+    uint public constant BONUSTWO_DATE = 1505142000;
+    // Regular Rate - 2400 LOK Per ETH for the Remaining Part of the Crowdsale
+    // End - Sunday, October 8, 2017 3:00:00 PM UTC (8:00:00 AM PDT GMT-07:00 DST)
+    uint public constant END_DATE = 1507474800;
 
     uint public constant DECIMALSFACTOR = 10**uint(decimals);
     uint public constant TOKENS_SOFT_CAP =   10000000 * DECIMALSFACTOR;
     uint public constant TOKENS_HARD_CAP = 2000000000 * DECIMALSFACTOR;
     uint public constant TOKENS_TOTAL =    5000000000 * DECIMALSFACTOR;
-    uint public initialSupply = 10000000 * DECIMALSFACTOR;
+    uint public constant INITIAL_SUPPLY = 10000000 * DECIMALSFACTOR;
 
     // 1 KETHER = 2,400,000 tokens
     // 1 ETH = 2,400 tokens
     uint public tokensPerKEther = 2400000;
     uint public CONTRIBUTIONS_MIN = 0 ether;
     uint public CONTRIBUTIONS_MAX = 0 ether;
-    uint public constant KYC_THRESHOLD = 1000000 * DECIMALSFACTOR;
+    uint public constant KYC_THRESHOLD = 100 * DECIMALSFACTOR;
 
     function LookRevToken() {
       owner = msg.sender;
       wallet = owner;
-      totalSupply = initialSupply;
+      totalSupply = INITIAL_SUPPLY;
       balances[owner] = totalSupply;
     }
 
@@ -200,16 +205,6 @@ contract LookRevToken is StandardToken {
         WalletUpdated(wallet);
     }
     event WalletUpdated(address newWallet);
-
-    // Can only be set before the start of the crowdsale
-    // Owner can change the rate before the crowdsale starts
-    function setTokensPerKEther(uint _tokensPerKEther) onlyOwner {
-        require(now < START_DATE);
-        require(_tokensPerKEther > 0);
-        tokensPerKEther = _tokensPerKEther;
-        TokensPerKEtherUpdated(tokensPerKEther);
-    }
-    event TokensPerKEtherUpdated(uint tokensPerKEther);
 
     // Accept ethers to buy tokens during the crowdsale
     function () payable {
@@ -226,6 +221,17 @@ contract LookRevToken is StandardToken {
 
         require(msg.value > CONTRIBUTIONS_MIN);
         require(CONTRIBUTIONS_MAX == 0 || msg.value < CONTRIBUTIONS_MAX);
+
+         // Add in bonus during the first 24 and 48 hours of the token sale
+         if (now < START_DATE) {
+            tokensPerKEther = 2400000;
+         } else if (now < BONUSONE_DATE) {
+            tokensPerKEther = 3000000;
+         } else if (now < BONUSTWO_DATE) {
+            tokensPerKEther = 2700000;
+         } else {
+            tokensPerKEther = 2400000;
+         }
 
          // Calculate number of tokens for contributed ETH
          // `18` is the ETH decimals
@@ -262,7 +268,7 @@ contract LookRevToken is StandardToken {
 
     event TokensBought(address indexed buyer, uint ethers, 
         uint participantTokenBalance, uint tokens, uint newTotalSupply, 
-        uint tokensPerKEther);
+        uint _tokensPerKEther);
 
     function finalise() onlyOwner {
         // Can only finalise if raised > soft cap or after the end date
