@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrocsFarmer at 0x1a4f7a5208c7dd4cf24633ac4d42e41b21e3d5f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrocsFarmer at 0xe76af0bb0f71a041b3b0179156f5d71573ebb91c
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -8,7 +8,7 @@ pragma solidity ^0.4.18; // solhint-disable-line
 contract CrocsFarmer{
     //uint256 EGGS_PER_CROCS_PER_SECOND=1;
     uint256 public EGGS_TO_HATCH_1CROCS=86400;//for final version should be seconds in a day
-    uint256 public STARTING_CROCS=10;
+    uint256 public STARTING_CROCS=300;
     uint256 PSN=10000;
     uint256 PSNH=5000;
     bool public initialized=false;
