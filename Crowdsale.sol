@@ -1,129 +1,79 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xd67aa6a98e99f979f23bf0da772d113fe6dbe50a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x826512e74f4a2a80d340e56a9ffd7c2c83fcfcd8
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.16;
 
 interface token {
-    function transfer(address receiver, uint amount)external;
+    function transfer(address receiver, uint amount) public;
 }
 
 contract Crowdsale {
     address public beneficiary;
     uint public amountRaised;
-	uint public allAmountRaised;
-    uint public deadline;
     uint public price;
-	uint public limitTransfer;
+    bool crowdsaleClosed = false;
     token public tokenReward;
     mapping(address => uint256) public balanceOf;
-    bool crowdsaleClosed = false;
-	bool public crowdsalePaused = false;
 
     event FundTransfer(address backer, uint amount, bool isContribution);
-    
-    modifier onlyOwner {
-        require(msg.sender == beneficiary);
-        _;
-    }
-	
-	/**
+
+    /**
      * Constrctor function
      *
      * Setup the owner
      */
-    function Crowdsale(
-        address ifSuccessfulSendTo,
-        uint durationInMinutes,
-        uint etherCostOfEachToken,
-		uint limitAfterSendToBeneficiary,
-        address addressOfTokenUsedAsReward
-    )public {
-        beneficiary = ifSuccessfulSendTo;
-        deadline = now + durationInMinutes * 1 minutes;
-        price = etherCostOfEachToken;
-        tokenReward = token(addressOfTokenUsedAsReward);
-		limitTransfer = limitAfterSendToBeneficiary;
-    }
-	
-	/**
-     * changeDeadline function
-     *
-     * Setup the new deadline
-     */
-    function changeDeadline(uint durationInMinutes) public onlyOwner 
-	{
-		crowdsaleClosed = false;
-        deadline = now + durationInMinutes * 1 minutes;
-    }
-	
-	/**
-     * changePrice function
-     *
-     * Setup the new price
-     */
-    function changePrice(uint _price) public onlyOwner 
-	{
-        price = _price;
-    }
-	
-	/**
-     * Pause Crowdsale
-     *
-     */
-    function pauseCrowdsale()public onlyOwner 
-	{
-        crowdsaleClosed = true;
-		crowdsalePaused = true;
-    }
-	
-	/**
-     * Run Crowdsale
-     *
-     */
-    function runCrowdsale()public onlyOwner 
-	{
-		require(now <= deadline);
-        crowdsaleClosed = false;
-		crowdsalePaused = false;
+    function Crowdsale () public {
+        beneficiary = 0x1e19E36928bA65184669d8A7e7A37d8B061B9022;
+        price = 0.00058 * 1 ether;
+        tokenReward = token(0xe8EF8d9d9Ff515720A62d2E2f14f3b5b677C6670);
     }
 
     /**
-     * Send To Beneficiary
-     *
-     * Transfer to Beneficiary
-     */
-    function sendToBeneficiary()public onlyOwner 
-	{
-        if (beneficiary.send(amountRaised)) 
-		{
-			amountRaised = 0;
-			emit FundTransfer(beneficiary, amountRaised, false);
-		}
-    }
-	
-	/**
      * Fallback function
      *
      * The function without name is the default function that is called whenever anyone sends funds to a contract
      */
-    function () public payable 
-	{
+    function () public payable {
         require(!crowdsaleClosed);
-		require(now <= deadline);
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
-        amountRaised    += amount;
-		allAmountRaised += amount;
-        tokenReward.transfer(msg.sender, amount / price);
-        emit FundTransfer(msg.sender, amount, true);
-		
-		if (amountRaised >= limitTransfer)
-		{
-			if (beneficiary.send(amountRaised)) 
-			{
-                amountRaised = 0;
-				emit FundTransfer(beneficiary, amountRaised, false);
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, (amount  * 1 ether) / price);
+        FundTransfer(msg.sender, amount, true);
+    }
+    
+    function changePrice(uint newprice) public {
+         if (beneficiary == msg.sender) {
+             price = newprice * 1 ether;
+         }
+    }
+
+    function safeWithdrawal() public {
+
+        if (beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+
             }
-		}
+        }
+    }
+    
+    function safeTokenWithdrawal(uint amount) public {
+         if (beneficiary == msg.sender) {
+             tokenReward.transfer(msg.sender, amount);
+        }
+    }
+    
+     function crowdsaleStop() public {
+         if (beneficiary == msg.sender) {
+            crowdsaleClosed = true;
+        }
+    }
+    
+    function crowdsaleStart() public {
+         if (beneficiary == msg.sender) {
+            crowdsaleClosed = false;
+        }
     }
 }
