@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PropyPrototype at 0x15078bf34a69358457682b876f1027565aca1ef1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PropyPrototype at 0xfbd017eac013c8713fc7b1d9fb6b4e4ed9d62832
 */
-pragma solidity 0.4.4;
+pragma solidity 0.4.6;
 
 contract Owned {
     address public contractOwner;
