@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RevolutionCoin at 0xd60f5b2dc0a0831db4aee723f4f43b147c15051f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RevolutionCoin at 0xa8517a3f019263dabcfb013b4f7f59079630fafc
 */
 pragma solidity ^0.4.11;
  
@@ -108,8 +108,9 @@ contract BasicToken is ERC20Basic {
   function balanceOf(address _owner) constant public returns (uint256 balance) {
     return tokenBalances[_owner];
   }
+  
 }
-//TODO: Change the name of the token
+
 contract RevolutionCoin is BasicToken,Ownable {
 
    using SafeMath for uint256;
@@ -117,35 +118,166 @@ contract RevolutionCoin is BasicToken,Ownable {
    string public constant name = "R-evolutioncoin";
    string public constant symbol = "RVL";
    uint256 public constant decimals = 18;
-   uint256 public buyPrice = 222222222222222;   // per token the price is 2.2222*10^-4 eth, this price is equivalent in wei
+   uint256 public preIcoBuyPrice = 222222222222222;   // per token the price is 2.2222*10^-4 eth, this price is equivalent in wei
+   uint256 public IcoPrice = 1000000000000000;
+   uint256 public bonusPhase1 = 30;
+   uint256 public bonusPhase2 = 20;
+   uint256 public bonusPhase3 = 10;
+   uint256 public TOKENS_SOLD;
+  
    address public ethStore = 0xDd64EF0c8a41d8a17F09ce2279D79b3397184A10;
    uint256 public constant INITIAL_SUPPLY = 100000000;
    event Debug(string message, address addr, uint256 number);
-   
+   event log(string message, uint256 number);
    /**
    * @dev Contructor that gives msg.sender all of existing tokens.
    */
    //TODO: Change the name of the constructor
     function RevolutionCoin() public {
-        owner = msg.sender;
+        owner = ethStore;
         totalSupply = INITIAL_SUPPLY;
-        tokenBalances[owner] = INITIAL_SUPPLY * (10 ** uint256(decimals));   //Since we divided the token into 10^18 parts
+        tokenBalances[ethStore] = INITIAL_SUPPLY * (10 ** uint256(decimals));   //Since we divided the token into 10^18 parts
+        TOKENS_SOLD = 0;
     }
-
-    function buy() payable public returns (uint amount) {
-        amount = msg.value.div(buyPrice);                    // calculates the amount
-        amount = amount * (10 ** uint256(decimals));
-        require(tokenBalances[owner] >= amount);               // checks if it has enough to sell
-        tokenBalances[msg.sender] = tokenBalances[msg.sender].add(amount);                  // adds the amount to buyer's balance
-        tokenBalances[owner] = tokenBalances[owner].sub(amount);                        // subtracts amount from seller's balance
-        Transfer(owner, msg.sender, amount);               // execute an event reflecting the change
-        ethStore.transfer(msg.value);                       //send the eth to the address where eth should be collected
-        return amount;                                    // ends function and returns
+    
+    
+    // fallback function can be used to buy tokens
+      function () public payable {
+       // require(msg.sender != owner);   //owner should not be buying any tokens
+        buy(msg.sender);
     }
-    function getTokenBalance() public view returns (uint256 balance) {
-        balance = tokenBalances[msg.sender].div (10**decimals); // show token balance in full tokens not part
+    
+    function calculateTokens(uint amt) internal returns (uint tokensYouCanGive, uint returnAmount) {
+        uint bonus = 0;
+        uint tokensRequired = 0;
+        uint tokensWithoutBonus = 0;
+        uint priceCharged = 0;
+        
+        //pre-ico phase
+        if (TOKENS_SOLD <4500000)
+        {
+            tokensRequired = amt.div(preIcoBuyPrice);
+            if (tokensRequired + TOKENS_SOLD > 4500000)
+            {
+                tokensYouCanGive = 4500000 - TOKENS_SOLD;
+                returnAmount = tokensRequired - tokensYouCanGive;
+                returnAmount = returnAmount.mul(preIcoBuyPrice);
+                log("Tokens being bought exceed the limit of pre-ico. Returning remaining amount",returnAmount);
+            }
+            else
+            {
+                tokensYouCanGive = tokensRequired;
+                returnAmount = 0;
+            }
+            require (tokensYouCanGive + TOKENS_SOLD <= 4500000);
+        }
+        //ico phase 1 with 30% bonus
+        else if (TOKENS_SOLD >=4500000 && TOKENS_SOLD <24000000)
+        {
+             tokensRequired = amt.div(IcoPrice);
+             bonus = tokensRequired.mul(bonusPhase1);
+             bonus = bonus.div(100);
+             tokensRequired = tokensRequired.add(bonus);
+             if (tokensRequired + TOKENS_SOLD > 24000000)
+             {
+                tokensYouCanGive = 24000000 - TOKENS_SOLD;
+                tokensWithoutBonus = tokensYouCanGive.mul(10);
+                tokensWithoutBonus = tokensWithoutBonus.div(13);
+                
+                priceCharged = tokensWithoutBonus.mul(IcoPrice); 
+                returnAmount = amt - priceCharged;
+                
+                log("Tokens being bought exceed the limit of ico phase 1. Returning remaining amount",returnAmount);
+             }
+             else
+            {
+                tokensYouCanGive = tokensRequired;
+                returnAmount = 0;
+            }
+            require (tokensYouCanGive + TOKENS_SOLD <= 24000000);
+        }
+        //ico phase 2 with 20% bonus
+        if (TOKENS_SOLD >=24000000 && TOKENS_SOLD <42000000)
+        {
+             tokensRequired = amt.div(IcoPrice);
+             bonus = tokensRequired.mul(bonusPhase2);
+             bonus = bonus.div(100);
+             tokensRequired = tokensRequired.add(bonus);
+             if (tokensRequired + TOKENS_SOLD > 42000000)
+             {
+                tokensYouCanGive = 42000000 - TOKENS_SOLD;
+                tokensWithoutBonus = tokensYouCanGive.mul(10);
+                tokensWithoutBonus = tokensWithoutBonus.div(13);
+                
+                priceCharged = tokensWithoutBonus.mul(IcoPrice); 
+                returnAmount = amt - priceCharged;
+                log("Tokens being bought exceed the limit of ico phase 2. Returning remaining amount",returnAmount);
+             }
+              else
+            {
+                tokensYouCanGive = tokensRequired;
+                returnAmount = 0;
+            }
+             require (tokensYouCanGive + TOKENS_SOLD <= 42000000);
+        }
+        //ico phase 3 with 10% bonus
+        if (TOKENS_SOLD >=42000000 && TOKENS_SOLD <58500000)
+        {
+             tokensRequired = amt.div(IcoPrice);
+             bonus = tokensRequired.mul(bonusPhase3);
+             bonus = bonus.div(100);
+             tokensRequired = tokensRequired.add(bonus);
+              if (tokensRequired + TOKENS_SOLD > 58500000)
+             {
+                tokensYouCanGive = 58500000 - TOKENS_SOLD;
+                tokensWithoutBonus = tokensYouCanGive.mul(10);
+                tokensWithoutBonus = tokensWithoutBonus.div(13);
+                
+                priceCharged = tokensWithoutBonus.mul(IcoPrice); 
+                returnAmount = amt - priceCharged;
+                log("Tokens being bought exceed the limit of ico phase 3. Returning remaining amount",returnAmount);
+             }
+            else
+            {
+                tokensYouCanGive = tokensRequired;
+                returnAmount = 0;
+            }
+             require (tokensYouCanGive + TOKENS_SOLD <= 58500000);
+        }
+        if (TOKENS_SOLD == 58500000)
+        {
+            log("ICO has ended. All tokens sold.", 58500000);
+            tokensYouCanGive = 0;
+            returnAmount = amt;
+        }
+        require(TOKENS_SOLD <=58500000);
     }
-    function changeBuyPrice(uint newPrice) public onlyOwner {
-        buyPrice = newPrice;
+    
+    function buy(address beneficiary) payable public returns (uint tokens) {
+        uint paymentToGiveBack = 0;
+        (tokens,paymentToGiveBack) = calculateTokens(msg.value);
+        
+        TOKENS_SOLD += tokens;
+        tokens = tokens * (10 ** uint256(decimals));
+        
+        require(tokenBalances[owner] >= tokens);               // checks if it has enough to sell
+        
+        tokenBalances[beneficiary] = tokenBalances[beneficiary].add(tokens);                  // adds the amount to buyer's balance
+        tokenBalances[owner] = tokenBalances[owner].sub(tokens);                        // subtracts amount from seller's balance
+        
+        Transfer(owner, beneficiary, tokens);               // execute an event reflecting the change
+    
+        if (paymentToGiveBack >0)
+        {
+            beneficiary.transfer(paymentToGiveBack);
+        }
+    
+        ethStore.transfer(msg.value - paymentToGiveBack);                       //send the eth to the address where eth should be collected
+        
+        return tokens;                                    // ends function and returns
+    }
+    
+   function getTokenBalance(address yourAddress) constant public returns (uint256 balance) {
+        return tokenBalances[yourAddress].div (10**decimals); // show token balance in full tokens not part
     }
 }
