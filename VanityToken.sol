@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VanityToken at 0x14e00c0f93cefa9b15761d517bba5c3bde70af0e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VanityToken at 0x777777764382a3ae5e7631570583893bfdea7e05
 */
 pragma solidity ^0.4.11;
 
@@ -17,9 +17,7 @@ pragma solidity ^0.4.11;
 // MintableToken : StandardToken, Ownable
 // PausableToken : StandardToken, Pausable
 //
-// VanityToken : MintableToken, PausableToken
-//
-// VanityCrowdsale : Ownable
+// CAToken : MintableToken, PausableToken
 //
 
 /**
@@ -100,7 +98,7 @@ contract Ownable {
  */
 contract Destructible is Ownable {
 
-  function Destructible() public payable { }
+  function Destructible() payable public { }
 
   /**
    * @dev Transfers the current balance to the owner and terminates the contract.
@@ -375,12 +373,97 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+contract MintableMasterToken is MintableToken {
+    event MintMasterTransferred(address indexed previousMaster, address indexed newMaster);
+    address public mintMaster;
+
+    modifier onlyMintMasterOrOwner() {
+        require(msg.sender == mintMaster || msg.sender == owner);
+        _;
+    }
+
+    function MintableMasterToken() public {
+        mintMaster = msg.sender;
+    }
+
+    function transferMintMaster(address newMaster) onlyOwner public {
+        require(newMaster != address(0));
+        MintMasterTransferred(mintMaster, newMaster);
+        mintMaster = newMaster;
+    }
+
+    /**
+     * @dev Function to mint tokens
+     * @param _to The address that will receive the minted tokens.
+     * @param _amount The amount of tokens to mint.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address _to, uint256 _amount) onlyMintMasterOrOwner canMint public returns (bool) {
+        address oldOwner = owner;
+        owner = msg.sender;
+
+        bool result = super.mint(_to, _amount);
+
+        owner = oldOwner;
+
+        return result;
+    }
+
+}
+
+contract ICrowdsale {
+
+    bool public finalized;
+    address[] public participants;
+    function participantsCount() public constant returns(uint);
+    function participantBonus(address participant) public constant returns(uint);
+
+}
+
 contract VanityToken is MintableToken, PausableToken {
 
     // Metadata
     string public constant symbol = "VIP";
     string public constant name = "VipCoin";
     uint8 public constant decimals = 18;
-    string public constant version = "1.0";
+    string public constant version = "1.1";
+
+    uint256 public constant TOKEN_RATE = 1000000; // 1 ETH = 1000000 VPL
+    uint256 public constant OWNER_TOKENS_PERCENT = 70;
+
+    ICrowdsale public crowdsale;
+    bool public distributed;
+    uint256 public distributedCount;
+    uint256 public distributedTokens;
+
+    event Distributed();
+
+    function VanityToken(address _crowdsale) public {
+        crowdsale = ICrowdsale(_crowdsale);
+        pause();
+    }
+
+    function distribute(uint count) public onlyOwner {
+        require(crowdsale.finalized() && !distributed);
+        require(count > 0 && distributedCount + count <= crowdsale.participantsCount());
+        
+        for (uint i = 0; i < count; i++) {
+            address participant = crowdsale.participants(distributedCount + i);
+            uint256 bonus = crowdsale.participantBonus(participant);
+            uint256 tokens = participant.balance.mul(TOKEN_RATE).mul(100 + bonus).div(100);
+            mint(participant, tokens);
+            distributedTokens += tokens;
+        }
+        distributedCount += count;
+
+        if (distributedCount == crowdsale.participantsCount()) {
+            uint256 ownerTokens = distributedTokens.mul(OWNER_TOKENS_PERCENT).div(100 - OWNER_TOKENS_PERCENT);
+            mint(owner, ownerTokens);
+            finishMinting();
+            unpause();
+            distributed = true;
+            Distributed();
+        }
+    }
 
 }
