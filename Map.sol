@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Map at 0x415f306a0628d35183f42d0607cd03fcb71d1e1f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Map at 0x8cb08d6379e79aa4b84a809bcf55ba5a00407e93
 */
 pragma solidity ^0.4.18;
 
@@ -162,8 +162,7 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
     uint constant public STARTING_CLAIM_PRICE_WEI = 0.03 ether;
     uint constant MAXIMUM_CLAIM_PRICE_WEI = 800 ether;
     uint constant KINGDOM_MULTIPLIER = 20;
-    uint constant TEAM_COMMISSION_RATIO = 10;
-    uint constant JACKPOT_COMMISSION_RATIO = 10;
+    uint constant TEAM_COMMISSION_RATIO = 20;
 
     // MODIFIERS
 
@@ -179,6 +178,11 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         } else if (_kingdomType == 5) {
             require((rounds[currentRound].nbKingdomsType5[_owner] + 1) < 9);
         }
+        _;
+    }
+
+    modifier checkKingdomCreated(string _key) {
+        require(rounds[currentRound].kingdomsCreated[_key] == false);
         _;
     }
 
@@ -245,7 +249,7 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
     }
 
     function getRemainingKingdoms() public view returns (uint nb) {
-        for (uint i = 1; i < 8; i++) {
+        for (uint i = 1; i < 10; i++) {
             if (now < rounds[currentRound].startTime + (i * 12 hours)) {
                 uint result = (10 * i);
                 if (result > 100) { 
@@ -260,7 +264,7 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
     //
     //  This is the main function. It is called to buy a kingdom
     //
-    function purchaseKingdom(string _key, string _title, bool _locked) public 
+    function purchaseKingdom(string _key, string _title, bool _locked, address affiliate) public 
     payable 
     nonReentrant()
     checkKingdomExistence(_key)
@@ -279,6 +283,12 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         require (msg.value >= requiredPrice);
         uint jackpotCommission = (msg.value).sub(kingdom.returnPrice);
 
+        if(affiliate != address(0)) {
+            uint affiliateValue = jackpotCommission.mul(10).div(100);
+            asyncSend(affiliate, affiliateValue);
+            jackpotCommission = jackpotCommission.sub(affiliateValue);
+        }
+
         if (kingdom.returnPrice > 0) {
             round.nbKingdoms[kingdom.owner]--;
             if (kingdom.kingdomType == 1) {
@@ -294,7 +304,6 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
             }
             compensateLatestMonarch(kingdom.lastTransaction, kingdom.returnPrice);
         }
-        
         
         // woodInterface.resetTimer(_key);
 
@@ -372,10 +381,19 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         kingdoms[kingdomId].lastTransaction = transactionId;
     }
 
+    function sendAffiliateValue(uint basePrice, address affiliate) internal returns (uint jackpotValue) {
+        uint result = basePrice;
+        if(affiliate != address(0)) {
+            asyncSend(affiliate, 0.003 ether);
+            result = basePrice - (0.003 ether);
+        }
+        return result;
+    }
+
     //
     //  User can call this function to generate new kingdoms (within the limits of available land)
     //
-    function createKingdom(string _key, string _title, uint _type, bool _locked) checkKingdomCap(msg.sender, _type) onlyForRemainingKingdoms() public payable {
+    function createKingdom(string _key, string _title, uint _type, address affiliate, bool _locked) checkKingdomCap(msg.sender, _type) onlyForRemainingKingdoms() public payable {
         require(now < rounds[currentRound].endTime);
         require(_type > 0);
         require(_type < 6);
@@ -383,8 +401,6 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         uint requiredPrice = basePrice;
         if (_locked == true) { requiredPrice = requiredPrice.add(ACTION_TAX); }
         require(msg.value >= requiredPrice);
-        Round storage round = rounds[currentRound];
-        require(round.kingdomsCreated[_key] == false);
 
         uint refundPrice = 0.0375 ether; // (STARTING_CLAIM_PRICE_WEI.mul(125)).div(100);
         uint nextMinimumPrice = 0.09 ether; // STARTING_CLAIM_PRICE_WEI.add(STARTING_CLAIM_PRICE_WEI.mul(2));
@@ -398,20 +414,25 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         kingdoms[kingdomId].minimumPrice = nextMinimumPrice;
         kingdoms[kingdomId].locked = _locked;
 
-        round.kingdomsKeys[_key] = kingdomId;
-        round.kingdomsCreated[_key] = true;
+        rounds[currentRound].kingdomsKeys[_key] = kingdomId;
+        rounds[currentRound].kingdomsCreated[_key] = true;
         
         if(_locked == true) {
             asyncSend(bookerAddress, ACTION_TAX);
         }
 
-        uint transactionId = kingdomTransactions.push(Transaction("", msg.sender, msg.value, 0, basePrice, now)) - 1;
+        uint transactionId = createTransaction(_type, msg.sender, msg.value, basePrice, affiliate);
         kingdomTransactions[transactionId].kingdomKey = _key;
         kingdoms[kingdomId].lastTransaction = transactionId;
-        lastTransaction[msg.sender] = now;
-
-        setNewJackpot(_type, basePrice, msg.sender);
         LandCreatedEvent(_key, msg.sender);
+    }
+
+    function createTransaction(uint _type, address _sender, uint _value, uint _basePrice, address _affiliate) internal returns (uint id) {
+        uint jackpotValue = sendAffiliateValue(_basePrice, _affiliate);
+        uint transactionId = kingdomTransactions.push(Transaction("", _sender, _value, 0, jackpotValue, now)) - 1;
+        lastTransaction[_sender] = now;
+        setNewJackpot(_type, jackpotValue, msg.sender);
+        return transactionId;
     }
 
     //
@@ -593,8 +614,8 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
                     round.scores[msg.sender] = round.scores[msg.sender] + 13;
                 }
                 
-                if(round.scores[msg.sender] == maxPoints) {
-                    if(lastTransaction[userAddress] < lastTransaction[winner]) {
+                if(round.scores[msg.sender] != 0 && round.scores[msg.sender] == maxPoints) {
+                    if(lastTransaction[userAddress] < lastTransaction[addr]) {
                         addr = userAddress;
                     }
                 } else if (round.scores[msg.sender] > maxPoints) {
