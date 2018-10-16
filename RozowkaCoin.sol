@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RozowkaCoin at 0xc48e4349d482296c32bb7ca430466f324c694d34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RozowkaCoin at 0x4a496a4e5559dfbc2435bec0fdfbfe84326dc725
 */
 pragma solidity ^0.4.20;
 
@@ -8,7 +8,7 @@ interface  tokenRecipient { function receiveApproval (address _from, uint256 _va
 contract RozowkaCoin {
     // Public variables of the token
     string public name = "RozowkaCoin";
-    string public symbol = "RZC";
+    string public symbol = "RWZC";
     uint8 public decimals = 6;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
@@ -33,10 +33,10 @@ contract RozowkaCoin {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = 10000000000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 10000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = 10000000000000;                // Give the creator all initial tokens
         name = "RozowkaCoin";                                   // Set the name for display purposes
-        symbol = "RZC";                               // Set the symbol for display purposes
+        symbol = "RWZC";                               // Set the symbol for display purposes
     }
 
     /**
