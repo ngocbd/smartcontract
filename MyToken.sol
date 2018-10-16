@@ -1,70 +1,180 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x953Cd9ad374Af0Eb69A65d30E550D0E88063a59a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x749bfd76a91fc84d6ec66b595ef4c4fc7ddb4e85
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.18;
 
-contract MyOwned {
-
-    address public owner;
-    function MyOwned() public { owner = msg.sender; }
-    modifier onlyOwner { require(msg.sender == owner ); _; }
-    function transferOwnership (address newOwner) onlyOwner public { owner = newOwner; }
+interface ERC223
+{
+	function transfer(address _to, uint _value, bytes _data) public returns(bool);
+    event Transfer(address indexed _from, address indexed _to, uint _value, bytes indexed data);
 }
 
-contract MyToken is MyOwned {   
+interface ERC20
+{
+	function transferFrom(address _from, address _to, uint _value) public returns(bool);
+	function approve(address _spender, uint _value) public returns (bool);
+	function allowance(address _owner, address _spender) public constant returns(uint);
+	event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+contract ERC223ReceivingContract
+{
+	function tokenFallBack(address _from, uint _value, bytes _data)public;	 
+}
 
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-    
-    mapping (address => uint256) public balanceOf;
-    mapping (address => bool) public frozenAccount;
-    event Burn (address indexed from,uint256 value);    
-    event FrozenFunds (address target,bool frozen);
-    event Transfer (address indexed from,address indexed to,uint256 value);
-    
-    function MyToken(
+contract Token
+{
+	string internal _symbol;
+	string internal _name;
+	uint8 internal _decimals;	
+    uint256 internal _totalSupply;
+   	mapping(address =>uint) internal _balanceOf;
+	mapping(address => mapping(address => uint)) internal _allowances;
 
-        string tokenName,
-        string tokenSymbol,
-        uint8 decimalUnits,
-        uint256 initialSupply) public {
-
-        name = tokenName;
-        symbol = tokenSymbol;
-        decimals = decimalUnits;
-        totalSupply = initialSupply;
-        balanceOf[msg.sender] = initialSupply;
+    function Token(string symbol, string name, uint8 decimals, uint256 totalSupply) public{
+	    _symbol = symbol;
+		_name = name;
+		_decimals = decimals;
+		_totalSupply = totalSupply;
     }
 
-    function transfer (address _to, uint256 _value) public {
+	function name() public constant returns (string){
+        	return _name;    
+	}
 
-        require(!frozenAccount[msg.sender]);
-        require (balanceOf[msg.sender] >= _value);
-        require (balanceOf[_to] + _value >= balanceOf[_to]);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
+	function symbol() public constant returns (string){
+        	return _symbol;    
+	}
+
+	function decimals() public constant returns (uint8){
+		return _decimals;
+	}
+
+	function totalSupply() public constant returns (uint256){
+        	return _totalSupply;
+	}
+            	
+	event Transfer(address indexed _from, address indexed _to, uint _value);	
+}
+
+
+contract admined{
+	address public admin;
+	function admined()public
+	{
+		admin = msg.sender;	
+	}
+	modifier onlyAdmin()
+	{
+		require(msg.sender == admin);		// if msg.sender is not an admin then throw exception
+		_;					// to execute as it is where this modifier will call
+	}
+
+	function transferAdminShip(address newAdmin) public onlyAdmin
+	{
+		admin = newAdmin;
+	}
+}
+
+contract MyToken is Token("TLT","TalentAgency Coin",8,50000000000000000000000000),ERC20,ERC223,admined
+{   
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+    function MyToken() public
+    {
+    	_balanceOf[msg.sender] = _totalSupply;
+    }
+
+    function totalSupply() public constant returns (uint256){
+    	return _totalSupply;  
+	}
+	
+	function findBalance(address _addr) public constant returns (uint) {
+	    return _balanceOf[_addr];
+	}
+
+    function _transfer(address _from, address _to, uint256 _value) internal {
+        require(_to != 0x0);
+        require(_balanceOf[_from] >= _value);
+        uint previousBalances = _balanceOf[_from] + _balanceOf[_to];
+        _balanceOf[_from] -= _value;
+        _balanceOf[_to]+=_value;
+        Transfer(_from, _to, _value);
+        assert(_balanceOf[_from] +_balanceOf[_to] == previousBalances);
     }
     
-    function freezeAccount (address target,bool freeze) public onlyOwner {
+	function transfer(address _to, uint256 _value)public{
+    	if(!isContract(_to))
+    	{
+		    _transfer(msg.sender, _to, _value); 
+	    }
+	}
+	
+	function transferFrom(address _from, address _to, uint256 _value)public returns(bool){
+    	require(_allowances[_from][msg.sender] >= _value);
+    	{
+			_allowances[_from][msg.sender] -= _value;
+			Transfer(_from, _to, _value);            
+			return true;
+    	}
+    	return false;
+   }
 
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
-    }
+	function transfer(address _to, uint _value, bytes _data)public returns(bool)
+	{
+	    require(_value>0 && _value <= _balanceOf[msg.sender]);
+		if(isContract(_to))
+		{
+			_balanceOf[msg.sender]-= _value;
+	       	_balanceOf[_to]+=_value;
+			ERC223ReceivingContract _contract = ERC223ReceivingContract(_to);
+			_contract.tokenFallBack(msg.sender,_value,_data);
+			Transfer(msg.sender, _to, _value, _data); 
+    		return true;
+		}
+		return false;
+	}
 
-    function mintToken (address target, uint256 mintedAmount) public onlyOwner {
-
-        balanceOf[target] += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
+	function isContract(address _addr) internal view returns(bool){
+		uint codeLength;
+		assembly
+		{
+		    codeLength := extcodesize(_addr)
+	    }
+		return codeLength > 0;
+	}	
+    
+	function approve(address _spender, uint _value) public returns (bool)
+	{
+    	_allowances[msg.sender][_spender] = _value;
+    	Approval(msg.sender, _spender, _value);	
+    	return true;
     }
     
-    function burnFrom (address _from,uint256 _value) public onlyOwner {
+    function allowance(address _owner, address _spender) public constant returns(uint)
+    {
+    	return _allowances[_owner][_spender];
+    }
+    
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice){
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
+    }
+    
+    function buy () public payable
+	{
+		uint256 amount = (msg.value/(1 ether))/ buyPrice;
+		require(_balanceOf[this]< amount);
+		_balanceOf[msg.sender]+=amount;
+		_balanceOf[this]-=amount;
+		Transfer(this,msg.sender,amount);
+	}
 
-        require(balanceOf[_from] >= _value); 
-        balanceOf[_from] -= _value; 
-        Burn(_from, _value);
-    }        
+	function sell(uint256 amount) public
+	{
+		require(_balanceOf[msg.sender]<amount);
+		_balanceOf[this]+= amount;
+		_balanceOf[msg.sender]-=amount;
+		require(!msg.sender.send(amount*sellPrice * 1 ether));
+		Transfer(msg.sender,this,amount);
+	}
 }
