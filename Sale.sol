@@ -1,106 +1,116 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x57e7d2eb31a54f3d661de5a29114ff16f1295991
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x00fa44d91d7541d16dd18a48dd6a011de5e887df
 */
-// Copyright New Alchemy Limited, 2017. All rights reserved.
+pragma solidity ^0.4.13;
 
-pragma solidity >=0.4.10;
-
-// Just the bits of ERC20 that we need.
-contract Token {
-	function balanceOf(address addr) returns(uint);
-	function transfer(address to, uint amount) returns(bool);
+contract Calculator {
+    function getAmount(uint value) constant returns (uint);
 }
 
-contract Sale {
-	address public owner;    // contract owner
-	address public newOwner; // new contract owner for two-way ownership handshake
-	string public notice;    // arbitrary public notice text
-	uint public start;       // start time of sale
-	uint public end;         // end time of sale
-	uint public cap;         // Ether hard cap
-	bool public live;        // sale is live right now
+contract Ownable {
+  address public owner;
 
-	event StartSale();
-	event EndSale();
-	event EtherIn(address from, uint amount);
 
-	function Sale() {
-		owner = msg.sender;
-	}
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
 
-	function () payable {
-		require(block.timestamp >= start);
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-		// If we've reached end-of-sale conditions, accept
-		// this as the last contribution and emit the EndSale event.
-		// (Technically this means we allow exactly one contribution
-		// after the end of the sale.)
-		// Conversely, if we haven't started the sale yet, emit
-		// the StartSale event.
-		if (block.timestamp > end || this.balance > cap) {
-			require(live);
-			live = false;
-			EndSale();
-		} else if (!live) {
-			live = true;
-			StartSale();
-		}
-		EtherIn(msg.sender, msg.value);
-	}
 
-	function init(uint _start, uint _end, uint _cap) onlyOwner {
-		start = _start;
-		end = _end;
-		cap = _cap;
-	}
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
 
-	function softCap(uint _newend) onlyOwner {
-		require(_newend >= block.timestamp && _newend >= start && _newend <= end);
-		end = _newend;
-	}
+}
 
-	// 1st half of ownership change
-	function changeOwner(address next) onlyOwner {
-		newOwner = next;
-	}
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-	// 2nd half of ownership change
-	function acceptOwnership() {
-		require(msg.sender == newOwner);
-		owner = msg.sender;
-		newOwner = 0;
-	}
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-	// put some text in the contract
-	function setNotice(string note) onlyOwner {
-		notice = note;
-	}
+contract Sale is Ownable {
 
-	// withdraw all of the Ether
-	function withdraw() onlyOwner {
-		msg.sender.transfer(this.balance);
-	}
+    //responsible for getting token amount
+    Calculator calculator;
 
-	// withdraw some of the Ether
-	function withdrawSome(uint value) onlyOwner {
-		require(value <= this.balance);
-		msg.sender.transfer(value);
-	}
+    //which token should we sell
+    ERC20 token;
 
-	// withdraw tokens to owner
-	function withdrawToken(address token) onlyOwner {
-		Token t = Token(token);
-		if (!t.transfer(msg.sender, t.balanceOf(this))) throw;
-	}
+    // who sells his tokens
+    address tokenSeller;
 
-	// refund early/late tokens
-	function refundToken(address token, address sender, uint amount) onlyOwner {
-		Token t = Token(token);
-		if (!t.transfer(sender, amount)) throw;
-	}
+    uint256 public minimalTokens = 100000000000;
+
+    /**
+     * event for token purchase logging
+     * @param purchaser who paid for the tokens
+     * @param value weis paid for purchase
+     * @param amount amount of tokens purchased
+     */
+    event TokenPurchase(address indexed purchaser, uint256 value, uint256 amount);
+
+    function Sale(address tokenAddress, address calculatorAddress) {
+        tokenSeller = msg.sender;
+        token = ERC20(tokenAddress);
+        setCalculatorAddress(calculatorAddress);
+    }
+
+    function () payable {
+        buyTokens();
+    }
+
+    function buyTokens() payable {
+        uint256 weiAmount = msg.value;
+
+        // calculate token amount to be created
+        uint256 tokens = calculator.getAmount(weiAmount);
+        assert(tokens >= minimalTokens);
+
+        token.transferFrom(tokenSeller, msg.sender, tokens);
+        TokenPurchase(msg.sender, weiAmount, tokens);
+    }
+
+    function setTokenSeller(address newTokenSeller) onlyOwner {
+        tokenSeller = newTokenSeller;
+    }
+
+    function setCalculatorAddress(address calculatorAddress) onlyOwner {
+        calculator = Calculator(calculatorAddress);
+    }
+
+    function setMinimalTokens(uint256 _minimalTokens) onlyOwner {
+        minimalTokens = _minimalTokens;
+    }
+
+    function withdraw(address beneficiary, uint amount) onlyOwner {
+        require(beneficiary != 0x0);
+
+        beneficiary.transfer(amount);
+    }
 }
