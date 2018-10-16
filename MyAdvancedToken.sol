@@ -1,14 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x7ab873f7bdd12a2a4ed4852378479cc8b2f32940
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x63d3cda2ebf391f633e96534e7bd6aa60f305c23
 */
-pragma solidity ^0.4.18;
-/**
- * MyAdvancedToken
- * edisonlee55/ethereum-org (https://github.com/edisonlee55/ethereum-org/blob/master/solidity/token-advanced.sol)
- *
- * Copyright (c) 2017 MING-CHIEN LEE
- * Forked from ethereum/ethereum-org (https://github.com/ethereum/ethereum-org/blob/master/solidity/token-advanced.sol)
- */
+pragma solidity ^0.4.16;
+
+//DUNNO TOKEN
+
 contract owned {
     address public owner;
 
@@ -32,7 +28,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 0;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -51,11 +47,15 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        totalSupply = 100000000 * 0 ** uint256(decimals);  // Update total supply with the decimal amount
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "TRESOR";                                   // Set the name for display purposes
-        symbol = "XTR";                               // Set the symbol for display purposes
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
@@ -189,12 +189,16 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken() TokenERC20() public {}
+    function MyAdvancedToken(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] > _value);                // Check if the sender has enough
+        require (balanceOf[_from] >= _value);               // Check if the sender has enough
         require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
