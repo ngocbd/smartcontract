@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0xb0d15abb7ef3167cfad71b6e8302a5f9d7b51e77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0xe753448f1a5f40eeaee8ab4c36666efeff6b3a24
 */
 // Unattributed material copyright New Alchemy Limited, 2017. All rights reserved.
 pragma solidity >=0.4.10;
@@ -84,8 +84,6 @@ contract IToken {
 	function balanceOf(address owner) returns(uint);
 }
 
-// In case someone accidentally sends token to one of these contracts,
-// add a way to get them back out.
 contract TokenReceivable is Owned {
 	function claimTokens(address _token, address _to) onlyOwner returns (bool) {
 		IToken token = IToken(_token);
@@ -98,17 +96,16 @@ contract EventDefinitions {
 	event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-contract BitLearnToken is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
-	string constant public name = "BTLN Test Token";
-	uint8 constant public decimals = 8;
-	string constant public symbol = "BTLN";
+contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
+	string constant public name = "DOC Token";
+	uint8 constant public decimals = 18;
+	string constant public symbol = "DOC";
 	Controller public controller;
 	string public motd;
 	event Motd(string message);
 
 	// functions below this line are onlyOwner
 
-	// set "message of the day"
 	function setMotd(string _m) onlyOwner {
 		motd = _m;
 		Motd(_m);
@@ -203,7 +200,7 @@ contract BitLearnToken is Finalizable, TokenReceivable, SafeMath, EventDefinitio
 
 contract Controller is Owned, Finalizable {
 	Ledger public ledger;
-	BitLearnToken public token;
+	Token public token;
 
 	function Controller() {
 	}
@@ -211,7 +208,7 @@ contract Controller is Owned, Finalizable {
 	// functions below this line are onlyOwner
 
 	function setToken(address _token) onlyOwner {
-		token = BitLearnToken(_token);
+		token = Token(_token);
 	}
 
 	function setLedger(address _ledger) onlyOwner {
@@ -275,7 +272,7 @@ contract Controller is Owned, Finalizable {
 	}
 }
 
-contract Ledger is Owned, SafeMath, Finalizable {
+contract Ledger is Owned, SafeMath, Finalizable, TokenReceivable {
 	Controller public controller;
 	mapping(address => uint) public balanceOf;
 	mapping (address => mapping (address => uint)) public allowance;
@@ -296,7 +293,7 @@ contract Ledger is Owned, SafeMath, Finalizable {
 		mintingStopped = true;
 	}
 
-	function multiMint(uint nonce, uint256[] bits) onlyOwner {
+	function multiMint(uint nonce, uint256[] bits) external onlyOwner {
 		require(!mintingStopped);
 		if (nonce != mintingNonce) return;
 		mintingNonce += 1;
