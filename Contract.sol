@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contract at 0xccffe7182dac0821af63d9498cd2fc99b8b40843
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contract at 0x286bbee3f20f1702e707e58d33dc28a69e7efd4e
 */
 //author : dm & w
 pragma solidity ^0.4.23;
@@ -71,11 +71,6 @@ contract Contract is Controller {
 		uint256 eth_balance;
 	}
 
-	modifier minAmountReached {
-		require(this.balance >= min_amount);
-		_;
-	}
-
   	modifier underMaxAmount {
     	require(max_amount == 0 || this.balance <= max_amount);
     	_;
@@ -87,7 +82,6 @@ contract Contract is Controller {
 
 	uint256 public FEE_OWNER;
 	uint256 public max_amount;
-	uint256 public min_amount;
 	uint256 public individual_cap;
 	uint256 public gas_price_max;
 	uint8 public rounds;
@@ -104,24 +98,23 @@ contract Contract is Controller {
 	bool public bought_tokens;
 	bool public owner_supplied_eth;
 	bool public allow_contributions = true;
+	bool public allow_refunds;
   //============================
 
 	constructor(
 		uint256 _max_amount,
-		uint256 _min_amount,
 		bool _whitelist,
 		uint256 _owner_fee_divisor
 		) {
-        FEE_OWNER = _owner_fee_divisor;
-  			max_amount = calculate_with_fees(_max_amount);
-		  	min_amount = calculate_with_fees(_min_amount);
+			FEE_OWNER = _owner_fee_divisor;
+			max_amount = calculate_with_fees(_max_amount);
 		  	whitelist_enabled = _whitelist;
 		  	Contributor storage contributor = contributors[msg.sender];
 		  	contributor.whitelisted = true;
   		}
 
 
-	function buy_the_tokens(bytes _data) onlyOwner minAmountReached {
+	function buy_the_tokens(bytes _data) onlyOwner {
 		require(!bought_tokens && sale != 0x0);
 		bought_tokens = true;
 		const_contract_eth_value = this.balance;
@@ -156,6 +149,10 @@ contract Contract is Controller {
 		allow_contributions = _boolean;
 	}
 
+	function set_allow_refunds(bool _boolean) onlyOwner {
+		allow_refunds = _boolean;
+	}
+
 	function set_tokens_received() onlyOwner {
 		tokens_received();
 	}
@@ -181,12 +178,6 @@ contract Contract is Controller {
 		//ATTENTION! The new amount should be in wei
 		//Use https://etherconverter.online/
 		max_amount = calculate_with_fees(_amount);
-	}
-
-	function change_min_amount(uint256 _amount) onlyOwner {
-		//ATTENTION! The new amount should be in wei
-		//Use https://etherconverter.online/
-		min_amount = calculate_with_fees(_amount);
 	}
 
 	function change_fee(uint256 _fee) onlyOwner {
@@ -218,7 +209,7 @@ contract Contract is Controller {
 	}
 
 	function refund(address _user) internal {
-		require(!bought_tokens && percent_reduction == 0);
+		require(!bought_tokens && allow_refunds && percent_reduction == 0);
 		Contributor storage contributor = contributors[_user];
 		uint256 eth_to_withdraw = contributor.balance.add(contributor.fee);
 		contributor.balance = 0;
@@ -227,7 +218,7 @@ contract Contract is Controller {
 	}
 
 	function partial_refund(address _user) internal {
-		require(bought_tokens && rounds == 0 && percent_reduction > 0);
+		require(bought_tokens && allow_refunds && rounds == 0 && percent_reduction > 0);
 		Contributor storage contributor = contributors[_user];
 		require(contributor.rounds == 0);
 		uint256 eth_to_withdraw = contributor.balance.mul(percent_reduction).div(100);
