@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CALLGToken at 0x48546427eb8f1fbe9cb4c92ad8fbd88e70ed8dfe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CALLGToken at 0x53c3818f9b12c1a2ac86beaaa4d43b414e9a5682
 */
 /*
-Capital Technologies & Research - Capital GAS (CALLG) Smart Contract
+Capital Technologies & Research - Capital GAS (CALLG)
 */
 pragma solidity ^0.4.19;
 
@@ -227,7 +227,7 @@ contract BurnableToken is StandardToken, Ownable {
     }
 }
 /**
- * @title CALLG Token
+ * @title CAPITAL GAS (CALLG) Token
  * @dev Token representing CALLG.
  */
  contract CALLGToken is BurnableToken {
