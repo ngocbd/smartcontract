@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x36b0abfa331caf85ead376b59fea780bc20bb593
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x52ffb515eceb5927dfec948dca10e5233db8f27f
 */
 pragma solidity ^0.4.19;
 
 /**
- * CashVault Presale. More info www.cashvault.io. 
+ * HauroPay Presale. More info www.hauropay.com. 
  * Designed by www.coincrowd.it.
  */
 
@@ -471,7 +471,7 @@ contract Presale is Ownable {
 		
 		uint256 totalSupply = 12000000; // 12.000.000 * 0.25€ = 3.000.000€ CAPPED
 		decimals = 18;
-		string memory name = "MetaVaucher";
+		string memory name = "MethaVoucher";
 		string memory symbol = "MTV";
 		
 		//End Configuration
