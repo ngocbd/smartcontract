@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pot at 0xCa50d78B6B01f66496Bf9Ec61248C51647975Ab4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pot at 0xf74503c8d80b145d622c8f97a7ed322cbff23d61
 */
 pragma solidity ^0.4.11;
 contract Pot {
@@ -10,7 +10,7 @@ contract Pot {
 	uint public potSize = 0;
 	uint public winnerIndex;
 	address public winnerAddress;
-	uint public minBetSize = .01 ether;
+	uint public minBetSize = .1 ether;
 	uint public potTime = 1800;
 	uint public endTime = now + potTime;
 	uint public totalBet = 0;
@@ -90,6 +90,7 @@ contract Pot {
             		random_number = 0;
             	else
                 	uint random_number = uint(block.blockhash(block.number-1))%potMembers.length - 1;
+                debug(bytesToString(bytes32(random_number)));
                 winnerIndex = random_number;
                 winnerAddress = potMembers[random_number];
                 uint amountWon = potSize * minBetSize * 98 / 100;
