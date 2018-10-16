@@ -1,17 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xc06c1d8dba472e5f9b1e45cbd3dadc1d79874d4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9819bce6698bd3ccd6ed983420e223479828490e
 */
+// GET Token | Getdoit.io | The GetDoIt platform is the first internet portal worldwide 
+// that covers all spheres of services connected with moving
+// 
+// GETDOIT.IO
 //
-//  Congratulations!! 
-//  
-//  You won a bonus token!
-//  This token gives an additional 5% discount. 
-//  Hurry up to participate in the tokensale prover.io    
-//  
-//  PROVER.IO
-//  
-//  ProofToken: 0x6f3a995E904c9be5279e375e79F3c30105eFa618
-
+// Telegram: https://goo.gl/JHsZo8
 
 pragma solidity 0.4.18;
 
@@ -57,6 +52,48 @@ contract Ownable {
         require(newOwner != address(0));
         owner = newOwner;
         OwnershipTransferred(owner, newOwner);
+    }
+}
+
+contract Manageable is Ownable {
+    mapping(address => bool) public managers;
+
+    event ManagerAdded(address indexed manager);
+    event ManagerRemoved(address indexed manager);
+
+    modifier onlyManager() { require(managers[msg.sender]); _; }
+
+    function addManager(address _manager) onlyOwner public {
+        require(_manager != address(0));
+
+        managers[_manager] = true;
+
+        ManagerAdded(_manager);
+    }
+
+    function removeManager(address _manager) onlyOwner public {
+        require(_manager != address(0));
+
+        managers[_manager] = false;
+
+        ManagerRemoved(_manager);
+    }
+}
+
+contract Withdrawable is Ownable {
+    function withdrawEther(address _to, uint _value) onlyOwner public returns(bool) {
+        require(_to != address(0));
+        require(this.balance >= _value);
+
+        _to.transfer(_value);
+
+        return true;
+    }
+
+    function withdrawTokens(ERC20 _token, address _to, uint _value) onlyOwner public returns(bool) {
+        require(_to != address(0));
+
+        return _token.transfer(_to, _value);
     }
 }
 
@@ -191,7 +228,6 @@ contract MintableToken is StandardToken, Ownable {
     bool public mintingFinished = false;
 
     modifier canMint() { require(!mintingFinished); _; }
-    modifier notMint() { require(mintingFinished); _; }
 
     function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
         totalSupply = totalSupply.add(_amount);
@@ -244,23 +280,40 @@ contract BurnableToken is StandardToken {
 
 
 
-contract Token is CappedToken, BurnableToken {
-
-    string public URL = "https://prover.io";
-
-    function Token() CappedToken(100000000 * 1 ether) StandardToken("PROVER.IO additional 5% discount", "BONUS", 18) public {
+contract Token is CappedToken, BurnableToken, Withdrawable {
+    function Token() CappedToken(14285714285 * 1 ether) StandardToken("GET Token", "GET", 18) public {
         
     }
-    
-    function transfer(address _to, uint256 _value) public returns(bool) {
-        return super.transfer(_to, _value);
-    }
-    
-    function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
-        return super.multiTransfer(_to, _value);
+}
+
+contract Crowdsale is Manageable, Withdrawable, Pausable {
+    using SafeMath for uint;
+
+    Token public token;
+    bool public crowdsaleClosed = false;
+
+    event ExternalPurchase(address indexed holder, string tx, string currency, uint256 currencyAmount, uint256 rateToEther, uint256 tokenAmount);
+    event CrowdsaleClose();
+   
+    function Crowdsale() public {
+        token = new Token();
+
+        addManager(0x63dE9947F3B411999fcf09592e0D8c30026B8daD);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        return super.transferFrom(_from, _to, _value);
+    function externalPurchase(address _to, string _tx, string _currency, uint _value, uint256 _rate, uint256 _tokens) whenNotPaused onlyManager public {
+        token.mint(_to, _tokens);
+        ExternalPurchase(_to, _tx, _currency, _value, _rate, _tokens);
+    }
+
+    function closeCrowdsale(address _to) onlyOwner public {
+        require(!crowdsaleClosed);
+
+        token.finishMinting();
+        token.transferOwnership(_to);
+
+        crowdsaleClosed = true;
+
+        CrowdsaleClose();
     }
 }
