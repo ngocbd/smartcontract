@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x6a8fa6f138adb3251ca3e1671b73ae036dd5ca6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xf7bc55e1bd62d44f72e9d7b351c74514e44eafdc
 */
-/* solium-disable security/no-block-members */
+pragma solidity ^0.4.21;
 
-pragma solidity ^0.4.23;
+
 
 /**
  * @title ERC20Basic
@@ -17,19 +17,16 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -40,7 +37,7 @@ contract ERC20 is ERC20Basic {
  */
 library SafeERC20 {
   function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    token.transfer(to, value);
+    assert(token.transfer(to, value));
   }
 
   function safeTransferFrom(
@@ -51,11 +48,11 @@ library SafeERC20 {
   )
     internal
   {
-    require(token.transferFrom(from, to, value));
+    assert(token.transferFrom(from, to, value));
   }
 
   function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    require(token.approve(spender, value));
+    assert(token.approve(spender, value));
   }
 }
 
@@ -69,18 +66,14 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  constructor() public {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -102,14 +95,8 @@ contract Ownable {
     owner = newOwner;
   }
 
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
 }
+
 
 /**
  * @title SafeMath
@@ -192,7 +179,7 @@ contract TokenVesting is Ownable {
    * @param _duration duration in seconds of the period in which the tokens will vest
    * @param _revocable whether the vesting is revocable or not
    */
-  constructor(
+  function TokenVesting(
     address _beneficiary,
     uint256 _start,
     uint256 _cliff,
