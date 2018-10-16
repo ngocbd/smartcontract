@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BnsPresale at 0xbbE534ade64BA84449AF1AE1Bae2275CaAA1D499
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BnsPresale at 0x95609c7c7cbc0f3ed3f7005379f5ae5f872408e2
 */
 pragma solidity ^0.4.17;
 
@@ -34,12 +34,12 @@ pragma solidity ^0.4.17;
 
 contract BnsPresale {
 
-    string public constant VERSION = "0.2.0-bns-test-01";
+    string public constant VERSION = "0.2.0-bns";
 
     /* ====== configuration START ====== */
-    uint public constant PRESALE_START  = 4465100; /* approx. TUE OCT 31 2017 17:47:21 GMT+0100 (CET) */
-    uint public constant PRESALE_END    = 4465500; /* approx. TUE OCT 31 2017 19:20:54 GMT+0100 (CET) */
-    uint public constant WITHDRAWAL_END = 4465600; /* approx. TUE OCT 31 2017 19:44:20 GMT+0100 (CET) */
+    uint public constant PRESALE_START  = 4470000; /* approx. WED NOV 01 2017 12:55:47 GMT+0100 (CET) */
+    uint public constant PRESALE_END    = 5033333; /* approx. WED JAN 31 2018 19:39:39 GMT+0100 (CET) */
+    uint public constant WITHDRAWAL_END = 5111111; /* approx. TUE FEB 13 2018 10:08:39 GMT+0100 (CET) */
 
     address public constant OWNER = 0x54ef8Ffc6EcdA95d286722c0358ad79123c3c8B0;
 
