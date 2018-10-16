@@ -1,52 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QNTU at 0x3d2dd0ea5ee462f597d05f3eaf147c6156206d86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QNTU at 0x4234f63b1d202f6c016ca3b6a0d41d7d85f17716
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title ReceivingContract Interface
+ * @dev ReceivingContract handle incoming token transfers.
  */
-contract Ownable {
-
-    address public owner;
+contract ReceivingContract {
 
     /**
-     * Events
+     * @dev Handle incoming token transfers.
+     * @param _from The token sender address.
+     * @param _value The amount of tokens.
      */
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    /**
-     * @dev Constructor
-     * Sets the original `owner` of the contract to the sender account.
-     */
-    function Ownable() public {
-        owner = msg.sender;
-        OwnershipTransferred(0, owner);
-    }
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a new owner.
-     * @param _newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address _newOwner)
-        public
-        onlyOwner
-    {
-        require(_newOwner != 0);
-
-        OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
-    }
+    function tokenFallback(address _from, uint _value) public;
 
 }
 
@@ -114,6 +82,53 @@ library SafeMath {
 }
 
 /**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+
+    address public owner;
+
+    /**
+     * Events
+     */
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Constructor
+     * Sets the original `owner` of the contract to the sender account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+        OwnershipTransferred(0, owner);
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a new owner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address _newOwner)
+        public
+        onlyOwner
+    {
+        require(_newOwner != 0);
+
+        OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
+    }
+
+}
+
+/**
  * @title Standard ERC20 token
  */
 contract StandardToken is Ownable {
@@ -153,23 +168,23 @@ contract StandardToken is Ownable {
         ChangeTokenInformation(_name, _symbol);
     }
 
-	/**
-	 * @dev Transfer token for a specified address
-	 * @param _to The address to transfer to.
-	 * @param _value The amount to be transferred.
-	 */
-	function transfer(address _to, uint _value)
-		public
-		returns (bool)
-	{
-		require(_to != 0);
+    /**
+     * @dev Transfer token for a specified address
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
+    function transfer(address _to, uint _value)
+        public
+        returns (bool)
+    {
+        require(_to != 0);
         require(_value > 0);
 
-		balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-		balanceOf[_to] = balanceOf[_to].add(_value);
-		Transfer(msg.sender, _to, _value);
-		return true;
-	}
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
 
     /**
      * @dev Transfer tokens from one address to another
@@ -278,93 +293,6 @@ contract StandardToken is Ownable {
 }
 
 /**
- * @title UpgradeAgent Interface
- * @dev Upgrade agent transfers tokens to a new contract. Upgrade agent itself can be the
- * token contract, or just a middle man contract doing the heavy lifting.
- */
-contract UpgradeAgent {
-
-    bool public isUpgradeAgent = true;
-
-    function upgradeFrom(address _from, uint _value) public;
-
-}
-
-
-/**
- * @title Mintable token
- */
-contract MintableToken is StandardToken {
-
-	bool public mintingFinished = false;
-
-	/**
-     * Events
-     */
-	event Mint(address indexed to, uint amount);
-  	event MintFinished();
-
-	modifier canMint() {
-		require(!mintingFinished);
-		_;
-	}
-
-	/**
-	 * @dev Function to mint tokens
-	 * @param _to The address that will receive the minted tokens.
-	 * @param _amount The amount of tokens to mint.
-	 */
-	function mint(address _to, uint _amount)
-		public
-		onlyOwner
-		canMint
-	{
-		totalSupply = totalSupply.add(_amount);
-		balanceOf[_to] = balanceOf[_to].add(_amount);
-		Mint(_to, _amount);
-		Transfer(0, _to, _amount);
-	}
-
-	/**
-	 * @dev Function to stop minting new tokens.
-	 */
-	function finishMinting()
-		public
-		onlyOwner
-		canMint
-	{
-		mintingFinished = true;
-		MintFinished();
-	}
-
-}
-
-/**
- * @title Capped token
- * @dev Mintable token with a token cap.
- */
-contract CappedToken is MintableToken {
-
-    uint public cap;
-
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     */
-    function mint(address _to, uint _amount)
-        public
-        onlyOwner
-        canMint
-    {
-        require(totalSupply.add(_amount) <= cap);
-
-        super.mint(_to, _amount);
-    }
-
-}
-
-/**
  * @title Pausable token
  * @dev Token that can be freeze "Transfer" function
  */
@@ -379,9 +307,9 @@ contract PausableToken is StandardToken {
     event UnfreezeTransfer();
 
     modifier canTransfer() {
-		require(isTradable);
-		_;
-	}
+        require(isTradable);
+        _;
+    }
 
     /**
      * Disallow to transfer token from an address to other address
@@ -406,17 +334,17 @@ contract PausableToken is StandardToken {
     }
 
     /**
-	 * @dev Transfer token for a specified address
-	 * @param _to The address to transfer to.
-	 * @param _value The amount to be transferred.
-	 */
+     * @dev Transfer token for a specified address
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
     function transfer(address _to, uint _value)
-		public
+        public
         canTransfer
-		returns (bool)
-	{
-		return super.transfer(_to, _value);
-	}
+        returns (bool)
+    {
+        return super.transfer(_to, _value);
+    }
 
     /**
      * @dev Transfer tokens from one address to another
@@ -490,6 +418,19 @@ contract PausableToken is StandardToken {
 }
 
 /**
+ * @title UpgradeAgent Interface
+ * @dev Upgrade agent transfers tokens to a new contract. Upgrade agent itself can be the
+ * token contract, or just a middle man contract doing the heavy lifting.
+ */
+contract UpgradeAgent {
+
+    bool public isUpgradeAgent = true;
+
+    function upgradeFrom(address _from, uint _value) public;
+
+}
+
+/**
  * @title Upgradable token
  */
 contract UpgradableToken is StandardToken {
@@ -514,14 +455,14 @@ contract UpgradableToken is StandardToken {
     event Upgrade(address indexed from, address indexed to, uint value);
 
     modifier onlyUpgradeMaster() {
-		require(msg.sender == upgradeMaster);
-		_;
-	}
+        require(msg.sender == upgradeMaster);
+        _;
+    }
 
     modifier canUpgrade() {
-		require(isUpgradable);
-		_;
-	}
+        require(isUpgradable);
+        _;
+    }
 
     /**
      * Change the upgrade master.
@@ -549,10 +490,7 @@ contract UpgradableToken is StandardToken {
 
         upgradeAgent = UpgradeAgent(_newAgent);
 
-        // Bad interface
-        if (!upgradeAgent.isUpgradeAgent()) {
-            revert();
-        }
+        require(upgradeAgent.isUpgradeAgent());
 
         ChangeUpgradeAgent(_newAgent);
     }
@@ -634,58 +572,54 @@ contract UpgradableToken is StandardToken {
 /**
  * @title QNTU 1.0 token
  */
-contract QNTU is UpgradableToken, CappedToken, PausableToken {
+contract QNTU is UpgradableToken, PausableToken {
 
     /**
-	 * @dev Constructor
-	 */
-    function QNTU()
+     * @dev Constructor
+     */
+    function QNTU(address[] _wallets, uint[] _amount)
         public
     {
+        require(_wallets.length == _amount.length);
+
         symbol = "QNTU";
         name = "QNTU Token";
         decimals = 18;
 
+        uint num = 0;
+        uint length = _wallets.length;
         uint multiplier = 10 ** uint(decimals);
 
-        cap = 120000000000 * multiplier;
-        totalSupply = 72000000000 * multiplier;
+        for (uint i = 0; i < length; i++) {
+            num = _amount[i] * multiplier;
 
-        // 40%
-        balanceOf[0xd83ef0076580e595b3be39d654da97184623b9b5] = 4800000000 * multiplier;
-        balanceOf[0xd4e40860b41f666fbc6c3007f3d1434e353063d8] = 4800000000 * multiplier;
-        balanceOf[0x84dd4187a87055495d0c08fe260ca9cc9e02f09e] = 4800000000 * multiplier;
-        balanceOf[0x0556620d12c38babd0461e366b433682a5000fae] = 4800000000 * multiplier;
-        balanceOf[0x0f363f18f49aa350ba8fcf233cdd155a7b77af99] = 4800000000 * multiplier;
-        balanceOf[0x1a38292d3f685cd79bcdfc19fad7447ae762aa4c] = 4800000000 * multiplier;
-        balanceOf[0xb262d04ee29ad9ebacb1ab9da99398916f425d84] = 4800000000 * multiplier;
-        balanceOf[0xd8c2d6f12baf10258eb390be4377e460c1d033e2] = 4800000000 * multiplier;
-        balanceOf[0x1ca70fd8433ec97fa0777830a152d028d71b88fa] = 4800000000 * multiplier;
-        balanceOf[0x57be4b8c57c0bb061e05fdf85843503fba673394] = 4800000000 * multiplier;
+            balanceOf[_wallets[i]] = num;
+            Transfer(0, _wallets[i], num);
 
-        Transfer(0, 0xd83ef0076580e595b3be39d654da97184623b9b5, 4800000000 * multiplier);
-        Transfer(0, 0xd4e40860b41f666fbc6c3007f3d1434e353063d8, 4800000000 * multiplier);
-        Transfer(0, 0x84dd4187a87055495d0c08fe260ca9cc9e02f09e, 4800000000 * multiplier);
-        Transfer(0, 0x0556620d12c38babd0461e366b433682a5000fae, 4800000000 * multiplier);
-        Transfer(0, 0x0f363f18f49aa350ba8fcf233cdd155a7b77af99, 4800000000 * multiplier);
-        Transfer(0, 0x1a38292d3f685cd79bcdfc19fad7447ae762aa4c, 4800000000 * multiplier);
-        Transfer(0, 0xb262d04ee29ad9ebacb1ab9da99398916f425d84, 4800000000 * multiplier);
-        Transfer(0, 0xd8c2d6f12baf10258eb390be4377e460c1d033e2, 4800000000 * multiplier);
-        Transfer(0, 0x1ca70fd8433ec97fa0777830a152d028d71b88fa, 4800000000 * multiplier);
-        Transfer(0, 0x57be4b8c57c0bb061e05fdf85843503fba673394, 4800000000 * multiplier);
+            totalSupply += num;
+        }
+    }
 
-        // 20%
-        balanceOf[0xb6ff15b634571cb56532022fe00f96fee51322b3] = 4800000000 * multiplier;
-        balanceOf[0x631c87278de77902e762ba0ab57d55c10716e0b6] = 4800000000 * multiplier;
-        balanceOf[0x7fe443391d9a3eb0c401181c46a44eb6106bba2e] = 4800000000 * multiplier;
-        balanceOf[0x94905c20fa2596fdc7d37bab6dd67b52e2335122] = 4800000000 * multiplier;
-        balanceOf[0x6ad8038f53ae2800d45a31d8261b062a0b55d63b] = 4800000000 * multiplier;
+    /**
+     * @dev Transfer token for a specified contract
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
+    function transferToContract(address _to, uint _value)
+        public
+        canTransfer
+        returns (bool)
+    {
+        require(_value > 0);
 
-        Transfer(0, 0xb6ff15b634571cb56532022fe00f96fee51322b3, 4800000000 * multiplier);
-        Transfer(0, 0x631c87278de77902e762ba0ab57d55c10716e0b6, 4800000000 * multiplier);
-        Transfer(0, 0x7fe443391d9a3eb0c401181c46a44eb6106bba2e, 4800000000 * multiplier);
-        Transfer(0, 0x94905c20fa2596fdc7d37bab6dd67b52e2335122, 4800000000 * multiplier);
-        Transfer(0, 0x6ad8038f53ae2800d45a31d8261b062a0b55d63b, 4800000000 * multiplier);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+
+        ReceivingContract receiver = ReceivingContract(_to);
+        receiver.tokenFallback(msg.sender, _value);
+
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
 }
