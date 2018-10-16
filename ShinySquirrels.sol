@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShinySquirrels at 0x294308484F47Ff5a833a284ac6949Eb02728FbE4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShinySquirrels at 0x870FE80e76DaE4a4c12690dEc52456ab13176202
 */
 contract ShinySquirrels {
 
