@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KimeraTokenCrowdsale at 0xe9e649c379a64a489da84783431bc79547044342
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KimeraTokenCrowdsale at 0xb7918f9099157b1564a6a323caca438b5d2885c7
 */
 pragma solidity 0.4.21;
 
@@ -248,7 +248,7 @@ contract BurnableToken is StandardToken {
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
 
-contract MintableToken is StandardToken, Ownable, BurnableToken {
+contract MintableToken is StandardToken, Ownable {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
 
@@ -285,6 +285,11 @@ contract MintableToken is StandardToken, Ownable, BurnableToken {
   }
 }
 
+contract KimeraToken is MintableToken, BurnableToken {
+    string public name = "Kimera";
+    string public symbol = "Kimera";
+    uint256 public decimals = 18;
+}
 
 /**
  * @title Crowdsale
@@ -463,6 +468,13 @@ contract KimeraTokenCrowdsale is Ownable, Crowdsale {
         token.mint(wallets[5], advisor3Sum);
     }
 
+    // creates the token to be sold.
+    // override this method to have crowdsale of a specific MintableToken token.
+    function createTokenContract() internal returns (MintableToken) {
+        return new KimeraToken();
+    }
+
+
     function forwardFunds() internal {
         forwardFundsAmount(msg.value);
     }
@@ -498,7 +510,7 @@ contract KimeraTokenCrowdsale is Ownable, Crowdsale {
         if(temp == State.preSale && now >= presaleEndtime) { temp = State.NormalSale; }
         if((temp == State.preSale || temp == State.BeforeSale) && tokensLeft <= 250000000*toDec) { temp = State.NormalSale; }
         calculateCurrentRate(temp);
-        require(temp != State.ShouldFinalize && temp != State.Lockup && temp != State.SaleOver && msg.value >= toDec.div(2));
+        require(temp != State.ShouldFinalize && temp != State.Lockup && temp != State.SaleOver);
         if(msg.value.mul(rate) >= tokensLeft) { temp = State.ShouldFinalize; }
         state = temp;
     }
