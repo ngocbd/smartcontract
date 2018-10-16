@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoreContract at 0x1135053a937e422c27a834642288304e35bb1340
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoreContract at 0x5562acc7749ed48ca4692a8d9d3cc25c3d8f9b2f
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -639,7 +639,6 @@ contract CoreContract is Manageable {
             address _owner = layer.ownerOf(_tokenId);
             uint256 price = layer.getPriceOf(_tokenId);
 
-            uint256 excess = msg.value.sub(price);
             require(_owner != msg.sender);
 
             require(msg.value >= price);
@@ -657,6 +656,7 @@ contract CoreContract is Manageable {
 
             _payChain(_tokenId, layerAddr, price);
 
+            uint256 excess = msg.value.sub(price);
             msg.sender.transfer(excess);
 
             _setReferrer(msg.sender, ref);
@@ -738,8 +738,7 @@ contract CoreContract is Manageable {
         }
     }
 
-    function _payChain(uint256 _tokenId, address layerAddr, uint256 _price) public
-    {
+    function _payChain(uint256 _tokenId, address layerAddr, uint256 _price) private {
         TokenLayer mainLayer = TokenLayer(layerAddr);
 
         uint256[10] memory _chainFees = mainLayer.getChainFeeArray();
