@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHSCoin at 0x2a44e16ba435f53666f8a39fa08ffd01c9f2ab2f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHSCoin at 0x1f77db6ecbce65902d8e27888b40d344f45c337e
 */
 pragma solidity ^0.4.16;
 
@@ -268,6 +268,8 @@ contract Ownable {
 
 
 
+
+
 contract WHSCoin is StandardToken, Ownable {
   string public constant name = "White Stone Coin";
   string public constant symbol = "WHS";
@@ -363,18 +365,11 @@ contract WHSCoin is StandardToken, Ownable {
    * This function is used to transfer tokens that have been bought through other means (credit card, bitcoin, etc), and to burn tokens after the sale.
    */
   function sendTokens(address receiver, uint256 tokens) public onlyAdmin {
-    require(now < endDate);
-    require(now >= startDate);
     require(totalSupply + tokens <= maxSupply);
 
     balances[receiver] += tokens;
     totalSupply += tokens;
     Transfer(address(0x0), receiver, tokens);
-
-    uint256 bonus = calcBonus(tokens);
-    if (bonus > 0) {
-      sendBonus(receiver, bonus);
-    }
   }
 
   function sendBonus(address receiver, uint256 bonus) public onlyAdmin {
