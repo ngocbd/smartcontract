@@ -1,13 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TitsToken at 0x03209BdE47dA583547C17c47e7CA74bFa3DFb404
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TitsToken at 0x07Ec6c3159c2336Ba36Ab41f73411f8fEe430470
 */
-pragma solidity ^ 0.4 .11;
+pragma solidity ^0.4.15;
+/*Visit  http://titscrypto.com/  for more information */
 
-/**
- * Overflow aware uint math functions.
- *
- * Inspired by https://github.com/MakerDAO/maker-otc/blob/master/contracts/simple_market.sol
- */
 library SafeMath {
     function mul(uint256 a, uint256 b) internal returns(uint256) {
         uint256 c = a * b;
@@ -34,6 +30,7 @@ library SafeMath {
     }
 }
 
+
 contract Ownable {
     address public owner;
 
@@ -54,13 +51,6 @@ contract Ownable {
             _;
         }
     }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-
 
 }
 
@@ -177,6 +167,9 @@ contract MintableToken is StandardToken, Ownable {
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
     event MintStarted();
+    event RefundRequest(uint256 sum,address adr,uint256 balance);
+    event CoinBuy(uint256 sum,address adr);
+    
 
     bool public mintingFinished = true;
     bool public goalReached = false;
@@ -199,24 +192,32 @@ contract MintableToken is StandardToken, Ownable {
         if (mintingFinished == false || alreadyMintedOnce == false) revert();
         _;
     }
+    
+    modifier IsMintingGoal() {
+        if (mintingFinished == false || alreadyMintedOnce == false || goalReached == false ) revert();
+        _;
+    }
 
     modifier notMintedYet() {
         if (alreadyMintedOnce == true) revert();
         _;
     }
 
+    function getNow() public returns(uint256){
+        return now;
+    }
     
 	/**
 	   * @dev Premium for buying TITS at the begining of ICO 
 	   * @return bool True if no errors
 	   */
     function fastBuyBonus() private returns(uint) {
-        uint period = now - mintingStartTime;
+        uint period = getNow() - mintingStartTime;
         if (period < 1 days) {
-            return 5000;
+            return 3500;
         }
         if (period < 2 days) {
-            return 4000;
+            return 3200;
         }
         if (period < 3 days) {
             return 3000;
@@ -260,8 +261,10 @@ contract MintableToken is StandardToken, Ownable {
         uint _amount = 0;
         _amount = msg.value * fastBuyBonus();
         totalSupply = totalSupply.add(_amount);
+        CoinBuy(_amount,msg.sender);
         balances[msg.sender] = balances[msg.sender].add(_amount);
         balances[owner] = balances[owner].add(_amount / 85 * 15); //15% shares of owner
+        totalSupply = totalSupply.add(_amount / 85 * 15);
         return true;
     }
 
@@ -269,11 +272,8 @@ contract MintableToken is StandardToken, Ownable {
 	   * @dev Opens ICO (only owner)
 	   * @return bool True if no errors
 	   */
-    function startMinting() onlyOwner returns(bool) {
-        mintingStartTime = now;
-        if (alreadyMintedOnce) {
-            revert();
-        }
+    function startMinting() onlyOwner notMintedYet returns(bool) {
+        mintingStartTime = getNow();
         alreadyMintedOnce = true;
         mintingFinished = false;
         MintStarted();
@@ -286,14 +286,14 @@ contract MintableToken is StandardToken, Ownable {
 	   */
     function finishMinting() returns(bool) {
         if (mintingFinished == false) {
-            if (now - mintingStartTime > maxMintingTime) {
+            if (getNow() - mintingStartTime > maxMintingTime) {
                 mintingFinished = true;
                 MintFinished();
                 goalReached = (this.balance > mintingGoal);
                 return true;
             }
         }
-        return false;
+        revert();
     }
 
 	/**
@@ -302,22 +302,16 @@ contract MintableToken is StandardToken, Ownable {
 	   */
     function refund() returns(bool) {
         if (mintingFinished == true && goalReached == false && alreadyMintedOnce == true) {
-            uint valueOfAssets = this.balance.mul(balances[msg.sender]).div(totalSupply.sub(balances[owner]));
-            totalSupply = totalSupply.sub(balances[msg.sender]);
+            uint256 valueOfInvestment =  this.balance.mul(balances[msg.sender]).div(totalSupply);
+            totalSupply.sub(balances[msg.sender]);
+            RefundRequest(valueOfInvestment,msg.sender,balances[msg.sender]);
             balances[msg.sender] = 0;
-            msg.sender.transfer(valueOfAssets);
+            msg.sender.transfer(valueOfInvestment);
 			return true;
         }
-		return false;
+        revert();
     }
  
- 
-	/**
-	   * @dev Allows to remove buggy contract before ICO launch
-	   */
-    function destroyUselessContract() onlyOwner notMintedYet {
-        selfdestruct(owner);
-    }
 }
 
 contract TitsToken is MintableToken {
@@ -328,9 +322,10 @@ contract TitsToken is MintableToken {
     address public votedAddress;
     uint public votedYes = 1;
     uint public votedNo = 0;
-    event VoteOnTransfer(address indexed beneficiaryContract);
-    event RogisterToVoteOnTransfer(address indexed beneficiaryContract);
+    event VoteOnTransferStarted(address indexed beneficiaryContract);
+    event RegisterTransferBeneficiaryContract(address indexed beneficiaryContract);
     event VotingEnded(address indexed beneficiaryContract, bool result);
+    event ShareHolderVoted(address adr,uint256 votes,bool isYesVote);
 
     uint public constant VOTING_PREPARE_TIMESPAN = 7 days;
     uint public constant VOTING_TIMESPAN =  7 days;
@@ -338,17 +333,16 @@ contract TitsToken is MintableToken {
     bool public isVoting = false;
     bool public isVotingPrepare = false;
 
-    address public beneficiaryContract = 0;
+    address public beneficiaryContract = address(0);
 
-    mapping(address => uint256) votesAvailable;
+    mapping(address => uint256) public votesAvailable;
     address[] public voters;
-    uint votersCount = 0;
 
 	/**
 	   * @dev voting long enought to go to next phase 
 	   */
     modifier votingLong() {
-        if (now - voitingStartTime < VOTING_TIMESPAN) revert();
+        if (getNow() - voitingStartTime <  VOTING_TIMESPAN) revert();
         _;
     }
 
@@ -356,7 +350,7 @@ contract TitsToken is MintableToken {
 	   * @dev preparation for voting (application for voting) long enought to go to next phase 
 	   */
     modifier votingPrepareLong() {
-        if (now - voitingStartTime < VOTING_PREPARE_TIMESPAN) revert();
+        if (getNow() - voitingStartTime < VOTING_PREPARE_TIMESPAN) revert();
         _;
     }
 
@@ -365,6 +359,10 @@ contract TitsToken is MintableToken {
 	   */
     modifier votingInProgress() {
         if (isVoting == false) revert();
+        _;
+    }
+    modifier votingNotInProgress() {
+        if (isVoting == true) revert();
         _;
     }
 
@@ -380,7 +378,7 @@ contract TitsToken is MintableToken {
 	   * @dev Voters agreed on proposed contract and Ethereum is being send to that contract
 	   */
     function sendToBeneficiaryContract()  {
-        if (beneficiaryContract != 0) {
+        if (beneficiaryContract != address(0)) {
             beneficiaryContract.transfer(this.balance);
         } else {
             revert();
@@ -392,7 +390,7 @@ contract TitsToken is MintableToken {
 	   * enables refund
 	   */
 	function registerVotingPrepareFailure() mintingClosed{
-		if(now-mintingStartTime>(2+failedVotingCount)*maxMintingTime ){
+		if(getNow()-mintingStartTime>(2+failedVotingCount)*maxMintingTime ){
 			failedVotingCount=failedVotingCount+1;
             if (failedVotingCount == 10) {
                 goalReached = false;
@@ -403,17 +401,16 @@ contract TitsToken is MintableToken {
 	/**
 	   * @dev opens preparation for new voting on proposed Lottery Contract address
 	   */
-    function startVotingPrepare(address votedAddressArg) mintingClosed onlyOwner{
+    function startVotingPrepare(address votedAddressArg) mintingClosed votingNotInProgress IsMintingGoal onlyOwner{
         isVoting = false;
-        RogisterToVoteOnTransfer(votedAddressArg);
-        votedAddress = votedAddressArg;
-        voitingStartTime = now;
         isVotingPrepare = true;
+        RegisterTransferBeneficiaryContract(votedAddressArg);
+        votedAddress = votedAddressArg;
+        voitingStartTime = getNow();
         for (uint i = 0; i < voters.length; i++) {
             delete voters[i];
         }
         delete voters;
-        votersCount = 0;
     }
 
 	/**
@@ -423,7 +420,6 @@ contract TitsToken is MintableToken {
     function registerForVoting() payable votingPrepareInProgress {
         if (msg.value >= 10 finney) {
             voters.push(msg.sender);
-            votersCount = votersCount + 1;
         }
 		else{
 			revert();
@@ -434,14 +430,15 @@ contract TitsToken is MintableToken {
 	   * @dev opens voting on proposed Lottery Contract address
 	   */
     function startVoting() votingPrepareInProgress votingPrepareLong {
-        VoteOnTransfer(votedAddress);
-        for (uint i = 0; i < votersCount; i++) {
-            votesAvailable[voters[i]] = balanceOf(voters[i]);
+        VoteOnTransferStarted(votedAddress);
+        for (uint256 i = 0; i < voters.length; i++) {
+            address voter = voters[i];
+            uint256 votes = balanceOf(voter);
+            votesAvailable[voter]=votes;
         }
         isVoting = true;
-        voitingStartTime = now;
+        voitingStartTime = getNow();
         isVotingPrepare = false;
-        votersCount = 0;
     }
 
 	/**
@@ -465,21 +462,23 @@ contract TitsToken is MintableToken {
 
 	/**
 	   * @dev votes on contract proposal
-	   * payable to ensure only serious voters will attend 
 	   */
-    function vote(bool isVoteYes) payable {
+    function vote(bool isVoteYes) votingInProgress{
 
-        if (msg.value >= 10 finney) {
-            var votes = votesAvailable[msg.sender];
-            votesAvailable[msg.sender] = 0;
+            uint256 votes = votesAvailable[msg.sender];
+            ShareHolderVoted(msg.sender,votes,isVoteYes);
             if (isVoteYes) {
-                votedYes.add(votes);
-            } else {
-                votedNo.add(votes);
+                votesAvailable[msg.sender] = 0;
+                votedYes = votedYes.add(votes);
             }
-        }
-		else{
-			revert();
-		}
+            else
+            if (isVoteYes==false) {
+                votesAvailable[msg.sender] = 0;
+                votedNo = votedNo.add(votes);
+            } 
+            else{
+                revert();   
+            }
+            
     }
 }
