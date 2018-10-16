@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0x1234567461d3f8db7496581774bd869c83d51c93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0x05805bd4f45f62d283646a330f0c1b31cb3d351d
 */
 pragma solidity ^0.4.11;
 
@@ -418,8 +418,8 @@ contract MintableMasterToken is MintableToken {
 contract CAToken is MintableMasterToken, PausableToken {
     
     // Metadata
-    string public constant symbol = "CAT";
-    string public constant name = "BitClave";
+    string public constant symbol = "testCAT";
+    string public constant name = "testCAT";
     uint8 public constant decimals = 18;
     string public constant version = "2.0";
 
