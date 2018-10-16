@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THETOKEN at 0x692a0669337b0073b3bf5ef1e6b12bb2f3abcced
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THETOKEN at 0x84a68fb0a9a8c8239316bb49865c164eed095a96
 */
 pragma solidity ^0.4.6;
 
@@ -154,10 +154,10 @@ contract NewToken is BasicToken, ERC20 {
 
 contract THETOKEN is NewToken {
 
-  string public name = "francoin";
-  string public symbol = "FRC";
-  uint public decimals = 8;
-  uint public INITIAL_SUPPLY = 2100000000000000;
+  string public name = "Coincode Token";
+  string public symbol = "CCT";
+  uint public decimals = 18;
+  uint public INITIAL_SUPPLY = 10240000000000000000000000;
 
   function THETOKEN () {
     totalSupply = INITIAL_SUPPLY;
