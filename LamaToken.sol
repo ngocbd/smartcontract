@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LamaToken at 0x9167cd1b7dedeeacb102cd4cce3e6999bc56885e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LamaToken at 0x6ef88e1ce5b3ba4d1c4d90a66b2ad0105ce60148
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 // Deployed to : 0x6ff0BE40314Fdf5E07BcBA38c69Be4955d5e6197
 // Symbol      : LAMA
 // Name        : Lama Tokens
-// Total supply: 1000000000000000000000000000
+// Total supply: 100,000,000,000
 // Decimals    : 18
 //
 // Dedicated to the Fornite community.
@@ -117,7 +117,7 @@ contract LamaToken is ERC20Interface, Owned, SafeMath {
         symbol = "LAMA";
         name = "Lama Token";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000;
+        _totalSupply = 100000000000;
         balances[0x6ff0BE40314Fdf5E07BcBA38c69Be4955d5e6197] = _totalSupply;
         Transfer(address(0), 0x6ff0BE40314Fdf5E07BcBA38c69Be4955d5e6197, _totalSupply);
     }
