@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SNC at 0x6e56d4e9de4e9d64ccfadce52cbf10c78f096af6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SNC at 0x9c8c7d25af66c20a0b3e3d1a3ea6567cdd7b137e
 */
 pragma solidity ^0.4.11;
 
@@ -140,11 +140,11 @@ contract SNC is SafeMath, Pausable {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function SNC() public {
         totalSupply = (10**8) * (10**8);
+        balanceOf[this] = totalSupply;                      // Give the creator all tokens
         name = "Snow Coin";                                 // Set the name for display purposes
         symbol = "SNC";                                     // Set the symbol for display purposes
         decimals = 8;                                       // Amount of decimals for display purposes
         owner = msg.sender;
-        balanceOf[owner] = totalSupply;                     // Give the creator all tokens
     }
 
     function transfer(address _to, uint256 _value) public whenNotPaused returns (bool success) {
