@@ -1,7 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RamenCoin at 0x878fcd33cdf5b66edce691bca5e1f442688c8ece
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RamenCoin at 0x6feb3a071a2732378521c53d024b67ad068ec921
 */
 pragma solidity ^0.4.19;
+
+/*
+* Ramen Coin is the FIRST and ONLY cryptocurrency for Ramen Enthusiasts with a mission to fight hunger GLOBALLY.
+*
+*
+* This the OFFICIAL token contract for Ramen Coin. 
+* Our old contract address is no longer valid. DO NOT accept tokens from the old contract.
+* Old Contract Address: (DO NOT USE) 0x878fcd33cdf5b66edce691bca5e1f442688c8ece (DO NOT USE)
+*
+* VALID contract address can be verified on https://ramencoin.me or our official social media channels
+* Twitter: @RamenCoin2018
+* Telegram: @ramencoin 
+* Reddit: /r/RamenCoin 
+* Facebook: RamenCoin
+* Instagram: @ramencoin 
+* BitcoinTalk: https://bitcointalk.org/index.php?topic=3171591
+*
+*
+* Etherscan will also display our Official Links and Token Image
+
+*/
 
 contract Token {
 
@@ -94,10 +115,10 @@ contract RamenCoin is StandardToken {
     function RamenCoin() {
         balances[msg.sender] = 350000000000000000000000000;
         totalSupply = 350000000000000000000000000;
-        name = "RamenCoin";
+        name = "Ramen Coin";
         decimals = 18;
         symbol = "RAMEN";
-        unitsOneEthCanBuy = 500000;
+        unitsOneEthCanBuy = 3500;
         fundsWallet = msg.sender;
     }
 
