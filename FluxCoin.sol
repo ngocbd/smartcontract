@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FluxCoin at 0x524e01177d2bd286be0049076625f4f9d4d1dd5d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FluxCoin at 0x282eaF0C93b535731c1A2Ef26A568e6131980c4A
 */
-pragma solidity 0.4.11;
+pragma solidity 0.4.15;
 
 contract RegistryICAPInterface {
     function parse(bytes32 _icap) constant returns(address, bytes32, bool);
@@ -31,11 +31,11 @@ contract EToken2Interface {
 contract AssetInterface {
     function _performTransferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
     function _performTransferToICAPWithReference(bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
-    function _performApprove(address _spender, uint _value, address _sender) returns(bool);
+    function _performApprove(address _spender, uint _value, address _sender) returns(bool);    
     function _performTransferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
     function _performTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
-    function _performGeneric(bytes _data, address _sender) payable returns(bytes32) {
-        throw;
+    function _performGeneric(bytes, address) payable {
+        revert();
     }
 }
 
@@ -70,6 +70,23 @@ contract Bytes32 {
     }
 }
 
+contract ReturnData {
+    function _returnReturnData(bool _success) internal {
+        assembly {
+            let returndatastart := msize()
+            mstore(0x40, add(returndatastart, returndatasize))
+            returndatacopy(returndatastart, 0, returndatasize)
+            switch _success case 0 { revert(returndatastart, returndatasize) } default { return(returndatastart, returndatasize) }
+        }
+    }
+
+    function _assemblyCall(address _destination, uint _value, bytes _data) internal returns(bool success) {
+        assembly {
+            success := call(div(mul(gas, 63), 64), _destination, _value, add(_data, 32), mload(_data), 0, 0)
+        }
+    }
+}
+
 /**
  * @title EToken2 Asset Proxy.
  *
@@ -98,7 +115,7 @@ contract Bytes32 {
  * Note: all the non constant functions return false instead of throwing in case if state change
  * didn't happen yet.
  */
-contract FluxCoin is ERC20Interface, AssetProxyInterface, Bytes32 {
+contract FluxCoin is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData {
     // Assigned EToken2, immutable.
     EToken2Interface public etoken2;
 
@@ -401,11 +418,25 @@ contract FluxCoin is ERC20Interface, AssetProxyInterface, Bytes32 {
      * along with the value. This allows for proxy interface growth.
      */
     function () payable {
-        bytes32 result = _getAsset()._performGeneric.value(msg.value)(msg.data, msg.sender);
-        assembly {
-            mstore(0, result)
-            return(0, 32)
-        }
+        _getAsset()._performGeneric.value(msg.value)(msg.data, msg.sender);
+        _returnReturnData(true);
+    }
+
+    // Interface functions to allow specifying ICAP addresses as strings.
+    function transferToICAP(string _icap, uint _value) returns(bool) {
+        return transferToICAPWithReference(_icap, _value, '');
+    }
+
+    function transferToICAPWithReference(string _icap, uint _value, string _reference) returns(bool) {
+        return transferToICAPWithReference(_bytes32(_icap), _value, _reference);
+    }
+
+    function transferFromToICAP(address _from, string _icap, uint _value) returns(bool) {
+        return transferFromToICAPWithReference(_from, _icap, _value, '');
+    }
+
+    function transferFromToICAPWithReference(address _from, string _icap, uint _value, string _reference) returns(bool) {
+        return transferFromToICAPWithReference(_from, _bytes32(_icap), _value, _reference);
     }
 
     /**
