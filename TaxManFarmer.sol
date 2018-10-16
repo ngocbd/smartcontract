@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaxManFarmer at 0x2fdc9fabfddded88bb00f9c9c220b247d18b641c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaxManFarmer at 0xe1076b0f7950ab5b37ce9af27d980b1fc093d40c
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 interface CornFarm
 {
@@ -60,9 +60,9 @@ contract TaxManFarmer {
     
     bool private reentrancy_lock = false;
     
-    address public shop = 0x02E0d32837313d9A5b0f88dB5f3Ef8075f4AFd1C;
-    address public object = 0x63b173CdDe9580F49aD80F4F697c4Ed40f349Ed6;
-    address public taxMan = 0xd5048F05Ed7185821C999e3e077A3d1baed0952c;
+    address public shop = 0x4a1b1d67804D272ba616337A171a93e644f2f672;
+    address public object = 0x95986d6fF6Edf1e24d4344D6a27aEA038bE72A7E;
+    address public taxMan = 0x4b8C7951fa087B804d1DA7Bc69Dc492f44C4CBf6;
     
     mapping(address => uint256) public workDone;
     
