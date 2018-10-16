@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCupToken at 0x6490efefbe454d7a4aaad6d1a3359d38a1065e91
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCupToken at 0xfef1595da2bba952fe13003dce7ad32d991c6e2f
 */
 pragma solidity ^0.4.21;
 
@@ -124,7 +124,7 @@ contract CryptoCupToken is ERC721 {
     }
     
     /*****------- CONSTRUCTOR -------******/
-    function CryptoCupToken() public {
+    constructor() public {
         contractModifierAddress = msg.sender;
         developerAddress = msg.sender;
 
@@ -197,6 +197,41 @@ contract CryptoCupToken is ERC721 {
     function setDeveloper(address _newDeveloperAddress) public onlyContractModifier {
         require(_newDeveloperAddress != address(0));
         developerAddress = _newDeveloperAddress;
+    }
+    
+    function createTeams() public onlyContractModifier {
+        _createTeam("Russia", "RUS", startingPrice, developerAddress);
+        _createTeam("Saudi Arabia", "KSA", startingPrice, developerAddress);
+        _createTeam("Egypt", "EGY", startingPrice, developerAddress);
+        _createTeam("Uruguay", "URU", startingPrice, developerAddress);
+        _createTeam("Portugal", "POR", startingPrice, developerAddress);
+        _createTeam("Spain", "SPA", startingPrice, developerAddress);
+        _createTeam("Morocco", "MOR", startingPrice, developerAddress);
+        _createTeam("Iran", "IRN", startingPrice, developerAddress);
+        _createTeam("France", "FRA", startingPrice, developerAddress);
+        _createTeam("Australia", "AUS", startingPrice, developerAddress);
+        _createTeam("Peru", "PER", startingPrice, developerAddress);
+        _createTeam("Denmark", "DEN", startingPrice, developerAddress);
+        _createTeam("Argentina", "ARG", startingPrice, developerAddress);
+        _createTeam("Iceland", "ICE", startingPrice, developerAddress);
+        _createTeam("Croatia", "CRO", startingPrice, developerAddress);
+        _createTeam("Nigeria", "NGA", startingPrice, developerAddress);
+        _createTeam("Brazil", "BRZ", startingPrice, developerAddress);
+        _createTeam("Switzerland", "SWI", startingPrice, developerAddress);
+        _createTeam("Costa Rica", "CRC", startingPrice, developerAddress);
+        _createTeam("Serbia", "SER", startingPrice, developerAddress);
+        _createTeam("Germany", "GER", startingPrice, developerAddress);
+        _createTeam("Mexico", "MEX", startingPrice, developerAddress);
+        _createTeam("Sweden", "SWE", startingPrice, developerAddress);
+        _createTeam("South Korea", "KOR", startingPrice, developerAddress);
+        _createTeam("Belgium", "BEL", startingPrice, developerAddress);
+        _createTeam("Panama", "PAN", startingPrice, developerAddress);
+        _createTeam("Tunisia", "TUN", startingPrice, developerAddress);
+        _createTeam("England", "ENG", startingPrice, developerAddress);
+        _createTeam("Poland", "POL", startingPrice, developerAddress);
+        _createTeam("Senegal", "SEN", startingPrice, developerAddress);
+        _createTeam("Colombia", "COL", startingPrice, developerAddress);
+        _createTeam("Japan", "JPN", startingPrice, developerAddress);
     }
     
     function createTeam(string name, string code) public onlyContractModifier {
@@ -340,11 +375,12 @@ contract CryptoCupToken is ERC721 {
         Team storage team = teams[_tokenId];
 	    
         uint256 purchaseExcess = SafeMath.sub(msg.value, price);
+        uint256 profit = SafeMath.sub(price, team.cost);
         
 	    // get 15% - 5 goes to dev and 10 stays in prize fund that is split during knockout stages
-	    uint256 onePercent = SafeMath.div(price, 100);
+	    uint256 onePercent = SafeMath.div(profit, 100);
 	    uint256 developerAllocation = SafeMath.mul(onePercent, 5);
-	    uint256 saleProceeds = SafeMath.mul(onePercent, 85);
+	    uint256 saleProceeds = SafeMath.add(SafeMath.mul(onePercent, 85), team.cost);
 	    uint256 fundProceeds = SafeMath.mul(onePercent, 10);
 	    
 	    _transfer(from, to, _tokenId);
