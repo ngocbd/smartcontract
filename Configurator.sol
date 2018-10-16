@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x300b02d269b3f186da94b9b5c085bc4d87d7af7d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xec7d1c212ab40b826022433da68ea8f7ee0e9973
 */
 pragma solidity ^0.4.18;
 
@@ -593,7 +593,7 @@ contract Configurator is Ownable {
     token.setSaleAgent(presale);
     
     // fix
-    presale.setBountyWallet(0x6FB77f2878A33ef21aadde868E84Ba66105a3E9c);
+    presale.setBountyWallet(0xcA2D6676D8D07dD25CC048413Cc0cadB7Bd66A62);
     presale.setWallet(0x2d664D31f3AF6aD256A62fdb72E704ab0De42619);
     presale.setStart(1508850000);
     presale.setPeriod(35);
