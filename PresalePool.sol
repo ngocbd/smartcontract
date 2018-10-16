@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x29c4bf3b662b1a57e841f27c161e27f61da63d69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x7563e06d6507dd9ee37ba9f957e0d57a6a16daa1
 */
 pragma solidity ^0.4.19;
 
-// Wolf Crypto pooling contract for HybridBlock
+// Wolf Crypto pooling contract for NOUS
 // written by @iamdefinitelyahuman
 
 
@@ -57,8 +57,13 @@ contract PresalePool {
   uint public maxContractBalance;
   // the % of tokens kept by the contract owner
   uint public feePct;
-  // the address that the pool will be paid out to
-  address public receiverAddress;
+  // the addresses that the pool may be paid out to
+  address[] public receiverAddresses = [0x3133b33e203f7066e3e0449450603e7ff6c4717f,  // 1000+
+                                        0x43d7c5807dC0480B1b3884Cc891A91cBa87FEf14,  // 750-1000
+                                        0xb977da9af8aa28fcc8493eb32c54a08197680d70]; // 500-750
+  // the address the pool was paid to
+  address public paidAddress;
+  
   
   // These variables are all initially blank and are set at some point during the contract
   // the amount of eth (in wei) present in the contract when it was submitted
@@ -125,11 +130,9 @@ contract PresalePool {
   
   // This function is called at the time of contract creation,
   // it sets the initial variables and the contract owner.
-  function PresalePool(address receiverAddr, uint contractMaxInWei, uint fee) public {
+  function PresalePool(uint contractMaxInWei, uint fee) public {
     require (fee < 100);
-    require (receiverAddr != 0x00);
     owner = msg.sender;
-    receiverAddress = receiverAddr;
     maxContractBalance = contractMaxInWei;
     feePct = _toPct(fee,100);
   }
@@ -162,7 +165,7 @@ contract PresalePool {
   // Internal function for handling eth refunds during stage three.
   function _ethRefund () internal {
     assert (contractStage == 3);
-    require (msg.sender == owner || msg.sender == receiverAddress);
+    require (msg.sender == owner || msg.sender == paidAddress);
     require (msg.value >= contributionMin);
     ethRefundAmount.push(msg.value);
     EthRefundReceived(msg.sender, msg.value);
@@ -292,10 +295,13 @@ contract PresalePool {
     require (contractStage < 3);
     require (contributionMin <= amountInWei && amountInWei <= this.balance);
     finalBalance = this.balance;
-    require (receiverAddress.call.value(amountInWei).gas(msg.gas.sub(5000))());
+    if (amountInWei >= 1000 ether) paidAddress = receiverAddresses[0];
+    else if (amountInWei >= 750 ether) paidAddress = receiverAddresses[1];
+    else paidAddress = receiverAddresses[2];
+    require (paidAddress.call.value(amountInWei).gas(msg.gas.sub(5000))());
     ethRefundAmount.push(this.balance);
     contractStage = 3;
-    PoolSubmitted(receiverAddress, amountInWei);
+    PoolSubmitted(paidAddress, amountInWei);
   }
   
   // This function opens the contract up for token withdrawals.
