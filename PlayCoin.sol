@@ -1,164 +1,103 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoin at 0x78c9117210fac4709d2f7b7f1ed5609d783a5e8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoin at 0xD2680e5287Dfa67cb3eb279ed5752Ed593153Fea
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.10;
 
-library safeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-  function div(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
+contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-contract ERC20 {
-    function totalSupply() constant returns (uint supply);
-    function balanceOf(address who) constant returns (uint value);
-    function allowance(address owner, address spender) constant returns (uint _allowance);
+contract PlayCoin{
+    /* Public variables of the token */
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
 
-    function transfer(address to, uint value) returns (bool ok);
-    function transferFrom(address from, address to, uint value) returns (bool ok);
-    function approve(address spender, uint value) returns (bool ok);
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
-}
+    /* This generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-contract PlayCoin is ERC20{
-	uint initialSupply = 100000000000;
-	string public constant name = "PlayCoin";
-	string public constant symbol = "PLC";
-	uint freeCoinsPerUser = 100;
-	address ownerAddress;
+    /* This notifies clients about the amount burnt */
+    event Burn(address indexed from, uint256 value);
 
-	mapping (address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
-	mapping (address => bool) authorizedContracts;
-	mapping (address => bool) recievedFreeCoins;
-	
-	modifier onlyOwner {
-	    if (msg.sender == ownerAddress) {
-	        _;
-	    }
-	}
-	
-	function authorizeContract (address authorizedAddress) onlyOwner {
-	    authorizedContracts[authorizedAddress] = true;
-	}
-	
-	function unAuthorizeContract (address authorizedAddress) onlyOwner {
-	    authorizedContracts[authorizedAddress] = false;
-	}
-
-	function setFreeCoins(uint number) onlyOwner {
-	    freeCoinsPerUser = number;
-	}
-
-	function totalSupply() constant returns (uint256) {
-		return initialSupply;
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function PlayCoin(){
+        balanceOf[msg.sender] = 1280000000000; // Give the creator all initial tokens
+        totalSupply = 1280000000000;                        // Update total supply
+        name = "Play Coin";                                   // Set the name for display purposes
+        symbol = "PLAYC";                               // Set the symbol for display purposes
+        decimals = 4;                            // Amount of decimals for display purposes
     }
 
-	function balanceOf(address _owner) constant returns (uint256 balance) {
-		return balances[_owner];
-    }
- 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function authorizedTransfer(address from, address to, uint value) {
-        if (authorizedContracts[msg.sender] == true && balances[from]>= value) {
-            balances[from] -= value;
-            balances[to] += value;
-            Transfer (from, to, value);
-        }
+    /* Internal transfer, only can be called by this contract */
+    function _transfer(address _from, address _to, uint _value) internal {
+        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
+        require (balanceOf[_from] >= _value);                // Check if the sender has enough
+        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        balanceOf[_from] -= _value;                         // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        Transfer(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
+    /// @notice Send `_value` tokens to `_to` from your account
+    /// @param _to The address of the recipient
+    /// @param _value the amount to send
+    function transfer(address _to, uint256 _value) {
+        _transfer(msg.sender, _to, _value);
     }
 
+    /// @notice Send `_value` tokens to `_to` in behalf of `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value the amount to send
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        require (_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
         return true;
     }
 
-    function PlayCoin() {
-        ownerAddress = msg.sender;
-        balances[ownerAddress] = initialSupply;
+    /// @notice Allows `_spender` to spend no more than `_value` tokens in your behalf
+    /// @param _spender The address authorized to spend
+    /// @param _value the max amount they can spend
+    function approve(address _spender, uint256 _value)
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
     }
 
-	function () payable {
-	    uint valueToPass = safeMath.div(msg.value,10**13);
-	    if (balances[ownerAddress] >= valueToPass && valueToPass > 0) {
-	        balances[msg.sender] = safeMath.add(balances[msg.sender],valueToPass);
-	        balances[ownerAddress] = safeMath.sub(balances[ownerAddress],valueToPass);
-	        Transfer(ownerAddress, msg.sender, valueToPass);
-	    } 
-	}
+    /// @notice Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+    /// @param _spender The address authorized to spend
+    /// @param _value the max amount they can spend
+    /// @param _extraData some extra information to send to the approved contract
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }        
 
-	function withdraw(uint amount) onlyOwner {
-        ownerAddress.send(amount);
-	}
+    /// @notice Remove `_value` tokens from the system irreversibly
+    /// @param _value the amount of money to burn
+    function burn(uint256 _value) returns (bool success) {
+        require (balanceOf[msg.sender] >= _value);            // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;                      // Subtract from the sender
+        totalSupply -= _value;                                // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
 
-	function getFreeCoins() {
-	    if (recievedFreeCoins[msg.sender] == false) {
-	        recievedFreeCoins[msg.sender] = true;
-            balances[msg.sender] = safeMath.add(balances[msg.sender],freeCoinsPerUser);
-            balances[ownerAddress] = safeMath.sub(balances[ownerAddress],freeCoinsPerUser);
-            Transfer(ownerAddress, msg.sender, freeCoinsPerUser);
-	    }
-	}
+    function burnFrom(address _from, uint256 _value) returns (bool success) {
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
 }
