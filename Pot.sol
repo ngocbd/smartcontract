@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pot at 0xB044a1F6352fAdbB9cEe1a499f2ccf17204f8AFe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pot at 0xCa50d78B6B01f66496Bf9Ec61248C51647975Ab4
 */
 pragma solidity ^0.4.11;
 contract Pot {
@@ -11,7 +11,7 @@ contract Pot {
 	uint public winnerIndex;
 	address public winnerAddress;
 	uint public minBetSize = .01 ether;
-	uint public potTime = 86400;
+	uint public potTime = 1800;
 	uint public endTime = now + potTime;
 	uint public totalBet = 0;
 
