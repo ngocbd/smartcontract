@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x837a953836366e2b27b589affe080622882d11fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x6c6ff5213433510c91c65787dcf604bb2dc37c19
 */
 pragma solidity ^0.4.16;
 
@@ -54,8 +54,8 @@ contract x32323 is owned{
     balanceOf[msg.sender] = initialSupply;
     totalSupply = initialSupply;
 	initialized[msg.sender] = true;
-        name = "??13";
-        symbol = "??13";         
+        name = "??12";
+        symbol = "??12";         
     }
 
     function initialize(address _address) internal returns (bool success) {
@@ -78,7 +78,7 @@ contract x32323 is owned{
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
 	
