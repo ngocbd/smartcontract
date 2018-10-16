@@ -1,25 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Array128Lib at 0xaaed720C987B25E8CC0f4C0d1827F8b0C8545B41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Array128Lib at 0xCD52b34a42E8302050e8Df012E286493e371196B
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.21;
 
 /**
  * @title Array128 Library
- * @author Majoolr.io
+ * @author Modular Inc, https://modular.network
  *
- * version 1.1.0
- * Copyright (c) 2017 Majoolr, LLC
+ * version 1.2.0
+ * Copyright (c) 2017 Modular, Inc
  * The MIT License (MIT)
- * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
+ * https://github.com/Modular-Network/ethereum-libraries/blob/master/LICENSE
  *
  *  The Array128 Library provides a few utility functions to work with
- * storage uint128[] types in place. Majoolr provides smart contract services
+ * storage uint128[] types in place. Modular provides smart contract services
  * and security reviews for contract deployments in addition to working on open
  * source projects in the Ethereum community. Our purpose is to test, document,
  * and deploy reusable code onto the blockchain and improve both security and
  * usability. We also educate non-profits, schools, and other community members
  * about the application of blockchain technology.
- * For further information: majoolr.io
+ * For further information: modular.network
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
@@ -209,60 +209,62 @@ library Array128Lib {
   /// @dev Sorts given array in place
   /// @param self Storage array containing uint256 type variables
   function heapSort(uint128[] storage self) public {
-    uint256 end = self.length - 1;
-    uint256 start = getParentI(end);
-    uint256 root = start;
-    uint256 lChild;
-    uint256 rChild;
-    uint256 swap;
-    uint128 temp;
-    while(start >= 0){
-      root = start;
-      lChild = getLeftChildI(start);
-      while(lChild <= end){
-        rChild = lChild + 1;
-        swap = root;
-        if(self[swap] < self[lChild])
-          swap = lChild;
-        if((rChild <= end) && (self[swap]<self[rChild]))
-          swap = rChild;
-        if(swap == root)
-          lChild = end+1;
-        else {
-          temp = self[swap];
-          self[swap] = self[root];
-          self[root] = temp;
-          root = swap;
-          lChild = getLeftChildI(root);
+    if(self.length > 1){
+      uint256 end = self.length - 1;
+      uint256 start = getParentI(end);
+      uint256 root = start;
+      uint256 lChild;
+      uint256 rChild;
+      uint256 swap;
+      uint128 temp;
+      while(start >= 0){
+        root = start;
+        lChild = getLeftChildI(start);
+        while(lChild <= end){
+          rChild = lChild + 1;
+          swap = root;
+          if(self[swap] < self[lChild])
+            swap = lChild;
+          if((rChild <= end) && (self[swap]<self[rChild]))
+            swap = rChild;
+          if(swap == root)
+            lChild = end+1;
+          else {
+            temp = self[swap];
+            self[swap] = self[root];
+            self[root] = temp;
+            root = swap;
+            lChild = getLeftChildI(root);
+          }
         }
+        if(start == 0)
+          break;
+        else
+          start = start - 1;
       }
-      if(start == 0)
-        break;
-      else
-        start = start - 1;
-    }
-    while(end > 0){
-      temp = self[end];
-      self[end] = self[0];
-      self[0] = temp;
-      end = end - 1;
-      root = 0;
-      lChild = getLeftChildI(0);
-      while(lChild <= end){
-        rChild = lChild + 1;
-        swap = root;
-        if(self[swap] < self[lChild])
-          swap = lChild;
-        if((rChild <= end) && (self[swap]<self[rChild]))
-          swap = rChild;
-        if(swap == root)
-          lChild = end + 1;
-        else {
-          temp = self[swap];
-          self[swap] = self[root];
-          self[root] = temp;
-          root = swap;
-          lChild = getLeftChildI(root);
+      while(end > 0){
+        temp = self[end];
+        self[end] = self[0];
+        self[0] = temp;
+        end = end - 1;
+        root = 0;
+        lChild = getLeftChildI(0);
+        while(lChild <= end){
+          rChild = lChild + 1;
+          swap = root;
+          if(self[swap] < self[lChild])
+            swap = lChild;
+          if((rChild <= end) && (self[swap]<self[rChild]))
+            swap = rChild;
+          if(swap == root)
+            lChild = end + 1;
+          else {
+            temp = self[swap];
+            self[swap] = self[root];
+            self[root] = temp;
+            root = swap;
+            lChild = getLeftChildI(root);
+          }
         }
       }
     }
