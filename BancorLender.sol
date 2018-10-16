@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorLender at 0x2d820ea3a6b9302c500feeb7f6361ba1ddfa5aba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorLender at 0xe4e821c1aef1d3305ade82835853d87d2705a992
 */
 pragma solidity ^0.4.11;
 
@@ -1008,12 +1008,12 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
 }
 
 
+
+
+
 // This contract allows people to lend and borrow any ERC-20 tokens that follow
 // the Bancor Protocol (i.e. are tradable on-chain).
-// When providing a loan, the lender sets a collateralRatio, which is the safety
-// margin above 100% collateral. For example, if collateralRatio = 10%, the
-// lender can margin-call whenever the collateral value drops below 110% of the
-// lended token value.
+// The lender provides the
 // That way, even if the lended token increases in value suddenly, there is a
 // safety margin for the lender to recover their loan in full.
 
@@ -1034,76 +1034,90 @@ contract BancorLender {
   IERC20Token constant public bancorToken =
       IERC20Token(0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C);
   BancorChanger constant public bancorChanger =
-      BancorChanger(0xb72A0Fa1E537c956DFca72711c468EfD81270468);
+      BancorChanger(0xb626A5FacC4de1c813F5293Ec3bE31979f1D1c78);
+  IEtherToken etherToken = bancorChanger.getQuickBuyEtherToken();
+
   BorrowAgreement[] public agreements;
 
   function isCollateralWithinMargin(
-      uint256 tokenAmount, uint256 collateralAmount, uint32 collateralRatio)
+      uint256 tokenAmount, uint256 collateralAmount,
+      uint32 collateralRatio) public constant
   returns(bool) {
-    IERC20Token etherToken = bancorChanger.getQuickBuyEtherToken();
     uint256 collateralInTokens =
         bancorChanger.getPurchaseReturn(etherToken, collateralAmount);
     uint256 minCollateral = tokenAmount * (100 + collateralRatio) / 100;
     return (collateralInTokens > minCollateral);
   }
 
-  function offerToLend(
-      uint256 _amount, uint256 _collataral_ratio, uint _expiration) {
-    assert(bancorToken.transferFrom(msg.sender, this, _amount));
-    BorrowAgreement agreement;
-    agreement.lender = msg.sender;
-    agreement.borrower = 0;
-    agreement.tokenAmount = _amount;
-    agreement.expiration = _expiration;
-    agreements.push(agreement);
+  function offerPosition(
+      uint256 _token_amount, uint32 _collataral_ratio,
+      uint _expiration) public {
+    assert(bancorToken.transferFrom(msg.sender, this, _token_amount));
+    agreements.push(BorrowAgreement(
+        msg.sender, 0, _token_amount, 0, _collataral_ratio, _expiration));
   }
 
-  function takeOffer(uint _offerNumber) payable {
+  function takePosition(uint _index) public payable {
+    // Check that the offer is valid.
+    assert(agreements[_index].tokenAmount > 0);
+    // Check that the offer has not been taken yet.
+    assert(agreements[_index].borrower == 0);
+    // Check that the taker provided enough collateral.
+    uint256 tokenAmount = agreements[_index].tokenAmount;
+    uint256 collateralAmount =
+        bancorChanger.getSaleReturn(etherToken, tokenAmount) + msg.value;
     assert(isCollateralWithinMargin(
-        agreements[_offerNumber].tokenAmount, msg.value,
-        agreements[_offerNumber].collateralRatio));
-    assert(bancorToken.transferFrom(
-        this, msg.sender, agreements[_offerNumber].tokenAmount));
-    agreements[_offerNumber].borrower = msg.sender;
-    agreements[_offerNumber].collateralAmount = msg.value;
+        tokenAmount, collateralAmount, agreements[_index].collateralRatio));
+    // Sell the tokens and add that balance to the collateral.
+    uint256 saleAmount = bancorChanger.sell(etherToken, tokenAmount, 1);
+    assert(saleAmount + msg.value == collateralAmount);
+    etherToken.withdraw(saleAmount);
+    agreements[_index].borrower = msg.sender;
+    agreements[_index].collateralAmount = collateralAmount;
   }
 
-  function addCollateral(uint _offerNumber) payable {
-    agreements[_offerNumber].collateralAmount += msg.value;
+  function addCollateral(uint _index) public payable {
+    // Check that the offer is valid.
+    assert(agreements[_index].tokenAmount > 0);
+    // To avoid people losing money by accident, only the original borrower
+    // can add collateral to their position.
+    assert(msg.sender == agreements[_index].borrower);
+    agreements[_index].collateralAmount += msg.value;
   }
 
-  function returnLoan(uint _agreementNumber) {
-    assert(msg.sender == agreements[_agreementNumber].borrower);
-    assert(bancorToken.transferFrom(
-        msg.sender, agreements[_agreementNumber].lender,
-        agreements[_agreementNumber].tokenAmount));
-    agreements[_agreementNumber].tokenAmount = 0;
-  }
-
-  function forceClose(uint _agreementNumber) {
-    assert(agreements[_agreementNumber].tokenAmount > 0);
-    bool marginCall = !isCollateralWithinMargin(
-        agreements[_agreementNumber].tokenAmount,
-        agreements[_agreementNumber].collateralAmount,
-        agreements[_agreementNumber].collateralRatio);
-    if (marginCall || now > agreements[_agreementNumber].expiration) {
-      uint256 salvagedAmount =
-          bancorChanger.quickBuy(agreements[_agreementNumber].collateralAmount);
-      if (salvagedAmount >= agreements[_agreementNumber].tokenAmount) {
+  function closePosition(uint _index) public {
+    // Check that the offer is valid.
+    assert(agreements[_index].tokenAmount > 0);
+    uint256 tokenAmount = agreements[_index].tokenAmount;
+    // Canceling an offer that has not been taken.
+    if (agreements[_index].borrower == 0) {
+      assert(msg.sender == agreements[_index].lender);
+      bancorToken.transfer(agreements[_index].lender, tokenAmount);
+      agreements[_index].tokenAmount = 0;
+      return;
+    }
+    // Margin-calling (can be done by anyone as a public service) or closing a
+    // position that reached maturity.
+    uint256 collateralAmount = agreements[_index].collateralAmount;
+    bool canMarginCall = !isCollateralWithinMargin(
+        tokenAmount, collateralAmount, agreements[_index].collateralRatio);
+    if (canMarginCall || now > agreements[_index].expiration) {
+      uint256 tokenRecoveredAmount =
+          bancorChanger.quickBuy.value(collateralAmount)(1);
+      if (tokenRecoveredAmount >= tokenAmount) {
         // Good: the debt is returned in full.
         // Should be the majority of cases since we provide a safety margin
         // and the BNT price is continuous.
-        assert(bancorToken.transfer(
-            agreements[_agreementNumber].lender,
-            agreements[_agreementNumber].tokenAmount));
-        assert(bancorToken.transfer(
-            agreements[_agreementNumber].borrower,
-            salvagedAmount - agreements[_agreementNumber].tokenAmount));
+        assert(bancorToken.transfer(agreements[_index].lender, tokenAmount));
+        uint256 remainingCollateral = bancorChanger.sell(
+            etherToken, tokenRecoveredAmount - tokenAmount, 1);
+        etherToken.withdrawTo(agreements[_index].borrower, remainingCollateral);
       } else {
         // Bad: part of the debt is not returned.
         assert(bancorToken.transfer(
-            agreements[_agreementNumber].lender, salvagedAmount));
+            agreements[_index].lender, tokenRecoveredAmount));
       }
+      agreements[_index].tokenAmount = 0;
     }
   }
 }
