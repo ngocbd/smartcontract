@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowhCoin3 at 0x2992CFEF496b9080b303cC4AC6BA114126253ff7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowhCoin3 at 0xc825aa83f12e4d225ea1f21511a68e7aa78a002f
 */
 pragma solidity ^0.4.18;
 
