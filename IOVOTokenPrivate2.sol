@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOVOTokenPrivate2 at 0x72910a2f71ccece5853c67cb69dc911684600c7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOVOTokenPrivate2 at 0x37bdd4393b7feb54f236fc3da0657b22035227f9
 */
-pragma solidity ^0.4.19;
+pragma solidity 0.4.19;
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -324,7 +324,7 @@ contract TimedCrowdsale is Crowdsale {
 
 }
 
-// File: contracts/IOVOTokenPrivate2.sol
+// File: contracts/IOVOTokenPrivate.sol
 
 contract IOVOTokenPrivate2 is AllowanceCrowdsale, TimedCrowdsale {
     function IOVOTokenPrivate2(address _tokenWallet,
