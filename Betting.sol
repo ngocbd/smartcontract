@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0xefc391aba7600da1964b9ae330e3f901d1306188
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0x6e1be153e35f23a9c3b37991e29580e350084403
 */
 pragma solidity ^0.4.20;
 
@@ -1046,6 +1046,7 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
+
 contract BettingControllerInterface {
     function remoteBettingClose() external;
     function depositHouseTakeout() external payable;
@@ -1074,9 +1075,9 @@ contract Betting is usingOraclize {
     }
     
     struct horses_info{
-        int32  BTC_delta; //horses.BTC delta value
-        int32  ETH_delta; //horses.ETH delta value
-        int32  LTC_delta; //horses.LTC delta value
+        int64  BTC_delta; //horses.BTC delta value
+        int64  ETH_delta; //horses.ETH delta value
+        int64  LTC_delta; //horses.LTC delta value
         bytes32 BTC; //32-bytes equivalent of horses.BTC
         bytes32 ETH; //32-bytes equivalent of horses.ETH
         bytes32 LTC;  //32-bytes equivalent of horses.LTC
@@ -1268,9 +1269,9 @@ contract Betting is usingOraclize {
         calculating the difference in price with a precision of 5 digits
         not using safemath since signed integers are handled
         */
-        horses.BTC_delta = int32(coinIndex[horses.BTC].post - coinIndex[horses.BTC].pre)*100000/int32(coinIndex[horses.BTC].pre);
-        horses.ETH_delta = int32(coinIndex[horses.ETH].post - coinIndex[horses.ETH].pre)*100000/int32(coinIndex[horses.ETH].pre);
-        horses.LTC_delta = int32(coinIndex[horses.LTC].post - coinIndex[horses.LTC].pre)*100000/int32(coinIndex[horses.LTC].pre);
+        horses.BTC_delta = int64(coinIndex[horses.BTC].post - coinIndex[horses.BTC].pre)*100000/int64(coinIndex[horses.BTC].pre);
+        horses.ETH_delta = int64(coinIndex[horses.ETH].post - coinIndex[horses.ETH].pre)*100000/int64(coinIndex[horses.ETH].pre);
+        horses.LTC_delta = int64(coinIndex[horses.LTC].post - coinIndex[horses.LTC].pre)*100000/int64(coinIndex[horses.LTC].pre);
         
         total_reward = (coinIndex[horses.BTC].total) + (coinIndex[horses.ETH].total) + (coinIndex[horses.LTC].total);
         if (total_bettors <= 1) {
@@ -1278,7 +1279,7 @@ contract Betting is usingOraclize {
         } else {
             uint house_fee = total_reward.mul(5).div(100);
             require(house_fee < address(this).balance);
-            total_reward = total_reward.sub(house_fee); 
+            total_reward = total_reward.sub(house_fee);
             bettingControllerInstance.depositHouseTakeout.value(house_fee)();
         }
         
