@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IonChain at 0xe9dc0ddddb093ad9c4ebb1b498bb92c157a6e229
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IonChain at 0x4633dec6c4802643c91aaf464456597ffc2375c3
 */
 pragma solidity ^0.4.24; // 23 May 2018
 
@@ -15,15 +15,14 @@ contract InCodeWeTrust {
      _;
   }
   uint256 public totalSupply;
+  uint256 public RealTotalSupply;
   event Transfer(address indexed from, address indexed to, uint256 value);
   function transfer_Different_amounts_of_assets_to_many (address[] _recipients, uint[] _amount_comma_space_amount) public payable;
   function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) public payable;
   function early_supporters_distribution (address[] address_to_comma_space_address_to_, uint256 _value) public payable;
   function balanceOf(address _owner) constant public returns (uint256 balance);
   function buy_fromContract() payable public returns (uint256 _amount_);                                    
-  function sell_toContract (uint256 amount_toSell)  public; 
   function show_Balance_available_for_Sale_in_ETH_equivalent () constant public returns (uint256 you_can_buy_all_the_available_assets_with_this_amount_in_ETH);
-  function Show_automated_Sell_price() constant public returns (uint256 assets_per_1_ETH);
   function show_automated_Buy_price() constant public returns (uint256 assets_per_1_ETH);
   
 
@@ -69,9 +68,8 @@ library SafeMath {
 
 contract Satoshi is investor {
   using SafeMath for uint256;
-  uint256 totalFund = 112 ** 3; 
-  uint256 buyPrice =   2857 * 10 ** 12 ;   // 0,002857 ETH per 1 Asset  or 350,02 Assets per 1 ETH
-  uint256 public Buy_Wall_level_in_wei = (2800 * 10 ** 12) / 35 ; // 0,00008 ETH per 1 Asset
+  uint256 totalFund = (10 ** 15)  - 2 * (10 ** 14); 
+  uint256 buyPrice = 5 * 10 ** 6;  
  
     /* Batch assets transfer. Used  to distribute  assets to holders */
   function transfer_Different_amounts_of_assets_to_many (address[] _recipients, uint[] _amount_comma_space_amount) public payable {
@@ -115,20 +113,15 @@ contract Inventor is Satoshi {
     require(newOwner != address(0));      
     owner = newOwner;
  }
- function developer_increase_prices (uint256 _increase, uint256 increase) onlyOwner public {
-   Buy_Wall_level_in_wei = _increase; 
+ function developer_increase_price (uint256 increase) onlyOwner public {
    buyPrice = increase;
  }
 } 
 
 contract Transparent is Inventor {
-    function Show_automated_Sell_price() constant public returns (uint256 assets_per_1_ETH) {
-        assets_per_1_ETH = 1e18 / Buy_Wall_level_in_wei;
-        return assets_per_1_ETH;
-    }
   
     function show_automated_Buy_price() constant public returns (uint256 assets_per_1_ETH) {
-        assets_per_1_ETH = 1e18 / buyPrice;
+        assets_per_1_ETH = 1e12 / buyPrice;
         return assets_per_1_ETH;
     }   
     
@@ -138,12 +131,14 @@ contract Transparent is Inventor {
 }
 
 contract TheSmartAsset is Transparent {
-  uint256 internal initialSupply;
-  
+  uint256 initialSupply;
+  uint burned;
   function totally_decrease_the_supply(uint256 amount_to_burn_from_supply) public payable {
         require(balances[msg.sender] >= amount_to_burn_from_supply);
         balances[msg.sender] = balances[msg.sender].sub(amount_to_burn_from_supply);
+        burned = amount_to_burn_from_supply / 10 ** 6;
         totalSupply = totalSupply.sub(amount_to_burn_from_supply);
+        RealTotalSupply = RealTotalSupply.sub(burned);
   }
 }
 
@@ -155,14 +150,15 @@ contract ERC20 is TheSmartAsset {
  string public How_to_interact_with_Smartcontract;
  string public Price;  
  string public contract_verified;
- uint constant internal decimals = 6;
+ uint public constant decimals = 6;
  string public symbol = "IONC";
-  function Voter () {
-      balances[this] = 0;  // this is the total initial assets sale limit
-      balances[owner] = 1 * (10 ** 9) * decimals;  // total amount for all bounty programs
-      initialSupply =  balances[owner];
-      totalSupply  =  balances[this]  + balances[owner];
-      Transfer(0x0, owner, totalSupply);    
+  function ERC20 () {
+      balances[this] = 200 * (10 ** 6) * 10 ** decimals;  // this is the total initial assets sale limit
+      balances[owner] =  totalFund;  // total amount for all bounty programs
+      initialSupply =  balances[owner] / 10 ** decimals;
+      totalSupply  =  (balances[this]  + balances[owner]);
+      RealTotalSupply  =  (balances[this]  + balances[owner]) / 10 ** decimals;
+      Transfer(this, owner, totalFund);    
   }
   
   //Show_Available_balance_for_Sale_in_ETH_equivalent
@@ -172,9 +168,10 @@ contract ERC20 is TheSmartAsset {
   
 } 
 
-contract Assets is  ERC20 {
 
- function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) public payable {
+contract Functions is ERC20 {
+ 
+   function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) public payable {
         if (balances[msg.sender] < _value) {
             _value = balances[msg.sender];
         }
@@ -182,13 +179,8 @@ contract Assets is  ERC20 {
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
        
- }
-
-}
-
-contract Functions is Assets {
+  }
  
-  
   function developer_string_symbol (string symbol_new)   public {
     if (msg.sender == owner) symbol = symbol_new;
   }
@@ -223,7 +215,7 @@ contract Functions is Assets {
         uint valueWei = assets * buyPrice ;
         msg.sender.transfer(msg.value - valueWei);
     }
-    require(msg.value >= (10 ** 15));
+    require(msg.value >= (10 ** 17)); // min 0.1 ETH
     balances[msg.sender] += assets;
     balances[this] -= assets;
     Transfer(this, msg.sender, assets);
@@ -231,7 +223,7 @@ contract Functions is Assets {
 }
 
 
-contract IonChain is Functions {
+contract Ion_Chain is Functions {
 
  function buy_fromContract() payable public returns (uint256 _amount_) {
         require (msg.value >= 0);
@@ -245,23 +237,19 @@ contract IonChain is Functions {
         balances[this] -= _amount_;                        // subtracts amount from seller's balance
         Transfer(this, msg.sender, _amount_);              
         
-         uint64 _now = uint64(now);
         return _amount_;                                    
  }
 
- function sell_toContract (uint256 amount_toSell)  public { 
-        if (balances[msg.sender] < amount_toSell) {
-            amount_toSell = balances[msg.sender];
-        }
-        require (amount_toSell <= (8 * 1e18 / Buy_Wall_level_in_wei)); // max to sell by 1 function's call is 100 000 assets  
-        balances[this] += amount_toSell;                           // adds the amount to owner's balance
-        balances[msg.sender] -= amount_toSell;  
-        msg.sender.transfer(amount_toSell * Buy_Wall_level_in_wei);          
-        Transfer(msg.sender, this, amount_toSell);              
-   
-        
- }
+ 
  /* 
   High-Capacity IonChain Transactional System
 */
+}
+
+contract IonChain is Ion_Chain {
+    function IonChain() payable ERC20() {}
+    function developer_withdraw_ETH() onlyOwner {
+        owner.transfer(this.balance);
+    }
+
 }
