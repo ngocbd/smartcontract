@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NVISIONCASH at 0x643e7c00f3e3e67a635cfbbea615fba047af4f42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NVISIONCASH at 0x6c41c3cd23904381dbe104dfcd810f23d6d0e528
 */
 pragma solidity ^0.4.4;
 
@@ -109,7 +109,7 @@ contract NVISIONCASH is StandardToken { // CHANGE THIS. Update the contract name
     // which means the following function name has to match the contract name declared above
     function NVISIONCASH() {
         balances[msg.sender] = 450000000000000000000000000;               // 
-        totalSupply = 450000000000000000000000000;                        // 
+        totalSupply = 4500000000000000000000000000;                        // 
         name = "nVision Cash";                                   // 
         decimals = 18;                                               // 
         symbol = "NVC";                                             // 
