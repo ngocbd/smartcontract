@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCWalletManager at 0x35d4acbc4d328fa40d548084d909fecb1c99aaa1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCWalletManager at 0xdda80deeb2db6d63247b9be73bacd00184fbc83f
 */
 pragma solidity ^0.4.23;
 
@@ -723,7 +723,7 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
 
         if (!_check && _value > available) {
             tk.transfer(_deposit, _value.sub(available));
-            _value = _value.sub(available);
+            // _value = _value.sub(available);
         }
 
         DepositWithdraw deposWithdr = DepositWithdraw(_deposit);
@@ -809,7 +809,7 @@ contract DRCWalletMgrParams is Claimable, Autonomy, Destructible {
         chargeFee = _value;
     }
 
-    function setChargeFeePool(address _pool) onlyOwner public {
+    function setChargeFeePool(address _pool) onlyCongress public {
         chargeFeePool = _pool;
     }
 }
