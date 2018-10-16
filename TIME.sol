@@ -1,51 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TIME at 0xdd1097a226b4434589ab639815857713670db717
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract time at 0x5ec5600e2ca82d241fd193051fe7117795c7769e
 */
-pragma solidity ^0.4.11;
-contract TIME {
-    /* Public variables of the token */
-    string public standard = 'TIME 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public initialSupply;
-    uint256 public totalSupply;
-
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-  
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function TIME() {
-
-         initialSupply = 100000000000000000000000;
-         name ="TIME";
-        decimals = 8;
-         symbol = "TIME";
-        
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-                                   
-    }
-
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-      
-    }
-
-   
-
+pragma solidity ^0.4.21;
+contract time{
+function _time() view external returns (uint)
+{
+    return now ;
     
-
-   
-
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
-    }
+}
 }
