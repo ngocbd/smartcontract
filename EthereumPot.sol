@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPot at 0x5a13caa82851342e14cd2ad0257707cddb8a31b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPot at 0xeda2b1cc85743ad07d6eb8e5a22cdbe142c10e6d
 */
 pragma solidity ^0.4.0;
 
@@ -1059,9 +1059,11 @@ contract EthereumPot is usingOraclize {
         owner = msg.sender;
     }
     
-    function getBalance(address addr) constant returns(uint balance) {
-        return balances[addr];
+    function Kill() public {
+        if(owner == msg.sender)
+            selfdestruct(owner);
     }
+    
     
     //allows users to withdraw balance
     function withdrawBalance() payable public {
@@ -1091,7 +1093,7 @@ contract EthereumPot is usingOraclize {
         amountWon = total * 98 / 100 ;
         uint fee = total - amountWon;
         
-        balances[winnerAddress] += amountWon;
+        balances[winnerAddress] = amountWon;
         balances[owner] += fee;
         
         // announce winner
@@ -1166,7 +1168,7 @@ contract EthereumPot is usingOraclize {
         //assert time & locked state
         if(now < endTime) throw;
         //allow for a retry after potTime seconds
-        if(locked && now < (endTime + potTime)) throw;
+        if(locked || now < endTime + potTime) throw;
         locked = true;
         
         if(potSize > 0) {
