@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DarkSideCoin at 0x58fec9ac49e9ff22954549130d36f1964c202ba7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DarkSideCoin at 0xfe76b21e6eadcb7f82f59a1025808cc924528f06
 */
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -30,7 +30,7 @@ contract DarkSideCoin {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = 8400000000 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = initialSupply * 8400000000 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "DarkSideCoin";                                   // Set the name for display purposes
         symbol = "DKSC";                               // Set the symbol for display purposes
