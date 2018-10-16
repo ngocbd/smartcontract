@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenevExch at 0xdafae9d2ecfa1f8bba620680f296c3404770e6fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenevExch at 0x37374c2a727442b180fc5c2f4b90cd91af682e41
 */
 pragma solidity ^0.4.9;
 
@@ -282,34 +282,19 @@ contract GenevExch is SafeMath {
     uint feeMakeXfer = safeMul(amount, feeMake) / (1 ether);
     uint feeTakeXfer = safeMul(amount, feeTake) / (1 ether);
     uint feeRebateXfer = 0;
-    uint multiplier;
+
     if (accountLevelsAddr != 0x0) {
       uint accountLevel = AccountLevels(accountLevelsAddr).accountLevel(user);
       if (accountLevel==1) feeRebateXfer = safeMul(amount, feeRebate) / (1 ether);
       if (accountLevel==2) feeRebateXfer = feeTakeXfer;
     }
 
-    // tokens[tokenGet][msg.sender] = safeSub(tokens[tokenGet][msg.sender], safeAdd(amount, feeTakeXfer));
-    // tokens[tokenGet][user] = safeAdd(tokens[tokenGet][user], safeSub(safeAdd(amount, feeRebateXfer), feeMakeXfer));
-
-    if(tokenGet != 0){
-      multiplier = 1;
-    }else{
-      multiplier = 100000;
-    }
-    tokens[tokenGet][msg.sender] = safeSub(tokens[tokenGet][msg.sender], amount * multiplier);
-    tokens[tokenGet][user] = safeAdd(tokens[tokenGet][user], amount * multiplier ); // adding 100000000 to test 
-
+    tokens[tokenGet][msg.sender] = safeSub(tokens[tokenGet][msg.sender], safeAdd(amount, feeTakeXfer));
+    tokens[tokenGet][user] = safeAdd(tokens[tokenGet][user], safeSub(safeAdd(amount, feeRebateXfer), feeMakeXfer));
     tokens[tokenGet][feeAccount] = safeAdd(tokens[tokenGet][feeAccount], safeSub(safeAdd(feeMakeXfer, feeTakeXfer), feeRebateXfer));
-    // tokens[tokenGive][user] = safeSub(tokens[tokenGive][user], safeMul(amountGive, amount) / amountGet);
-    // tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
-    if(tokenGet != 0){
-      multiplier = 100000;
-    }else{
-      multiplier = 1;
-    }
-    tokens[tokenGive][user] = safeSub(tokens[tokenGive][user], amount * multiplier);
-    tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], amount * multiplier);
+    tokens[tokenGive][user] = safeSub(tokens[tokenGive][user], safeMul(amountGive, amount) / amountGet);
+    tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
+
 
     return true;
   }
