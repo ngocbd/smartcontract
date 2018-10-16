@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumLottery at 0x608c460a08b10ca06b9b5fe45451cf2552fa2e4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumLottery at 0x40658db197bddea6a51cb576fe975ca488ab3693
 */
 pragma solidity ^0.4.15;
 
@@ -15,9 +15,13 @@ contract Escrow {
     function deposit(address recipient) payable;
 }
 
+contract AffiliateNetwork {
+    function affiliateAddresses(uint code) returns (address);
+}
+
 contract EthereumLottery {
     uint constant GAS_LIMIT_DEPOSIT = 300000;
-    uint constant GAS_LIMIT_BUY = 450000;
+    uint constant GAS_LIMIT_AFFILIATE = 35000;
 
     struct Lottery {
         uint jackpot;
@@ -25,6 +29,7 @@ contract EthereumLottery {
         uint numTickets;
         uint numTicketsSold;
         uint ticketPrice;
+        uint affiliateCut;
         int winningTicket;
         address winner;
         uint finalizationBlock;
@@ -50,8 +55,9 @@ contract EthereumLottery {
 
     address public btcRelay;
     address public escrow;
+    address public affiliateNetwork;
 
-    enum Reason { TicketSaleClosed, TicketAlreadySold, InsufficientGas }
+    enum Reason { TicketSaleClosed, TicketAlreadySold }
     event PurchaseFailed(address indexed buyer, uint mark, Reason reason);
     event PurchaseSuccessful(address indexed buyer, uint mark);
 
@@ -71,11 +77,13 @@ contract EthereumLottery {
     }
 
     function EthereumLottery(address _btcRelay,
-                             address _escrow) {
+                             address _escrow,
+                             address _affiliateNetwork) {
         owner = msg.sender;
         admin = msg.sender;
         btcRelay = _btcRelay;
         escrow = _escrow;
+        affiliateNetwork = _affiliateNetwork;
     }
 
     function needsInitialization() constant returns (bool) {
@@ -94,19 +102,18 @@ contract EthereumLottery {
         lotteries[id].ticketPrice = _ticketPrice;
         lotteries[id].winningTicket = -1;
 
+        uint affiliateCut = (_ticketPrice - (_jackpot / _numTickets)) / 2;
+        lotteries[id].affiliateCut = affiliateCut;
+
         lastInitTimestamp = block.timestamp;
         lastSaleTimestamp = 0;
     }
 
-    function buyTickets(uint[] _tickets, uint _mark, bytes _extraData)
+    function buyTickets(uint[] _tickets, uint _mark, uint _affiliate)
              payable afterInitialization {
-        if (msg.gas < GAS_LIMIT_BUY) {
-            PurchaseFailed(msg.sender, _mark, Reason.InsufficientGas);
-            return;
-        }
-
         if (lotteries[id].numTicketsSold == lotteries[id].numTickets) {
             PurchaseFailed(msg.sender, _mark, Reason.TicketSaleClosed);
+            msg.sender.transfer(msg.value);
             return;
         }
 
@@ -120,6 +127,7 @@ contract EthereumLottery {
 
             if (lotteries[id].tickets[ticket] != 0) {
                 PurchaseFailed(msg.sender, _mark, Reason.TicketAlreadySold);
+                msg.sender.transfer(msg.value);
                 return;
             }
         }
@@ -138,7 +146,12 @@ contract EthereumLottery {
         lotteries[id].numTicketsSold += _tickets.length;
         lastSaleTimestamp = block.timestamp;
 
-        BTCRelay(btcRelay).storeBlockHeader(_extraData);
+        address affiliateAddress =
+            AffiliateNetwork(affiliateNetwork).affiliateAddresses(_affiliate);
+        if (affiliateAddress != 0) {
+            uint cut = lotteries[id].affiliateCut * _tickets.length;
+            var _ = affiliateAddress.call.gas(GAS_LIMIT_AFFILIATE).value(cut)();
+        }
 
         PurchaseSuccessful(msg.sender, _mark);
     }
@@ -343,6 +356,16 @@ contract EthereumLottery {
             } else {
                 details[i] = 0;
             }
+        }
+    }
+
+    function getFullTicketDetails(int _id, uint _offset, uint _n)
+             constant returns (address[] details) {
+        require(_offset + _n <= lotteries[_id].numTickets);
+
+        details = new address[](_n);
+        for (uint i = 0; i < _n; i++) {
+            details[i] = lotteries[_id].tickets[_offset + i];
         }
     }
 
