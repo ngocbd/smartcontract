@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HoQuBurner at 0x4c129783B42833220ad57d48548f871189009d3f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HoQuBurner at 0x818e2ad435764b80ee844cf7b2e8036e0a4b7c83
 */
 pragma solidity ^0.4.16;
 
@@ -271,7 +271,7 @@ contract HoQuBurner is Ownable {
     // token instance
     HoQuToken public token;
 
-    mapping(address => uint256) public claimed;
+    mapping(address => uint256) public burned;
     mapping(uint32 => address) public transactionAddresses;
     mapping(uint32 => uint256) public transactionAmounts;
     uint32 public transactionsCount;
@@ -302,6 +302,8 @@ contract HoQuBurner is Ownable {
         transactionAddresses[transactionsCount] = _sender;
         transactionAmounts[transactionsCount] = _tokens;
         transactionsCount++;
+
+        burned[_sender] = burned[_sender].add(_tokens);
 
         TokenBurned(_sender, _tokens);
     }
