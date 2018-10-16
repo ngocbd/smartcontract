@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FourLeafClover at 0xf7344abcfcd2667d2a4af8baca2236ef8d749b61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FourLeafClover at 0xc4d5d04cf64e949b99239cfb410f6c4d39d4b08a
 */
 pragma solidity ^0.4.18;
 
@@ -73,7 +73,8 @@ contract _ERC20Interface {
 
 // ----------------------------------------------------------------------------
 // ERC20 Token, with the addition of symbol, name and decimals and an
-// initial fixed supply
+// initial fixed supply of 0 units.
+// The units will be created by demand using the create function reservated for trusted contract's address 
 // ----------------------------------------------------------------------------
 contract _Token is WhiteListAccess, _ERC20Interface {
     using _SafeMath for uint;
@@ -175,15 +176,12 @@ contract _Token is WhiteListAccess, _ERC20Interface {
         return allowed[tokenOwner][spender];
     }
 
-
     // ------------------------------------------------------------------------
     // Don't accept ETH
     // ------------------------------------------------------------------------
     function () public payable {
         revert();
     }
-
-
 
     // ------------------------------------------------------------------------
     // FLC API 
@@ -201,6 +199,15 @@ contract _Token is WhiteListAccess, _ERC20Interface {
     
     function unfreeze() public onlyWhitelisted() {
         freezed = false;
+    }
+
+    // recover tokens sent accidentally
+    function _withdrawal(address _token) public {
+        uint _balance =  _ERC20Interface(_token).balanceOf(address(this));
+        if (_balance > 0) {
+            _ERC20Interface(_token).transfer(owner, _balance);
+        }
+        owner.transfer(this.balance);
     }
 }
 
