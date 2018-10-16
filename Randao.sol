@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Randao at 0xb2A1ac7F7253B0EBF6410920ED1342c974bcA67A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Randao at 0x6C8060507273A0ff175361C6bf9F86e97f8Cf2C8
 */
 // version 1.0
 contract Randao {
@@ -36,10 +36,14 @@ contract Randao {
   Campaign[] public campaigns;
   address public founder;
 
+  uint256 public bounty          = 1 ether;
+
   // Prevents methods from perfoming any value transfer
   modifier noEther() { if (msg.value > 0) throw; _}
 
   modifier blankAddress(address _n) { if (_n != 0) throw; _}
+
+  modifier checkBounty { if (msg.value < bounty) throw; _}
 
   modifier moreThanZero(uint256 _deposit) { if (_deposit <= 0) throw; _}
 
@@ -76,7 +80,7 @@ contract Randao {
       uint16 _commitBalkline,
       uint16 _commitDeadline
   ) timeLineCheck(_bnum, _commitBalkline, _commitDeadline)
-    moreThanZero(_deposit) external returns (uint256 _campaignID) {
+    checkBounty moreThanZero(_deposit) external returns (uint256 _campaignID) {
       _campaignID = campaigns.length++;
       Campaign c = campaigns[_campaignID];
       numCampaigns++;
@@ -92,7 +96,7 @@ contract Randao {
   event Follow(uint256 indexed CampaignId, address indexed from, uint256 bountypot);
 
   function follow(uint256 _campaignID)
-    external returns (bool) {
+    checkBounty external returns (bool) {
       Campaign c = campaigns[_campaignID];
       Consumer consumer = c.consumers[msg.sender];
       return followCampaign(_campaignID, c, consumer);
@@ -164,7 +168,7 @@ contract Randao {
   }
 
   modifier checkSecret(uint256 _s, bytes32 _commitment) {
-      if (sha3(_s) != _commitment) throw;
+      if (sha3(_s) == _commitment) throw;
       _
   }
 
