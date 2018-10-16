@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GnarlyTimes at 0xff61b13bfecca5b46c6eb31beaa3e3dd157358a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GnarlyTimes at 0x88cd51d749ef0ead434eaf95e54a630c65a45133
 */
 pragma solidity ^0.4.18;
 
@@ -101,7 +101,7 @@ contract GnarlyTimes is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function GnarlyTimes() public {
-        symbol = "GNAX";
+        symbol = "GDAX";
         name = "Gnarly Times";
         decimals = 18;
         _totalSupply = 100000000000000000000000000;
