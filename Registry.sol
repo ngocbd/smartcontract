@@ -1,48 +1,69 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registry at 0xf0577c974bde656df648d66778701903d3650e40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registry at 0x445b4c58113c784640a978cfe39b0065118b91a5
 */
-pragma solidity ^0.4.4;
+// Created using ICO Wizard https://github.com/poanetwork/ico-wizard by POA Network 
+pragma solidity ^0.4.11;
 
-contract Registry {
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
   address public owner;
-  mapping (address => uint) public expirations;
-  uint weiPerBlock;
-  uint minBlockPurchase;
 
-  function Registry() {
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
     owner = msg.sender;
-    // works out to about $7 per month
-    weiPerBlock = 100000000000;
-    // roughly 1 day worth of blocks at 20 sec transaction time
-    minBlockPurchase = 4320;
   }
 
-  function () payable {
-    if (expirations[msg.sender] > 0 && expirations[msg.sender] < block.number) {
-      // The sender already has credit, add to it
-      expirations[msg.sender] += blocksForWei(msg.value);
-    } else {
-      // The senders credit has either expired or the sender is unregistered
-      // Give them block credits starting from the current block
-      expirations[msg.sender] = block.number + blocksForWei(msg.value);
-    }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
   }
 
-  function blocksForWei(uint weiValue) returns (uint) {
-    assert(weiValue >= weiPerBlock * minBlockPurchase);
-    return weiValue / weiPerBlock;
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
-  function setWeiPerBlock(uint newWeiPerBlock) {
-    if (msg.sender == owner) weiPerBlock = newWeiPerBlock;
+}
+
+
+
+
+/**
+ * Registry of contracts deployed from ICO Wizard.
+ */
+contract Registry is Ownable {
+  mapping (address => address[]) public deployedContracts;
+
+  event Added(address indexed sender, address indexed deployAddress);
+
+  function add(address deployAddress) public {
+    deployedContracts[msg.sender].push(deployAddress);
+    Added(msg.sender, deployAddress);
   }
 
-  function setMinBlockPurchase(uint newMinBlockPurchase) {
-    if (msg.sender == owner) minBlockPurchase = newMinBlockPurchase;
+  function count(address deployer) constant returns (uint) {
+    return deployedContracts[deployer].length;
   }
-
-  function withdraw(uint weiValue) {
-    if (msg.sender == owner) owner.transfer(weiValue);
-  }
-
 }
