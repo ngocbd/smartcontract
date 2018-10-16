@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpectreDividendToken at 0x554c98b3ec772f79ee5b96d47a1d10852ed274c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpectreDividendToken at 0x12b306fa98f4cbb8d4457fdff3a0a0a56f07ccdf
 */
 pragma solidity ^0.4.15;
 
@@ -820,9 +820,9 @@ contract SpectreDividendToken is SpectreToken {
         _tokenFactory,
         0x0,                     // no parent token
         0,                       // no snapshot block number from parent
-        "Spectre Dividend Token",           // Token name
-        6,                       // Decimals
-        "SXD",                   // Symbol
+        "Spectre.ai D-Token",           // Token name
+        18,                       // Decimals
+        "SXDT",                   // Symbol
         true                    // Enable transfers
       )
     {}
