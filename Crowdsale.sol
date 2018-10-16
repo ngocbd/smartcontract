@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x7405db460b6ab08f16087c66ec34051c2e579477
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x819dc78e14d7a3c3830e9f583154278b28893eb9
 */
 pragma solidity ^0.4.18;
 
@@ -117,12 +117,12 @@ contract BurnableToken is StandardToken {
     Burn(burner, _value);
   }
 }
-contract SpaceTRUMPLToken is BurnableToken {
-  string public constant name = "Space TRUMPL Token";
+contract SpaceTRUMPToken is BurnableToken {
+  string public constant name = "Space TRUMP Token";
   string public constant symbol = "TRUMP";
   uint32 public constant decimals = 0;
   uint256 public constant INITIAL_SUPPLY = 38440000;
-  function SpaceTRUMPLToken() public {
+  function SpaceKIMToken() public {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
@@ -132,7 +132,7 @@ contract Crowdsale is Ownable {
 
   using SafeMath for uint;
 
-  SpaceTRUMPLToken public token = new SpaceTRUMPLToken();
+  SpaceTRUMPToken public token = new SpaceTRUMPToken();
 
   address multisig;
   address restricted;
