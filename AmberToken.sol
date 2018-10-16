@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmberToken at 0x90e62d00ec8e3dc0f40a59389105f678ae027406
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmberToken at 0x39283b6660f216b788b00a547f8c4d3dfebb9a2f
 */
 //! By Parity Technologies, 2017.
 //! Released under the Apache Licence 2.
@@ -489,7 +489,7 @@ contract AmbrosusSale {
 	//////
 
 	// How much is enough?
-	uint public constant MIN_BUYIN_VALUE = 10000000000000000;
+	uint public constant MIN_BUYIN_VALUE = 1;
 	// Max gas price for buyins.
 	uint public constant MAX_BUYIN_GAS_PRICE = 25000000000;
 	// The exposed hard cap.
@@ -511,7 +511,7 @@ contract AmbrosusSale {
 	// Who gets the stash? Should not release funds during minting process.
 	address public constant TREASURY = 0xB47aD434C6e401473F1d3442001Ac69cda1dcFDd;
 	// When does the contribution period begin?
-	uint public constant BEGIN_TIME = 1506081600;
+	uint public constant BEGIN_TIME = 1505986211;
 	// How long does the sale last for?
 	uint public constant DURATION = 30 days;
 	// When does the period end?
