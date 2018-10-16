@@ -1,273 +1,298 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x5fa9bfb614bfcdce2c1138062a559fe8b3a7ead5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x9F06b7263A24c48F284c3E25c28DfD63CEA24AC6
 */
-pragma solidity ^0.4.13;
-
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
+pragma solidity ^0.4.18;
 library SafeMath {
     
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+ 
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+ 
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+ 
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
+  function percent(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = (a * b)/100;
+    uint256 k = a * b;
+    assert(a == 0 || k / a == b);
+    return c;
+  }
   
-}
-
-
-contract BasicToken is ERC20Basic {
-    
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
 }
 
 contract Ownable {
-    
-  address public owner;
+address public owner;
+function Ownable() public {    owner = msg.sender;  }
 
-  function Ownable() {
-    owner = msg.sender;
-  }
+event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
+modifier onlyOwner() {    require(msg.sender == owner);    _;  }
 
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
+function transferOwnership(address newOwner) public onlyOwner {
+require(newOwner != address(0));
+OwnershipTransferred(owner, newOwner);
+owner = newOwner;
   }
 
 }
 
-contract MintableToken is StandardToken, Ownable {
+contract ERC20Basic {
+  uint256 public totalSupply=1000000;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+ 
+}
+contract BasicToken is ERC20Basic, Ownable {
+    using SafeMath for uint256;
+    mapping (address => uint) public Account_balances;
+    mapping (address => uint) public Account_frozen;
+    mapping (address => uint) public Account_timePayout; 
     
-  event Mint(address indexed to, uint256 amount);
-  
-  event MintFinished();
+    event FrozenAccount_event(address target, uint frozen);
 
-  bool public mintingFinished = false;
 
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
+  function transfer(address _toaddress, uint256 _value) public returns (bool) {
+    require(Account_frozen[msg.sender]==0 );
+    require(Account_frozen[_toaddress]==0 );
+    Account_timePayout[_toaddress]=Account_timePayout[msg.sender];
+    Account_balances[msg.sender] = Account_balances[msg.sender].sub(_value);
+    Account_balances[_toaddress] = Account_balances[_toaddress].add(_value);
+    Transfer(msg.sender, _toaddress, _value);
     return true;
   }
-
-  function finishMinting() onlyOwner returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
+ 
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return Account_balances[_owner];
+     }
   
+ function BasicToken()    public {   
+     Account_balances[msg.sender] =   totalSupply;    
+          }
+ }
+contract AESconstants is BasicToken {
+    string public constant name = "Adept Ethereum Stocks";
+    string public constant symbol = "AES";
+    string public constant tagline = "AES - when resoluteness is rewarded!";
+    uint32 public constant decimals = 0;
+}
+contract Freeze_contract is AESconstants {
+   
+function Freeze(address _address, uint _uint)   private {
+Account_frozen[_address] = _uint;
+FrozenAccount_event(_address, _uint);
+}    
+    
+// mapping (address => uint) public frozenAccount;
+// 0 NO FREEZE
+// 1 Freeze onlyOwner
+// 2 Freeze user    
+
+//Freeze user //this is done to freeze your account. To avoid an attack: a block of dividend payments using spam transactions.
+function user_on_freeze() public  {     require(Account_frozen[msg.sender]==0);  Freeze(msg.sender,2);   }
+function user_off_freeze() public {    require(Account_frozen[msg.sender]==2);   Freeze(msg.sender,0);   }
+//Freeze used bounty company
+
+
+function pay_Bounty(address _address, uint _sum_pay )  onlyOwner public {
+transfer(_address, _sum_pay); 
+Freeze(_address, 1);
+} 
+
+function offFreeze_Bounty(address _address) onlyOwner public { Freeze(_address, 0); }     
+   
 }
 
-/* @dev Specific contract details name , decimals */
 
-contract SimpleTokenCoin is MintableToken {
-    
-    string public constant name = "Chain ID Token";
-    
-    string public constant symbol = "CID";
-    
-    uint32 public constant decimals = 18;
-    
-}
+contract AES_token_contract is Freeze_contract {
+using SafeMath for uint;
 
-/* Specific contract details: Start time, End time, Min.Cap, Max.Cap,
-Rate of Token to ETH, Final owner wallet, Team's bonuses wallet*/
+uint public next_payout=now + 90 days;
+uint public payout = 0; // ?????? ??????????
 
-contract Crowdsale is Ownable {
-    
-    using SafeMath for uint;
-    
-    address public multisig;
+//--------??????? ????  
+function Take_payout() public {
+//???????? ????? ?? ???????????? ???????????
+require(Account_timePayout[msg.sender] < now);
+//???????? ???????, ???? ?????? ?????? ?????????  ?????? ??????
+if(next_payout<now){
+payout=this.balance; 
+next_payout=now + 90 days;
+}   
 
-    SimpleTokenCoin public token = new SimpleTokenCoin();
-
-    uint start;
-    
-    uint endtime;
-
-    uint hardcap;
-
-    uint rate;
-    
-    uint softcap;
-    
-    address wal1;
-    address wal2;
-    address wal3;
-
-    mapping(address => uint) public balances;
-
-    function Crowdsale() {
-        /** Final owner wallet */
-        multisig = 0x2338801bA8aEe40d679364bcA4e69d8C1B7a101C;
-        rate = 1000000000000000000000; 
-        start = 1517468400; /** in unix */
-        endtime = 1519801200;
-        hardcap = 70000000000000000000000000; /** 7 000 000 * 1e18 CID*/
-        softcap = 300000000000000000000000; /** 300 000 1e18 */
-        
-        /*Team's bonuses wallet*/
-        wal1 = 0x35E0e717316E38052f6b74f144F2a7CE8318294b;
-        wal2 = 0xa9251f22203e34049aa5D4DbfE4638009A1586F5;
-        wal3 = 0xE9267a312B9Bc125557cff5146C8379cCEE3a33D;
-    }
-
-    modifier saleIsOn() {
-    require(now > start && now < endtime);
-        _;
-    }
-    
-    modifier isUnderHardCap() {
-        require(this.balance <= hardcap);
-        _;
-    }
-    /* refund option for investors*/
-    function refund() public {
-        require(this.balance < softcap && now > start && balances[msg.sender] > 0);
-        uint value = balances[msg.sender];
-        balances[msg.sender] = 0;
-        msg.sender.transfer(value);
-    }
-    
-    /* when softcap reached , finish of token minting could be implemented */
-   function finishMinting() public onlyOwner {
-      if(this.balance > softcap) {
-        multisig.transfer(this.balance);
-        token.finishMinting();
+msg.sender.transfer(payout.mul(Account_balances[msg.sender]).div(totalSupply));
+Account_timePayout[msg.sender]=next_payout;
       }
-    }
+
+function() external payable {} 
+   
+ }
+contract Hype is Ownable {
+using SafeMath for uint;  
+address public investors;
+function Hype(address _addres)  onlyOwner public {investors=_addres;    }
+    mapping (uint => address) public level;    
+    uint private price=5000000000000000;      // in wei    1000 finney in 1 ether
+    uint public step_level=0;
+    uint public step_pay=0;
+    uint private constant percent_hype=10;
+    uint private constant percent_investors=3;
+    uint private bonus=price.percent(100+percent_hype);
     
-    
-   function createTokens() isUnderHardCap saleIsOn payable {
-       
-        
-        uint tokens = rate.mul(msg.value).div(1 ether);
-        uint CTS = token.totalSupply(); /** check total Supply */
-        uint bonusTokens = 0;
-        
-        /* bonus tokens calculation for ICO stages */
-        if(CTS <= (300000 * (10 ** 18))) {
-          bonusTokens = (tokens.mul(30)).div(100);    /* 30% bonus */
-        } else if(CTS > (300000 * (10 ** 18)) && CTS <= (400000 * (10 ** 18)))  {
-          bonusTokens = (tokens.mul(25)).div(100);       /* 25% bonus */
-        } else if(CTS > (400000 * (10 ** 18)) && CTS <= (500000 * (10 ** 18))) {
-          bonusTokens = (tokens.mul(20)).div(100);         /* 20% bonus */
-        } else if(CTS > (500000 * (10 ** 18)) && CTS <= (700000 * (10 ** 18))) {
-          bonusTokens = (tokens.mul(15)).div(100);       /* 15% bonus */
-        } else if(CTS > (700000 * (10 ** 18)) && CTS <= (1000000 * (10 ** 18))) {
-          bonusTokens = (tokens.mul(10)).div(100);          /* 10% bonus */
-        } else if(CTS > (1000000 * (10 ** 18))) {
-          bonusTokens = 0;      /* 0% */
-        }
-        
-        tokens += bonusTokens;
-        token.mint(msg.sender, tokens);
-        
-        
-        balances[msg.sender] = balances[msg.sender].add(msg.value);
-        /** Team's bonus tokens calculation*/
-        uint wal1Tokens = (tokens.mul(25)).div(100);
-        token.mint(wal1, wal1Tokens);
-        
-        
-        uint wal2Tokens = (tokens.mul(10)).div(100);
-        token.mint(wal2, wal2Tokens);
-        
-        uint wal3Tokens = (tokens.mul(5)).div(100);
-        token.mint(wal3, wal3Tokens);
-        
-        
-       
-    }
+function() external payable {
+require(msg.value > 4999999999999999);
+uint amt_deposit=msg.value.div(price); // ?????????? ????? // ??????????? ????? ???????? ??????????
+investors.transfer(msg.value.percent(percent_investors));       //????????? ??????? ??????????
+
+ for (  uint i= 0; i < amt_deposit; i++) { 
+        if (level[step_pay].send(bonus)==true){
+          step_pay++;
+                                              }
+     level[step_level]=msg.sender;
+     step_level++;
+                                              }
+                                              }
 
    
+}
+contract BigHype is Ownable {
+using SafeMath for uint;  
+address public investors;
+function BigHype(address _addres)  onlyOwner public {investors=_addres;      }
+
+struct info {
+        address i_address;
+        uint i_balance;
+            }
+
+    mapping (uint => info) public level;    
+    uint public step_level=0;
+    uint public step_pay=0;
+    uint private constant percent_hype=10;
+    uint private constant percent_investors=3;
+ 
+function() external payable {
+require(msg.value > 4999999999999999); 
+investors.transfer(msg.value.percent(percent_investors));       
+uint bonus=(level[step_pay].i_balance).percent(100+percent_hype);  
+ if (step_level>0 && level[step_pay].i_address.send(bonus)==true){
+          step_pay++;
+                                                                 }
+     level[step_level].i_address=msg.sender;
+     level[step_level].i_balance=msg.value;
+     step_level++;
+}
+
+}
+
+
+contract Crowdsale is Ownable {
+  
+address private	multisig = msg.sender; 
+bool private share_team_AES=false;
+
+
+using SafeMath for uint;
+
+AES_token_contract   public AEStoken  = new AES_token_contract(); 
+Hype     public hype    = new Hype(AEStoken);
+BigHype  public bighype = new BigHype(AEStoken);
+
+uint public Time_Start_Crowdsale= 1518210000; // 1518210000  - 10 February 2018
+
+// ??????? ??????? ? ??????
+function Take_share_team_AES() onlyOwner public {
+require(share_team_AES == false);
+AEStoken.transfer(multisig,500000); 
+share_team_AES=true;
+}
+
+// ?????
+function For_admin() onlyOwner public {
+AEStoken.transferOwnership(multisig); 
+hype.transferOwnership(multisig); 
+bighype.transferOwnership(multisig); 
+}
+
+
+function getTokensSale() public  view returns(uint){  return AEStoken.balanceOf(this);  }
+function getBalance_in_token() public view returns(uint){  return AEStoken.balanceOf(msg.sender); }
+ 
+modifier isSaleTime() {  require(Time_Start_Crowdsale<now);  _;  } 
+ 
+ // ????? 1 000 000 ??????? AES
+ // 400 000 ??????          40%
+ // 100 000 ??????? ??????? 10%
+ // 500 000 SALE IN ICO     50%
+
+ 
+   function createTokens() isSaleTime private  {
+      
+        uint Tokens_on_Sale = AEStoken.balanceOf(this);      
+        uint CenaTokena=1000000000000000; //1 finney= 1000 Szabo =0.002 Ether  //   1000 Szabo= 1 finney
+        
+        uint Discount=0;
+        
+      // ?????? ?? ??????? ??? ??????????
+            if(Tokens_on_Sale>400000)   {Discount+=20;}   //Szabo
+       else if(Tokens_on_Sale>300000)   {Discount+=15; }   //Szabo
+       else if(Tokens_on_Sale>200000)   {Discount+=10; }   //2000 Szabo   1000 Szabo= 1 finney
+       else if(Tokens_on_Sale>100000)   {Discount+=5; } 
+       
+       // ?????? ?? ??????
+            if(msg.value> 1000000000000000000 && Tokens_on_Sale>2500 )  {Discount+=20; }   // ???? ??????? ?????? ??? ?? 1 ?????? 
+       else if(msg.value>  900000000000000000 && Tokens_on_Sale>1500 )  {Discount+=15;  }   // ???? ??????? ?????? ??? ?? 0.9 ?????? 
+       else if(msg.value>  600000000000000000 && Tokens_on_Sale>500  )  {Discount+=10;  }   // ???? ??????? ?????? ??? ?? 0.6 ????? 
+       else if(msg.value>  300000000000000000 && Tokens_on_Sale>250  )  {Discount+=5;  }   // ???? ??????? ?????? ??? ?? 0.3 ???? 
+       
+       //?????? ?? ???????
+     uint256   Time_Discount=now-Time_Start_Crowdsale;
+             if(Time_Discount < 3 days)   {Discount+=20; }
+        else if(Time_Discount < 5 days)   {Discount+=15; }       
+        else if(Time_Discount < 10 days)  {Discount+=10; }
+        else if(Time_Discount < 20 days)  {Discount+=5;  } 
+         
+     CenaTokena=CenaTokena.percent(100-Discount); // ?????? ??????
+     uint256 Tokens=msg.value.div(CenaTokena); // ?????? ??????? ??????? ??????
+       
+        if (Tokens_on_Sale>=Tokens)   {         
+            multisig.transfer(msg.value);
+          }
+     else {
+        multisig.transfer(msg.value.mul(Tokens_on_Sale.div(Tokens)));   // ?????? ??????? ??????? ??????
+        msg.sender.transfer(msg.value.mul(Tokens-Tokens_on_Sale).div(Tokens));  // ??? ?? ?????? ?????
+        Tokens=Tokens_on_Sale;
+        }
+        
+       AEStoken.transfer(msg.sender, Tokens);
+        
+        }
+       
+ 
     function() external payable {
-        createTokens();
+     
+      if (AEStoken.balanceOf(this)>0)  { createTokens(); }
+      else { AEStoken.transfer(msg.value); }// ????? ????????? ICO ????????? ?????????????
+        
     }
     
 }
