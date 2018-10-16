@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockPrinceCoin at 0x3f5e60c4e294ab62ea706f3858adf42454b0d3ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockPrinceCoin at 0x75d0364cde62a4a3666f07d37ba46a5acd23ad8a
 */
 pragma solidity ^0.4.16;
 
@@ -33,7 +33,7 @@ contract BlockPrinceCoin {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10000;  // Update total supply with the decimal amount
+        totalSupply = 10000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "BlockPrinceCoin";                                   // Set the name for display purposes
         symbol = "BPC";                               // Set the symbol for display purposes
