@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoPoliceCrowdsale at 0xde67c7df62c27d996d72d8b106022885f5a81d30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoPoliceCrowdsale at 0xa9d3f3bc16a971fe51a02aa6f8a75f569693e415
 */
 pragma solidity ^0.4.23;
 
@@ -95,7 +95,7 @@ contract CryptoPoliceCrowdsale is Ownable {
     uint public constant THRESHOLD3 = 490000000e18;
     uint public constant THRESHOLD4 = 510000000e18;
 
-    uint public constant RELEASE_THRESHOLD = 11111111e18;
+    uint public constant RELEASE_THRESHOLD = 27000500e18;
 
     address public admin;
 
@@ -134,7 +134,7 @@ contract CryptoPoliceCrowdsale is Ownable {
     /**
      * Number of Wei that can be paid without carrying out KYC process
      */
-    uint public unidentifiedSaleLimit = 1.45 ether;
+    uint public unidentifiedSaleLimit = 1 ether;
 
     /**
      * Crowdsale participants that have made payments
