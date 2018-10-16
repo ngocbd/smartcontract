@@ -1,109 +1,82 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MCAP at 0x93e682107d1e9defb0b5ee701c71707a4b2e46bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MCAP at 0x40fdba87e66fdcdf04cab199fa4a7684e78c3edf
 */
-pragma solidity ^0.4.6;
+pragma solidity ^ 0.4 .9;
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
+    function div(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-contract tokenRecipient {function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData);}
+    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-
+    function add(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
 contract MCAP {
-    /* Public variables of the token */
-    string public standard = 'MCAP 1.0';
-
-    string public name;
-
-    string public symbol;
-
-    uint8 public decimals;
-
+    using SafeMath
+    for uint256;
+    mapping(address => mapping(address => uint256)) allowed;
+    mapping(address => uint256) balances;
     uint256 public totalSupply;
-
+    uint256 public decimals;
     address public owner;
-
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    /* This generates a public event on the blockchain that will notify clients */
+    bytes32 public symbol;
     event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MCAP(
-    uint256 initialSupply,
-    string tokenName,
-    uint8 decimalUnits,
-    string tokenSymbol
-    ) {
-        balanceOf[msg.sender] = initialSupply;
-        // Give the creator all initial tokens
-        totalSupply = initialSupply;
-        // Update total supply
-        name = tokenName;
-        // Set the name for display purposes
-        symbol = tokenSymbol;
-        // Set the symbol for display purposes
-        decimals = decimalUnits;
-        // Amount of decimals for display purposes
-        
-        owner=msg.sender;
+    function MCAP() {
+        totalSupply = 100000000;
+        symbol = 'MCAP';
+        owner = 0xa2079452d0f4012f7660c7266d39c5e67a03d34c;
+        balances[owner] = totalSupply;
+        decimals = 0;
     }
 
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
+    function balanceOf(address _owner) constant returns(uint256 balance) {
+        return balances[_owner];
     }
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (_to == 0x0) throw;
-        // Prevent transfer to 0x0 address
-        if (balanceOf[msg.sender] < _value) throw;
-        // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
-        // Check for overflows
-        balanceOf[msg.sender] -= _value;
-        // Subtract from the sender
-        balanceOf[_to] += _value;
-        // Add the same to the recipient
+
+    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    function transfer(address _to, uint256 _value) returns(bool) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
-        // Notify anyone listening that this transfer took place
-    }
-
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-    returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
         return true;
     }
 
-    /* Approve and then comunicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-    returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (_to == 0x0) throw;
-        // Prevent transfer to 0x0 address
-        if (balanceOf[_from] < _value) throw;
-        // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
-        // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;
-        // Check allowance
-        balanceOf[_from] -= _value;
-        // Subtract from the sender
-        balanceOf[_to] += _value;
-        // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
+    function transferFrom(address _from, address _to, uint256 _value) returns(bool) {
+        var _allowance = allowed[_from][msg.sender];
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
         Transfer(_from, _to, _value);
         return true;
     }
 
+    function approve(address _spender, uint256 _value) returns(bool) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function() {
+        revert();
+    }
 }
