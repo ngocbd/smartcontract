@@ -1,9 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract slot at 0x76bc9e61a1904b82cbf70d1fd9c0f8a120483bbb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract slot at 0x1d979bd0b663040f2fe8a9854a8569919ae153ac
 */
 // <ORACLIZE_API>
 /*
-Copyright (c) 2015-2016 Oraclize srl, Thomas Bertani
+Copyright (c) 2015-2016 Oraclize SRL
+Copyright (c) 2016 Oraclize LTD
 
 
 
@@ -30,7 +31,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.0;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -42,6 +43,7 @@ contract OraclizeI {
     function getPrice(string _datasource, uint gaslimit) returns (uint _dsprice);
     function useCoupon(string _coupon);
     function setProofType(byte _proofType);
+    function setConfig(bytes32 _config);
     function setCustomGasPrice(uint _gasPrice);
 }
 contract OraclizeAddrResolverI {
@@ -75,23 +77,40 @@ contract usingOraclize {
     }
 
     function oraclize_setNetwork(uint8 networkID) internal returns(bool){
-        if (getCodeSize(0x1d3b2638a7cc9f2cb3d298a3da7a90b67e5506ed)>0){
+        if (getCodeSize(0x1d3b2638a7cc9f2cb3d298a3da7a90b67e5506ed)>0){ //mainnet
             OAR = OraclizeAddrResolverI(0x1d3b2638a7cc9f2cb3d298a3da7a90b67e5506ed);
             return true;
         }
-        if (getCodeSize(0x9efbea6358bed926b293d2ce63a730d6d98d43dd)>0){
-            OAR = OraclizeAddrResolverI(0x9efbea6358bed926b293d2ce63a730d6d98d43dd);
+        if (getCodeSize(0xc03a2615d5efaf5f49f60b7bb6583eaec212fdf1)>0){ //ropsten testnet
+            OAR = OraclizeAddrResolverI(0xc03a2615d5efaf5f49f60b7bb6583eaec212fdf1);
             return true;
         }
-        if (getCodeSize(0x20e12a1f859b3feae5fb2a0a32c18f5a65555bbf)>0){
+        if (getCodeSize(0x20e12a1f859b3feae5fb2a0a32c18f5a65555bbf)>0){ //ether.camp ide
             OAR = OraclizeAddrResolverI(0x20e12a1f859b3feae5fb2a0a32c18f5a65555bbf);
             return true;
         }
-        if (getCodeSize(0x9a1d6e5c6c8d081ac45c6af98b74a42442afba60)>0){
-            OAR = OraclizeAddrResolverI(0x9a1d6e5c6c8d081ac45c6af98b74a42442afba60);
+        if (getCodeSize(0x93bbbe5ce77034e3095f0479919962a903f898ad)>0){ //norsborg testnet
+            OAR = OraclizeAddrResolverI(0x93bbbe5ce77034e3095f0479919962a903f898ad);
+            return true;
+        }
+        if (getCodeSize(0x51efaf4c8b3c9afbd5ab9f4bbc82784ab6ef8faa)>0){ //browser-solidity
+            OAR = OraclizeAddrResolverI(0x51efaf4c8b3c9afbd5ab9f4bbc82784ab6ef8faa);
             return true;
         }
         return false;
+    }
+    
+    function __callback(bytes32 myid, string result) {
+        __callback(myid, result, new bytes(0));
+    }
+    function __callback(bytes32 myid, string result, bytes proof) {
+    }
+    
+    function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource);
+    }
+    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource, gaslimit);
     }
     
     function oraclize_query(string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
@@ -143,6 +162,9 @@ contract usingOraclize {
     function oraclize_setCustomGasPrice(uint gasPrice) oraclizeAPI internal {
         return oraclize.setCustomGasPrice(gasPrice);
     }    
+    function oraclize_setConfig(bytes32 config) oraclizeAPI internal {
+        return oraclize.setConfig(config);
+    }
 
     function getCodeSize(address _addr) constant internal returns(uint _size) {
         assembly {
@@ -269,12 +291,27 @@ contract usingOraclize {
         return mint;
     }
     
+    function uint2str(uint i) internal returns (string){
+        if (i == 0) return "0";
+        uint j = i;
+        uint len;
+        while (j != 0){
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (i != 0){
+            bstr[k--] = byte(48 + i % 10);
+            i /= 10;
+        }
+        return string(bstr);
+    }
+    
+    
 
 }
 // </ORACLIZE_API>
-
-
-
 
 
 
@@ -302,6 +339,10 @@ contract slot is mortal, usingOraclize {
     uint32[] public prizes;
     /** the amount of ether per bet **/
     mapping (bytes32 => uint) bets;
+    /** the oraclize query string**/
+    string public query;
+    /** the type of the oraclize query**/
+    string public queryType;
     /** tell the listeners the result
     first value: type, second value: player address, third value: oraclize ID**/
     event gameResult(uint, address);// 0-> %5; 1 -> 80%; 2 -> loss, 3->error in callback;
@@ -327,7 +368,9 @@ contract slot is mortal, usingOraclize {
         prizes.push(1600);
         prizes.push(1500);
         prizes.push(375);
-        oraclizeGas = 100000;
+        oraclizeGas = 250000;
+        query = "random number between 1 and 1000000";
+        queryType = "WolframAlpha";
     }
     
     /**
@@ -338,7 +381,7 @@ contract slot is mortal, usingOraclize {
         if(msg.sender!=owner){//owner should be able to send funds to the contract anytime
             if(msg.value<100000000000000000||msg.value>1000000000000000000) throw;//bet has to lie between 0.1 and 1 ETH
             if(address(this).balance < msg.value/100*prizes[0]) throw; //make sure the contract is able to pay out the player in case he wins
-            bytes32 oid = oraclize_query("URL","https://www.random.org/integers/?num=1&min=1&max=1000000&col=1&base=10&format=plain&rnd=new", oraclizeGas);
+            bytes32 oid = oraclize_query(queryType, query, oraclizeGas);
             bets[oid] = msg.value;
             players[oid] = msg.sender;
         }
@@ -385,6 +428,22 @@ contract slot is mortal, usingOraclize {
     function setOraclizeGas(uint32 newGas){
         if(!(msg.sender==owner)) throw;
     	oraclizeGas = newGas;
+    }
+    
+    /**
+     * sets the amount of gas to be sent to oraclize
+     * */
+    function setOraclizeQuery(string newQuery){
+        if(!(msg.sender==owner)) throw;
+    	query = newQuery;
+    }
+    
+    /**
+     * sets the amount of gas to be sent to oraclize
+     * */
+    function setOraclizeQueryType(string newQueryType){
+        if(!(msg.sender==owner)) throw;
+    	queryType = newQueryType;
     }
     
     /** set the probabilities of the results (absolute frequencies out of 1.000.000 spins) **/
