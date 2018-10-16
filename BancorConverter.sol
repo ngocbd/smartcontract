@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0x94c654fef85b8b0a982909a6ca45b66bb2384236
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0xda4939211420997a309fe2a2dcb02e6e8f93be0e
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
 /*
     Utilities & Common Modifiers
@@ -10,7 +10,7 @@ contract Utils {
     /**
         constructor
     */
-    function Utils() {
+    function Utils() public {
     }
 
     // verifies that an amount is greater than zero
@@ -21,7 +21,7 @@ contract Utils {
 
     // validates an address - currently only checks that it isn't null
     modifier validAddress(address _address) {
-        require(_address != 0x0);
+        require(_address != address(0));
         _;
     }
 
@@ -41,7 +41,7 @@ contract Utils {
 
         @return sum
     */
-    function safeAdd(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeAdd(uint256 _x, uint256 _y) internal pure returns (uint256) {
         uint256 z = _x + _y;
         assert(z >= _x);
         return z;
@@ -55,7 +55,7 @@ contract Utils {
 
         @return difference
     */
-    function safeSub(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeSub(uint256 _x, uint256 _y) internal pure returns (uint256) {
         assert(_x >= _y);
         return _x - _y;
     }
@@ -68,83 +68,10 @@ contract Utils {
 
         @return product
     */
-    function safeMul(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeMul(uint256 _x, uint256 _y) internal pure returns (uint256) {
         uint256 z = _x * _y;
         assert(_x == 0 || z / _x == _y);
         return z;
-    }
-}
-
-/*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public constant returns (string) {}
-    function symbol() public constant returns (string) {}
-    function decimals() public constant returns (uint8) {}
-    function totalSupply() public constant returns (uint256) {}
-    function balanceOf(address _owner) public constant returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public constant returns (uint256) { _owner; _spender; }
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-}
-
-/*
-    Owned contract interface
-*/
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public constant returns (address) {}
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-}
-
-/*
-    Provides support and utilities for contract ownership
-*/
-contract Owned is IOwned {
-    address public owner;
-    address public newOwner;
-
-    event OwnerUpdate(address _prevOwner, address _newOwner);
-
-    /**
-        @dev constructor
-    */
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract ownership
-        the new owner still needs to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new contract owner
-    */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /**
-        @dev used by a new owner to accept an ownership transfer
-    */
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = 0x0;
     }
 }
 
@@ -155,12 +82,12 @@ contract Managed {
     address public manager;
     address public newManager;
 
-    event ManagerUpdate(address _prevManager, address _newManager);
+    event ManagerUpdate(address indexed _prevManager, address indexed _newManager);
 
     /**
         @dev constructor
     */
-    function Managed() {
+    function Managed() public {
         manager = msg.sender;
     }
 
@@ -189,8 +116,81 @@ contract Managed {
         require(msg.sender == newManager);
         ManagerUpdate(manager, newManager);
         manager = newManager;
-        newManager = 0x0;
+        newManager = address(0);
     }
+}
+
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public view returns (address) {}
+
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+}
+
+/*
+    Provides support and utilities for contract ownership
+*/
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
+
+    /**
+        @dev constructor
+    */
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    // allows execution by the owner only
+    modifier ownerOnly {
+        assert(msg.sender == owner);
+        _;
+    }
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+/*
+    ERC20 Standard Token interface
+*/
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
 /*
@@ -198,18 +198,6 @@ contract Managed {
 */
 contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
-}
-
-/*
-    EIP228 Token Converter interface
-*/
-contract ITokenConverter {
-    function convertibleTokenCount() public constant returns (uint16);
-    function convertibleToken(uint16 _tokenIndex) public constant returns (address);
-    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public constant returns (uint256);
-    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-    // deprecated, backward compatibility
-    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
 }
 
 /*
@@ -223,7 +211,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     /**
         @dev constructor
     */
-    function TokenHolder() {
+    function TokenHolder() public {
     }
 
     /**
@@ -246,44 +234,21 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
 }
 
 /*
+    Ether Token interface
+*/
+contract IEtherToken is ITokenHolder, IERC20Token {
+    function deposit() public payable;
+    function withdraw(uint256 _amount) public;
+    function withdrawTo(address _to, uint256 _amount) public;
+}
+
+/*
     Smart Token interface
 */
 contract ISmartToken is IOwned, IERC20Token {
     function disableTransfers(bool _disable) public;
     function issue(address _to, uint256 _amount) public;
     function destroy(address _from, uint256 _amount) public;
-}
-
-/*
-    Bancor Formula interface
-*/
-contract IBancorFormula {
-    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public constant returns (uint256);
-    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public constant returns (uint256);
-}
-
-/*
-    Bancor Gas Price Limit interface
-*/
-contract IBancorGasPriceLimit {
-    function gasPrice() public constant returns (uint256) {}
-}
-
-/*
-    Bancor Quick Converter interface
-*/
-contract IBancorQuickConverter {
-    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
-    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
-}
-
-/*
-    Bancor Converter Extensions interface
-*/
-contract IBancorConverterExtensions {
-    function formula() public constant returns (IBancorFormula) {}
-    function gasPriceLimit() public constant returns (IBancorGasPriceLimit) {}
-    function quickConverter() public constant returns (IBancorQuickConverter) {}
 }
 
 /*
@@ -309,6 +274,7 @@ contract SmartTokenController is TokenHolder {
         @dev constructor
     */
     function SmartTokenController(ISmartToken _token)
+        public
         validAddress(_token)
     {
         token = _token;
@@ -356,20 +322,71 @@ contract SmartTokenController is TokenHolder {
     }
 
     /**
-        @dev withdraws tokens held by the token and sends them to an account
+        @dev withdraws tokens held by the controller and sends them to an account
         can only be called by the owner
 
         @param _token   ERC20 token contract address
         @param _to      account to receive the new amount
         @param _amount  amount to withdraw
     */
-    function withdrawFromToken(IERC20Token _token, address _to, uint256 _amount) public ownerOnly {
+    function withdrawFromToken(
+        IERC20Token _token, 
+        address _to, 
+        uint256 _amount
+    ) 
+        public
+        ownerOnly
+    {
         ITokenHolder(token).withdrawTokens(_token, _to, _amount);
     }
 }
 
 /*
-    Bancor Converter v0.6
+    Bancor Formula interface
+*/
+contract IBancorFormula {
+    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
+    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
+}
+
+/*
+    Bancor Gas Price Limit interface
+*/
+contract IBancorGasPriceLimit {
+    function gasPrice() public view returns (uint256) {}
+}
+
+/*
+    Bancor Quick Converter interface
+*/
+contract IBancorQuickConverter {
+    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
+    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
+}
+
+/*
+    Bancor Converter Extensions interface
+*/
+contract IBancorConverterExtensions {
+    function formula() public view returns (IBancorFormula) {}
+    function gasPriceLimit() public view returns (IBancorGasPriceLimit) {}
+    function quickConverter() public view returns (IBancorQuickConverter) {}
+}
+
+/*
+    EIP228 Token Converter interface
+*/
+contract ITokenConverter {
+    function convertibleTokenCount() public view returns (uint16);
+    function convertibleToken(uint16 _tokenIndex) public view returns (address);
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
+    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+    // deprecated, backward compatibility
+    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+}
+
+/*
+    Bancor Converter v0.7
 
     The Bancor version of the token converter, allows conversion between a smart token and other ERC20 tokens and between different ERC20 tokens and themselves.
 
@@ -401,7 +418,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         bool isSet;                     // used to tell if the mapping element is defined
     }
 
-    string public version = '0.6';
+    string public version = '0.7';
     string public converterType = 'bancor';
 
     IBancorConverterExtensions public extensions;       // bancor converter extensions contract
@@ -415,7 +432,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
 
     // triggered when a conversion between two tokens occurs (TokenConverter event)
     event Conversion(address indexed _fromToken, address indexed _toToken, address indexed _trader, uint256 _amount, uint256 _return,
-                     uint256 _currentPriceN, uint256 _currentPriceD);
+                     int256 _conversionFee, uint256 _currentPriceN, uint256 _currentPriceD);
     // triggered when the conversion fee is updated
     event ConversionFeeUpdate(uint32 _prevFee, uint32 _newFee);
 
@@ -429,6 +446,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         @param  _connectorWeight    optional, weight for the initial connector
     */
     function BancorConverter(ISmartToken _token, IBancorConverterExtensions _extensions, uint32 _maxConversionFee, IERC20Token _connectorToken, uint32 _connectorWeight)
+        public
         SmartTokenController(_token)
         validAddress(_extensions)
         validMaxConversionFee(_maxConversionFee)
@@ -436,7 +454,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         extensions = _extensions;
         maxConversionFee = _maxConversionFee;
 
-        if (address(_connectorToken) != 0x0)
+        if (_connectorToken != address(0))
             addConnector(_connectorToken, _connectorWeight, false);
     }
 
@@ -488,12 +506,18 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         _;
     }
 
+    // allows execution only for owner or manager
+    modifier ownerOrManagerOnly {
+        require(msg.sender == owner || msg.sender == manager);
+        _;
+    }
+
     /**
         @dev returns the number of connector tokens defined
 
         @return number of connector tokens
     */
-    function connectorTokenCount() public constant returns (uint16) {
+    function connectorTokenCount() public view returns (uint16) {
         return uint16(connectorTokens.length);
     }
 
@@ -503,7 +527,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
 
         @return number of convertible tokens
     */
-    function convertibleTokenCount() public constant returns (uint16) {
+    function convertibleTokenCount() public view returns (uint16) {
         return connectorTokenCount() + 1;
     }
 
@@ -514,7 +538,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
 
         @return convertible token address
     */
-    function convertibleToken(uint16 _tokenIndex) public constant returns (address) {
+    function convertibleToken(uint16 _tokenIndex) public view returns (address) {
         if (_tokenIndex == 0)
             return token;
         return connectorTokens[_tokenIndex - 1];
@@ -559,7 +583,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
 
         @return quick buy path length
     */
-    function getQuickBuyPathLength() public constant returns (uint256) {
+    function getQuickBuyPathLength() public view returns (uint256) {
         return quickBuyPath.length;
     }
 
@@ -570,7 +594,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
 
         @param _disable true to disable conversions, false to re-enable them
     */
-    function disableConversions(bool _disable) public managerOnly {
+    function disableConversions(bool _disable) public ownerOrManagerOnly {
         conversionsEnabled = !_disable;
     }
 
@@ -582,7 +606,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
     */
     function setConversionFee(uint32 _conversionFee)
         public
-        managerOnly
+        ownerOrManagerOnly
         validConversionFee(_conversionFee)
     {
         ConversionFeeUpdate(conversionFee, _conversionFee);
@@ -594,7 +618,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
 
         @return conversion fee amount
     */
-    function getConversionFeeAmount(uint256 _amount) public constant returns (uint256) {
+    function getConversionFeeAmount(uint256 _amount) public view returns (uint256) {
         return safeMul(_amount, conversionFee) / MAX_CONVERSION_FEE;
     }
 
@@ -674,7 +698,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
     */
     function getConnectorBalance(IERC20Token _connectorToken)
         public
-        constant
+        view
         validConnector(_connectorToken)
         returns (uint256)
     {
@@ -691,7 +715,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
 
         @return expected conversion return amount
     */
-    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public constant returns (uint256) {
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256) {
         require(_fromToken != _toToken); // validate input
 
         // conversion between the token and one of its connectors
@@ -715,7 +739,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
     */
     function getPurchaseReturn(IERC20Token _connectorToken, uint256 _depositAmount)
         public
-        constant
+        view
         active
         validConnector(_connectorToken)
         returns (uint256)
@@ -740,7 +764,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
 
         @return expected sale return amount
     */
-    function getSaleReturn(IERC20Token _connectorToken, uint256 _sellAmount) public constant returns (uint256) {
+    function getSaleReturn(IERC20Token _connectorToken, uint256 _sellAmount) public view returns (uint256) {
         return getSaleReturn(_connectorToken, _sellAmount, token.totalSupply());
     }
 
@@ -785,7 +809,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         returns (uint256)
     {
         uint256 amount = getPurchaseReturn(_connectorToken, _depositAmount);
-        assert(amount != 0 && amount >= _minReturn); // ensure the trade gives something in return and meets the minimum requested amount
+        require(amount != 0 && amount >= _minReturn); // ensure the trade gives something in return and meets the minimum requested amount
 
         // update virtual balance if relevant
         Connector storage connector = connectors[_connectorToken];
@@ -820,7 +844,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         require(_sellAmount <= token.balanceOf(msg.sender)); // validate input
 
         uint256 amount = getSaleReturn(_connectorToken, _sellAmount);
-        assert(amount != 0 && amount >= _minReturn); // ensure the trade gives something in return and meets the minimum requested amount
+        require(amount != 0 && amount >= _minReturn); // ensure the trade gives something in return and meets the minimum requested amount
 
         uint256 tokenSupply = token.totalSupply();
         uint256 connectorBalance = getConnectorBalance(_connectorToken);
@@ -896,7 +920,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
     */
     function getSaleReturn(IERC20Token _connectorToken, uint256 _sellAmount, uint256 _totalSupply)
         private
-        constant
+        view
         active
         validConnector(_connectorToken)
         greaterThanZero(_totalSupply)
@@ -939,17 +963,21 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
                 tokenAmount = safeMul(tokenAmount, 10 ** uint256(connectorTokenDecimals - tokenDecimals));
         }
 
+        uint256 feeAmount = getConversionFeeAmount(_returnAmount);
+        // ensure that the fee is capped at 255 bits to prevent overflow when converting it to a signed int
+        assert(feeAmount <= 2 ** 255);
+
         if (isPurchase)
-            Conversion(_connectorToken, token, msg.sender, _amount, _returnAmount, connectorAmount, tokenAmount);
+            Conversion(_connectorToken, token, msg.sender, _amount, _returnAmount, int256(feeAmount), connectorAmount, tokenAmount);
         else
-            Conversion(token, _connectorToken, msg.sender, _amount, _returnAmount, tokenAmount, connectorAmount);
+            Conversion(token, _connectorToken, msg.sender, _amount, _returnAmount, int256(feeAmount), tokenAmount, connectorAmount);
     }
 
     /**
         @dev fallback, buys the smart token with ETH
         note that the purchase will use the price at the time of the purchase
     */
-    function() payable {
+    function() payable public {
         quickConvert(quickBuyPath, msg.value, 1);
     }
 }
