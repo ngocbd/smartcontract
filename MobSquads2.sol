@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobSquads2 at 0x82898432d56663b132d3104181a4edea8680097c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobSquads2 at 0x64cd4cf9538e455353070d6024e86a8c0c98a246
 */
 pragma solidity ^0.4.19; //
 
