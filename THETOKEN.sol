@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THETOKEN at 0x840278b27eef8019095f8c8198a373b57a8fe0e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THETOKEN at 0x1b7f9de410d5ba09fd26ce133fdf59515e0bf728
 */
 pragma solidity ^0.4.6;
 
@@ -154,10 +154,10 @@ contract NewToken is BasicToken, ERC20 {
 
 contract THETOKEN is NewToken {
 
-  string public name = "Venezuelan Gold";
-  string public symbol = "VZG";
+  string public name = "Rethereum";
+  string public symbol = "Reth";
   uint public decimals = 8;
-  uint public INITIAL_SUPPLY = 20000000000000000000;
+  uint public INITIAL_SUPPLY = 750000000000000;
 
   function THETOKEN () {
     totalSupply = INITIAL_SUPPLY;
