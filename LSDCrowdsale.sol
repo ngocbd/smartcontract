@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LSDCrowdsale at 0x2aa0a30006fdf8cf273ddf7a80c56eb3646f28b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LSDCrowdsale at 0x588cfe5203b9bfc759782d207bcbfeb93edd678d
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.21;
 
 // File: node_modules/zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -608,7 +608,7 @@ contract LSDCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
 
     function LSDCrowdsale()
         public
-        Crowdsale(1521288000, 1523102400, 8700, 0xCb4c2C679c08D56908be14E109501451565aEF40)
+        Crowdsale(1521284400, 1523102400, 8700, 0xCb4c2C679c08D56908be14E109501451565aEF40)
         CappedCrowdsale(11428 ether)
     {
 
@@ -647,13 +647,13 @@ contract LSDCrowdsale is CappedCrowdsale, FinalizableCrowdsale {
 
     function calculateRate() internal view returns (uint256) {
                 
-        if ( now <= 1521309600 )
+        if ( now <= 1521306000 )
             return rate.mul(115).div(100);
-        else if ( now <= 1521374400 )
+        else if ( now <= 1521370800 )
             return rate.mul(110).div(100);
-        else if ( now <= 1521633600 )
+        else if ( now <= 1521630000 )
             return rate.mul(107).div(100);
-	else if ( now <= 1521892800 )
+	else if ( now <= 1521889200 )
             return rate.mul(103).div(100);
         else
             return rate.mul(100).div(100);
