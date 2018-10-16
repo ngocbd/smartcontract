@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract stopScamHolder at 0xe010d0a52791340db3323b77700817546a062109
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract stopScamHolder at 0xe5975de205854b3a913b7cb157b7c1ef6f500336
 */
 pragma solidity ^0.4.13;
 
@@ -12,7 +12,7 @@ contract stopScamHolder {
     
     token public sharesTokenAddress;
     address public owner;
-    uint public endTime = 1530403200;// 1 july 2018
+    uint public endTime = 1510664400;////10 symbols
     uint256 public tokenFree;
 
 modifier onlyOwner() {
