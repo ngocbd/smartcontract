@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCoinChest at 0x2aEcBf1a805C573D0c459c03B7db8011613Ac14c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCoinChest at 0x40f4091707ff4c05446b4a9778b368a8d651eaa9
 */
 contract CryptoCoinChest {
     /* Public variables of the token */
@@ -18,7 +18,7 @@ contract CryptoCoinChest {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function CryptoCoinChest() {
 
-         initialSupply = 314159265;
+         initialSupply = 314159265000000000;
          name ="CryptoCoinChest";
         decimals = 9;
          symbol = "CCH";
