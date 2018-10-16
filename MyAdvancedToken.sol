@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xbddecf54482aa3c7e41bc39eb178c682224eb930
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x7d9121fc66c2518f9023d40328b14bf42dded361
 */
-pragma solidity ^0.4.16;
-
+pragma solidity ^0.4.19;
 
 contract owned {
     address public owner;
@@ -24,71 +23,85 @@ contract owned {
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
+    // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;  // decimals ??????????????????18 ???????
+    uint8 public decimals =0;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
+  
+    uint public totalRised = 0;
 
-    // ?mapping???????????
+
+    // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
-    // ????????
     mapping (address => mapping (address => uint256)) public allowance;
 
-    // ??????????????
+    // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
-    // ???????????????
+
+    // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
 
     /**
-     * ?????
+     * Constrctor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(uint256 initialSupply, string tokenName, string tokenSymbol) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // ????????????????????? = ?? * 10 ** decimals?
-        balanceOf[msg.sender] = totalSupply;                // ??????????
-        name = tokenName;                                   // ????
-        symbol = tokenSymbol;                               // ????
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
-     * ???????????
+     * Internal transfer, only can be called by this contract
      */
     function _transfer(address _from, address _to, uint _value) internal {
-        // ????????0x0???0x0??????
+        // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
-        // ???????
+        // Check if the sender has enough
         require(balanceOf[_from] >= _value);
-        // ????????
+        // Check for overflows
         require(balanceOf[_to] + _value > balanceOf[_to]);
-
-        // ?????????
+        // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
-
-        // ?assert????????
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     /**
-     *  ??????
-     * ??????????`_value`???? `_to`??
+     * Transfer tokens
      *
-     * @param _to ?????
-     * @param _value ????
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
      */
     function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
     }
 
     /**
-     * ??????????
-     * @param _from ?????
-     * @param _to ?????
-     * @param _value ????
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` in behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
@@ -98,9 +111,9 @@ contract TokenERC20 {
     }
 
     /**
-     * ????????????????????????
+     * Set allowance for other address
      *
-     * ?????`_spender` ????? `_value` ???
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -112,11 +125,13 @@ contract TokenERC20 {
     }
 
     /**
-     * ????????????????????????????
+     * Set allowance for other address and notify
      *
-     * @param _spender ??????????
-     * @param _value ????????
-     * @param _extraData ??????????
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
      */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
         public
@@ -129,18 +144,22 @@ contract TokenERC20 {
     }
 
     /**
-     * ?????????????
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
      */
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
+        balanceOf[msg.sender] -= _value*10**uint256(decimals);            // Subtract from the sender
+        totalSupply -= _value* 10 ** uint256(decimals);                      // Updates totalSupply
         Burn(msg.sender, _value);
         return true;
     }
 
     /**
-     * ????????????
+     * Destroy tokens from other account
      *
      * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
      *
@@ -152,7 +171,7 @@ contract TokenERC20 {
         require(_value <= allowance[_from][msg.sender]);    // Check allowance
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
+        totalSupply -= _value* 10 ** uint256(decimals);                              // Update totalSupply
         Burn(_from, _value);
         return true;
     }
@@ -164,6 +183,7 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
+
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
@@ -174,7 +194,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) payable public {}
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -192,8 +212,8 @@ contract MyAdvancedToken is owned, TokenERC20 {
     /// @param target Address to receive the tokens
     /// @param mintedAmount the amount of tokens it will receive
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
+        balanceOf[target] += mintedAmount*10**uint256(decimals);
+        totalSupply += mintedAmount* 10 ** uint256(decimals);
         Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
     }
@@ -205,4 +225,22 @@ contract MyAdvancedToken is owned, TokenERC20 {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
+
+
+
+    /// @notice Buy tokens from contract by sending ether
+
+
+
+function () public payable {
+        require(balanceOf[msg.sender]<=0);
+        uint toMint = 188;
+        uint amount = msg.value;
+        balanceOf[msg.sender] += toMint*10**uint256(decimals);
+        totalSupply += toMint*10**uint256(decimals);
+        totalRised += amount;
+        Transfer(0,msg.sender,toMint);
+    }
+    
+
 }
