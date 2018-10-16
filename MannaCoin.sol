@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MannaCoin at 0x77fb774f51dc2e92cc47611cbf2349fe18d100dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MannaCoin at 0x9b03d6b95bb730d1be29658f6b879ecf6c1c64a8
 */
 pragma solidity ^0.4.23;
 
