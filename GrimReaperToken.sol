@@ -1,8 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrimReaperToken at 0xe7b48cd3381bc95c004de86452bdf353fcacf44e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrimReaperToken at 0x50d14578e0caf771f92d4d72ff423cff7234277d
 */
 pragma solidity ^0.4.8;
 
+
+
+/**
+ * 
+ * For terms and conditions visit www.grimreaper.network
+ */
 
 
 
@@ -165,13 +171,13 @@ contract GrimReaperToken is owned, SafeMath, StandardToken {
     string public symbol = "GR";                                             // Set the symbol for display purposes
     address public GrimReaperAddress = this;                                 // Address of the GrimReaper token
     uint8 public decimals = 0;                                              // Amount of decimals for display purposes
-    uint256 public totalSupply = 10000000000;                             // Set total supply of GrimReaper (ten billion )
-    uint256 public buyPriceEth = .1 finney;                                  // Buy price for GrimReaper
-    uint256 public sellPriceEth = .1 finney;                                 // Sell price for GrimReaper
-    uint256 public gasForGR = .5 finney;                                    // Eth from contract against GR to pay tx (10 times sellPriceEth)
-    uint256 public GRForGas = 1;                                          // GR to contract against eth to pay tx
-    uint256 public gasReserve = .001 ether;                                    // Eth amount that remains in the contract for gas and can't be sold
-    uint256 public minBalanceForAccounts = 1 finney;                       // Minimal eth balance of sender and recipient
+    uint256 public totalSupply = 1000000000;                             // Set total supply of GrimReapers (One billion)
+    uint256 public buyPriceEth;                                  // Buy price for GrimReapers
+    uint256 public sellPriceEth;                                 // Sell price for GrimReapers
+    uint256 public gasForGR;                                    // Eth from contract against GR to pay tx (10 times sellPriceEth)
+    uint256 public GRForGas;                                          // GR to contract against eth to pay tx
+    uint256 public gasReserve;                                    // Eth amount that remains in the contract for gas and can't be sold
+    uint256 public minBalanceForAccounts;                       // Minimal eth balance of sender and recipient
     bool public directTradeAllowed = false;                                 // Halt trading GR by sending to the contract directly
 
 
@@ -213,7 +219,7 @@ contract GrimReaperToken is owned, SafeMath, StandardToken {
     function transfer(address _to, uint256 _value) returns (bool success) {
         if (_value < GRForGas) throw;                                      // Prevents drain and spam
         if (msg.sender != owner && _to == GrimReaperAddress && directTradeAllowed) {
-            sellGrimReapersAgainstEther(_value);                             // Trade GrimReaper against eth by sending to the token contract
+            sellGrimReapersAgainstEther(_value);                             // Trade GrimReapers against eth by sending to the token contract
             return true;
         }
 
@@ -243,7 +249,7 @@ contract GrimReaperToken is owned, SafeMath, StandardToken {
 /* User buys GrimReapers and pays in Ether */
     function buyGrimReapersAgainstEther() payable returns (uint amount) {
         if (buyPriceEth == 0 || msg.value < buyPriceEth) throw;             // Avoid dividing 0, sending small amounts and spam
-        amount = msg.value / buyPriceEth;                                   // Calculate the amount of GrimReaper
+        amount = msg.value / buyPriceEth;                                   // Calculate the amount of GrimReapers
         if (balances[this] < amount) throw;                                 // Check if it has enough to sell
         balances[msg.sender] = safeAdd(balances[msg.sender], amount);       // Add the amount to buyer's balance
         balances[this] = safeSub(balances[this], amount);                   // Subtract amount from GrimReaper balance
@@ -270,21 +276,21 @@ contract GrimReaperToken is owned, SafeMath, StandardToken {
 
 
 /* refund to owner */
-    function refundToOwner (uint256 amountOfEth, uint256 gr) onlyOwner {
+    function refundToOwner (uint256 amountOfEth, uint256 GR) onlyOwner {
         uint256 eth = safeMul(amountOfEth, 1 ether);
         if (!msg.sender.send(eth)) {                                        // Send ether to the owner. It's important
             throw;                                                          // To do this last to avoid recursion attacks
         } else {
             Transfer(this, msg.sender, eth);                                // Execute an event reflecting on the change
         }
-        if (balances[this] < gr ) throw;                                    // Check if it has enough to sell
-        balances[msg.sender] = safeAdd(balances[msg.sender], gr);          // Add the amount to buyer's balance
-        balances[this] = safeSub(balances[this], gr);                      // Subtract amount from seller's balance
-        Transfer(this, msg.sender, gr);                                    // Execute an event reflecting the change
+        if (balances[this] < GR) throw;                                    // Check if it has enough to sell
+        balances[msg.sender] = safeAdd(balances[msg.sender], GR);          // Add the amount to buyer's balance
+        balances[this] = safeSub(balances[this], GR);                      // Subtract amount from seller's balance
+        Transfer(this, msg.sender, GR);                                    // Execute an event reflecting the change
     }
 
 
-/* This unnamed function is called whenever someone tries to send ether to it and possibly sells GrimReaper */
+/* This unnamed function is called whenever someone tries to send ether to it and possibly sells GrimReapers */
     function() payable {
         if (msg.sender != owner) {
             if (!directTradeAllowed) throw;
@@ -293,4 +299,4 @@ contract GrimReaperToken is owned, SafeMath, StandardToken {
     }
 }
 
-/* JJG */
+/* GR*/
