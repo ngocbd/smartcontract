@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesPresale at 0xAE506bb28Ed79b29c6968Ab527d1eFdc5f399331
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesPresale at 0x5Bc7e5694ee5D6ea32A0dA36EFb56A177190A53a
 */
 contract WavesPresale {
     address public owner;
@@ -10,7 +10,7 @@ contract WavesPresale {
         uint date;
     }
 
-    mapping (bytes16 => Sale[]) public sales;
+    mapping (bytes16 => Sale) public sales;
     uint32 public numberOfSales;
     uint public totalTokens;
 
@@ -28,20 +28,20 @@ contract WavesPresale {
     function newSale(bytes16 txidHash, uint amount, uint timestamp) {
         if (msg.sender != owner) return;
 
-        sales[txidHash].push(Sale({
+        if (sales[txidHash].date == 0) {
+            sales[txidHash] = Sale({
                     amount: amount,
                     date: timestamp
-                }));
-        numberOfSales += 1;
-        totalTokens += amount;
+                });
+            numberOfSales += 1;
+            totalTokens += amount;
+        } else {
+            throw;
+        }
     }
 
-    function getNumOfSalesWithSameId(bytes16 txidHash) constant returns (uint) {
-        return sales[txidHash].length;
-    }
-
-    function getSaleDate(bytes16 txidHash, uint num) constant returns (uint, uint) {
-    	return (sales[txidHash][num].amount, sales[txidHash][num].date);
+    function getSaleDate(bytes16 txidHash) constant returns (uint, uint) {
+    	return (sales[txidHash].amount, sales[txidHash].date);
     }
 
     function () {
