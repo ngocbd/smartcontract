@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExchangeWhitelist at 0xfbf8ecb34acbc2c4d2d4cdc645c9a76efcbe2cff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExchangeWhitelist at 0x63091244180ae240c87d1f528f5f269134cb07b3
 */
 pragma solidity ^0.4.6;
 
@@ -166,15 +166,14 @@ contract ExchangeWhitelist is Math, Owned {
   uint256 internal feeTake;
   uint256 internal feeMake;
   uint256 internal feeTerm;
-  bytes32 internal tradeHash;
 
   function trade(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s, uint256 amount) onlyWhitelisted {
     //amount is in amountBuy terms
-    tradeHash = sha3(this, tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user);
+    bytes32 hash = sha3(tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user);
     if (!(
-      ecrecover(sha3("\x19Ethereum Signed Message:\n32", tradeHash),v,r,s) == user &&
+      ecrecover(hash,v,r,s) == user &&
       block.number <= expires &&
-      safeAdd(orderFills[tradeHash], amount) <= amountBuy &&
+      safeAdd(orderFills[hash], amount) <= amountBuy &&
       tokens[tokenBuy][msg.sender] >= amount &&
       tokens[tokenSell][user] >= safeMul(amountSell, amount) / amountBuy
     )) throw;
@@ -191,19 +190,19 @@ contract ExchangeWhitelist is Math, Owned {
     tokens[tokenSell][msg.sender] = safeAdd(tokens[tokenSell][msg.sender], feeTerm);
     feeTerm = safeMul(safeMul(feeTake, amountSell), amount) / amountBuy / (1 ether);
     tokens[tokenSell][feeAccount] = safeAdd(tokens[tokenSell][feeAccount], feeTerm);
-    orderFills[tradeHash] = safeAdd(orderFills[tradeHash], amount);
-    Trade(tokenBuy, amount, tokenSell, amountSell * amount / amountBuy, user, msg.sender, tradeHash);
+    orderFills[hash] = safeAdd(orderFills[hash], amount);
+    Trade(tokenBuy, amount, tokenSell, amountSell * amount / amountBuy, user, msg.sender, hash);
   }
 
   bytes32 internal testHash;
   uint256 internal amountSelln;
 
   function testTrade(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s, uint256 amount, address sender) constant returns (uint8 code) {
-    testHash = sha3(this, tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user);
+    testHash = sha3(tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user);
     if (tokens[tokenBuy][sender] < amount) return 1;
     if (!accounts[sender].authorized) return 2; 
     if (!accounts[user].authorized) return 3;
-    if (ecrecover(sha3("\x19Ethereum Signed Message:\n32", testHash), v, r, s) != user) return 4;
+    if (ecrecover(testHash, v, r, s) != user) return 4;
     amountSelln = safeMul(amountSell, amount) / amountBuy;
     if (tokens[tokenSell][user] < amountSelln) return 5;
     if (block.number > expires) return 6;
@@ -211,8 +210,8 @@ contract ExchangeWhitelist is Math, Owned {
     return 0;
   }
   function cancelOrder(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, uint8 v, bytes32 r, bytes32 s, address user) {
-    bytes32 hash = sha3(this, tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user);
-    if (ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) != msg.sender) throw;
+    bytes32 hash = sha3(tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, user);
+    if (ecrecover(hash,v,r,s) != msg.sender) throw;
     orderFills[hash] = amountBuy;
     Cancel(tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, msg.sender, v, r, s);
   }
