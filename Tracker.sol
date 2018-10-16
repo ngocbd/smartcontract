@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tracker at 0x8254eabce8e3d62574efa7f69846e6225d56022f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tracker at 0x2e8f82c00670915b300fc355f55529d3655eef6b
 */
 contract Ownable {
   address public owner;
@@ -16,6 +16,7 @@ contract Ownable {
   }
 
 }
+
 
 ///This is the blockchain side of the notifier. Here so that payment, registering,etc is painless async and
 /// most importantly *trustless* since you can exit at any time taking your funds having lost nothing
@@ -44,8 +45,8 @@ contract Tracker is Ownable{
     
     // Constants used for configuration
     uint constant Period = 1 days; // amount of time between debits ERROR set these values for release
-    uint constant Fee = 0.4 finney; // amount debited per period
-    uint8 constant MininumPercent = 3; // this is the minimum ratio allowed. TODO set to 5 for sms contract
+    uint constant Fee = 1 finney; // amount debited per period
+    uint8 constant MininumPercent = 5; // this is the minimum ratio allowed. TODO set to 5 for sms contract
 
     
     // This function registers a new client, and can be used to add funds or change ratio
