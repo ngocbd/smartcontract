@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x0d324b2e732c35162b99bafc63e35b16e6ec54cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x67d3728EdE12013117cc186477239EAab0C56bF1
 */
 // compiler: 0.4.21+commit.dfe3193c.Emscripten.clang
 pragma solidity ^0.4.21;
@@ -21,6 +21,8 @@ interface ContractReceiver {
 // - https://www.ethereum.org/token (uncontrolled, non-standard)
 // - https://github.com/Dexaran/ERC23-tokens/blob/Recommended/ERC223_Token.sol
 
+// NOTE: Burn functionality intentionally removed
+
 contract ERC223Token
 {
   string  public name;
@@ -40,9 +42,6 @@ contract ERC223Token
                   address indexed to,
                   uint256 value );
                // bytes    data ); use ERC20 version instead
-
-  // Ethereum Token
-  event Burn( address indexed from, uint256 value );
 
   function ERC223Token( uint256 initialSupply,
                         string tokenName,
@@ -135,33 +134,6 @@ contract ERC223Token
     }
     return false;
   }        
-
-  // Ethereum Token
-  function burn( uint256 value ) public
-  returns (bool success)
-  {
-    require( balances_[msg.sender] >= value );
-    balances_[msg.sender] -= value;
-    totalSupply -= value;
-
-    emit Burn( msg.sender, value );
-    return true;
-  }
-
-  // Ethereum Token
-  function burnFrom( address from, uint256 value ) public
-  returns (bool success)
-  {
-    require( balances_[from] >= value );
-    require( value <= allowances_[from][msg.sender] );
-
-    balances_[from] -= value;
-    allowances_[from][msg.sender] -= value;
-    totalSupply -= value;
-
-    emit Burn( from, value );
-    return true;
-  }
 
   // ERC223 Transfer and invoke specified callback
   function transfer( address to,
