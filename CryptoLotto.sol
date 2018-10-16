@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoLotto at 0x9bf82c025f57f4a94e567204c811e0d5db6350a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoLotto at 0x2510b926ec1b0bf127beb53b091294da0fe1a3a1
 */
 // <ORACLIZE_API>
 /*
