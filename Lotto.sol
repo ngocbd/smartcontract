@@ -1,145 +1,98 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotto at 0x80616F35Df2ef0CB42280a629761e0350FaFd679
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotto at 0xFb4d20ED9f88798be8348915AA93B0Ef481CE69D
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.18;
+contract Lotto {
 
-/**
- * Very basic owned/mortal boilerplate.  Used for basically everything, for
- * security/access control purposes.
- */
-contract Owned {
-  address owner;
+  address public owner = msg.sender;
+  address[] internal playerPool;
+  uint seed = 0;
+  uint amount = 1 ether;
+  // events
+  event Payout(address from, address to, uint quantity);
+  event BoughtIn(address from);
+  event Rejected();
 
-  modifier onlyOwner {
-    if (msg.sender != owner) {
-      throw;
-    }
+  modifier onlyBy(address _account) {
+    require(msg.sender == _account);
     _;
   }
-
-  /**
-   * Basic constructor.  The sender is the owner.
-   */
-  function Owned() {
-    owner = msg.sender;
+  
+  function changeOwner(address _newOwner) public onlyBy(owner) {
+    owner = _newOwner;
   }
 
-  /**
-   * Transfers ownership of the contract to a new owner.
-   * @param newOwner  Who gets to inherit this thing.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    owner = newOwner;
+/*
+The reasoning behind this method to get a random number is, because I'm not
+displaying the current number of players, no one should know who the 11th player
+will be, and that should be random enough to prevent anyone from cheating the system.
+The reward is only 1 ether so it's low enough that miners won't try to influence it
+... i hope.
+*/
+  function random(uint upper) internal returns (uint) {
+    seed = uint(keccak256(keccak256(playerPool[playerPool.length -1], seed), now));
+    return seed % upper;
   }
 
-  /**
-   * Shuts down the contract and removes it from the blockchain state.
-   * Only available to the owner.
-   */
-  function shutdown() onlyOwner {
+  // only accepts a value of 0.1 ether. no extra eth please!! don't be crazy!
+  // i'll make contracts for different sized bets eventually.
+  function buyIn() payable public returns (uint) {
+    if (msg.value * 10 != 1 ether) {
+      revert();
+      Rejected();
+    } else {
+      playerPool.push(msg.sender);
+      BoughtIn(msg.sender);
+      if (playerPool.length >= 11) {
+        selectWinner();
+      }
+    }
+    return playerPool.length;
+  }
+
+  function selectWinner() private {
+    address winner = playerPool[random(playerPool.length)];
+    
+    winner.transfer(amount);
+    playerPool.length = 0;
+    owner.transfer(this.balance);
+    Payout(this, winner, amount);
+    
+  }
+  
+/*
+If the contract becomes stagnant and new players haven't signed up for awhile,
+this function will return the money to all the players. The function is made
+payable so I can send some ether with the transaction to pay for gas. this way
+I can make sure all players are paid back. 
+
+as a note, 100 finney == 0.1 ether.
+*/
+  function refund() public onlyBy(owner) payable {
+    require(playerPool.length > 0);
+    for (uint i = 0; i < playerPool.length; i++) {
+      playerPool[i].transfer(100 finney);
+    }
+      playerPool.length = 0;
+  }
+  
+/*
+Self destruct just in case. Also, will refund all ether to the players before it
+explodes into beautiful digital star dust.
+*/
+  function close() public onlyBy(owner) {
+    refund();
     selfdestruct(owner);
   }
 
-  /**
-   * Withdraw all the funds from this contract.
-   * Only available to the owner.
-   */
-  function withdraw() onlyOwner {
-    if (!owner.send(this.balance)) {
-      throw;
+
+// fallback function acts the same as buyIn(), omitting the return of course.
+  function () public payable {
+    require(msg.value * 10 == 1 ether);
+    playerPool.push(msg.sender);
+    BoughtIn(msg.sender);
+    if (playerPool.length >= 11) {
+      selectWinner();
     }
-  }
-}
-
-/**
- * The base interface is what the parent contract expects to be able to use.
- * If rules change in the future, and new logic is introduced, it only has to
- * implement these methods, wtih the role of the curator being used
- * to execute the additional functionality (if any).
- */
-contract LotteryGameLogicInterface {
-  address public currentRound;
-  function finalizeRound() returns(address);
-  function isUpgradeAllowed() constant returns(bool);
-  function transferOwnership(address newOwner);
-}
-
-/**
- * This contract is pretty generic, as it really only serves to maintain a constant
- * address on the blockchain (through upgrades to the game logic), and to maintain
- * a history of previous rounds.  Note that the rounds will have had ownership
- * transferred to the curator (most likely), so there's mostly just here for
- * accounting purposes.
- *
- * A side effect of this is that finalizing a round has to happen from here.
- */
-contract Lotto is Owned {
-
-  address[] public previousRounds;
-
-  LotteryGameLogicInterface public gameLogic;
-
-  modifier onlyWhenUpgradeable {
-    if (!gameLogic.isUpgradeAllowed()) {
-      throw;
-    }
-    _;
-  }
-
-  modifier onlyGameLogic {
-    if (msg.sender != address(gameLogic)) {
-      throw;
-    }
-    _;
-  }
-
-  /**
-   * Creates a new lottery contract.
-   * @param initialGameLogic   The starting game logic.
-   */
-  function Lotto(address initialGameLogic) {
-    gameLogic = LotteryGameLogicInterface(initialGameLogic);
-  }
-
-  /**
-   * Upgrade the game logic.  Only possible to do when the game logic
-   * has deemed it clear to do so.  Hands the old one over to the owner
-   * for cleanup.  Expects the new logic to already be configured.
-   * @param newLogic   New, already-configured game logic.
-   */
-  function setNewGameLogic(address newLogic) onlyOwner onlyWhenUpgradeable {
-    gameLogic.transferOwnership(owner);
-    gameLogic = LotteryGameLogicInterface(newLogic);
-  }
-
-  /**
-   * Returns the current round.
-   * @return address The current round (when applicable)
-   */
-  function currentRound() constant returns(address) {
-    return gameLogic.currentRound();
-  }
-
-  /**
-   * Used to finalize (e.g. pay winners) the current round, then log
-   * it in the history.
-   */
-  function finalizeRound() onlyOwner {
-    address roundAddress = gameLogic.finalizeRound();
-    previousRounds.push(roundAddress);
-  }
-
-  /**
-   * Tells how many previous rounds exist.
-   */
-  function previousRoundsCount() constant returns(uint) {
-    return previousRounds.length;
-  }
-
-  // You must think I'm a joke
-  // I ain't gonna be part of your system
-  // Man! Pump that garbage in another man's veins
-  function () {
-    throw;
   }
 }
