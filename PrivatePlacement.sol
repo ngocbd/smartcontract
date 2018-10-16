@@ -1,13 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivatePlacement at 0x7ceb828497922646c2b0bd23ba199d753219f64c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivatePlacement at 0x4eb57a7a1b210835b4b1a05b74c3c25f27b4b385
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
+
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
@@ -31,111 +53,20 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-}
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
 
 }
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-  modifier whenPaused {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused returns (bool) {
-    paused = true;
-    Pause();
-    return true;
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused returns (bool) {
-    paused = false;
-    Unpause();
-    return true;
-  }
-}
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
+ * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
+
   using SafeMath for uint256;
+
+  modifier onlyPayloadSize(uint size) {
+    assert(msg.data.length == size + 4);
+    _;
+  }
 
   mapping(address => uint256) balances;
 
@@ -144,7 +75,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -153,24 +84,12 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
+  * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
-
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -183,7 +102,6 @@ contract ERC20 is ERC20Basic {
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) allowed;
-
 
   /**
    * @dev Transfer tokens from one address to another
@@ -226,7 +144,7 @@ contract StandardToken is ERC20, BasicToken {
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   * @return A uint256 specifing the amount of tokens still available for the spender.
    */
   function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
@@ -235,254 +153,186 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 /**
- * @title HoQuToken
- * @dev HoQu.io token contract.
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
-contract HoQuToken is StandardToken, Pausable {
-    
-    string public constant name = "HOQU Token";
-    string public constant symbol = "HQX";
-    uint32 public constant decimals = 18;
-    
-    /**
-     * @dev Give all tokens to msg.sender.
-     */
-    function HoQuToken(uint _totalSupply) {
-        require (_totalSupply > 0);
-        totalSupply = balances[msg.sender] = _totalSupply;
-    }
+contract Ownable {
 
-    function transfer(address _to, uint _value) whenNotPaused returns (bool) {
-        return super.transfer(_to, _value);
-    }
+  address public owner;
 
-    function transferFrom(address _from, address _to, uint _value) whenNotPaused returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
+
 }
 
 /**
- * @title BaseCrowdSale
- * @title HoQu.io base crowdsale contract for managing a token crowdsale.
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-contract BaseCrowdsale is Pausable {
-    using SafeMath for uint256;
 
-    // all accepted ethers go to this address
-    address beneficiaryAddress;
+contract MintableToken is StandardToken, Ownable {
 
-    // all remain tokens after ICO should go to that address
-    address public bankAddress;
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
 
-    // token instance
-    HoQuToken public token;
+  bool public mintingFinished = false;
+  mapping (address => bool) public crowdsaleContracts;
 
-    uint256 public maxTokensAmount;
-    uint256 public issuedTokensAmount = 0;
-    uint256 public minBuyableAmount;
-    uint256 public tokenRate; // amount of HQX per 1 ETH
-    
-    uint256 endDate;
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
 
-    bool public isFinished = false;
+  modifier onlyCrowdsaleContract() {
+    require(crowdsaleContracts[msg.sender]);
+    _;
+  }
 
-    /**
-    * Event for token purchase logging
-    * @param buyer who paid for the tokens
-    * @param tokens amount of tokens purchased
-    * @param amount ethers paid for purchase
-    */
-    event TokenBought(address indexed buyer, uint256 tokens, uint256 amount);
+  function addCrowdsaleContract(address _crowdsaleContract) onlyOwner {
+    crowdsaleContracts[_crowdsaleContract] = true;
+  }
 
-    modifier inProgress() {
-        require (!isFinished);
-        require (issuedTokensAmount < maxTokensAmount);
-        require (now <= endDate);
-        _;
-    }
-    
-    /**
-    * @param _tokenAddress address of a HQX token contract
-    * @param _bankAddress address for remain HQX tokens accumulation
-    * @param _beneficiaryAddress accepted ETH go to this address
-    * @param _tokenRate rate HQX per 1 ETH
-    * @param _minBuyableAmount min ETH per each buy action (in ETH)
-    * @param _maxTokensAmount ICO HQX capacity (in HQX)
-    * @param _endDate the date when ICO will expire
-    */
-    function BaseCrowdsale(
-        address _tokenAddress,
-        address _bankAddress,
-        address _beneficiaryAddress,
-        uint256 _tokenRate,
-        uint256 _minBuyableAmount,
-        uint256 _maxTokensAmount,
-        uint256 _endDate
-    ) {
-        token = HoQuToken(_tokenAddress);
+  function deleteCrowdsaleContract(address _crowdsaleContract) onlyOwner {
+    require(crowdsaleContracts[_crowdsaleContract]);
+    delete crowdsaleContracts[_crowdsaleContract];
+  }
 
-        bankAddress = _bankAddress;
-        beneficiaryAddress = _beneficiaryAddress;
+  function mint(address _to, uint256 _amount) onlyCrowdsaleContract canMint returns (bool) {
 
-        tokenRate = _tokenRate;
-        minBuyableAmount = _minBuyableAmount.mul(1 ether);
-        maxTokensAmount = _maxTokensAmount.mul(1 ether);
-    
-        endDate = _endDate;
-    }
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(this, _to, _amount);
+    return true;
+  }
 
-    /*
-     * @dev Set new HoQu token exchange rate.
-     */
-    function setTokenRate(uint256 _tokenRate) onlyOwner inProgress {
-        require (_tokenRate > 0);
-        tokenRate = _tokenRate;
-    }
+  function finishMinting() onlyCrowdsaleContract returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
 
-    /*
-     * @dev Set new minimum buyable amount in ethers.
-     */
-    function setMinBuyableAmount(uint256 _minBuyableAmount) onlyOwner inProgress {
-        require (_minBuyableAmount > 0);
-        minBuyableAmount = _minBuyableAmount.mul(1 ether);
-    }
-
-    /**
-     * Buy HQX. Check minBuyableAmount and tokenRate.
-     * @dev Performs actual token sale process. Sends all ethers to beneficiary.
-     */
-    function buyTokens() payable inProgress whenNotPaused {
-        require (msg.value >= minBuyableAmount);
-    
-        uint256 payAmount = msg.value;
-        uint256 returnAmount = 0;
-
-        // calculate token amount to be transfered to investor
-        uint256 tokens = tokenRate.mul(payAmount);
-    
-        if (issuedTokensAmount + tokens > maxTokensAmount) {
-            tokens = maxTokensAmount.sub(issuedTokensAmount);
-            payAmount = tokens.div(tokenRate);
-            returnAmount = msg.value.sub(payAmount);
-        }
-    
-        issuedTokensAmount = issuedTokensAmount.add(tokens);
-        require (issuedTokensAmount <= maxTokensAmount);
-
-        // send token to investor
-        token.transfer(msg.sender, tokens);
-        // notify listeners on token purchase
-        TokenBought(msg.sender, tokens, payAmount);
-
-        // send ethers to special address
-        beneficiaryAddress.transfer(payAmount);
-    
-        if (returnAmount > 0) {
-            msg.sender.transfer(returnAmount);
-        }
-    }
-
-    /**
-     * Trigger emergency token pause.
-     */
-    function pauseToken() onlyOwner returns (bool) {
-        require(!token.paused());
-        token.pause();
-        return true;
-    }
-
-    /**
-     * Unpause token.
-     */
-    function unpauseToken() onlyOwner returns (bool) {
-        require(token.paused());
-        token.unpause();
-        return true;
-    }
-    
-    /**
-     * Finish ICO.
-     */
-    function finish() onlyOwner {
-        require (issuedTokensAmount >= maxTokensAmount || now > endDate);
-        require (!isFinished);
-        isFinished = true;
-        token.transfer(bankAddress, token.balanceOf(this));
-    }
-    
-    /**
-     * Buy HQX. Check minBuyableAmount and tokenRate.
-     */
-    function() external payable {
-        buyTokens();
-    }
 }
 
-/**
- * @title PrivatePlacement
- * @dev HoQu.io Private Token Placement contract
- */
-contract PrivatePlacement is BaseCrowdsale {
+contract ABHCoin is MintableToken {
 
-    // internal addresses for HoQu tokens allocation
-    address public foundersAddress;
-    address public supportAddress;
-    address public bountyAddress;
+  string public constant name = "ABH Coin";
 
-    // initial amount distribution values
-    uint256 public constant totalSupply = 888888000 ether;
-    uint256 public constant initialFoundersAmount = 266666400 ether;
-    uint256 public constant initialSupportAmount = 8888880 ether;
-    uint256 public constant initialBountyAmount = 35555520 ether;
+  string public constant symbol = "ABH";
 
-    // whether initial token allocations was performed or not
-    bool allocatedInternalWallets = false;
-    
-    /**
-    * @param _bankAddress address for remain HQX tokens accumulation
-    * @param _foundersAddress founders address
-    * @param _supportAddress support address
-    * @param _bountyAddress bounty address
-    * @param _beneficiaryAddress accepted ETH go to this address
-    */
-    function PrivatePlacement(
-        address _bankAddress,
-        address _foundersAddress,
-        address _supportAddress,
-        address _bountyAddress,
-        address _beneficiaryAddress
-    ) BaseCrowdsale(
-        createToken(totalSupply),
-        _bankAddress,
-        _beneficiaryAddress,
-        10000, /* rate HQX per 1 ETH (includes 100% private placement bonus) */
-        100, /* min amount in ETH */
-        23111088, /* cap in HQX */
-        1507939200 /* end 10/14/2017 @ 12:00am (UTC) */
-    ) {
-        foundersAddress = _foundersAddress;
-        supportAddress = _supportAddress;
-        bountyAddress = _bountyAddress;
+  uint32 public constant decimals = 18;
+
+}
+
+
+
+contract PrivatePlacement is Ownable {
+
+  using SafeMath for uint;
+
+  address public multisig;
+
+  ABHCoin public token;
+
+  uint256 public hardcap;
+  uint public rate;
+  //uint public softcap;
+
+  bool refundAllowed;
+  bool privatePlacementIsOn = true;
+  bool PrivatePlacementFinished = false;
+  //uint public change;
+  //address public lastInvest;
+  mapping(address => uint) public balances;
+
+  function PrivatePlacement(address _ABHCoinAddress, address _multisig, uint _rate) {
+    multisig = _multisig;
+    rate = _rate * 1 ether;
+    hardcap = 120600000 * 1 ether; // token amount
+    token = ABHCoin(_ABHCoinAddress);
+  }
+
+  modifier isUnderHardCap() {
+    require(token.totalSupply() <= hardcap);
+    _;
+  }
+
+  function stopPrivatePlacement() onlyOwner {
+    privatePlacementIsOn = false;
+  }
+
+  function restartPrivatePlacement() onlyOwner {
+    require(!PrivatePlacementFinished);
+    privatePlacementIsOn = true;
+  }
+
+  function finishPrivatePlacement() onlyOwner {
+    require(!refundAllowed);
+    multisig.transfer(this.balance);
+    //lastInvest.transfer(change);
+    privatePlacementIsOn = false;
+    PrivatePlacementFinished = true;
+  }
+
+  function alloweRefund() onlyOwner {
+    refundAllowed = true;
+  }
+
+  function refund() public {
+    require(refundAllowed);
+    uint valueToReturn = balances[msg.sender];
+    balances[msg.sender] = 0;
+    msg.sender.transfer(valueToReturn);
+  }
+
+  function createTokens() isUnderHardCap payable {
+    require(privatePlacementIsOn);
+    uint valueWEI = msg.value;
+    uint tokens = rate.mul(msg.value).div(1 ether);
+    if (token.totalSupply() + tokens > hardcap){
+      tokens = hardcap - token.totalSupply();
+      valueWEI = tokens.mul(1 ether).div(rate);
+      token.mint(msg.sender, tokens);
+      uint change = msg.value - valueWEI;
+      bool isSent = msg.sender.call.gas(3000000).value(change)();
+    require(isSent);
+    } else {
+      token.mint(msg.sender, tokens);
     }
+    balances[msg.sender] = balances[msg.sender].add(valueWEI);
+  }
+  
+  function changeRate(uint _rate) onlyOwner {
+     rate = _rate; 
+  }
 
-    /*
-     * @dev Perform initial token allocation between founders' addresses.
-     * Is only executed once after presale contract deployment and is invoked manually.
-     */
-    function allocateInternalWallets() onlyOwner {
-        require (!allocatedInternalWallets);
+  function() external payable {
+    createTokens();
+  }
 
-        allocatedInternalWallets = true;
-
-        token.transfer(foundersAddress, initialFoundersAmount);
-        token.transfer(supportAddress, initialSupportAmount);
-        token.transfer(bountyAddress, initialBountyAmount);
-    }
-    
-    /*
-     * @dev HoQu Token factory.
-     */
-    function createToken(uint256 _totalSupply) internal returns (HoQuToken) {
-        return new HoQuToken(_totalSupply);
-    }
 }
