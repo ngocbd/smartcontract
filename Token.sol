@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf04cc6c6f30a1d7dbe2fc083f8988a00e39bf1a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xcf7f36385d2c90a757c8fd771fbd9eae779dcae8
 */
 contract Token {
     /* Public variables of the token */
-    string public standard = 'ONG COIN';
+    string public standard = 'Token 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -16,12 +16,12 @@ contract Token {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Token() {
+    function Token () {
 
-         initialSupply = 300000000;
-         name ="ONG COIN";
-        decimals = 18;
-         symbol = "ONGC";
+         initialSupply = 50000000000;
+         name ="ClaudioToken";
+        decimals = 2;
+         symbol = "CA2";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
