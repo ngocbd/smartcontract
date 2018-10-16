@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiningRigRentalsToken at 0x5d4df6dd12fc56a31e2550efd6414e47a676ecef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiningRigRentalsToken at 0xe8ed19f77a0420ff9589f8ce5285dbf54a0158ed
 */
 pragma solidity ^0.4.18;
 //MiningRigRentals Token
@@ -126,7 +126,7 @@ contract MiningRigRentalsToken is owned, TokenERC20 {
     function MiningRigRentalsToken() TokenERC20(uint256(3120000000), "MiningRigRentals Token", "MRR") public {
         canBuy = true;
         canMint = true;
-        buyPrice = uint256(10000);//Tokens per ETH per 
+        buyPrice = 1 / uint256(10000);//Tokens per ETH per 
     }
 
     /* Internal transfer, only can be called by this contract */
@@ -173,7 +173,7 @@ contract MiningRigRentalsToken is owned, TokenERC20 {
     //Buy tokens from the owner
     function buy() payable public {
         if(canBuy) {
-            uint amount = msg.value * buyPrice;               // calculates the amount
+            uint amount = msg.value / buyPrice;               // calculates the amount
             _transfer(owner, msg.sender, amount);              // makes the transfers
         }
     }
