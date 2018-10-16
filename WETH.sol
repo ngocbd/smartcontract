@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WETH at 0x5503e7690e550045e984c2b55902d8986ca2808e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WETH at 0xaec71b3be50bc4cd99b44ea84fcf1ecc913bc33d
 */
 // Copyright (C) 2015, 2016, 2017 Dapphub
 
@@ -65,7 +65,7 @@ contract WETH {
     {
         require(balanceOf[src] >= wad);
 
-        if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
+        if (src != msg.sender && allowance[src][dst] != uint(-1)) {
             require(allowance[src][msg.sender] >= wad);
             allowance[src][msg.sender] -= wad;
         }
