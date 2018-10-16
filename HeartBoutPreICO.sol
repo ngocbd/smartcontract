@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeartBoutPreICO at 0x6546e21a148d6ffffee6bef916949f2efdae36aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeartBoutPreICO at 0x009449c99a2822914d68691d87b0177292fb5a6c
 */
 pragma solidity ^0.4.18;
 /**
@@ -79,6 +79,12 @@ contract Ownable {
     bool nonZeroPurchase = msg.value != 0;
     return withinPeriod && nonZeroPurchase;
   }
+  // @return true if the transaction can mint tokens
+  function validMintPurchase(uint256 _value) internal constant returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = _value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
   // @return true if crowdsale event has ended
   function hasEnded() public constant returns (bool) {
     return now > endTime;
@@ -102,6 +108,12 @@ contract Ownable {
   function validPurchase() internal constant returns (bool) {
     bool withinCap = weiRaised.add(msg.value) <= cap;
     return super.validPurchase() && withinCap;
+  }
+  // overriding Crowdsale#validPurchase to add extra cap logic
+  // @return true if investors can mint at the moment
+  function validMintPurchase(uint256 _value) internal constant returns (bool) {
+    bool withinCap = weiRaised.add(_value) <= cap;
+    return super.validMintPurchase(_value) && withinCap;
   }
   // overriding Crowdsale#hasEnded to add cap logic
   // @return true if crowdsale event has ended
@@ -141,6 +153,20 @@ contract HeartBoutPreICO is CappedCrowdsale, Ownable {
         // update state
         weiRaised = weiRaised.add(weiAmount);
         forwardFunds();
+    }
+    // mintTokens function
+    function mintTokens(address _to, uint256 _amount, string _account) onlyOwner public {
+        require(!stringEqual(_account, ""));
+        require(validMintPurchase(_amount));
+        require(_amount >= minCount);
+        uint256 weiAmount = _amount;
+        // calculate token amount to be created
+        uint256 tokens = weiAmount.mul(rate);
+        // Mint only message sender address
+        HeartBoutToken token_contract = HeartBoutToken(token);
+        token_contract.mint(_to, tokens, _account);
+        // update state
+        weiRaised = weiRaised.add(weiAmount);
     }
     // send ether to the fund collection wallet
     // override to create custom fund forwarding mechanisms
