@@ -1,13 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicCoinManager at 0x9b8eb09a59a180e7798fbe7e099c8c351ac56af0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicCoinManager at 0x7B30DEb4a3EDeAF4e82c34f8134ddd0abe2C93d6
 */
-//! BasicCoin ECR20-compliant token contract
-//! By Parity Team (Ethcore), 2016.
-//! Released under the Apache Licence 2.
-
-pragma solidity ^0.4.1;
-
-// ECR20 standard token interface
 contract Token {
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Approval(address indexed owner, address indexed spender, uint256 value);
