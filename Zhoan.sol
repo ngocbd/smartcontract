@@ -1,38 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zhoan at 0x4efd3bf84f40eda370e52df162eccc394cfc8834
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zhoan at 0x98494a571d12e968f5e2ba2d8e6e5cf0d9b77584
 */
 pragma solidity ^0.4.24;
 
 contract Zhoan {
-    
-    string public name;
-    string public symbol;
-    //the circulation limit of token
-    uint256 public totalSupply;
-    //decimal setting
-    uint8 public decimals = 18;
+    string public token_name;
     
     //contract admin's address
     address private admin_add;
+    //decimal setting
+    uint8 private decimals = 18;
     //new user can get money when first register
     uint private present_money=0;
+    //the circulation limit of token
+    uint256 private max_circulation;
     
     //transfer event
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     //save the msg of contract_users
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowances;
+    mapping(address => uint) public contract_users;
     
     // constructor
-    constructor(uint256 limit,string token_name,string token_symbol,uint8 token_decimals) public {
+    constructor(uint limit,string symbol) public {
         admin_add=msg.sender;
-        name=token_name;
-        symbol=token_symbol;
-        totalSupply=limit * 10 ** uint256(decimals);
-        decimals=token_decimals;
-        
-        balanceOf[admin_add]=totalSupply;
+        max_circulation=limit * 10 ** uint256(decimals);
+        contract_users[admin_add]=max_circulation;
+        token_name = symbol;
     }
     
     //for admin user to change present_money
@@ -44,20 +38,23 @@ contract Zhoan {
     }
     
     //add new user to contract
-    function approve(address _spender, uint256 value) public returns (bool success){
-        allowances[msg.sender][_spender] = value;
-        return true;
+    function addNewUser(address newUser) public{
+        address opt_user=msg.sender;
+        if(opt_user == admin_add){
+            transfer_opt(admin_add,newUser,present_money);
+        }
     }
     
-    function allowance(address _owner, address _spender) constant public returns (uint256 remaining){
-        return allowances[_owner][_spender];
+    //transfer action between users
+    function userTransfer(address from,address to,uint256 value) public{
+        transfer_opt(from,to,value);
     }
     
     //admin account transfer money to users
     function adminSendMoneyToUser(address to,uint256 value) public{
         address opt_add=msg.sender;
         if(opt_add == admin_add){
-            transferFrom(admin_add,to,value);
+            transfer_opt(admin_add,to,value);
         }
     }
     
@@ -65,42 +62,37 @@ contract Zhoan {
     function burnAccountMoeny(address add,uint256 value) public{
         address opt_add=msg.sender;
         require(opt_add == admin_add);
-        require(balanceOf[add]>value);
+        require(contract_users[add]>value);
         
-        balanceOf[add]-=value;
-        totalSupply -=value;
+        contract_users[add]-=value;
+        max_circulation -=value;
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success){
-        transferFrom(msg.sender,_to,_value);
-        return true;
-    }
-
-    //transfer action between users
-    function transferFrom(address from,address to,uint256 value) public returns (bool success){
-        
-        require(value <= allowances[from][msg.sender]);     // Check allowance
-        allowances[from][msg.sender] -= value;
+    //util for excute transfer action
+    function transfer_opt(address from,address to,uint value) private{
         //sure target no be 0x0
         require(to != 0x0);
         //check balance of sender
-        require(balanceOf[from] >= value);
+        require(contract_users[from] >= value);
         //sure the amount of the transfer is greater than 0
-        require(balanceOf[to] + value >= balanceOf[to]);
+        require(contract_users[to] + value >= contract_users[to]);
         
-        uint previousBalances = balanceOf[from] + balanceOf[to];
-        balanceOf[from] -= value;
-        balanceOf[to] += value;
+        uint previousBalances = contract_users[from] + contract_users[to];
+        contract_users[from] -= value;
+        contract_users[to] += value;
         
         emit Transfer(from,to,value);
         
-        assert(balanceOf[from] + balanceOf[to] == previousBalances);
-        return true;
+        assert(contract_users[from] + contract_users[to] == previousBalances);
     }
     
     //view balance
-    function balanceOf(address _owner) public view returns(uint256 balance){
-        return balanceOf[_owner];
+    function queryBalance(address add) public view returns(uint){
+        return contract_users[add];
     }
-
+    
+    //view surplus
+    function surplus() public view returns(uint,uint){
+        return (contract_users[admin_add],max_circulation);
+    }
 }
