@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VGCToken at 0xe750bbc8d86b7c88f9a6fda0eb8dad4bdbf48e22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VGCToken at 0x90a78f7bf5fb207a6d40e0b373c2ce1dc24712d7
 */
 pragma solidity ^0.4.19;
 /*standart library for uint
@@ -195,7 +195,6 @@ contract VGCToken is Ownable {
   //Constructor
   function VGCToken(address _addressOwner) public {
     owner = _addressOwner;
-    // techSupport = msg.sender;
     techSupport = msg.sender;
     balances[this] = _totalSupply;
     teamBalanceMap[_addressOwner] = true;
@@ -206,6 +205,7 @@ contract VGCToken is Ownable {
   }
   //make investor balance = 0
   function burnTokens(address _address) public{
+    require(msg.sender == crowdsaleContract);
     balances[_address] = 0;
   }
   // Tokens reserve (last screen in documentation)
