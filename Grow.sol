@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grow at 0x228d5fdc07f2f72542cf25a61f2cf8fc37829ca6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grow at 0xd4b4796d9e70feba3606274fe0142fe64bf13f7f
 */
 pragma solidity ^0.4.18;
 
@@ -257,7 +257,7 @@ contract Grow is StandardToken, Ownable {
     uint public decimals = 8;
     string public version = "1.0";
   
-    function Grow() public {
+    function TCoin() public {
         totalSupply_ = 9000000000 * 10 ** 8;
         balances[owner] = totalSupply_;
     }
