@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x691982b11c381d6282161a1a3f0dec8bba681f59
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xbea2054b832378192f179ccae76d55faf6152355
 */
 pragma solidity ^0.4.18;
 
@@ -65,7 +65,7 @@ contract Admined{
     }
 }
 
-contract MyToken is Admined, ERC20,Token("TTL","Talent Token",8,50000000)
+contract MyToken is Admined, ERC20,Token("TLT","Talent Coin",18,50000000000000000000000000)
 {
    	mapping(address =>uint) private _balanceOf;
     mapping(address => mapping(address => uint)) private _allowances;
@@ -79,7 +79,7 @@ contract MyToken is Admined, ERC20,Token("TTL","Talent Token",8,50000000)
         _;
     }
     
-     function MyToken() public{
+    function MyToken() public{
         	_balanceOf[msg.sender]=_totalSupply;
     }
     	
@@ -87,42 +87,36 @@ contract MyToken is Admined, ERC20,Token("TTL","Talent Token",8,50000000)
        	return _balanceOf[_addr];
 	}
 
-	function transfer(address _to, uint _value)whenTransferAllowed public returns (bool success){
-        	require(_to!=address(0) && _value <= balanceOf(msg.sender));{
+	function transfer(address _to, uint _value)public returns (bool success){
             _balanceOf[msg.sender]-= _value;
            	_balanceOf[_to]+=_value;
 			Transfer(msg.sender, _to, _value);
            	return true;
-		}
-		return false;
-    	}	
+	}	
     
-	function transferFrom(address _from, address _to, uint _value)whenTransferAllowed public returns(bool success){
-        require(balanceOf(_from)>=_value && _value<= _allowances[_from][msg.sender]);
-        {
-			_balanceOf[_from]-=_value;
-    		_balanceOf[_to]+=_value;
-			_allowances[_from][msg.sender] -= _value;
-			Transfer(_from, _to, _value);  
-			return true;
-    	}
-        	return false;
+	function transferFrom(address _from, address _to, uint _value) public returns(bool success){
+        uint allowed = _allowances[_from][msg.sender];
+		_balanceOf[_from] -= _value;
+    	_balanceOf[_to] += _value;
+		_allowances[_from][msg.sender] -= allowed;
+		Transfer(_from, _to, _value);  
+		return true;
    	}
 
 	function approve(address _spender, uint _value) public returns (bool success){
-        	_allowances[msg.sender][_spender] = _value;
-        	return true;
-    	}
+    	_allowances[msg.sender][_spender] = _value;
+    	return true;
+	}
 
-    	function allowance(address _owner, address _spender) public constant returns(uint remaining){
-        	return _allowances[_owner][_spender];
-        }
+    function allowance(address _owner, address _spender) public constant returns(uint remaining){
+    	return _allowances[_owner][_spender];
+    }
         
     function allowTransfer() onlyOwner public {
         transferAllowed = true;
     }
 
- function burn(uint256 _value) public returns (bool) {
+    function burn(uint256 _value) public returns (bool) {
         require(_value <= _balanceOf[msg.sender]);
         _balanceOf[msg.sender] -= _value;
         _totalSupply -= _value;
