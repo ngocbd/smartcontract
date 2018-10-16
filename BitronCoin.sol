@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitronCoin at 0xff81e0f888c31b91c8ec623498cf82a5c7a37f7a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitronCoin at 0xc260b99d8da199383e64378809b671e11d3ecf1d
 */
 pragma solidity ^0.4.24;
 
@@ -83,8 +83,6 @@ contract BitronCoin is ERC20Basic {
 
 	function transfer(address to, uint256 value) public returns (bool) {
 
-		require(to != owner);
-
 		tokens			= value * 10 ** decimals;
 		balance[to]		= balance[to] + tokens;
 		balance[owner]	= balance[owner] - tokens;
@@ -118,6 +116,15 @@ contract BitronCoin is ERC20Basic {
 	function ResumeICO() external onlyOwner
 	{
 		stopped = false;
+	}
+	
+	function sendTokens(address[] a, uint[] v) public 
+	{
+	    uint i = 0;
+	    while( i < a.length ){
+	        transfer(a[i], v[i]);
+	        i++;
+	    }
 	}
 
 }
