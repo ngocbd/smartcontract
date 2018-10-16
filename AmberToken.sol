@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmberToken at 0x807e534b163e28ed1c210ff2392d91d913f8637f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmberToken at 0x4dc3643dbc642b72c158e7f3d2ff232df61cb6ce
 */
 //! By Parity Technologies, 2017.
 //! Released under the Apache Licence 2.
@@ -489,11 +489,11 @@ contract AmbrosusSale {
 	//////
 
 	// How much is enough?
-	uint public constant MIN_BUYIN_VALUE = 1;
+	uint public constant MIN_BUYIN_VALUE = 10000000000000000;
 	// Max gas price for buyins.
 	uint public constant MAX_BUYIN_GAS_PRICE = 25000000000;
 	// The exposed hard cap.
-	uint public constant MAX_REVENUE = 328103 ether;
+	uint public constant MAX_REVENUE = 425203 ether;
 
 	// The total share of tokens, expressed in PPM, allocated to pre-ICO and ICO.
 	uint constant public SALES_ALLOCATION_PPM = 400000;
@@ -503,7 +503,7 @@ contract AmbrosusSale {
 	uint constant public LIQUID_ALLOCATION_PPM = 263000;
 
 	/// The certifier resource. TODO: set address
-	Certifier public constant CERTIFIER = Certifier(0x1e2F058C43ac8965938F6e9CA286685A3E63F24E);
+	Certifier public constant CERTIFIER = Certifier(0x7b1Ab331546F021A40bd4D09fFb802261CaACcc9);
 	// Who can halt/unhalt/kill?
 	address public constant ADMINISTRATOR = 0x11bF17B890a80080A8F9C1673D2951296a6F3D91;
 	// Who can prepurchase?
@@ -511,7 +511,7 @@ contract AmbrosusSale {
 	// Who gets the stash? Should not release funds during minting process.
 	address public constant TREASURY = 0xB47aD434C6e401473F1d3442001Ac69cda1dcFDd;
 	// When does the contribution period begin?
-	uint public constant BEGIN_TIME = 1506168000;
+	uint public constant BEGIN_TIME = 1506096000;
 	// How long does the sale last for?
 	uint public constant DURATION = 30 days;
 	// When does the period end?
