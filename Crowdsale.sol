@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x9192e2cb98de04234889d39e70b8f7fa3e591f8a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x939da7bce862f79676db57267ebd6856eaead7c1
 */
 pragma solidity ^0.4.15;
 
@@ -309,14 +309,14 @@ contract RefundVault is Ownable {
   }
 }
 
-// @title The TestPCoin
+// @title The PallyCoin
 /// @author Manoj Patidar
-contract TestPCoin is PausableToken {
+contract PallyCoin is PausableToken {
    using SafeMath for uint256;
 
-   string public constant name = 'TestPCoin';
+   string public constant name = 'PallyCoin';
 
-   string public constant symbol = 'TESTP';
+   string public constant symbol = 'PAL';
 
    uint8 public constant decimals = 18;
 
@@ -355,7 +355,7 @@ contract TestPCoin is PausableToken {
    /// The 20% + 20% of the 100 M tokens used for platform and development team.
    /// The owner, msg.sender, is able to do allowance for other contracts. Remember
    /// to use `transferFrom()` if you're allowed
-   function TestPCoin() {
+   function PallyCoin() {
       balances[msg.sender] = initialSupply; // 40M tokens wei
    }
 
@@ -411,11 +411,11 @@ contract TestPCoin is PausableToken {
 
    /// @notice Burn the amount of tokens remaining after ICO ends
    function burnTokens() external onlyCrowdsale whenNotPaused {
-
+      
       uint256 remainingICOToken = limitCrowdsale.sub(tokensDistributedCrowdsale);
       if(remainingICOToken > 0 && !remainingTokenBurnt) {
-      remainingTokenBurnt = true;
-      limitCrowdsale = limitCrowdsale.sub(remainingICOToken);
+      remainingTokenBurnt = true;    
+      limitCrowdsale = limitCrowdsale.sub(remainingICOToken);  
       totalSupply = totalSupply.sub(remainingICOToken);
       }
    }
@@ -424,12 +424,17 @@ contract TestPCoin is PausableToken {
 // 2. If the goal is reached, the state of the vault will change and the ether will be sent to the address
 // 3. If the goal is not reached , the state of the vault will change to refunding and the users will be able to call claimRefund() to get their ether
 
+/// @title Crowdsale contract to carry out an ICO with the PallyCoin
+/// Crowdsales have a start and end timestamps, where investors can make
+/// token purchases and the crowdsale will assign them tokens based
+/// on a token per ETH rate. Funds collected are forwarded to a wallet
+/// as they arrive.
 /// @author Manoj Patidar <patidarmanoj@gmail.com>
 contract Crowdsale is Pausable {
    using SafeMath for uint256;
 
    // The token being sold
-   TestPCoin public token;
+   PallyCoin public token;
 
    // The vault that will store the ether until the goal is reached
    RefundVault public vault;
@@ -489,7 +494,7 @@ contract Crowdsale is Pausable {
    // Minimum amount of tokens to be raised. 7.5 million tokens which is the 15%
    // of the total of 50 million tokens sold in the crowdsale
    // 7.5e6 + 1e18
-   uint256 public constant minimumGoal = 5.33e19;
+   uint256 public constant minimumGoal = 5.33e24;
 
    // If the crowdsale wasn't successful, this will be true and users will be able
    // to claim the refund of their ether
@@ -543,7 +548,7 @@ contract Crowdsale is Pausable {
 
       wallet = _wallet;
       walletB = _walletB;
-      token = TestPCoin(_tokenAddress);
+      token = PallyCoin(_tokenAddress);
       vault = new RefundVault(_wallet);
 
       if(_startTime > 0)
@@ -563,7 +568,7 @@ contract Crowdsale is Pausable {
       require(validPurchase());
 
       uint256 tokens = 0;
-
+      
       uint256 amountPaid = calculateExcessBalance();
 
       if(tokensRaised < limitTier1) {
@@ -615,7 +620,7 @@ contract Crowdsale is Pausable {
          if(goalReached()) {
           vault.close();
          }
-
+         
       }
 
       // If the minimum goal of the ICO has been reach, close the vault to send
@@ -703,7 +708,7 @@ contract Crowdsale is Pausable {
    {
       require(now <= _endTime);
       require(startTime < _endTime);
-
+      
       endTime = _endTime;
    }
 
@@ -719,22 +724,22 @@ contract Crowdsale is Pausable {
             isEnded = true;
             Finalized();
          } else if(hasEnded()  && goalReached()) {
+            
+            
+            isEnded = true; 
 
 
-            isEnded = true;
-
-
-            // Burn token only when minimum goal reached and maxGoal not reached.
+            // Burn token only when minimum goal reached and maxGoal not reached. 
             if(tokensRaised < maxTokensRaised) {
 
                token.burnTokens();
 
-            }
+            } 
 
             Finalized();
-         }
-
-
+         } 
+         
+         
       }
    }
 
