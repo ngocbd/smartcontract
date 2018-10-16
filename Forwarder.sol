@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0x7211f65a7876433635601b9480e57f812a3665d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0x97f599b5ab34dd6223a0a80c2794c04cddf59488
 */
 pragma solidity ^0.4.18;
 
@@ -61,8 +61,12 @@ contract Forwarder is OwnableImpl {
 		to.transfer(value);
 	}
 
-	function forward(address to, bytes data) payable public {
-		uint256 commission = msg.value / 100;
-		EtherReceiver(to).receiveWithData.value(msg.value - commission)(data);
+	function forward(address to, bytes data, uint256 value) payable public {
+		uint256 toTransfer = value - value / 100;
+		if (msg.value > toTransfer) {
+			EtherReceiver(to).receiveWithData.value(toTransfer)(data);
+		} else {
+			EtherReceiver(to).receiveWithData.value(msg.value)(data);
+		}
 	}
 }
