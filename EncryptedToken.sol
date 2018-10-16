@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xfcd1d13e8709a91628f507c1368d21582454329e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xf8ba207b3a590dbc99c18d38f6df0ba6398f734c
 */
 pragma solidity ^0.4.16;
 
@@ -116,13 +116,13 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 70000000;
-  uint256 public buyPrice = 2500;
+  uint256 INITIAL_SUPPLY = 1000000000;
+  uint256 public buyPrice = 600000;
   mapping (address => bool) public frozenAccount;
 
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'FCH', 'FCH') payable public {}
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'GTCC', 'GTCC') payable public {}
     
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
