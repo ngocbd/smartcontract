@@ -1,86 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9a2e92f57eb9aedf260d091c314a7f52ef0461a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x16e91cfe9df364fcd270d264665737b11f44de20
 */
-pragma solidity ^0.4.11;
- 
+pragma solidity ^0.4.13;
 contract Token {
-    string public symbol = "";
-    string public name = "";
-    uint8 public constant decimals = 18;
-    uint256 _totalSupply = 0;
-    address owner = 0;
-    bool setupDone = false;
-	
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- 
-    mapping(address => uint256) balances;
- 
-    mapping(address => mapping (address => uint256)) allowed;
- 
-    function Token(address adr) {
-		owner = adr;        
-    }
-	
-	function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
-	{
-		if (msg.sender == owner && setupDone == false)
-		{
-			symbol = tokenSymbol;
-			name = tokenName;
-			_totalSupply = tokenSupply * 1000000000000000000;
-			balances[owner] = _totalSupply;
-			setupDone = true;
-		}
+    
+	/* Public variables of the token */
+	string public name;
+	string public symbol;
+	uint8 public decimals;
+	uint256 public totalSupply;
+    
+	/* This creates an array with all balances */
+	mapping (address => uint256) public balanceOf;
+
+	/* This generates a public event on the blockchain that will notify clients */
+	event Transfer(address indexed from, address indexed to, uint256 value);
+
+	function Token() {
+	    totalSupply = 3*(10**8)*(10**18);
+		balanceOf[msg.sender] = 3*(10**8)*(10**18);              // Give the creator all initial tokens
+		name = "WiseMoveChainCar";                                   // Set the name for display purposes
+		symbol = "WMCC";                               // Set the symbol for display purposes
+		decimals = 18;                            // Amount of decimals for display purposes
 	}
- 
-    function totalSupply() constant returns (uint256 totalSupply) {        
-		return _totalSupply;
-    }
- 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
- 
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-        if (balances[msg.sender] >= _amount 
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) returns (bool success) {
-        if (balances[_from] >= _amount
-            && allowed[_from][msg.sender] >= _amount
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function approve(address _spender, uint256 _amount) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
-    }
- 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
+
+	function transfer(address _to, uint256 _value) {
+	/* Check if sender has balance and for overflows */
+	if (balanceOf[msg.sender] < _value || balanceOf[_to] + _value < balanceOf[_to])
+		revert();
+	/* Add and subtract new balances */
+	balanceOf[msg.sender] -= _value;
+	balanceOf[_to] += _value;
+	/* Notifiy anyone listening that this transfer took place */
+	Transfer(msg.sender, _to, _value);
+	}
+
+	/* This unnamed function is called whenever someone tries to send ether to it */
+	function () {
+	revert();     // Prevents accidental sending of ether
+	}
 }
