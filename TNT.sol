@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TNT at 0x120445ca0f92547742d20ce978240d8bdb9edc9a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TNT at 0xd498dfc76a976a1d9045048298456a4c609c241d
 */
 contract TNT {
     /* Public variables of the token */
