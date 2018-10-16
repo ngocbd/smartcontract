@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MTRCToken at 0x1e49ff77c355a3e38d6651ce8404af0e48c5395f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MTRCToken at 0xe1aea071dc996d1dc5e2b7164b4c708f10e72001
 */
 pragma solidity ^0.4.13;
 
 contract Receiver {
-    function tokenFallback(address from, uint value, bytes data);
+    function tokenFallback(address from, uint value);
 }
 
 /*
@@ -83,7 +83,6 @@ contract SafeMath {
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, SafeMath {
-  event Transfer(address indexed from, address indexed to, uint indexed value, bytes data);
 
   /* Token supply got increased and a new owner received these tokens */
   event Minted(address receiver, uint amount);
@@ -108,19 +107,12 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) public returns (bool success) {
-      bytes memory _empty;
-
-      return transfer(_to, _value, _empty);
-  }
-
-  function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
-    Transfer(msg.sender, _to, _value, _data);
     Transfer(msg.sender, _to, _value);
 
     if (isContract(_to)) {
-      Receiver(_to).tokenFallback(msg.sender, _value, _data);
+      Receiver(_to).tokenFallback(msg.sender, _value);
     }
 
     return true;
