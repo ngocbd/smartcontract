@@ -1,7 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilestoneTracker at 0x0f593dcce096c5c39bd509123150707644ad48de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilestoneTracker at 0xb438202e27991b04be6cae51e9ca4c15ddcbac55
 */
 pragma solidity ^0.4.6;
+
+/*
+    Copyright 2016, Jordi Baylina
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/// @title MilestoneTracker Contract
+/// @author Jordi Baylina
+/// @dev This contract tracks the
+
+
+/// is rules the relation betwen a donor and a recipient
+///  in order to guaranty to the donor that the job will be done and to guaranty
+///  to the recipient that he will be paid
+
+
+/// @dev We use the RLP library to decode RLP so that the donor can approve one
+///  set of milestone changes at a time.
+///  https://github.com/androlo/standard-contracts/blob/master/contracts/src/codec/RLP.sol
+
 
 /**
 * @title RLPReader
@@ -417,40 +449,6 @@ library RLP {
          return true;
      }
 }
-
-pragma solidity ^0.4.6;
-
-/*
-    Copyright 2016, Jordi Baylina
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/// @title MilestoneTracker Contract
-/// @author Jordi Baylina
-/// @dev This contract tracks the
-
-
-/// is rules the relation betwen a donor and a recipient
-///  in order to guaranty to the donor that the job will be done and to guaranty
-///  to the recipient that he will be paid
-
-
-/// @dev We use the RLP library to decode RLP so that the donor can approve one
-///  set of milestone changes at a time.
-///  https://github.com/androlo/standard-contracts/blob/master/contracts/src/codec/RLP.sol
-
 
 
 
