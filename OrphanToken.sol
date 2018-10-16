@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrphanToken at 0x464d2573e29b3a5b4440b62e27fe4685437dbeaa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrphanToken at 0x6cfba3c7b4c944bdc9442c91d67d35d7c27fa430
 */
 pragma solidity ^0.4.21;
 
@@ -196,7 +196,7 @@ contract OrphanToken is StandardToken {
 
     string public constant name = "OrphanToken";
     string public constant symbol = "ORT";
-    uint8 public constant decimals = 0;
+    uint8 public constant decimals =0;
     uint256 public constant INITIAL_SUPPLY = 1 * 10**9 * (10**uint256(decimals));
     uint256 public weiRaised;
     uint256 public tokenAllocated;
