@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract thewhalegame at 0x02B2101903eB6a51518E63e84B785180859FDa9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract thewhalegame at 0x1492cdd605d91658f228eab14d8444b60e6da8df
 */
 contract thewhalegame {
 
@@ -61,8 +61,8 @@ contract thewhalegame {
     }
 
 
-    while (balance > persons[payoutIdx].amount / 100 * 200) {
-      uint transactionAmount = persons[payoutIdx].amount / 100 * 200;
+    while (balance > persons[payoutIdx].amount / 100 * 125) {
+      uint transactionAmount = persons[payoutIdx].amount / 100 * 125;
       persons[payoutIdx].etherAddress.send(transactionAmount);
 
       balance -= transactionAmount;
