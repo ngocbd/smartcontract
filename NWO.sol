@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NWO at 0x2c6b2bed2ad5b920936363b0cab60d684c718327
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NWO at 0x3e3998ae57c9b3e914113e5383b38db839673409
 */
 pragma solidity ^0.4.11;
 contract NWO {
     
     uint public constant _totalSupply = 999000000;
     
-    string public constant symbol = "LCFR";
+    string public constant symbol = "LCF";
     string public constant name = "NWO";
-    uint8 public constant decimals = 0;
+    uint8 public constant decimals = 18;
     
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
