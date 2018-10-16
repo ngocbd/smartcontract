@@ -1,15 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x8bb2129eb6ae7592539e0c3053ebca6bc99c4e81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xb5dddb7879138e567dd2c94a76341d5aa3562a75
 */
-pragma solidity ^0.4.15;
+/**
+ * Originally from https://github.com/ConsenSys/MultiSigWallet
+ */
 
-// From https://github.com/ConsenSys/MultiSigWallet/blob/master/contracts/solidity/MultiSigWallet.sol @ e3240481928e9d2b57517bd192394172e31da487
+
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    uint constant public MAX_OWNER_COUNT = 3;
+    uint constant public MAX_OWNER_COUNT = 50;
 
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
@@ -104,19 +106,19 @@ contract MultiSigWallet {
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    function MultiSigWallet()
+    /// @param _owners List of initial owners.
+    /// @param _required Number of required confirmations.
+    function MultiSigWallet(address[] _owners, uint _required)
         public
+        validRequirement(_owners.length, _required)
     {
-        address owner1 = address(0xA1091481AEde4adDe00C1a26992AE49a7e0E1FB0);
-        address owner2 = address(0x0B92baeBE1C99Bbf1841CF81550E196dfb97cbD6);
-        address owner3 = address(0x75D54C5CA999AaDad9B5E4c446e92cEa66Ed29F0);
-        owners.push(address(owner1));
-        owners.push(address(owner2));
-        owners.push(address(owner3));
-        isOwner[owner1] = true;
-        isOwner[owner2] = true;
-        isOwner[owner3] = true;
-        required = 2;
+        for (uint i=0; i<_owners.length; i++) {
+            if (isOwner[_owners[i]] || _owners[i] == 0)
+                throw;
+            isOwner[_owners[i]] = true;
+        }
+        owners = _owners;
+        required = _required;
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
