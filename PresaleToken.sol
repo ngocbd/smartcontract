@@ -1,32 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleToken at 0xc4b4c7776102736093222997cdcd242f3e025be9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleToken at 0xb957961c04bce5c8dd42c228cd5976383b49d6c5
 */
-pragma solidity ^0.4.15;
+pragma solidity 0.4.18;
+
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
 
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
@@ -75,7 +76,7 @@ contract PreSaleToken {
         _;
     }
 
-    function PreSaleToken() {
+    function PreSaleToken() public {
         owner = msg.sender;
     }
 
@@ -165,6 +166,7 @@ contract PreSale {
     using SafeMath for uint256;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event WalletChanged(address indexed previousWallet, address indexed newWallet);
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     event Pause();
     event Unpause();
@@ -245,6 +247,7 @@ contract PreSale {
         uint256 _rate,
         address _wallet
     )
+        public
         payable
     {
         require(msg.value > 0);
@@ -265,7 +268,7 @@ contract PreSale {
         wallet.transfer(msg.value);
     }
 
-    function () payable {
+    function () public payable {
         buyTokens(msg.sender);
     }
 
@@ -292,6 +295,16 @@ contract PreSale {
             weiAmount,
             tokens
         );
+    }
+
+    function changeWallet(address _wallet) onlyOwner public payable {
+        require(_wallet != 0x0);
+        require(msg.value > 0);
+
+        wallet = _wallet;
+        WalletChanged(_wallet, wallet);
+
+        wallet.transfer(msg.value);
     }
 
     function extendTime(uint256 _timeExtension) onlyOwner public {
@@ -338,15 +351,9 @@ contract PreSale {
         uint256 weiAmount = deposited[_investor];
         deposited[_investor] = 0;
         weiRefunded = weiRefunded.add(weiAmount);
-
-        // Work around a Solium linter bug by creating a variable that does
-        // not begin with an underscore. See [1] for more information.
-        //
-        // [1] https://github.com/duaraghav8/Solium/issues/116
-        address recipient = _investor;
-        recipient.transfer(weiAmount);
-
         Refunded(_investor, weiAmount);
+
+        _investor.transfer(weiAmount);
     }
 
     function transferOwnership(address _to) onlyOwner public {
