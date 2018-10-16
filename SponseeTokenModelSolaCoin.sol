@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SponseeTokenModelSolaCoin at 0x50dbb89261c38e9f7c1070d1ec4c266b2e291085
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SponseeTokenModelSolaCoin at 0xeb12a9c5dbcf7fbb6deb1f85cdf84e66de4cc300
 */
 pragma solidity ^0.4.13;
 
@@ -385,7 +385,7 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     function mint(address _address, uint _value) {
 
         // check sender is multisig address
-        require(multiSigAddress == msg.sender);
+        require(accountAddressForSponseeAddress == msg.sender);
 
         // add tokens
         balances[_address] = balances[_address].add(_value);
