@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUToken at 0x027971a9609345ba6f2fa5b0f671cceba5d6ea54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUToken at 0x516ed389ca876239a11d49050bb51577500f6781
 */
 contract ERC20Token {
     /* This is a slight change to the ERC20 base standard.
@@ -133,7 +133,7 @@ contract FUToken is StandardToken, Owned {
     uint256 public constant MILLION = (10**6 * 10**decimals);
     // constructor
     function FUToken(uint256 _amount) {
-        totalSupply = 500 * MILLION; 
+        totalSupply = 5000 * MILLION; 
         balances[msg.sender] = _amount;
     }
 
