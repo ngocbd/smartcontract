@@ -1,265 +1,157 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldBackedToken at 0x7585f835ae2d522722d2684323a0ba83401f32f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldBackedToken at 0xeab43193cf0623073ca89db9b712796356fa7414
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.17;
 
 
-contract DoNotDeployThisGetTheRightOneCosParityPutsThisOnTop {
-    uint256 nothing;
-
-    function DoNotDeployThisGetTheRightOneCosParityPutsThisOnTop() {
-        nothing = 27;
-    }
-}
-
-
-//*************** Ownable
-
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
-  function Ownable() {
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
     owner = msg.sender;
   }
 
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
   modifier onlyOwner() {
     require(msg.sender == owner);
-    
     _;
   }
 
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
 }
 
-//***********Pausible
-
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
 
   bool public paused = false;
 
+
   /**
-   * @dev modifier to allow actions only when the contract IS paused
+   * @dev Modifier to make a function callable only when the contract is not paused.
    */
   modifier whenNotPaused() {
-    require (!paused);
+    require(!paused);
     _;
   }
 
   /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
+   * @dev Modifier to make a function callable only when the contract is paused.
    */
-  modifier whenPaused {
-    require (paused) ;
+  modifier whenPaused() {
+    require(paused);
     _;
   }
 
   /**
    * @dev called by the owner to pause, triggers stopped state
    */
-  function pause() onlyOwner whenNotPaused returns (bool) {
+  function pause() onlyOwner whenNotPaused public {
     paused = true;
     Pause();
-    return true;
   }
 
   /**
    * @dev called by the owner to unpause, returns to normal state
    */
-  function unpause() onlyOwner whenPaused returns (bool) {
+  function unpause() onlyOwner whenPaused public {
     paused = false;
     Unpause();
-    return true;
   }
 }
 
-//*************ERC20
-
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-//*************** SafeMath
-
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
     return c;
   }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
 }
 
-//**************** StandardToken
 
-contract StandardToken is ERC20, SafeMath {
-
-  /**
-   * @dev Fix for the ERC20 short address attack.
-   */
-  modifier onlyPayloadSize(uint size) {
-     require(msg.data.length >= size + 4);
-     _;
-  }
-
-  mapping(address => uint) balances;
-  mapping (address => mapping (address => uint)) allowed;
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32)  returns (bool success){
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
-
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  //uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract GBT {
-  function parentChange(address,uint);
-  function parentFees(address);
-  function setHGT(address _hgt);
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20 
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-//************ HELLOGOLDTOKEN
-
-contract HelloGoldToken is ERC20, SafeMath, Pausable, StandardToken {
-
-  string public name;
-  string public symbol;
-  uint8  public decimals;
-
-  GBT  goldtoken;
-  
-
-  function setGBT(address gbt_) onlyOwner {
-    goldtoken = GBT(gbt_);
-  }
-
-  function GBTAddress() constant returns (address) {
-    return address(goldtoken);
-  }
-
-  function HelloGoldToken(address _reserve) {
-    name = "HelloGold Token";
-    symbol = "HGT";
-    decimals = 8;
- 
-    totalSupply = 1 * 10 ** 9 * 10 ** uint256(decimals);
-    balances[_reserve] = totalSupply;
-  }
-
-
-  function parentChange(address _to) internal {
-    require(address(goldtoken) != 0x0);
-    goldtoken.parentChange(_to,balances[_to]);
-  }
-  function parentFees(address _to) internal {
-    require(address(goldtoken) != 0x0);
-    goldtoken.parentFees(_to);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success){
-    parentFees(_from);
-    parentFees(_to);
-    success = super.transferFrom(_from,_to,_value);
-    parentChange(_from);
-    parentChange(_to);
-    return;
-  }
-
-  function transfer(address _to, uint _value) whenNotPaused returns (bool success)  {
-    parentFees(msg.sender);
-    parentFees(_to);
-    success = super.transfer(_to,_value);
-    parentChange(msg.sender);
-    parentChange(_to);
-    return;
-  }
-
-  function approve(address _spender, uint _value) whenNotPaused returns (bool success)  {
-    return super.approve(_spender,_value);
-  }
-}
-
-//********* GOLDFEES ************************
-
-contract GoldFees is SafeMath,Ownable {
+contract GoldFees is Ownable {
+    using SafeMath for uint256;
+    
     // e.g. if rate = 0.0054
     //uint rateN = 9999452055;
     uint rateN = 9999452054794520548;
@@ -268,11 +160,11 @@ contract GoldFees is SafeMath,Ownable {
     uint public maxRate;
 
     
-    function GoldFees() {
+    function GoldFees() public {
         calcMax();
     }
 
-    function calcMax() {
+    function calcMax() internal {
         maxDays = 1;
         maxRate = rateN;
         
@@ -290,18 +182,18 @@ contract GoldFees is SafeMath,Ownable {
         
     }
 
-    function updateRate(uint256 _n, uint256 _d) onlyOwner{
+    function updateRate(uint256 _n, uint256 _d) public onlyOwner {
         rateN = _n;
         rateD = _d;
         calcMax();
     }
     
-    function rateForDays(uint256 numDays) constant returns (uint256 rate) {
+    function rateForDays(uint256 numDays) public view returns (uint256 rate) {
         if (numDays <= maxDays) {
             uint r = rateN ** numDays;
             uint d = rateD * numDays;
             if (d > 18) {
-                uint div =  10 ** (d-18);
+                uint div = 10 ** (d-18);
                 rate = r / div;
             } else {
                 div = 10 ** (18 - d);
@@ -322,7 +214,7 @@ contract GoldFees is SafeMath,Ownable {
 
             //uint256 r1 = rateForDays(maxDays);
             //uint256 r2 = rateForDays(numDays-maxDays);
-            rate  = safeMul( r1 , r2)  / 10 ** 18;
+            rate = r1.mul(r2)/(10**18);
         }
         return; 
         
@@ -330,27 +222,128 @@ contract GoldFees is SafeMath,Ownable {
 
     uint256 constant public UTC2MYT = 1483200000;
 
-    function wotDay(uint256 time) returns (uint256) {
+    function wotDay(uint256 time) public pure returns (uint256) {
         return (time - UTC2MYT) / (1 days);
     }
 
     // minimum fee is 1 unless same day
-    function calcFees(uint256 start, uint256 end, uint256 startAmount) constant returns (uint256 amount, uint256 fee) {
-        if (startAmount == 0) return;
+    function calcFees(uint256 start, uint256 end, uint256 startAmount) public view returns (uint256 amount, uint256 fee) {
+        if (startAmount == 0) 
+            return;
         uint256 numberOfDays = wotDay(end) - wotDay(start);
         if (numberOfDays == 0) {
             amount = startAmount;
             return;
         }
         amount = (rateForDays(numberOfDays) * startAmount) / (1 ether);
-        if ((fee == 0) && (amount !=  0)) amount--;
-        fee = safeSub(startAmount,amount);
+        if ((fee == 0) && (amount != 0)) 
+            amount--;
+        fee = startAmount.sub(amount);
     }
 }
 
-//******************** GoldBackedToken
 
-contract GoldBackedToken is Ownable, SafeMath, ERC20, Pausable {
+contract Reclaimable is Ownable {
+	ERC20Basic constant internal RECLAIM_ETHER = ERC20Basic(0x0);
+
+	function reclaim(ERC20Basic token)
+        public
+        onlyOwner
+    {
+        address reclaimer = msg.sender;
+        if (token == RECLAIM_ETHER) {
+            reclaimer.transfer(this.balance);
+        } else {
+            uint256 balance = token.balanceOf(this);
+            require(token.transfer(reclaimer, balance));
+        }
+    }
+}
+
+
+// This is primarity used for the migration. Use in the GBT contract is for convenience
+contract GBTBasic {
+
+    struct Balance {
+        uint256 amount;                 // amount through update or transfer
+        uint256 lastUpdated;            // DATE last updated
+        uint256 nextAllocationIndex;    // which allocationsOverTime record contains next update
+        uint256 allocationShare;        // the share of allocationPool that this holder gets (means they hold HGT)
+	}
+
+	/*Creates an array with all balances*/
+	mapping (address => Balance) public balances;
+	
+    struct Allocation { 
+        uint256     amount;
+        uint256     date;
+    }
+	
+	Allocation[]   public allocationsOverTime;
+	Allocation[]   public currentAllocations;
+
+	function currentAllocationLength() view public returns (uint256) {
+		return currentAllocations.length;
+	}
+
+	function aotLength() view public returns (uint256) {
+		return allocationsOverTime.length;
+	}
+}
+
+
+contract GoldBackedToken is Ownable, ERC20, Pausable, GBTBasic, Reclaimable {
+	using SafeMath for uint;
+
+	function GoldBackedToken(GoldFees feeCalc, GBTBasic _oldToken) public {
+		uint delta = 3799997201200178500814753;
+		feeCalculator = feeCalc;
+        oldToken = _oldToken;
+		// now migrate the non balance stuff
+		uint x;
+		for (x = 0; x < oldToken.aotLength(); x++) {
+			Allocation memory al;
+			(al.amount, al.date) = oldToken.allocationsOverTime(x);
+			allocationsOverTime.push(al);
+		}
+		allocationsOverTime[3].amount = allocationsOverTime[3].amount.sub(delta);
+		for (x = 0; x < oldToken.currentAllocationLength(); x++) {
+			(al.amount, al.date) = oldToken.currentAllocations(x);
+			al.amount = al.amount.sub(delta);
+			currentAllocations.push(al);
+		}
+
+		// 1st Minting : TxHash 0x8ba9175d77ed5d3bbf0ddb3666df496d3789da5aa41e46228df91357d9eae8bd
+		// amount = 528359800000000000000;
+		// date = 1512646845;
+		
+		// 2nd Minting : TxHash 0xb3ec483dc8cf7dbbe29f4b86bd371702dd0fdaccd91d1b2d57d5e9a18b23d022
+		// date = 1513855345;
+		// amount = 1003203581831868623088;
+
+		// Get values of first minting at second minting date
+		// feeCalc(1512646845,1513855345,528359800000000000000) => (527954627221032516031,405172778967483969)
+
+		mintedGBT.date = 1515700247;
+		mintedGBT.amount = 1529313490861692541644;
+	}
+
+  function totalSupply() view public returns (uint256) {
+	  uint256 minted;
+	  uint256 mFees;
+	  uint256 uminted;
+	  uint256 umFees;
+	  uint256 allocated;
+	  uint256 aFees;
+	  (minted,mFees) = calcFees(mintedGBT.date,now,mintedGBT.amount);
+	  (uminted,umFees) = calcFees(unmintedGBT.date,now,unmintedGBT.amount);
+	  (allocated,aFees) = calcFees(currentAllocations[0].date,now,currentAllocations[0].amount);
+	  if (minted+allocated>uminted) {
+	  	return minted.add(allocated).sub(uminted);
+	  } else {
+		return 0;
+	  }
+  }
 
   event Transfer(address indexed from, address indexed to, uint value);
   event Approval(address indexed owner, address indexed spender, uint value);
@@ -359,100 +352,105 @@ contract GoldBackedToken is Ownable, SafeMath, ERC20, Pausable {
   event TokenMinted(address destination, uint256 amount);
   event TokenBurned(address source, uint256 amount);
   
-	string public name = "HelloGold Gold Backed Token";
-	string public symbol = "GBT";
+	string public name = "GOLDX";
+	string public symbol = "GOLDX";
 	uint256 constant public  decimals = 18;  // same as ETH
 	uint256 constant public  hgtDecimals = 8;
 		
-	uint256 constant public allocationPool = 1 *  10**9 * 10**hgtDecimals;      // total HGT holdings
-	uint256	constant public	maxAllocation  = 38 * 10**5 * 10**decimals;			// max GBT that can ever ever be given out
+	uint256 constant public allocationPool = 1 * 10**9 * 10**hgtDecimals;      // total HGT holdings
+	uint256	         public	maxAllocation  = 38 * 10**5 * 10**decimals;			// max GBT that can ever ever be given out
 	uint256	         public	totAllocation;			// amount of GBT so far
 	
-	address			 public feeCalculator;
+	GoldFees		 public feeCalculator;
 	address		     public HGT;					// HGT contract address
 
+	function updateMaxAllocation(uint256 newMax) public onlyOwner {
+		require(newMax > 38 * 10**5 * 10**decimals);
+		maxAllocation = newMax;
+	}
 
-
-	function setFeeCalculator(address newFC) onlyOwner {
+	function setFeeCalculator(GoldFees newFC) public onlyOwner {
 		feeCalculator = newFC;
 	}
 
-
-	function calcFees(uint256 from, uint256 to, uint256 amount) returns (uint256 val, uint256 fee) {
-		return GoldFees(feeCalculator).calcFees(from,to,amount);
-	}
-
-	function GoldBackedToken(address feeCalc) {
-		feeCalculator = feeCalc;
-	}
-
-    struct allocation { 
-        uint256     amount;
-        uint256     date;
-    }
 	
-	allocation[]   public allocationsOverTime;
-	allocation[]   public currentAllocations;
+	// GoldFees needs to take care of Domain Offset - do not do here
 
-	function currentAllocationLength() constant returns (uint256) {
-		return currentAllocations.length;
-	}
-
-	function aotLength() constant returns (uint256) {
-		return allocationsOverTime.length;
+	function calcFees(uint256 from, uint256 to, uint256 amount) view public returns (uint256 val, uint256 fee) {
+		return feeCalculator.calcFees(from,to,amount);
 	}
 
 	
-    struct Balance {
-        uint256 amount;                 // amount through update or transfer
-        uint256 lastUpdated;            // DATE last updated
-        uint256 nextAllocationIndex;    // which allocationsOverTime record contains next update
-        uint256 allocationShare;        // the share of allocationPool that this holder gets (means they hold HGT)
-    }
+	mapping (address => mapping (address => uint)) public allowance;
+    mapping (address => bool) updated;
 
-	/*Creates an array with all balances*/
-	mapping (address => Balance) public balances;
-	mapping (address => mapping (address => uint)) allowed;
+    GBTBasic oldToken;
+
+	function migrateBalance(address where) public {
+		if (!updated[where]) {
+            uint256 am;
+            uint256 lu;
+            uint256 ne;
+            uint256 al;
+            (am,lu,ne,al) = oldToken.balances(where);
+            balances[where] = Balance(am,lu,ne,al);
+            updated[where] = true;
+        }
+
+	}
 	
 	function update(address where) internal {
         uint256 pos;
 		uint256 fees;
 		uint256 val;
+		migrateBalance(where);
         (val,fees,pos) = updatedBalance(where);
 	    balances[where].nextAllocationIndex = pos;
 	    balances[where].amount = val;
         balances[where].lastUpdated = now;
 	}
 	
-	function updatedBalance(address where) constant public returns (uint val, uint fees, uint pos) {
-		uint256 c_val;
-		uint256 c_fees;
-		uint256 c_amount;
+	function updatedBalance(address where) view public returns (uint val, uint fees, uint pos) {
+		uint256 cVal;
+		uint256 cFees;
+		uint256 cAmount;
 
-		(val, fees) = calcFees(balances[where].lastUpdated,now,balances[where].amount);
+        uint256 am;
+        uint256 lu;
+        uint256 ne;
+        uint256 al;
+		Balance memory bb;
 
-	    pos = balances[where].nextAllocationIndex;
-		if ((pos < currentAllocations.length) &&  (balances[where].allocationShare != 0)) {
-
-			c_amount = currentAllocations[balances[where].nextAllocationIndex].amount * balances[where].allocationShare / allocationPool;
-
-			(c_val,c_fees)   = calcFees(currentAllocations[balances[where].nextAllocationIndex].date,now,c_amount);
-
+		// calculate update of balance in account
+        if (updated[where]) {
+            bb = balances[where];
+            am = bb.amount;
+            lu = bb.lastUpdated;
+            ne = bb.nextAllocationIndex;
+            al = bb.allocationShare;
+        } else {
+            (am,lu,ne,al) = oldToken.balances(where);
+        }
+		(val,fees) = calcFees(lu,now,am);
+		// calculate update based on accrued disbursals
+	    pos = ne;
+		if ((pos < currentAllocations.length) && (al != 0)) {
+			cAmount = currentAllocations[ne].amount.mul(al).div( allocationPool);
+			(cVal,cFees) = calcFees(currentAllocations[ne].date,now,cAmount);
 		} 
-
-	    val  += c_val;
-		fees += c_fees;
-		pos   = currentAllocations.length;
+	    val = val.add(cVal);
+		fees = fees.add(cFees);
+		pos = currentAllocations.length;
 	}
 
-    function balanceOf(address where) constant returns (uint256 val) {
+    function balanceOf(address where) view public returns (uint256 val) {
         uint256 fees;
 		uint256 pos;
         (val,fees,pos) = updatedBalance(where);
         return ;
     }
 
-	event Allocation(uint256 amount, uint256 date);
+	event GoldAllocation(uint256 amount, uint256 date);
 	event FeeOnAllocation(uint256 fees, uint256 date);
 
 	event PartComplete();
@@ -460,13 +458,17 @@ contract GoldBackedToken is Ownable, SafeMath, ERC20, Pausable {
 	uint256 public partPos;
 	uint256 public partFees;
 	uint256 partL;
-	allocation[]   public partAllocations;
+	Allocation[]   public partAllocations;
 
-	function partAllocationLength() constant returns (uint) {
+	function partAllocationLength() view public returns (uint) {
 		return partAllocations.length;
 	}
 
-	function addAllocationPartOne(uint newAllocation,uint numSteps) onlyOwner{
+	function addAllocationPartOne(uint newAllocation,uint numSteps) 
+		public 
+		onlyMinter 
+	{
+		require(partPos == 0);
 		uint256 thisAllocation = newAllocation;
 
 		require(totAllocation < maxAllocation);		// cannot allocate more than this;
@@ -476,14 +478,14 @@ contract GoldBackedToken is Ownable, SafeMath, ERC20, Pausable {
 		}
 
 		if (totAllocation + thisAllocation > maxAllocation) {
-			thisAllocation = maxAllocation - totAllocation;
+			thisAllocation = maxAllocation.sub(totAllocation);
 			log0("max alloc reached");
 		}
-		totAllocation += thisAllocation;
+		totAllocation = totAllocation.add(thisAllocation);
 
-		Allocation(thisAllocation,now);
+		GoldAllocation(thisAllocation,now);
 
-        allocation memory newDiv;
+        Allocation memory newDiv;
         newDiv.amount = thisAllocation;
         newDiv.date = now;
 		// store into history
@@ -501,12 +503,12 @@ contract GoldBackedToken is Ownable, SafeMath, ERC20, Pausable {
 		// The only fees that need to be collected are the fees on location zero.
 		// Since they are the last calculated = they come out with the break
 		//
-		for (partPos = partAllocations.length - 2; partPos >= 0; partPos-- ){
+		for (partPos = partAllocations.length - 2; partPos >= 0; partPos-- ) {
 			(partAllocations[partPos].amount,partFees) = calcFees(partAllocations[partPos].date,now,partAllocations[partPos].amount);
 
-			partAllocations[partPos].amount += partAllocations[partL - 1].amount;
-			partAllocations[partPos].date    = now;
-			if ((partPos == 0) || (partPos == partAllocations.length-numSteps)){
+			partAllocations[partPos].amount = partAllocations[partPos].amount.add(partAllocations[partL - 1].amount);
+			partAllocations[partPos].date = now;
+			if ((partPos == 0) || (partPos == partAllocations.length-numSteps)) {
 				break; 
 			}
 		}
@@ -519,15 +521,17 @@ contract GoldBackedToken is Ownable, SafeMath, ERC20, Pausable {
 		currentAllocations = partAllocations;
 	}
 
-	function addAllocationPartTwo(uint numSteps) onlyOwner {
+	function addAllocationPartTwo(uint numSteps) 
+		public 
+		onlyMinter 
+	{
 		require(numSteps > 0);
 		require(partPos > 0);
-		for (uint i = 0; i < numSteps; i++ ){
+		for (uint i = 0; i < numSteps; i++ ) {
 			partPos--;
 			(partAllocations[partPos].amount,partFees) = calcFees(partAllocations[partPos].date,now,partAllocations[partPos].amount);
-
-			partAllocations[partPos].amount += partAllocations[partL - 1].amount;
-			partAllocations[partPos].date    = now;
+			partAllocations[partPos].amount = partAllocations[partPos].amount.add(partAllocations[partL - 1].amount);
+			partAllocations[partPos].date = now;
 			if (partPos == 0) {
 				break; 
 			}
@@ -541,377 +545,128 @@ contract GoldBackedToken is Ownable, SafeMath, ERC20, Pausable {
 		currentAllocations = partAllocations;
 	}
 
-
-	function setHGT(address _hgt) onlyOwner {
+	function setHGT(address _hgt) public onlyOwner {
 		HGT = _hgt;
 	}
 
-	function parentFees(address where) whenNotPaused {
+	function parentFees(address where) public whenNotPaused {
 		require(msg.sender == HGT);
 	    update(where);		
 	}
 	
-	function parentChange(address where, uint newValue) whenNotPaused { // called when HGT balance changes
+	function parentChange(address where, uint newValue) public whenNotPaused { // called when HGT balance changes
 		require(msg.sender == HGT);
 	    balances[where].allocationShare = newValue;
 	}
 	
 	/* send GBT */
-	function transfer(address _to, uint256 _value) whenNotPaused returns (bool ok) {
+	function transfer(address _to, uint256 _value) public whenNotPaused returns (bool ok) {
+		require(_to != address(0));
 	    update(msg.sender);              // Do this to ensure sender has enough funds.
 		update(_to); 
 
-        balances[msg.sender].amount = safeSub(balances[msg.sender].amount, _value);
-        balances[_to].amount = safeAdd(balances[_to].amount, _value);
-
+        balances[msg.sender].amount = balances[msg.sender].amount.sub(_value);
+        balances[_to].amount = balances[_to].amount.add(_value);
 		Transfer(msg.sender, _to, _value); //Notify anyone listening that this transfer took place
         return true;
 	}
 
-	function transferFrom(address _from, address _to, uint _value) whenNotPaused returns (bool success) {
-		var _allowance = allowed[_from][msg.sender];
+	function transferFrom(address _from, address _to, uint _value) public whenNotPaused returns (bool success) {
+		require(_to != address(0));
+		var _allowance = allowance[_from][msg.sender];
 
 	    update(_from);              // Do this to ensure sender has enough funds.
 		update(_to); 
 
-		balances[_to].amount = safeAdd(balances[_to].amount, _value);
-		balances[_from].amount = safeSub(balances[_from].amount, _value);
-		allowed[_from][msg.sender] = safeSub(_allowance, _value);
+		balances[_to].amount = balances[_to].amount.add(_value);
+		balances[_from].amount = balances[_from].amount.sub(_value);
+		allowance[_from][msg.sender] = _allowance.sub(_value);
 		Transfer(_from, _to, _value);
 		return true;
 	}
 
-  	function approve(address _spender, uint _value) whenNotPaused returns (bool success) {
-		require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-    	allowed[msg.sender][_spender] = _value;
+  	function approve(address _spender, uint _value) public whenNotPaused returns (bool success) {
+		require((_value == 0) || (allowance[msg.sender][_spender] == 0));
+    	allowance[msg.sender][_spender] = _value;
     	Approval(msg.sender, _spender, _value);
     	return true;
   	}
 
-  	function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    	return allowed[_owner][_spender];
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowance[msg.sender][_spender] = allowance[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowance[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowance[msg.sender][_spender] = 0;
+    } else {
+      allowance[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
+    return true;
+  }
+
+  	function allowance(address _owner, address _spender) public view returns (uint remaining) {
+    	return allowance[_owner][_spender];
   	}
 
 	// Minting Functions 
 	address public authorisedMinter;
 
-	function setMinter(address minter) onlyOwner {
+	function setMinter(address minter) public onlyOwner {
 		authorisedMinter = minter;
 	}
+
+	modifier onlyMinter() {
+		require(msg.sender == authorisedMinter);
+		_;
+	}
+
+	Allocation public mintedGBT;		// minting adds to this one
+	Allocation public unmintedGBT;		// allocating adds here, burning takes from here if minted is empty
 	
-	function mintTokens(address destination, uint256 amount) {
+	function mintTokens(address destination, uint256 amount) 
+		onlyMinter
+		public 
+	{
 		require(msg.sender == authorisedMinter);
 		update(destination);
-		balances[destination].amount = safeAdd(balances[destination].amount, amount);
-		balances[destination].lastUpdated = now;
-		balances[destination].nextAllocationIndex = currentAllocations.length;
+		balances[destination].amount = balances[destination].amount.add(amount);
 		TokenMinted(destination,amount);
+		Transfer(0x0,destination,amount); // ERC20 compliance
+		//
+		// TotalAllocation stuff
+		//
+		uint256 fees;
+		(mintedGBT.amount,fees) = calcFees(mintedGBT.date,now,mintedGBT.amount);
+		mintedGBT.amount = mintedGBT.amount.add(amount);
+		mintedGBT.date = now;
 	}
 
-	function burnTokens(address source, uint256 amount) {
-		require(msg.sender == authorisedMinter);
+	function burnTokens(address source, uint256 amount) 
+		onlyMinter
+		public 
+	{
 		update(source);
-		balances[source].amount = safeSub(balances[source].amount,amount);
-		balances[source].lastUpdated = now;
-		balances[source].nextAllocationIndex = currentAllocations.length;
+		balances[source].amount = balances[source].amount.sub(amount);
 		TokenBurned(source,amount);
+		Transfer(source,0x0,amount); // ERC20 compliance
+		//
+		// TotalAllocation stuff
+		//
+		uint256 fees;
+		(unmintedGBT.amount,fees) = calcFees(unmintedGBT.date,now,unmintedGBT.amount);
+		unmintedGBT.date = now;
+		unmintedGBT.amount = unmintedGBT.amount.add(amount);
 	}
-}
-
-//**************** HelloGoldSale
-
-contract HelloGoldSale is Pausable, SafeMath {
-
-  uint256 public decimals = 8;
-
-  uint256 public startDate = 1503892800;      // Monday, August 28, 2017 12:00:00 PM GMT+08:00
-  uint256 public endDate   = 1504497600;      // Monday, September 4, 2017 12:00:00 PM GMT+08:00
-
-  uint256 tranchePeriod = 1 weeks;
-
-  // address of HGT Token. HGT must Approve this contract to disburse 300M tokens
-  HelloGoldToken          token;
-
-  uint256 constant MaxCoinsR1      = 180 * 10**6 * 10**8;   // 180M HGT
-  uint256 public coinsRemaining    = 180 * 10**6 * 10**8; 
-  uint256 coinsPerTier             =  20 * 10**6 * 10**8;   // 20M HGT
-  uint256 public coinsLeftInTier   =  20 * 10**6 * 10**8;
-
-  uint256 public minimumCap        =  0;   // 40M HGT
-
-  uint256 numTiers                  = 5;
-  uint16  public tierNo;
-  uint256 public preallocCoins;   // used for testing against cap (inc placement)
-  uint256 public purchasedCoins;  // used for testing against tier pricing
-  uint256 public ethRaised;
-  uint256 public personalMax        = 10 * 1 ether;     // max ether per person during public sale
-  uint256 public contributors;
-
-  address public cs;
-  address public multiSig;
-  address public HGT_Reserve;
-  
-  struct csAction  {
-      bool        passedKYC;
-      bool        blocked;
-  }
-
-  /* This creates an array with all balances */
-  mapping (address => csAction) public permissions;
-  mapping (address => uint256)  public deposits;
-
-  modifier MustBeEnabled(address x) {
-      require (!permissions[x].blocked) ;
-      require (permissions[x].passedKYC) ;
-      
-      _;
-  }
-
-  function HelloGoldSale(address _cs, address _hgt, address _multiSig, address _reserve) {
-    cs          = _cs;
-    token       = HelloGoldToken(_hgt);
-    multiSig    = _multiSig;
-    HGT_Reserve = _reserve;
-  }
-
-  // We only expect to use this to set/reset the start of the contract under exceptional circumstances
-  function setStart(uint256 when_) onlyOwner {
-      startDate = when_;
-      endDate = when_ + tranchePeriod;
-  }
-
-  modifier MustBeCs() {
-      require (msg.sender == cs) ;
-      
-      _;
-  }
-
-
-  // 1 ether = N HGT tokens 
-  uint256[5] public hgtRates = [1248900000000,1196900000000,1144800000000,1092800000000,1040700000000];
-                      
-
-    /* Approve the account for operation */
-    function approve(address user) MustBeCs {
-        permissions[user].passedKYC = true;
-    }
-    
-    function block(address user) MustBeCs {
-        permissions[user].blocked = true;
-    }
-
-    function unblock(address user) MustBeCs {
-         permissions[user].blocked = false;
-    }
-
-    function newCs(address newCs) onlyOwner {
-        cs = newCs;
-    }
-
-    function setPeriod(uint256 period_) onlyOwner {
-        require (!funding()) ;
-        tranchePeriod = period_;
-        endDate = startDate + tranchePeriod;
-        if (endDate < now + tranchePeriod) {
-            endDate = now + tranchePeriod;
-        }
-    }
-
-    function when()  constant returns (uint256) {
-        return now;
-    }
-
-  function funding() constant returns (bool) {     
-    if (paused) return false;               // frozen
-    if (now < startDate) return false;      // too early
-    if (now > endDate) return false;        // too late
-    if (coinsRemaining == 0) return false;  // no more coins
-    if (tierNo >= numTiers ) return false;  // passed end of top tier. Tiers start at zero
-    return true;
-  }
-
-  function success() constant returns (bool succeeded) {
-    if (coinsRemaining == 0) return true;
-    bool complete = (now > endDate) ;
-    bool didOK = (coinsRemaining <= (MaxCoinsR1 - minimumCap)); // not even 40M Gone?? Aargh.
-    succeeded = (complete && didOK)  ;  // (out of steam but enough sold) 
-    return ;
-  }
-
-  function failed() constant returns (bool didNotSucceed) {
-    bool complete = (now > endDate  );
-    bool didBad = (coinsRemaining > (MaxCoinsR1 - minimumCap));
-    didNotSucceed = (complete && didBad);
-    return;
-  }
-
-  
-  function () payable MustBeEnabled(msg.sender) whenNotPaused {    
-    createTokens(msg.sender,msg.value);
-  }
-
-  function linkCoin(address coin) onlyOwner {
-    token = HelloGoldToken(coin);
-  }
-
-  function coinAddress() constant returns (address) {
-      return address(token);
-  }
-
-  // hgtRates in whole tokens per ETH
-  // max individual contribution in whole ETH
-  function setHgtRates(uint256 p0,uint256 p1,uint256 p2,uint256 p3,uint256 p4, uint256 _max ) onlyOwner {
-              require (now < startDate) ;
-              hgtRates[0]   = p0 * 10**8;
-              hgtRates[1]   = p1 * 10**8;
-              hgtRates[2]   = p2 * 10**8;
-              hgtRates[3]   = p3 * 10**8;
-              hgtRates[4]   = p4 * 10**8;
-              personalMax = _max * 1 ether;           // max ETH per person
-  }
-
-  
-  event Purchase(address indexed buyer, uint256 level,uint256 value, uint256 tokens);
-  event Reduction(string msg, address indexed buyer, uint256 wanted, uint256 allocated);
-  
-  function createTokens(address recipient, uint256 value) private {
-    uint256 totalTokens;
-    uint256 hgtRate;
-    require (funding()) ;
-    require (value > 1 finney) ;
-    require (deposits[recipient] < personalMax);
-
-    uint256 maxRefund = 0;
-    if ((deposits[msg.sender] + value) > personalMax) {
-        maxRefund = deposits[msg.sender] + value - personalMax;
-        value -= maxRefund;
-        log0("maximum funds exceeded");
-    }  
-
-    uint256 val = value;
-
-    ethRaised = safeAdd(ethRaised,value);
-    if (deposits[recipient] == 0) contributors++;
-    
-    
-    do {
-      hgtRate = hgtRates[tierNo];                 // hgtRate must include the 10^8
-      uint tokens = safeMul(val, hgtRate);      // (val in eth * 10^18) * #tokens per eth
-      tokens = safeDiv(tokens, 1 ether);      // val is in ether, msg.value is in wei
-   
-      if (tokens <= coinsLeftInTier) {
-        uint256 actualTokens = tokens;
-        uint refund = 0;
-        if (tokens > coinsRemaining) { //can't sell desired # tokens
-            Reduction("in tier",recipient,tokens,coinsRemaining);
-            actualTokens = coinsRemaining;
-            refund = safeSub(tokens, coinsRemaining ); // refund amount in tokens
-            refund = safeDiv(refund*1 ether,hgtRate );  // refund amount in ETH
-            // need a refund mechanism here too
-            coinsRemaining = 0;
-            val = safeSub( val,refund);
-        } else {
-            coinsRemaining  = safeSub(coinsRemaining,  actualTokens);
-        }
-        purchasedCoins  = safeAdd(purchasedCoins, actualTokens);
-
-        totalTokens = safeAdd(totalTokens,actualTokens);
-
-        require (token.transferFrom(HGT_Reserve, recipient,totalTokens)) ;
-
-        Purchase(recipient,tierNo,val,actualTokens); // event
-
-        deposits[recipient] = safeAdd(deposits[recipient],val); // in case of refund - could pull off etherscan
-        refund += maxRefund;
-        if (refund > 0) {
-            ethRaised = safeSub(ethRaised,refund);
-            recipient.transfer(refund);
-        }
-        if (coinsRemaining <= (MaxCoinsR1 - minimumCap)){ // has passed success criteria
-            if (!multiSig.send(this.balance)) {                // send funds to HGF
-                log0("cannot forward funds to owner");
-            }
-        }
-        coinsLeftInTier = safeSub(coinsLeftInTier,actualTokens);
-        if ((coinsLeftInTier == 0) && (coinsRemaining != 0)) { // exact sell out of non final tier
-            coinsLeftInTier = coinsPerTier;
-            tierNo++;
-            endDate = now + tranchePeriod;
-        }
-        return;
-      }
-      // check that coinsLeftInTier >= coinsRemaining
-
-      uint256 coins2buy = min256(coinsLeftInTier , coinsRemaining); 
-
-      endDate = safeAdd( now, tranchePeriod);
-      // Have bumped levels - need to modify end date here
-      purchasedCoins = safeAdd(purchasedCoins, coins2buy);  // give all coins remaining in this tier
-      totalTokens    = safeAdd(totalTokens,coins2buy);
-      coinsRemaining = safeSub(coinsRemaining,coins2buy);
-
-      uint weiCoinsLeftInThisTier = safeMul(coins2buy,1 ether);
-      uint costOfTheseCoins = safeDiv(weiCoinsLeftInThisTier, hgtRate);  // how much did that cost?
-
-      Purchase(recipient, tierNo,costOfTheseCoins,coins2buy); // event
-
-      deposits[recipient] = safeAdd(deposits[recipient],costOfTheseCoins);
-      val    = safeSub(val,costOfTheseCoins);
-      tierNo = tierNo + 1;
-      coinsLeftInTier = coinsPerTier;
-    } while ((val > 0) && funding());
-
-    // escaped because we passed the end of the universe.....
-    // so give them their tokens
-    require (token.transferFrom(HGT_Reserve, recipient,totalTokens)) ;
-
-    if ((val > 0) || (maxRefund > 0)){
-        Reduction("finished crowdsale, returning ",recipient,value,totalTokens);
-        // return the remainder !
-        recipient.transfer(val+maxRefund); // if you can't return the balance, abort whole process
-    }
-    if (!multiSig.send(this.balance)) {
-        ethRaised = safeSub(ethRaised,this.balance);
-        log0("cannot send at tier jump");
-    }
-  }
-  
-  function allocatedTokens(address grantee, uint256 numTokens) onlyOwner {
-    require (now < startDate) ;
-    if (numTokens < coinsRemaining) {
-        coinsRemaining = safeSub(coinsRemaining, numTokens);
-       
-    } else {
-        numTokens = coinsRemaining;
-        coinsRemaining = 0;
-    }
-    preallocCoins = safeAdd(preallocCoins,numTokens);
-    require (token.transferFrom(HGT_Reserve,grantee,numTokens));
-  }
-
-  function withdraw() { // it failed. Come and get your ether.
-      if (failed()) {
-          if (deposits[msg.sender] > 0) {
-              uint256 val = deposits[msg.sender];
-              deposits[msg.sender] = 0;
-              msg.sender.transfer(val);
-          }
-      }
-  }
-
-  function complete() onlyOwner {  // this should not have to be called. Extreme measures.
-      if (success()) {
-          uint256 val = this.balance;
-          if (val > 0) {
-            if (!multiSig.send(val)) {
-                log0("cannot withdraw");
-            } else {
-                log0("funds withdrawn");
-            }
-          } else {
-              log0("nothing to withdraw");
-          }
-      }
-  }
 
 }
