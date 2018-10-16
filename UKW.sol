@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UKW at 0x45ff8301cef74017e8c08f55a201863abafa82a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UKW at 0x68d442fa302719ee298b8ea3ac6ed15b05784d17
 */
 pragma solidity ^0.4.17;
 
@@ -210,7 +210,7 @@ contract UKW is BurnableToken {
 
     function UKW() public {
         name = "Ubuntukingdomwealth";
-        symbol = "UKW";
+        symbol = "UWC";
         decimals = 18;
         totalSupply = 200000000e18;
         balances[msg.sender] = totalSupply;
