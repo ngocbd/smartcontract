@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xaa4ec8484e89bed69570825688789589d38eea5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x9d007cfd71cd1e3ca4853b1ab7d43fbd3263509c
 */
 pragma solidity ^0.4.20;
 
@@ -149,7 +149,7 @@ contract Hourglass {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = .51 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = .5 ether;
     uint256 constant internal ambassadorQuota_ = .5 ether;
     
     
