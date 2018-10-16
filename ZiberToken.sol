@@ -1,97 +1,46 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xb8d24ac55866236b2c7b8fb046ca110d488fba02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xa279111bac7ea963b0ee35a562304fb59c97807b
 */
 pragma solidity ^0.4.13;
 
-/*
+ /// @title Ownable contract - base contract with an owner
+ /// @author dev@smartcontracteam.com
+contract Ownable {
+  address public owner;
 
-  Ziber.io Contract
-  ========================
-  Buys ZBR tokens from the DAO crowdsale on your behalf.
-  Author: /u/Leo
-
-*/
-
-
-// Interface to ZBR ICO Contract
-contract DaoToken {
-  uint256 public CAP;
-  uint256 public totalEthers;
-  function proxyPayment(address participant) payable;
-  function transfer(address _to, uint _amount) returns (bool success);
-}
-
-contract ZiberToken {
-  // Store the amount of ETH deposited by each account.
-  mapping (address => uint256) public balances;
-  // Store whether or not each account would have made it into the crowdsale.
-  mapping (address => bool) public checked_in;
-  // ico for executing buy.
-  uint256 public ico;
-  // Track whether the contract has bought the tokens yet.
-  bool public bought_tokens;
-  // Record the time the contract bought the tokens.
-  uint256 public time_bought;
-  uint256 public extra_time_bought;
-  // Emergency kill switch in case a critical bug is found.
-  bool public kill_switch;
-  
-  /* Public variables of the token */
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-  
-  // Ratio of ZBR tokens received to ETH contributed
-  // 1.000.000 BGP = 80.000.000 ZBR
-  // 1ETH = 218 BGP (03.07.2017: https://www.coingecko.com/en/price_charts/ethereum/gbp)
-  // 1 ETH = 17440 ZBR
-  uint256 ZBR_per_eth = 17440;
-  //Total ZBR Tokens Reserve
-  uint256 ZBR_total_reserve = 100000000;
-  // ZBR Tokens for Developers
-  uint256 ZBR_dev_reserved = 10000000;
-  // ZBR Tokens for Selling over ICO
-  uint256 ZBR_for_selling = 80000000;
-  // ZBR Tokens for ico
-  uint256 ZBR_for_ico= 10000000;
-  // ETH for activate kill-switch in contract
-  uint256 min_eth_to_end = 50000 ether;
-  uint256 max_eth_to_end = 100000 ether;
-  uint registredTo;
-  uint256 loadedRefund;
-  uint256 _supply;
-  string _name;
-  string _symbol;
-  uint8 _decimals;
-
-  // The ZBR Token address and sale address are the same.
-  DaoToken public token = DaoToken(0xa9d585CE3B227d69985c3F7A866fE7d0e510da50);
-  // The developer address.
-  address developer_address = 0x004B74Ea737AFD25ce083573fB45a49da762aCD4; 
-
-  /* This creates an array with all balances */
-  mapping (address => uint256) public balanceOf;
-    
-  /* This generates a public event on the blockchain that will notify clients */
-  event Transfer(address indexed from, address indexed to, uint256 value);
-    
-  /* Initializes contract with initial supply tokens to the creator of the contract */
-  function ZiberToken() {
-      /* if supply not given then generate 100 million of the smallest unit of the token */
-      _supply = 10000000000;
-      
-      /* Unless you add other functions these variables will never change */
-      balanceOf[msg.sender] = _supply;
-      name = "ZIBER LTD Crowdsale Tokens";     
-      symbol = "ZBR";
-      
-      /* If you want a divisible token then add the amount of decimals the base unit has  */
-      decimals = 2;
+  function Ownable() {
+    owner = msg.sender;
   }
 
+  modifier onlyOwner() {
+    require(msg.sender == owner);  
+    _;
+  }
 
-  /// SafeMath contract - math operations with safety checks
-  /// @author dev@smartcontracteam.com
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+}
+
+ /// @title ERC20 interface see https://github.com/ethereum/EIPs/issues/20
+ /// @author dev@smartcontracteam.com
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+  function mint(address receiver, uint amount);
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+ /// @title SafeMath contract - math operations with safety checks
+ /// @author dev@smartcontracteam.com
+contract SafeMath {
   function safeMul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
@@ -133,181 +82,153 @@ contract ZiberToken {
   }
 
   function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
+    require(assertion);  
   }
+}
 
+/// @title ZiberToken contract - standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
+/// @author dev@smartcontracteam.com
+contract ZiberToken is SafeMath, ERC20, Ownable {
+ string public name = "Ziber Token";
+ string public symbol = "ZBR";
+ uint public decimals = 8;
+ uint public constant FROZEN_TOKENS = 10000000;
+ uint public constant FREEZE_PERIOD = 1 years;
+ uint public crowdSaleOverTimestamp;
 
-  /**
-  * Allow load refunds back on the contract for the refunding.
-  *
-  * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
-  */
-  function loadRefund() payable {
-    if(msg.value == 0) throw;
-    loadedRefund = safeAdd(loadedRefund, msg.value);
-  }
+ /// contract that is allowed to create new tokens and allows unlift the transfer limits on this token
+ address public crowdsaleAgent;
+ /// A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.
+ bool public released = false;
+ /// approve() allowances
+ mapping (address => mapping (address => uint)) allowed;
+ /// holder balances
+ mapping(address => uint) balances;
 
-  /**
-  * Investors can claim refund.
-  */
-  function refund() private  {
-    uint256 weiValue = this.balance;
-    if (weiValue == 0) throw;
-    uint256 weiRefunded;
-    weiRefunded = safeAdd(weiRefunded, weiValue);
-    refund();
-    if (!msg.sender.send(weiValue)) throw;
-  }
+ /// @dev Limit token transfer until the crowdsale is over.
+ modifier canTransfer() {
+   if(!released) {
+     require(msg.sender == crowdsaleAgent);
+   }
+   _;
+ }
 
-  /* Send coins */
-  function transfer(address _to, uint256 _value) {
-      /* if the sender doenst have enough balance then stop */
-      if (balanceOf[msg.sender] < _value) throw;
-      if (balanceOf[_to] + _value < balanceOf[_to]) throw;
-      
-      /* Add and subtract new balances */
-      balanceOf[msg.sender] -= _value;
-      balanceOf[_to] += _value;
-      
-      /* Notifiy anyone listening that this transfer took place */
-      Transfer(msg.sender, _to, _value);
-  }
-  
-  // Allows the developer to shut down everything except withdrawals in emergencies.
-  function activate_kill_switch() {
-    // Only allow the developer to activate the kill switch.
-    if (msg.sender != developer_address) throw;
-    // Irreversibly activate the kill switch.
-    kill_switch = true;
-  }
-  
-  // Withdraws all ETH deposited or ZBR purchased by the sender.
-  function withdraw(){
-    // If called before the ICO, cancel caller's participation in the sale.
-    if (!bought_tokens) {
-      // Store the user's balance prior to withdrawal in a temporary variable.
-      uint256 eth_amount = balances[msg.sender];
-      // Update the user's balance prior to sending ETH to prevent recursive call.
-      balances[msg.sender] = 0;
-      // Return the user's funds.  Throws on failure to prevent loss of funds.
-      msg.sender.transfer(eth_amount);
-    }
-    // Withdraw the sender's tokens if the contract has already purchased them.
-    else {
-      // Store the user's ZBR balance in a temporary variable (1 ETHWei -> 2000 ZBRWei).
-      uint256 ZBR_amount = balances[msg.sender] * ZBR_per_eth;
-      // Update the user's balance prior to sending ZBR to prevent recursive call.
-      balances[msg.sender] = 0;
-      // No fee for withdrawing if the user would have made it into the crowdsale alone.
-      uint256 fee = 0;
-      // 1% fee if the user didn't check in during the crowdsale.
-      if (!checked_in[msg.sender]) {
-        fee = ZBR_amount / 100;
-        // Send any non-zero fees to developer.
-        if(!token.transfer(developer_address, fee)) throw;
-      }
-      // Send the user their tokens.  Throws if the crowdsale isn't over.
-      if(!token.transfer(msg.sender, ZBR_amount - fee)) throw;
-    }
-  }
-  
-  // Allow developer to add ETH to the buy execution ico.
-  function add_to_ico() payable {
-    // Only allow the developer to contribute to the buy execution ico.
-    if (msg.sender != developer_address) throw;
-    // Disallow adding to ico if kill switch is active.
-    if (kill_switch) throw;
-    // Disallow adding to the ico if contract has already bought the tokens.
-    if (bought_tokens) throw;
-    // Update ico to include received amount.
-    ico += msg.value;
-  }
-  
-  // Buys tokens in the crowdsale and rewards the caller, callable by anyone.
-  function claim_ico(){
-    // Short circuit to save gas if the contract has already bought tokens.
-    if (bought_tokens) return;
-    // Disallow buying into the crowdsale if kill switch is active.
-    if (kill_switch) throw;
-    // Record that the contract has bought the tokens.
-    bought_tokens = true;
-    // Record the time the contract bought the tokens.
-    time_bought = now + 1 days;
-    // Transfer all the funds (less the ico) to the ZBR crowdsale contract
-    // to buy tokens.  Throws if the crowdsale hasn't started yet or has
-    // already completed, preventing loss of funds.
-    token.proxyPayment.value(this.balance - ico)(address(this));
-    // Send the caller their ico for buying tokens for the contract.
-    if(this.balance > max_eth_to_end)
-    {
-        msg.sender.transfer(ico);
-    }
-    else {
-        extra_time_bought = now +  1 days * 10;
-        if(this.balance < min_eth_to_end) throw;
-        else {
-          if (now > extra_time_bought) {
-            msg.sender.transfer(ico);
-          }
-        }
-      }
-  }
+ modifier checkFrozenAmount(address source, uint amount) {
+   if (source == owner && now < crowdSaleOverTimestamp + FREEZE_PERIOD) {
+     var frozenTokens = 10 ** decimals * FROZEN_TOKENS;
+     require(safeSub(balances[owner], amount) > frozenTokens);
+   }
+   _;
+ }
 
-    //Check is msg_sender is contract dev
-  modifier onlyOwner() {
-    if (msg.sender != developer_address) {
-      throw;
-    }
+ /// @dev The function can be called only before or after the tokens have been releasesd
+ /// @param _released token transfer and mint state
+ modifier inReleaseState(bool _released) {
+   require(_released == released);
+   _;
+ }
+
+ /// @dev The function can be called only by release agent.
+ modifier onlyCrowdsaleAgent() {
+   require(msg.sender == crowdsaleAgent);
+   _;
+ }
+
+ /// @dev Fix for the ERC20 short address attack http://vessenes.com/the-erc20-short-address-attack-explained/
+ /// @param size payload size
+ modifier onlyPayloadSize(uint size) {
+   require(msg.data.length >= size + 4);
+    _;
+ }
+
+ /// @dev Make sure we are not done yet.
+ modifier canMint() {
+   require(!released);
     _;
   }
-  
-  // Send fund when ico end
-  function withdrawEth() onlyOwner {        
-        msg.sender.transfer(this.balance);
-  }
-  
-  //Kill contract
-  function kill() onlyOwner {        
-        selfdestruct(developer_address);
-  }
-  
-  // A helper function for the default function, allowing contracts to interact.
-  function default_helper() payable {
-    // Check if ICO Started: 27.07.2017 12:00 GMT to get ETH //1501156800
-    if (now < 1500655200 ) throw; 
-    else {
-      // Treat near-zero ETH transactions as check ins and withdrawal requests.
-      if (msg.value <= 1 finney) {
-        // Check in during the crowdsale.
-        if (bought_tokens) {
-          // Only allow checking in before the crowdsale has reached the cap.
-          if (token.totalEthers() >= token.CAP()) throw;
-          // Mark user as checked in, meaning they would have been able to enter alone.
-          checked_in[msg.sender] = true;
-        }
-        // Withdraw funds if the crowdsale hasn't begun yet or is already over.
-        else {
-          withdraw();
-        }
-      }
-      // Deposit the user's funds for use in purchasing tokens.
-      else {
-        // Disallow deposits if kill switch is active.
-        if (kill_switch) throw;
-        // Only allow deposits if the contract hasn't already purchased the tokens.
-        if (bought_tokens) throw;
-        // Update records of deposited ETH to include the received amount.
-        balances[msg.sender] += msg.value;
-      }
-    }
-  }
-  
-  // Default function.  Called when a user sends ETH to the contract.
-  function () payable {
-    // Delegate to the helper function.
-    default_helper();
-  }
-  
+
+ /// @dev Constructor
+ function ZiberToken() {
+   owner = msg.sender;
+ }
+
+ /// Fallback method will buyout tokens
+ function() payable {
+   revert();
+ }
+ /// @dev Create new tokens and allocate them to an address. Only callably by a crowdsale contract
+ /// @param receiver Address of receiver
+ /// @param amount  Number of tokens to issue.
+ function mint(address receiver, uint amount) onlyCrowdsaleAgent canMint public {
+    totalSupply = safeAdd(totalSupply, amount);
+    balances[receiver] = safeAdd(balances[receiver], amount);
+    Transfer(0, receiver, amount);
+ }
+
+ /// @dev Set the contract that can call release and make the token transferable.
+ /// @param _crowdsaleAgent crowdsale contract address
+ function setCrowdsaleAgent(address _crowdsaleAgent) onlyOwner inReleaseState(false) public {
+   crowdsaleAgent = _crowdsaleAgent;
+ }
+ /// @dev One way function to release the tokens to the wild. Can be called only from the release agent that is the final ICO contract. It is only called if the crowdsale has been success (first milestone reached).
+ function releaseTokenTransfer() public onlyCrowdsaleAgent {
+   crowdSaleOverTimestamp = now;
+   released = true;
+ }
+ /// @dev Tranfer tokens to address
+ /// @param _to dest address
+ /// @param _value tokens amount
+ /// @return transfer result
+ function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) canTransfer checkFrozenAmount(msg.sender, _value) returns (bool success) {
+   balances[msg.sender] = safeSub(balances[msg.sender], _value);
+   balances[_to] = safeAdd(balances[_to], _value);
+
+   Transfer(msg.sender, _to, _value);
+   return true;
+ }
+
+ /// @dev Tranfer tokens from one address to other
+ /// @param _from source address
+ /// @param _to dest address
+ /// @param _value tokens amount
+ /// @return transfer result
+ function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(2 * 32) canTransfer checkFrozenAmount(_from, _value) returns (bool success) {
+    var _allowance = allowed[_from][msg.sender];
+
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+ }
+ /// @dev Tokens balance
+ /// @param _owner holder address
+ /// @return balance amount
+ function balanceOf(address _owner) constant returns (uint balance) {
+   return balances[_owner];
+ }
+
+ /// @dev Approve transfer
+ /// @param _spender holder address
+ /// @param _value tokens amount
+ /// @return result
+ function approve(address _spender, uint _value) returns (bool success) {
+   // To change the approve amount you first have to reduce the addresses`
+   //  allowance to zero by calling `approve(_spender, 0)` if it is not
+   //  already 0 to mitigate the race condition described here:
+   //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729   
+   require ((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+   allowed[msg.sender][_spender] = _value;
+   Approval(msg.sender, _spender, _value);
+   return true;
+ }
+
+ /// @dev Token allowance
+ /// @param _owner holder address
+ /// @param _spender spender address
+ /// @return remain amount
+ function allowance(address _owner, address _spender) constant returns (uint remaining) {
+   return allowed[_owner][_spender];
+ }
 }
