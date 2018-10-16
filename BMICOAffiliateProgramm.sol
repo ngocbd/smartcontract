@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMICOAffiliateProgramm at 0xbd1e1ea13de6f320e89f33a7076b29d1a00506d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMICOAffiliateProgramm at 0xfc4f1acaaed191715cd50b9bc5311f7ad076424e
 */
 pragma solidity ^0.4.15;
 
@@ -9,9 +9,9 @@ contract BMICOAffiliateProgramm {
     mapping (address => uint256) referrals;
 
     struct itemPartners {
-    uint256 balance;
-    string promo;
-    bool create;
+        uint256 balance;
+        string promo;
+        bool create;
     }
     mapping (address => itemPartners) partnersInfo;
 
@@ -46,7 +46,7 @@ contract BMICOAffiliateProgramm {
     function str_length(string x) constant internal returns (uint256) {
         bytes32 str;
         assembly {
-        str := mload(add(x, 32))
+            str := mload(add(x, 32))
         }
         bytes memory bytesString = new bytes(32);
         uint256 charCount = 0;
@@ -160,13 +160,8 @@ contract BMICOAffiliateProgramm {
         return partnerInfo(partner_address);
     }
 
-    function partnerInfo_for_Owner (address partner, bytes32 hash, uint8 v, bytes32 r, bytes32 s) constant returns(string, uint256, uint256[], uint256[], address[]){
-        if(owner == ecrecover(hash, v, r, s)){
-            return partnerInfo(partner);
-        }
-        else {
-            return ('-1', 0, new uint256[](0), new uint256[](0), new address[](0));
-        }
+    function partnerInfo_for_Owner (address partner) isOwner constant returns(string, uint256, uint256[], uint256[], address[]){
+        return partnerInfo(partner);
     }
 
     function add_referral(address referral, string promo, uint256 amount) external returns(address partner, uint256 p_partner, uint256 p_referral){
