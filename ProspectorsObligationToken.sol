@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProspectorsObligationToken at 0x7eb9f191f0280edea1178d2b9848f43ffd520193
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProspectorsObligationToken at 0x74e5F1a34A651c052D86DBD25042d6F710187F0A
 */
 pragma solidity ^0.4.8;
 /// Prospectors obligation Token (OBG) - crowdfunding code for Prospectors game
@@ -11,8 +11,8 @@ contract ProspectorsObligationToken {
     uint256 public constant tokenCreationRate = 1000;
 
     // The funding cap in weis.
-    uint256 public constant tokenCreationCap = 0.5 ether * tokenCreationRate;
-    uint256 public constant tokenCreationMin = 0.1 ether * tokenCreationRate;
+    uint256 public constant tokenCreationCap = 1 ether * tokenCreationRate;
+    uint256 public constant tokenCreationMin = 0.5 ether * tokenCreationRate;
 
     uint256 public fundingStartBlock;
     uint256 public fundingEndBlock;
@@ -56,7 +56,7 @@ contract ProspectorsObligationToken {
         prospectors_team = 0xCCe6DA2086DD9348010a2813be49E58530852b46;
         migrationMaster = 0xCCe6DA2086DD9348010a2813be49E58530852b46;
         fundingStartBlock = block.number + 10;
-        fundingEndBlock = block.number + 50;
+        fundingEndBlock = block.number + 30;
         lockedAllocation = new OBGAllocation(prospectors_team);
         
     }
@@ -179,7 +179,7 @@ contract ProspectorsObligationToken {
         // the 18% of total number of tokens.
         // All additional tokens are transfered to the account controller by
         // OBGAllocation contract which will not allow using them for 6 months.
-        uint256 percentOfTotal = 10;
+        uint256 percentOfTotal = 18;
         uint256 additionalTokens =
             totalTokens * percentOfTotal / (100 - percentOfTotal);
         totalTokens += additionalTokens;
@@ -242,7 +242,7 @@ contract OBGAllocation {
 
     function OBGAllocation(address _prospectors_team) internal {
         obg = ProspectorsObligationToken(msg.sender);
-        unlockedAt = now + 1 days;
+        unlockedAt = now + 6 * 30 days;
 
         // For the Prospectors Team:
         allocations[_prospectors_team] = 30000; // 12/18 pp of 30000 allocations.
