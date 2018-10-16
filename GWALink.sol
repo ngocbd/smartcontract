@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GWALink at 0x06ba669680584b8bf8be2df362cfcf10a7430085
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GWALink at 0x9A3B82b780f451Cf3dA24B9b7f7ebcE13f510745
 */
 pragma solidity ^0.4.10;
 /**
@@ -10,7 +10,7 @@ pragma solidity ^0.4.10;
  * Lieferanten/Abnehmer Managements in einem HSM oder P2P Markt ohne zentrale
  * Kontrollstelle.
  * 
- * Kontakt V0.1.1: 
+ * Kontakt V0.1: 
  * Thorsten Zoerner <thorsten.zoerner(at)stromdao.de)
  * https://stromdao.de/
  */
@@ -49,40 +49,57 @@ contract GWALink is owned {
     // Representation eines Zählerstandes
     struct ZS {
         uint256 time;
-        uint256 power_in;
-        uint256 power_out;
+        uint256 power;
         address oracle;
     }
     
     event recleared(address link);
-    event pinged(address link,uint256 time,uint256 power_in,uint256 power_out);
     
     ClearanceLimits public defaultLimits = ClearanceLimits(1,1,86400,1000,owner,true);
-  
-    mapping(address=>ZS) public zss;
+    mapping(address=>ClearanceLimits) public clearances;
+    mapping(address=>ZS) public  zss;
     
-    function changeClearance(uint256 _min_time,uint256 _min_power,uint256 _max_time, uint256 _max_power,bool _clearance) onlyOwner {
+    function changeDefaults(uint256 _min_time,uint256 _min_power,uint256 _max_time, uint256 _max_power,bool _clearance) onlyOwner {
         defaultLimits = ClearanceLimits(_min_time,_min_power,_max_time,_max_power,msg.sender,_clearance);
     }
     
-
+    function  _retrieveClearance(address link) private returns (ClearanceLimits) {
+        ClearanceLimits  limits = defaultLimits;
+        if(clearances[msg.sender].definedBy==owner) { limits=clearances[msg.sender];}
+        if(clearances[link].definedBy==owner) { limits=clearances[link];}
+        return limits;
+    }
     
-    function changeZS(address link,address oracle,uint256 _power_in,uint256 _power_out) onlyOwner {
+    function getClearance(address link) returns (uint256, uint256,uint256,uint256,address,bool) {
+        ClearanceLimits memory limits = _retrieveClearance(link);
+        return (limits.min_time,limits.min_power,limits.max_time,limits.max_power,limits.definedBy,limits.valid);
+    }
+    
+    function changeMPO(address link) onlyOwner {
          ZS zs = zss[link];
-         zs.oracle=oracle;
+         zs.oracle=msg.sender;
          zs.time=now;
-         zs.power_in=_power_in;
-         zs.power_out=_power_out;
+         zss[link]=zs;
+    }
+    
+    function changeZS(address link,uint256 _power) onlyOwner {
+         ZS zs = zss[link];
+         zs.oracle=msg.sender;
+         zs.time=now;
+         zs.power=_power;
          zss[link]=zs;
         
     }
-
+    function reclear(address stromkonto_or_oracle,uint256 _min_time,uint256 _min_power,uint256 _max_time, uint256 _max_power,bool clearance) onlyOwner {
+           clearances[stromkonto_or_oracle]=ClearanceLimits(_min_time,_min_power,_max_time,_max_power,msg.sender,clearance);
+           recleared(stromkonto_or_oracle);
+    }
     
-    function ping(address link,uint256 delta_time,uint256 delta_power_in,uint256 delta_power_out) {
-        ClearanceLimits  limits = defaultLimits;
+    function ping(address link,uint256 delta_time,uint256 delta_power) {
+        ClearanceLimits memory limits = _retrieveClearance(link);
         if(!limits.valid) {  throw; }
-        if((limits.min_power>delta_power_in)&&(limits.min_power>delta_power_out) ) throw;
-        if((limits.max_power<delta_power_in)&&(limits.max_power<delta_power_out)) throw;
+        if(limits.min_power>delta_power) throw;
+        if(limits.max_power<delta_power) throw;
         if(limits.min_time>delta_time) throw;
         if(limits.max_time<delta_time) throw;
         
@@ -91,14 +108,10 @@ contract GWALink is owned {
         if(zs.time==0) {
             zs.oracle=msg.sender;
             zs.time=now;
-        } else {
-            if((zs.oracle!=msg.sender) &&(zs.oracle!=owner)) throw;
         }
         
         zs.time+=delta_time;
-        zs.power_in+=delta_power_in;
-        zs.power_out+=delta_power_out;
+        zs.power+=delta_power;
         zss[link]=zs;
-        pinged(link,zs.time,zs.power_in,zs.power_out);
     }
 }
