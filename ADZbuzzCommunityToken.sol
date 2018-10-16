@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x3ca35c7f132b2e68bfef6cd11b8bbe448007535d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x6c4e7214abaa66c08127e8e043c1add6c72e3ccc
 */
 pragma solidity ^0.4.18;
 
@@ -7,8 +7,8 @@ pragma solidity ^0.4.18;
 // 'ACT135172' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT157567
-// Name        : ADZbuzz Activistpost.com Community Token
+// Symbol      : ACT135172
+// Name        : ADZbuzz Zerohedge.com Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT157567";
-        name = "ADZbuzz Activistpost.com Community Token";
+        symbol = "ACT135172";
+        name = "ADZbuzz Zerohedge.com Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
