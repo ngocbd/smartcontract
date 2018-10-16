@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIAcrowdsale at 0x7eb8d69dC8bcA4d49BFe9090d1a93bC430b08610
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIAcrowdsale at 0x969e98cC8c4CF426Ec3b2B649fad0eE565d947DD
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 contract myOwned {
     address public contractOwner;
@@ -11,7 +11,7 @@ contract myOwned {
 }
 
 interface token {
-    function transfer(address receiver, uint amount);
+    function transfer(address receiver, uint amount) public;
 }
 
 contract AIAcrowdsale is myOwned {
@@ -31,7 +31,7 @@ contract AIAcrowdsale is myOwned {
         uint _fundingGoal,
         address _contractWallet,
         address _contractTokenReward
-    ) {
+    ) public {
         startDate = _startDate;
         stopDate = _stopDate;
         fundingGoal = _fundingGoal * 1 ether;
@@ -39,8 +39,8 @@ contract AIAcrowdsale is myOwned {
         contractTokenReward = token(_contractTokenReward);
     }
     
-    function getCurrentTimestamp() internal returns (uint256) {
-        return now;    
+    function getCurrentTimestamp () internal constant returns (uint256) {
+        return now;
     }
 
     function saleActive() public constant returns (bool) {
@@ -49,10 +49,10 @@ contract AIAcrowdsale is myOwned {
 
     function getRateAt(uint256 at) public constant returns (uint256) {
         if (at < startDate) {return 0;} 
-        else if (at < (startDate + 150 hours)) {return 4355;} 
-        else if (at < (startDate + 318 hours)) {return 3920;} 
-        else if (at < (startDate + 486 hours)) {return 3528;} 
-        else if (at <= stopDate) {return 3176;} 
+        else if (at < (startDate + 168 hours)) {return 10000;} 
+        else if (at < (startDate + 336 hours)) {return 9000;} 
+        else if (at < (startDate + 528 hours)) {return 8100;} 
+        else if (at <= stopDate) {return 7300;} 
         else if (at > stopDate) {return 0;}
     }
 
@@ -60,7 +60,7 @@ contract AIAcrowdsale is myOwned {
         return getRateAt(now);
     }
 
-    function () payable {
+    function () public payable {
         require(saleActive());
         require(amountRaised < fundingGoal);
         uint amount = msg.value;
@@ -72,18 +72,10 @@ contract AIAcrowdsale is myOwned {
         contractWallet.transfer(msg.value);
     }
 
-    function saleEnd() onlyOwner {
+    function saleEnd() public onlyOwner {
         require(!saleActive());
         require(now > stopDate );
         contractWallet.transfer(this.balance);
         contractTokenReward.transfer(contractWallet, this.balance);
-
     }
-
-    function destroy() { 
-        if (msg.sender == contractWallet) { 
-        suicide(contractWallet);
-        contractTokenReward.transfer(contractWallet, this.balance);
-        }
-    }    
 }
