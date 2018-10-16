@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Disbursement at 0x9d175226f9e9c2d20513e9d9637ba2ba25131636
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Disbursement at 0x5d3e70ff65f83e309552a0242702ccffd030fc57
 */
 contract Disbursement {
 
@@ -60,14 +60,14 @@ contract Disbursement {
 
     /// @dev Setup function sets external contracts' addresses
     /// @param _token Token address
-    function setup(address _token)
+    function setup(Token _token)
         public
         isOwner
     {
         if (address(token) != 0 || address(_token) == 0)
             // Setup was executed already or address is null
             revert();
-        token = Token(_token);
+        token = _token;
     }
 
     /// @dev Transfers tokens to a given address
