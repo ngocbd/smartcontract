@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BreedingMarket at 0x09885361b44d31d57d59f5acfad97ba34d35876c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BreedingMarket at 0x20c81ae5a7cf1c5a3f8293313692474f8d6b808b
 */
 pragma solidity ^0.4.20;
 
@@ -28,7 +28,7 @@ contract CutieCoreInterface
         uint16 generation
     );
 
-     function getGenes(uint40 _id)
+    function getGenes(uint40 _id)
         public
         view
         returns (
@@ -195,6 +195,21 @@ contract MarketInterface
     function createAuction(uint40 _cutieId, uint128 _startPrice, uint128 _endPrice, uint40 _duration, address _seller) public payable;
 
     function bid(uint40 _cutieId) public payable;
+
+    function cancelActiveAuctionWhenPaused(uint40 _cutieId) public;
+
+	function getAuctionInfo(uint40 _cutieId)
+        public
+        view
+        returns
+    (
+        address seller,
+        uint128 startPrice,
+        uint128 endPrice,
+        uint40 duration,
+        uint40 startedAt,
+        uint128 featuringFee
+    );
 }
 
 
@@ -227,7 +242,7 @@ contract Market is MarketInterface, Pausable
     uint16 public ownerFee;
 
     // Map from token ID to their corresponding auction.
-    mapping (uint40 => Auction) cutieIdToAuction;
+    mapping (uint40 => Auction) public cutieIdToAuction;
 
     event AuctionCreated(uint40 cutieId, uint128 startPrice, uint128 endPrice, uint40 duration, uint128 fee);
     event AuctionSuccessful(uint40 cutieId, uint128 totalPrice, address winner);
@@ -291,7 +306,6 @@ contract Market is MarketInterface, Pausable
         coreContract.transferFrom(_owner, this, _cutieId);
     }
 
-
     // @dev just cancel auction.
     function _cancelActiveAuction(uint40 _cutieId, address _seller) internal
     {
@@ -347,7 +361,6 @@ contract Market is MarketInterface, Pausable
         return (_auction.startedAt > 0);
     }
 
-
     // @dev calculate current price of auction. 
     //  When testing, make this function public and turn on
     //  `Current price calculation` test suite.
@@ -399,7 +412,6 @@ contract Market is MarketInterface, Pausable
         return _price * ownerFee / 10000;
     }
 
-
     // @dev Remove all Ether from the contract with the owner's cuts. Also, remove any Ether sent directly to the contract address.
     //  Transfers to the token contract, but can be called by
     //  the owner or the token contract.
@@ -433,11 +445,9 @@ contract Market is MarketInterface, Pausable
 
     // @dev Set the reference to cutie ownership contract. Verify the owner's fee.
     //  @param fee should be between 0-10,000.
-    function setup(address _coreContractAddress, uint16 _fee) public
+    function setup(address _coreContractAddress, uint16 _fee) public onlyOwner
     {
-        require(coreContract == address(0));
         require(_fee <= 10000);
-        require(msg.sender == owner);
 
         ownerFee = _fee;
         
@@ -448,10 +458,9 @@ contract Market is MarketInterface, Pausable
 
     // @dev Set the owner's fee.
     //  @param fee should be between 0-10,000.
-    function setFee(uint16 _fee) public
+    function setFee(uint16 _fee) public onlyOwner
     {
         require(_fee <= 10000);
-        require(msg.sender == owner);
 
         ownerFee = _fee;
     }
@@ -489,6 +498,50 @@ contract Market is MarketInterface, Pausable
             auction.featuringFee
         );
     }
+
+    // @dev Returns auction info for a token on auction.
+    // @param _cutieId - ID of token on auction.
+    function isOnAuction(uint40 _cutieId)
+        public
+        view
+        returns (bool) 
+    {
+        return cutieIdToAuction[_cutieId].startedAt > 0;
+    }
+
+/*
+    /// @dev Import cuties from previous version of Core contract.
+    /// @param _oldAddress Old core contract address
+    /// @param _fromIndex (inclusive)
+    /// @param _toIndex (inclusive)
+    function migrate(address _oldAddress, uint40 _fromIndex, uint40 _toIndex) public onlyOwner whenPaused
+    {
+        Market old = Market(_oldAddress);
+
+        for (uint40 i = _fromIndex; i <= _toIndex; i++)
+        {
+            if (coreContract.ownerOf(i) == _oldAddress)
+            {
+                address seller;
+                uint128 startPrice;
+                uint128 endPrice;
+                uint40 duration;
+                uint40 startedAt;
+                uint128 featuringFee;   
+                (seller, startPrice, endPrice, duration, startedAt, featuringFee) = old.getAuctionInfo(i);
+
+                Auction memory auction = Auction({
+                    seller: seller, 
+                    startPrice: startPrice, 
+                    endPrice: endPrice, 
+                    duration: duration, 
+                    startedAt: startedAt, 
+                    featuringFee: featuringFee
+                });
+                _addAuction(i, auction);
+            }
+        }
+    }*/
 
     // @dev Returns the current price of an auction.
     function getCurrentPrice(uint40 _cutieId)
