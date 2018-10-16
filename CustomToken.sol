@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xa2f3c8b6a332fcf2004dffc7c13bdc2b6acad445
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xFc8F16651eA413c0Aef1F0C2c3d86C95968bb88A
 */
 pragma solidity ^0.4.19;
 
@@ -45,51 +45,6 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
-    }
-}
-
-contract AirdropToken is BaseToken {
-    uint256 public airAmount;
-    uint256 public airBegintime;
-    uint256 public airEndtime;
-    address public airSender;
-    uint32 public airLimitCount;
-
-    mapping (address => uint32) public airCountOf;
-
-    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
-
-    function airdrop() public payable {
-        require(now >= airBegintime && now <= airEndtime);
-        require(msg.value == 0);
-        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
-            revert();
-        }
-        _transfer(airSender, msg.sender, airAmount);
-        airCountOf[msg.sender] += 1;
-        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
-    }
-}
-
 contract ICOToken is BaseToken {
     // 1 ether = icoRatio token
     uint256 public icoRatio;
@@ -118,33 +73,23 @@ contract ICOToken is BaseToken {
     }
 }
 
-contract CustomToken is BaseToken, BurnToken, AirdropToken, ICOToken {
+contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000000000000;
-        name = 'BillCoin';
-        symbol = 'BLC';
+        totalSupply = 250000000000000000000000000;
+        name = 'SuperconductorChain';
+        symbol = 'SCC';
         decimals = 18;
-        balanceOf[0x95fd530fcd47f6426c624b00d5762acfebf8c4bc] = totalSupply;
-        Transfer(address(0), 0x95fd530fcd47f6426c624b00d5762acfebf8c4bc, totalSupply);
+        balanceOf[0x97f38f9957dca0f48fcc48202ece69e7920b7b4b] = totalSupply;
+        Transfer(address(0), 0x97f38f9957dca0f48fcc48202ece69e7920b7b4b, totalSupply);
 
-        airAmount = 1000000000000000000;
-        airBegintime = 1522508400;
-        airEndtime = 1530370800;
-        airSender = 0x95fd530fcd47f6426c624b00d5762acfebf8c4bc;
-        airLimitCount = 5;
-
-        icoRatio = 3000;
-        icoBegintime = 1522508400;
-        icoEndtime = 1540998000;
-        icoSender = 0x95fd530fcd47f6426c624b00d5762acfebf8c4bc;
-        icoHolder = 0x95fd530fcd47f6426c624b00d5762acfebf8c4bc;
+        icoRatio = 4500;
+        icoBegintime = 1522900800;
+        icoEndtime = 1535601600;
+        icoSender = 0x97f38f9957dca0f48fcc48202ece69e7920b7b4b;
+        icoHolder = 0x97f38f9957dca0f48fcc48202ece69e7920b7b4b;
     }
 
     function() public payable {
-        if (msg.value == 0) {
-            airdrop();
-        } else {
-            ico();
-        }
+        ico();
     }
 }
