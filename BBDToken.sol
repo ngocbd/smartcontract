@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BBDToken at 0xfe52320b68ee964c889bdcc2f076e44f144fad14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BBDToken at 0x5ca71ea65acb6293e71e62c41b720698b0aa611c
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.13;
 
 /**
  * @title SafeMath
@@ -193,7 +193,7 @@ contract MigrationAgent {
 }
 
 /**
-    BlockChain Board Of Derivatives Token. 
+    BlockChain Board Of Derivatives Token.
  */
 contract BBDToken is StandardToken, Ownable {
 
@@ -201,164 +201,182 @@ contract BBDToken is StandardToken, Ownable {
     string public constant name = "BlockChain Board Of Derivatives Token";
     string public constant symbol = "BBD";
     uint256 public constant decimals = 18;
-    string public constant version = '1.0.0';
+    string private constant version = '1.0.0';
 
-    // Presale parameters
-    uint256 public presaleStartTime;
-    uint256 public presaleEndTime;
+    // Crowdsale parameters
+    uint256 public constant startTime = 1506844800; //Sunday, 1 October 2017 08:00:00 GMT
+    uint256 public constant endTime = 1509523200;  // Wednesday, 1 November 2017 08:00:00 GMT
 
-    bool public presaleFinalized = false;
+    uint256 public constant creationMaxCap = 300000000 * 10 ** decimals;
+    uint256 public constant creationMinCap = 2500000 * 10 ** decimals;
 
-    uint256 public constant presaleTokenCreationCap = 40000 * 10 ** decimals;// amount on presale
-    uint256 public constant presaleTokenCreationRate = 20000; // 2 BDD per 1 ETH
+    uint256 private constant startCreationRateOnTime = 1666; // 1666 BDD per 1 ETH
+    uint256 private constant endCreationRateOnTime = 1000; // 1000 BDD per 1 ETH
 
-    // Sale parameters
-    uint256 public saleStartTime;
-    uint256 public saleEndTime;
+    uint256 private constant quantityThreshold_10 = 10 ether;
+    uint256 private constant quantityThreshold_30 = 30 ether;
+    uint256 private constant quantityThreshold_100 = 100 ether;
+    uint256 private constant quantityThreshold_300 = 300 ether;
 
-    bool public saleFinalized = false;
+    uint256 private constant quantityBonus_10 = 500;    // 5%
+    uint256 private constant quantityBonus_30 = 1000;  // 10%
+    uint256 private constant quantityBonus_100 = 1500; // 15%
+    uint256 private constant quantityBonus_300 = 2000; // 20%
 
-    uint256 public constant totalTokenCreationCap = 240000 * 10 ** decimals; //total amount on ale and presale
-    uint256 public constant saleStartTokenCreationRate = 16600; // 1.66 BDD per 1 ETH
-    uint256 public constant saleEndTokenCreationRate = 10000; // 1 BDD per 1 ETH
+    // The flag indicates if the crowdsale was finalized
+    bool public finalized = false;
 
     // Migration information
     address public migrationAgent;
     uint256 public totalMigrated;
 
+    // Exchange address
+    address public exchangeAddress;
+
     // Team accounts
-    address public constant qtAccount = 0x87a9131485cf8ed8E9bD834b46A12D7f3092c263;
-    address public constant coreTeamMemberOne = 0xe43088E823eA7422D77E32a195267aE9779A8B07;
-    address public constant coreTeamMemberTwo = 0xad00884d1E7D0354d16fa8Ab083208c2cC3Ed515;
+    address private constant mainAccount = 0xEB1D40f6DA0E77E2cA046325F6F2a76081B4c7f4;
+    address private constant coreTeamMemberOne = 0xe43088E823eA7422D77E32a195267aE9779A8B07;
+    address private constant coreTeamMemberTwo = 0xad00884d1E7D0354d16fa8Ab083208c2cC3Ed515;
 
-    uint256 public constant divisor = 10000;
+    // Ether raised
+    uint256 private raised = 0;
 
-    // ETH amount rised
-    uint256 raised = 0;
+    // Since we have different exchange rates, we need to keep track of how
+    // much ether each contributed in case that we need to issue a refund
+    mapping (address => uint256) private ethBalances;
+
+    uint256 private constant divisor = 10000;
 
     // Events
-    event Migrate(address indexed _from, address indexed _to, uint256 _value);
-    event TokenPurchase(address indexed _purchaser, address indexed _beneficiary, uint256 _value, uint256 _amount);
+    event LogRefund(address indexed _from, uint256 _value);
+    event LogMigrate(address indexed _from, address indexed _to, uint256 _value);
+    event LogBuy(address indexed _purchaser, address indexed _beneficiary, uint256 _value, uint256 _amount);
+
+    // Check if min cap was archived.
+    modifier onlyWhenICOReachedCreationMinCap() {
+        require( totalSupply >= creationMinCap );
+        _;
+    }
 
     function() payable {
-        require(!presaleFinalized || !saleFinalized); //todo
-
-        if (!presaleFinalized) {
-            buyPresaleTokens(msg.sender);
-        }
-        else{
-            buySaleTokens(msg.sender);
-        }
+        buy(msg.sender);
     }
 
-    function BBDToken(uint256 _presaleStartTime, uint256 _presaleEndTime, uint256 _saleStartTime, uint256 _saleEndTime) {
-        require(_presaleStartTime >= now);
-        require(_presaleEndTime >= _presaleStartTime);
-        require(_saleStartTime >= _presaleEndTime);
-        require(_saleEndTime >= _saleStartTime);
+    function creationRateOnTime() public constant returns (uint256) {
+        uint256 currentPrice;
 
-        presaleStartTime = _presaleStartTime;
-        presaleEndTime = _presaleEndTime;
-        saleStartTime = _saleStartTime;
-        saleEndTime = _saleEndTime;
-    }
-
-    // Get token creation rate
-    function getTokenCreationRate() constant returns (uint256) {
-        require(!presaleFinalized || !saleFinalized);
-
-        uint256 creationRate;
-
-        if (!presaleFinalized) {
-            //The rate on presales is constant
-            creationRate = presaleTokenCreationRate;
-        } else {
-            //The rate on sale is changing lineral while time is passing. On sales start it is 1.66 and on end 1.0 
-            uint256 rateRange = saleStartTokenCreationRate - saleEndTokenCreationRate;
-            uint256 timeRange = saleEndTime - saleStartTime;
-            creationRate = saleStartTokenCreationRate.sub(rateRange.mul(now.sub(saleStartTime)).div(timeRange));
+        if (now > endTime) {
+            currentPrice = endCreationRateOnTime;
+        }
+        else {
+            //Price is changing lineral starting from  startCreationRateOnTime to endCreationRateOnTime
+            uint256 rateRange = startCreationRateOnTime - endCreationRateOnTime;
+            uint256 timeRange = endTime - startTime;
+            currentPrice = startCreationRateOnTime.sub(rateRange.mul(now.sub(startTime)).div(timeRange));
         }
 
-        return creationRate;
+        return currentPrice;
     }
-    
-    // Buy presale tokens
-    function buyPresaleTokens(address _beneficiary) payable {
-        require(!presaleFinalized);
+
+    //Calculate number of BBD tokens for provided ether
+    function calculateBDD(uint256 _ethVal) private constant returns (uint256) {
+        uint256 bonus;
+
+        //We provide bonus depending on eth value
+        if (_ethVal < quantityThreshold_10) {
+            bonus = 0; // 0% bonus
+        }
+        else if (_ethVal < quantityThreshold_30) {
+            bonus = quantityBonus_10; // 5% bonus
+        }
+        else if (_ethVal < quantityThreshold_100) {
+            bonus = quantityBonus_30; // 10% bonus
+        }
+        else if (_ethVal < quantityThreshold_300) {
+            bonus = quantityBonus_100; // 15% bonus
+        }
+        else {
+            bonus = quantityBonus_300; // 20% bonus
+        }
+
+        // Get number of BBD tokens
+        return _ethVal.mul(creationRateOnTime()).mul(divisor.add(bonus)).div(divisor);
+    }
+
+    // Buy BBD
+    function buy(address _beneficiary) payable {
+        require(!finalized);
         require(msg.value != 0);
-        require(now <= presaleEndTime);
-        require(now >= presaleStartTime);
+        require(now <= endTime);
+        require(now >= startTime);
 
-        uint256 bbdTokens = msg.value.mul(getTokenCreationRate()).div(divisor);
-        uint256 checkedSupply = totalSupply.add(bbdTokens);
-        require(presaleTokenCreationCap >= checkedSupply);
+        uint256 bbdTokens = calculateBDD(msg.value);
+        uint256 additionalBBDTokensForMainAccount = bbdTokens.mul(2250).div(divisor); // 22.5%
+        uint256 additionalBBDTokensForCoreTeamMember = bbdTokens.mul(125).div(divisor); // 1.25%
 
-        totalSupply = totalSupply.add(bbdTokens);
+        //Increase by 25% number of bbd tokens on each buy.
+        uint256 checkedSupply = totalSupply.add(bbdTokens)
+                                           .add(additionalBBDTokensForMainAccount)
+                                           .add(2 * additionalBBDTokensForCoreTeamMember);
+
+        require(creationMaxCap >= checkedSupply);
+
+        totalSupply = checkedSupply;
+
+        //Update balances
         balances[_beneficiary] = balances[_beneficiary].add(bbdTokens);
-
-        raised += msg.value;
-        TokenPurchase(msg.sender, _beneficiary, msg.value, bbdTokens);
-    }
-
-    // Finalize presale
-    function finalizePresale() onlyOwner external {
-        require(!presaleFinalized);
-        require(now >= presaleEndTime || totalSupply == presaleTokenCreationCap);
-
-        presaleFinalized = true;
-
-        uint256 ethForCoreMember = this.balance.mul(500).div(divisor);
-
-        coreTeamMemberOne.transfer(ethForCoreMember); // 5%
-        coreTeamMemberTwo.transfer(ethForCoreMember); // 5%
-        qtAccount.transfer(this.balance); // Quant Technology 90%
-    }
-
-    // Buy sale tokens
-    function buySaleTokens(address _beneficiary) payable {
-        require(!saleFinalized);
-        require(msg.value != 0);
-        require(now <= saleEndTime);
-        require(now >= saleStartTime);
-
-        uint256 bbdTokens = msg.value.mul(getTokenCreationRate()).div(divisor);
-        uint256 checkedSupply = totalSupply.add(bbdTokens);
-        require(totalTokenCreationCap >= checkedSupply);
-
-        totalSupply = totalSupply.add(bbdTokens);
-        balances[_beneficiary] = balances[_beneficiary].add(bbdTokens);
-
-        raised += msg.value;
-        TokenPurchase(msg.sender, _beneficiary, msg.value, bbdTokens);
-    }
-
-    // Finalize sale
-    function finalizeSale() onlyOwner external {
-        require(!saleFinalized);
-        require(now >= saleEndTime || totalSupply == totalTokenCreationCap);
-
-        saleFinalized = true;
-
-        //Add aditional 25% tokens to the Quant Technology and development team
-        uint256 additionalBBDTokensForQTAccount = totalSupply.mul(2250).div(divisor); // 22.5%
-        totalSupply = totalSupply.add(additionalBBDTokensForQTAccount);
-        balances[qtAccount] = balances[qtAccount].add(additionalBBDTokensForQTAccount);
-
-        uint256 additionalBBDTokensForCoreTeamMember = totalSupply.mul(125).div(divisor); // 1.25%
-        totalSupply = totalSupply.add(2 * additionalBBDTokensForCoreTeamMember);
+        balances[mainAccount] = balances[mainAccount].add(additionalBBDTokensForMainAccount);
         balances[coreTeamMemberOne] = balances[coreTeamMemberOne].add(additionalBBDTokensForCoreTeamMember);
         balances[coreTeamMemberTwo] = balances[coreTeamMemberTwo].add(additionalBBDTokensForCoreTeamMember);
 
-        uint256 ethForCoreMember = this.balance.mul(500).div(divisor);
+        ethBalances[_beneficiary] = ethBalances[_beneficiary].add(msg.value);
+
+        raised += msg.value;
+
+        if (exchangeAddress != 0x0 && totalSupply >= creationMinCap && msg.value >= 1 ether) {
+            // After archiving min cap we start moving 10% to exchange. It will help with liquidity on exchange.
+            exchangeAddress.transfer(msg.value.mul(1000).div(divisor)); // 10%
+        }
+
+        LogBuy(msg.sender, _beneficiary, msg.value, bbdTokens);
+    }
+
+    // Finalize for successful ICO
+    function finalize() onlyOwner external {
+        require(!finalized);
+        require(now >= endTime || totalSupply >= creationMaxCap);
+
+        finalized = true;
+
+        uint256 ethForCoreMember = raised.mul(500).div(divisor);
 
         coreTeamMemberOne.transfer(ethForCoreMember); // 5%
         coreTeamMemberTwo.transfer(ethForCoreMember); // 5%
-        qtAccount.transfer(this.balance); // Quant Technology 90%
+        mainAccount.transfer(this.balance); //90%
     }
 
-    // Allow migrate contract
+    // Refund if ICO won't reach min cap
+    function refund() external {
+        require(now > endTime);
+        require(totalSupply < creationMinCap);
+
+        uint256 bddVal = balances[msg.sender];
+        require(bddVal > 0);
+        uint256 ethVal = ethBalances[msg.sender];
+        require(ethVal > 0);
+
+        balances[msg.sender] = 0;
+        ethBalances[msg.sender] = 0;
+        totalSupply = totalSupply.sub(bddVal);
+
+        msg.sender.transfer(ethVal);
+
+        LogRefund(msg.sender, ethVal);
+    }
+
+    // Allow to migrate to next version of contract
     function migrate(uint256 _value) external {
-        require(saleFinalized);
+        require(finalized);
         require(migrationAgent != 0x0);
         require(_value > 0);
         require(_value <= balances[msg.sender]);
@@ -366,21 +384,51 @@ contract BBDToken is StandardToken, Ownable {
         balances[msg.sender] = balances[msg.sender].sub(_value);
         totalSupply = totalSupply.sub(_value);
         totalMigrated = totalMigrated.add(_value);
+
         MigrationAgent(migrationAgent).migrateFrom(msg.sender, _value);
-        Migrate(msg.sender, migrationAgent, _value);
+
+        LogMigrate(msg.sender, migrationAgent, _value);
     }
 
+    // Set migration Agent
     function setMigrationAgent(address _agent) onlyOwner external {
-        require(saleFinalized);
+        require(finalized);
         require(migrationAgent == 0x0);
 
         migrationAgent = _agent;
     }
 
-    // ICO Status overview. Used for BBOD landing page
-    function icoOverview() constant returns (uint256 currentlyRaised, uint256 currentlyTotalSupply, uint256 currentlyTokenCreationRate){
+    // Set exchange address
+    function setExchangeAddress(address _exchangeAddress) onlyOwner external {
+        require(exchangeAddress == 0x0);
+
+        exchangeAddress = _exchangeAddress;
+    }
+
+    function transfer(address _to, uint _value) onlyWhenICOReachedCreationMinCap returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint _value) onlyWhenICOReachedCreationMinCap returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    // Transfer BBD to exchange.
+    function transferToExchange(address _from, uint256 _value) onlyWhenICOReachedCreationMinCap returns (bool) {
+        require(msg.sender == exchangeAddress);
+
+        balances[exchangeAddress] = balances[exchangeAddress].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+
+        Transfer(_from, exchangeAddress, _value);
+
+        return true;
+    }
+
+    // ICO overview
+    function icoOverview() constant returns (uint256 currentlyRaised, uint256 currentlyTotalSupply, uint256 currentlyCreationRateOnTime){
         currentlyRaised = raised;
         currentlyTotalSupply = totalSupply;
-        currentlyTokenCreationRate = getTokenCreationRate();
+        currentlyCreationRateOnTime = creationRateOnTime();
     }
 }
