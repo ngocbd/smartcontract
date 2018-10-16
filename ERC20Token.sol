@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x6c2890058246e18e186ae4229f697eedd647f118
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x11e0d60eff1c70457010150fbf9f6efddb91b5c2
 */
-pragma solidity ^0.4.4;
-
 contract Token {
 
     /// @return total amount of tokens
@@ -119,11 +117,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 6912250000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 6912250000000000;                        // Update total supply (100000 for example)
-        name = "SafeKeet Token";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "SKT";                               // Set the symbol for display purposes
+        balances[msg.sender] = 100000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000;                        // Update total supply (100000 for example)
+        name = "Kuwaiti Dinar";                                   // Set the name for display purposes
+        decimals = 2;                            // Amount of decimals for display purposes
+        symbol = "KWDR";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
