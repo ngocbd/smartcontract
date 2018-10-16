@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STACrowdsale at 0xb898208b7b4e7f8a94f9e6cf9ef938826c614610
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STACrowdsale at 0xd15f9b63b8c50276c05347ee4db74129a12bdf60
 */
 pragma solidity ^0.4.17;
 
@@ -251,10 +251,7 @@ contract BasicToken is ERC20Basic {
 
     // SafeMath.sub will throw if there is not enough balance.
    // balances[msg.sender] = balances[msg.sender].sub(_value);
-   if(balances[_to]>=_value)
-   {
-     balances[_to] = balances[_to].sub(_value);
-   }
+    balances[_to] = balances[_to].sub(_value);
     //emit Transfer(msg.sender, _to, _value);
     return true;
   }
@@ -451,8 +448,8 @@ contract MintableToken is StandardToken, Ownable {
  */
 contract STA is MintableToken, PausableToken {
     string public constant version = "1.0";
-    string public constant name = "STAB Crypto Platform";
-    string public constant symbol = "STAB";
+    string public constant name = "STAX Crypto Platform";
+    string public constant symbol = "STAX";
     uint8 public constant decimals = 18;
 
     event MintMasterTransferred(address indexed previousMaster, address indexed newMaster);
