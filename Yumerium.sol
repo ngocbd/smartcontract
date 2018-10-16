@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Yumerium at 0x7f4404db6a3f4d3cfb41d5920d81d44d64759235
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Yumerium at 0xcf1ed959c190916b0dfe6413743da76155123f7b
 */
 pragma solidity ^0.4.23;
 
@@ -691,7 +691,7 @@ contract Yumerium is owned, TokenERC20 {
     function Yumerium() public {
 
         balanceOf[this] = totalSupply; 
-        
+
 
     }
     
@@ -703,7 +703,6 @@ contract Yumerium is owned, TokenERC20 {
         balanceOf[this] -= _value;
         balanceOf[_to] += _value;
         Sale(_to, _value);
-        Transfer(this, _to, _value);
     }
     
     
@@ -713,7 +712,6 @@ contract Yumerium is owned, TokenERC20 {
         balanceOf[this] -= _value;
         balanceOf[_to] += _value;
         Sale(_to, _value);
-        Transfer(this, _to, _value);
     }
     
     
