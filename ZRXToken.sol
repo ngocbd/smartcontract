@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZRXToken at 0xb70ae1b7a95c3443af3c7f18b7f4e08cda58bbe7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZRXToken at 0x285fb869687239ab1a9d21ee212974b291d36fc3
 */
 /*
 
