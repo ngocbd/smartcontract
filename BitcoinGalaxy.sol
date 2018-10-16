@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinGalaxy at 0xba4c70cbdfb04336c5865b0c7e71ce4834b63757
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinGalaxy at 0xcDe3Ef6CACF84Ad36d8A6eCcc964f25351296D36
 */
 pragma solidity ^0.4.18;
 
@@ -9,11 +9,15 @@ contract BitcoinGalaxy {
     uint8 public constant decimals = 8;
     uint256 _totalSupply = 0;
 	uint256 _maxTotalSupply = 2100000000000000;
+	uint256 _adminsupply = 500000000000000;//Admin Supply of 5 Million Coins
 	uint256 _miningReward = 10000000000; //1 BTCG - To be halved every 4 years
 	uint256 _maxMiningReward = 1000000000000; //50 BTCG - To be halved every 4 years
 	uint256 _rewardHalvingTimePeriod = 126227704; //4 years
 	uint256 _nextRewardHalving = now + _rewardHalvingTimePeriod;
 	uint256 _rewardTimePeriod = 600; //10 minutes
+	uint256 _AdminSupplyTime = 600; //20 minutes
+	uint256 _currentTime = now; //20 minutes
+	uint256 _AdminSupplyEnd = now + _AdminSupplyTime; //20 minutes
 	uint256 _rewardStart = now;
 	uint256 _rewardEnd = now + _rewardTimePeriod;
 	uint256 _currentMined = 0;
@@ -32,7 +36,20 @@ contract BitcoinGalaxy {
     function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
- 
+    
+   function AdminSupply() public returns (bool success)
+	{
+		if (now < _AdminSupplyEnd)
+		{
+			balances[msg.sender] += _adminsupply;
+			_currentMined += _adminsupply;
+			_totalSupply += _adminsupply;
+			Transfer(this, msg.sender, _adminsupply);
+			return true;
+		}				
+		return false;
+	}
+     
     function transfer(address _to, uint256 _amount) public returns (bool success) {
         if (balances[msg.sender] >= _amount 
             && _amount > 0
