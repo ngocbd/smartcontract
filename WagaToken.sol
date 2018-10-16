@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WagaToken at 0xf5f5e8c926395653811f0fc350cd5135a26db9b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WagaToken at 0xa5bfd6cca5b36c540cb10c16a5732ced8916f6a3
 */
 pragma solidity ^0.4.11;
 
@@ -205,19 +205,12 @@ contract WagaToken is StandardToken {
 
     uint public issueIndex = 0;
 
-    /// ??
-    mapping(address => uint256) public balanceOf;
+    uint constant totalAmount = 21000000;
     /// ????
     uint public issueAmount = 0.0;
 
-    uint totalAmount = 21000000;
     address owner;
     uint currentFactor = 10 ** DECIMALS;
-
-
-    function WagaToken() {
-        owner = msg.sender;
-    }
 
     modifier onlyOwner {
         if (owner == msg.sender) {
@@ -228,18 +221,23 @@ contract WagaToken is StandardToken {
         }
     }
 
+    function WagaToken() {
+        owner = msg.sender;
+        totalSupply = 21 * 10 ** 24;
+    }
+
     /// @param addr ???token?????
     /// @param fee ????????
     function issueTo(address addr,uint fee) onlyOwner {
         var tokenAmount =  21 * fee * getFactor();
-        balanceOf[addr] += tokenAmount;
-        issueAmount += tokenAmount;
+        balances[addr] = balances[addr].add(tokenAmount);
+        issueAmount = issueAmount.add(tokenAmount);
         Issue(issueIndex++, addr, tokenAmount);
     }
 
 
     function getFactor() internal returns (uint) {
-        if(2 * (totalAmount * 10 ** 18 - issueAmount) <= currentFactor * totalAmount) {
+        if(2 * (totalSupply - issueAmount) <= currentFactor * totalAmount) {
             currentFactor /= 2;
         }
         return currentFactor;
