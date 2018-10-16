@@ -1,7 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distributor at 0x1987a7e3379c9f963a4d8c717342dae7dbe51b55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distributor at 0x18fc62f39b5fd91c57e2b3d6a60de098b1a6b93a
 */
 pragma solidity ^0.4.18;
+
+contract ERC20Cutted {
+    
+  function balanceOf(address who) public constant returns (uint256);
+  
+  function transfer(address to, uint256 value) public returns (bool);
+  
+}
 
 contract Distributor {
 
@@ -11,11 +19,21 @@ contract Distributor {
     
   mapping (address => uint) public balances;
 
+  address[] public stopList;
+
+  mapping (address => uint) public stopAddresses;
+
+  uint public stopAddressesTotal;
+
   address[] public receivers;
   
   uint public index;
   
   uint public total;
+
+  uint public receivedTotal;
+
+  ERC20Cutted public token = ERC20Cutted(0xE2FB6529EF566a080e6d23dE0bd351311087D567);
 
   modifier onlyOwner() {
     require(owner == msg.sender);
@@ -25,26 +43,72 @@ contract Distributor {
   function Distributor() public {
       owner = msg.sender;
   }
+
+  function isContract(address _addr) private view returns (bool) {
+    uint length;
+    assembly {
+      length := extcodesize(_addr)
+    }
+    return (length>0);
+  }
   
+  function setToken(address newToken) public onlyOwner {
+    token = ERC20Cutted(newToken);
+  }
+  
+  function receiversCount() public view returns(uint) {
+    return receivers.length;
+  }
+
+  function receivedCount() public view returns(uint) {
+    return index;
+  }
+
   function addReceivers(address[] _receivers, uint[] _balances) public onlyOwner {
     for(uint i = 0; i < _receivers.length; i++) {
       address receiver = _receivers[i];
-      require(balances[receiver] == 0);
-      balances[receiver] = _balances[i];
-      total += _balances[i];
-      receivers.push(receiver);
+      uint balance = _balances[i];
+      if(balance > 0) {
+        if(isContract(receiver)) {
+          if(stopAddresses[receiver] == 0) stopList.push(receiver);
+          stopAddresses[receiver] += balance;
+          stopAddressesTotal += balance;
+        } else {
+          if(balances[receiver] == 0) receivers.push(receiver); 
+          balances[receiver] += balance;
+          total += balance;
+        }
+      }
     }
   }
 
+  function changeBalance(address to, uint newValue) public onlyOwner {
+    require(balances[to] > 0);
+    total -= balances[to]; 
+    balances[to] = newValue;
+    total += newValue;
+  }
+
   function process(uint count) public onlyOwner {
+    address receiver;
+    uint value;
     for(uint i = 0; index < receivers.length && i < count; i++) {
-      address receiver = receivers[index];
-      require(received[receiver] == 0);
-      uint value = balances[receiver];
-      received[receiver] = balances[receiver];
-      receiver.transfer(value);
+      receiver = receivers[index];
+      value = balances[receiver];
+      token.transfer(receiver, value);
+      received[receiver] = value;
+      receivedTotal += value;
       index++;
     }
+  }
+
+  function retrieveCurrentTokensToOwner() public {
+    retrieveTokens(owner, address(token));
+  }
+
+  function retrieveTokens(address to, address anotherToken) public onlyOwner {
+    ERC20Cutted alienToken = ERC20Cutted(anotherToken);
+    alienToken.transfer(to, alienToken.balanceOf(this));
   }
 
   function () public payable {
