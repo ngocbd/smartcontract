@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuConsumptionPlan at 0x61fafae5b0a5c63efe4507d7e19ac3dadad96bb9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuConsumptionPlan at 0xe0670e32c120813a54860442155659cfa029d343
 */
 pragma solidity 0.4.19;
 
@@ -359,12 +359,12 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
         return true;
     }
 
-    function payFee(bytes32 _serviceName, uint256 _multiplier, address _client) public returns(bool paid) {
+    function payFee(bytes32 _serviceName, uint256 _amount, address _client) public returns(bool paid) {
         //require(isService(_serviceName)); // Already checked by #usageFee
-        //require(_multiplier != 0); // Already checked by #usageFee
+        //require(_amount != 0); // Already checked by #usageFee
         require(_client != 0);
 
-        uint256 fee = usageFee(_serviceName, _multiplier);
+        uint256 fee = usageFee(_serviceName, _amount);
 
         assert(ERC20(nokuMasterToken).transferFrom(_client, tokenBurner, fee));
 
@@ -373,11 +373,12 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
         return true;
     }
 
-    function usageFee(bytes32 _serviceName, uint256 _multiplier) public constant returns(uint fee) {
+    function usageFee(bytes32 _serviceName, uint256 _amount) public constant returns(uint fee) {
         require(isService(_serviceName));
-        require(_multiplier != 0);
+        require(_amount != 0);
         
-        return _multiplier.mul(services[_serviceName].serviceFee);
+        // Assume fee are represented in 18-decimals notation
+        return _amount.mul(services[_serviceName].serviceFee).div(10**18);
     }
 
     function serviceCount() public constant returns(uint count) {
