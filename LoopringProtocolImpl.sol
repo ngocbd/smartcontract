@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0xb1170de31c7f72ab62535862c97f5209e356991b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0xd29beca9c9749ab6b37082bcbd16d041a9285c8b
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -75,7 +75,7 @@ library MathUint {
         require(scale > 0);
         uint avg = 0;
         for (uint i = 0; i < len; i++) {
-            avg += arr[i];
+            avg = add(avg, arr[i]);
         }
         avg = avg / len;
         if (avg == 0) {
@@ -87,7 +87,7 @@ library MathUint {
         for (i = 0; i < len; i++) {
             item = arr[i];
             s = item > avg ? item - avg : avg - item;
-            cvs += mul(s, s);
+            cvs = add(cvs, mul(s, s));
         }
         return ((mul(mul(cvs, scale), scale) / avg) / avg) / (len - 1);
     }
@@ -205,25 +205,24 @@ contract LoopringProtocol {
     /// _amountsList is an array of:
     /// [_amountS, _amountB, _lrcReward, _lrcFee, splitS, splitB].
     event RingMined(
-        uint                _ringIndex,
-        bytes32     indexed _ringHash,
-        address             _feeRecipient,
-        bytes32[]           _orderHashList,
-        uint[6][]           _amountsList
+        uint            _ringIndex,
+        bytes32 indexed _ringHash,
+        address         _miner,
+        bytes32[]       _orderInfoList
     );
     event OrderCancelled(
-        bytes32     indexed _orderHash,
-        uint                _amountCancelled
+        bytes32 indexed _orderHash,
+        uint            _amountCancelled
     );
     event AllOrdersCancelled(
-        address     indexed _address,
-        uint                _cutoff
+        address indexed _address,
+        uint            _cutoff
     );
     event OrdersCancelled(
-        address     indexed _address,
-        address             _token1,
-        address             _token2,
-        uint                _cutoff
+        address indexed _address,
+        address         _token1,
+        address         _token2,
+        uint            _cutoff
     );
     /// @dev Cancel a order. cancel amount(amountS or amountB) can be specified
     ///      in orderValues.
@@ -323,8 +322,14 @@ contract LoopringProtocol {
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
 contract TokenRegistry {
-    event TokenRegistered(address addr, string symbol);
-    event TokenUnregistered(address addr, string symbol);
+    event TokenRegistered(
+        address indexed addr,
+        string          symbol
+    );
+    event TokenUnregistered(
+        address indexed addr,
+        string          symbol
+    );
     function registerToken(
         address addr,
         string  symbol
@@ -389,8 +394,14 @@ contract TokenRegistry {
 /// versions of Loopring protocol to avoid ERC20 re-authorization.
 /// @author Daniel Wang - <daniel@loopring.org>.
 contract TokenTransferDelegate {
-    event AddressAuthorized(address indexed addr, uint32 number);
-    event AddressDeauthorized(address indexed addr, uint32 number);
+    event AddressAuthorized(
+        address indexed addr,
+        uint32          number
+    );
+    event AddressDeauthorized(
+        address indexed addr,
+        uint32          number
+    );
     // The following map is used to keep trace of order fill and cancellation
     // history.
     mapping (bytes32 => uint) public cancelledOrFilled;
@@ -446,7 +457,9 @@ contract TokenTransferDelegate {
     function addCancelled(bytes32 orderHash, uint cancelAmount)
         external;
     function addCancelledOrFilled(bytes32 orderHash, uint cancelOrFillAmount)
-        external;
+        public;
+    function batchAddCancelledOrFilled(bytes32[] batch)
+        public;
     function setCutoffs(uint t)
         external;
     function setTradingPairCutoffs(bytes20 tokenPair, uint t)
@@ -454,6 +467,9 @@ contract TokenTransferDelegate {
     function checkCutoffsBatch(address[] owners, bytes20[] tradingPairs, uint[] validSince)
         external
         view;
+    function suspend() external;
+    function resume() external;
+    function kill() external;
 }
 /// @title An Implementation of LoopringProtocol.
 /// @author Daniel Wang - <daniel@loopring.org>,
@@ -468,11 +484,11 @@ contract TokenTransferDelegate {
 contract LoopringProtocolImpl is LoopringProtocol {
     using AddressUtil   for address;
     using MathUint      for uint;
-    address public constant  lrcTokenAddress             = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
-    address public constant  tokenRegistryAddress        = 0x004DeF62C71992615CF22786d0b7Efb22850Df4a;
-    address public constant  delegateAddress             = 0x5567ee920f7E62274284985D793344351A00142B;
+    address public constant lrcTokenAddress             = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
+    address public constant tokenRegistryAddress        = 0x004DeF62C71992615CF22786d0b7Efb22850Df4a;
+    address public constant delegateAddress             = 0xD22f97BCEc8E029e109412763b889fC16C4bca8B;
     uint64  public  ringIndex                   = 0;
-    uint8   public  walletSplitPercentage       = 20;
+    uint8   public constant walletSplitPercentage       = 20;
     // Exchange rate (rate) is the amount to sell or sold divided by the amount
     // to buy or bought.
     //
@@ -482,8 +498,8 @@ contract LoopringProtocolImpl is LoopringProtocol {
     // To require all orders' rate ratios to have coefficient ofvariation (CV)
     // smaller than 2.5%, for an example , rateRatioCVSThreshold should be:
     //     `(0.025 * RATE_RATIO_SCALE)^2` or 62500.
-    uint    public rateRatioCVSThreshold        = 62500;
-    uint    public constant MAX_RING_SIZE       = 8;
+    uint    public constant rateRatioCVSThreshold        = 62500;
+    uint    public constant MAX_RING_SIZE       = 16;
     uint    public constant RATE_RATIO_SCALE    = 10000;
     /// @param orderHash    The order's hash
     /// @param feeSelection -
@@ -760,9 +776,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
             _lrcTokenAddress
         );
         /// Make transfers.
-        bytes32[] memory orderHashList;
-        uint[6][] memory amountsList;
-        (orderHashList, amountsList) = settleRing(
+        bytes32[] memory orderInfoList = settleRing(
             delegate,
             params.ringSize,
             orders,
@@ -773,8 +787,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
             _ringIndex,
             params.ringHash,
             params.miner,
-            orderHashList,
-            amountsList
+            orderInfoList
         );
     }
     function settleRing(
@@ -785,42 +798,45 @@ contract LoopringProtocolImpl is LoopringProtocol {
         address       _lrcTokenAddress
         )
         private
-        returns (
-        bytes32[] memory orderHashList,
-        uint[6][] memory amountsList)
+        returns (bytes32[] memory orderInfoList)
     {
         bytes32[] memory batch = new bytes32[](ringSize * 7); // ringSize * (owner + tokenS + 4 amounts + wallet)
-        orderHashList = new bytes32[](ringSize);
-        amountsList = new uint[6][](ringSize);
+        bytes32[] memory historyBatch = new bytes32[](ringSize * 2); // ringSize * (orderhash, fillAmount)
+        orderInfoList = new bytes32[](ringSize * 7);
         uint p = 0;
+        uint q = 0;
+        uint r = 0;
+        uint prevSplitB = orders[ringSize - 1].splitB;
         for (uint i = 0; i < ringSize; i++) {
             OrderState memory state = orders[i];
-            uint prevSplitB = orders[(i + ringSize - 1) % ringSize].splitB;
             uint nextFillAmountS = orders[(i + 1) % ringSize].fillAmountS;
             // Store owner and tokenS of every order
-            batch[p] = bytes32(state.owner);
-            batch[p + 1] = bytes32(state.tokenS);
+            batch[p++] = bytes32(state.owner);
+            batch[p++] = bytes32(state.tokenS);
             // Store all amounts
-            batch[p + 2] = bytes32(state.fillAmountS - prevSplitB);
-            batch[p + 3] = bytes32(prevSplitB + state.splitS);
-            batch[p + 4] = bytes32(state.lrcReward);
-            batch[p + 5] = bytes32(state.lrcFeeState);
-            batch[p + 6] = bytes32(state.wallet);
-            p += 7;
-            // Update fill records
-            if (state.buyNoMoreThanAmountB) {
-                delegate.addCancelledOrFilled(state.orderHash, nextFillAmountS);
-            } else {
-                delegate.addCancelledOrFilled(state.orderHash, state.fillAmountS);
-            }
-            orderHashList[i] = state.orderHash;
-            amountsList[i][0] = state.fillAmountS + state.splitS;
-            amountsList[i][1] = nextFillAmountS - state.splitB;
-            amountsList[i][2] = state.lrcReward;
-            amountsList[i][3] = state.lrcFeeState;
-            amountsList[i][4] = state.splitS;
-            amountsList[i][5] = state.splitB;
+            batch[p++] = bytes32(state.fillAmountS.sub(prevSplitB));
+            batch[p++] = bytes32(prevSplitB.add(state.splitS));
+            batch[p++] = bytes32(state.lrcReward);
+            batch[p++] = bytes32(state.lrcFeeState);
+            batch[p++] = bytes32(state.wallet);
+            historyBatch[r++] = state.orderHash;
+            historyBatch[r++] = bytes32(
+                state.buyNoMoreThanAmountB ? nextFillAmountS : state.fillAmountS);
+            orderInfoList[q++] = bytes32(state.orderHash);
+            orderInfoList[q++] = bytes32(state.owner);
+            orderInfoList[q++] = bytes32(state.tokenS);
+            orderInfoList[q++] = bytes32(state.fillAmountS);
+            orderInfoList[q++] = bytes32(state.lrcReward);
+            orderInfoList[q++] = bytes32(
+                state.lrcFeeState > 0 ? int(state.lrcFeeState) : -int(state.lrcReward)
+            );
+            orderInfoList[q++] = bytes32(
+                state.splitS > 0 ? int(state.splitS) : -int(state.splitB)
+            );
+            prevSplitB = state.splitB;
         }
+        // Update fill records
+        delegate.batchAddCancelledOrFilled(historyBatch);
         // Do all transactions
         delegate.batchTransferToken(
             _lrcTokenAddress,
@@ -835,7 +851,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         OrderState[] orders
         )
         private
-        view
+        pure
     {
         uint[] memory rateRatios = new uint[](ringSize);
         uint _rateRatioScale = RATE_RATIO_SCALE;
@@ -881,14 +897,14 @@ contract LoopringProtocolImpl is LoopringProtocol {
                 // If the order is selling LRC, we need to calculate how much LRC
                 // is left that can be used as fee.
                 if (state.tokenS == _lrcTokenAddress) {
-                    lrcSpendable -= state.fillAmountS;
+                    lrcSpendable = lrcSpendable.sub(state.fillAmountS);
                 }
                 // If the order is buyign LRC, it will has more to pay as fee.
                 if (state.tokenB == _lrcTokenAddress) {
                     nextFillAmountS = orders[(i + 1) % ringSize].fillAmountS;
                     lrcReceiable = nextFillAmountS;
                 }
-                uint lrcTotal = lrcSpendable + lrcReceiable;
+                uint lrcTotal = lrcSpendable.add(lrcReceiable);
                 // If order doesn't have enough LRC, set margin split to 100%.
                 if (lrcTotal < state.lrcFeeState) {
                     state.lrcFeeState = lrcTotal;
@@ -905,7 +921,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
                         state.lrcFeeState = 0;
                     } else {
                         state.splitB = lrcReceiable;
-                        state.lrcFeeState -= lrcReceiable;
+                        state.lrcFeeState = state.lrcFeeState.sub(lrcReceiable);
                     }
                 }
             } else {
@@ -946,7 +962,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
                     // be paid LRC reward first, so the orders in the ring does
                     // mater.
                     if (split > 0) {
-                        minerLrcSpendable -= state.lrcFeeState;
+                        minerLrcSpendable = minerLrcSpendable.sub(state.lrcFeeState);
                         state.lrcReward = state.lrcFeeState;
                     }
                 }
@@ -1008,6 +1024,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
                 state.fillAmountS = fillAmountB.mul(
                     state.rateS
                 ) / state.rateB;
+                require(state.fillAmountS > 0);
                 newSmallestIdx = i;
             }
             state.lrcFeeState = state.lrcFee.mul(
@@ -1060,6 +1077,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
                 state.amountS < availableAmountS ?
                 state.amountS : availableAmountS
             );
+            require(state.fillAmountS > 0);
         }
     }
     /// @return Amount of ERC20 token that can be spent by this contract.
@@ -1123,6 +1141,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
     {
         orders = new OrderState[](params.ringSize);
         for (uint i = 0; i < params.ringSize; i++) {
+            uint[6] memory uintArgs = uintArgsList[i];
             bool marginSplitAsFee = (params.feeSelections & (uint16(1) << i)) > 0;
             orders[i] = OrderState(
                 addressList[i][0],
@@ -1130,17 +1149,17 @@ contract LoopringProtocolImpl is LoopringProtocol {
                 addressList[(i + 1) % params.ringSize][1],
                 addressList[i][2],
                 addressList[i][3],
-                uintArgsList[i][2],
-                uintArgsList[i][3],
-                uintArgsList[i][0],
-                uintArgsList[i][1],
-                uintArgsList[i][4],
+                uintArgs[2],
+                uintArgs[3],
+                uintArgs[0],
+                uintArgs[1],
+                uintArgs[4],
                 buyNoMoreThanAmountBList[i],
                 marginSplitAsFee,
                 bytes32(0),
                 uint8ArgsList[i][0],
-                uintArgsList[i][5],
-                uintArgsList[i][1],
+                uintArgs[5],
+                uintArgs[1],
                 0,   // fillAmountS
                 0,   // lrcReward
                 0,   // lrcFee
