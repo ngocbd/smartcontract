@@ -1,195 +1,101 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JesusCoin at 0xe2d82dc7da0e6f882e96846451f4fabcc8f90528
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JesusCoin at 0x0438Ce30335047EDf6655f64de599c6B5727d54d
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.8;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+interface ERC20Interface {
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    owner = newOwner;
-    OwnershipTransferred(owner, newOwner);
-  }
-}
-
-contract ERC20Basic {
-  uint256 public totalSupply;
-  
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-}
-
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-  address public airdropper;
-  
-  function MintableToken() public {
-    airdropper = msg.sender;
-  }
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
+    function totalSupply() constant returns (uint256 totalSupply) ;
     
-  modifier onlyAirdropper() {
-    require(msg.sender == airdropper);
-    _;
-  }
-
-  function mint(address _to, uint256 _amount) onlyAirdropper canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    
+    function transfer(address _to, uint256 _value) returns (bool success);
+    
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    
+    function approve(address _spender, uint256 _value) returns (bool success);
+    
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+ }
   
-  function setAirdropper(address _airdropper) public onlyOwner {
-      require(_airdropper != address(0));
-      airdropper = _airdropper;
-  }
-}
+ contract JesusCoin is ERC20Interface {
+      string public constant symbol = "JC";
+      string public constant name = "Jesus Coin";
+      uint8 public constant decimals = 18;
+      uint256 _totalSupply = 333091815195973856000000000000000000;
+ 
+      address public owner;
+   
+      mapping(address => uint256) balances;
+   
+ 
+      mapping(address => mapping (address => uint256)) allowed;
+   
+      
+      modifier onlyOwner() {
+          if (msg.sender != owner) {
+              throw;
+          }
+          _;
+      }
+   
+      function JesusCoin() {
+          owner = msg.sender;
+          balances[owner] = _totalSupply;
+      }
+   
+      function totalSupply() constant returns (uint256 totalSupply) {
+          totalSupply = _totalSupply;
+      }
+   
+      function balanceOf(address _owner) constant returns (uint256 balance) {
+          return balances[_owner];
+      }
+   
+      function transfer(address _to, uint256 _amount) returns (bool success) {
+          if (balances[msg.sender] >= _amount 
+              && _amount > 0
+              && balances[_to] + _amount > balances[_to]) {
+              balances[msg.sender] -= _amount;
+              balances[_to] += _amount;
+              Transfer(msg.sender, _to, _amount);
+              return true;
+          } else {
+              return false;
+          }
+      }
+   
+      function transferFrom(
+          address _from,
+          address _to,
+          uint256 _amount
+     ) returns (bool success) {
+         if (balances[_from] >= _amount
+             && allowed[_from][msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[_from] -= _amount;
+             allowed[_from][msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(_from, _to, _amount);
+             return true;
+         } else {
+             return false;
+         }
+     }
 
-contract TokenDestructible is Ownable {
-  function TokenDestructible() public payable { }
-
-  function destroy(address[] tokens) onlyOwner public {
-    for(uint256 i = 0; i < tokens.length; i++) {
-      ERC20Basic token = ERC20Basic(tokens[i]);
-      uint256 balance = token.balanceOf(this);
-      token.transfer(owner, balance);
-    }
-
-    selfdestruct(owner);
-  }
-}
-
-contract JesusCoin is MintableToken, TokenDestructible {
-  string public constant name = "Jesus Coin";
-  uint8  public constant decimals = 18;
-  string public constant symbol = "JC";
+     function approve(address _spender, uint256 _amount) returns (bool success) {
+         allowed[msg.sender][_spender] = _amount;
+         Approval(msg.sender, _spender, _amount);
+         return true;
+     }
   
-  function JesusCoin() public payable { }
-}
+     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+         return allowed[_owner][_spender];
+     }
+ }
