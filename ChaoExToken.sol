@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChaoExToken at 0x9fd800bf4c8c0e263970f8fc53c68878ed70824e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChaoExToken at 0xfbc3c8aad80b5934d134e2cce065702ff254ad7d
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
 
 /**
  * @title ERC20Basic
@@ -9,10 +9,21 @@ pragma solidity ^0.4.18;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint256 public totalSupply;
+  function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -20,6 +31,10 @@ contract ERC20Basic {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -29,6 +44,9 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -36,15 +54,175 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
+  }
+}
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale,
+ * allowing investors to purchase tokens with ether. This contract implements
+ * such functionality in its most fundamental form and can be extended to provide additional
+ * functionality and/or custom behavior.
+ * The external interface represents the basic interface for purchasing tokens, and conform
+ * the base architecture for crowdsales. They are *not* intended to be modified / overriden.
+ * The internal interface conforms the extensible and modifiable surface of crowdsales. Override 
+ * the methods to add functionality. Consider using 'super' where appropiate to concatenate
+ * behavior.
+ */
+
+contract Crowdsale {
+  using SafeMath for uint256;
+
+  // The token being sold
+  ERC20 public token;
+
+  // Address where funds are collected
+  address public wallet;
+
+  // How many token units a buyer gets per wei
+  uint256 public rate;
+
+  // Amount of wei raised
+  uint256 public weiRaised;
+
+  /**
+   * Event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+  /**
+   * @param _rate Number of token units a buyer gets per wei
+   * @param _wallet Address where collected funds will be forwarded to
+   * @param _token Address of the token being sold
+   */
+  function Crowdsale(uint256 _rate, address _wallet, ERC20 _token) public {
+    require(_rate > 0);
+    require(_wallet != address(0));
+    require(_token != address(0));
+
+    rate = _rate;
+    wallet = _wallet;
+    token = _token;
+  }
+
+  // -----------------------------------------
+  // Crowdsale external interface
+  // -----------------------------------------
+
+  /**
+   * @dev fallback function ***DO NOT OVERRIDE***
+   */
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+
+  /**
+   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @param _beneficiary Address performing the token purchase
+   */
+  function buyTokens(address _beneficiary) public payable {
+
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
+
+    // calculate token amount to be created
+    uint256 tokens = _getTokenAmount(weiAmount);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    _processPurchase(_beneficiary, tokens);
+    TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+
+    _updatePurchasingState(_beneficiary, weiAmount);
+
+    _forwardFunds();
+    _postValidatePurchase(_beneficiary, weiAmount);
+  }
+
+  // -----------------------------------------
+  // Internal interface (extensible)
+  // -----------------------------------------
+
+  /**
+   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+    require(_beneficiary != address(0));
+    require(_weiAmount != 0);
+  }
+
+  /**
+   * @dev Validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met.
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+    // optional override
+  }
+
+  /**
+   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
+   * @param _beneficiary Address performing the token purchase
+   * @param _tokenAmount Number of tokens to be emitted
+   */
+  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    token.transfer(_beneficiary, _tokenAmount);
+  }
+
+  /**
+   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
+   * @param _beneficiary Address receiving the tokens
+   * @param _tokenAmount Number of tokens to be purchased
+   */
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    _deliverTokens(_beneficiary, _tokenAmount);
+  }
+
+  /**
+   * @dev Override for extensions that require an internal state to check for validity (current user contributions, etc.)
+   * @param _beneficiary Address receiving the tokens
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
+    // optional override
+  }
+
+  /**
+   * @dev Override to extend the way in which ether is converted to tokens.
+   * @param _weiAmount Value in wei to be converted into tokens
+   * @return Number of tokens that can be purchased with the specified _weiAmount
+   */
+  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+    return _weiAmount.mul(rate);
+  }
+
+  /**
+   * @dev Determines how ETH is stored/forwarded on purchases.
+   */
+  function _forwardFunds() internal {
+    wallet.transfer(msg.value);
   }
 }
 
@@ -56,6 +234,15 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
   /**
   * @dev transfer token for a specified address
@@ -82,17 +269,6 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -210,7 +386,6 @@ contract Ownable {
     owner = msg.sender;
   }
 
-
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -218,7 +393,6 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
-
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
@@ -238,7 +412,6 @@ contract Ownable {
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-
 contract MintableToken is StandardToken, Ownable {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
@@ -258,7 +431,7 @@ contract MintableToken is StandardToken, Ownable {
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
+    totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
     Transfer(address(0), _to, _amount);
@@ -277,104 +450,29 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 /**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
+ * @title Capped token
+ * @dev Mintable token with a token cap.
  */
-contract Crowdsale {
-  using SafeMath for uint256;
+contract CappedToken is MintableToken {
 
-  // The token being sold
-  MintableToken public token;
+  uint256 public cap;
 
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
-
-  // address where funds are collected
-  address public wallet;
-
-  // how many token units a buyer gets per wei
-  uint256 public rate;
-
-  // amount of raised money in wei
-  uint256 public weiRaised;
+  function CappedToken(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
 
   /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
    */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply_.add(_amount) <= cap);
 
-
-  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
-    require(_startTime >= now);
-    require(_endTime >= _startTime);
-    require(_rate > 0);
-    require(_wallet != address(0));
-
-    token = createTokenContract();
-    startTime = _startTime;
-    endTime = _endTime;
-    rate = _rate;
-    wallet = _wallet;
+    return super.mint(_to, _amount);
   }
-
-  // creates the token to be sold.
-  // override this method to have crowdsale of a specific mintable token.
-  function createTokenContract() internal returns (MintableToken) {
-    return new MintableToken();
-  }
-
-
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable {
-    require(beneficiary != address(0));
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.mul(rate);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) {
-    bool withinPeriod = now >= startTime && now <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
-
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-    return now > endTime;
-  }
-
 
 }
 
@@ -396,30 +494,32 @@ contract DetailedERC20 is ERC20 {
  */
 contract BurnableToken is BasicToken {
 
-    event Burn(address indexed burner, uint256 value);
+  event Burn(address indexed burner, uint256 value);
 
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+    Transfer(burner, address(0), _value);
+  }
 }
 
-contract ChaoExToken is MintableToken, BurnableToken, DetailedERC20 {
+contract ChaoExToken is CappedToken, BurnableToken, DetailedERC20 {
 
     uint8 constant DECIMALS = 18;
-    string constant NAME = "CHAO";
-    string constant SYM = "CHX";
+    uint  constant TOTALTOKEN = 5 * 10 ** (8 + uint(DECIMALS));
+    string constant NAME = "CHAOEX";
+    string constant SYM = "CHEX";
 
-    function ChaoExToken() DetailedERC20 (NAME, SYM, DECIMALS) public {}
+    constructor() DetailedERC20 (NAME, SYM, DECIMALS) CappedToken(TOTALTOKEN) public {}
 
 }
