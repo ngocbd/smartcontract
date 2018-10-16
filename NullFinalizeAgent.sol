@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgent at 0x3a08c207ae45a71ee1ea063562e515cc05f981be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgent at 0x851374d83d0a38ecd1a682979fbe48fcccb82470
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -115,6 +115,11 @@ contract Haltable is Ownable {
 
   modifier stopInEmergency {
     if (halted) throw;
+    _;
+  }
+
+  modifier stopNonOwnersInEmergency {
+    if (halted && msg.sender != owner) throw;
     _;
   }
 
