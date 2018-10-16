@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x491f01a87a53432d117f8f59c10cfb17901a13fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3d9f4e43b52b0d9d4c607254539a505e0e810f99
 */
 pragma solidity ^0.4.16;
 
@@ -10,8 +10,8 @@ pragma solidity ^0.4.16;
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -20,9 +20,9 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
@@ -32,25 +32,25 @@ contract ERC20 is ERC20Basic {
  */
 library SafeMath {
     
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -73,7 +73,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) public returns (bool) {
+  function transfer(address _to, uint256 _value) returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -85,7 +85,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of. 
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
+  function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
 
@@ -108,7 +108,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amout of tokens to be transfered
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
     var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
@@ -126,7 +126,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
+  function approve(address _spender, uint256 _value) returns (bool) {
 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
@@ -145,7 +145,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifing the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
@@ -161,9 +161,10 @@ contract Ownable {
   address public owner;
 
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
    */
-  function Ownable() public {
+  function Ownable() {
     owner = msg.sender;
   }
 
@@ -179,7 +180,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner {
     require(newOwner != address(0));      
     owner = newOwner;
   }
@@ -208,19 +209,23 @@ contract BurnableToken is StandardToken {
 
 }
 
-contract VirCoinToken is BurnableToken {
+contract SimpleCoinToken is BurnableToken {
     
-  string public constant name = "VR Games Coin Token";
+  string public constant name = "Bitcoin Bank Token";
    
-  string public constant symbol = "ViR";
+  string public constant symbol = "MBB";
     
   uint32 public constant decimals = 18;
 
-  uint256 public INITIAL_SUPPLY = 10000000 * 1 ether;
+  uint256 public INITIAL_SUPPLY = 70000000 * 1 ether;
+  uint256 public Public_Sale_SUPPLY = 42000000 * 1 ether;
+  address for_save=0x51A0aF8dd8cf3EFF0c1422361AcF0c02Cf64c892;
+  
 
-  function VirCoinToken() public {
+  function SimpleCoinToken() {
     totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
+    balances[msg.sender] = Public_Sale_SUPPLY;
+    balances[for_save] = INITIAL_SUPPLY-Public_Sale_SUPPLY;
   }
     
 }
@@ -235,37 +240,20 @@ contract Crowdsale is Ownable {
 
   address restricted;
 
-  VirCoinToken public token = new VirCoinToken();
+  SimpleCoinToken public token = new SimpleCoinToken();
 
   uint start;
     
   uint period;
-  
-  uint presale;
-    
-  uint sale;
 
   uint rate;
 
-  function Crowdsale() public {
-    multisig = 0x8317BD267d4F80105a4e634D85145eE37d24c7a9;
-    restricted = 0x862631C23626959b080e6F0A7972BA5e53ae0a88;
-    restrictedPercent = 10;
-    rate = 1000000000000000000000;
-    start = 1518566400;
-    period = 150;
-    presale = 50;
-    sale = 100;
-  }
-  
-  function bytesToAddress(bytes source) internal pure returns(address) {
-    uint result;
-    uint mul = 1;
-    for(uint i = 20; i > 0; i--) {
-      result += uint8(source[i-1]) * mul;
-      mul = mul * 256;
-    }
-    return address(result);
+  function Crowdsale() {
+    multisig = 0x51A0aF8dd8cf3EFF0c1422361AcF0c02Cf64c892;
+    restrictedPercent = 40;
+    rate = 1000*1 ether;
+    start = 1517832000;
+    period = 80;
   }
 
   modifier saleIsOn() {
@@ -273,29 +261,20 @@ contract Crowdsale is Ownable {
     _;
   }
 
-  function createTokens() public saleIsOn payable {
+  function createTokens() saleIsOn payable {
     multisig.transfer(msg.value);
     uint tokens = rate.mul(msg.value).div(1 ether);
     uint bonusTokens = 0;
-    if(now < start + (presale * 1 days)) {
-      bonusTokens = tokens.mul(15).div(100);
-    } else if(now >= start + (presale * 1 days) && now < start + (presale * 1 days) + (sale * 1 days).div(3)) {
+     if(now <= start + 25 days) {
+      bonusTokens = tokens.div(5);
+    } else if(now > start + 25 days && now < start + 40 days) {
       bonusTokens = tokens.div(10);
-    } else if(now >= start + (presale * 1 days) + (sale * 1 days).div(3) && now < start + (presale * 1 days) + (sale * 1 days).div(3).mul(2)) {
+    } else if(now >= start + 40 days && now < start + 55 days) {
       bonusTokens = tokens.div(20);
     }
     uint tokensWithBonus = tokens.add(bonusTokens);
     token.transfer(msg.sender, tokensWithBonus);
-    uint restrictedTokens = tokens.mul(restrictedPercent).div(100 - restrictedPercent);
-    token.transfer(restricted, restrictedTokens);
 
-    //Referal
-    if(msg.data.length == 20) {
-      address referer = bytesToAddress(bytes(msg.data));
-      require(referer != msg.sender);
-      uint refererTokens = tokens.mul(10).div(100);
-      token.transfer(referer, refererTokens);
-    }
   }
 
   function() external payable {
