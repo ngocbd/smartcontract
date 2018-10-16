@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeonyToken at 0xb17d9e106d5b30ab6c62e1373ce2167ccfa08da4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeonyToken at 0x76b969cdcd7b03f76aed454d0e4a57421a8229e1
 */
 /**
 *?????????BitPeony?????????Bitcaps.club?????????????
@@ -38,17 +38,17 @@ contract ERC20 is ERC20Basic {
 contract Ownable {
   address public owner;
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-  * account.
-  */
   function Ownable() {
     owner = msg.sender;
   }
 
   /**
-  * @dev Throws if called by any account other than the owner.
+  * This contract only defines a modifier but does not use it
+  * it will be used in derived contracts.
+  * The function body is inserted where the special symbol
+  * "_;" in the definition of a modifier appears.
+  * This means that if the owner calls this function, the
+  * function is executed and otherwise, an exception is  thrown.
   */
   modifier onlyOwner() {
     require(msg.sender == owner);
@@ -64,19 +64,6 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-}
-
-/**
-*Abstract contract for the full ERC 20 Token standard
-*https://github.com/ethereum/EIPs/issues/20
-*/
-contract Peony is Ownable {
-  function stock(string _index, string _unit, uint256 _amount, string _list) returns (bool);
-  function ship(string _index) returns (bool);
-  function mint(uint256 _ptAmount) returns (bool);
-  function reduce(uint256 _tokenAmount) returns (bool);
-  function setTokenAddress(address _address) returns (bool);
-  function info(string _index) constant returns (string, string, uint256, string);
 }
 
 /**
