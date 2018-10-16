@@ -1,9 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LPCReserveWrapper at 0x0c9cce04224171b03f3b36d576500c0ace70e651
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LPCReserveWrapper at 0xd596fb9b95cf9cd39bdfa9d5cf9e1abe6f5db393
 */
 pragma solidity ^0.4.21;
 
-////// lib/ds-roles/lib/ds-auth/src/auth.sol
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -70,6 +69,8 @@ contract DSAuth is DSAuthEvents {
         }
     }
 }
+
+/// math.sol -- mixin for inline numerical wizardry
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -152,6 +153,8 @@ contract DSMath {
     }
 }
 
+/// note.sol -- the `note' modifier, for logging calls as events
+
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -190,6 +193,8 @@ contract DSNote {
     }
 }
 
+/// stop.sol -- mixin for enable/disable functionality
+
 // Copyright (C) 2017  DappHub, LLC
 
 // This program is free software: you can redistribute it and/or modify
@@ -222,6 +227,8 @@ contract DSStop is DSNote, DSAuth {
 
 }
 
+/// erc20.sol -- API for the ERC20 token standard
+
 // See <https://github.com/ethereum/EIPs/issues/20>.
 
 // This file likely does not meet the threshold of originality
@@ -244,6 +251,8 @@ contract ERC20 is ERC20Events {
         address src, address dst, uint wad
     ) public returns (bool);
 }
+
+/// base.sol -- basic ERC20 implementation
 
 // Copyright (C) 2015, 2016, 2017  DappHub, LLC
 
@@ -308,6 +317,8 @@ contract DSTokenBase is ERC20, DSMath {
         return true;
     }
 }
+
+/// token.sol -- ERC20 implementation with minting and burning
 
 // Copyright (C) 2015, 2016, 2017  DappHub, LLC
 
@@ -399,6 +410,7 @@ contract DSToken is DSTokenBase(0), DSStop {
         name = name_;
     }
 }
+// thing.sol - `auth` with handy mixins. your things should be DSThings
 
 // Copyright (C) 2017  DappHub, LLC
 
@@ -422,6 +434,8 @@ contract DSThing is DSAuth, DSNote, DSMath {
     }
 
 }
+
+/// value.sol - a value is a simple thing, it can be get and set
 
 // Copyright (C) 2017  DappHub, LLC
 
@@ -458,6 +472,8 @@ contract DSValue is DSThing {
         has = false;
     }
 }
+
+/// lpc.sol -- really dumb liquidity pool
 
 // Copyright (C) 2017, 2018 Rain <rainbreak@riseup.net>
 
@@ -643,19 +659,32 @@ contract LPCReserveWrapper is DSThing {
         require(token.approve(who, wad));
     }
 
-    function take(ERC20 token, uint wad) public note auth {
+    event Take(
+        address indexed origin,
+        address indexed srcToken,
+        uint srcAmount,
+        address indexed destToken,
+        uint destAmount,
+        address destAddress,
+        uint tag
+    );
+
+    function take(ERC20 token, uint wad) public auth {
         require(token == weth || token == dai);
         // Handle only ref == DAI and alt == WETH in this contract
         require(lpc.ref() == dai);
         require(lpc.alt() == weth);
         // Get from LPC the amount that we need to have
-        uint amountToWithdraw = (token == dai) ? wdiv(wad, lpc.tag()) : wmul(wad, lpc.tag());
+        uint tag = lpc.tag();
+        uint amountToWithdraw = (token == dai) ? wdiv(wad, tag) : wmul(wad, tag);
+        ERC20 withdrawToken = (token == dai) ? weth : dai;
         // Get the amount from the reserve
-        require(withdrawFromReserve((token == dai) ? weth : dai, amountToWithdraw));
+        require(withdrawFromReserve(withdrawToken, amountToWithdraw));
         // Magic
         lpc.take(token, wad);
         // Transfer DAI/WETH to reserve
         require(transferToReserve(token, wad));
+        emit Take(reserve, withdrawToken, amountToWithdraw, token, wad, lpc, tag);
     }
 
     function withdraw(ERC20 token, uint amount, address destination) public note auth {
