@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0x6a362e3042442cb9bb6fce29fb5c0da35191ae6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0xa10151d088f6f2705a05d6c83719e99e079a61c1
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
 // File: node_modules/zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -14,11 +14,11 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -28,9 +28,9 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
@@ -44,8 +44,8 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -87,7 +87,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -122,8 +122,9 @@ contract ERC20 is ERC20Basic {
 
 // File: contracts/Marketplace.sol
 
-// TODO: Add require reasons as soon as Solidity 0.4.22 is out (now commented out)
-//   follow progress at https://github.com/ethereum/solidity/projects/6
+// Note about numbers:
+//   All prices and exchange rates are in "decimal fixed-point", that is, scaled by 10^18, like ETH vs wei.
+//   Seconds are integers as usual.
 contract Marketplace is Ownable {
     using SafeMath for uint256;
 
@@ -139,7 +140,7 @@ contract Marketplace is Ownable {
     event Subscribed(bytes32 indexed productId, address indexed subscriber, uint endTimestamp);
     event NewSubscription(bytes32 indexed productId, address indexed subscriber, uint endTimestamp);
     event SubscriptionExtended(bytes32 indexed productId, address indexed subscriber, uint endTimestamp);
-    event SubscriptionTransferred(bytes32 indexed productId, address indexed from, address indexed to, uint secondsTransferred, uint datacoinTransferred);    
+    event SubscriptionTransferred(bytes32 indexed productId, address indexed from, address indexed to, uint secondsTransferred);
 
     // currency events
     event ExchangeRatesUpdated(uint timestamp, uint dataInUsd);
@@ -150,8 +151,8 @@ contract Marketplace is Ownable {
     }
 
     enum Currency {
-        DATA,                       // data atoms or "wei" (10^-18 DATA)
-        USD                         // nanodollars (10^-9 USD)
+        DATA,                       // "token wei" (10^-18 DATA)
+        USD                         // attodollars (10^-18 USD)
     }
 
     struct Product {
@@ -171,30 +172,9 @@ contract Marketplace is Ownable {
         uint endTimestamp;
     }
 
-    mapping (bytes32 => Product) products;
-    function getProduct(bytes32 id) public view returns (string name, address owner, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds, ProductState state) {
-        return (
-            products[id].name,
-            products[id].owner,
-            products[id].beneficiary,
-            products[id].pricePerSecond,
-            products[id].priceCurrency,
-            products[id].minimumSubscriptionSeconds,
-            products[id].state
-        );
-    }
+    /////////////// Marketplace lifecycle /////////////////
 
-    function getSubscription(bytes32 productId, address subscriber) public view returns (bool isValid, uint endTimestamp) {
-        TimeBasedSubscription storage sub;
-        (isValid, , sub) = _getSubscription(productId, subscriber);
-        endTimestamp = sub.endTimestamp;        
-    }
-
-    function getSubscriptionTo(bytes32 productId) public view returns (bool isValid, uint endTimestamp) {
-        return getSubscription(productId, msg.sender);
-    }
-
-    ERC20 datacoin;
+    ERC20 public datacoin;
 
     address public currencyUpdateAgent;
 
@@ -209,18 +189,32 @@ contract Marketplace is Ownable {
 
     ////////////////// Product management /////////////////
 
+    mapping (bytes32 => Product) public products;
+    function getProduct(bytes32 id) public view returns (string name, address owner, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds, ProductState state) {
+        return (
+            products[id].name,
+            products[id].owner,
+            products[id].beneficiary,
+            products[id].pricePerSecond,
+            products[id].priceCurrency,
+            products[id].minimumSubscriptionSeconds,
+            products[id].state
+        );
+    }
+
     // also checks that p exists: p.owner == 0 for non-existent products    
     modifier onlyProductOwner(bytes32 productId) {
         Product storage p = products[productId];
-        require(p.owner == msg.sender || owner == msg.sender); //, "Only product owner may call this function");
+        require(p.id != 0x0, "error_notFound");
+        require(p.owner == msg.sender || owner == msg.sender, "error_productOwnersOnly");
         _;
     }
 
     function createProduct(bytes32 id, string name, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds) public whenNotHalted {
-        require(id != 0); //, "Product ID can't be empty/null");
-        require(pricePerSecond > 0); //, "Free streams go through different channel");
+        require(id != 0x0, "error_nullProductId");
+        require(pricePerSecond > 0, "error_freeProductsNotSupported");
         Product storage p = products[id];
-        require(p.id == 0); //, "Product with this ID already exists");        
+        require(p.id == 0x0, "error_alreadyExists");
         products[id] = Product(id, name, msg.sender, beneficiary, pricePerSecond, currency, minimumSubscriptionSeconds, ProductState.Deployed, 0);
         emit ProductCreated(msg.sender, id, name, beneficiary, pricePerSecond, currency, minimumSubscriptionSeconds);
     }
@@ -230,7 +224,7 @@ contract Marketplace is Ownable {
     */
     function deleteProduct(bytes32 productId) public onlyProductOwner(productId) {        
         Product storage p = products[productId];
-        require(p.state == ProductState.Deployed);
+        require(p.state == ProductState.Deployed, "error_notDeployed");
         p.state = ProductState.NotDeployed;
         emit ProductDeleted(p.owner, productId, p.name, p.beneficiary, p.pricePerSecond, p.priceCurrency, p.minimumSubscriptionSeconds);
     }
@@ -240,13 +234,13 @@ contract Marketplace is Ownable {
     */
     function redeployProduct(bytes32 productId) public onlyProductOwner(productId) {        
         Product storage p = products[productId];
-        require(p.state == ProductState.NotDeployed);
+        require(p.state == ProductState.NotDeployed, "error_mustBeNotDeployed");
         p.state = ProductState.Deployed;
         emit ProductRedeployed(p.owner, productId, p.name, p.beneficiary, p.pricePerSecond, p.priceCurrency, p.minimumSubscriptionSeconds);
     }
 
     function updateProduct(bytes32 productId, string name, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds) public onlyProductOwner(productId) {
-        require(pricePerSecond > 0); //, "Free streams go through different channel");
+        require(pricePerSecond > 0, "error_freeProductsNotSupported");
         Product storage p = products[productId]; 
         p.name = name;
         p.beneficiary = beneficiary;
@@ -271,7 +265,7 @@ contract Marketplace is Ownable {
     function claimProductOwnership(bytes32 productId) public whenNotHalted {
         // also checks that productId exists (newOwnerCandidate is zero for non-existent)
         Product storage p = products[productId]; 
-        require(msg.sender == p.newOwnerCandidate);
+        require(msg.sender == p.newOwnerCandidate, "error_notPermitted");
         emit ProductOwnershipChanged(msg.sender, productId, p.owner);
         p.owner = msg.sender;
         p.newOwnerCandidate = 0;
@@ -279,19 +273,27 @@ contract Marketplace is Ownable {
 
     /////////////// Subscription management ///////////////
 
+    function getSubscription(bytes32 productId, address subscriber) public view returns (bool isValid, uint endTimestamp) {
+        TimeBasedSubscription storage sub;
+        (isValid, , sub) = _getSubscription(productId, subscriber);
+        endTimestamp = sub.endTimestamp;        
+    }
+
+    function getSubscriptionTo(bytes32 productId) public view returns (bool isValid, uint endTimestamp) {
+        return getSubscription(productId, msg.sender);
+    }
+
     /**
      * Purchases access to this stream for msg.sender.
      * If the address already has a valid subscription, extends the subscription by the given period.
      */
     function buy(bytes32 productId, uint subscriptionSeconds) public whenNotHalted {
-        Product storage product;
-        TimeBasedSubscription storage sub;
-        (, product, sub) = _getSubscription(productId, msg.sender);
-        require(product.state == ProductState.Deployed); //, "Product has been deleted");        
+        var (, product, sub) = _getSubscription(productId, msg.sender);
+        require(product.state == ProductState.Deployed, "error_notDeployed");
         _addSubscription(product, msg.sender, subscriptionSeconds, sub);
 
-        uint price = _toDatacoin(product.pricePerSecond.mul(subscriptionSeconds), product.priceCurrency);
-        require(datacoin.transferFrom(msg.sender, product.beneficiary, price));  //, "Not enough DATAcoin allowance");
+        uint price = getPriceInData(subscriptionSeconds, product.pricePerSecond, product.priceCurrency);        
+        require(datacoin.transferFrom(msg.sender, product.beneficiary, price), "error_paymentFailed");
     }
 
     /**
@@ -306,22 +308,18 @@ contract Marketplace is Ownable {
     * If the address already has a valid subscription, extends the subscription by the msg.sender's remaining period.
     */
     function transferSubscription(bytes32 productId, address newSubscriber) public whenNotHalted {
-        bool isValid = false;
-        Product storage product;
-        TimeBasedSubscription storage sub;
-        (isValid, product, sub) = _getSubscription(productId, msg.sender);
-        require(isValid);   //, "Only valid subscriptions can be transferred");
-        uint secondsLeft = sub.endTimestamp.sub(block.timestamp);
-        uint datacoinLeft = secondsLeft.mul(product.pricePerSecond);
+        var (isValid, product, sub) = _getSubscription(productId, msg.sender);
+        require(isValid, "error_subscriptionNotValid");
+        uint secondsLeft = sub.endTimestamp.sub(block.timestamp);        
         TimeBasedSubscription storage newSub = product.subscriptions[newSubscriber];
         _addSubscription(product, newSubscriber, secondsLeft, newSub);
         delete product.subscriptions[msg.sender];
-        emit SubscriptionTransferred(productId, msg.sender, newSubscriber, secondsLeft, datacoinLeft);
+        emit SubscriptionTransferred(productId, msg.sender, newSubscriber, secondsLeft);
     }
 
     function _getSubscription(bytes32 productId, address subscriber) internal constant returns (bool subIsValid, Product storage, TimeBasedSubscription storage) {
         Product storage p = products[productId];
-        require(p.id != 0); //, "Product doesn't exist");
+        require(p.id != 0x0, "error_notFound");
         TimeBasedSubscription storage s = p.subscriptions[subscriber];
         return (s.endTimestamp >= block.timestamp, p, s);
     }
@@ -329,12 +327,12 @@ contract Marketplace is Ownable {
     function _addSubscription(Product storage p, address subscriber, uint addSeconds, TimeBasedSubscription storage oldSub) internal {
         uint endTimestamp;
         if (oldSub.endTimestamp > block.timestamp) {
-            require(addSeconds > 0); //, "Must top up worth at least one second");
+            require(addSeconds > 0, "error_topUpTooSmall");
             endTimestamp = oldSub.endTimestamp.add(addSeconds);
             oldSub.endTimestamp = endTimestamp;  
             emit SubscriptionExtended(p.id, subscriber, endTimestamp);
         } else {
-            require(addSeconds >= p.minimumSubscriptionSeconds); //, "More ether required to meet the minimum subscription period");
+            require(addSeconds >= p.minimumSubscriptionSeconds, "error_newSubscriptionTooSmall");
             endTimestamp = block.timestamp.add(addSeconds);
             TimeBasedSubscription memory newSub = TimeBasedSubscription(endTimestamp);
             p.subscriptions[subscriber] = newSub;
@@ -348,36 +346,36 @@ contract Marketplace is Ownable {
     //   the account on another Marketplace; OR that there is a central credit pool (say, an ERC20 token)
     // Creating another ERC20 token for this could be a simple fix: it would need the ability to transfer allowances
 
-    /////////////// Currency management ///////////////
+    /////////////// Currency management ///////////////    
 
-    uint public dataPerUsd = 1;
+    // Exchange rates are formatted as "decimal fixed-point", that is, scaled by 10^18, like ether.
+    //        Exponent: 10^18 15 12  9  6  3  0
+    //                      |  |  |  |  |  |  |
+    uint public dataPerUsd = 100000000000000000;   // ~= 0.1 DATA/USD
 
     /**
     * Update currency exchange rates; all purchases are still billed in DATAcoin
     * @param timestamp in seconds when the exchange rates were last updated
-    * @param dataUsd how many data atoms (10^-18 DATA) equal one nanodollar (10^-9 USD)
+    * @param dataUsd how many data atoms (10^-18 DATA) equal one USD dollar
     */
     function updateExchangeRates(uint timestamp, uint dataUsd) public {
-        require(msg.sender == currencyUpdateAgent);
+        require(msg.sender == currencyUpdateAgent, "error_notPermitted");
         require(dataUsd > 0);
         dataPerUsd = dataUsd;
         emit ExchangeRatesUpdated(timestamp, dataUsd);
     }
 
     /**
-    * Allow updating currency exchange rates even if time of exchange rate isn't known
-    */
-    function updateExchangeRates(uint dataUsd) public {
-        require(msg.sender == currencyUpdateAgent);
-        dataPerUsd = dataUsd;
-        emit ExchangeRatesUpdated(block.timestamp, dataUsd);
-    }    
-
-    function _toDatacoin(uint number, Currency unit) view internal returns (uint datacoinAmount) {
+    * Helper function to calculate (hypothetical) subscription cost for given seconds and price, using current exchange rates.
+    * @param subscriptionSeconds length of hypothetical subscription, as a non-scaled integer
+    * @param price nominal price scaled by 10^18 ("token wei" or "attodollars")
+    * @param unit unit of the number price
+    */    
+    function getPriceInData(uint subscriptionSeconds, uint price, Currency unit) public view returns (uint datacoinAmount) {
         if (unit == Currency.DATA) {
-            return number;
+            return price.mul(subscriptionSeconds);
         }
-        return number.mul(dataPerUsd);
+        return price.mul(dataPerUsd).div(10**18).mul(subscriptionSeconds);
     }
 
     /////////////// Admin functionality ///////////////
@@ -387,7 +385,7 @@ contract Marketplace is Ownable {
     bool public halted = false;
 
     modifier whenNotHalted() {
-        require(!halted || owner == msg.sender);
+        require(!halted || owner == msg.sender, "error_halted");
         _;
     }
     function halt() public onlyOwner {
