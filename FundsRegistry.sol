@@ -1,53 +1,101 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsRegistry at 0xf2c4497e74cd2aff31a8d4e5168f720c061eb218
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsRegistry at 0x8c4ccf23d8674a04665e9e7a64260aa4c0030aeb
 */
-/*************************************************************************
- * This contract has been merged with solidify
- * https://github.com/tiesnetwork/solidify
- *************************************************************************/
- 
- pragma solidity 0.4.15;
+// Copyright (C) 2017  MixBytes, LLC
 
-/*************************************************************************
- * import "../ownership/MultiownedControlled.sol" : start
- *************************************************************************/
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
 
-/*************************************************************************
- * import "./multiowned.sol" : start
- *************************************************************************/// Code taken from https://github.com/ethereum/dapp-bin/blob/master/wallet/wallet.sol
-// Audit, refactoring and improvements by github.com/Eenae
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
 
-// @authors:
-// Gav Wood <g@ethdev.com>
-// inheritable "property" contract that enables methods to be protected by requiring the acquiescence of either a
-// single, or, crucially, each of a number of, designated owners.
-// usage:
-// use modifiers onlyowner (just own owned) or onlymanyowners(hash), whereby the same hash must be provided by
-// some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
-// interior is executed.
+pragma solidity ^0.4.15;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
 
 
+/**
+ * @title Helps contracts guard agains rentrancy attacks.
+ * @author Remco Bloemen <remco@2?.com>
+ * @notice If you mark a function `nonReentrant`, you should also
+ * mark it `external`.
+ */
+contract ReentrancyGuard {
+
+    /**
+     * @dev We use a single lock for the whole contract.
+     */
+    bool private rentrancy_lock = false;
+
+    /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * @notice If you mark a function `nonReentrant`, you should also
+     * mark it `external`. Calling one nonReentrant function from
+     * another is not supported. Instead, you can implement a
+     * `private` function doing the actual work, and a `external`
+     * wrapper marked as `nonReentrant`.
+     */
+    modifier nonReentrant() {
+        require(!rentrancy_lock);
+        rentrancy_lock = true;
+        _;
+        rentrancy_lock = false;
+    }
+
+}
 
 
 /// note: during any ownership changes all pending operations (waiting for more signatures) are cancelled
 // TODO acceptOwnership
 contract multiowned {
 
-	// TYPES
+    // TYPES
 
     // struct for the status of a pending operation.
     struct MultiOwnedOperationPendingState {
-        // count of confirmations needed
-        uint yetNeeded;
+    // count of confirmations needed
+    uint yetNeeded;
 
-        // bitmap of confirmations where owner #ownerIndex's decision corresponds to 2**ownerIndex bit
-        uint ownersDone;
+    // bitmap of confirmations where owner #ownerIndex's decision corresponds to 2**ownerIndex bit
+    uint ownersDone;
 
-        // position of this operation key in m_multiOwnedPendingIndex
-        uint index;
+    // position of this operation key in m_multiOwnedPendingIndex
+    uint index;
     }
 
-	// EVENTS
+    // EVENTS
 
     event Confirmation(address owner, bytes32 operation);
     event Revoke(address owner, bytes32 operation);
@@ -61,7 +109,7 @@ contract multiowned {
     // the last one is emitted if the required signatures change
     event RequirementChanged(uint newRequirement);
 
-	// MODIFIERS
+    // MODIFIERS
 
     // simple single-sig function modifier.
     modifier onlyowner {
@@ -105,13 +153,13 @@ contract multiowned {
         _;
     }
 
-	// METHODS
+    // METHODS
 
     // constructor is given number of sigs required to do protected "onlymanyowners" transactions
     // as well as the selection of addresses capable of confirming them (msg.sender is not added to the owners!).
     function multiowned(address[] _owners, uint _required)
-        validNumOwners(_owners.length)
-        multiOwnedValidRequirement(_required, _owners.length)
+    validNumOwners(_owners.length)
+    multiOwnedValidRequirement(_required, _owners.length)
     {
         assert(c_maxOwners <= 255);
 
@@ -137,10 +185,10 @@ contract multiowned {
     /// @param _to address of new owner
     // All pending operations will be canceled!
     function changeOwner(address _from, address _to)
-        external
-        ownerExists(_from)
-        ownerDoesNotExist(_to)
-        onlymanyowners(sha3(msg.data))
+    external
+    ownerExists(_from)
+    ownerDoesNotExist(_to)
+    onlymanyowners(sha3(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -158,10 +206,10 @@ contract multiowned {
     /// @param _owner address of new owner
     // All pending operations will be canceled!
     function addOwner(address _owner)
-        external
-        ownerDoesNotExist(_owner)
-        validNumOwners(m_numOwners + 1)
-        onlymanyowners(sha3(msg.data))
+    external
+    ownerDoesNotExist(_owner)
+    validNumOwners(m_numOwners + 1)
+    onlymanyowners(sha3(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -178,11 +226,11 @@ contract multiowned {
     /// @param _owner address of owner to remove
     // All pending operations will be canceled!
     function removeOwner(address _owner)
-        external
-        ownerExists(_owner)
-        validNumOwners(m_numOwners - 1)
-        multiOwnedValidRequirement(m_multiOwnedRequired, m_numOwners - 1)
-        onlymanyowners(sha3(msg.data))
+    external
+    ownerExists(_owner)
+    validNumOwners(m_numOwners - 1)
+    multiOwnedValidRequirement(m_multiOwnedRequired, m_numOwners - 1)
+    onlymanyowners(sha3(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -201,9 +249,9 @@ contract multiowned {
     /// @param _newRequired new number of signatures required
     // All pending operations will be canceled!
     function changeRequirement(uint _newRequired)
-        external
-        multiOwnedValidRequirement(_newRequired, m_numOwners)
-        onlymanyowners(sha3(msg.data))
+    external
+    multiOwnedValidRequirement(_newRequired, m_numOwners)
+    onlymanyowners(sha3(msg.data))
     {
         m_multiOwnedRequired = _newRequired;
         clearPending();
@@ -221,7 +269,7 @@ contract multiowned {
     function getOwners() public constant returns (address[]) {
         address[] memory result = new address[](m_numOwners);
         for (uint i = 0; i < m_numOwners; i++)
-            result[i] = getOwner(i);
+        result[i] = getOwner(i);
 
         return result;
     }
@@ -244,9 +292,9 @@ contract multiowned {
     /// @notice Revokes a prior confirmation of the given operation
     /// @param _operation operation value, typically sha3(msg.data)
     function revoke(bytes32 _operation)
-        external
-        multiOwnedOperationIsActive(_operation)
-        onlyowner
+    external
+    multiOwnedOperationIsActive(_operation)
+    onlyowner
     {
         uint ownerIndexBit = makeOwnerBitmapBit(msg.sender);
         var pending = m_multiOwnedPending[_operation];
@@ -265,11 +313,11 @@ contract multiowned {
     /// @param _operation operation value, typically sha3(msg.data)
     /// @param _owner an owner address
     function hasConfirmed(bytes32 _operation, address _owner)
-        external
-        constant
-        multiOwnedOperationIsActive(_operation)
-        ownerExists(_owner)
-        returns (bool)
+    external
+    constant
+    multiOwnedOperationIsActive(_operation)
+    ownerExists(_owner)
+    returns (bool)
     {
         return !(m_multiOwnedPending[_operation].ownersDone & makeOwnerBitmapBit(_owner) == 0);
     }
@@ -277,16 +325,16 @@ contract multiowned {
     // INTERNAL METHODS
 
     function confirmAndCheck(bytes32 _operation)
-        private
-        onlyowner
-        returns (bool)
+    private
+    onlyowner
+    returns (bool)
     {
         if (512 == m_multiOwnedPendingIndex.length)
-            // In case m_multiOwnedPendingIndex grows too much we have to shrink it: otherwise at some point
-            // we won't be able to do it because of block gas limit.
-            // Yes, pending confirmations will be lost. Dont see any security or stability implications.
-            // TODO use more graceful approach like compact or removal of clearPending completely
-            clearPending();
+        // In case m_multiOwnedPendingIndex grows too much we have to shrink it: otherwise at some point
+        // we won't be able to do it because of block gas limit.
+        // Yes, pending confirmations will be lost. Dont see any security or stability implications.
+        // TODO use more graceful approach like compact or removal of clearPending completely
+        clearPending();
 
         var pending = m_multiOwnedPending[_operation];
 
@@ -353,7 +401,7 @@ contract multiowned {
         // TODO block gas limit
         for (uint i = 0; i < length; ++i) {
             if (m_multiOwnedPendingIndex[i] != 0)
-                delete m_multiOwnedPending[m_multiOwnedPendingIndex[i]];
+            delete m_multiOwnedPending[m_multiOwnedPendingIndex[i]];
         }
         delete m_multiOwnedPendingIndex;
     }
@@ -388,7 +436,7 @@ contract multiowned {
     }
 
 
-   	// FIELDS
+    // FIELDS
 
     uint constant c_maxOwners = 250;
 
@@ -412,9 +460,6 @@ contract multiowned {
     mapping(bytes32 => MultiOwnedOperationPendingState) internal m_multiOwnedPending;
     bytes32[] internal m_multiOwnedPendingIndex;
 }
-/*************************************************************************
- * import "./multiowned.sol" : end
- *************************************************************************/
 
 
 /**
@@ -440,7 +485,7 @@ contract MultiownedControlled is multiowned {
     // PUBLIC interface
 
     function MultiownedControlled(address[] _owners, uint _signaturesRequired, address _controller)
-        multiowned(_owners, _signaturesRequired)
+    multiowned(_owners, _signaturesRequired)
     {
         m_controller = _controller;
         ControllerSet(m_controller);
@@ -465,12 +510,6 @@ contract MultiownedControlled is multiowned {
     /// @notice address of entity entitled to mint new tokens
     address public m_controller;
 }
-/*************************************************************************
- * import "../ownership/MultiownedControlled.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "../security/ArgumentsChecker.sol" : start
- *************************************************************************/
 
 
 /// @title utility methods and modifiers of arguments validation
@@ -478,8 +517,8 @@ contract ArgumentsChecker {
 
     /// @dev check which prevents short address attack
     modifier payloadSizeIs(uint size) {
-       require(msg.data.length == size + 4 /* function selector */);
-       _;
+        require(msg.data.length == size + 4 /* function selector */);
+        _;
     }
 
     /// @dev check that address is valid
@@ -488,82 +527,6 @@ contract ArgumentsChecker {
         _;
     }
 }
-/*************************************************************************
- * import "../security/ArgumentsChecker.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "zeppelin-solidity/contracts/math/SafeMath.sol" : start
- *************************************************************************/
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-/*************************************************************************
- * import "zeppelin-solidity/contracts/math/SafeMath.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "zeppelin-solidity/contracts/ReentrancyGuard.sol" : start
- *************************************************************************/
-
-/**
- * @title Helps contracts guard agains rentrancy attacks.
- * @author Remco Bloemen <remco@2?.com>
- * @notice If you mark a function `nonReentrant`, you should also
- * mark it `external`.
- */
-contract ReentrancyGuard {
-
-  /**
-   * @dev We use a single lock for the whole contract.
-   */
-  bool private rentrancy_lock = false;
-
-  /**
-   * @dev Prevents a contract from calling itself, directly or indirectly.
-   * @notice If you mark a function `nonReentrant`, you should also
-   * mark it `external`. Calling one nonReentrant function from
-   * another is not supported. Instead, you can implement a
-   * `private` function doing the actual work, and a `external`
-   * wrapper marked as `nonReentrant`.
-   */
-  modifier nonReentrant() {
-    require(!rentrancy_lock);
-    rentrancy_lock = true;
-    _;
-    rentrancy_lock = false;
-  }
-
-}
-/*************************************************************************
- * import "zeppelin-solidity/contracts/ReentrancyGuard.sol" : end
- *************************************************************************/
 
 
 /// @title registry of funds sent by investors
@@ -649,12 +612,12 @@ contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuar
     }
 
     /// @notice withdraw accumulated balance, called by payee in case crowdsale failed
-    function withdrawPayments()
+    function withdrawPayments(address payee)
         external
         nonReentrant
+        onlyController
         requiresState(State.REFUNDING)
     {
-        address payee = msg.sender;
         uint256 payment = m_weiBalances[payee];
 
         require(payment != 0);
