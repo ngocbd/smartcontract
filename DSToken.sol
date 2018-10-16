@@ -1,82 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x89927172477a079282090c0a00c2661417adbacb
 */
-// MKR Token
+pragma solidity ^0.4.13;
 
-// hevm: flattened sources of src/mkr-499.sol
-pragma solidity ^0.4.15;
-
-////// lib/ds-roles/lib/ds-auth/src/auth.sol
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.13; */
-
-contract DSAuthority {
-    function canCall(
-        address src, address dst, bytes4 sig
-    ) public view returns (bool);
-}
-
-contract DSAuthEvents {
-    event LogSetAuthority (address indexed authority);
-    event LogSetOwner     (address indexed owner);
-}
-
-contract DSAuth is DSAuthEvents {
-    DSAuthority  public  authority;
-    address      public  owner;
-
-    function DSAuth() public {
-        owner = msg.sender;
-        LogSetOwner(msg.sender);
-    }
-
-    function setOwner(address owner_)
-        public
-        auth
-    {
-        owner = owner_;
-        LogSetOwner(owner);
-    }
-
-    function setAuthority(DSAuthority authority_)
-        public
-        auth
-    {
-        authority = authority_;
-        LogSetAuthority(authority);
-    }
-
-    modifier auth {
-        require(isAuthorized(msg.sender, msg.sig));
-        _;
-    }
-
-    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else if (authority == DSAuthority(0)) {
-            return false;
-        } else {
-            return authority.canCall(src, this, sig);
-        }
-    }
-}
-
-////// lib/ds-thing/lib/ds-math/src/math.sol
+////// lib/ds-math/src/math.sol
 /// math.sol -- mixin for inline numerical wizardry
 
 // This program is free software: you can redistribute it and/or modify
@@ -162,7 +89,77 @@ contract DSMath {
     }
 }
 
-////// lib/ds-thing/lib/ds-note/src/note.sol
+////// lib/ds-stop/lib/ds-auth/src/auth.sol
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.13; */
+
+contract DSAuthority {
+    function canCall(
+        address src, address dst, bytes4 sig
+    ) public view returns (bool);
+}
+
+contract DSAuthEvents {
+    event LogSetAuthority (address indexed authority);
+    event LogSetOwner     (address indexed owner);
+}
+
+contract DSAuth is DSAuthEvents {
+    DSAuthority  public  authority;
+    address      public  owner;
+
+    function DSAuth() public {
+        owner = msg.sender;
+        LogSetOwner(msg.sender);
+    }
+
+    function setOwner(address owner_)
+        public
+        auth
+    {
+        owner = owner_;
+        LogSetOwner(owner);
+    }
+
+    function setAuthority(DSAuthority authority_)
+        public
+        auth
+    {
+        authority = authority_;
+        LogSetAuthority(authority);
+    }
+
+    modifier auth {
+        require(isAuthorized(msg.sender, msg.sig));
+        _;
+    }
+
+    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
+        if (src == address(this)) {
+            return true;
+        } else if (src == owner) {
+            return true;
+        } else if (authority == DSAuthority(0)) {
+            return false;
+        } else {
+            return authority.canCall(src, this, sig);
+        }
+    }
+}
+
+////// lib/ds-stop/lib/ds-note/src/note.sol
 /// note.sol -- the `note' modifier, for logging calls as events
 
 // This program is free software: you can redistribute it and/or modify
@@ -205,34 +202,7 @@ contract DSNote {
     }
 }
 
-////// lib/ds-thing/src/thing.sol
-// thing.sol - `auth` with handy mixins. your things should be DSThings
-
-// Copyright (C) 2017  DappHub, LLC
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.13; */
-
-/* import 'ds-auth/auth.sol'; */
-/* import 'ds-note/note.sol'; */
-/* import 'ds-math/math.sol'; */
-
-contract DSThing is DSAuth, DSNote, DSMath {
-}
-
-////// lib/ds-token/lib/ds-stop/src/stop.sol
+////// lib/ds-stop/src/stop.sol
 /// stop.sol -- mixin for enable/disable functionality
 
 // Copyright (C) 2017  DappHub, LLC
@@ -272,39 +242,35 @@ contract DSStop is DSNote, DSAuth {
 
 }
 
-////// lib/ds-token/lib/erc20/src/erc20.sol
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+////// lib/erc20/src/erc20.sol
+/// erc20.sol -- API for the ERC20 token standard
 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// See <https://github.com/ethereum/EIPs/issues/20>.
 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// This file likely does not meet the threshold of originality
+// required for copyright to apply.  As a result, this is free and
+// unencumbered software belonging to the public domain.
 
 /* pragma solidity ^0.4.8; */
 
-// Token standard API
-// https://github.com/ethereum/EIPs/issues/20
-
-contract ERC20 {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf( address who ) public view returns (uint value);
-    function allowance( address owner, address spender ) public view returns (uint _allowance);
-
-    function transfer( address to, uint value) public returns (bool ok);
-    function transferFrom( address from, address to, uint value) public returns (bool ok);
-    function approve( address spender, uint value ) public returns (bool ok);
-
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
+contract ERC20Events {
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
 }
 
-////// lib/ds-token/src/base.sol
+contract ERC20 is ERC20Events {
+    function totalSupply() public view returns (uint);
+    function balanceOf(address guy) public view returns (uint);
+    function allowance(address src, address guy) public view returns (uint);
+
+    function approve(address guy, uint wad) public returns (bool);
+    function transfer(address dst, uint wad) public returns (bool);
+    function transferFrom(
+        address src, address dst, uint wad
+    ) public returns (bool);
+}
+
+////// src/base.sol
 /// base.sol -- basic ERC20 implementation
 
 // Copyright (C) 2015, 2016, 2017  DappHub, LLC
@@ -376,7 +342,7 @@ contract DSTokenBase is ERC20, DSMath {
     }
 }
 
-////// lib/ds-token/src/token.sol
+////// src/token.sol
 /// token.sol -- ERC20 implementation with minting and burning
 
 // Copyright (C) 2015, 2016, 2017  DappHub, LLC
