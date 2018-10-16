@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NYXToken at 0x8d06cbfdaf7066c739c71d70a2261d96d00d2d52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NYXToken at 0x54345d405d4f459c22954b1a233cd42bfd3a9262
 */
 /*
  * NYX Token smart contract
@@ -370,7 +370,6 @@ contract ERC23PayableToken is BasicToken, ERC23{
 contract NYXToken is MintableToken, ERC23PayableToken {
     string public constant name = "NYX Token";
     string public constant symbol = "NYX";
-    uint constant decimals = 0;
 
     bool public transferEnabled = true;
 
