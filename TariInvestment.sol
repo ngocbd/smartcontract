@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TariInvestment at 0x7078b01170768c6db7bd9f515305682e52664cd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TariInvestment at 0xcad708773b0ee530998e9d9699a65f8367f65cad
 */
 pragma solidity ^0.4.19;
-
-/** GitHub repository: https://github.com/dggventures/syndicate/tree/master/tari */
 
 /**
  * @title Ownable
@@ -45,7 +43,6 @@ contract Ownable {
 
 contract TariInvestment is Ownable {
 
-  // These are addresses that shouldn't consume too much gas in their fallback functions if they are contracts.
   // Address of the target contract
   address public investmentAddress = 0x33eFC5120D99a63bdF990013ECaBbd6c900803CE;
   // Major partner address
@@ -55,22 +52,24 @@ contract TariInvestment is Ownable {
   // Record balances to allow refunding
   mapping(address => uint) public balances;
   // Total received. Used for refunding.
-  uint totalInvestment;
+  uint public totalInvestment;
   // Available refunds. Used for refunding.
-  uint availableRefunds;
+  uint public availableRefunds;
   // Deadline when refunding starts.
-  uint refundingDeadline;
-  // States: Open for investments - allows ether investments; transitions to Closed as soon as
-  //                                a transfer to the target investment address is made,
-  //         Closed for investments - only transfers to target investment address are allowed,
+  uint public refundingDeadline;
+  // Gas used for withdrawals.
+  uint public withdrawal_gas;
+  // States: Open for investments - allows investments and transfers,
   //         Refunding investments - any state can transition to refunding state
-  enum State{Open, Closed, Refunding}
+  enum State{Open, Refunding}
 
 
   State public state = State.Open;
 
   function TariInvestment() public {
-    refundingDeadline = now + 10 days;
+    refundingDeadline = now + 4 days;
+    // Withdrawal gas is added to the standard 2300 by the solidity compiler.
+    set_withdrawal_gas(1000);
   }
 
   // Payments to this contract require a bit of gas. 100k should be enough.
@@ -82,32 +81,28 @@ contract TariInvestment is Ownable {
   }
 
   // Transfer some funds to the target investment address.
-  // It is expected of all addresses to allow low gas transferrals of ether.
-  function execute_transfer(uint transfer_amount) public onlyOwner {
-    // Close down investments. Transferral of funds shouldn't be possible during refunding.
-    State current_state = state;
-    if (current_state == State.Open)
-      state = State.Closed;
-    require(state == State.Closed);
+  function execute_transfer(uint transfer_amount, uint gas_amount) public onlyOwner {
+    // Transferral of funds shouldn't be possible during refunding.
+    require(state == State.Open);
 
     // Major fee is 1,50% = 15 / 1000
     uint major_fee = transfer_amount * 15 / 1000;
     // Minor fee is 1% = 10 / 1000
     uint minor_fee = transfer_amount * 10 / 1000;
-    majorPartnerAddress.transfer(major_fee);
-    minorPartnerAddress.transfer(minor_fee);
+    require(majorPartnerAddress.call.gas(gas_amount).value(major_fee)());
+    require(minorPartnerAddress.call.gas(gas_amount).value(minor_fee)());
 
-    // Send the rest 
-    investmentAddress.transfer(transfer_amount - major_fee - minor_fee);
+    // Send the rest
+    require(investmentAddress.call.gas(gas_amount).value(transfer_amount - major_fee - minor_fee)());
   }
 
   // Convenience function to transfer all available balance.
-  function execute_transfer() public onlyOwner {
-    execute_transfer(this.balance);
+  function execute_transfer_all(uint gas_amount) public onlyOwner {
+    execute_transfer(this.balance, gas_amount);
   }
 
   // Refund an investor when he sends a withdrawal transaction.
-  // Only available once refunds are enabled.
+  // Only available once refunds are enabled or the deadline for transfers is reached.
   function withdraw() public {
     if (state != State.Refunding) {
       require(refundingDeadline <= now);
@@ -115,9 +110,20 @@ contract TariInvestment is Ownable {
       availableRefunds = this.balance;
     }
 
+    // withdrawal = availableRefunds * investor's share
     uint withdrawal = availableRefunds * balances[msg.sender] / totalInvestment;
     balances[msg.sender] = 0;
-    msg.sender.transfer(withdrawal);
+    require(msg.sender.call.gas(withdrawal_gas).value(withdrawal)());
+  }
+
+  // Convenience function to allow immediate refunds.
+  function enable_refunds() public onlyOwner {
+    state = State.Refunding;
+  }
+
+  // Sets the amount of gas allowed to withdrawers
+  function set_withdrawal_gas(uint gas_amount) public onlyOwner {
+    withdrawal_gas = gas_amount;
   }
 
 }
