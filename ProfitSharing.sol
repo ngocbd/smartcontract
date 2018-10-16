@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProfitSharing at 0x6822aaf4ab22e6cca8352a927b9ae0a8fdb58d9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProfitSharing at 0xafcc79d4cbe7e5b6e6997bbe7233e8e9179f664a
 */
 pragma solidity ^0.4.11;
 
@@ -35,6 +35,32 @@ contract Ownable {
     }
   }
 
+}
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 /*
@@ -623,31 +649,6 @@ contract MiniMeTokenFactory {
     }
 }
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
 
 contract ProfitSharing is Ownable {
   using SafeMath for uint;
@@ -656,7 +657,7 @@ contract ProfitSharing is Ownable {
   event DividendClaimed(address indexed _claimer, uint256 _dividendIndex, uint256 _claim);
   event DividendRecycled(address indexed _recycler, uint256 _blockNumber, uint256 _amount, uint256 _totalSupply, uint256 _dividendIndex);
 
-  MiniMeToken public miniMeToken;
+  MiniMeToken public token;
 
   uint256 public RECYCLE_TIME = 1 years;
 
@@ -679,14 +680,14 @@ contract ProfitSharing is Ownable {
     _;
   }
 
-  function ProfitSharing(address _miniMeToken) {
-    miniMeToken = MiniMeToken(_miniMeToken);
+  function ProfitSharing(address _token) {
+    token = MiniMeToken(_token);
   }
 
   function depositDividend() payable
   onlyOwner
   {
-    uint256 currentSupply = miniMeToken.totalSupplyAt(block.number);
+    uint256 currentSupply = token.totalSupplyAt(block.number);
     uint256 dividendIndex = dividends.length;
     uint256 blockNumber = SafeMath.sub(block.number, 1);
     dividends.push(
@@ -708,7 +709,7 @@ contract ProfitSharing is Ownable {
     Dividend dividend = dividends[_dividendIndex];
     require(dividend.claimed[msg.sender] == false);
     require(dividend.recycled == false);
-    uint256 balance = miniMeToken.balanceOfAt(msg.sender, dividend.blockNumber);
+    uint256 balance = token.balanceOfAt(msg.sender, dividend.blockNumber);
     uint256 claim = balance.mul(dividend.amount).div(dividend.totalSupply);
     dividend.claimed[msg.sender] = true;
     dividend.claimedAmount = SafeMath.add(dividend.claimedAmount, claim);
@@ -736,7 +737,7 @@ contract ProfitSharing is Ownable {
     require(dividend.recycled == false);
     require(dividend.timestamp < SafeMath.sub(getNow(), RECYCLE_TIME));
     dividends[_dividendIndex].recycled = true;
-    uint256 currentSupply = miniMeToken.totalSupplyAt(block.number);
+    uint256 currentSupply = token.totalSupplyAt(block.number);
     uint256 remainingAmount = SafeMath.sub(dividend.amount, dividend.claimedAmount);
     uint256 dividendIndex = dividends.length;
     uint256 blockNumber = SafeMath.sub(block.number, 1);
