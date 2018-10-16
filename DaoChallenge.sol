@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoChallenge at 0x80f1f62b8b365c5326100d462d8570771b8d0e57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoChallenge at 0x08d698358b31ca6926e329879db9525504802abf
 */
 contract DaoChallenge
 {
@@ -37,7 +37,7 @@ contract DaoChallenge
 	}
 
 	// This uses call.value()() rather than send(), but only sends to msg.sender
-	function withdrawEtherOrThrow(uint256 amount) private {
+	function withdrawEtherOrThrow(uint256 amount) {
 		bool result = msg.sender.call.value(amount)();
 		if (!result) {
 			throw;
