@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinnerTakesAll at 0x28a23d1dde784f11486bf0e94e74dbf96d35b7ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinnerTakesAll at 0x77ce1c41db1baf27614a03b64c0b4995535d9179
 */
 pragma solidity ^0.4.4;
-// 6 Player, winner takes all
-// 6P-WTA-0.005 Version 1.2
-// - updated version tracking system
-// - changed bet to 0.005
-// - changed default function title
 
 contract WinnerTakesAll { 
     uint8 public currentPlayers;
@@ -18,7 +13,7 @@ contract WinnerTakesAll {
         bytes32[requiredPlayers] roundScores
     );
     
-    function WinnerTakesAll() public {
+    function SixPlayerRoulette() public {
         currentPlayers = 0;
     }
     
