@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gryphon at 0x05cd43ce7c54a23713841aeed22cb8686b1de820
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gryphon at 0x8325c7406d3c559a421adfa3a51cc53e2b270ff4
 */
 pragma solidity ^0.4.18;
 
@@ -97,23 +97,23 @@ contract Gryphon is ERC20, Ownable {
     mapping(address => uint256) total_vested;
     mapping (address => mapping (address => uint256)) allowed;
 
-    uint256 totalSupply_;
+    uint256 totalSupply_; // of hurtle token
 
     string public name = 'Gryphon';
     string public symbol = 'GXC';
     uint256 public decimals = 4;
-    uint256 public initialSupply = 2000000000;
+    uint256 public initialSupply = 2000000000; //2billion
 
     uint256 public start;
     uint256 public duration;
 
-    uint256 public rateICO = 910000000000000;
+    uint256 public rateICO = 910000000000000; //1 ether = 1100 GRC
 
-    uint256 public preSaleMaxCapInWei = 2500 ether;
+    uint256 public preSaleMaxCapInWei = 2500 ether;//52400 ether;
     uint256 public preSaleRaised = 0;
 
-    uint256 public icoSoftCapInWei = 2500 ether;
-    uint256 public icoHardCapInWei = 122400 ether;
+    uint256 public icoSoftCapInWei = 2500 ether;//52400 ether; //1 million gbp
+    uint256 public icoHardCapInWei = 122400 ether; //12 million gbp
     uint256 public icoRaised = 0;
 
     uint256 public presaleStartTimestamp;
@@ -138,21 +138,21 @@ contract Gryphon is ERC20, Ownable {
     function Gryphon() public {
 
         owner = 0xf42B82D02b8f3E7983b3f7E1000cE28EC3F8C815;
-        vault = new RefundVault(0x6cD6B03D16E4BE08159412a7E290F1EA23446Bf2);
+        vault = new RefundVault(0x6cD6B03D16E4BE08159412a7E290F1EA23446Bf2); //address of wallet in which process will go in case of success
 
-        totalSupply_ = initialSupply*(10**decimals);
+        totalSupply_ = initialSupply*(10**decimals); //The total supply defined in base token
 
         balances[owner] = totalSupply_;
 
-        presaleStartTimestamp = 1523232000;
-        presaleEndTimestamp = presaleStartTimestamp + 50 * 1 days;
+        presaleStartTimestamp = 1525046400;
+        presaleEndTimestamp = presaleStartTimestamp + 30 * 1 days;
 
         icoStartTimestamp = presaleEndTimestamp + 1 days;
-        icoEndTimestamp = icoStartTimestamp + 60 * 1 days;
+        icoEndTimestamp = icoStartTimestamp + 90 * 1 days;
 
         crowdSaleState = State.Preparing;
 
-        start = 1523232000;
+        start = 1525046400;
         duration = 23328000;
     }
 
@@ -161,6 +161,7 @@ contract Gryphon is ERC20, Ownable {
     }
 
     function enter() public nonZero payable {
+        //test = msg.value;
         if(isPreSalePeriod()) {
 
             if(crowdSaleState == State.Preparing) {
@@ -212,10 +213,11 @@ contract Gryphon is ERC20, Ownable {
 
         balances[owner] = balances[owner].sub(tokens_in_cents);
 
+        //add vesting here
         balances[_recipient] = balances[_recipient].add(tokens_in_cents);
         getVested(_recipient);
 
-        Transfer(owner, _recipient, tokens_in_cents);
+        Transfer(owner, _recipient, tokens_in_cents); //actual function that does the transfer
         return true;
     }
 
@@ -258,7 +260,7 @@ contract Gryphon is ERC20, Ownable {
         require(balances[msg.sender] >= _tokens_in_cents);
         require(vested[msg.sender] >= _tokens_in_cents);
 
-        if(balanceOf(_to) == 0) {
+        if(balanceOf(_to) == 0) {  //increase invester count if new invester
             investorCount++;
         }
 
@@ -266,9 +268,11 @@ contract Gryphon is ERC20, Ownable {
         vested[msg.sender] = vested[msg.sender].sub(_tokens_in_cents);
         balances[_to] = balances[_to].add(_tokens_in_cents);
 
-        if(balanceOf(msg.sender) == 0) {
+        if(balanceOf(msg.sender) == 0) { //update invester count
             investorCount=investorCount-1;
         }
+
+        //TODO: increment raised values here
 
         Transfer(msg.sender, _to, _tokens_in_cents);
         return true;
@@ -282,7 +286,7 @@ contract Gryphon is ERC20, Ownable {
         require(vested[_from] >= _tokens_in_cents);
         require(allowed[_from][msg.sender] >= _tokens_in_cents);
 
-        if(balanceOf(_to) == 0) {
+        if(balanceOf(_to) == 0) {  //increase invester count if new invester
             investorCount++;
         }
 
@@ -292,7 +296,7 @@ contract Gryphon is ERC20, Ownable {
 
         balances[_to] = balances[_to].add(_tokens_in_cents);
 
-        if(balanceOf(_from) == 0) {
+        if(balanceOf(_from) == 0) { //update invester count
             investorCount=investorCount-1;
         }
 
@@ -345,22 +349,44 @@ contract Gryphon is ERC20, Ownable {
         return balances[a];
     }
 
+
+    /////////////////////
+    // State Functions //
+    /////////////////////
+
+    /** Check the state of the Contract, if in Pre Sale
+      * @return bool  Return true if the contract is in Pre Sale
+      */
+
     function isCrowdSaleStatePreSale() public constant returns (bool) {
         return crowdSaleState == State.PreSale;
     }
+
+    /** Check the state of the Contract, if in ICO
+      * @return bool  Return true if the contract is in ICO
+      */
 
     function isCrowdSaleStateICO() public constant returns (bool) {
         return crowdSaleState == State.ICO;
     }
 
+    /** Check if the Pre Sale Period is still ON
+      * @return bool  Return true if the contract is in Pre Sale Period
+      */
+
     function isPreSalePeriod() public constant returns (bool) {
         if(preSaleRaised > preSaleMaxCapInWei || now >= presaleEndTimestamp) {
             crowdSaleState = State.PresaleFinalized;
+            //icoStartTimestamp = now.sub(10); //CONFIRM
             return false;
         } else {
             return now > presaleStartTimestamp;
         }
     }
+
+    /** Check if the ICO is in the Sale period or not
+      * @return bool  Return true if the contract is in ICO Period
+      */
 
     function isICOPeriod() public constant returns (bool) {
         if (icoRaised > icoHardCapInWei || now >= icoEndTimestamp){
@@ -371,17 +397,21 @@ contract Gryphon is ERC20, Ownable {
         }
     }
 
+    // Called by the owner of the contract to close the Sale
     function endCrowdSale() public onlyOwner {
         require(now >= icoEndTimestamp || icoRaised >= icoSoftCapInWei);
         if(icoRaised >= icoSoftCapInWei){
             crowdSaleState = State.Success;
-            vault.close();
+            vault.close(); //send funds to owner
         } else {
             crowdSaleState = State.Failure;
-            vault.enableRefunds();
+            vault.enableRefunds(); //allow people to get refund
         }
     }
 
+    /////////////////////////////////////////
+    // Fetch some statistics about the ICO //
+    /////////////////////////////////////////
 
     function getInvestorCount() public constant returns (uint256) {
         return investorCount;
