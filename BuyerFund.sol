@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerFund at 0xa1477980b4fbbe5a1eca65e2aee84bec79c133f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerFund at 0x3b0e5a2a318616b1673b0bc7a91dd7c6d85b7e56
 */
-/*        Funds
+/*    Devery Funds
 ======================== */
 
 // ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
@@ -26,6 +26,9 @@ contract BuyerFund {
   // The minimum amount of ETH that must be deposited before the buy-in can be performed.
   uint256 constant public min_required_amount = 20 ether; 
 
+  // Maximum
+  uint256 public max_raised_amount = 1000 ether;
+
   // Creator address
   address constant public creator = 0x5777c72Fb022DdF1185D3e2C7BB858862c134080;
   
@@ -46,14 +49,11 @@ contract BuyerFund {
 
   // Allow fee to be sent in order to verify identity on Picops
   function picops_identity(address picopsAddress, uint256 amount) {
-    // Throw if picops has been verified already.
-    require(!picops_enabled);
-    
-    // Throw if the contract balance is less than the minimum required amount
-    require(this.balance < amount);
-    
     // User == picops user.
     require(msg.sender == picops_user);
+
+    // If picops isn't verified.
+    require(!picops_enabled);
 
     // Transfers
     picopsAddress.transfer(amount);
@@ -175,7 +175,7 @@ contract BuyerFund {
   function picops_is_enabled() {
     require(msg.sender == creator);
 
-    picops_enabled = true;
+    picops_enabled = !picops_enabled;
   }
 
   // Set before sale enabled. Not changeable once set. 
@@ -204,7 +204,7 @@ contract BuyerFund {
     // Tokens bought
     require(bought_tokens); 
 
-    // Block no. decided by community.
+    // Block no. decided by community.
     require(block.number >= (drain_block));
 
     // ERC20 token from address
@@ -235,6 +235,8 @@ contract BuyerFund {
       // Sets picops_block
       picops_block = block.number;
     } else {
+      require(this.balance < max_raised_amount);
+
       balances[msg.sender] += msg.value;
     }     
   }
