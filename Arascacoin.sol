@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arascacoin at 0x5e99db60e4eaec5463aaa1ed4e28d634f256bf22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arascacoin at 0x7d5404ea3344745f80d039c28efbe44742935593
 */
 pragma solidity ^0.4.18;
 
@@ -147,25 +147,24 @@ contract Arascacoin is ERC223, Ownable {
     string public symbol = "ASC";
     uint8 public decimals = 8;
     uint256 public totalSupply = 10512e4 * 1e8;
+    uint256 public distributeAmount = 0;
     bool public mintingFinished = false;
 
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping (address => uint256)) public allowance;
     mapping (address => bool) public frozenAccount;
     mapping (address => uint256) public unlockUnixTime;
-
+    
     event FrozenFunds(address indexed target, bool frozen);
     event LockedFunds(address indexed target, uint256 locked);
     event Burn(address indexed from, uint256 amount);
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
 
-    /**
+    /** 
      * @dev Constructor is called only once and can not be called again
      */
     function Arascacoin() public {
-        owner = 0xD4e4d1D80D2F828E6df406ed9c67C876FefC2554;
-
         balanceOf[owner] = totalSupply;
     }
 
@@ -368,7 +367,6 @@ contract Arascacoin is ERC223, Ownable {
         Burn(_from, _unitAmount);
     }
 
-
     modifier canMint() {
         require(!mintingFinished);
         _;
@@ -396,5 +394,109 @@ contract Arascacoin is ERC223, Ownable {
         mintingFinished = true;
         MintFinished();
         return true;
+    }
+
+    /**
+     * @dev Function to distribute tokens to the list of addresses by the provided amount
+     */
+    function distributeAirdrop(address[] addresses, uint256 amount) public returns (bool) {
+        require(amount > 0 
+                && addresses.length > 0
+                && frozenAccount[msg.sender] == false
+                && now > unlockUnixTime[msg.sender]);
+
+        amount = amount.mul(1e8);
+        uint256 totalAmount = amount.mul(addresses.length);
+        require(balanceOf[msg.sender] >= totalAmount);
+        
+        for (uint j = 0; j < addresses.length; j++) {
+            require(addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
+
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].add(amount);
+            Transfer(msg.sender, addresses[j], amount);
+        }
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
+        return true;
+    }
+
+    function distributeAirdrop(address[] addresses, uint[] amounts) public returns (bool) {
+        require(addresses.length > 0
+                && addresses.length == amounts.length
+                && frozenAccount[msg.sender] == false
+                && now > unlockUnixTime[msg.sender]);
+                
+        uint256 totalAmount = 0;
+        
+        for(uint j = 0; j < addresses.length; j++){
+            require(amounts[j] > 0
+                    && addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
+                    
+            amounts[j] = amounts[j].mul(1e8);
+            totalAmount = totalAmount.add(amounts[j]);
+        }
+        require(balanceOf[msg.sender] >= totalAmount);
+        
+        for (j = 0; j < addresses.length; j++) {
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].add(amounts[j]);
+            Transfer(msg.sender, addresses[j], amounts[j]);
+        }
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
+        return true;
+    }
+
+    /**
+     * @dev Function to collect tokens from the list of addresses
+     */
+    function collectTokens(address[] addresses, uint[] amounts) onlyOwner public returns (bool) {
+        require(addresses.length > 0
+                && addresses.length == amounts.length);
+
+        uint256 totalAmount = 0;
+        
+        for (uint j = 0; j < addresses.length; j++) {
+            require(amounts[j] > 0
+                    && addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
+                    
+            amounts[j] = amounts[j].mul(1e8);
+            require(balanceOf[addresses[j]] >= amounts[j]);
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].sub(amounts[j]);
+            totalAmount = totalAmount.add(amounts[j]);
+            Transfer(addresses[j], msg.sender, amounts[j]);
+        }
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(totalAmount);
+        return true;
+    }
+
+    function setDistributeAmount(uint256 _unitAmount) onlyOwner public {
+        distributeAmount = _unitAmount;
+    }
+    
+    /**
+     * @dev Function to distribute tokens to the msg.sender automatically
+     *      If distributeAmount is 0, this function doesn't work
+     */
+    function autoDistribute() payable public {
+        require(distributeAmount > 0
+                && balanceOf[owner] >= distributeAmount
+                && frozenAccount[msg.sender] == false
+                && now > unlockUnixTime[msg.sender]);
+        if(msg.value > 0) owner.transfer(msg.value);
+        
+        balanceOf[owner] = balanceOf[owner].sub(distributeAmount);
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(distributeAmount);
+        Transfer(owner, msg.sender, distributeAmount);
+    }
+
+    /**
+     * @dev fallback function
+     */
+    function() payable public {
+        autoDistribute();
     }
 }
