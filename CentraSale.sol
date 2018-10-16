@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraSale at 0x229f07c5df0d19919185dd08b61dd9a26151ddfe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraSale at 0x90bd2cb1b88359308f6d3df01c47c349a46e27ba
 */
 pragma solidity ^0.4.16;        
    
@@ -21,8 +21,8 @@ pragma solidity ^0.4.16;
     uint256 public constant token_price = 10**18*1/200;  
     uint256 public tokens_total;  
 
-    uint public constant contract_start = 1505793600;
-    uint public constant contract_finish = 1507176000;
+    uint public constant contract_start = 1505844000;
+    uint public constant contract_finish = 1507269600;
 
     uint public constant card_titanium_minamount = 500*10**18;
     uint public constant card_titanium_first = 200;
