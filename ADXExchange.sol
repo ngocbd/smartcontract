@@ -1,7 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADXExchange at 0x0f6029ebde2ecd9ab4d60dd5d0a297e9e59bf77a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADXExchange at 0x67c9232f2f449f7acd4dd784cc1f20395af5baae
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 
 /**
@@ -13,11 +47,14 @@ contract Ownable {
   address public owner;
 
 
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -35,43 +72,12 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
-}
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
 }
 
 
@@ -82,8 +88,8 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -95,16 +101,17 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 
 contract Drainable is Ownable {
 	function withdrawToken(address tokenaddr) 
-		onlyOwner 
+		onlyOwner
+		public
 	{
 		ERC20 token = ERC20(tokenaddr);
 		uint bal = token.balanceOf(address(this));
@@ -113,217 +120,73 @@ contract Drainable is Ownable {
 
 	function withdrawEther() 
 		onlyOwner
+		public
 	{
 	    require(msg.sender.send(this.balance));
 	}
 }
 
+contract ADXExchangeInterface {
+	// events
+	event LogBidAccepted(bytes32 bidId, address advertiser, bytes32 adunit, address publisher, bytes32 adslot, uint acceptedTime);
+	event LogBidCanceled(bytes32 bidId);
+	event LogBidExpired(bytes32 bidId);
+	event LogBidConfirmed(bytes32 bidId, address advertiserOrPublisher, bytes32 report);
+	event LogBidCompleted(bytes32 bidId, bytes32 advReport, bytes32 pubReport);
 
-contract ADXRegistry is Ownable, Drainable {
-	string public name = "AdEx Registry";
+	function acceptBid(address _advertiser, bytes32 _adunit, uint _opened, uint _target, uint _rewardAmount, uint _timeout, bytes32 _adslot, uint8 v, bytes32 r, bytes32 s, uint8 sigMode) public;
+	function cancelBid(bytes32 _adunit, uint _opened, uint _target, uint _rewardAmount, uint _timeout, uint8 v, bytes32 r, bytes32 s, uint8 sigMode) public;
+	function giveupBid(bytes32 _bidId) public;
+	function refundBid(bytes32 _bidId) public;
+	function verifyBid(bytes32 _bidId, bytes32 _report) public;
 
-	// Structure:
-	// AdUnit (advertiser) - a unit of a single advertisement
-	// AdSlot (publisher) - a particular property (slot) that can display an ad unit
-	// Campaign (advertiser) - group of ad units ; not vital
-	// Channel (publisher) - group of properties ; not vital
-	// Each Account is linked to all the items they own through the Account struct
+	function deposit(uint _amount) public;
+	function withdraw(uint _amount) public;
 
-	mapping (address => Account) public accounts;
+	// constants 
+	function getBid(bytes32 _bidId) 
+		constant external 
+		returns (
+			uint, uint, uint, uint, uint, 
+			// advertiser (advertiser, ad unit, confiration)
+			address, bytes32, bytes32,
+			// publisher (publisher, ad slot, confirmation)
+			address, bytes32, bytes32
+		);
 
-	// XXX: mostly unused, because solidity does not allow mapping with enum as primary type.. :( we just use uint
-	enum ItemType { AdUnit, AdSlot, Campaign, Channel }
-
-	// uint here corresponds to the ItemType
-	mapping (uint => uint) public counts;
-	mapping (uint => mapping (uint => Item)) public items;
-
-	// Publisher or Advertiser (could be both)
-	struct Account {		
-		address addr;
-		address wallet;
-
-		bytes32 ipfs; // ipfs addr for additional (larger) meta
-		bytes32 name; // name
-		bytes32 meta; // metadata, can be JSON, can be other format, depends on the high-level implementation
-
-		bytes32 signature; // signature in the off-blockchain state channel
-		
-		// Items, by type, then in an array of numeric IDs	
-		mapping (uint => uint[]) items;
-	}
-
-	// Sub-item, such as AdUnit, AdSlot, Campaign, Channel
-	struct Item {
-		uint id;
-		address owner;
-
-		ItemType itemType;
-
-		bytes32 ipfs; // ipfs addr for additional (larger) meta
-		bytes32 name; // name
-		bytes32 meta; // metadata, can be JSON, can be other format, depends on the high-level implementation
-	}
-
-	modifier onlyRegistered() {
-		var acc = accounts[msg.sender];
-		require(acc.addr != 0);
-		_;
-	}
-
-	// can be called over and over to update the data
-	// XXX consider entrance barrier, such as locking in some ADX
-	function register(bytes32 _name, address _wallet, bytes32 _ipfs, bytes32 _sig, bytes32 _meta)
+	function getBalance(address _user)
+		constant
 		external
-	{
-		require(_wallet != 0);
-		// XXX should we ensure _sig is not 0? if so, also add test
-		
-		require(_name != 0);
+		returns (uint, uint);
 
-		var isNew = accounts[msg.sender].addr == 0;
-
-		var acc = accounts[msg.sender];
-
-		if (!isNew) require(acc.signature == _sig);
-		else acc.signature = _sig;
-
-		acc.addr = msg.sender;
-		acc.wallet = _wallet;
-		acc.ipfs = _ipfs;
-		acc.name = _name;
-		acc.meta = _meta;
-
-		if (isNew) LogAccountRegistered(acc.addr, acc.wallet, acc.ipfs, acc.name, acc.meta, acc.signature);
-		else LogAccountModified(acc.addr, acc.wallet, acc.ipfs, acc.name, acc.meta, acc.signature);
-	}
-
-	// use _id = 0 to create a new item, otherwise modify existing
-	function registerItem(uint _type, uint _id, bytes32 _ipfs, bytes32 _name, bytes32 _meta)
-		onlyRegistered
-	{
-		// XXX _type sanity check?
-		var item = items[_type][_id];
-
-		if (_id != 0)
-			require(item.owner == msg.sender);
-		else {
-			// XXX: what about overflow here?
-			var newId = ++counts[_type];
-
-			item = items[_type][newId];
-			item.id = newId;
-			item.itemType = ItemType(_type);
-			item.owner = msg.sender;
-
-			accounts[msg.sender].items[_type].push(item.id);
-		}
-
-		item.name = _name;
-		item.meta = _meta;
-		item.ipfs = _ipfs;
-
-		if (_id == 0) LogItemRegistered(
-			item.owner, uint(item.itemType), item.id, item.ipfs, item.name, item.meta
-		);
-		else LogItemModified(
-			item.owner, uint(item.itemType), item.id, item.ipfs, item.name, item.meta
-		);
-	}
-
-	// NOTE
-	// There's no real point of un-registering items
-	// Campaigns need to be kept anyway, as well as ad units
-	// END NOTE
-
-	//
-	// Constant functions
-	//
-	function isRegistered(address who)
-		public 
-		constant
-		returns (bool)
-	{
-		var acc = accounts[who];
-		return acc.addr != 0;
-	}
-
-	// Functions exposed for web3 interface
-	// NOTE: this is sticking to the policy of keeping static-sized values at the left side of tuples
-	function getAccount(address _acc)
+	function getBidID(address _advertiser, bytes32 _adunit, uint _opened, uint _target, uint _amount, uint _timeout)
 		constant
 		public
-		returns (address, bytes32, bytes32, bytes32)
-	{
-		var acc = accounts[_acc];
-		require(acc.addr != 0);
-		return (acc.wallet, acc.ipfs, acc.name, acc.meta);
-	}
-
-	function getAccountItems(address _acc, uint _type)
-		constant
-		public
-		returns (uint[])
-	{
-		var acc = accounts[_acc];
-		require(acc.addr != 0);
-		return acc.items[_type];
-	}
-
-	function getItem(uint _type, uint _id) 
-		constant
-		public
-		returns (address, bytes32, bytes32, bytes32)
-	{
-		var item = items[_type][_id];
-		require(item.id != 0);
-		return (item.owner, item.ipfs, item.name, item.meta);
-	}
-
-	function hasItem(uint _type, uint _id)
-		constant
-		public
-		returns (bool)
-	{
-		var item = items[_type][_id];
-		return item.id != 0;
-	}
-
-	// Events
-	event LogAccountRegistered(address addr, address wallet, bytes32 ipfs, bytes32 accountName, bytes32 meta, bytes32 signature);
-	event LogAccountModified(address addr, address wallet, bytes32 ipfs, bytes32 accountName, bytes32 meta, bytes32 signature);
-	
-	event LogItemRegistered(address owner, uint itemType, uint id, bytes32 ipfs, bytes32 itemName, bytes32 meta);
-	event LogItemModified(address owner, uint itemType, uint id, bytes32 ipfs, bytes32 itemName, bytes32 meta);
+		returns (bytes32);
 }
 
 
-contract ADXExchange is Ownable, Drainable {
+contract ADXExchange is ADXExchangeInterface, Drainable {
 	string public name = "AdEx Exchange";
 
 	ERC20 public token;
-	ADXRegistry public registry;
 
-	uint public bidsCount;
+	uint public maxTimeout = 365 days;
 
-	mapping (uint => Bid) bidsById;
-	mapping (uint => uint[]) bidsByAdunit; // bids set out by ad unit
-	mapping (uint => uint[]) bidsByAdslot; // accepted by publisher, by ad slot
+ 	mapping (address => uint) balances;
 
-	// TODO: some properties in the bid structure - achievedPoints/peers for example - are not used atm
-	
-	// CONSIDER: the bid having a adunitType so that this can be filtered out
-	// WHY IT'S NOT IMPORTANT: you can get bids by ad units / ad slots, which is filter enough already considering we know their types
+ 	// escrowed on bids
+ 	mapping (address => uint) onBids; 
 
-	// CONSIDER: locking ad units / ad slots or certain properties from them so that bids cannot be ruined by editing them
-	// WHY IT'S NOT IMPORTANT: from a game theoretical point of view there's no incentive to do that
+ 	// bid info
+	mapping (bytes32 => Bid) bids;
+	mapping (bytes32 => BidState) bidStates;
 
-	// corresponds to enum types in ADXRegistry
-	uint constant ADUNIT = 0;
-	uint constant ADSLOT = 1;
 
 	enum BidState { 
-		Open, 
+		DoesNotExist, // default state
+
+		// There is no 'Open' state - the Open state is just a signed message that you're willing to place such a bid
 		Accepted, // in progress
 
 		// the following states MUST unlock the ADX amount (return to advertiser)
@@ -332,359 +195,281 @@ contract ADXExchange is Ownable, Drainable {
 		Expired,
 
 		// success states
-		Completed,
-		Claimed
+		Completed
 	}
 
 	struct Bid {
-		uint id;
-		BidState state;
-
-		// ADX reward amount
-		uint amount;
-
 		// Links on advertiser side
 		address advertiser;
-		address advertiserWallet;
-		uint adUnit;
-		bytes32 adUnitIpfs;
-		bytes32 advertiserPeer;
+		bytes32 adUnit;
 
 		// Links on publisher side
 		address publisher;
-		address publisherWallet;
-		uint adSlot;
-		bytes32 adSlotIpfs;
-		bytes32 publisherPeer;
+		bytes32 adSlot;
 
-		uint acceptedTime; // when was it accepted by a publisher
+		// when was it accepted by a publisher
+		uint acceptedTime;
+
+		// Token reward amount
+		uint amount;
 
 		// Requirements
+		uint target; // how many impressions/clicks/conversions have to be done
+		uint timeout; // the time to execute
 
-		//RequirementType type;
-		uint requiredPoints; // how many impressions/clicks/conversions have to be done
-		uint requiredExecTime; // essentially a timeout
-
-		// Results
-		bool confirmedByPublisher;
-		bool confirmedByAdvertiser;
-
-		// IPFS links to result reports 
-		bytes32 publisherReportIpfs;
-		bytes32 advertiserReportIpfs;
+		// Confirmations from both sides; any value other than 0 is vconsidered as confirm, but this should usually be an IPFS hash to a final report
+		bytes32 publisherConfirmation;
+		bytes32 advertiserConfirmation;
 	}
+
+	// Schema hash 
+	// keccak256(_advertiser, _adunit, _opened, _target, _amount, _timeout, this)
+	bytes32 constant public SCHEMA_HASH = keccak256(
+		"address Advertiser",
+		"bytes32 Ad Unit ID",
+		"uint Opened",
+		"uint Target",
+		"uint Amount",
+		"uint Timeout",
+		"address Exchange"
+	);
 
 	//
 	// MODIFIERS
 	//
-	modifier onlyRegisteredAcc() {
-		require(registry.isRegistered(msg.sender));
+	modifier onlyBidAdvertiser(bytes32 _bidId) {
+		require(msg.sender == bids[_bidId].advertiser);
 		_;
 	}
 
-	modifier onlyBidOwner(uint _bidId) {
-		require(msg.sender == bidsById[_bidId].advertiser);
+	modifier onlyBidPublisher(bytes32 _bidId) {
+		require(msg.sender == bids[_bidId].publisher);
 		_;
 	}
 
-	modifier onlyBidAceptee(uint _bidId) {
-		require(msg.sender == bidsById[_bidId].publisher);
-		_;
-	}
-
-	modifier onlyBidState(uint _bidId, BidState _state) {
-		require(bidsById[_bidId].id != 0);
-		require(bidsById[_bidId].state == _state);
-		_;
-	}
-
-	modifier onlyExistingBid(uint _bidId) {
-		require(bidsById[_bidId].id != 0);
+	modifier onlyBidState(bytes32 _bidId, BidState _state) {
+		require(bidStates[_bidId] == _state);
 		_;
 	}
 
 	// Functions
 
-	function ADXExchange(address _token, address _registry)
+	function ADXExchange(address _token)
+		public
 	{
 		token = ERC20(_token);
-		registry = ADXRegistry(_registry);
 	}
 
 	//
 	// Bid actions
 	// 
 
-	// the bid is placed by the advertiser
-	function placeBid(uint _adunitId, uint _target, uint _rewardAmount, uint _timeout, bytes32 _peer)
-		onlyRegisteredAcc
+	// the bid is accepted by the publisher
+	function acceptBid(address _advertiser, bytes32 _adunit, uint _opened, uint _target, uint _amount, uint _timeout, bytes32 _adslot, uint8 v, bytes32 r, bytes32 s, uint8 sigMode)
+		public
 	{
-		bytes32 adIpfs;
-		address advertiser;
-		address advertiserWallet;
+		require(_amount > 0);
 
-		// NOTE: those will throw if the ad or respectively the account do not exist
-		(advertiser,adIpfs,,) = registry.getItem(ADUNIT, _adunitId);
-		(advertiserWallet,,,) = registry.getAccount(advertiser);
+		// It can be proven that onBids will never exceed balances which means this can't underflow
+		// SafeMath can't be used here because of the stack depth
+		require(_amount <= (balances[_advertiser] - onBids[_advertiser]));
 
-		// XXX: maybe it could be a feature to allow advertisers bidding on other advertisers' ad units, but it will complicate things...
-		require(advertiser == msg.sender);
+		// _opened acts as a nonce here
+		bytes32 bidId = getBidID(_advertiser, _adunit, _opened, _target, _amount, _timeout);
 
-		Bid memory bid;
+		require(bidStates[bidId] == BidState.DoesNotExist);
 
-		bid.id = ++bidsCount; // start from 1, so that 0 is not a valid ID
-		bid.state = BidState.Open; // XXX redundant, but done for code clarity
-
-		bid.amount = _rewardAmount;
-
-		bid.advertiser = advertiser;
-		bid.advertiserWallet = advertiserWallet;
-
-		bid.adUnit = _adunitId;
-		bid.adUnitIpfs = adIpfs;
-
-		bid.requiredPoints = _target;
-		bid.requiredExecTime = _timeout;
-
-		bid.advertiserPeer = _peer;
-
-		bidsById[bid.id] = bid;
-		bidsByAdunit[_adunitId].push(bid.id);
-
-		require(token.transferFrom(advertiserWallet, address(this), _rewardAmount));
-
-		LogBidOpened(bid.id, advertiser, _adunitId, adIpfs, _target, _rewardAmount, _timeout, _peer);
-	}
-
-	// the bid is canceled by the advertiser
-	function cancelBid(uint _bidId)
-		onlyRegisteredAcc
-		onlyExistingBid(_bidId)
-		onlyBidOwner(_bidId)
-		onlyBidState(_bidId, BidState.Open)
-	{
-		Bid storage bid = bidsById[_bidId];
-		bid.state = BidState.Canceled;
-		require(token.transfer(bid.advertiserWallet, bid.amount));
-
-		LogBidCanceled(bid.id);
-	}
-
-	// a bid is accepted by a publisher for a given ad slot
-	function acceptBid(uint _bidId, uint _slotId, bytes32 _peer) 
-		onlyRegisteredAcc 
-		onlyExistingBid(_bidId) 
-		onlyBidState(_bidId, BidState.Open)
-	{
-		address publisher;
-		address publisherWallet;
-		bytes32 adSlotIpfs;
-
-		// NOTE: those will throw if the ad slot or respectively the account do not exist
-		(publisher,adSlotIpfs,,) = registry.getItem(ADSLOT, _slotId);
-		(publisherWallet,,,) = registry.getAccount(publisher);
-
-		require(publisher == msg.sender);
-
-		Bid storage bid = bidsById[_bidId];
-
-		// should not happen when bid.state is BidState.Open, but just in case
-		require(bid.publisher == 0);
-
-		bid.state = BidState.Accepted;
+		require(didSign(_advertiser, bidId, v, r, s, sigMode));
 		
-		bid.publisher = publisher;
-		bid.publisherWallet = publisherWallet;
+		// advertier and publisher cannot be the same
+		require(_advertiser != msg.sender);
 
-		bid.adSlot = _slotId;
-		bid.adSlotIpfs = adSlotIpfs;
+		Bid storage bid = bids[bidId];
 
-		bid.publisherPeer = _peer;
+		bid.target = _target;
+		bid.amount = _amount;
+
+		// it is pretty much mandatory for a bid to have a timeout, else tokens can be stuck forever
+		bid.timeout = _timeout > 0 ? _timeout : maxTimeout;
+		require(bid.timeout <= maxTimeout);
+
+		bid.advertiser = _advertiser;
+		bid.adUnit = _adunit;
+
+		bid.publisher = msg.sender;
+		bid.adSlot = _adslot;
 
 		bid.acceptedTime = now;
 
-		bidsByAdslot[_slotId].push(_bidId);
+		bidStates[bidId] = BidState.Accepted;
 
-		LogBidAccepted(bid.id, publisher, _slotId, adSlotIpfs, bid.acceptedTime, bid.publisherPeer);
+		onBids[_advertiser] += _amount;
+
+		// static analysis?
+		// require(onBids[_advertiser] <= balances[advertiser]);
+
+		LogBidAccepted(bidId, _advertiser, _adunit, msg.sender, _adslot, bid.acceptedTime);
 	}
 
-	// the bid is given up by the publisher, therefore canceling it and returning the funds to the advertiser
-	// same logic as cancelBid(), but different permissions
-	function giveupBid(uint _bidId)
-		onlyRegisteredAcc
-		onlyExistingBid(_bidId)
-		onlyBidAceptee(_bidId)
+	// The bid is canceled by the advertiser
+	function cancelBid(bytes32 _adunit, uint _opened, uint _target, uint _amount, uint _timeout, uint8 v, bytes32 r, bytes32 s, uint8 sigMode)
+		public
+	{
+		// _opened acts as a nonce here
+		bytes32 bidId = getBidID(msg.sender, _adunit, _opened, _target, _amount, _timeout);
+
+		require(bidStates[bidId] == BidState.DoesNotExist);
+
+		require(didSign(msg.sender, bidId, v, r, s, sigMode));
+
+		bidStates[bidId] = BidState.Canceled;
+
+		LogBidCanceled(bidId);
+	}
+
+	// The bid is canceled by the publisher
+	function giveupBid(bytes32 _bidId)
+		public
+		onlyBidPublisher(_bidId)
 		onlyBidState(_bidId, BidState.Accepted)
 	{
-		var bid = bidsById[_bidId];
-		bid.state = BidState.Canceled;
-		require(token.transfer(bid.advertiserWallet, bid.amount));
+		Bid storage bid = bids[_bidId];
 
-		LogBidCanceled(bid.id);
+		bidStates[_bidId] = BidState.Canceled;
+
+		onBids[bid.advertiser] -= bid.amount;
+	
+		LogBidCanceled(_bidId);
 	}
 
-	// both publisher and advertiser have to call this for a bid to be considered verified
-	function verifyBid(uint _bidId, bytes32 _report)
-		onlyRegisteredAcc
-		onlyExistingBid(_bidId)
-		onlyBidState(_bidId, BidState.Accepted)
-	{
-		Bid storage bid = bidsById[_bidId];
-
-		require(bid.publisher == msg.sender || bid.advertiser == msg.sender);
-
-		if (bid.publisher == msg.sender) {
-			bid.confirmedByPublisher = true;
-			bid.publisherReportIpfs = _report;
-		}
-
-		if (bid.advertiser == msg.sender) {
-			bid.confirmedByAdvertiser = true;
-			bid.advertiserReportIpfs = _report;
-		}
-
-		if (bid.confirmedByAdvertiser && bid.confirmedByPublisher) {
-			bid.state = BidState.Completed;
-			LogBidCompleted(bid.id, bid.advertiserReportIpfs, bid.publisherReportIpfs);
-		}
-	}
-
-	// now, claim the reward; callable by the publisher;
-	// claimBidReward is a separate function so as to define clearly who pays the gas for transfering the reward 
-	function claimBidReward(uint _bidId)
-		onlyRegisteredAcc
-		onlyExistingBid(_bidId)
-		onlyBidAceptee(_bidId)
-		onlyBidState(_bidId, BidState.Completed)
-	{
-		Bid storage bid = bidsById[_bidId];
-		
-		bid.state = BidState.Claimed;
-
-		require(token.transfer(bid.publisherWallet, bid.amount));
-
-		LogBidRewardClaimed(bid.id, bid.publisherWallet, bid.amount);
-	}
 
 	// This can be done if a bid is accepted, but expired
 	// This is essentially the protection from never settling on verification, or from publisher not executing the bid within a reasonable time
-	function refundBid(uint _bidId)
-		onlyRegisteredAcc
-		onlyExistingBid(_bidId)
-		onlyBidOwner(_bidId)
+	function refundBid(bytes32 _bidId)
+		public
+		onlyBidAdvertiser(_bidId)
 		onlyBidState(_bidId, BidState.Accepted)
 	{
-		Bid storage bid = bidsById[_bidId];
-		require(bid.requiredExecTime > 0); // you can't refund if you haven't set a timeout
-		require(SafeMath.add(bid.acceptedTime, bid.requiredExecTime) < now);
+		Bid storage bid = bids[_bidId];
 
-		bid.state = BidState.Expired;
-		require(token.transfer(bid.advertiserWallet, bid.amount));
+ 		// require that we're past the point of expiry
+		require(now > SafeMath.add(bid.acceptedTime, bid.timeout));
 
-		LogBidExpired(bid.id);
+		bidStates[_bidId] = BidState.Expired;
+
+		onBids[bid.advertiser] -= bid.amount;
+
+		LogBidExpired(_bidId);
+	}
+
+
+	// both publisher and advertiser have to call this for a bid to be considered verified
+	function verifyBid(bytes32 _bidId, bytes32 _report)
+		public
+		onlyBidState(_bidId, BidState.Accepted)
+	{
+		Bid storage bid = bids[_bidId];
+
+		require(_report != 0);
+		require(bid.publisher == msg.sender || bid.advertiser == msg.sender);
+
+		if (bid.publisher == msg.sender) {
+			require(bid.publisherConfirmation == 0);
+			bid.publisherConfirmation = _report;
+		}
+
+		if (bid.advertiser == msg.sender) {
+			require(bid.advertiserConfirmation == 0);
+			bid.advertiserConfirmation = _report;
+		}
+
+		LogBidConfirmed(_bidId, msg.sender, _report);
+
+		if (bid.advertiserConfirmation != 0 && bid.publisherConfirmation != 0) {
+			bidStates[_bidId] = BidState.Completed;
+
+			onBids[bid.advertiser] = SafeMath.sub(onBids[bid.advertiser], bid.amount);
+			balances[bid.advertiser] = SafeMath.sub(balances[bid.advertiser], bid.amount);
+			balances[bid.publisher] = SafeMath.add(balances[bid.publisher], bid.amount);
+
+			LogBidCompleted(_bidId, bid.advertiserConfirmation, bid.publisherConfirmation);
+		}
+	}
+
+	// Deposit and withdraw
+	function deposit(uint _amount)
+		public
+	{
+		balances[msg.sender] = SafeMath.add(balances[msg.sender], _amount);
+		require(token.transferFrom(msg.sender, address(this), _amount));
+	}
+
+	function withdraw(uint _amount)
+		public
+	{
+		uint available = SafeMath.sub(balances[msg.sender], onBids[msg.sender]);
+		require(_amount <= available);
+
+		balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
+		require(token.transfer(msg.sender, _amount));
+	}
+
+	function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+		public
+		pure
+		returns (bool)
+	{
+		bytes32 message = hash;
+		
+		if (mode == 1) {
+			// Geth mode
+			message = keccak256("\x19Ethereum Signed Message:\n32", hash);
+		} else if (mode == 2) {
+			// Trezor mode
+			message = keccak256("\x19Ethereum Signed Message:\n\x20", hash);
+		}
+
+		return ecrecover(message, v, r, s) == addr;
 	}
 
 	//
 	// Public constant functions
 	//
-
-	function getBidsFromArr(uint[] arr, uint _state) 
-		internal
-		returns (uint[] _all)
-	{
-		BidState state = BidState(_state);
-
-		// separate array is needed because of solidity stupidity (pun intended ))) )
-		uint[] memory all = new uint[](arr.length);
-
-		uint count = 0;
-		uint i;
-
-		for (i = 0; i < arr.length; i++) {
-			var id = arr[i];
-			var bid = bidsById[id];
-			if (bid.state == state) {
-				all[count] = id;
-				count += 1;
-			}
-		}
-
-		_all = new uint[](count);
-		for (i = 0; i < count; i++) _all[i] = all[i];
-	}
-
-	function getAllBidsByAdunit(uint _adunitId) 
-		constant 
-		external
-		returns (uint[])
-	{
-		return bidsByAdunit[_adunitId];
-	}
-
-	function getBidsByAdunit(uint _adunitId, uint _state)
-		constant
-		external
-		returns (uint[])
-	{
-		return getBidsFromArr(bidsByAdunit[_adunitId], _state);
-	}
-
-	function getAllBidsByAdslot(uint _adslotId) 
-		constant 
-		external
-		returns (uint[])
-	{
-		return bidsByAdslot[_adslotId];
-	}
-
-	function getBidsByAdslot(uint _adslotId, uint _state)
-		constant
-		external
-		returns (uint[])
-	{
-		return getBidsFromArr(bidsByAdslot[_adslotId], _state);
-	}
-
-	function getBid(uint _bidId) 
-		onlyExistingBid(_bidId)
+	function getBid(bytes32 _bidId) 
 		constant
 		external
 		returns (
 			uint, uint, uint, uint, uint, 
-			// advertiser (ad unit, ipfs, peer)
-			uint, bytes32, bytes32,
-			// publisher (ad slot, ipfs, peer)
-			uint, bytes32, bytes32
+			// advertiser (advertiser, ad unit, confiration)
+			address, bytes32, bytes32,
+			// publisher (publisher, ad slot, confirmation)
+			address, bytes32, bytes32
 		)
 	{
-		var bid = bidsById[_bidId];
+		Bid storage bid = bids[_bidId];
 		return (
-			uint(bid.state), bid.requiredPoints, bid.requiredExecTime, bid.amount, bid.acceptedTime,
-			bid.adUnit, bid.adUnitIpfs, bid.advertiserPeer,
-			bid.adSlot, bid.adSlotIpfs, bid.publisherPeer
+			uint(bidStates[_bidId]), bid.target, bid.timeout, bid.amount, bid.acceptedTime,
+			bid.advertiser, bid.adUnit, bid.advertiserConfirmation,
+			bid.publisher, bid.adSlot, bid.publisherConfirmation
 		);
 	}
 
-	function getBidReports(uint _bidId)
-		onlyExistingBid(_bidId)
+	function getBalance(address _user)
 		constant
 		external
-		returns (
-			bytes32, // advertiser report
-			bytes32 // publisher report
-		)
+		returns (uint, uint)
 	{
-		var bid = bidsById[_bidId];
-		return (bid.advertiserReportIpfs, bid.publisherReportIpfs);
+		return (balances[_user], onBids[_user]);
 	}
 
-	//
-	// Events
-	//
-	event LogBidOpened(uint bidId, address advertiser, uint adunitId, bytes32 adunitIpfs, uint target, uint rewardAmount, uint timeout, bytes32 advertiserPeer);
-	event LogBidAccepted(uint bidId, address publisher, uint adslotId, bytes32 adslotIpfs, uint acceptedTime, bytes32 publisherPeer);
-	event LogBidCanceled(uint bidId);
-	event LogBidExpired(uint bidId);
-	event LogBidCompleted(uint bidId, bytes32 advReport, bytes32 pubReport);
-	event LogBidRewardClaimed(uint _bidId, address _wallet, uint _amount);
+	function getBidID(address _advertiser, bytes32 _adunit, uint _opened, uint _target, uint _amount, uint _timeout)
+		constant
+		public
+		returns (bytes32)
+	{
+		return keccak256(
+			SCHEMA_HASH,
+			keccak256(_advertiser, _adunit, _opened, _target, _amount, _timeout, this)
+		);
+	}
 }
