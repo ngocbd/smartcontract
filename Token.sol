@@ -1,203 +1,148 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x3e55859759e5a969622bf21fc91d9723f73023d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9bf393afac08096f8c7c9b9b932afc106f65b615
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
-contract Ownable {
-  address public owner;
+contract Token {
+    uint8 public decimals = 6;
+    uint8 public referralPromille = 20;
+    uint256 public totalSupply = 2000000000000;
+    uint256 public buyPrice = 1600000000;
+    uint256 public sellPrice = 1400000000;
+    string public name = "Brisfund token";
+    string public symbol = "BRIS";
+    mapping (address => bool) public lock;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+    address owner;
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-library SafeMath {
-  function mul(uint a, uint b) internal pure returns (uint) {
-    if (a == 0) {
-      return 0;
+    function Token() public {
+        owner = msg.sender;
+        balanceOf[owner] = totalSupply;
     }
-    uint c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint a, uint b) internal pure returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint a, uint b) internal pure returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal pure returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract ERC20 {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-  uint public totalSupply;  
-  function ERC20(string _name, string _symbol, uint8 _decimals) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-  }
-  function balanceOf(address who) public view returns (uint);
-  function transfer(address to, uint value) public returns (bool);
-  function allowance(address owner, address spender) public view returns (uint);
-  function transferFrom(address from, address to, uint value) public returns (bool);
-  function approve(address spender, uint value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-contract Token is Pausable, ERC20 {
-  using SafeMath for uint;
-
-  mapping(address => uint) balances;
-  mapping (address => mapping (address => uint)) internal allowed;
-  mapping(address => uint) public balanceOfLocked;
-
-  uint public unlocktime;
-  bool manualUnlock;
-  address public crowdsaleAddress = 0;
-
-  function Token() ERC20("HIKICK", "KICK1", 18) public {
-    manualUnlock = false;
-    unlocktime = 1525017600;
-    totalSupply = 10000 * 10 ** uint(decimals);
-    balances[msg.sender] = totalSupply;
-  }
-
-  function allowCrowdsaleAddress(address crowdsale) onlyOwner public {
-    crowdsaleAddress = crowdsale;
-  }
-
-  function isLocked() view public returns (bool) {
-    return (now < unlocktime && !manualUnlock);
-  }
-
-  modifier lockCheck(address from, uint value) { 
-    if (isLocked()) {
-      require(value <= balances[from] - balanceOfLocked[from]);
-    } else {
-      balanceOfLocked[from] = 0;
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(!lock[msg.sender]);
+        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
-    _;
-  }
 
-  function unlock() onlyOwner public {
-    require(!manualUnlock);
-    manualUnlock = true;
-  }
-
-  function transfer(address _to, uint _value) lockCheck(msg.sender, _value) whenNotPaused public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferLockedPart(address _to, uint _value) whenNotPaused public returns (bool) {
-    require(msg.sender == crowdsaleAddress);
-    if (transfer(_to, _value)) {
-      balanceOfLocked[_to] = balanceOfLocked[_to].add(_value);
-      return true;
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(!lock[_from]);
+        require(allowance[_from][msg.sender] >= _value);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        allowance[_from][msg.sender] -= _value;
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
+        return true;
     }
-  }
 
-  function balanceOf(address _owner) public view returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function transferFrom(address _from, address _to, uint _value) public lockCheck(_from, _value) whenNotPaused returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function approve(address _spender, uint _value) public whenNotPaused returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) public view returns (uint) {
-    return allowed[_owner][_spender];
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+
+    function setBlocking(address _address, bool _state) public onlyOwner returns (bool) {
+        lock[_address] = _state;
+        return true;
+    }
+
+    function setReferralPromille(uint8 _promille) public onlyOwner returns (bool) {
+        require(_promille < 100);
+        referralPromille = _promille;
+        return true;
+    }
+
+    function setPrice(uint256 _buyPrice, uint256 _sellPrice) public onlyOwner returns (bool) {
+        require(_sellPrice > 0);
+        require(_buyPrice > _sellPrice);
+        buyPrice = _buyPrice;
+        sellPrice = _sellPrice;
+        return true;
+    }
+
+    function buy() public payable returns (bool) {
+        uint value = msg.value / buyPrice;
+        require(balanceOf[owner] >= value);
+        require(balanceOf[msg.sender] + value > balanceOf[msg.sender]);
+        balanceOf[owner] -= value;
+        balanceOf[msg.sender] += value;
+        Transfer(owner, msg.sender, value);
+        return true;
+    }
+
+    function buyWithReferral(address _referral) public payable returns (bool) {
+        uint value = msg.value / buyPrice;
+        uint bonus = value / 1000 * referralPromille;
+        require(balanceOf[owner] >= value + bonus);
+        require(balanceOf[msg.sender] + value > balanceOf[msg.sender]);
+        require(balanceOf[_referral] + bonus >= balanceOf[_referral]);
+        balanceOf[owner] -= value + bonus;
+        balanceOf[msg.sender] += value;
+        balanceOf[_referral] += bonus;
+        Transfer(owner, msg.sender, value);
+        Transfer(owner, _referral, bonus);
+        return true;
+    }
+
+    function sell(uint256 _tokenAmount) public returns (bool) {
+        require(!lock[msg.sender]);
+        uint ethValue = _tokenAmount * sellPrice;
+        require(this.balance >= ethValue);
+        require(balanceOf[msg.sender] >= _tokenAmount);
+        require(balanceOf[owner] + _tokenAmount > balanceOf[owner]);
+        balanceOf[msg.sender] -= _tokenAmount;
+        balanceOf[owner] += _tokenAmount;
+        msg.sender.transfer(ethValue);
+        Transfer(msg.sender, owner, _tokenAmount);
+        return true;
+    }
+
+    function changeSupply(uint256 _value, bool _add) public onlyOwner returns (bool) {
+        if(_add) {
+            require(balanceOf[owner] + _value > balanceOf[owner]);
+            balanceOf[owner] += _value;
+            totalSupply += _value;
+            Transfer(0, owner, _value);
+        } else {
+            require(balanceOf[owner] >= _value);
+            balanceOf[owner] -= _value;
+            totalSupply -= _value;
+            Transfer(owner, 0, _value);
+        }
+        return true;
+    }
+
+    function reverse(address _reversed, uint256 _value) public onlyOwner returns (bool) {
+        require(balanceOf[_reversed] >= _value);
+        require(balanceOf[owner] + _value > balanceOf[owner]);
+        balanceOf[_reversed] -= _value;
+        balanceOf[owner] += _value;
+        Transfer(_reversed, owner, _value);
+        return true;
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        owner = newOwner;
+    }
+
+    function kill() public onlyOwner {
+        selfdestruct(owner);
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
