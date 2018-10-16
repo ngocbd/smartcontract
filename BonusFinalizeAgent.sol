@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0xd5c2337a7e290840d40ff520b7273099d61326a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0x59cb3be449c42afd2e01b0b4829b9e5dac1496ed
 */
 /**
  * Safe unsigned safe math.
@@ -615,9 +615,6 @@ contract Crowdsale is Haltable {
 
   /**
    * Investors can claim refund.
-   *
-   * Note that any refunds from proxy buyers should be handled separately,
-   * and not through this contract.
    */
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
@@ -629,7 +626,7 @@ contract Crowdsale is Haltable {
   }
 
   /**
-   * @return true if the crowdsale has raised enough money to be a successful.
+   * @return true if the crowdsale has raised enough money to be a succes
    */
   function isMinimumGoalReached() public constant returns (bool reached) {
     return weiRaised >= minimumFundingGoal;
@@ -1167,7 +1164,6 @@ contract MintableToken is StandardToken, Ownable {
  */
 contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
-  /** Name and symbol were updated. */
   event UpdatedTokenInformation(string newName, string newSymbol);
 
   string public name;
@@ -1234,13 +1230,7 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
   }
 
   /**
-   * Owner can update token information here.
-   *
-   * It is often useful to conceal the actual token association, until
-   * the token operations, like central issuance or reissuance have been completed.
-   *
-   * This function allows the token owner to rename the token after the operations
-   * have been completed and then point the audience to use the token contract.
+   * Owner can update token information here
    */
   function setTokenInformation(string _name, string _symbol) onlyOwner {
     name = _name;
