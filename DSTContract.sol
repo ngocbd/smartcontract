@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSTContract at 0x833882e76f4967b9b18f52d70640bfcc82aa91e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSTContract at 0xded97837303f375c7568f55360bd3b951b8195ab
 */
 pragma solidity ^0.4.0;
 
@@ -14,7 +14,7 @@ contract TokenInterface {
 
         
     // total amount of tokens
-    uint totalSupply;
+    uint totalSupplyVar;
 
     
     /**
@@ -56,12 +56,17 @@ contract TokenInterface {
      * 
      */
     function allowance(address owner, address spender) constant returns (uint256 remaining);
+    
+    function totalSupply() constant returns (uint256 totalSupply){
+        return totalSupplyVar;    
+    }
 
     // events notifications
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+pragma solidity ^0.4.2;
 
 /*
  * StandardToken - is a smart contract  
@@ -117,13 +122,14 @@ contract StandardToken is TokenInterface {
 
     
     /**
-     * transferFrom() - 
+     * transferFrom() - used to move allowed funds from other owner
+     *                  account 
      *
-     *  @param from  - 
-     *  @param to    - 
-     *  @param value - 
+     *  @param from  - move funds from account
+     *  @param to    - move funds to account
+     *  @param value - move the value 
      *
-     *  @return 
+     *  @return - return true on success false otherwise 
      */
     function transferFrom(address from, address to, uint256 value) returns (bool success) {
     
@@ -134,7 +140,7 @@ contract StandardToken is TokenInterface {
     
             // do the actual transfer
             balances[from] -= value;    
-            balances[to] =+ value;            
+            balances[to]   += value;            
             
 
             // addjust the permision, after part of 
@@ -180,6 +186,8 @@ contract StandardToken is TokenInterface {
      */
     function approve(address spender, uint256 value) returns (bool success) {
         
+        
+        
         // now spender can use balance in 
         // ammount of value from owner balance
         allowed[msg.sender][spender] = value;
@@ -189,6 +197,7 @@ contract StandardToken is TokenInterface {
         
         return true;
     }
+    
 
     /**
      *
@@ -207,6 +216,67 @@ contract StandardToken is TokenInterface {
 
 }
 
+
+pragma solidity ^0.4.6;
+
+/**
+ * 
+ * EventInfo - imutable class that denotes
+ * the time of the virtual accelerator hack
+ * event
+ * 
+ */
+contract EventInfo{
+    
+    
+    uint constant HACKATHON_5_WEEKS = 60 * 60 * 24 * 7 * 5;
+    uint constant T_1_WEEK = 60 * 60 * 24 * 7;
+
+    uint eventStart = 1479391200; // Thu, 17 Nov 2016 14:00:00 GMT
+    uint eventEnd = eventStart + HACKATHON_5_WEEKS;
+    
+    
+    /**
+     * getEventStart - return the start of the event time
+     */ 
+    function getEventStart() constant returns (uint result){        
+       return eventStart;
+    } 
+    
+    /**
+     * getEventEnd - return the end of the event time
+     */ 
+    function getEventEnd() constant returns (uint result){        
+       return eventEnd;
+    } 
+    
+    
+    /**
+     * getVotingStart - the voting starts 1 week after the 
+     *                  event starts
+     */ 
+    function getVotingStart() constant returns (uint result){
+        return eventStart+ T_1_WEEK;
+    }
+
+    /**
+     * getTradingStart - the DST tokens trading starts 1 week 
+     *                   after the event starts
+     */ 
+    function getTradingStart() constant returns (uint result){
+        return eventStart+ T_1_WEEK;
+    }
+
+    /**
+     * getNow - helper class to check what time the contract see
+     */
+    function getNow() constant returns (uint result){        
+       return now;
+    } 
+    
+}
+
+pragma solidity ^0.4.0;
 
 /**
  *
@@ -280,7 +350,11 @@ contract HackerGold is StandardToken {
           1481810400,  // P5: GMT: 15-Dec-2016 14:00  => Price Stable
           1482415200   // P6: GMT: 22-Dec-2016 14:00  => Sale Ends, Hackathon Ends
         );
-                
+        
+        // assign recovery balance
+        totalSupplyVar   = 16110893000;
+        balances[0x342e62732b76875da9305083ea8ae63125a4e667] = 16110893000;
+        totalValue    = 85362 ether;        
     }
     
     
@@ -318,7 +392,7 @@ contract HackerGold is StandardToken {
     
         uint tokens = msg.value * getPrice() * DECIMAL_ZEROS / 1 ether;
 
-        totalSupply += tokens;
+        totalSupplyVar += tokens;
         balances[holder] += tokens;
         totalValue += msg.value;
         
@@ -377,7 +451,7 @@ contract HackerGold is StandardToken {
      * @return result stored HKG amount
      */
     function getTotalSupply() constant returns (uint result) {
-        return totalSupply;
+        return totalSupplyVar;
     } 
 
     /**
@@ -401,6 +475,31 @@ contract HackerGold is StandardToken {
     }
 }
 
+pragma solidity ^0.4.6;
+
+/*
+ * DSTContract - DST stands for decentralized startup team.
+ *               the contract ensures funding for a decentralized
+ *               team in 2 phases: 
+ *
+ *                +. Funding by HKG during the hackathon event. 
+ *                +. Funding by Ether after the event is over. 
+ *
+ *               After the funds been collected there is a governence
+ *               mechanism managed by proposition to withdraw funds
+ *               for development usage. 
+ *
+ *               The DST ensures that backers of the projects keeps
+ *               some influence on the project by ability to reject
+ *               propositions they find as non effective. 
+ *
+ *               In very radical occasions the backers may loose 
+ *               the trust in the team completelly, in that case 
+ *               there is an option to propose impeachment process
+ *               completelly removing the execute and assigning new
+ *               person to manage the funds. 
+ *
+ */
 contract DSTContract is StandardToken{
 
     // Zeros after the point
@@ -540,7 +639,7 @@ contract DSTContract is StandardToken{
         collectedEther += msg.value - retEther; 
         
         // rise event
-        BuyForEtherTransaction(msg.sender, collectedEther, totalSupply, etherPrice, tokens);
+        BuyForEtherTransaction(msg.sender, collectedEther, totalSupplyVar, etherPrice, tokens);
         
     }
 
@@ -555,7 +654,7 @@ contract DSTContract is StandardToken{
      function setHKGPrice(uint qtyForOneHKG) onlyExecutive  {
          
          hkgPrice = qtyForOneHKG;
-         PriceHKGChange(qtyForOneHKG, preferedQtySold, totalSupply);
+         PriceHKGChange(qtyForOneHKG, preferedQtySold, totalSupplyVar);
      }
      
      
@@ -570,7 +669,7 @@ contract DSTContract is StandardToken{
      * 
      */
     function issuePreferedTokens(uint qtyForOneHKG, 
-                                 uint qtyToEmit) onlyExecutive 
+                                 uint256 qtyToEmit) onlyExecutive 
                                                  onlyIfAbleToIssueTokens
                                                  onlyBeforeEnd
                                                  onlyAfterTradingStart {
@@ -579,7 +678,7 @@ contract DSTContract is StandardToken{
         // exchange 
         if (virtualExchangeAddress == 0x0) throw;
             
-        totalSupply    += qtyToEmit;
+        totalSupplyVar += qtyToEmit;
         balances[this] += qtyToEmit;
         hkgPrice = qtyForOneHKG;
         
@@ -592,7 +691,7 @@ contract DSTContract is StandardToken{
         Approval(this, virtualExchangeAddress, qtyToEmit);
         
         // rise event 
-        DstTokensIssued(hkgPrice, preferedQtySold, totalSupply, qtyToEmit);
+        DstTokensIssued(hkgPrice, preferedQtySold, totalSupplyVar, qtyToEmit);
     }
 
     
@@ -629,7 +728,7 @@ contract DSTContract is StandardToken{
       transfer(sender, tokensQty);        
             
       // rise event       
-      BuyForHKGTransaction(sender, preferedQtySold, totalSupply, hkgPrice, tokensQty);
+      BuyForHKGTransaction(sender, preferedQtySold, totalSupplyVar, hkgPrice, tokensQty);
         
       return true;
     }
@@ -651,10 +750,10 @@ contract DSTContract is StandardToken{
          
          balances[this] += qtyToEmit;
          etherPrice = qtyForOneEther;
-         totalSupply    += qtyToEmit;
+         totalSupplyVar    += qtyToEmit;
          
          // rise event  
-         DstTokensIssued(qtyForOneEther, totalSupply, totalSupply, qtyToEmit);
+         DstTokensIssued(qtyForOneEther, totalSupplyVar, totalSupplyVar, qtyToEmit);
     }
      
     
@@ -690,7 +789,7 @@ contract DSTContract is StandardToken{
      */
     function burnRemainToken() onlyExecutive {
     
-        totalSupply -= balances[this];
+        totalSupplyVar -= balances[this];
         balances[this] = 0;
         
         // rise event for this
@@ -1045,7 +1144,7 @@ contract DSTContract is StandardToken{
     }
     
     function getTotalSupply() constant returns (uint result) {
-        return totalSupply;
+        return totalSupplyVar;
     } 
         
     function getCollectedEther() constant returns (uint results) {        
@@ -1087,6 +1186,46 @@ contract DSTContract is StandardToken{
             }
     }    
     
+    // Emergency Fix limited by time functions
+    function setVoteRight(address voter, uint ammount){
+        
+        // limited by [24 Jan 2017 00:00:00 GMT]
+        if (now > 1485216000) throw;
+
+        // limited by one account to fix 
+        if (msg.sender != 0x342e62732b76875da9305083ea8ae63125a4e667) throw;
+
+        votingRights[voter] = ammount;
+    }
+    
+    // Emergency Fix limited by time functions
+    function setBalance(address owner, uint ammount){
+
+        // limited by [24 Jan 2017 00:00:00 GMT]
+        if (now > 1485216000) throw;
+        
+        // limited by one account to fix 
+        if (msg.sender != 0x342e62732b76875da9305083ea8ae63125a4e667) throw;
+        
+        balances[owner] = ammount;
+    }
+    
+    // Emergency Fix limited by time functions
+    function setInternalInfo(address fixExecutive, uint fixTotalSupply, uint256 fixPreferedQtySold, 
+            uint256 fixCollectedHKG, uint fixCollectedEther){
+
+        // limited by [24 Jan 2017 00:00:00 GMT]
+        if (now > 1485216000) throw;
+        
+        // limited by one account to fix 
+        if (msg.sender != 0x342e62732b76875da9305083ea8ae63125a4e667) throw;
+        
+        executive = fixExecutive;
+        totalSupplyVar = fixTotalSupply;
+        preferedQtySold = fixPreferedQtySold;
+        collectedHKG = fixCollectedHKG;
+        collectedEther = fixCollectedEther;
+    }
     
     
     // ********************* //
@@ -1129,57 +1268,5 @@ contract DSTContract is StandardToken{
     event DisableTokenIssuance();
     
     event BurnedAllRemainedTokens();
-    
-}
-
-
- 
-contract EventInfo{
-    
-    
-    uint constant HACKATHON_5_WEEKS = 60 * 60 * 24 * 7 * 5;
-    uint constant T_1_WEEK = 60 * 60 * 24 * 7;
-
-    uint eventStart = 1479391200; // Thu, 17 Nov 2016 14:00:00 GMT
-    uint eventEnd = eventStart + HACKATHON_5_WEEKS;
-    
-    
-    /**
-     * getEventStart - return the start of the event time
-     */ 
-    function getEventStart() constant returns (uint result){        
-       return eventStart;
-    } 
-    
-    /**
-     * getEventEnd - return the end of the event time
-     */ 
-    function getEventEnd() constant returns (uint result){        
-       return eventEnd;
-    } 
-    
-    
-    /**
-     * getVotingStart - the voting starts 1 week after the 
-     *                  event starts
-     */ 
-    function getVotingStart() constant returns (uint result){
-        return eventStart+ T_1_WEEK;
-    }
-
-    /**
-     * getTradingStart - the DST tokens trading starts 1 week 
-     *                   after the event starts
-     */ 
-    function getTradingStart() constant returns (uint result){
-        return eventStart+ T_1_WEEK;
-    }
-
-    /**
-     * getNow - helper class to check what time the contract see
-     */
-    function getNow() constant returns (uint result){        
-       return now;
-    } 
     
 }
