@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x8a70cf25cf32e728be9e30c20b2781f60cb0ed6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xd41f3b51e0c2d825a1178582d27c84dbfe48d1af
 */
 pragma solidity ^0.4.2;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -9,7 +9,7 @@ contract MyToken {
     string public standard = 'Token 0.1';
     string public name;
     string public symbol;
-    uint8 public decimals = 0;
+    uint8 public decimals;
     uint256 public totalSupply;
 
     /* This creates an array with all balances */
@@ -20,12 +20,17 @@ contract MyToken {
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyToken() {
-        balanceOf[msg.sender] = 100000;              // Give the creator all initial tokens
-        totalSupply = 100000;                        // Update total supply
-        name = "TESTBtfund.ru";                                   // Set the name for display purposes
-        symbol = "TST";                               // Set the symbol for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
+    function MyToken(
+        uint256 initialSupply,
+        string tokenName,
+        uint8 decimalUnits,
+        string tokenSymbol
+        ) {
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
     }
 
     /* Send coins */
