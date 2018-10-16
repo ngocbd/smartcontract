@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eXtremehoDLCoin at 0x9e046dcead1a5d711d89daff4c6af980a766aaf2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eXtremehoDLCoin at 0x61b685baec2da4d0b942d47cd1932007ab3cec59
 */
 pragma solidity ^0.4.2;
 
@@ -143,9 +143,16 @@ contract eXtremehoDLCoin is StandardToken, SafeMath {
     uint public sellPrice;
     uint public buyPrice;
 
-    function buy_value() private returns (uint) { return (init_sellPrice ** (totalSupply + 1)); }
+    function buy_value() private returns (uint) { return (init_sellPrice ** totalSupply); }
     
-    function sell_value() private returns (uint){ return (init_sellPrice ** totalSupply); }
+    function sell_value() private returns (uint){ 
+        if (totalSupply>0){
+            return (init_sellPrice ** totalSupply);
+            }
+        else {
+            return 0;
+        }
+    }
     
     function update_prices() private{
         sellPrice = sell_value();
