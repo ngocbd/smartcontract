@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x70b0505c0653e0fed13d2f0924ad63cdf39edefe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x9259b4e90c5980ad2cb16d685254c859f5eddde5
 */
 /**
  * Safe unsigned safe math.
@@ -26,7 +26,7 @@ library SafeMathLib {
 
   function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
-    assert(c>=a);
+    assert(c>=a && c>=b);
     return c;
   }
 
@@ -386,7 +386,7 @@ contract Crowdsale is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
 
     // Check that we did not bust the cap
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
+    if(isBreakingCap(tokenAmount, weiAmount, weiRaised, tokensSold)) {
       throw;
     }
 
@@ -417,7 +417,7 @@ contract Crowdsale is Haltable {
   function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
 
     uint tokenAmount = fullTokens * 10**token.decimals();
-    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
+    uint weiAmount = weiPrice * tokenAmount; // This can be also 0, we give out tokens for free
 
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
