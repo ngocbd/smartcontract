@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x5aa7ec82de098d957699d78a2515610707e89231
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x6bec76a319d3b97523f50137ba20ec63746ac49a
 */
 pragma solidity ^0.4.18;
 
@@ -7,8 +7,9 @@ pragma solidity ^0.4.18;
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    uint constant public MAX_OWNER_COUNT = 50;
-
+    /*
+     *  Events
+     */
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -19,6 +20,14 @@ contract MultiSigWallet {
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
+    /*
+     *  Constants
+     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
+    /*
+     *  Storage
+     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -33,6 +42,9 @@ contract MultiSigWallet {
         bool executed;
     }
 
+    /*
+     *  Modifiers
+     */
     modifier onlyWallet() {
         if (msg.sender != address(this))
             throw;
@@ -152,7 +164,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param owner Address of new owner.
+    /// @param newOwner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -223,6 +235,8 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
