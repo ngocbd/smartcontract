@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xA1643d446989075f537cE27993aa631a17e86879
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xFbF67d58859EFA5972C0E020bA5473b534c99914
 */
 // Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
