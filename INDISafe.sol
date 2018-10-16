@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INDISafe at 0x9f0ccf35420ab231c09c879fbfb5d8a38be3a568
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INDISafe at 0x3bbb50a8979443dbaab05da1264ef2f1f1b1a3f6
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.18;
 contract Token {
     uint256 public totalSupply;
     function balanceOf(address _owner) constant returns (uint256 balance);
@@ -57,7 +57,7 @@ contract StandardToken is Token {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
-// requires 50,000,000 INDI deposited here for bounty
+// requires 200,000,000 INDI deposited here for Social Vault
 contract INDISafe {
   mapping (address => uint256) allocations;
   uint256 public unlockDate;
@@ -66,8 +66,8 @@ contract INDISafe {
 
   function INDISafe() {
     INDI = 0xe8c09672cfb9cfce6e2edbb01057d9fa569f97c1;
-    unlockDate = 1515283200;
-    allocations[0x91c594706246Bed9a99CB49718b95D0F067042C8] = 50000000; 
+    unlockDate = 1518134400;
+    allocations[0x91c594706246Bed9a99CB49718b95D0F067042C8] = 200000000; 
     
   }
 
