@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSaleAfterSplit at 0x37e3efe76ee6cec50559bc07565eaf36ddc05467
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSaleAfterSplit at 0x06f0b31fa75d6a4f689fa0f4225f1811ae4a7e7d
 */
 pragma solidity ^0.4.11;
 
@@ -368,7 +368,7 @@ contract TokenSaleAfterSplit is TokenController, Owned, SafeMath {
             (tokenContract.controller() != 0) &&
             (msg.value != 0) );
 
-        uint256 tokensAmount = mul(msg.value, exchangeRate);
+        uint256 tokensAmount = mul(msg.value, exchangeRate) / 10000;
 
         require( totalTokenCount + tokensAmount <= tokenCap );
 
