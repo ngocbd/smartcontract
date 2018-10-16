@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BouleToken at 0xC2C63F23ec5E97efbD7565dF9Ec764FDc7d4e91d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BouleToken at 0x8CEb724bA3cF37637ca0844c9d24f2C2713C9da0
 */
 pragma solidity ^0.4.11;
 
@@ -267,7 +267,7 @@ pragma solidity ^0.4.11;
 
 contract BouleToken is MintableToken {
     // BouleToken is an OpenZeppelin Mintable Token
-    string public name = "Boule Token";
+    string public name = "Boulé Token";
     string public symbol = "BOU";
     uint public decimals = 18;
 
