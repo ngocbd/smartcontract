@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ButenCoin at 0x6e4d1ed3f7b5d7a4998b1116c1ef713e34f38e9a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ButenCoin at 0x309f87bccc19738042b8ede15affecad9961e1a9
 */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -24,10 +24,10 @@ contract ButenCoin {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function ButenCoin() {
-        balanceOf[msg.sender] =  580000000 * 1000000000000000000;              // Give the creator all initial tokens
-        totalSupply =  580000000 * 1000000000000000000;                        // Update total supply
+        balanceOf[msg.sender] =  200000000 * 1000000000000000000;              // Give the creator all initial tokens
+        totalSupply =  200000000 * 1000000000000000000;                        // Update total supply
         name = "ButenCoin";                                   // Set the name for display purposes
-        symbol = "NMT";                               // Set the symbol for display purposes
+        symbol = "BUT";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
