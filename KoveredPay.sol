@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KoveredPay at 0xf24b487192af0202746f832bb5242896a2e1769e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KoveredPay at 0x298e56b430536e42b64caba4a47bbd54c7642667
 */
 pragma solidity 0.4.19;
 
