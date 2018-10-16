@@ -1,13 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x6c5208924c5b302f756a79776a8b2918a041ad4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xb59fdff77a6175dfa4fe7af4281a52f61611eaa2
 */
 pragma solidity ^0.4.11;
 
 /**
- * Token BRAT. Dividends, remuneration, bounty, rewards - are sent continuously, all who have the token BRAT in wallet.
- * Token BRAT (BRAT - translated into English as BROTHER) is the story of each brother in cryptohistory.
- * Each brother should be BRAT.
- * BRAT is the creator of the BRO-Consortium.io
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
  */
 contract Ownable {
   address public owner;
