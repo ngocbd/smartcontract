@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterUpgrader at 0x6b8c3eaa82353ec89a96942708e3d9dc87db6a34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterUpgrader at 0xfae75ba2bb591a74cbca330174e9736403984bd5
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 /*
     Owned contract interface
@@ -12,6 +12,119 @@ contract IOwned {
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
+}
+
+/*
+    ERC20 Standard Token interface
+*/
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+}
+
+/*
+    Smart Token interface
+*/
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
+}
+
+/*
+    Contract Registry interface
+*/
+contract IContractRegistry {
+    function getAddress(bytes32 _contractName) public view returns (address);
+}
+
+/*
+    Contract Features interface
+*/
+contract IContractFeatures {
+    function isSupported(address _contract, uint256 _features) public view returns (bool);
+    function enableFeatures(uint256 _features, bool _enable) public;
+}
+
+/*
+    Whitelist interface
+*/
+contract IWhitelist {
+    function isWhitelisted(address _address) public view returns (bool);
+}
+
+/*
+    Bancor Converter interface
+*/
+contract IBancorConverter {
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
+    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+    function conversionWhitelist() public view returns (IWhitelist) {}
+    // deprecated, backward compatibility
+    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+}
+
+/*
+    Bancor Converter Factory interface
+*/
+contract IBancorConverterFactory {
+    function createConverter(
+        ISmartToken _token,
+        IContractRegistry _registry,
+        uint32 _maxConversionFee,
+        IERC20Token _connectorToken,
+        uint32 _connectorWeight
+    )
+    public returns (address);
+}
+
+/*
+    Bancor converter dedicated interface
+*/
+contract IBancorConverterExtended is IBancorConverter, IOwned {
+    function token() public view returns (ISmartToken) {}
+    function quickBuyPath(uint256 _index) public view returns (IERC20Token) { _index; }
+    function maxConversionFee() public view returns (uint32) {}
+    function conversionFee() public view returns (uint32) {}
+    function connectorTokenCount() public view returns (uint16);
+    function reserveTokenCount() public view returns (uint16);
+    function connectorTokens(uint256 _index) public view returns (IERC20Token) { _index; }
+    function reserveTokens(uint256 _index) public view returns (IERC20Token) { _index; }
+    function setConversionWhitelist(IWhitelist _whitelist) public view;
+    function getQuickBuyPathLength() public view returns (uint256);
+    function transferTokenOwnership(address _newOwner) public view;
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public view;
+    function acceptTokenOwnership() public view;
+    function transferManagement(address _newManager) public view;
+    function acceptManagement() public;
+    function setConversionFee(uint32 _conversionFee) public view;
+    function setQuickBuyPath(IERC20Token[] _path) public view;
+    function addConnector(IERC20Token _token, uint32 _weight, bool _enableVirtualBalance) public view;
+    function getConnectorBalance(IERC20Token _connectorToken) public view returns (uint256);
+    function getReserveBalance(IERC20Token _reserveToken) public view returns (uint256);
+    function connectors(address _address) public view returns (
+        uint256 virtualBalance, 
+        uint32 weight, 
+        bool isVirtualBalanceEnabled, 
+        bool isPurchaseEnabled, 
+        bool isSet
+    );
+    function reserves(address _address) public view returns (
+        uint256 virtualBalance, 
+        uint32 weight, 
+        bool isVirtualBalanceEnabled, 
+        bool isPurchaseEnabled, 
+        bool isSet
+    );
 }
 
 /*
@@ -53,119 +166,31 @@ contract Owned is IOwned {
     */
     function acceptOwnership() public {
         require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
+        emit OwnerUpdate(owner, newOwner);
         owner = newOwner;
         newOwner = address(0);
     }
 }
 
-/*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public view returns (string) {}
-    function symbol() public view returns (string) {}
-    function decimals() public view returns (uint8) {}
-    function totalSupply() public view returns (uint256) {}
-    function balanceOf(address _owner) public view returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
+/**
+    Id definitions for bancor contracts
 
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
+    Can be used in conjunction with the contract registry to get contract addresses
+*/
+contract ContractIds {
+    bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
+    bytes32 public constant BANCOR_FORMULA = "BancorFormula";
+    bytes32 public constant CONTRACT_FEATURES = "ContractFeatures";
 }
 
-/*
-    Smart Token interface
-*/
-contract ISmartToken is IOwned, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
-}
+/**
+    Id definitions for bancor contract features
 
-/*
-    Bancor Formula interface
+    Can be used to query the ContractFeatures contract to check whether a certain feature is supported by a contract
 */
-contract IBancorFormula {
-    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
-    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
-    function calculateCrossConnectorReturn(uint256 _connector1Balance, uint32 _connector1Weight, uint256 _connector2Balance, uint32 _connector2Weight, uint256 _amount) public view returns (uint256);
-}
-
-/*
-    Bancor Gas Price Limit interface
-*/
-contract IBancorGasPriceLimit {
-    function gasPrice() public view returns (uint256) {}
-    function validateGasPrice(uint256) public view;
-}
-
-/*
-    Bancor Quick Converter interface
-*/
-contract IBancorQuickConverter {
-    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
-    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
-    function convertForPrioritized(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for, uint256 _block, uint256 _nonce, uint8 _v, bytes32 _r, bytes32 _s) public payable returns (uint256);
-}
-
-/*
-    Bancor Converter Extensions interface
-*/
-contract IBancorConverterExtensions {
-    function formula() public view returns (IBancorFormula) {}
-    function gasPriceLimit() public view returns (IBancorGasPriceLimit) {}
-    function quickConverter() public view returns (IBancorQuickConverter) {}
-}
-
-/*
-    Bancor Converter Factory interface
-*/
-contract IBancorConverterFactory {
-    function createConverter(ISmartToken _token, IBancorConverterExtensions _extensions, uint32 _maxConversionFee, IERC20Token _connectorToken, uint32 _connectorWeight) public returns (address);
-}
-
-/*
-    Bancor converter dedicated interface
-*/
-contract IBancorConverter is IOwned {
-    function token() public view returns (ISmartToken) {}
-    function extensions() public view returns (IBancorConverterExtensions) {}
-    function quickBuyPath(uint256 _index) public view returns (IERC20Token) {}
-    function maxConversionFee() public view returns (uint32) {}
-    function conversionFee() public view returns (uint32) {}
-    function connectorTokenCount() public view returns (uint16);
-    function reserveTokenCount() public view returns (uint16);
-    function connectorTokens(uint256 _index) public view returns (IERC20Token) {}
-    function reserveTokens(uint256 _index) public view returns (IERC20Token) {}
-    function setExtensions(IBancorConverterExtensions _extensions) public view;
-    function getQuickBuyPathLength() public view returns (uint256);
-    function transferTokenOwnership(address _newOwner) public view;
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public view;
-    function acceptTokenOwnership() public view;
-    function transferManagement(address _newManager) public view;
-    function acceptManagement() public;
-    function setConversionFee(uint32 _conversionFee) public view;
-    function setQuickBuyPath(IERC20Token[] _path) public view;
-    function addConnector(IERC20Token _token, uint32 _weight, bool _enableVirtualBalance) public view;
-    function getConnectorBalance(IERC20Token _connectorToken) public view returns (uint256);
-    function getReserveBalance(IERC20Token _reserveToken) public view returns (uint256);
-    function connectors(address _address) public view returns (
-        uint256 virtualBalance, 
-        uint32 weight, 
-        bool isVirtualBalanceEnabled, 
-        bool isPurchaseEnabled, 
-        bool isSet
-    );
-    function reserves(address _address) public view returns (
-        uint256 virtualBalance, 
-        uint32 weight, 
-        bool isVirtualBalanceEnabled, 
-        bool isPurchaseEnabled, 
-        bool isSet
-    );
+contract FeatureIds {
+    // converter features
+    uint256 public constant CONVERTER_CONVERSION_WHITELIST = 1 << 0;
 }
 
 /*
@@ -179,7 +204,10 @@ contract IBancorConverter is IOwned {
     back to the original owner.
     The address of the new converter is available in the ConverterUpgrade event.
 */
-contract BancorConverterUpgrader is Owned {
+contract BancorConverterUpgrader is Owned, ContractIds, FeatureIds {
+    string public version = '0.2';
+
+    IContractRegistry public registry;                      // contract registry contract address
     IBancorConverterFactory public bancorConverterFactory;  // bancor converter factory contract
 
     // triggered when the contract accept a converter ownership
@@ -190,10 +218,9 @@ contract BancorConverterUpgrader is Owned {
     /**
         @dev constructor
     */
-    function BancorConverterUpgrader(IBancorConverterFactory _bancorConverterFactory)
-        public
-    {
+    function BancorConverterUpgrader(IBancorConverterFactory _bancorConverterFactory, IContractRegistry _registry) public {
         bancorConverterFactory = _bancorConverterFactory;
+        registry = _registry;
     }
 
     /*
@@ -201,9 +228,17 @@ contract BancorConverterUpgrader is Owned {
 
         @param _bancorConverterFactory    address of a bancor converter factory contract
     */
-    function setBancorConverterFactory(IBancorConverterFactory _bancorConverterFactory) public ownerOnly
-    {
+    function setBancorConverterFactory(IBancorConverterFactory _bancorConverterFactory) public ownerOnly {
         bancorConverterFactory = _bancorConverterFactory;
+    }
+
+    /*
+        @dev allows the owner to update the contract registry contract address
+
+        @param _registry   address of a contract registry contract
+    */
+    function setContractRegistry(IContractRegistry _registry) public ownerOnly {
+        registry = _registry;
     }
 
     /**
@@ -215,23 +250,28 @@ contract BancorConverterUpgrader is Owned {
         @param _oldConverter   old converter contract address
         @param _version        old converter version
     */
-    function upgrade(IBancorConverter _oldConverter, bytes32 _version) public {
+    function upgrade(IBancorConverterExtended _oldConverter, bytes32 _version) public {
         bool formerVersions = false;
         if (_version == "0.4")
             formerVersions = true;
         acceptConverterOwnership(_oldConverter);
-        IBancorConverter toConverter = createConverter(_oldConverter);
-        copyConnectors(_oldConverter, toConverter, formerVersions);
-        copyConversionFee(_oldConverter, toConverter);
-        copyQuickBuyPath(_oldConverter, toConverter);
-        transferConnectorsBalances(_oldConverter, toConverter, formerVersions);
-        _oldConverter.transferTokenOwnership(toConverter);
-        toConverter.acceptTokenOwnership();
-        _oldConverter.transferOwnership(msg.sender);
-        toConverter.transferOwnership(msg.sender);
-        toConverter.transferManagement(msg.sender);
+        IBancorConverterExtended newConverter = createConverter(_oldConverter);
+        copyConnectors(_oldConverter, newConverter, formerVersions);
+        copyConversionFee(_oldConverter, newConverter);
+        copyQuickBuyPath(_oldConverter, newConverter);
+        transferConnectorsBalances(_oldConverter, newConverter, formerVersions);                
+        ISmartToken token = _oldConverter.token();
 
-        ConverterUpgrade(address(_oldConverter), address(toConverter));
+        if (token.owner() == address(_oldConverter)) {
+            _oldConverter.transferTokenOwnership(newConverter);
+            newConverter.acceptTokenOwnership();
+        }
+
+        _oldConverter.transferOwnership(msg.sender);
+        newConverter.transferOwnership(msg.sender);
+        newConverter.transferManagement(msg.sender);
+
+        emit ConverterUpgrade(address(_oldConverter), address(newConverter));
     }
 
     /**
@@ -242,36 +282,45 @@ contract BancorConverterUpgrader is Owned {
 
         @param _oldConverter       converter to accept ownership of
     */
-    function acceptConverterOwnership(IBancorConverter _oldConverter) private {
+    function acceptConverterOwnership(IBancorConverterExtended _oldConverter) private {
         require(msg.sender == _oldConverter.owner());
         _oldConverter.acceptOwnership();
-        ConverterOwned(_oldConverter, this);
+        emit ConverterOwned(_oldConverter, this);
     }
 
     /**
         @dev creates a new converter with same basic data as the original old converter
         the newly created converter will have no connectors at this step.
 
-        @param _oldConverter       old converter contract address
+        @param _oldConverter    old converter contract address
 
         @return the new converter  new converter contract address
     */
-    function createConverter(IBancorConverter _oldConverter) private returns(IBancorConverter) {
+    function createConverter(IBancorConverterExtended _oldConverter) private returns(IBancorConverterExtended) {
+        IWhitelist whitelist;
         ISmartToken token = _oldConverter.token();
-        IBancorConverterExtensions extensions = _oldConverter.extensions();
         uint32 maxConversionFee = _oldConverter.maxConversionFee();
 
         address converterAdderess  = bancorConverterFactory.createConverter(
             token,
-            extensions,
+            registry,
             maxConversionFee,
             IERC20Token(address(0)),
             0
         );
 
-        IBancorConverter converter = IBancorConverter(converterAdderess);
+        IBancorConverterExtended converter = IBancorConverterExtended(converterAdderess);
         converter.acceptOwnership();
         converter.acceptManagement();
+
+        // get the contract features address from the registry
+        IContractFeatures features = IContractFeatures(registry.getAddress(ContractIds.CONTRACT_FEATURES));
+
+        if (features.isSupported(_oldConverter, FeatureIds.CONVERTER_CONVERSION_WHITELIST)) {
+            whitelist = _oldConverter.conversionWhitelist();
+            if (whitelist != address(0))
+                converter.setConversionWhitelist(whitelist);
+        }
 
         return converter;
     }
@@ -284,7 +333,7 @@ contract BancorConverterUpgrader is Owned {
         @param _newConverter    new converter contract address
         @param _isLegacyVersion true if the converter version is under 0.5
     */
-    function copyConnectors(IBancorConverter _oldConverter, IBancorConverter _newConverter, bool _isLegacyVersion)
+    function copyConnectors(IBancorConverterExtended _oldConverter, IBancorConverterExtended _newConverter, bool _isLegacyVersion)
         private
     {
         uint256 virtualBalance;
@@ -313,7 +362,7 @@ contract BancorConverterUpgrader is Owned {
         @param _oldConverter    old converter contract address
         @param _newConverter    new converter contract address
     */
-    function copyConversionFee(IBancorConverter _oldConverter, IBancorConverter _newConverter) private {
+    function copyConversionFee(IBancorConverterExtended _oldConverter, IBancorConverterExtended _newConverter) private {
         uint32 conversionFee = _oldConverter.conversionFee();
         _newConverter.setConversionFee(conversionFee);
     }
@@ -324,7 +373,7 @@ contract BancorConverterUpgrader is Owned {
         @param _oldConverter    old converter contract address
         @param _newConverter    new converter contract address
     */
-    function copyQuickBuyPath(IBancorConverter _oldConverter, IBancorConverter _newConverter) private {
+    function copyQuickBuyPath(IBancorConverterExtended _oldConverter, IBancorConverterExtended _newConverter) private {
         uint256 quickBuyPathLength = _oldConverter.getQuickBuyPathLength();
         if (quickBuyPathLength <= 0)
             return;
@@ -346,7 +395,7 @@ contract BancorConverterUpgrader is Owned {
         @param _newConverter    new converter contract address
         @param _isLegacyVersion true if the converter version is under 0.5
     */
-    function transferConnectorsBalances(IBancorConverter _oldConverter, IBancorConverter _newConverter, bool _isLegacyVersion)
+    function transferConnectorsBalances(IBancorConverterExtended _oldConverter, IBancorConverterExtended _newConverter, bool _isLegacyVersion)
         private
     {
         uint256 connectorBalance;
@@ -369,7 +418,7 @@ contract BancorConverterUpgrader is Owned {
 
         @return connector's settings
     */
-    function readConnector(IBancorConverter _converter, address _address, bool _isLegacyVersion) 
+    function readConnector(IBancorConverterExtended _converter, address _address, bool _isLegacyVersion) 
         private
         view
         returns(uint256 virtualBalance, uint32 weight, bool isVirtualBalanceEnabled, bool isPurchaseEnabled, bool isSet)
