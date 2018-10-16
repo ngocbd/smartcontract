@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0x013969cb9113d3636f214b19a3c80a4b4afa6c83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0xaec7e8c221c3fd24e75c996e32289235fd899ebf
 */
 contract TeikhosBounty {
 
@@ -29,8 +29,8 @@ contract TeikhosBounty {
         bytes32 msgHash = keccak256("\x19Ethereum Signed Message:\n64", _publicKey);
 
         // The value v is not known, try both 27 and 28
-        if(ecrecover(msgHash, 27, r, s) == signer) suicide(msg.sender);
-        if(ecrecover(msgHash, 28, r, s) == signer) suicide(msg.sender);
+        if(ecrecover(msgHash, 27, r, s) == signer) return true;
+        if(ecrecover(msgHash, 28, r, s) == signer) return true;
     }
     
     function() payable {}                            
