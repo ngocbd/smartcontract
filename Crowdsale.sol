@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x7550f3936a356246ea8876582e90b4bb3ab540fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x9860a2e40AF0126acE4BE9439fF40875916b4Afd
 */
 pragma solidity ^0.4.16;
 
@@ -209,17 +209,17 @@ contract BurnableToken is StandardToken {
 
 }
 
-contract CSFM is BurnableToken {
+contract CSFT is BurnableToken {
     
-  string public constant name = "Cryptosafefundmining";
+  string public constant name = "Cryptosafefundtrading";
    
-  string public constant symbol = "CSFM";
+  string public constant symbol = "CSFT";
     
   uint8 public constant decimals = 18;
 
   uint256 public INITIAL_SUPPLY = 100000000 * 1 ether;
 
-  function CSFM  () {
+  function CSFT  () {
     totalSupply = INITIAL_SUPPLY;
     balances[0xd9fEA37020AD04626d362BB7e2f8ad6F822EBae4] = INITIAL_SUPPLY;
   }
@@ -232,7 +232,7 @@ contract Crowdsale is Ownable {
     
   address multisig;
 
-  CSFM public token = new CSFM ();
+  CSFT public token = new CSFT ();
 
 
   uint start;
