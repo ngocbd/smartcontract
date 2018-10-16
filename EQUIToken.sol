@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EQUIToken at 0xe6ff2834b6cf56dc23282a5444b297faccca1b28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EQUIToken at 0x1b0cd7c0dc07418296585313a816e0cb953dea96
 */
 pragma solidity ^0.4.22;
 
@@ -228,7 +228,7 @@ contract EQUIToken is StandardToken {
    */
   constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
-    balances[0x4AA48F9cF25eB7d2c425780653c321cfaC458FA4] = INITIAL_SUPPLY;
-    emit Transfer(0x0,0x4AA48F9cF25eB7d2c425780653c321cfaC458FA4, INITIAL_SUPPLY);
+    balances[0xccB84A750f386bf5A4FC8C29611ad59057968605] = INITIAL_SUPPLY;
+    emit Transfer(0x0,0xccB84A750f386bf5A4FC8C29611ad59057968605, INITIAL_SUPPLY);
   }
 }
