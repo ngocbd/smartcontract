@@ -1,31 +1,31 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DesToken at 0xd1265BFe57597840f89971B7e67538BAC780F9ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DesToken at 0x1a9b18cB4891046a1211Eb61C6F3f2694b26f427
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 /**
  * Math operations with safety checks
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal returns (uint256) {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal returns (uint256) {
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal returns (uint256) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal returns (uint256) {
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -56,12 +56,77 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+/*
+ * Ownable
+ *
+ * Base contract with an owner.
+ * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+ */
+contract Ownable {
+  address public owner;
+
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+  function unown() onlyOwner {
+    owner = address(0);
+  }
+
+}
+
+contract Transferable is Ownable {
+
+  bool public transfersAllowed = false;
+  mapping(address => bool) allowedTransfersTo;
+
+  function Transferable() {
+    allowedTransfersTo[msg.sender] = true;
+  }
+
+  modifier onlyIfTransfersAllowed() {
+    require(transfersAllowed == true || allowedTransfersTo[msg.sender] == true);
+    _;
+  }
+
+  function allowTransfers() onlyOwner {
+    transfersAllowed = true;
+  }
+
+  function disallowTransfers() onlyOwner {
+    transfersAllowed = false;
+  }
+
+  function allowTransfersTo(address _owner) onlyOwner {
+    allowedTransfersTo[_owner] = true;
+  }
+
+  function disallowTransfersTo(address _owner) onlyOwner {
+    allowedTransfersTo[_owner] = false;
+  }
+
+  function transfersAllowedTo(address _owner) constant returns (bool) {
+    return (transfersAllowed == true || allowedTransfersTo[_owner] == true);
+  }
+
+}
 
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances. 
  */
-contract BasicToken is ERC20Basic {
+contract BasicToken is ERC20Basic, Transferable {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
@@ -79,7 +144,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) {
+  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) onlyIfTransfersAllowed {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -114,7 +179,7 @@ contract StandardToken is BasicToken, ERC20 {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amout of tokens to be transfered
    */
-  function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) {
+  function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) onlyIfTransfersAllowed {
     var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
@@ -176,139 +241,4 @@ contract DesToken is StandardToken {
     balances[msg.sender] = INITIAL_SUPPLY;
   }
 
-}
-
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
- */
-contract Ownable {
-  address public owner;
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-/*
- * Haltable
- *
- * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
- *
- *
- * Originally envisioned in FirstBlood ICO contract.
- */
-contract Haltable is Ownable {
-  bool public halted = false;
-
-  modifier stopInEmergency {
-    require(!halted);
-    _;
-  }
-
-  modifier onlyInEmergency {
-    require(halted);
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
-  }
-
-}
-
-contract DesTokenSale is Haltable {
-    using SafeMath for uint;
-
-    string public name = "3DES Token Sale Contract";
-
-    DesToken public token;
-    address public beneficiary;
-
-    uint public tokensSoldTotal = 0; // in wei
-    uint public weiRaisedTotal = 0; // in wei
-    uint public investorCount = 0;
-    uint public tokensSelling = 0; // tokens selling in the current phase
-    uint public tokenPrice = 0; // in wei
-    uint public purchaseLimit = 0; // in tokens wei amount
-
-    event NewContribution(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
-
-    function DesTokenSale(
-      address _token,
-      address _beneficiary
-      ) {
-        token = DesToken(_token);
-        beneficiary = _beneficiary;
-    }
-
-    function startPhase(
-      uint256 _tokens,
-      uint256 _price,
-      uint256 _limit
-      ) onlyOwner {
-        require(tokensSelling == 0);
-        require(_tokens <= token.balanceOf(this));
-        tokensSelling = _tokens * 1 ether;
-        tokenPrice = _price;
-        purchaseLimit = _limit * 1 ether;
-    }
-
-    // If DES tokens will not be sold in a phase it will be ours.
-    // We belive in success of our project.
-    function finishPhase() onlyOwner {
-        require(tokensSelling != 0);
-        token.transfer(beneficiary, tokensSelling);
-        tokensSelling = 0;
-    }
-
-    function () payable stopInEmergency {
-        require(tokensSelling != 0);
-        require(msg.value >= 0.01 * 1 ether);
-        
-        // calculate token amount
-        uint tokens = msg.value / tokenPrice * 1 ether;
-        
-        // throw if you trying to buy over the limit
-        require(token.balanceOf(msg.sender).add(tokens) <= purchaseLimit);
-        
-        // recalculate selling tokens
-        // will throw if it is not enough tokens
-        tokensSelling = tokensSelling.sub(tokens);
-        
-        // recalculate counters
-        tokensSoldTotal = tokensSoldTotal.add(tokens);
-        if (token.balanceOf(msg.sender) == 0) investorCount++;
-        weiRaisedTotal = weiRaisedTotal.add(msg.value);
-        
-        // transfer bought tokens to the contributor 
-        token.transfer(msg.sender, tokens);
-
-        // transfer funds to the beneficiary
-        beneficiary.transfer(msg.value);
-
-        NewContribution(msg.sender, tokens, msg.value);
-    }
-    
 }
