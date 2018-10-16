@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x39053e1cf324b9667f21e513f3c968e2febf5181
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xbc512b1d63110c286fd821a73855117fc395464d
 */
 pragma solidity ^0.4.4;
 
-
+//  @address:0xbc512b1d63110c286fd821a73855117fc395464d
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
@@ -26,7 +26,7 @@ contract MultiSigWallet {
     address[] public owners;
     uint public required;
     uint public transactionCount;
-    uint public onceSetOwners = 2;
+    uint public onceSetOwners = 1;
 
     address public creator;
 
