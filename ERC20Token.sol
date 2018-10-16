@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xc9ba80b5e573210231781f08967b2c0fc1e8d111
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x7cda45312d561306c47b55ebd982e5aaf49af135
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.18;
 
 contract Token {
 
@@ -111,14 +111,19 @@ contract ERC20Token is StandardToken {
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 12000000000000000000000000;               
-        totalSupply = 12000000000000000000000000;                        
-        name = "Ethereum Silver";                                   
-        decimals = 18;                            
-        symbol = "ETS";                               
+        balances[msg.sender] = 1000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000000;                        // Update total supply (100000 for example)
+        name = "Belfie Coin";                                   // Set the name for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "BELF";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
