@@ -1,11 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0xba6a643f02fad92124c936ad0f4e9b6889812881
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0x0c5ce6367951cf2e617845de0f6492f9ea67da46
 */
 pragma solidity ^0.4.20;
-
-
-
-
 
 contract CutieCoreInterface
 {
@@ -219,6 +215,8 @@ contract Market is MarketInterface, Pausable
         // Time when auction started
         // NOTE: 0 if this auction has been concluded
         uint40 startedAt;
+        // Featuring fee (in wei, optional)
+        uint128 featuringFee;
     }
 
     // Reference to contract that tracks ownership
@@ -231,7 +229,7 @@ contract Market is MarketInterface, Pausable
     // Map from token ID to their corresponding auction.
     mapping (uint40 => Auction) cutieIdToAuction;
 
-    event AuctionCreated(uint40 cutieId, uint128 startPrice, uint128 endPrice, uint40 duration, uint256 fee);
+    event AuctionCreated(uint40 cutieId, uint128 startPrice, uint128 endPrice, uint40 duration, uint128 fee);
     event AuctionSuccessful(uint40 cutieId, uint128 totalPrice, address winner);
     event AuctionCancelled(uint40 cutieId);
 
@@ -249,7 +247,7 @@ contract Market is MarketInterface, Pausable
     // @param _cutieId The token ID is to be put on auction.
     // @param _auction To add an auction.
     // @param _fee Amount of money to feature auction
-    function _addAuction(uint40 _cutieId, Auction _auction, uint256 _fee) internal
+    function _addAuction(uint40 _cutieId, Auction _auction) internal
     {
         // Require that all auctions have a duration of
         // at least one minute. (Keeps our math from getting hairy!)
@@ -262,7 +260,7 @@ contract Market is MarketInterface, Pausable
             _auction.startPrice,
             _auction.endPrice,
             _auction.duration,
-            _fee
+            _auction.featuringFee
         );
     }
 
@@ -416,9 +414,8 @@ contract Market is MarketInterface, Pausable
         coreAddress.transfer(address(this).balance);
     }
 
-
     // @dev create and begin new auction.
-    function createAuction(uint40 _cutieId, uint128 _startPrice, uint128 _endPrice, uint40 _duration, address _seller) 
+    function createAuction(uint40 _cutieId, uint128 _startPrice, uint128 _endPrice, uint40 _duration, address _seller)
         public whenNotPaused payable
     {
         require(_isOwner(msg.sender, _cutieId));
@@ -428,9 +425,10 @@ contract Market is MarketInterface, Pausable
             _endPrice,
             _seller,
             _duration,
-            uint40(now)
+            uint40(now),
+            uint128(msg.value)
         );
-        _addAuction(_cutieId, auction, msg.value);
+        _addAuction(_cutieId, auction);
     }
 
     // @dev Set the reference to cutie ownership contract. Verify the owner's fee.
@@ -477,7 +475,8 @@ contract Market is MarketInterface, Pausable
         uint128 startPrice,
         uint128 endPrice,
         uint40 duration,
-        uint40 startedAt
+        uint40 startedAt,
+        uint128 featuringFee
     ) {
         Auction storage auction = cutieIdToAuction[_cutieId];
         require(_isOnAuction(auction));
@@ -486,7 +485,8 @@ contract Market is MarketInterface, Pausable
             auction.startPrice,
             auction.endPrice,
             auction.duration,
-            auction.startedAt
+            auction.startedAt,
+            auction.featuringFee
         );
     }
 
@@ -555,9 +555,10 @@ contract SaleMarket is Market
             _endPrice,
             _seller,
             _duration,
-            uint40(now)
+            uint40(now),
+            uint128(msg.value)
         );
-        _addAuction(_cutieId, auction, msg.value);
+        _addAuction(_cutieId, auction);
     }
 
     // @dev LastSalePrice is updated if seller is the token contract.
