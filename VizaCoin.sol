@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VizaCoin at 0xc589ef59db4b96b176b6aa61af19f28813b1a91f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VizaCoin at 0xdfcb66c4bdb2fc7a82a8870f3297637651f1a797
 */
 pragma solidity ^0.4.16;
 
@@ -177,11 +177,11 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract VizaCoin is StandardToken {
-  string public name = "Viza Coin";
+  string public name = "VizaCoin";
   string public symbol = "VIZ";
-  uint8 public decimals = 8;
+  uint8 public decimal = 8;
 
-  uint256 public INITIAL_SUPPLY = 21000000 * (10 ** uint256(decimals));
+  uint256 public INITIAL_SUPPLY = 21000000 * (10 ** uint256(decimal));
 
   function VizaCoin() public {
     totalSupply = INITIAL_SUPPLY;
