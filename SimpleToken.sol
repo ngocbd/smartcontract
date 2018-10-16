@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xCD1e4ea603eaCB15930abD28e2cc1020636bf3F1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xbffdbbb3c6e77ba88627a181dd8edc3c2f89da50
 */
 pragma solidity ^0.4.6;
+/**
+* AirdropToken
+* 
+*/
 
 library SafeMath {
   function mul(uint a, uint b) internal returns (uint) {
@@ -46,7 +50,7 @@ library SafeMath {
 
   function assert(bool assertion) internal {
     if (!assertion) {
-      throw;
+      revert();
     }
   }
 }
@@ -72,7 +76,7 @@ contract BasicToken is ERC20Basic {
 
   modifier onlyPayloadSize(uint size) {
      if(msg.data.length < size + 4) {
-       throw;
+       revert();
      }
      _;
   }
@@ -153,10 +157,10 @@ contract StandardToken is BasicToken, ERC20 {
 
 contract SimpleToken is StandardToken {
 
-  string public name = "MILLIONAIRE";
-  string public symbol = "MIL";
-  uint public decimals = 6;
-  uint public INITIAL_SUPPLY = 1000000000000;
+  string public name = "AIRDROP";
+  string public symbol = "ADROP";
+  uint public decimals = 18;
+  uint public INITIAL_SUPPLY = 11000000000000000000000000;
 
   function SimpleToken() {
     totalSupply = INITIAL_SUPPLY;
