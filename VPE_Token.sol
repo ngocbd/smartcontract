@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VPE_Token at 0xcb3216a6c36d9a79c2b97d5b280cc63f39c70ec6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VPE_Token at 0x87fa133a852f52a04e4bb6467f6120bdd3c214d4
 */
 pragma solidity ^0.4.16;
 
@@ -110,25 +110,28 @@ contract Token is ERC20Interface, CNT_Common {
     mapping(address => uint) public balances;
     mapping(address => mapping(address => uint)) public allowed;
 
+    address public ICO_PRE_SALE = address(0x1);
+    address public ICO_TEAM = address(0x2);
+    address public ICO_PROMO_REWARDS = address(0x3);
+    address public ICO_EOS_AIRDROP = address(0x4);
 
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
     
-    function Token(uint8 _decimals, uint _millions, string _name, string _sym) public {
+    function Token(uint8 _decimals, uint _thousands, string _name, string _sym) public {
         owner = msg.sender;
         symbol = _sym;
         name = _name;
         decimals = _decimals;
-        totSupply = _millions * 10**6 * 10**uint(decimals);
-        balances[owner] = totSupply;
+        totSupply = _thousands * 10**3 * 10**uint(decimals);
     }
 
     // ------------------------------------------------------------------------
     // Total supply
     // ------------------------------------------------------------------------
     function totalSupply() public constant returns (uint) {
-        return totSupply - balances[SALE_address];
+        return totSupply;
     }
 
 
@@ -239,9 +242,6 @@ contract Token is ERC20Interface, CNT_Common {
         require(!initialized);
         // we need to know the CNTTokenSale and NewRichOnTheBlock Contract address before distribute to them
         SALE_address = _sale;
-        balances[SALE_address] = totSupply;
-        balances[address(this)] = 0;
-        balances[owner] = 0;
         whitelist[SALE_address] = true;
         initialized = true;
         freezed = true;
@@ -249,12 +249,19 @@ contract Token is ERC20Interface, CNT_Common {
 
     function ico_distribution(address to, uint tokens) public onlyWhitelisted() {
         require(initialized);
-        balances[SALE_address] = balances[SALE_address].sub(tokens);
+        balances[ICO_PRE_SALE] = balances[ICO_PRE_SALE].sub(tokens);
         balances[to] = balances[to].add(tokens);
-        Transfer(SALE_address, to, tokens);
+        Transfer(ICO_PRE_SALE, to, tokens);
     }
-    
-    function balanceOfMine() public returns (uint) {
+
+    function ico_promo_reward(address to, uint tokens) public onlyWhitelisted() {
+        require(initialized);
+        balances[ICO_PROMO_REWARDS] = balances[ICO_PROMO_REWARDS].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        Transfer(ICO_PROMO_REWARDS, to, tokens);
+    }
+
+    function balanceOfMine() constant public returns (uint) {
         return balances[msg.sender];
     }
 
@@ -272,22 +279,50 @@ contract Token is ERC20Interface, CNT_Common {
     
 }
 
-contract CNT_Token is Token(18, 300, "Chip", "CNT") {
-    function CNT_Token() public {}
+contract CNT_Token is Token(18, 500000, "Chip", "CNT") {
+    function CNT_Token() public {
+        uint _millons = 10**6 * 10**18;
+        balances[ICO_PRE_SALE]       = 300 * _millons; // 60% - PRE-SALE / DA-ICO
+        balances[ICO_TEAM]           =  90 * _millons; // 18% - reserved for the TEAM
+        balances[ICO_PROMO_REWARDS]  =  10 * _millons; //  2% - project promotion (Steem followers rewards and influencers sponsorship)
+        balances[ICO_EOS_AIRDROP]    = 100 * _millons; // 20% - AIRDROP over EOS token holders
+        balances[address(this)]      = 0;
+        Transfer(address(this), ICO_PRE_SALE, balances[ICO_PRE_SALE]);
+        Transfer(address(this), ICO_TEAM, balances[ICO_TEAM]);
+        Transfer(address(this), ICO_PROMO_REWARDS, balances[ICO_PROMO_REWARDS]);
+        Transfer(address(this), ICO_EOS_AIRDROP, balances[ICO_EOS_AIRDROP]);
+    }
 }
 
-contract BGB_Token is Token(18, 300, "BG-Coin", "BGB") {
-    function BGB_Token() public {}
+contract BGB_Token is Token(18, 500000, "BG-Coin", "BGB") {
+    function BGB_Token() public {
+        uint _millons = 10**6 * 10**18;
+        balances[ICO_PRE_SALE]      = 250 * _millons; // 50% - PRE-SALE
+        balances[ICO_TEAM]          = 200 * _millons; // 40% - reserved for the TEAM
+        balances[ICO_PROMO_REWARDS] =  50 * _millons; // 10% - project promotion (Steem followers rewards and influencers sponsorship)
+        balances[address(this)] =   0;
+        Transfer(address(this), ICO_PRE_SALE, balances[ICO_PRE_SALE]);
+        Transfer(address(this), ICO_TEAM, balances[ICO_TEAM]);
+        Transfer(address(this), ICO_PROMO_REWARDS, balances[ICO_PROMO_REWARDS]);
+    }
 }
 
-contract VPE_Token is Token(18, 100, "Vapaee", "VPE") {
-    function VPE_Token() public {}
+contract VPE_Token is Token(18, 1000, "Vapaee", "VPE") {
+    function VPE_Token() public {
+        uint _thousands = 10**3 * 10**18;
+        balances[ICO_PRE_SALE]  = 500 * _thousands; // 50% - PRE-SALE
+        balances[ICO_TEAM]      = 500 * _thousands; // 50% - reserved for the TEAM
+        balances[address(this)] =   0;
+        Transfer(address(this), ICO_PRE_SALE, balances[ICO_PRE_SALE]);
+        Transfer(address(this), ICO_TEAM, balances[ICO_TEAM]);
+    }
 }
 
-contract GVPE_Token is Token(18, 1, "Golden Vapaee", "GVPE") {
-    function GVPE_Token() public {}
-}
-
-contract EOS is Token(18, 1000, "EOS Dummie", "EOS") {
-    function EOS() public {}
+contract GVPE_Token is Token(18, 100, "Golden Vapaee", "GVPE") {
+    function GVPE_Token() public {
+        uint _thousands = 10**3 * 10**18;
+        balances[ICO_PRE_SALE]  = 100 * _thousands; // 100% - PRE-SALE
+        balances[address(this)] = 0;
+        Transfer(address(this), ICO_PRE_SALE, balances[ICO_PRE_SALE]);
+    }
 }
