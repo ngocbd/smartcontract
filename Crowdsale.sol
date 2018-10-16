@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x7cdc6bb9534f18e6e532b37f4cbcf90bd641e73b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x300549a4a3c35d1b24f3ce05f93908b5849a7267
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /**
  * @title ERC20Basic
@@ -31,12 +31,10 @@ contract ERC20 is ERC20Basic {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
+    
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
@@ -57,6 +55,7 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
+  
 }
 
 /**
@@ -110,7 +109,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _value uint256 the amout of tokens to be transfered
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    uint _allowance = allowed[_from][msg.sender];
+    uint256 _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
     // require (_value <= _allowance);
@@ -165,7 +164,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -181,7 +180,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));      
     owner = newOwner;
   }
@@ -194,12 +193,14 @@ contract Ownable {
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
+
 contract MintableToken is StandardToken, Ownable {
+    
   event Mint(address indexed to, uint256 amount);
+  
   event MintFinished();
 
   bool public mintingFinished = false;
-
 
   modifier canMint() {
     require(!mintingFinished);
@@ -208,7 +209,7 @@ contract MintableToken is StandardToken, Ownable {
 
   /**
    * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
+   * @param _to The address that will recieve the minted tokens.
    * @param _amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
@@ -224,225 +225,157 @@ contract MintableToken is StandardToken, Ownable {
    * @dev Function to stop minting new tokens.
    * @return True if the operation was successful.
    */
-  function finishMinting() onlyOwner canMint public returns (bool) {
+  function finishMinting() onlyOwner public returns (bool) {
     mintingFinished = true;
     emit MintFinished();
     return true;
   }
+  
 }
 
-contract MSPT is Ownable, MintableToken {
-  using SafeMath for uint256;    
-  string public constant name = "MySmartProperty Tokens";
-  string public constant symbol = "MSPT";
-  uint32 public constant decimals = 18;
-
-  address public addressSupporters;
-  address public addressEccles;
-  address public addressJenkins;
-  address public addressLeskiw;
-  address public addressBilborough;
-
-  uint public summSupporters = 1000000 * 1 ether;
-  uint public summEccles = 2000000 * 1 ether;
-  uint public summJenkins = 2000000 * 1 ether;
-  uint public summLeskiw = 2000000 * 1 ether;
-  uint public summBilborough = 3000000 * 1 ether;
-
-  function MSPT() public {
-    addressSupporters = 0x49ce9f664d9fe7774fE29F5ab17b46266e4437a4;
-    addressEccles = 0xF59C5199FCd7e29b2979831e39EfBcf16b90B485;
-    addressJenkins = 0x974e94C33a37e05c4cE292b43e7F50a57fAA5Bc7;
-    addressLeskiw = 0x3a7e8Eb6DDAa74e58a6F3A39E3d073A9eFA22160;
-    addressBilborough = 0xAabb89Ade1Fc2424b7FE837c40E214375Dcf9840;  
-      
-    //Founders and supporters initial Allocations
-    balances[addressSupporters] = balances[addressSupporters].add(summSupporters);
-    balances[addressEccles] = balances[addressEccles].add(summEccles);
-    balances[addressJenkins] = balances[addressJenkins].add(summJenkins);
-    balances[addressLeskiw] = balances[addressLeskiw].add(summLeskiw);
-    balances[addressBilborough] = balances[addressBilborough].add(summBilborough);
-    totalSupply = summSupporters.add(summEccles).add(summJenkins).add(summLeskiw).add(summBilborough);
-  }
-  function getTotalSupply() public constant returns(uint256){
-      return totalSupply;
-  }
+contract SMAR is MintableToken {
+    
+    string public constant name = "SmartRetail ICO";
+    
+    string public constant symbol = "SMAR";
+    
+    uint32 public constant decimals = 18;
+    
 }
 
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive. The contract requires a MintableToken that will be
- * minted as contributions arrive, note that the crowdsale contract
- * must be owner of the token in order to be able to mint it.
- */
+
 contract Crowdsale is Ownable {
-  using SafeMath for uint256;
-  // The token being sold
-  MSPT public token;
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startPreICO;
-  uint256 public startICO;
-  uint256 public endPreICO;
-  uint256 public endICO;           
-  
-  uint256 public maxAmountPreICO;
-  uint256 public maxAmountICO;
-  
-  uint256 public totalPreICOAmount;
-  uint256 public totalICOAmount;
-  
-  // Remaining Token Allocation
-  uint public mintStart1; //15th July 2018
-  uint public mintStart2; //15th August 2018
-  uint public mintStart3; //15th December 2018
-  uint public mintStart4; //15th January 2018
-  uint public mintStart5; //15th July 2019     
-  
-  // address where funds are collected
-  address public wallet;
-
-  // how many token units a buyer gets per wei
-  uint256 public ratePreICO;
-  uint256 public rateICO;      
-
-  // minimum quantity values
-  uint256 public minQuanValues; 
-  
-  // Remaining Token Allocation
-  uint256 public totalMintAmount; 
-  uint256 public allowTotalMintAmount;
-  uint256 public mintAmount1;
-  uint256 public mintAmount2;
-  uint256 public mintAmount3;
-  uint256 public mintAmount4;
-  uint256 public mintAmount5;
-  // totalTokens
-  uint256 public totalTokens;
-  
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-  function Crowdsale() public {
-    token = createTokenContract();
-    // total number of tokens
-    totalTokens = 100000000 * 1 ether;
-    // minimum quantity values
-    minQuanValues = 100000000000000000;
-    // start and end timestamps where investments are allowed
-    startPreICO = 1527948000; //3 June 2018 00:00:00 +10 GMT
-    endPreICO = 1530280800; //30 June 2018 00:00:00 +10 GMT
-    startICO = 1530280800; //30 June 2018 00:00:00 +10 GMT
-    endICO = startICO +  30 * 1 days;           
-    // restrictions on amounts during the ico stages
-    maxAmountPreICO = 12000000  * 1 ether;
-    maxAmountICO = 24000000  * 1 ether;
-    // rate decimals = 2;
-    ratePreICO = 79294;
-    rateICO = 59470;
-    // Remaining Token Allocation    
-    mintAmount1 = 10000000 * 1 ether;
-    mintAmount2 = 10000000 * 1 ether;
-    mintAmount3 = 10000000 * 1 ether;
-    mintAmount4 = 10000000 * 1 ether;
-    mintAmount5 = 10000000 * 1 ether;
     
-    mintStart1 = 1538316000; //1st October  2018 +10 GMT
-    mintStart2 = 1540994400; //1st November 2018 +10 GMT
-    mintStart3 = 1551362400; //1st March    2019 +10 GMT
-    mintStart4 = 1554040800; //1st April    2019 +10 GMT
-    mintStart5 = 1569852000; //1st October  2019 +10 GMT
-    // address where funds are collected
-    wallet = 0x7Ac93a7A1F8304c003274512F6c46C132106FE8E;
-  }
-  function setRatePreICO(uint _ratePreICO) public {
-    ratePreICO = _ratePreICO;
-  }  
-  function setRateICO(uint _rateICO) public {
-    rateICO = _rateICO;
-  }    
-  
-  function createTokenContract() internal returns (MSPT) {
-    return new MSPT();
-  }
+    using SafeMath for uint;
+    
+    address public multisig = 0xF15eE43d0345089625050c08b482C3f2285e4F12;
+    
+    uint dec = 1000000000000000000;
+    
+    SMAR public token = new SMAR();
 
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens(msg.sender);
-  }
+    
+    uint public icoStartP1 = 1528675200; // GMT: Mon, 11 Jun 2018 00:00:00 GMT
+    uint public icoStartP2 = 1531267200; // Wed, 11 Jul 2018 00:00:00 GMT
+    uint public icoStartP3 = 1533945600; // GMT: Sat, 11 Aug 2018 00:00:00 GMT
+    uint public icoStartP4 = 1536624000; // Tue, 11 Sep 2018 00:00:00 GMT
+    uint public icoStartP5 = 1539216000; // GMT: Thu, 11 Oct 2018 00:00:00 GMT
+    uint public icoStartP6 = 1541894400; // GMT: Sun, 11 Nov 2018 00:00:00 GMT
+    uint public icoEnd = 1544486400; // Tue, 11 Dec 2018 00:00:00 GMT
+    
+    
+    
+    uint public icoSoftcap = 35000*dec; // 35 000 SMAR
+    uint public icoHardcap =  1000000*dec; // 1 000 000 SMAR
 
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable {
-    uint256 tokens;
-    uint256 weiAmount = msg.value;
-    uint256 backAmount;
-    require(beneficiary != address(0));
-    //minimum amount in ETH
-    require(weiAmount >= minQuanValues);
-    if (now >= startPreICO && now < endPreICO && totalPreICOAmount < maxAmountPreICO && tokens == 0){
-      tokens = weiAmount.div(100).mul(ratePreICO);
-      if (maxAmountPreICO.sub(totalPreICOAmount) < tokens){
-        tokens = maxAmountPreICO.sub(totalPreICOAmount); 
-        weiAmount = tokens.mul(100).div(ratePreICO);
-        backAmount = msg.value.sub(weiAmount);
-      }
-      totalPreICOAmount = totalPreICOAmount.add(tokens);
-      if (totalPreICOAmount >= maxAmountPreICO){
-        startICO = now;
-        endICO = startICO + 30 * 1 days;
-      }   
+
+    //----
+    uint public tokensFor1EthP6 = 50*dec; //0.02 ETH for 1 token
+    uint public tokensFor1EthP1 = tokensFor1EthP6*125/100; //0,016   ETH for 1 token
+    uint public tokensFor1EthP2 = tokensFor1EthP6*120/100; //0,01667 ETH for 1 token
+    uint public tokensFor1EthP3 = tokensFor1EthP6*115/100; //0,01739 ETH for 1 token
+    uint public tokensFor1EthP4 = tokensFor1EthP6*110/100; //0,01818 ETH for 1 token
+    uint public tokensFor1EthP5 = tokensFor1EthP6*105/100; //0,01905 ETH for 1 token
+    //----
+        
+    mapping(address => uint) public balances;
+
+
+
+    constructor() public {
+       owner = multisig;
+       token.mint(multisig, 5000*dec);  
+    }
+
+
+    function refund() public {
+
+      require(  (now>icoEnd)&&(token.totalSupply()<icoSoftcap) );
+      uint value = balances[msg.sender]; 
+      balances[msg.sender] = 0; 
+      msg.sender.transfer(value); 
+    }
+    
+
+    function refundToWallet(address _wallet) public  {
+
+      require(  (now>icoEnd)&&(token.totalSupply()<icoSoftcap) );
+      uint value = balances[_wallet]; 
+      balances[_wallet] = 0; 
+      _wallet.transfer(value); 
     }    
-    if (now >= startICO && totalICOAmount < maxAmountICO  && tokens == 0){
-      tokens = weiAmount.div(100).mul(rateICO);
-      if (maxAmountICO.sub(totalICOAmount) < tokens){
-        tokens = maxAmountICO.sub(totalICOAmount); 
-        weiAmount = tokens.mul(100).div(rateICO);
-        backAmount = msg.value.sub(weiAmount);
-      }
-      totalICOAmount = totalICOAmount.add(tokens);
-    }     
-    require(tokens > 0);
-    token.mint(beneficiary, tokens);
-    wallet.transfer(weiAmount);
     
-    if (backAmount > 0){
-      msg.sender.transfer(backAmount);    
-    }
-    emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-  }
 
-  function mintTokens(address _to, uint256 _amount) onlyOwner public returns (bool) {
-    require(_amount > 0);
-    require(_to != address(0));
-    if (now >= mintStart1 && now < mintStart2){
-      allowTotalMintAmount = mintAmount1;  
+    function withdraw() public onlyOwner {
+
+       require(token.totalSupply()>=icoSoftcap);
+       multisig.transfer(address(this).balance);
     }
-    if (now >= mintStart2 && now < mintStart3){
-      allowTotalMintAmount = mintAmount1.add(mintAmount2);  
-    }  
-    if (now >= mintStart3 && now < mintStart4){
-      allowTotalMintAmount = mintAmount1.add(mintAmount2).add(mintAmount3);  
-    }       
-    if (now >= mintStart4 && now < mintStart5){
-      allowTotalMintAmount = mintAmount1.add(mintAmount2).add(mintAmount3).add(mintAmount4);  
-    }       
-    if (now >= mintStart5){
-      allowTotalMintAmount = totalMintAmount.add(totalTokens.sub(token.getTotalSupply()));
-    }       
-    require(_amount.add(totalMintAmount) <= allowTotalMintAmount);
-    token.mint(_to, _amount);
-    totalMintAmount = totalMintAmount.add(_amount);
-    return true;
-  }
-  function finishMintingTokens() onlyOwner public returns (bool) {
-    token.finishMinting(); 
-  }
+
+
+
+    function finishMinting() public onlyOwner {
+      if(now>icoEnd) {
+        token.finishMinting();
+        token.transferOwnership(multisig);
+      }
+    }
+
+
+   function createTokens()  payable public {
+
+      require( (now>=icoStartP1)&&(now<icoEnd) );
+
+      require(token.totalSupply()<icoHardcap);
+       
+      uint tokens = 0;
+      uint sum = msg.value;
+      uint tokensFor1EthCurr = tokensFor1EthP6;
+      uint rest = 0;
+      
+
+      if(now < icoStartP2) {
+        tokensFor1EthCurr = tokensFor1EthP1;
+      } else if(now >= icoStartP2 && now < icoStartP3) {
+        tokensFor1EthCurr = tokensFor1EthP2;
+      } else if(now >= icoStartP3 && now < icoStartP4) {
+        tokensFor1EthCurr = tokensFor1EthP3;
+      } else if(now >= icoStartP4 && now < icoStartP5) {
+        tokensFor1EthCurr = tokensFor1EthP4;
+      } else if(now >= icoStartP5 && now < icoStartP6) {
+        tokensFor1EthCurr = tokensFor1EthP5;
+      }
+      
+      
+
+      tokens = sum.mul(tokensFor1EthCurr).div(1000000000000000000);  
+        
+
+      if(token.totalSupply().add(tokens) > icoHardcap){
+
+          tokens = icoHardcap.sub(token.totalSupply());
+
+          rest = sum.sub(tokens.mul(1000000000000000000).div(tokensFor1EthCurr));
+      }      
+      
+
+      token.mint(msg.sender, tokens);
+      if(rest!=0){
+          msg.sender.transfer(rest);
+      }
+      
+
+      balances[msg.sender] = balances[msg.sender].add(sum.sub(rest));
+      
+
+      if(token.totalSupply()>=icoSoftcap){
+
+        multisig.transfer(address(this).balance);
+      }
+    }
+
+    function() external payable {
+      createTokens();
+    }
+    
 }
