@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x90d9fe536f8aa816d27e327b6d5ec391dc22beff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x5f2c225e042D5973f1f20407A9486509a6672244
 */
 // Created using ICO Wizard https://github.com/poanetwork/ico-wizard by POA Network 
 /**
