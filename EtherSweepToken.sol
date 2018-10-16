@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherSweepToken at 0xb1ceda4f0ba82d9f33605df02180474a8e831909
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherSweepToken at 0x86e98bfd154b386fb8c3b65f7beff8bda5a13ba1
 */
 pragma solidity ^0.4.19;
 
@@ -25,7 +25,7 @@ library SafeMath {
 contract ERC20Token {
     using SafeMath for uint;
 
-    string public constant symbol = "EST";
+    string public constant symbol = "EBT";
     string public constant name = "EtherSweep Token";
     uint8 public constant decimals = 9;
     uint public totalSupply = 0;
