@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x26b112dbc2abfabfc7949e817b2118cfc9128623
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x584ac1314963f7c648241d03467185645b640281
 */
 pragma solidity ^0.4.13;
 
@@ -139,8 +139,6 @@ contract PreSale is Pausable {
 
   mapping (address => uint) balances;
   
-  mapping (address => bool) invested;
-  
   address[] public investors;
   
   modifier saleIsOn() {
@@ -172,11 +170,7 @@ contract PreSale is Pausable {
   function invest() saleIsOn whenNotPaused payable {
     wallet.transfer(msg.value);
     balances[msg.sender] = balances[msg.sender].add(msg.value);
-    bool isInvested = invested[msg.sender];
-    if(!isInvested) {
-        investors.push(msg.sender);    
-        invested[msg.sender] = true;
-    }
+    investors.push(msg.sender);
     total = total.add(msg.value);
     Invest(msg.sender, msg.value);
   }
