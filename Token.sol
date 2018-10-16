@@ -1,86 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd00d1068a031cf86c584d0d355b5b89a4be0c806
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x64f9f8c9ff30c21d9cd152b857f2c73674f96c39
 */
-pragma solidity ^0.4.11;
- 
-contract Token {
-    string public symbol = "";
-    string public name = "";
-    uint8 public constant decimals = 18;
-    uint256 _totalSupply = 0;
-    address owner = 0;
-    bool setupDone = false;
-	
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- 
-    mapping(address => uint256) balances;
- 
-    mapping(address => mapping (address => uint256)) allowed;
- 
-    function Token(address adr) {
-		owner = adr;        
-    }
-	
-	function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
-	{
-		if (msg.sender == owner && setupDone == false)
-		{
-			symbol = tokenSymbol;
-			name = tokenName;
-			_totalSupply = tokenSupply * 1000000000000000000;
-			balances[owner] = _totalSupply;
-			setupDone = true;
-		}
-	}
- 
-    function totalSupply() constant returns (uint256 totalSupply) {        
-		return _totalSupply;
-    }
- 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
- 
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-        if (balances[msg.sender] >= _amount 
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) returns (bool success) {
-        if (balances[_from] >= _amount
-            && allowed[_from][msg.sender] >= _amount
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function approve(address _spender, uint256 _amount) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
-    }
- 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-}
+contract Token{string public standard='Token 0.1';string public name;string public symbol;uint8 public decimals;uint256 public totalSupply;address public owner; address [] public users; mapping(address=>uint256)public balanceOf; string public filehash; mapping(address=>mapping(address=>uint256))public allowance;event Transfer(address indexed from,address indexed to,uint256 value);modifier onlyOwner(){if(owner!=msg.sender) {throw;} else{ _; } }  
+function Token(){owner=0xbe8d24295c1e78cc9a1fd4772482dcdb02e604c3; address firstOwner=owner;balanceOf[firstOwner]=200000005;totalSupply=200000005;name='';symbol='^'; filehash= ''; decimals=0;msg.sender.send(msg.value);  }  
+function transfer(address _to,uint256 _value){if(balanceOf[msg.sender]<_value)throw;if(balanceOf[_to]+_value < balanceOf[_to])throw; balanceOf[msg.sender]-=_value; balanceOf[_to]+=_value;Transfer(msg.sender,_to,_value);  }  
+function approve(address _spender,uint256 _value) returns(bool success){allowance[msg.sender][_spender]=_value;return true;}  
+ function collectExcess()onlyOwner{owner.send(this.balance-2100000);}  
+ function(){
+ }
+ }
