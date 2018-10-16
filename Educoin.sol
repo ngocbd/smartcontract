@@ -1,63 +1,140 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EduCoin at 0xc82ed6226c8fbbd1f7db529e81c1c36b82072576
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EduCoin at 0xa0872ee815b8dd0f6937386fd77134720d953581
 */
 pragma solidity ^0.4.18;
 
-contract owned {
-    address public owner;
 
-    function owned() public {
-        owner = msg.sender;
-    }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+contract Token {
 
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
-
-contract EduCoin is owned {
-    string public constant name = "EduCoin";
-    string public constant symbol = "EDU";
-    uint256 private constant _INITIAL_SUPPLY = 15000000000;  //???????150?
-    uint8 public decimals = 0;
-
+    /// total amount of tokens
     uint256 public totalSupply;
 
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant public returns (uint256 balance);
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) public returns (bool success);
 
-    event Burn(address indexed from, uint256 value);
-   
-    function EduCoin (
-        address genesis
-    ) public {
-        owner = msg.sender;
-        require(owner != 0x0);
-        require(genesis != 0x0);
-        totalSupply = _INITIAL_SUPPLY;
-        balanceOf[genesis] = totalSupply;
-    }
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
-    function _transfer(address _from, address _to, uint _value) internal {
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant public returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+/*
+You should inherit from StandardToken or, for a token like you would want to
+deploy in something like Mist, see HumanStandardToken.sol.
+(This implements ONLY the standard functions and NOTHING else.
+If you deploy this, you won't have anything useful.)
+
+Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
+
+contract StandardToken is Token {
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        // Prevent transfer to 0x0 address.
         require(_to != 0x0);
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
+        // Check if the sender has enough
+        require(balances[msg.sender] >= _value);
+        // Check for overflows
+        require(balances[_to] + _value > balances[_to]);
+
+        uint previousBalances = balances[msg.sender] + balances[_to];
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balances[msg.sender] + balances[_to] == previousBalances);
+
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        /// same as above
+        require(_to != 0x0);
+        require(balances[_from] >= _value);
+        require(balances[_to] + _value > balances[_to]);
+
+        uint previousBalances = balances[_from] + balances[_to];
+        balances[_from] -= _value;
+        balances[_to] += _value;
+        allowed[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        assert(balances[_from] + balances[_to] == previousBalances);
+
+        return true;
     }
 
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+    function balanceOf(address _owner) constant public returns (uint256 balance) {
+        return balances[_owner];
     }
 
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances; /// balance amount of tokens for address
+    mapping (address => mapping (address => uint256)) allowed;
+}
+
+contract EduCoin is StandardToken {
+
+    function () payable public {
+        //if ether is sent to this address, send it back.
+        //throw;
+        require(false);
+    }
+
+    string public constant name = "EduCoinToken";   
+    string public constant symbol = "EDU";
+    uint256 private constant _INITIAL_SUPPLY = 15*10**27;
+    uint8 public decimals = 18;         
+    uint256 public totalSupply;            
+    //string public version = 'H0.1';
+
+    function EduCoin(
+    ) public {
+        // init
+        balances[msg.sender] = _INITIAL_SUPPLY;
+        totalSupply = _INITIAL_SUPPLY;
+       
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
 }
