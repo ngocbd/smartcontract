@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiTrade at 0x5592a2704ba651f8af4cb6f330415f9877483ad2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiTrade at 0x7369bdbcc09c083dccd99a048046c2bbfe96ba0c
 */
 pragma solidity ^0.4.23;
 
@@ -917,13 +917,12 @@ library SafeMath {
 
 
 
-
 contract NamiTrade{
     using SafeMath for uint256;
     
     uint public minNac = 0; // min NAC deposit
-    uint public minWithdraw =  10 * 10**18;
-    uint public maxWithdraw = 1000000 * 10**18; // max NAC withdraw one time
+    uint public minWithdraw =  100 * 10**18;
+    uint public maxWithdraw = 100000 * 10**18; // max NAC withdraw one time
     
     constructor(address _escrow, address _namiMultiSigWallet, address _namiAddress) public {
         require(_namiMultiSigWallet != 0x0);
@@ -1083,7 +1082,7 @@ contract NamiTrade{
     //////////////////////////////////////////////////////fci token function///////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     string public name = "Nami Trade";
-    string public symbol = "FCI-Test";
+    string public symbol = "FCI";
     uint8 public decimals = 18;
     
     uint256 public totalSupply;
