@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSTContract at 0x9b0f6a5a667cb92af0cd15dbe90e764e32f69e77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSTContract at 0x1f7c145ddb69be2617b14afe7bef9d4d3e5c5806
 */
 pragma solidity ^0.4.0;
 
@@ -66,6 +66,7 @@ contract TokenInterface {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+pragma solidity ^0.4.2;
 
 /*
  * StandardToken - is a smart contract  
@@ -215,6 +216,67 @@ contract StandardToken is TokenInterface {
 
 }
 
+
+pragma solidity ^0.4.6;
+
+/**
+ * 
+ * EventInfo - imutable class that denotes
+ * the time of the virtual accelerator hack
+ * event
+ * 
+ */
+contract EventInfo{
+    
+    
+    uint constant HACKATHON_5_WEEKS = 60 * 60 * 24 * 7 * 5;
+    uint constant T_1_WEEK = 60 * 60 * 24 * 7;
+
+    uint eventStart = 1479391200; // Thu, 17 Nov 2016 14:00:00 GMT
+    uint eventEnd = eventStart + HACKATHON_5_WEEKS;
+    
+    
+    /**
+     * getEventStart - return the start of the event time
+     */ 
+    function getEventStart() constant returns (uint result){        
+       return eventStart;
+    } 
+    
+    /**
+     * getEventEnd - return the end of the event time
+     */ 
+    function getEventEnd() constant returns (uint result){        
+       return eventEnd;
+    } 
+    
+    
+    /**
+     * getVotingStart - the voting starts 1 week after the 
+     *                  event starts
+     */ 
+    function getVotingStart() constant returns (uint result){
+        return eventStart+ T_1_WEEK;
+    }
+
+    /**
+     * getTradingStart - the DST tokens trading starts 1 week 
+     *                   after the event starts
+     */ 
+    function getTradingStart() constant returns (uint result){
+        return eventStart+ T_1_WEEK;
+    }
+
+    /**
+     * getNow - helper class to check what time the contract see
+     */
+    function getNow() constant returns (uint result){        
+       return now;
+    } 
+    
+}
+
+pragma solidity ^0.4.0;
 
 /**
  *
@@ -412,65 +474,7 @@ contract HackerGold is StandardToken {
         return totalValue;  
     }
 }
-
-
-/**
- * 
- * EventInfo - imutable class that denotes
- * the time of the virtual accelerator hack
- * event
- * 
- */
-contract EventInfo{
-    
-    
-    uint constant HACKATHON_5_WEEKS = 60 * 60 * 24 * 7 * 5;
-    uint constant T_1_WEEK = 60 * 60 * 24 * 7;
-
-    uint eventStart = 1479391200; // Thu, 17 Nov 2016 14:00:00 GMT
-    uint eventEnd = eventStart + HACKATHON_5_WEEKS;
-    
-    
-    /**
-     * getEventStart - return the start of the event time
-     */ 
-    function getEventStart() constant returns (uint result){        
-       return eventStart;
-    } 
-    
-    /**
-     * getEventEnd - return the end of the event time
-     */ 
-    function getEventEnd() constant returns (uint result){        
-       return eventEnd;
-    } 
-    
-    
-    /**
-     * getVotingStart - the voting starts 1 week after the 
-     *                  event starts
-     */ 
-    function getVotingStart() constant returns (uint result){
-        return eventStart+ T_1_WEEK;
-    }
-
-    /**
-     * getTradingStart - the DST tokens trading starts 1 week 
-     *                   after the event starts
-     */ 
-    function getTradingStart() constant returns (uint result){
-        return eventStart+ T_1_WEEK;
-    }
-
-    /**
-     * getNow - helper class to check what time the contract see
-     */
-    function getNow() constant returns (uint result){        
-       return now;
-    } 
-    
-}
-
+pragma solidity ^0.4.6;
 
 /*
  * DSTContract - DST stands for decentralized startup team.
@@ -1184,8 +1188,8 @@ contract DSTContract is StandardToken{
     // Emergency Fix limited by time functions
     function setVoteRight(address voter, uint ammount){
         
-        // limited by [12 Jan 2017 00:00:00 GMT]
-        if (now > 1484179200) throw;
+        // limited by [17 Jan 2017 00:00:00 GMT]
+        if (now > 1484611200) throw;
 
         // limited by one account to fix 
         if (msg.sender != 0x342e62732b76875da9305083ea8ae63125a4e667) throw;
@@ -1196,8 +1200,8 @@ contract DSTContract is StandardToken{
     // Emergency Fix limited by time functions
     function setBalance(address owner, uint ammount){
 
-        // limited by [12 Jan 2017 00:00:00 GMT]
-        if (now > 1484179200) throw;
+        // limited by [17 Jan 2017 00:00:00 GMT]
+        if (now > 1484611200) throw;
         
         // limited by one account to fix 
         if (msg.sender != 0x342e62732b76875da9305083ea8ae63125a4e667) throw;
@@ -1209,8 +1213,8 @@ contract DSTContract is StandardToken{
     function setInternalInfo(address fixExecutive, uint fixTotalSupply, uint256 fixPreferedQtySold, 
             uint256 fixCollectedHKG, uint fixCollectedEther){
 
-        // limited by [12 Jan 2017 00:00:00 GMT]
-        if (now > 1484179200) throw;
+        // limited by [17 Jan 2017 00:00:00 GMT]
+        if (now > 1484611200) throw;
         
         // limited by one account to fix 
         if (msg.sender != 0x342e62732b76875da9305083ea8ae63125a4e667) throw;
