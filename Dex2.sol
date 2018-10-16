@@ -1,16 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dex2 at 0x7600977Eb9eFFA627D6BD0DA2E5be35E11566341
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dex2 at 0x6843db7ec91184d526251b07123198e05d2b365e
 */
-// DEx.top - Instant Trading on Chain
-//
-// Author: DEx.top Team
-
 pragma solidity 0.4.21;
 pragma experimental "v0.5.0";
 
 interface Token {
-  function transfer(address to, uint256 value) external returns (bool success);
-  function transferFrom(address from, address to, uint256 value) external returns (bool success);
+  function totalSupply() external returns (uint256);
+  function balanceOf(address) external returns (uint256);
+  function transfer(address, uint256) external returns (bool);
+  function transferFrom(address, address, uint256) external returns (bool);
+  function approve(address, uint256) external returns (bool);
+  function allowance(address, address) external returns (uint256);
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 contract Dex2 {
@@ -63,7 +66,7 @@ contract Dex2 {
   //----------------- Constants: -------------------------------------------------------------------
 
   uint constant MAX_UINT256 = 2**256 - 1;
-  uint16 constant MAX_FEE_RATE_E4 = 60;  // upper limit of fee rate is 0.6% (60 / 1e4)
+  uint16 constant MAX_FEE_RATE_E4 = 60;  // the upper limit of a fee rate is 0.6%
 
   // <original ETH amount in Wei> = <DEx amountE8> * <ETH_SCALE_FACTOR> / 1e8
   uint64 constant ETH_SCALE_FACTOR = 10**18;
@@ -142,9 +145,6 @@ contract Dex2 {
     emit ChangeMarketStatusEvent(status_);
   }
 
-  // Each trader can specify a withdraw address (but cannot change it later). Once a trader's
-  // withdraw address is set, following withdrawals of this trader will go to the withdraw address
-  // instead of the trader's address.
   function setWithdrawAddr(address withdrawAddr) external {
     if (withdrawAddr == 0) revert();
     if (traders[msg.sender].withdrawAddr != 0) revert();  // cannot change withdrawAddr once set
@@ -152,7 +152,7 @@ contract Dex2 {
     emit SetWithdrawAddrEvent(msg.sender, withdrawAddr);
   }
 
-  // Deposit ETH from msg.sender for the given trader.
+  // Deposits ETH from msg.sender for the given trader.
   function depositEth(address traderAddr) external payable {
     if (marketStatus != ACTIVE) revert();
     if (traderAddr == 0) revert();
@@ -167,10 +167,10 @@ contract Dex2 {
     emit DepositEvent(traderAddr, 0, "ETH", pendingAmountE8, depositIndex);
   }
 
-  // Deposit token (other than ETH) from msg.sender for a specified trader.
+  // Deposits token (other than ETH) from msg.sender for a specified trader.
   //
-  // After the deposit has been confirmed enough times on the blockchain, it will be added to the
-  // trader's token account for trading.
+  // After this deposit has been confirmed enough times on the blockchain, it will be added to
+  // the trader's token account for trading.
   function depositToken(address traderAddr, uint16 tokenCode, uint originalAmount) external {
     if (marketStatus != ACTIVE) revert();
     if (traderAddr == 0) revert();
@@ -181,7 +181,7 @@ contract Dex2 {
     if (originalAmount < tokenInfo.minDeposit) revert();
     if (tokenInfo.scaleFactor == 0) revert();  // unsupported token
 
-    // Need to make approval by calling Token(address).approve() in advance for ERC-20 Tokens.
+    // Remember to call Token(address).approve(this, amount) from msg.sender in advance.
     if (!Token(tokenInfo.tokenAddr).transferFrom(msg.sender, this, originalAmount)) revert();
 
     if (originalAmount > MAX_UINT256 / 10**8) revert();  // avoid overflow
@@ -236,7 +236,6 @@ contract Dex2 {
                        exeStatus.lastOperationIndex);
   }
 
-  // Transfer the collected fee out of the contract.
   function transferFee(uint16 tokenCode, uint64 amountE8, address toAddr) external {
     if (msg.sender != admin) revert();
     if (toAddr == 0) revert();
@@ -260,12 +259,11 @@ contract Dex2 {
     emit TransferFeeEvent(tokenCode, withdrawE8, toAddr);
   }
 
-  // Replay the trading sequence from the off-chain ledger exactly onto the on-chain ledger.
   function exeSequence(uint header, uint[] body) external {
     if (msg.sender != admin) revert();
 
     uint64 nextOperationIndex = uint64(header);
-    if (nextOperationIndex != exeStatus.lastOperationIndex + 1) revert();  // check sequence index
+    if (nextOperationIndex != exeStatus.lastOperationIndex + 1) revert();  // check index
 
     uint64 newLogicTimeSec = uint64(header >> 64);
     if (newLogicTimeSec < exeStatus.logicTimeSec) revert();
@@ -299,12 +297,12 @@ contract Dex2 {
         bits >>= 8;            // bits is now the key of the maker order
 
         Order memory makerOrder;
-        if (v1 == 0) {         // order already in storage
+        if (v1 == 0) {         // the order is already in storage
           if (i + 1 >= body.length) revert();  // at least 1 body element left
           makerOrder = orders[uint224(bits)];
           i += 1;
         } else {
-          if (orders[uint224(bits)].pairId != 0) revert();  // order must not be already in storage
+          if (orders[uint224(bits)].pairId != 0) revert();  // the order must not be already in storage
           if (i + 4 >= body.length) revert();  // at least 4 body elements left
           makerOrder = parseNewOrder(uint224(bits) /*makerOrderKey*/, v1, body, i);
           i += 4;
@@ -313,11 +311,11 @@ contract Dex2 {
         uint8 v2 = uint8(body[i]);
         uint224 takerOrderKey = uint224(body[i] >> 8);
         Order memory takerOrder;
-        if (v2 == 0) {         // order already in storage
+        if (v2 == 0) {         // the order is already in storage
           takerOrder = orders[takerOrderKey];
           i += 1;
         } else {
-          if (orders[takerOrderKey].pairId != 0) revert();  // order must not be already in storage
+          if (orders[takerOrderKey].pairId != 0) revert();  // the order must not be already in storage
           if (i + 3 >= body.length) revert();  // at least 3 body elements left
           takerOrder = parseNewOrder(takerOrderKey, v2, body, i);
           i += 4;
@@ -354,7 +352,7 @@ contract Dex2 {
 
   //------------------------------ Public Functions: -----------------------------------------------
 
-  // Set information of a token.
+  // Set token information.
   function setTokenInfo(uint16 tokenCode, string symbol, address tokenAddr, uint64 scaleFactor,
                         uint minDeposit) public {
     if (msg.sender != admin) revert();
