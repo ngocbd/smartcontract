@@ -1,186 +1,114 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xe8ca6178e82120bb23c883c3778d048b1efbb072
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x5209283a7ad07b579cb34183f4dc1da2aef422dc
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
-contract token {
-    function transferFrom(address, address, uint) returns(bool){}
-    function burn() {}
+library SafeMath {
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint a, uint b) internal returns (uint) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
 }
 
-contract SafeMath {
-    //internals
-
-    function safeMul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
-        Assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function safeSub(uint a, uint b) internal returns (uint) {
-        Assert(b <= a);
-        return a - b;
-    }
-
-    function safeAdd(uint a, uint b) internal returns (uint) {
-        uint c = a + b;
-        Assert(c >= a && c >= b);
-        return c;
-    }
-
-    function Assert(bool assertion) internal {
-        if (!assertion) {
-            revert();
-        }
-    }
+interface token {
+    function transfer(address receiver, uint amount);
 }
 
-
-contract Crowdsale is SafeMath {
-    /*Owner's address*/
-    address public owner;
-    /* tokens will be transferred from BAP's address */
-    address public initialTokensHolder = 0xB27590b9d328bA0396271303e24db44132531411;
-    /* if the funding goal is not reached, investors may withdraw their funds */
-    uint public fundingGoal =  260000000;
-    /* the maximum amount of tokens to be sold */
-    uint public maxGoal     = 2100000000;
-    /* how much has been raised by crowdale (in ETH) */
+contract Crowdsale {
+    address public beneficiary;
+    uint public tokenBalance;
     uint public amountRaised;
-    /* the start date of the crowdsale 12:00 am 31/11/2017 */
-    uint public start = 1508929200;
-    /* the start date of the crowdsale 11:59 pm 10/11/2017*/
-    uint public end =   1508936400;
-    /*token's price  1ETH = 15000 KRB*/
-    uint public tokenPrice = 15000;
-    /* the number of tokens already sold */
-    uint public tokensSold;
-    /* the address of the token contract */
+    uint public deadline;
+    uint dollar_exchange;
+    uint test_factor;
+    uint start_time;
     token public tokenReward;
-    /* the balances (in ETH) of all investors */
     mapping(address => uint256) public balanceOf;
-    /*this mapping tracking allowed specific investor to invest and their referral */
-    mapping(address => address) public permittedInvestors;
-    /* indicated if the funding goal has been reached. */
-    bool public fundingGoalReached = false;
-    /* indicates if the crowdsale has been closed already */
-    bool public crowdsaleClosed = false;
-    /* this wallet will store all the fund made by ICO after ICO success*/
-    address beneficiary = 0x12bF8E198A6474FC65cEe0e1C6f1C7f23324C8D5;
-    /* notifying transfers and the success of the crowdsale*/
-    event GoalReached(address TokensHolderAddr, uint amountETHRaised);
-    event FundTransfer(address backer, uint amount, uint amountRaisedInICO, uint amountTokenSold, uint tokensHaveSold);
-    event TransferToReferrer(address indexed backer, address indexed referrerAddress, uint commission, uint amountReferralHasInvested, uint tokensReferralHasBought);
-    event AllowSuccess(address indexed investorAddr, address referralAddr);
-    event Withdraw(address indexed recieve, uint amount);
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
-    function changeTime(uint _start, uint _end){
-        start = _start;
-        end   = _end;
-    }
-
-    function changeMaxMin(uint _min, uint _max){
-        fundingGoal = _min;
-        maxGoal     = _max;
-    }
-
-    /*  initialization, set the token address */
+    /**
+     * Constrctor function
+     *
+     * Setup the owner
+     */
     function Crowdsale() {
-        tokenReward = token(0x1960edc283c1c7b9fba34da4cc1aa665eec0587e);
-        owner = msg.sender;
+        tokenBalance = 50000;
+        beneficiary = 0x6519C9A1BF6d69a35C7C87435940B05e9915Ccb3;
+        start_time = now;
+        deadline = start_time + 30 * 1 days;
+        dollar_exchange = 295;
+
+        tokenReward = token(0x67682915bdfe37a04edcb8888c0f162181e9f400);  //vegan coin address
     }
 
-    /* invest by sending ether to the contract. */
-    function () payable {
-        invest();
-    }
+    /**
+     * Fallback function
+    **/
 
-    function invest() payable {
-        if(permittedInvestors[msg.sender] == 0x0) {
-            revert();
-        }
+    function () payable beforeDeadline {
+
         uint amount = msg.value;
-        uint numTokens = safeMul(amount, tokenPrice) / 1000000000000000000; // 1 ETH
-        if (now < start || now > end || safeAdd(tokensSold, numTokens) > maxGoal) {
-            revert();
-        }
-        balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], amount);
-        amountRaised = safeAdd(amountRaised, amount);
-        tokensSold += numTokens;
-        if (!tokenReward.transferFrom(initialTokensHolder, msg.sender, numTokens)) {
-            revert();
-        }
-        if(permittedInvestors[msg.sender] != initialTokensHolder) {
-            uint commission = safeMul(numTokens, 5) / 100;
-            if(commission != 0){
-                /* we plus maxGoal for referrer in value param to distinguish between tokens for investors and tokens for referrer.
-                This value will be subtracted in token contract */
-                if (!tokenReward.transferFrom(initialTokensHolder, permittedInvestors[msg.sender], safeAdd(commission, maxGoal))) {
-                    revert();
-                }
-                TransferToReferrer(msg.sender, permittedInvestors[msg.sender], commission, amount, numTokens);
-            }
-        }
-
-        FundTransfer(msg.sender, amount, amountRaised, tokensSold, numTokens);
+        uint price;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        if (now <= start_time + 7 days) { price = SafeMath.div(2 * 1 ether, dollar_exchange);}
+        else {price = SafeMath.div(3 * 1 ether, dollar_exchange);}
+        // price = SafeMath.div(price, test_factor); for testing
+        tokenBalance = SafeMath.sub(tokenBalance, SafeMath.div(amount, price));
+        if (tokenBalance < 0 ) { revert(); }
+        tokenReward.transfer(msg.sender, SafeMath.div(amount * 1 ether, price));
+        FundTransfer(msg.sender, amount, true);
+        
     }
 
-    modifier afterDeadline() {
-        if (now < end) {
-            revert();
-        }
-        _;
+    modifier afterDeadline() { if (now >= deadline) _; }
+    modifier beforeDeadline() { if (now <= deadline) _; }
 
-    }
-    modifier onlyOwner {
-        if (msg.sender != owner) {
-            revert();
-        }
-        _;
-    }
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign
+     */
 
-    /* checks if the goal or time limit has been reached and ends the campaign */
-    function checkGoalReached() {
-        if((tokensSold >= fundingGoal && now >= end) || (tokensSold >= maxGoal)) {
-            fundingGoalReached = true;
-            crowdsaleClosed = true;
-            tokenReward.burn();
-            sendToBeneficiary();
-            GoalReached(initialTokensHolder, amountRaised);
-        }
-        if(now >= end) {
-            crowdsaleClosed = true;
-        }
-    }
-
-    function allowInvest(address investorAddress, address referralAddress) onlyOwner external {
-        require(permittedInvestors[investorAddress] == 0x0);
-        if(referralAddress != 0x0 && permittedInvestors[referralAddress] == 0x0) revert();
-        permittedInvestors[investorAddress] = referralAddress == 0x0 ? initialTokensHolder : referralAddress;
-        AllowSuccess(investorAddress, referralAddress);
-    }
-
-    /* send money to beneficiary */
-    function sendToBeneficiary() internal {
-        beneficiary.transfer(this.balance);
-    }
-
-
-    /*if the ICO is fail, investors will call this function to get their money back */
     function safeWithdrawal() afterDeadline {
-        require(this.balance != 0);
-        if(!crowdsaleClosed) revert();
-        uint amount = balanceOf[msg.sender];
-        if(address(this).balance >= amount) {
-            balanceOf[msg.sender] = 0;
-            if (amount > 0) {
-                msg.sender.transfer(amount);
-                Withdraw(msg.sender, amount);
-            }
-        }
-    }
 
-    function kill() onlyOwner {
-        selfdestruct(beneficiary);
+        if (beneficiary.send(amountRaised)) {
+            FundTransfer(beneficiary, amountRaised, false);
+        }
     }
 }
