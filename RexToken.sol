@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RexToken at 0xf05a9382A4C3F29E2784502754293D88b835109C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RexToken at 0x99d439455991f7f4885f20c634c9a31918d366e5
 */
 pragma solidity ^0.4.11;
 
@@ -204,10 +204,11 @@ library Math {
   }
 }
 
+
 contract RexToken is StandardToken, Ownable {
 
   function version() constant returns (bytes32) {
-      return "0.1.2-debug";
+      return "0.1.1";
   }
 
   string public constant name = "REX - Real Estate tokens";
@@ -215,11 +216,12 @@ contract RexToken is StandardToken, Ownable {
   uint256 public constant decimals = 18;
 
   uint256 constant BASE_RATE = 700;
-  uint256 constant ETH_RATE = 225; // TODO: update before deploying
-  uint256 constant USD_RAISED_CAP = 27*10**6; // 30*10**6 = $30 Million USD
+  uint256 constant ETH_RATE = 225; 
+  uint256 constant USD_RAISED_CAP = 30*10**6; 
   uint256 constant ETHER_RAISED_CAP = USD_RAISED_CAP / ETH_RATE;
   uint256 public constant WEI_RAISED_CAP = ETHER_RAISED_CAP * 1 ether;
   uint256 constant DURATION = 4 weeks;
+
 
   uint256 TOTAL_SHARE = 1000;
   uint256 CROWDSALE_SHARE = 500;
@@ -243,16 +245,14 @@ contract RexToken is StandardToken, Ownable {
 
   // state variables
   address vault;
-  address previousToken;
   uint256 public startTime;
   uint256 public weiRaised;
 
   event TokenCreated(address indexed investor, uint256 amount);
 
-  function RexToken(uint256 _start, address _vault, address _previousToken) {
+  function RexToken(uint256 _start, address _vault) {
     startTime = _start;
     vault = _vault;
-    previousToken = _previousToken;
     isFinalized = false;
   }
 
@@ -382,9 +382,13 @@ contract RexToken is StandardToken, Ownable {
     if (pendingMigrations[msg.sender].amount > 0)
       revert();
 
+    //amount parameter is in Wei
+    //old rex token is only 4 decimal places
+    //i.e. to migrate 8 old REX (80000) user inputs 8, ui converts to 8**18 (wei), then we divide by 14dp to get the original 80000.
+    uint256 amount_4dp = amount / (10**14);
 
     //this will throw if they dont have the balance/allowance
-    StandardToken(previousToken).transferFrom(msg.sender, this, amount);
+    StandardToken(0x0042a689f1ebfca404e13c29cb6d01e00059ba9dbc).transferFrom(msg.sender, this, amount_4dp);
 
     //store time and amount in pending mapping
     pendingMigrations[msg.sender].dateTimeCreated = now;
