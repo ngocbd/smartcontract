@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicCoin at 0xde8faf11e8cabcfeea67270cdec67489383f38ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicCoin at 0xe58433B402d8db6a0Ea48A0feabB948Cf4b6A7c1
 */
 //! BasicCoin ECR20-compliant token contract
 //! By Parity Team (Ethcore), 2016.
