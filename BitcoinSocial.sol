@@ -1,9 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinSocial at 0xb53089afd49c4db819047e0507b4ccfdf7bc1edc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinSocial at 0x65174ea72a85bcbb562b37749b998f08037bc123
 */
+pragma solidity ^0.4.2;
+
 contract BitcoinSocial {
     /* Public variables of the token */
-    string public standard = 'Token 0.1';
+    string public standard = 'BitcoinSocial 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -19,8 +21,8 @@ contract BitcoinSocial {
     function BitcoinSocial() {
 
          initialSupply = 21000000;
-         name ="BitcoinSocial";
-        decimals = 3;
+         name ="proofcoin";
+        decimals = 5;
          symbol = "BSX";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
