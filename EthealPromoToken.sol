@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthealPromoToken at 0x1acc5652735bc9ed6b420627d93411ff6a6df549
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthealPromoToken at 0x7b2f9706cd8473b4f5b7758b0171a9933fc6c4d6
 */
 pragma solidity ^0.4.17;
 
@@ -490,6 +490,8 @@ contract EthealPromoToken is HasNoTokens, AbstractVirtualToken {
     // crowdsale to set bonus when sending token
     iEthealSale public crowdsale;
 
+    // logging promo token activation
+    event LogBonusSet(address indexed _address, uint256 _amount);
 
     ////////////////
     // Basic functions
@@ -539,6 +541,7 @@ contract EthealPromoToken is HasNoTokens, AbstractVirtualToken {
 
         if (_to == address(1) || _to == address(this) || _to == address(crowdsale)) {
             crowdsale.setPromoBonus(_from, _value);
+            LogBonusSet(_from, _value);
         }
     }
 
