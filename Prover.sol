@@ -1,281 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Prover at 0x7Aef44E5e6930F8799559aFB046Ccd8692044f86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Prover at 0x4125c610b63dd63bE5c48D5CC3C68784F92D3B43
 */
 pragma solidity ^0.4.13;
 
-library Sets {
-    // address set
-    struct addressSet {
-        address[] members;
-        mapping (address => bool) memberExists;
-        mapping (address => uint) memberIndex;
-    }
-
-    function insert(addressSet storage self, address other) {
-        if (!self.memberExists[other]) {
-            self.memberExists[other] = true;
-            self.memberIndex[other] = self.members.length;
-            self.members.push(other);
-        }
-    }
-
-    function remove(addressSet storage self, address other) {
-        if (self.memberExists[other])  {
-            self.memberExists[other] = false;
-            uint index = self.memberIndex[other];
-            // change index of last value to index of other 
-            self.memberIndex[self.members[self.members.length - 1]] = index;
-            // copy last value over other and decrement length
-            self.members[index] = self.members[self.members.length - 1];
-            self.members.length--;
-        }
-    }
-
-    function contains(addressSet storage self, address other) returns (bool) {
-        return self.memberExists[other];
-    }
-
-    function length(addressSet storage self) returns (uint256) {
-        return self.members.length;
-    }
-
-
-    // uint set
-    struct uintSet {
-        uint[] members;
-        mapping (uint => bool) memberExists;
-        mapping (uint => uint) memberIndex;
-    }
-
-    function insert(uintSet storage self, uint other) {
-        if (!self.memberExists[other]) {
-            self.memberExists[other] = true;
-            self.memberIndex[other] = self.members.length;
-            self.members.push(other);
-        }
-    }
-
-    function remove(uintSet storage self, uint other) {
-        if (self.memberExists[other])  {
-            self.memberExists[other] = false;
-            uint index = self.memberIndex[other];
-            // change index of last value to index of other 
-            self.memberIndex[self.members[self.members.length - 1]] = index;
-            // copy last value over other and decrement length
-            self.members[index] = self.members[self.members.length - 1];
-            self.members.length--;
-        }
-    }
-
-    function contains(uintSet storage self, uint other) returns (bool) {
-        return self.memberExists[other];
-    }
-
-    function length(uintSet storage self) returns (uint256) {
-        return self.members.length;
-    }
-
-
-    // uint8 set
-    struct uint8Set {
-        uint8[] members;
-        mapping (uint8 => bool) memberExists;
-        mapping (uint8 => uint) memberIndex;
-    }
-
-    function insert(uint8Set storage self, uint8 other) {
-        if (!self.memberExists[other]) {
-            self.memberExists[other] = true;
-            self.memberIndex[other] = self.members.length;
-            self.members.push(other);
-        }
-    }
-
-    function remove(uint8Set storage self, uint8 other) {
-        if (self.memberExists[other])  {
-            self.memberExists[other] = false;
-            uint index = self.memberIndex[other];
-            // change index of last value to index of other 
-            self.memberIndex[self.members[self.members.length - 1]] = index;
-            // copy last value over other and decrement length
-            self.members[index] = self.members[self.members.length - 1];
-            self.members.length--;
-        }
-    }
-
-    function contains(uint8Set storage self, uint8 other) returns (bool) {
-        return self.memberExists[other];
-    }
-
-    function length(uint8Set storage self) returns (uint256) {
-        return self.members.length;
-    }
-
-
-    // int set
-    struct intSet {
-        int[] members;
-        mapping (int => bool) memberExists;
-        mapping (int => uint) memberIndex;
-    }
-
-    function insert(intSet storage self, int other) {
-        if (!self.memberExists[other]) {
-            self.memberExists[other] = true;
-            self.memberIndex[other] = self.members.length;
-            self.members.push(other);
-        }
-    }
-
-    function remove(intSet storage self, int other) {
-        if (self.memberExists[other])  {
-            self.memberExists[other] = false;
-            uint index = self.memberIndex[other];
-            // change index of last value to index of other 
-            self.memberIndex[self.members[self.members.length - 1]] = index;
-            // copy last value over other and decrement length
-            self.members[index] = self.members[self.members.length - 1];
-            self.members.length--;
-        }
-    }
-
-    function contains(intSet storage self, int other) returns (bool) {
-        return self.memberExists[other];
-    }
-
-    function length(intSet storage self) returns (uint256) {
-        return self.members.length;
-    }
-
-
-    // int8 set
-    struct int8Set {
-        int8[] members;
-        mapping (int8 => bool) memberExists;
-        mapping (int8 => uint) memberIndex;
-    }
-
-    function insert(int8Set storage self, int8 other) {
-        if (!self.memberExists[other]) {
-            self.memberExists[other] = true;
-            self.memberIndex[other] = self.members.length;
-            self.members.push(other);
-        }
-    }
-
-    function remove(int8Set storage self, int8 other) {
-        if (self.memberExists[other])  {
-            self.memberExists[other] = false;
-            uint index = self.memberIndex[other];
-            // change index of last value to index of other 
-            self.memberIndex[self.members[self.members.length - 1]] = index;
-            // copy last value over other and decrement length
-            self.members[index] = self.members[self.members.length - 1];
-            self.members.length--;
-        }
-    }
-
-    function contains(int8Set storage self, int8 other) returns (bool) {
-        return self.memberExists[other];
-    }
-
-    function length(int8Set storage self) returns (uint256) {
-        return self.members.length;
-    }
-
-
-    // byte set
-    struct byteSet {
-        byte[] members;
-        mapping (byte => bool) memberExists;
-        mapping (byte => uint) memberIndex;
-    }
-
-    function insert(byteSet storage self, byte other) {
-        if (!self.memberExists[other]) {
-            self.memberExists[other] = true;
-            self.memberIndex[other] = self.members.length;
-            self.members.push(other);
-        }
-    }
-
-    function remove(byteSet storage self, byte other) {
-        if (self.memberExists[other])  {
-            self.memberExists[other] = false;
-            uint index = self.memberIndex[other];
-            // change index of last value to index of other 
-            self.memberIndex[self.members[self.members.length - 1]] = index;
-            // copy last value over other and decrement length
-            self.members[index] = self.members[self.members.length - 1];
-            self.members.length--;
-        }
-    }
-
-    function contains(byteSet storage self, byte other) returns (bool) {
-        return self.memberExists[other];
-    }
-
-    function length(byteSet storage self) returns (uint256) {
-        return self.members.length;
-    }
-
-
-    // bytes32 set
-    struct bytes32Set {
-        bytes32[] members;
-        mapping (bytes32 => bool) memberExists;
-        mapping (bytes32 => uint) memberIndex;
-    }
-
-    function insert(bytes32Set storage self, bytes32 other) {
-        if (!self.memberExists[other]) {
-            self.memberExists[other] = true;
-            self.memberIndex[other] = self.members.length;
-            self.members.push(other);
-        }
-    }
-
-    function remove(bytes32Set storage self, bytes32 other) {
-        if (self.memberExists[other])  {
-            self.memberExists[other] = false;
-            uint index = self.memberIndex[other];
-            // change index of last value to index of other 
-            self.memberIndex[self.members[self.members.length - 1]] = index;
-            // copy last value over other and decrement length
-            self.members[index] = self.members[self.members.length - 1];
-            self.members.length--;
-        }
-    }
-
-    function contains(bytes32Set storage self, bytes32 other) returns (bool) {
-        return self.memberExists[other];
-    }
-
-    function length(bytes32Set storage self) returns (uint256) {
-        return self.members.length;
-    }
-}
-
 contract Prover {
     // attach library
-    using Sets for *;
-
+    using Sets for Sets.addressSet;
+    using Sets for Sets.bytes32Set;
 
     // storage vars
     address owner;
-    Sets.addressSet internal users;
-    mapping (address => UserAccount) internal ledger;
-    
-    
+    Sets.addressSet users;
+    mapping(address => Account) internal accounts;
+
     // structs
-    struct UserAccount {
-        Sets.bytes32Set hashes;
-        mapping (bytes32 => Entry) entries;
+    struct Account {
+        Sets.bytes32Set entries;
+        mapping(bytes32 => Entry) values;
     }
 
     struct Entry {
-        uint256 time;
-        uint256 value;
+        uint time;
+        uint staked;
     }
 
 
@@ -286,43 +32,42 @@ contract Prover {
     
     
     // fallback: unmatched transactions will be returned
-    function () {
+    function() {
         revert();
     }
 
 
-    // modifier to check if sender has an account
-    modifier hasAccount() {
-        assert(ledger[msg.sender].hashes.length() >= 1);
+    // modifier to check if a target address has a particular entry
+    modifier entryExists(address target, bytes32 dataHash, bool exists) {
+        assert(accounts[target].entries.contains(dataHash) == exists);
         _;
     }
 
 
     // external functions
-    // proving
-    function proveIt(address target, bytes32 dataHash) external constant
-        returns (bool proved, uint256 time, uint256 value)
-    {
-        return status(target, dataHash);
-    }
-
-    function proveIt(address target, string dataString) external constant
-        returns (bool proved, uint256 time, uint256 value)
-    {
-        return status(target, sha3(dataString));
-    }
-    
     // allow access to our structs via functions with convenient return values
-    function usersGetter() public constant
-        returns (uint256 number_unique_addresses, address[] unique_addresses)
+    function registeredUsers() external constant
+        returns (uint number_unique_addresses, address[] unique_addresses)
     {
         return (users.length(), users.members);
     }
 
     function userEntries(address target) external constant returns (bytes32[]) {
-        return ledger[target].hashes.members;
+        return accounts[target].entries.members;
     }
-    
+    // proving
+    function proveIt(address target, bytes32 dataHash) external constant
+        returns (bool proved, uint time, uint staked)
+    {
+        return status(target, dataHash);
+    }
+
+    function proveIt(address target, string dataString) external constant
+        returns (bool proved, uint time, uint staked)
+    {
+        return status(target, sha3(dataString));
+    }
+
     
     // public functions
     // adding entries
@@ -330,16 +75,17 @@ contract Prover {
         _addEntry(dataHash);
     }
 
-    function addEntry(string dataString) payable {
+    function addEntry(string dataString) payable
+    {
         _addEntry(sha3(dataString));
     }
 
     // deleting entries
-    function deleteEntry(bytes32 dataHash) hasAccount {
+    function deleteEntry(bytes32 dataHash) {
         _deleteEntry(dataHash);
     }
 
-    function deleteEntry(string dataString) hasAccount {
+    function deleteEntry(string dataString) {
         _deleteEntry(sha3(dataString));
     }
     
@@ -352,39 +98,308 @@ contract Prover {
 
 
     // internal functions
-    function _addEntry(bytes32 dataHash) internal {
-        // ensure the entry doesn't exist
-        assert(!ledger[msg.sender].hashes.contains(dataHash));
-        // update UserAccount (hashes then entries)
-        ledger[msg.sender].hashes.insert(dataHash);
-        ledger[msg.sender].entries[dataHash] = Entry(now, msg.value);
-        // add sender to userlist
+    function _addEntry(bytes32 dataHash)
+        entryExists(msg.sender, dataHash, false)
+        internal
+    {
         users.insert(msg.sender);
+        accounts[msg.sender].entries.insert(dataHash);
+        accounts[msg.sender].values[dataHash] = Entry(now, msg.value);
     }
 
-    function _deleteEntry(bytes32 dataHash) internal {
-        // ensure the entry does exist
-        assert(ledger[msg.sender].hashes.contains(dataHash));
-        uint256 rebate = ledger[msg.sender].entries[dataHash].value;
-        // update UserAccount (hashes then entries)
-        ledger[msg.sender].hashes.remove(dataHash);
-        delete ledger[msg.sender].entries[dataHash];
-        // send the rebate
-        if (rebate > 0) {
-            msg.sender.transfer(rebate);
-        }
-        // delete from userlist if this was the user's last entry
-        if (ledger[msg.sender].hashes.length() == 0) {
+    function _deleteEntry(bytes32 dataHash)
+        entryExists(msg.sender, dataHash, true)
+        internal
+    {
+        uint rebate = accounts[msg.sender].values[dataHash].staked;
+        // update user account
+        delete accounts[msg.sender].values[dataHash];
+        accounts[msg.sender].entries.remove(dataHash);
+        // delete from users if this was the user's last entry
+        if (accounts[msg.sender].entries.length() == 0) {
             users.remove(msg.sender);
         }
+        // send the rebate
+        if (rebate > 0) msg.sender.transfer(rebate);
     }
 
     // return status of arbitrary address and dataHash
     function status(address target, bytes32 dataHash) internal constant
-        returns (bool proved, uint256 time, uint256 value)
+        returns (bool proved, uint time, uint staked)
     {
-        return (ledger[msg.sender].hashes.contains(dataHash),
-                ledger[target].entries[dataHash].time,
-                ledger[target].entries[dataHash].value);
+        return (accounts[target].entries.contains(dataHash),
+                accounts[target].values[dataHash].time,
+                accounts[target].values[dataHash].staked);
+    }
+}
+
+pragma solidity ^0.4.13;
+
+// sets support up to 2^256-2 members
+// memberIndices stores the index of members + 1, not their actual index
+library Sets {
+    // address set
+    struct addressSet {
+        address[] members;
+        mapping(address => uint) memberIndices;
+    }
+
+    function insert(addressSet storage self, address other) {
+        if (!contains(self, other)) {
+            self.members.push(other);
+            self.memberIndices[other] = length(self);
+        }
+    }
+
+    function remove(addressSet storage self, address other) {
+        if (contains(self, other)) {
+            uint replaceIndex = self.memberIndices[other];
+            address lastMember = self.members[length(self)-1];
+            // overwrite other with the last member and remove last member
+            self.members[replaceIndex-1] = lastMember;
+            self.members.length--;
+            // reflect this change in the indices
+            self.memberIndices[lastMember] = replaceIndex;
+            delete self.memberIndices[other];
+        }
+    }
+
+    function contains(addressSet storage self, address other)
+        constant
+        returns (bool)
+    {
+        return self.memberIndices[other] > 0;
+    }
+
+    function length(addressSet storage self) constant returns (uint) {
+        return self.members.length;
+    }
+
+
+    // uint set
+    struct uintSet {
+        uint[] members;
+        mapping(uint => uint) memberIndices;
+    }
+
+    function insert(uintSet storage self, uint other) {
+        if (!contains(self, other)) {
+            self.members.push(other);
+            self.memberIndices[other] = length(self);
+        }
+    }
+
+    function remove(uintSet storage self, uint other) {
+        if (contains(self, other)) {
+            uint replaceIndex = self.memberIndices[other];
+            uint lastMember = self.members[length(self)-1];
+            // overwrite other with the last member and remove last member
+            self.members[replaceIndex-1] = lastMember;
+            self.members.length--;
+            // reflect this change in the indices
+            self.memberIndices[lastMember] = replaceIndex;
+            delete self.memberIndices[other];
+        }
+    }
+
+    function contains(uintSet storage self, uint other)
+        constant
+        returns (bool)
+    {
+        return self.memberIndices[other] > 0;
+    }
+
+    function length(uintSet storage self) constant returns (uint) {
+        return self.members.length;
+    }
+
+
+    // uint8 set
+    struct uint8Set {
+        uint8[] members;
+        mapping(uint8 => uint) memberIndices;
+    }
+
+    function insert(uint8Set storage self, uint8 other) {
+        if (!contains(self, other)) {
+            self.members.push(other);
+            self.memberIndices[other] = length(self);
+        }
+    }
+
+    function remove(uint8Set storage self, uint8 other) {
+        if (contains(self, other)) {
+            uint replaceIndex = self.memberIndices[other];
+            uint8 lastMember = self.members[length(self)-1];
+            // overwrite other with the last member and remove last member
+            self.members[replaceIndex-1] = lastMember;
+            self.members.length--;
+            // reflect this change in the indices
+            self.memberIndices[lastMember] = replaceIndex;
+            delete self.memberIndices[other];
+        }
+    }
+
+    function contains(uint8Set storage self, uint8 other)
+        constant
+        returns (bool)
+    {
+        return self.memberIndices[other] > 0;
+    }
+
+    function length(uint8Set storage self) constant returns (uint) {
+        return self.members.length;
+    }
+
+
+    // int set
+    struct intSet {
+        int[] members;
+        mapping(int => uint) memberIndices;
+    }
+
+    function insert(intSet storage self, int other) {
+        if (!contains(self, other)) {
+            self.members.push(other);
+            self.memberIndices[other] = length(self);
+        }
+    }
+
+    function remove(intSet storage self, int other) {
+        if (contains(self, other)) {
+            uint replaceIndex = self.memberIndices[other];
+            int lastMember = self.members[length(self)-1];
+            // overwrite other with the last member and remove last member
+            self.members[replaceIndex-1] = lastMember;
+            self.members.length--;
+            // reflect this change in the indices
+            self.memberIndices[lastMember] = replaceIndex;
+            delete self.memberIndices[other];
+        }
+    }
+
+    function contains(intSet storage self, int other)
+        constant
+        returns (bool)
+    {
+        return self.memberIndices[other] > 0;
+    }
+
+    function length(intSet storage self) constant returns (uint) {
+        return self.members.length;
+    }
+
+
+    // int8 set
+    struct int8Set {
+        int8[] members;
+        mapping(int8 => uint) memberIndices;
+    }
+
+    function insert(int8Set storage self, int8 other) {
+        if (!contains(self, other)) {
+            self.members.push(other);
+            self.memberIndices[other] = length(self);
+        }
+    }
+
+    function remove(int8Set storage self, int8 other) {
+        if (contains(self, other)) {
+            uint replaceIndex = self.memberIndices[other];
+            int8 lastMember = self.members[length(self)-1];
+            // overwrite other with the last member and remove last member
+            self.members[replaceIndex-1] = lastMember;
+            self.members.length--;
+            // reflect this change in the indices
+            self.memberIndices[lastMember] = replaceIndex;
+            delete self.memberIndices[other];
+        }
+    }
+
+    function contains(int8Set storage self, int8 other)
+        constant
+        returns (bool)
+    {
+        return self.memberIndices[other] > 0;
+    }
+
+    function length(int8Set storage self) constant returns (uint) {
+        return self.members.length;
+    }
+
+
+    // byte set
+    struct byteSet {
+        byte[] members;
+        mapping(byte => uint) memberIndices;
+    }
+
+    function insert(byteSet storage self, byte other) {
+        if (!contains(self, other)) {
+            self.members.push(other);
+            self.memberIndices[other] = length(self);
+        }
+    }
+
+    function remove(byteSet storage self, byte other) {
+        if (contains(self, other)) {
+            uint replaceIndex = self.memberIndices[other];
+            byte lastMember = self.members[length(self)-1];
+            // overwrite other with the last member and remove last member
+            self.members[replaceIndex-1] = lastMember;
+            self.members.length--;
+            // reflect this change in the indices
+            self.memberIndices[lastMember] = replaceIndex;
+            delete self.memberIndices[other];
+        }
+    }
+
+    function contains(byteSet storage self, byte other)
+        constant
+        returns (bool)
+    {
+        return self.memberIndices[other] > 0;
+    }
+
+    function length(byteSet storage self) constant returns (uint) {
+        return self.members.length;
+    }
+
+
+    // bytes32 set
+    struct bytes32Set {
+        bytes32[] members;
+        mapping(bytes32 => uint) memberIndices;
+    }
+
+    function insert(bytes32Set storage self, bytes32 other) {
+        if (!contains(self, other)) {
+            self.members.push(other);
+            self.memberIndices[other] = length(self);
+        }
+    }
+
+    function remove(bytes32Set storage self, bytes32 other) {
+        if (contains(self, other)) {
+            uint replaceIndex = self.memberIndices[other];
+            bytes32 lastMember = self.members[length(self)-1];
+            // overwrite other with the last member and remove last member
+            self.members[replaceIndex-1] = lastMember;
+            self.members.length--;
+            // reflect this change in the indices
+            self.memberIndices[lastMember] = replaceIndex;
+            delete self.memberIndices[other];
+        }
+    }
+
+    function contains(bytes32Set storage self, bytes32 other)
+        constant
+        returns (bool)
+    {
+        return self.memberIndices[other] > 0;
+    }
+
+    function length(bytes32Set storage self) constant returns (uint) {
+        return self.members.length;
     }
 }
