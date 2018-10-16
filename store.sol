@@ -1,28 +1,44 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract store at 0x627917e47cd111382ddf7fb1dc140d2daf8876b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract store at 0xd39fe1cffd8f070429169b416b7e07f486d553cf
 */
-contract mortal {
-    /* Define variable owner of the type address*/
+contract store {
+
     address owner;
 
-    /* this function is executed at initialization and sets the owner of the contract */
-    function mortal() { owner = msg.sender; }
-
-    /* Function to recover the funds on the contract */
-    function kill() { if (msg.sender == owner) suicide(owner); }
-}
-
-contract store is mortal {
-
-    uint16 public contentCount = 0;
+    uint public contentCount = 0;
     
-    event content(string datainfo); 
+    event content(string datainfo, uint indexed version, address indexed sender, uint indexed datatype, uint timespan, uint payment);
+    modifier onlyowner { if (msg.sender == owner) _ } 
     
-    function store() public {
+    function store() public { owner = msg.sender; }
+    
+    ///TODO: remove in release
+    function kill() onlyowner { suicide(owner); }
+
+    function flush() onlyowner {
+        owner.send(this.balance);
     }
 
-    function add(string datainfo) {
+    function add(string datainfo, uint version, uint datatype, uint timespan) {
+        //item listing
+        if(datatype == 1) {
+          //2 weeks listing costs 0,04 USD = 0,004 ether
+          if(timespan <= 1209600) {
+            if(msg.value < (4 finney)) return;
+          //4 weeks listing costs 0,06 USD = 0,006 ether
+          } else if(timespan <= 2419200) {
+            if(msg.value < (6 finney)) return;
+          //limit 4 weeks max
+          } else {
+            timespan = 2419200;
+            if(msg.value < (6 finney)) return;
+          }
+        }
+
+        //revert higher payment transactions
+        if(msg.value > (6 finney)) throw;
+
         contentCount++;
-        content(datainfo);
+        content(datainfo, version, msg.sender, datatype, timespan, msg.value);
     }
 }
