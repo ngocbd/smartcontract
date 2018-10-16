@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNYToken at 0x9e88770da20ebea0df87ad874c2f5cf8ab92f605
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNYToken at 0x041b3eb05560ba2670def3cc5eec2aeef8e5d14b
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -101,7 +101,7 @@ contract CNYToken is StandardToken {
     string public name;                   // fancy name: eg Simon Bucks
     uint8 public decimals;                // How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 // An identifier: eg SBX
-    string public version = 'CNY0.1';     // CNY 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'CNY1.0';     // CNY 0.1 standard. Just an arbitrary versioning scheme.
     
 
     // The nonce for avoid transfer replay attacks
@@ -175,8 +175,11 @@ contract CNYToken is StandardToken {
         if(balances[_from] < _fee + _value) throw;
 
         uint256 nonce = nonces[_from];
-        bytes32 h = sha3(_from,_to,_value,_fee,nonce);
-        if(_from != ecrecover(h,_v,_r,_s)) throw;
+                
+        bytes32 hash = sha3(_from,_to,_value,_fee,nonce);
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 prefixedHash = sha3(prefix, hash);
+        if(_from != ecrecover(prefixedHash,_v,_r,_s)) throw;
 
         if(balances[_to] + _value < balances[_to]
             || balances[msg.sender] + _fee < balances[msg.sender]) throw;
@@ -208,9 +211,15 @@ contract CNYToken is StandardToken {
     function approveProxy(address _from, address _spender, uint256 _value,
         uint8 _v,bytes32 _r, bytes32 _s, string _comment) returns (bool success) {
 
+        if(balances[_from] < _value) throw;
+        
         uint256 nonce = nonces[_from];
+        
         bytes32 hash = sha3(_from,_spender,_value,nonce);
-        if(_from != ecrecover(hash,_v,_r,_s)) throw;
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 prefixedHash = sha3(prefix, hash);
+        if(_from != ecrecover(prefixedHash,_v,_r,_s)) throw;
+
         allowed[_from][_spender] = _value;
         Approval(_from, _spender, _value);
         lastComment[_from] = _comment;
