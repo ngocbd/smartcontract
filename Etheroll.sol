@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x6410504202C3fD106baadB2A1c1782B0aDAd1654
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x9DC69490EC0d558f8F62b6d0aD64611B621A026E
 */
 //just updated the encrypted api key
 //updated contractBalance -= 57245901639344;
+//removed safesub from all contractBalance and replaced with operators
 
 pragma solidity ^0.4.2;
 
@@ -1397,16 +1398,15 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         betIsValid(msg.value, rollUnder)
 	{        
         
-        /* safely update contract balance to account for cost to call oraclize*/
-        contractBalance = 2500000000000000000; 
-
         /*
         * assign partially encrypted query to oraclize
         * only the apiKey is encrypted 
         * integer query is in plain text
         */
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BLe1oIPSkMLW1hEBy67tRK1Tdr6I3sWdFUjgL6pbDJwn1mhINr9aEGLNYztAQv3NKFUASsMZUMLNwSOSaUq/Hel1GJYxM/9uWmg+heH3Tn+JaPgGhKKuFuooViVzzftjOaBZ+oVtxtNSNFFlK2w7hW3vBPtP/qQ=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
-        	        
+        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BKjhlm6SfYJ79hWWmywPWdwaFHZCU9yBavQcnDLajf8Cbxo9W6z8KNnzmS+/0hmoNTnBRZxSgACLlIghH+Zm65EAhJCsE6q/W5YlR55o+HbGWyMEi0o5ngKy1MtUi49eg4HhelENzDMMEynC3eY6SeJeQNe4NsE=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
+        
+        /* safely update contract balance to account for cost to call oraclize*/
+        contractBalance -= 57245901639344;	        
         /* total number of bets */
         totalBets += 1;
         /* map bet id to this oraclize query */
@@ -1504,7 +1504,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         if(playerDieResult[myid] < playerNumber[myid]){ 
 
             /* safely reduce contract balance by player profit */
-            contractBalance = safeSub(contractBalance, playerTempReward[myid]); 
+            contractBalance -= playerTempReward[myid]; 
 
             /* update total wei won */
             totalWeiWon = safeAdd(totalWeiWon, playerTempReward[myid]);              
@@ -1546,7 +1546,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
             *  setMaxProfit
             *  send 1 wei to losing bet
             */
-            contractBalance = safeAdd(contractBalance, (playerTempBetValue[myid]-1));                                                                         
+            contractBalance += playerTempBetValue[myid]-1;                                                                         
 
             /* update maximum profit */
             setMaxProfit(); 
@@ -1607,7 +1607,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         onlyTreasury
     {
         /* safely update contract balance */
-        contractBalance = safeAdd(contractBalance, msg.value);        
+        contractBalance += msg.value;        
         /* update the maximum profit */
         setMaxProfit();
     } 
@@ -1655,7 +1655,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 		onlyOwner
     {        
         /* safely update contract balance when sending out funds*/
-        contractBalance = safeSub(contractBalance, amount);		
+        contractBalance -= amount;		
         /* update max profit */
         setMaxProfit();
         if(!sendTo.send(amount)) throw;
