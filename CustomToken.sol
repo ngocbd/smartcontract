@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x7880fa461042aa2a60b8a82f6533e601adaff1a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x6435e117aed259a39cd5032773653c52c160a647
 */
 pragma solidity ^0.4.19;
 
@@ -45,13 +45,51 @@ contract BaseToken {
     }
 }
 
-contract CustomToken is BaseToken {
+contract ICOToken is BaseToken {
+    // 1 ether = icoRatio token
+    uint256 public icoRatio;
+    uint256 public icoBegintime;
+    uint256 public icoEndtime;
+    address public icoSender;
+    address public icoHolder;
+
+    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
+    event Withdraw(address indexed from, address indexed holder, uint256 value);
+
+    function ico() public payable {
+        require(now >= icoBegintime && now <= icoEndtime);
+        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
+        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
+            revert();
+        }
+        _transfer(icoSender, msg.sender, tokenValue);
+        ICO(msg.sender, msg.value, tokenValue);
+    }
+
+    function withdraw() public {
+        uint256 balance = this.balance;
+        icoHolder.transfer(balance);
+        Withdraw(msg.sender, icoHolder, balance);
+    }
+}
+
+contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 5000000000000000000000000000;
-        name = 'AuToCarCoin';
-        symbol = 'ATCC';
+        totalSupply = 999999999000000000000000000;
+        name = 'LongChain';
+        symbol = 'LON';
         decimals = 18;
-        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
-        Transfer(address(0), 0xa5791f4e7bf0ec01620317cf9f135325a5b47404, totalSupply);
+        balanceOf[0x8f1e8c7050d9bd74d7658cbf3b437826b9fb4bf8] = totalSupply;
+        Transfer(address(0), 0x8f1e8c7050d9bd74d7658cbf3b437826b9fb4bf8, totalSupply);
+
+        icoRatio = 6000;
+        icoBegintime = 1530374400;
+        icoEndtime = 1538236800;
+        icoSender = 0x21a22a62b7db045a327696105d9587badfb97c8e;
+        icoHolder = 0x21a22a62b7db045a327696105d9587badfb97c8e;
+    }
+
+    function() public payable {
+        ico();
     }
 }
