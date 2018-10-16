@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bithenet at 0xbcd1072f9b35499f75f23a9711712fc7ef08eba7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bithenet at 0xe387f96a266c4b32d68d0b27db74ca2aafc85eb3
 */
 pragma solidity ^0.4.0;
 contract Ballot {
@@ -73,7 +73,7 @@ pragma solidity ^0.4.18;
 // ----------------------------------------------------------------------------
 // 'Bithenet' token contract
 //
-// Deployed to : 0xb782A0aF833d6Eba4AA83B43251B620C5d33bb01
+// Deployed to : 0x04922f44D030f352aE336C125cf785BF49628056
 // Symbol      : BTN
 // Name        : Bithenet
 // Total supply: 100000000000000000000000000
@@ -187,8 +187,8 @@ contract Bithenet is ERC20Interface, Owned, SafeMath {
         name = "Bithenet";
         decimals = 18;
         _totalSupply = 10000000000000000000000000;
-        balances[0xb782A0aF833d6Eba4AA83B43251B620C5d33bb01] = _totalSupply;
-        emit Transfer(address(0), 0xb782A0aF833d6Eba4AA83B43251B620C5d33bb01, _totalSupply);
+        balances[0x04922f44D030f352aE336C125cf785BF49628056] = _totalSupply;
+        emit Transfer(address(0), 0x04922f44D030f352aE336C125cf785BF49628056, _totalSupply);
     }
 
 
