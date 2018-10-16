@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RefundVault at 0x6ee69c5e877b51cd532193d70e96d6162e69987c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RefundVault at 0xf229815bc503abc2238f6cdf5505d326c223e14c
 */
 pragma solidity ^0.4.18;
 
@@ -60,19 +60,6 @@ contract Ownable {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -117,10 +104,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
-
-
 
 
 /**
@@ -232,8 +215,6 @@ contract StandardToken is ERC20, BasicToken ,Ownable {
 }
 
 
-
-
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
@@ -276,9 +257,6 @@ contract MintableToken is StandardToken {
     return true;
   }
 }
-
-
-
 
 /**
  * @title SafeMath
@@ -325,7 +303,6 @@ library SafeMath {
     return c;
   }
 }
-
 
 
 /**
@@ -481,11 +458,6 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
 }
 
 
-
-
-
-
-
 /**
  * @title RefundVault
  * @dev This contract is used for storing funds while a crowdsale
@@ -517,7 +489,7 @@ contract RefundVault is Ownable {
   }
 
   function close() onlyOwner public {
- 
+    require(state == State.Active);
     state = State.Closed;
     Closed();
     wallet.transfer(this.balance);
@@ -598,10 +570,6 @@ contract RefundableCrowdsale is FinalizableCrowdsale {
 
 
 
-
-
-
-
 /**
  * @title CappedCrowdsale
  * @dev Extension of Crowdsale with a max amount of funds raised
@@ -633,115 +601,18 @@ contract CappedCrowdsale is Crowdsale {
 }
 
 
-
-
-
-
-
-contract Mest is MintableToken {
-  string public constant name = "MEST";
-  string public constant symbol = "MEST";
+contract Toplancer is MintableToken {
+  string public constant name = "Toplancer";
+  string public constant symbol = "TLC";
   uint8 public constant decimals = 18;
  
-  address public admin=0x5c485ac62550fe1eafaae8f6e387c39f5df4f372;
- event Pause();
- event Unpause();
- event AdminAccessTransferred(address indexed admin, address indexed newAdmin);
-
-  bool public paused = true;
-
- // modifier to allow only owner has full control on the function
-    modifier onlyAdmin {
-        require(msg.sender == admin);
-        _;
-    }
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyAdmin whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyAdmin whenPaused public {
-    paused = false;
-    Unpause();
-  }
-
-  /**
-   * @dev Allows the current admin to transfer control of the contract to a newAdmin.
-   * @param newAdmin The address to transfer Admin to.
-   */
-  function changeAdmin(address newAdmin) public onlyAdmin {
-    require(newAdmin != address(0));
-    AdminAccessTransferred(admin, newAdmin);
-    admin = newAdmin;
-  }
- /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) whenNotPaused public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-
-   
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) whenNotPaused public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-
-
 
 }
 
-contract FounderAllocation is Ownable {
+contract Allocation is Ownable {
   using SafeMath for uint;
   uint256 public unlockedAt;
-  Mest mest;
+  Toplancer tlc;
   mapping (address => uint) founderAllocations;
   uint256 tokensCreated = 0;
  
@@ -749,14 +620,14 @@ contract FounderAllocation is Ownable {
 //decimal value
  uint256 public constant decimalFactor = 10 ** uint256(18);
 
-  uint256 constant public FounderAllocationTokens = 20000000*decimalFactor;
+  uint256 constant public FounderAllocationTokens = 840000000*decimalFactor;
 
  
   //address of the founder storage vault
-  address public founderStorageVault = 0x0b7Fe8cDF4AAC62F6E0BeF22D808fE255cCDdF63;
+  address public founderStorageVault = 0x97763051c517DD3aBc2F6030eac6Aa04576E05E1;
  
   function TeamAllocation() {
-    mest = Mest(msg.sender);
+    tlc = Toplancer(msg.sender);
   
     unlockedAt = now;
    
@@ -770,98 +641,91 @@ contract FounderAllocation is Ownable {
   function unlock() external payable {
     require (now >=unlockedAt);
     if (tokensCreated == 0) {
-      tokensCreated = mest.balanceOf(this);
+      tokensCreated = tlc.balanceOf(this);
     }
     
     //transfer the  tokens to the founderStorageAddress
-    mest.transfer(founderStorageVault, tokensCreated);
+    tlc.transfer(founderStorageVault, tokensCreated);
   
   }
 }
 
 
-contract MestCrowdsale is RefundableCrowdsale,CappedCrowdsale {
+contract TLCMarketCrowdsale is RefundableCrowdsale,CappedCrowdsale {
 
+
+ enum State {PRESALE, PUBLICSALE}
+ State public state;
 
 //decimal value
  uint256 public constant decimalFactor = 10 ** uint256(18);
  
-//Available tokens for PublicAllocation
-uint256 public publicAllocation = 80000000 *decimalFactor; //80%
-//Available token for FounderAllocation
-uint256 public _founder = 20000000* decimalFactor; //20%
-
-FounderAllocation founderAllocation;
-
-// How much ETH each address has invested to this crowdsale
-mapping (address => uint256) public investedAmountOf;
-// How many distinct addresses have invested
-uint256 public investorCount;
-uint256 public minContribAmount = 0.2 ether; // minimum contribution amount is 0.2 ether
-
-event Burn(address indexed burner, uint256 value);
-uint256 public whitelistMaxContribAmount = 2.5 ether; // 2.5 ether
-
-  
-
-//status to find  whitelist investor's max contribution amount
-struct whiteListInStruct{
-uint256 status;
-
-}
-
-//investor claim their amount  between refunding Starttime && refunding Endtime
-uint256 public refundingStarttime;
-uint256 public refundingEndtime=90 days;
-
-//To store whitelist investors address and status
-  
-mapping(address => whiteListInStruct[]) whiteList;
+ 
+ uint256 public constant _totalSupply = 2990000000 *decimalFactor; 
+ 
+ uint256 public presaleCap = 200000000 *decimalFactor; // 7%
+ uint256 public soldTokenInPresale;
+ uint256 public publicSaleCap = 1950000000 *decimalFactor; // 65%
+ uint256 public soldTokenInPublicsale;
+ uint256 public distributionSupply = 840000000 *decimalFactor; // 28%
+ 
 
 
 
-// Constructor
-// Token Creation and presale starts
-//Start time end time should be given in unix timestamps
-function MestCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, uint256 _goal, uint256 _cap)
+ Allocation allocation;
+
+ // How much ETH each address has invested to this crowdsale
+ mapping (address => uint256) public investedAmountOf;
+ // How many distinct addresses have invested
+ uint256 public investorCount;
+ uint256 public minContribAmount = 0.1 ether; // minimum contribution amount is 0.1 ether
+
+ // Constructor
+ // Token Creation and presale starts
+ //Start time end time should be given in unix timestamps
+ //goal and cap
+  function TLCMarketCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, uint256 _goal, uint256 _cap)
 
     Crowdsale (_startTime, _endTime, _rate, _wallet)  RefundableCrowdsale(_goal*decimalFactor) CappedCrowdsale(_cap*decimalFactor)
   {
-
+        state = State.PRESALE;
   }
-  function createTokenContract() internal returns (MintableToken) {
-    return new Mest();
+   function createTokenContract() internal returns (MintableToken) {
+    return new Toplancer();
   }
 
   // low level token purchase function
   // @notice buyTokens
   // @param beneficiary The address of the beneficiary
-  // @return the transaction address and send the event as TokenPurchase
- function buyTokens(address beneficiary) public payable {
-      require(publicAllocation > 0);
-       require(validPurchase());
+   // @return the transaction address and send the event as TokenPurchase
+  function buyTokens(address beneficiary) public payable {
+      require(publicSaleCap > 0);
+      require(validPurchase());
       uint256  weiAmount = msg.value;
-          require(isVerified(beneficiary,weiAmount));
+       
        // calculate token amount to be created
     uint256 tokens = weiAmount.mul(rate);
 
-    uint256 Bonus = tokens.mul(getVolumBonusRate()).div(100);
+    uint256 Bonus = tokens.mul(getTimebasedBonusRate()).div(100);
 
     tokens = tokens.add(Bonus);
-
-
-
+    
+    if (state == State.PRESALE) {
+        assert (soldTokenInPresale + tokens <= presaleCap);
+        soldTokenInPresale = soldTokenInPresale.add(tokens);
+        presaleCap=presaleCap.sub(tokens);
+    } else if(state==State.PUBLICSALE){
+         assert (soldTokenInPublicsale + tokens <= publicSaleCap);
+        soldTokenInPublicsale = soldTokenInPublicsale.add(tokens);
+        publicSaleCap=publicSaleCap.sub(tokens);
+    }
+       
        if(investedAmountOf[beneficiary] == 0) {
            // A new investor
            investorCount++;
         }
         // Update investor
         investedAmountOf[beneficiary] = investedAmountOf[beneficiary].add(weiAmount);
-
-            assert (tokens <= publicAllocation);
-            publicAllocation = publicAllocation.sub(tokens);
-
-
        forwardFunds();
        weiRaised = weiRaised.add(weiAmount);
        token.mint(beneficiary, tokens);
@@ -871,176 +735,96 @@ function MestCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, addr
 
 
      // @return true if the transaction can buy tokens
-    function validPurchase() internal constant returns (bool) {
+   function validPurchase() internal constant returns (bool) {
         bool minContribution = minContribAmount <= msg.value;
         bool withinPeriod = now >= startTime && now <= endTime;
         bool nonZeroPurchase = msg.value != 0;
-        bool Publicsale =publicAllocation !=0;
+        bool Publicsale =publicSaleCap !=0;
         return withinPeriod && minContribution && nonZeroPurchase && Publicsale;
     }
    // @return  current time
-    function getNow() public constant returns (uint) {
+   function getNow() public constant returns (uint) {
         return (now);
     }
 
-    // ------------------------------------------------------------------------
-  // Add to whitelist
-  // ------------------------------------------------------------------------
-
-    function addtoWhitelist(address _to, uint256 _status)public onlyOwner returns (bool){
-
-    if(whiteList[_to].length==0) {
-
-    whiteList[_to].push(whiteListInStruct(uint256(_status)));
-     return true;
-
-    }else if(whiteList[_to].length>0){
-
-        for (uint i = 0; i < whiteList[_to].length; i++){
-            whiteList[_to][i].status=_status;
-
-        }
-
-         return true;
-
-    }
-}
-
-//whiteList verification
-
-function isVerified(address _address, uint256 _amt)internal  returns  ( bool){
-
-   if(whiteList[_address].length > 0) {
-    for (uint i = 0; i < whiteList[_address].length; i++){
-    if(whiteList[_address][i].status==0 ){
-        if( whitelistMaxContribAmount>=_amt+ investedAmountOf[_address])return true;
-
-    }
-         if(whiteList[_address][i].status==1){
-             return true;
-         }
-
-         }
-
+    // Get the time-based bonus rate
+   function getTimebasedBonusRate() internal constant returns (uint256) {
+  	  uint256 bonusRate = 0;
+      if (state == State.PRESALE) {
+          bonusRate = 100;
+      } else {
+          uint256 nowTime = getNow();
+          uint256 bonusFirstWeek = startTime + (7 days * 1000);
+          uint256 bonusSecondWeek = bonusFirstWeek + (7 days * 1000);
+          uint256 bonusThirdWeek = bonusSecondWeek + (7 days * 1000);
+          uint256 bonusFourthWeek = bonusThirdWeek + (7 days * 1000);
+          if (nowTime <= bonusFirstWeek) {
+              bonusRate = 30;
+          } else if (nowTime <= bonusSecondWeek) {
+              bonusRate = 30;
+          } else if (nowTime <= bonusThirdWeek) {
+              bonusRate = 15;
+          } else if (nowTime <= bonusFourthWeek) {
+              bonusRate = 15;
+          }
+      }
+      return bonusRate;
+   }  
+     
+        //start public sale
+      // @param startTime 
+      // @param _endTime 
+   function startPublicsale(uint256 _startTime, uint256 _endTime) public onlyOwner {
+      require(state == State.PRESALE && _endTime >= _startTime);
+      state = State.PUBLICSALE;
+      startTime = _startTime;
+      endTime = _endTime;
+      publicSaleCap=publicSaleCap.add(presaleCap);
+      presaleCap=presaleCap.sub(presaleCap);
    }
-}
-
-
-
-
-       // Get the Volume-based bonus rate
-       function getVolumBonusRate() internal constant returns (uint256) {
-        uint256 bonusRate = 0;
-        if(!goalReached()){
-            bonusRate=10;
-
-        }
-           return bonusRate;
-       }
-    //if the user not claim after 90days, owner revoke the ether to wallet
-     function revoke() public onlyOwner {
-         require(getNow()>refundingEndtime);
-          require(isFinalized);
-          vault.close();
-     }
+    
      
-     
-// if crowdsale is unsuccessful, investors can claim refunds here
-  function claimRefund() public {
-        require(getNow()<=refundingEndtime);
-        require(isFinalized);
-        require(!goalReached());
-      
-         vault.refund(msg.sender);
-      
-      
-  }
-  
-     
- 
-  //it will call when   crowdsale unsuccessful  if crowdsale  completed
-  function finalization() internal {
-        refundingStarttime=getNow();
-        refundingEndtime=refundingEndtime.add(getNow());
-       
+   //it will call when   crowdsale unsuccessful  if crowdsale  completed
+   function finalization() internal {
        if(goalReached()){
-        founderAllocation = new FounderAllocation();
-        token.mint(address(founderAllocation), _founder);
-        _founder=_founder.sub(_founder);
-       }else if(!goalReached()){
-           
-           
-            Burn(msg.sender, _founder);
-             _founder=0;
+        allocation = new Allocation();
+        token.mint(address(allocation), distributionSupply);
+        distributionSupply=distributionSupply.sub(distributionSupply);
        }
         
         token.finishMinting();
         super.finalization();
          
-  }
+   }
 
- 
-  // Change crowdsale Starttime 
-  function changeStarttime(uint256 _startTime) public onlyOwner {
-
-           
-            startTime = _startTime;
-        }
+    //change Starttime
+   // @param startTime 
+   function changeStarttime(uint256 _startTime) public onlyOwner {
+        require(_startTime != 0);  
+        startTime = _startTime;
+    }
         
-        
-        
-  // Change crowdsale  Endtime 
+   
+  //change Edntime      
+ // @param _endTime
   function changeEndtime(uint256 _endTime) public onlyOwner {
-
-            endTime = _endTime;
+        require(_endTime != 0);    
+        endTime = _endTime;
            
         }
-
-        // Change the token price
-       function changeRate(uint256 _rate) public onlyOwner {
-         require(_rate != 0);
-          rate = _rate;
+    //change token price per 1 ETH
+     // @param _rate
+  function changeRate(uint256 _rate) public onlyOwner {
+        require(_rate != 0);
+        rate = _rate;
 
        }
 
-       // Change the goal
-      function changeGoal(uint256 _softcap) public onlyOwner {
-        require(_softcap != 0);
-         goal = _softcap;
-
-      }
-
-
-      // Change the whiteList Maximum contribution amount
-     function changeMaximumContribution(uint256 _whitelistMaxContribAmount) public onlyOwner {
-       require(_whitelistMaxContribAmount != 0);
-        whitelistMaxContribAmount = _whitelistMaxContribAmount;
-        
-     }
-
-
-  
-            
-      //change  Publicallocation
-    function changePublicallocation (uint256  _value) onlyOwner  {
-        publicAllocation = _value.mul(decimalFactor);
-       
-    }
-        
-        
-        
     //change  wallet address
-    function changeWallet (address _wallet) onlyOwner  {
+    // @param wallet address
+   function changeWallet (address _wallet) onlyOwner  {
         wallet = _wallet;
        
     }
         
-            
-        //Burns a specific amount of tokens
-    function burnToken(uint256 _value) onlyOwner {
-        require(_value > 0 &&_value <= publicAllocation);
-         publicAllocation = publicAllocation.sub(_value.mul(decimalFactor));
-
-        
-        Burn(msg.sender, _value);
-    }}
+   }
