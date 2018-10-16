@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract sicoinco2 at 0xaa86134434dba834abbdb313432fd27d99b65ea8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SicoinCo2 at 0xe7baa76b10a19f06abde07ee8f659d78f0877b28
 */
 pragma solidity ^0.4.20;
 
@@ -7,14 +7,14 @@ pragma solidity ^0.4.20;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract sicoinco2 {
+contract SicoinCo2 {
     // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 6;
-    // 6 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
-
+    string public name = "Sicoinco2";
+    string public symbol = "Co2";
+    uint8 public decimals = 7;
+    // 7 decimals is the strongly suggested default, avoid changing it
+    uint256 public totalSupply = 1000000000000000;
+    
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
@@ -35,9 +35,9 @@ contract sicoinco2 {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 100000000 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply = 100000000;                // Give the creator all initial tokens
-        name = tokenName = "SicoinCo2";                      // Set the name for display purposes
+        totalSupply = initialSupply = 1000000000000000; uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply = 1000000000000000;                // Give the creator all initial tokens
+        name = tokenName = "SICOINCO2";                      // Set the name for display purposes
         symbol = tokenSymbol = "CO2";                               // Set the symbol for display purposes
     }
 
