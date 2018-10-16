@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FricaCoin at 0x09e9666c667f0b2df3b5a9e8c9cb1a669e164d30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FricaCoin at 0x56de19f26241960cad08340e81eb61b71a27b89c
 */
 pragma solidity 0.4.20;
 
@@ -56,8 +56,8 @@ contract FricaCoin is ERC20
 
     // Symbol of token
     string public constant symbol = "FRI";
-    uint8 public constant decimals = 18;
-    uint public _totalsupply = 1000000000000 * 10 ** 18; // 1 trillion total supply // muliplies dues to decimal precision
+    uint8 public constant decimals = 8;
+    uint public _totalsupply = 1000000000000 * 10 ** 8; // 1 trillion total supply // muliplies dues to decimal precision
     address public owner;                    // Owner of this contract
 
     uint256 no_of_tokens;
@@ -73,7 +73,7 @@ contract FricaCoin is ERC20
     uint256 pre_enddate;
   
     uint256 public eth_received; // total ether received in the contract
-    uint256 maxCap_public = 50000000000 * 10 **18;  //  50 billion in Public Sale
+    uint256 maxCap_public = 250000000000 * 10 **8;  //  25% - 250 billion in Public Sale
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
     /** Who are our advisors (iterable) */
@@ -108,9 +108,26 @@ contract FricaCoin is ERC20
     function FricaCoin() public
     {
         owner = msg.sender;
-        balances[owner] = 50000000000 * 10 **18; // 50 billion to owner
+        balances[owner] = 50000000000 * 10 **8; // 5% - 50 billion to owner
         stage = Stages.NOTSTARTED;
         Transfer(0, owner, balances[owner]);
+        
+        uint256 _transfertoemployees = 140000000000 * 10 **8; // 14% - 140 billion to Employees Advisors Consultants & Partners
+        balances[0xa36eEa22131881BB0a8902A6b8bF4a2cbb9782BC] = _transfertoemployees;
+        Transfer(address(0), 0xa36eEa22131881BB0a8902A6b8bF4a2cbb9782BC, _transfertoemployees);
+        
+        uint256 _transfertofirstround = 260000000000 * 10 **8; // 26% - 260 billion to First Round & Bonus
+        balances[0x553015bc932FaCc0C60159b7503a58ef5806CA48] = _transfertofirstround;
+        Transfer(address(0), 0x553015bc932FaCc0C60159b7503a58ef5806CA48, _transfertofirstround);
+        
+        uint256 _transfertocharity = 50000000000 * 10 **8; // 5% - 50 billion to Charity and non-profit
+        balances[0x11Bfb0B5a901cbc5015EF924c39ac33e91Eb015a] = _transfertocharity;
+        Transfer(address(0), 0x11Bfb0B5a901cbc5015EF924c39ac33e91Eb015a, _transfertocharity);
+
+        uint256 _transfertosecondround = 250000000000 * 10 **8; // 25% - 250 billion to Second Round & Bonus
+        balances[0xaAA258C8dbf31De53Aa679F6b492569556e1c306] = _transfertosecondround;
+        Transfer(address(0), 0xaAA258C8dbf31De53Aa679F6b492569556e1c306, _transfertosecondround);
+        
     }
   
 
@@ -178,14 +195,8 @@ contract FricaCoin is ERC20
      // deliberately authorized the sender of the message via some mechanism; we propose
      // these standardized APIs for approval:
      function transferFrom( address _from, address _to, uint256 _amount )public returns (bool success) {
-     require(stage == Stages.ENDED);
      require( _to != 0x0);
      require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount >= 0);
-     
-     if(isAdvisor(_to)) {
-         require(now > ico1_startdate + 150 days);
-     }
-     
      balances[_from] = (balances[_from]).sub(_amount);
      allowed[_from][msg.sender] = (allowed[_from][msg.sender]).sub(_amount);
      balances[_to] = (balances[_to]).add(_amount);
