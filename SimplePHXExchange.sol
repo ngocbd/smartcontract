@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimplePHXExchange at 0xeb71e963645f1e76f233f70e1b0815e8f089bbc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimplePHXExchange at 0x3c97676ec12e37ca91cc31f03ea6c17d7bbd52ad
 */
 pragma solidity ^0.4.21;
 
@@ -155,10 +155,6 @@ contract SimplePHXExchange {
     
     // Getter Functions
     
-    function getNumTknOfferors() public constant returns (uint _numOfferors) {
-        return tknOfferors.length; // !important:  This is always 1 more than the number of actual offers
-    }
-    
     function getTknOfferor(uint _ndx) public constant returns (address _offeror) {
         return tknOfferors[_ndx];
     }
@@ -169,10 +165,6 @@ contract SimplePHXExchange {
     
     function getTknOfferAmount(uint _ndx) public constant returns (uint _tokensOffered) {
         return tknTokensOffered[tknOfferors[_ndx]];
-    }
-    
-    function getNumEthOfferors() public constant returns (uint _numOfferors) {
-        return ethOfferors.length; // !important:  This is always 1 more than the number of actual offers
     }
     
     function getEthOfferor(uint _ndx) public constant returns (address _offeror) {
