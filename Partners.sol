@@ -1,175 +1,414 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Partners at 0x005ebcce7fc2d1432c82be1923ab938989271583
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Partners at 0x0c9a488c025db96ce8a834cd3412661f46833a28
 */
 pragma solidity ^0.4.21;
 
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+/// @title A base contract to control ownership
+/// @author cuilichen
+contract OwnerBase {
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
+    // The addresses of the accounts that can execute actions within each roles.
+    address public ceoAddress;
+    address public cfoAddress;
+    address public cooAddress;
+
+    // @dev Keeps track whether the contract is paused. When that is true, most actions are blocked
+    bool public paused = false;
+    
+    /// constructor
+    function OwnerBase() public {
+       ceoAddress = msg.sender;
+       cfoAddress = msg.sender;
+       cooAddress = msg.sender;
+    }
+
+    /// @dev Access modifier for CEO-only functionality
+    modifier onlyCEO() {
+        require(msg.sender == ceoAddress);
+        _;
+    }
+
+    /// @dev Access modifier for CFO-only functionality
+    modifier onlyCFO() {
+        require(msg.sender == cfoAddress);
+        _;
+    }
+    
+    /// @dev Access modifier for COO-only functionality
+    modifier onlyCOO() {
+        require(msg.sender == cooAddress);
+        _;
+    }
+
+    /// @dev Assigns a new address to act as the CEO. Only available to the current CEO.
+    /// @param _newCEO The address of the new CEO
+    function setCEO(address _newCEO) external onlyCEO {
+        require(_newCEO != address(0));
+
+        ceoAddress = _newCEO;
+    }
+
+
+    /// @dev Assigns a new address to act as the COO. Only available to the current CEO.
+    /// @param _newCFO The address of the new COO
+    function setCFO(address _newCFO) external onlyCEO {
+        require(_newCFO != address(0));
+
+        cfoAddress = _newCFO;
+    }
+    
+    /// @dev Assigns a new address to act as the COO. Only available to the current CEO.
+    /// @param _newCOO The address of the new COO
+    function setCOO(address _newCOO) external onlyCEO {
+        require(_newCOO != address(0));
+
+        cooAddress = _newCOO;
+    }
+
+    /// @dev Modifier to allow actions only when the contract IS NOT paused
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    /// @dev Modifier to allow actions only when the contract IS paused
+    modifier whenPaused {
+        require(paused);
+        _;
+    }
+
+    /// @dev Called by any "C-level" role to pause the contract. Used only when
+    ///  a bug or exploit is detected and we need to limit damage.
+    function pause() external onlyCOO whenNotPaused {
+        paused = true;
+    }
+
+    /// @dev Unpauses the smart contract. Can only be called by the CEO, since
+    ///  one reason we may pause the contract is when CFO or COO accounts are
+    ///  compromised.
+    /// @notice This is public rather than external so it can be called by
+    ///  derived contracts.
+    function unpause() public onlyCOO whenPaused {
+        // can't unpause if contract was upgraded
+        paused = false;
+    }
+	
+	
+	/// @dev check wether target address is a contract or not
+    function isNormalUser(address addr) internal view returns (bool) {
+		if (addr == address(0)) {
+			return false;
+		}
+        uint size = 0;
+        assembly { 
+		    size := extcodesize(addr) 
+		} 
+        return size == 0;
+    }
+}
+
+
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+    function safeMul(uint a, uint b) internal pure returns (uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
         return c;
     }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
+    function safeDiv(uint a, uint b) internal pure returns (uint) {
+        assert(b > 0);
+        uint c = a / b;
+        assert(a == b * c + a % b);
+        return c;
     }
 
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    function safeSub(uint a, uint b) internal pure returns (uint) {
         assert(b <= a);
         return a - b;
     }
 
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
+    function safeAdd(uint a, uint b) internal pure returns (uint) {
+        uint c = a + b;
+        assert(c>=a && c>=b);
         return c;
     }
+
+    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+ 
 }
 
 
-contract Ownable {
 
-    address public owner;
-
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        owner = newOwner;
-    }
+/// @title Interface of contract for partner
+/// @author cuilichen
+contract PartnerHolder {
+    //
+    function isHolder() public pure returns (bool);
+    
+    // Required methods
+    function bonusAll() payable public ;
+	
+	
+	function bonusOne(uint id) payable public ;
+    
 }
 
-interface smartContract {
-    function transfer(address _to, uint256 _value) payable external;
-    function approve(address _spender, uint256 _value) external returns (bool success);
-}
+/// @title Contract for partner. Holds all partner structs, events and base variables.
+/// @author cuilichen
+contract Partners is OwnerBase, SafeMath, PartnerHolder {
 
-contract Basic is Ownable {
-    using SafeMath for uint256;
-
-    // This creates an array with all balances
-    mapping(address => uint256) public totalAmount;
-    mapping(address => uint256) public availableAmount;
-    mapping(address => uint256) public withdrawedAmount;
-    uint[] public periods;
-    uint256 public currentPeriod;
-    smartContract public contractAddress;
-    uint256 public ownerWithdrawalDate;
-
-    // fix for short address attack
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length == size + 4);
-        _;
+    event Bought(uint16 id, address newOwner, uint price, address oldOwner);
+    
+	// data of Casino
+    struct Casino {
+		uint16 id;
+		uint16 star;
+		address owner;
+		uint price;
+		string name;
+		string desc;
     }
-
-    /**
-     * Constructor function
-     *
-     * transfer tokens to the smart contract here
-     */
-    function Basic(address _contractAddress) public onlyOwner {
-        contractAddress = smartContract(_contractAddress);
+	
+	// address to balance.
+	mapping(address => uint) public balances;
+	
+	
+	mapping(uint => Casino) public allCasinos; // key is id
+	
+	// all ids of casinos
+	uint[] public ids;
+	
+	
+	uint public masterCut = 200;
+	
+	// master balance;
+	uint public masterHas = 0;
+	
+	
+	function Partners() public {
+		ceoAddress = msg.sender;
+        cooAddress = msg.sender;
+        cfoAddress = msg.sender;
+		
+	}
+	
+	function initCasino() public onlyCOO {
+		addCasino(5, 100000000000000000, 'Las Vegas Bellagio Casino', 'Five star Casino');
+		addCasino(4, 70000000000000000, 'London Ritz Club Casino', 'Four star Casino');
+		addCasino(4, 70000000000000000, 'Las Vegas Metropolitan Casino', 'Four star Casino');
+		addCasino(4, 70000000000000000, 'Argentina Park Hyatt Mendoza Casino', 'Four star Casino');
+		addCasino(3, 30000000000000000, 'Canada Golf Thalasso & Casino Resort', 'Three star Casino');
+		addCasino(3, 30000000000000000, 'Monaco Monte-Carlo Casino', 'Three star Casino');
+		addCasino(3, 30000000000000000, 'Las Vegas Flamingo Casino', 'Three star Casino');
+		addCasino(3, 30000000000000000, 'New Jersey Bogota Casino', 'Three star Casino');
+		addCasino(3, 30000000000000000, 'Atlantic City Taj Mahal Casino', 'Three star Casino');
+		addCasino(2, 20000000000000000, 'Dubai Atlantis Casino', 'Two star Casino');
+		addCasino(2, 20000000000000000, 'Germany Baden-Baden Casino', 'Two star Casino');
+		addCasino(2, 20000000000000000, 'South Korea Paradise Walker Hill Casino', 'Two star Casino');
+		addCasino(2, 20000000000000000, 'Las Vegas Paris Casino', 'Two star Casino');
+		addCasino(2, 20000000000000000, 'Las Vegas Caesars Palace Casino', 'Two star Casino');
+		addCasino(1, 10000000000000000, 'Las Vegas Riviera Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Las Vegas Mandalay Bay Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Las Vegas MGM Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Las Vegas New York Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Las Vegas  Renaissance Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Las Vegas Venetian Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Melbourne Crown Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Macao Grand Lisb Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Singapore Marina Bay Sands Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Malaysia Cloud Top Mountain Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'South Africa Sun City Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Vietnam Smear Peninsula Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Macao Sands Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Bahamas Paradise Island Casino', 'One star Casino');
+		addCasino(1, 10000000000000000, 'Philippines Manila Casinos', 'One star Casino');
+	}
+	///
+	function () payable public {
+		//receive ether.
+		masterHas = safeAdd(masterHas, msg.value);
+	}
+	
+	/// @dev add a new casino 
+	function addCasino(uint16 _star, uint _price, string _name, string _desc) internal 
+	{
+		uint newID = ids.length + 1;
+		Casino memory item = Casino({
+			id:uint16(newID),
+			star:_star,
+			owner:cooAddress,
+			price:_price,
+			name:_name,
+			desc:_desc
+		});
+		allCasinos[newID] = item;
+		ids.push(newID);
+	}
+	
+	/// @dev set casino name and description by coo
+	function setCasinoName(uint16 id, string _name, string _desc) public onlyCOO 
+	{
+		Casino storage item = allCasinos[id];
+		require(item.id > 0);
+		item.name = _name;
+		item.desc = _desc;
+	}
+	
+	/// @dev check wether the address is a casino owner.
+	function isOwner( address addr) public view returns (uint16) 
+	{
+		for(uint16 id = 1; id <= 29; id++) {
+			Casino storage item = allCasinos[id];
+			if ( item.owner == addr) {
+				return id;
+			}
+		}
+		return 0;
+	}
+	
+	/// @dev identify this contract is a partner holder.
+	function isHolder() public pure returns (bool) {
+		return true;
+	}
+	
+	
+	/// @dev give bonus to all partners, and the owners can withdraw it soon.
+	function bonusAll() payable public {
+		uint total = msg.value;
+		uint remain = total;
+		if (total > 0) {
+			for (uint i = 0; i < ids.length; i++) {
+				uint id = ids[i];
+				Casino storage item = allCasinos[id];
+				uint fund = 0;
+				if (item.star == 5) {
+					fund = safeDiv(safeMul(total, 2000), 10000);
+				} else if (item.star == 4) {
+					fund = safeDiv(safeMul(total, 1000), 10000);
+				} else if (item.star == 3) {
+					fund = safeDiv(safeMul(total, 500), 10000);
+				} else if (item.star == 2) {
+					fund = safeDiv(safeMul(total, 200), 10000);
+				} else {
+					fund = safeDiv(safeMul(total, 100), 10000);
+				}
+				
+				if (remain >= fund) {
+					remain -= fund;
+					address owner = item.owner;
+					if (owner != address(0)) {
+						uint oldVal = balances[owner];
+						balances[owner] = safeAdd(oldVal, fund);
+					}
+				}
+			}
+		}
+		
+	}
+	
+	
+	/// @dev bonus to casino which has the specific id
+	function bonusOne(uint id) payable public {
+		Casino storage item = allCasinos[id];
+		address owner = item.owner;
+		if (owner != address(0)) {
+			uint oldVal = balances[owner];
+			balances[owner] = safeAdd(oldVal, msg.value);
+		} else {
+			masterHas = safeAdd(masterHas, msg.value);
+		}
+	}
+	
+	
+	/// @dev user withdraw, 
+	function userWithdraw() public {
+		uint fund = balances[msg.sender];
+		require (fund > 0);
+		delete balances[msg.sender];
+		msg.sender.transfer(fund);
+	}
+	
+	
+    
+    /// @dev buy a casino without any agreement.
+    function buy(uint16 _id) payable public returns (bool) {
+		Casino storage item = allCasinos[_id];
+		uint oldPrice = item.price;
+		require(oldPrice > 0);
+		require(msg.value >= oldPrice);
+		
+		address oldOwner = item.owner;
+		address newOwner = msg.sender;
+		require(oldOwner != address(0));
+		require(oldOwner != newOwner);
+		require(isNormalUser(newOwner));
+		
+		item.price = calcNextPrice(oldPrice);
+		item.owner = newOwner;
+		emit Bought(_id, newOwner, oldPrice, oldOwner);
+		
+		// Transfer payment to old owner minus the developer's cut.
+		uint256 devCut = safeDiv(safeMul(oldPrice, masterCut), 10000);
+		oldOwner.transfer(safeSub(oldPrice, devCut));
+		masterHas = safeAdd(masterHas, devCut);
+		
+		uint256 excess = msg.value - oldPrice;
+		if (excess > 0) {
+			newOwner.transfer(excess);
+		}
     }
-
-    function _recalculateAvailable(address _addr) internal {
-        _updateCurrentPeriod();
-        uint256 available;
-        uint256 calcPeriod = currentPeriod + 1;
-        if (calcPeriod < periods.length) {
-            available = totalAmount[_addr].div(periods.length).mul(calcPeriod);
-            //you don't have anything to withdraw
-            require(available > withdrawedAmount[_addr]);
-            //remove already withdrawed tokens
-            available = available.sub(withdrawedAmount[_addr]);
-        } else {
-            available = totalAmount[_addr].sub(withdrawedAmount[_addr]);
-        }
-        availableAmount[_addr] = available;
+	
+	
+	
+	/// @dev calculate next price 
+	function calcNextPrice (uint _price) public pure returns (uint nextPrice) {
+		if (_price >= 5 ether ) {
+			return safeDiv(safeMul(_price, 110), 100);
+		} else if (_price >= 2 ether ) {
+			return safeDiv(safeMul(_price, 120), 100);
+		} else if (_price >= 500 finney ) {
+			return safeDiv(safeMul(_price, 130), 100);
+		} else if (_price >= 20 finney ) {
+			return safeDiv(safeMul(_price, 140), 100);
+		} else {
+			return safeDiv(safeMul(_price, 200), 100);
+		}
+	}
+	
+	
+	// @dev Allows the CFO to capture the balance.
+    function cfoWithdraw() external onlyCFO {
+		cfoAddress.transfer(masterHas);
+		masterHas = 0;
     }
-
-    function addRecipient(address _from, uint256 _amount) external onlyOwner onlyPayloadSize(2 * 32) {
-        require(_from != 0x0);
-        require(totalAmount[_from] == 0);
-        totalAmount[_from] = _amount;
-        availableAmount[_from] = 0;
-        withdrawedAmount[_from] = 0;
+	
+	
+	
+	/// @dev cfo withdraw dead ether. 
+    function withdrawDeadFund( address addr) external onlyCFO {
+        uint fund = balances[addr];
+        require (fund > 0);
+        delete balances[addr];
+        cfoAddress.transfer(fund);
     }
-
-    function withdraw() public payable {
-        _withdraw(msg.sender);
-    }
-
-    function _withdraw(address _addr) internal {
-        require(_addr != 0x0);
-        require(totalAmount[_addr] > 0);
-
-        //Recalculate available balance if time has come
-        _recalculateAvailable(_addr);
-        require(availableAmount[_addr] > 0);
-        uint256 available = availableAmount[_addr];
-        withdrawedAmount[_addr] = withdrawedAmount[_addr].add(available);
-        availableAmount[_addr] = 0;
-
-        contractAddress.transfer(_addr, available);
-    }
-
-    function triggerWithdraw(address _addr) public payable onlyOwner {
-        _withdraw(_addr);
-    }
-
-    // owner may withdraw funds after some period of time
-    function withdrawToOwner(uint256 _amount) external onlyOwner {
-        // no need to create modifier for one case
-        require(now > ownerWithdrawalDate);
-        contractAddress.transfer(msg.sender, _amount);
-    }
-
-    function _updateCurrentPeriod() internal {
-        require(periods.length >= 1);
-        for (uint i = 0; i < periods.length; i++) {
-            if (periods[i] <= now && i >= currentPeriod) {
-                currentPeriod = i;
-            }
-        }
-    }
-}
-
-contract Partners is Basic{
-    function Partners(address _contractAddress) Basic(_contractAddress) public {
-        periods = [
-            now + 61 days
-        ];
-        ownerWithdrawalDate = now + 91 days;
-    }
+	
+	
 }
