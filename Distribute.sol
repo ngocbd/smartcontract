@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0xf45a3bbe486779250961c9f2da73651deb90406a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0x87ea2c9a60a8ba2db5b9abed0fd0788a4663fad0
 */
 pragma solidity ^0.4.15;
 
@@ -53,10 +53,8 @@ contract Distribute is Owned {
         token = ERC20Basic(_token);
     }
 
-    function setAmount(address[] contributors, uint[] amounts) public onlyOwner {
-        for (uint256 i = 0; i < contributors.length; i++) {
-            tokensOwed[contributors[i]] = amounts[i];
-        }
+    function setAmount(address contributor, uint amount) public onlyOwner {
+        tokensOwed[contributor] = amount;
     }
 
     function withdrawAllTokens() public onlyOwner {
