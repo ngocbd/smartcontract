@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x7e6614722614e434c4df9901bab31e466ba12fa4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xa1916efb6f9ff61196050a3bcd5c391643334145
 */
 /**
  * Originally from https://github.com/ConsenSys/MultiSigWallet
