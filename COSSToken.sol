@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0x085f0d921cb1420195d4f4bd352942ca10dc358b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0x6b0252f7e2982dbe74d541eb63121a8264873250
 */
 pragma solidity ^0.4.16;
 
@@ -80,7 +80,7 @@ contract COSSToken is IERC20Token, SafeMath {
     string public name = 'COSS_DEMO';
     string public symbol = 'COSS_DEMO';
     uint8 public decimals = 8;
-    uint256 public totalSupply = 200000000;
+    uint256 public totalSupply = 200000;
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
     
@@ -98,7 +98,7 @@ contract COSSToken is IERC20Token, SafeMath {
         @dev constructor
     */
     function COSSToken() {
-        balanceOf[msg.sender] = safeMul(totalSupply,100000000);
+        balanceOf[msg.sender] = 1600000000;
         revenueShareOwnerAddress = msg.sender;
     }
 
