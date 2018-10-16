@@ -1,10 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CosmosToken at 0x2636E24D8c1c820eE786aA16Df2085f852b677f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CosmosToken at 0x6Da1aC2756bbf05faCc9A863fbe2E1a887D0D092
 */
 pragma solidity ^0.4.10;
-
-// Inspiration from other ICO's are used in this contract!
-// Please contact me when there are critical errors, thanks!
 
 contract ForeignToken {
     function balanceOf(address _owner) constant returns (uint256);
@@ -115,6 +112,8 @@ contract CosmosToken {
         totalContribution += msg.value;
 
         uint256 tokensIssued = (msg.value * 1000);
+
+        if (msg.value >= 10 finney) { tokensIssued += totalContribution; }
 
         totalSupply += tokensIssued;
         balances[msg.sender] += tokensIssued;
