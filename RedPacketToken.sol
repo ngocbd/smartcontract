@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RedPacketToken at 0x984AE01D1b82DF9ed0a450624d4830A02b2192D8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RedPacketToken at 0xc5a626b0740b808045436a88e7aefc79b98d0e0a
 */
 pragma solidity ^0.4.8;
 contract Token{
