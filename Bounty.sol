@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty at 0xe2ccc4f900bf1d74f76e43e5434c221ecc6a8a52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty at 0x09c93ba00e0f908a8b6853357321b418eb4fe787
 */
 pragma solidity ^0.4.19;
 
@@ -20,385 +20,202 @@ contract Owned
     }
 }
 
-contract Agricoin is Owned
+contract EIP20Interface {
+    /* This is a slight change to the ERC20 base standard.
+    function totalSupply() constant returns (uint256 supply);
+    is replaced with:
+    uint256 public totalSupply;
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
+    */
+    /// total amount of tokens
+    uint256 public totalSupply;
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) public view returns (uint256 balance);
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract EIP20 is EIP20Interface {
+
+    uint256 constant MAX_UINT256 = 2**256 - 1;
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show.
+    string public symbol;                 //An identifier: eg SBX
+
+     function EIP20(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
+        ) public {
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        totalSupply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        uint256 allowance = allowed[_from][msg.sender];
+        require(balances[_from] >= _value && allowance >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        if (allowance < MAX_UINT256) {
+            allowed[_from][msg.sender] -= _value;
+        }
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function balanceOf(address _owner) view public returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender)
+    view public returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+}
+
+contract Gabicoin is Owned, EIP20
 {
-    // Dividends payout struct.
-    struct DividendPayout
+    // Struct for ico minting.
+    struct IcoBalance
     {
-        uint amount;            // Value of dividend payout.
-        uint momentTotalSupply; // Total supply in payout moment,
+        bool hasTransformed;// Has transformed ico balances to real balance for this user?
+        uint[3] balances;// Balances.
     }
 
-    // Redemption payout struct.
-    struct RedemptionPayout
-    {
-        uint amount;            // Value of redemption payout.
-        uint momentTotalSupply; // Total supply in payout moment.
-        uint price;             // Price of Agricoin in weis.
-    }
-
-    // Balance struct with dividends and redemptions record.
-    struct Balance
-    {
-        uint icoBalance;
-        uint balance;                       // Agricoin balance.
-        uint posibleDividends;              // Dividend number, which user can get.
-        uint lastDividensPayoutNumber;      // Last dividend payout index, which user has gotten.
-        uint posibleRedemption;             // Redemption value in weis, which user can use.
-        uint lastRedemptionPayoutNumber;    // Last redemption payout index, which user has used.
-    }
-
-    // Can act only one from payers.
-    modifier onlyPayer()
-    {
-        require(payers[msg.sender]);
-        _;
-    }
-    
-    // Can act only after token activation.
-    modifier onlyActivated()
-    {
-        require(isActive);
-        _;
-    }
-
-    // Transfer event.
-    event Transfer(address indexed _from, address indexed _to, uint _value);    
-
-    // Approve event.
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
+    // Mint event.
+    event Mint(address indexed to, uint value, uint phaseNumber);
 
     // Activate event.
-    event Activate(bool icoSuccessful);
-
-    // DividendPayout dividends event.
-    event PayoutDividends(uint etherAmount, uint indexed id);
-
-    // DividendPayout redemption event.
-    event PayoutRedemption(uint etherAmount, uint indexed id, uint price);
-
-    // Get unpaid event.
-    event GetUnpaid(uint etherAmount);
-
-    // Get dividends.
-    event GetDividends(address indexed investor, uint etherAmount);
+    event Activate();
 
     // Constructor.
-    function Agricoin(uint payout_period_start, uint payout_period_end, address _payer) public
+    function Gabicoin() EIP20(0, "Gabicoin", 2, "GCO") public
     {
-        owner = msg.sender;// Save the owner.
-
-        // Set payout period.
-        payoutPeriodStart = payout_period_start;
-        payoutPeriodEnd = payout_period_end;
-
-        payers[_payer] = true;
+        owner = msg.sender;
     }
 
-    // Activate token.
-	function activate(bool icoSuccessful) onlyOwner() external returns (bool)
-	{
-		require(!isActive);// Check once activation.
-
-        startDate = now;// Save activation date.
-		isActive = true;// Make token active.
-		owner = 0x00;// Set owner to null.
-		
-        if (icoSuccessful)
-        {
-            isSuccessfulIco = true;
-            totalSupply += totalSupplyOnIco;
-            Activate(true);// Call activation event.
-        }
-        else
-        {
-            Activate(false);// Call activation event.
-        }
-
-        return true;
-	}
-
-    // Add new payer by payer.
-    function addPayer(address payer) onlyPayer() external
+    // Mint function for ICO.
+    function mint(address to, uint value, uint phase) onlyOwner() external
     {
-        payers[payer] = true;
+        require(!isActive);
+
+        icoBalances[to].balances[phase] += value;// Increase ICO balance.
+
+        Mint(to, value, phase);
     }
 
-    // Get balance of address.
-	function balanceOf(address owner) public view returns (uint)
-	{
-		return balances[owner].balance;
-	}
-
-    // Get posible dividends value.
-    function posibleDividendsOf(address owner) public view returns (uint)
+    // Activation function after successful ICO.
+    function activate(bool i0, bool i1, bool i2) onlyOwner() external
     {
-        return balances[owner].posibleDividends;
-    }
+        require(!isActive);// Only for not yet activated token.
 
-    // Get posible redemption value.
-    function posibleRedemptionOf(address owner) public view returns (uint)
-    {
-        return balances[owner].posibleRedemption;
-    }
+        activatedPhases[0] = i0;
+        activatedPhases[1] = i1;
+        activatedPhases[2] = i2;
 
-    // Transfer _value etheres to _to.
-    function transfer(address _to, uint _value) onlyActivated() external returns (bool)
-    {
-        require(balanceOf(msg.sender) >= _value);
-
-        recalculate(msg.sender);// Recalculate user's struct.
+        Activate();
         
-        if (_to != 0x00)// For normal transfer.
+        isActive = true;// Activate token.
+    }
+
+    // Transform ico balance to standard balance.
+    function transform(address addr) public
+    {
+        require(isActive);// Only after activation.
+        require(!icoBalances[addr].hasTransformed);// Only for not transfromed structs.
+
+        for (uint i = 0; i < 3; i++)
         {
-            recalculate(_to);// Recalculate recipient's struct.
-
-            // Change balances.
-            balances[msg.sender].balance -= _value;
-            balances[_to].balance += _value;
-
-            Transfer(msg.sender, _to, _value);// Call transfer event.
-        }
-        else// For redemption transfer.
-        {
-            require(payoutPeriodStart <= now && now >= payoutPeriodEnd);// Check redemption period.
-            
-            uint amount = _value * redemptionPayouts[amountOfRedemptionPayouts].price;// Calculate amount of weis in redemption.
-
-            require(amount <= balances[msg.sender].posibleRedemption);// Check redemption limits.
-
-            // Change user's struct.
-            balances[msg.sender].posibleRedemption -= amount;
-            balances[msg.sender].balance -= _value;
-
-            totalSupply -= _value;// Decrease total supply.
-
-            msg.sender.transfer(amount);// Transfer redemption to user.
-
-            Transfer(msg.sender, _to, _value);// Call transfer event.
-        }
-
-        return true;
-    }
-
-    // Transfer from _from to _to _value tokens.
-    function transferFrom(address _from, address _to, uint _value) onlyActivated() external returns (bool)
-    {
-        // Check transfer posibility.
-        require(balances[_from].balance >= _value);
-        require(allowed[_from][msg.sender] >= _value);
-        require(_to != 0x00);
-
-        // Recalculate structs.
-        recalculate(_from);
-        recalculate(_to);
-
-        // Change balances.
-        balances[_from].balance -= _value;
-        balances[_to].balance += _value;
-        
-        Transfer(_from, _to, _value);// Call tranfer event.
-        
-        return true;
-    }
-
-    // Approve for transfers.
-    function approve(address _spender, uint _value) onlyActivated() public returns (bool)
-    {
-        // Recalculate structs.
-        recalculate(msg.sender);
-        recalculate(_spender);
-
-        allowed[msg.sender][_spender] = _value;// Set allowed.
-        
-        Approval(msg.sender, _spender, _value);// Call approval event.
-        
-        return true;
-    }
-
-    // Get allowance.
-    function allowance(address _owner, address _spender) onlyActivated() external view returns (uint)
-    {
-        return allowed[_owner][_spender];
-    }
-
-    // Mint _value tokens to _to address.
-    function mint(address _to, uint _value, bool icoMinting) onlyOwner() external returns (bool)
-    {
-        require(!isActive);// Check no activation.
-
-        if (icoMinting)
-        {
-            balances[_to].icoBalance += _value;
-            totalSupplyOnIco += _value;
-        }
-        else
-        {
-            balances[_to].balance += _value;// Increase user's balance.
-            totalSupply += _value;// Increase total supply.
-
-            Transfer(0x00, _to, _value);// Call transfer event.
-        }
-        
-        return true;
-    }
-
-    // Pay dividends.
-    function payDividends() onlyPayer() onlyActivated() external payable returns (bool)
-    {
-        require(now >= payoutPeriodStart && now <= payoutPeriodEnd);// Check payout period.
-
-        dividendPayouts[amountOfDividendsPayouts].amount = msg.value;// Set payout amount in weis.
-        dividendPayouts[amountOfDividendsPayouts].momentTotalSupply = totalSupply;// Save total supply on that moment.
-        
-        PayoutDividends(msg.value, amountOfDividendsPayouts);// Call dividend payout event.
-
-        amountOfDividendsPayouts++;// Increment dividend payouts amount.
-
-        return true;
-    }
-
-    // Pay redemption.
-    function payRedemption(uint price) onlyPayer() onlyActivated() external payable returns (bool)
-    {
-        require(now >= payoutPeriodStart && now <= payoutPeriodEnd);// Check payout period.
-
-        redemptionPayouts[amountOfRedemptionPayouts].amount = msg.value;// Set payout amount in weis.
-        redemptionPayouts[amountOfRedemptionPayouts].momentTotalSupply = totalSupply;// Save total supply on that moment.
-        redemptionPayouts[amountOfRedemptionPayouts].price = price;// Set price of Agricoin in weis at this redemption moment.
-
-        PayoutRedemption(msg.value, amountOfRedemptionPayouts, price);// Call redemption payout event.
-
-        amountOfRedemptionPayouts++;// Increment redemption payouts amount.
-
-        return true;
-    }
-
-    // Get back unpaid dividends and redemption.
-    function getUnpaid() onlyPayer() onlyActivated() external returns (bool)
-    {
-        require(now >= payoutPeriodEnd);// Check end payout period.
-
-        GetUnpaid(this.balance);// Call getting unpaid ether event.
-
-        msg.sender.transfer(this.balance);// Transfer all ethers back to payer.
-
-        return true;
-    }
-
-    // Recalculates dividends and redumptions.
-    function recalculate(address user) onlyActivated() public returns (bool)
-    {
-        if (isSuccessfulIco)
-        {
-            if (balances[user].icoBalance != 0)
+            if (activatedPhases[i])// Check phase activation.
             {
-                balances[user].balance += balances[user].icoBalance;
-                Transfer(0x00, user, balances[user].icoBalance);
-                balances[user].icoBalance = 0;
+                balances[addr] += icoBalances[addr].balances[i];// Increase balance.
+                Transfer(0x00, addr, icoBalances[addr].balances[i]);
+                icoBalances[addr].balances[i] = 0;// Set ico balance to zero.
             }
         }
 
-        // Check for necessity of recalculation.
-        if (balances[user].lastDividensPayoutNumber == amountOfDividendsPayouts &&
-            balances[user].lastRedemptionPayoutNumber == amountOfRedemptionPayouts)
-        {
-            return true;
-        }
-
-        uint addedDividend = 0;
-
-        // For dividends.
-        for (uint i = balances[user].lastDividensPayoutNumber; i < amountOfDividendsPayouts; i++)
-        {
-            addedDividend += (balances[user].balance * dividendPayouts[i].amount) / dividendPayouts[i].momentTotalSupply;
-        }
-
-        balances[user].posibleDividends += addedDividend;
-        balances[user].lastDividensPayoutNumber = amountOfDividendsPayouts;
-
-        uint addedRedemption = 0;
-
-        // For redemption.
-        for (uint j = balances[user].lastRedemptionPayoutNumber; j < amountOfRedemptionPayouts; j++)
-        {
-            addedRedemption += (balances[user].balance * redemptionPayouts[j].amount) / redemptionPayouts[j].momentTotalSupply;
-        }
-
-        balances[user].posibleRedemption += addedRedemption;
-        balances[user].lastRedemptionPayoutNumber = amountOfRedemptionPayouts;
-
-        return true;
+        icoBalances[addr].hasTransformed = true;// Set struct to transformed status.
     }
 
-    // Get dividends.
-    function () external payable
+    // For simple call transform().
+    function () payable external
     {
-        if (payoutPeriodStart >= now && now <= payoutPeriodEnd)// Check payout period.
-        {
-            if (posibleDividendsOf(msg.sender) > 0)// Check posible dividends.
-            {
-                uint dividendsAmount = posibleDividendsOf(msg.sender);// Get posible dividends amount.
-
-                GetDividends(msg.sender, dividendsAmount);// Call getting dividends event.
-
-                balances[msg.sender].posibleDividends = 0;// Set balance to zero.
-
-                msg.sender.transfer(dividendsAmount);// Transfer dividends amount.
-            }
-        }
+        transform(msg.sender);
+        msg.sender.transfer(msg.value);
     }
 
-    // Token name.
-    string public constant name = "Agricoin";
-    
-    // Token market symbol.
-    string public constant symbol = "AGR";
-    
-    // Amount of digits after comma.
-    uint public constant decimals = 2;
+    // Activated on ICO phases.
+    bool[3] public activatedPhases;
 
-    // Total supply.
-    uint public totalSupply;
+    // Token activation status.
+    bool public isActive;
 
-    // Total supply on ICO only;
-    uint public totalSupplyOnIco;
-       
-    // Activation date.
-    uint public startDate;
-    
-    // Payment period start date, setted by ICO contract before activation.
-    uint public payoutPeriodStart;
-    
-    // Payment period last date, setted by ICO contract before activation.
-    uint public payoutPeriodEnd;
-    
-    // Dividends DividendPayout counter.
-    uint public amountOfDividendsPayouts = 0;
-
-    // Redemption DividendPayout counter.
-    uint public amountOfRedemptionPayouts = 0;
-
-    // Dividend payouts.
-    mapping (uint => DividendPayout) public dividendPayouts;
-    
-    // Redemption payouts.
-    mapping (uint => RedemptionPayout) public redemptionPayouts;
-
-    // Dividend and redemption payers.
-    mapping (address => bool) public payers;
-
-    // Balance records.
-    mapping (address => Balance) public balances;
-
-    // Allowed balances.
-    mapping (address => mapping (address => uint)) public allowed;
-
-    // Set true for activating token. If false then token isn't working.
-    bool public isActive = false;
-
-    // Set true for activate ico minted tokens.
-    bool public isSuccessfulIco = false;
+    // Ico balances.
+    mapping (address => IcoBalance) public icoBalances;
 }
 
 contract Bounty is Owned
@@ -410,16 +227,16 @@ contract Bounty is Owned
     event AddBounty(address indexed bountyHunter, uint amount);
 
     // Constructor.
-    function Bounty(address agricoinAddress) public
+    function Bounty(address gabicoinAddress) public
     {
         owner = msg.sender;
-        token = agricoinAddress;
+        token = gabicoinAddress;
     }
 
     // Add bounty for hunter.
     function addBountyForHunter(address hunter, uint bounty) onlyOwner() external returns (bool)
     {
-        require(!Agricoin(token).isActive());// Check token activity.
+        require(!Gabicoin(token).isActive());// Check token activity.
 
         bounties[hunter] += bounty;// Increase bounty for hunter.
         bountyTotal += bounty;// Increase total bounty value.
@@ -432,10 +249,10 @@ contract Bounty is Owned
     // Get bounty.
     function getBounty() external returns (uint)
     {
-        require(Agricoin(token).isActive());// Check token activity.
+        require(Gabicoin(token).isActive());// Check token activity.
         require(bounties[msg.sender] != 0);// Check balance of bounty hunter.
         
-        if (Agricoin(token).transfer(msg.sender, bounties[msg.sender]))// Transfer bounty tokens to bounty hunter.
+        if (Gabicoin(token).transfer(msg.sender, bounties[msg.sender]))// Transfer bounty tokens to bounty hunter.
         {
             uint amount = bounties[msg.sender];
             bountyTotal -= amount;// Decrease total bounty.
@@ -458,6 +275,6 @@ contract Bounty is Owned
     // Total bounty.
     uint public bountyTotal = 0;
 
-    // Agricoin token.
+    // Gabicoin token.
     address public token;
 }
