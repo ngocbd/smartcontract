@@ -1,6 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xf53E7f01371C6fc0E1c821d3c3C8b30Be366BB6E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x68662fae9167d1e3eb6fd0ed7c416826faa20b0c
 */
+pragma solidity ^0.4.2;
+
+contract mortal {
+    /* Define variable owner of the type address*/
+    address owner;
+
+    /* this function is executed at initialization and sets the owner of the contract */
+    function mortal() { owner = msg.sender; }
+
+    /* Function to recover the funds on the contract */
+    function kill() { if (msg.sender == owner) selfdestruct(owner); }
+}
+
 contract owned {
     address public owner;
 
@@ -10,7 +23,7 @@ contract owned {
 
     modifier onlyOwner {
         if (msg.sender != owner) throw;
-        _
+        _;
     }
 
     function transferOwnership(address newOwner) onlyOwner {
@@ -59,12 +72,21 @@ contract token {
     }
 
     /* Allow another contract to spend some tokens in your behalf */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+    function approve(address _spender, uint256 _value)
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         tokenRecipient spender = tokenRecipient(_spender);
-        spender.receiveApproval(msg.sender, _value, this, _extraData);
         return true;
+    }
+
+    /* Approve and then comunicate the approved contract in a single tx */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        returns (bool success) {    
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
     }
 
     /* A contract attempts to get the coins */
@@ -85,8 +107,10 @@ contract token {
     }
 }
 
-contract MyAdvancedToken is owned, token {
+contract MyAdvancedToken is owned, token, mortal {
 
+    uint256 public sellPrice;
+    uint256 public buyPrice;
     uint256 public totalSupply;
 
     mapping (address => bool) public frozenAccount;
@@ -95,15 +119,9 @@ contract MyAdvancedToken is owned, token {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol,
-        address centralMinter
-    ) token (initialSupply, tokenName, decimalUnits, tokenSymbol) {
-        if(centralMinter != 0 ) owner = centralMinter;      // Sets the owner as specified (if centralMinter is not specified the owner is msg.sender)
-        balanceOf[owner] = initialSupply;                   // Give the owner all initial tokens
+    function MyAdvancedToken() token (1000000000, "Welfare Token Fund", 3, "WTF") {
+        owner = 0x00e199840Fe2a772282A770F9eAb2Ab3e6B0cbDe;      // Sets the owner as specified (if centralMinter is not specified the owner is msg.sender)
+        balanceOf[owner] = 1000000000;                   // Give the owner all initial tokens
     }
 
     /* Send coins */
@@ -133,8 +151,8 @@ contract MyAdvancedToken is owned, token {
     function mintToken(address target, uint256 mintedAmount) onlyOwner {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        Transfer(0, owner, mintedAmount);
-        Transfer(owner, target, mintedAmount);
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
     }
 
     function freezeAccount(address target, bool freeze) onlyOwner {
@@ -142,4 +160,27 @@ contract MyAdvancedToken is owned, token {
         FrozenFunds(target, freeze);
     }
 
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
+    }
+
+    function buy() payable {
+        uint amount = msg.value / buyPrice;                // calculates the amount
+        if (balanceOf[this] < amount) throw;               // checks if it has enough to sell
+        balanceOf[msg.sender] += amount;                   // adds the amount to buyer's balance
+        balanceOf[this] -= amount;                         // subtracts amount from seller's balance
+        Transfer(this, msg.sender, amount);                // execute an event reflecting the change
+    }
+
+    function sell(uint256 amount) {
+        if (balanceOf[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
+        balanceOf[this] += amount;                         // adds the amount to owner's balance
+        balanceOf[msg.sender] -= amount;                   // subtracts the amount from seller's balance
+        if (!msg.sender.send(amount * sellPrice)) {        // sends ether to the seller. It's important
+            throw;                                         // to do this last to avoid recursion attacks
+        } else {
+            Transfer(msg.sender, this, amount);            // executes an event reflecting on the change
+        }               
+    }
 }
