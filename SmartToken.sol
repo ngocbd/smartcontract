@@ -1,7 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x970d48531bd6Da34DfA5f867c3bc0AFE17c0c4dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x5EF7D6bCF0Ff2fee823883841a246aB84ffce8A0
 */
 pragma solidity ^0.4.11;
+
+/*
+    Overflow protected math functions
+*/
+contract SafeMath {
+    /**
+        constructor
+    */
+    function SafeMath() {
+    }
+
+    /**
+        @dev returns the sum of _x and _y, asserts if the calculation overflows
+
+        @param _x   value 1
+        @param _y   value 2
+
+        @return sum
+    */
+    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
+        uint256 z = _x + _y;
+        assert(z >= _x);
+        return z;
+    }
+
+    /**
+        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
+
+        @param _x   minuend
+        @param _y   subtrahend
+
+        @return difference
+    */
+    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
+        assert(_x >= _y);
+        return _x - _y;
+    }
+
+    /**
+        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
+
+        @param _x   factor 1
+        @param _y   factor 2
+
+        @return product
+    */
+    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
+        uint256 z = _x * _y;
+        assert(_x == 0 || z / _x == _y);
+        return z;
+    }
+} 
 
 /*
     Owned contract interface
@@ -13,7 +65,6 @@ contract IOwned {
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
 }
-
 
 /*
     Provides support and utilities for contract ownership
@@ -67,58 +118,50 @@ contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
 
-
 /*
-    Overflow protected math functions
+    We consider every contract to be a 'token holder' since it's currently not possible
+    for a contract to deny receiving tokens.
+
+    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
+    the owner to send tokens that were sent to the contract by mistake back to their sender.
 */
-contract SafeMath {
+contract TokenHolder is ITokenHolder, Owned {
     /**
-        constructor
+        @dev constructor
     */
-    function SafeMath() {
+    function TokenHolder() {
+    }
+
+    // validates an address - currently only checks that it isn't null
+    modifier validAddress(address _address) {
+        require(_address != 0x0);
+        _;
+    }
+
+    // verifies that the address is different than this contract address
+    modifier notThis(address _address) {
+        require(_address != address(this));
+        _;
     }
 
     /**
-        @dev returns the sum of _x and _y, asserts if the calculation overflows
+        @dev withdraws tokens held by the contract and sends them to an account
+        can only be called by the owner
 
-        @param _x   value 1
-        @param _y   value 2
-
-        @return sum
+        @param _token   ERC20 token contract address
+        @param _to      account to receive the new amount
+        @param _amount  amount to withdraw
     */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x + _y;
-        assert(z >= _x);
-        return z;
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
+        public
+        ownerOnly
+        validAddress(_token)
+        validAddress(_to)
+        notThis(_to)
+    {
+        assert(_token.transfer(_to, _amount));
     }
-
-    /**
-        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
-
-        @param _x   minuend
-        @param _y   subtrahend
-
-        @return difference
-    */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
-        assert(_x >= _y);
-        return _x - _y;
-    }
-
-    /**
-        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
-
-        @param _x   factor 1
-        @param _y   factor 2
-
-        @return product
-    */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x * _y;
-        assert(_x == 0 || z / _x == _y);
-        return z;
-    }
-} 
+}
 
 /*
     ERC20 Standard Token interface
@@ -243,55 +286,6 @@ contract ERC20Token is IERC20Token, SafeMath {
     }
 }
 
-
-
-/*
-    We consider every contract to be a 'token holder' since it's currently not possible
-    for a contract to deny receiving tokens.
-
-    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
-    the owner to send tokens that were sent to the contract by mistake back to their sender.
-*/
-contract TokenHolder is ITokenHolder, Owned {
-    /**
-        @dev constructor
-    */
-    function TokenHolder() {
-    }
-
-    // validates an address - currently only checks that it isn't null
-    modifier validAddress(address _address) {
-        require(_address != 0x0);
-        _;
-    }
-
-    // verifies that the address is different than this contract address
-    modifier notThis(address _address) {
-        require(_address != address(this));
-        _;
-    }
-
-    /**
-        @dev withdraws tokens held by the contract and sends them to an account
-        can only be called by the owner
-
-        @param _token   ERC20 token contract address
-        @param _to      account to receive the new amount
-        @param _amount  amount to withdraw
-    */
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
-        public
-        ownerOnly
-        validAddress(_token)
-        validAddress(_to)
-        notThis(_to)
-    {
-        assert(_token.transfer(_to, _amount));
-    }
-}
-
-
-
 /*
     Smart Token interface
 */
@@ -300,7 +294,6 @@ contract ISmartToken is ITokenHolder, IERC20Token {
     function issue(address _to, uint256 _amount) public;
     function destroy(address _from, uint256 _amount) public;
 }
-
 
 /*
     Smart Token v0.2
