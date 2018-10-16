@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetstreakToken at 0x1bbc17fbba88ed99b7e4de5fe908c24568fc57ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetstreakToken at 0x2af3c466199f11f779135354319861af4237b521
 */
 pragma solidity ^0.4.4;
 
@@ -127,7 +127,7 @@ contract BetstreakToken is StandardToken { // CHANGE THIS. Update the contract n
         units40percentExtra = 7000;
         units50percentExtra = 7500;
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
-        maxHardCaphardcap = 5;
+        maxHardCaphardcap = 20000;
         IEOEndDate = 1529020800; // 15th June 2018 00:00:00
         tokenMoveableDate = 1539388800; // 13th Oct 2018 00:00:00 --- 120 days from 15th June 2018
         isIEOActive = isWithinIEO();
