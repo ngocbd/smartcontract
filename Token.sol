@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xaf55f3b7dc65c8f9577cf00c8c5ca7b6e8cc4433
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xaf28902a20fe752c26258dad52587ad8765c247f
 */
 pragma solidity ^0.4.14;
 
@@ -149,8 +149,8 @@ contract Token is StandardToken, Ownable {
 
     uint256 public cap;
     uint256 public issuedTokens;
-    string public name = "Enter-Coin";
-    string public symbol = "ENTRC";
+    string public name = "EnterCoin";
+    string public symbol = "ENTR";
     uint public decimals = 8;
     uint public INITIAL_SUPPLY = 100000000 * (10**decimals);
     address founder; 
@@ -167,14 +167,13 @@ contract Token is StandardToken, Ownable {
     
 
     wallet = address(0x6D6D8fDFeFDA898341a60340a5699769Af2BA350); 
-    founder = address(0x0CC74179395d9434C9A31586763861327C499E76); // address of the founder
+    founder = address(0xD03ED9dA0b06135953f5dab808C77A077412A2D3); // address of the founder
 
-    tokensPerEther = 306; // 12/10/17 value 1 dollar value
+    tokensPerEther = 301; // 12/10/17 value 1 dollar value
     endBlock = block.number + 1000000;
 
     totalSupply = INITIAL_SUPPLY;
-                          // reserve         // for token sale
-    balances[msg.sender] = (25000000 * mf) + (65000000 * mf);
+    balances[msg.sender] = 25000000 * mf;
     balances[founder] = 10000000 * mf;
 
     startBlock = block.number;    
@@ -192,31 +191,27 @@ contract Token is StandardToken, Ownable {
   function () payable {
     buyTokens(msg.sender);
   }
-  
-  function getTimePassed() public constant returns (uint256) {
-      return (now - contractDeployedTime).div(1 days);
-  }
   // bonus based on the current time
-  function applyBonus(uint256 tokens) internal constant returns (uint256) {
+  function applyBonus(uint256 tokens, uint256 ethers) internal returns (uint256) {
 
-    if ( (now < (contractDeployedTime + 14 days)) && (issuedTokens < (3500000*mf)) ) {
+    if ( (now < contractDeployedTime + 14 days) && (issuedTokens < (3500000*mf)) ) {
 
       return tokens.mul(20).div(10); // 100% bonus
       
-    } else if ((now < (contractDeployedTime + 20 days)) && (issuedTokens < (13500000*mf)) ) {
+    } else if ((now < contractDeployedTime + 20 days) && (issuedTokens < (13500000*mf)) ) {
     
       return tokens.mul(15).div(10); // 50% bonus
     
 
-    } else if ((now < (contractDeployedTime + 26 days)) && (issuedTokens < (23500000*mf)) ) {
+    } else if ((now < contractDeployedTime + 26 days) && (issuedTokens < (23500000*mf)) ) {
 
       return tokens.mul(13).div(10); // 30% bonus
 
-    } else if ((now < (contractDeployedTime + 32 days)) && (issuedTokens < (33500000*mf)) ) {
+    } else if ((now < contractDeployedTime + 32 days) && (issuedTokens < (33500000*mf)) ) {
 
       return tokens.mul(12).div(10); // 20% bonus
 
-    } else if ((now < (contractDeployedTime + 38 days)) && (issuedTokens < (43500000*mf)) ) {
+    } else if ((now < contractDeployedTime + 38 days) && (issuedTokens < (43500000*mf)) ) {
       return tokens.mul(11).div(10); // 10% bonus
 
     } 
@@ -228,11 +223,6 @@ contract Token is StandardToken, Ownable {
   // stop the crowd sale
   function stopCrowdSale() onlyOwner {
     isCrowdSaleRunning = false;
-    endBlock = block.number;
-  }
-
-  function resetContractDeploymentDate() onlyOwner {
-      contractDeployedTime = now;
   }
 
   function startCrowdsale(uint interval) onlyOwner {
@@ -258,7 +248,7 @@ contract Token is StandardToken, Ownable {
     // calculate token amount to be created
     uint256 tokens = weiAmount.mul(tokensPerEther).div(factor);
 
-    tokens = applyBonus(tokens);
+    tokens = applyBonus(tokens,weiAmount.div(1 ether));
     
     // check if the tokens are more than the cap
     require(issuedTokens.add(tokens) <= cap);
@@ -280,7 +270,6 @@ contract Token is StandardToken, Ownable {
 
   // can be issued to anyone without owners concent but as this method is internal only buyToken is calling it.
   function issueToken(address beneficiary, uint256 tokens) internal {
-    balances[owner] = balances[owner].sub(tokens);
     balances[beneficiary] = balances[beneficiary].add(tokens);
   }
 
@@ -302,7 +291,7 @@ contract Token is StandardToken, Ownable {
 
   // @return true if crowdsale event has ended
   function hasEnded() public constant returns (bool) {
-      return (block.number > endBlock) || !isCrowdSaleRunning;
+      return (block.number > endBlock) && isCrowdSaleRunning;
   }
 
 }
