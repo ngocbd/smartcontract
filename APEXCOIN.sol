@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APEXCOIN at 0xF05EbadcF22b4dfd49d7f3AB59fd22C9fC49AF6F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApexCoin at 0x975ea07461c985d0971f8d9bd31cad49ddde33dc
 */
 pragma solidity ^0.4.11;
 
@@ -57,15 +57,15 @@ contract owned {
         }
 }
 
-contract APEXCOIN is owned,IERC20{
+contract ApexCoin is owned,IERC20{
     
     using SafeMath for uint256;
     
     uint256 public constant _totalSupply = 28000000000000000000000000;
  
-    string public symbol = 'APX';
+    string public symbol = 'APC';
 
-    string public name = 'APEXCOIN';
+    string public name = 'Apex Coin';
     
     uint8 public constant decimals = 18;
     
@@ -74,9 +74,13 @@ contract APEXCOIN is owned,IERC20{
     
     mapping(address => uint256) public balances;
     mapping (address => mapping (address => uint256)) allowed;
-  
+    
+   /* function () payable {
+        createTokens();
+    }*/
+    
 
-    function APEXCOIN() {
+    function ApexCoin() {
        // owner = msg.sender;
         balances[msg.sender] = _totalSupply;
     }
@@ -85,6 +89,18 @@ contract APEXCOIN is owned,IERC20{
         symbol = _symbol;
         name   = _name;
     }
+    
+  /* function createTokens() payable {
+        require(
+            msg.value > 0
+        );
+        uint256 baseTokens  = msg.value.mul(tokensPerEther);
+        balances[msg.sender] = balances[msg.sender].add(baseTokens);
+        _totalSupply      = _totalSupply.add(baseTokens);
+        
+        owner.transfer(msg.value);
+    }
+    */
     
     function totalSupply() constant returns (uint256 totalSupply) {
         return _totalSupply;
