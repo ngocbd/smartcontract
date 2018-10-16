@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xcbeea2e0c48f5bed015fe53bdc8fb643cfef7969
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x058306004a2acfcaf5160142adcb71e9bb6d38e9
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.17;
 
 /**
  * @title SafeMath
@@ -49,7 +49,7 @@ contract Crowdsale {
   // address where funds are collected
   address public wallet;
   // token address
-  address addressOfTokenUsedAsReward;
+  address public addressOfTokenUsedAsReward;
 
   token tokenReward;
 
@@ -72,21 +72,14 @@ contract Crowdsale {
 
 
   function Crowdsale() {
-    wallet = 0xA10f6f8A723038ca267FD8D5354d1563238dc1De;
-    // durationInMinutes = _durationInMinutes;
-    addressOfTokenUsedAsReward = 0xdFF8e7f5496D1e1A4Af3497Cb4712017a9C65442;
+    wallet = 0x7F9C7AA8A7F467DD5641BA81B218aADd6883e038;
+    addressOfTokenUsedAsReward = 0xD70c22FF998cb7c5c36ae1680d1b49A435Cd7306;
 
 
     tokenReward = token(addressOfTokenUsedAsReward);
-  }
-
-  bool started = false;
-
-  function startSale(uint256 delay){
-    if (msg.sender != wallet || started) throw;
-    startTime = now + delay * 1 minutes;
-    endTime = startTime + 42 * 24 * 60 * 1 minutes;
-    started = true;
+    //update required here.
+    startTime = now + 50410 * 1 minutes;
+    endTime = startTime + 54*24*60 * 1 minutes;
   }
 
   // fallback function can be used to buy tokens
@@ -101,18 +94,20 @@ contract Crowdsale {
 
     uint256 weiAmount = msg.value;
 
-    // calculate token amount to be sent
-    uint256 tokens = (weiAmount) * 3000;
 
-    if(now < startTime + 1*7*24*60* 1 minutes){
-      tokens += (tokens * 60) / 100;
-    }else if(now < startTime + 2*7*24*60* 1 minutes){
+
+    // calculate token amount to be sent
+    uint256 tokens = (weiAmount) * 1000;
+
+    if(now < startTime + 7*24*60* 1 minutes){
       tokens += (tokens * 40) / 100;
-    }else if(now < startTime + 3*7*24*60* 1 minutes){
-      tokens += (tokens * 30) / 100;
-    }else if(now < startTime + 4*7*24*60* 1 minutes){
+    }else if (now < startTime + 27*24*60*1 minutes){
+      throw;
+    }else if(now < startTime + 34*24*60* 1 minutes){
       tokens += (tokens * 20) / 100;
-    }else if(now < startTime + 5*7*24*60* 1 minutes){
+    }else if(now < startTime + 41*24*60* 1 minutes){
+      tokens += (tokens * 15) / 100;
+    }else if(now < startTime + 47*24*60* 1 minutes){
       tokens += (tokens * 10) / 100;
     }
 
@@ -127,7 +122,6 @@ contract Crowdsale {
   // send ether to the fund collection wallet
   // override to create custom fund forwarding mechanisms
   function forwardFunds() internal {
-    // wallet.transfer(msg.value);
     if (!wallet.send(msg.value)) {
       throw;
     }
