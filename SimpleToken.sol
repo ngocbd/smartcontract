@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x9348E71Eb8f7eFDb17792Ba3cf1e3163eA8b78F2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x31BE2a2cDE326B7910b3eadE8b0DB7eBED4D11F6
 */
 pragma solidity ^0.4.6;
 
@@ -153,10 +153,10 @@ contract StandardToken is BasicToken, ERC20 {
 
 contract SimpleToken is StandardToken {
 
-  string public name = "Retcoin";
-  string public symbol = "RET";
+  string public name = "Routecoin";
+  string public symbol = "RC";
   uint public decimals = 3;
-  uint public INITIAL_SUPPLY = 100000000000;
+  uint public INITIAL_SUPPLY = 1000000000000;
 
   function SimpleToken() {
     totalSupply = INITIAL_SUPPLY;
