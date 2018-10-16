@@ -1,6 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAVAssetProxy at 0xf8e6bacd9298df8b0aba67ef2ef8348fabc5ae8a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAVAssetProxy at 0x9f0577396ede6414394fc97ae222418e8a96ed24
 */
+pragma solidity ^0.4.11;
+
+// File: contracts/CAVAssetInterface.sol
+
 contract CAVAsset {
     function __transferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
     function __transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
@@ -10,19 +14,7 @@ contract CAVAsset {
     }
 }
 
-contract ERC20 {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed from, address indexed spender, uint256 value);
-    string public symbol;
-
-    function decimals() constant returns (uint8);
-    function totalSupply() constant returns (uint256 supply);
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-}
+// File: contracts/CAVPlatformInterface.sol
 
 contract CAVPlatform {
     mapping(bytes32 => address) public proxies;
@@ -50,7 +42,48 @@ contract CAVPlatform {
     function hasAssetRights(address _owner, bytes32 _symbol) public view returns (bool);
 }
 
-contract CAVAssetProxy is ERC20 {
+// File: contracts/ERC20Interface.sol
+
+contract ERC20Interface {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed from, address indexed spender, uint256 value);
+    string public symbol;
+
+    function decimals() constant returns (uint8);
+    function totalSupply() constant returns (uint256 supply);
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+}
+
+// File: contracts/CAVAssetProxy.sol
+
+/**
+ * @title CAV Asset Proxy.
+ *
+ * Proxy implements ERC20 interface and acts as a gateway to a single platform asset.
+ * Proxy adds symbol and caller(sender) when forwarding requests to platform.
+ * Every request that is made by caller first sent to the specific asset implementation
+ * contract, which then calls back to be forwarded onto platform.
+ *
+ * Calls flow: Caller ->
+ *             Proxy.func(...) ->
+ *             Asset.__func(..., Caller.address) ->
+ *             Proxy.__func(..., Caller.address) ->
+ *             Platform.proxyFunc(..., symbol, Caller.address)
+ *
+ * Asset implementation contract is mutable, but each user have an option to stick with
+ * old implementation, through explicit decision made in timely manner, if he doesn't agree
+ * with new rules.
+ * Each user have a possibility to upgrade to latest asset contract implementation, without the
+ * possibility to rollback.
+ *
+ * Note: all the non constant functions return false instead of throwing in case if state change
+ * didn't happen yet.
+ */
+contract CAVAssetProxy is ERC20Interface {
 
     // Supports CAVPlatform ability to return error codes from methods
     uint constant OK = 1;
