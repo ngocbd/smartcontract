@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTACrowdsale at 0xdb58a73c4c63f36a0a90d3d3b0bb9fafa04105b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTACrowdsale at 0x826fda249eda33f43b8dfb3084efacc39993f851
 */
 pragma solidity ^0.4.18;
 
@@ -248,7 +248,7 @@ contract Ownable {
 
 contract MintableToken is StandardToken, Ownable {
     string public constant name = "Bitcoin Futures Alpha";
-    string public constant symbol = "BTA";
+    string public constant symbol = "BFA";
     uint8 public constant decimals = 10;
 
     event Mint(address indexed to, uint256 amount);
