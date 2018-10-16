@@ -1,20 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TronToken at 0x062344dc7fbe2cb6a14eaf84b613af64684252bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TronToken at 0xb63a6d64a7772a47621de768f23a4bb6632c09d6
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
 contract TronToken {
 
-    string   public name ;            //  token name
-    string   public symbol ;          //  token symbol
-    uint256  public decimals ;        //  token digit
+    string public name = "Tronix";      //  token name
+    string public symbol = "TRX";           //  token symbol
+    uint256 public decimals = 6;            //  token digit
 
     mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
     uint256 public totalSupply = 0;
-    bool public stopped = false;      //  stopflag: true is stoped,false is not stoped
+    bool public stopped = false;
 
-    uint256 constant valueFounder = 500000000000000000;
+    uint256 constant valueFounder = 100000000000000000;
     address owner = 0x0;
 
     modifier isOwner {
@@ -32,21 +33,14 @@ contract TronToken {
         _;
     }
 
-    function TronToken(address _addressFounder,uint256 _initialSupply, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public {
+    function TronToken(address _addressFounder) {
         owner = msg.sender;
-        if (_addressFounder == 0x0)
-            _addressFounder = msg.sender;
-        if (_initialSupply == 0) 
-            _initialSupply = valueFounder;
-        totalSupply = _initialSupply;   // Set the totalSupply 
-        name = _tokenName;              // Set the name for display 
-        symbol = _tokenSymbol;          // Set the symbol for display 
-        decimals = _decimalUnits;       // Amount of decimals for display purposes
-        balanceOf[_addressFounder] = totalSupply;
-        Transfer(0x0, _addressFounder, totalSupply);
+        totalSupply = valueFounder;
+        balanceOf[_addressFounder] = valueFounder;
+        Transfer(0x0, _addressFounder, valueFounder);
     }
 
-    function transfer(address _to, uint256 _value) public isRunning validAddress returns (bool success) {
+    function transfer(address _to, uint256 _value) isRunning validAddress returns (bool success) {
         require(balanceOf[msg.sender] >= _value);
         require(balanceOf[_to] + _value >= balanceOf[_to]);
         balanceOf[msg.sender] -= _value;
@@ -55,23 +49,37 @@ contract TronToken {
         return true;
     }
 
-    function stop() public isOwner {
+    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        balanceOf[_to] += _value;
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) isRunning validAddress returns (bool success) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function stop() isOwner {
         stopped = true;
     }
 
-    function start() public isOwner {
+    function start() isOwner {
         stopped = false;
     }
 
-    function setName(string _name) public isOwner {
+    function setName(string _name) isOwner {
         name = _name;
     }
-    
-    function setOwner(address _owner) public isOwner {
-        owner = _owner;
-    }
 
-    function burn(uint256 _value) public {
+    function burn(uint256 _value) {
         require(balanceOf[msg.sender] >= _value);
         balanceOf[msg.sender] -= _value;
         balanceOf[0x0] += _value;
@@ -79,4 +87,5 @@ contract TronToken {
     }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
