@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Share at 0x67257572dc786eea23e2050fe30c2d182ff52926
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Share at 0xa66b19f7de1f0c91029aaff474cd3b9652e1587c
 */
 pragma solidity ^0.4.24;
 
@@ -217,9 +217,5 @@ contract Share is Control {
         
         emit Approval(msg.sender, to, amount);
         return true;
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return total;
     }
 }
