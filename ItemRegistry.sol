@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemRegistry at 0xa4bec96265c7b58486acd15de27a53e2a45b30a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemRegistry at 0x17df117bb806a622d841bd5166a23b5d8746232f
 */
 pragma solidity ^0.4.13;
 
@@ -36,21 +36,22 @@ contract ItemRegistry {
     owner = _owner;
   }
 
-  function withdrawAll () onlyOwner() public {
+  function setCut (uint256 _n, uint256 _d) onlyOwner() public {
+    cutNumerator = _n;
+    cutDenominator = _d;
+  }
+
+  function withdraw () onlyOwner() public {
     owner.transfer(this.balance);
   }
 
-  function withdrawAmountTo (uint256 _amount, address _to) onlyOwner() public {
-    _to.transfer(_amount);
-  }
-
-  function listItem (uint256 _itemId, uint256 _price, ItemClass _class, address _owner) onlyOwner() public {
+  function listItem (uint256 _itemId, uint256 _price, ItemClass _class) onlyOwner() public {
     require(_price > 0);
     require(priceOfItem[_itemId] == 0);
     require(ownerOfItem[_itemId] == address(0));
     require(_class <= ItemClass.TIER4);
 
-    ownerOfItem[_itemId] = _owner;
+    ownerOfItem[_itemId] = owner;
     priceOfItem[_itemId] = _price;
     startingPriceOfItem[_itemId] = _price;
     classOfItem[_itemId] = _class;
@@ -59,7 +60,7 @@ contract ItemRegistry {
 
   function listMultipleItems (uint256[] _itemIds, uint256 _price, ItemClass _class) onlyOwner() external {
     for (uint256 i = 0; i < _itemIds.length; i++) {
-      listItem(_itemIds[i], _price, _class, msg.sender);
+      listItem(_itemIds[i], _price, _class);
     }
   }
 
@@ -179,14 +180,13 @@ contract ItemRegistry {
   function buy (uint256 _itemId) payable public {
     require(priceOf(_itemId) > 0);
     require(ownerOf(_itemId) != address(0));
-    require(msg.value >= priceOf(_itemId));
+    require(msg.value == priceOf(_itemId));
     require(ownerOf(_itemId) != msg.sender);
     require(!isContract(msg.sender));
 
     address oldOwner = ownerOf(_itemId);
     address newOwner = msg.sender;
     uint256 price = priceOf(_itemId);
-    uint256 excess = msg.value - price;
 
     ownerOfItem[_itemId] = newOwner;
     priceOfItem[_itemId] = nextPriceOf(_itemId);
@@ -200,10 +200,6 @@ contract ItemRegistry {
     }
 
     oldOwner.transfer(price - cut);
-
-    if (excess > 0) {
-      newOwner.transfer(excess);
-    }
   }
 
   /* Util */
