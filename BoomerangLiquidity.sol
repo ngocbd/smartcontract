@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x2247fdc0e5de91ae589abfab8b99976d8e9f330b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x3e7c4add320224d124125a6cb8dde2e45407f3dc
 */
 pragma solidity 0.4.21;
 
@@ -15,10 +15,9 @@ contract ERC20Interface {
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-contract FLMContract {
+contract P3D {
     function withdraw() public;
     function buy(address) public payable returns(uint256);
-    function myTokens() public view returns(uint256);
 }
 
 contract Owned {
@@ -52,73 +51,47 @@ contract BoomerangLiquidity is Owned {
         _;
     }
 
-    uint public multiplier;
-    uint public payoutOrder = 0;
-    FLMContract flmContract;
-
-    function BoomerangLiquidity(uint multiplierPercent, address aFlmContract) public {
-        multiplier = multiplierPercent;
-        flmContract = FLMContract(aFlmContract);
-    }
-    
-    
-    struct Participant {
-        address etherAddress;
-        uint payout;
-    }
-
-    Participant[] public participants;
-
+    P3D internal constant p3dContract = P3D(address(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe));
+    address internal constant sk2xContract = address(0xAfd87E1E1eCe09D18f4834F64F63502718d1b3d4);
     
     function() payable public {
-        deposit();
+        invest();
     }
     
-    function deposit() payable public {
-        participants.push(Participant(msg.sender, (msg.value * multiplier) / 100));
-    }
-    
-    function payout() public {
-        uint balance = address(this).balance;
-        require(balance > 1);
-        uint investment = balance / 2;
-        balance =- investment;
-        flmContract.buy.value(investment)(msg.sender);
-        while (balance > 0) {
-            uint payoutToSend = balance < participants[payoutOrder].payout ? balance : participants[payoutOrder].payout;
-            if(payoutToSend > 0){
-                participants[payoutOrder].payout -= payoutToSend;
-                balance -= payoutToSend;
-                participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)();
-            }
-            if(balance > 0){
-                payoutOrder += 1;
-            }
+    function invest() public {
+        uint256 amountToSend = address(this).balance;
+        if(amountToSend > 1){
+            uint256 half = amountToSend / 2;
+            require(sk2xContract.call.value(half)());
+            p3dContract.buy.value(half)(msg.sender);
         }
     }
-    
-    function myTokens()
-        public
-        view
-        returns(uint256) {
-        return flmContract.myTokens();    
+
+    function withdraw(address token) public {
+        P3D(token).withdraw.gas(1000000)();
+        invest();
     }
     
     function withdraw() public {
-        flmContract.withdraw.gas(1000000)();
+        p3dContract.withdraw.gas(1000000)();
+        invest();
+    }
+    
+    function withdrawAndSend() public {
+        p3dContract.withdraw.gas(1000000)();
+        invest();
     }
     
     function donate() payable public {
+        require(sk2xContract.call.value(msg.value).gas(1000000)());
     }
     
-    //THIS CONTRACT IS FOR TESTING. IF THIS IS HERE, DO NOT INVEST REAL MONEY.
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    function donateToken(address token) payable public {
+        P3D(token).buy.value(msg.value).gas(1000000)(msg.sender);
     }
     
-    //THIS CONTRACT IS FOR TESTING. IF THIS IS HERE, DO NOT INVEST REAL MONEY.
-    function exitScam() onlyOwner public {
-        msg.sender.transfer(address(this).balance);
+    function donateP3D() payable public {
+        p3dContract.buy.value(msg.value).gas(1000000)(msg.sender);
     }
     
 }
