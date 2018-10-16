@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x90ccba003bcdec6a61e67b4c09bd6ec4e70cba35
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x41ab1b6fcbb2fa9dced81acbdec13ea6315f2bf2
 */
 pragma solidity ^0.4.4;
 
@@ -142,7 +142,7 @@ contract UpgradeAgent {
  */
 contract StandardToken is ERC20, SafeMathLib {
 
-  /* Actual             of token holders */
+  /* Actual balances of token holders */
   mapping(address => uint) balances;
 
   /* approve() allowances */
@@ -418,10 +418,6 @@ contract Coin is XinfinUpgradeableToken, ReleasableToken {
 
 
   uint tokensForPublicSale = 0;
-  //uint maxTokensForWhitelister = 0;
-
-  /** Customer whitelisted address mapping */
-  //mapping(address => bool) whitelistedAddress;
 
   address contractAddress;
 
@@ -501,7 +497,7 @@ contract Coin is XinfinUpgradeableToken, ReleasableToken {
  }
 
 
-      function setTotalTokensForPublicSale(uint _value) onlyOwner{
+ function setTotalTokensForPublicSale(uint _value) onlyOwner{
       require(_value != 0);
       tokensForPublicSale = _value;
   }
@@ -551,22 +547,19 @@ function decreaseSupply(uint value) onlyOwner returns (bool) {
     require(weiAmount >= minETH);
     require(weiAmount <= maxETH);
 
-
-
     _tokenAmount =  safeMul(weiAmount,multiplier) / pricePerToken;
 
     require(_tokenAmount > 0);
 
-
     //safe sub will automatically handle overflows
     tokensForPublicSale = safeSub(tokensForPublicSale, _tokenAmount);
     onSaleTokens = safeSub(onSaleTokens, _tokenAmount);
+    balances[contractAddress] = safeSub(balances[contractAddress],_tokenAmount);
     //assign tokens
     balances[msg.sender] = safeAdd(balances[msg.sender], _tokenAmount);
 
     //send money to the owner
     require(owner.send(weiAmount));
-
 
     return _tokenAmount;
 
@@ -576,6 +569,10 @@ function decreaseSupply(uint value) onlyOwner returns (bool) {
 
   function() payable {
       buyTokens();
+  }
+
+  function destroyToken() public onlyOwner {
+      selfdestruct(msg.sender);
   }
 
 }
