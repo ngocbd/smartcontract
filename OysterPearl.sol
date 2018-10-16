@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPearl at 0x1844b21593262668b7248d0f57a220caaba46ab9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPearl at 0x4219e0D5cc63f6d7D757b2B104e80d7eDA88aFeB
 */
 pragma solidity ^0.4.18;
 
@@ -11,6 +11,7 @@ contract OysterPearl {
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
+    uint256 public buriedSupply;
     uint256 public funds;
     address public director;
     bool public saleClosed;
@@ -20,6 +21,7 @@ contract OysterPearl {
     uint256 public feeAmount;
     uint256 public epoch;
     uint256 public retentionMax;
+    uint256 public storageStep;
 
     // Array definitions
     mapping (address => uint256) public balances;
@@ -41,6 +43,8 @@ contract OysterPearl {
     
     // This notifies clients about a claim being made on a buried address
     event Claim(address indexed _target, address indexed _payout, address indexed _fee);
+    
+    event Step(uint256 _nextStep, uint256 _currentClaim);
 
     /**
      * Constructor function
@@ -50,24 +54,18 @@ contract OysterPearl {
     function OysterPearl() public {
         director = msg.sender;
         name = "Oyster Pearl";
-        symbol = "PRL";
+        symbol = "TPRL";
         decimals = 18;
         saleClosed = true;
         directorLock = false;
         funds = 0;
-        totalSupply = 0;
+        totalSupply = 15000000 * 10 ** uint256(decimals);
+        buriedSupply = 0;
+        storageStep = totalSupply / 2;
         
-        // Marketing share (5%)
-        totalSupply += 25000000 * 10 ** uint256(decimals);
-        
-        // Devfund share (15%)
-        totalSupply += 75000000 * 10 ** uint256(decimals);
-        
-        // Allocation to match PREPRL supply and reservation for discretionary use
-        totalSupply += 8000000 * 10 ** uint256(decimals);
-        
-        // Assign reserved PRL supply to the director
+        // Assign PRL supply to the director
         balances[director] = totalSupply;
+        Transfer(this, director, totalSupply);
         
         // Define default values for Oyster functions
         claimAmount = 5 * 10 ** (uint256(decimals) - 1);
@@ -165,30 +163,6 @@ contract OysterPearl {
     }
     
     /**
-     * Director can close the crowdsale
-     */
-    function closeSale() public onlyDirector returns (bool success) {
-        // The sale must be currently open
-        require(!saleClosed);
-        
-        // Lock the crowdsale
-        saleClosed = true;
-        return true;
-    }
-
-    /**
-     * Director can open the crowdsale
-     */
-    function openSale() public onlyDirector returns (bool success) {
-        // The sale must be currently closed
-        require(saleClosed);
-        
-        // Unlock the crowdsale
-        saleClosed = false;
-        return true;
-    }
-    
-    /**
      * Oyster Protocol Function
      * More information at https://oyster.ws/OysterWhitepaper.pdf
      * 
@@ -211,6 +185,14 @@ contract OysterPearl {
         
         // Set the initial claim clock to 1
         claimed[msg.sender] = 1;
+        
+        buriedSupply += balances[msg.sender];
+        
+        if (buriedSupply >= storageStep) {
+            storageStep += (totalSupply - storageStep) / 2;
+            claimAmount = claimAmount / 2;
+            Step(storageStep, claimAmount);
+        }
         
         // Execute an event reflecting the change
         Bury(msg.sender, balances[msg.sender]);
@@ -262,6 +244,8 @@ contract OysterPearl {
         // Pay the broker node that unlocked the PRL
         balances[_fee] += feeAmount;
         
+        buriedSupply -= claimAmount;
+        
         // Execute events to reflect the changes
         Claim(msg.sender, _payout, _fee);
         Transfer(msg.sender, _payout, payAmount);
@@ -270,35 +254,6 @@ contract OysterPearl {
         // Failsafe logic that should never be false
         assert(balances[msg.sender] + balances[_payout] + balances[_fee] == previousBalances);
         return true;
-    }
-    
-    /**
-     * Crowdsale function
-     */
-    function () public payable {
-        // Check if crowdsale is still active
-        require(!saleClosed);
-        
-        // Minimum amount is 1 finney
-        require(msg.value >= 1 finney);
-        
-        // Price is 1 ETH = 5000 PRL
-        uint256 amount = msg.value * 5000;
-        
-        // totalSupply limit is 500 million PRL
-        require(totalSupply + amount <= (500000000 * 10 ** uint256(decimals)));
-        
-        // Increases the total supply
-        totalSupply += amount;
-        
-        // Adds the amount to the balance
-        balances[msg.sender] += amount;
-        
-        // Track ETH amount raised
-        funds += msg.value;
-        
-        // Execute an event reflecting the change
-        Transfer(this, msg.sender, amount);
     }
 
     /**
@@ -311,6 +266,7 @@ contract OysterPearl {
         // If the receiving address is buried, it cannot exceed retentionMax
         if (buried[_to]) {
             require(balances[_to] + _value <= retentionMax);
+            buriedSupply += _value;
         }
         
         // Prevent transfer to 0x0 address, use burn() instead
