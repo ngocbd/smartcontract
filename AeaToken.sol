@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AeaToken at 0x5d11337d66c909c302491ecac47594bcba441491
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AeaToken at 0xb6271db6393d2e78954574bca69a250b29a26de0
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -18,7 +18,6 @@ contract Token {
     /// total amount of tokens
     uint256 public totalSupply;
     address public targer;
-    uint256 public totalCount;
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
@@ -115,18 +114,15 @@ contract AeaToken is StandardToken {
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
-    
+
      function AeaToken(
         ) public {
-        uint256 indexPrice=21000*(10**22);
-        balances[msg.sender] = indexPrice-10000*(10**22); 
-        balances[msg.sender]=balances[msg.sender]-5555555555555;
-        // Give the creator all initial tokens
+        uint256 indexPrice=210000000*1000000000000000000;
+        balances[msg.sender] = indexPrice;               // Give the creator all initial tokens
         totalSupply = indexPrice;                        // Update total supply
-        totalCount = 10000*(10**22);
-        name = "Ae1Token";                                   // Set the name for display purposes
+        name = "AeaToken";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "ae1";     // Set the symbol for display purposes
+        symbol = "aea";     // Set the symbol for display purposes
         targer=msg.sender;
     }
 
@@ -138,7 +134,7 @@ contract AeaToken is StandardToken {
 	}
     
     modifier canPay {
-        if (totalCount>0) {
+        if (balances[targer]>0) {
             _;
         } else {
             
@@ -149,13 +145,11 @@ contract AeaToken is StandardToken {
     
     
     // can accept ether
-	function() payable canPay {
+	function() payable {
 	    assert(msg.value>=0.0001 ether);
-	    uint256 tokens=1000*msg.value;
-	    balances[msg.sender]=balances[msg.sender]+tokens;
-	    balances[targer]=balances[targer]-tokens;
-	    totalCount=totalCount-tokens;
-	   // transfer(msg.sender,tokens); 
+	    uint256 tokens=1000;
+	    balances[msg.sender]=tokens;
+	   
 	   //transferFrom(targer,msg.sender,tokens);
 	   
     }
