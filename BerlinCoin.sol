@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BerlinCoin at 0x947b9130d7ac72f221f9dc223297a4ca747bc80f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BerlinCoin at 0x366adf86265497b1e39721a5c789a72b6ea0e67b
 */
 pragma solidity ^0.4.4;
 
@@ -123,7 +123,7 @@ contract BerlinCoin is StandardToken {
         totalSupply = 850000000;                        // Update total supply (100000 for example)
         name = "BerlinCoin";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "BLN";                               // Set the symbol for display purposes
+        symbol = "BC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
