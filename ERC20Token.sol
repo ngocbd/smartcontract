@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xf622cc9a7d21f344c4940c4f09ab7d98d8c176f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x516e5436bafdc11083654de7bb9b95382d08d5de
 */
 pragma solidity ^0.4.4;
 
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 5000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 5000000000000;                        // Update total supply (100000 for example)
-        name = "SCAM Token";                                   // Set the name for display purposes
-        decimals = 4;                            // Amount of decimals for display purposes
-        symbol = "SCAM";                               // Set the symbol for display purposes
+        balances[msg.sender] = 20000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 20000000000000000;                        // Update total supply (100000 for example)
+        name = "Ormeus Coin";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "ORME";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
