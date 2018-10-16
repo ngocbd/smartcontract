@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0x17e5e0910b9185b0ede564dcbf074ca910ad56a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0xed877a73e624d5694feb871d4a9f5315a1da8439
 */
 contract TeikhosBounty {
 
@@ -7,7 +7,7 @@ contract TeikhosBounty {
     bytes32 proof_of_public_key1 = hex"381c185bf75548b134adc3affd0cc13e66b16feb125486322fa5f47cb80a5bf0";
     bytes32 proof_of_public_key2 = hex"5f9d1d2152eae0513a4814bd8e6b0dd3ac8f6310c0494c03e9aa08bcd867c352";
 
-    function authenticate(bytes _publicKey) { // Accepts an array of bytes, for example ["0x00","0xaa", "0xff"]
+    function authenticate(bytes _publicKey) returns (bool) { // Accepts an array of bytes, for example ["0x00","0xaa", "0xff"]
 
         // Get address from public key
         address signer = address(keccak256(_publicKey));
