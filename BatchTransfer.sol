@@ -1,89 +1,146 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransfer at 0xa52b67a74b53a815fdd8699d443635a3cb285fb6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransfer at 0x62a03c868c959386b2df7f266e79bc711fb92398
 */
-pragma solidity ^0.4.15;
-
-contract Owned {
-    address public owner;
-    address public newOwner;
-
-    /**
-     * Events
-     */
-    event ChangedOwner(address indexed new_owner);
-
-    /**
-     * Functionality
-     */
-
-    function Owned() {
-        owner = msg.sender;
+pragma solidity ^0.4.18;
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+    event OwnerChanged(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    function changeOwner(address _newOwner) onlyOwner external {
-        newOwner = _newOwner;
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function changeOwner(address _newOwner) onlyOwner public {
+        require(_newOwner != address(0));
+        OwnerChanged(owner, _newOwner);
+        owner = _newOwner;
     }
 
-    function acceptOwnership() external {
-        if (msg.sender == newOwner) {
-            owner = newOwner;
-            newOwner = 0x0;
-            ChangedOwner(owner);
-        }
-    }
 }
 
-// basic functionality from token contract
-contract Token {
-    function transferFrom(address from, address to, uint amount) returns (bool);
-    function transfer(address to, uint amount) returns(bool);
-    function balanceOf(address addr) constant returns(uint);
+interface Token {
+    function transfer(address _to, uint256 _value) public;
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    //function transfer(address _to, uint256 _value) public returns (bool success);
+    //event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }
 
 
-contract BatchTransfer is Owned {    
-    uint public nonce;
-    Token public token;
+contract BatchTransfer is Ownable {
+    using SafeMath for uint256;
+    event TransferToken(address indexed from, address indexed to, uint256 value);
+    Token public standardToken;
+    // List of admins
+    mapping (address => bool) public contractAdmins;
+    mapping (address => bool) public userTransfered;
+    uint256 public totalUserTransfered;
 
-    // some events to assist in contract readability
-    event Batch(uint256 indexed nonce);
-    event Complete();
+    function BatchTransfer(address _owner) public {
+        require(_owner != address(0));
+        owner = _owner;
+        owner = msg.sender; //for test
+    }
 
-    function batchTransfer(uint n, uint256[] bits) public onlyOwner {
-        require(n == nonce);
+    function setContractToken (address _addressContract) public onlyOwner {
+        require(_addressContract != address(0));
+        standardToken = Token(_addressContract);
+        totalUserTransfered = 0;
+    }
 
-        nonce += 1;
-        uint256 lomask = (1 << 96) - 1;
-        uint sum = 0;
-        for (uint i=0; i<bits.length; i++) {
-            address a = address(bits[i]>>96);
-            uint value = bits[i]&lomask;
-            token.transfer(a, value);
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return standardToken.balanceOf(_owner);
+    }
+
+    modifier onlyOwnerOrAdmin() {
+        require(msg.sender == owner || contractAdmins[msg.sender]);
+        _;
+    }
+
+    /**
+    * @dev Add an contract admin
+    */
+    function setContractAdmin(address _admin, bool _isAdmin) public onlyOwner {
+        contractAdmins[_admin] = _isAdmin;
+    }
+
+    /* Batch token transfer. Used by contract creator to distribute initial tokens to holders */
+    function batchTransfer(address[] _recipients, uint256[] _values) external onlyOwnerOrAdmin returns (bool) {
+        require( _recipients.length > 0 && _recipients.length == _values.length);
+        uint256 total = 0;
+        for(uint i = 0; i < _values.length; i++){
+            total = total.add(_values[i]);
         }
-        Batch(n);
-    }
-
-    function setToken(address tokenAddress) public onlyOwner {
-        token = Token(tokenAddress);
-    }
-
-    function reset() public onlyOwner {
-        nonce = 0;
-        Complete();
-    }
-
-    // refund all tokens back to owner
-    function refund() public onlyOwner {
-        uint256 balance = token.balanceOf(this);
-        token.transfer(owner, balance);
-    }
-
-    function getBalance() public constant returns (uint256 balance) {
-        return token.balanceOf(this);
+        require(total <= standardToken.balanceOf(msg.sender));
+        for(uint j = 0; j < _recipients.length; j++){
+            standardToken.transfer(_recipients[j], _values[j]);
+            totalUserTransfered = totalUserTransfered.add(1);
+            userTransfered[_recipients[j]] = true;
+            TransferToken(msg.sender, _recipients[j], _values[j]);
+        }
+        return true;
     }
 }
