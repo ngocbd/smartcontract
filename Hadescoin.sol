@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hadescoin at 0x5a890d8c8573d623bd72727f2ae8f3caa0d4aed1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hadescoin at 0x7Ed172530F9822cd0573B895853E3f745f4108B4
 */
 pragma solidity ^0.4.20;
 
@@ -19,6 +19,7 @@ pragma solidity ^0.4.20;
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
+
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -50,51 +51,49 @@ library SafeMath {
  *      Recommended implementation used at https://github.com/Dexaran/ERC223-token-standard/tree/Recommended
  */
 contract ERC223 {
+    function balanceOf(address who) public view returns (uint);
 
-
-    // ERC223 and ERC20 functions 
-    function balanceOf(address who) public view returns (uint256);
-    function totalSupply() public view returns (uint256 _supply);
-    function transfer(address to, uint256 value) public returns (bool ok);
-    function transfer(address to, uint256 value, bytes data) public returns (bool ok);
-    function transfer(address to, uint256 value, bytes data, string customFallback) public returns (bool ok);
-    event LogTransfer(address indexed from, address indexed to, uint256 value, bytes indexed data); 
-
-    // ERC223 functions
     function name() public view returns (string _name);
     function symbol() public view returns (string _symbol);
     function decimals() public view returns (uint8 _decimals);
+    function totalSupply() public view returns (uint256 _supply);
 
-    // ERC20 functions 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-    event LogTransfer(address indexed _from, address indexed _to, uint256 _value);
-    event LogApproval(address indexed _owner, address indexed _spender, uint256 _value);
-   
+    function transfer(address to, uint value) public returns (bool ok);
+    function transfer(address to, uint value, bytes data) public returns (bool ok);
+    function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
 
-    event LogBurn(address indexed burner, uint256 value);
-
+    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Burn(address indexed burner, uint256 value);
 }
 
-    // ERC223 functions
- contract ContractReceiver {
 
+contract ContractReceiver {
+     
     struct TKN {
         address sender;
         uint value;
         bytes data;
         bytes4 sig;
     }
-
+    
+    
     function tokenFallback(address _from, uint _value, bytes _data) public pure {
-        TKN memory tkn;
-        tkn.sender = _from;
-        tkn.value = _value;
-        tkn.data = _data;
-        uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-        tkn.sig = bytes4(u);
-        
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u);
+      
+      /* tkn variable is analogue of msg variable of Ether transaction
+      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
+      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
+      *  tkn.data is data of token transaction   (analogue of msg.data)
+      *  tkn.sig is 4 bytes signature of function
+      *  if data of token transaction is a function execution
+      */
     }
 }
 
@@ -109,24 +108,25 @@ contract Hadescoin is ERC223  {
     
     using SafeMath for uint256;
     using SafeMath for uint;
-    address owner = msg.sender;
+    address public owner = msg.sender;
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     mapping (address => bool) public blacklist;
     mapping (address => uint) public increase;
     mapping (address => uint256) public unlockUnixTime;
-    uint maxIncrease=20;
+    uint  public maxIncrease=20;
     address public target;
-    string public constant _name = "HadesCoin";
-    string public constant _symbol = "HADC";
-    uint8 public constant _decimals = 18;
+    string internal name_= "HadesCoin";
+    string internal symbol_ = "HAC";
+    uint8 internal decimals_= 18;
+    uint256 internal totalSupply_= 2000000000e18;
     uint256 public toGiveBase = 5000e18;
     uint256 public increaseBase = 500e18;
-    uint256 public _totalSupply = 20000000000e18;
 
-    uint256 public OfficalHold = _totalSupply.div(100).mul(18);
-    uint256 public totalRemaining = _totalSupply;
+
+    uint256 public OfficalHold = totalSupply_.mul(18).div(100);
+    uint256 public totalRemaining = totalSupply_;
     uint256 public totalDistributed = 0;
     bool public canTransfer = true;
     uint256 public etherGetBase=5000000;
@@ -159,6 +159,106 @@ contract Hadescoin is ERC223  {
         target = _target;
         distr(target, OfficalHold);
     }
+
+    // Function to access name of token .
+    function name() public view returns (string _name) {
+      return name_;
+    }
+    // Function to access symbol of token .
+    function symbol() public view returns (string _symbol) {
+      return symbol_;
+    }
+    // Function to access decimals of token .
+    function decimals() public view returns (uint8 _decimals) {
+      return decimals_;
+    }
+    // Function to access total supply of tokens .
+    function totalSupply() public view returns (uint256 _totalSupply) {
+      return totalSupply_;
+    }
+
+
+    // Function that is called when a user or another contract wants to transfer funds .
+    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) canTrans public returns (bool success) {
+      
+    if(isContract(_to)) {
+        if (balanceOf(msg.sender) < _value) revert();
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+    else {
+        return transferToAddress(_to, _value, _data);
+    }
+    }
+
+
+    // Function that is called when a user or another contract wants to transfer funds .
+    function transfer(address _to, uint _value, bytes _data) canTrans public returns (bool success) {
+      
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, _data);
+    }
+    else {
+        return transferToAddress(_to, _value, _data);
+    }
+    }
+
+    // Standard function transfer similar to ERC20 transfer with no _data .
+    // Added due to backwards compatibility reasons .
+    function transfer(address _to, uint _value) canTrans public returns (bool success) {
+      
+    //standard function transfer similar to ERC20 transfer with no _data
+    //added due to backwards compatibility reasons
+    bytes memory empty;
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, empty);
+    }
+    else {
+        return transferToAddress(_to, _value, empty);
+    }
+    }
+
+    //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+    function isContract(address _addr) private view returns (bool is_contract) {
+      uint length;
+      assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
+      }
+      return (length>0);
+    }
+
+    //function that is called when transaction target is an address
+    function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) revert();
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value, _data);
+    Transfer(msg.sender, _to, _value);
+    return true;
+    }
+
+    //function that is called when transaction target is a contract
+    function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) revert();
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    ContractReceiver receiver = ContractReceiver(_to);
+    receiver.tokenFallback(msg.sender, _value, _data);
+    Transfer(msg.sender, _to, _value, _data);
+    Transfer(msg.sender, _to, _value);
+    return true;
+    }
+
+
+    function balanceOf(address _owner) public view returns (uint balance) {
+    return balances[_owner];
+    }
+
     
     function changeOwner(address newOwner) onlyOwner public {
         if (newOwner != address(0)) {
@@ -235,7 +335,7 @@ contract Hadescoin is ERC223  {
 
         balances[_to] = balances[_to].add(_amount);
 
-        LogTransfer(address(0), _to, _amount);
+        Transfer(address(0), _to, _amount);
         return true;
     }
     
@@ -249,7 +349,7 @@ contract Hadescoin is ERC223  {
             distr(addresses[i], amount);
         }
   
-        if (totalDistributed >= _totalSupply) {
+        if (totalDistributed >= totalSupply_) {
             distributionFinished = true;
         }
     }
@@ -263,7 +363,7 @@ contract Hadescoin is ERC223  {
             require(amounts[i] <= totalRemaining);
             distr(addresses[i], amounts[i]);
             
-            if (totalDistributed >= _totalSupply) {
+            if (totalDistributed >= totalSupply_) {
                 distributionFinished = true;
             }
         }
@@ -301,85 +401,12 @@ contract Hadescoin is ERC223  {
             distr(investor, value);
             unlockUnixTime[investor]=now+1 days;
         }        
-        if (totalDistributed >= _totalSupply) {
+        if (totalDistributed >= totalSupply_) {
             distributionFinished = true;
         }
 
     }
 
-
-    function transfer(address _to, uint256 _value, bytes _data, string _custom_fallback) canTrans public returns (bool success) {
-        require(_value > 0
-                && blacklist[msg.sender] == false 
-                && blacklist[_to] == false);
-
-        if (isContract(_to)) {
-            require(balances[msg.sender] >= _value);
-            balances[msg.sender] = balances[msg.sender].sub(_value);
-            balances[_to] = balances[_to].add(_value);
-            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-            LogTransfer(msg.sender, _to, _value, _data);
-            LogTransfer(msg.sender, _to, _value);
-            return true;
-        } else {
-            return transferToAddress(_to, _value, _data);
-        }
-    }
-
-    function transfer(address _to, uint256 _value, bytes _data) canTrans public  returns (bool success) {
-        require(_value > 0
-                && blacklist[msg.sender] == false 
-                && blacklist[_to] == false);
-
-        if (isContract(_to)) {
-            return transferToContract(_to, _value, _data);
-        } else {
-            return transferToAddress(_to, _value, _data);
-        }
-    }
-
-    function transfer(address _to, uint256 _value) canTrans public returns (bool success) {
-        require(_value > 0
-                && blacklist[msg.sender] == false 
-                && blacklist[_to] == false);
-
-        bytes memory empty;
-        if (isContract(_to)) {
-            return transferToContract(_to, _value, empty);
-        } else {
-            return transferToAddress(_to, _value, empty);
-        }
-    }
-    function isContract(address _addr) private view returns (bool is_contract) {
-        uint length;
-        assembly {
-            //retrieve the size of the code on target address, this needs assembly
-            length := extcodesize(_addr)
-        }
-        return (length > 0);
-    }
-
-    // function that is called when transaction target is an address
-    function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        LogTransfer(msg.sender, _to, _value, _data);
-        LogTransfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    // function that is called when transaction target is a contract
-    function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        ContractReceiver receiver = ContractReceiver(_to);
-        receiver.tokenFallback(msg.sender, _value, _data);
-        LogTransfer(msg.sender, _to, _value, _data);
-        LogTransfer(msg.sender, _to, _value);
-        return true;
-    }
 
     function transferFrom(address _from, address _to, uint256 _value) canTrans public returns (bool success) {
         require(_to != address(0)
@@ -392,13 +419,13 @@ contract Hadescoin is ERC223  {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        LogTransfer(_from, _to, _value);
+        Transfer(_from, _to, _value);
         return true;
     }
   
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        LogApproval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -422,9 +449,9 @@ contract Hadescoin is ERC223  {
         require(_value <= balances[msg.sender]);
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
-        _totalSupply = _totalSupply.sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
         totalDistributed = totalDistributed.sub(_value);
-        LogBurn(burner, _value);
+        Burn(burner, _value);
     }
     
     function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
@@ -432,24 +459,6 @@ contract Hadescoin is ERC223  {
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
-    function name() public view returns (string Name) {
-        return _name;
-    }
 
-    function symbol() public view returns (string Symbol) {
-        return _symbol;
-    }
-
-    function decimals() public view returns (uint8 Decimals) {
-        return _decimals;
-    }
-
-    function totalSupply() public view returns (uint256 TotalSupply) {
-        return _totalSupply;
-    }
-
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
 
 }
