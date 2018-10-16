@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgentExt at 0x2A7855af2bb020f228dfC280dE801d9854334886
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgentExt at 0x518c67d69F395173987f6ccADbB2432Fa564870A
 */
 pragma solidity ^0.4.11;
 
