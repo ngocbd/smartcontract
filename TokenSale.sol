@@ -1,328 +1,164 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x8026b0587e033a1acf607e84a7bbe9fa8410d5e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokensale at 0x882447790ea65cb00530a02e835f1f4b6d9a4430
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-contract Token {
 
-  function totalSupply () constant returns (uint256 _totalSupply);
 
-  function balanceOf (address _owner) constant returns (uint256 balance);
-
-  function transfer (address _to, uint256 _value) returns (bool success);
-
-  function transferFrom (address _from, address _to, uint256 _value) returns (bool success);
-
-  function approve (address _spender, uint256 _value) returns (bool success);
-
-  function allowance (address _owner, address _spender) constant returns (uint256 remaining);
-
-  event Transfer (address indexed _from, address indexed _to, uint256 _value);
-
-  event Approval (address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-contract SafeMath {
-  uint256 constant private MAX_UINT256 =
-  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-
-  function safeAdd (uint256 x, uint256 y) constant internal returns (uint256 z) {
-    assert (x <= MAX_UINT256 - y);
-    return x + y;
-  }
-
-  function safeSub (uint256 x, uint256 y) constant internal returns (uint256 z) {
-    assert (x >= y);
-    return x - y;
-  }
-
-  function safeMul (uint256 x, uint256 y)  constant internal  returns (uint256 z) {
-    if (y == 0) return 0; // Prevent division by zero at the next line
-    assert (x <= MAX_UINT256 / y);
-    return x * y;
-  }
-  
-  
-   function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
     return c;
   }
-  
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 
-contract AbstractToken is Token, SafeMath {
+// We need this interface to interact with out ERC20 - tokencontract
+contract ERC20Interface {
+         // function totalSupply() public constant returns (uint256);
+      function balanceOf(address tokenOwner) public constant returns (uint256 balance);
+         // function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining);
+      function transfer(address to, uint256 tokens) public returns (bool success);
+         // function approve(address spender, uint256 tokens) public returns (bool success);
+         // function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
+         // event Transfer(address indexed from, address indexed to, uint256 tokens);
+         // event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
+ } 
 
-  function AbstractToken () {
-    // Do nothing
-  }
+
+// ---
+// Main tokensale class
+//
+contract Tokensale
+{
+using SafeMath for uint256;
+
+address public owner;                  // Owner of this contract, may withdraw ETH and kill this contract
+address public thisAddress;            // Address of this contract
+string  public lastaction;             // 
+uint256 public constant RATE = 1000;   // 1 ETH = 1000 Rentarto Coin
+uint256 public raisedAmount     = 0;   // Raised amount in ETH
+uint256 public available_tokens = 0;   // Last number of available_tokens BEFORE last payment
+
+uint256 public lasttokencount;         // Last ordered token
+bool    public last_transfer_state;    // Last state (bool) of token transfer
+
+
+
+// ---
+// Construktor
+// 
+function Tokensale () public
+{
+owner       = msg.sender;
+thisAddress = address(this);
+} // Construktor
+
+
  
-  function balanceOf (address _owner) constant returns (uint256 balance) {
-    return accounts [_owner];
-  }
-
-  function transfer (address _to, uint256 _value) returns (bool success) {
-    if (accounts [msg.sender] < _value) return false;
-    if (_value > 0 && msg.sender != _to) {
-      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
-      accounts [_to] = safeAdd (accounts [_to], _value);
-    }
-    Transfer (msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferFrom (address _from, address _to, uint256 _value)  returns (bool success) {
-    if (allowances [_from][msg.sender] < _value) return false;
-    if (accounts [_from] < _value) return false;
-
-    allowances [_from][msg.sender] =
-      safeSub (allowances [_from][msg.sender], _value);
-
-    if (_value > 0 && _from != _to) {
-      accounts [_from] = safeSub (accounts [_from], _value);
-      accounts [_to] = safeAdd (accounts [_to], _value);
-    }
-    Transfer (_from, _to, _value);
-    return true;
-  }
-
  
-  function approve (address _spender, uint256 _value) returns (bool success) {
-    allowances [msg.sender][_spender] = _value;
-    Approval (msg.sender, _spender, _value);
-    return true;
-  }
-
-  
-  function allowance (address _owner, address _spender) constant
-  returns (uint256 remaining) {
-    return allowances [_owner][_spender];
-  }
-
-  /**
-   * Mapping from addresses of token holders to the numbers of tokens belonging
-   * to these token holders.
-   */
-  mapping (address => uint256) accounts;
-
-  /**
-   * Mapping from addresses of token holders to the mapping of addresses of
-   * spenders to the allowances set by these token holders to these spenders.
-   */
-  mapping (address => mapping (address => uint256)) private allowances;
-}
 
 
-contract RebateCoin is AbstractToken {
+
+// ---
+// Pay ether to this contract and receive your tokens
+//
+function () payable public
+{
+address tokenAddress = 0x7C0924eEA284EF4B7A1b0Fefdd0d808Fc717377E;
+ERC20Interface atoContract = ERC20Interface(tokenAddress); // Rentarto Coin is 0x7C0924eEA284EF4B7A1b0Fefdd0d808Fc717377E
+
+
+//
+// Minimum = 0.00125 ETH
+//
+if ( msg.value >= 1250000000000000 )
+   {
+   // Calculate tokens to sell
+   uint256 weiAmount = msg.value;
+   uint256 tokens = weiAmount.mul(RATE);
     
-     address public owner;
-     
-     uint256 tokenCount = 0;
-     
-     bool frozen = false;
-     
-     uint256 constant MAX_TOKEN_COUNT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-     
-	uint public constant _decimals = (10**18);
-     
-    modifier onlyOwner() {
-	    require(owner == msg.sender);
-	    _;
-	}
-     
-     function RebateCoin() {
-         owner = msg.sender;
-     }
-     
-     function totalSupply () constant returns (uint256 _totalSupply) {
-        return tokenCount;
-     }
-     
-    function name () constant returns (string result) {
-		return "Rebate Coin";
-	}
-	
-	function symbol () constant returns (string result) {
-		return "RBC";
-	}
-	
-	function decimals () constant returns (uint result) {
-        return 18;
-    }
+   // Our current token balance
+   available_tokens = atoContract.balanceOf(thisAddress);    
     
-    function transfer (address _to, uint256 _value) returns (bool success) {
-    if (frozen) return false;
-    else return AbstractToken.transfer (_to, _value);
-  }
-
-  
-  function transferFrom (address _from, address _to, uint256 _value)
-    returns (bool success) {
-    if (frozen) return false;
-    else return AbstractToken.transferFrom (_from, _to, _value);
-  }
-
-  
-  function approve (address _spender, uint256 _currentValue, uint256 _newValue)
-    returns (bool success) {
-    if (allowance (msg.sender, _spender) == _currentValue)
-      return approve (_spender, _newValue);
-    else return false;
-  }
-
-  function burnTokens (uint256 _value) returns (bool success) {
-    if (_value > accounts [msg.sender]) return false;
-    else if (_value > 0) {
-      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
-      tokenCount = safeSub (tokenCount, _value);
-      return true;
-    } else return true;
-  }
+   
+   if (available_tokens >= tokens)
+      {      
+      
+      	  lasttokencount = tokens;   
+      	  raisedAmount   = raisedAmount.add(msg.value);
+   
+          // Send tokens to buyer
+          last_transfer_state = atoContract.transfer(msg.sender,  tokens);
+          
+          
+      } // if (available_tokens >= tokens)
+      else
+          {
+          revert();
+          }
+   
+   
+   
+   } // if ( msg.value >= 1250000000000000 )
+   else
+       {
+       revert();
+       }
 
 
-  function createTokens (uint256 _value) returns (bool success) {
-
-    if (_value > 0) {
-      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
-      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
-      tokenCount = safeAdd (tokenCount, _value);
-    }
-
-    return true;
-  }
 
 
-  function setOwner (address _newOwner) {
-    require (msg.sender == owner);
 
-    owner = _newOwner;
-  }
-
-  function freezeTransfers () {
-    require (msg.sender == owner);
-
-    if (!frozen) {
-      frozen = true;
-      Freeze ();
-    }
-  }
-
-
-  function unfreezeTransfers () {
-    require (msg.sender == owner);
-
-    if (frozen) {
-      frozen = false;
-      Unfreeze ();
-    }
-  }
-
-  event Freeze ();
-
-  event Unfreeze ();
-
-}
-
-
-contract TokenSale is RebateCoin  {
+} // ()
  
-    enum State { PRE_ICO, ICO_FIRST, ICO_SECOND, STOPPED, CLOSED }
-    
-    // 0 , 1 , 2 , 3 , 4 
-    
-    State public currentState = State.STOPPED;
 
-    uint public tokenPrice = 1000000000000000; // wei , 0.0001 eth , 0.6 usd
- 
-    address public beneficiary;
-	
-	uint256 private BountyFound = 10 * (10**24);
-	uint256 private SaleFound = 70 * (10**24);
-	uint256 private PartnersFound = 5 * (10**24);
-	uint256 private TeamFound = 15 * (10**24);
-	
-	uint256 public totalSold = 0;
-	
-	uint256 private _hardcap = 22800 ether;
-	uint256 private _softcap = 62250 ether;
-	
-	bool private _allowedTransfers = true;
 
-    modifier saleIsOn() {
-        require(currentState != State.STOPPED && currentState != State.CLOSED && totalSold < SaleFound);
-        _;
-    }
-    
-	function TokenSale() {
-	    owner = msg.sender;
-	    beneficiary = msg.sender;
-	}
-	
-	function setState(State _newState) public onlyOwner {
-	    require(currentState != State.CLOSED);
-	    currentState = _newState;
-	}
-	
-	
-	function allowTransfers() public onlyOwner {
-		_allowedTransfers = true;		
-	}
-	
-	function stopTransfers() public onlyOwner {
-		_allowedTransfers = false;
-	}
-	
-	function stopSale() public onlyOwner {
-	    currentState = State.CLOSED;
-	}
-	
-    function setBeneficiaryAddress(address _new) public onlyOwner {
-        
-        beneficiary = _new;
-        
-    }
-    
-    function setTokenPrice(uint _price) public onlyOwner {
-        
-        tokenPrice = _price;
-        
-    }
-    
-	
-	function transferPayable(uint _amount) private returns (bool) {
-	    
-	    if(SaleFound < _amount) return false;
 
-	    return true;
-	    
-	}
-	
-	
-	function buyRBCTokens() public saleIsOn() payable {
+//
+// owner_withdraw - Ether withdraw (owner only)
+//
+function owner_withdraw () public
+{
+if (msg.sender != owner) return;
 
-	    uint tokens = get_tokens_count(msg.value);
-		require(transferPayable(tokens));
-		createTokens(tokens);
-		if(_allowedTransfers) {
-			beneficiary.transfer(msg.value);
-			emit Transfer(owner, msg.sender, tokens);
-	    }
-	    
-	}
-	
-	
-	function get_tokens_count(uint _amount) private returns (uint) {
-	    
-	     uint currentPrice = tokenPrice;
-	     uint tokens = safeDiv( safeMul(_amount, _decimals), currentPrice ) ;
-    	 return tokens;
-	    
-	}
-	
-	
-	function() external payable {
-      buyRBCTokens();
-    }
-	
-    
-}
+owner.transfer( this.balance );
+lastaction = "Withdraw";  
+} // owner_withdraw
+
+
+
+//
+// Kill (owner only)
+//
+function kill () public
+{
+if (msg.sender != owner) return;
+
+
+// Transfer tokens back to owner
+address tokenAddress = 0x7C0924eEA284EF4B7A1b0Fefdd0d808Fc717377E;
+ERC20Interface atoContract = ERC20Interface(tokenAddress); // rentarto is 0x7C0924eEA284EF4B7A1b0Fefdd0d808Fc717377E
+
+uint256 balance = atoContract.balanceOf(this);
+assert(balance > 0);
+atoContract.transfer(owner, balance);
+
+
+owner.transfer( this.balance );
+selfdestruct(owner);
+} // kill
+
+
+} /* contract Tokensale */
