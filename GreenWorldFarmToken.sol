@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenWorldFarmToken at 0xd55362749f7270576f8a0fde81473d6d9677e864
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenWorldFarmToken at 0xf4e06c5f4b14ef5896e30bf405914eefc0b80728
 */
 contract GreenWorldFarmToken {
     /* Public variables of the token */
@@ -18,7 +18,7 @@ contract GreenWorldFarmToken {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function GreenWorldFarmToken() {
 
-         initialSupply = 300000000;
+         initialSupply = 300000000 * 1000000000000000000;
          name ="GreenWorldFarmToken";
         decimals = 18;
          symbol = "GWF";
