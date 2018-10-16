@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x414BF51522a681DCE60fF432067e89aC8326Aaf7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x8685631276cfcf17a973d92f6dc11645e5158c0c
 */
 pragma solidity ^0.4.23;
 
@@ -14,7 +14,7 @@ contract CryptoRoulette {
 
     uint256 private secretNumber;
     uint256 public lastPlayed;
-    uint256 public betPrice = 0.2 ether;
+    uint256 public betPrice = 0.001 ether;
     address public ownerAddr;
 
     struct Game {
@@ -29,12 +29,12 @@ contract CryptoRoulette {
     }
 
     function shuffle() internal {
-        // randomly set secretNumber with a value between 1 and 16
-        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 16 + 1;
+        // randomly set secretNumber with a value between 1 and 10
+        secretNumber = 6;
     }
 
     function play(uint256 number) payable public {
-        require(msg.value >= betPrice && number <= 16);
+        require(msg.value >= betPrice && number <= 10);
 
         Game game;
         game.player = msg.sender;
@@ -46,7 +46,7 @@ contract CryptoRoulette {
             msg.sender.transfer(this.balance);
         }
 
-        shuffle();
+        //shuffle();
         lastPlayed = now;
     }
 
