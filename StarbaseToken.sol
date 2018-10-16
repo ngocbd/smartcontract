@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseToken at 0xc301b935d0fd1f5d0b6d68491deca39d44e2da6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseToken at 0x2b25741c1e8bc08cfffc7286a88604a6d800dcb1
 */
-pragma solidity ^0.4.13;
-
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -33,7 +31,6 @@ library SafeMath {
   }
 }
 
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -41,11 +38,10 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
 
 
 /**
@@ -84,6 +80,7 @@ contract BasicToken is ERC20Basic {
 }
 
 
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -96,13 +93,6 @@ contract ERC20 is ERC20Basic {
 }
 
 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) allowed;
@@ -182,6 +172,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
 contract AbstractStarbaseCrowdsale {
     function startDate() constant returns (uint256) {}
     function endedAt() constant returns (uint256) {}
@@ -231,8 +222,8 @@ contract StarbaseToken is StandardToken {
     /*
      *  Constants / Token meta data
      */
-    string constant public name = "Starbase";  // Token name
-    string constant public symbol = "STAR";  // Token symbol
+    string constant public name = "TESTER";  // Token name
+    string constant public symbol = "TESTAR";  // Token symbol
     uint8 constant public decimals = 18;
     uint256 constant public initialSupply = 1000000000e18; // 1B STAR tokens
     uint256 constant public initialCompanysTokenAllocation = 750000000e18;  // 750M
@@ -265,6 +256,11 @@ contract StarbaseToken is StandardToken {
 
     modifier onlyAfterCrowdsale() {
         require(starbaseCrowdsale.isEnded());
+        _;
+    }
+
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length == size + 4);
         _;
     }
 
@@ -398,6 +394,7 @@ contract StarbaseToken is StandardToken {
         onlyMarketingCampaignContract
         returns (bool)
     {
+        require(to != address(0));
         return allocateFrom(address(starbaseMarketingCampaign), to, value);
     }
 
@@ -411,6 +408,7 @@ contract StarbaseToken is StandardToken {
         onlyFundraiser
         returns (bool)
     {
+        require(to != address(0));
         initialEcTokenAllocation[to] =
             SafeMath.add(initialEcTokenAllocation[to], value);
         return allocateFrom(0, to, value);
@@ -427,6 +425,7 @@ contract StarbaseToken is StandardToken {
         onlyAfterCrowdsale
         returns (bool)
     {
+        require(_for != address(0));
         // check if the value under the limits
         assert(value <= numOfInflatableTokens());
 
@@ -465,6 +464,7 @@ contract StarbaseToken is StandardToken {
         onlyAfterCrowdsale
         returns (bool)
     {
+        require(to != address(0));
         return allocateFrom(address(starbaseCrowdsale), to, value);
     }
 
@@ -477,7 +477,7 @@ contract StarbaseToken is StandardToken {
      * @param to Address of token receiver.
      * @param value Number of tokens to transfer.
      */
-    function transfer(address to, uint256 value) public returns (bool) {
+    function transfer(address to, uint256 value) public onlyPayloadSize(2*32) returns (bool) {
         assert(isTransferable(msg.sender, value));
         return super.transfer(to, value);
     }
@@ -488,7 +488,7 @@ contract StarbaseToken is StandardToken {
      * @param to Address to where tokens are sent.
      * @param value Number of tokens to transfer.
      */
-    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+    function transferFrom(address from, address to, uint256 value) public onlyPayloadSize(3*32) returns (bool) {
         assert(isTransferable(from, value));
         return super.transferFrom(from, to, value);
     }
@@ -498,6 +498,7 @@ contract StarbaseToken is StandardToken {
      * @param fundraiserAddress The address in check
      */
     function addFundraiser(address fundraiserAddress) public onlyFundraiser {
+        require(fundraiserAddress != address(0));
         assert(!isFundraiser(fundraiserAddress));
 
         fundraisers[fundraiserAddress] = true;
