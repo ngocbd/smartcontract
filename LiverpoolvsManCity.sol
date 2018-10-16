@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiverpoolvsManCity at 0xa3b832598f642892cfa34b540bc11edb99703ef8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiverpoolvsManCity at 0xe88d59b921981626a2c1f2450b37e3137a3e6ba7
 */
 pragma solidity ^0.4.11;
 
@@ -1035,7 +1035,7 @@ contract LiverpoolvsManCity is usingOraclize {
   uint public constant MIN_BET = 0.01 ether;
 
   uint public EXPECTED_START = 1522867200; // When the bet's event is expected to start
-  uint public EXPECTED_END = 1522876500; // When the bet's event is expected to end
+  uint public EXPECTED_END = 1523482200; // When the bet's event is expected to end
 
   uint public constant BETTING_OPENS = 1522660968;
   uint public BETTING_CLOSES = EXPECTED_START - 60; // Betting closes a minute before the bet event starts
@@ -1177,7 +1177,7 @@ contract LiverpoolvsManCity is usingOraclize {
     // ipfs.io/ipfs/<HASH>). Oraclize will then deploy this script.
     // Look over the Oraclize documentation to verify this info
     // for yourself.
-    oraclizeQueryId = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmZ7x9mEdGeMLcu642gLVgVkoPbr3E1mq4kXLQ72qNS95r', '164861', '164862', '${[decrypt] BJkQc/CLo4JqCXndEtpplj0jVkMjreC5AawczL/pgAh+XrPDdaDK+clR1+Ku9USh1QUU4nazFQ3KrH4ptv5mZSsXeq2nW3U6p1SQMxWZKPiSk8UCbg5+5yGChYpw3mNNmwIlGhaAy1Zs4cbnWRnwLHk=}']", gas);
+    oraclizeQueryId = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmZ7x9mEdGeMLcu642gLVgVkoPbr3E1mq4kXLQ72qNS95r', '164861', '164862', '${[decrypt] BP6bw6VvvF4JOkogZJSNc2or1ZhNQPdfgPSGINDDPjkQp64nfxsVu+1eTpmmOSOXokb61HRJ4mz4gtzHAqpm8cQDA9Q0p/UXzm/DKwLkzTTiR6EHeKCtSAKFzzQsCIUWev163WdQ2f9sO7KWFwVNrTo=}']", gas);
   }
 
   function makeOraclizeQuery(uint timeOrDelay, string datasource, string query, uint gas) private returns(bytes32) {
@@ -1294,8 +1294,10 @@ contract LiverpoolvsManCity is usingOraclize {
     if (COMMISSION == 0) {
       ownersPayed = true;
       ownerPayout = 0;
-      collectionFees = ((oraclizeFees != 0) ? (oraclizeFees / numberOfBets[winningOption] + 1) : 0); // We add 1 wei to act as a ceil for the integer div -- important because the contract cannot afford to lose that spare change, as it will gaurantee that the final payout collection will fail.
-
+      if (numberOfBets[winningOption] > 0) {
+        collectionFees = ((oraclizeFees != 0) ? (oraclizeFees / numberOfBets[winningOption] + 1) : 0); // We add 1 wei to act as a ceil for the integer div -- important because the contract cannot afford to lose that spare change, as it will gaurantee that the final payout collection will fail.
+      }
+    
       return;
     }
 
@@ -1303,9 +1305,10 @@ contract LiverpoolvsManCity is usingOraclize {
     // betted for the two outcomes.    
     uint losingChunk = totalAmountsBet[1 - winningOption];
     ownerPayout = (losingChunk - oraclizeFees) / COMMISSION; // Payout to the owner; commission of losing pot, minus the same % of the fees
-
-    collectionFees = ((oraclizeFees != 0) ? ((oraclizeFees - oraclizeFees / COMMISSION) / numberOfBets[winningOption] + 1) : 0); // The fees to be distributed to the collectors, after owner payout. See reasoning above for adding the 1 wei.
-
+    if (numberOfBets[winningOption] > 0) {
+      collectionFees = ((oraclizeFees != 0) ? ((oraclizeFees - oraclizeFees / COMMISSION) / numberOfBets[winningOption] + 1) : 0); // The fees to be distributed to the collectors, after owner payout. See reasoning above for adding the 1 wei.
+    }
+    
     // Equal weight payout to the owners
     OWNERS.transfer(ownerPayout);
     ownersPayed = true;
