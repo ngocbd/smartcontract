@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaklimakanCrowdsale at 0x3be69852d5cd9c0323c96248846472f9c55d86d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaklimakanCrowdsale at 0x5d26239257e6433889f00bb46294c552b4d75ec9
 */
 pragma solidity 0.4.18;
 
@@ -238,6 +238,7 @@ contract TaklimakanCrowdsale is Owned, CrowdsaleParameters {
     function safeWithdrawal(uint amount) external onlyOwner {
         require(this.balance >= amount);
         require(!isICOActive());
+        require(totalCollected >= CrowdsaleParameters.minimumICOCap * 1e18);
 
         if (owner.send(amount)) {
             FundTransfer(address(this), msg.sender, amount);
