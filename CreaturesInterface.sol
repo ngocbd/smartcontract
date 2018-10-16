@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreaturesInterface at 0x07f2a3ac67517b1d2b777d7f61d943c4b9d359d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreaturesInterface at 0xa7f598984f6a77da416efaaf6ff18f5f7b9eeab2
 */
+pragma solidity ^0.4.16;
+
 pragma solidity ^0.4.16;
 
 contract Permissions {
@@ -101,6 +103,7 @@ contract Creatures is Permissions {
 	}
 }
 
+
 contract CreaturesInterface is Permissions {
 
 	mapping (uint8 => uint256) public creatureCosts;
@@ -114,15 +117,8 @@ contract CreaturesInterface is Permissions {
 		creatureCosts[5] = 2.0 ether;
 		creatureCosts[6] = 2.0 ether;
 		creatureCosts[7] = 1.0 ether;
-		creatureCosts[8] = 1.0 ether;
-		creatureCosts[9] = .50 ether;
-		creatureCosts[10] = .50 ether;
-		creatureCosts[11] = .20 ether;
-		creatureCosts[12] = .50 ether;
-		creatureCosts[13] = .10 ether;
-		creatureCosts[14] = 1.0 ether;
-		creatureCosts[15] = 1.0 ether;
-		creatureCosts[16] = 10 ether;
+		creatureCosts[8] = .01 ether;
+		creatureCosts[9] = .025 ether;
 	}
 
 	function addCreature(uint16 _species, uint8 _subSpecies, uint8 _eyeColor) external payable {
