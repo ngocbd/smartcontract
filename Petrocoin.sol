@@ -1,15 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Petrocoin at 0xfd660ef8666ecc397041ee5e057681ae804ba18f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PetroCoin at 0x1b96c20d37f415bf159fdc6cf301b600b259b224
 */
-pragma solidity ^0.4.9;
-
-contract Petrocoin {
-     /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    
-    */
-    /// total amount of tokens
+contract PetroCoin {
+    /* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
     string public symbol;
@@ -21,45 +14,37 @@ contract Petrocoin {
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
- 
+  
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function PetroCoin() {
 
- 
- 
- 
- function Petrocoin() {
-
-        initialSupply = 100000000;
-        name ="Petrocoin";
-        decimals = 0;
-        symbol = "PETRO";
+         initialSupply = 100000000;
+         name ="PetroCoin";
+        decimals = 8;
+         symbol = "PTRC";
         
-        balanceOf[msg.sender] = initialSupply;              
-        totalSupply = initialSupply;                        
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
                                    
     }
 
     /* Send coins */
     function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; 
-        balanceOf[msg.sender] -= _value;                     
-        balanceOf[_to] += _value;                           
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
       
     }
 
+   
 
- 
-  function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
     
-    function depositToken(address token, uint256 amount){
-    
-}
-    
+
+   
+
+    /* This unnamed function is called whenever someone tries to send ether to it */
     function () {
-        throw;    
+        throw;     // Prevents accidental sending of ether
     }
 }
