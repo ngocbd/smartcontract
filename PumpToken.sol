@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PumpToken at 0xaab0a030f3504dba3634b721fc03f42bbcc02c42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PumpToken at 0xa416b64ed395bcf5d4958ada6afaea5ee05e3ab1
 */
 pragma solidity ^0.4.4;
 
@@ -119,9 +119,9 @@ contract PumpToken is StandardToken {
         ) {
         balances[msg.sender] = 1000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 1000000000000000;                        // Update total supply (100000 for example)
-        name = "PumpToken";                                   // Set the name for display purposes
+        name = "PTK";                                   // Set the name for display purposes
         decimals = 6;                            // Amount of decimals for display purposes
-        symbol = "PUTK";                               // Set the symbol for display purposes
+        symbol = "PTK";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
