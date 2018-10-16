@@ -1,11 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x8f951903c9360345b4e1b536c7f5ae8f88a64e79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xcafe1a77e84698c83ca8931f54a755176ef75f2c
 */
-pragma solidity 0.4.9;
-
-
-/// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
-/// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
     uint constant public MAX_OWNER_COUNT = 50;
