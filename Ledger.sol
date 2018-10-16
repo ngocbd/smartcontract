@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0x025db0ad4f49ae49102246bbb5120a619e9562c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0xa7e6819ed10d57475978bb6f755ecff29b48ac8a
 */
 // Copyright New Alchemy Limited, 2017. All rights reserved.
 
@@ -7,22 +7,22 @@ pragma solidity >=0.4.10;
 
 // from Zeppelin
 contract SafeMath {
-    function safeMul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
-        require(a == 0 || c / a == b);
-        return c;
-    }
+	function safeMul(uint a, uint b) internal returns (uint) {
+		uint c = a * b;
+		require(a == 0 || c / a == b);
+		return c;
+	}
 
-    function safeSub(uint a, uint b) internal returns (uint) {
-        require(b <= a);
-        return a - b;
-    }
+	function safeSub(uint a, uint b) internal returns (uint) {
+		require(b <= a);
+		return a - b;
+	}
 
-    function safeAdd(uint a, uint b) internal returns (uint) {
-        uint c = a + b;
-        require(c>=a && c>=b);
-        return c;
-    }
+	function safeAdd(uint a, uint b) internal returns (uint) {
+		uint c = a + b;
+		require(c>=a && c>=b);
+		return c;
+	}
 }
 
 contract Owned {
@@ -95,15 +95,18 @@ contract TokenReceivable is Owned {
 
 contract EventDefinitions {
 	event Transfer(address indexed from, address indexed to, uint value);
+	event TransferInternalLedgerAT(address indexed _from, address _to, uint256 indexed _value, bytes32 indexed mdn);
 	event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
-	string constant public name = "Token Report";
+	// Set these appropriately before you deploy
+	string constant public name = "AirToken";
 	uint8 constant public decimals = 8;
-	string constant public symbol = "DATA";
+	string constant public symbol = "AIR";
 	Controller public controller;
 	string public motd;
+	address public atFundDeposit;
 	event Motd(string message);
 
 	// functions below this line are onlyOwner
@@ -116,6 +119,10 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Paus
 
 	function setController(address _c) onlyOwner notFinalized {
 		controller = Controller(_c);
+	}
+
+	function setBeneficiary(address _beneficiary) onlyOwner {
+		atFundDeposit = _beneficiary;
 	}
 
 	// functions below this line are public
@@ -183,6 +190,15 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Paus
 	function burn(uint _amount) notPaused {
 		controller.burn(msg.sender, _amount);
 		Transfer(msg.sender, 0x0, _amount);
+	}
+
+	function transferToInternalLedger(uint256 _value, bytes32 _mdn) external returns (bool success) {
+		require(atFundDeposit != 0);
+		if (transfer(atFundDeposit, _value)) {
+			TransferInternalLedgerAT(msg.sender, atFundDeposit, _value, _mdn);
+			return true;
+		}
+		return false;
 	}
 
 	// functions below this line are onlyController
