@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoNumismat at 0x92e2d8348df613104c321bb7ab2862f0883e3bdc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoNumismat at 0x386d51a52b36ff03602798418d4d5eec49939c5b
 */
 pragma solidity ^0.4.8;
 contract CryptoNumismat 
@@ -21,6 +21,7 @@ contract CryptoNumismat
 
     mapping (uint => Buy) public cardsForSale;
     mapping (address => bool) public admins;
+    mapping (address => string) public nicknames;
 
     event Assign(uint indexed _cardIndex, address indexed _seller, uint256 _value);
     event Transfer(address indexed _from, address indexed _to, uint _cardIndex, uint256 _value);
@@ -75,14 +76,14 @@ contract CryptoNumismat
         owner.transfer(_amount);
     }
 
-    function addCard(uint _cardIndex, uint256 _value) public onlyAdmins()
+    function addCard(uint _cardIndex, uint256 _value, address _ownAddress) public onlyAdmins()
     {
         require(_cardIndex <= 1000);
         require(_cardIndex > 0);
         
         require(cardsForSale[_cardIndex].cardIndex != _cardIndex);
         
-        address seller = msg.sender;
+        address seller = _ownAddress;
         uint256 _value2 = (_value * 1000000000);
         
         cardsForSale[_cardIndex] = Buy(_cardIndex, seller, _value2);
@@ -101,6 +102,16 @@ contract CryptoNumismat
         cardsForSale[_cardIndex].minValue);
     }
     
+    function setNick(string _newNick) public
+    {
+        nicknames[msg.sender] = _newNick;      
+    }
+    
+    function displayNick(address _owner) public constant returns(string)
+    {
+        return nicknames[_owner];
+    }
+    
     
     uint256 private limit1 = 0.05 ether;
     uint256 private limit2 = 0.5 ether;
@@ -110,27 +121,31 @@ contract CryptoNumismat
     function calculateNextPrice(uint256 _startPrice) public constant returns (uint256 _finalPrice)
     {
         if (_startPrice < limit1)
-            return _startPrice * 10 / 4;
+            _startPrice =  _startPrice * 10 / 4;
         else if (_startPrice < limit2)
-            return _startPrice * 10 / 5;
+            _startPrice =  _startPrice * 10 / 5;
         else if (_startPrice < limit3)
-            return _startPrice * 10 / 6;
+            _startPrice =  _startPrice * 10 / 6;
         else if (_startPrice < limit4)
-            return _startPrice * 10 / 7;
+            _startPrice =  _startPrice * 10 / 7;
         else
-            return _startPrice * 10 / 8;
+            _startPrice =  _startPrice * 10 / 8;
+            
+        return (_startPrice / 1000000) * 1000000;
     }
     
     function calculateDevCut(uint256 _startPrice) public constant returns (uint256 _cut)
     {
         if (_startPrice < limit2)
-            return _startPrice * 5 / 100;
+            _startPrice =  _startPrice * 5 / 100;
         else if (_startPrice < limit3)
-            return _startPrice * 4 / 100;
+            _startPrice =  _startPrice * 4 / 100;
         else if (_startPrice < limit4)
-            return _startPrice * 3 / 100;
+            _startPrice =  _startPrice * 3 / 100;
         else
-            return _startPrice * 2 / 100;
+            _startPrice =  _startPrice * 2 / 100;
+            
+        return (_startPrice / 1000000) * 1000000;
     }
     
     function buy(uint _cardIndex) public payable
