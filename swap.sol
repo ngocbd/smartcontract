@@ -1,297 +1,229 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0xda32d3814b10aee35dcba4de4f6b2259916f9cbb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0x0e786d42fd70e4a51ab5f80aa5da19e74337e7f2
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-    address public owner;
+  address public owner;
+  
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() internal {
+    owner = msg.sender;
+  }
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+contract tokenInterface {
+	function balanceOf(address _owner) public constant returns (uint256 balance);
+	function transfer(address _to, uint256 _value) public returns (bool);
 }
 
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) balances;
-
-    uint256 totalSupply_;
-
-    /**
-    * @dev total number of tokens in existence
-    */
-    function totalSupply() public view returns (uint256) {
-        return totalSupply_;
+contract Library {
+    // Notes:
+    // - this is limited to a payload length of 253 bytes
+    // - the payload should be ASCII as many clients will want to display this to the user
+    function createBSMHash(string payload) pure internal returns (bytes32) {
+        // \x18Bitcoin Signed Message:\n#{message.size.chr}#{message}
+        string memory prefix = "\x18Bitcoin Signed Message:\n";
+        return sha256(sha256(prefix, bytes1(bytes(payload).length), payload));
     }
 
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
+    function validateBSM(string payload, address key, uint8 v, bytes32 r, bytes32 s) internal pure returns (bool) {
+        return key == ecrecover(createBSMHash(payload), v, r, s);
     }
+  
+	//bytes32 constant mask4 = 0xffffffff00000000000000000000000000000000000000000000000000000000;
+	//bytes1 constant network = 0x00;
 
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
+    /*
+	function getBitcoinAddress( bytes32 _xPoint, bytes32 _yPoint ) constant public returns( bytes20 hashedPubKey, bytes4 checkSum, bytes1 network)	{
+		hashedPubKey 	= getHashedPublicKey(_xPoint, _yPoint);
+ 		checkSum 	= getCheckSum(hashedPubKey);
+ 		network 	= network;
+	}*/
 
-}
-
-contract BurnableToken is BasicToken {
-
-    event Burn(address indexed burner, uint256 value);
-
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-        Burn(burner, _value);
-    }
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-library SafeERC20 {
-    function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-        assert(token.transfer(to, value));
-    }
-
-    function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-        assert(token.transferFrom(from, to, value));
-    }
-
-    function safeApprove(ERC20 token, address spender, uint256 value) internal {
-        assert(token.approve(spender, value));
-    }
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * @dev Increase the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _addedValue The amount of tokens to increase the allowance by.
-     */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    /**
-     * @dev Decrease the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To decrement
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _subtractedValue The amount of tokens to decrease the allowance by.
-     */
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
+	function btcAddrPubKeyUncompr( bytes32 _xPoint, bytes32 _yPoint) internal pure returns( bytes20 hashedPubKey )	{
+		bytes1 startingByte = 0x04;
+ 		return ripemd160(sha256(startingByte, _xPoint, _yPoint));
+	}
+	
+	function btcAddrPubKeyCompr(bytes32 _x, bytes32 _y) internal pure returns( bytes20 hashedPubKey )	{
+	    bytes1 _startingByte;
+	    if (uint256(_y) % 2 == 0  ) {
+            _startingByte = 0x02;
         } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+            _startingByte = 0x03;
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+ 		return ripemd160(sha256(_startingByte, _x));
+	}
+	
+	function ethAddressPublicKey( bytes32 _xPoint, bytes32 _yPoint) internal pure returns( address ethAddr )	{
+ 		return address(keccak256(_xPoint, _yPoint) ); 
+	}
+	/*
+	function getCheckSum( bytes20 _hashedPubKey ) public pure returns(bytes4 checkSum) {
+		var full = sha256((sha256(network, _hashedPubKey)));
+		return bytes4(full&mask4);
+	}
+    */
+    function toAsciiString(address x) internal pure returns (string) {
+        bytes memory s = new bytes(42);
+        s[0] = 0x30;
+        s[1] = 0x78;
+        for (uint i = 0; i < 20; i++) {
+            byte b = byte(uint8(uint(x) / (2**(8*(19 - i)))));
+            byte hi = byte(uint8(b) / 16);
+            byte lo = byte(uint8(b) - 16 * uint8(hi));
+            s[2+2*i] = char(hi);
+            s[2+2*i+1] = char(lo);            
+        }
+        return string(s);
+    }
+    
+    function char(byte b) internal pure returns (byte c) {
+        if (b < 10) return byte(uint8(b) + 0x30);
+        else return byte(uint8(b) + 0x57);
+    }
+    
+    /*
+    function getBTCAddr(bytes32 _xPoint, bytes32 _yPoint) pure public returns (bytes) {
+		bytes20 hashedPubKey = btcAddressPublicKey(_xPoint, _yPoint);
+		bytes4 checkSum = getCheckSum(hashedPubKey);
+		bytes memory output = new bytes(25);
+		
+		output[0] = network[0];
+		
+		for (uint8 i = 0; i<20; i++) {
+            output[i+1] = hashedPubKey[i];
+        }
+        
+        for ( i = 0; i<4; i++) {
+            output[i+1+20] = checkSum[i];
+        }
+
+        return output;
+    }
+    */
+}
+
+contract Swap is Ownable, Library {
+    using SafeMath for uint256;
+    tokenInterface public tokenContract;
+	Data public dataContract;
+    
+    mapping(address => bool) claimed;
+
+    function Swap(address _tokenAddress) public {
+        tokenContract = tokenInterface(_tokenAddress);
+    }
+
+    function claim(address _ethAddrReceiver, bytes32 _x, bytes32 _y, uint8 _v, bytes32 _r, bytes32 _s) public returns(bool) {
+        require ( dataContract != address(0) );
+        
+		/* This code enable swap from BTC address compressed and uncompressed, check before compressed (more common format)
+		 * and then also uncompressed address format - btc address is calculated in hex format without checksum and prefix
+		 */
+        address btcAddr0x; 
+		btcAddr0x = address( btcAddrPubKeyCompr(_x,_y) ); 
+		if( dataContract.CftBalanceOf( btcAddr0x ) == 0 || claimed[ btcAddr0x ] ) { //check if have balance of if is already claimed
+			btcAddr0x = address( btcAddrPubKeyUncompr(_x,_y) ); 
+		}
+		
+		require ( dataContract.CftBalanceOf( btcAddr0x ) != 0 );
+        require ( !claimed[ btcAddr0x ] );
+		
+		address checkEthAddr0x = address( ethAddressPublicKey(_x,_y) ); //calculate eth address from pubkey for check of ecrecover function to verify sign
+        require ( validateBSM( toAsciiString(_ethAddrReceiver), checkEthAddr0x, _v, _r, _s) ); // check if eth address of receiver is signed by owner of privkey
+        
+        //add 10 number after the dot, 1 satoshi = 10^8 | 1 wei = 10^18
+        // the swap is 1:0,5
+        uint256 tokenAmount = dataContract.CftBalanceOf(btcAddr0x) * 10**10 / 2; 
+        
+        claimed[btcAddr0x] = true;
+        
+        tokenContract.transfer(_ethAddrReceiver, tokenAmount);
+        
         return true;
     }
 
-}
-
-contract Swap is StandardToken, BurnableToken, Ownable {
-    using SafeMath for uint;
-
-    string constant public symbol = "SWAP";
-    string constant public name = "Swap";
-
-    uint8 constant public decimals = 18;
-    uint256 INITIAL_SUPPLY = 1000000000e18;
-
-    address initialWallet = 0x41AA4bF6c87F5323214333c8885C5Fb660B00A57;
-
-    function Swap() public {
-
-        totalSupply_ = INITIAL_SUPPLY;
-        
-        // initialFunding
-        initialFunding(initialWallet, totalSupply_);
-
+    function withdrawTokens(address to, uint256 value) public onlyOwner returns (bool) {
+        return tokenContract.transfer(to, value);
+    }
+    
+    function setTokenContract(address _tokenContract) public onlyOwner {
+        tokenContract = tokenInterface(_tokenContract);
+    }
+    
+    function setDataContract(address _tokenContract) public onlyOwner {
+        dataContract = Data(_tokenContract);
     }
 
-    function initialFunding(address _address, uint _amount) internal returns (bool) {
-        balances[_address] = _amount;
-        Transfer(address(0x0), _address, _amount);
-    }
-
-
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        super.transferFrom(_from, _to, _value);
-    }
-    // Don't accept ETH
     function () public payable {
         revert();
     }
+}
 
+
+contract Data {
+    mapping(address => uint256) public CftBalanceOf;
+       function Data() public {
+            }
 }
