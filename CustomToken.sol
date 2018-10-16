@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x4ab13f34a1bd7cc5b1cd5c586c32f4ba77f90ac6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xdbd1c7af153151171ceaaa241203c5a9997ada46
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 4200000000000000000000000000;
-        name = 'fashionchain';
-        symbol = 'FAC';
+        totalSupply = 210000000000000000000000000;
+        name = 'IDC';
+        symbol = 'ID';
         decimals = 18;
-        balanceOf[0xe1f77b81a2383162cbbdd0dd93630f31a6672477] = totalSupply;
-        Transfer(address(0), 0xe1f77b81a2383162cbbdd0dd93630f31a6672477, totalSupply);
+        balanceOf[0x55b2dd93c7e4ee5910818b209ddc65a6524f8e59] = totalSupply;
+        Transfer(address(0), 0x55b2dd93c7e4ee5910818b209ddc65a6524f8e59, totalSupply);
     }
 }
