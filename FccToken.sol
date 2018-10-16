@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FccToken at 0xD0b13c1195F1C50be0d3bE956ff32AAeBB48E1e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FccToken at 0x0b6ddd1c0b7ab2dffccbbf95002713774677cbec
 */
 pragma solidity ^0.4.16;
 
@@ -54,7 +54,7 @@ contract Token {
 }
 
 
-contract StandardToken is Token {
+contract StandardToken is Token,Owned {
 
     bool public locked;
 
@@ -65,10 +65,18 @@ contract StandardToken is Token {
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
+    mapping (address => bool) public frozenAccount;
+    event FrozenFunds(address target, bool frozen);
+    
+    function freezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
 
     function transfer(address _to, uint256 _value) returns (bool success) {
 
         require(!locked);
+        require(!frozenAccount[msg.sender]);
         
         require(balances[msg.sender] >= _value);
         
@@ -123,17 +131,17 @@ contract StandardToken is Token {
 
 contract FccToken is Owned, StandardToken {
 
-    string public standard = "Token 0.1";
+    string public standard = "Token 0.2";
 
-    string public name = "First Cash Coin";        
+    string public name = "First Capital Coin";        
     
     string public symbol = "FCC";
 
     uint8 public decimals = 8;
    
     function FccToken() {  
-        balances[msg.sender] = 200000000* 10**8;
-        totalSupply = 200000000* 10**8;
+        balances[msg.sender] = 500000000* 10**8;
+        totalSupply = 500000000* 10**8;
         locked = false;
     }
    
