@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BalanceReader at 0x7d01989c920ff8c45916195317381bb6a62352d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BalanceReader at 0xe5b70a2ce2b507237baa81c98a5448431b1e8cb8
 */
 pragma solidity ^0.4.6;
 
@@ -28,11 +28,11 @@ contract BalanceReader {
 	    presale = Presale(0xe3c61a3bff7cb03ddd422258006fddd5ba1ed0fe);
 	}
 	
-	function attach(Presale _presale) public {
+	function attach(Presale _presale){
 	    presale = _presale;
 	}
 	
-	function balance(address addr) public constant returns (uint) {
+	function balance(address addr) public returns (uint) {
 		return presale.balances(addr);
 	}
 }
