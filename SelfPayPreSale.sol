@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SelfPayPreSale at 0x3363e360c565b43dad7cd468f63fa27b74932b15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SelfPayPreSale at 0x25e3e38b52f604585a117abb2b408e64e1bdc074
 */
 pragma solidity ^0.4.13;
 
@@ -58,7 +58,7 @@ contract Crowdsale {
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
 
-  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) {
+  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
     require(_startTime >= now);
     require(_endTime >= _startTime);
     require(_rate > 0);
@@ -79,7 +79,7 @@ contract Crowdsale {
 
 
   // fallback function can be used to buy tokens
-  function () payable {
+  function () public payable {
     buyTokens(msg.sender);
   }
 
@@ -128,7 +128,7 @@ contract CappedCrowdsale is Crowdsale {
 
   uint256 public cap;
 
-  function CappedCrowdsale(uint256 _cap) {
+  function CappedCrowdsale(uint256 _cap) public {
     require(_cap > 0);
     cap = _cap;
   }
@@ -160,7 +160,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -230,14 +230,22 @@ contract SelfPayPreSale is CappedCrowdsale, FinalizableCrowdsale {
   // Ensure the gold level bonus can only be used once
   bool public goldLevelBonusIsUsed = false;
 
-  function SelfPayPreSale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _goal, uint256 _cap, address _wallet)
+  //
+  address private goldLevelBonusAddress=0x0;
+
+  function SelfPayPreSale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _goal, uint256 _cap, address _wallet, address _goldLevelBonusAddress)
     CappedCrowdsale(_cap)
     FinalizableCrowdsale()
     Crowdsale(_startTime, _endTime, _rate, _wallet) public
   {
+    goldLevelBonusAddress = _goldLevelBonusAddress;
     // As goal needs to be met for a successful crowdsale the value needs to be less
     // than or equal than a cap which is limit for accepted funds
     require(_goal <= _cap);
+  }
+
+  function createTokenContract() internal returns (MintableToken) {
+   return new SelfPayToken();
   }
 
   /**
@@ -249,20 +257,24 @@ contract SelfPayPreSale is CappedCrowdsale, FinalizableCrowdsale {
     // standard rate: 1 ETH : 300 SXP
     uint256 tokens_ = weiAmount.mul(rate);
 
-    // Hardcoded address of the specific gold level beneficiary
-    // mainnet: 0x2157a35ce381175946d564ef64e22735286e61ea
-    // testnet: 0xCB61f584dCCd8762427ef44ee8eB4a24f4bC4a82 (accounts[7])
-    if (beneficiary == address(0xCB61f584dCCd8762427ef44ee8eB4a24f4bC4a82) && weiAmount >= 50 ether && !goldLevelBonusIsUsed) {
+    // Specific gold level investor
+    if (beneficiary == goldLevelBonusAddress && weiAmount >= 50 ether && weiAmount <= 100 ether && !goldLevelBonusIsUsed) {
+
       // Gold level bonus: Exclusive bonus of 100% for one specific investor
       tokens_ = tokens_.mul(200).div(100);
       goldLevelBonusIsUsed = true;
+
     } else if (weiAmount >= 10 ether && nbBackerWithMoreOrEqualTen < 10) {
+
       // Silver level bonus: the first 10 participants that transfer 10 ETH or more will get 75% SXP bonus
       tokens_ = tokens_.mul(175).div(100);
       nbBackerWithMoreOrEqualTen++;
+
     } else {
-      // Bronze level bonus: +60% bonus for everyone else
+
+      // Bronze level bonus: +60% bonus for everyone else during PRE SALE
       tokens_ = tokens_.mul(160).div(100);
+
     }
 
     return tokens_;
@@ -289,11 +301,6 @@ contract SelfPayPreSale is CappedCrowdsale, FinalizableCrowdsale {
     forwardFunds();
   }
 
-  /**
-   * @dev Can be overridden to add finalization logic. The overriding function
-   * should call super.finalization() to ensure the chain of finalization is
-   * executed entirely.
-   */
   function finalization() internal {
     token.transferOwnership(owner);
   }
@@ -403,14 +410,14 @@ contract StandardToken is ERC20, BasicToken {
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval (address _spender, uint _addedValue)
+  function increaseApproval (address _spender, uint _addedValue) public
     returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue)
+  function decreaseApproval (address _spender, uint _subtractedValue) public
     returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -480,7 +487,7 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 contract SelfPayToken is MintableToken,BurnableToken {
-    string public constant name = "SelfPay Token";
+    string public constant name = "SelfPay.asia Token";
     string public constant symbol = "SXP";
     uint256 public decimals = 18;
     bool public tradingStarted = false;
