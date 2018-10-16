@@ -1,21 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xbce39946aba431f8a244153cb8aca6541625bc2e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xe1c9a03cf690256ff7738cbd508c88cf5238a535
 */
 pragma solidity ^0.4.20;
 
 /*
-* Welcome to Power of HODL (POHD) pohd.io ..
+* 
 * ==========================*
-*  ____   ___  _   _ ____   *
-* |  _ \ / _ \| | | |  _ \  *
-* | |_) | | | | |_| | | | | *
-* |  __/| |_| |  _  | |_| | *
-* |_|    \___/|_| |_|____/  *
+*  ____   ___     __        *
+* |  _ \ / _ \   |  |       * 
+* | |_) | | | |  |  |       *
+* |  __/| |_| |__|  |       *
+* |_|    \___/|_____|       *
 *                           *
 * ==========================*
 * -> What?
 * This source code is copy of Proof of Weak Legs (POWL) which is copy of POWH3D
-* Only difference is that, you will receive 25% dividends.
+* Only difference is that, you will receive 50% dividends.
+SUCK A DICK POORGUY
+papa is daddy
 */
 
 contract Hourglass {
@@ -123,7 +125,7 @@ contract Hourglass {
     string public name = "POHD";
     string public symbol = "POHD";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 4;
+    uint8 constant internal dividendFee_ = 2;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -153,7 +155,7 @@ contract Hourglass {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
@@ -167,14 +169,23 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0xa01f8af244314a5585bd4c9c320d8a2d4375f98982655aec449748112312da4b] = true;
+        administrators[0x235910f4682cfe7250004430a4ffb5ac78f5217e1f6a4bf99c937edf757c3330] = true;
         
         // add the ambassadors here.
         // One lonely developer 
-        ambassadors_[0x04569cdb6fc3e0add8d71c4c83b5a4d9232bbded] = true;
+        ambassadors_[0x6405C296d5728de46517609B78DA3713097163dB] = true;
         
         // Backup Eth address
-        ambassadors_[0x206f60817a5a57a8efeb1d06e0c007201f1c11e9] = true;
+       
+        ambassadors_[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = true;
+         
+        ambassadors_[0x448D9Ae89DF160392Dd0DD5dda66952999390D50] = true;
+        
+    
+         
+         
+        
+        
      
 
     }
