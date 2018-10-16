@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VAToken at 0xdfe315d117ebd8b6ca2315a779d33a0e358f1ab5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VAToken at 0x4d9deb2adce853df52d8567f535b864905f23372
 */
 pragma solidity ^0.4.16;
 
@@ -150,7 +150,7 @@ contract VAToken is owned, TokenERC20 {
     event Withdrawal(address beneficiary, uint256 amount);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function VAToken() TokenERC20(500000000, "REEX", "REEX") public {
+    function VAToken() TokenERC20(5000000000, "REEX", "REEX") public {
         beneficiary = msg.sender;
     }
 
