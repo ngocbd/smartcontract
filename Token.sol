@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf885eafdfafbf8ef15a7799aff65b52e6ea23118
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x1d556d7fb1af721da8b9c30d44f6d4a52f8e0ba2
 */
 pragma solidity ^0.4.18;
 
@@ -98,7 +98,7 @@ contract Token is TokenI {
     uint256 public minFunding = 1 ether;  //??????
     uint256 public airdropQty=0;//??????????
     uint256 public airdropTotalQty=0;//???????????
-    uint256 public tokensPerEther = 9000;//1eth??????
+    uint256 public tokensPerEther = 10000;//1eth??????
     address private vaultAddress;//????ETH???
     uint256 public totalCollected = 0;//????ETH????
 
@@ -111,11 +111,11 @@ contract Token is TokenI {
     event Payment(address sender, uint256 _ethAmount, uint256 _tokenAmount);
 
     function Token(
-    uint256 initialSupply,
-    string tokenName,
-    uint8 decimalUnits,
-    string tokenSymbol,
-    address _vaultAddress
+        uint256 initialSupply,
+        string tokenName,
+        uint8 decimalUnits,
+        string tokenSymbol,
+        address _vaultAddress
     ) public {
         require(_vaultAddress != 0);
         totalSupply = initialSupply * 10 ** uint256(decimalUnits);
@@ -303,7 +303,6 @@ contract Token is TokenI {
         paused = _paused;
     }
     
-
     function changePauseTranfser(bool _paused) onlyOwner public {
         pauseTransfer = _paused;
     }
@@ -326,13 +325,14 @@ contract Token is TokenI {
             require(msg.value >= minFunding);//????
             require(msg.value % 1 ether==0);//??????eth
             totalCollected +=msg.value;
-            require(vaultAddress.send(msg.value));//?eth??????
+            require(vaultAddress.send(msg.value));//Send the ether to the vault
             tokenValue = (msg.value/1 ether)*(tokensPerEther*10 ** uint256(decimals));
             require(_generateTokens(_user, tokenValue));
-            //??30%?????????6?????35%?1?????????SPM
-            //
-            require(_freeze(_user, tokenValue*35/100, 0));
-            _freeze(_user, tokenValue*35/100, 1);
+            uint256 lock1 = tokenValue / 5;
+            require(_freeze(_user, lock1, 0));
+            _freeze(_user, lock1, 1);
+            _freeze(_user, lock1, 2);
+            _freeze(_user, lock1, 3);
             emit Payment(_user, msg.value, tokenValue);
 
         }
