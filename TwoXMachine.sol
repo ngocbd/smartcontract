@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwoXMachine at 0xf884911a846c06a32887e266c52d98016182dfef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwoXMachine at 0x0db847406c33959dd0b30fd6962b60f1f3bfcce7
 */
 pragma solidity ^0.4.18;
 /**
@@ -128,7 +128,6 @@ contract TwoXMachine is Ownable, Pausable {
     // I don't want no scrub
     require(msg.value >= 0.01 ether);
 
-    // Take a 2% fee
     uint256 value = SafeMath.div(SafeMath.mul(msg.value, 98), 100);
 
     // HNNNNNNGGGGGG
