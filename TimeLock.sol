@@ -1,34 +1,84 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLock at 0xadd553d102761875207c8bca3fd8f3d7d40df1dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract timelock at 0xdcd2e1ce73f5b569d398cf60285d32a5768c6e48
 */
-pragma solidity ^0.4.9;
+// Timelock
+// lock withdrawal for a set time period
+// @authors:
+// Cody Burns <dontpanic@codywburns.com>
+// license: Apache 2.0
+// version:
 
-contract TimeLock {
-    address user;
-    uint balance;
-    uint depositTime;
-    function () payable {
-      if (user!=0)
-        throw;
-      user = msg.sender;
-      balance = msg.value;
-      depositTime = block.timestamp;
+pragma solidity ^0.4.19;
+
+// Intended use: lock withdrawal for a set time period
+//
+// Status: functional
+// still needs:
+// submit pr and issues to https://github.com/realcodywburns/
+//version 0.2.0
+
+
+contract timelock {
+
+////////////////
+//Global VARS//////////////////////////////////////////////////////////////////////////
+//////////////
+
+    uint public freezeBlocks = 200000;       //number of blocks to keep a lockers (200k)
+
+///////////
+//MAPPING/////////////////////////////////////////////////////////////////////////////
+///////////
+
+    struct locker{
+      uint freedom;
+      uint bal;
     }
-    function withdraw (){
-        if (user==0){
-            throw;
-        }
-        
-        if (block.timestamp-depositTime<20*60){
-            throw;
-        }
-        
-        if(!user.send(balance))
-            throw;
-        
-        delete user;
-        
-        
-        
+    mapping (address => locker) public lockers;
+
+///////////
+//EVENTS////////////////////////////////////////////////////////////////////////////
+//////////
+
+    event Locked(address indexed locker, uint indexed amount);
+    event Released(address indexed locker, uint indexed amount);
+
+/////////////
+//MODIFIERS////////////////////////////////////////////////////////////////////
+////////////
+
+//////////////
+//Operations////////////////////////////////////////////////////////////////////////
+//////////////
+
+/* public functions */
+    function() payable public {
+        locker storage l = lockers[msg.sender];
+        l.freedom =  block.number + freezeBlocks; //this will reset the freedom clock
+        l.bal = l.bal + msg.value;
+
+        Locked(msg.sender, msg.value);
     }
+
+    function withdraw() public {
+        locker storage l = lockers[msg.sender];
+        require (block.number > l.freedom && l.bal > 0);
+
+        // avoid recursive call
+
+        uint value = l.bal;
+        l.bal = 0;
+        msg.sender.transfer(value);
+        Released(msg.sender, value);
+    }
+
+////////////
+//OUTPUTS///////////////////////////////////////////////////////////////////////
+//////////
+
+////////////
+//SAFETY ////////////////////////////////////////////////////////////////////
+//////////
+
+
 }
