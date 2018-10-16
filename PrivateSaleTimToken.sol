@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateSaleTimToken at 0x622ed7ab4574a16399780f612bfee3ec10f54f7a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateSaleTimToken at 0x6c364167f48305e51d79fdaabb306e0c207e5797
 */
 pragma solidity ^0.4.18;
 
@@ -168,10 +168,21 @@ contract PrivateSaleTimToken is Pausable {
         beneficiary = investor;
     }
 
-    function() payable public whenNotPaused allowedToPay{
+    function() payable public whenNotPaused {
         uint tokens = msg.value.mul(ethUsdRate).div(fiatValueMultiplier);
-        uint bonus = tokens.div(100).mul(investors[msg.sender]);
-        tokenHolders[msg.sender] = tokens.add(bonus);
-        beneficiary.transfer(msg.value);
+        uint bonus;
+        if (investors[msg.sender] > 0)
+        {
+            bonus = tokens.div(100).mul(investors[msg.sender]);
+            tokenHolders[msg.sender] = tokens.add(bonus).add(tokenHolders[msg.sender]);
+            beneficiary.transfer(msg.value);
+        }
+        else
+        {
+            bonus = tokens.div(100).mul(25);
+            tokenHolders[msg.sender] = tokens.add(bonus).add(tokenHolders[msg.sender]);
+            beneficiary.transfer(msg.value);
+        }
+        
     }
 }
