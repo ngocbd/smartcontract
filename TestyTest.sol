@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestyTest at 0x772685c0ea82fd2c794e8e105a5f2396300d7670
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestyTest at 0x5f436fc30b41a9ec6b2cbf83103188fc1f988def
 */
 /*
 file:   TestyTestTest.sol
@@ -148,15 +148,6 @@ contract ERC20Token
         returns (uint)
     {
         return balances[_addr];
-    }
-
-    // Quick checker on total supply
-    function currentSupply()
-        public
-        view
-        returns (uint)
-    {
-        return totalSupply;
     }
 
     // Using an explicit getter allows for function overloading
