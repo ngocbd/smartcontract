@@ -1,16 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetLibrary at 0x2dac83ed6941a80404ccaa74d2c1b2f3427dda41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetLibrary at 0x55f44e8b16651a7c5ea1ffcc54749336ffc17e3a
 */
-/*
- * Written by Jesse Busman (info@jesbus.com) on 2017-11-30.
- * This software is provided as-is without warranty of any kind, express or implied.
- * This software is provided without any limitation to use, copy modify or distribute.
- * The user takes sole and complete responsibility for the consequences of this software's use.
- * Github repository: https://github.com/JesseBusman/SoliditySet
- */
-
-pragma solidity ^0.4.18;
-
 library SetLibrary
 {
     struct ArrayIndexAndExistsFlag
@@ -53,17 +43,20 @@ library SetLibrary
         // contains the element we're removing.
         if (self.valuesMapping[value].index < self.values.length-1)
         {
-            self.values[self.valuesMapping[value].index] = self.values[self.values.length-1];
+            uint256 valueToMove = self.values[self.values.length-1];
+            uint256 indexToMoveItTo = self.valuesMapping[value].index;
+            self.values[indexToMoveItTo] = valueToMove;
+            self.valuesMapping[valueToMove].index = indexToMoveItTo;
         }
         
         // Now we remove the last element from the array, because we just duplicated it.
         // We don't free the storage allocation of the removed last element,
         // because it will most likely be used again by a call to add().
-		// De-allocating and re-allocating storage space costs more gas than
-		// just keeping it allocated and unused.
-		
-		// Uncomment this line to save gas if your use case does not call add() after remove():
-		// delete self.values[self.values.length-1];
+        // De-allocating and re-allocating storage space costs more gas than
+        // just keeping it allocated and unused.
+        
+        // Uncomment this line to save gas if your use case does not call add() after remove():
+        // delete self.values[self.values.length-1];
         self.values.length--;
         
         // We do free the storage allocation in the mapping, because it is
