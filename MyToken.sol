@@ -1,81 +1,108 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x91fAaD742B9F829423491B286814CD609f121cD4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x5fef027b4bd02df117f6c28bc58abcbfed4ce898
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.6;
 
-contract Owner {
-    //For storing the owner address
+
+contract tokenRecipient {function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData);}
+
+
+contract MyToken {
+    /* Public variables of the token */
+    string public standard = 'Token 1.0';
+
+    string public name;
+
+    string public symbol;
+
+    uint8 public decimals;
+
+    uint256 public totalSupply;
+
     address public owner;
-    //Constructor for assign a address for owner property(It will be address who deploy the contract) 
-    function Owner() {
-        owner = msg.sender;
+
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function MyToken(
+    uint256 initialSupply,
+    string tokenName,
+    uint8 decimalUnits,
+    string tokenSymbol
+    ) {
+        balanceOf[msg.sender] = initialSupply;
+        // Give the creator all initial tokens
+        totalSupply = initialSupply;
+        // Update total supply
+        name = tokenName;
+        // Set the name for display purposes
+        symbol = tokenSymbol;
+        // Set the symbol for display purposes
+        decimals = decimalUnits;
+        // Amount of decimals for display purposes
     }
-    //This is modifier (a special function) which will execute before the function execution on which it applied 
-    modifier onlyOwner() {
-        if(msg.sender != owner) throw;
-        //This statement replace with the code of fucntion on which modifier is applied
+
+    modifier onlyOwner {
+        if (msg.sender != owner) throw;
         _;
     }
-    //Here is the example of modifier this function code replace _; statement of modifier 
-    function transferOwnership(address new_owner) onlyOwner {
-        owner = new_owner;
-    }
-}
-
-contract MyToken is Owner {
-    //Common information about coin
-    string public name;
-    string public symbol;
-    uint8  public decimal;
-    uint256 public totalSupply;
-    
-    //Balance property which should be always associate with an address
-    mapping (address => uint256) public balanceOf;
-    //frozenAccount property which should be associate with an address
-    mapping (address => bool) public frozenAccount;
-    
-    //These generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event FrozenFunds(address target, bool frozen);
-    
-    //Construtor for initial supply (The address who deployed the contract will get it) and important information
-    function MyToken(uint256 initial_supply, string _name, string _symbol, uint8 _decimal) {
-        balanceOf[msg.sender] = initial_supply;
-        name = _name;
-        symbol = _symbol;
-        decimal = _decimal;
-        totalSupply = initial_supply;
-    }
-    
-    //Function for transer the coin from one address to another
-    function transfer(address to, uint value) {
-        //checking account is freeze or not
-        if (frozenAccount[msg.sender]) throw;
-        //checking the sender should have enough coins
-        if(balanceOf[msg.sender] < value) throw;
-        //checking for overflows
-        if(balanceOf[to] + value < balanceOf[to]) throw;
-        
-        //substracting the sender balance
-        balanceOf[msg.sender] -= value;
-        //adding the reciever balance
-        balanceOf[to] += value;
-        
+    /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        if (_to == 0x0) throw;
+        // Prevent transfer to 0x0 address
+        if (balanceOf[msg.sender] < _value) throw;
+        // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        // Check for overflows
+        balanceOf[msg.sender] -= _value;
+        // Subtract from the sender
+        balanceOf[_to] += _value;
+        // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);
         // Notify anyone listening that this transfer took place
-        Transfer(msg.sender, to, value);
-    }
-    
-    function mintToken(address target, uint256 mintedAmount) onlyOwner{
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        
-        Transfer(0,owner,mintedAmount);
-        Transfer(owner,target,mintedAmount);
+
+        owner=msg.sender;
     }
 
-    function freezeAccount(address target, bool freeze) onlyOwner {
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+    /* Allow another contract to spend some tokens in your behalf */
+    function approve(address _spender, uint256 _value)
+    returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
     }
-    
+
+    /* Approve and then comunicate the approved contract in a single tx */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+    returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    /* A contract attempts to get the coins */
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (_to == 0x0) throw;
+        // Prevent transfer to 0x0 address
+        if (balanceOf[_from] < _value) throw;
+        // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        // Check for overflows
+        if (_value > allowance[_from][msg.sender]) throw;
+        // Check allowance
+        balanceOf[_from] -= _value;
+        // Subtract from the sender
+        balanceOf[_to] += _value;
+        // Add the same to the recipient
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
 }
