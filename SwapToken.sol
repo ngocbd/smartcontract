@@ -1,231 +1,147 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapToken at 0x50ae8d7c70c33d1f40b36c75fe9f560646134dd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapToken at 0x1200830aef9ded0b33f8c53bbb189738f3e3e1e4
 */
-pragma solidity ^0.4.6;
-contract owned {
-    address public owner;
+pragma solidity ^0.4.13;
 
-    function owned() {
-        owner = msg.sender;
-    }
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
-    }
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-contract SwapToken is owned {
-    /* Public variables of the token */
-    
-    string public standard = 'Token 0.1';
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    // buyer tokens
-    string public buyerTokenName;
-    string public buyerSymbol;
-    uint8 public buyerDecimals;
-    uint256 public totalBuyerSupply;
-    
-    // issuer tokens
-    string public issuerTokenName;
-    string public issuerSymbol;
-    uint8 public issuerDecimals;
-    uint256 public totalIssuerSupply;
-    
-    // more variables
-    uint256 public buyPrice;
-    uint256 public issuePrice;
-    address public project_wallet;
-    address public collectionFunds;
-    uint public startBlock;
-    uint public endBlock;
-    
-    /* Sets the constructor variables */
-    function SwapToken(
-        string _buyerTokenName,
-        string _buyerSymbol,
-        uint8 _buyerDecimals,
-        string _issuerTokenName,
-        string _issuerSymbol,
-        uint8 _issuerDecimals,
-        address _collectionFunds,
-        uint _startBlock,
-        uint _endBlock
-        ) {
-        buyerTokenName = _buyerTokenName;
-        buyerSymbol = _buyerSymbol;
-        buyerDecimals = _buyerDecimals;
-        issuerTokenName = _issuerTokenName;
-        issuerSymbol = _issuerSymbol;
-        issuerDecimals = _issuerDecimals;
-        collectionFunds = _collectionFunds;
-        startBlock = _startBlock;
-        endBlock = _endBlock;
-    }
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOfBuyer;
-    mapping (address => uint256) public balanceOfIssuer;
-    mapping (address => mapping (address => uint256)) public allowance;
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
 
-    /* Initializes contract with initial supply tokens to the creator of the contract 
-    function token(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol
-        ) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
-    }
-    */
-    
-    /* Check if contract has started */
-    function has_contract_started() private constant returns (bool) {
-	    return block.number >= startBlock;
-    }
-    
-    /* Check if contract has ended */
-    function has_contract_ended() private constant returns (bool) {
-        return block.number > endBlock;
-    }
-    
-    /* Set a project Wallet */
-    function defineProjectWallet(address target) onlyOwner {
-        project_wallet = target;
-    }
-    
-    /* Mint coins */
-    
-    // buyer tokens
-    function mintBuyerToken(address target, uint256 mintedAmount) onlyOwner {
-        balanceOfBuyer[target] += mintedAmount;
-        totalBuyerSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
-    }
-    
-    // issuer tokens
-    function mintIssuerToken(address target, uint256 mintedAmount) onlyOwner {
-        balanceOfIssuer[target] += mintedAmount;
-        totalIssuerSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
-    }
-    
-    /* Distroy coins */
-    
-    // Distroy buyer coins for sale in contract 
-    function distroyBuyerToken(uint256 burnAmount) onlyOwner {
-        balanceOfBuyer[this] -= burnAmount;
-        totalBuyerSupply -= burnAmount;
-    }
-    
-    // Distroy issuer coins for sale in contract
-    function distroyIssuerToken(uint256 burnAmount) onlyOwner {
-        balanceOfIssuer[this] -= burnAmount;
-        totalIssuerSupply -= burnAmount;
-    }
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-    /* Send coins */
-    
-    // send buyer coins
-    function transferBuyer(address _to, uint256 _value) {
-        if (balanceOfBuyer[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOfBuyer[_to] + _value < balanceOfBuyer[_to]) throw; // Check for overflows
-        balanceOfBuyer[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOfBuyer[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
-    }
-    
-    // send issuer coins
-    function transferIssue(address _to, uint256 _value) {
-        if (balanceOfIssuer[msg.sender] < _value) throw;
-        if (balanceOfIssuer[_to] + _value < balanceOfIssuer[_to]) throw;
-        balanceOfIssuer[msg.sender] -= _value;
-        balanceOfIssuer[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-    }
-    
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        tokenRecipient spender = tokenRecipient(_spender);
-        return true;
-    }
+  mapping(address => uint256) balances;
 
-    /* Approve and then comunicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {    
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-    /* A contract attempts to get the coins 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balanceOfBuyer[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOfBuyer[_to] + _value < balanceOfBuyer[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
-        balanceOfBuyer[_from] -= _value;                          // Subtract from the sender
-        balanceOfBuyer[_to] += _value;                            // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-    */
-    
-    /* Set token price */
-    function setPrices(uint256 newBuyPrice, uint256 newIssuePrice) onlyOwner {
-        buyPrice = newBuyPrice;
-        issuePrice = newIssuePrice;
-    }
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 
-    /* Buy tokens */
-    
-    // buy buyer tokens
-    function buyBuyerTokens() payable {
-        if(!has_contract_started()) throw;                  // checks if the contract has started
-        if(has_contract_ended()) throw;                     // checks if the contract has ended 
-        uint amount = msg.value / buyPrice;                // calculates the amount
-        if (balanceOfBuyer[this] < amount) throw;               // checks if it has enough to sell
-        balanceOfBuyer[msg.sender] += amount;                   // adds the amount to buyer's balance
-        balanceOfBuyer[this] -= amount;                         // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);                // execute an event reflecting the change
-    }
-    
-    // buy issuer tokens
-    function buyIssuerTokens() payable {
-        uint amount = msg.value / issuePrice;
-        if (balanceOfIssuer[this] < amount) throw;
-        balanceOfIssuer[msg.sender] += amount;
-        balanceOfIssuer[this] -= amount;
-        Transfer(this, msg.sender, amount);
-    }
-    
-    /* After contract ends move funds */
-    function moveFunds() onlyOwner {
-        //if (!has_contract_ended()) throw;
-        if (!project_wallet.send(this.balance)) throw;
-    }
+}
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  function increaseApproval (address _spender, uint _addedValue)
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue)
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+
+contract Ownable {
+  address public owner;
+
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
+
+}
+
+
+contract SwapToken is StandardToken {
+  string public name = "SWAP";
+  string public symbol = "SWAP";
+  uint8 public decimals = 4;
+
+  function SwapToken() {
+      totalSupply = 1200000 * 1e4;
+      balances[msg.sender] = totalSupply;
+  }
+
 }
