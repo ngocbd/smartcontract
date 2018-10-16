@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VEC at 0x9dabd6bc07e8cd030606a602fa5225acbcbcae0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VEC at 0x928c24ead4556d3a3f2e3cbc9b235851ab468631
 */
 pragma solidity ^0.4.21;
 
@@ -308,7 +308,7 @@ contract VEC is Ownable, MintableToken {
 
   function VEC() public {
     summTeam =     9500000000;
-    addressTeam =     0x58a2CE10BAe7903829795Bca26A204360213C62e;
+    addressTeam =     0xc6CA7ac8D2FF8f04A3f23bb9aeC2254970B9f66e;
     //Founders and supporters initial Allocations
     mint(addressTeam, summTeam);
   }
@@ -351,8 +351,8 @@ contract Crowdsale is Ownable {
   function Crowdsale() public {
     maxTokens = 500000000; 
     maxEther = 10000 * 1 ether;
-    rate = 13062;
-    startICO =1527062400; //Wed, 23 May 2018 08:00:00 +0000
+    rate = 12908;
+    startICO =1523864288; // 04/16/2018 @ 7:38am (UTC)
     wallet = 0xb382C19879d39E38B4fa77fE047FAdadE002fdAB;
     token = createTokenContract();
   }
@@ -440,7 +440,7 @@ contract Crowdsale is Ownable {
    * @return Number of tokens that can be purchased with the specified _weiAmount
    */
   function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-    return _weiAmount.mul(rate);
+    return _weiAmount.mul(rate).div(1 ether);
   }
 
   /**
