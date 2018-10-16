@@ -1,153 +1,119 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleVault at 0xda6d5a2ec190562cbd8c50f13faa8c1a43a04461
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleVault at 0x3b420901882eC5EFafBbc976e1004571DA223f37
 */
 pragma solidity ^0.4.18;
 
+contract Owned {
+    address public Owner;
+  
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+    function Owned() public {
+        Owner = msg.sender;
+    }
 
+    modifier OnlyOwner() {
+        require(msg.sender == Owner);
+        _;
+    }
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
+    function transferOwnership(address newOwner) public OnlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(Owner, newOwner);
+        Owner = newOwner;
   }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
 }
 
-
-
-
-
-
-
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title ?? ??
+ * @dev   ??? ??? ?? ????? ?? ??? ?????.
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+        return 0;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-
-
 /**
- * @title RefundVault
- * @dev This contract is used for storing funds while a crowdsale
- * is in progress. Supports refunding the money if crowdsale fails,
- * and forwarding it if crowdsale is successful.
+ * @title ?????? ?? ??? ???? ??? ?????.
+ * @dev   ????? ???? ??? ?????.
+ *        ????? ???? ?????.
  */
-contract RefundVault is Ownable {
-  using SafeMath for uint256;
+contract RefundVault is Owned {
+    using SafeMath for uint256;
 
-  enum State { Active, Refunding, Closed }
+    enum State { Active, Refunding, Closed }
 
-  mapping (address => uint256) public deposited;
-  address public wallet;
-  State public state;
+    mapping (address => uint256) public deposited;
+    address public wallet;
+    State public state;
 
-  event Closed();
-  event RefundsEnabled();
-  event Refunded(address indexed beneficiary, uint256 weiAmount);
+    event Closed();
+    event RefundsEnabled();
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
 
-  function RefundVault(address _wallet) public {
-    require(_wallet != address(0));
-    wallet = _wallet;
-    state = State.Active;
-  }
+    function RefundVault(address _wallet) public {
+        require(_wallet != address(0));
+        wallet = _wallet;
+        state = State.Active;
+    }
 
-  function deposit(address investor) onlyOwner public payable {
-    require(state == State.Active);
-    deposited[investor] = deposited[investor].add(msg.value);
-  }
+    function deposit(address investor) OnlyOwner public payable {
+        require(state == State.Active);
+        deposited[investor] = deposited[investor].add(msg.value);
+    }
 
-  function close() onlyOwner public {
-    require(state == State.Active);
-    state = State.Closed;
-    Closed();
-    wallet.transfer(this.balance);
-  }
+    function close() OnlyOwner public {
+        require(state == State.Active);
+        state = State.Closed;
+        Closed();
+        wallet.transfer(this.balance);
+    }
 
-  function enableRefunds() onlyOwner public {
-    require(state == State.Active);
-    state = State.Refunding;
-    RefundsEnabled();
-  }
+    function enableRefunds() OnlyOwner public {
+        require(state == State.Active);
+        state = State.Refunding;
+        RefundsEnabled();
+    }
 
-  function refund(address investor) public {
-    require(state == State.Refunding);
-    uint256 depositedValue = deposited[investor];
-    deposited[investor] = 0;
-    investor.transfer(depositedValue);
-    Refunded(investor, depositedValue);
-  }
+    function refund(address investor) public {
+        require(state == State.Refunding);
+        uint256 depositedValue = deposited[investor];
+        deposited[investor] = 0;
+        investor.transfer(depositedValue);
+        Refunded(investor, depositedValue);
+    }
 }
 
-
 /**
- * @title PresaleVault
- * @dev This contract is used for storing funds while a crowdsale
- * is in progress. Supports refunding the money if crowdsale fails,
- * and forwarding it if crowdsale is successful.
- * PresaleVault.sol exists to handle deployed address.
+ * @title ???? ??
+ * @dev   ? ??? ??? ???? ? ?????.
+ *        ????? ??? ?? ??? ?????.
+ *        ????? ??? ?? ??? ?????.
+ *        PresaleVault.sol ?? ? ??? ???? ?? ?????.
  */
 contract PresaleVault is RefundVault {
-  bool public forPresale = true;
-  function PresaleVault(address _wallet) RefundVault(_wallet) public {}
+    bool public forPresale = true;
+    function PresaleVault(address _wallet) RefundVault(_wallet) public {}
 }
