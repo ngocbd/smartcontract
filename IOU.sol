@@ -1,11 +1,37 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOU at 0xff4f3ab463056a5a63c0ed83ecaf57d78a2e53db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOU at 0xafc36ac17c5d84504064f944b27292e795d03398
 */
 pragma solidity ^0.4.11;
 
-contract PTOYToken {
-  function transfer(address _to, uint256 _value);
-  function balanceOf(address _owner) constant returns (uint256 balance);
+/*
+  Allows buyers to securely/confidently buy recent ICO tokens that are
+  still non-transferrable, on an IOU basis. Like HitBTC, but with protection,
+  control, and guarantee of either the purchased tokens or ETH refunded.
+
+  The Buyer's ETH will be locked into the contract until the purchased
+  IOU/tokens arrive here and are ready for the buyer to invoke withdraw(),
+  OR until cut-off time defined below is exceeded and as a result ETH
+  refunds/withdrawals become enabled.
+
+  In other words, the seller must fulfill the IOU token purchases any time
+  before the cut-off time defined below, otherwise the buyer gains the
+  ability to withdraw their ETH.
+
+  The buyer's ETH will ONLY be released to the seller AFTER the adequate
+  amount of tokens have been deposited for ALL purchases.
+
+  Estimated Time of Distribution: 3-5 weeks from ICO according to TenX
+  Cut-off Time: ~ August 9, 2017
+
+  Greetz: blast
+  foobarbizarre@gmail.com (Please report any findings or suggestions for a 1 ETH bounty!)
+
+  Thank you
+*/
+
+contract ERC20 {
+  function transfer(address _to, uint _value);
+  function balanceOf(address _owner) constant returns (uint balance);
 }
 
 contract IOU {
@@ -16,7 +42,7 @@ contract IOU {
   mapping (address => uint256) public eth_sent;
 
   // Total IOUs available to sell
-  uint256 public total_iou_available = 400000000;
+  uint256 public total_iou_available = 40000000000000000000000;
 
   // Total IOUs purchased by all buyers
   uint256 public total_iou_purchased;
@@ -24,13 +50,14 @@ contract IOU {
   // Total IOU withdrawn by all buyers (keep track to protect buyers)
   uint256 public total_iou_withdrawn;
 
-  uint256 public price_in_wei = 100000000000000;
+  // IOU per ETH (price)
+  uint256 public price_per_eth = 100;
 
-  //  MTL token contract address (IOU offering)
-  PTOYToken public token = PTOYToken(0x8Ae4BF2C33a8e667de34B54938B0ccD03Eb8CC06);
+  //  PAY token contract address (IOU offering)
+  ERC20 public token = ERC20(0xB97048628DB6B661D4C2aA833e95Dbe1A905B280);
 
   // The seller's address (to receive ETH upon distribution, and for authing safeties)
-  address seller = 0x006FEd95aD39777938AaE0BaAA11b4cB33dF0F5a;
+  address seller = 0x496529c12e229e9787D37E5EFA2E48B651e755B0;
 
   // Halt further purchase ability just in case
   bool public halt_purchases;
@@ -70,7 +97,7 @@ contract IOU {
     Update IOU price
   */
   function updatePrice(uint256 _price) pwner {
-    price_in_wei = _price;
+    price_per_eth = _price;
   }
 
   /*
@@ -157,7 +184,7 @@ contract IOU {
     if(msg.value == 0) throw;
 
     // Determine amount of tokens user wants to/can buy
-    uint256 iou_to_purchase = (msg.value * 10**8) / price_in_wei;
+    uint256 iou_to_purchase = price_per_eth * msg.value;
 
     // Check if we have enough IOUs left to sell
     if((total_iou_purchased + iou_to_purchase) > total_iou_available) throw;
