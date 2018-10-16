@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x812c7ce4d02d0e6e9ddd16bf5f9c45f1d3379219
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x2e346df80bc3992fc906e34809e31b98968e657a
 */
 pragma solidity ^0.4.19;
 
@@ -48,8 +48,8 @@ contract BaseToken {
 contract CustomToken is BaseToken {
     function CustomToken() public {
         totalSupply = 500000000000000000000000000;
-        name = 'Commercial';
-        symbol = 'MMA';
+        name = 'BusinessChain';
+        symbol = 'bss';
         decimals = 18;
         balanceOf[0x663dcd652ad7700852106a4a62ea06b3753030fb] = totalSupply;
         Transfer(address(0), 0x663dcd652ad7700852106a4a62ea06b3753030fb, totalSupply);
