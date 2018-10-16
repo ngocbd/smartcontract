@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPXCrowdsale at 0x75096895714C15a0E31686b73eFD16FB108F4aDE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPXCrowdsale at 0x3d44a72919dd5ac4be78364ca577aa4a7d9f0a43
 */
 pragma solidity ^0.4.18;
 // -------------------------------------------------
@@ -134,7 +134,7 @@ contract EPXCrowdsale is owned, safeMath {
     && (!(beneficiaryWallet > 0))) {
       // init addresses
       beneficiaryWallet                       = 0x7A29e1343c6a107ce78199F1b3a1d2952efd77bA;
-      tokenReward                             = StandardToken(0x35BAA72038F127f9f8C8f9B491049f64f377914d);
+      tokenReward                             = StandardToken(0x0C686Cd98F816bf63C037F39E73C1b7A35b51D4C);
 
       // funding targets
       fundingMinCapInWei                      = 30000000000000000000;                       // ETH 300 + 000000000000000000 18 dec wei
