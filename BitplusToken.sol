@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitplusToken at 0x9BD1C760208BFb99A82cDf3adAc09F4800db78B1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitplusToken at 0x50fcf0396874f1d4a4d243e8bb4c370c97f119bf
 */
 pragma solidity ^0.4.11;
 
@@ -29,7 +29,11 @@ library SafeMath {
   }
 }
 
-
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) constant returns (uint256);
@@ -173,6 +177,8 @@ contract Ownable {
 
 }
 
+
+
 contract MintableToken is StandardToken, Ownable {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
@@ -209,6 +215,12 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+
+
+/**
+ * @title BitplusToken
+ * @dev Very simple ERC20 Token
+ */
 contract BitplusToken is MintableToken {
 
   string public name = "BitplusToken";
@@ -222,4 +234,178 @@ contract BitplusToken is MintableToken {
     totalSupply = 0;
   }
 
+}
+
+
+/**
+ * @title Crowdsale 
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end block, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet 
+ * as they arrive.
+ */
+
+contract Crowdsale is Ownable {
+  using SafeMath for uint256;
+
+  // The token being sold
+  BitplusToken public token;
+
+  // start and end block where investments are allowed (both inclusive)
+  uint256 public startBlock;
+  uint256 public endBlock;
+
+  // address where funds are collected
+  address public wallet;
+  
+  // how many wei is in 1 cent
+  uint256 public usdRate;
+
+  // how many cents does a token unit costs
+  uint256 public tokenPriceInCents;
+
+  // amount of raised money in wei
+  uint256 public weiRaised;
+  
+  // allow the sale to be closed manually
+  bool public saleOpened = false;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */ 
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale(uint256 _startBlock, uint256 _endBlock, uint256 _usdRate,uint256 _tokenPriceInCents, address _wallet) {
+    require(_startBlock >= block.number);
+    require(_endBlock >= _startBlock);
+    require(_usdRate > 0);
+    require(_tokenPriceInCents > 0);
+    require(_wallet != 0x0);
+
+    token = createTokenContract();
+    startBlock = _startBlock;
+    endBlock = _endBlock;
+    usdRate = _usdRate;
+    tokenPriceInCents = _tokenPriceInCents;
+    wallet = _wallet;
+  }
+
+  // creates the token to be sold. 
+  // override this method to have crowdsale of a specific mintable token.
+  function createTokenContract() internal returns (BitplusToken) {
+    return new BitplusToken();
+  }
+
+
+  // fallback function can be used to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+    uint256 updatedWeiRaised = weiRaised.add(weiAmount);
+
+	// how many USD cents were sent
+	uint256 centsAmount = weiAmount.div(usdRate) * 1 ether;
+	
+    // calculate token amount to be created
+    uint256 tokens = centsAmount.div(tokenPriceInCents);
+
+    // update state
+    weiRaised = updatedWeiRaised;
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    uint256 current = block.number;
+    bool withinPeriod = current >= startBlock && current <= endBlock;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase && saleOpened;
+  }
+
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    return (block.number > endBlock) && saleOpened;
+  }
+  
+  function setTokenPrice(uint256 newPrice) public onlyOwner {
+      tokenPriceInCents = newPrice;
+  }
+  
+  function setUsdConversionRate(uint256 newUsdRate) public onlyOwner {
+      usdRate = newUsdRate;
+  }
+  
+  function closeSale() public onlyOwner {
+      saleOpened = false;
+  }
+  
+  function openSale() public onlyOwner {
+      saleOpened = true;
+  }
+
+}
+
+contract BitplusCrowdsale is Crowdsale  {
+  using SafeMath for uint256;
+  event CrowdsaleMintFinished();
+
+  uint256 public cap;
+
+  function BitplusCrowdsale(uint256 _cap, uint256 _startBlock, uint256 _endBlock, uint256 _usdRate, uint256 _tokenPriceInCents, address _wallet) Crowdsale(_startBlock, _endBlock, _usdRate, _tokenPriceInCents, _wallet) {
+    cap = _cap;
+  }
+
+  // overriding Crowdsale#validPurchase to add extra cap logic
+  // @return true if investors can buy at the moment
+  function validPurchase() internal constant returns (bool) {
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return super.validPurchase() && withinCap;
+  }
+
+  // overriding Crowdsale#hasEnded to add cap logic
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    bool capReached = weiRaised >= cap;
+    return super.hasEnded() || capReached;
+  }
+  
+  // this function allows distribution by the owner before the 
+  // actual public sale starts
+  function mint(address _to, uint256 _amount) public onlyOwner returns (bool) {
+      return token.mint(_to, _amount);
+  }
+  
+  function changeTokenOwner(address _to) public onlyOwner {
+      token.transferOwnership(_to);
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() public onlyOwner {
+    wallet.transfer(this.balance);
+  }  
+  
+  /**
+   * @dev Function to stop minting new tokens in crowdsale(initial distribution).
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner returns (bool) {
+    return token.finishMinting();
+  }  
+  
 }
