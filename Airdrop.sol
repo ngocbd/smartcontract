@@ -1,95 +1,116 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xff7a73983fa6b6b2adcc3981fdcdf36970f07175
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x70e9d86cd9d84429a008f868e781780ee423e823
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-contract Ownable {
+contract ERC20Interface {
+    // Get the total token supply
+    function totalSupply() public constant returns (uint256 supply);
 
-  address public owner;
+    // Get the account balance of another a ccount with address _owner
+    function balanceOf(address _owner) public constant returns (uint256 balance);
 
-  function Ownable() {
-    owner = msg.sender;
-  }
+    // Send _value amount of tokens to address _to
+    function transfer(address _to, uint256 _value) public returns (bool success);
 
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+    // Send _value amount of tokens from address _from to address _to
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));
-    owner = newOwner;
-  }
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    // this function is required for some DEX functionality
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    // Returns the amount which _spender is still allowed to withdraw from _owner
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+
+    // Triggered when tokens are transferred.
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    // Triggered whenever approve(address _spender, uint256 _value) is called.
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-interface Token {
-  function transfer(address _to, uint256 _value) returns (bool);
-  function balanceOf(address _owner) constant returns (uint256 balance);
-}
-
-contract AirDrop is Ownable {
-
-  Token token;
-
-  event TransferredToken(address indexed to, uint256 value);
-  event FailedTransfer(address indexed to, uint256 value);
-
-  modifier whenDropIsActive() {
-    assert(isActive());
-
-    _;
-  }
-
-  function AirDrop () {
-      address _tokenAddr = 0x378903a03FB2C3AC76BB52773e3CE11340377A32; //here pass address of your token
-      token = Token(_tokenAddr);
-  }
-
-  function isActive() constant returns (bool) {
-    return (
-        tokensAvailable() > 0 // Tokens must be available to send
-    );
-  }
-  //below function can be used when you want to send every recipeint with different number of tokens
-  function sendTokens(address[] dests, uint256[] values) whenDropIsActive onlyOwner external {
-    uint256 i = 0;
-    while (i < dests.length) {
-        uint256 toSend = values[i] * 10**18;
-        sendInternally(dests[i] , toSend, values[i]);
-        i++;
+contract AirDrop
+{
+    address public owner;
+    address public executor;
+    
+    event eTransferExecutor(address newOwner);
+    event eMultiTransfer(address _tokenAddr, address[] dests, uint256[] values);
+    event eMultiTransferETH(address[] dests, uint256[] values);
+    
+    function () public payable {
     }
-  }
-
-  // this function can be used when you want to send same number of tokens to all the recipients
-  function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
-    uint256 i = 0;
-    uint256 toSend = value * 10**18;
-    while (i < dests.length) {
-        sendInternally(dests[i] , toSend, value);
-        i++;
+    
+    // Constructor
+    function AirDrop() public {
+        owner = msg.sender;
+        executor = msg.sender;
     }
-  }  
-
-  function sendInternally(address recipient, uint256 tokensToSend, uint256 valueToPresent) internal {
-    if(recipient == address(0)) return;
-
-    if(tokensAvailable() >= tokensToSend) {
-      token.transfer(recipient, tokensToSend);
-      TransferredToken(recipient, valueToPresent);
-    } else {
-      FailedTransfer(recipient, valueToPresent); 
+    
+    // Functions with this modifier can only be executed by the owner
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
-  }   
-
-
-  function tokensAvailable() constant returns (uint256) {
-    return token.balanceOf(this);
-  }
-
-  function destroy() onlyOwner {
-    uint256 balance = tokensAvailable();
-    require (balance > 0);
-    token.transfer(owner, balance);
-    selfdestruct(owner);
-  }
+    
+    function transferExecutor(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        executor = newOwner;
+        eTransferExecutor(newOwner);
+    }
+    
+    // Functions with this modifier can only be executed by the owner
+    modifier onlyExecutor() {
+        require(msg.sender == executor || msg.sender == owner);
+        _;
+    }
+    
+    function MultiTransfer(address _tokenAddr, address[] dests, uint256[] values) public onlyExecutor
+    {
+        uint256 i = 0;
+        ERC20Interface T = ERC20Interface(_tokenAddr);
+        
+        require(dests.length > 0 && (dests.length == values.length || values.length == 1));
+        
+        if (values.length > 1)
+        {
+            while (i < dests.length) {
+                T.transfer(dests[i], values[i]);
+                i += 1;
+            }
+        }
+        else    
+        {
+            while (i < dests.length) {
+                T.transfer(dests[i], values[0]);
+                i += 1;
+            }
+        }
+        eMultiTransfer(_tokenAddr, dests, values);
+    }
+    
+    function MultiTransferETH(address[] dests, uint256[] values) public onlyExecutor
+    {
+        uint256 i = 0;
+        require(dests.length > 0 && (dests.length == values.length || values.length == 1));
+        
+        
+        if (values.length > 1)
+        {
+            while (i < dests.length) {
+                dests[i].transfer(values[i]);
+                i += 1;
+            }
+        }
+        else    
+        {
+            while (i < dests.length) {
+                dests[i].transfer(values[0]);
+                i += 1;
+            }
+        }
+        eMultiTransferETH(dests, values);
+    }
 }
