@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BerithCoin at 0x904c557d64007a8df6884b7e0b43f675cee012c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BerithCoin at 0xae080d87b45b029ac4999226afcf653d363949ac
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
 
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
@@ -30,7 +30,7 @@ contract BerithCoin {
         totalSupply = initialSupply;                        // Update total supply
         name = "Berith";                                   // Set the name for display purposes
         symbol = "BRT";                               // Set the symbol for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
     }
 
     /* Send coins */
