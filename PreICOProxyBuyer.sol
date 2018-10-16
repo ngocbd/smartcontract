@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x1d1452a107e2bf2cffba3049464331de8d79c448
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x2c41e86b5c19af863b774e0a7146923fe3952dcf
 */
 /**
  * Math operations with safety checks
@@ -441,7 +441,6 @@ contract Crowdsale is Haltable {
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
 
-
     // Check that we did not bust the cap
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
       throw;
@@ -454,7 +453,6 @@ contract Crowdsale is Haltable {
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
-
   }
 
   /**
@@ -1089,9 +1087,6 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
-    // This was originally "send()" but was replaced with call.value()() to
-    // forward gas, if there happens to be a complicated multisig implementation
-    // which would need more gas than the gas stipend:
     if(!(investor.call.value(amount)())) throw;
     Refunded(investor, amount);
   }
