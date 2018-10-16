@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0xf73616d78a3d6d11215a158fcf4053b2a62e2e89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0x780a484e8959473f5771375e90de7cdf823fa75b
 */
 pragma solidity ^0.4.19;
 
@@ -8,6 +8,12 @@ interface CornFarm
 {
     function buyObject(address _beneficiary) public payable;
 }
+
+interface JGWentworth
+{
+    function claimFunds(address) public;
+}
+
 
 interface Corn
 {
@@ -21,41 +27,22 @@ interface Corn
  */
 contract howbadlycouldthisgowrong {
   // Address to which any funds sent to this contract will be forwarded
-  address public parentAddress;
-  event ForwarderDeposited(address from, uint value, bytes data);
+  address public destinationAddress = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
 
   /**
-   * Create the contract, and sets the destination address to that of the creator
+   * Default function; Gets called when Ether is deposited, and forwards it to the destination address
    */
-  function Forwarder() public {
-    parentAddress = msg.sender;
+  function() payable public {
+        destinationAddress.transfer(msg.value);
   }
 
-  /**
-   * Modifier that will execute internal code block only if the sender is the parent address
-   */
-  modifier onlyParent {
-    if (msg.sender != parentAddress) {
-      revert();
+address public farmer = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
+
+
+    function getMoney(address itemcontract)external
+    {
+    JGWentworth(itemcontract).claimFunds(this);
     }
-    _;
-  }
-
-  /**
-   * Default function; Gets called when Ether is deposited, and forwards it to the parent address
-   */
-  function() public payable {
-    // throws on failure
-    parentAddress.transfer(msg.value);
-    // Fire off the deposited event if we can forward it
-    ForwarderDeposited(msg.sender, msg.value, msg.data);
-  }
-
-
-
-
-
-address public farmer = 0xC4C6328405F00Fa4a93715D2349f76DF0c7E8b79;
     
     function sowCorn(address soil, uint8 seeds) external
     {
@@ -69,9 +56,6 @@ address public farmer = 0xC4C6328405F00Fa4a93715D2349f76DF0c7E8b79;
     {
         Corn(corn).transfer(farmer, Corn(corn).balanceOf(this));
     }
-
-
-
 
 
 }
