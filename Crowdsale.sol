@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xaf006fb1453badba95c121d1a4144193b70975a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc974e45917da065382b17e43ccb883a2f26a3c5c
 */
 pragma solidity ^0.4.15;
 
@@ -96,6 +96,7 @@ contract BasicToken is ERC20Basic {
  *
  * @dev Implementation of the basic standard token.
  * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
 
@@ -225,11 +226,11 @@ contract MintableToken is StandardToken, Ownable {
   
 }
 
-contract ChatTradersCoin is MintableToken {
+contract ExmoTradersCoin is MintableToken {
     
-    string public constant name = "Chat Traders Coin";
+    string public constant name = "Exmo Traders Coin";
     
-    string public constant symbol = "CTC";
+    string public constant symbol = "EXTC";
     
     uint32 public constant decimals = 3;
     
@@ -242,7 +243,7 @@ contract Crowdsale is Ownable {
     
     address multisig;
 
-    ChatTradersCoin public token = new ChatTradersCoin();
+    ExmoTradersCoin public token = new ExmoTradersCoin();
 
     uint start;
     
@@ -252,8 +253,8 @@ contract Crowdsale is Ownable {
 
     function Crowdsale() {
       multisig = 0xd951Fa6f1546d0979BB9fC671C40bB9027d31763;
-      start = 1518300000;
-      rate = 1000000;
+      start = 1518561030;
+      rate = 100000;
       period = 28;
     }
 
