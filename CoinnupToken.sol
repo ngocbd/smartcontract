@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinnupToken at 0x148676fd040b7cf207a0c69011e2fc068b969a27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinnupToken at 0xca503175c6fd8dc36bd23737adf15916c7821cd3
 */
 pragma solidity ^0.4.23;
 
@@ -388,8 +388,7 @@ contract CoinnupToken is StandardToken, Ownable {
     tokensBought[_to] = tokensBought[_to].add(_tokens); // tokens in wei
 
     uint256 _soldInETH = _tokens.div( rate );
-    investments[_to] = investments[_to].add(_soldInETH); // in wei
-    _sold = _sold.add(_soldInETH); // in wei
+    _sold = _sold.add(_tokens); // in wei
     _soldOutside = _soldOutside.add(_soldInETH); // eth
     _soldOutsidePMZ = _soldOutsidePMZ.add(_tokens); // in PMZ
   }
