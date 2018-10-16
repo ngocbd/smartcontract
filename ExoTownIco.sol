@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExoTownIco at 0xb9131e894259d0d374bf189ca640ffc472a7d143
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExoTownIco at 0xf3eb09a1fd5a3e133a669074de1231d7a673744b
 */
 pragma solidity ^0.4.11;
 
@@ -66,14 +66,16 @@ contract AbstractToken {
 }
 
 contract IcoLimits {
-    uint constant privateSaleStart = 1511136000; // 11/20/2017 @ 12:00am (UTC)
-    uint constant privateSaleEnd   = 1512086399; // 11/30/2017 @ 11:59pm (UTC)
+    uint constant privateSaleStart = 1511676000; // 11/26/2017 @ 06:00am (UTC)
+    uint constant privateSaleEnd   = 1512172799; // 12/01/2017 @ 11:59pm (UTC)
 
-    uint constant presaleStart     = 1512086400; // 12/01/2017 @ 12:00am (UTC)
-    uint constant presaleEnd       = 1513900799; // 12/21/2017 @ 11:59pm (UTC)
+    uint constant presaleStart     = 1512172800; // 12/02/2017 @ 12:00am (UTC)
+    uint constant presaleEnd       = 1513987199; // 12/22/2017 @ 11:59pm (UTC)
 
     uint constant publicSaleStart  = 1516320000; // 01/19/2018 @ 12:00am (UTC)
     uint constant publicSaleEnd    = 1521158399; // 03/15/2018 @ 11:59pm (UTC)
+
+    uint constant foundersTokensUnlock = 1558310400; // 05/20/2019 @ 12:00am (UTC)
 
     modifier afterPublicSale() {
         require(now > publicSaleEnd);
@@ -527,7 +529,6 @@ contract ExoTownIco is SafeMath, IcoLimits {
         if (total > 0) {
             // Top up Mediator wallet with 1% of Development amount = 0.65% of contribution amount.
             // It will cover tracking transaction fee (if any).
-            // See White Paper for more information about payment tracking
 
             uint _mediatorAmount = _devAmount / 100;
             mediatorWallet.transfer(_mediatorAmount);
@@ -542,12 +543,12 @@ contract ExoTownIco is SafeMath, IcoLimits {
     /// @dev Partial withdraw. Only manager can do it
     function withdrawEther(uint _value) onlyManager {
         require(_value > 0);
-        require(_value <= this.balance);
+        require(_value * 1000000000000000 <= this.balance);
         // send 1234 to get 1.234
         icoManager.transfer(_value * 1000000000000000); // 10^15
     }
 
-    ///@dev Send tokens to bountyOwner depending on crowdsale results. Can be send only after public sale.
+    ///@dev Send tokens to bountyOwner depending on crowdsale results. Can be sent only after public sale.
     function sendTokensToBountyOwner() onlyManager whenInitialized hasBountyCampaign afterPublicSale {
         require(!sentTokensToBountyOwner);
 
@@ -559,9 +560,10 @@ contract ExoTownIco is SafeMath, IcoLimits {
         sentTokensToBountyOwner = true;
     }
 
-    /// @dev Send tokens to founders.
+    /// @dev Send tokens to founders. Can be sent only after May 20th, 2019.
     function sendTokensToFounders() onlyManager whenInitialized afterPublicSale {
         require(!sentTokensToFounders);
+        require(now >= foundersTokensUnlock);
 
         //Calculate founder reward depending on total tokens sold
         uint founderReward = getTokensSold() / 10; // 10%
