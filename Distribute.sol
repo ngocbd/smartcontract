@@ -1,91 +1,116 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0x06ecbdacda591a378c66dfd297a911b3ca6f3217
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0x360d15eed32c9bdf393497fc28189f27f3c17f1a
 */
-pragma solidity ^0.4.15;
+/**
 
-contract Owned {
+ * @title Ownable
 
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
 
-    address public owner;
+ * functions, this simplifies the implementation of "user permissions".
 
-    /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() {
-        owner = msg.sender;
-    }
+ */
 
-    address public newOwner;
+contract Ownable {
 
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    ///  an unowned neutral vault, however that cannot be undone
-    function changeOwner(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
-    }
+  address public owner;
 
-    function acceptOwnership() {
-        if (msg.sender == newOwner) {
-            owner = newOwner;
-        }
-    }
+
+
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+
+
+
+  /**
+
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+
+   * account.
+
+   */
+
+  function Ownable() {
+
+    owner = msg.sender;
+
+  }
+
+
+
+
+
+  /**
+
+   * @dev Throws if called by any account other than the owner.
+
+   */
+
+  modifier onlyOwner() {
+
+    require(msg.sender == owner);
+
+    _;
+
+  }
+
+
+
+
+
+  /**
+
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+
+   * @param newOwner The address to transfer ownership to.
+
+   */
+
+  function transferOwnership(address newOwner) onlyOwner public {
+
+    require(newOwner != address(0));
+
+    OwnershipTransferred(owner, newOwner);
+
+    owner = newOwner;
+
+  }
+
 }
 
-contract ERC20Basic {
-    function transfer(address to, uint256 value) public returns (bool);
-    function balanceOf(address who) public constant returns (uint256);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-contract Distribute is Owned {
 
-    mapping (address => uint) public tokensOwed;
-    ERC20Basic token;
+contract token { function transfer(address receiver, uint amount){  } }
 
-    event AmountSet(address contributor, uint amount);
-    event AmountSent(address contributor, uint amount);
 
-    function Distribute(address _token) public {
-        token = ERC20Basic(_token);
-    }
 
-    function setAmount(address[] contributors, uint[] amounts) public onlyOwner {
-        for (uint256 i = 0; i < contributors.length; i++) {
-            tokensOwed[contributors[i]] = amounts[i];
-        }
-    }
+contract Distribute is Ownable{
 
-    function withdrawAllTokens() public onlyOwner {
-        token.transfer(owner, token.balanceOf(address(this)));
-    }
+	
 
-    function() public payable {
-        collect();
-    }
+	token tokenReward = token(0xdd007278B667F6bef52fD0a4c23604aA1f96039a);
 
-    function collect() public {
-        uint amount = tokensOwed[msg.sender];
-        require(amount > 0);
-        tokensOwed[msg.sender] = 0;
-        token.transfer(msg.sender, amount);
-        AmountSent(msg.sender, amount);
-    }
 
-    function withdrawOnBehalf(address beneficiary) public {
-        uint amount = tokensOwed[beneficiary];
-        require(amount > 0);
-        tokensOwed[beneficiary] = 0;
-        token.transfer(beneficiary, amount);
-        AmountSent(beneficiary, amount);
-    }
 
-    function multiWithdraw(address[] beneficiaries) public {
-        for (uint256 i = 0; i < beneficiaries.length; i++) {
-            withdrawOnBehalf(beneficiaries[i]);
-        }
-    }
+	function register(address[] _addrs) onlyOwner{
+
+		for(uint i = 0; i < _addrs.length; ++i){
+
+			tokenReward.transfer(_addrs[i],5*10**8);
+
+		}
+
+	}
+
+
+
+	function withdraw(uint _amount) onlyOwner {
+
+		tokenReward.transfer(owner,_amount);
+
+	}
+
 }
