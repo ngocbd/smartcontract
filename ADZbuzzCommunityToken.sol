@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x1aed65031a8d9f20d9f8b9a7179a3972662517c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x4f4020c17f822aafdd39be0069e4347240b749e3
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT82190' token contract
+    // 'ACT97112' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT82190
-    // Name        : ADZbuzz Thehouseflipping.life Community Token
+    // Symbol      : ACT97112
+    // Name        : ADZbuzz Vegetarian.download Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT82190";
-            name = "ADZbuzz Thehouseflipping.life Community Token";
+            symbol = "ACT97112";
+            name = "ADZbuzz Vegetarian.download Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
