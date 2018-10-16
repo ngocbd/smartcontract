@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JaroCoinCrowdsale at 0x25301ddb71f1342ddee1aa4829d450eacafdaf56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JaroCoinCrowdsale at 0x872f634ce643a9b5a4d9bcfa0714382267839fcc
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.24;
 
 /**
  * @title SafeMath
@@ -65,7 +65,7 @@ contract Ownable {
   /**
    * @dev The constructor sets the original owner of the contract to the sender account.
    */
-  function Ownable() public {
+  constructor() public {
     setOwner(msg.sender);
   }
 
@@ -450,7 +450,7 @@ contract JaroSleep is ERC820Implementer, ERC777TokensRecipient {
 
     event ReceivedTokens(address operator, address from, address to, uint amount, bytes userData, bytes operatorData);
 
-    function JaroSleep(address _token, uint256 _dailyTime) public {
+    constructor(address _token, uint256 _dailyTime) public {
         setInterfaceImplementation("ERC777TokensRecipient", this);
         token = JaroCoinToken(_token);
         lastBurn = getNow();
@@ -499,7 +499,7 @@ contract PersonalTime is Ownable, ERC820Implementer, ERC777TokensRecipient {
 
     event ReceivedTokens(address operator, address from, address to, uint amount, bytes userData, bytes operatorData);
 
-    function PersonalTime(address _token, uint256 _dailyTime) public {
+    constructor(address _token, uint256 _dailyTime) public {
         setInterfaceImplementation("ERC777TokensRecipient", this);
         token = JaroCoinToken(_token);
         lastBurn = getNow();
@@ -558,14 +558,15 @@ contract JaroCoinCrowdsale is Ownable {
 
     address public constant WALLET = 0xefF42c79c0aBea9958432DC82FebC4d65f3d24A3;
 
+    // digits of precision for exchange rate
+    uint8 public constant EXCHANGE_RATE_DECIMALS = 8;
+
     // Max tokens which can be in circulation
     uint256 public constant MAX_AMOUNT = 21000000e18; // 21 000 000
 
-    // Amount of raised funds in satoshi
-    uint256 public satoshiRaised;
-
+    uint256 public satoshiRaised;                     // Amount of raised funds in satoshi
     uint256 public rate;                              // number of tokens buyer gets per satoshi
-    uint256 public conversionRate;                    // wei per satoshi - per ETH => 0.056 ETH/BTC ? wei per satoshi?
+    uint256 public conversionRate;                    // 17e10 wei per satoshi => 0.056 ETH/BTC
 
     JaroCoinToken public token;
     JaroSleep public sleepContract;
@@ -578,6 +579,8 @@ contract JaroCoinCrowdsale is Ownable {
     // Indicator of token sale activity.
     bool public isActive = false;
     bool internal initialized = false;
+
+    address public exchangeRateOracle;
 
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     event SaleActivated(uint256 startTime, uint256 amount);
@@ -614,7 +617,7 @@ contract JaroCoinCrowdsale is Ownable {
         _buyTokens(msg.sender, msg.value, 0);
     }
 
-    function coupon(uint256 _timeStamp, uint8 _bonus, uint8 v, bytes32 r, bytes32 s) external canMint payable {
+    function coupon(uint256 _timeStamp, uint16 _bonus, uint8 v, bytes32 r, bytes32 s) external canMint payable {
         require(_timeStamp >= getNow());
 
         // Check if signature is valid, get signer's address and mark this cheque as used.
@@ -631,13 +634,13 @@ contract JaroCoinCrowdsale is Ownable {
         _buyTokens(_beneficiary, msg.value, 0);
     }
 
-    function _buyTokens(address _beneficiary, uint256 _value, uint8 _bonus) internal {
+    function _buyTokens(address _beneficiary, uint256 _value, uint16 _bonus) internal {
         require (_beneficiary != address(0));
         require (_value > 0);
 
         uint256 weiAmount = _value;
         uint256 satoshiAmount = weiAmount.div(conversionRate);
-        uint256 tokens = satoshiAmount.mul(rate).mul(100+_bonus).div(100);
+        uint256 tokens = satoshiAmount.mul(rate).mul(_bonus + 100).div(100);
 
         // Mint tokens and refund not used ethers in case when max amount reached during this minting
         uint256 excess = appendContribution(_beneficiary, tokens);
@@ -713,10 +716,16 @@ contract JaroCoinCrowdsale is Ownable {
         _closeSale();
     }
 
-    function updateConvertionRate(uint256 _rate) public onlyOwner {
-        require (_rate > 0);
+    function setExchangeRateOracle(address _exchangeRateOracle) public onlyOwner {
+        require(_exchangeRateOracle != address(0));
+        exchangeRateOracle = _exchangeRateOracle;
+    }
+
+    function setExchangeRate(uint256 _exchangeRate) public {
+        require(msg.sender == exchangeRateOracle || msg.sender == owner);
+        require(_exchangeRate > 0);
         uint256 one = 1e18;
-        conversionRate = one.div(_rate);
+        conversionRate = one.div(_exchangeRate);
     }
 
     function mint(address _beneficiary, uint256 _amount) internal {
