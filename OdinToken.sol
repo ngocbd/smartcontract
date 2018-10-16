@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0xa3db848dd84beb0da60fec0005ad40272cc75562
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0xf0cf016ce7504ffa257262cc686f4f7647a65563
 */
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
@@ -36,8 +36,6 @@ library SafeMath {
   }
 }
 
-
-
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
@@ -52,15 +50,10 @@ contract ERC20Interface {
 
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+    event Burn(uint tokens);
 }
 
 
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-// ----------------------------------------------------------------------------
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
 
 // ----------------------------------------------------------------------------
 // Owned contract
@@ -71,18 +64,14 @@ contract Owned {
 
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    function Owned() public {
-        owner = msg.sender;
-    }
-
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
+    function transferOwnership(address _newOwner) onlyOwner public onlyOwner {
         owner = _newOwner;
-        OwnershipTransferred(msg.sender, _newOwner);
+        emit OwnershipTransferred(msg.sender, _newOwner);
     }
 
 }
@@ -118,7 +107,6 @@ contract OdinToken is ERC20Interface, Owned {
     function OdinToken() public {
         
         // owner of this contract
-        address owner;
         owner = msg.sender;
         symbol = "ODIN";
         name = "ODIN Token";
@@ -127,22 +115,17 @@ contract OdinToken is ERC20Interface, Owned {
         _totalSupply = 100000000000000000000000;
         balances[owner].balance = _totalSupply;
 
-        Transfer(address(0), msg.sender, _totalSupply);
+        emit Transfer(address(0), msg.sender, _totalSupply);
     }
 
-
-    // ------------------------------------------------------------------------
-    // Total supply
-    // ------------------------------------------------------------------------
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply - balances[owner].balance;
+    function totalSupply() constant public returns (uint256 totalSupply) {
+        return _totalSupply;
     }
 
     // ------------------------------------------------------------------------
     // whitelist an address
     // ------------------------------------------------------------------------
-    function whitelistAddress(address to) public returns (bool)    {
-		require(msg.sender == owner);
+    function whitelistAddress(address to) onlyOwner public  returns (bool)    {
 		balances[to].airDropQty = 0;
 		return true;
     }
@@ -152,8 +135,7 @@ contract OdinToken is ERC20Interface, Owned {
   * @dev Whitelist all addresses early
   * @return An bool showing if the function succeeded.
   */
-    function whitelistAllAddresses() public returns (bool) {
-        require (msg.sender == owner);
+    function whitelistAllAddresses() onlyOwner public returns (bool) {
         _whitelistAll = true;
         return true;
     }
@@ -179,36 +161,30 @@ contract OdinToken is ERC20Interface, Owned {
         require(to != address(0));                              // cannot send to address(0)
         require(tokens <= balances[msg.sender].balance);        // do you have enough to send?
         
-        uint sep_1_2018_ts = 1535760000;
-        uint dec_31_2018_ts = 1546214400;
-        uint mar_31_2019_ts = 1553990400;
-        uint jun_30_2019_ts = 1561852800;
-        uint oct_2_2019_ts = 1569974400;
-
         if (!_whitelistAll) {
 
             // do not allow transfering air dropped tokens prior to Sep 1 2018
-             if (msg.sender != owner && block.timestamp < sep_1_2018_ts && balances[msg.sender].airDropQty>0) {
+             if (msg.sender != owner && block.timestamp < 1535760000 && balances[msg.sender].airDropQty>0) {
                  require(tokens < 0);
             }
 
             // after Sep 1 2018 and before Dec 31, 2018, do not allow transfering more than 10% of air dropped tokens
-            if (msg.sender != owner && block.timestamp < dec_31_2018_ts && balances[msg.sender].airDropQty>0) {
+            if (msg.sender != owner && block.timestamp < 1546214400 && balances[msg.sender].airDropQty>0) {
                 require((balances[msg.sender].balance - tokens) >= (balances[msg.sender].airDropQty / 10 * 9));
             }
 
             // after Dec 31 2018 and before March 31, 2019, do not allow transfering more than 25% of air dropped tokens
-            if (msg.sender != owner && block.timestamp < mar_31_2019_ts && balances[msg.sender].airDropQty>0) {
+            if (msg.sender != owner && block.timestamp < 1553990400 && balances[msg.sender].airDropQty>0) {
                 require((balances[msg.sender].balance - tokens) >= balances[msg.sender].airDropQty / 4 * 3);
             }
 
             // after March 31, 2019 and before Jun 30, 2019, do not allow transfering more than 50% of air dropped tokens
-            if (msg.sender != owner && block.timestamp < jun_30_2019_ts && balances[msg.sender].airDropQty>0) {
+            if (msg.sender != owner && block.timestamp < 1561852800 && balances[msg.sender].airDropQty>0) {
                 require((balances[msg.sender].balance - tokens) >= balances[msg.sender].airDropQty / 2);
             }
 
             // after Jun 30, 2019 and before Oct 2, 2019, do not allow transfering more than 75% of air dropped tokens
-            if (msg.sender != owner && block.timestamp < jun_30_2019_ts && balances[msg.sender].airDropQty>0) {
+            if (msg.sender != owner && block.timestamp < 1569974400 && balances[msg.sender].airDropQty>0) {
                 require((balances[msg.sender].balance - tokens) >= balances[msg.sender].airDropQty / 4);
             }
             
@@ -221,10 +197,9 @@ contract OdinToken is ERC20Interface, Owned {
         if (msg.sender == owner) {
             balances[to].airDropQty = balances[to].airDropQty.add(tokens);
         }
-        Transfer(msg.sender, to, tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
-
 
     // ------------------------------------------------------------------------
     // not implemented
@@ -256,8 +231,20 @@ contract OdinToken is ERC20Interface, Owned {
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         return false;
     }
+    
+    // ------------------------------------------------------------------------
+    // Used to burn unspent tokens in the contract
+    // ------------------------------------------------------------------------
+    function burn(uint256 tokens) onlyOwner public returns (bool) {
+        require((balances[owner].balance - tokens) >= 0);
+        balances[owner].balance = balances[owner].balance.sub(tokens);
+        _totalSupply = _totalSupply.sub(tokens);
+        emit Burn(tokens);
+        return true;
+    }
 
-    function () {
+
+    function ()  {
         //if ether is sent to this address, send it back.
         throw;
     }
