@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GA_chain at 0x0a3454b1c30f956f52f6a5b712b390b243ecd288
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GA_chain at 0xd77bcd9cf4212a41defbcd2e2ff0f50fea2be643
 */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -27,7 +27,7 @@ contract GA_chain{
         balanceOf[msg.sender] =  1800000000 * 1000000000000000000;              // Give the creator all initial tokens
         totalSupply =  1800000000 * 1000000000000000000;                        // Update total supply
         name = "GA_chain";                                   // Set the name for display purposes
-        symbol = "GAC";                               // Set the symbol for display purposes
+        symbol = "GA";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
