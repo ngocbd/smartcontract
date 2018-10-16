@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Empty at 0xfbeeb0b43213a0abaa921f65873e09849ae5deec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Empty at 0x41d3a6aba32a4fc0955fea08ab2629601f99c3fe
 */
-pragma solidity 0.4.18;
-
-
-contract Empty {
- uint public value = 5;
+contract Empty{
+   
+    function Empty(){}
 }
