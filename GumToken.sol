@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GumToken at 0x2e9b4a34c79b4fd099c8203b5d6e90ea6f9bf0f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GumToken at 0xef801f0d31d30de44103be1e35b65bde6f65b79e
 */
 pragma solidity ^0.4.16;
 
@@ -167,7 +167,7 @@ contract GumToken is StandardToken {
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
    */
-  function GumToken() {
+  function WILDToken() {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
