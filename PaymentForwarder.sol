@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentForwarder at 0xc81d7e536a613e902799af2c9955b73c94857afc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentForwarder at 0xe75509810e09b04eef4ebd0b471bacf5530b162e
 */
 /*
  * Ownable
@@ -34,7 +34,8 @@ contract Ownable {
  * Haltable
  *
  * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
+ * emergency stop mechanism. Differs from Pausable by causing a throw
+ * instead of return when in halt mode.
  *
  *
  * Originally envisioned in FirstBlood ICO contract.
@@ -65,6 +66,60 @@ contract Haltable is Ownable {
 }
 
 
+
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function safeDiv(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}
+
+
+
 /**
  * Forward Ethereum payments to another wallet and track them with an event.
  *
@@ -73,7 +128,7 @@ contract Haltable is Ownable {
  *
  * Allow pausing to signal the end of the crowdsale.
  */
-contract PaymentForwarder is Haltable {
+contract PaymentForwarder is Haltable, SafeMath {
 
   /** Who will get all ETH in the end */
   address public teamMultisig;
@@ -93,6 +148,11 @@ contract PaymentForwarder is Haltable {
   /** A customer has made a payment. Benefactor is the address where the tokens will be ultimately issued.*/
   event PaymentForwarded(address source, uint amount, uint128 customerId, address benefactor);
 
+  /**
+   * @param _teamMultisig Team multisig receives the deposited payments.
+   *
+   * @param _owner Owner is able to pause and resume crowdsale
+   */
   function PaymentForwarder(address _owner, address _teamMultisig) {
     teamMultisig = _teamMultisig;
     owner = _owner;
@@ -101,28 +161,44 @@ contract PaymentForwarder is Haltable {
   /**
    * Pay on a behalf of an address.
    *
-   * @param customerId Identifier in the central database, UUID v4
+   * We log the payment event, so that the server can keep tally of the invested amounts
+   * and token receivers.
+   *
+   * The actual payment is forwarded to the team multisig.
+   *
+   * @param customerId Identifier in the central database, UUID v4 - this is used to note customer by email
    *
    */
   function pay(uint128 customerId, address benefactor) public stopInEmergency payable {
 
     uint weiAmount = msg.value;
 
+    if(weiAmount == 0) {
+      throw; // No invalid payments
+    }
+
+    if(customerId == 0) {
+      throw; // We require to record customer id for the server side processing
+    }
+
+    if(benefactor == 0) {
+      throw; // Bad payment address
+    }
+
     PaymentForwarded(msg.sender, weiAmount, customerId, benefactor);
 
-    // We trust Ethereum amounts cannot overflow uint256
-    totalTransferred += weiAmount;
+    totalTransferred = safeAdd(totalTransferred, weiAmount);
 
     if(paymentsByCustomer[customerId] == 0) {
       customerCount++;
     }
 
-    paymentsByCustomer[customerId] += weiAmount;
+    paymentsByCustomer[customerId] = safeAdd(paymentsByCustomer[customerId], weiAmount);
 
     // We track benefactor addresses for extra safety;
     // In the case of central ETH issuance tracking has problems we can
     // construct ETH contributions solely based on blockchain data
-    paymentsByBenefactor[benefactor] += weiAmount;
+    paymentsByBenefactor[benefactor] = safeAdd(paymentsByBenefactor[benefactor], weiAmount);
 
     // May run out of gas
     if(!teamMultisig.send(weiAmount)) throw;
