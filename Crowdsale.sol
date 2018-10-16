@@ -1,207 +1,306 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x65061cfa23aa566316b0215c9eecabeafd4d9e81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0fe31fb2fe9ae7e84ee9e570c3463f25ee50d31b
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  function Ownable() public {
+    owner = msg.sender;
+  }
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
-
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded 
- to a wallet
- * as they arrive.
- */
-contract token { function transfer(address receiver, uint amount){  } }
-contract Crowdsale {
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
+  mapping(address => uint256) balances;
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+}
+contract StandardToken is ERC20, BasicToken {
+  mapping (address => mapping (address => uint256)) internal allowed;
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+}
 
-  // uint256 durationInMinutes;
-  // address where funds are collected
-  address public wallet;
-  // token address
-  address public addressOfTokenUsedAsReward1;
-  address public addressOfTokenUsedAsReward2;
-  address public addressOfTokenUsedAsReward3;
-  address public addressOfTokenUsedAsReward4;
-  address public addressOfTokenUsedAsReward5;
+contract BurnableToken is StandardToken {
+  event Burn(address indexed burner, uint256 value);
+  function burn(uint256 _value) public {
+    require(_value > 0);
+    require(_value <= balances[msg.sender]);
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(burner, _value);
+  }
+}
+contract SpaceKIMToken is BurnableToken {
+  string public constant name = "Space KIM Token";
+  string public constant symbol = "KIM";
+  uint32 public constant decimals = 0;
+  uint256 public constant INITIAL_SUPPLY = 37900000;
+  function SpaceKIMToken() public {
+    totalSupply = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+  }
+}
 
-  uint256 public price = 7500;
+contract Crowdsale is Ownable {
 
-  token tokenReward1;
-  token tokenReward2;
-  token tokenReward3;
-  token tokenReward4;
-  token tokenReward5;
+  using SafeMath for uint;
 
-  // mapping (address => uint) public contributions;
-  
+  SpaceKIMToken public token = new SpaceKIMToken();
 
+  address multisig;
+  address restricted;
 
-  // start and end timestamps where investments are allowed (both inclusive)
-  // uint256 public startTime;
-  // uint256 public endTime;
-  // amount of raised money in wei
-  uint256 public weiRaised;
+  uint statusPreSale = 0;
 
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  uint rate;
+  uint minAmount;
 
+  uint saleStartDate;
+  uint saleFinishDate;
 
-  function Crowdsale() {
-    //You will change this to your wallet where you need the ETH 
-    wallet = 0xE37C4541C34e4A8785DaAA9aEb5005DdD29854ac;
-    // durationInMinutes = _durationInMinutes;
-    //Here will come the checksum address we got
-    //aircoin
-    addressOfTokenUsedAsReward1 = 0xBD17Dfe402f1Afa41Cda169297F8de48d6Dfb613;
-    //diamond
-    addressOfTokenUsedAsReward2 = 0x489DF6493C58642e6a4651dDcd4145eaFBAA1018;
-    //silver
-    addressOfTokenUsedAsReward3 = 0x404a639086eda1B9C8abA3e34a5f8145B4B04ea5;
-    //usdgold
-    addressOfTokenUsedAsReward4 = 0x00755562Dfc1F409ec05d38254158850E4e8362a;
-    //worldcoin
-    addressOfTokenUsedAsReward5 = 0xE7AE9dc8F5F572e4f80655C4D0Ffe32ec16fF0E3;
+  uint olympStartDate;
+  uint olympEndDate;
 
+  uint percentsTeamTokens;
+  uint percentsPreSaleTokens;
+  uint percentsBountySecondTokens;
+  uint percentsOlympicTokens;
 
-    tokenReward1 = token(addressOfTokenUsedAsReward1);
-    tokenReward2 = token(addressOfTokenUsedAsReward2);
-    tokenReward3 = token(addressOfTokenUsedAsReward3);
-    tokenReward4 = token(addressOfTokenUsedAsReward4);
-    tokenReward5 = token(addressOfTokenUsedAsReward5);
+  uint endCrowdsaleDate;
+
+  modifier saleIsOn() {
+    uint curState = getStatus();
+    require(curState != 0 && curState != 5 && curState != 3);
+    _;
   }
 
-  bool public started = true;
-
-  function startSale(){
-    if (msg.sender != wallet) throw;
-    started = true;
+  modifier isUnderHardCap() {
+    uint _availableTokens = token.balanceOf(this);
+    uint _tokens = calculateTokens(msg.value);
+    uint _minTokens = holdTokensOnStage();
+    require(_availableTokens.sub(_tokens) >= _minTokens);
+    _;
   }
 
-  function stopSale(){
-    if(msg.sender != wallet) throw;
-    started = false;
+  modifier checkMinAmount() {
+    require(msg.value >= minAmount);
+    _;
+  }
+  function Crowdsale() public {
+    multisig = 0x381b16397eF8fB8FFF65F6d3B6E5979C9d38fe40;
+    restricted = 0x381b16397eF8fB8FFF65F6d3B6E5979C9d38fe40;
+    minAmount = 0.01 * 1 ether;
+    rate = 10000;
+
+    saleStartDate = 1515974400; // 15.01.2018 00:00 GMT Main START
+    saleFinishDate = 1517961600; // 07.02.2017 00:00 GMT Main END
+    //Bounty first
+    olympStartDate = 1518134400; // 09.02.2018 00:00 GMT Olymp START
+    olympEndDate = 1519516800; // 25.02.2018 00:00 GMT Olymp END
+    //Bounty second
+    endCrowdsaleDate = 1519948800; // 02.03.2018 00:00 GMT Close Contract
+
+    percentsTeamTokens = 20;
+    percentsBountySecondTokens = 5;
+    percentsPreSaleTokens = 30;
+    percentsOlympicTokens = 15;
   }
 
-  function setPrice(uint256 _price){
-    if(msg.sender != wallet) throw;
-    price = _price;
-  }
-  function changeWallet(address _wallet){
-  	if(msg.sender != wallet) throw;
-  	wallet = _wallet;
-  }
-
-  // function changeTokenReward(address _token){
-  //   if(msg.sender!=wallet) throw;
-  //   tokenReward = token(_token);
-  // }
-
-  // fallback function can be used to buy tokens
-  function () payable {
-    buyTokens(msg.sender);
+  function calculateTokens(uint value) internal constant returns (uint) {
+    uint tokens = rate.mul(value).div(1 ether);
+    if(getStatus() == 1){
+      tokens += tokens.div(2);
+    }
+    return tokens;
   }
 
-  // low level token `purchase function
-  function buyTokens(address beneficiary) payable {
-    require(beneficiary != 0x0);
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // if(weiAmount < 10**16) throw;
-    // if(weiAmount > 50*10**18) throw;
-
-    // calculate token amount to be sent
-    uint256 tokens = (weiAmount/10**10) * price;//weiamount * price 
-    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-    
-    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
-    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
-
-    tokenReward1.transfer(beneficiary, tokens);
-    tokenReward2.transfer(beneficiary, tokens);
-    tokenReward3.transfer(beneficiary, tokens);
-    tokenReward4.transfer(beneficiary, tokens);
-    tokenReward5.transfer(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    // wallet.transfer(msg.value);
-    if (!wallet.send(msg.value)) {
-      throw;
+  // 0 - stop
+  // 1 - preSale
+  // 2 - sale
+  // 3 - Bounty First
+  // 4 - Olympic games
+  // 5 - Bounty Second
+  function getStatus() internal constant returns (uint8) {
+    if(now > endCrowdsaleDate) {
+      return 0;
+    } else if(now > olympEndDate && now < endCrowdsaleDate) {
+      return 5;
+    } else if(now > olympStartDate && now < olympEndDate) {
+      return 4;
+    } else if(now > saleFinishDate && now < olympStartDate) {
+      return 3;
+    } else if(now > saleStartDate && now < saleFinishDate) {
+      return 2;
+    } else if(statusPreSale == 1){
+      return 1;
+    } else {
+      return 0;
     }
   }
 
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal constant returns (bool) {
-    bool withinPeriod = started;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
+  function holdTokensOnStage() public view returns (uint) {
+    uint _totalSupply = token.totalSupply();
+    uint _percents = 100;
+    uint curState = getStatus();
+    if(curState == 5) {
+      _percents = percentsTeamTokens;//20
+    } else if(curState == 4) {
+      _percents = percentsTeamTokens.add(percentsBountySecondTokens);//20+5
+    } else if(curState == 3) {
+      _percents = percentsTeamTokens.add(percentsBountySecondTokens).add(percentsOlympicTokens);//20+5+15
+    } else if(curState == 2) {
+      _percents = percentsTeamTokens.add(percentsBountySecondTokens).add(percentsOlympicTokens);//20+5+15
+    } else if(curState == 1) {
+      _percents = _percents.sub(percentsPreSaleTokens);//70
+    }
+    return _totalSupply.mul(_percents).div(100);
   }
 
-  function withdrawTokens1(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward1.transfer(wallet,_amount);
+  function onBalance() public view returns (uint) {
+    return token.balanceOf(this);
   }
-  function withdrawTokens2(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward2.transfer(wallet,_amount);
+
+  function availableTokensOnCurrentStage() public view returns (uint) {
+    uint _currentHolder = token.balanceOf(this);
+    uint _minTokens = holdTokensOnStage();
+    return _currentHolder.sub(_minTokens);
   }
-  function withdrawTokens3(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward3.transfer(wallet,_amount);
+
+  function getStatusInfo() public view returns (string) {
+    uint curState = getStatus();
+    if(now > endCrowdsaleDate) {
+      return "Crowdsale is over";
+    } else if(curState == 5) {
+      return "Now Bounty #2 token distribution is active";
+    } else if(curState == 4) {
+      return "Now Olympic Special (ICO #2) is active";
+    } else if(curState == 3) {
+      return "Now Bounty #1 token distribution is active";
+    } else if(curState == 2) {
+      return "Now ICO #1 is active";
+    } else if(curState == 1) {
+      return "Now Pre-ICO is active";
+    } else {
+      return "The sale of tokens is stopped";
+    }
   }
-  function withdrawTokens4(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward4.transfer(wallet,_amount);
+
+  function setStatus(uint8 newStatus) public onlyOwner {
+    require(newStatus == 1 || newStatus == 0);
+    statusPreSale = newStatus;
   }
-  function withdrawTokens5(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward5.transfer(wallet,_amount);
+
+  function burnTokens() public onlyOwner {
+    require(now > endCrowdsaleDate);
+    uint _totalSupply = token.totalSupply();
+    uint _teamTokens = _totalSupply.mul(percentsTeamTokens).div(100);
+    token.transfer(restricted, _teamTokens);
+    uint _burnTokens = token.balanceOf(this);
+    token.burn(_burnTokens);
+  }
+
+  function sendTokens(address to, uint tokens) public onlyOwner {
+    uint curState = getStatus();
+    require(curState == 5 || curState == 3);
+    uint _minTokens = holdTokensOnStage();
+    require(token.balanceOf(this).sub(tokens) >=  _minTokens);
+    token.transfer(to, tokens);
+  }
+
+  function createTokens() public saleIsOn isUnderHardCap checkMinAmount payable {
+    uint tokens = calculateTokens(msg.value);
+    multisig.transfer(msg.value);
+    token.transfer(msg.sender, tokens);
+  }
+
+  function() external payable {
+    createTokens();
   }
 }
