@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetToken at 0xf860f90e1f55e3528682e18850612cbb45bbf1bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetToken at 0x1cd0eea0748fde4b6cedaf571ad25fd8281a10c6
 */
 pragma solidity 0.4.23;
 
@@ -329,7 +329,7 @@ contract SetInterface {
  * @author Felix Feng
  * @dev Implementation of the basic {Set} token.
  */
-contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange Set", "DEX", 18), SetInterface {
+contract SetToken is StandardToken, DetailedERC20("EthereumX May 2018 Set", "ETHX-5-18", 18), SetInterface {
   using SafeMath for uint256;
   using AddressArrayUtils for address[];
 
