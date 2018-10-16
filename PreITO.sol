@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreITO at 0xd10399746b72a23662f8ba010f951b002dc45cfe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreITO at 0x54b9eaee92a9bff63cd445a65bd19078116fe927
 */
 pragma solidity ^0.4.18;
 
@@ -349,8 +349,6 @@ contract TokenProvider is Ownable {
 
 contract MintTokensInterface is TokenProvider {
 
-  uint public minted;
-
   function mintTokens(address to, uint tokens) internal;
 
 }
@@ -359,11 +357,14 @@ contract MintTokensInterface is TokenProvider {
 
 contract MintTokensFeature is MintTokensInterface {
 
-  using SafeMath for uint;
-
   function mintTokens(address to, uint tokens) internal {
     token.mint(to, tokens);
-    minted = minted.add(tokens);
+  }
+
+  function mintTokensBatch(uint amount, address[] to) public onlyOwner {
+    for(uint i = 0; i < to.length; i++) {
+      token.mint(to[i], amount);
+    }
   }
 
 }
@@ -412,6 +413,8 @@ contract WalletProvider is Ownable {
 // File: contracts/CommonSale.sol
 
 contract CommonSale is PercentRateFeature, InvestedProvider, WalletProvider, RetrieveTokensFeature, MintTokensFeature {
+
+  using SafeMath for uint;
 
   address public directMintAgent;
 
@@ -498,119 +501,9 @@ contract CommonSale is PercentRateFeature, InvestedProvider, WalletProvider, Ret
 
 }
 
-// File: contracts/SpecialWallet.sol
-
-contract SpecialWallet is PercentRateFeature {
-  
-  using SafeMath for uint;
-
-  uint public endDate;
-
-  uint initialBalance;
-
-  bool public started;
-
-  uint public startDate;
-
-  uint availableAfterStart;
-
-  uint public withdrawed;
-
-  uint public startQuater;
-
-  uint public quater1;
-
-  uint public quater2;
-
-  uint public quater3;
-
-  uint public quater4;
-
-  modifier notStarted() {
-    require(!started);
-    _;
-  }
-
-  function start() public onlyOwner notStarted {
-    started = true;
-    startDate = now;
-
-    uint year = 1 years;
-    uint quater = year.div(4);
-    uint prevYear = endDate.sub(1 years);
-
-    quater1 = prevYear;
-    quater2 = prevYear.add(quater);
-    quater3 = prevYear.add(quater.mul(2));
-    quater4 = prevYear.add(quater.mul(3));
-
-    initialBalance = this.balance;
-
-    startQuater = curQuater();
-  }
-
-  function curQuater() public view returns (uint) {
-    if(now > quater4) 
-      return 4;
-    if(now > quater3) 
-      return 3;
-    if(now > quater2) 
-      return 2;
-    return 1;
-  }
- 
-  function setAvailableAfterStart(uint newAvailableAfterStart) public onlyOwner notStarted {
-    availableAfterStart = newAvailableAfterStart;
-  }
-
-  function setEndDate(uint newEndDate) public onlyOwner notStarted {
-    endDate = newEndDate;
-  }
-
-  function withdraw(address to) public onlyOwner {
-    require(started);
-    if(now >= endDate) {
-      to.transfer(this.balance);
-    } else {
-      uint cQuater = curQuater();
-      uint toTransfer = initialBalance.mul(availableAfterStart).div(percentRate);
-      if(startQuater < 4 && cQuater > startQuater) {
-        uint secondInitialBalance = initialBalance.sub(toTransfer);
-        uint quaters = 4;
-        uint allQuaters = quaters.sub(startQuater);        
-        uint value = secondInitialBalance.mul(cQuater.sub(startQuater)).div(allQuaters);         
-        toTransfer = toTransfer.add(value);
-      }
-      toTransfer = toTransfer.sub(withdrawed); 
-      to.transfer(toTransfer);
-      withdrawed = withdrawed.add(toTransfer);        
-    }
-  }
-
-  function () public payable {
-  }
-
-}
-
 // File: contracts/AssembledCommonSale.sol
 
 contract AssembledCommonSale is CommonSale {
-
-  uint public period;
-
-  SpecialWallet public specialWallet;
-
-  function setSpecialWallet(address addrSpecialWallet) public onlyOwner {
-    specialWallet = SpecialWallet(addrSpecialWallet);
-  }
-
-  function setPeriod(uint newPeriod) public onlyOwner {
-    period = newPeriod;
-  }
-
-  function endSaleDate() public view returns(uint) {
-    return start.add(period * 1 days);
-  }
 
 }
 
@@ -752,22 +645,37 @@ contract StagedCrowdsale is Ownable {
 
 // File: contracts/ITO.sol
 
-contract ITO is ExtendedWalletsMintTokensFeature, AssembledCommonSale {
+contract ITO is ExtendedWalletsMintTokensFeature, StagedCrowdsale, AssembledCommonSale {
 
-  function calculateTokens(uint _invested) internal returns(uint) {
-    return  _invested.mul(price).div(1 ether);
+  mapping(address => uint) public lockDays;
+
+  function lockAddress(address newLockAddress, uint newLockDays) public onlyOwner {
+    lockDays[newLockAddress] = newLockDays;
   }
 
-  function setSpecialWallet(address addrSpecialWallet) public onlyOwner {
-    super.setSpecialWallet(addrSpecialWallet);
-    setWallet(addrSpecialWallet);
+  function calculateTokens(uint _invested) internal returns(uint) {
+    uint milestoneIndex = currentMilestone(start);
+    Milestone storage milestone = milestones[milestoneIndex];
+    uint tokens = _invested.mul(price).div(1 ether);
+    if(milestone.bonus > 0) {
+      tokens = tokens.add(tokens.mul(milestone.bonus).div(percentRate));
+    }
+    return tokens;
+  }
+
+  function endSaleDate() public view returns(uint) {
+    return lastSaleDate(start);
   }
 
   function finish() public onlyOwner {
      mintExtendedTokens();
+     for(uint i = 0; i < wallets.length; i++) {
+      if (lockDays[wallets[i]] != 0){
+        token.lock(wallets[i], lockDays[wallets[i]]);
+      }
+      
+    }
      token.finishMinting();
-     specialWallet.start();
-     specialWallet.transferOwnership(owner);
   }
 
 }
@@ -796,15 +704,13 @@ contract SoftcapFeature is InvestedProvider, WalletProvider {
 
   bool public refundOn;
 
-  bool public feePayed;
+  bool feePayed;
 
   uint public softcap;
 
-  uint public constant devLimit = 26500000000000000000;
+  uint public constant devLimit = 19500000000000000000;
 
   address public constant devWallet = 0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770;
-
-  address public constant special = 0x1D0B575b48a6667FD8E59Da3b01a49c33005d2F1;
 
   function setSoftcap(uint newSoftcap) public onlyOwner {
     softcap = newSoftcap;
@@ -814,8 +720,7 @@ contract SoftcapFeature is InvestedProvider, WalletProvider {
     require(msg.sender == owner || msg.sender == devWallet);
     require(softcapAchieved);
     if(!feePayed) {
-      devWallet.transfer(devLimit.sub(18 ether));
-      special.transfer(18 ether);
+      devWallet.transfer(devLimit);
       feePayed = true;
     }
     wallet.transfer(this.balance);
@@ -825,11 +730,7 @@ contract SoftcapFeature is InvestedProvider, WalletProvider {
     balances[to] = balances[to].add(amount);
     if (!softcapAchieved && invested >= softcap) {
       softcapAchieved = true;
-      softcapReachedCallabck();
     }
-  }
-
-  function softcapReachedCallabck() internal {
   }
 
   function refund() public {
@@ -852,40 +753,18 @@ contract SoftcapFeature is InvestedProvider, WalletProvider {
 
 contract PreITO is SoftcapFeature, NextSaleAgentFeature, AssembledCommonSale {
 
-  uint public firstBonusTokensLimit;
-
-  uint public firstBonus;
-
-  uint public secondBonus;
-
-  function setFirstBonusTokensLimit(uint _tokens) public onlyOwner {
-    firstBonusTokensLimit = _tokens;
-  }
-
-  function setFirstBonus(uint newFirstBonus) public onlyOwner {
-    firstBonus = newFirstBonus;
-  }
-
-  function setSecondBonus(uint newSecondBonus) public onlyOwner {
-    secondBonus = newSecondBonus;
-  }
+  uint public period;
 
   function calculateTokens(uint _invested) internal returns(uint) {
-    uint tokens = _invested.mul(price).div(1 ether);
-    if(minted <= firstBonusTokensLimit) {
-      if(firstBonus > 0) {
-        tokens = tokens.add(tokens.mul(firstBonus).div(percentRate));
-      }
-    } else {
-      if(secondBonus > 0) {
-        tokens = tokens.add(tokens.mul(secondBonus).div(percentRate));
-      }
-    }
-    return tokens;
+    return _invested.mul(price).div(1 ether);
   }
 
-  function softcapReachedCallabck() internal {
-    wallet = specialWallet;
+  function setPeriod(uint newPeriod) public onlyOwner {
+    period = newPeriod;
+  }
+
+  function endSaleDate() public view returns(uint) {
+    return start.add(period * 1 days);
   }
 
   function mintTokensByETH(address to, uint _invested) internal returns(uint) {
@@ -899,7 +778,6 @@ contract PreITO is SoftcapFeature, NextSaleAgentFeature, AssembledCommonSale {
       token.finishMinting();
     } else {
       withdraw();
-      specialWallet.transferOwnership(nextSaleAgent);
       token.setSaleAgent(nextSaleAgent);
     }
   }
@@ -924,9 +802,9 @@ contract ReceivingContractCallback {
 
 contract Token is MintableToken {
 
-  string public constant name = "Blockchain Agro Trading Token";
+  string public constant name = "BUILD";
 
-  string public constant symbol = "BATT";
+  string public constant symbol = "BUILD";
 
   uint32 public constant decimals = 18;
 
@@ -964,46 +842,51 @@ contract Configurator is Ownable {
 
   Token public token;
 
-  SpecialWallet public specialWallet;
-
   PreITO public preITO;
 
   ITO public ito;
 
   function deploy() public onlyOwner {
 
-    address manager = 0x529E6B0e82EF632F070D997dd50C35aAa939cB37;
+    address manager = 0x66C1833F667eAE8ea1890560e009F139A680F939;
 
     token = new Token();
-    specialWallet = new SpecialWallet();
+
     preITO = new PreITO();
     ito = new ITO();
-
-    specialWallet.setAvailableAfterStart(50);
-    specialWallet.setEndDate(1546300800);
-    specialWallet.transferOwnership(preITO);
 
     commonConfigure(preITO);
     commonConfigure(ito);
 
-    preITO.setWallet(0x0fc0b9f68DCc12B72203e579d427d1ddf007e464);
-    preITO.setStart(1524441600);
-    preITO.setSoftcap(1000000000000000000000);
-    preITO.setHardcap(33366000000000000000000);
-    preITO.setFirstBonus(100);
-    preITO.setFirstBonusTokensLimit(30000000000000000000000000);
-    preITO.setSecondBonus(50);
-    preITO.setMinInvestedLimit(1000000000000000000);
+    preITO.setWallet(0xB53E3f252fBCD041e46Aad82CFaEe326E04d1396);
+    preITO.setStart(1530921600); // 07 Jul 2018 00:00:00 GMT
+    preITO.setPeriod(42);
+    preITO.setPrice(6650000000000000000000);
+    preITO.setSoftcap(2500000000000000000000);
+    preITO.setHardcap(12000000000000000000000);
 
     token.setSaleAgent(preITO);
 
-    ito.setStart(1527206400);
+    ito.setWallet(0x8f1C4E049907Fa4329dAC9c504f4013620Fa39c9);
+    ito.setStart(1535155200); // 25 Aug 2018 00:00:00 GMT
     ito.setHardcap(23000000000000000000000);
+    ito.setPrice(5000000000000000000000);
 
-    ito.addWallet(0x8c76033Dedd13FD386F12787Ab4973BcbD1de2A8, 1);
-    ito.addWallet(0x31Dba1B0b92fa23Eec30e2fF169dc7Cc05eEE915, 1);
-    ito.addWallet(0x7Ae3c0DdaC135D69cA8E04d05559cd42822ecf14, 8);
-    ito.setMinInvestedLimit(100000000000000000);
+    ito.addMilestone(10, 25);
+    ito.addMilestone(15, 20);
+    ito.addMilestone(15, 15);
+    ito.addMilestone(15, 10);
+    ito.addMilestone(30, 5);
+
+
+    ito.addWallet(0x3180e7B6E726B23B1d18D9963bDe3264f5107aef, 2);
+    ito.addWallet(0x36A8b67fe7800Cd169Fd46Cd75824DC016a54d13, 3);
+    ito.addWallet(0xDf9CAAE51eED1F23B4ae9AeCDbdeb926252eFFC4, 11);
+    ito.addWallet(0x7D648BcAbf05CEf119C9a11b8E05756a41Bd29Ad, 4);
+
+    ito.lockAddress(0x3180e7B6E726B23B1d18D9963bDe3264f5107aef,30);
+    ito.lockAddress(0x36A8b67fe7800Cd169Fd46Cd75824DC016a54d13,90);
+    ito.lockAddress(0xDf9CAAE51eED1F23B4ae9AeCDbdeb926252eFFC4,180);
 
     preITO.setNextSaleAgent(ito);
 
@@ -1014,9 +897,7 @@ contract Configurator is Ownable {
 
   function commonConfigure(AssembledCommonSale sale) internal {
     sale.setPercentRate(100);
-    sale.setPeriod(30);
-    sale.setPrice(30000000000000000000000);
-    sale.setSpecialWallet(specialWallet);
+    sale.setMinInvestedLimit(100000000000000000);
     sale.setToken(token);
   }
 
