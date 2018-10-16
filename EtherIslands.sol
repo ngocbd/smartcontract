@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherIslands at 0x741733ca54e0f052a092bdc95ba9897c2d56e04b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherIslands at 0xab55903841e9d755ac512e9cca39def98eb64943
 */
 pragma solidity ^0.4.19;
 
@@ -321,11 +321,6 @@ contract EtherIslands is Ownable, ERC721 {
             uint256 previous_owner_fee = SafeMath.mul(SafeMath.div(island.price, 160), 3);
             uint256 previous_owner_fee2 = SafeMath.mul(SafeMath.div(island.price, 160), 2);
 
-            if (island.owner != address(this)) {
-                island.owner.transfer(owners_cut);
-                //divs for current island owner
-            }
-
             island.previous_owners[0].transfer(previous_owner_fee);
             //divs for 1st previous owner
             island.previous_owners[1].transfer(previous_owner_fee2);
@@ -343,8 +338,11 @@ contract EtherIslands is Ownable, ERC721 {
             DividendsPaid(island.previous_owners[1], previous_owner_fee2, "previousOwner2");
             DividendsPaid(island.owner, owners_cut, "owner");
             DividendsPaid(owner, dev_fee, "dev");
-        } else {
-            island.owner.transfer(msg.value);
+
+            if (island.owner != address(this)) {
+                island.owner.transfer(owners_cut);
+                //divs for current island owner
+            }
         }
 
         island.previous_price = island.price;
@@ -362,8 +360,8 @@ contract EtherIslands is Ownable, ERC721 {
         ownerCount[_old_owner] -= 1;
         ownerCount[island.owner] += 1;
 
-        islandBattleStats[_island_id].attack_cooldown = battle_cooldown; // immunity for 10 mins
-        islandBattleStats[_island_id].defense_cooldown = battle_cooldown; // immunity for 10 mins
+        islandBattleStats[_island_id].attack_cooldown = block.number + battle_cooldown; // immunity for 10 mins
+        islandBattleStats[_island_id].defense_cooldown = block.number + battle_cooldown; // immunity for 10 mins
 
         Transfer(_old_owner, island.owner, _island_id);
         IslandSold(_island_id, island.previous_price, island.price, _old_owner, island.owner, island.name);
