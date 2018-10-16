@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x3cb4d77747e0b432d81055b8ead1fcdba2b40512
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xdf83D7442386fd70D8CAF3F00B94b752CD51aD25
 */
 pragma solidity 0.4.18;
 
@@ -295,13 +295,13 @@ contract MintableToken is StandardToken, Ownable {
 
 }
 
-// File: contracts/WBBToken.sol
+// File: contracts/VEZETToken.sol
 
-contract WBBToken is MintableToken {
+contract VezetToken is MintableToken {
 
-  string public constant name = "WIBCOIN";
+  string public constant name = "VEZET";
 
-  string public constant symbol = "WBB";
+  string public constant symbol = "VZT";
 
   uint32 public constant decimals = 18;
 
@@ -335,7 +335,7 @@ contract CommonSale is PercentRateProvider {
 
   uint public minInvestedLimit;
 
- WBBToken public token;
+  VezetToken public token;
 
   uint public hardcap;
 
@@ -381,7 +381,7 @@ contract CommonSale is PercentRateProvider {
   }
 
   function setToken(address newToken) public onlyOwner {
-    token = WBBToken(newToken);
+    token = VezetToken(newToken);
   }
 
   function calculateTokens(uint _invested) internal returns(uint);
@@ -523,9 +523,9 @@ contract ValueBonusFeature is PercentRateProvider {
 
 }
 
-// File: contracts/WBB.sol
+// File: contracts/AICCommonSale.sol
 
-contract WBBCommonSale is ValueBonusFeature, RetrieveTokensFeature, ReferersRewardFeature {
+contract VezetCommonSale is ValueBonusFeature, RetrieveTokensFeature, ReferersRewardFeature {
 
 
 }
@@ -623,7 +623,7 @@ contract StagedCrowdsale is Ownable {
 
 // File: contracts/Mainsale.sol
 
-contract Mainsale is StagedCrowdsale, WBBCommonSale {
+contract Mainsale is StagedCrowdsale, VezetCommonSale {
 
   address public foundersTokensWallet;
 
@@ -693,7 +693,7 @@ contract Mainsale is StagedCrowdsale, WBBCommonSale {
 
 // File: contracts/Presale.sol
 
-contract Presale is WBBCommonSale {
+contract Presale is VezetCommonSale {
 
   Mainsale public mainsale;
 
@@ -726,43 +726,42 @@ contract Presale is WBBCommonSale {
 
 contract Configurator is Ownable {
 
-  WBBToken public token;
+ VezetToken public token;
 
   Presale public presale;
 
   Mainsale public mainsale;
 
   function deploy() public onlyOwner {
-    //owner = 0x41FEa3861abCd7c769feAe7E84c03E3C84A68174;
+    //owner = 0x06c49F11b09c0d984394cb355Bb1c284b1924b37;
 
-    token = new WBBToken();
+    token = new VezetToken();
 
     presale = new Presale();
 
-    presale.setWallet(0x619B63f9b9aC6570AB86bc4fB232Ac04Bc47618E);
-    presale.setStart(1524441600);
-    presale.setPeriod(65);
-    presale.setPrice(370000000000000000000);
-    presale.setHardcap(42000000000000000000000);
+    presale.setWallet(0x06c49F11b09c0d984394cb355Bb1c284b1924b37);
+    presale.setStart(1525996800);
+    presale.setPeriod(7);
+    presale.setPrice(3000000000000000000000);
+    presale.setHardcap(20000000000000000000000);
     token.setSaleAgent(presale);
     commonConfigure(presale, token);
 
     mainsale = new Mainsale();
 
-    mainsale.addMilestone(7, 20);
-    mainsale.addMilestone(7, 15);
-    mainsale.addMilestone(7, 10);
-    mainsale.addMilestone(100, 0);
-    mainsale.setPrice(370000000000000000000);
-    mainsale.setWallet(0x619B63f9b9aC6570AB86bc4fB232Ac04Bc47618E);
-    mainsale.setFoundersTokensWallet(0x9C93e79E17Fb9B187E5Edf264c571081289E4814);
-    mainsale.setMarketingTokensWallet(0x47497893408D3a0f6F3cDb70EdfbdaB18b8e9EC7);
-    mainsale.setBountyTokensWallet(0x535cc5A392D805e707086da7EAfF5C1bD2Ec3Ed9);
-    mainsale.setStart(1535760000);
-    mainsale.setHardcap(830000000000000000000000);
+    mainsale.addMilestone(17, 10);
+    mainsale.addMilestone(21, 5);
+    mainsale.addMilestone(15, 0);
+    mainsale.setPrice(2500000000000000000000);
+    mainsale.setWallet(0x06c49F11b09c0d984394cb355Bb1c284b1924b37);
+    mainsale.setFoundersTokensWallet(0x06c49F11b09c0d984394cb355Bb1c284b1924b37);
+    mainsale.setMarketingTokensWallet(0x50ec61BE408eB227fE4E50963567C7a09baE728D);
+    mainsale.setBountyTokensWallet(0x87140A60339968dF9e2DB831F7168c7de7719578);
+    mainsale.setStart(1526601600);
+    mainsale.setHardcap(20000000000000000000000);
     mainsale.setFoundersTokensPercent(15);
-    mainsale.setMarketingTokensPercent(10);
-    mainsale.setBountyTokensPercent(5);
+    mainsale.setMarketingTokensPercent(3);
+    mainsale.setBountyTokensPercent(15);
     commonConfigure(mainsale, token);
 
     presale.setMainsale(mainsale);
@@ -773,14 +772,15 @@ contract Configurator is Ownable {
   }
 
   function commonConfigure(address saleAddress, address _token) internal {
-     WBBCommonSale sale = WBBCommonSale(saleAddress);
-     sale.addValueBonus(800000000000000000, 10);
-     sale.addValueBonus(4000000000000000000, 15);
-     sale.addValueBonus(8000000000000000000, 20);
-     sale.addValueBonus(40000000000000000000, 25);
-     sale.setReferalsMinInvestLimit(1000000000000000000);
-     sale.setRefererPercent(5);
-     sale.setMinInvestedLimit(100000000000000000);
+     VezetCommonSale  sale = VezetCommonSale (saleAddress);
+     sale.addValueBonus(100000000000000000, 2);
+     sale.addValueBonus(500000000000000000, 4);
+     sale.addValueBonus(1000000000000000000, 7);
+     sale.addValueBonus(3000000000000000000, 10);
+     
+     sale.setReferalsMinInvestLimit(5000000000000000000);
+     sale.setRefererPercent(0);
+     sale.setMinInvestedLimit(10000000000000000);
      sale.setToken(_token);
   }
 
