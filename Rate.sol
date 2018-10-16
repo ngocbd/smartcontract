@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rate at 0x0fe3abab578cc9bd8139c425b89318d745759fb6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rate at 0x17db86b8a8a53476236a41fd9511b0a67622013f
 */
 pragma solidity ^0.4.13;
 
@@ -18,13 +18,13 @@ contract Ownable {
   }
 }
 
-
 contract RBInformationStore is Ownable {
     address public profitContainerAddress;
     address public companyWalletAddress;
     uint public etherRatioForOwner;
     address public multiSigAddress;
     address public accountAddressForSponsee;
+    bool public isPayableEnabledForAll = true;
 
     modifier onlyMultiSig() {
         require(multiSigAddress == msg.sender);
@@ -69,8 +69,11 @@ contract RBInformationStore is Ownable {
     function changeAccountAddressForSponsee(address _address) onlyMultiSig {
         accountAddressForSponsee = _address;
     }
-}
 
+    function changeIsPayableEnabledForAll() onlyMultiSig {
+        isPayableEnabledForAll = !isPayableEnabledForAll;
+    }
+}
 
 contract Rate {
     uint public ETH_USD_rate;
