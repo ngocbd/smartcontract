@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0xb43b5be03416ca16f7b9749c6aba818538dcc032
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0x73b958200ca61991556324cdf2f315ce2ae08698
 */
 pragma solidity ^0.4.16;
 
@@ -156,16 +156,7 @@ contract Slotthereum is Mortal {
         games[gameId].end = end;
         games[gameId].hash = getBlockHash(pointer);
         games[gameId].number = getNumber(games[gameId].hash);
-        
-        if (pointer == games[gameId].number) {
-            if (pointer <= 4) {
-                pointer++;
-            } else {
-                pointer--;
-            }
-        } else {
-            pointer = games[gameId].number;
-        }
+        pointer = games[gameId].number;
 
         if ((games[gameId].number >= start) && (games[gameId].number <= end)) {
             games[gameId].win = true;
