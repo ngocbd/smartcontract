@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithDrawChildDAO at 0x56aef5f4529bca12cbfa7055d7d917c347a14ad1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithDrawChildDAO at 0xf35c09172F521F11569147fBa340a27cEc76E086
 */
 contract DAO {
     function balanceOf(address addr) returns (uint);
@@ -20,7 +20,6 @@ contract WithDrawChildDAO {
         // at the time of split) are commented out with a "b" at the beginning of the comment. ChildDAOs which habe already executed a 
         // proposal are commented out witha "e" in the beginning of the comment. Both types of childDAO have been taken from:
         // https://github.com/dsystems-io/childDaoWithdraw. Thanks for the work!
-        // Added by @ledgerwatch: childDAOs that are already paid off are commented out with a "p" in the beginning of the comment
         
         // e - childDAOs[0xd4fe7bc31cedb7bfb8a345f31e668033056b2728] = SplitData(11727766784716799192555572, 11727751591980739956782275);
         // e - childDAOs[0x2c19c7f9ae8b751e37aeb2d93a699722395ae18f] = SplitData(11723955902593679358349542, 11723940714794427556781866);
@@ -38,7 +37,7 @@ contract WithDrawChildDAO {
         childDAOs[0xd9aef3a1e38a39c16b31d1ace71bca8ef58d315b] = SplitData(11657174904348740590804928, 11657159803060936256781866);
         childDAOs[0x6f6704e5a10332af6672e50b3d9754dc460dfa4d] = SplitData(11660273159043194987425803, 11660258053741756456781866);
         childDAOs[0x492ea3bb0f3315521c31f273e565b868fc090f17] = SplitData(11672394990422733145443415, 11672379869418067556781866);
-        // p - childDAOs[0x9ea779f907f0b315b364b0cfc39a0fde5b02a416] = SplitData(11651681905425321164752175, 11651666811253422556781866);
+        childDAOs[0x9ea779f907f0b315b364b0cfc39a0fde5b02a416] = SplitData(11651681905425321164752175, 11651666811253422556781866);
         childDAOs[0xcc34673c6c40e791051898567a1222daf90be287] = SplitData(11672027610039670010098830, 11672012489510927356781866);
         // e - childDAOs[0xe308bd1ac5fda103967359b2712dd89deffb7973] = SplitData(11672027570039618192029731, 11672012449510927356781866);
         // e - childDAOs[0xac1ecab32727358dba8962a0f3b261731aad9723] = SplitData(11671920519900940084603472, 11671905399510927356781866);
@@ -50,10 +49,10 @@ contract WithDrawChildDAO {
         childDAOs[0x542a9515200d14b68e934e9830d91645a980dd7a] = SplitData(11655924902729425931460472, 11655909803060936256781866); 
         childDAOs[0x782495b7b3355efb2833d56ecb34dc22ad7dfcc4] = SplitData(11657074904219195418057372, 11657059803060936256781866);
         // e - childDAOs[0x3ba4d81db016dc2890c81f3acec2454bff5aada5] = SplitData(11644042202973928247591111, 11644027118698882556781866);
-        // p - childDAOs[0xe4ae1efdfc53b73893af49113d8694a057b9c0d1] = SplitData(11651686905431798423389552, 11651671811253422556781866);
+        childDAOs[0xe4ae1efdfc53b73893af49113d8694a057b9c0d1] = SplitData(11651686905431798423389552, 11651671811253422556781866);
         childDAOs[0x0737a6b837f97f46ebade41b9bc3e1c509c85c53] = SplitData(8285423727021618574288915, 11597611623386926056781866);
         childDAOs[0x52c5317c848ba20c7504cb2c8052abd1fde29d03] = SplitData(11640162228429435032712289, 11640147149180702556781865);
-        // p - childDAOs[0x5d2b2e6fcbe3b11d26b525e085ff818dae332479] = SplitData(11637045764389294338324695, 11637030689177785356781865);
+        childDAOs[0x5d2b2e6fcbe3b11d26b525e085ff818dae332479] = SplitData(11637045764389294338324695, 11637030689177785356781865);
         childDAOs[0x057b56736d32b86616a10f619859c6cd6f59092a] = SplitData(11632720959688545875602644, 11632705890079605356781865);
         // b - childDAOs[0x304a554a310c7e546dfe434669c62820b7d83490]
         childDAOs[0x4deb0033bb26bc534b197e61d19e0733e5679784] = SplitData(11600333244558691014482582, 11600318216906417656781865);
@@ -92,14 +91,4 @@ contract WithDrawChildDAO {
     function checkMyWithdraw(DAO _childDAO) constant returns(uint) {        
         return _childDAO.balanceOf(msg.sender) * childDAOs[_childDAO].totalSupply / childDAOs[_childDAO].balance;
     }
-
-    address constant curator = 0xda4a4626d3e16e094de3225a751aab7128e96526;
-    
-   /**
-   * Return funds back to the curator.
-   */
-   function clawback() external {
-        if (msg.sender != curator) throw;
-        if (!curator.send(this.balance)) throw;
-   }     
 }
