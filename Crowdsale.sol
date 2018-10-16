@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x05feb3b6c5fc0226eaba3f2354de0a79eb7d961a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1a350d0d94cdad152322ffefb58033c95477238a
 */
 pragma solidity ^0.4.11;
 
@@ -52,11 +52,6 @@ contract Crowdsale {
   address public addressOfTokenUsedAsReward;
 
   uint256 public price = 300;
-  uint256 public priceBeforeGoalReached;
-  uint256 public tokensSoldGoal;
-  uint256 public tokensSold;
-  uint256 public minBuy;
-  uint256 public maxBuy;
 
   token tokenReward;
 
@@ -65,7 +60,7 @@ contract Crowdsale {
 
 
   // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
+  // uint256 public startTime;
   // uint256 public endTime;
   // amount of raised money in wei
   uint256 public weiRaised;
@@ -82,10 +77,10 @@ contract Crowdsale {
 
   function Crowdsale() {
     //You will change this to your wallet where you need the ETH 
-    wallet = 0xD975c18B7B9e6a0821cD86126705f9544B6e392d;
+    wallet = 0x7f2C22f715379F2c0Fa102661fB7ACf9234a38B8;
     // durationInMinutes = _durationInMinutes;
     //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0x2f5381bA547332d2a972189B5a4bB895A32aE4B6;
+    addressOfTokenUsedAsReward = 0xcAa6CC715164969AEd2f8752283F212a56ABa611;
 
 
     tokenReward = token(addressOfTokenUsedAsReward);
@@ -93,9 +88,8 @@ contract Crowdsale {
 
   bool public started = false;
 
-  function startSale(uint256 _delayInMinutes){
+  function startSale(){
     if (msg.sender != wallet) throw;
-    startTime = now + _delayInMinutes*1 minutes;
     started = true;
   }
 
@@ -108,17 +102,6 @@ contract Crowdsale {
     if(msg.sender != wallet) throw;
     price = _price;
   }
-
-  function setMinBuy(uint256 _minBuy){
-    if(msg.sender!=wallet) throw;
-    minBuy = _minBuy;
-  }
-
-  function setMaxBuy(uint256 _maxBuy){
-    if(msg.sender != wallet) throw;
-    maxBuy = _maxBuy;
-  }
-
   function changeWallet(address _wallet){
   	if(msg.sender != wallet) throw;
   	wallet = _wallet;
@@ -127,16 +110,6 @@ contract Crowdsale {
   function changeTokenReward(address _token){
     if(msg.sender!=wallet) throw;
     tokenReward = token(_token);
-  }
-
-  function setTokensSoldGoal(uint256 _goal){
-    if(msg.sender!=wallet) throw;
-    tokensSoldGoal = _goal;
-  }
-
-  function setPriceBeforeGoalReached(uint256 _price){
-    if(msg.sender!=wallet) throw;
-    priceBeforeGoalReached = _price;
   }
 
   // fallback function can be used to buy tokens
@@ -151,26 +124,11 @@ contract Crowdsale {
 
     uint256 weiAmount = msg.value;
 
-    if(weiAmount < 10**17) throw;
-
     // calculate token amount to be sent
-    uint256 tokens;
-
-    if (tokensSoldGoal>0&&tokensSold<tokensSoldGoal*10**18)
-      tokens = (weiAmount) * priceBeforeGoalReached; 
-    else tokens = (weiAmount) * price;
-    
-    if(minBuy!=0){
-      if(tokens < minBuy*10**18) throw;
-    }
-
-    if(maxBuy!=0){
-      if(tokens > maxBuy*10**18) throw;
-    }
+    uint256 tokens = (weiAmount) * price;//weiamount * price 
 
     // update state
     weiRaised = weiRaised.add(weiAmount);
-    tokensSold = tokensSold.add(tokens);
     
     // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
     // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
@@ -191,7 +149,7 @@ contract Crowdsale {
 
   // @return true if the transaction can buy tokens
   function validPurchase() internal constant returns (bool) {
-    bool withinPeriod = started&&(now>=startTime);
+    bool withinPeriod = started;
     bool nonZeroPurchase = msg.value != 0;
     return withinPeriod && nonZeroPurchase;
   }
