@@ -1,14 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x60F52581489e879df02d86F956Bd8C634f6f4dB9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x7957eeFc49Db8E7c7a11DEd53f4604aa6afc0b29
 */
 pragma solidity ^0.4.0;
 
 contract Ethraffle {
+    // Structs
     struct Contestant {
         address addr;
         uint raffleId;
     }
 
+    // Events
     event RaffleResult(
         uint indexed raffleId,
         uint winningNumber,
@@ -45,14 +47,20 @@ contract Ethraffle {
     uint constant public pricePerTicket = (prize + rake) / totalTickets;
 
     // Variables
-    uint public raffleId = 1;
-    uint public nextTicket = 1;
+    uint public raffleId = 0;
+    uint public nextTicket = 0;
     mapping (uint => Contestant) public contestants;
     uint[] public gaps;
 
     // Initialization
     function Ethraffle() public {
         creatorAddress = msg.sender;
+        resetRaffle();
+    }
+
+    function resetRaffle() private {
+        raffleId++;
+        nextTicket = 1;
     }
 
     // Call buyTickets() when receiving Ether outside a function
@@ -89,8 +97,26 @@ contract Ethraffle {
     }
 
     function chooseWinner() private {
-        // Pseudorandom number generator
-        bytes32 sha = sha3(
+        uint winningNumber = getRandom();
+        address winningAddress = contestants[winningNumber].addr;
+        RaffleResult(
+            raffleId, winningNumber, winningAddress, block.timestamp,
+            block.number, block.gaslimit, block.difficulty, msg.gas,
+            msg.value, msg.sender, block.coinbase, getSha()
+        );
+
+        resetRaffle();
+        winningAddress.transfer(prize);
+        rakeAddress.transfer(rake);
+    }
+
+    // Choose a random int between 1 and totalTickets
+    function getRandom() private returns (uint) {
+        return (uint(getSha()) % totalTickets) + 1;
+    }
+
+    function getSha() private returns (bytes32) {
+        return sha3(
             block.timestamp +
             block.number +
             block.gaslimit +
@@ -100,20 +126,6 @@ contract Ethraffle {
             uint(msg.sender) +
             uint(block.coinbase)
         );
-
-        uint winningNumber = (uint(sha) % totalTickets) + 1;
-        address winningAddress = contestants[winningNumber].addr;
-        RaffleResult(
-            raffleId, winningNumber, winningAddress, block.timestamp,
-            block.number, block.gaslimit, block.difficulty, msg.gas,
-            msg.value, msg.sender, block.coinbase, sha
-        );
-
-        // Start next raffle and distribute prize
-        raffleId++;
-        nextTicket = 1;
-        winningAddress.transfer(prize);
-        rakeAddress.transfer(rake);
     }
 
     function getRefund() public {
