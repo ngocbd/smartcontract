@@ -1,180 +1,259 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABCToken at 0x1DC5b8CcBe7A3669ED59dcd3B3d5AFA0FeD4eE57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABCToken at 0x3e01b9ea9db8f17ab1825d848b2f2e04f57caf09
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
+contract Ownable {
+  address public owner;
 
- /* Receiver must implement this function to receive tokens
- *  otherwise token transaction will fail
- */
- 
- contract ContractReceiver {
-    function tokenFallback(address _from, uint256 _value, bytes _data){
-      _from = _from;
-      _value = _value;
-      _data = _data;
-      // Incoming transaction code here
-    }
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
- 
- /* New ERC23 contract interface */
 
-contract ERC23 {
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function allowance(address owner, address spender) constant returns (uint256);
-
-  function name() constant returns (string _name);
-  function symbol() constant returns (string _symbol);
-  function decimals() constant returns (uint8 _decimals);
-  function totalSupply() constant returns (uint256 _supply);
-
-  function transfer(address to, uint256 value) returns (bool ok);
-  function transfer(address to, uint256 value, bytes data) returns (bool ok);
-  function transferFrom(address from, address to, uint256 value) returns (bool ok);
-  function approve(address spender, uint256 value) returns (bool ok);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
-  event Transfer(address indexed from, address indexed to, uint256 value, bytes data);
+}
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
- /**
- * ERC23 token by Dexaran
- *
- * https://github.com/Dexaran/ERC23-tokens
- */
- 
-contract ERC23Token is ERC23 {
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
   mapping(address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
 
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-  uint256 public totalSupply;
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-  // Function to access name of token .
-  function name() constant returns (string _name) {
-      return name;
-  }
-  // Function to access symbol of token .
-  function symbol() constant returns (string _symbol) {
-      return symbol;
-  }
-  // Function to access decimals of token .
-  function decimals() constant returns (uint8 _decimals) {
-      return decimals;
-  }
-  // Function to access total supply of tokens .
-  function totalSupply() constant returns (uint256 _totalSupply) {
-      return totalSupply;
-  }
-
-  //function that is called when a user or another contract wants to transfer funds
-  function transfer(address _to, uint256 _value, bytes _data) returns (bool success) {
-  
-    //filtering if the target is a contract with bytecode inside it
-    if(isContract(_to)) {
-        transferToContract(_to, _value, _data);
-    }
-    else {
-        transferToAddress(_to, _value, _data);
-    }
-    return true;
-  }
-  
-  function transfer(address _to, uint256 _value) returns (bool success) {
-      
-    //standard function transfer similar to ERC20 transfer with no _data
-    //added due to backwards compatibility reasons
-    bytes memory empty;
-    if(isContract(_to)) {
-        transferToContract(_to, _value, empty);
-    }
-    else {
-        transferToAddress(_to, _value, empty);
-    }
-    return true;
-  }
-
-  //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool success) {
-    balances[msg.sender] -= _value;
-    balances[_to] += _value;
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value, _data);
     return true;
   }
-  
-  //function that is called when transaction target is a contract
-  function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool success) {
-    balances[msg.sender] -= _value;
-    balances[_to] += _value;
-    ContractReceiver reciever = ContractReceiver(_to);
-    reciever.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
   }
-  
-  //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-  function isContract(address _addr) private returns (bool is_contract) {
-      _addr = _addr;
-      uint256 length;
-      assembly {
-            //retrieve the size of the code on target address, this needs assembly
-            length := extcodesize(_addr)
-        }
-        if(length>0) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
 
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
-    
-    if(_value > _allowance) {
-        throw;
-    }
+}
 
-    balances[_to] += _value;
-    balances[_from] -= _value;
-    allowed[_from][msg.sender] -= _value;
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint256 _value) returns (bool success) {
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
-}
 
-contract ABCToken is ERC23Token {
-    // Constructor
-    function ABCToken(
-            string _name,
-            string _symbol,
-            uint8 _decimals,
-            uint256 _totalSupply,
-            address _initialTokensHolder) {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-        totalSupply = _totalSupply;
-        balances[_initialTokensHolder] = _totalSupply;
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    _amount = _amount * 1 ether;
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+contract ABCToken is Ownable, MintableToken {
+  //Event for Presale transfers
+  //event TokenPreSaleTransfer(address indexed purchaser, address indexed beneficiary, uint256 amount);
+  address constant singleOwner = 0xe9902c76c11d353eD9Cc5753b8fD7FEAfB675359;
+  // Token details
+  string public constant name = "Mankind First";
+  string public constant symbol = "MKF";
+
+  // 18 decimal places, the same as ETH.
+  uint8 public constant decimals = 18;
+
+  /**
+    @dev Constructor. Sets the initial supplies and transfer advisor/founders/presale tokens to the given account
+   */
+  function ABCToken () public {
+      totalSupply = 0; //initialize total supply
+      mint(singleOwner, 5*10**9);
+      finishMinting();
+  }
+
 }
