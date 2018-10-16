@@ -1,101 +1,202 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCartel at 0x5088b94cf8a1143eb228b6d3f008350ca742ddc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCartel at 0xa77cf14e0bda66f94873498ed15e1eaf183d2fd0
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
 
 
 contract EtherCartel{
-    //uint256 DRUGS_TO_PRODUCE_1KILO=1;
-    uint256 public DRUGS_TO_PRODUCE_1KILO=86400;//for final version should be seconds in a day
-    uint256 public STARTING_KILOS=300;
+    //uint256 EGGS_TO_HATCH_1SHRIMP=1;
+    uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
+    uint256 public STARTING_SHRIMP=300;
     uint256 PSN=10000;
     uint256 PSNH=5000;
     bool public initialized=false;
-    address public ceoAddress=0x85abE8E3bed0d4891ba201Af1e212FE50bb65a26;
-    mapping (address => uint256) public Kilos;
-    mapping (address => uint256) public claimedDrugs;
-    mapping (address => uint256) public lastCollect;
+    address public ceoAddress;
+    mapping (address => uint256) public hatcheryShrimp;
+    mapping (address => uint256) public claimedEggs;
+    mapping (address => uint256) public lastHatch;
     mapping (address => address) public referrals;
-    uint256 public marketDrugs;
-    function DrugDealer() public{
+    uint256 public marketEggs;
+
+
+    // Additions 
+    mapping(address => bool) public hasDoubler;
+    uint256 public CurrentIcePrice = 0.01 ether;
+    uint256 public CurrentIceDelta = 0.001 ether;
+    uint256 public CurrentGoldPrice = 0.2 ether;
+    uint256 public CurrentGoldPercentIncrease = 200; // 200 = doubles in price 
+    uint256 public CurrentDevFee = 7;
+    address public GoldOwner;
+
+
+    constructor() public{
         ceoAddress=msg.sender;
+        GoldOwner=msg.sender;
     }
-    function collectDrugs(address ref) public{
+
+    function BuyDoubler() public payable{
+        require(initialized);
+        require(msg.value >= CurrentIcePrice);
+        uint256 left;
+        uint256 excess=0;
+        if (msg.value > CurrentIcePrice){
+            excess = msg.value - CurrentIcePrice;
+            left = CurrentIcePrice;
+        }
+        else{
+            left = msg.value;
+        }
+
+
+        // save current eggs into the wallet of user 
+        uint256 eggs = getMyEggs();
+        claimedEggs[msg.sender] = SafeMath.add(claimedEggs[msg.sender], eggs);
+        // shrimp production all moved into claimed eggs 
+        lastHatch[msg.sender] = now;
+        hasDoubler[msg.sender] = true;
+        CurrentIcePrice = CurrentIcePrice + CurrentIceDelta;
+        ceoAddress.transfer(devFee(left));
+        if (excess > 0){
+            msg.sender.transfer(excess);
+        }
+    }
+
+    function BuyGold() public payable{
+        require(initialized);
+        require(msg.value >= CurrentGoldPrice);
+        require(msg.sender != GoldOwner);
+        uint256 left;
+        uint256 excess=0;
+        if (msg.value > CurrentGoldPrice){
+            excess = msg.value - CurrentGoldPrice;
+            left = CurrentGoldPrice;
+        }
+        else{
+            left = msg.value;
+        }
+
+        left = SafeMath.sub(left, devFee(left));
+
+        uint256 eggs = getMyEggs();
+        claimedEggs[msg.sender] = SafeMath.add(claimedEggs[msg.sender], eggs);
+        // shrimp production all moved into claimed eggs 
+        lastHatch[msg.sender] = now;
+
+        eggs = getEggsOff(GoldOwner);
+        claimedEggs[GoldOwner] = SafeMath.add(claimedEggs[GoldOwner], eggs);
+        // shrimp production all moved into claimed eggs 
+        lastHatch[GoldOwner] = now;
+
+
+        CurrentGoldPrice = SafeMath.div(SafeMath.mul(CurrentGoldPrice,CurrentGoldPercentIncrease),100);
+        address oldOwner = GoldOwner;
+        GoldOwner = msg.sender;
+
+        oldOwner.transfer(left);
+        if (excess > 0){
+            msg.sender.transfer(excess);
+        }
+    }
+
+
+    function hatchEggs(address ref) public{
         require(initialized);
         if(referrals[msg.sender]==0 && referrals[msg.sender]!=msg.sender){
             referrals[msg.sender]=ref;
         }
-        uint256 drugsUsed=getMyDrugs();
-        uint256 newKilo=SafeMath.div(drugsUsed,DRUGS_TO_PRODUCE_1KILO);
-        Kilos[msg.sender]=SafeMath.add(Kilos[msg.sender],newKilo);
-        claimedDrugs[msg.sender]=0;
-        lastCollect[msg.sender]=now;
+        uint256 eggsUsed=getMyEggs();
+        uint256 newShrimp=SafeMath.div(eggsUsed,EGGS_TO_HATCH_1SHRIMP);
+        hatcheryShrimp[msg.sender]=SafeMath.add(hatcheryShrimp[msg.sender],newShrimp);
+        claimedEggs[msg.sender]=0;
+        lastHatch[msg.sender]=now;
         
-        //send referral drugs
-        claimedDrugs[referrals[msg.sender]]=SafeMath.add(claimedDrugs[referrals[msg.sender]],SafeMath.div(drugsUsed,5));
+        //send referral eggs
+        claimedEggs[referrals[msg.sender]]=SafeMath.add(claimedEggs[referrals[msg.sender]],SafeMath.div(eggsUsed,5));
         
-        //boost market to nerf kilo hoarding
-        marketDrugs=SafeMath.add(marketDrugs,SafeMath.div(drugsUsed,10));
+        //boost market to nerf shrimp hoarding
+        marketEggs=SafeMath.add(marketEggs,SafeMath.div(eggsUsed,10));
     }
-    function sellDrugs() public{
+    function sellEggs() public{
         require(initialized);
-        uint256 hasDrugs=getMyDrugs();
-        uint256 drugValue=calculateDrugSell(hasDrugs);
-        uint256 fee=devFee(drugValue);
-        claimedDrugs[msg.sender]=0;
-        lastCollect[msg.sender]=now;
-        marketDrugs=SafeMath.add(marketDrugs,hasDrugs);
+        uint256 hasEggs=getMyEggs();
+        uint256 eggValue=calculateEggSell(hasEggs);
+        uint256 fee=devFee(eggValue);
+        claimedEggs[msg.sender]=0;
+        lastHatch[msg.sender]=now;
+        marketEggs=SafeMath.add(marketEggs,hasEggs);
+        hatcheryShrimp[msg.sender]=SafeMath.div(SafeMath.mul(hatcheryShrimp[msg.sender],3),4);
         ceoAddress.transfer(fee);
-        msg.sender.transfer(SafeMath.sub(drugValue,fee));
+        msg.sender.transfer(SafeMath.sub(eggValue,fee));
     }
-    function buyDrugs() public payable{
+    function buyEggs() public payable{
         require(initialized);
-        uint256 drugsBought=calculateDrugBuy(msg.value,SafeMath.sub(this.balance,msg.value));
-        drugsBought=SafeMath.sub(drugsBought,devFee(drugsBought));
+        uint256 eggsBought=calculateEggBuy(msg.value,SafeMath.sub(this.balance,msg.value));
+        eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
         ceoAddress.transfer(devFee(msg.value));
-        claimedDrugs[msg.sender]=SafeMath.add(claimedDrugs[msg.sender],drugsBought);
+        claimedEggs[msg.sender]=SafeMath.add(claimedEggs[msg.sender],eggsBought);
     }
     //magic trade balancing algorithm
     function calculateTrade(uint256 rt,uint256 rs, uint256 bs) public view returns(uint256){
         //(PSN*bs)/(PSNH+((PSN*rs+PSNH*rt)/rt));
         return SafeMath.div(SafeMath.mul(PSN,bs),SafeMath.add(PSNH,SafeMath.div(SafeMath.add(SafeMath.mul(PSN,rs),SafeMath.mul(PSNH,rt)),rt)));
     }
-    function calculateDrugSell(uint256 drugs) public view returns(uint256){
-        return calculateTrade(drugs,marketDrugs,this.balance);
+    function calculateEggSell(uint256 eggs) public view returns(uint256){
+        return calculateTrade(eggs,marketEggs,this.balance);
     }
-    function calculateDrugBuy(uint256 eth,uint256 contractBalance) public view returns(uint256){
-        return calculateTrade(eth,contractBalance,marketDrugs);
+    function calculateEggBuy(uint256 eth,uint256 contractBalance) public view returns(uint256){
+        return calculateTrade(eth,contractBalance,marketEggs);
     }
-    function calculateDrugBuySimple(uint256 eth) public view returns(uint256){
-        return calculateDrugBuy(eth,this.balance);
+    function calculateEggBuySimple(uint256 eth) public view returns(uint256){
+        return calculateEggBuy(eth,this.balance);
     }
     function devFee(uint256 amount) public view returns(uint256){
-        return SafeMath.div(SafeMath.mul(amount,4),100);
+        return SafeMath.div(SafeMath.mul(amount,CurrentDevFee),100);
     }
-    function seedMarket(uint256 drugs) public payable{
-        require(marketDrugs==0);
+    function seedMarket(uint256 eggs) public payable{
+        require(marketEggs==0);
         initialized=true;
-        marketDrugs=drugs;
+        marketEggs=eggs;
     }
-    function getFreeKilo() public{
+    function getFreeShrimp() public{
         require(initialized);
-        require(Kilos[msg.sender]==0);
-        lastCollect[msg.sender]=now;
-        Kilos[msg.sender]=STARTING_KILOS;
+        require(hatcheryShrimp[msg.sender]==0);
+        lastHatch[msg.sender]=now;
+        hatcheryShrimp[msg.sender]=STARTING_SHRIMP;
     }
     function getBalance() public view returns(uint256){
         return this.balance;
     }
-    function getMyKilo() public view returns(uint256){
-        return Kilos[msg.sender];
+    function getMyShrimp() public view returns(uint256){
+        return hatcheryShrimp[msg.sender];
     }
-    function getMyDrugs() public view returns(uint256){
-        return SafeMath.add(claimedDrugs[msg.sender],getDrugsSinceLastCollect(msg.sender));
+
+    function getEggsOff(address adr) public view returns (uint256){
+        uint256 ret = SafeMath.add(claimedEggs[adr],getEggsSinceLastHatch(adr));
+        if (hasDoubler[adr]){
+            ret = SafeMath.mul(ret,2);
+        }
+        if (adr == GoldOwner){
+            ret = SafeMath.mul(ret,4);
+        }
+        return ret;
+    
     }
-    function getDrugsSinceLastCollect(address adr) public view returns(uint256){
-        uint256 secondsPassed=min(DRUGS_TO_PRODUCE_1KILO,SafeMath.sub(now,lastCollect[adr]));
-        return SafeMath.mul(secondsPassed,Kilos[adr]);
+
+
+    function getMyEggs() public view returns(uint256){
+        uint256 ret = SafeMath.add(claimedEggs[msg.sender],getEggsSinceLastHatch(msg.sender));
+        if (hasDoubler[msg.sender]){
+            ret = SafeMath.mul(ret,2);
+        }
+        if (msg.sender == GoldOwner){
+            ret = SafeMath.mul(ret,4);
+        }
+        return ret;
+    }
+    function getEggsSinceLastHatch(address adr) public view returns(uint256){
+        uint256 secondsPassed=min(EGGS_TO_HATCH_1SHRIMP,SafeMath.sub(now,lastHatch[adr]));
+        return SafeMath.mul(secondsPassed,hatcheryShrimp[adr]);
     }
     function min(uint256 a, uint256 b) private pure returns (uint256) {
         return a < b ? a : b;
