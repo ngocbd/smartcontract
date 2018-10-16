@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapToken at 0x740e6b6f0a0165e8bb3d1cdf94862bdffbded22e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapToken at 0x3a09769f27a6e4b01bc58b1273bcaa8159033ec5
 */
 pragma solidity ^0.4.6;
 contract owned {
@@ -198,7 +198,6 @@ contract SwapToken is owned {
         buyPrice = newBuyPrice;
         issuePrice = newIssuePrice;
         cPT = coveragePerToken;
-        premium = (issuePrice - cPT) * 98/100;
     }
 
     /* Buy tokens */
@@ -245,13 +244,18 @@ contract SwapToken is owned {
         }
     }
     
+    // get premium, note not tested yet
+    function getPremium() private constant returns (uint256 premium) {
+        premium = (issuePrice - cPT) * 98/100;
+        return premium;
+    }
     
     // issuer collection sale
     function sellIssuerTokens(uint amount) returns (uint revenue){
         if (balanceOfIssuer[msg.sender] < amount ) throw;
         balanceOfIssuer[this] += amount;
         balanceOfIssuer[msg.sender] -= amount;
-        revenue = amount * premium;
+        revenue = amount * getPremium();
         if (!msg.sender.send(revenue)) {
             throw;
         } else {
