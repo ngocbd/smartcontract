@@ -1,174 +1,82 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x945400ae0c905725e3197cc37255241337301335
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x6CD171eF32b2fFA2b54481beA9d72692cD44F053
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.13;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract token { 
+    function transfer(address _to, uint256 _value);
+	function balanceOf(address _owner) constant returns (uint256 balance);	
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
+contract Crowdsale {
 
-  address public owner;
+	token public sharesTokenAddress; // token address
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
+	uint public startICO = now; // start ICO
+	uint public periodICO; // duration ICO
+	uint public stopICO; // end ICO
+	uint public price = 0.0035 * 1 ether; // ETH for 1 package of tokens
+	uint coeff = 200000; // capacity of 1 package
+	
+	uint256 public tokenSold = 0; // tokens sold
+	uint256 public tokenFree = 0; // tokens free
+	bool public crowdsaleClosed = false;
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));
-    owner = newOwner;
-  }
-}
-
-interface Token {
-  function transfer(address _to, uint256 _value) returns (bool);
-  function balanceOf(address _owner) constant returns (uint256 balance);
-}
-
-contract Crowdsale is Ownable {
-
-  using SafeMath for uint256;
-
-  Token token;
-
-  uint256 public constant RATE = 312; // Number of tokens per Ether
-  uint256 public constant START = 1505433600; // Sep 15, 2017 @ 00:00 GMT
-  uint256 public DAYS = 20; // 20 Days
-
-  uint256 public constant initialTokens = 15600000 * 10**18; // Initial number of tokens available
-  bool public initialized = false;
-
-  uint256 public raisedAmount = 0;
-
-  event BoughtTokens(address indexed to, uint256 value);
-
-  modifier whenSaleIsActive() {
-    // Check if sale is active
-    assert(isActive());
-
-    _;
-  }
-
-  function Crowdsale(address _tokenAddr) {
-      require(_tokenAddr != 0);
-      token = Token(_tokenAddr);
-  }
-  
-  function initialize() onlyOwner {
-      require(initialized == false); // Can only be initialized once
-      require(tokensAvailable() == initialTokens); // Must have enough tokens allocated
-      initialized = true;
-  }
-
-  function isActive() constant returns (bool) {
-    return (
-        initialized == true &&
-        now >= START && // Must be after the START date
-        now <= START.add(DAYS * 1 days) // Must be before the end date
-    );
-  }
-
-  function () payable {
-    buyTokens();
-  }
-
-  /**
-  * @dev function that sells available tokens
-  */
-  function buyTokens() payable whenSaleIsActive {
-
-    // Calculate tokens to sell
-    uint256 weiAmount = msg.value;
-    uint256 tokens = weiAmount.mul(RATE);
-    uint256 bonus = 0;
-
-    require(tokens >= 1);
-
-    // Calculate Bonus
-    if (now <= START.add(5 days)) {
-      bonus = tokens.mul(20).div(100);
-    } else if (now <= START.add(8 days)) {
-      bonus = tokens.mul(10).div(100);
-    } else if (now <= START.add(18 days)) {
-      bonus = tokens.mul(5).div(100);
-    }
+	address public owner;
+	
+	event TokenFree(uint256 value);
+	event CrowdsaleClosed(bool value);
     
-    tokens = tokens.add(bonus);
+	function Crowdsale(address _tokenAddress, address _owner, uint _timePeriod) {
+		owner = _owner;
+		sharesTokenAddress = token(_tokenAddress);
+		periodICO = _timePeriod * 1 hours;
+		stopICO = startICO + periodICO;
+	}
 
-    BoughtTokens(msg.sender, tokens);
-
-    // Send tokens to buyer
-    token.transfer(msg.sender, tokens);
-
-    // Send money to owner
-    owner.transfer(msg.value);
-  }
-
-  /**
-   * @dev returns the number of tokens allocated to this contract
-   */
-  function tokensAvailable() constant returns (uint256) {
-    return token.balanceOf(this);
-  }
-
-  /**
-   * @notice Terminate contract and refund to owner
-   */
-  function destroy() onlyOwner {
-    // Transfer tokens back to owner
-    uint256 balance = token.balanceOf(this);
-    token.transfer(owner, balance);
-
-    // There should be no ether in the contract but just in case
-    selfdestruct(owner);
-  }
-
+	function() payable {
+		tokenFree = sharesTokenAddress.balanceOf(this); // free tokens count
+		if (now < startICO) {
+		    msg.sender.transfer(msg.value);
+		}
+		else if (now > (stopICO + 1)) {
+			msg.sender.transfer(msg.value); // if crowdsale closed - cash back
+			crowdsaleClosed = true;
+		} 
+		else if (crowdsaleClosed) {
+			msg.sender.transfer(msg.value); // if no more tokens - cash back
+		} 
+		else {
+			uint256 tokenToBuy = msg.value / price * coeff; // tokens to buy
+			require(tokenToBuy > 0);
+			uint256 actualETHTransfer = tokenToBuy * price / coeff;
+			if (tokenFree >= tokenToBuy) { // free tokens >= tokens to buy, sell tokens
+				owner.transfer(actualETHTransfer);
+				if (msg.value > actualETHTransfer){ // if more than need - cash back
+					msg.sender.transfer(msg.value - actualETHTransfer);
+				}
+				sharesTokenAddress.transfer(msg.sender, tokenToBuy);
+				tokenSold += tokenToBuy;
+				tokenFree -= tokenToBuy;
+				if(tokenFree==0) crowdsaleClosed = true;
+			} else { // free tokens < tokens to buy 
+				uint256 sendETH = tokenFree * price / coeff; // price for all free tokens
+				owner.transfer(sendETH); 
+				sharesTokenAddress.transfer(msg.sender, tokenFree); 
+				msg.sender.transfer(msg.value - sendETH); // more than need - cash back
+				tokenSold += tokenFree;
+				tokenFree = 0;
+				crowdsaleClosed = true;
+			}
+		}
+		TokenFree(tokenFree);
+		CrowdsaleClosed(crowdsaleClosed);
+	}
+	
+	function unsoldTokensBack(){ // after crowdsale we can take back all unsold tokens from crowdsale	    
+	    require(crowdsaleClosed);
+		require(msg.sender == owner);
+	    sharesTokenAddress.transfer(owner, sharesTokenAddress.balanceOf(this));
+		tokenFree = 0;
+	}	
 }
