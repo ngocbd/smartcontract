@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0x77a9fe3e5b0589cce65f1b1848ce8162abae9cf7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0xdf9e97970c953ff6730b155845fb7bbd5ae72abf
 */
 pragma solidity ^ 0.4 .8;
 
@@ -55,7 +55,7 @@ contract blockoptions is ERC20
         uint profit_sent=0;
         bool stopped = false;
         
-      function blockoptions() payable{
+      function blockoptions(){
           owner = msg.sender;
           balances[owner] = totalSupply ; //to handle 8 decimal places
           pre_ico_start = now;
