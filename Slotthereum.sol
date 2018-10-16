@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0xda8fe472e1beae12973fa48e9a1d9595f752fce0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0x0a9b9d976de8e09f0b57d1d7f344abe77925145c
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.15;
 
 
 contract Owned {
@@ -32,7 +32,7 @@ contract Slotthereum is Mortal {
 
     Game[] public games;                              // games
     uint public numberOfGames = 0;                    // number of games
-    uint private minBetAmount = 100000000000000;      // minimum amount per bet
+    uint private minBetAmount = 1;                    // minimum amount per bet
     uint private maxBetAmount = 5000000000000000000;  // maximum amount per bet
     uint8 private pointer = 1;                        // block pointer
 
@@ -157,7 +157,7 @@ contract Slotthereum is Mortal {
         games[gameId].end = end;
         games[gameId].hash = getBlockHash(pointer);
         games[gameId].number = getNumber(games[gameId].hash);
-        // pointer = games[gameId].number;
+        pointer = games[gameId].number;
 
         if ((games[gameId].number >= start) && (games[gameId].number <= end)) {
             games[gameId].win = true;
