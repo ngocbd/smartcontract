@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa3e97b1da9c3684324fe38627c40e94555f39b18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x5e535df4c48e8995200ca99358a735129a6195f3
 */
 pragma solidity ^0.4.18;
 /**
@@ -122,7 +122,7 @@ contract Crowdsale is Ownable {
   
   // constructor
   function Crowdsale(address tokenContractAddress) public{
-    wallet = 0x1aC024482b91fa9AaF22450Ff60680BAd60bF8D3;//wallet where ETH will be transferred
+    wallet = 0x9656e8520C1cc10721963F2E974761cf76Af81d8;//wallet where ETH will be transferred
     token_reward = token(tokenContractAddress);
   }
   
