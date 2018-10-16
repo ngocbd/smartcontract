@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngelToken at 0xa751c82450ca68c38b6e611ae6464977ef40379a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngelToken at 0xc499ea948a1ad5d8eaf12abd2f67975c4dbe21aa
 */
 pragma solidity ^0.4.16;
 
@@ -77,7 +77,6 @@ library SafeMath {
 
 
 
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -89,8 +88,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-
 
 
 
@@ -128,8 +125,6 @@ contract BasicToken is ERC20Basic {
 
 
 
-
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -140,9 +135,6 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
-
-
 
 
 
@@ -206,7 +198,6 @@ contract StandardToken is ERC20, BasicToken {
   }
 
 }
-
 
 
 
@@ -377,9 +368,6 @@ contract Manageable is Ownable {
 
 
 
-
-
-
 /**
  * @title Pausable
  * @dev Base contract which allows children to implement an emergency stop mechanism.
@@ -445,10 +433,6 @@ contract Pausable is Manageable {
 
 
 
-
-
-
-
 /**
  * @title NamedToken
  */
@@ -481,9 +465,6 @@ contract NamedToken {
     return keccak256(symbol);
   }
 }
-
-
-
 
 
 
@@ -569,10 +550,6 @@ contract AngelToken is StandardToken, NamedToken, Pausable {
 
 
 
-
-
-
-
 /**
  * @title AngelCentralBank
  *
@@ -618,7 +595,7 @@ contract AngelCentralBank {
 
   address public angelFoundationAddress = address(0x2b0556a6298eA3D35E90F1df32cc126b31F59770);
   uint public icoLaunchTimestamp = 1511784000;  // November 27th 12:00 GMT
-  uint public icoFinishTimestamp = 1514376000;  // December 27th 12:00 GMT
+  uint public icoFinishTimestamp = 1513727999;  // December 19th 23:59:59 GMT
   uint public firstRefundRoundFinishTimestamp = 1520424000;  // March 7th 2018 12:00 GMT
   uint public secondRefundRoundFinishTimestamp = 1524744000;  // April 26th 2018 12:00 GMT
 
