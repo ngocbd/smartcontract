@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OODCrowdsale at 0x4fc6f746dd8d4bd24cb0b19b6a17c4845765d0c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OODCrowdsale at 0xbe96b352eb1a1ec00300456ced64139d564e9186
 */
 pragma solidity ^0.4.18;
 
@@ -201,7 +201,7 @@ contract OODCrowdsale is Pausable {
   constructor() public {
     rate = 16872;
     wallet = 0x06e49f7d87De832763b8a81CDdB243d5FbC6F96E;
-    token = ERC20(0xA9E49917B55E0F3E305E69f71F06de5a4388BE0D);
+    token = ERC20(0xb033362Bb061d84110BFae42a22B2f0B2f6Ae649);
     supply = 1600000000;
     cap = supply.div(rate) * 1 ether;
     minInvest = 0.1 * 1 ether;
