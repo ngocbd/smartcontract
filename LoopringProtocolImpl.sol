@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0x0b48b747436f10c846696e889e66425e05cd740f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0xbddecfaa1f67d414039523498a6d73369d239a86
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -978,7 +978,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
     address public constant lrcTokenAddress       = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
     address public constant tokenRegistryAddress  = 0xa21c1f2AE7f721aE77b1204A4f0811c642638da9;
     address public constant delegateAddress       = 0x7b126ab811f278f288bf1d62d47334351dA20d1d;
-    address public constant nameRegistryAddress   = 0xd181c1808e3f010F0F0aABc6Fe1bcE2025DB7Bb7;
+    address public constant nameRegistryAddress   = 0xf16af7F69697465f92fF469a837A2B4a82C77423;
     uint64  public ringIndex                      = 0;
     uint8   public constant walletSplitPercentage = 20;
     // Exchange rate (rate) is the amount to sell or sold divided by the amount
