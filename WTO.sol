@@ -1,149 +1,126 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WTO at 0x708946c984cf432992088cbaa4c50c9d5c1e680f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WTO at 0x83f06e75e448115d7f5e2038814766124c0db8ce
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.19;
 
-/**
- * Math operations with safety checks
- */
-contract SafeMath {
-  function safeMul(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+contract ERC20Token {
 
-  function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
-    assert(b > 0);
-    uint256 c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint supply) {}
 
-  function safeSub(uint256 a, uint256 b) internal returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint balance) {}
 
-  function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint _value) returns (bool success) {}
 
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint _value) returns (bool success) {}
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
-contract WTO is SafeMath{
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-	address public owner;
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-	mapping (address => uint256) public freezeOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+contract RegularToken is ERC20Token {
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    function transfer(address _to, uint _value) returns (bool) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        if (balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
-    /* This notifies clients about the amount burnt */
-    event Burn(address indexed from, uint256 value);
-	
-	/* This notifies clients about the amount frozen */
-    event Freeze(address indexed from, uint256 value);
-	
-	/* This notifies clients about the amount unfrozen */
-    event Unfreeze(address indexed from, uint256 value);
+    function transferFrom(address _from, address _to, uint _value) returns (bool) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function WTO(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol
+    function balanceOf(address _owner) constant returns (uint) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint _value) returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint) {
+        return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
+    uint public totalSupply;
+}
+
+contract UnboundedRegularToken is RegularToken {
+
+    uint constant MAX_UINT = 2**256 - 1;
+    
+    /// @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited amount.
+    /// @param _from Address to transfer from.
+    /// @param _to Address to transfer to.
+    /// @param _value Amount to transfer.
+    /// @return Success of transfer.
+    function transferFrom(address _from, address _to, uint _value)
+        public
+        returns (bool)
+    {
+        uint allowance = allowed[_from][msg.sender];
+        if (balances[_from] >= _value
+            && allowance >= _value
+            && balances[_to] + _value >= balances[_to]
         ) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
-		owner = msg.sender;
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            if (allowance < MAX_UINT) {
+                allowed[_from][msg.sender] -= _value;
+            }
+            Transfer(_from, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
     }
+}
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (_to == 0x0) throw;                               // Prevent transfer to 0x0 address. Use burn() instead
-		if (_value <= 0) throw; 
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                     // Subtract from the sender
-        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
-    }
+contract WTO is UnboundedRegularToken {
 
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-		if (_value <= 0) throw; 
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-       
+    uint public totalSupply = 100*10**26;
+    uint8 constant public decimals = 18;
+    string constant public name = "WindTalk Token";
+    string constant public symbol = "WTO";
 
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (_to == 0x0) throw;                                // Prevent transfer to 0x0 address. Use burn() instead
-		if (_value <= 0) throw; 
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;     // Check allowance
-        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);                           // Subtract from the sender
-        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                             // Add the same to the recipient
-        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function burn(uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
-		if (_value <= 0) throw; 
-        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                      // Subtract from the sender
-        totalSupply = SafeMath.safeSub(totalSupply,_value);                                // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-	
-	function freeze(uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
-		if (_value <= 0) throw; 
-        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                      // Subtract from the sender
-        freezeOf[msg.sender] = SafeMath.safeAdd(freezeOf[msg.sender], _value);                                // Updates totalSupply
-        Freeze(msg.sender, _value);
-        return true;
-    }
-	
-	function unfreeze(uint256 _value) returns (bool success) {
-        if (freezeOf[msg.sender] < _value) throw;            // Check if the sender has enough
-		if (_value <= 0) throw; 
-        freezeOf[msg.sender] = SafeMath.safeSub(freezeOf[msg.sender], _value);                      // Subtract from the sender
-		balanceOf[msg.sender] = SafeMath.safeAdd(balanceOf[msg.sender], _value);
-        Unfreeze(msg.sender, _value);
-        return true;
-    }
-	
-	// transfer balance to owner
-	function withdrawEther(uint256 amount) {
-		if(msg.sender != owner)throw;
-		owner.transfer(amount);
-	}
-	
-	// can accept ether
-	function() payable {
+    function WTO() {
+        balances[msg.sender] = totalSupply;
+        Transfer(address(0), msg.sender, totalSupply);
     }
 }
