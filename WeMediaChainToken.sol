@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeMediaChainToken at 0x50fb0758dd833a408febf768b566ba1e968d853a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeMediaChainToken at 0xa8f7cab2c2485ff8f044248ebe64b6ccb9e250cd
 */
 pragma solidity ^0.4.16;
 
@@ -293,9 +293,9 @@ contract PausableFrozenToken is StandardToken, Frozen {
 }
 
 /**
- * @title WeMediaChain Token
+ * @title Bec Token
  *
- * @dev Implementation of WeMediaChain Token based on the basic standard token.
+ * @dev Implementation of Bec Token based on the basic standard token.
  */
 contract WeMediaChainToken is PausableFrozenToken {
     
