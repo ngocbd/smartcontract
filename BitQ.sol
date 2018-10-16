@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitQ at 0x6c558a4976e751391fb73dd61fa6a72c318d80b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitQ at 0xfc893c085a905fb8fe853bdac5ff255eb314cfbf
 */
 pragma solidity ^0.4.18;
 
@@ -9,8 +9,8 @@ pragma solidity ^0.4.18;
 // Deployed to : 0x74205dece41e14DCE4fD94da4Dcfb255f3A69059
 // Symbol      : BITQ
 // Name        : BitQuarium
-// Total supply: 3000000<---100000000
-// Decimals    : 18
+// Total supply: 3000000
+// Decimals    : 2
 //
 // Enjoy.
 //
@@ -118,8 +118,8 @@ contract BitQ is ERC20Interface, Owned, SafeMath {
     function BitQ() public {
         symbol = "BITQ";
         name = "BitQuarium";
-        decimals = 18;
-        _totalSupply = 3000000000000000000000000;
+        decimals = 2;
+        _totalSupply = 300000000;
         balances[0x74205dece41e14DCE4fD94da4Dcfb255f3A69059] = _totalSupply;
         Transfer(address(0), 0x74205dece41e14DCE4fD94da4Dcfb255f3A69059, _totalSupply);
     }
