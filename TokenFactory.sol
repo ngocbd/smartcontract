@@ -1,674 +1,632 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactory at 0x43990734e03cb75b1f48f95857da21e3963c2326
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactory at 0x36B86289ccCE0984251CCCA62871b589B0F52d68
 */
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-pragma solidity 0.4.21;
-/// @title Utility Functions for address
-/// @author Kongliang Zhong - <kongliang@loopring.org>
-library StringUtil {
-    function stringToBytes12(string str)
-        internal
-        pure
-        returns (bytes12 result)
-    {
-        assembly {
-            result := mload(add(str, 32))
-        }
-    }
-    function stringToBytes10(string str)
-        internal
-        pure
-        returns (bytes10 result)
-    {
-        assembly {
-            result := mload(add(str, 32))
-        }
-    }
-    /// check length >= min && <= max
-    function checkStringLength(string name, uint min, uint max)
-        internal
-        pure
-        returns (bool)
-    {
-        bytes memory temp = bytes(name);
-        return temp.length >= min && temp.length <= max;
-    }
+pragma solidity ^0.4.21;
+
+interface Token {
+    function totalSupply() constant external returns (uint256 ts);
+    function balanceOf(address _owner) constant external returns (uint256 balance);
+    function transfer(address _to, uint256 _value) external returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+    function approve(address _spender, uint256 _value) external returns (bool success);
+    function allowance(address _owner, address _spender) constant external returns (uint256 remaining);
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/// @title Utility Functions for address
-/// @author Daniel Wang - <daniel@loopring.org>
-library AddressUtil {
-    function isContract(address addr)
+
+interface Baliv {
+    function getPrice(address fromToken_, address toToken_) external view returns(uint256);
+}
+
+contract SafeMath {
+    function safeAdd(uint x, uint y)
+        internal
+        pure
+    returns(uint) {
+      uint256 z = x + y;
+      require((z >= x) && (z >= y));
+      return z;
+    }
+
+    function safeSub(uint x, uint y)
+        internal
+        pure
+    returns(uint) {
+      require(x >= y);
+      uint256 z = x - y;
+      return z;
+    }
+
+    function safeMul(uint x, uint y)
+        internal
+        pure
+    returns(uint) {
+      uint z = x * y;
+      require((x == 0) || (z / x == y));
+      return z;
+    }
+    
+    function safeDiv(uint x, uint y)
+        internal
+        pure
+    returns(uint) {
+        require(y > 0);
+        return x / y;
+    }
+
+    function random(uint N, uint salt)
         internal
         view
-        returns (bool)
+    returns(uint) {
+      bytes32 hash = keccak256(block.number, msg.sender, salt);
+      return uint(hash) % N;
+    }
+}
+
+contract Authorization {
+    mapping(address => bool) internal authbook;
+    address[] public operators;
+    address public owner;
+    bool public powerStatus = true;
+    function Authorization()
+        public
+        payable
     {
-        if (addr == 0x0) {
-            return false;
-        } else {
-            uint size;
-            assembly { size := extcodesize(addr) }
-            return size > 0;
-        }
+        owner = msg.sender;
+        assignOperator(msg.sender);
     }
-}
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/*
-    Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/// @title ERC20 Token Interface
-/// @dev see https://github.com/ethereum/EIPs/issues/20
-/// @author Daniel Wang - <daniel@loopring.org>
-contract ERC20 {
-    function balanceOf(address who) view public returns (uint256);
-    function allowance(address owner, address spender) view public returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-}
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/// @title Utility Functions for uint
-/// @author Daniel Wang - <daniel@loopring.org>
-library MathUint {
-    function mul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function sub(uint a, uint b) internal pure returns (uint) {
-        require(b <= a);
-        return a - b;
-    }
-    function add(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function tolerantSub(uint a, uint b) internal pure returns (uint c) {
-        return (a >= b) ? a - b : 0;
-    }
-    /// @dev calculate the square of Coefficient of Variation (CV)
-    /// https://en.wikipedia.org/wiki/Coefficient_of_variation
-    function cvsquare(
-        uint[] arr,
-        uint scale
-        )
-        internal
-        pure
-        returns (uint)
+    modifier onlyOwner
     {
-        uint len = arr.length;
-        require(len > 1);
-        require(scale > 0);
-        uint avg = 0;
-        for (uint i = 0; i < len; i++) {
-            avg += arr[i];
-        }
-        avg = avg / len;
-        if (avg == 0) {
-            return 0;
-        }
-        uint cvs = 0;
-        uint s;
-        uint item;
-        for (i = 0; i < len; i++) {
-            item = arr[i];
-            s = item > avg ? item - avg : avg - item;
-            cvs += mul(s, s);
-        }
-        return ((mul(mul(cvs, scale), scale) / avg) / avg) / (len - 1);
+        assert(msg.sender == owner);
+        _;
     }
-}
-/// @title ERC20 Token Implementation
-/// @dev see https://github.com/ethereum/EIPs/issues/20
-/// @author Daniel Wang - <daniel@loopring.org>
-contract ERC20Token is ERC20 {
-    using MathUint for uint;
-    string  public name;
-    string  public symbol;
-    uint8   public decimals;
-    uint    public totalSupply_;
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    function ERC20Token(
-        string  _name,
-        string  _symbol,
-        uint8   _decimals,
-        uint    _totalSupply,
-        address _firstHolder
-        )
+    modifier onlyOperator
+    {
+        assert(checkOperator(msg.sender));
+        _;
+    }
+    modifier onlyActive
+    {
+        assert(powerStatus);
+        _;
+    }
+    function powerSwitch(
+        bool onOff_
+    )
+        public
+        onlyOperator
+    {
+        powerStatus = onOff_;
+    }
+    function transferOwnership(address newOwner_)
+        onlyOwner
         public
     {
-        require(bytes(_name).length > 0);
-        require(bytes(_symbol).length > 0);
-        require(_totalSupply > 0);
-        require(_firstHolder != 0x0);
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-        totalSupply_ = _totalSupply;
-        balances[_firstHolder] = totalSupply_;
+        owner = newOwner_;
     }
-    function () payable public
+    
+    function assignOperator(address user_)
+        public
+        onlyOwner
     {
-        revert();
+        if(user_ != address(0) && !authbook[user_]) {
+            authbook[user_] = true;
+            operators.push(user_);
+        }
     }
-    /**
-    * @dev total number of tokens in existence
-    */
-    function totalSupply() public view returns (uint256) {
-        return totalSupply_;
+    
+    function dismissOperator(address user_)
+        public
+        onlyOwner
+    {
+        delete authbook[user_];
+        for(uint i = 0; i < operators.length; i++) {
+            if(operators[i] == user_) {
+                operators[i] = operators[operators.length - 1];
+                operators.length -= 1;
+            }
+        }
     }
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
+
+    function checkOperator(address user_)
+        public
+        view
+    returns(bool) {
+        return authbook[user_];
+    }
+}
+
+contract StandardToken is SafeMath {
+    mapping(address => uint256) balances;
+    mapping(address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Issue(address indexed _to, uint256 indexed _value);
+    event Burn(address indexed _from, uint256 indexed _value);
+
+    /* constructure */
+    function StandardToken() public payable {}
+
+    /* Send coins */
     function transfer(
-        address _to,
-        uint256 _value
-        )
+        address to_,
+        uint256 amount_
+    )
         public
-        returns (bool)
-    {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
+    returns(bool success) {
+        if(balances[msg.sender] >= amount_ && amount_ > 0) {
+            balances[msg.sender] = safeSub(balances[msg.sender], amount_);
+            balances[to_] = safeAdd(balances[to_], amount_);
+            emit Transfer(msg.sender, to_, amount_);
+            return true;
+        } else {
+            return false;
+        }
     }
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner)
+
+    /* A contract attempts to get the coins */
+    function transferFrom(
+        address from_,
+        address to_,
+        uint256 amount_
+    ) public returns(bool success) {
+        if(balances[from_] >= amount_ && allowed[from_][msg.sender] >= amount_ && amount_ > 0) {
+            balances[to_] = safeAdd(balances[to_], amount_);
+            balances[from_] = safeSub(balances[from_], amount_);
+            allowed[from_][msg.sender] = safeSub(allowed[from_][msg.sender], amount_);
+            emit Transfer(from_, to_, amount_);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function balanceOf(
+        address _owner
+    )
+        constant
         public
-        view
-        returns (uint256 balance)
-    {
+    returns (uint256 balance) {
         return balances[_owner];
     }
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _value
-        )
-        public
-        returns (bool)
-    {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
+
+    /* Allow another contract to spend some tokens in your behalf */
     function approve(
         address _spender,
         uint256 _value
-        )
+    )
         public
-        returns (bool)
-    {
+    returns (bool success) {
+        assert((_value == 0) || (allowed[msg.sender][_spender] == 0));
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(
-        address _owner,
-        address _spender)
-        public
-        view
-        returns (uint256)
-    {
+
+    function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
-    /**
-     * @dev Increase the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _addedValue The amount of tokens to increase the allowance by.
-     */
-    function increaseApproval(
-        address _spender,
-        uint _addedValue
-        )
+}
+
+contract XPAAssetToken is StandardToken, Authorization {
+    // metadata
+    address[] public burners;
+    string public name;
+    string public symbol;
+    uint256 public defaultExchangeRate;
+    uint256 public constant decimals = 18;
+
+    // constructor
+    function XPAAssetToken(
+        string symbol_,
+        string name_,
+        uint256 defaultExchangeRate_
+    )
         public
-        returns (bool)
     {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
+        totalSupply = 0;
+        symbol = symbol_;
+        name = name_;
+        defaultExchangeRate = defaultExchangeRate_ > 0 ? defaultExchangeRate_ : 0.01 ether;
     }
-    /**
-     * @dev Decrease the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To decrement
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _subtractedValue The amount of tokens to decrease the allowance by.
-     */
-    function decreaseApproval(
-        address _spender,
-        uint _subtractedValue
-        )
+
+    function transferOwnership(
+        address newOwner_
+    )
+        onlyOwner
         public
-        returns (bool)
     {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        owner = newOwner_;
+    }
+
+    function create(
+        address user_,
+        uint256 amount_
+    )
+        public
+        onlyOperator
+    returns(bool success) {
+        if(amount_ > 0 && user_ != address(0)) {
+            totalSupply = safeAdd(totalSupply, amount_);
+            balances[user_] = safeAdd(balances[user_], amount_);
+            emit Issue(owner, amount_);
+            emit Transfer(owner, user_, amount_);
+            return true;
         }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
     }
-}
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/// @title Ownable
-/// @dev The Ownable contract has an owner address, and provides basic
-///      authorization control functions, this simplifies the implementation of
-///      "user permissions".
-contract Ownable {
-    address public owner;
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    /// @dev The Ownable constructor sets the original `owner` of the contract
-    ///      to the sender.
-    function Ownable() public {
-        owner = msg.sender;
-    }
-    /// @dev Throws if called by any account other than the owner.
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    /// @dev Allows the current owner to transfer control of the contract to a
-    ///      newOwner.
-    /// @param newOwner The address to transfer ownership to.
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != 0x0);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-}
-/// @title Claimable
-/// @dev Extension for the Ownable contract, where the ownership needs
-///      to be claimed. This allows the new owner to accept the transfer.
-contract Claimable is Ownable {
-    address public pendingOwner;
-    /// @dev Modifier throws if called by any account other than the pendingOwner.
-    modifier onlyPendingOwner() {
-        require(msg.sender == pendingOwner);
-        _;
-    }
-    /// @dev Allows the current owner to set the pendingOwner address.
-    /// @param newOwner The address to transfer ownership to.
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != 0x0 && newOwner != owner);
-        pendingOwner = newOwner;
-    }
-    /// @dev Allows the pendingOwner address to finalize the transfer.
-    function claimOwnership() onlyPendingOwner public {
-        emit OwnershipTransferred(owner, pendingOwner);
-        owner = pendingOwner;
-        pendingOwner = 0x0;
-    }
-}
-/// @title Token Register Contract
-/// @dev This contract maintains a list of tokens the Protocol supports.
-/// @author Kongliang Zhong - <kongliang@loopring.org>,
-/// @author Daniel Wang - <daniel@loopring.org>.
-contract TokenRegistry is Claimable {
-    using AddressUtil for address;
-    address tokenMintAddr;
-    address[] public addresses;
-    mapping (address => TokenInfo) addressMap;
-    mapping (string => address) symbolMap;
-    ////////////////////////////////////////////////////////////////////////////
-    /// Structs                                                              ///
-    ////////////////////////////////////////////////////////////////////////////
-    struct TokenInfo {
-        uint   pos;      // 0 mens unregistered; if > 0, pos + 1 is the
-                         // token's position in `addresses`.
-        string symbol;   // Symbol of the token
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    /// Events                                                               ///
-    ////////////////////////////////////////////////////////////////////////////
-    event TokenRegistered(address addr, string symbol);
-    event TokenUnregistered(address addr, string symbol);
-    ////////////////////////////////////////////////////////////////////////////
-    /// Public Functions                                                     ///
-    ////////////////////////////////////////////////////////////////////////////
-    /// @dev Disable default function.
-    function () payable public {
-        revert();
-    }
-    function TokenRegistry(address _tokenMintAddr) public
-    {
-        require(_tokenMintAddr.isContract());
-        tokenMintAddr = _tokenMintAddr;
-    }
-    function registerToken(
-        address addr,
-        string  symbol
-        )
-        external
-        onlyOwner
-    {
-        registerTokenInternal(addr, symbol);
-    }
-    function registerMintedToken(
-        address addr,
-        string  symbol
-        )
-        external
-    {
-        require(msg.sender == tokenMintAddr);
-        registerTokenInternal(addr, symbol);
-    }
-    function unregisterToken(
-        address addr,
-        string  symbol
-        )
-        external
-        onlyOwner
-    {
-        require(addr != 0x0);
-        require(symbolMap[symbol] == addr);
-        delete symbolMap[symbol];
-        uint pos = addressMap[addr].pos;
-        require(pos != 0);
-        delete addressMap[addr];
-        // We will replace the token we need to unregister with the last token
-        // Only the pos of the last token will need to be updated
-        address lastToken = addresses[addresses.length - 1];
-        // Don't do anything if the last token is the one we want to delete
-        if (addr != lastToken) {
-            // Swap with the last token and update the pos
-            addresses[pos - 1] = lastToken;
-            addressMap[lastToken].pos = pos;
+
+    function burn(
+        uint256 amount_
+    )
+        public
+    returns(bool success) {
+        require(allowToBurn(msg.sender));
+        if(amount_ > 0 && balances[msg.sender] >= amount_) {
+            balances[msg.sender] = safeSub(balances[msg.sender], amount_);
+            totalSupply = safeSub(totalSupply, amount_);
+            emit Transfer(msg.sender, owner, amount_);
+            emit Burn(owner, amount_);
+            return true;
         }
-        addresses.length--;
-        emit TokenUnregistered(addr, symbol);
     }
-    function areAllTokensRegistered(address[] addressList)
-        external
+
+    function burnFrom(
+        address user_,
+        uint256 amount_
+    )
+        public
+    returns(bool success) {
+        require(allowToBurn(msg.sender));
+        if(balances[user_] >= amount_ && allowed[user_][msg.sender] >= amount_ && amount_ > 0) {
+            balances[user_] = safeSub(balances[user_], amount_);
+            totalSupply = safeSub(totalSupply, amount_);
+            allowed[user_][msg.sender] = safeSub(allowed[user_][msg.sender], amount_);
+            emit Transfer(user_, owner, amount_);
+            emit Burn(owner, amount_);
+            return true;
+        }
+    }
+
+    function getDefaultExchangeRate(
+    )
+        public
         view
-        returns (bool)
+    returns(uint256) {
+        return defaultExchangeRate;
+    }
+
+    function getSymbol(
+    )
+        public
+        view
+    returns(bytes32) {
+        return keccak256(symbol);
+    }
+
+    function assignBurner(
+        address account_
+    )
+        public
+        onlyOperator
     {
-        for (uint i = 0; i < addressList.length; i++) {
-            if (addressMap[addressList[i]].pos == 0) {
-                return false;
+        require(account_ != address(0));
+        for(uint256 i = 0; i < burners.length; i++) {
+            if(burners[i] == account_) {
+                return;
             }
         }
-        return true;
+        burners.push(account_);
     }
-    function getAddressBySymbol(string symbol)
-        external
-        view
-        returns (address)
+
+    function dismissBunner(
+        address account_
+    )
+        public
+        onlyOperator
     {
-        return symbolMap[symbol];
+        require(account_ != address(0));
+        for(uint256 i = 0; i < burners.length; i++) {
+            if(burners[i] == account_) {
+                burners[i] = burners[burners.length - 1];
+                burners.length -= 1;
+            }
+        }
     }
-    function isTokenRegisteredBySymbol(string symbol)
+
+    function allowToBurn(
+        address account_
+    )
         public
         view
-        returns (bool)
-    {
-        return symbolMap[symbol] != 0x0;
-    }
-    function isTokenRegistered(address addr)
-        public
-        view
-        returns (bool)
-    {
-        return addressMap[addr].pos != 0;
-    }
-    function getTokens(
-        uint start,
-        uint count
-        )
-        public
-        view
-        returns (address[] addressList)
-    {
-        uint num = addresses.length;
-        if (start >= num) {
-            return;
+    returns(bool) {
+        if(checkOperator(account_)) {
+            return true;
         }
-        uint end = start + count;
-        if (end > num) {
-            end = num;
+        for(uint256 i = 0; i < burners.length; i++) {
+            if(burners[i] == account_) {
+                return true;
+            }
         }
-        if (start == num) {
-            return;
-        }
-        addressList = new address[](end - start);
-        for (uint i = start; i < end; i++) {
-            addressList[i - start] = addresses[i];
-        }
-    }
-    function registerTokenInternal(
-        address addr,
-        string  symbol
-        )
-        internal
-    {
-        require(0x0 != addr);
-        require(bytes(symbol).length > 0);
-        require(0x0 == symbolMap[symbol]);
-        require(0 == addressMap[addr].pos);
-        addresses.push(addr);
-        symbolMap[symbol] = addr;
-        addressMap[addr] = TokenInfo(addresses.length, symbol);
-        emit TokenRegistered(addr, symbol);
     }
 }
-/// @title ERC20 Token Mint
-/// @dev This contract deploys ERC20 token contract and registered the contract
-///      so the token can be traded with Loopring Protocol.
-/// @author Kongliang Zhong - <kongliang@loopring.org>,
-/// @author Daniel Wang - <daniel@loopring.org>.
-contract TokenFactory {
-    using AddressUtil for address;
-    using StringUtil for string;
-    mapping(bytes10 => address) public tokens;
-    address   public tokenRegistry;
-    event TokenCreated(
-        address indexed addr,
-        string  name,
-        string  symbol,
-        uint8   decimals,
-        uint    totalSupply,
-        address firstHolder
-    );
-    /// @dev Disable default function.
-    function () payable public
-    {
-        revert();
-    }
-    /// @dev Initialize TokenRegistry address.
-    ///      This method shall be called immediately upon deployment.
-    function initialize(address _tokenRegistry)
-        public
-    {
-        require(tokenRegistry == 0x0 && _tokenRegistry.isContract());
-        tokenRegistry = _tokenRegistry;
-    }
-    /// @dev Deploy an ERC20 token contract, register it with TokenRegistry,
-    ///      and returns the new token's address.
-    /// @param name The name of the token
-    /// @param symbol The symbol of the token.
-    /// @param decimals The decimals of the token.
-    /// @param totalSupply The total supply of the token.
+
+contract TokenFactory is Authorization {
+    string public version = "0.5.0";
+
+    event eNominatingExchange(address);
+    event eNominatingXPAAssets(address);
+    event eNominatingETHAssets(address);
+    event eCancelNominatingExchange(address);
+    event eCancelNominatingXPAAssets(address);
+    event eCancelNominatingETHAssets(address);
+    event eChangeExchange(address, address);
+    event eChangeXPAAssets(address, address);
+    event eChangeETHAssets(address, address);
+    event eAddFundAccount(address);
+    event eRemoveFundAccount(address);
+
+    address[] public assetTokens;
+    address[] public fundAccounts;
+    address public exchange = 0x008ea74569c1b9bbb13780114b6b5e93396910070a;
+    address public exchangeOldVersion = 0x0013b4b9c415213bb2d0a5d692b6f2e787b927c211;
+    address public XPAAssets = address(0);
+    address public ETHAssets = address(0);
+    address public candidateXPAAssets = address(0);
+    address public candidateETHAssets = address(0);
+    address public candidateExchange = address(0);
+    uint256 public candidateTillXPAAssets = 0;
+    uint256 public candidateTillETHAssets = 0;
+    uint256 public candidateTillExchange = 0;
+    address public XPA = 0x0090528aeb3a2b736b780fd1b6c478bb7e1d643170;
+    address public ETH = address(0);
+
     function createToken(
-        string  name,
-        string  symbol,
-        uint8   decimals,
-        uint    totalSupply
-        )
+        string symbol_,
+        string name_,
+        uint256 defaultExchangeRate_
+    )
         public
-        returns (address addr)
+    returns(address) {
+        require(msg.sender == XPAAssets);
+        bool tokenRepeat = false;
+        address newAsset;
+        for(uint256 i = 0; i < assetTokens.length; i++) {
+            if(XPAAssetToken(assetTokens[i]).getSymbol() == keccak256(symbol_)){
+                tokenRepeat = true;
+                newAsset = assetTokens[i];
+                break;
+            }
+        }
+        if(!tokenRepeat){
+            newAsset = new XPAAssetToken(symbol_, name_, defaultExchangeRate_);
+            XPAAssetToken(newAsset).assignOperator(XPAAssets);
+            XPAAssetToken(newAsset).assignOperator(ETHAssets);
+            for(uint256 j = 0; j < fundAccounts.length; j++) {
+                XPAAssetToken(newAsset).assignBurner(fundAccounts[j]);
+            }
+            assetTokens.push(newAsset);
+        }
+        return newAsset;
+    }
+
+    // set to candadite, after 7 days set to exchange, set again after 7 days
+    function setExchange(
+        address exchange_
+    )
+        public
+        onlyOperator
     {
-        require(tokenRegistry != 0x0);
-        require(symbol.checkStringLength(3, 10));
-        bytes10 symbolBytes = symbol.stringToBytes10();
-        require(tokens[symbolBytes] == 0x0);
-        ERC20Token token = new ERC20Token(
-            name,
-            symbol,
-            decimals,
-            totalSupply,
-            tx.origin
+        require(
+            exchange_ != address(0)
         );
-        addr = address(token);
-        TokenRegistry(tokenRegistry).registerMintedToken(addr, symbol);
-        tokens[symbolBytes] = addr;
-        emit TokenCreated(
-            addr,
-            name,
-            symbol,
-            decimals,
-            totalSupply,
-            tx.origin
+        if(
+            exchange_ == exchange &&
+            candidateExchange != address(0)
+        ) {
+            emit eCancelNominatingExchange(candidateExchange);
+            candidateExchange = address(0);
+            candidateTillExchange = 0;
+        } else if(
+            exchange == address(0)
+        ) {
+            // initial value
+            emit eChangeExchange(address(0), exchange_);
+            exchange = exchange_;
+            exchangeOldVersion = exchange_;
+        } else if(
+            exchange_ != candidateExchange &&
+            candidateTillExchange + 86400 * 7 < block.timestamp
+        ) {
+            // set to candadite
+            emit eNominatingExchange(exchange_);
+            candidateExchange = exchange_;
+            candidateTillExchange = block.timestamp + 86400 * 7;
+        } else if(
+            exchange_ == candidateExchange &&
+            candidateTillExchange < block.timestamp
+        ) {
+            // set to exchange
+            emit eChangeExchange(exchange, candidateExchange);
+            exchangeOldVersion = exchange;
+            exchange = candidateExchange;
+            candidateExchange = address(0);
+        }
+    }
+
+    function setXPAAssets(
+        address XPAAssets_
+    )
+        public
+        onlyOperator
+    {
+        require(
+            XPAAssets_ != address(0)
         );
+        if(
+            XPAAssets_ == XPAAssets &&
+            candidateXPAAssets != address(0)
+        ) {
+            emit eCancelNominatingXPAAssets(candidateXPAAssets);
+            candidateXPAAssets = address(0);
+            candidateTillXPAAssets = 0;
+        } else if(
+            XPAAssets == address(0)
+        ) {
+            // initial value
+            emit eChangeXPAAssets(address(0), XPAAssets_);
+            XPAAssets = XPAAssets_;
+        } else if(
+            XPAAssets_ != candidateXPAAssets &&
+            candidateTillXPAAssets + 86400 * 7 < block.timestamp
+        ) {
+            // set to candadite
+            emit eNominatingXPAAssets(XPAAssets_);
+            candidateXPAAssets = XPAAssets_;
+            candidateTillXPAAssets = block.timestamp + 86400 * 7;
+        } else if(
+            XPAAssets_ == candidateXPAAssets &&
+            candidateTillXPAAssets < block.timestamp
+        ) {
+            // set to XPAAssets
+            emit eChangeXPAAssets(XPAAssets, candidateXPAAssets);
+            dismissTokenOperator(XPAAssets);
+            assignTokenOperator(candidateXPAAssets);
+            XPAAssets = candidateXPAAssets;
+            candidateXPAAssets = address(0);
+        }
+    }
+
+    function setETHAssets(
+        address ETHAssets_
+    )
+        public
+        onlyOperator
+    {
+        require(
+            ETHAssets_ != address(0)
+        );
+        if(
+            ETHAssets_ == ETHAssets &&
+            candidateETHAssets != address(0)
+        ) {
+            emit eCancelNominatingETHAssets(candidateETHAssets);
+            candidateETHAssets = address(0);
+            candidateTillETHAssets = 0;
+        } else if(
+            ETHAssets == address(0)
+        ) {
+            // initial value
+            ETHAssets = ETHAssets_;
+        } else if(
+            ETHAssets_ != candidateETHAssets &&
+            candidateTillETHAssets + 86400 * 7 < block.timestamp
+        ) {
+            // set to candadite
+            emit eNominatingETHAssets(ETHAssets_);
+            candidateETHAssets = ETHAssets_;
+            candidateTillETHAssets = block.timestamp + 86400 * 7;
+        } else if(
+            ETHAssets_ == candidateETHAssets &&
+            candidateTillETHAssets < block.timestamp
+        ) {
+            // set to ETHAssets
+            emit eChangeETHAssets(ETHAssets, candidateETHAssets);
+            dismissTokenOperator(ETHAssets);
+            assignTokenOperator(candidateETHAssets);
+            ETHAssets = candidateETHAssets;
+            candidateETHAssets = address(0);
+        }
+    }
+
+    function addFundAccount(
+        address account_
+    )
+        public
+        onlyOperator
+    {
+        require(account_ != address(0));
+        for(uint256 i = 0; i < fundAccounts.length; i++) {
+            if(fundAccounts[i] == account_) {
+                return;
+            }
+        }
+        for(uint256 j = 0; j < assetTokens.length; j++) {
+            XPAAssetToken(assetTokens[i]).assignBurner(account_);
+        }
+        emit eAddFundAccount(account_);
+        fundAccounts.push(account_);
+    }
+
+    function removeFundAccount(
+        address account_
+    )
+        public
+        onlyOperator
+    {
+        require(account_ != address(0));
+        uint256 i = 0;
+        uint256 j = 0;
+        for(i = 0; i < fundAccounts.length; i++) {
+            if(fundAccounts[i] == account_) {
+                for(j = 0; j < assetTokens.length; j++) {
+                    XPAAssetToken(assetTokens[i]).dismissBunner(account_);
+                }
+                fundAccounts[i] = fundAccounts[fundAccounts.length - 1];
+                fundAccounts.length -= 1;
+            }
+        }
+    }
+
+    function getPrice(
+        address token_
+    ) 
+        public
+        view
+    returns(uint256) {
+        uint256 currPrice = Baliv(exchange).getPrice(XPA, token_);
+        if(currPrice == 0) {
+            currPrice = XPAAssetToken(token_).getDefaultExchangeRate();
+        }
+        return currPrice;
+    }
+
+    function getAssetLength(
+    )
+        public
+        view
+    returns(uint256) {
+        return assetTokens.length;
+    }
+
+    function getAssetToken(
+        uint256 index_
+    )
+        public
+        view
+    returns(address) {
+        return assetTokens[index_];
+    }
+
+    function assignTokenOperator(address user_)
+        internal
+    {
+        if(user_ != address(0)) {
+            for(uint256 i = 0; i < assetTokens.length; i++) {
+                XPAAssetToken(assetTokens[i]).assignOperator(user_);
+            }
+        }
+    }
+    
+    function dismissTokenOperator(address user_)
+        internal
+    {
+        if(user_ != address(0)) {
+            for(uint256 i = 0; i < assetTokens.length; i++) {
+                XPAAssetToken(assetTokens[i]).dismissOperator(user_);
+            }
+        }
     }
 }
