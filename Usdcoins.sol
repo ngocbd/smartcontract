@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Usdcoins at 0x1f8ABd8E5FB90C7C4076fCA58Fe335bA55dA5945
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Usdcoins at 0xb9e31a22e3a1c743c6720f3b723923e91f3c0f8b
 */
 pragma solidity ^0.4.17;
 
@@ -45,7 +45,7 @@ contract Usdcoins { //is inherently ERC20
 
 
 
-    string constant public name = "Usdcoins";
+    string constant public name = "USDC";
 
     string constant public symbol = "USDC";
 
