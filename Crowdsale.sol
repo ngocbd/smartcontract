@@ -1,109 +1,249 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x41021442eab722c0a52c61738550faabfd0fca4e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x5b3c6ac07f3729534b7483d31e48f15e6ce7c6e9
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-interface token {
-    function transfer(address receiver, uint amount);
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Crowdsale {
-    address public beneficiary;
-    uint public amountRaised;
-    token public tokenReward;
-    uint256 public soldTokensCounter;
-    uint public price;
-    uint public saleStage = 1;
-    bool public crowdsaleClosed = false;
-    bool public adminVer = false;
-    mapping(address => uint256) public balanceOf;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
 
-    event GoalReached(address recipient, uint totalAmountRaised);
-    event FundTransfer(address backer, uint amount, uint price, bool isContribution);
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /**
-     * Constrctor function
-     *
-     * Setup the owner
-     */
-    function Crowdsale() {
-        beneficiary = 0xA4047af02a2Fd8e6BB43Cfe8Ab25292aC52c73f4;
-        tokenReward = token(0x12AC8d8F0F48b7954bcdA736AF0576a12Dc8C387);
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ALT1Token is Ownable, ERC20Basic {
+  using SafeMath for uint256;
+
+  string public constant name     = "Altair VR presale token";
+  string public constant symbol   = "ALT1";
+  uint8  public constant decimals = 18;
+
+  bool public mintingFinished = false;
+
+  mapping(address => uint256) public balances;
+  address[] public holders;
+
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  /**
+  * @dev Function to mint tokens
+  * @param _to The address that will receive the minted tokens.
+  * @param _amount The amount of tokens to mint.
+  * @return A boolean that indicates if the operation was successful.
+  */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    if (balances[_to] == 0) { 
+      holders.push(_to);
     }
+    balances[_to] = balances[_to].add(_amount);
 
-    modifier onlyOwner {
-        require(msg.sender == beneficiary);
-        _;
-    }
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
 
-    /**
-     * Check ownership
-     */
-    function checkAdmin() onlyOwner {
-        adminVer = true;
-    }
+  /**
+  * @dev Function to stop minting new tokens.
+  * @return True if the operation was successful.
+  */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
 
-    /**
-     * Change crowdsale discount stage
-     */
-    function changeStage(uint stage) onlyOwner {
-        saleStage = stage;
-    }
+  /**
+  * @dev Current token is not transferred.
+  * After start official token sale ALT, you can exchange your ALT1 to ALT
+  */
+  function transfer(address, uint256) public returns (bool) {
+    revert();
+    return false;
+  }
 
-    /**
-     * Return unsold tokens to beneficiary address
-     */
-    function getUnsoldTokens(uint val_) onlyOwner {
-        tokenReward.transfer(beneficiary, val_);
-    }
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
 
-    /**
-     * Return unsold tokens to beneficiary address with decimals
-     */
-    function getUnsoldTokensWithDecimals(uint val_, uint dec_) onlyOwner {
-        val_ = val_ * 10 ** dec_;
-        tokenReward.transfer(beneficiary, val_);
-    }
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+}
 
-    /**
-     * Close/Open crowdsale
-     */
-    function closeCrowdsale(bool closeType) onlyOwner {
-        crowdsaleClosed = closeType;
-    }
+/**
+ * @title Crowdsale ALT1 presale token
+ */
 
-    /**
-     * Return current token price
-     *
-     * The price depends on `saleStage` and `amountRaised`
-     */
-    function getPrice() returns (uint) {
-        if (amountRaised > 12000 ether || saleStage == 4) {
-            return 0.000142857 ether;
-        } else if (amountRaised > 8000 ether || saleStage == 3) {
-            return 0.000125000 ether;
-        } else if (amountRaised > 4000 ether || saleStage == 2) {
-            return 0.000119047 ether;
-        }
-        return 0.000109890 ether;
-    }
+contract Crowdsale is Ownable {
+  using SafeMath for uint256;
 
-    /**
-     * Fallback function
-     *
-     * The function without name is the default function that is called whenever anyone sends funds to a contract
-     */
-    function () payable {
-        require(!crowdsaleClosed && msg.value >= 1 ether);                                 //1 ether is minimum to contribute
-        price = getPrice();                                                                //get current token price
-        uint amount = msg.value;                                                           //save users eth value
-        balanceOf[msg.sender] += amount;                                                   //save users eth value in balance list 
-        amountRaised += amount;                                                            //update total amount of crowdsale
-        uint sendTokens = (amount / price) * 10 ** uint256(18);                            //calculate user's tokens
-        tokenReward.transfer(msg.sender, sendTokens);                                      //send tokens to user
-        soldTokensCounter += sendTokens;                                                   //update total sold tokens counter
-        FundTransfer(msg.sender, amount, price, true);                                     //pin transaction data in blockchain
-        if (beneficiary.send(amount)) { FundTransfer(beneficiary, amount, price, false); } //send users amount to beneficiary
-    }
+  uint256   public constant rate = 17000;                 // How many token units a buyer gets per wei
+  uint256   public constant cap = 80000000 ether / rate;   // Maximum amount of funds
+
+  bool      public isFinalized = false;
+  uint256   public endTime = 1522540800;                  // End timestamps where investments are allowed
+                                                          // Sunday, 01-Apr-18 00:00:00 UTC
+
+  ALT1Token public token;                                 // ALT1 token itself
+  address   public wallet;                                // Wallet of funds
+  uint256   public weiRaised;                             // Amount of raised money in wei
+
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  event Finalized();
+
+  function Crowdsale (ALT1Token _ALT1, address _wallet) public {
+    assert(address(_ALT1) != address(0));
+    assert(_wallet != address(0));
+    assert(endTime > now);
+    assert(rate > 0);
+    assert(cap > 0);
+
+    token = _ALT1;
+    wallet = _wallet;
+  }
+
+  function () public payable {
+    buyTokens(msg.sender);
+  }
+
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != address(0));
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+    uint256 tokens = weiAmount.mul(rate);
+
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
+  }
+
+  /**
+   * @dev Calls the contract's finalization function.
+   */
+  function finalize() onlyOwner public {
+    require(!isFinalized);
+
+    finalization();
+    Finalized();
+
+    isFinalized = true;
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal view returns (bool) {
+    bool tokenMintingFinished = token.mintingFinished();
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    bool withinPeriod = now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    bool moreThanMinimumPayment = msg.value >= 0.05 ether;
+
+    return !tokenMintingFinished && withinCap && withinPeriod && nonZeroPurchase && moreThanMinimumPayment;
+  }
+
+  function finalization() internal {
+    token.finishMinting();
+    endTime = now;
+  }
+
+  // @return true if crowdsale event has ended
+  function hasEnded() public view returns (bool) {
+    return now > endTime;
+  }
 }
