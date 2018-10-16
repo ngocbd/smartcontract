@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoversePreorder at 0x3868eaf38f1319c70c4557c2234cd3e89947c633
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoversePreorder at 0x39a31ccd63cd1b186392654a2d520f73cc19274f
 */
-pragma solidity 0.4.20;
+pragma solidity 0.4.24;
 
 contract ERC20 {
 	function balanceOf(address who) public view returns (uint256);
@@ -12,7 +12,7 @@ contract ERC20 {
 }
 
 contract Ownable {
-	address public owner = 0x045dCD3419273C8BF7ca88563Fc25725Acf93Ae9;
+	address public owner = 0x345aCaFA4314Bc2479a3aA7cCf8eb47f223C1d0e;
 
 	modifier onlyOwner() {
 		require(msg.sender == owner);
@@ -34,35 +34,35 @@ contract Pausable is Ownable {
 
 
 	/**
-		* @dev modifier to allow actions only when the contract IS paused
-		*/
+        * @dev modifier to allow actions only when the contract IS paused
+        */
 	modifier whenNotPaused() {
 		require(!paused);
 		_;
 	}
 
 	/**
-		* @dev modifier to allow actions only when the contract IS NOT paused
-		*/
+        * @dev modifier to allow actions only when the contract IS NOT paused
+        */
 	modifier whenPaused() {
 		require(paused);
 		_;
 	}
 
 	/**
-		* @dev called by the owner to pause, triggers stopped state
-		*/
+        * @dev called by the owner to pause, triggers stopped state
+        */
 	function pause() public onlyOwner whenNotPaused {
 		paused = true;
-		Pause();
+		emit Pause();
 	}
 
 	/**
-		* @dev called by the owner to unpause, returns to normal state
-		*/
+        * @dev called by the owner to unpause, returns to normal state
+        */
 	function unpause() public onlyOwner whenPaused {
 		paused = false;
-		Unpause();
+		emit Unpause();
 	}
 }
 
@@ -150,7 +150,7 @@ contract CryptoversePreorderBonusAssets is Pausable, ERC721 {
 		itemIndexToOwner[tokenId] = to;
 		delete itemIndexToApproved[tokenId];
 
-		Transfer(from, to, tokenId);
+		emit Transfer(from, to, tokenId);
 	}
 
 	event CreateItem(uint id, ItemType typeId, ItemModel model, ItemManufacturer manufacturer, ItemRarity rarity, uint createTime, uint amount, address indexed owner);
@@ -164,7 +164,7 @@ contract CryptoversePreorderBonusAssets is Pausable, ERC721 {
 
 		items.push(item);
 
-		CreateItem(newItemId, typeId, model, manufacturer, rarity, now, amount, owner);
+		emit CreateItem(newItemId, typeId, model, manufacturer, rarity, now, amount, owner);
 
 		ownershipTokenCount[owner]++;
 		itemIndexToOwner[newItemId] = owner;
@@ -191,6 +191,47 @@ contract CryptoversePreorderBonusAssets is Pausable, ERC721 {
 
 			return ownerTokens;
 		}
+	}
+
+	function tokensInfoOfOwner(address owner) external view returns (uint[] ownerTokens) {
+		uint tokenCount = balanceOf(owner);
+
+		if (tokenCount == 0) {
+			return new uint[](0);
+		} else {
+			ownerTokens = new uint[](tokenCount * 7);
+			uint totalItems = totalSupply();
+			uint k = 0;
+
+			for (uint itemId = 0; itemId < totalItems; itemId++) {
+				if (itemIndexToOwner[itemId] == owner) {
+					Item item = items[itemId];
+					ownerTokens[k++] = itemId;
+					ownerTokens[k++] = uint(item.typeId);
+					ownerTokens[k++] = uint(item.model);
+					ownerTokens[k++] = uint(item.manufacturer);
+					ownerTokens[k++] = uint(item.rarity);
+					ownerTokens[k++] = item.createTime;
+					ownerTokens[k++] = item.amount;
+				}
+			}
+
+			return ownerTokens;
+		}
+	}
+
+	function tokenInfo(uint itemId) external view returns (uint[] ownerTokens) {
+		ownerTokens = new uint[](7);
+		uint k = 0;
+
+		Item item = items[itemId];
+		ownerTokens[k++] = itemId;
+		ownerTokens[k++] = uint(item.typeId);
+		ownerTokens[k++] = uint(item.model);
+		ownerTokens[k++] = uint(item.manufacturer);
+		ownerTokens[k++] = uint(item.rarity);
+		ownerTokens[k++] = item.createTime;
+		ownerTokens[k++] = item.amount;
 	}
 
 	ERC721Metadata public erc721Metadata;
@@ -245,7 +286,7 @@ contract CryptoversePreorderBonusAssets is Pausable, ERC721 {
 	function approve(address to, uint tokenId) external {
 		require(_owns(msg.sender, tokenId));
 		_approve(tokenId, to);
-		Approval(msg.sender, to, tokenId);
+		emit Approval(msg.sender, to, tokenId);
 	}
 
 	function transferFrom(address from, address to, uint tokenId) external {
@@ -332,19 +373,15 @@ contract CryptoversePreorder is CryptoversePreorderBonusAssets {
 
 	uint public weiRaised;
 
-	uint public constant minInvest = 100 ether;
+	uint public constant minInvest = 0.1 ether;
 
-	uint public constant target = 10000 ether;
-
-	uint public constant hardCap = 50000 ether;
-
-	uint public startTime = 1519153200; // 20 February 2018 19:00 UTC
-
-	uint public endTime = startTime + 60 days;
-
-	uint public targetTime = 0;
+	uint public contributorsCompleteCount;
 
 	mapping(address => uint) public contributorBalance;
+	mapping(address => bool) public contributorComplete;
+	mapping(address => uint) public contributorWhiteListTime;
+
+	uint public constant hardCap = 50000 ether;
 
 	address[] public contributors;
 
@@ -408,7 +445,6 @@ contract CryptoversePreorder is CryptoversePreorderBonusAssets {
 	}
 
 	function buyTokens(address contributor) public whenNotPaused payable {
-		require(startTime <= now && now <= endTime);
 		require(contributor != address(0));
 
 		uint weiAmount = msg.value;
@@ -419,61 +455,82 @@ contract CryptoversePreorder is CryptoversePreorderBonusAssets {
 
 		require(weiRaised <= hardCap);
 
-		if (weiRaised >= target && targetTime == 0) {
-			targetTime = now;
-			endTime = targetTime + 2 weeks;
+		emit Purchase(contributor, weiAmount);
+
+		if (contributorBalance[contributor] == 0) {
+			contributors.push(contributor);
+			contributorBalance[contributor] += weiAmount;
+			contributorWhiteListTime[contributor] = now;
+		} else {
+			require(!contributorComplete[contributor]);
+			require(weiAmount >= contributorBalance[contributor] * 99);
+
+			bool hasBonus = (now - contributorWhiteListTime[contributor]) < 72 hours;
+
+			contributorBalance[contributor] += weiAmount;
+			sendTokens(contributorBalance[contributor], contributor, hasBonus);
+
+			contributorComplete[contributor] = true;
+			contributorsCompleteCount++;
 		}
+	}
 
-		Purchase(contributor, weiAmount);
+	function sendTokens(uint balance, address contributor, bool hasBonus) private {
 
-		if (contributorBalance[contributor] == 0) contributors.push(contributor);
-		contributorBalance[contributor] += weiAmount;
+		if (balance < 40 ether) {
+			createMechBTC(balance, contributor);
+			createSaiLimitedEdition(balance, contributor);
+			createVRCBox(ItemModel.Kilo, balance, contributor);
+			createVCXVault(balance, contributor);
 
-		if (weiAmount < 500 ether) {
+		} else if (balance < 100 ether) {
+			createMechBTC(balance, contributor);
+			createMechVRC(balance, contributor);
+			createSaiLimitedEdition(balance, contributor);
 
-			createSaiLimitedEdition(weiAmount, contributor);
-			createVRCBox(ItemModel.Kilo, weiAmount, contributor);
-			createVCXVault(weiAmount, contributor);
+			createVRCBox(ItemModel.Mega, hasBonus ? (balance * 105 / 100) : balance, contributor);
+			createVCXVault(balance, contributor);
 
-		} else if (weiAmount < 1000 ether) {
+		} else if (balance < 500 ether) {
+			createMechBTC(balance, contributor);
+			createMechVRC(balance, contributor);
+			createMechETH(balance, contributor);
+			createSaiCollectorsEdition(balance, contributor);
 
-			createSaiLimitedEdition(weiAmount, contributor);
-			createMechBTC(weiAmount, contributor);
-			createVRCBox(ItemModel.Mega, weiAmount, contributor);
-			createVCXVault(weiAmount, contributor);
+			createVRCBox(ItemModel.Giga, hasBonus ? (balance * 110 / 100) : balance, contributor);
+			createVCXVault(balance, contributor);
 
-		} else if (weiAmount < 2500 ether) {
+		} else if (balance < 1000 ether) {
 
-			createSaiCollectorsEdition(weiAmount, contributor);
-			createMechBTC(weiAmount, contributor);
-			createMechVRC(weiAmount, contributor);
-			createVRCBox(ItemModel.Giga, weiAmount, contributor);
-			createVCXVault(weiAmount, contributor);
+			createMechBTC(balance, contributor);
+			createMechVRC(balance, contributor);
+			createMechETH(balance, contributor);
+			createSaiCollectorsEdition(balance, contributor);
 
-		} else if (weiAmount < 5000 ether) {
+			createVRCBox(ItemModel.Tera, hasBonus ? (balance * 115 / 100) : balance, contributor);
+			createVCXVault(balance, contributor);
 
-			createSaiCollectorsEdition(weiAmount, contributor);
-			createMechBTC(weiAmount, contributor);
-			createMechVRC(weiAmount, contributor);
-			createVRCBox(ItemModel.Tera, weiAmount, contributor);
-			createVCXVault(weiAmount, contributor);
+		} else if (balance < 5000 ether) {
 
-		} else if (weiAmount < 9000 ether) {
+			createMechBTC(balance, contributor);
+			createMechVRC(balance, contributor);
+			createMechETH(balance, contributor);
+			createSaiFoundersEdition(balance, contributor);
 
-			createSaiFoundersEdition(weiAmount, contributor);
-			createMechBTC(weiAmount, contributor);
-			createMechVRC(weiAmount, contributor);
-			createVRCBox(ItemModel.Peta, weiAmount, contributor);
-			createVCXVault(weiAmount, contributor);
 
-		} else if (weiAmount >= 9000 ether) {
+			createVRCBox(ItemModel.Peta, hasBonus ? (balance * 120 / 100) : balance, contributor);
+			createVCXVault(balance, contributor);
 
-			createSaiFoundersEdition(weiAmount, contributor);
-			createMechBTC(weiAmount, contributor);
-			createMechVRC(weiAmount, contributor);
-			createMechETH(weiAmount, contributor);
-			createVRCBox(ItemModel.Exa, weiAmount, contributor);
-			createVCXVault(weiAmount, contributor);
+		} else if (balance >= 5000 ether) {
+
+			createMechBTC(balance, contributor);
+			createMechVRC(balance, contributor);
+			createMechETH(balance, contributor);
+			createSaiFoundersEdition(balance, contributor);
+
+
+			createVRCBox(ItemModel.Exa, hasBonus ? (balance * 135 / 100) : balance, contributor);
+			createVCXVault(balance, contributor);
 
 		}
 	}
@@ -537,7 +594,7 @@ contract CryptoversePreorder is CryptoversePreorderBonusAssets {
 
 	function isBoxItemId(uint itemId) public view returns (bool){
 		return isBox(items[itemId]);
-	} 
+	}
 
 	function openBoxes(uint[] itemIds) public {
 		for (uint i = 0; i < itemIds.length; i++) {
