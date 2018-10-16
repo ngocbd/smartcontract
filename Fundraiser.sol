@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0xB62EF4c58F3997424B0CCeaB28811633201706Bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0x7fE4D5E37b83C0DF81E370C95ae814E23C378E4A
 */
 pragma solidity 0.4.11;
 
@@ -33,11 +33,6 @@ contract Fundraiser {
     signer2_proposal.action = Action.None;
   }
 
-  /* allow simple send transactions */
-  function () payable {
-  }
-
-  
   /* Entry points for signers */
 
   function Withdraw(address proposed_destination,
