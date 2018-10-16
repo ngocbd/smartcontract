@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x5e39a5d846dfda5c66538ce9ed6043e42089eb0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x3659e8daa4bab9a263b3e43ec63c068dfbc1246f
 */
 pragma solidity ^0.4.11;
 
@@ -91,7 +91,7 @@ contract Factory {
   address[] public artworks;
 
   // Registrar contract address
-  address registrar = 0x5f68698245e8c8949450E68B8BD8acef37faaE7D;   // set after deployment of Registrar contract
+  address registrar = 0xC636277B8250e62632467B7Db19ed9111E25EB99;   // set after deployment of Registrar contract
 
   // useful to know the row count in artworks index
 
@@ -218,7 +218,7 @@ For security reasons Ethart contracts' handling of ether transfers have been imp
 
 17. Standing bug bounty
 
-The factory contract this contract has been spawned from has a standing bug bounty of 1,000 Patrons for all practical and demonstrable exploits that cause the unintentional loss of ether and/or tokens. If you feel you have discovered an exploit path or vulnerability please contact us at http://ethart.com and claim your reward.
+The factory contract this contract has been spawned from has a standing bug bounty of 5 ETH for all practical and demonstrable exploits that cause the unintentional loss of ether and/or tokens. If you feel you have discovered an exploit path or vulnerability please contact us at http://ethart.com and claim your reward.
 
 	(c) Stefan Pernar 2017 - all rights reserved
 	(c) ERC20 functions BokkyPooBah 2017. The MIT Licence.
@@ -279,7 +279,7 @@ The factory contract this contract has been spawned from has a standing bug boun
  	mapping (address => mapping (address => uint256)) allowed;
 	
 	// set after deployment of Registrar contract
-    address registrar = 0x5f68698245e8c8949450E68B8BD8acef37faaE7D;
+    address registrar = 0xC636277B8250e62632467B7Db19ed9111E25EB99;
 	
 	// Ethart reward variables - fixed after contract creation
 	uint256 public ethartRevenueReward;
