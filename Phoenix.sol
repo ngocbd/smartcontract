@@ -1,192 +1,209 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Phoenix at 0x1b68c6d4a3b27aa43619750bf9d7578fd29ee6fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Phoenix at 0xa33c4a314faa9684eeffa6ba334688001ea99bbc
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-/* taking ideas from FirstBlood token */
-contract SafeMath {
+contract Phoenix {
+    // If round last more than a year - cancel is activated
+    uint private MAX_ROUND_TIME = 365 days;
+    
+    uint private totalCollected;
+    uint private currentRound;
+    uint private currentRoundCollected;
+    uint private prevLimit;
+    uint private currentLimit;
+    uint private currentRoundStartTime;
 
-function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
-uint256 z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
+    // That structure describes current user Account    
+    // moneyNew - invested money in currentRound
+    // moneyHidden - invested in previous round and not profit yet
+    // profitTotal - total profit of user account (it never decreases)
+    // profitTaken - profit taken by user
+    // lastUserUpdateRound - last round when account was updated
+    struct Account {
+        uint moneyNew;
+        uint moneyHidden;
+        uint profitTotal;
+        uint profitTaken;
+
+        uint lastUserUpdateRound;
+    }
+    
+    mapping (address => Account) private accounts;
+
+
+    function Phoenix() public {
+        totalCollected = 0;
+        currentRound = 0;
+        currentRoundCollected = 0;
+        prevLimit = 0;
+        currentLimit = 100e18;
+        currentRoundStartTime = block.timestamp;
+    }
+    
+    // This function increments round to next:
+    // - it sets new currentLimit (round)using sequence:
+    //      100e18, 200e18, 4 * currentLImit - 2 * prevLimit
+    function iterateToNextRound() private {
+        currentRound++;
+        uint tempcurrentLimit = currentLimit;
+        
+        if(currentRound == 1) {
+            currentLimit = 200e18;
+        }
+        else {
+            currentLimit = 4 * currentLimit - 2 * prevLimit;
+        }
+        
+        prevLimit = tempcurrentLimit;
+        currentRoundStartTime = block.timestamp;
+        currentRoundCollected = 0;
+    }
+    
+    // That function calculates profit update for user
+    // - if increments from last calculated round to current round and 
+    //   calculates current user Account state
+    // - algorithm:
+    function calculateUpdateProfit(address user) private view returns (Account) {
+        Account memory acc = accounts[user];
+        
+        for(uint r = acc.lastUserUpdateRound; r < currentRound; r++) {
+            acc.profitTotal *= 2;
+
+            if(acc.moneyHidden > 0) {
+                acc.profitTotal += acc.moneyHidden * 2;
+                acc.moneyHidden = 0;
+            }
+            
+            if(acc.moneyNew > 0) {
+                acc.moneyHidden = acc.moneyNew;
+                acc.moneyNew = 0;
+            }
+        }
+        
+        acc.lastUserUpdateRound = currentRound;
+        return acc;
+    }
+    
+    // Here we calculate profit and update it for user
+    function updateProfit(address user) private returns(Account) {
+        Account memory acc = calculateUpdateProfit(user);
+        accounts[user] = acc;
+        return acc;
     }
 
-    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
-      assert(x >= y);
-      uint256 z = x - y;
-      return z;
+    // That function returns canceled status.
+    // If round lasts for more than 1 year - cancel mode is on
+    function canceled() public view returns(bool isCanceled) {
+        return block.timestamp >= (currentRoundStartTime + MAX_ROUND_TIME);
+    }
+    
+    // Fallback function for handling money sending directly to contract
+    function () public payable {
+        require(!canceled());
+        deposit();
     }
 
-    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
+    // Function for calculating and updating state during user money investment
+    // - first of all we update current user state using updateProfit function
+    // - after that we handle situation of investment that makes 
+    //   currentRoundCollected more than current round limit. If that happen, 
+    //   we set moneyNew to totalMoney - moneyPartForCrossingRoundLimit.
+    // - check crossing round limit in cycle for case when money invested are 
+    //   more than several round limit
+    function deposit() public payable {
+        require(!canceled());
+        
+        updateProfit(msg.sender);
+
+        uint money2add = msg.value;
+        totalCollected += msg.value;
+        while(currentRoundCollected + money2add >= currentLimit) {
+            accounts[msg.sender].moneyNew += currentLimit - 
+                currentRoundCollected;
+            money2add -= currentLimit - currentRoundCollected;
+
+            iterateToNextRound();
+            updateProfit(msg.sender);
+        }
+        
+        accounts[msg.sender].moneyNew += money2add;
+        currentRoundCollected += money2add;
+    }
+    
+    // Returns common information about round
+    // totalCollectedSum - total sum, collected in all rounds
+    // roundCollected - sum collected in current round
+    // currentRoundNumber - current round number
+    // remainsCurrentRound - how much remains for round change
+    function whatRound() public view returns (uint totalCollectedSum, 
+            uint roundCollected, uint currentRoundNumber, 
+            uint remainsCurrentRound) {
+        return (totalCollected, currentRoundCollected, currentRound, 
+            currentLimit - currentRoundCollected);
     }
 
-}
-
-contract Token {
-    uint256 public totalSupply;
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-
-/*  ERC 20 token */
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-      if (balances[msg.sender] >= _value && _value > 0) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
+    // Returns current user account state
+    // profitTotal - how much profit is collected during all rounds
+    // profitTaken - how much profit was taken by user during all rounds
+    // profitAvailable (= profitTotal - profitTaken) - how much profit can be 
+    //    taken by user
+    // investmentInProgress - how much money are not profit yet and are invested
+    //    in current or previous round
+    function myAccount() public view returns (uint profitTotal, 
+            uint profitTaken, uint profitAvailable, uint investmentInProgress) {
+        var acc = calculateUpdateProfit(msg.sender);
+        return (acc.profitTotal, acc.profitTaken, 
+                acc.profitTotal - acc.profitTaken, 
+                acc.moneyNew + acc.moneyHidden);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
+    // That function handles cancel state. In that case:
+    // - transfer all invested money in current round
+    // - transfer all user profit except money taken
+    // - remainder of 100 ETH is left after returning all invested in current
+    //      round and all profit. Transfer it to users that invest money in 
+    //      previous round. Total investment in previous round = prevLimit.
+    //      So percent of money return = 100 ETH / prevLimit
+    function payback() private {
+        require(canceled());
+
+        var acc = accounts[msg.sender];
+        uint hiddenpart = 0;
+        if(prevLimit > 0) {
+            hiddenpart = (acc.moneyHidden * 100e18) / prevLimit;
+        }
+        uint money2send = acc.moneyNew + acc.profitTotal - acc.profitTaken + 
+            hiddenpart;
+        if(money2send > this.balance) {
+            money2send = this.balance;
+        }
+        acc.moneyNew = 0;
+        acc.moneyHidden = 0;
+        acc.profitTaken = acc.profitTotal;
+
+        msg.sender.transfer(money2send);
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    // Function for taking all profit
+    // If round is canceled than do a payback (see above)
+    // Calculate money left on account = (profitTotal - profitTaken)
+    // Increase profitTaken by money left on account
+    // Transfer money to user
+    function takeProfit() public {
+        Account memory acc = updateProfit(msg.sender);
+
+        if(canceled()) {
+            payback();
+            return;
+        }
+
+        uint money2send = acc.profitTotal - acc.profitTaken;
+        acc.profitTaken += money2send;
+        accounts[msg.sender] = acc;
+
+        if(money2send > 0) {
+            msg.sender.transfer(money2send);
+        }
     }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-
-contract Phoenix is StandardToken, SafeMath {
-
-    // metadata
-    string public constant name = "Phoenix";
-    string public constant symbol = "PHX";
-    uint256 public constant decimals = 18;
-    string public version = "1.0";
-
-    // contracts
-    address public ethFundDeposit;      // deposit address for ETH for Phoenix
-    address public PhoenixFundDeposit;      // deposit address for depositing tokens for owners
-    address public PhoenixExchangeDeposit;      // deposit address depositing tokens for promotion, Exchange
-
-    // crowdsale parameters
-    bool public isFinalized;              // switched to true in operational state
-    bool public saleStarted; //switched to true during ICO
-    uint public firstWeek;
-    uint public secondWeek;
-    uint public thirdWeek;
-    uint public fourthWeek;
-    uint256 public bonus;
-    uint256 public constant PhoenixFund = 125 * (10**5) * 10**decimals;   // 12.5m Phoenix reserved for Owners
-    uint256 public constant PhoenixExchangeFund = 125 * (10**5) * 10**decimals;   // 12.5m Phoenix reserved for Promotion, Exchange etc.
-    uint256 public tokenExchangeRate = 55; //  Phoenix tokens per 1 ETH
-    uint256 public constant tokenCreationCap =  50 * (10**6) * 10**decimals;
-    uint256 public constant tokenPreSaleCap =  375 * (10**5) * 10**decimals;
-
-
-    // events
-    event CreatePHX(address indexed _to, uint256 _value);
-
-    // constructor
-    function Phoenix()
-    {
-      isFinalized = false;                   //controls pre through crowdsale state
-      saleStarted = false;
-      PhoenixFundDeposit = '0xCA0664Cc0c1E1EE6CF4507670C9060e03f16F508';
-      PhoenixExchangeDeposit = '0x7A0B7a6c058b354697fbC5E641C372E877593631';
-      ethFundDeposit = '0xfF0b05152A8477A92E5774685667e32484A76f6A';
-      totalSupply = PhoenixFund + PhoenixExchangeFund;
-      balances[PhoenixFundDeposit] = PhoenixFund;    // Deposit tokens for Owners
-      balances[PhoenixExchangeDeposit] = PhoenixExchangeFund;    // Deposit tokens for Exchange and Promotion
-      CreatePHX(PhoenixFundDeposit, PhoenixFund);  // logs Owners deposit
-      CreatePHX(PhoenixExchangeDeposit, PhoenixExchangeFund);  // logs Exchange deposit
-    }
-
-    /// @dev Accepts ether and creates new BAT tokens.
-    function () payable {
-      bool isPreSale = true;
-      if (isFinalized) throw;
-      if (!saleStarted) throw;
-      if (msg.value == 0) throw;
-      //change exchange rate based on duration
-      if (now > firstWeek && now < secondWeek){
-        tokenExchangeRate = 41;
-      }
-      else if (now > secondWeek && now < thirdWeek){
-        tokenExchangeRate = 29;
-      }
-      else if (now > thirdWeek && now < fourthWeek){
-        tokenExchangeRate = 25;
-      }
-      else if (now > fourthWeek){
-        tokenExchangeRate = 18;
-        isPreSale = false;
-      }
-      //create tokens
-      uint256 tokens = safeMult(msg.value, tokenExchangeRate); // check that we're not over totals
-      uint256 checkedSupply = safeAdd(totalSupply, tokens);
-
-      // return money if something goes wrong
-      if(isPreSale && tokenPreSaleCap < checkedSupply) throw;
-      if (tokenCreationCap < checkedSupply) throw;  // odd fractions won't be found
-      totalSupply = checkedSupply;
-      //All good. start the transfer
-      balances[msg.sender] += tokens;  // safeAdd not needed
-      CreatePHX(msg.sender, tokens);  // logs token creation
-    }
-
-    /// Phoenix Ends the funding period and sends the ETH home
-    function finalize() external {
-      if (isFinalized) throw;
-      if (msg.sender != ethFundDeposit) throw; // locks finalize to the ultimate ETH owner
-      if (totalSupply < tokenCreationCap){
-        uint256 remainingTokens = safeSubtract(tokenCreationCap, totalSupply);
-        uint256 checkedSupply = safeAdd(totalSupply, remainingTokens);
-        if (tokenCreationCap < checkedSupply) throw;
-        totalSupply = checkedSupply;
-        balances[msg.sender] += remainingTokens;
-        CreatePHX(msg.sender, remainingTokens);
-      }
-      // move to operational
-      if(!ethFundDeposit.send(this.balance)) throw;
-      isFinalized = true;  // send the eth to Phoenix
-    }
-
-    function startSale() external {
-      if(saleStarted) throw;
-      if (msg.sender != ethFundDeposit) throw; // locks start sale to the ultimate ETH owner
-      firstWeek = now + 1 weeks; //sets duration of first cutoff
-      secondWeek = firstWeek + 1 weeks; //sets duration of second cutoff
-      thirdWeek = secondWeek + 1 weeks; //sets duration of third cutoff
-      fourthWeek = thirdWeek + 1 weeks; //sets duration of fourth cutoff
-      saleStarted = true; //start the sale
-    }
-
-
 }
