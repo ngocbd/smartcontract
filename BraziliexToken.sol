@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BraziliexToken at 0xa17c4b92e9725bbb73329d0421262c234357b9fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BraziliexToken at 0xda5180086461ff6eeb09580181ac160522dcdcd4
 */
 pragma solidity ^0.4.11;
 /// Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
@@ -72,7 +72,7 @@ contract StandardToken is Token {
 contract BraziliexToken is StandardToken {
 
     string constant public name = "BraziliexToken";
-    string constant public symbol = "BZX";
+    string constant public symbol = "BRZX";
     uint8 constant public decimals = 8;
 
 
