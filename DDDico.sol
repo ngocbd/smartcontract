@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DDDico at 0x300707fd457f707db56cba0995755da78775c84f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DDDico at 0x66618f48976e9c9f9cc5001d416e82d87789481c
 */
 pragma solidity ^0.4.11;
 
@@ -71,16 +71,6 @@ contract owned {
         OwnerEvents(msg.sender,1);
     }
 
-    // @notice Transfers the ownership of owner
-    // @param newOwner Address of the new owner
-    function transferOwnership( address newOwner )
-        external
-    {
-        require(msg.sender == owner);
-        require(newOwner != address(0));
-        owner = newOwner;
-        OwnerEvents(msg.sender,2);
-    }
 }
 
 contract ERC20Token is owned, SafeMath{
@@ -91,10 +81,11 @@ contract ERC20Token is owned, SafeMath{
     string public symbol = "DDD";
     uint256 public decimals = 8;
     uint256 public totalSupply = 380000000000000000;
-    uint256 public blocktime;
     address public ico;
+    bool public blockState = true;
 
     mapping(address => uint256) balances;
+    mapping(address => bool) public userBanned;
     mapping (address => mapping (address => uint256)) allowed;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -105,15 +96,14 @@ contract ERC20Token is owned, SafeMath{
     // @param _code Short Code of the Token
     // @param _decimals Amount of Decimals for the Token
     // @param _netSupply TotalSupply of Tokens
-    function init( uint256 _blocktime,address _ico)
+    function init()
         external
     returns ( bool ){
         require(tokenState == false);
         owned;
         tokenState = true;
-        balances[msg.sender] = totalSupply;
-        blocktime = _blocktime;
-        ico = _ico;
+        balances[this] = totalSupply;
+        allowed[this][owner] = totalSupply;
         return true;
     }
 
@@ -126,7 +116,8 @@ contract ERC20Token is owned, SafeMath{
         require(tokenState == true);
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
-        require(block.number >= blocktime);
+        require(blockState == false);
+        require(userBanned[msg.sender] == false);
         balances[msg.sender] = sub(balances[msg.sender],_value);
         balances[_to] = add(balances[_to],_value);
         Transfer(msg.sender, _to, _value);
@@ -158,11 +149,11 @@ contract ERC20Token is owned, SafeMath{
     returns ( bool ) {
         require(tokenState == true);
         require(_to != address(0));
-        require(_value <= balances[owner]);
+        require(_value <= balances[this]);
         require(ico == msg.sender);
-        balances[owner] = sub(balances[owner],_value);
+        balances[this] = sub(balances[this],_value);
         balances[_to] = add(balances[_to],_value);
-        Transfer(msg.sender, _to, _value);
+        Transfer(this, _to, _value);
         return true;
     }
 
@@ -200,6 +191,71 @@ contract ERC20Token is owned, SafeMath{
         require(tokenState == true);
         return allowed[_owner][_spender];
     }
+
+    // @notice Allows enabling of blocking of transfer for all users
+    function blockTokens()
+        external
+    returns (bool) {
+        require(tokenState == true);
+        require(msg.sender == owner);
+        blockState = true;
+        return true;
+    }
+
+    // @notice Allows enabling of unblocking of transfer for all users
+    function unblockTokens()
+        external
+    returns (bool) {
+        require(tokenState == true);
+        require(msg.sender == owner);
+        blockState = false;
+        return true;
+    }
+
+    // @notice Bans an Address
+    function banAddress(address _addr)
+        external
+    returns (bool) {
+        require(tokenState == true);
+        require(msg.sender == owner);
+        userBanned[_addr] = true;
+        return true;
+    }
+
+    // @notice Un-Bans an Address
+    function unbanAddress(address _addr)
+        external
+    returns (bool) {
+        require(tokenState == true);
+        require(msg.sender == owner);
+        userBanned[_addr] = false;
+        return true;
+    }
+
+    function setICO(address _ico)
+        external
+    returns (bool) {
+        require(tokenState == true);
+        require(msg.sender == owner);
+        ico = _ico;
+        return true;
+    }
+
+    // @notice Transfers the ownership of owner
+    // @param newOwner Address of the new owner
+    function transferOwnership( address newOwner )
+        external
+    {
+        require(msg.sender == owner);
+        require(newOwner != address(0));
+
+        allowed[this][owner] =  0;
+        owner = newOwner;
+        allowed[this][owner] =  balances[this];
+        OwnerEvents(msg.sender,2);
+    }
+
+
 }
 contract tokenContract is ERC20Token{
 
@@ -223,13 +279,13 @@ contract DDDico is SafeMath {
     uint256 weiAmount;
     uint256 tok;
 
-    uint256 public block0 = 4644650;
-    uint256 public block1 = 4644890;
-    uint256 public block2 = 4650650;
-    uint256 public block3 = 4690970;
-    uint256 public block4 = 4731290;
-    uint256 public block5 = 4771610;
-    uint256 public block6 = 4811930;
+    uint256 public block0 = 4594600;
+    uint256 public block1 = 4594840;
+    uint256 public block2 = 4600600;
+    uint256 public block3 = 4640920;
+    uint256 public block4 = 4681240;
+    uint256 public block5 = 4721560;
+    uint256 public block6 = 4761880;
 
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
@@ -284,27 +340,27 @@ contract DDDico is SafeMath {
     // @notice Calculates the rate based on slabs
     function fetchRate() constant returns (uint256){
         if( block0 <= block.number && block1 > block.number ){
-            applicableRate = 18700000000;
-            return applicableRate;
-        }
-        if ( block1 <= block.number && block2 > block.number ){
-            applicableRate = 16700000000;
-            return applicableRate;
-        }
-        if ( block2 <= block.number && block3 > block.number ){
             applicableRate = 15000000000;
             return applicableRate;
         }
+        if ( block1 <= block.number && block2 > block.number ){
+            applicableRate = 14000000000;
+            return applicableRate;
+        }
+        if ( block2 <= block.number && block3 > block.number ){
+            applicableRate = 13000000000;
+            return applicableRate;
+        }
         if ( block3 <= block.number && block4 > block.number ){
-            applicableRate = 13600000000;
+            applicableRate = 12000000000;
             return applicableRate;
         }
         if ( block4 <= block.number && block5 > block.number ){
-            applicableRate = 12500000000;
+            applicableRate = 11000000000;
             return applicableRate;
         }
         if ( block5 <= block.number && block6 > block.number ){
-            applicableRate = 11500000000;
+            applicableRate = 10000000000;
             return applicableRate;
         }
     }
