@@ -1,212 +1,250 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UECToken at 0xc3a007ee74b71fb09a1fd0296f643438e207df00
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UECToken at 0xf3620846825ba198be14cdbc5f2b41bbff788d67
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.12;
 
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
+contract IMigrationContract {
+function migrate(address addr, uint256 nas) returns (bool success);
+}
+
+/* ?????NAS  coin*/
 contract SafeMath {
-    function safeAdd(uint256 a, uint256 b) public pure returns (uint256 c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint256 a, uint256 b) public pure returns (uint256 c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function safeMul(uint256 a, uint256 b) public pure returns (uint256 c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function safeDiv(uint256 a, uint256 b) public pure returns (uint256 c) {
-        require(b > 0);
-        c = a / b;
-    }
+
+
+function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
+uint256 z = x + y;
+assert((z >= x) && (z >= y));
+return z;
+}
+
+function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
+assert(x >= y);
+uint256 z = x - y;
+return z;
+}
+
+function safeMult(uint256 x, uint256 y) internal returns(uint256) {
+uint256 z = x * y;
+assert((x == 0)||(z/x == y));
+return z;
+}
+
+}
+
+contract Token {
+uint256 public totalSupply;
+function balanceOf(address _owner) constant returns (uint256 balance);
+function transfer(address _to, uint256 _value) returns (bool success);
+function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+function approve(address _spender, uint256 _value) returns (bool success);
+function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+event Transfer(address indexed _from, address indexed _to, uint256 _value);
+event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// ----------------------------------------------------------------------------
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint256);
-    function balanceOf(address tokenOwner) public constant returns (uint256 balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining);
-    function transfer(address to, uint256 tokens) public returns (bool success);
-    function approve(address spender, uint256 tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
+/*  ERC 20 token */
+contract StandardToken is Token {
 
-    event Transfer(address indexed from, address indexed to, uint256 tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
+function transfer(address _to, uint256 _value) returns (bool success) {
+if (balances[msg.sender] >= _value && _value > 0) {
+balances[msg.sender] -= _value;
+balances[_to] += _value;
+Transfer(msg.sender, _to, _value);
+return true;
+} else {
+return false;
+}
 }
 
-
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
-// ----------------------------------------------------------------------------
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+balances[_to] += _value;
+balances[_from] -= _value;
+allowed[_from][msg.sender] -= _value;
+Transfer(_from, _to, _value);
+return true;
+} else {
+return false;
+}
 }
 
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
-contract Owned {
-    address public owner;
-    address public newOwner;
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
+function balanceOf(address _owner) constant returns (uint256 balance) {
+return balances[_owner];
 }
 
+function approve(address _spender, uint256 _value) returns (bool success) {
+allowed[msg.sender][_spender] = _value;
+Approval(msg.sender, _spender, _value);
+return true;
+}
 
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and assisted
-// token transfers
-// ----------------------------------------------------------------------------
-contract UECToken is ERC20Interface, Owned, SafeMath {
-    bytes32 public symbol;
-    bytes32 public name;
-    uint8 public decimals;
-    uint256 public _totalSupply;
+function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+return allowed[_owner][_spender];
+}
 
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) allowed;
+mapping (address => uint256) balances;
+mapping (address => mapping (address => uint256)) allowed;
+}
 
+contract UECToken is StandardToken, SafeMath {
 
-    // ------------------------------------------------------------------------
-    // Constructor
-    // ------------------------------------------------------------------------
-    constructor() public {
-        symbol = "UEC";
-        name = "Universal Energy Token";
-        decimals = 6;
-        _totalSupply = 1000000000000000;
-        balances[0xc7C3E00d990f38DC22BDf61383C0FebC98190E0E] = _totalSupply;
-        emit Transfer(address(0), 0xc7C3E00d990f38DC22BDf61383C0FebC98190E0E, _totalSupply);
-    }
+// metadata
+string  public constant name = "User Experience";
+string  public constant symbol = "UEC";
+uint256 public constant decimals = 18;
+string  public version = "1.0";
 
+// contracts
+address public ethFundDeposit;          // ETH????
+address public newContractAddr;         // token????
 
-    // ------------------------------------------------------------------------
-    // Total supply
-    // ------------------------------------------------------------------------
-    function totalSupply() public constant returns (uint256) {
-        return _totalSupply  - balances[address(0)];
-    }
+// crowdsale parameters
+bool    public isFunding;                // ?????true
+uint256 public fundingStartBlock;
+uint256 public fundingStopBlock;
 
+uint256 public currentSupply;           // ??????tokens??
+uint256 public tokenRaised = 0;         // ??????token
+uint256 public tokenMigrated = 0;     // ??????? token
+uint256 public tokenExchangeRate = 625;             // 625 BILIBILI ?? 1 ETH
 
-    // ------------------------------------------------------------------------
-    // Get the token balance for account tokenOwner
-    // ------------------------------------------------------------------------
-    function balanceOf(address tokenOwner) public constant returns (uint256 balance) {
-        return balances[tokenOwner];
-    }
+// events
+event AllocateToken(address indexed _to, uint256 _value);   // ???????token;
+event IssueToken(address indexed _to, uint256 _value);      // ???????token;
+event IncreaseSupply(uint256 _value);
+event DecreaseSupply(uint256 _value);
+event Migrate(address indexed _to, uint256 _value);
 
+// ??
+function formatDecimals(uint256 _value) internal returns (uint256 ) {
+return _value * 10 ** decimals;
+}
 
-    // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to to account
-    // - Owner's account must have sufficient balance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transfer(address to, uint256 tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        emit Transfer(msg.sender, to, tokens);
-        return true;
-    }
+// constructor
+function UECToken(
+address _ethFundDeposit,
+uint256 _currentSupply)
+{
+ethFundDeposit = _ethFundDeposit;
 
+isFunding = false;                           //?????CrowdS ale??
+fundingStartBlock = 0;
+fundingStopBlock = 0;
 
-    // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account
-    //
-    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-    // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
-    // ------------------------------------------------------------------------
-    function approve(address spender, uint256 tokens) public returns (bool success) {
-        require(balances[msg.sender] > tokens && tokens > 0);
-        allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
-        return true;
-    }
+currentSupply = formatDecimals(_currentSupply);
+totalSupply = formatDecimals(10000000000);
+balances[msg.sender] = totalSupply;
+if(currentSupply > totalSupply) throw;
+}
 
+modifier isOwner()  { require(msg.sender == ethFundDeposit); _; }
 
-    // ------------------------------------------------------------------------
-    // Transfer tokens from the from account to the to account
-    // 
-    // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the from account and
-    // - From account must have sufficient balance to transfer
-    // - Spender must have sufficient allowance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint256 tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        emit Transfer(from, to, tokens);
-        return true;
-    }
+///  ??token??
+function setTokenExchangeRate(uint256 _tokenExchangeRate) isOwner external {
+if (_tokenExchangeRate == 0) throw;
+if (_tokenExchangeRate == tokenExchangeRate) throw;
 
+tokenExchangeRate = _tokenExchangeRate;
+}
 
-    // ------------------------------------------------------------------------
-    // Returns the amount of tokens approved by the owner that can be
-    // transferred to the spender's account
-    // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining) {
-        return allowed[tokenOwner][spender];
-    }
+/// @dev ??token??
+function increaseSupply (uint256 _value) isOwner external {
+uint256 value = formatDecimals(_value);
+if (value + currentSupply > totalSupply) throw;
+currentSupply = safeAdd(currentSupply, value);
+IncreaseSupply(value);
+}
 
+/// @dev ??token??
+function decreaseSupply (uint256 _value) isOwner external {
+uint256 value = formatDecimals(_value);
+if (value + tokenRaised > currentSupply) throw;
 
-    // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account. The spender contract function
-    // receiveApproval(...) is then executed
-    // ------------------------------------------------------------------------
-    function approveAndCall(address spender, uint256 tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
+currentSupply = safeSubtract(currentSupply, value);
+DecreaseSupply(value);
+}
 
+///  ?????? ?????
+function startFunding (uint256 _fundingStartBlock, uint256 _fundingStopBlock) isOwner external {
+if (isFunding) throw;
+if (_fundingStartBlock >= _fundingStopBlock) throw;
+if (block.number >= _fundingStartBlock) throw;
 
-    // ------------------------------------------------------------------------
-    // Don't accept ETH
-    // ------------------------------------------------------------------------
-    function () public payable {
-        revert();
-    }
+fundingStartBlock = _fundingStartBlock;
+fundingStopBlock = _fundingStopBlock;
+isFunding = true;
+}
 
+///  ????????
+function stopFunding() isOwner external {
+if (!isFunding) throw;
+isFunding = false;
+}
 
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens
-    // ------------------------------------------------------------------------
-    function transferAnyERC20Token(address tokenAddress, uint256 tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
-    }
+/// ????????????token?????token?
+function setMigrateContract(address _newContractAddr) isOwner external {
+if (_newContractAddr == newContractAddr) throw;
+newContractAddr = _newContractAddr;
+}
+
+/// ?????????
+function changeOwner(address _newFundDeposit) isOwner() external {
+if (_newFundDeposit == address(0x0)) throw;
+ethFundDeposit = _newFundDeposit;
+}
+
+///??token?????
+function migrate() external {
+if(isFunding) throw;
+if(newContractAddr == address(0x0)) throw;
+
+uint256 tokens = balances[msg.sender];
+if (tokens == 0) throw;
+
+balances[msg.sender] = 0;
+tokenMigrated = safeAdd(tokenMigrated, tokens);
+
+IMigrationContract newContract = IMigrationContract(newContractAddr);
+if (!newContract.migrate(msg.sender, tokens)) throw;
+
+Migrate(msg.sender, tokens);               // log it
+}
+
+/// ??ETH ?BILIBILI??
+function transferETH() isOwner external {
+if (this.balance == 0) throw;
+if (!ethFundDeposit.send(this.balance)) throw;
+}
+
+///  ?BILIBILI token?????????
+function allocateToken (address _addr, uint256 _eth) isOwner external {
+if (_eth == 0) throw;
+if (_addr == address(0x0)) throw;
+
+uint256 tokens = safeMult(formatDecimals(_eth), tokenExchangeRate);
+if (tokens + tokenRaised > currentSupply) throw;
+
+tokenRaised = safeAdd(tokenRaised, tokens);
+balances[_addr] += tokens;
+
+AllocateToken(_addr, tokens);  // ??token??
+}
+
+/// ??token
+function () payable {
+if (!isFunding) throw;
+if (msg.value == 0) throw;
+
+if (block.number < fundingStartBlock) throw;
+if (block.number > fundingStopBlock) throw;
+
+uint256 tokens = safeMult(msg.value, tokenExchangeRate);
+if (tokens + tokenRaised > currentSupply) throw;
+
+tokenRaised = safeAdd(tokenRaised, tokens);
+balances[msg.sender] += tokens;
+
+IssueToken(msg.sender, tokens);  //????
+}
 }
