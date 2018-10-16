@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngelCardData at 0x33D514e149ca8405ad9644D5fd2384B645Abd668
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngelCardData at 0x6d2e76213615925c5fc436565b5ee788ee0e86dc
 */
 pragma solidity ^0.4.17;
 
@@ -51,7 +51,6 @@ contract AccessControl {
 
   
 } 
-
 contract SafeMath {
     function safeAdd(uint x, uint y) pure internal returns(uint) {
       uint z = x + y;
@@ -106,7 +105,7 @@ contract IAngelCardData is AccessControl, Enums {
     // write
     // angels
     function createAngelCardSeries(uint8 _angelCardSeriesId, uint _basePrice,  uint64 _maxTotal, uint8 _baseAura, uint16 _baseBattlePower, uint64 _liveTime) onlyCREATOR external returns(uint8);
-    function updateAngelCardSeries(uint8 _angelCardSeriesId) onlyCREATOR external;
+    function updateAngelCardSeries(uint8 _angelCardSeriesId, uint64 _newPrice, uint64 _newMaxTotal) onlyCREATOR external;
     function setAngel(uint8 _angelCardSeriesId, address _owner, uint _price, uint16 _battlePower) onlySERAPHIM external returns(uint64);
     function addToAngelExperienceLevel(uint64 _angelId, uint _value) onlySERAPHIM external;
     function setAngelLastBattleTime(uint64 _angelId) onlySERAPHIM external;
@@ -115,6 +114,8 @@ contract IAngelCardData is AccessControl, Enums {
     function addAngelIdMapping(address _owner, uint64 _angelId) private;
     function transferAngel(address _from, address _to, uint64 _angelId) onlySERAPHIM public returns(ResultCode);
     function ownerAngelTransfer (address _to, uint64 _angelId)  public;
+    function updateAngelLock (uint64 _angelId, bool newValue) public;
+    function removeCreator() onlyCREATOR external;
 
     // read
     function getAngelCardSeries(uint8 _angelCardSeriesId) constant public returns(uint8 angelCardSeriesId, uint64 currentAngelTotal, uint basePrice, uint64 maxAngelTotal, uint8 baseAura, uint baseBattlePower, uint64 lastSellTime, uint64 liveTime);
@@ -123,8 +124,8 @@ contract IAngelCardData is AccessControl, Enums {
     function getAngelByIndex(address _owner, uint _index) constant public returns(uint64);
     function getTotalAngelCardSeries() constant public returns (uint8);
     function getTotalAngels() constant public returns (uint64);
+    function getAngelLockStatus(uint64 _angelId) constant public returns (bool);
 }
-
 
 contract AngelCardData is IAngelCardData, SafeMath {
     /*** EVENTS ***/
@@ -155,6 +156,7 @@ contract AngelCardData is IAngelCardData, SafeMath {
         uint64 lastBattleTime;
         uint64 lastVsBattleTime;
         uint16 lastBattleResult;
+        bool ownerLock;
     }
 
     /*** STORAGE ***/
@@ -172,8 +174,8 @@ contract AngelCardData is IAngelCardData, SafeMath {
   
 
     function createAngelCardSeries(uint8 _angelCardSeriesId, uint _basePrice,  uint64 _maxTotal, uint8 _baseAura, uint16 _baseBattlePower, uint64 _liveTime) onlyCREATOR external returns(uint8) {
-         if ((now > 1516692600) || (totalAngelCardSeries >= 24)) {revert();}
-        //This confirms that no one, even the develoopers, can create any angel series after JAN/23/2018 @ 7:30 am (UTC) or more than the original 24 series.
+         if ((now > 1517189201) || (totalAngelCardSeries >= 24)) {revert();}
+        //This confirms that no one, even the develoopers, can create any angel series after JAN/29/2018 @ 1:26 am (UTC) or more than the original 24 series.
 
         AngelCardSeries storage angelCardSeries = angelCardSeriesCollection[_angelCardSeriesId];
         angelCardSeries.angelCardSeriesId = _angelCardSeriesId;
@@ -188,42 +190,20 @@ contract AngelCardData is IAngelCardData, SafeMath {
         return totalAngelCardSeries;
     }
 
-    // This is called every 5 days to set the basePrice and maxAngelTotal for the angel series based on buy pressure of the last card
-    function updateAngelCardSeries(uint8 _angelCardSeriesId) onlyCREATOR external {
+  // This is called every 5 days to set the basePrice and maxAngelTotal for the angel series based on buy pressure of the last card
+    function updateAngelCardSeries(uint8 _angelCardSeriesId, uint64 _newPrice, uint64 _newMaxTotal) onlyCREATOR external {
         // Require that the series is above the Arel card
-        if (_angelCardSeriesId < 4) 
-            revert();
-        //don't need to use safesubtract here because above we already reverted id less than 4. 
-        AngelCardSeries memory seriesMinusOne = angelCardSeriesCollection[_angelCardSeriesId - 1];
+        if (_angelCardSeriesId < 4) {revert();}
+        //(The orginal, powerful series can't be altered. 
+        if ((_newMaxTotal <45) || (_newMaxTotal >450)) {revert();}
+       //series can only be adjusted within a certain narrow range. 
         AngelCardSeries storage seriesStorage = angelCardSeriesCollection[_angelCardSeriesId];
-        //In case no conditions are true, then no change. 
-        seriesStorage.maxAngelTotal = seriesMinusOne.maxAngelTotal;
-        if (seriesMinusOne.currentAngelTotal >= seriesMinusOne.maxAngelTotal) {
-            prevSeriesSelloutHours = (safeSubtract(seriesMinusOne.lastSellTime,seriesMinusOne.liveTime))/3600;
-        } else {
-            prevSeriesSelloutHours = 120;
-        }
-
-        // Set the new basePrice for the angelCardSeries
-        //Lower by 0.65 eth if didn't sell out, until min of 0.005 eth
-        if (prevSeriesSelloutHours > 100) { 
-            if (seriesMinusOne.basePrice > 70000000000000000) 
-            {seriesStorage.basePrice = seriesMinusOne.basePrice - 65000000000000000;}
-            else {seriesStorage.basePrice = 5000000000000000;}
-        }
-        //Increase by 0.005 ETH for 100-sell out hours. Price increases faster based on demand. 
-        else {seriesStorage.basePrice = seriesMinusOne.basePrice+((100-prevSeriesSelloutHours)*5000000000000000);}
-        
-        // Adjust the maxTotal for the angelCardSeries
-        //Don't need safeMath here because we are already checking values. 
-        if (prevSeriesSelloutHours < 100 && seriesMinusOne.maxAngelTotal <= 435) {
-            seriesStorage.maxAngelTotal = seriesMinusOne.maxAngelTotal+15;
-        } else if (prevSeriesSelloutHours > 100 && seriesMinusOne.maxAngelTotal >= 60) {
-            seriesStorage.maxAngelTotal = seriesMinusOne.maxAngelTotal-15;
-        }
-        // Need to set this incase no cards  sell, so that other calculations don't break
+        seriesStorage.maxAngelTotal = _newMaxTotal;
+       seriesStorage.basePrice = _newPrice;
         seriesStorage.lastSellTime = uint64(now);
     }
+
+
 
     function setAngel(uint8 _angelCardSeriesId, address _owner, uint _price, uint16 _battlePower) onlySERAPHIM external returns(uint64) {
         AngelCardSeries storage series = angelCardSeriesCollection[_angelCardSeriesId];
@@ -248,6 +228,7 @@ contract AngelCardData is IAngelCardData, SafeMath {
         angel.lastVsBattleTime = 0;
         angel.lastBattleResult = 0;
         addAngelIdMapping(_owner, angel.angelId);
+        angel.ownerLock = true;
         return angel.angelId;
        }
     }
@@ -303,15 +284,27 @@ contract AngelCardData is IAngelCardData, SafeMath {
     function transferAngel(address _from, address _to, uint64 _angelId) onlySERAPHIM public returns(ResultCode) {
         Angel storage angel = angelCollection[_angelId];
         if (_from == _to) {revert();}
+        if (angel.ownerLock == true) {revert();} //must be unlocked before transfering. 
         if (angel.owner != _from) {
             return ResultCode.ERROR_NOT_OWNER;
         }
         angel.owner = _to;
         addAngelIdMapping(_to, _angelId);
+        angel.ownerLock = true;
         return ResultCode.SUCCESS;
     }
 
-  
+      function updateAngelLock (uint64 _angelId, bool newValue) public {
+        if ((_angelId > totalAngels) || (_angelId == 0)) {revert();}
+        Angel storage angel = angelCollection[_angelId];
+        if (angel.owner != msg.sender) { revert();}
+        angel.ownerLock = newValue;
+    }
+    
+    function removeCreator() onlyCREATOR external {
+        //this function is meant to be called once all modules for the game are in place. It will remove our ability to add any new modules and make the game fully decentralized. 
+        creatorAddress = address(0);
+    }
    
     //*** Read Access ***//
     function getAngelCardSeries(uint8 _angelCardSeriesId) constant public returns(uint8 angelCardSeriesId, uint64 currentAngelTotal, uint basePrice, uint64 maxAngelTotal, uint8 baseAura, uint baseBattlePower, uint64 lastSellTime, uint64 liveTime) {
@@ -345,6 +338,13 @@ contract AngelCardData is IAngelCardData, SafeMath {
     function getOwnerAngelCount(address _owner) constant public returns(uint) {
         return ownerAngelCollection[_owner].length;
     }
+    
+    function getAngelLockStatus(uint64 _angelId) constant public returns (bool) {
+        if ((_angelId > totalAngels) || (_angelId == 0)) {revert();}
+       Angel storage angel = angelCollection[_angelId];
+       return angel.ownerLock;
+    }
+    
 
     function getAngelByIndex(address _owner, uint _index) constant public returns(uint64) {
         if (_index >= ownerAngelCollection[_owner].length) {
