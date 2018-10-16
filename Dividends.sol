@@ -1,254 +1,311 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividends at 0xc103d95c326383a01a2fc3d5bd1c2514bb9a7ae1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividends at 0x09470436bd5b44c7ebdb75eee2478ec172eaabf6
 */
 pragma solidity ^0.4.21;
 
-// Dev fee payout contract + dividend options 
-// EtherGuy DApp fee will be stored here 
-// Buying any token gives right to claim part of development dividends.
-// It is suggested you do withdraw once in a while. If someone still finds an attack after this fixed contrat 
-// they are unable the steal any of your withdrawn eth. Withdrawing does not sell your tokens!
-// UI: etherguy.surge.sh/dividend.html
-// Made by EtherGuy, etherguy@mail.com 
-// Version 2 of contract. Exploit(s) found by ccashwell in v1, thanks for reporting them!
+// ERC20 contract which has the dividend shares of Ethopolis in it 
+// The old contract had a bug in it, thanks to ccashwell for notifying.
+// Contact: etherguy@mail.com 
+// ethopolis.io 
+// etherguy.surge.sh [if the .io site is up this might be outdated, one of those sites will be up-to-date]
+// Selling tokens (and buying them) will be online at etherguy.surge.sh/dividends.html and might be moved to the ethopolis site.
+
+contract Dividends {
+
+    string public name = "Ethopolis Shares";      //  token name
+    string public symbol = "EPS";           //  token symbol
+    uint256 public decimals = 18;            //  token digit
+
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    uint256 public totalSupply = 10000000* (10 ** uint256(decimals));
+    
+    uint256 SellFee = 1250; // max is 10 000
 
 
-// IF THERE IS ANY BUG the data will be rerolled from here. See the discord https://discord.gg/R84hD6f if anything happens or mail me 
+    address owner = 0x0;
 
-
-contract Dividends{
-    // 10 million token supply 
-    uint256 constant TokenSupply = 10000000;
-    
-    uint256 public TotalPaid = 0;
-    
-    uint16 public Tax = 1250; 
-    
-    address dev;
-    
-    bool public StopSell=false; // in case aonther bug is found, stop selling so it is easier to give everyone their tokens back. 
-    
-    mapping (address => uint256) public MyTokens;
-    mapping (address => uint256) public DividendCollectSince;
-    
-    // TKNS / PRICE 
-    mapping(address => uint256[2]) public SellOrder;
-    
-    // web 
-    // returns tokens + price (in wei)
-    function GetSellOrderDetails(address who) public view returns (uint256, uint256){
-        return (SellOrder[who][0], SellOrder[who][1]);
-    }
-    
-    function ViewMyTokens(address who) public view returns (uint256){
-        return MyTokens[who];
+    modifier isOwner {
+        assert(owner == msg.sender);
+        _;
     }
 
-    
-    function ViewMyDivs(address who) public view returns (uint256){
-        uint256 tkns = MyTokens[who];
-        if (tkns==0){
-            return 0;
-        }
-        return (GetDividends(who, tkns));
+
+
+    modifier validAddress {
+        assert(0x0 != msg.sender);
+        _;
     }
-    
-    function Bal() public view returns (uint256){
-        return (address(this).balance);
-    }
-    
-    // >MINT IT
+
     function Dividends() public {
-        dev = msg.sender;
+        owner = msg.sender;
+
+
+        // PREMINED TOKENS 
+        
         // EG
-        MyTokens[msg.sender] =  8000000;// was: TokenSupply - 400000;
+        balanceOf[msg.sender] =  8000000* (10 ** uint256(decimals));// was: TokenSupply - 400000;
         // HE
-        MyTokens[address(0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285)] = 200000;
+        balanceOf[address(0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285)] = 200000* (10 ** uint256(decimals));
         // PG
-        MyTokens[address(0x26581d1983ced8955C170eB4d3222DCd3845a092)] = 200000;
-        //MyTokens[address(0x0)] = 400000;
+        balanceOf[address(0x26581d1983ced8955C170eB4d3222DCd3845a092)] = 200000* (10 ** uint256(decimals));
+
+        // BOUGHT tokens in the OLD contract         
+        balanceOf[address(0x3130259deEdb3052E24FAD9d5E1f490CB8CCcaa0)] = 100000* (10 ** uint256(decimals));
+        balanceOf[address(0x4f0d861281161f39c62B790995fb1e7a0B81B07b)] = 200000* (10 ** uint256(decimals));
+        balanceOf[address(0x36E058332aE39efaD2315776B9c844E30d07388B)] =  20000* (10 ** uint256(decimals));
+        balanceOf[address(0x1f2672E17fD7Ec4b52B7F40D41eC5C477fe85c0c)] =  40000* (10 ** uint256(decimals));
+        balanceOf[address(0xedDaD54E9e1F8dd01e815d84b255998a0a901BbF)] =  20000* (10 ** uint256(decimals));
+        balanceOf[address(0x0a3239799518E7F7F339867A4739282014b97Dcf)] = 500000* (10 ** uint256(decimals));
+        balanceOf[address(0x29A9c76aD091c015C12081A1B201c3ea56884579)] = 600000* (10 ** uint256(decimals));
+        balanceOf[address(0x0668deA6B5ec94D7Ce3C43Fe477888eee2FC1b2C)] = 100000* (10 ** uint256(decimals));
+        balanceOf[address(0x0982a0bf061f3cec2a004b4d2c802F479099C971)] =  20000* (10 ** uint256(decimals));
+
+        // Etherscan likes it very much if we emit these events 
+        emit Transfer(0x0, msg.sender, 8000000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285, 200000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x26581d1983ced8955C170eB4d3222DCd3845a092, 200000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x3130259deEdb3052E24FAD9d5E1f490CB8CCcaa0, 100000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x4f0d861281161f39c62B790995fb1e7a0B81B07b, 200000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x36E058332aE39efaD2315776B9c844E30d07388B, 20000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x1f2672E17fD7Ec4b52B7F40D41eC5C477fe85c0c, 40000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0xedDaD54E9e1F8dd01e815d84b255998a0a901BbF, 20000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x0a3239799518E7F7F339867A4739282014b97Dcf, 500000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x29A9c76aD091c015C12081A1B201c3ea56884579, 600000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x0668deA6B5ec94D7Ce3C43Fe477888eee2FC1b2C, 100000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x0982a0bf061f3cec2a004b4d2c802F479099C971, 20000* (10 ** uint256(decimals)));
+       
+    }
+
+    function transfer(address _to, uint256 _value)  public validAddress returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        // after transfer have enough to pay sell order 
+        require(sub(balanceOf[msg.sender], SellOrders[msg.sender][0]) >= _value);
+        require(msg.sender != _to);
+
+        uint256 _toBal = balanceOf[_to];
+        uint256 _fromBal = balanceOf[msg.sender];
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
         
-        // Since not a lot of addresses bought, we can instantly restore this 
-        // If this happens in the future, we will need users to do a single transaction to retrieve their tokens from 
-        // previous contract and withdraw all amount immediately 
-        // Below tokens are paid for - 0.5 szabo per token (cheap right? blame the develo --- oh wait :D )
+        uint256 _sendFrom = _withdraw(msg.sender, _fromBal, false);
+        uint256 _sendTo = _withdraw(_to, _toBal, false);
         
-        MyTokens[address(0x3130259deEdb3052E24FAD9d5E1f490CB8CCcaa0)] = 100000;
-        MyTokens[address(0x4f0d861281161f39c62B790995fb1e7a0B81B07b)] = 200000;
-        MyTokens[address(0x36E058332aE39efaD2315776B9c844E30d07388B)] =  20000;
-        MyTokens[address(0x1f2672E17fD7Ec4b52B7F40D41eC5C477fe85c0c)] =  40000;
-        MyTokens[address(0xedDaD54E9e1F8dd01e815d84b255998a0a901BbF)] =  20000;
-        MyTokens[address(0x0a3239799518E7F7F339867A4739282014b97Dcf)] = 500000;
-        MyTokens[address(0x29A9c76aD091c015C12081A1B201c3ea56884579)] = 600000;
-        MyTokens[address(0x0668deA6B5ec94D7Ce3C43Fe477888eee2FC1b2C)] = 100000;
-        MyTokens[address(0x0982a0bf061f3cec2a004b4d2c802F479099C971)] =  20000;
-        //                                                              ------+
-        //                                                             1600000 = 1.6M which corresponds to the sell volume. Nice.     +400k + 8M = 10M, which corresponds to token supply                                                          
+        msg.sender.transfer(_sendFrom);
+        _to.transfer(_sendTo);
         
-        //PlaceSellOrder(1600000, (0.5 szabo)); // 1 token per 0.5 szabo / 500 gwei or 1000 tokens per 0.5 finney / 0.0005 ether or 1M tokens per 0.5 ETH 
+        return true;
     }
     
-    function GetDividends(address who, uint256 TokenAmount ) internal view  returns(uint256){
-        if (TokenAmount == 0){
+    // forcetransfer does not do any withdrawals
+    function _forceTransfer(address _from, address _to, uint256  _value) internal validAddress {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        emit Transfer(_from, _to, _value);
+        
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public validAddress returns (bool success) {
+                // after transfer have enough to pay sell order 
+        require(_from != _to);
+        require(sub(balanceOf[_from], SellOrders[_from][0]) >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        uint256 _toBal = balanceOf[_to];
+        uint256 _fromBal = balanceOf[_from];
+        balanceOf[_to] += _value;
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        emit Transfer(_from, _to, _value);
+        
+        // Call withdrawal of old amounts 
+        CancelOrder();
+        uint256 _sendFrom = _withdraw(_from, _fromBal,false);
+        uint256 _sendTo = _withdraw(_to, _toBal,false);
+        
+        _from.transfer(_sendFrom);
+        _to.transfer(_sendTo);
+        
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public validAddress returns (bool success) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function setSymbol(string _symb) public isOwner {
+        symbol = _symb;
+    }
+
+    function setName(string _name) public isOwner {
+        name = _name;
+    }
+    
+    function newOwner(address who) public isOwner validAddress {
+        owner = who;
+    }
+    
+    function setFee(uint256 fee) public isOwner {
+        require (fee <= 2500);
+        SellFee = fee;
+    }
+
+
+// Market stuff start 
+    
+    mapping(address => uint256[2]) public SellOrders;
+    mapping(address => uint256) public LastBalanceWithdrawn;
+    uint256 TotalOut;
+    
+    function Withdraw() public{
+        _withdraw(msg.sender, balanceOf[msg.sender], true);
+    }
+    
+    function ViewSellOrder(address who) public view returns (uint256, uint256){
+        return (SellOrders[who][0], SellOrders[who][1]);
+    }
+    
+    // if dosend is set to false then the calling function MUST send the fees 
+    function _withdraw(address to, uint256 tkns, bool dosend) internal returns (uint256){
+        // calculate how much wei you get 
+        if (tkns == 0){
+            // ok we just reset the timer then 
+            LastBalanceWithdrawn[msg.sender] = sub(add(address(this).balance, TotalOut),msg.value);
+            return;
+        }
+        // remove msg.value is exists. if it is nonzero then the call came from Buy, do not include this in balance. 
+        uint256 total_volume_in = address(this).balance + TotalOut - msg.value;
+        // get volume in since last withdrawal; 
+        uint256 Delta = sub(total_volume_in, LastBalanceWithdrawn[to]);
+        
+        uint256 Get = (tkns * Delta) / totalSupply;
+        
+        TotalOut = TotalOut + Get;
+        
+        LastBalanceWithdrawn[to] = sub(sub(add(address(this).balance, TotalOut), Get),msg.value);
+        
+        emit WithdrawalComplete(to, Get);
+        if (dosend){
+            to.transfer(Get);
             return 0;
-        }
-        uint256 TotalContractIn = address(this).balance + TotalPaid;
-        // division rounds DOWN so we never pay too much
-        // no revert errors due to this. 
-        
-        uint256 MyBalance = sub(TotalContractIn, DividendCollectSince[who]);
-        
-        return  ((MyBalance * TokenAmount) / (TokenSupply));
-    }
-    
-    // dev can stop selling 
-    // this does NOT DISABLE withdrawing 
-    function EmergencyStopSell(bool setting) public {
-        require(msg.sender==dev);
-        StopSell=setting;
-    }
-    
-
-    event Sold(address Buyer, address Seller, uint256 price, uint256 tokens);
-    // price_max anti-scam arg 
-    function Buy(address who, uint256 price_max) public payable {
-       // require(msg.value >= (1 szabo)); // normal amounts pls 
-        // lookup order by addr 
-        require(!StopSell);
-        require(who!=msg.sender && who!=tx.origin);
-        uint256[2] storage order = SellOrder[who];
-        uint256 amt_available = order[0];
-        uint256 price = order[1];
-        
-        // only buy for certain price 
-        require(price <= price_max);
-        
-        uint256 excess = 0;
-        
-        // nothing to sell 
-        if (amt_available == 0){
-            revert();
-        }
-        
-        // high price overflow prevent (ccashwell)
-        uint256 max = mul(amt_available, price); 
-        uint256 currval = msg.value;
-        // more than max buy value 
-        if (currval > max){
-            excess = (currval-max);
-            currval = max;
-        }
-        
-
-
-
-        uint256 take = currval / price;
-        
-        if (take == 0){
-            revert(); // very high price apparently 
-        }
-        excess = excess + sub(currval, mul(take, price)); 
-        // do not take max value off .
-        currval = sub(currval,sub(currval, mul(take, price)));
-        
-        // pay fees 
-
-        uint256 fee = (mul(Tax, currval))/10000;
-
-        
-        // the person with these tokens will also receive dividend over this buy order (this.balance)
-        // however the excess is removed, see the excess transfer above 
-     //   if (msg.value > (excess+currval+fee)){
-      //      msg.sender.transfer(msg.value-excess-currval-fee);
-     //   }
-
-
-        MyTokens[who] = MyTokens[who] - take; 
-        SellOrder[who][0] = SellOrder[who][0]-take; 
-        MyTokens[msg.sender] = MyTokens[msg.sender] + take;
-    //    MyPayouts[msg.sender] = MyPayouts[msg.sender] + GetDividends(msg.sender, take);
-        //DividendCollectSince[msg.sender] = (address(this).balance) + TotalPaid;
-        
-        emit Sold(msg.sender, who, price, take);
-       // push((excess + currval)/(1 finney), (msg.value)/(1 finney));
-       
-       // all transfers at end 
-       
-       
-        dev.transfer(fee);
-        who.transfer(currval-fee);
-        if ((excess) > 0){
-            msg.sender.transfer(excess);
-        }
-        // call withdraw with tokens before data change 
-        _withdraw(who, MyTokens[who]+take);
-        //DividendCollectSince[msg.sender] = (address(this).balance) + TotalPaid;
-        if (sub(MyTokens[msg.sender],take) > 0){
-            _withdraw(msg.sender,MyTokens[msg.sender]-take);    
         }
         else{
-            // withdraw zero tokens to set DividendCollectSince to the right place. 
-            // updates before this break the withdraw if user has any tokens .
-            _withdraw(msg.sender, 0);
+            return Get;
         }
         
-        
-        
     }
     
-    function Withdraw() public {
-        _withdraw(msg.sender, MyTokens[msg.sender]);
+    function GetDivs(address who) public view returns (uint256){
+         uint256 total_volume_in = address(this).balance + TotalOut;
+         uint256 Delta = sub(total_volume_in, LastBalanceWithdrawn[who]);
+         uint256 Get = (balanceOf[who] * Delta) / totalSupply;
+         return (Get);
+    }
+    
+    function CancelOrder() public {
+        _cancelOrder(msg.sender);
+    }
+    
+    function _cancelOrder(address target) internal{
+         SellOrders[target][0] = 0;
+         emit SellOrderCancelled(target);
     }
     
     
-    event GiveETH(address who, uint256 yummy_eth);
-    function _withdraw(address who, uint256 amt) internal{
-        // withdraws from amt. 
-        // (amt not used in current code, always same value)
-       // if (MyTokens[who] < amt){
-        //    revert(); // ??? security check 
-       // }
-        
-        uint256 divs = GetDividends(who, amt);
-        TotalPaid = TotalPaid + divs;
-        DividendCollectSince[who] = sub(TotalPaid + address(this).balance, divs);
-        
-        // muh logs 
-        emit GiveETH(who, divs);
-        
-        who.transfer(divs);
+    // the price is per 10^decimals tokens 
+    function PlaceSellOrder(uint256 amount, uint256 price) public {
+        require(price > 0);
+        require(balanceOf[msg.sender] >= amount);
+        SellOrders[msg.sender] = [amount, price];
+        emit SellOrderPlaced(msg.sender, amount, price);
+    }
 
-    }
-    
-    event SellOrderPlaced(address who, uint256 amt, uint256 price);
-    function PlaceSellOrder(uint256 amt, uint256 price) public {
-        // replaces old order 
-        if (amt > MyTokens[msg.sender]){
-            revert(); // ?? more sell than you got 
+    // Safe buy order where user specifies the max amount to buy and the max price; prevents snipers changing their price 
+    function Buy(address target, uint256 maxamount, uint256 maxprice) public payable {
+        require(SellOrders[target][0] > 0);
+        require(SellOrders[target][1] <= maxprice);
+        uint256 price = SellOrders[target][1];
+        uint256 amount_buyable = (mul(msg.value, uint256(10**decimals))) / price; 
+        
+        // decide how much we buy 
+        
+        if (amount_buyable > SellOrders[target][0]){
+            amount_buyable = SellOrders[target][0];
         }
-        SellOrder[msg.sender] = [amt,price];
-        emit SellOrderPlaced(msg.sender, amt, price);
-    }
-    
-    function ChangeTax(uint16 amt) public {
-        require (amt <= 2500);
-        require(msg.sender == dev);
-        Tax=amt;
-    }
-    
+        if (amount_buyable > maxamount){
+            amount_buyable = maxamount;
+        }
+        //10000000000000000000,1000
+        //"0xca35b7d915458ef540ade6068dfe2f44e8fa733c",10000000000000000000,1000
+        uint256 total_payment = mul(amount_buyable, price) / (uint256(10 ** decimals));
+        
+        // Let's buy tokens and actually pay, okay?
+        require(amount_buyable > 0 && total_payment > 0); 
+        
+        // From the amount we actually pay, we take exchange fee from it 
+        
+        uint256 Fee = mul(total_payment, SellFee) / 10000;
+        uint256 Left = total_payment - Fee; 
+        
+        uint256 Excess = msg.value - total_payment;
+        
+        uint256 OldTokensSeller = balanceOf[target];
+        uint256 OldTokensBuyer = balanceOf[msg.sender];
 
+        // Change it in memory 
+        _forceTransfer(target, msg.sender, amount_buyable);
+        
+        // Pay out withdrawals and reset timer
+        // Prevents double withdrawals in same tx
+        
+        // Change sell order 
+        SellOrders[target][0] = sub(SellOrders[target][0],amount_buyable);
+        
+        
+        // start all transfer stuff 
+
+        uint256 _sendTarget = _withdraw(target, OldTokensSeller, false);
+        uint256 _sendBuyer = _withdraw(msg.sender, OldTokensBuyer, false );
+        
+        // in one transfer saves gas, but its not nice in the etherscan logs 
+        target.transfer(add(Left, _sendTarget));
+        
+        if (add(Excess, _sendBuyer) > 0){
+            msg.sender.transfer(add(Excess,_sendBuyer));
+        }
+        
+        if (Fee > 0){
+            owner.transfer(Fee);
+        }
+     
+        emit SellOrderFilled(msg.sender, target, amount_buyable,  price, Left);
+    }
+
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event SellOrderPlaced(address who, uint256 available, uint256 price);
+    event SellOrderFilled(address buyer, address seller, uint256 tokens, uint256 price, uint256 payment);
+    event SellOrderCancelled(address who);
+    event WithdrawalComplete(address who, uint256 got);
     
-    // dump divs in contract 
-    function() public payable {
+    
+    // thanks for divs 
+    function() public payable{
         
     }
     
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    } 
+    // safemath 
     
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+      function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
     }
@@ -256,5 +313,31 @@ contract Dividends{
     assert(c / a == b);
     return c;
   }
-    
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
