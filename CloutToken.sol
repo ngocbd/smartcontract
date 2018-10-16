@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloutToken at 0x572781e7b021d2b3f3f082b3e487234ce9fc2961
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloutToken at 0xf9ad45ab49ba5583728da619305ad126e4675416
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.17;
 
 
-//Clout Token version 0.2
+//Clout Token version 0.3
+//fixed totalSupply count for etherscan
 
 
 contract SafeMath {
@@ -166,7 +167,7 @@ contract CloutToken is StandardToken {
     }
     
 
-    totalSupply = totalSupply + amount;
+    totalSupply = totalSupply + (amount*1 ether);
     balances[receiver] += (amount*1 ether);
 
     // This will make the mint transaction appear in EtherScan.io
@@ -179,11 +180,13 @@ contract CloutToken is StandardToken {
 	//This function is called when Ether is sent to the contract address
 	//Even if 0 ether is sent.
     function () payable {
-
+            
+            totalSupply = (totalSupply/1 ether);
 
             //If all the tokens are gone, stop!
             if (totalSupply > 999999)
             {
+                totalSupply = (totalSupply*1 ether);
                 revert();
             }
             
@@ -227,6 +230,7 @@ contract CloutToken is StandardToken {
             //Make sure they send enough to buy atleast 1 token.
             if (tokenAmount < 0)
             {
+                totalSupply = (totalSupply*1 ether);
                 revert();
             }
             
@@ -238,6 +242,7 @@ contract CloutToken is StandardToken {
             
             if (check > 1000000)
             {
+                totalSupply = (totalSupply*1 ether);
                 revert();
             }
             
@@ -245,18 +250,21 @@ contract CloutToken is StandardToken {
             //Make sure someone isn't buying more than the current tier
             if (totalSupply < 25000 && check > 25000)
             {
+                totalSupply = (totalSupply*1 ether);
                 revert();
             }
             
             //Make sure someone isn't buying more than the current tier
             if (totalSupply < 125000 && check > 125000)
             {
+                totalSupply = (totalSupply*1 ether);
                 revert();
             }
             
             //Make sure someone isn't buying more than the current tier
             if (totalSupply < 525000 && check > 525000)
             {
+                totalSupply = (totalSupply*1 ether);
                 revert();
             }
             
@@ -265,10 +273,11 @@ contract CloutToken is StandardToken {
             uint256 senderBalance = (balances[msg.sender]/1 ether);
             if ((senderBalance + tokenAmount) > 200 && totalSupply < 25000)
             {
+                totalSupply = (totalSupply*1 ether);
                 revert();
             }
             
-    
+            totalSupply = (totalSupply*1 ether);
         	mint(msg.sender, tokenAmount);
         	tokenAmount = 0;							//set the 'amount' var back to zero
         	check = 0;
@@ -288,7 +297,7 @@ contract CloutToken is StandardToken {
         
         if (msg.sender == owner)
         {
-            totalSupply = 1000000;
+            totalSupply = (1000000*1 ether);
         } else {throw;}
 
     }
