@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CPCE at 0xa40827ecef3154577e60cc36ccf8f3664f95f5a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CPCE at 0xc1466074bc6daa0c388be07d35152a822230c3f5
 */
 pragma solidity ^0.4.13;
 
@@ -82,8 +82,8 @@ contract StandardToken is Token {
 
 contract CPCE is StandardToken, SafeMath {
 
-    string public constant name = "CPC123";
-    string public constant symbol = "CPC123";
+    string public constant name = "CPC33";
+    string public constant symbol = "CPC33";
     uint256 public constant decimals = 18;
     string public version = "1.0";
 
@@ -98,6 +98,7 @@ contract CPCE is StandardToken, SafeMath {
   
 
     // constructor
+ 
     function CPCE()
     {
       CPCEPrivateDeposit = 0x960F9fD51b887F537268b2E4d88Eba995E87E5E0;
