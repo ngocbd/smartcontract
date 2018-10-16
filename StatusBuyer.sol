@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatusBuyer at 0xf5aca7f577de131c176d6a2069eb90b494a34fff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatusBuyer at 0xab50e301204aab5f0a14ad934f176e09b8216c15
 */
 pragma solidity ^0.4.11;
 
@@ -128,7 +128,7 @@ contract StatusBuyer {
     // Update user's number of purchased SNT to include this purchase.
     purchased_snt[user] += (eth_spent * 10000);
     // Calculate the user's bounty proportionally to the amount purchased.
-    uint256 user_bounty = (bounty * eth_spent) / (old_contract_eth_balance - bounty);
+    uint256 user_bounty = (bounty * eth_spent) / old_contract_eth_balance;
     // Update the bounty prior to sending ETH to prevent recursive call.
     bounty -= user_bounty;
     // Send the user their bounty for buying tokens for the contract.
@@ -154,10 +154,7 @@ contract StatusBuyer {
   // Default function.  Called when a user sends ETH to the contract.
   function () payable {
     throw;  // Safety throw, which will be removed in deployed version.
-    // Avoid recursively buying tokens when the sale contract refunds ETH.
-    if (msg.sender != address(sale)) {
-      // Delegate to the helper function.
-      default_helper();
-    }
+    // Delegate to the helper function.
+    default_helper();
   }
 }
