@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Savings at 0xc7413ae0e8e3ac3bf186f47850a05bb5603294de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Savings at 0x29d680a0f573864198a8707998fbc4bc1c99d1ea
 */
 pragma solidity >=0.4.10;
 
@@ -42,6 +42,12 @@ contract Owned {
             ChangedOwner(owner);
         }
     }
+}
+
+contract IOwned {
+    function owner() returns (address);
+    function changeOwner(address);
+    function acceptOwnership();
 }
 
 /**
@@ -119,6 +125,16 @@ contract Savings is Owned {
     mapping (address => uint256) public withdrawn;
 
     bool public nullified;
+
+    modifier isParticipant() {
+        require(
+            msg.sender == 0x4778bE92Dd5c51035bf80Fca564ba5E7Fad5FB6d ||
+            msg.sender == 0x8567462b8E8303637F0004B2E664993314e58BD7 ||
+            msg.sender == 0x0e24D8Fcdf0c319dF03998Cc53F4FBA035D9a4f9 ||
+            msg.sender == 0xb493c9C0C0aBfd9847baB53231774f13BF882eE9
+        );
+        _;
+    }
 
     modifier notNullified() { require(!nullified); _; }
 
@@ -293,7 +309,7 @@ contract Savings is Owned {
     }
 
 
-    function depositTo(address beneficiary, uint tokens) preLock notNullified {
+    function depositTo(address beneficiary, uint tokens) isParticipant preLock notNullified {
         require(token.transferFrom(msg.sender, this, tokens));
         deposited[beneficiary] += tokens;
         totalfv += tokens;
