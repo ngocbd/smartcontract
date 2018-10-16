@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distributor at 0xc9f797dde181539D58Fee31826a0508a1fA2a889
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distributor at 0x8719612bf4ced64a3c1034b70d496c6810239b05
 */
 pragma solidity ^0.4.18;
 
@@ -30,7 +30,6 @@ library SafeMath {
         return c;
     }
 }
-
 
 contract Owned {
     address public owner;
@@ -92,8 +91,8 @@ contract Distributor is Owned {
         require(distributed[holder] == 0);
 
         uint256 holderBalance = token.balanceOf(holder);
-        uint256 portion = percent(holderBalance, eligibleTokens, uint256(18));
-        amountDistributed = totalDistributionAmountInWei.mul(portion).div(1000000000000000000);
+        uint256 portion = percent(holderBalance, eligibleTokens, uint256(4));
+        amountDistributed = totalDistributionAmountInWei.mul(portion).div(10000);
 
         distributed[holder] = amountDistributed;
         Dividend(holder, amountDistributed);
