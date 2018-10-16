@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x5f9b61e7d7a7da4f8cd5f5c91eb935993e2d01ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xfc4753f0531fd01b5faa49bb0ab14c621daa6e56
 */
 pragma solidity ^0.4.19;
 
-// Wolf Crypto pooling contract for Nexo
+// Wolf Crypto pooling contract for DML
 // written by @iamdefinitelyahuman
 
 library SafeMath {
@@ -128,7 +128,7 @@ contract PresalePool {
   event ReceiverAddressSet ( address _addr);
   event PoolSubmitted (address receiver, uint amount);
   event WithdrawalsOpen (address tokenAddr);
-  event TokensWithdrawn (address receiver, uint amount);
+  event TokensWithdrawn (address receiver, address token, uint amount);
   event EthRefundReceived (address sender, uint amount);
   event EthRefunded (address receiver, uint amount);
   event ERC223Received (address token, uint value);
@@ -248,7 +248,7 @@ contract PresalePool {
       if (tokenAmount > 0) {
         require(d.token.transfer(receiver,tokenAmount));
         d.balanceRemaining = d.balanceRemaining.sub(tokenAmount);
-        TokensWithdrawn(receiver,tokenAmount);
+        TokensWithdrawn(receiver,tokenAddr,tokenAmount);
       }  
     }
     
@@ -465,7 +465,7 @@ contract PresalePool {
     require (contributionMin <= amountInWei && amountInWei <= this.balance);
     finalBalance = this.balance;
     require (receiverAddress.call.value(amountInWei).gas(msg.gas.sub(5000))());
-    ethRefundAmount.push(this.balance);
+    if (this.balance > 0) ethRefundAmount.push(this.balance);
     contractStage = 3;
     PoolSubmitted(receiverAddress, amountInWei);
   }
