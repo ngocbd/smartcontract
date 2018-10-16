@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6325cff224c4947fd7b4e2e2d29e1a2a5e3fc80f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xe2b7d18eb4a6358b78483ff095408f240a96596e
 */
 // Copyright New Alchemy Limited, 2017. All rights reserved.
 
@@ -7,22 +7,22 @@ pragma solidity >=0.4.10;
 
 // from Zeppelin
 contract SafeMath {
-	function safeMul(uint a, uint b) internal returns (uint) {
-		uint c = a * b;
-		require(a == 0 || c / a == b);
-		return c;
-	}
+    function safeMul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
 
-	function safeSub(uint a, uint b) internal returns (uint) {
-		require(b <= a);
-		return a - b;
-	}
+    function safeSub(uint a, uint b) internal returns (uint) {
+        require(b <= a);
+        return a - b;
+    }
 
-	function safeAdd(uint a, uint b) internal returns (uint) {
-		uint c = a + b;
-		require(c>=a && c>=b);
-		return c;
-	}
+    function safeAdd(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        require(c>=a && c>=b);
+        return c;
+    }
 }
 
 contract Owned {
@@ -95,18 +95,16 @@ contract TokenReceivable is Owned {
 
 contract EventDefinitions {
 	event Transfer(address indexed from, address indexed to, uint value);
-	event TransferInternalLedgerAT(address indexed _from, address _to, uint256 indexed _value, bytes32 indexed mdn);
 	event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
 	// Set these appropriately before you deploy
-	string constant public name = "AirToken";
-	uint8 constant public decimals = 8;
-	string constant public symbol = "FOX";
+	string constant public name = "Mock1";
+	uint8 constant public decimals = 2;
+	string constant public symbol = "MACH1";
 	Controller public controller;
 	string public motd;
-	address public atFundDeposit;
 	event Motd(string message);
 
 	// functions below this line are onlyOwner
@@ -119,10 +117,6 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Paus
 
 	function setController(address _c) onlyOwner notFinalized {
 		controller = Controller(_c);
-	}
-
-	function setBeneficiary(address _beneficiary) onlyOwner {
-		atFundDeposit = _beneficiary;
 	}
 
 	// functions below this line are public
@@ -190,25 +184,6 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Paus
 	function burn(uint _amount) notPaused {
 		controller.burn(msg.sender, _amount);
 		Transfer(msg.sender, 0x0, _amount);
-	}
-
-	// Transfer a number of AirTokens to the internal AirFox ledger address
-	// by a user's MDN, digits only including country code, no white space, dashes,
-	// plusses, or any other special characters. Encode using web3.fromAscii()
-	// with 32 bytes as the length. If you don't encode the MDN properly, they
-	// won't receive the AirTokens.
-	//
-	// Example for US number (country code 1):  16175551234
-	// web3.fromAscii("16175555555", 32);
-	// Example for UK number (country code 44): 442055551234
-	// web3.fromAscii("442055551234", 32);
-	function transferToInternalLedger(uint256 _value, bytes32 _mdn) external returns (bool success) {
-		require(atFundDeposit != 0);
-		if (transfer(atFundDeposit, _value)) {
-			TransferInternalLedgerAT(msg.sender, atFundDeposit, _value, _mdn);
-			return true;
-		}
-		return false;
 	}
 
 	// functions below this line are onlyController
