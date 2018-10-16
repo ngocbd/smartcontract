@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xb2048d829482dbc9baf6951c28909e5c49686041
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x2a28cc275b458019910e3b8b8ee58f17eb6d38c8
 */
 pragma solidity ^0.4.6;
 
@@ -37,9 +37,9 @@ contract Presale {
     string public constant VERSION = "0.1.4-beta";
 
     /* ====== configuration START ====== */
-	uint public constant PRESALE_START  = 3125250; /* approx. 05.02.2017 04:20 CET */
-    uint public constant PRESALE_END    = 3125260; /* approx. 05.02.2017 04:25 CET */
-    uint public constant WITHDRAWAL_END = 3125270; /* approx. 05.02.2017 04:30 CET */
+	uint public constant PRESALE_START  = 3125170; /* approx. 05.02.2017 04:20 CET */
+    uint public constant PRESALE_END    = 3125195; /* approx. 05.02.2017 04:25 CET */
+    uint public constant WITHDRAWAL_END = 3125215; /* approx. 05.02.2017 04:30 CET */
 
 
     address public constant OWNER = 0x41ab8360dEF1e19FdFa32092D83a7a7996C312a4;
@@ -103,7 +103,7 @@ contract Presale {
     }
 
     function abort() external
-    inStateBefore(State.REFUND_RUNNING)
+    //inStateBefore(State.REFUND_RUNNING)
     onlyOwner
     {
         isAborted = true;
@@ -177,9 +177,9 @@ contract Presale {
         _;
     }
 
-    //fails if the current state is after than the given one.
+    //fails if state is not less than given
     modifier inStateBefore(State state) {
-        if (currentState() > state) throw;
+        if (state >= currentState()) throw;
         _;
     }
 
