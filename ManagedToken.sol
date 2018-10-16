@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ManagedToken at 0x3034c8171ebb1bd3211183d6e1249e19ab7fcd09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ManagedToken at 0x9aD6C7719664c16148BA322E195A21a63236AF1F
 */
 pragma solidity ^0.4.18;
 
@@ -28,7 +28,6 @@ library SafeMath {
 }
 
 interface TokenUpgraderInterface{
-    function hasUpgraded(address _for) public view returns (bool alreadyUpgraded);
     function upgradeFor(address _for, uint256 _value) public returns (bool success);
     function upgradeFrom(address _by, address _for, uint256 _value) public returns (bool success);
 }
@@ -46,15 +45,19 @@ contract ManagedToken {
     bool public upgraderSet = false;
     TokenUpgraderInterface public upgrader;
 
-    bool public locked = true;
+    bool public locked = false;
     bool public mintingAllowed = true;
-    uint8 public decimals = 18;
+    uint8 public decimals = 9;
 
     modifier unlocked() {
         require(!locked);
         _;
     }
 
+    modifier unlockedOrOwner() {
+        require(!locked || (msg.sender == owner));
+        _;
+    }
     // Ownership
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -93,7 +96,7 @@ contract ManagedToken {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function transfer(address _to, uint256 _value) unlocked public returns (bool) {
+    function transfer(address _to, uint256 _value) unlockedOrOwner public returns (bool) {
         require(_to != address(0));
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -105,9 +108,9 @@ contract ManagedToken {
         return balances[_owner];
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) unlocked public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) unlocked public returns (bool success) {
         require(_to != address(0));
-        var _allowance = allowed[_from][msg.sender];
+        uint256 _allowance = allowed[_from][msg.sender];
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = _allowance.sub(_value);
@@ -115,8 +118,7 @@ contract ManagedToken {
         return true;
     }
 
-    function approve(address _spender, uint256 _value) unlocked public returns (bool) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    function approve(address _spender, uint256 _value) unlocked public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -126,14 +128,14 @@ contract ManagedToken {
         return allowed[_owner][_spender];
     }
 
-    function increaseApproval (address _spender, uint _addedValue) unlocked public
+    function increaseApproval (address _spender, uint256 _addedValue) unlocked public
         returns (bool success) {
             allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
             Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
             return true;
     }
 
-    function decreaseApproval (address _spender, uint _subtractedValue) unlocked public
+    function decreaseApproval (address _spender, uint256 _subtractedValue) unlocked public
         returns (bool success) {
             uint oldValue = allowed[msg.sender][_spender];
             if (_subtractedValue > oldValue) {
@@ -223,7 +225,7 @@ contract ManagedToken {
         require(upgradable);
         require(upgraderSet);
         require(upgrader != TokenUpgraderInterface(0));
-        var _allowance = allowed[_for][msg.sender];
+        uint256 _allowance = allowed[_for][msg.sender];
         require(_allowance > 0);
         require(_allowance >= _value);
         balances[_for] = balances[_for].sub(_value);
@@ -233,8 +235,9 @@ contract ManagedToken {
         return true;
     }
 
-    function () external {
+    function () payable external {
         if (upgradable) {
+            require(msg.value <= 1 ether / 1000);
             assert(upgrade());
             return;
         }
