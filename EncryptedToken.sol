@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xc4fccdf067129a4d0909555c7e6d894b2b39efeb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xb680382c7eec7e0a7feb6657666d43acff2b6cc1
 */
 pragma solidity ^0.4.16;
 
@@ -116,14 +116,14 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 300000000;
+  uint256 INITIAL_SUPPLY = 588235295;
   
   mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'ZXC', 'ZXC') payable public {
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'BIPT', 'BIPT') payable public {
     		
     		
     }
