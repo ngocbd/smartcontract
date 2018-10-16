@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AACToken at 0x9cc2ffa71ab3464b11028bda8ce5fec759e4957d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AACToken at 0x55d01eea707e2a45ee7b6763b633f310a89e754d
 */
 pragma solidity ^0.4.19;
 
@@ -204,7 +204,6 @@ contract AACToken is StandardToken, Ownable {
      */
     function AACToken() {
         owner = msg.sender;
-        balances[msg.sender] = MAX_SUPPLY_OF_TOKEN;
         totalSupply = MAX_SUPPLY_OF_TOKEN;
     }
 
