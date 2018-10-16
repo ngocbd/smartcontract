@@ -1,12 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xedb2675b05d3c89cd2800b8f23567bb77a990fe4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xf0300337E920aE843040A71584f870aE719bf5eD
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -15,7 +25,7 @@ library SafeMath {
   }
 
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
@@ -33,151 +43,219 @@ library SafeMath {
   }
 }
 
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
- */
-contract token { function transfer(address receiver, uint amount){  } }
-contract Crowdsale {
+contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  // uint256 durationInMinutes;
-  // address where funds are collected
-  address public wallet;
-  // token address
-  address public addressOfTokenUsedAsReward;
+  mapping(address => uint256) balances;
 
-  uint256 public price = 300;
-  uint256 public minBuy;
-  uint256 public maxBuy;
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-  token tokenReward;
-
-  // mapping (address => uint) public contributions;
-  
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  // uint256 public endTime;
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale() {
-    //You will change this to your wallet where you need the ETH 
-    wallet = 0xc076b054EF62aCCE747175F698FC3Dbec9B7A36F;
-    // durationInMinutes = _durationInMinutes;
-    //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0xd62e9252F1615F5c1133F060CF091aCb4b0faa2b;
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
   }
 
-  bool public started = false;
-
-  function startSale(uint256 _delayInMinutes){
-    if (msg.sender != wallet) throw;
-    startTime = now + _delayInMinutes*1 minutes;
-    started = true;
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
   }
 
-  function stopSale(){
-    if(msg.sender != wallet) throw;
-    started = false;
+}
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
   }
 
-  function setPrice(uint256 _price){
-    if(msg.sender != wallet) throw;
-    price = _price;
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
   }
 
-  function setMinBuy(uint256 _minBuy){
-    if(msg.sender!=wallet) throw;
-    minBuy = _minBuy;
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
   }
 
-  function setMaxBuy(uint256 _maxBuy){
-    if(msg.sender != wallet) throw;
-    maxBuy = _maxBuy;
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
-  function changeWallet(address _wallet){
-    if(msg.sender != wallet) throw;
-    wallet = _wallet;
-  }
-
-  function changeTokenReward(address _token){
-    if(msg.sender!=wallet) throw;
-    tokenReward = token(_token);
-  }
-
-  // fallback function can be used to buy tokens
-  function () payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) payable {
-    require(beneficiary != 0x0);
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be sent
-    uint256 tokens = (weiAmount) * price;//weiamount * price 
-
-    if(minBuy!=0){
-      if(tokens < minBuy*10**18) throw;
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-    if(maxBuy!=0){
-      if(tokens > maxBuy*10**18) throw;
-    }
+}
 
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  function Ownable() public{
+    owner = msg.sender;
+  }
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+  function finishMinting() onlyOwner public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+contract BurnableToken is StandardToken {
+
+  function burn(uint _value) public {
+    require(_value > 0);
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(burner, _value);
+  }
+
+  event Burn(address indexed burner, uint indexed value);
+
+}
+
+
+contract WAEP is MintableToken, BurnableToken {
     
-    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
-    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
-
-    tokenReward.transfer(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    // wallet.transfer(msg.value);
-    if (!wallet.send(msg.value)) {
-      throw;
+    string public constant name = "WeAre Pre-ICO Token";
+    
+    string public constant symbol = "WAEP";
+    
+    uint32 public constant decimals = 18;
+    
+    function WAEP() public{
+		owner = msg.sender;
     }
-  }
+    
+}
 
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal constant returns (bool) {
-    bool withinPeriod = started&&(now>=startTime);
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
+contract Crowdsale is Ownable {
+    
+    using SafeMath for uint;
+    WAEP public token ;
+    uint start; //15dec
+    uint end; //15feb
+    uint softcapUSD;
+    uint hardcapUSD;
+    uint public risedUSD;
+    uint hardcapTokens;
+    uint oneTokenInWei;
+    uint sale1 = 1000000*10**18;
+    uint sale2 = 2000000*10**18;
+    uint sale3 = 3000000*10**18;
 
-  function withdrawTokens(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward.transfer(wallet,_amount);
-  }
+    mapping (address => bool) refunded;
+    mapping (address => uint256) saleBalances ;  
+    function Crowdsale() public{
+        owner = msg.sender;
+        start = 1513339200; //15dec
+        end = 1518696000; //15feb
+        softcapUSD = 350000*10**18;
+        hardcapUSD = 3500000*10**18;
+        hardcapTokens = 1000000000*10**18;
+		oneTokenInWei = 1532355690402860; // init price $652.59 usd per eth
+		token = new WAEP();
+    }
+    
+    function setEthPrice(uint _new) onlyOwner {
+        oneTokenInWei = _new;
+    }
+    
+    function buyByBot(uint _usd, uint _tokens, address _to) onlyOwner {
+        require( risedUSD + _usd < hardcapUSD );
+        risedUSD += _usd*10**18;
+        token.mint(_to, _tokens*10**18);
+    }
+    
+    function() external payable {
+        require(now > start && now < end);
+        require( risedUSD + msg.value.mul(10**18).div(oneTokenInWei) < hardcapUSD );
+        uint discountPrice ;
+        
+        if ( risedUSD < sale1 ) {                
+            discountPrice = oneTokenInWei.div(100).mul(60);
+        } else if ( risedUSD < sale2 ) {                
+            discountPrice = oneTokenInWei.div(100).mul(70);
+        } else if ( risedUSD < sale3 ) {                
+            discountPrice = oneTokenInWei.div(100).mul(80);
+        } else {
+           discountPrice = oneTokenInWei ;
+        }
+
+        uint256 tokenAdd = msg.value.mul(10**18).div(discountPrice);
+        require(token.totalSupply() + tokenAdd < hardcapTokens);
+        risedUSD += msg.value.mul(10**18).div(oneTokenInWei);
+        saleBalances[msg.sender] = saleBalances[msg.sender].add(msg.value);
+        token.mint(msg.sender, tokenAdd);
+    }
+    
+    function getEth() public onlyOwner {
+        owner.transfer(this.balance);
+    }
+    
+    function mint(address _to, uint _value) public onlyOwner {
+        require(_value > 0);
+        token.mint(_to, _value*10**18);
+    }
+
+    function refund() public {
+        require (now > end  && risedUSD < softcapUSD );
+        require (!refunded[msg.sender]);
+        require (saleBalances[msg.sender] != 0) ;
+        uint refund = saleBalances[msg.sender];
+        require(msg.sender.send(refund));
+        refunded[msg.sender] = true;
+    }
 }
