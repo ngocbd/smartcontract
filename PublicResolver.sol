@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicResolver at 0x218ce76c54c3b7c716969e206ee35461dd70b015
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicResolver at 0x5ffc014343cd971b7eb70732021e26c35b744cc4
 */
 pragma solidity ^0.4.0;
 
@@ -30,10 +30,20 @@ contract AbstractENS {
  * address.
  */
 contract PublicResolver {
+    bytes4 constant INTERFACE_META_ID = 0x01ffc9a7;
     bytes4 constant ADDR_INTERFACE_ID = 0x3b3b57de;
     bytes4 constant CONTENT_INTERFACE_ID = 0xd8389dc5;
+    bytes4 constant NAME_INTERFACE_ID = 0x691f3431;
     bytes4 constant ABI_INTERFACE_ID = 0x2203ab56;
     bytes4 constant PUBKEY_INTERFACE_ID = 0xc8690233;
+    bytes4 constant TEXT_INTERFACE_ID = 0x59d1d43c;
+
+    event AddrChanged(bytes32 indexed node, address a);
+    event ContentChanged(bytes32 indexed node, bytes32 hash);
+    event NameChanged(bytes32 indexed node, string name);
+    event ABIChanged(bytes32 indexed node, uint256 indexed contentType);
+    event PubkeyChanged(bytes32 indexed node, bytes32 x, bytes32 y);
+    event TextChanged(bytes32 indexed node, string indexed indexedKey, string key);
 
     struct PublicKey {
         bytes32 x;
@@ -43,7 +53,9 @@ contract PublicResolver {
     struct Record {
         address addr;
         bytes32 content;
+        string name;
         PublicKey pubkey;
+        mapping(string=>string) text;
         mapping(uint256=>bytes) abis;
     }
 
@@ -71,8 +83,11 @@ contract PublicResolver {
     function supportsInterface(bytes4 interfaceID) constant returns (bool) {
         return interfaceID == ADDR_INTERFACE_ID ||
                interfaceID == CONTENT_INTERFACE_ID ||
+               interfaceID == NAME_INTERFACE_ID ||
                interfaceID == ABI_INTERFACE_ID ||
-               interfaceID == PUBKEY_INTERFACE_ID;
+               interfaceID == PUBKEY_INTERFACE_ID ||
+               interfaceID == TEXT_INTERFACE_ID ||
+               interfaceID == INTERFACE_META_ID;
     }
 
     /**
@@ -92,6 +107,7 @@ contract PublicResolver {
      */
     function setAddr(bytes32 node, address addr) only_owner(node) {
         records[node].addr = addr;
+        AddrChanged(node, addr);
     }
 
     /**
@@ -115,8 +131,30 @@ contract PublicResolver {
      */
     function setContent(bytes32 node, bytes32 hash) only_owner(node) {
         records[node].content = hash;
+        ContentChanged(node, hash);
+    }
+
+    /**
+     * Returns the name associated with an ENS node, for reverse records.
+     * Defined in EIP181.
+     * @param node The ENS node to query.
+     * @return The associated name.
+     */
+    function name(bytes32 node) constant returns (string ret) {
+        ret = records[node].name;
     }
     
+    /**
+     * Sets the name associated with an ENS node, for reverse records.
+     * May only be called by the owner of that node in the ENS registry.
+     * @param node The node to update.
+     * @param name The name to set.
+     */
+    function setName(bytes32 node, string name) only_owner(node) {
+        records[node].name = name;
+        NameChanged(node, name);
+    }
+
     /**
      * Returns the ABI associated with an ENS node.
      * Defined in EIP205.
@@ -149,6 +187,7 @@ contract PublicResolver {
         if(((contentType - 1) & contentType) != 0) throw;
         
         records[node].abis[contentType] = data;
+        ABIChanged(node, contentType);
     }
     
     /**
@@ -169,5 +208,28 @@ contract PublicResolver {
      */
     function setPubkey(bytes32 node, bytes32 x, bytes32 y) only_owner(node) {
         records[node].pubkey = PublicKey(x, y);
+        PubkeyChanged(node, x, y);
+    }
+
+    /**
+     * Returns the text data associated with an ENS node and key.
+     * @param node The ENS node to query.
+     * @param key The text data key to query.
+     * @return The associated text data.
+     */
+    function text(bytes32 node, string key) constant returns (string ret) {
+        ret = records[node].text[key];
+    }
+
+    /**
+     * Sets the text data associated with an ENS node and key.
+     * May only be called by the owner of that node in the ENS registry.
+     * @param node The node to update.
+     * @param key The key to set.
+     * @param value The text data value to set.
+     */
+    function setText(bytes32 node, string key, string value) only_owner(node) {
+        records[node].text[key] = value;
+        TextChanged(node, key, key);
     }
 }
