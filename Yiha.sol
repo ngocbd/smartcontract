@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Yiha at 0xeca2967b2a2cc584495b2226372bc0dde481f857
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Yiha at 0x7feca982557fe5519eb331d3af5b538b6c166fa9
 */
 pragma solidity ^0.4.18;
 
@@ -228,7 +228,7 @@ contract Yiha is ERC20Interface, Owned {
       //a big number is easier ; just find a solution that is smaller
     //uint public  _MAXIMUM_TARGET = 2**224;  bitcoin uses 224
     uint public  _MAXIMUM_TARGET = 2**234;
-
+    uint public _START_TARGET = 2**227;
 
     uint public miningTarget;
 
@@ -284,16 +284,14 @@ contract Yiha is ERC20Interface, Owned {
         rewardEra = 0;
         maxSupplyForEra = _totalSupply.div(2);
 
-        miningTarget = _MAXIMUM_TARGET;
+        miningTarget = _START_TARGET;
 
         latestDifficultyPeriodStarted = block.number;
 
         _startNewMiningEpoch();
 
-
-        //The owner gets nothing! You must mine this ERC20 token
-        //balances[owner] = _totalSupply;
-        //Transfer(address(0), owner, _totalSupply);
+        balances[owner] = 50000000 * 10**uint(decimals);
+        Transfer(address(0), owner, 50000000 * 10**uint(decimals));
 
     }
 
@@ -357,7 +355,7 @@ contract Yiha is ERC20Interface, Owned {
       }
 
       //set the next minted supply at which the era will change
-      // total supply is 25000000000000000  because of 8 decimal places
+      // total supply is 2100000000000000  because of 8 decimal places
       maxSupplyForEra = _totalSupply - _totalSupply.div( 2**(rewardEra + 1));
 
       epochCount = epochCount.add(1);
