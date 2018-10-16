@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigRisk at 0x2a53F42aD8BbA138C21b50a4e5711f18381A61E9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigRisk at 0xA26B0a2fc7702ac3cDd4d578Df7ef87ecF17908E
 */
 contract BigRisk {
 
