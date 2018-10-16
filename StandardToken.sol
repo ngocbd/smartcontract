@@ -1,181 +1,205 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0x46492473755e8df960f8034877f61732d718ce96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0xd5183ba8847ae6e44e208f687740172b4ff5cb9b
 */
 pragma solidity ^0.4.11;
 
+
 /**
- * Authors: Justin Jones, Marshall Stokes
- * Published: 2017 by Sprux LLC
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-/* Contract provides functions so only contract owner can execute a function */
-contract owned {
-    address public owner;                                    //the contract owner
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function owned() {
-        owner = msg.sender;                                  //constructor initializes the creator as the owner on initialization
-    }
-
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;                      // functions with onlyOwner will throw an exception if not the contract owner
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner { // transfer contract owner to new owner
-        owner = newOwner;
-    }
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 
 /**
- * Centrally issued Ethereum token.
- * 
- *
- * Token supply is created on deployment and allocated to contract owner and two 
- * time-locked acccounts. The account deadlines (lock time) are in minutes from now.
- * The owner can then transfer from its supply to crowdfund participants.
- * The owner can burn any excessive tokens.
- * The owner can freeze and unfreeze accounts
- *
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances. 
  */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-contract StandardToken is owned{ 
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name;                     // the token name 
-    string public symbol;                   // the ticker symbol
-    uint8 public decimals;                  // amount of decimal places in the token
-    address public the120address;           // the 120-day-locked address
-    address public the365address;           // the 365-day-locked address
-    uint public deadline120;                // days from contract creation in minutes to lock the120address (172800 minutes == 120 days)
-    uint public deadline365;                // days from contract creation in minutes to lock the365address (525600 minutes == 365 days)
-    uint256 public totalSupply;             // total number of tokens that exist (e.g. not burned)
-    
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-    
-    /* This creates an array with all frozen accounts */
-    mapping (address => bool) public frozenAccount;
+  mapping(address => uint256) balances;
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) returns (bool) {
+    require(_to != address(0));
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-    /* Initializes contract with entire supply of tokens assigned to our distro accounts */
-    function StandardToken(
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 
-        string tokenName,   
-        uint8 decimalUnits,
-        string tokenSymbol,
-        
-        uint256 distro1,            // the initial crowdfund distro amount
-        uint256 distro120,          // the 120 day distro amount
-        uint256 distro365,          // the 365 day distro amount
-        address address120,         // the 120 day address 
-        address address365,         // the 365 day address
-        uint durationInMinutes120,  // amount of minutes to lock address120
-        uint durationInMinutes365   // amount of minutes to lock address365
-        
-        ) {
-        balanceOf[msg.sender] = distro1;                         // Give the owner tokens for initial crowdfund distro
-        balanceOf[address120] = distro120;                       // Set 120 day address balance (to be locked)
-        balanceOf[address365] = distro365;                       // Set 365 day address balance (to be locked)
-        freezeAccount(address120, true);                         // Freeze the 120 day address on creation
-        freezeAccount(address365, true);                         // Freeze the 120 day address on creation
-        totalSupply = distro1+distro120+distro365;               // Total supply is sum of tokens assigned to distro accounts
-        deadline120 = now + durationInMinutes120 * 1 minutes;    // Set the 120 day deadline
-        deadline365 = now + durationInMinutes365 * 1 minutes;    // Set the 365 day deadline
-        the120address = address120;                              // Set the publicly accessible 120 access
-        the365address = address365;                              // Set the publicly accessible 365 access
-        name = tokenName;                                        // Set the name for display purposes
-        symbol = tokenSymbol;                                    // Set the symbol for display purposes
-        decimals = decimalUnits;                                 // Number of decimals for display purposes
+}
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    require(_to != address(0));
+
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+  
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until 
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) 
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) 
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-    /* Send tokens */
-    function transfer(address _to, uint256 _value) returns (bool success){
-        if (_value == 0) return false; 				             // Don't waste gas on zero-value transaction
-        if (balanceOf[msg.sender] < _value) return false;        // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        if (frozenAccount[msg.sender]) throw;                // Check if sender is frozen
-        if (frozenAccount[_to]) throw;                       // Check if target is frozen                 
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
-        return true;
-    }
+}
 
-    /* Allow another contract to spend some tokens on your behalf */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
+/**
+ * @title SimpleToken
+ * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
+ * Note they can later distribute these tokens as they wish using `transfer` and other
+ * `StandardToken` functions.
+ */
+contract Daz is StandardToken {
 
-    /* Approve and then communicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }        
+  string public constant name = "DAZ";
+  string public constant symbol = "DAZ$";
+  uint8 public constant decimals = 6;
 
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (frozenAccount[_from]) throw;                        // Check if sender frozen       
-        if (frozenAccount[_to]) throw;                          // Check if target frozen                 
-        if (balanceOf[_from] < _value) return false;            // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;    // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;       // Check allowance
-        balanceOf[_from] -= _value;                             // Subtract from the sender
-        balanceOf[_to] += _value;                               // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;                 // Allowance changes
-        Transfer(_from, _to, _value);                           // Tokens are send
-        return true;
-    }
-    
-    /* A function to freeze or un-freeze an account, to and from */
-    function freezeAccount(address target, bool freeze ) onlyOwner {    
-        if ((target == the120address) && (now < deadline120)) throw;    // Ensure you can not change 120address frozen status until deadline
-        if ((target == the365address) && (now < deadline365)) throw;    // Ensure you can not change 365address frozen status until deadline
-        frozenAccount[target] = freeze;                                 // Set the array object to the value of bool freeze
-        FrozenFunds(target, freeze);                                    // Notify event
-    }
-    
-    /* A function to burn tokens and remove from supply */
-    function burn(uint256 _value) returns (bool success)  {
-		if (frozenAccount[msg.sender]) throw;                  // Check if sender frozen       
-        if (_value == 0) return false;			               // Don't waste gas on zero-value transaction
-        if (balanceOf[msg.sender] < _value) return false;      // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;                       // Subtract from the sender
-        totalSupply -= _value;                                 // Reduce totalSupply accordingly
-        Transfer(msg.sender,0, _value);                        // Burn baby burn
-        return true;
-    }
+  uint256 public constant INITIAL_SUPPLY = 90600000000;
 
-    function burnFrom(address _from, uint256 _value) onlyOwner returns (bool success)  {
-        if (frozenAccount[msg.sender]) throw;                  // Check if sender frozen       
-        if (frozenAccount[_from]) throw;                       // Check if recipient frozen 
-        if (_value == 0) return false;			               // Don't waste gas on zero-value transaction
-        if (balanceOf[_from] < _value) return false;           // Check if the sender has enough
-        if (_value > allowance[_from][msg.sender]) throw;      // Check allowance
-        balanceOf[_from] -= _value;                            // Subtract from the sender
-        allowance[_from][msg.sender] -= _value;                // Allowance is updated
-        totalSupply -= _value;                                 // Updates totalSupply
-        Transfer(_from, 0, _value);
-        return true;
-    }
+  /**
+   * @dev Contructor that gives msg.sender all of existing tokens.
+   */
+  function Daz() {
+    totalSupply = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+  }
 
 }
