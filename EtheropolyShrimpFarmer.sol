@@ -1,8 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheropolyShrimpFarmer at 0xde251c7778eb259b449885f63d6cae090e15601a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheropolyShrimpFarmer at 0x8f3c2c0bee4854337a1826fe6c62e7b351a18d27
 */
-pragma solidity ^0.4.18; // solhint-disable-line
+pragma solidity ^0.4.18;
 
+/**
+ * Etheropoly Board Game without Developer Fee taken out.
+ */
 
 contract ERC20Interface {
     function transfer(address to, uint256 tokens) public returns (bool success);
@@ -65,9 +68,10 @@ contract EtheropolyShrimpFarmer is AcceptsEtheropoly {
     }
 
     /**
-     * Fallback function for the contract, protect investors
+     * Fallback function for the contract if sent ethereum by mistake
      */
     function() payable public {
+        ceoAddress.transfer(msg.value);
       /* revert(); */
     }
 
@@ -90,9 +94,7 @@ contract EtheropolyShrimpFarmer is AcceptsEtheropoly {
         uint256 EtheropolyBalance = tokenContract.myTokens();
 
         uint256 eggsBought=calculateEggBuy(_value, SafeMath.sub(EtheropolyBalance, _value));
-        eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
         reinvest();
-        tokenContract.transfer(ceoAddress, devFee(_value));
         claimedEggs[_from]=SafeMath.add(claimedEggs[_from],eggsBought);
 
         return true;
@@ -120,13 +122,11 @@ contract EtheropolyShrimpFarmer is AcceptsEtheropoly {
         require(initialized);
         uint256 hasEggs=getMyEggs();
         uint256 eggValue=calculateEggSell(hasEggs);
-        uint256 fee=devFee(eggValue);
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
         reinvest();
-        tokenContract.transfer(ceoAddress, fee);
-        tokenContract.transfer(msg.sender, SafeMath.sub(eggValue,fee));
+        tokenContract.transfer(msg.sender, eggValue);
     }
 
     // Dev should initially seed the game before start
@@ -167,11 +167,6 @@ contract EtheropolyShrimpFarmer is AcceptsEtheropoly {
         return calculateEggBuy(eth, tokenContract.myTokens());
     }
 
-    // Calculate dev fee in game
-    function devFee(uint256 amount) public view returns(uint256){
-        return SafeMath.div(SafeMath.mul(amount,4),100);
-    }
-
     // Get amount of Shrimps user has
     function getMyShrimp() public view returns(uint256){
         return hatcheryShrimp[msg.sender];
@@ -188,7 +183,7 @@ contract EtheropolyShrimpFarmer is AcceptsEtheropoly {
         return SafeMath.mul(secondsPassed,hatcheryShrimp[adr]);
     }
 
-    // Collect information about doge farm dividents amount
+    // Collect information about doge farm dividends amount
     function getContractDividends() public view returns(uint256) {
       return tokenContract.myDividends(true); // + this.balance;
     }
