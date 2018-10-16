@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrayerCoin at 0x43ad0e9446e72c5b9677a108f2b1d4adf34452cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrayerCoin at 0x0215c96d7badf65cfe9b897d232e53451c3876d3
 */
 pragma solidity ^0.4.18;
 
@@ -156,7 +156,7 @@ contract PrayerCoin is PrayerCoinToken {
   string public symbol = "PRAY";
   string public version = 'H1.0';  
 
-  uint256 public totalSupply = 666666666 ether;
+  uint256 public publicSupply = 666666666 ether;
  
   uint private PRAY_ETH_RATIO = 6666;
   uint private PRAY_ETH_RATIO_BONUS1 = 7106;
@@ -174,7 +174,7 @@ contract PrayerCoin is PrayerCoinToken {
 
   function PrayerCoin() public { // initialize contract
     god = msg.sender;
-    balances[god] = totalSupply; // god holds all of the PRAY
+    balances[god] = publicSupply; // god holds all of the PRAY
   } 
 
   function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
