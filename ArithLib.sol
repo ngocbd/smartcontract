@@ -1,16 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArithLib at 0xc75175d7de7e8036f7c00a8e89f30dcf6e733f2e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArithLib at 0x04daec4e1fc6a4b4555b509b7c5c673ebad29f1f
 */
-/* An elliptic curve arithmetics contract */
-
-/* Deployment:
-Owner: 0xeb5fa6cbf2aca03a0df228f2df67229e2d3bd01e
-Last address: 0xc75175d7de7e8036f7c00a8e89f30dcf6e733f2e
-ABI: [{"constant":true,"inputs":[{"name":"_ax","type":"uint256"},{"name":"_ay","type":"uint256"},{"name":"_az","type":"uint256"},{"name":"_bx","type":"uint256"},{"name":"_by","type":"uint256"},{"name":"_bz","type":"uint256"}],"name":"jadd","outputs":[{"name":"","type":"uint256"},{"name":"","type":"uint256"},{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_pub1","type":"uint256"},{"name":"_pub2","type":"uint256"}],"name":"hash_pubkey_to_pubkey","outputs":[{"name":"","type":"uint256"},{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_x","type":"uint256"},{"name":"_y_bit","type":"uint256"}],"name":"jrecover_y","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_q0","type":"uint256"},{"name":"_q1","type":"uint256"},{"name":"_q2","type":"uint256"}],"name":"jdecompose","outputs":[{"name":"","type":"uint256"},{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_ax","type":"uint256"},{"name":"_ay","type":"uint256"},{"name":"_az","type":"uint256"}],"name":"jdouble","outputs":[{"name":"","type":"uint256"},{"name":"","type":"uint256"},{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_data","type":"uint256"},{"name":"_bit","type":"uint256"}],"name":"isbit","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_b","type":"uint256"},{"name":"_e","type":"uint256"},{"name":"_m","type":"uint256"}],"name":"jexp","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_bx","type":"uint256"},{"name":"_by","type":"uint256"},{"name":"_bz","type":"uint256"},{"name":"_n","type":"uint256"}],"name":"jmul","outputs":[{"name":"","type":"uint256"},{"name":"","type":"uint256"},{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"inputs":[],"type":"constructor"},{"payable":false,"type":"fallback"}]
-Optimized: yes
-Solidity version: v0.4.4
-*/
-
 pragma solidity ^0.4.0;
 
 contract ArithLib {
@@ -27,58 +17,48 @@ contract ArithLib {
 
         if(_ay == 0) return (0, 0, 0);
 
-        uint ysq = (_ay * _ay) % P;
-        uint s = (4 * _ax * ysq) % P;
-        uint m = (3 * _ax * _ax) % P;
-        uint nx = (m * m - 2 * s) % P;
-        uint ny = (m * (s - nx) - 8 * ysq * ysq) % P;
-        uint nz = (2 * _ay * _az) % P;
+        uint ysq = _ay * _ay;
+        uint s = 4 * _ax * ysq;
+        uint m = 3 * _ax * _ax;
+        uint nx = m * m - 2 * s;
+        uint ny = m * (s - nx) - 8 * ysq * ysq;
+        uint nz = 2 * _ay * _az;
         return (nx, ny, nz);
     }
 
     function jadd(uint _ax, uint _ay, uint _az, uint _bx, uint _by, uint _bz) constant returns (uint, uint, uint) {
 
+        if(_ay == 0) return (0, 0, 0);
         if(_ay == 0) return(_bx, _by, _bz);
         if(_by == 0) return(_ax, _ay, _az);
 
-        uint u1 = (_ax * _bz * _bz) % P;
-        uint u2 = (_bx * _az * _az) % P;
-        uint s1 = (_ay * _bz * _bz * _bz) % P;
-        uint s2 = (_by * _az * _az * _az) % P;
+        uint u1 = _ax * _bz * _bz;
+        uint u2 = _bx * _az * _az;
+        uint s1 = _ay * _bz * _bz * _bz;
+        uint s2 = _by * _az * _az * _az;
 
         if(u1 == u2) {
            if(s1 != s2) return(0, 0, 1);
            return jdouble(_ax, _ay, _az);
         }
         
-        //H
-        _ax = u2 - u1;
-        //R
-        _ay = s2 - s1;
-        //H2
-        _bx = (_ax * _ax) % P;
-        //H3
-        _by = (_ax * _bx) % P;
-        //U1H2
-        u1 = (u1 * _bx) % P;
-        //nx
-        u2 = (_ay * _ay - _by - 2 * u1) % P;
-        //ny
-        s1 = (_ay * (u1 - u2) - s1 * _by) % P;
-        //nz
-        s2 = (_ax * _az * _bz) % P;
+        uint nx = (s2 - s1) * (s2 - s1) - (u2 - u1) * (u2 - u1) * (u2 - u1) - 2 * u1 * (u2 - u1) * (u2 - u1);
 
-        return (u2, s1, s2);
+        return
+            (nx,
+             (s2 - s1) * (u1 * (u2 - u1) * (u2 - u1) - nx) - s1 * (u2 - u1) * (u2 - u1) * (u2 - u1),
+             (u2 - u1) * _az * _bz);
     }
 
     function jmul(uint _bx, uint _by, uint _bz, uint _n) constant returns (uint, uint, uint) {
 
         _n = _n % N;
-        if(((_by == 0)) || (_n == 0)) return(0, 0, 1);
+        if(((_bx == 0) && (_by == 0)) || (_n == 0)) return(0, 0, 1);
 
-        uint ax = 0;
-        uint ay = 0;
-        uint az = 1;
+        uint ax;
+        uint ay;
+        uint az;
+        (ax, ay, az) = (0, 0, 1);
         uint b = M;
         
         while(b > 0) {
