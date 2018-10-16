@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EROSCOIN at 0x245fc6d0c59e5b9e6118088b48465e3757b31804
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EROSCOIN at 0x74ceda77281b339142a36817fa5f9e29412bab85
 */
 pragma solidity ^0.4.16;
 // EROSCOIN Token contract based on the full ERC 20 Token standard
@@ -208,7 +208,7 @@ contract EROSCOIN is EroStandardToken {
     uint256 public totalSupply = 24 * (10**7) * 10**8 ; // 240 million tokens, 8 decimal places
     string constant public name = "EROSCOIN"; //fancy name: eg EROSCOIN
     string constant public symbol = "ERO"; //An identifier: eg ERO
-    string constant public version = "v1.3";       //Version 1.1.5 standard. Just an arbitrary versioning scheme.
+    string constant public version = "v2";       //Version 2 standard. Just an arbitrary versioning scheme.
     
     function EROSCOIN(){
         balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
