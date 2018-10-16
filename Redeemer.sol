@@ -1,9 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redeemer at 0xf7c928a19c5128076deb5f12db92dacf7e5c04bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redeemer at 0x642ae78fafbb8032da552d619ad43f1d81e4dd7c
 */
-// (c) Dai Foundation, 2017
+// Redeemer
+// Copyright 2017 - DappHub
 
+// hevm: flattened sources of src/mkr-499.sol
 pragma solidity ^0.4.15;
+
+////// lib/ds-roles/lib/ds-auth/src/auth.sol
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.13; */
 
 contract DSAuthority {
     function canCall(
@@ -59,60 +77,23 @@ contract DSAuth is DSAuthEvents {
     }
 }
 
-contract DSNote {
-    event LogNote(
-        bytes4   indexed  sig,
-        address  indexed  guy,
-        bytes32  indexed  foo,
-        bytes32  indexed  bar,
-        uint              wad,
-        bytes             fax
-    ) anonymous;
+////// lib/ds-thing/lib/ds-math/src/math.sol
+/// math.sol -- mixin for inline numerical wizardry
 
-    modifier note {
-        bytes32 foo;
-        bytes32 bar;
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-        assembly {
-            foo := calldataload(4)
-            bar := calldataload(36)
-        }
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-        _;
-    }
-}
-
-contract DSStop is DSNote, DSAuth {
-
-    bool public stopped;
-
-    modifier stoppable {
-        require(!stopped);
-        _;
-    }
-    function stop() public auth note {
-        stopped = true;
-    }
-    function start() public auth note {
-        stopped = false;
-    }
-
-}
-
-contract ERC20 {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf( address who ) public view returns (uint value);
-    function allowance( address owner, address spender ) public view returns (uint _allowance);
-
-    function transfer( address to, uint value) public returns (bool ok);
-    function transferFrom( address from, address to, uint value) public returns (bool ok);
-    function approve( address spender, uint value ) public returns (bool ok);
-
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
-}
+/* pragma solidity ^0.4.13; */
 
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
@@ -182,6 +163,171 @@ contract DSMath {
     }
 }
 
+////// lib/ds-thing/lib/ds-note/src/note.sol
+/// note.sol -- the `note' modifier, for logging calls as events
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.13; */
+
+contract DSNote {
+    event LogNote(
+        bytes4   indexed  sig,
+        address  indexed  guy,
+        bytes32  indexed  foo,
+        bytes32  indexed  bar,
+        uint              wad,
+        bytes             fax
+    ) anonymous;
+
+    modifier note {
+        bytes32 foo;
+        bytes32 bar;
+
+        assembly {
+            foo := calldataload(4)
+            bar := calldataload(36)
+        }
+
+        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+
+        _;
+    }
+}
+
+////// lib/ds-thing/src/thing.sol
+// thing.sol - `auth` with handy mixins. your things should be DSThings
+
+// Copyright (C) 2017  DappHub, LLC
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.13; */
+
+/* import 'ds-auth/auth.sol'; */
+/* import 'ds-note/note.sol'; */
+/* import 'ds-math/math.sol'; */
+
+contract DSThing is DSAuth, DSNote, DSMath {
+}
+
+////// lib/ds-token/lib/ds-stop/src/stop.sol
+/// stop.sol -- mixin for enable/disable functionality
+
+// Copyright (C) 2017  DappHub, LLC
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.13; */
+
+/* import "ds-auth/auth.sol"; */
+/* import "ds-note/note.sol"; */
+
+contract DSStop is DSNote, DSAuth {
+
+    bool public stopped;
+
+    modifier stoppable {
+        require(!stopped);
+        _;
+    }
+    function stop() public auth note {
+        stopped = true;
+    }
+    function start() public auth note {
+        stopped = false;
+    }
+
+}
+
+////// lib/ds-token/lib/erc20/src/erc20.sol
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.8; */
+
+// Token standard API
+// https://github.com/ethereum/EIPs/issues/20
+
+contract ERC20 {
+    function totalSupply() public view returns (uint supply);
+    function balanceOf( address who ) public view returns (uint value);
+    function allowance( address owner, address spender ) public view returns (uint _allowance);
+
+    function transfer( address to, uint value) public returns (bool ok);
+    function transferFrom( address from, address to, uint value) public returns (bool ok);
+    function approve( address spender, uint value ) public returns (bool ok);
+
+    event Transfer( address indexed from, address indexed to, uint value);
+    event Approval( address indexed owner, address indexed spender, uint value);
+}
+
+////// lib/ds-token/src/base.sol
+/// base.sol -- basic ERC20 implementation
+
+// Copyright (C) 2015, 2016, 2017  DappHub, LLC
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.13; */
+
+/* import "erc20/erc20.sol"; */
+/* import "ds-math/math.sol"; */
+
 contract DSTokenBase is ERC20, DSMath {
     uint256                                            _supply;
     mapping (address => uint256)                       _balances;
@@ -231,9 +377,31 @@ contract DSTokenBase is ERC20, DSMath {
     }
 }
 
-contract DSToken is DSTokenBase(0), DSStop {
+////// lib/ds-token/src/token.sol
+/// token.sol -- ERC20 implementation with minting and burning
 
-    mapping (address => mapping (address => bool)) _trusted;
+// Copyright (C) 2015, 2016, 2017  DappHub, LLC
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.13; */
+
+/* import "ds-stop/stop.sol"; */
+
+/* import "./base.sol"; */
+
+contract DSToken is DSTokenBase(0), DSStop {
 
     bytes32  public  symbol;
     uint256  public  decimals = 18; // standard token precision. override to customize
@@ -242,27 +410,23 @@ contract DSToken is DSTokenBase(0), DSStop {
         symbol = symbol_;
     }
 
-    event Trust(address indexed src, address indexed guy, bool wat);
     event Mint(address indexed guy, uint wad);
     event Burn(address indexed guy, uint wad);
 
-    function trusted(address src, address guy) public view returns (bool) {
-        return _trusted[src][guy];
-    }
-    function trust(address guy, bool wat) public stoppable {
-        _trusted[msg.sender][guy] = wat;
-        Trust(msg.sender, guy, wat);
+    function approve(address guy) public stoppable returns (bool) {
+        return super.approve(guy, uint(-1));
     }
 
     function approve(address guy, uint wad) public stoppable returns (bool) {
         return super.approve(guy, wad);
     }
+
     function transferFrom(address src, address dst, uint wad)
         public
         stoppable
         returns (bool)
     {
-        if (src != msg.sender && !_trusted[src][msg.sender]) {
+        if (src != msg.sender && _approvals[src][msg.sender] != uint(-1)) {
             _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
         }
 
@@ -296,7 +460,7 @@ contract DSToken is DSTokenBase(0), DSStop {
         Mint(guy, wad);
     }
     function burn(address guy, uint wad) public auth stoppable {
-        if (guy != msg.sender && !_trusted[guy][msg.sender]) {
+        if (guy != msg.sender && _approvals[guy][msg.sender] != uint(-1)) {
             _approvals[guy][msg.sender] = sub(_approvals[guy][msg.sender], wad);
         }
 
@@ -313,7 +477,17 @@ contract DSToken is DSTokenBase(0), DSStop {
     }
 }
 
-contract Redeemer {
+////// src/mkr-499.sol
+// (c) Dai Foundation, 2017
+
+/* pragma solidity ^0.4.15; */
+
+/* import 'ds-token/token.sol'; */
+//import 'ds-vault/vault.sol';
+
+/* import 'ds-thing/thing.sol'; */
+
+contract Redeemer is DSStop {
     ERC20   public from;
     DSToken public to;
     uint    public undo_deadline;
@@ -322,15 +496,22 @@ contract Redeemer {
         to = to_;
         undo_deadline = undo_deadline_;
     }
-    function redeem() public {
+    function redeem() public stoppable {
         var wad = from.balanceOf(msg.sender);
         require(from.transferFrom(msg.sender, this, wad));
         to.push(msg.sender, wad);
     }
-    function undo() public {
+    function undo() public stoppable {
         var wad = to.balanceOf(msg.sender);
         require(now < undo_deadline);
         require(from.transfer(msg.sender, wad));
         to.pull(msg.sender, wad);
+    }
+    function reclaim() public auth {
+        require(stopped);
+        var wad = from.balanceOf(this);
+        require(from.transfer(msg.sender, wad));
+        wad = to.balanceOf(this);
+        to.push(msg.sender, wad);
     }
 }
