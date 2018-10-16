@@ -1,391 +1,222 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KWHToken at 0x5e9c58aaed30f2ece3d2baf7814be9dc4425a6d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KWHToken at 0xebc7cd2684dd96619841c7994343c5a8bda94b10
 */
 pragma solidity ^0.4.17;
-
-
-// ----------------------------------------------------------------------------
-// 'KWHToken' contract
-//
-// Symbol      : KWHT
-// Name        : KWHToken
-// Total supply: 900,000.000000000000000000
-// Decimals    : 18
-//
-// The MIT Licence.
-// ----------------------------------------------------------------------------
-
-
-// Overflow math functions.
-
+ 
 contract SafeMath {
-
-    function safeAdd(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
+ 
+   function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
+      uint256 z = x + y;
+      assert((z >= x) && (z >= y));
+      return z;
     }
-
-    function safeSub(uint a, uint b) internal pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
+ 
+    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
+      assert(x >= y);
+      uint256 z = x - y;
+      return z;
     }
-
-    function safeMul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
+ 
+    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
+      uint256 z = x * y;
+      assert((x == 0)||(z/x == y));
+      return z;
     }
-
-    function safeDiv(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
-
-    function assert(bool assertion) internal {
-        require(assertion);
-    }
-
+ 
 }
-
-
-// Contract Owned
-
-contract Owned {
-
-    address public owner;
-
-    function Owned() {
-
-        owner = msg.sender;
-
-    }
-
-    modifier onlyOwner {
-
-        require(msg.sender == owner);
-        _;
-
-    }
-
-    function transferOwnership(address newOwner) onlyOwner {
-
-        require(newOwner != 0x0);
-        
-        owner = newOwner;
-
-    }
-
-}
-
-
-// Contract Token
-
+ 
 contract Token {
-
     uint256 public totalSupply;
-
     function balanceOf(address _owner) constant returns (uint256 balance);
-
     function transfer(address _to, uint256 _value) returns (bool success);
-
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
     function approve(address _spender, uint256 _value) returns (bool success);
-
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
 }
-
-
-// StandardToken
-
+ 
+ 
+/*  ERC 20 token */
 contract StandardToken is Token {
-
+ 
     function transfer(address _to, uint256 _value) returns (bool success) {
-
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-
-            balances[msg.sender] -= _value;
-            
-            balances[_to] += _value;
-            
-            Transfer(msg.sender, _to, _value);
-            
-            return true;
-
-        } else {
-            
-            return false;
-            
-        }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-
-            balances[_from] -= _value;
-            
-            balances[_to] += _value;
-            
-            allowed[_from][msg.sender] -= _value;
-            
-            Transfer(_from, _to, _value);
-            
-            return true;
-
-        } else {
-            
-            return false;
-            
-        }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-
-        return balances[_owner];
-
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-
-        allowed[msg.sender][_spender] = _value;
-        
-        Approval(msg.sender, _spender, _value);
-        
+      if (balances[msg.sender] >= _value && _value > 0) {
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
         return true;
-
+      } else {
+        return false;
+      }
     }
-
+ 
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+      } else {
+        return false;
+      }
+    }
+ 
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+ 
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        require(_value == 0 || allowed[msg.sender][_spender] == 0);
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+ 
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-
       return allowed[_owner][_spender];
-
     }
-
+ 
     mapping (address => uint256) balances;
-
     mapping (address => mapping (address => uint256)) allowed;
-
 }
-
-
-
-// 'KWHToken' contract
-
-contract KWHToken is SafeMath, Owned, StandardToken {
-
-    string public symbol = "KWHT";
+ 
+contract KWHToken is StandardToken, SafeMath {
+ 
+    // metadata
+    string public constant name = "KWHCoin";
+    string public constant symbol = "KWH";
+    uint256 public constant decimals = 18;
+    string public version = "1.0";
+ 
+    // contracts
+    address private ethFundDeposit;      // deposit address for ETH for KWH
+    address private kwhFundDeposit;      // deposit address for KWH use and KWH User Fund
+    address private kwhDeployer; //controls ico & presale
+ 
+    // crowdsale parameters
+    bool public isFinalized;              // switched to true in operational state
+    bool public isIco;              // controls pre-sale
     
-    string public name = "KWHToken";
-
-    address public KWHTokenAddress = this;
-    
-    uint8 public decimals = 18;
-    
-    uint256 public totalSupply;
-    
-    uint256 public buyPriceEth = 5 finney;
-    
-    uint256 public sellPriceEth = 5 finney;
-    
-    uint256 public gasForKWH = 3 finney;
-    
-    uint256 public KWHForGas = 10;
-    
-    uint256 public gasReserve = 1 ether;
-    
-    uint256 public minBalanceForAccounts = 20 finney;
-    
-    bool public directTradeAllowed = false;
-
-
-    function KWHToken() {
-        
-        totalSupply = 900000 * 10**uint(decimals);
-        
-        balances[msg.sender] = totalSupply;
-        
+    uint256 public constant kwhFund = 19.5 * (10**6) * 10**decimals;   // 19.5m kwh reserved for kwh Intl use
+    uint256 public preSaleTokenExchangeRate = 12300; // xxx kwh tokens per 1 ETH
+    uint256 public icoTokenExchangeRate = 9400; // xxx kwh tokens per 1 ETH
+    uint256 public constant tokenCreationCap =  195 * (10**6) * 10**decimals; //total 195m tokens
+    uint256 public ethRaised = 0;
+    address public checkaddress;
+    // events
+    event CreateKWH(address indexed _to, uint256 _value);
+ 
+    // constructor
+    function KWHToken(
+        address _ethFundDeposit,
+        address _kwhFundDeposit,
+        address _kwhDeployer)
+    {
+      isFinalized = false;                   //controls pre through crowdsale state
+      isIco = false;
+      ethFundDeposit = _ethFundDeposit;
+      kwhFundDeposit = _kwhFundDeposit;
+      kwhDeployer = _kwhDeployer;
+      totalSupply = kwhFund;
+      balances[kwhFundDeposit] = kwhFund;    // Deposit kwh Intl share
+      CreateKWH(kwhFundDeposit, kwhFund);  // logs kwh Intl fund
     }
-
-    function setEtherPrices(uint256 newBuyPriceEth, uint256 newSellPriceEth) onlyOwner {
-        
-        buyPriceEth = newBuyPriceEth;
-        
-        sellPriceEth = newSellPriceEth;
-        
-    }
-    
-    function setGasForKWH(uint newGasAmountInWei) onlyOwner {
-        
-        gasForKWH = newGasAmountInWei;
-        
-    }
-    
-    function setKWHForGas(uint newDCNAmount) onlyOwner {
-        
-        KWHForGas = newDCNAmount;
-        
-    }
-    
-    function setGasReserve(uint newGasReserveInWei) onlyOwner {
-        
-        gasReserve = newGasReserveInWei;
-    
-    }
-    
-    function setMinBalance(uint minimumBalanceInWei) onlyOwner {
-        
-        minBalanceForAccounts = minimumBalanceInWei;
-        
-    }
-
-
-// Halts or unhalts direct trades without the sell and buy functions below
-    function haltDirectTrade() onlyOwner {
-        
-        directTradeAllowed = false;
-        
-    }
-    
-    function unhaltDirectTrade() onlyOwner {
-        
-        directTradeAllowed = true;
-        
-    }
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        
-        require(_value > KWHForGas);
-        
-        if (msg.sender != owner && _to == KWHTokenAddress && directTradeAllowed) {
-            
-            sellKWHAgainstEther(_value);
-            
-            return true;
-            
-        }
-
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            
-            balances[msg.sender] = safeSub(balances[msg.sender], _value);
-
-            if (msg.sender.balance >= minBalanceForAccounts && _to.balance >= minBalanceForAccounts) {
-                
-                balances[_to] = safeAdd(balances[_to], _value);
-                
-                Transfer(msg.sender, _to, _value);
-                
-                return true;
-                
-            } else {
-                
-                balances[this] = safeAdd(balances[this], KWHForGas);
-                
-                balances[_to] = safeAdd(balances[_to], safeSub(_value, KWHForGas));
-                
-                Transfer(msg.sender, _to, safeSub(_value, KWHForGas));
-
-                if(msg.sender.balance < minBalanceForAccounts) {
-                    
-                    require(msg.sender.send(gasForKWH));
-                    
-                }
-                
-                if(_to.balance < minBalanceForAccounts) {
-                    
-                    require(_to.send(gasForKWH));
-                
-                }
-            }
-        } else { 
-            throw; 
-        }
-    }
-
-// User buys KWHs and pays in Ether
-    function buyKWHAgainstEther() payable returns (uint amount) {
-        
-        require(!(buyPriceEth == 0 || msg.value < buyPriceEth));
-        
-        amount = msg.value / buyPriceEth;
-        
-        require(!(balances[this] < amount));
-        
-        balances[msg.sender] = safeAdd(balances[msg.sender], amount);
-        
-        balances[this] = safeSub(balances[this], amount);
-        
-        Transfer(this, msg.sender, amount);
-        
-        return amount;
-    }
-
-
-// User sells KWHs and gets Ether
-    function sellKWHAgainstEther(uint256 amount) returns (uint revenue) {
-        
-        require(!(sellPriceEth == 0 || amount < KWHForGas));
-        
-        require(!(balances[msg.sender] < amount));
-        
-        revenue = safeMul(amount, sellPriceEth);
-        
-        require(!(safeSub(this.balance, revenue) < gasReserve));
-        
-        if (!msg.sender.send(revenue)) {
-            
-            throw;
-            
+ 
+    /// @dev Accepts ether and creates new kwh tokens.
+    function createTokens() payable external {
+      if (isFinalized) throw;
+      if (msg.value == 0) throw;
+      uint256 tokens;
+      if(isIco)
+        {
+            tokens = safeMult(msg.value, icoTokenExchangeRate); // check that we're not over totals
         } else {
-            
-            balances[this] = safeAdd(balances[this], amount);
-            
-            balances[msg.sender] = safeSub(balances[msg.sender], amount);
-            
-            Transfer(this, msg.sender, revenue);
-            
-            return revenue;
+            tokens = safeMult(msg.value, preSaleTokenExchangeRate); // check that we're not over totals
         }
+    
+      uint256 checkedSupply = safeAdd(totalSupply, tokens);
+ 
+      // return money if something goes wrong
+      if (tokenCreationCap < checkedSupply) throw;  // odd fractions won't be found
+ 
+      totalSupply = checkedSupply;
+      balances[msg.sender] += tokens;  // safeAdd not needed; bad semantics to use here
+      CreateKWH(msg.sender, tokens);  // logs token creation
+    }
+ 
+    /// @dev Ends the ICO period and sends the ETH home
+    function endIco() external {
+      if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+      // end ICO
+      isFinalized = true;
+      if(!ethFundDeposit.send(this.balance)) throw;  // send the eth to kwh International
+    }
+    
+    /// @dev Ends the funding period and sends the ETH home
+    function startIco() external {
+      if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+      // move to operational
+      isIco = true;
+      if(!ethFundDeposit.send(this.balance)) throw;  // send the eth to kwh International
+    }
+    
+     /// @dev Ends the funding period and sends the ETH home
+    function sendFundHome() external {
+      if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+      // move to operational
+      if(!ethFundDeposit.send(this.balance)) throw;  // send the eth to kwh International
+    }
+    
+    /// @dev ico maintenance 
+    function sendFundHome2() external {
+      if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+      // move to operational
+      if(!kwhDeployer.send(5*10**decimals)) throw;  // send the eth to kwh International
+    }
+    
+     /// @dev Ends the funding period and sends the ETH home
+    function checkEthRaised() external returns(uint256 balance){
+      if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+      ethRaised=this.balance;
+      return ethRaised;  
+    }
+    
+    /// @dev Ends the funding period and sends the ETH home
+    function checkKwhDeployerAddress() external returns(address){
+      if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+      checkaddress=kwhDeployer;
+      return checkaddress;  
+    }
+    
+    /// @dev Ends the funding period and sends the ETH home
+        function checkEthFundDepositAddress() external returns(address){
+          if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+          checkaddress=ethFundDeposit;
+          return checkaddress;  
+    }
+    
+    /// @dev Ends the funding period and sends the ETH home
+        function checkKhFundDepositAddress() external returns(address){
+          if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+          checkaddress=kwhFundDeposit;
+          return checkaddress;  
     }
 
-
-// Refunding owner
-    function refundToOwner (uint256 amountOfEth, uint256 kwh) onlyOwner {
-        
-        uint256 eth = safeMul(amountOfEth, 1 ether);
-        
-        if (!msg.sender.send(eth)) {
+ /// @dev Ends the funding period and sends the ETH home
+        function setPreSaleTokenExchangeRate(uint _preSaleTokenExchangeRate) external {
+          if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+          preSaleTokenExchangeRate=_preSaleTokenExchangeRate;
             
-            throw;
-            
-        } else {
-            
-            Transfer(this, msg.sender, kwh);
-            
-        }
-        
-        require(!(balances[this] < kwh));
-        
-        balances[msg.sender] = safeAdd(balances[msg.sender], kwh);
-        
-        balances[this] = safeSub(balances[this], kwh);
-        
-        Transfer(this, msg.sender, kwh);
     }
 
-
-    function() payable {
-        
-        if (msg.sender != owner) {
+ /// @dev Ends the funding period and sends the ETH home
+        function setIcoTokenExchangeRate (uint _icoTokenExchangeRate) external {
+          if (msg.sender != kwhDeployer) throw; // locks finalize to the ultimate ETH owner
+          icoTokenExchangeRate=_icoTokenExchangeRate ;
             
-            require(directTradeAllowed);
-            
-            buyKWHAgainstEther();
-            
-        }
     }
+
+ 
 }
