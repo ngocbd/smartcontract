@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DANK at 0xb8ad23dd7bbe75e2f2e35de24bc641bb4dfeb574
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DANK at 0xbc6e91fb8834eecc7bc3e896c439a532e0e7c260
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.16;
 
 contract Token {
 
@@ -90,40 +90,27 @@ contract StandardToken is Token {
 }
 
 
-//name this contract whatever you'd like
 contract DANK is StandardToken {
 
     function () {
-        //if ether is sent to this address, send it back.
         throw;
     }
 
     /* Public variables of the token */
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public name;                   
+    uint8 public decimals;                
+    string public symbol;                 
+    string public version = 'H1.0';    
 
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function DANK(
         ) {
-        balances[msg.sender] = 1000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000000000;                        // Update total supply (100000 for example)
-        name = "DANK";                                   // Set the name for display purposes
-        decimals = 4;                            // Amount of decimals for display purposes
-        symbol = "DANK";                               // Set the symbol for display purposes
+        balances[msg.sender] = 250000000000000000000000000000;
+        totalSupply = 250000000000000000000000000000;
+        name = "Dank Signals";
+        decimals = 18;
+        symbol = "DANK";
     }
 
     /* Approves and then calls the receiving contract */
@@ -136,7 +123,5 @@ contract DANK is StandardToken {
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
-        
     }
-    
 }
