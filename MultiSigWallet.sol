@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xe18ce35060f39ed5c68b92629230aadcd79ea6e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x7e6614722614e434c4df9901bab31e466ba12fa4
 */
 /**
  * Originally from https://github.com/ConsenSys/MultiSigWallet
  */
 
-pragma solidity 0.4.8;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
