@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract coinback at 0xfea15f60f4bb409c77a798e2611dca661bece942
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract coinback at 0x58f08db7ce5b8dccbc675d75f86b997fae88a296
 */
 pragma solidity ^0.4.0;
 contract OraclizeI {
@@ -251,35 +251,79 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
-contract coinback is usingOraclize {
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    require(c / a == b);
+    return c;
+  }
 
-    struct betInfo{
-        address srcAddress;
-        uint betValue;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a);
+    return c;
+  }
+}
+
+contract owned {
+    address public owner;
+
+    function owned() public {
+        owner = msg.sender;
     }
 
-    uint POOL_AWARD;                                          //??
-    uint constant FREE_PERCENT = 1;                          //??????1%
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+}
 
-    uint32 public oraclizeGas = 200000;
-    uint32 constant MAX_RANDOM_NUM = 1000000;                 //?????
-    betInfo overBetPlayer;                                    //???????
-    uint32 betId;
-    uint32 luckyIndex;
-    uint32 public turnId;                                     //??
-    uint   public beginTime;                                  //??????
-    uint   public totalAward;                                 //????
+contract coinback is owned,usingOraclize {
 
-    bool public stopContract;                                 //????
-    bool public stopBet;                                      //????
-    bool public exitOverPlayer;
-    address owner;
-    mapping(uint32=>betInfo) betMap;
+    using SafeMath for uint256;
+    struct betInfo{
+        address srcAddress;
+        uint256 betValue;
+    }
 
-    event LOG_NewTurn(uint turnNo,uint time,uint totalnum);                                         //???(??,????,????)
-    event LOG_PlayerBet(address srcAddress,uint betNum,uint turnNo,uint totalnum,uint time);        //????(????????????????????)
-    event LOG_LuckyPLayer(address luckyAddress,uint luckyNum,uint turnNo);                         //????(????????????)
+    uint256 private POOL_AWARD;
+    uint256 constant FREE_PERCENT = 1;
 
+    uint32 private oraclizeGas = 200000;
+    uint32 constant MAX_RANDOM_NUM = 1000000;
+    betInfo private overBetPlayer;
+    uint256 private betId;
+
+    uint256 private turnId;
+    uint256 private beginTime;
+    uint256 private totalAward;
+    uint256 private realAward;
+
+    bool public stopContract;
+    bool public stopBet;
+    bool private exitOverPlayer;
+    bool private generateRandom;
+    uint256 private randomBalance;
+    mapping(uint256=>betInfo) private betMap;
+    uint256 private randomNum;
+
+    event LOG_NewTurn(uint256 turnNo,uint256 time,uint256 totalnum);
+    event LOG_PlayerBet(address srcAddress,uint256 betNum,uint256 turnNo,uint256 totalnum,uint256 time);
+    event LOG_LuckyPLayer(address luckyAddress,uint256 luckyNum,uint256 turnNo);
+    event LOG_Random(uint256 random);
     modifier onlyOwner {
         if (owner != msg.sender) throw;
         _;
@@ -295,14 +339,23 @@ contract coinback is usingOraclize {
         _;
     }
 
-    function coinback(uint initPool){
+    modifier notBiger{
+        if(msg.value > POOL_AWARD) throw;
+        _;
+    }
 
-        owner = msg.sender;
+    modifier onlyRandom{
+        if(!generateRandom) throw;
+        _;
+    }
+
+    function coinback(uint256 initPool){
         POOL_AWARD = initPool;
         turnId = 0;
         stopContract = false;
         exitOverPlayer = false;
         betId = 0;
+        generateRandom = false;
         startNewTurn();
     }
 
@@ -312,27 +365,32 @@ contract coinback is usingOraclize {
 
     function bet() payable
         notStopContract
-        notStopBet{
+        notStopBet
+        notBiger
+        {
 
-        uint betValue = msg.value;
+        uint256 betValue = msg.value;
         totalAward = address(this).balance;
         if(totalAward > POOL_AWARD)
             totalAward = POOL_AWARD;
 
+        realAward = totalAward;
+
         if(address(this).balance >= POOL_AWARD)
         {
-            uint overValue = address(this).balance - POOL_AWARD;
+            uint256 overValue = address(this).balance.sub(POOL_AWARD);
             if(overValue > 0)
             {
-                betValue = betValue - overValue;
+                betValue = betValue.sub(overValue);
                 overBetPlayer = betInfo({srcAddress:msg.sender,betValue:overValue});
+                exitOverPlayer = true;
             }
             stopBet = true;
         }
         betMap[betId] = betInfo({srcAddress:msg.sender,betValue:betValue});
-        betId++;
+        betId = betId.add(1);
 
-        LOG_PlayerBet(msg.sender,msg.value,turnId,totalAward,beginTime);
+        LOG_PlayerBet(msg.sender,betValue,turnId,totalAward,beginTime);
 
         if(stopBet)
           closeThisTurn();
@@ -341,35 +399,40 @@ contract coinback is usingOraclize {
     function __callback(bytes32 myid, string result) {
         if (msg.sender != oraclize_cbAddress()) throw;
 
-        uint randomNum = parseInt(result);
+        randomNum = parseInt(result);
+        generateRandom = true;
+        LOG_Random(randomNum);
+    }
+
+    function afterCallBack() onlyOwner
+        onlyRandom{
+
+        generateRandom = false;
         totalAward = address(this).balance;
         if(totalAward > POOL_AWARD)
             totalAward = POOL_AWARD;
 
-        uint randomBalance = totalAward*randomNum/MAX_RANDOM_NUM;
-        uint32 index = 0;
+        randomBalance = totalAward.mul(randomNum).div(MAX_RANDOM_NUM);
+        uint256 index = getLunckyIndex();
+        uint256 winCoin = totalAward.mul(100-FREE_PERCENT).div(100);
+        uint256 waiterfree = totalAward.mul(FREE_PERCENT).div(100);
 
-        index = getLunckyIndex(randomBalance);
-        uint winCoin = totalAward*(100-FREE_PERCENT)/100;
-        uint waiterfree = totalAward*FREE_PERCENT/100;
-
-        LOG_LuckyPLayer(betMap[index].srcAddress,totalAward,turnId);
+        LOG_LuckyPLayer(betMap[index].srcAddress,realAward,turnId);
 
         if(!betMap[index].srcAddress.send(winCoin)) throw;
         if(!owner.send(waiterfree)) throw;
 
         startNewTurn();
+
     }
+    function getLunckyIndex() private returns(uint256){
 
-    function getLunckyIndex(uint randomBalance) private returns(uint32){
-
-        uint range = 0;
-        for(uint32 i =0; i< betId; i++)
+        uint256 range = 0;
+        for(uint256 i =0; i< betId; i++)
         {
-            range += betMap[i].betValue;
+            range = range.add(betMap[i].betValue);
             if(range >= randomBalance)
             {
-                luckyIndex = i;
                 return i;
             }
         }
@@ -379,39 +442,32 @@ contract coinback is usingOraclize {
 
         clearBetMap();
         betId = 0;
-        if(exitOverPlayer)
-        {
-            betMap[betId] = overBetPlayer;
-            betId++;
-            exitOverPlayer = false;
-        }
-        turnId++;
+        turnId = turnId.add(1);
         beginTime = now;
         totalAward = address(this).balance;
         stopBet = false;
+        if(exitOverPlayer)
+        {
+            betMap[betId] = overBetPlayer;
+            betId = betId.add(1);
+            exitOverPlayer = false;
+            LOG_PlayerBet(overBetPlayer.srcAddress,overBetPlayer.betValue,turnId,totalAward,beginTime);
+        }
         LOG_NewTurn(turnId,beginTime,totalAward);
     }
 
     function clearBetMap() private{
-        for(uint32 i=0;i<betId;i++){
+        for(uint256 i=0;i<betId;i++){
             delete betMap[i];
         }
     }
 
     function closeThisTurn() private{
+
         bytes32 oid = oraclize_query("URL","https://www.random.org/integers/?num=1&min=1&max=1000000&col=1&base=10&format=plain&rnd=new",oraclizeGas);
     }
 
-    function getLunckyInfo() returns(uint32,address,bool){
-        return (luckyIndex,betMap[luckyIndex].srcAddress,stopContract);
-    }
-
-    function getOverPLayer() returns(address,uint){
-        return (overBetPlayer.srcAddress,overBetPlayer.betValue);
-    }
-    /***********????**********/
-
-    function closeTurnByHand(uint32 no) onlyOwner{
+    function closeTurnByHand(uint256 no) onlyOwner{
         if(turnId != no) throw;
         if(address(this).balance == 0) throw;
         stopBet = true;
@@ -428,5 +484,9 @@ contract coinback is usingOraclize {
 
     function changeOwner(address newOwner) onlyOwner{
         owner = newOwner;
+    }
+
+    function resetState() onlyOwner{
+        stopBet = false;
     }
 }
