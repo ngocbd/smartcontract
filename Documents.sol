@@ -1,7 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Documents at 0xFA1Bcd27Da169C69bfbeda681c2A8277b8E08171
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Documents at 0x52ed3c202c4652f952a1561ac0c030f1ed9460ff
 */
-pragma solidity ^0.4.2;
+/*
+AvatarNetwork Copyright
+
+??????? ?????????? v1.2
+
+
+https://avatarnetwork.io
+
+*/
 
 /* ???????????? ???????? */
 contract Owned {
@@ -92,6 +100,7 @@ contract Documents is Owned {
     ? ????? ????????? ??????? DocumentSigned */
     function addSignature(uint id) {
         address member = msg.sender;
+        if (documentsCount < id) throw;
 
         Document d = documentsIds[id];
         uint count = d.signsCount;
@@ -125,8 +134,7 @@ contract Documents is Owned {
                        string link,
                        string data,
                        address creator,
-                       uint date,
-                       uint count) {
+                       uint date) {
         Document d = documentsIds[id];
         hash = d.hash;
         link = d.link;
