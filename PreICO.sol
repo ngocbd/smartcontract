@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICO at 0x5a13fb126ff58a66e09b79de8777d3f62d4e7161
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICO at 0xc2065c868006cc417b8d604874e47d58937f4f39
 */
 pragma solidity ^0.4.15;
 
@@ -76,7 +76,7 @@ contract PreICO is Ownable {
   uint256 public constant START = 1523692800; // start date in epoch timestamp
   uint256 public constant DAYS = 21; // 21 days/ 3 weeks
   uint256 public constant Bonus = 40; //40% bonus during preICO
-  uint256 public constant initialTokens =  53333333333 * 10**17; // Initial number of tokens available
+  uint256 public constant initialTokens =  5333333333 * 10**17; // Initial number of tokens available
   bool public initialized = false;
   uint256 public raisedAmount = 0;
   
