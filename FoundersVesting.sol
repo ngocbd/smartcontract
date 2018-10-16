@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoundersVesting at 0x26bedda4f8c496444306c801367d9cba5d5d9266
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoundersVesting at 0xceb4cd1ce2b6809dff06b70a8455990ec040dd41
 */
 pragma solidity ^0.4.16;
 
@@ -289,7 +289,7 @@ contract Goldmint is SafeMath {
           0xe9fC1A57a5dC1CaA3DE22A940E9F09e640615f7E,
           0xD360433950DE9F6FA0e93C29425845EeD6BFA0d0,
           0xF0De97EAff5D6c998c80e07746c81a336e1BBd43,
-          0xF4Ce80097bf1E584822dBcA84f91D5d7d9df0846
+          0x80b365da1C18f4aa1ecFa0dFA07Ed4417B05Cc69
      ];
 
      // We count ETH invested by person, for refunds (see below)
