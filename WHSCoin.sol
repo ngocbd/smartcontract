@@ -1,24 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHSCoin at 0x3ce205908643988b7Ca506A493d67ece5b03b5df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHSCoin at 0xbaea1d11eb75760d46d4ebf842d6e14e07f8871a
 */
 pragma solidity ^0.4.16;
-
-/**
- * White Stone Coin
- *
- * When Art meets Blockchain, interesting things happen.
- * https://www.whitestone-gallery.com/
- *
- * This is an ownable StandardToken with the following behavior added:
- *  - 10.000.000 coins can be minted maximum
- *  - 5.000.000 coins minted to company wallet at creation time
- *  - Investor receives bonus coins from company wallet during bonus phases
- * 
- * Visit https://whscoin.com for more information 
- *
- * Copyright 2017 AI Innovation Japan. All Rights Reserved.
- */
-
 
 /**
  * @title ERC20Basic
@@ -27,7 +10,7 @@ pragma solidity ^0.4.16;
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
@@ -37,25 +20,28 @@ contract ERC20Basic {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -78,6 +64,7 @@ contract BasicToken is ERC20Basic {
   */
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -91,7 +78,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
@@ -102,7 +89,7 @@ contract BasicToken is ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
+  function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -117,7 +104,7 @@ contract ERC20 is ERC20Basic {
  */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) allowed;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
   /**
@@ -128,15 +115,12 @@ contract StandardToken is ERC20, BasicToken {
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
-
-    uint256 _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
@@ -163,7 +147,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
@@ -173,15 +157,13 @@ contract StandardToken is ERC20, BasicToken {
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval (address _spender, uint _addedValue)
-    returns (bool success) {
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue)
-    returns (bool success) {
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -210,7 +192,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -228,13 +210,29 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
+
+/**
+ * White Stone Coin
+ *
+ * When Art meets Blockchain, interesting things happen.
+ *
+ * This is a very simple token with the following properties:
+ *  - 10.000.000 coins max supply
+ *  - 5.000.000 coins mined for the company wallet
+ *  - Investor receives bonus coins from company wallet during bonus phases
+ * 
+ * Visit https://whscoin.com for more information and tokenholder benefits. 
+ */
+
+
+
 
 contract WHSCoin is StandardToken, Ownable {
   string public constant name = "White Stone Coin";
@@ -244,18 +242,19 @@ contract WHSCoin is StandardToken, Ownable {
   uint256 public constant UNIT = 10 ** decimals;
 
   address public companyWallet;
+  address public admin;
 
-  uint256 public tokenPrice = 0.03 ether;
-  uint256 public totalSupply = 10000000 * UNIT;
-  uint256 public remainingSupply = totalSupply;
+  uint256 public tokenPrice = 0.01 ether;
+  uint256 public maxSupply = 10000000 * UNIT;
+  uint256 public totalSupply = 0;
   uint256 public totalWeiReceived = 0;
 
-  uint256 startDate  = 1513400400; // 14:00 JST Dec 16 2017;
-  uint256 endDate    = 1523768400; //14:00 JST Apr 15 2018;
+  uint256 startDate  = 1516856400; // 14:00 JST Jan 25 2018;
+  uint256 endDate    = 1522731600; // 14:00 JST Apr 3 2018;
 
-  uint256 bonus30end = 1516078800; // 14:00 JST Jan 16 2018;
-  uint256 bonus20end = 1518757200; // 14:00 JST Feb 16 2018;
-  uint256 bonus10end = 1521176400; // 14:00 JST Mar 16 2018;
+  uint256 bonus30end = 1518066000; // 14:00 JST Feb 8 2018;
+  uint256 bonus15end = 1519794000; // 14:00 JST Feb 28 2018;
+  uint256 bonus5end  = 1521003600; // 14:00 JST Mar 14 2018;
 
   /**
    * event for token purchase logging
@@ -265,19 +264,32 @@ contract WHSCoin is StandardToken, Ownable {
    * @param amount amount of tokens purchased
    */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-  
-  function WHSCoin(address _companyWallet) {
-    companyWallet = _companyWallet;
-    balances[companyWallet] = 5000000 * UNIT;
-    remainingSupply = remainingSupply.sub(5000000 * UNIT);
+
+  event NewSale();
+
+  modifier onlyAdmin() {
+    require(msg.sender == admin);
+    _;
   }
 
-  function calcBonus(uint256 amount) internal returns (uint256) {
+  function WHSCoin(address _companyWallet, address _admin) public {
+    companyWallet = _companyWallet;
+    admin = _admin;
+    balances[companyWallet] = 5000000 * UNIT;
+    totalSupply = totalSupply.add(5000000 * UNIT);
+    Transfer(address(0x0), _companyWallet, 5000000 * UNIT);
+  }
+
+  function setAdmin(address _admin) public onlyOwner {
+    admin = _admin;
+  }
+
+  function calcBonus(uint256 _amount) internal view returns (uint256) {
     uint256 bonusPercentage = 30;
-    if (now > bonus30end) bonusPercentage = 20;
-    if (now > bonus20end) bonusPercentage = 10;
-    if (now > bonus10end) bonusPercentage = 0;
-    return amount * bonusPercentage / 100;
+    if (now > bonus30end) bonusPercentage = 15;
+    if (now > bonus15end) bonusPercentage = 5;
+    if (now > bonus5end) bonusPercentage = 0;
+    return _amount * bonusPercentage / 100;
   }
 
   function buyTokens() public payable {
@@ -286,26 +298,45 @@ contract WHSCoin is StandardToken, Ownable {
     require(msg.value > 0);
 
     uint256 amount = msg.value * UNIT / tokenPrice;
-    uint256 bonus = calcBonus(amount);
-    require(remainingSupply.sub(amount.add(bonus)) > 0);
+    uint256 bonus = calcBonus(msg.value) * UNIT / tokenPrice;
+    
+    totalSupply = totalSupply.add(amount);
+    
+    require(totalSupply <= maxSupply);
 
     totalWeiReceived = totalWeiReceived.add(msg.value);
 
-    remainingSupply = remainingSupply.sub(amount);
     balances[msg.sender] = balances[msg.sender].add(amount);
+    
+    TokenPurchase(msg.sender, msg.sender, msg.value, amount);
+    
     Transfer(address(0x0), msg.sender, amount);
 
     if (bonus > 0) {
       Transfer(companyWallet, msg.sender, bonus);
-      balances[companyWallet] = balances[companyWallet].sub(bonus);
+      balances[companyWallet] -= bonus;
       balances[msg.sender] = balances[msg.sender].add(bonus);
     }
 
-    TokenPurchase(msg.sender, msg.sender, msg.value, amount.add(bonus));
     companyWallet.transfer(msg.value);
   }
 
   function() public payable {
     buyTokens();
   }
+
+  /***
+   * This function is used to transfer tokens that have been bought through other means (credit card, bitcoin, etc), and to burn tokens after the sale.
+   */
+  function sendTokens(address receiver, uint256 tokens) public onlyAdmin {
+    require(now < endDate);
+    require(now >= startDate);
+    require(totalSupply + tokens * UNIT <= maxSupply);
+
+    uint256 amount = tokens * UNIT;
+    balances[receiver] += amount;
+    totalSupply += amount;
+    Transfer(address(0x0), receiver, amount);
+  }
+
 }
