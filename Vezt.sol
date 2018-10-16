@@ -1,76 +1,173 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vezt at 0x66315af28d74e09e049673b4cd30b79db5a47f0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vezt at 0x9720b467a710382a232a32f540bdced7d662a10b
 */
-pragma solidity 0.4.16;
+pragma solidity 0.4.18;
+/**
+    Used for administrration of the VZT Token Contract
+*/
 
-// implement safemath as a library
+contract Administration {
+
+    // keeps track of the contract owner
+    address     public  owner;
+    // keeps track of the contract administrator
+    address     public  administrator;
+    // keeps track of hte song token exchange
+    address     public  songTokenExchange;
+    // keeps track of the royalty information contract
+    address     public  royaltyInformationContract;
+    // keeps track of whether or not the admin contract is frozen
+    bool        public  administrationContractFrozen;
+
+    // keeps track of the contract moderators
+    mapping (address => bool) public moderators;
+
+    event ModeratorAdded(address indexed _invoker, address indexed _newMod, bool indexed _newModAdded);
+    event ModeratorRemoved(address indexed _invoker, address indexed _removeMod, bool indexed _modRemoved);
+    event AdministratorAdded(address indexed _invoker, address indexed _newAdmin, bool indexed _newAdminAdded);
+    event RoyaltyInformationContractSet(address indexed _invoker, address indexed _newRoyaltyContract, bool indexed _newRoyaltyContractSet);
+    event SongTokenExchangeContractSet(address indexed _invoker, address indexed _newSongTokenExchangeContract, bool indexed _newSongTokenExchangeSet);
+
+    function Administration() {
+        owner = 0x79926C875f2636808de28CD73a45592587A537De;
+        administrator = 0x79926C875f2636808de28CD73a45592587A537De;
+        administrationContractFrozen = false;
+    }
+
+    /// @dev checks to see if the contract is frozen
+    modifier isFrozen() {
+        require(administrationContractFrozen);
+        _;
+    }
+
+    /// @dev checks to see if the contract is not frozen
+    modifier notFrozen() {
+        require(!administrationContractFrozen);
+        _;
+    }
+
+    /// @dev checks to see if the msg.sender is owner
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /// @dev checks to see if msg.sender is owner, or admin
+    modifier onlyAdmin() {
+        require(msg.sender == owner || msg.sender == administrator);
+        _;
+    }
+
+    /// @dev checks to see if msg.sender is owner, admin, or song token exchange
+    modifier onlyAdminOrExchange() {
+        require(msg.sender == owner || msg.sender == songTokenExchange || msg.sender == administrator);
+        _;
+    }
+
+    /// @dev checks to see if msg.sender is privileged
+    modifier onlyModerator() {
+        if (msg.sender == owner) {_;}
+        if (msg.sender == administrator) {_;}
+        if (moderators[msg.sender]) {_;}
+    }
+
+    /// @notice used to freeze the administration contract
+    function freezeAdministrationContract() public onlyAdmin notFrozen returns (bool frozen) {
+        administrationContractFrozen = true;
+        return true;
+    }
+
+    /// @notice used to unfreeze the administration contract
+    function unfreezeAdministrationContract() public onlyAdmin isFrozen returns (bool unfrozen) {
+        administrationContractFrozen = false;
+        return true;
+    }
+
+    /// @notice used to set the royalty information contract
+    function setRoyaltyInformationContract(address _royaltyInformationContract) public onlyAdmin notFrozen returns (bool set) {
+        royaltyInformationContract = _royaltyInformationContract;
+        RoyaltyInformationContractSet(msg.sender, _royaltyInformationContract, true);
+        return true;
+    }
+
+    /// @notice used to set the song token exchange
+    function setTokenExchange(address _songTokenExchange) public onlyAdmin notFrozen returns (bool set) {
+        songTokenExchange = _songTokenExchange;
+        SongTokenExchangeContractSet(msg.sender, _songTokenExchange, true);
+        return true;
+    }
+
+    /// @notice used to add a moderator
+    function addModerator(address _newMod) public onlyAdmin notFrozen returns (bool success) {
+        moderators[_newMod] = true;
+        ModeratorAdded(msg.sender, _newMod, true);
+        return true;
+    }
+
+    /// @notice used to remove a moderator
+    function removeModerator(address _removeMod) public onlyAdmin notFrozen returns (bool success) {
+        moderators[_removeMod] = false;
+        ModeratorRemoved(msg.sender, _removeMod, true);
+        return true;
+    }
+
+    /// @notice used to set an administrator
+    function setAdministrator(address _administrator) public onlyOwner notFrozen returns (bool success) {
+        administrator = _administrator;
+        AdministratorAdded(msg.sender, _administrator, true);
+        return true;
+    }
+
+    /// @notice used to transfer contract ownership
+    function transferOwnership(address _newOwner) public onlyOwner notFrozen returns (bool success) {
+        owner = _newOwner;
+        return true;
+    }
+}
+
 library SafeMath {
 
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     require(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a / b;
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     require(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     require(c >= a);
     return c;
   }
 }
 
-// Used for function invoke restriction
-contract Owned {
+/**
+    Version: 1.0.1
+*/
 
-    address public owner; // temporary address
-
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner() {
-        if (msg.sender != owner)
-            revert();
-        _; // function code inserted here
-    }
-
-    function transferOwnership(address _newOwner) onlyOwner returns (bool success) {
-        if (msg.sender != owner)
-            revert();
-        owner = _newOwner;
-        return true;
-        
-    }
-}
-
-contract Vezt is Owned {
+contract Vezt is Administration {
     using SafeMath for uint256;
 
-    address[]   public  veztUsers;
-    uint256     public  totalSupply;
-    uint8       public  decimals;
-    string      public  name;
-    string      public  symbol;
-    bool        public  tokenTransfersFrozen;
-    bool        public  tokenMintingEnabled;
-    bool        public  contractLaunched;
+    uint256                 public  totalSupply;
+    uint8                   public  decimals;
+    string                  public  name;
+    string                  public  symbol;
+    bool                    public  tokenTransfersFrozen;
+    bool                    public  tokenMintingEnabled;
+    bool                    public  contractLaunched;
 
-    mapping (address => mapping (address => uint256))   public allowance;
     mapping (address => uint256)                        public balances;
-    mapping (address => uint256)                        public royaltyTracking;
-    mapping (address => uint256)                        public icoBalances;
-    mapping (address => uint256)                        public veztUserArrayIdentifier;
-    mapping (address => bool)                           public veztUserRegistered;
+    mapping (address => mapping (address => uint256))   public allowed;
+
 
     event Transfer(address indexed _sender, address indexed _recipient, uint256 _amount);
     event Approve(address indexed _owner, address indexed _spender, uint256 _amount);
@@ -80,44 +177,27 @@ contract Vezt is Owned {
     event MintTokens(address indexed _minter, uint256 _amount, bool indexed _minted);
     event TokenMintingDisabled(address indexed _invoker, bool indexed _disabled);
     event TokenMintingEnabled(address indexed _invoker, bool indexed _enabled);
+    event SongTokenAdded(address indexed _songTokenAddress, bool indexed _songTokenAdded);
+    event SongTokenRemoved(address indexed _songTokenAddress, bool indexed _songTokenRemoved);
 
     function Vezt() {
         name = "Vezt";
         symbol = "VZT";
         decimals = 18;
-        //125 million in wei 
         totalSupply = 125000000000000000000000000;
-        balances[msg.sender] = balances[msg.sender].add(totalSupply);
+        balances[0x79926C875f2636808de28CD73a45592587A537De] = balances[0x79926C875f2636808de28CD73a45592587A537De].add(totalSupply);
         tokenTransfersFrozen = true;
         tokenMintingEnabled = false;
         contractLaunched = false;
     }
 
-    /// @notice Used to log royalties
-    /// @param _receiver The eth address of person to receive VZT Tokens
-    /// @param _amount The amount of VZT Tokens in wei to send
-    function logRoyalty(address _receiver, uint256 _amount)
-        onlyOwner
-        public 
-        returns (bool logged)
-    {
-        require(transferCheck(msg.sender, _receiver, _amount));
-        if (!veztUserRegistered[_receiver]) {
-            veztUsers.push(_receiver);
-            veztUserRegistered[_receiver] = true;
-        }
-        require(royaltyTracking[_receiver].add(_amount) > 0);
-        require(royaltyTracking[_receiver].add(_amount) > royaltyTracking[_receiver]);
-        royaltyTracking[_receiver] = royaltyTracking[_receiver].add(_amount);
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_receiver] = balances[_receiver].add(_amount);
-        Transfer(owner, _receiver, _amount);
-        return true;
-    }
-
+    /**
+        @dev Used by admin to send bulk amount of transfers, primary purpose to replay tx from the crowdfund to make it easier to do bulk sending
+        @notice Can also be used for general bulk transfers  via the associated python script
+     */
     function transactionReplay(address _receiver, uint256 _amount)
-        onlyOwner
         public
+        onlyOwner
         returns (bool replayed)
     {
         require(transferCheck(msg.sender, _receiver, _amount));
@@ -127,45 +207,80 @@ contract Vezt is Owned {
         return true;
     }
 
-    /// @notice Used to launch the contract, and enabled token minting
-    function launchContract() onlyOwner {
+    /**
+        @notice Used to launch the contract
+     */
+    function launchContract() 
+        public
+        onlyOwner
+        returns (bool launched)
+    {
         require(!contractLaunched);
         tokenTransfersFrozen = false;
         tokenMintingEnabled = true;
         contractLaunched = true;
         LaunchContract(msg.sender, true);
+        return true;
     }
 
-    function disableTokenMinting() onlyOwner returns (bool disabled) {
+    /**
+        @notice Used to disable token minting
+     */
+    function disableTokenMinting() 
+        public
+        onlyOwner
+        returns (bool disabled) 
+    {
         tokenMintingEnabled = false;
         TokenMintingDisabled(msg.sender, true);
         return true;
     }
 
-    function enableTokenMinting() onlyOwner returns (bool enabled) {
+    /**
+        @notice Used to enable token minting
+     */
+    function enableTokenMinting() 
+        public
+        onlyOwner
+        returns (bool enabled)
+    {
         tokenMintingEnabled = true;
         TokenMintingEnabled(msg.sender, true);
         return true;
     }
 
-    function freezeTokenTransfers() onlyOwner returns (bool success) {
+    /**
+        @notice Used to freeze token transfers
+     */
+    function freezeTokenTransfers()
+        public
+        onlyOwner
+        returns (bool frozen)
+    {
         tokenTransfersFrozen = true;
         FreezeTokenTransfers(msg.sender, true);
         return true;
     }
 
-    function thawTokenTransfers() onlyOwner returns (bool success) {
+    /**
+        @notice Used to thaw token tra4nsfers
+     */
+    function thawTokenTransfers()
+        public
+        onlyOwner
+        returns (bool thawed)
+    {
         tokenTransfersFrozen = false;
         ThawTokenTransfers(msg.sender, true);
         return true;
     }
 
-    /// @notice Used to transfer funds
-    /// @param _receiver Eth address to send VZT tokens too
-    /// @param _amount The amount of VZT tokens in wei to send
+    /**
+        @notice Used to transfer funds
+     */
     function transfer(address _receiver, uint256 _amount)
         public
-        returns (bool success)
+        returns (bool transferred)
     {
         require(transferCheck(msg.sender, _receiver, _amount));
         balances[msg.sender] = balances[msg.sender].sub(_amount);
@@ -174,128 +289,142 @@ contract Vezt is Owned {
         return true;
     }
 
-    /// @notice Used to transfer funds on behalf of owner to receiver
-    /// @param _owner The person you are allowed to sends funds on bhhalf of
-    /// @param _receiver The person to receive the funds
-    /// @param _amount The amount of VZT tokens in wei to send
+    /**
+        @notice Used to transfer funds on behalf of someone
+     */
     function transferFrom(address _owner, address _receiver, uint256 _amount) 
         public 
-        returns (bool success)
+        returns (bool transferred)
     {
-        require(allowance[_owner][msg.sender] >= _amount);
+        require(allowed[_owner][msg.sender] >= _amount);
         require(transferCheck(_owner, _receiver, _amount));
-        allowance[_owner][msg.sender] = allowance[_owner][msg.sender].sub(_amount);
-        balances[_owner] =  balances[_owner].sub(_amount);
+        allowed[_owner][msg.sender] = allowed[_owner][msg.sender].sub(_amount);
+        balances[_owner] = balances[_owner].sub(_amount);
         balances[_receiver] = balances[_receiver].add(_amount);
         Transfer(_owner, _receiver, _amount);
         return true;
     }
 
-    /// @notice Used to approve someone to send funds on your behalf
-    /// @param _spender The eth address of the person you are approving
-    /// @param _amount The amount of VZT tokens _spender is allowed to send (in wei)
+    /**
+        @notice Used to approve someone to spend funds on your behalf
+     */
     function approve(address _spender, uint256 _amount)
         public
         returns (bool approved)
     {
         require(_amount > 0);
-        require(balances[msg.sender] >= _amount);
-        allowance[msg.sender][_spender] = allowance[msg.sender][_spender].add(_amount);
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_amount);
+        Approve(msg.sender, _spender, _amount);
         return true;
     }
-
-    /// @notice Used to burn tokens and decrease total supply
-    /// @param _amount The amount of VZT tokens in wei to burn
+    
+    /**
+        @notice Used to burn tokens
+     */
     function tokenBurner(uint256 _amount)
+        public
         onlyOwner
         returns (bool burned)
     {
         require(_amount > 0);
-        require(totalSupply.sub(_amount) > 0);
-        require(balances[msg.sender] > _amount);
-        require(balances[msg.sender].sub(_amount) > 0);
+        require(totalSupply.sub(_amount) >= 0);
+        require(balances[msg.sender] >= _amount);
+        require(balances[msg.sender].sub(_amount) >= 0);
         totalSupply = totalSupply.sub(_amount);
         balances[msg.sender] = balances[msg.sender].sub(_amount);
         Transfer(msg.sender, 0, _amount);
         return true;
     }
 
-    /// @notice Low level function Used to create new tokens and increase total supply
-    /// @param _amount The amount of VZT tokens in wei to create
-    function tokenMinter(uint256 _amount)
-        private
+    /**
+        @notice Used to mint new tokens
+    */
+    function tokenFactory(uint256 _amount)
+        public 
+        onlyOwner
         returns (bool minted)
     {
-        require(tokenMintingEnabled);
-        require(_amount > 0);
-        require(totalSupply.add(_amount) > 0);
-        require(totalSupply.add(_amount) > totalSupply);
-        require(balances[owner].add(_amount) > 0);
-        require(balances[owner].add(_amount) > balances[owner]);
-        return true;
-    }
-    /// @notice Used to create new tokens and increase total supply
-    /// @param _amount The amount of VZT tokens in wei to create
-    function tokenFactory(uint256 _amount) 
-        onlyOwner
-        returns (bool success)
-    {
-        require(tokenMinter(_amount));
+        // this calls the token minter function which is used to do a sanity check of the parameters being passed in
+        require(tokenMinter(_amount, msg.sender));
         totalSupply = totalSupply.add(_amount);
         balances[msg.sender] = balances[msg.sender].add(_amount);
         Transfer(0, msg.sender, _amount);
         return true;
     }
 
-    // GETTER //
+    // Internals
 
-    function lookupRoyalty(address _veztUser)
-        public
-        constant
-        returns (uint256 royalties)
+    /**
+        @dev Low level function used to do a sanity check of minting params
+     */
+    function tokenMinter(uint256 _amount, address _sender)
+        internal
+        view
+        returns (bool valid)
     {
-        return royaltyTracking[_veztUser];
+        require(tokenMintingEnabled);
+        require(_amount > 0);
+        require(_sender != address(0x0));
+        require(totalSupply.add(_amount) > 0);
+        require(totalSupply.add(_amount) > totalSupply);
+        require(balances[_sender].add(_amount) > 0);
+        require(balances[_sender].add(_amount) > balances[_sender]);
+        return true;
     }
-
-    /// @notice Reusable code to do sanity check of transfer variables
+    
+    /**
+        @dev Prevents people from sending to a  a null address        
+        @notice Low level function used to do a sanity check of transfer parameters
+     */
     function transferCheck(address _sender, address _receiver, uint256 _amount)
-        private
-        constant
-        returns (bool success)
+        internal
+        view
+        returns (bool valid)
     {
         require(!tokenTransfersFrozen);
         require(_amount > 0);
         require(_receiver != address(0));
+        require(balances[_sender] >= _amount); // added check
         require(balances[_sender].sub(_amount) >= 0);
         require(balances[_receiver].add(_amount) > 0);
         require(balances[_receiver].add(_amount) > balances[_receiver]);
         return true;
     }
 
-    /// @notice Used to retrieve total supply
+    // Getters
+
+    /**
+        @notice Used to retrieve total supply
+     */
     function totalSupply() 
         public
-        constant
+        view
         returns (uint256 _totalSupply)
     {
         return totalSupply;
     }
 
-    /// @notice Used to look up balance of a person
+
+    /**
+        @notice Used to retrieve balance of a user
+     */
     function balanceOf(address _person)
         public
-        constant
-        returns (uint256 _balance)
+        view
+        returns (uint256 _balanceOf)
     {
         return balances[_person];
     }
 
-    /// @notice Used to look up the allowance of someone
+    /**
+        @notice Used to retrieve the allowed balance of someone
+     */
     function allowance(address _owner, address _spender)
-        public
-        constant 
-        returns (uint256 _amount)
+        public 
+        view
+        returns (uint256 _allowance)
     {
-        return allowance[_owner][_spender];
+        return allowed[_owner][_spender];
     }
+
 }
