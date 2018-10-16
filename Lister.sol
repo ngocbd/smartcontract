@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lister at 0x851E60609FD6E2d21038e43854CbD98470A8BAfC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lister at 0x83472f108363fd63626b130b50273282fe4a7c87
 */
 pragma solidity ^0.4.18;
 
@@ -15,12 +15,13 @@ interface TokenConfigInterface {
 
     // network
     function listPairForReserve(address reserve, address src, address dest, bool add) public;
+    function addReserve(address reserve, bool add) public;
 }
 
 
 contract Lister {
-    TokenConfigInterface public network = TokenConfigInterface(0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e);
-    address newReserve = 0xE1213e46EfCb8785B47AE0620a51F490F747F1Da;
+    TokenConfigInterface public network = TokenConfigInterface(0x964F35fAe36d75B1e72770e244F6595B68508CF5);
+    address newReserve = 0x2AAb2b157a03915c8a73ADaE735d0Cf51c872F31;
     address public ETH = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     ERC20 public ENG = ERC20(0xf0ee6b27b759c9893ce4f094b49ad28fd15a23e4);
     ERC20 public SALT = ERC20(0x4156D3342D5c385a87D264F90653733592000581);
@@ -51,6 +52,8 @@ contract Lister {
             network.listPairForReserve(newReserve,ETH,newTokens[i],true);
             network.listPairForReserve(newReserve,newTokens[i],ETH,true);
         }
+
+        network.addReserve(newReserve, true);
 
         network.transferAdminQuickly(orgAdmin);
         require(orgAdmin == network.admin());
