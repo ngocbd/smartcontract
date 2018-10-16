@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PureMilestonePricing at 0x6f2f13fc263bc0dc5c21b214135c3ba163b554ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PureMilestonePricing at 0x403d41f55cbac0375a7c90f7aba5ed2122d2087d
 */
 /**
  * This smart contract is modified 2017 by 4new.co.uk to change milestone pricing suitable for 4NEW token's
