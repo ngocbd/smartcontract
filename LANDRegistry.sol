@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x236db4283035d4f497e35bda4cab7965350a89e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x91d88c714e86caa99c6fd1f221a0a7702a4118f9
 */
 pragma solidity ^0.4.23;
 
@@ -408,6 +408,7 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
    */
   function approve(address operator, uint256 assetId) external {
     address holder = _ownerOf(assetId);
+    require(msg.sender == holder || _isApprovedForAll(msg.sender, holder));
     require(operator != holder);
     if (_getApprovedAddress(assetId) != operator) {
       _approval[assetId] = operator;
