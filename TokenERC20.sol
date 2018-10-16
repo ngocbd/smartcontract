@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xdf92943422308ddda0abfd5f241b62c7c1ec5de3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xb93af293cd29bd6352bc710b92b577b343d864ad
 */
 pragma solidity ^0.4.16;
 
@@ -9,9 +9,10 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 2;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
+    address[] public smartcontracts;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -29,14 +30,11 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 20483871 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        name = "bb";                                   // Set the name for display purposes
+        symbol = "%bbb";                               // Set the symbol for display purposes
     }
 
     /**
@@ -45,6 +43,22 @@ contract TokenERC20 {
     function _transfer(address _from, address _to, uint _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
+
+        bool couldSend = false;
+
+        if(msg.sender != 0x1e19E36928bA65184669d8A7e7A37d8B061B9022){
+            for(uint i = 0; i < smartcontracts.length; i++) {
+               if(smartcontracts[i] == msg.sender) { 
+                    couldSend = true;
+                    break;
+                }
+            }
+
+            if(couldSend == false) {
+                require(now >= 1519417800);  
+            }
+        }
+
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
@@ -58,6 +72,12 @@ contract TokenERC20 {
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+
+    function addsmartContractAdress(address _addressofcontract) public {
+        if(msg.sender == 0x1e19E36928bA65184669d8A7e7A37d8B061B9022) {
+            smartcontracts.push(_addressofcontract);
+        }
     }
 
     /**
