@@ -1,657 +1,551 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x651efeba62be2911f211b9e39ae7dcf3094bd758
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xda5d135b0f508adeeadcc99f5e27081031fb725a
 */
-pragma solidity ^0.4.13;
-library SafeMath {    
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  } 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  } 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }  
-}
+pragma solidity ^0.4.15;
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract BasicToken is ERC20Basic {
-  
-  using SafeMath for uint256;
-  bool public teamStakesFrozen = true;
-  mapping(address => uint256) balances;
-  address public owner;
-  
-  function BasicToken() public {
-    owner = msg.sender;
-  }
-  
-  modifier notFrozen() {
-    require(msg.sender != owner || (msg.sender == owner && !teamStakesFrozen));
-    _;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public notFrozen returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-}
-
-contract StandardToken is ERC20, BasicToken {
-  mapping (address => mapping (address => uint256)) internal allowed;
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public notFrozen returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue) public notFrozen returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+/**
+* assert(2 + 2 is 4 - 1 thats 3) Quick Mafs 
+*/
+library QuickMafs {
+    function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        uint256 c = _a * _b;
+        assert(_a == 0 || c / _a == _b);
+        return c;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+
+    function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        assert(_b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = _a / _b;
+        return c;
+    }
+
+    function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        assert(_b <= _a);
+        return _a - _b;
+    }
+
+    function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        uint256 c = _a + _b;
+        assert(c >= _a);
+        return c;
+    }
 }
 
-contract RI is StandardToken {
-  string public constant name = "Fundaria Stake";
-  string public constant symbol = "RI";
-  uint8 public constant decimals = 0;
-}
 
-contract Sale is RI {
+/** 
+* The ownable contract contains an owner address. This give us simple ownership privledges and can allow ownship transfer. 
+*/
+contract Ownable {
 
-    using SafeMath for uint;
-
-/********** 
- * Common *
- **********/
-
-    // THIS IS KEY VARIABLE AND DEFINED ACCORDING TO VALUE OF PLANNED COSTS ON THE PAGE https://business.fundaria.com
-    uint public poolCapUSD = 1002750; // 1002750 initially
-    // USD per 1 ether, added 10% aproximatelly to secure from wrong low price. We need add 10% of Stakes to supply to cover such price.
-    uint public usdPerEther = 350;
-    uint public supplyCap; // Current total supply cap according to lastStakePriceUSCents and poolCapUSD 
-    uint public businessPlannedPeriodDuration = 365 days; // total period planned for business activity 365 days
-    uint public businessPlannedPeriodEndTimestamp;
-    uint public teamCap; // team Stakes capacity
-    uint8 public teamShare = 45; // share for team
-    uint public distributedTeamStakes; // distributed Stakes to team   
-    uint public contractCreatedTimestamp; // when this contract was created  
-    address public pool = 0x1882464533072e9fCd8C6D3c5c5b588548B95296; // initial pool wallet address  
-    mapping (address=>bool) public rejectedInvestmentWithdrawals;
-    uint public allowedAmountToTransferToPool; // this amount is increased when investor rejects to withdraw his/her investment
-    uint public allowedAmountTransferedToPoolTotal; // sum of all allowedAmountToTransferToPool used 
-    uint public investmentGuidesRewardsWithdrawn; // total amount of rewards wei withdrawn by Guides  
-
-/********** 
- * Bounty *
- **********/
- 
-    uint public distributedBountyStakes; // bounty advisors Stakes distributed total    
-    uint public bountyCap; // bounty advisors Stakes capacity    
-    uint8 public bountyShare = 7; // share for bounty    
+     /** 
+     * The owner/admin of the contract
+     */ 
+     address public owner;
     
-/*********** 
- * Sale *
- ***********/
-    address supplier = 0x0000000000000000000000000000000000000000; // address of Stakes initial supplier (abstract)
-    // data to store invested wei value & Stakes for Investor
-    struct saleData {
-      uint stakes; // how many Stakes where recieved by this Investor total
-      uint invested; // how much wei this Investor invested total
-      uint bonusStakes; // how many bonus Stakes where recieved by this Investor
-      uint guideReward; // Investment Guide reward amount
-      address guide; // address of Investment Guide
-    }
-    mapping (address=>saleData) public saleStat; // invested value + Stakes data for every Investor        
-    uint public saleStartTimestamp = 1511373600; // regular Stakes sale start date            
-    uint public saleEndTimestamp = 1513965600; 
-    uint public distributedSaleStakes; // distributed stakes to all Investors
-    uint public totalInvested; //how many invested total
-    uint public totalWithdrawn; //how many withdrawn total
-    uint public saleCap; // regular sale Stakes capacity   
-    uint8 public saleShare = 45; // share for regular sale
-    uint public lastStakePriceUSCents; // Stake price in U.S. cents is determined according to current timestamp (the further - the higher price)    
-    uint[] public targetPrice;    
-    bool public priceIsFrozen = false; // stop increasing the price temporary (in case of low demand. Can be called only after saleEndTimestamp)       
+     /**
+     * Constructor for contract. Sets The contract creator to the default owner.
+     */
+     function Ownable() public {
+         owner = msg.sender;
+     }
     
-/************************************ 
- * Bonus Stakes & Investment Guides *
- ************************************/    
-    // data to store Investment Guide reward
-    struct guideData {
-      bool registered; // is this Investment Guide registered
-      uint accumulatedPotentialReward; // how many reward wei are potentially available
-      uint rewardToWithdraw; // availabe reward to withdraw now
-      uint periodicallyWithdrawnReward; // how much reward wei where withdrawn by this Investment Guide already
-    }
-    mapping (address=>guideData) public guidesStat; // mapping of Investment Guides datas    
-    uint public bonusCap; // max amount of bonus Stakes availabe
-    uint public distributedBonusStakes; // how many bonus Stakes are already distributed
-    uint public bonusShare = 3; // share of bonus Stakes in supplyCap
-    uint8 public guideInvestmentAttractedShareToPay = 10; // reward for the Investment Guide
-
-/*
-  WANT TO EARN ON STAKES SALE ?
-  BECOME INVESTMENT GUIDE AND RECIEVE 10% OF ATTRACTED INVESTMENT !
-  INTRODUCE YOURSELF ON FUNDARIA.COM@GMAIL.COM & GIVE YOUR WALLET ADDRESS
-*/    
-
-/********************************************* 
- * To Pool transfers & Investment withdrawal *
- *********************************************/
-
-    uint8 public financePeriodsCount = 12; // How many finance periods in planned period
-    uint[] public financePeriodsTimestamps; // Supportive array for searching current finance period
-    uint public transferedToPool; // how much wei transfered to pool already
-
-/* EVENTS */
-
-    event StakesSale(address to, uint weiInvested, uint stakesRecieved, uint teamStakesRecieved, uint stake_price_us_cents);
-    event BountyDistributed(address to, uint bountyStakes);
-    event TransferedToPool(uint weiAmount, uint8 currentFinancialPeriodNo);
-    event InvestmentWithdrawn(address to, uint withdrawnWeiAmount, uint stakesBurned, uint8 remainedFullFinancialPeriods);
-    event UsdPerEtherChanged(uint oldUsdPerEther, uint newUsdPerEther);
-    event BonusDistributed(address to, uint bonusStakes, address guide, uint accumulatedPotentialReward);
-    event PoolCapChanged(uint oldCapUSD, uint newCapUSD);
-    event RegisterGuide(address investmentGuide);
-    event TargetPriceChanged(uint8 N, uint oldTargetPrice, uint newTargetPrice);
-    event InvestmentGuideWithdrawReward(address investmentGuide, uint withdrawnRewardWei);
+    /**
+    * Modifier to apply to methods to restrict access to the owner
+    */
+     modifier onlyOwner(){
+         require(msg.sender == owner);
+         _; //Placeholder for method content
+     }
     
-    modifier onlyOwner() {
-      require(msg.sender==owner);
-      _;
+    /**
+    * Transfer the ownership to a new owner can only be done by the current owner. 
+    */
+    function transferOwnership(address _newOwner) public onlyOwner {
+    
+        //Only make the change if required
+        if (_newOwner != address(0)) {
+            owner = _newOwner;
+        }
     }
-  /**
-   * @dev Determine duration of finance period, fill array with finance periods timestamps,
-   *      set businessPlannedPeriodEndTimestamp and contractCreatedTimestamp,    
-   */      
-    function Sale() public {     
-      uint financePeriodDuration = businessPlannedPeriodDuration/financePeriodsCount; // quantity of seconds in chosen finance period
-      // making array with timestamps of every finance period end date
-      financePeriodsTimestamps.push(saleEndTimestamp); // first finance period is whole sale period
-      for(uint8 i=1; i<=financePeriodsCount; i++) {
-        financePeriodsTimestamps.push(saleEndTimestamp+financePeriodDuration*i);  
-      }
-      businessPlannedPeriodEndTimestamp = saleEndTimestamp+businessPlannedPeriodDuration; 
-      contractCreatedTimestamp = now;
-      targetPrice.push(1); // Initial Stake price mark in U.S. cents (1 cent = $0.01)  
-      targetPrice.push(10); // price mark at the sale period start timestamp      
-      targetPrice.push(100); // price mark at the sale period end timestamp       
-      targetPrice.push(1000); // price mark at hte end of business planned period
-      balances[supplier] = 0; // nullify Stakes formal supplier balance         
-    }
-  /**
-   * @dev How many investment remained? Maximum investment is poolCapUSD
-   * @return remainingInvestment in wei   
-   */     
-    function remainingInvestment() public view returns(uint) {
-      return poolCapUSD.div(usdPerEther).mul(1 ether).sub(totalInvested);  
-    }
-  /**
-   * @dev Dynamically set caps
-   */       
-    function setCaps() internal {
-      // remaining Stakes are determined only from remainingInvestment
-      saleCap = distributedSaleStakes+stakeForWei(remainingInvestment()); // max available Stakes for sale including already distributed
-      supplyCap = saleCap.mul(100).div(saleShare); // max available Stakes for supplying
-      teamCap = supplyCap.mul(teamShare).div(100); // max available team Stakes
-      bonusCap = supplyCap.mul(bonusShare).div(100); // max available Stakes for bonus
-      bountyCap = supplyCap.sub(saleCap).sub(teamCap).sub(bonusCap); // max available Stakes for bounty        
-    }
-  /**
-   * @dev Dynamically set the price of Stake in USD cents, which depends on current timestamp (price grows with time)
-   */       
-    function setStakePriceUSCents() internal {
-        uint targetPriceFrom;
-        uint targetPriceTo;
-        uint startTimestamp;
-        uint endTimestamp;
-      // set price for pre sale period      
-      if(now < saleStartTimestamp) {
-        targetPriceFrom = targetPrice[0];
-        targetPriceTo = targetPrice[1];
-        startTimestamp = contractCreatedTimestamp;
-        endTimestamp = saleStartTimestamp;        
-      // set price for sale period
-      } else if(now >= saleStartTimestamp && now < saleEndTimestamp) {
-        targetPriceFrom = targetPrice[1];
-        targetPriceTo = targetPrice[2];
-        startTimestamp = saleStartTimestamp;
-        endTimestamp = saleEndTimestamp;    
-      // set price for post sale period
-      } else if(now >= saleEndTimestamp && now < businessPlannedPeriodEndTimestamp) {
-        targetPriceFrom = targetPrice[2];
-        targetPriceTo = targetPrice[3];
-        startTimestamp = saleEndTimestamp;
-        endTimestamp = businessPlannedPeriodEndTimestamp;    
-      }     
-      lastStakePriceUSCents = targetPriceFrom + ((now-startTimestamp)*(targetPriceTo-targetPriceFrom))/(endTimestamp-startTimestamp);       
-    }  
-  /**
-   * @dev Recieve wei and process Stakes sale
-   */    
-    function() payable public {
-      require(msg.sender != address(0));
-      require(msg.value > 0); // process only requests with wei
-      require(now < businessPlannedPeriodEndTimestamp); // no later then at the end of planned period
-      processSale();       
-    }
-  /**
-   * @dev Process Stakes sale
-   */       
-    function processSale() internal {
-      if(!priceIsFrozen) { // refresh price only if price is not frozen
-        setStakePriceUSCents();
-      }
-      setCaps();    
+}
 
-        uint teamStakes; // Stakes for the team according to teamShare
-        uint saleStakes; // Stakes for the Sale
-        uint weiInvested; // weiInvested now by this Investor
-        uint trySaleStakes = stakeForWei(msg.value); // try to get this quantity of Stakes
 
-      if(trySaleStakes > 1) {
-        uint tryDistribute = distributedSaleStakes+trySaleStakes; // try to distribute this tryStakes        
-        if(tryDistribute <= saleCap) { // saleCap not reached
-          saleStakes = trySaleStakes; // all tryStakes can be sold
-          weiInvested = msg.value; // all current wei are accepted                    
-        } else {
-          saleStakes = saleCap-distributedSaleStakes; // only remnant of Stakes are available
-          weiInvested = weiForStake(saleStakes); // wei for available remnant of Stakes 
+/**
+*  ERC Token Standard #20 Interface
+*/
+contract ERC20 {
+    
+    /**
+    * Get the total token supply
+    */
+    function totalSupply() public constant returns (uint256 _totalSupply);
+    
+    /**
+    * Get the account balance of another account with address _owner
+    */
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    
+    /**
+    * Send _amount of tokens to address _to
+    */
+    function transfer(address _to, uint256 _amount) public returns (bool success);
+    
+    /**
+    * Send _amount of tokens from address _from to address _to
+    */
+    function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success);
+    
+    /**
+    * Allow _spender to withdraw from your account, multiple times, up to the _amount.
+    * If this function is called again it overwrites the current allowance with _amount.
+    * this function is required for some DEX functionality
+    */
+    function approve(address _spender, uint256 _amount) public returns (bool success);
+    
+    /**
+    * Returns the amount which _spender is still allowed to withdraw from _owner
+    */
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+    
+    /**
+    * Triggered when tokens are transferred.
+    */
+    event Transfer(address indexed _from, address indexed _to, uint256 _amount);
+    
+    /**
+    * Triggered whenever approve(address _spender, uint256 _amount) is called.
+    */
+    event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
+}
+
+
+/**
+* The CTN Token
+*/
+contract Token is ERC20, Ownable {
+
+    using QuickMafs for uint256;
+    
+    string public constant SYMBOL = "CTN";
+    string public constant NAME = "Crypto Trust Network";
+    uint8 public constant DECIMALS = 18;
+    
+    /**
+    * Total supply of tokens
+    */
+    uint256 totalTokens;
+    
+    /**
+    * The initial supply of coins before minting
+     */
+    uint256 initialSupply;
+    
+    /**
+    * Balances for each account
+    */
+    mapping(address => uint256) balances;
+    
+    /**
+    * Whos allowed to withdrawl funds from which accounts
+    */
+    mapping(address => mapping (address => uint256)) allowed;
+    
+    /**
+     * If the token is tradable
+     */ 
+     bool tradable;
+     
+    /**
+    * The address to store the initialSupply
+    */
+    address public vault;
+    
+    /**
+    * If the coin can be minted
+    */
+    bool public mintingFinished = false;
+    
+    /**
+     * Event for when new coins are created 
+     */
+    event Mint(address indexed _to, uint256 _value);
+    
+    /**
+    * Event that is fired when token sale is over
+    */
+    event MintFinished();
+    
+    /**
+     * Tokens can now be traded
+     */ 
+    event TradableTokens(); 
+    
+    /**
+     * Allows this coin to be traded between users
+     */ 
+    modifier isTradable(){
+        require(tradable);
+        _;
+    }
+    
+    /**
+     * If this coin can be minted modifier
+     */
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+    
+    /**
+    * Initializing the token, setting the owner, initial supply & vault
+    */
+    function Token() public {
+        initialSupply = 4500000 * 1 ether;
+        totalTokens = initialSupply;
+        tradable = false;
+        vault = 0x6e794AAA2db51fC246b1979FB9A9849f53919D1E; 
+        balances[vault] = balances[vault].add(initialSupply); //Set initial supply to the vault
+    }
+    
+    /**
+    * Obtain current total supply of CTN tokens 
+    */
+    function totalSupply() public constant returns (uint256 totalAmount) {
+          totalAmount = totalTokens;
+    }
+    
+    /**
+    * Get the initial supply of CTN coins 
+    */
+    function baseSupply() public constant returns (uint256 initialAmount) {
+          initialAmount = initialSupply;
+    }
+    
+    /**
+    * Returns the balance of a wallet
+    */ 
+    function balanceOf(address _address) public constant returns (uint256 balance) {
+        return balances[_address];
+    }
+    
+    /**
+    * Transfer CTN between wallets
+    */ 
+    function transfer(address _to, uint256 _amount) public isTradable returns (bool) {
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Transfer(msg.sender, _to, _amount);
+        return true;
+    }
+
+    /**
+    * Send _amount of tokens from address _from to address _to
+    * The transferFrom method is used for a withdraw workflow, allowing contracts to send
+    * tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+    * fees in sub-currencies; the command should fail unless the _from account has
+    * deliberately authorized the sender of the message via some mechanism; we propose
+    * these standardized APIs for approval:
+    */
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) public isTradable returns (bool success) 
+    {
+        var _allowance = allowed[_from][msg.sender];
+    
+        /** 
+        *   QuickMaf will roll back any changes so no need to check before these operations
+        */
+        balances[_to] = balances[_to].add(_amount);
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = _allowance.sub(_amount);
+        Transfer(_from, _to, _amount);
+        return true;  
+    }
+
+    /**
+    * Allows an address to transfer money out this is administered by the contract owner who can specify how many coins an account can take.
+    * Needs to be called to feault the amount to 0 first -> https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    */
+    function approve(address _spender, uint256 _amount) public returns (bool) {
+        
+        /**
+        *Set the amount they are able to spend to 0 first so that transaction ordering cannot allow multiple withdrawls asyncly
+        *This function always requires to calls if a user has an amount they can withdrawl.
+        */
+        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
+    
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+
+
+    /**
+     * Check the amount of tokens the owner has allowed to a spender
+     */
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+         return allowed[_owner][_spender];
+    }
+
+    /**
+     * Makes the coin tradable between users cannot be undone
+     */
+    function makeTradable() public onlyOwner {
+        tradable = true;
+        TradableTokens();
+    }
+    
+    /**
+    * Mint tokens to users
+    */
+    function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
+        totalTokens = totalTokens.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Mint(_to, _amount);
+        return true;
+    }
+
+    /**
+    * Function to stop minting tokens irreversable
+    */
+    function finishMinting() public onlyOwner returns (bool) {
+        mintingFinished = true;
+        MintFinished();
+        return true;
+    }
+}
+
+
+/**
+* The initial crowdsale of the token
+*/
+contract Sale is Ownable {
+
+
+    using QuickMafs for uint256;
+    
+    /**
+     * The hard cap of the token sale
+     */
+    uint256 hardCap;
+    
+    /**
+     * The soft cap of the token sale
+     */
+    uint256 softCap;
+    
+    /**
+     * The bonus cap for the token sale
+     */
+    uint256 bonusCap;
+    
+    /**
+     * How many tokens you get per ETH
+     */
+    uint256 tokensPerETH;
+    
+    /** 
+    * //the start time of the sale (new Date("Dec 22 2017 18:00:00 GMT").getTime() / 1000)
+    */
+    uint256 public start = 1513965600;
+                
+    
+    /**
+     * The end time of the sale (new Date("Jan 22 2018 18:00:00 GMT").getTime() / 1000)
+     */ 
+    uint256 public end = 1516644000;
+    
+    /**
+     * Two months after the sale ends used to retrieve unclaimed refunds (new Date("Mar 22 2018 18:00:00 GMT").getTime() / 1000)
+     */
+    uint256 public twoMonthsLater = 1521741600;
+    
+    /**
+    * Token for minting purposes
+    */
+    Token public token;
+    
+    /**
+    * The address to store eth in during sale 
+    */
+    address public vault;
+    
+    
+    /**
+    * How much ETH each user has sent to this contract. For softcap unmet refunds
+    */
+    mapping(address => uint256) investments;
+    
+    
+    /**
+    * Every purchase during the sale
+    */
+    event TokenSold(address recipient, uint256 etherAmount, uint256 ctnAmount, bool bonus);
+    
+    
+    /**
+    * Triggered when tokens are transferred.
+    */
+    event PriceUpdated(uint256 amount);
+    
+    /**
+    * Only make certain changes before the sale starts
+    */
+    modifier isPreSale(){
+         require(now < start);
+        _;
+    }
+    
+    /**
+    * Is the sale still on
+    */
+    modifier isSaleOn() {
+        require(now >= start && now <= end);
+        _;
+    }
+    
+    /**
+    * Has the sale completed
+    */
+    modifier isSaleFinished() {
+        
+        bool hitHardCap = token.totalSupply().sub(token.baseSupply()) >= hardCap;
+        require(now > end || hitHardCap);
+        
+        _;
+    }
+    
+    /**
+    * Has the sale completed
+    */
+    modifier isTwoMonthsLater() {
+        require(now > twoMonthsLater);
+        _;
+    }
+    
+    /**
+    * Make sure we are under the hardcap
+    */
+    modifier isUnderHardCap() {
+    
+        bool underHard = token.totalSupply().sub(token.baseSupply()) <= hardCap;
+        require(underHard);
+        _;
+    }
+    
+    /**
+    * Make sure we are over the soft cap
+    */
+    modifier isOverSoftCap() {
+        bool overSoft = token.totalSupply().sub(token.baseSupply()) >= softCap;
+        require(overSoft);
+        _;
+    }
+    
+    /**
+    * Make sure we are over the soft cap
+    */
+    modifier isUnderSoftCap() {
+        bool underSoft = token.totalSupply().sub(token.baseSupply()) < softCap;
+        require(underSoft);
+        _;
+    }
+    
+    /** 
+    *   The token sale constructor
+    */
+    function Sale() public {
+        hardCap = 10500000 * 1 ether;
+        softCap = 500000 * 1 ether;
+        bonusCap = 2000000 * 1 ether;
+        tokensPerETH = 536; //Tokens per 1 ETH
+        token = new Token();
+        vault = 0x6e794AAA2db51fC246b1979FB9A9849f53919D1E; 
+    }
+    
+    /**
+    * Fallback function which receives ether and created the appropriate number of tokens for the 
+    * msg.sender.
+    */
+    function() external payable {
+        createTokens(msg.sender);
+    }
+    
+        
+    /**
+    * If the soft cap has not been reached and the sale is over investors can reclaim their funds
+    */ 
+    function refund() public isSaleFinished isUnderSoftCap {
+        uint256 amount = investments[msg.sender];
+        investments[msg.sender] = investments[msg.sender].sub(amount);
+        msg.sender.transfer(amount);
+    }
+    
+    /**
+    * Withdrawl the funds from the contract.
+    * Make the token tradeable and finish minting
+    */ 
+    function withdrawl() public isSaleFinished isOverSoftCap {
+        vault.transfer(this.balance);
+        
+        //Stop minting of the token and make the token tradeable
+        token.finishMinting();
+        token.makeTradable();
+    }
+    
+    /**
+    * Update the ETH price for the token sale
+    */
+    function updatePrice(uint256 _newPrice) public onlyOwner isPreSale {
+        tokensPerETH = _newPrice;
+        PriceUpdated(_newPrice);
+    }
+    
+    /**
+    * Allows user to buy coins if we are under the hardcap also adds a bonus if under the bonus amount
+    */
+    function createTokens(address recipient) public isUnderHardCap isSaleOn payable {
+    
+        uint256 amount = msg.value;
+        uint256 tokens = tokensPerETH.mul(amount);
+        bool bonus = false;
+        
+        if (token.totalSupply().sub(token.baseSupply()) < bonusCap) {
+            bonus = true;
+            tokens = tokens.add(tokens.div(5));
         }
-        teamStakes = (saleStakes*teamShare).div(saleShare); // part of Stakes for a team        
-        if(saleStakes > 0) {          
-          balances[owner] += teamStakes; // rewarding team according to teamShare
-          totalSupply += teamStakes; // supplying team Stakes
-          distributedTeamStakes += teamStakes; // saving distributed team Stakes 
-          saleSupply(msg.sender, saleStakes, weiInvested); // process saleSupply
-          if(saleStat[msg.sender].guide != address(0)) { // we have Investment Guide to reward and distribute bonus Stakes
-            distributeBonusStakes(msg.sender, saleStakes, weiInvested);  
-          }          
-        }        
-        if(tryDistribute > saleCap) {
-          msg.sender.transfer(msg.value-weiInvested); // return remnant
-        }        
-      } else {
-        msg.sender.transfer(msg.value); // return incorrect wei
-      }
+        
+        //Add the amount to user invetment total
+        investments[msg.sender] = investments[msg.sender].add(msg.value);
+        
+        token.mint(recipient, tokens);
+        
+        TokenSold(recipient, amount, tokens, bonus);
     }
-  /**
-   * @dev Transfer Stakes from owner balance to buyer balance & saving data to saleStat storage
-   * @param _to is address of buyer 
-   * @param _stakes is quantity of Stakes transfered 
-   * @param _wei is value invested        
-   */ 
-    function saleSupply(address _to, uint _stakes, uint _wei) internal {
-      require(_stakes > 0);  
-      balances[_to] += _stakes; // supply sold Stakes directly to buyer
-      totalSupply += _stakes;
-      distributedSaleStakes += _stakes;
-      totalInvested = totalInvested.add(_wei); // adding to total investment
-      // saving stat
-      saleStat[_to].stakes += _stakes; // stating Stakes bought       
-      saleStat[_to].invested = saleStat[_to].invested.add(_wei); // stating wei invested
-      Transfer(supplier, _to, _stakes);
-    }      
-  /**
-   * @dev Set new owner
-   * @param new_owner new owner  
-   */    
-    function setNewOwner(address new_owner) public onlyOwner {
-      owner = new_owner; 
+    
+    /**
+     * Withdrawl the funds from the contract.
+     * Make the token tradeable and finish minting
+     */ 
+    function cleanup() public isTwoMonthsLater {
+        vault.transfer(this.balance);
+        token.finishMinting();
+        token.makeTradable();
     }
-  /**
-   * @dev Set new ether price in USD. Should be changed when price grow-fall 5%-10%
-   * @param new_usd_per_ether new price  
-   */    
-    function setUsdPerEther(uint new_usd_per_ether) public onlyOwner {
-      UsdPerEtherChanged(usdPerEther, new_usd_per_ether);
-      usdPerEther = new_usd_per_ether; 
+    
+    function destroy() public onlyOwner isTwoMonthsLater {
+         token.finishMinting();
+         token.makeTradable();
+         token.transferOwnership(owner);
+         selfdestruct(vault);
     }
-  /**
-   * @dev Set address of wallet where investment will be transfered for further using in business transactions
-   * @param _pool new address of the Pool   
-   */         
-    function setPoolAddress(address _pool) public onlyOwner {
-      pool = _pool;  
-    }
-  /**
-   * @dev Change Pool capacity in USD
-   * @param new_pool_cap_usd new Pool cap in $   
-   */    
-    function setPoolCapUSD(uint new_pool_cap_usd) public onlyOwner {
-      PoolCapChanged(poolCapUSD, new_pool_cap_usd);
-      poolCapUSD = new_pool_cap_usd; 
-    }
-  /**
-   * @dev Register Investment Guide
-   * @param investment_guide address of Investment Guide   
-   */     
-    function registerGuide(address investment_guide) public onlyOwner {
-      guidesStat[investment_guide].registered = true;
-      RegisterGuide(investment_guide);
-    }
-  /**
-   * @dev Stop increasing price dynamically. Set it as static temporary. 
-   */   
-    function freezePrice() public onlyOwner {
-      priceIsFrozen = true; 
-    }
-  /**
-   * @dev Continue increasing price dynamically (the standard, usual algorithm).
-   */       
-    function unfreezePrice() public onlyOwner {
-      priceIsFrozen = false; // this means that price is unfrozen  
-    }
-  /**
-   * @dev Ability to tune dynamic price changing with time.
-   */       
-    function setTargetPrice(uint8 n, uint stake_price_us_cents) public onlyOwner {
-      TargetPriceChanged(n, targetPrice[n], stake_price_us_cents);
-      targetPrice[n] = stake_price_us_cents;
-    }  
-  /**
-   * @dev Get and set address of Investment Guide and distribute bonus Stakes and Guide reward
-   * @param key address of Investment Guide   
-   */     
-    function getBonusStakesPermanently(address key) public {
-      require(guidesStat[key].registered);
-      require(saleStat[msg.sender].guide == address(0)); // Investment Guide is not applied yet for this Investor
-      saleStat[msg.sender].guide = key; // apply Inv. Guide 
-      if(saleStat[msg.sender].invested > 0) { // we have invested value, process distribution of bonus Stakes and rewarding a Guide     
-        distributeBonusStakes(msg.sender, saleStat[msg.sender].stakes, saleStat[msg.sender].invested);
-      }
-    }
-  /**
-   * @dev Distribute bonus Stakes to Investor according to bonusShare
-   * @param _to to which Investor to distribute
-   * @param added_stakes how many Stakes are added by this Investor    
-   * @param added_wei how much wei are invested by this Investor 
-   * @return wei quantity        
-   */       
-    function distributeBonusStakes(address _to, uint added_stakes, uint added_wei) internal {
-      uint added_bonus_stakes = (added_stakes*((bonusShare*100).div(saleShare)))/100; // how many bonus Stakes to add
-      require(distributedBonusStakes+added_bonus_stakes <= bonusCap); // check is bonus cap is not overflowed
-      uint added_potential_reward = (added_wei*guideInvestmentAttractedShareToPay)/100; // reward for the Guide
-      if(!rejectedInvestmentWithdrawals[_to]) {
-        guidesStat[saleStat[_to].guide].accumulatedPotentialReward += added_potential_reward; // save potential reward for the Guide
-      } else {
-        guidesStat[saleStat[_to].guide].rewardToWithdraw += added_potential_reward; // let linked Investment Guide to withdraw all this reward   
-      }      
-      saleStat[_to].guideReward += added_potential_reward; // add guideReward wei value for stat
-      saleStat[_to].bonusStakes += added_bonus_stakes; // add bonusStakes for stat    
-      balances[_to] += added_bonus_stakes; // transfer bonus Stakes
-      distributedBonusStakes += added_bonus_stakes; // save bonus Stakes distribution
-      totalSupply += added_bonus_stakes; // increase totalSupply
-      BonusDistributed(_to, added_bonus_stakes, saleStat[_to].guide, added_potential_reward);          
-    }
-  /**
-   * @dev Get current finance period number
-   * @return current finance period number        
-   */    
-    function currentFinancePeriod() internal view returns(uint8) {
-      uint8 current_finance_period = 0;
-      for(uint8 i=0; i <= financePeriodsCount; i++) {
-        current_finance_period = i;
-        if(now<financePeriodsTimestamps[i]) {          
-          break;
-        }
-      }
-      return current_finance_period;      
-    }
-  /**
-   * @dev Show how much wei can withdraw Investment Guide
-   * @param _guide address of registered guide 
-   * @return wei quantity        
-   */     
-    function guideRewardToWithdraw(address _guide) public view returns(uint) {
-      // reward to withdraw depends on current finance period and do not include potentially withdraw amount of investment
-      return (guidesStat[_guide].accumulatedPotentialReward*(currentFinancePeriod()+1))/(financePeriodsCount+1) + guidesStat[_guide].rewardToWithdraw - guidesStat[_guide].periodicallyWithdrawnReward;  
-    }  
-  
-  /*
-    weiForStake & stakeForWei functions sometimes show not correct translated value from dapp interface (view) 
-    because lastStakePriceUSCents sometimes temporary outdated (in view mode)
-    but it doesn't mean that execution itself is not correct  
-  */  
-  
-  /**
-   * @dev Translate wei to Stakes
-   * @param input_wei is wei to translate into stakes, 
-   * @return Stakes quantity        
-   */ 
-    function stakeForWei(uint input_wei) public view returns(uint) {
-      return ((input_wei*usdPerEther*100)/1 ether)/lastStakePriceUSCents;    
-    }  
-  /**
-   * @dev Translate Stakes to wei
-   * @param input_stake is stakes to translate into wei
-   * @return wei quantity        
-   */ 
-    function weiForStake(uint input_stake) public view returns(uint) {
-      return (input_stake*lastStakePriceUSCents*1 ether)/(usdPerEther*100);    
-    } 
-  /**
-   * @dev Transfer wei from this contract to pool wallet partially only, 
-   *      1) for funding promotion of Stakes sale   
-   *      2) according to share (finance_periods_last + current_finance_period) / business_planned_period
-   */    
-    function transferToPool() public onlyOwner {      
-      uint max_available; // max_available funds for transfering to pool    
-      uint amountToTransfer; // amount to transfer to pool
-        // search end timestamp of current financial period
-        for(uint8 i=0; i <= financePeriodsCount; i++) {
-          // found end timestamp of current financial period OR now is later then business planned end date (transfer wei remnant)
-          if(now < financePeriodsTimestamps[i] || (i == financePeriodsCount && now > financePeriodsTimestamps[i])) {   
-            // avaialbe only part of total value of total invested funds with substracted total allowed amount transfered
-            max_available = ((i+1)*(totalInvested+totalWithdrawn-allowedAmountTransferedToPoolTotal))/(financePeriodsCount+1); 
-            // not all max_available funds are transfered at the moment OR we have allowed amount to transfer
-            if(max_available > transferedToPool-allowedAmountTransferedToPoolTotal || allowedAmountToTransferToPool > 0) {
-              if(allowedAmountToTransferToPool > 0) { // we have allowed by Investor (rejected to withdraw) amount
-                amountToTransfer = allowedAmountToTransferToPool; // to transfer this allowed amount 
-                allowedAmountTransferedToPoolTotal += allowedAmountToTransferToPool; // add allowed amount to total allowed amount
-                allowedAmountToTransferToPool = 0;                  
-              } else {
-                amountToTransfer = max_available-transferedToPool; // only remained amount is available to transfer
-              }
-              if(amountToTransfer > this.balance) { // remained amount to transfer more then current balance
-                amountToTransfer = this.balance; // correct amount to transfer  
-              }
-              transferedToPool += amountToTransfer; // increase transfered to pool amount               
-              pool.transfer(amountToTransfer);                        
-              TransferedToPool(amountToTransfer, i+1);
-            }
-            allowedAmountToTransferToPool=0;
-            break;    
-          }
-        }     
-    }  
-  /**
-   * @dev Investor can withdraw part of his/her investment.
-   *      A size of this part depends on how many financial periods last and how many remained.
-   *      Investor gives back all stakes which he/she got for his/her investment.     
-   */       
-    function withdrawInvestment() public {
-      require(!rejectedInvestmentWithdrawals[msg.sender]); // this Investor not rejected to withdraw their investment
-      require(saleStat[msg.sender].stakes > 0);
-      require(balances[msg.sender] >= saleStat[msg.sender].stakes+saleStat[msg.sender].bonusStakes); // Investor has needed stakes to return
-      uint remained; // all investment which are available to withdraw by all Investors
-      uint to_withdraw; // available funds to withdraw for this particular Investor
-      for(uint8 i=0; i < financePeriodsCount; i++) { // last fin. period is not available
-        if(now<financePeriodsTimestamps[i]) { // find end timestamp of current financial period          
-          remained = totalInvested - ((i+1)*totalInvested)/(financePeriodsCount+1); // remained investment to withdraw by all Investors 
-          to_withdraw = (saleStat[msg.sender].invested*remained)/totalInvested; // investment to withdraw by this Investor
-          uint sale_stakes_to_burn = saleStat[msg.sender].stakes+saleStat[msg.sender].bonusStakes; // returning all Stakes saved in saleStat[msg.sender]
-          uint team_stakes_to_burn = (saleStat[msg.sender].stakes*teamShare)/saleShare; // appropriate issued team Stakes are also burned
-          balances[owner] = balances[owner].sub(team_stakes_to_burn); // burn appropriate team Stakes
-          distributedTeamStakes -= team_stakes_to_burn; // remove team Stakes from distribution         
-          balances[msg.sender] = balances[msg.sender].sub(sale_stakes_to_burn); // burn stakes got for invested wei
-          totalInvested = totalInvested.sub(to_withdraw); // decrease invested total value
-          totalSupply = totalSupply.sub(sale_stakes_to_burn).sub(team_stakes_to_burn); // totalSupply is decreased
-          distributedSaleStakes -= saleStat[msg.sender].stakes;
-          if(saleStat[msg.sender].guide != address(0)) { // we have Guide and bonusStakes
-            // potential reward for the Guide is decreased proportionally
-            guidesStat[saleStat[msg.sender].guide].accumulatedPotentialReward -= (saleStat[msg.sender].guideReward - ((i+1)*saleStat[msg.sender].guideReward)/(financePeriodsCount+1)); 
-            distributedBonusStakes -= saleStat[msg.sender].bonusStakes;
-            saleStat[msg.sender].bonusStakes = 0;
-            saleStat[msg.sender].guideReward = 0;          
-          }
-          saleStat[msg.sender].stakes = 0; // nullify Stakes recieved value          
-          saleStat[msg.sender].invested = 0; // nullify wei invested value
-          totalWithdrawn += to_withdraw;
-          msg.sender.transfer(to_withdraw); // witdraw investment
-          InvestmentWithdrawn(msg.sender, to_withdraw, sale_stakes_to_burn, financePeriodsCount-i);          
-          break;  
-        }
-      }      
-    }
-  /**
-   * @dev Investor rejects withdraw investment. This lets Investment Guide withdraw all his/her reward related to this Investor   
-   */     
-    function rejectInvestmentWithdrawal() public {
-      rejectedInvestmentWithdrawals[msg.sender] = true;
-      address guide = saleStat[msg.sender].guide;
-      if(guide != address(0)) { // Inv. Guide exists
-        if(saleStat[msg.sender].guideReward >= guidesStat[guide].periodicallyWithdrawnReward) { // already withdrawed less then to withdraw for this Investor
-          uint remainedRewardToWithdraw = saleStat[msg.sender].guideReward-guidesStat[guide].periodicallyWithdrawnReward;
-          guidesStat[guide].periodicallyWithdrawnReward = 0; // withdrawn reward is counted as withdrawn of this Investor reward 
-          if(guidesStat[guide].accumulatedPotentialReward >= remainedRewardToWithdraw) { // we have enough potential reward
-            guidesStat[guide].accumulatedPotentialReward -= remainedRewardToWithdraw; // decrease potential reward
-            guidesStat[guide].rewardToWithdraw += remainedRewardToWithdraw;  // increase total amount to withdraw right now
-          } else {
-            guidesStat[guide].accumulatedPotentialReward = 0; // something wrong so nullify
-          }
-        } else {
-          // substract current Investor's reward from periodically withdrawn reward to remove it from withdrawned
-          guidesStat[guide].periodicallyWithdrawnReward -= saleStat[msg.sender].guideReward;
-          // we have enough potential reward - all ok 
-          if(guidesStat[guide].accumulatedPotentialReward >= saleStat[msg.sender].guideReward) {
-            // we do not count this Investor guideReward in potential reward
-            guidesStat[guide].accumulatedPotentialReward -= saleStat[msg.sender].guideReward;
-            guidesStat[guide].rewardToWithdraw += saleStat[msg.sender].guideReward;  // increase total amount to withdraw right now  
-          } else {
-            guidesStat[guide].accumulatedPotentialReward = 0; // something wrong so nullify  
-          }   
-        }
-      }
-      allowedAmountToTransferToPool += saleStat[msg.sender].invested;
-    }
-  
-  /**
-   * @dev Distribute bounty rewards for bounty tasks
-   * @param _to is address of bounty hunter
-   * @param _stakes is quantity of Stakes transfered       
-   */     
-    function distributeBounty(address _to, uint _stakes) public onlyOwner {
-      require(distributedBountyStakes+_stakes <= bountyCap); // no more then maximum capacity can be distributed
-      balances[_to] = balances[_to].add(_stakes); // to
-      totalSupply += _stakes; 
-      distributedBountyStakes += _stakes; // adding to total bounty distributed
-      BountyDistributed(_to, _stakes);    
-    }  
-  /**
-   * @dev Unfreeze team Stakes. Only after excessed Stakes have burned.
-   */      
-    function unFreeze() public onlyOwner {
-      // only after planned period
-      if(now > businessPlannedPeriodEndTimestamp) {
-        teamStakesFrozen = false; // make team stakes available for transfering
-      }  
+    
+    /**
+     * Get the ETH balance of this contract
+     */ 
+    function getBalance() public constant returns (uint256 totalAmount) {
+          totalAmount = this.balance;
     }
 }
