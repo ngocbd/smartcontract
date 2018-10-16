@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FTXToken at 0x0ef6d1808b129f77cc5fb3ef864acc06aa52fa3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FTXToken at 0xd559f20296ff4895da39b5bd9add54b442596a61
 */
 pragma solidity ^0.4.18;
 
@@ -231,10 +231,10 @@ contract Ownable {
 contract FTXToken is StandardToken, Ownable {
 
     /* metadata */
-    string public constant NAME = "Fincoin";
-    string public constant SYMBOL = "FTX";
-    string public constant VERSION = "0.9";
-    uint8 public constant DECIMALS = 18;
+    string public constant name = "FintruX Network";
+    string public constant symbol = "FTX";
+    string public constant version = "1.0";
+    uint8 public constant decimals = 18;
 
     /* all accounts in wei */
     uint256 public constant INITIAL_SUPPLY = 100000000 * 10**18;
@@ -266,14 +266,17 @@ contract FTXToken is StandardToken, Ownable {
     /**
     * @dev Contructor that gives msg.sender all existing tokens. 
     */
-    function FTXToken(address _owner) public {
-        require(_owner != address(0));
+    function FTXToken() public {
+        owner = msg.sender;
         totalSupply = INITIAL_SUPPLY;
-        balances[_owner] = INITIAL_SUPPLY - FINTRUX_RESERVE_FTX - CROSS_RESERVE_FTX - TEAM_RESERVE_FTX;
+        balances[owner] = INITIAL_SUPPLY - FINTRUX_RESERVE_FTX - CROSS_RESERVE_FTX - TEAM_RESERVE_FTX;
+        Transfer(address(0), owner, balances[owner]);
         balances[FINTRUX_RESERVE] = FINTRUX_RESERVE_FTX;
+        Transfer(address(0), FINTRUX_RESERVE, balances[FINTRUX_RESERVE]);
         balances[CROSS_RESERVE] = CROSS_RESERVE_FTX;
+        Transfer(address(0), CROSS_RESERVE, balances[CROSS_RESERVE]);
         balances[TEAM_RESERVE] = TEAM_RESERVE_FTX;
-        owner = _owner;
+        Transfer(address(0), TEAM_RESERVE, balances[TEAM_RESERVE]);
         transferException[owner] = true;
     }
 
