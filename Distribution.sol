@@ -1,125 +1,74 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xc62a0b4dfdbcce38b6431f9e1609c6b9bce9e461
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xd95294fEcB64478541CA7B0E5c0a278F4F9d7ee5
 */
 pragma solidity ^0.4.18;
 
-interface ERC20 {
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    require(c / a == b);
-    return c;
-  }
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+contract Distribution is Ownable {
+  function Distribution() public {}
 
-contract Distribution {
-  using SafeMath for uint256;
-
-  enum State {
-    AwaitingTokens,
-    DistributingNormally,
-    DistributingProRata,
-    Done
-  }
- 
-  address admin;
-  ERC20 tokenContract;
-  State public state;
-  uint256 actualTotalTokens;
-  uint256 tokensTransferred;
-
-  bytes32[] contributionHashes;
-  uint256 expectedTotalTokens;
-
-  function Distribution(address _admin, ERC20 _tokenContract,
-                        bytes32[] _contributionHashes, uint256 _expectedTotalTokens) public {
-    expectedTotalTokens = _expectedTotalTokens;
-    contributionHashes = _contributionHashes;
-    tokenContract = _tokenContract;
-    admin = _admin;
-
-    state = State.AwaitingTokens;
-  }
-
-  function _handleTokensReceived(uint256 totalTokens) internal {
-    require(state == State.AwaitingTokens);
-    require(totalTokens > 0);
-
-    tokensTransferred = 0;
-    if (totalTokens == expectedTotalTokens) {
-      state = State.DistributingNormally;
-    } else {
-      actualTotalTokens = totalTokens;
-      state = State.DistributingProRata;
+  function distribute(address _tokenAddr, address _tokenSupplier, address[] _to, uint256[] _value) onlyOwner public returns (bool _success) {
+    require(_to.length == _value.length);
+    require(_to.length <= 150);
+    for (uint8 i = 0; i < _to.length; i++) {
+        assert((ERC20(_tokenAddr).transferFrom(_tokenSupplier, _to[i], _value[i])) == true);
     }
-  }
-
-  function handleTokensReceived() public {
-    _handleTokensReceived(tokenContract.balanceOf(this));
-  }
-
-  function tokenFallback(address /*_from*/, uint _value, bytes /*_data*/) public {
-    require(msg.sender == address(tokenContract));
-    _handleTokensReceived(_value);
-  }
-
-  function _numTokensForContributor(uint256 contributorExpectedTokens,
-                                    uint256 _tokensTransferred, State _state)
-      internal view returns (uint256) {
-    if (_state == State.DistributingNormally) {
-      return contributorExpectedTokens;
-    } else if (_state == State.DistributingProRata) {
-      uint256 tokens = actualTotalTokens.mul(contributorExpectedTokens) / expectedTotalTokens;
-
-      uint256 tokensRemaining = actualTotalTokens - _tokensTransferred;
-      if (tokens < tokensRemaining) {
-        return tokens;
-      } else {
-        return tokensRemaining;
-      }
-    } else {
-      revert();
-    }
-  }
-
-  function doDistributionRange(uint256 start, address[] contributors,
-                               uint256[] contributorExpectedTokens) public {
-    require(contributors.length == contributorExpectedTokens.length);
-
-    uint256 tokensTransferredSoFar = tokensTransferred;
-    uint256 end = start + contributors.length;
-    State _state = state;
-    for (uint256 i = start; i < end; ++i) {
-      address contributor = contributors[i];
-      uint256 expectedTokens = contributorExpectedTokens[i];
-      require(contributionHashes[i] == keccak256(contributor, expectedTokens));
-      contributionHashes[i] = 0x00000000000000000000000000000000;
-
-      uint256 numTokens = _numTokensForContributor(expectedTokens, tokensTransferredSoFar, _state);
-      tokensTransferredSoFar += numTokens;
-      require(tokenContract.transfer(contributor, numTokens));
-    }
-
-    tokensTransferred = tokensTransferredSoFar;
-    if (tokensTransferred == actualTotalTokens) {
-      state = State.Done;
-    }
-  }
-
-  function numTokensForContributor(uint256 contributorExpectedTokens)
-      public view returns (uint256) {
-    return _numTokensForContributor(contributorExpectedTokens, tokensTransferred, state);
-  }
-
-  function temporaryEscapeHatch(address to, uint256 value, bytes data) public {
-    require(msg.sender == admin);
-    require(to.call.value(value)(data));
+    return true;
   }
 }
