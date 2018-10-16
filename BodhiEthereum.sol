@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BodhiEthereum at 0x47c171ce16c1c06aae6e785ba3c518c42235da0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BodhiEthereum at 0x970e035e2a013cf4becd67e300d65bc32a56d826
 */
+pragma solidity ^0.4.23;
+
 /**
  * @title ERC20 interface
  * @dev Implements ERC20 Token Standard: https://github.com/ethereum/EIPs/issues/20
@@ -154,6 +156,7 @@ contract StandardToken is ERC223 {
             ERC223ReceivingContract(_to).tokenFallback(msg.sender, _value, _data);
         }
 
+        emit Transfer(msg.sender, _to, _value);
         emit Transfer(msg.sender, _to, _value, _data);
         return true;
     }
