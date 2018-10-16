@@ -1,17 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x3a933b622b82b5d6b2f27fa5a9be539747e8f92d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x8c57650a2866e5a0405e01bb65f64660e4ffd187
 */
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
+    
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
@@ -32,4 +26,5 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
+  
 }
