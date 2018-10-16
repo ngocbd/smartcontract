@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilestonePricing at 0x42245fd5c9d7b4af5df92a0bafd83cacda73944e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilestonePricing at 0xab1a9b59cadafae90008f4e8fd5d073fdfdc5dbd
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -810,6 +810,15 @@ contract Crowdsale is CrowdsaleBase {
    * Invest to tokens, recognize the payer.
    *
    */
+  function buyWithCustomerIdWithChecksum(uint128 customerId, bytes1 checksum) public payable {
+    // see customerid.py
+    if (bytes1(sha3(customerId)) != checksum) throw;
+    investWithCustomerId(msg.sender, customerId);
+  }
+
+  /**
+   * Legacy API signature.
+   */
   function buyWithCustomerId(uint128 customerId) public payable {
     investWithCustomerId(msg.sender, customerId);
   }
@@ -820,13 +829,6 @@ contract Crowdsale is CrowdsaleBase {
    * Pay for funding, get invested tokens back in the sender address.
    */
   function buy() public payable {
-    invest(msg.sender);
-  }
-
-  /**
-   * Buy tokens as generic fallback
-   */
-  function() payable {
     invest(msg.sender);
   }
 
