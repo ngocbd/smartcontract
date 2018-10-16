@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x2812ce48e96530f7c7ebc0f6eff9c195c9dcd0be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x6c9e70d6682ea36ff340153d574b2c523671b107
 */
-pragma solidity 0.4.15;
-
-// From https://github.com/ConsenSys/MultiSigWallet/blob/master/contracts/solidity/MultiSigWallet.sol @ e3240481928e9d2b57517bd192394172e31da487
+pragma solidity ^0.4.4;
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -104,13 +102,18 @@ contract MultiSigWallet {
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    function MultiSigWallet()
+    /// @param _owners List of initial owners.
+    /// @param _required Number of required confirmations.
+    function MultiSigWallet(address[] _owners, uint _required)
         public
+        validRequirement(_owners.length, _required)
     {
-        address _owner = address(0x3Af8eE248D651E5Ae4D8f475D24DbA6380932677);
-        uint256 _required = 2;
-        isOwner[_owner] = true;
-        owners.push(_owner);
+        for (uint i=0; i<_owners.length; i++) {
+            if (isOwner[_owners[i]] || _owners[i] == 0)
+                throw;
+            isOwner[_owners[i]] = true;
+        }
+        owners = _owners;
         required = _required;
     }
 
@@ -118,9 +121,10 @@ contract MultiSigWallet {
     /// @param owner Address of new owner.
     function addOwner(address owner)
         public
-        ownerExists(msg.sender)
+        onlyWallet
         ownerDoesNotExist(owner)
         notNull(owner)
+        validRequirement(owners.length + 1, required)
     {
         isOwner[owner] = true;
         owners.push(owner);
@@ -222,13 +226,13 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction mtx = transactions[transactionId];
-            mtx.executed = true;
-            if (mtx.destination.call.value(mtx.value)(mtx.data))
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
-                mtx.executed = false;
+                tx.executed = false;
             }
         }
     }
