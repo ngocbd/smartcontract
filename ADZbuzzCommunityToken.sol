@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xfac8f4db01ff27c84f5c01930d0508b68648d3e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xf14e8dbb0a4ee6916c8c2f22784f0372ecf61310
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT473316' token contract
+    // 'ACT473299' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT473316
-    // Name        : ADZbuzz Howardstern.com Community Token
+    // Symbol      : ACT473299
+    // Name        : ADZbuzz Ethereum.org Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT473316";
-            name = "ADZbuzz Howardstern.com Community Token";
+            symbol = "ACT473299";
+            name = "ADZbuzz Ethereum.org Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
