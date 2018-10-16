@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenLongevityPresale at 0x14cf6193935b17fc72649ba420fdd5bfdf1f0001
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenLongevityPresale at 0x179a303c1fdff0ffbda6a68b384787621b78ee84
 */
 /*
 This file is part of the Open Longevity Contract.
@@ -28,7 +28,7 @@ contract owned {
     address public owner;
     address public newOwner;
 
-    function owned() payable {
+    function owned() public payable {
         owner = msg.sender;
     }
     
@@ -55,46 +55,20 @@ contract owned {
  */
 contract ERC20 {
     uint public totalSupply;
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value);
-    function allowance(address owner, address spender) constant returns (uint);
-    function transferFrom(address from, address to, uint value);
-    function approve(address spender, uint value);
+    function balanceOf(address who) public constant returns (uint);
+    function transfer(address to, uint value) public ;
+    function allowance(address owner, address spender) public constant returns (uint);
+    function transferFrom(address from, address to, uint value) public;
+    function approve(address spender, uint value) public;
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
 }
 
-/**
- * @title Know your customer contract
- */
-contract KYC is owned {
+contract PresaleOriginal is owned, ERC20 {
 
-    mapping (address => bool) public known;
-    address                   public confirmer;
-
-    function setConfirmer(address _confirmer) public onlyOwner {
-        confirmer = _confirmer;
-    }
-
-    function setToKnown(address _who) public {
-        require(msg.sender == confirmer || msg.sender == owner);
-        known[_who] = true;
-    }
-}
-
-contract Presale is KYC, ERC20 {
-
-    uint    public etherPrice;
-    address public presaleOwner;
     uint    public totalLimitUSD;
     uint    public collectedUSD;
-
-    enum State { Disabled, Presale, Finished }
-    event NewState(State state);
-    State   public state;
     uint    public presaleStartTime;
-    uint    public ppFinishTime;
-    uint    public presaleFinishTime;
 
     struct Investor {
         uint256 amountTokens;
@@ -103,11 +77,63 @@ contract Presale is KYC, ERC20 {
     mapping (address => Investor) public investors;
     mapping (uint => address)     public investorsIter;
     uint                          public numberOfInvestors;
-    
+}
+
+contract Presale is PresaleOriginal {
+
+    uint    public etherPrice;
+    address public presaleOwner;
+
+    enum State { Disabled, Presale, Finished }
+    event NewState(State state);
+    State   public state;
+    uint    public presaleFinishTime;
+
+    uint    public migrationCounter;
+
+    function migrate(address _originalContract, uint n) public onlyOwner {
+        require(state == State.Disabled);
+        
+        // migrate tokens with x2 bonus
+        numberOfInvestors = PresaleOriginal(_originalContract).numberOfInvestors();
+        uint limit = migrationCounter + n;
+        if(limit > numberOfInvestors) {
+            limit = numberOfInvestors;
+        }
+        for(; migrationCounter < limit; ++migrationCounter) {
+            address a = PresaleOriginal(_originalContract).investorsIter(migrationCounter);
+            investorsIter[migrationCounter] = a;
+            uint256 amountTokens;
+            uint amountWei;
+            (amountTokens, amountWei) = PresaleOriginal(_originalContract).investors(a);
+            amountTokens *= 2;
+            investors[a].amountTokens = amountTokens;
+            investors[a].amountWei = amountWei;
+            totalSupply += amountTokens;
+            Transfer(_originalContract, a, amountTokens);
+        }
+        if(limit < numberOfInvestors) {
+            return;
+        }
+
+        // migrate main parameters
+        presaleStartTime = PresaleOriginal(_originalContract).presaleStartTime();
+        collectedUSD = PresaleOriginal(_originalContract).collectedUSD();
+        totalLimitUSD = PresaleOriginal(_originalContract).totalLimitUSD();
+
+        // add extra tokens for bounty
+        address bountyAddress = 0x59B95A5e0268Cc843e6308FEf723544BaA6676c6;
+        if(investors[bountyAddress].amountWei == 0 && investors[bountyAddress].amountTokens == 0) {
+            investorsIter[numberOfInvestors++] = bountyAddress;
+        }
+        uint bountyTokens = 5 * PresaleOriginal(_originalContract).totalSupply() / 100;
+        investors[bountyAddress].amountTokens += bountyTokens;
+        totalSupply += bountyTokens;
+    }
+
     function () payable public {
         require(state == State.Presale);
         require(now < presaleFinishTime);
-        require(now > ppFinishTime || known[msg.sender]);
 
         uint valueWei = msg.value;
         uint valueUSD = valueWei * etherPrice / 1000000000000000000;
@@ -120,19 +146,9 @@ contract Presale is KYC, ERC20 {
             collectedUSD += valueUSD;
         }
 
-        uint256 tokensPer10USD = 100;
-        if (now <= ppFinishTime) {
-            if (valueUSD >= 100000) {
-                tokensPer10USD = 200;
-            } else {
-                tokensPer10USD = 175;
-            }
-        } else {
-            if (valueUSD >= 100000) {
-                tokensPer10USD = 150;
-            } else {
-                tokensPer10USD = 130;
-            }
+        uint256 tokensPer10USD = 130;
+        if (valueUSD >= 100000) {
+            tokensPer10USD = 150;
         }
 
         uint256 tokens = tokensPer10USD * valueUSD / 10;
@@ -151,14 +167,17 @@ contract Presale is KYC, ERC20 {
     
     function startPresale(address _presaleOwner, uint _etherPrice) public onlyOwner {
         require(state == State.Disabled);
-        presaleStartTime = now;
         presaleOwner = _presaleOwner;
         etherPrice = _etherPrice;
-        ppFinishTime = now + 3 days;
-        presaleFinishTime = ppFinishTime + 60 days;
+        presaleFinishTime = 1526342400; // (GMT) 15 May 2018, 00:00:00
         state = State.Presale;
         totalLimitUSD = 500000;
         NewState(state);
+    }
+
+    function setEtherPrice(uint _etherPrice) public onlyOwner {
+        require(state == State.Presale);
+        etherPrice = _etherPrice;
     }
     
     function timeToFinishPresale() public constant returns(uint t) {
@@ -190,16 +209,53 @@ contract PresaleToken is Presale {
     string  public symbol      = "YEAR";
     uint8   public decimals    = 0;
 
+    mapping (address => mapping (address => uint)) public allowed;
+
+    // Fix for the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        require(msg.data.length >= size + 4);
+        _;
+    }
+
     function PresaleToken() payable public Presale() {}
 
     function balanceOf(address _who) constant public returns (uint) {
         return investors[_who].amountTokens;
     }
 
-    function transfer(address, uint256) public {revert();}
-    function transferFrom(address, address, uint256) public {revert();}
-    function approve(address, uint256) public {revert();}
-    function allowance(address, address) public constant returns (uint256) {revert();}
+    function transfer(address _to, uint256 _value) public onlyPayloadSize(2 * 32) {
+        require(investors[msg.sender].amountTokens >= _value);
+        require(investors[_to].amountTokens + _value >= investors[_to].amountTokens);
+        investors[msg.sender].amountTokens -= _value;
+        if(investors[_to].amountTokens == 0 && investors[_to].amountWei == 0) {
+            investorsIter[numberOfInvestors++] = _to;
+        }
+        investors[_to].amountTokens += _value;
+        Transfer(msg.sender, _to, _value);
+    }
+    
+    function transferFrom(address _from, address _to, uint _value) public onlyPayloadSize(3 * 32) {
+        require(investors[_from].amountTokens >= _value);
+        require(investors[_to].amountTokens + _value >= investors[_to].amountTokens); // overflow
+        require(allowed[_from][msg.sender] >= _value);
+        investors[_from].amountTokens -= _value;
+        if(investors[_to].amountTokens == 0 && investors[_to].amountWei == 0) {
+            investorsIter[numberOfInvestors++] = _to;
+        }
+        investors[_to].amountTokens += _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+    }
+
+    function approve(address _spender, uint _value) public {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+    }
+
+    function allowance(address _owner, address _spender) public constant
+        returns (uint remaining) {
+        return allowed[_owner][_spender];
+    }
 }
 
 contract OpenLongevityPresale is PresaleToken {
