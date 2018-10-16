@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmezingCoin at 0xfb9b2de941b4df31ca3929cd911030847b5eea20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmezingCoin at 0x8b30c057d08433fb3220f929dae46d6dc907c0f6
 */
 contract AmezingCoin {
     /* Public variables of the token */
