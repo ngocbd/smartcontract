@@ -1,21 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xcd2a5c39b13b2c27b2ed1f51eef17d5f646563d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xa6dbb9f12f725d971326107c42662554cccf5742
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.19;
 
 // Wolf Crypto presale pooling contract
 // written by @iamdefinitelyahuman
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) return 0;
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
     assert(c / a == b);
     return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a / b;
   }
 
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -30,299 +28,474 @@ library SafeMath {
   }
 }
 
-interface ERC20 {
-  function balanceOf(address _owner) external returns (uint256 balance);
-  function transfer(address _to, uint256 _value) external returns (bool success);
+
+contract ERC20 {
+  function transfer(address _to, uint256 _value) returns (bool success) {}
+  function balanceOf(address _owner) constant returns (uint256 balance) {}
 }
 
-interface WhiteList {
-   function checkMemberLevel (address addr) external view returns (uint);
+
+contract WhiteList {
+   function checkMemberLevel (address addr) view public returns (uint) {}
 }
 
-library PresaleLib {
-	
+
+contract PresalePool {
+
+  // SafeMath is a library to ensure that math operations do not have overflow errors
+  // https://zeppelin-solidity.readthedocs.io/en/latest/safemath.html
   using SafeMath for uint;
   
-  WhiteList constant whitelistContract = WhiteList(0x8D95B038cA80A986425FA240C3C17Fb2B6e9bc63);
-  uint constant contributionMin = 100000000000000000;
-  uint constant maxGasPrice = 50000000000;
+  // The contract has 3 stages:
+  // 1 - The initial state. The owner is able to add addresses to the whitelist, and any whitelisted addresses can deposit or withdraw eth to the contract.
+  // 2 - The owner has closed the contract for further deposits. Whitelisted addresses can still withdraw eth from the contract.
+  // 3 - The eth is sent from the contract to the receiver. Unused eth can be claimed by contributors immediately. Once tokens are sent to the contract,
+  //     the owner enables withdrawals and contributors can withdraw their tokens.
+  uint8 public contractStage = 1;
   
+  // These variables are set at the time of contract creation
+  // address that creates the contract
+  address public owner;
+  // maximum eth amount (in wei) that can be sent by a whitelisted address
+  uint[] public contributionCaps;
+  // the % of tokens kept by the contract owner
+  uint public feePct;
+  // the address that the pool will be paid out to
+  address public receiverAddress;
+  
+  // These constant variables do not change with each contract deployment
+  // minimum eth amount (in wei) that can be sent by a whitelisted address
+  uint constant public contributionMin = 100000000000000000;
+  // maximum gas price allowed for deposits in stage 1
+  uint constant public maxGasPrice = 50000000000;
+  // whitelisting contract
+  WhiteList constant public whitelistContract = WhiteList(0x8D95B038cA80A986425FA240C3C17Fb2B6e9bc63);
+  
+  
+  // These variables are all initially set to 0 and will be set at some point during the contract
+  // epoch time that the next contribution caps become active
+  uint public nextCapTime;
+  // pending contribution caps
+  uint [] public nextContributionCaps;
+  // block number of the last change to the receiving address (set if receiving address is changed, stage 1 or 2)
+  uint public addressChangeBlock;
+  // amount of eth (in wei) present in the contract when it was submitted
+  uint public finalBalance;
+  // array containing eth amounts to be refunded in stage 3
+  uint[] public ethRefundAmount;
+  // default token contract to be used for withdrawing tokens in stage 3
+  address public activeToken;
+  
+  // data structure for holding the contribution amount, cap, eth refund status, and token withdrawal status for each whitelisted address
   struct Contributor {
-    uint16 claimedTokensIndex;
+    bool authorized;
+    uint ethRefund;
     uint balance;
+    uint cap;
+    mapping (address => uint) tokensClaimed;
+  }
+  // mapping that holds the contributor struct for each whitelisted address
+  mapping (address => Contributor) whitelist;
+  
+  // data structure for holding information related to token withdrawals.
+  struct TokenAllocation {
+    ERC20 token;
+    uint[] pct;
+    uint balanceRemaining;
+  }
+  // mapping that holds the token allocation struct for each token address
+  mapping (address => TokenAllocation) distributionMap;
+  
+  
+  // modifier for functions that can only be accessed by the contract creator
+  modifier onlyOwner () {
+    require (msg.sender == owner);
+    _;
   }
   
-  struct Data {
-    address owner;
-    address receiver;
-    address[] withdrawToken;
-    bool poolSubmitted;
-    bool locked;
-    uint addressSetTime;
-    uint fee;
-    uint contractCap;
-    uint finalBalance;
-    uint[] withdrawAmount;
-    uint[] capAmounts;
-    uint32[] capTimes;
-    mapping (address => uint) tokenBalances;
-    mapping (address => uint) individualCaps;
-    mapping (address => Contributor) contributorMap;
+  // modifier to prevent re-entrancy exploits during contract > contract interaction
+  bool locked;
+  modifier noReentrancy() {
+    require(!locked);
+    locked = true;
+    _;
+    locked = false;
   }
   
+  // Events triggered throughout contract execution
+  // These can be watched via geth filters to keep up-to-date with the contract
   event ContributorBalanceChanged (address contributor, uint totalBalance);
-  event ReceiverAddressSet ( address addr);
+  event ReceiverAddressSet ( address _addr);
   event PoolSubmitted (address receiver, uint amount);
-  event WithdrawalAvailable (address token);
-  event WithdrawalClaimed (address receiver, address token, uint amount);
-  
-  modifier onlyOwner (Data storage self) {
-    require (msg.sender == self.owner);
-    _;
-  }
-  
-  modifier noReentrancy(Data storage self) {
-    require(!self.locked);
-    self.locked = true;
-    _;
-    self.locked = false;
-  }
-  
+  event WithdrawalsOpen (address tokenAddr);
+  event TokensWithdrawn (address receiver, address token, uint amount);
+  event EthRefundReceived (address sender, uint amount);
+  event EthRefunded (address receiver, uint amount);
+  event ERC223Received (address token, uint value);
+   
+  // These are internal functions used for calculating fees, eth and token allocations as %
+  // returns a value as a % accurate to 20 decimal points
   function _toPct (uint numerator, uint denominator ) internal pure returns (uint) {
-    return numerator.mul(10 ** 20).div(denominator);
+    return numerator.mul(10 ** 20) / denominator;
   }
   
+  // returns % of any number, where % given was generated with toPct
   function _applyPct (uint numerator, uint pct) internal pure returns (uint) {
-    return numerator.mul(pct).div(10 ** 20);
+    return numerator.mul(pct) / (10 ** 20);
   }
   
-  function newPool (Data storage self, uint _fee, address _receiver, uint _contractCap, uint _individualCap) public {
-    require (_fee < 1000);
-    self.owner = msg.sender;
-    self.receiver = _receiver;
-    self.contractCap = _contractCap;
-    self.capTimes.push(0);
-    self.capAmounts.push(_individualCap);
-    self.fee = _toPct(_fee,1000);
+  // This function is called at the time of contract creation,
+  // it sets the initial variables and whitelists the contract owner.
+  function PresalePool(address receiverAddr, uint[] capAmounts, uint fee) public {
+    require (fee < 100);
+    require (capAmounts.length>1 && capAmounts.length<256);
+    for (uint8 i=1; i<capAmounts.length; i++) {
+      require (capAmounts[i] <= capAmounts[0]);
+    }
+    owner = msg.sender;
+    receiverAddress = receiverAddr;
+    contributionCaps = capAmounts;
+    feePct = _toPct(fee,100);
+    whitelist[msg.sender].authorized = true;
   }
-	
-  function deposit (Data storage self) public {
-	  assert (!self.poolSubmitted);
+  
+  // This function is called whenever eth is sent into the contract.
+  // The send will fail unless the contract is in stage one and the sender has been whitelisted.
+  // The amount sent is added to the balance in the Contributor struct associated with the sending address.
+  function () payable public {
+    if (contractStage == 1) {
+      _ethDeposit();
+    } else if (contractStage == 3) {
+      _ethRefund();
+    } else revert();
+  }
+  
+  // Internal function for handling eth deposits during contract stage one.
+  function _ethDeposit () internal {
+    assert (contractStage == 1);
     require (tx.gasprice <= maxGasPrice);
-    Contributor storage c = self.contributorMap[msg.sender];
-    uint cap = _getCap(self, msg.sender);
-    require (cap >= c.balance.add(msg.value));
-    if (self.contractCap < address(this).balance) {
-      require (address(this).balance.sub(msg.value) < self.contractCap);
-      uint excess = address(this).balance.sub(self.contractCap);
-      c.balance = c.balance.add(msg.value.sub(excess));
-      msg.sender.transfer(excess);
-    } else {
-      c.balance = c.balance.add(msg.value);
-    }
-    require (c.balance >= contributionMin);
-    emit ContributorBalanceChanged(msg.sender, c.balance);
+    require (this.balance <= contributionCaps[0]);
+    var c = whitelist[msg.sender];
+    uint newBalance = c.balance.add(msg.value);
+    require (newBalance >= contributionMin);
+    require (newBalance <= _checkCap(msg.sender));
+    c.balance = newBalance;
+    ContributorBalanceChanged(msg.sender, newBalance);
   }
   
-  function receiveRefund (Data storage self) public {
-    assert (self.poolSubmitted);
-    require (msg.sender == self.receiver || msg.sender == self.owner);
-    require (msg.value >= 1 ether);
-    self.withdrawToken.push(0x00);
-    self.withdrawAmount.push(msg.value);
-    emit WithdrawalAvailable(0x00);
+  // Internal function for handling eth refunds during stage three.
+  function _ethRefund () internal {
+    assert (contractStage == 3);
+    require (msg.sender == owner || msg.sender == receiverAddress);
+    require (msg.value >= contributionMin);
+    ethRefundAmount.push(msg.value);
+    EthRefundReceived(msg.sender, msg.value);
   }
   
-  function withdraw (Data storage self) public {
-    assert (msg.value == 0);
-    Contributor storage c = self.contributorMap[msg.sender];
+  // This function is called to withdraw eth or tokens from the contract.
+  // It can only be called by addresses that are whitelisted and show a balance greater than 0.
+  // If called during stages one or two, the full eth balance deposited into the contract is returned and the contributor's balance reset to 0.
+  // If called during stage three, the contributor's unused eth will be returned, as well as any available tokens.
+  // The token address may be provided optionally to withdraw tokens that are not currently the default token (airdrops).
+  function withdraw (address tokenAddr) public {
+    var c = whitelist[msg.sender];
     require (c.balance > 0);
-    if (!self.poolSubmitted) {
-      uint balance = c.balance;
+    if (contractStage < 3) {
+      uint amountToTransfer = c.balance;
       c.balance = 0;
-      msg.sender.transfer(balance);
-      emit ContributorBalanceChanged(msg.sender, 0);
-      return;
-    }
-    require (c.claimedTokensIndex < self.withdrawToken.length);
-    uint pct = _toPct(c.balance,self.finalBalance);
-    uint amount;
-    address token;
-    for (uint16 i = c.claimedTokensIndex; i < self.withdrawToken.length; i++) {
-      amount = _applyPct(self.withdrawAmount[i],pct);
-      token = self.withdrawToken[i];
-      c.claimedTokensIndex++;
-      if (amount > 0) {  
-        if (token == 0x00) {
-          msg.sender.transfer(amount);
-        } else {
-          require (ERC20(token).transfer(msg.sender, amount));
-          self.tokenBalances[token] = self.tokenBalances[token].sub(amount);  
-        }
-        emit WithdrawalClaimed(msg.sender, token, amount);
-      }
-    }
-  }
-  
-  function setIndividualCaps (Data storage self, address[] addr, uint[] cap) public onlyOwner(self) {
-    require (addr.length == cap.length);
-    for (uint8 i = 0; i < addr.length; i++) {
-      self.individualCaps[addr[i]] = cap[i];
+      msg.sender.transfer(amountToTransfer);
+      ContributorBalanceChanged(msg.sender, 0);
+    } else {
+      _withdraw(msg.sender,tokenAddr);
     }  
   }
   
-  function setCaps (Data storage self, uint32[] times, uint[] caps) public onlyOwner(self) {
-    require (caps.length > 0);
-    require (caps.length == times.length);
-    self.capTimes = [0];
-    self.capAmounts = [self.capAmounts[0]];
-    for (uint8 i = 0; i < caps.length; i++) {
-      require (times[i] > self.capTimes[self.capTimes.length.sub(1)]);
-      self.capTimes.push(times[i]);
-      self.capAmounts.push(caps[i]);
+  // This function allows the contract owner to force a withdrawal to any contributor.
+  function withdrawFor (address contributor, address tokenAddr) public onlyOwner {
+    require (contractStage == 3);
+    require (whitelist[contributor].balance > 0);
+    _withdraw(contributor,tokenAddr);
+  }
+  
+  // This internal function handles withdrawals during stage three.
+  // The associated events will fire to notify when a refund or token allocation is claimed.
+  function _withdraw (address receiver, address tokenAddr) internal {
+    assert (contractStage == 3);
+    var c = whitelist[receiver];
+    if (tokenAddr == 0x00) {
+      tokenAddr = activeToken;
+    }
+    var d = distributionMap[tokenAddr];
+    require ( (ethRefundAmount.length > c.ethRefund) || d.pct.length > c.tokensClaimed[tokenAddr] );
+    if (ethRefundAmount.length > c.ethRefund) {
+      uint pct = _toPct(c.balance,finalBalance);
+      uint ethAmount = 0;
+      for (uint i=c.ethRefund; i<ethRefundAmount.length; i++) {
+        ethAmount = ethAmount.add(_applyPct(ethRefundAmount[i],pct));
+      }
+      c.ethRefund = ethRefundAmount.length;
+      if (ethAmount > 0) {
+        receiver.transfer(ethAmount);
+        EthRefunded(receiver,ethAmount);
+      }
+    }
+    if (d.pct.length > c.tokensClaimed[tokenAddr]) {
+      uint tokenAmount = 0;
+      for (i=c.tokensClaimed[tokenAddr]; i<d.pct.length; i++) {
+        tokenAmount = tokenAmount.add(_applyPct(c.balance,d.pct[i]));
+      }
+      c.tokensClaimed[tokenAddr] = d.pct.length;
+      if (tokenAmount > 0) {
+        require(d.token.transfer(receiver,tokenAmount));
+        d.balanceRemaining = d.balanceRemaining.sub(tokenAmount);
+        TokensWithdrawn(receiver,tokenAddr,tokenAmount);
+      }  
+    }
+    
+  }
+  
+  // This function can only be executed by the owner, it adds an address to the whitelist.
+  // To execute, the contract must be in stage 1, the address cannot already be whitelisted, and the address cannot be a contract itself.
+  // Blocking contracts from being whitelisted prevents attacks from unexpected contract to contract interaction - very important!
+  function authorize (address addr, uint cap) public onlyOwner {
+    require (contractStage == 1);
+    _checkWhitelistContract(addr);
+    require (!whitelist[addr].authorized);
+    require ((cap > 0 && cap < contributionCaps.length) || (cap >= contributionMin && cap <= contributionCaps[0]) );
+    uint size;
+    assembly { size := extcodesize(addr) }
+    require (size == 0);
+    whitelist[addr].cap = cap;
+    whitelist[addr].authorized = true;
+  }
+  
+  // This function is used by the owner to authorize many addresses in a single call.
+  // Each address will be given the same cap, and the cap must be one of the standard levels.
+  function authorizeMany (address[] addr, uint cap) public onlyOwner {
+    require (addr.length < 255);
+    require (cap > 0 && cap < contributionCaps.length);
+    for (uint8 i=0; i<addr.length; i++) {
+      authorize(addr[i], cap);
     }
   }
   
-  function setContractCap (Data storage self, uint amount) public onlyOwner(self) {
-    require (amount >= address(this).balance);
-    self.contractCap = amount;
-  }
-  
-  function _getCap (Data storage self, address addr) internal view returns (uint) {
-    if (self.individualCaps[addr] > 0) return self.individualCaps[addr];
-    if (whitelistContract.checkMemberLevel(msg.sender) == 0) return 0;
-    return getCapAtTime(self,now);
-  }
-  
-  function getCapAtTime (Data storage self, uint time) public view returns (uint) {
-    if (time == 0) time = now;
-    for (uint i = 1; i < self.capTimes.length; i++) {
-      if (self.capTimes[i] > time) return self.capAmounts[i-1];
+  // This function is called by the owner to remove an address from the whitelist.
+  // It may only be executed during stages 1 and 2.  Any eth sent by the address is refunded and their personal cap is set to 0.
+  // It will throw if the address is still authorised in the whitelist contract.
+  function revoke (address addr) public onlyOwner {
+    require (contractStage < 3);
+    require (whitelist[addr].authorized);
+    require (whitelistContract.checkMemberLevel(addr) == 0);
+    whitelist[addr].authorized = false;
+    if (whitelist[addr].balance > 0) {
+      uint amountToTransfer = whitelist[addr].balance;
+      whitelist[addr].balance = 0;
+      addr.transfer(amountToTransfer);
+      ContributorBalanceChanged(addr, 0);
     }
-    return self.capAmounts[self.capAmounts.length-1];
   }
   
-  function getPoolInfo (Data storage self) view public returns (uint balance, uint remaining, uint cap) {
-    if (!self.poolSubmitted) return (address(this).balance, self.contractCap.sub(address(this).balance), self.contractCap);
-    return (address(this).balance, 0, self.contractCap);
-  }
-  
-  function getContributorInfo (Data storage self, address addr) view public returns (uint balance, uint remaining, uint cap) {
-    cap = _getCap(self, addr);
-    Contributor storage c = self.contributorMap[addr];
-    if (self.poolSubmitted || cap <= c.balance) return (c.balance, 0, cap);
-    if (cap.sub(c.balance) > self.contractCap.sub(address(this).balance)) return (c.balance, self.contractCap.sub(address(this).balance), cap);
-    return (c.balance, cap.sub(c.balance), cap);
-  }
-  
-  function checkWithdrawalAvailable (Data storage self, address addr) view public returns (bool) {
-    return self.contributorMap[addr].claimedTokensIndex < self.withdrawToken.length;
-  }
-  
-  function setReceiverAddress (Data storage self, address _receiver) public onlyOwner(self) {
-    require (!self.poolSubmitted);
-    self.receiver = _receiver;
-    self.addressSetTime = now;
-    emit ReceiverAddressSet(_receiver);
-  }
-  
-  function submitPool (Data storage self, uint amountInWei) public onlyOwner(self) noReentrancy(self) {
-    require (!self.poolSubmitted);
-    require (now > self.addressSetTime.add(86400));
-    if (amountInWei == 0) amountInWei = address(this).balance;
-    self.finalBalance = address(this).balance;
-    self.poolSubmitted = true;
-    require (self.receiver.call.value(amountInWei).gas(gasleft().sub(5000))());
-    if (address(this).balance > 0) {
-      self.withdrawToken.push(0x00);
-      self.withdrawAmount.push(address(this).balance);
-      emit WithdrawalAvailable(0x00);
+  // This function is called by the owner to modify the contribution cap of a whitelisted address.
+  // If the current contribution balance exceeds the new cap, the excess balance is refunded.
+  function modifyIndividualCap (address addr, uint cap) public onlyOwner {
+    require (contractStage < 3);
+    require (cap < contributionCaps.length || (cap >= contributionMin && cap <= contributionCaps[0]) );
+    _checkWhitelistContract(addr);
+    var c = whitelist[addr];
+    require (c.authorized);
+    uint amount = c.balance;
+    c.cap = cap;
+    uint capAmount = _checkCap(addr);
+    if (amount > capAmount) {
+      c.balance = capAmount;
+      addr.transfer(amount.sub(capAmount));
+      ContributorBalanceChanged(addr, capAmount);
     }
-    emit PoolSubmitted(self.receiver, amountInWei);
   }
   
-  function enableWithdrawals (Data storage self, address tokenAddress, address feeAddress) public onlyOwner(self) noReentrancy(self) {
-    require (self.poolSubmitted);
-    if (feeAddress == 0x00) feeAddress = self.owner;
-    ERC20 token = ERC20(tokenAddress);
-    uint amount = token.balanceOf(this).sub(self.tokenBalances[tokenAddress]);
-    require (amount > 0);
-    if (self.fee > 0) {
-      require (token.transfer(feeAddress, _applyPct(amount,self.fee)));
-      amount = token.balanceOf(this).sub(self.tokenBalances[tokenAddress]);
-    }
-    self.tokenBalances[tokenAddress] = token.balanceOf(this);
-    self.withdrawToken.push(tokenAddress);
-    self.withdrawAmount.push(amount);
-    emit WithdrawalAvailable(tokenAddress);
+  // This function is called by the owner to modify the cap for a contribution level.
+  // The cap cannot be decreased below the current balance or increased past the contract limit.
+  function modifyLevelCap (uint level, uint cap) public onlyOwner {
+    require (contractStage < 3);
+    require (level > 0 && level < contributionCaps.length);
+    require (this.balance <= cap && contributionCaps[0] >= cap);
+    contributionCaps[level] = cap;
+    nextCapTime = 0;
   }
-
-}
-contract PresalePool {
-	
-	using PresaleLib for PresaleLib.Data;
-	PresaleLib.Data data;
   
-  event ERC223Received (address token, uint value, bytes data);
-	
-	function PresalePool (uint fee, address receiver, uint contractCap, uint individualCap) public {
-    data.newPool(fee, receiver, contractCap, individualCap);
-	}
-	
-	function () public payable {
-    if (msg.value > 0) {
-      if (!data.poolSubmitted) {
-        data.deposit();
-      } else {
-        data.receiveRefund();
+  // This function changes every level cap at once, with an optional delay.
+  // Modifying the caps immediately will cancel any delayed cap change.
+  function modifyAllLevelCaps (uint[] cap, uint time) public onlyOwner {
+    require (contractStage < 3);
+    require (cap.length == contributionCaps.length-1);
+    require (time == 0 || time>block.timestamp);
+    if (time == 0) {
+      for (uint8 i = 0; i < cap.length; i++) {
+        modifyLevelCap(i+1, cap[i]);
       }
     } else {
-      data.withdraw();
+      nextContributionCaps = contributionCaps;
+      nextCapTime = time;
+      for (i = 0; i < cap.length; i++) {
+        require (contributionCaps[i+1] <= cap[i] && contributionCaps[0] >= cap[i]);
+        nextContributionCaps[i+1] = cap[i];
+      }
     }
-	}
-  
-  function setIndividualCaps (address[] addr, uint[] cap) public {
-    data.setIndividualCaps(addr, cap); 
   }
   
-  function setCaps (uint32[] times, uint[] caps) public {
-    data.setCaps(times,caps);
+  // This function can be called during stages one or two to modify the maximum balance of the contract.
+  // It can only be called by the owner. The amount cannot be set to lower than the current balance of the contract.
+  function modifyMaxContractBalance (uint amount) public onlyOwner {
+    require (contractStage < 3);
+    require (amount >= contributionMin);
+    require (amount >= this.balance);
+    contributionCaps[0] = amount;
+    nextCapTime = 0;
+    for (uint8 i=1; i<contributionCaps.length; i++) {
+      if (contributionCaps[i]>amount) contributionCaps[i]=amount;
+    }
   }
   
-  function setContractCap (uint amount) public {
-    data.setContractCap(amount);
+  // This internal function returns the cap amount of a whitelisted address.
+  function _checkCap (address addr) internal returns (uint) {
+    _checkWhitelistContract(addr);
+    var c = whitelist[addr];
+    if (!c.authorized) return 0;
+    if (nextCapTime>0 && block.timestamp>nextCapTime) {
+      contributionCaps = nextContributionCaps;
+      nextCapTime = 0;
+    }
+    if (c.cap<contributionCaps.length) return contributionCaps[c.cap];
+    return c.cap; 
   }
   
-  function getPoolInfo () view public returns (uint balance, uint remaining, uint cap) {
-    return data.getPoolInfo();
+  // This internal function checks if an address is whitelisted in the whitelist contract.
+  function _checkWhitelistContract (address addr) internal {
+    var c = whitelist[addr];
+    if (!c.authorized) {
+      var level = whitelistContract.checkMemberLevel(addr);
+      if (level == 0 || level >= contributionCaps.length) return;
+      c.cap = level;
+      c.authorized = true;
+    }
   }
   
-  function getContributorInfo (address addr) view public returns (uint balance, uint remaining, uint cap) {
-    return data.getContributorInfo(addr);
+  // This callable function returns the total pool cap, current balance and remaining balance to be filled.
+  function checkPoolBalance () view public returns (uint poolCap, uint balance, uint remaining) {
+    if (contractStage == 1) {
+      remaining = contributionCaps[0].sub(this.balance);
+    } else {
+      remaining = 0;
+    }
+    return (contributionCaps[0],this.balance,remaining);
   }
   
-  function getCapAtTime (uint32 time) view public returns (uint) {
-    return data.getCapAtTime(time);
+  // This callable function returns the balance, contribution cap, and remaining available balance of any contributor.
+  function checkContributorBalance (address addr) view public returns (uint balance, uint cap, uint remaining) {
+    var c = whitelist[addr];
+    if (!c.authorized) {
+      cap = whitelistContract.checkMemberLevel(addr);
+      if (cap == 0) return (0,0,0);
+    } else {
+      cap = c.cap;
+    }
+    balance = c.balance;
+    if (contractStage == 1) {
+      if (cap<contributionCaps.length) { 
+        if (nextCapTime == 0 || nextCapTime > block.timestamp) {
+          cap = contributionCaps[cap];
+        } else {
+          cap = nextContributionCaps[cap];
+        }
+      }
+      remaining = cap.sub(balance);
+      if (contributionCaps[0].sub(this.balance) < remaining) remaining = contributionCaps[0].sub(this.balance);
+    } else {
+      remaining = 0;
+    }
+    return (balance, cap, remaining);
   }
   
-  function checkWithdrawalAvailable (address addr) view public returns (bool) {
-    return data.checkWithdrawalAvailable(addr);
+  // This callable function returns the token balance that a contributor can currently claim.
+  function checkAvailableTokens (address addr, address tokenAddr) view public returns (uint tokenAmount) {
+    var c = whitelist[addr];
+    var d = distributionMap[tokenAddr];
+    for (uint i = c.tokensClaimed[tokenAddr]; i < d.pct.length; i++) {
+      tokenAmount = tokenAmount.add(_applyPct(c.balance, d.pct[i]));
+    }
+    return tokenAmount;
   }
   
-  function setReceiverAddress (address receiver) public {
-    data.setReceiverAddress(receiver);
+  // This function closes further contributions to the contract, advancing it to stage two.
+  // It can only be called by the owner.  After this call has been made, whitelisted addresses
+  // can still remove their eth from the contract but cannot contribute any more.
+  function closeContributions () public onlyOwner {
+    require (contractStage == 1);
+    contractStage = 2;
   }
   
-  function submitPool (uint amountInWei) public {
-    data.submitPool(amountInWei);
+  // This function reopens the contract to contributions and further whitelisting, returning it to stage one.
+  // It can only be called by the owner during stage two.
+  function reopenContributions () public onlyOwner {
+    require (contractStage == 2);
+    contractStage = 1;
   }
   
-  function enableWithdrawals (address tokenAddress, address feeAddress) public {
-    data.enableWithdrawals(tokenAddress, feeAddress);
+  // This function sets the receiving address that the contract will send the pooled eth to.
+  // It can only be called by the contract owner if the receiver address has not already been set.
+  // After making this call, the contract will be unable to send the pooled eth for 6000 blocks.
+  // This limitation is so that if the owner acts maliciously in making the change, all whitelisted
+  // addresses have ~24 hours to withdraw their eth from the contract.
+  function setReceiverAddress (address addr) public onlyOwner {
+    require (addr != 0x00 && receiverAddress == 0x00);
+    require (contractStage < 3);
+    receiverAddress = addr;
+    addressChangeBlock = block.number;
+    ReceiverAddressSet(addr);
+  }
+
+  // This function sends the pooled eth to the receiving address, calculates the % of unused eth to be returned,
+  // and advances the contract to stage three. It can only be called by the contract owner during stages one or two.
+  // The amount to send (given in wei) must be specified during the call. As this function can only be executed once,
+  // it is VERY IMPORTANT not to get the amount wrong.
+  function submitPool (uint amountInWei) public onlyOwner noReentrancy {
+    require (contractStage < 3);
+    require (receiverAddress != 0x00);
+    require (block.number >= addressChangeBlock.add(6000));
+    require (contributionMin <= amountInWei && amountInWei <= this.balance);
+    finalBalance = this.balance;
+    require (receiverAddress.call.value(amountInWei).gas(msg.gas.sub(5000))());
+    if (this.balance > 0) ethRefundAmount.push(this.balance);
+    contractStage = 3;
+    PoolSubmitted(receiverAddress, amountInWei);
   }
   
-  function tokenFallback (address from, uint value, bytes calldata) public {
-    emit ERC223Received(from, value, calldata);
+  // This function opens the contract up for token withdrawals.
+  // It can only be called by the owner during stage 3.  The owner specifies the address of an ERC20 token
+  // contract that this contract has a balance in, and optionally a bool to prevent this token from being
+  // the default withdrawal (in the event of an airdrop, for example).
+  function enableTokenWithdrawals (address tokenAddr, bool notDefault) public onlyOwner noReentrancy {
+    require (contractStage == 3);
+    if (notDefault) {
+      require (activeToken != 0x00);
+    } else {
+      activeToken = tokenAddr;
+    }
+    var d = distributionMap[tokenAddr];    
+    if (d.pct.length==0) d.token = ERC20(tokenAddr);
+    uint amount = d.token.balanceOf(this).sub(d.balanceRemaining);
+    require (amount > 0);
+    if (feePct > 0) {
+      require (d.token.transfer(owner,_applyPct(amount,feePct)));
+    }
+    amount = d.token.balanceOf(this).sub(d.balanceRemaining);
+    d.balanceRemaining = d.token.balanceOf(this);
+    d.pct.push(_toPct(amount,finalBalance));
   }
-	
+  
+  // This is a standard function required for ERC223 compatibility.
+  function tokenFallback (address from, uint value, bytes data) public {
+    ERC223Received (from, value);
+  }
+  
 }
