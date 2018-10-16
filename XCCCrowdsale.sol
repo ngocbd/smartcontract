@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCCCrowdsale at 0x062543100374b5fdb33aea4605fb791c4e867b06
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCCCrowdsale at 0x3117d298a9feb0e81626b809b840ae376e00f40e
 */
 pragma solidity ^0.4.23;
 
@@ -346,8 +346,8 @@ contract XCCCrowdsale is Ownable, Crowdsale, MintableToken {
     mapping (address => uint256) public deposited;
     mapping(address => bool) public whitelist;
 
-    uint256 public constant INITIAL_SUPPLY = 5 * (10 ** 12) * (10 ** uint256(decimals));
-    uint256 public fundForSale = 5 * (10 ** 12) * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 7050000000 * (10 ** uint256(decimals));
+    uint256 public fundForSale = 7050000000 * (10 ** uint256(decimals));
     uint256 public fundPreSale =  1 * (10 ** 9) * (10 ** uint256(decimals));
 
     uint256 public countInvestor;
@@ -438,10 +438,10 @@ contract XCCCrowdsale is Ownable, Crowdsale, MintableToken {
     }
 
     function getPeriod(uint256 _currentDate) public pure returns (uint) {
-        //1526860800 - May, 21, 2018 00:00:00 && 1529539199 - Jun, 20, 2018 23:59:59
+        //1527465600 - May, 28, 2018 00:00:00 && 1530143999 - Jun, 27, 2018 23:59:59
         //1540080000 - Oct, 21, 2018 00:00:00 && 1542758399 - Nov, 20, 2018 23:59:59
 
-        if( 1526860800 <= _currentDate && _currentDate <= 1529539199){
+        if( 1527465600 <= _currentDate && _currentDate <= 1530143999){
             return 0;
         }
         if( 1540080000 <= _currentDate && _currentDate <= 1542758399){
