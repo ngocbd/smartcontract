@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QatarCoin at 0x81f284d04e151362199db299490da3036765fee7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QatarCoin at 0x69cc9be8e03a11fc0707666d5ce64508047de2b1
 */
 pragma solidity ^0.4.11;
 
