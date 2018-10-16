@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _ERC20Pool at 0x136c016c3216d7b15cb5f613b97d9e9c5d04fc6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _ERC20Pool at 0x96fd68b56946126d25d8cb6e7df68cb8ed13152a
 */
-pragma solidity ^0.4.19; 
+pragma solidity ^0.4.17;
 /*
 Author: Vox / 0xPool.io
 Description: This smart contract is designed to store mining pool payouts for 
@@ -45,8 +45,8 @@ contract _ERC20Pool {
 
   address public owner = msg.sender;
   uint32 public totalTokenSupply;
-  mapping (address => uint32) public minerTokens;
-  mapping (address => uint32) public minerTokenPayouts;
+  mapping (address => uint32) minerTokens;
+  mapping (address => uint32) minerTokenPayouts;
 
   // Modifier for important owner only functions
   modifier onlyOwner() {
@@ -80,7 +80,7 @@ contract _ERC20Pool {
   }
 
   // Fallback function, Ether sent to this contract will be considered as a donation towards the 
-  // 0xPool project unless you get in contact with 0xPool.io within 72 hours. 
+  // 0xPool & 0xBitcoin projects unless you get in contact with 0xPool.io within 72 hours. 
   function () public payable {
     owner.transfer(msg.value);
   }
