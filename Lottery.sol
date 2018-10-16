@@ -1,50 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xd0020A0f0Fb926910AA26c4BEE922ab961C5393f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x0BF0f154B176C5d90F24e506F10F7F583eB5334d
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-contract Random {
-  uint256 _seed;
+contract Lottery {
+    address public owner = msg.sender;
+    bytes32 secretNumberHash = 0x04994f67dc55b09e814ab7ffc8df3686b4afb2bb53e60eae97ef043fe03fb829;
 
-  function maxRandom() public returns (uint256 randomNumber) {
-    _seed = uint256(keccak256(
-        _seed,
-        block.blockhash(block.number - 1),
-        block.coinbase,
-        block.difficulty
-    ));
-    return _seed;
-  }
-
-  // return a pseudo random number between lower and upper bounds
-  // given the number of previous blocks it should hash.
-  function random(uint256 upper) public returns (uint256 randomNumber) {
-    return maxRandom() % upper;
-  }
-}
-
-contract Lottery is Random {
-
-	struct Stage {
-		uint32 maxNum;
-		bytes32 participantsHash;
-		uint winnerNum;
-	}
-	mapping (uint32 => Stage) public stages;
-	address public owner;
-
-	event Winner(uint32 _stageNum, uint _winnerNum);
-
-	modifier onlyOwner() { require(msg.sender == owner); _;}
-
-	constructor() public {
-        owner = msg.sender;
+    function withdraw() public {
+        require(msg.sender == owner);
+        owner.transfer(this.balance);
     }
 
-	function randomJackpot(uint32 _stageNum, bytes32 _participantsHash, uint32 _maxNum) external onlyOwner {
-		require(_maxNum > 0);
-		uint winnerNum = random(_maxNum);
-		stages[_stageNum] = Stage(_maxNum, _participantsHash, winnerNum);
-		emit Winner(_stageNum, winnerNum);
-	}
+    function guess(uint8 number) public payable {
+        // each next attempt is more expensive than all previous ones
+        if (keccak256(number) == secretNumberHash && msg.value > this.balance) {
+            // send the jack pot
+            msg.sender.transfer(this.balance + msg.value);
+        }
+    }
 }
