@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DepositHolder at 0xcd6608b1291d4307652592c29bff7d51f1ad83d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DepositHolder at 0x687a241422c92e3d15ce6a02c832f800b74c8b3c
 */
 pragma solidity ^0.3.5;
 
@@ -38,14 +38,6 @@ contract DepositHolder {
     modifier auditor_only {
         if(msg.sender != auditor) throw;
         _;
-    }
-    
-    function setOwner(address newOwner) owner_only {
-        owner = newOwner;
-    }
-    
-    function setAuditor(address newAuditor) auditor_only {
-        auditor = newAuditor;
     }
 
     /**
