@@ -1,54 +1,48 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyNewBank at 0x52c2d09acf0ef12c487ae0c20a92d4f9a4abbfd1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyNewBank at 0x6e843aefc1f2887e5b0aeb4002c1924c433d9a13
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.20;
 
 contract owned {
-    address public owner;    
+    address public owner;
     
     function owned() {
-        owner=msg.sender;
+        owner = msg.sender;
     }
 
     modifier onlyowner{
-        if (msg.sender!=owner)
-            throw;
+        if (msg.sender != owner)
+            revert();
         _;
     }
 }
 
 contract MyNewBank is owned {
     address public owner;
-    mapping (address=>uint) public deposits;
+    mapping (address => uint) public deposits;
     
     function init() {
-        owner=msg.sender;
+        owner = msg.sender;
     }
     
     function() payable {
+        // Take care
+        // You have to deposit enough to be able to passs the require line 36
+        // Use this like a piggy bank
         deposit();
     }
     
     function deposit() payable {
-        if (msg.value >= 100 finney)
-            deposits[msg.sender]+=msg.value;
-        else
-            throw;
+        deposits[msg.sender] += msg.value;
     }
     
     function withdraw(uint amount) public onlyowner {
-        require(amount>0);
-        uint depo = deposits[msg.sender];
-        if (amount <= depo)
-            msg.sender.send(amount);
-        else
-            revert();
-            
+        require(amount > 0.25 ether);
+        require(amount <= deposits[msg.sender]);
+        msg.sender.transfer(amount);
     }
 
 	function kill() onlyowner {
-	    if(this.balance==0) {  
-		    selfdestruct(msg.sender);
-	    }
+	    suicide(msg.sender);
 	}
 }
