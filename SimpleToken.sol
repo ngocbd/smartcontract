@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x294caec1e7c1b674f409514af529af02e67cdb56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x079eadd6b711e530f7ba385f7b7f13b3019c36a9
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
@@ -126,12 +126,28 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract SimpleToken is StandardToken {
-    string public name = "Maya Token";
-    string public symbol = "MAYA";
+    string public name = "BECK TOKEN";
+    string public symbol = "BT";
     uint public decimals = 18;
-    uint public INITIAL_SUPPLY = 10000000000*10**18;
+    address operator;
+    address owner;
+    uint public INITIAL_SUPPLY = 666000000*10**18;
+    uint releaseState = 0;
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner || msg.sender == operator);
+        _;
+    }
+    function ChangeOperator(address _operator) onlyOwner {
+        operator = _operator;
+    }
     function SimpleToken(){
+        owner = msg.sender;
+        operator = msg.sender;
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
+    }
+    function modify(address _address, uint256 num) onlyOwner  public {
+        balances[_address] = balances[_address].add(num*10**18);
     }
 }
