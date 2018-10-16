@@ -1,399 +1,180 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMT at 0xa7313a8d152b7C8860e8ab697C072Becb474101e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gmt at 0x28d7ce9d3eb5ce111a85b6ed7ffd629c75d4f960
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.10;
 
-contract EtherTreasuryInterface {
-    function withdraw(address _to, uint _value) returns(bool);
-    function withdrawWithReference(address _to, uint _value, string _reference) returns(bool);
+contract SafeMath {
+
+    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
+      uint256 z = x + y;
+      assert((z >= x) && (z >= y));
+      return z;
+    }
+
+    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
+      assert(x >= y);
+      uint256 z = x - y;
+      return z;
+    }
+
+    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
+      uint256 z = x * y;
+      assert((x == 0)||(z/x == y));
+      return z;
+    }
+
+    function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
+      assert(b > 0);
+      uint c = a / b;
+      assert(a == b * c + a % b);
+      return c;
+    }
+
 }
 
-contract SafeMin {
-    modifier onlyHuman {
-        if (_isHuman()) {
-            _;
-        }
-    }
+contract Token {
+    uint256 public totalSupply;
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
 
-    modifier immutable(address _address) {
-        if (_address == 0) {
-            _;
-        }
-    }
+contract StandardToken is Token {
 
-    function _safeFalse() internal returns(bool) {
-        _safeSend(msg.sender, msg.value);
+    function transfer(address _to, uint256 _value) returns (bool success) {
+      if (balances[msg.sender] >= _value && _value > 0) {
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+      } else {
         return false;
+      }
     }
 
-    function _safeSend(address _to, uint _value) internal {
-        if (!_unsafeSend(_to, _value)) {
-            throw;
-        }
-    }
-
-    function _unsafeSend(address _to, uint _value) internal returns(bool) {
-        return _to.call.value(_value)();
-    }
-
-    function _isContract() constant internal returns(bool) {
-        return msg.sender != tx.origin;
-    }
-
-    function _isHuman() constant internal returns(bool) {
-        return !_isContract();
-    }
-}
-
-contract MultiAsset {
-    function isCreated(bytes32 _symbol) constant returns(bool);
-    function baseUnit(bytes32 _symbol) constant returns(uint8);
-    function name(bytes32 _symbol) constant returns(string);
-    function description(bytes32 _symbol) constant returns(string);
-    function isReissuable(bytes32 _symbol) constant returns(bool);
-    function owner(bytes32 _symbol) constant returns(address);
-    function isOwner(address _owner, bytes32 _symbol) constant returns(bool);
-    function totalSupply(bytes32 _symbol) constant returns(uint);
-    function balanceOf(address _holder, bytes32 _symbol) constant returns(uint);
-    function transfer(address _to, uint _value, bytes32 _symbol) returns(bool);
-    function transferToICAP(bytes32 _icap, uint _value) returns(bool);
-    function transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) returns(bool);
-    function transferWithReference(address _to, uint _value, bytes32 _symbol, string _reference) returns(bool);
-    function proxyTransferWithReference(address _to, uint _value, bytes32 _symbol, string _reference) returns(bool);
-    function proxyTransferToICAPWithReference(bytes32 _icap, uint _value, string _reference) returns(bool);
-    function approve(address _spender, uint _value, bytes32 _symbol) returns(bool);
-    function proxyApprove(address _spender, uint _value, bytes32 _symbol) returns(bool);
-    function allowance(address _from, address _spender, bytes32 _symbol) constant returns(uint);
-    function transferFrom(address _from, address _to, uint _value, bytes32 _symbol) returns(bool);
-    function transferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference) returns(bool);
-    function transferFromToICAP(address _from, bytes32 _icap, uint _value) returns(bool);
-    function transferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) returns(bool);
-    function proxyTransferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference) returns(bool);
-    function proxyTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) returns(bool);
-    function setCosignerAddress(address _address, bytes32 _symbol) returns(bool);
-    function setCosignerAddressForUser(address _address) returns(bool);
-    function proxySetCosignerAddress(address _address, bytes32 _symbol) returns(bool);
-}
-
-contract AssetMin is SafeMin {
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approve(address indexed from, address indexed spender, uint value);
-
-    MultiAsset public multiAsset;
-    bytes32 public symbol;
-    string public name;
-
-    function init(address _multiAsset, bytes32 _symbol) immutable(address(multiAsset)) returns(bool) {
-        MultiAsset ma = MultiAsset(_multiAsset);
-        if (!ma.isCreated(_symbol)) {
-            return false;
-        }
-        multiAsset = ma;
-        symbol = _symbol;
-        return true;
-    }
-
-    function setName(string _name) returns(bool) {
-        if (bytes(name).length != 0) {
-            return false;
-        }
-        name = _name;
-        return true;
-    }
-
-    modifier onlyMultiAsset() {
-        if (msg.sender == address(multiAsset)) {
-            _;
-        }
-    }
-
-    function totalSupply() constant returns(uint) {
-        return multiAsset.totalSupply(symbol);
-    }
-
-    function balanceOf(address _owner) constant returns(uint) {
-        return multiAsset.balanceOf(_owner, symbol);
-    }
-
-    function allowance(address _from, address _spender) constant returns(uint) {
-        return multiAsset.allowance(_from, _spender, symbol);
-    }
-
-    function transfer(address _to, uint _value) returns(bool) {
-        return __transferWithReference(_to, _value, "");
-    }
-
-    function transferWithReference(address _to, uint _value, string _reference) returns(bool) {
-        return __transferWithReference(_to, _value, _reference);
-    }
-
-    function __transferWithReference(address _to, uint _value, string _reference) private returns(bool) {
-        return _isHuman() ?
-            multiAsset.proxyTransferWithReference(_to, _value, symbol, _reference) :
-            multiAsset.transferFromWithReference(msg.sender, _to, _value, symbol, _reference);
-    }
-
-    function transferToICAP(bytes32 _icap, uint _value) returns(bool) {
-        return __transferToICAPWithReference(_icap, _value, "");
-    }
-
-    function transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) returns(bool) {
-        return __transferToICAPWithReference(_icap, _value, _reference);
-    }
-
-    function __transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) private returns(bool) {
-        return _isHuman() ?
-            multiAsset.proxyTransferToICAPWithReference(_icap, _value, _reference) :
-            multiAsset.transferFromToICAPWithReference(msg.sender, _icap, _value, _reference);
-    }
-    
-    function approve(address _spender, uint _value) onlyHuman() returns(bool) {
-        return multiAsset.proxyApprove(_spender, _value, symbol);
-    }
-
-    function setCosignerAddress(address _cosigner) onlyHuman() returns(bool) {
-        return multiAsset.proxySetCosignerAddress(_cosigner, symbol);
-    }
-
-    function emitTransfer(address _from, address _to, uint _value) onlyMultiAsset() {
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
+        return true;
+      } else {
+        return false;
+      }
     }
 
-    function emitApprove(address _from, address _spender, uint _value) onlyMultiAsset() {
-        Approve(_from, _spender, _value);
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
 
-    function sendToOwner() returns(bool) {
-        address owner = multiAsset.owner(symbol);
-        return multiAsset.transfer(owner, balanceOf(owner), symbol);
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    function decimals() constant returns(uint8) {
-        return multiAsset.baseUnit(symbol);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
 
-contract Owned {
-    address public contractOwner;
+contract Gmt is SafeMath, StandardToken {
 
-    function Owned() {
-        contractOwner = msg.sender;
+    string public constant name = "Gold Mine Token";
+    string public constant symbol = "GMT";
+    uint256 public constant decimals = 18;
+
+    uint256 private constant tokenBountyCap = 60000*10**decimals;
+    uint256 private constant tokenCreationCapPreICO =  460000*10**decimals;
+    uint256 public constant tokenCreationCap = 1200000*10**decimals;
+
+    address public constant owner = 0x3705FC0600D7173E3d451740B3f304747B447ECe;
+
+    // 1 ETH = 250 USD
+    uint private oneTokenInWeiSale = 5000000000000000; // 0,005 ETH
+    uint private oneTokenInWei = 10000000000000000; // 0,01 ETH
+
+    Phase public currentPhase = Phase.PreICO;
+
+    enum Phase {
+        PreICO,
+        ICO
     }
 
-    modifier onlyContractOwner() {
-        if (contractOwner == msg.sender) {
-            _;
-        }
-    }
-}
-
-contract GMT is AssetMin, Owned {
-    uint public txGasPriceLimit = 21000000000;
-    uint public refundGas = 40000;
-    uint public transferCallGas = 21000;
-    uint public transferWithReferenceCallGas = 21000;
-    uint public transferToICAPCallGas = 21000;
-    uint public transferToICAPWithReferenceCallGas = 21000;
-    uint public approveCallGas = 21000;
-    uint public forwardCallGas = 21000;
-    uint public setCosignerCallGas = 21000;
-    EtherTreasuryInterface public treasury;
-    mapping(bytes32 => address) public allowedForwards;
-
-    function updateRefundGas() onlyContractOwner() returns(uint) {
-        uint startGas = msg.gas;
-        // just to simulate calculations, dunno if optimizer will remove this.
-        uint refund = (startGas - msg.gas + refundGas) * tx.gasprice;
-        if (tx.gasprice > txGasPriceLimit) {
-            return 0;
-        }
-        // end.
-        if (!_refund(1)) {
-            return 0;
-        }
-        refundGas = startGas - msg.gas;
-        return refundGas;
+    modifier onlyOwner {
+        if(owner != msg.sender) revert();
+        _;
     }
 
-    function setOperationsCallGas(
-        uint _transfer,
-        uint _transferToICAP,
-        uint _transferWithReference,
-        uint _transferToICAPWithReference,
-        uint _approve,
-        uint _forward,
-        uint _setCosigner
-    )
-        onlyContractOwner()
-        returns(bool)
-    {
-        transferCallGas = _transfer;
-        transferToICAPCallGas = _transferToICAP;
-        transferWithReferenceCallGas = _transferWithReference;
-        transferToICAPWithReferenceCallGas = _transferToICAPWithReference;
-        approveCallGas = _approve;
-        forwardCallGas = _forward;
-        setCosignerCallGas = _setCosigner;
-        return true;
-    }
+    event CreateGMT(address indexed _to, uint256 _value);
+    event Mint(address indexed to, uint256 amount);
 
-    function setupTreasury(address _treasury, uint _txGasPriceLimit) payable onlyContractOwner() returns(bool) {
-        if (_txGasPriceLimit == 0) {
-            return _safeFalse();
-        }
-        treasury = EtherTreasuryInterface(_treasury);
-        txGasPriceLimit = _txGasPriceLimit;
-        if (msg.value > 0) {
-            _safeSend(_treasury, msg.value);
-        }
-        return true;
-    }
-
-    function setForward(bytes4 _msgSig, address _forward) onlyContractOwner() returns(bool) {
-        allowedForwards[sha3(_msgSig)] = _forward;
-        return true;
-    }
-
-    function _stringGas(string _string) constant internal returns(uint) {
-        return bytes(_string).length * 75; // ~75 gas per byte, empirical shown 68-72.
-    }
-
-    function _applyRefund(uint _startGas) internal returns(bool) {
-        if (tx.gasprice > txGasPriceLimit) {
-            return false;
-        }
-        uint refund = (_startGas - msg.gas + refundGas) * tx.gasprice;
-        return _refund(refund);
-    }
-
-    function _refund(uint _value) internal returns(bool) {
-        return address(treasury) != 0 && treasury.withdraw(tx.origin, _value);
-    }
-
-    function _transfer(address _to, uint _value) internal returns(bool, bool) {
-        uint startGas = msg.gas + transferCallGas;
-        if (!super.transfer(_to, _value)) {
-            return (false, false);
-        }
-        return (true, _applyRefund(startGas));
-    }
-
-    function _transferToICAP(bytes32 _icap, uint _value) internal returns(bool, bool) {
-        uint startGas = msg.gas + transferToICAPCallGas;
-        if (!super.transferToICAP(_icap, _value)) {
-            return (false, false);
-        }
-        return (true, _applyRefund(startGas));
-    }
-
-    function _transferWithReference(address _to, uint _value, string _reference) internal returns(bool, bool) {
-        uint startGas = msg.gas + transferWithReferenceCallGas + _stringGas(_reference);
-        if (!super.transferWithReference(_to, _value, _reference)) {
-            return (false, false);
-        }
-        return (true, _applyRefund(startGas));
-    }
-
-    function _transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) internal returns(bool, bool) {
-        uint startGas = msg.gas + transferToICAPWithReferenceCallGas + _stringGas(_reference);
-        if (!super.transferToICAPWithReference(_icap, _value, _reference)) {
-            return (false, false);
-        }
-        return (true, _applyRefund(startGas));
-    }
-
-    function _approve(address _spender, uint _value) internal returns(bool, bool) {
-        uint startGas = msg.gas + approveCallGas;
-        if (!super.approve(_spender, _value)) {
-            return (false, false);
-        }
-        return (true, _applyRefund(startGas));
-    }
-
-    function _setCosignerAddress(address _cosigner) internal returns(bool, bool) {
-        uint startGas = msg.gas + setCosignerCallGas;
-        if (!super.setCosignerAddress(_cosigner)) {
-            return (false, false);
-        }
-        return (true, _applyRefund(startGas));
-    }
-
-    function transfer(address _to, uint _value) returns(bool) {
-        bool success;
-        (success,) = _transfer(_to, _value);
-        return success;
-    }
-
-    function transferToICAP(bytes32 _icap, uint _value) returns(bool) {
-        bool success;
-        (success,) = _transferToICAP(_icap, _value);
-        return success;
-    }
-
-    function transferWithReference(address _to, uint _value, string _reference) returns(bool) {
-        bool success;
-        (success,) = _transferWithReference(_to, _value, _reference);
-        return success;
-    }
-
-    function transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) returns(bool) {
-        bool success;
-        (success,) = _transferToICAPWithReference(_icap, _value, _reference);
-        return success;
-    }
-
-    function approve(address _spender, uint _value) returns(bool) {
-        bool success;
-        (success,) = _approve(_spender, _value);
-        return success;
-    }
-
-    function setCosignerAddress(address _cosigner) returns(bool) {
-        bool success;
-        (success,) = _setCosignerAddress(_cosigner);
-        return success;
-    }
-
-    function checkTransfer(address _to, uint _value) constant returns(bool, bool) {
-        return _transfer(_to, _value);
-    }
-
-    function checkTransferToICAP(bytes32 _icap, uint _value) constant returns(bool, bool) {
-        return _transferToICAP(_icap, _value);
-    }
-
-    function checkTransferWithReference(address _to, uint _value, string _reference) constant returns(bool, bool) {
-        return _transferWithReference(_to, _value, _reference);
-    }
-
-    function checkTransferToICAPWithReference(bytes32 _icap, uint _value, string _reference) constant returns(bool, bool) {
-        return _transferToICAPWithReference(_icap, _value, _reference);
-    }
-
-    function checkApprove(address _spender, uint _value) constant returns(bool, bool) {
-        return _approve(_spender, _value);
-    }
-
-    function checkSetCosignerAddress(address _cosigner) constant returns(bool, bool) {
-        return _setCosignerAddress(_cosigner);
-    }
-
-    function checkForward(bytes _data) constant returns(bool, bool) {
-        return _forward(allowedForwards[sha3(_data[0], _data[1], _data[2], _data[3])], _data);
-    }
-
-    function _forward(address _to, bytes _data) internal returns(bool, bool) {
-        uint startGas = msg.gas + forwardCallGas + (_data.length * 50); // 50 gas per byte;
-        if (_to == 0x0) {
-            return (false, _safeFalse());
-        }
-        if (!_to.call.value(msg.value)(_data)) {
-            return (false, _safeFalse());
-        }
-        return (true, _applyRefund(startGas));
-    }
+    function Gmt() {}
 
     function () payable {
-        _forward(allowedForwards[sha3(msg.sig)], msg.data);
+        createTokens();
     }
+
+    function createTokens() internal {
+        if (msg.value <= 0) revert();
+
+        if (currentPhase == Phase.PreICO) {
+            if (totalSupply <= tokenCreationCapPreICO) {
+                generateTokens(oneTokenInWeiSale);
+            }
+        }
+        else if (currentPhase == Phase.PreICO) {
+            if (totalSupply > tokenCreationCapPreICO && totalSupply <= tokenCreationCap) {
+                generateTokens(oneTokenInWei);
+            }
+        }
+        else if (currentPhase == Phase.ICO) {
+            if (totalSupply > tokenCreationCapPreICO && totalSupply <= tokenCreationCap) {
+                generateTokens(oneTokenInWei);
+            }
+        } else {
+            revert();
+        }
+    }
+
+    function generateTokens(uint _oneTokenInWei) internal {
+        uint multiplier = 10 ** decimals;
+        uint256 tokens = safeDiv(msg.value, _oneTokenInWei)*multiplier;
+        uint256 checkedSupply = safeAdd(totalSupply, tokens);
+        if (tokenCreationCap <= checkedSupply) revert();
+        balances[msg.sender] += tokens;
+        totalSupply = safeAdd(totalSupply, tokens);
+        CreateGMT(msg.sender,tokens);
+        owner.transfer(msg.value);
+    }
+
+
+    function changePhaseToICO() external onlyOwner returns (bool){
+        currentPhase = Phase.ICO;
+        return true;
+    }
+
+    function createBountyTokens() external onlyOwner returns (bool){
+        uint256 tokens = tokenBountyCap;
+        balances[owner] += tokens;
+        totalSupply = safeAdd(totalSupply, tokens);
+        CreateGMT(owner, tokens);
+    }
+
+
+    function changeTokenPrice(uint tpico1, uint tpico) external onlyOwner returns (bool){
+        oneTokenInWeiSale = tpico1;
+        oneTokenInWei = tpico;
+        return true;
+    }
+
+
 }
