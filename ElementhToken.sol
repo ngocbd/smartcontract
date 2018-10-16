@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ElementhToken at 0x4c567c3363cc42c5a42c6d8bf01503fd1d0b91cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ElementhToken at 0x15f917e4f828671a0bcda6e961eb43e945bb2b42
 */
 pragma solidity ^0.4.18;
 
@@ -258,8 +258,6 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
-    
-
 }
 
 
@@ -276,7 +274,6 @@ contract StandardToken is ERC20, BasicToken {
 contract MintableToken is StandardToken {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
-  event Burn(address indexed burner, uint256 value);
 
   bool public mintingFinished = false;
 
@@ -308,21 +305,6 @@ contract MintableToken is StandardToken {
     mintingFinished = true;
     MintFinished();
     return true;
-  }
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(address _address, uint256 _value) onlyOwner public {
-      require(_value <= balances[_address]);
-      // no need to require value <= totalSupply, since that would imply the
-      // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-      address burner = _address;
-      balances[burner] = balances[burner].sub(_value);
-      totalSupply = totalSupply.sub(_value);
-      Burn(burner, _value);
   }
 }
 
