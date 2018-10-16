@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TIMEDToken at 0xcf3334ddef93e384713b5fb42ed3b9b4e703afa5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TIMEDToken at 0x1b0d723ab149f359e98d06051c2dab804a15d5c2
 */
 pragma solidity ^0.4.4;
 
@@ -112,7 +112,7 @@ contract TIMEDToken is StandardToken {
 
     function TIMEDToken(
         ) {
-        balances[msg.sender] = 178000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        balances[msg.sender] = 90000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 178000000000000000000000000000;                        // Update total supply (100000 for example)
         name = "TIMED";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
