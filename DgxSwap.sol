@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DgxSwap at 0xD05d56acd892F33010D93DdF6D9593511B618946
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DgxSwap at 0x943bbeEf41460a3F0f3Ac7f7a062128ad0Ba9cB1
 */
 contract DgxToken {
   function approve(address _spender,uint256 _value) returns(bool success);
@@ -8,6 +8,7 @@ contract DgxToken {
   function balanceOf(address _owner) constant returns(uint256 balance);
   function transfer(address _to,uint256 _value) returns(bool success);
   function allowance(address _owner,address _spender) constant returns(uint256 remaining);
+  function calculateTxFee(uint256 _value, address _user) public returns (uint256);
 }
 
 contract SwapContract {
@@ -33,9 +34,10 @@ contract SwapContract {
   function () {
     if (dgxBalance() == 0) throw;
     if (msg.value < totalWeiPrice()) throw;
-    if (DgxToken(dgxContract).transfer(address(this), dgxBalance())) {
-      seller.send(msg.value);       
-    }
+    uint256 _txfee = DgxToken(dgxContract).calculateTxFee(dgxBalance(), address(this));
+    uint256 _sendamount = dgxBalance() - _txfee;
+    if (!DgxToken(dgxContract).transfer(msg.sender, _sendamount)) throw;
+    if (!seller.send(msg.value)) throw;
   }
 
   function setWeiPrice(uint256 _newweiprice) ifSeller returns (bool _success) {
@@ -55,7 +57,9 @@ contract SwapContract {
   }
 
   function withdraw() ifSeller returns (bool _success) {
-    _success = DgxToken(dgxContract).transfer(seller, dgxBalance());
+    uint256 _txfee = DgxToken(dgxContract).calculateTxFee(dgxBalance(), seller);
+    uint256 _sendamount = dgxBalance() - _txfee;
+    _success = DgxToken(dgxContract).transfer(seller, _sendamount);
     return _success;
   }
 }
