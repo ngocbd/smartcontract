@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INT at 0x0b76544f6c413a555f309bf76260d1e02377c02a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INT at 0xc32088cf2e82426e29b5e623082f7793114f1259
 */
-pragma solidity ^0.4.13; contract owned { address public owner;
+pragma solidity ^0.4.13; 
+contract owned { 
+  address public owner;
   function owned() {
       owner = msg.sender;
   }
@@ -16,7 +18,9 @@ pragma solidity ^0.4.13; contract owned { address public owner;
   }
 }
 contract tokenRecipient { function receiveApproval(address from, uint256 value, address token, bytes extraData); }
-contract token { /*Public variables of the token*/ string public name; string public symbol; uint8 public decimals; uint256 public totalSupply;
+contract token { 
+/*Public variables of the token */ 
+string public name; string public symbol; uint8 public decimals; uint256 public totalSupply;
   /* This creates an array with all balances */
   mapping (address => uint256) public balanceOf;
   mapping (address => mapping (address => uint256)) public allowance;
@@ -180,4 +184,4 @@ contract INTToken is owned, token {
       msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
   }
 }
-contract INT is INTToken(1000000000000000, "Internet Node Token", 6, "INT") {}
+contract INT is INTToken(1000000000000000, "my test 09token", 6, "TEST09") {}
