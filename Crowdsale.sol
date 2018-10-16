@@ -1,19 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x5a0d7bf44907b48a6af0e6f3e9519811aeaaa925
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x2520e2b81a7424b89b9fbd739f94aa430cb1b267
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
+    
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
@@ -34,106 +55,18 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
+  
 }
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
+library Math {
+  function max(uint a, uint b) pure internal returns (uint) {
+    if (a > b) return a;
+    else return b;
   }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
+  function min(uint a, uint b) pure internal returns (uint) {
+    if (a < b) return a;
+    else return b;
   }
 }
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
 
 /**
  * @title Basic token
@@ -170,20 +103,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
 
 /**
  * @title Standard ERC20 token
@@ -266,444 +185,219 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
 /**
- * @title Pausable token
- *
- * @dev StandardToken modified with pausable transfers.
- **/
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-contract PausableToken is StandardToken, Pausable {
 
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
 
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
-
-contract CostumeToken is PausableToken {
-  using SafeMath for uint256;
-
-  // Token Details
-  string public constant name = 'Costume Token';
-  string public constant symbol = 'COST';
-  uint8 public constant decimals = 18;
-
-  // 200 Million Total Supply
-  uint256 public constant totalSupply = 200e24;
-
-  // 120 Million - Supply not for Crowdsale
-  uint256 public initialSupply = 120e24;
-
-  // 80 Million - Crowdsale limit
-  uint256 public limitCrowdsale = 80e24;
-
-  // Tokens Distributed - Crowdsale Buyers
-  uint256 public tokensDistributedCrowdsale = 0;
-
-  // The address of the crowdsale
-  address public crowdsale;
-
-  // -- MODIFIERS
-
-  // Modifier, must be called from Crowdsale contract
-  modifier onlyCrowdsale() {
-    require(msg.sender == crowdsale);
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
     _;
   }
 
-  // Constructor - send initial supply to owner
-  function CostumeToken() public {
-    balances[msg.sender] = initialSupply;
-  }
 
-  // Set crowdsale address, only by owner
-  // @param - crowdsale address
-  function setCrowdsaleAddress(address _crowdsale) external onlyOwner whenNotPaused {
-    require(crowdsale == address(0));
-    require(_crowdsale != address(0));
-    crowdsale = _crowdsale;
-  }
-
-  // Distribute tokens, only by crowdsale
-  // @param _buyer The buyer address
-  // @param tokens The amount of tokens to send to that address
-  function distributeCrowdsaleTokens(address _buyer, uint tokens) external onlyCrowdsale whenNotPaused {
-    require(_buyer != address(0));
-    require(tokens > 0);
-
-    require(tokensDistributedCrowdsale < limitCrowdsale);
-    require(tokensDistributedCrowdsale.add(tokens) <= limitCrowdsale);
-
-    // Tick up the distributed amount
-    tokensDistributedCrowdsale = tokensDistributedCrowdsale.add(tokens);
-
-    // Add the funds to buyer address
-    balances[_buyer] = balances[_buyer].add(tokens);
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
 }
 
-contract Crowdsale is Pausable {
-   using SafeMath for uint256;
-
-   // The token being sold
-   CostumeToken public token;
-
-   // 12.15.2017 - 12:00:00 GMT
-   uint256 public startTime = 1513339200;
-
-   // 1.31.2018 - 12:00:00 GMT
-   uint256 public endTime = 1517400000;
-
-   // Costume Wallet
-   address public wallet;
-
-   // Set tier rates
-   uint256 public rate = 3400;
-   uint256 public rateTier2 = 3200;
-   uint256 public rateTier3 = 3000;
-   uint256 public rateTier4 = 2800;
-
-   // The maximum amount of wei for each tier
-   // 20 Million Intervals
-   uint256 public limitTier1 = 20e24;
-   uint256 public limitTier2 = 40e24;
-   uint256 public limitTier3 = 60e24;
-
-   // 80 Million Tokens available for crowdsale
-   uint256 public constant maxTokensRaised = 80e24;
-
-   // The amount of wei raised
-   uint256 public weiRaised = 0;
-
-   // The amount of tokens raised
-   uint256 public tokensRaised = 0;
-
-   // 0.1 ether minumum per contribution
-   uint256 public constant minPurchase = 100 finney;
-
-   // Crowdsale tokens not purchased
-   bool public remainingTransfered = false;
-
-   // The number of transactions
-   uint256 public numberOfTransactions;
-
-   // -- DATA-SETS
-
-   // Amount each address paid for tokens
-   mapping(address => uint256) public crowdsaleBalances;
-
-   // Amount of tokens each address received
-   mapping(address => uint256) public tokensBought;
-
-   // -- EVENTS
-
-   // Trigger TokenPurchase event
-   event TokenPurchase(address indexed buyer, uint256 value, uint256 amountOfTokens);
-
-   // Crowdsale Ended
-   event Finalized();
-
-   // -- MODIFIERS
-
-   // Only allow the execution of the function before the crowdsale starts
-   modifier beforeStarting() {
-      require(now < startTime);
-      _;
-   }
-
-   // Main Constructor
-   // @param _wallet - Fund wallet address
-   // @param _tokenAddress - Associated token address
-   // @param _startTime - Crowdsale start time
-   // @param _endTime - Crowdsale end time
-   function Crowdsale(
-      address _wallet,
-      address _tokenAddress,
-      uint256 _startTime,
-      uint256 _endTime
-   ) public {
-      require(_wallet != address(0));
-      require(_tokenAddress != address(0));
-
-      if (_startTime > 0 && _endTime > 0) {
-          require(_startTime < _endTime);
-      }
-
-      wallet = _wallet;
-      token = CostumeToken(_tokenAddress);
-
-      if (_startTime > 0) {
-          startTime = _startTime;
-      }
-
-      if (_endTime > 0) {
-          endTime = _endTime;
-      }
-
-   }
-
-   /// Buy tokens fallback
-   function () external payable {
-      buyTokens();
-   }
-
-   /// Buy tokens main
-   function buyTokens() public payable whenNotPaused {
-      require(validPurchase());
-
-      uint256 tokens = 0;
-      uint256 amountPaid = adjustAmountValue();
-
-      if (tokensRaised < limitTier1) {
-
-         // Tier 1
-         tokens = amountPaid.mul(rate);
-
-         // If the amount of tokens that you want to buy gets out of this tier
-         if (tokensRaised.add(tokens) > limitTier1) {
-
-            tokens = adjustTokenTierValue(amountPaid, limitTier1, 1, rate);
-         }
-
-      } else if (tokensRaised >= limitTier1 && tokensRaised < limitTier2) {
-
-         // Tier 2
-         tokens = amountPaid.mul(rateTier2);
-
-          // Breaks tier cap
-         if (tokensRaised.add(tokens) > limitTier2) {
-            tokens = adjustTokenTierValue(amountPaid, limitTier2, 2, rateTier2);
-         }
-
-      } else if (tokensRaised >= limitTier2 && tokensRaised < limitTier3) {
-
-         // Tier 3
-         tokens = amountPaid.mul(rateTier3);
-
-         // Breaks tier cap
-         if (tokensRaised.add(tokens) > limitTier3) {
-            tokens = adjustTokenTierValue(amountPaid, limitTier3, 3, rateTier3);
-         }
-
-      } else if (tokensRaised >= limitTier3) {
-
-         // Tier 4
-         tokens = amountPaid.mul(rateTier4);
-
-      }
-
-      weiRaised = weiRaised.add(amountPaid);
-      tokensRaised = tokensRaised.add(tokens);
-      token.distributeCrowdsaleTokens(msg.sender, tokens);
-
-      // Keep the records
-      tokensBought[msg.sender] = tokensBought[msg.sender].add(tokens);
-
-      // Broadcast event
-      TokenPurchase(msg.sender, amountPaid, tokens);
-
-      // Update records
-      numberOfTransactions = numberOfTransactions.add(1);
-
-      forwardFunds(amountPaid);
-   }
-
-   // Forward funds to fund wallet
-   function forwardFunds(uint256 amountPaid) internal whenNotPaused {
-
-     // Send directly to dev wallet
-     wallet.transfer(amountPaid);
-   }
-
-   // Adjust wei based on tier, refund if necessaey
-   function adjustAmountValue() internal whenNotPaused returns(uint256) {
-      uint256 amountPaid = msg.value;
-      uint256 differenceWei = 0;
-
-      // Check final tier
-      if(tokensRaised >= limitTier3) {
-         uint256 addedTokens = tokensRaised.add(amountPaid.mul(rateTier4));
-
-         // Have we reached the max?
-         if(addedTokens > maxTokensRaised) {
-
-            // Find the amount over the max
-            uint256 difference = addedTokens.sub(maxTokensRaised);
-            differenceWei = difference.div(rateTier4);
-            amountPaid = amountPaid.sub(differenceWei);
-         }
-      }
-
-      // Update balances dataset
-      crowdsaleBalances[msg.sender] = crowdsaleBalances[msg.sender].add(amountPaid);
-
-      // Transfer at the end
-      if (differenceWei > 0) msg.sender.transfer(differenceWei);
-
-      return amountPaid;
-   }
-
-   // Set / change tier rates
-   // @param tier1 - tier4 - Rate per tier
-   function setTierRates(uint256 tier1, uint256 tier2, uint256 tier3, uint256 tier4)
-      external onlyOwner whenNotPaused {
-
-      require(tier1 > 0 && tier2 > 0 && tier3 > 0 && tier4 > 0);
-      require(tier1 > tier2 && tier2 > tier3 && tier3 > tier4);
-
-      rate = tier1;
-      rateTier2 = tier2;
-      rateTier3 = tier3;
-      rateTier4 = tier4;
-   }
-
-   // Adjust token per tier, return wei if necessay
-   // @param amount - Amount buyer paid
-   // @param tokensThisTier - Tokens in tier
-   // @param tierSelected - The current tier
-   // @param _rate - Current rate
-   function adjustTokenTierValue(
-      uint256 amount,
-      uint256 tokensThisTier,
-      uint256 tierSelected,
-      uint256 _rate
-   ) internal returns(uint256 totalTokens) {
-      require(amount > 0 && tokensThisTier > 0 && _rate > 0);
-      require(tierSelected >= 1 && tierSelected <= 4);
-
-      uint weiThisTier = tokensThisTier.sub(tokensRaised).div(_rate);
-      uint weiNextTier = amount.sub(weiThisTier);
-      uint tokensNextTier = 0;
-      bool returnTokens = false;
-
-      // If there's excessive wei for the last tier, refund those
-      if(tierSelected != 4) {
-
-         tokensNextTier = calculateTokensPerTier(weiNextTier, tierSelected.add(1));
-
-      } else {
-
-         returnTokens = true;
-
-      }
-
-      totalTokens = tokensThisTier.sub(tokensRaised).add(tokensNextTier);
-
-      // Do the transfer at the end
-      if (returnTokens) msg.sender.transfer(weiNextTier);
-   }
-
-   // Return token amount based on wei paid
-   // @param weiPaid - Amount buyer paid
-   // @param tierSelected - The current tier
-   function calculateTokensPerTier(uint256 weiPaid, uint256 tierSelected)
-        internal constant returns(uint256 calculatedTokens)
-    {
-      require(weiPaid > 0);
-      require(tierSelected >= 1 && tierSelected <= 4);
-
-      if (tierSelected == 1) {
-
-         calculatedTokens = weiPaid.mul(rate);
-
-      } else if (tierSelected == 2) {
-
-         calculatedTokens = weiPaid.mul(rateTier2);
-
-      } else if (tierSelected == 3) {
-
-         calculatedTokens = weiPaid.mul(rateTier3);
-
-      } else {
-
-         calculatedTokens = weiPaid.mul(rateTier4);
-     }
-   }
-
-   // Confirm valid purchase
-   function validPurchase() internal constant returns(bool) {
-      bool withinPeriod = now >= startTime && now <= endTime;
-      bool nonZeroPurchase = msg.value > 0;
-      bool withinTokenLimit = tokensRaised < maxTokensRaised;
-      bool minimumPurchase = msg.value >= minPurchase;
-
-      return withinPeriod && nonZeroPurchase && withinTokenLimit && minimumPurchase;
-   }
-
-   // Check if sale ended
-   function hasEnded() public constant returns(bool) {
-       return now > endTime || tokensRaised >= maxTokensRaised;
-   }
-
-   // Finalize if ended
-   function completeCrowdsale() external onlyOwner whenNotPaused {
-       require(hasEnded());
-
-       // Transfer left over tokens
-       transferTokensLeftOver();
-
-       // Call finalized event
-       Finalized();
-   }
-
-   // Transfer any remaining tokens from Crowdsale
-   function transferTokensLeftOver() internal {
-       require(!remainingTransfered);
-       require(maxTokensRaised > tokensRaised);
-
-       remainingTransfered = true;
-
-       uint256 remainingTokens = maxTokensRaised.sub(tokensRaised);
-       token.distributeCrowdsaleTokens(msg.sender, remainingTokens);
-   }
-
-   // Change dates before crowdsale has started
-   // @param _startTime - New start time
-   // @param _endTime - New end time
-   function changeDates(uint256 _startTime, uint256 _endTime)
-        external onlyOwner beforeStarting
-    {
-
-       if (_startTime > 0 && _endTime > 0) {
-           require(_startTime < _endTime);
-       }
-
-       if (_startTime > 0) {
-           startTime = _startTime;
-       }
-
-       if (_endTime > 0) {
-           endTime = _endTime;
-       }
-   }
-
-   // Change the end date
-   // @param _endTime - New end time
-   function changeEndDate(uint256 _endTime) external onlyOwner {
-       require(_endTime > startTime);
-       require(_endTime > now);
-       require(!hasEnded());
-
-       if (_endTime > 0) {
-           endTime = _endTime;
-       }
-   }
-
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
+//---------------------------------------------------------------------------------
+
+contract BuronCoin is MintableToken {
+    
+    string public constant name = "Buron Coin";
+    
+    string public constant symbol = "BURC";
+    
+    uint32 public constant decimals = 4;
+    
+}
+
+contract Crowdsale is Ownable {
+    
+	struct tier {
+        uint cap;
+        uint rate;
+    }
+	
+    using SafeMath for uint;
+	using Math for uint;
+    
+	BuronCoin public token = new BuronCoin();
+	
+    address multisig; 		
+	uint restrictedAmount; 	
+    address restricted;		
+	uint price;				
+	bool saleOn;		
+	uint public sold;	
+    
+	tier[7] tiers; 
+  
+	function bytesToAddress(bytes source) internal pure returns(address) {
+		uint result;
+		uint mul = 1;
+		for(uint i = 20; i > 0; i--) {
+		  result += uint8(source[i-1])*mul;
+		  mul = mul*256;
+		}
+		return address(result);
+	}
+  
+    function Crowdsale(address _multisig, address _restricted) public {
+        multisig = _multisig;
+        restricted = _restricted;
+		restrictedAmount=231000000000; 		
+        price = 17700000000; 
+		
+		tiers[0]=tier(10000000000,50);
+		tiers[1]=tier(30000000000,30);
+		tiers[2]=tier(60000000000,25);
+		tiers[3]=tier(110000000000,20);
+		tiers[4]=tier(190000000000,15);
+		tiers[5]=tier(320000000000,10);
+		tiers[6]=tier(530000000000,5);
+		
+		sold=0;
+		saleOn=true;
+		
+		token.mint(restricted, restrictedAmount);	
+    }
+
+    modifier saleIsOn() {
+    	require(saleOn && sold<tiers[6].cap);
+    	_;
+    }
+	
+    function buyTokens(address to, address referer) public saleIsOn payable {
+		require(msg.value>0);
+	
+		if (to==address(0x0))
+			to=msg.sender;
+	
+        multisig.transfer(msg.value);	
+		
+		
+        uint tokensBase = msg.value.div(price);
+		
+		uint tokensForBonus=tokensBase;
+		uint tmpSold=sold;
+		uint currentTier=0;
+		uint bonusTokens=0;
+		
+		
+		while(tiers[currentTier].cap<tmpSold)
+			currentTier++;
+		
+		uint currentTierTokens=0;
+		while((tokensForBonus>0) && (currentTier<7))
+		{
+			currentTierTokens=Math.min(tiers[currentTier].cap.sub(tmpSold), tokensForBonus); 		
+			bonusTokens=bonusTokens.add(currentTierTokens.mul(tiers[currentTier].rate).div(100));   
+			tmpSold=tmpSold.add(currentTierTokens);									   			
+			
+			tokensForBonus=tokensForBonus.sub(currentTierTokens);					   			
+			currentTier++;
+		}
+		
+		
+		token.mint(to, tokensBase.add(bonusTokens));  						   			
+		sold=sold.add(tokensBase);											   		
+		
+	
+		if (referer != address(0x0))
+		if (referer != msg.sender)	
+		{
+		  uint refererTokens = tokensBase.mul(3).div(100);	
+		  token.mint(referer, refererTokens);				
+		}		
+		
+		if (sold>=tiers[6].cap)													   	  
+		{
+			saleOn=false;
+			token.finishMinting();
+		}
+    }
+	
+    function() external payable {
+		
+		
+		address referer;
+		if(msg.data.length == 20)
+			referer = bytesToAddress(bytes(msg.data));
+		else
+			referer=address(0x0);
+			
+        buyTokens(address(0x0), referer);
+    }
 }
