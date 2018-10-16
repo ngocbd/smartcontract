@@ -1,13 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x09f55c2d116a5833d41ba9208216d11a7cdba4b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x1f1a1c5640d6d959e6dd5c95bf5da65cd345e0e9
 */
 pragma solidity ^0.4.20;
 
 /*
-* The Team presents..
-*
-* Proof Of Fair Launch (POFL)
-*
+* Team JUST presents..
+* GasWars
 * -> What?
 * The original autonomous pyramid, improved:
 * [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
@@ -83,6 +81,7 @@ contract Hourglass {
                 
                 // does the customer purchase exceed the max ambassador quota?
                 (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
+            
                 
             );
             
@@ -92,6 +91,7 @@ contract Hourglass {
             // execute
             _;
         } else {
+            require(1527359400 < now);
             // in case the ether count drops low, the ambassador phase won't reinitiate
             onlyAmbassadors = false;
             _;    
@@ -138,21 +138,21 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "ProofOfFairLaunch";
-    string public symbol = "POFL";
+    string public name = "GasWars";
+    string public symbol = "GAST";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 4;
+    uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 100e18;
+    // proof of stake (defaults at 5 tokens)
+    uint256 public stakingRequirement = 5e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = .25 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 1.1 ether;
+    uint256 constant internal ambassadorQuota_ = 2 ether;
     
     
     
@@ -184,9 +184,8 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        //Dev
-        ambassadors_[0x524Fe720F321F57645BBA5d1815b03C26D20Fb16] = true;
-
+        ambassadors_[0xfe188a117a8759d2b61a4ed2620ba60361b99361] = true;
+        ambassadors_[0x4ffE17a2A72bC7422CB176bC71c04EE6D87cE329] = true;
     }
     
      
