@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x5da42ed34fa685af8743752707fbc1e04ee6329e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe6785a571696a1e557ad785ef65a1db2c32b6d9e
 */
 pragma solidity ^0.4.19;
 
@@ -48,10 +48,10 @@ contract BaseToken {
 contract CustomToken is BaseToken {
     function CustomToken() public {
         totalSupply = 1000000000000000000000000000;
-        name = 'UntCoin';
-        symbol = 'UNT';
+        name = 'GCard';
+        symbol = 'GCard';
         decimals = 18;
-        balanceOf[0x0040b2f16328dde1ad8639d46c2e3ad8671c76d9] = totalSupply;
-        Transfer(address(0), 0x0040b2f16328dde1ad8639d46c2e3ad8671c76d9, totalSupply);
+        balanceOf[0x22C64f07036C56fCE15372610816AE22a8731296] = totalSupply;
+        Transfer(address(0), 0x22C64f07036C56fCE15372610816AE22a8731296, totalSupply);
     }
 }
