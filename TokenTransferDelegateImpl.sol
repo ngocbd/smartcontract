@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegateImpl at 0x5567ee920f7e62274284985d793344351a00142b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegateImpl at 0x17233e07c67d086464fd408148c3abb56245fa64
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -75,7 +75,7 @@ library MathUint {
         require(scale > 0);
         uint avg = 0;
         for (uint i = 0; i < len; i++) {
-            avg += arr[i];
+            avg = add(avg, arr[i]);
         }
         avg = avg / len;
         if (avg == 0) {
@@ -87,7 +87,7 @@ library MathUint {
         for (i = 0; i < len; i++) {
             item = arr[i];
             s = item > avg ? item - avg : avg - item;
-            cvs += mul(s, s);
+            cvs = add(cvs, mul(s, s));
         }
         return ((mul(mul(cvs, scale), scale) / avg) / avg) / (len - 1);
     }
@@ -262,8 +262,14 @@ contract ERC20 {
 /// versions of Loopring protocol to avoid ERC20 re-authorization.
 /// @author Daniel Wang - <daniel@loopring.org>.
 contract TokenTransferDelegate {
-    event AddressAuthorized(address indexed addr, uint32 number);
-    event AddressDeauthorized(address indexed addr, uint32 number);
+    event AddressAuthorized(
+        address indexed addr,
+        uint32          number
+    );
+    event AddressDeauthorized(
+        address indexed addr,
+        uint32          number
+    );
     // The following map is used to keep trace of order fill and cancellation
     // history.
     mapping (bytes32 => uint) public cancelledOrFilled;
@@ -305,6 +311,7 @@ contract TokenTransferDelegate {
         external;
     function batchTransferToken(
         address lrcTokenAddress,
+        address miner,
         address minerFeeRecipient,
         uint8 walletSplitPercentage,
         bytes32[] batch
@@ -319,7 +326,9 @@ contract TokenTransferDelegate {
     function addCancelled(bytes32 orderHash, uint cancelAmount)
         external;
     function addCancelledOrFilled(bytes32 orderHash, uint cancelOrFillAmount)
-        external;
+        public;
+    function batchAddCancelledOrFilled(bytes32[] batch)
+        public;
     function setCutoffs(uint t)
         external;
     function setTradingPairCutoffs(bytes20 tokenPair, uint t)
@@ -327,21 +336,36 @@ contract TokenTransferDelegate {
     function checkCutoffsBatch(address[] owners, bytes20[] tradingPairs, uint[] validSince)
         external
         view;
+    function suspend() external;
+    function resume() external;
+    function kill() external;
 }
 /// @title An Implementation of TokenTransferDelegate.
 /// @author Daniel Wang - <daniel@loopring.org>.
+/// @author Kongliang Zhong - <kongliang@loopring.org>.
 contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
     using MathUint for uint;
+    bool public suspended = false;
     struct AddressInfo {
         address previous;
         uint32  index;
         bool    authorized;
     }
     mapping(address => AddressInfo) public addressInfos;
-    address public latestAddress;
+    address private latestAddress;
     modifier onlyAuthorized()
     {
         require(addressInfos[msg.sender].authorized);
+        _;
+    }
+    modifier notSuspended()
+    {
+        require(!suspended);
+        _;
+    }
+    modifier isSuspended()
+    {
+        require(suspended);
         _;
     }
     /// @dev Disable default function.
@@ -367,7 +391,6 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
             address prev = latestAddress;
             if (prev == 0x0) {
                 addrInfo.index = 1;
-                addrInfo.authorized = true;
             } else {
                 addrInfo.previous = prev;
                 addrInfo.index = addressInfos[prev].index + 1;
@@ -405,7 +428,9 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
             if (addrInfo.index == 0) {
                 break;
             }
-            addresses[count++] = addr;
+            if (addrInfo.authorized) {
+                addresses[count++] = addr;
+            }
             addr = addrInfo.previous;
         }
     }
@@ -416,6 +441,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
         uint    value
         )
         onlyAuthorized
+        notSuspended
         external
     {
         if (value > 0 && from != to && to != 0x0) {
@@ -426,25 +452,27 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
     }
     function batchTransferToken(
         address lrcTokenAddress,
-        address minerFeeRecipient,
+        address miner,
+        address feeRecipient,
         uint8 walletSplitPercentage,
         bytes32[] batch
         )
         onlyAuthorized
+        notSuspended
         external
     {
         uint len = batch.length;
         require(len % 7 == 0);
         require(walletSplitPercentage > 0 && walletSplitPercentage < 100);
         ERC20 lrc = ERC20(lrcTokenAddress);
+        address prevOwner = address(batch[len - 7]);
         for (uint i = 0; i < len; i += 7) {
             address owner = address(batch[i]);
-            address prevOwner = address(batch[(i + len - 7) % len]);
             // Pay token to previous order, or to miner as previous order's
             // margin split or/and this order's margin split.
             ERC20 token = ERC20(address(batch[i + 1]));
             // Here batch[i + 2] has been checked not to be 0.
-            if (owner != prevOwner) {
+            if (batch[i + 2] != 0x0 && owner != prevOwner) {
                 require(
                     token.transferFrom(
                         owner,
@@ -455,10 +483,10 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
             }
             // Miner pays LRx fee to order owner
             uint lrcReward = uint(batch[i + 4]);
-            if (lrcReward != 0 && minerFeeRecipient != owner) {
+            if (lrcReward != 0 && miner != owner) {
                 require(
                     lrc.transferFrom(
-                        minerFeeRecipient,
+                        miner,
                         owner,
                         lrcReward
                     )
@@ -469,7 +497,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
                 token,
                 uint(batch[i + 3]),
                 owner,
-                minerFeeRecipient,
+                feeRecipient,
                 address(batch[i + 6]),
                 walletSplitPercentage
             );
@@ -478,10 +506,11 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
                 lrc,
                 uint(batch[i + 5]),
                 owner,
-                minerFeeRecipient,
+                feeRecipient,
                 address(batch[i + 6]),
                 walletSplitPercentage
             );
+            prevOwner = owner;
         }
     }
     function isAddressAuthorized(
@@ -497,7 +526,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
         ERC20   token,
         uint    fee,
         address owner,
-        address minerFeeRecipient,
+        address feeRecipient,
         address walletFeeRecipient,
         uint    walletSplitPercentage
         )
@@ -507,7 +536,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
             return;
         }
         uint walletFee = (walletFeeRecipient == 0x0) ? 0 : fee.mul(walletSplitPercentage) / 100;
-        uint minerFee = fee - walletFee;
+        uint minerFee = fee.sub(walletFee);
         if (walletFee > 0 && walletFeeRecipient != owner) {
             require(
                 token.transferFrom(
@@ -517,11 +546,11 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
                 )
             );
         }
-        if (minerFee > 0 && minerFeeRecipient != 0x0 && minerFeeRecipient != owner) {
+        if (minerFee > 0 && feeRecipient != 0x0 && feeRecipient != owner) {
             require(
                 token.transferFrom(
                     owner,
-                    minerFeeRecipient,
+                    feeRecipient,
                     minerFee
                 )
             );
@@ -529,24 +558,39 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
     }
     function addCancelled(bytes32 orderHash, uint cancelAmount)
         onlyAuthorized
+        notSuspended
         external
     {
         cancelled[orderHash] = cancelled[orderHash].add(cancelAmount);
     }
     function addCancelledOrFilled(bytes32 orderHash, uint cancelOrFillAmount)
         onlyAuthorized
-        external
+        notSuspended
+        public
     {
         cancelledOrFilled[orderHash] = cancelledOrFilled[orderHash].add(cancelOrFillAmount);
     }
+    function batchAddCancelledOrFilled(bytes32[] batch)
+        onlyAuthorized
+        notSuspended
+        public
+    {
+        require(batch.length % 2 == 0);
+        for (uint i = 0; i < batch.length / 2; i++) {
+            cancelledOrFilled[batch[i * 2]] = cancelledOrFilled[batch[i * 2]]
+                .add(uint(batch[i * 2 + 1]));
+        }
+    }
     function setCutoffs(uint t)
         onlyAuthorized
+        notSuspended
         external
     {
         cutoffs[tx.origin] = t;
     }
     function setTradingPairCutoffs(bytes20 tokenPair, uint t)
         onlyAuthorized
+        notSuspended
         external
     {
         tradingPairCutoffs[tx.origin][tokenPair] = t;
@@ -562,5 +606,28 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
             require(validSince[i] > tradingPairCutoffs[owners[i]][tradingPairs[i]]);  // order trading pair is cut off
             require(validSince[i] > cutoffs[owners[i]]);                              // order is cut off
         }
+    }
+    function suspend()
+        onlyOwner
+        notSuspended
+        external
+    {
+        suspended = true;
+    }
+    function resume()
+        onlyOwner
+        isSuspended
+        external
+    {
+        suspended = false;
+    }
+    /// owner must suspend delegate first before invoke kill method.
+    function kill()
+        onlyOwner
+        isSuspended
+        external
+    {
+        emit OwnershipTransferred(owner, 0x0);
+        owner = 0x0;
     }
 }
