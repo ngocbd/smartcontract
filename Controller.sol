@@ -1,766 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0xfaac705fb942836070fd11c6fb1bd784e9ce48a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x8a0c810d797508c64663cb038a29476f6034c032
 */
 pragma solidity ^0.4.11;
-
-
-contract Storage {
-    struct Crate {
-        mapping(bytes32 => uint256) uints;
-        mapping(bytes32 => address) addresses;
-        mapping(bytes32 => bool) bools;
-        mapping(address => uint256) bals;
-    }
-
-    mapping(bytes32 => Crate) crates;
-
-    function setUInt(bytes32 _crate, bytes32 _key, uint256 _value)  {
-        crates[_crate].uints[_key] = _value;
-    }
-
-    function getUInt(bytes32 _crate, bytes32 _key) constant returns(uint256) {
-        return crates[_crate].uints[_key];
-    }
-
-    function setAddress(bytes32 _crate, bytes32 _key, address _value)  {
-        crates[_crate].addresses[_key] = _value;
-    }
-
-    function getAddress(bytes32 _crate, bytes32 _key) constant returns(address) {
-        return crates[_crate].addresses[_key];
-    }
-
-    function setBool(bytes32 _crate, bytes32 _key, bool _value)  {
-        crates[_crate].bools[_key] = _value;
-    }
-
-    function getBool(bytes32 _crate, bytes32 _key) constant returns(bool) {
-        return crates[_crate].bools[_key];
-    }
-
-    function setBal(bytes32 _crate, address _key, uint256 _value)  {
-        crates[_crate].bals[_key] = _value;
-    }
-
-    function getBal(bytes32 _crate, address _key) constant returns(uint256) {
-        return crates[_crate].bals[_key];
-    }
-}
-
-contract StorageEnabled {
-
-  // satelite contract addresses
-  address public storageAddr;
-
-  function StorageEnabled(address _storageAddr) {
-    storageAddr = _storageAddr;
-  }
-
-
-  // ############################################
-  // ########### NUTZ FUNCTIONS  ################
-  // ############################################
-
-
-  // all Nutz balances
-  function babzBalanceOf(address _owner) constant returns (uint256) {
-    return Storage(storageAddr).getBal('Nutz', _owner);
-  }
-  function _setBabzBalanceOf(address _owner, uint256 _newValue) internal {
-    Storage(storageAddr).setBal('Nutz', _owner, _newValue);
-  }
-  // active supply - sum of balances above
-  function activeSupply() constant returns (uint256) {
-    return Storage(storageAddr).getUInt('Nutz', 'activeSupply');
-  }
-  function _setActiveSupply(uint256 _newActiveSupply) internal {
-    Storage(storageAddr).setUInt('Nutz', 'activeSupply', _newActiveSupply);
-  }
-  // burn pool - inactive supply
-  function burnPool() constant returns (uint256) {
-    return Storage(storageAddr).getUInt('Nutz', 'burnPool');
-  }
-  function _setBurnPool(uint256 _newBurnPool) internal {
-    Storage(storageAddr).setUInt('Nutz', 'burnPool', _newBurnPool);
-  }
-  // power pool - inactive supply
-  function powerPool() constant returns (uint256) {
-    return Storage(storageAddr).getUInt('Nutz', 'powerPool');
-  }
-  function _setPowerPool(uint256 _newPowerPool) internal {
-    Storage(storageAddr).setUInt('Nutz', 'powerPool', _newPowerPool);
-  }
-
-
-
-
-
-  // ############################################
-  // ########### POWER   FUNCTIONS  #############
-  // ############################################
-
-  // all power balances
-  function powerBalanceOf(address _owner) constant returns (uint256) {
-    return Storage(storageAddr).getBal('Power', _owner);
-  }
-
-  function _setPowerBalanceOf(address _owner, uint256 _newValue) internal {
-    Storage(storageAddr).setBal('Power', _owner, _newValue);
-  }
-
-  function outstandingPower() constant returns (uint256) {
-    return Storage(storageAddr).getUInt('Power', 'outstandingPower');
-  }
-
-  function _setOutstandingPower(uint256 _newOutstandingPower) internal {
-    Storage(storageAddr).setUInt('Power', 'outstandingPower', _newOutstandingPower);
-  }
-
-  function authorizedPower() constant returns (uint256) {
-    return Storage(storageAddr).getUInt('Power', 'authorizedPower');
-  }
-
-  function _setAuthorizedPower(uint256 _newAuthorizedPower) internal {
-    Storage(storageAddr).setUInt('Power', 'authorizedPower', _newAuthorizedPower);
-  }
-
-
-  function downs(address _user) constant public returns (uint256 total, uint256 left, uint256 start) {
-    uint256 rawBytes = Storage(storageAddr).getBal('PowerDown', _user);
-    start = uint64(rawBytes);
-    left = uint96(rawBytes >> (64));
-    total = uint96(rawBytes >> (96 + 64));
-    return;
-  }
-
-  function _setDownRequest(address _holder, uint256 total, uint256 left, uint256 start) internal {
-    uint256 result = uint64(start) + (left << 64) + (total << (96 + 64));
-    Storage(storageAddr).setBal('PowerDown', _holder, result);
-  }
-
-}
-
-
-contract Governable {
-
-  // list of admins, council at first spot
-  address[] public admins;
-
-  function Governable() {
-    admins.length = 1;
-    admins[0] = msg.sender;
-  }
-
-  modifier onlyAdmins() {
-    bool isAdmin = false;
-    for (uint256 i = 0; i < admins.length; i++) {
-      if (msg.sender == admins[i]) {
-        isAdmin = true;
-      }
-    }
-    require(isAdmin == true);
-    _;
-  }
-
-  function addAdmin(address _admin) public onlyAdmins {
-    for (uint256 i = 0; i < admins.length; i++) {
-      require(_admin != admins[i]);
-    }
-    require(admins.length < 10);
-    admins[admins.length++] = _admin;
-  }
-
-  function removeAdmin(address _admin) public onlyAdmins {
-    uint256 pos = admins.length;
-    for (uint256 i = 0; i < admins.length; i++) {
-      if (_admin == admins[i]) {
-        pos = i;
-      }
-    }
-    require(pos < admins.length);
-    // if not last element, switch with last
-    if (pos < admins.length - 1) {
-      admins[pos] = admins[admins.length - 1];
-    }
-    // then cut off the tail
-    admins.length--;
-  }
-
-}
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Governable {
-
-  bool public paused = true;
-
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyAdmins whenNotPaused {
-    paused = true;
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyAdmins whenPaused {
-    //TODO: do some checks
-    paused = false;
-  }
-
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract NutzEnabled is Pausable, StorageEnabled {
-  using SafeMath for uint;
-
-  // satelite contract addresses
-  address public nutzAddr;
-
-
-  modifier onlyNutz() {
-    require(msg.sender == nutzAddr);
-    _;
-  }
-
-  function NutzEnabled(address _nutzAddr, address _storageAddr)
-    StorageEnabled(_storageAddr) {
-    nutzAddr = _nutzAddr;
-  }
-
-  // ############################################
-  // ########### NUTZ FUNCTIONS  ################
-  // ############################################
-
-  // total supply
-  function totalSupply() constant returns (uint256) {
-    return activeSupply().add(powerPool()).add(burnPool());
-  }
-
-  // allowances according to ERC20
-  // not written to storage, as not very critical
-  mapping (address => mapping (address => uint)) internal allowed;
-
-  function allowance(address _owner, address _spender) constant returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  function approve(address _owner, address _spender, uint256 _amountBabz) public onlyNutz whenNotPaused {
-    require(_owner != _spender);
-    allowed[_owner][_spender] = _amountBabz;
-  }
-
-  function _transfer(address _from, address _to, uint256 _amountBabz, bytes _data) internal {
-    require(_to != address(this));
-    require(_to != address(0));
-    require(_amountBabz > 0);
-    require(_from != _to);
-    _setBabzBalanceOf(_from, babzBalanceOf(_from).sub(_amountBabz));
-    _setBabzBalanceOf(_to, babzBalanceOf(_to).add(_amountBabz));
-  }
-
-  function transfer(address _from, address _to, uint256 _amountBabz, bytes _data) public onlyNutz whenNotPaused {
-    _transfer(_from, _to, _amountBabz, _data);
-  }
-
-  function transferFrom(address _sender, address _from, address _to, uint256 _amountBabz, bytes _data) public onlyNutz whenNotPaused {
-    allowed[_from][_sender] = allowed[_from][_sender].sub(_amountBabz);
-    _transfer(_from, _to, _amountBabz, _data);
-  }
-
-}
-
-/**
- * @title PullPayment
- * @dev Base contract supporting async send for pull payments.
- */
-contract PullPayment {
-
-  modifier onlyNutz() {
-      _;
-  }
-  
-modifier onlyOwner() {
-      _;
-  }
-
-  modifier whenNotPaused () {_;}
-
-  function balanceOf(address _owner) constant returns (uint256 value);
-
-  function paymentOf(address _owner) constant returns (uint256 value, uint256 date) ;
-
-  /// @dev Allows to change the daily limit. Transaction has to be sent by wallet.
-  /// @param _dailyLimit Amount in wei.
-  function changeDailyLimit(uint _dailyLimit) public ;
-
-  function changeWithdrawalDate(address _owner, uint256 _newDate)  public ;
-
-  function asyncSend(address _dest) public payable ;
-
-
-  function withdraw() public ;
-
-  /*
-   * Internal functions
-   */
-  /// @dev Returns if amount is within daily limit and resets spentToday after one day.
-  /// @param amount Amount to withdraw.
-  /// @return Returns if amount is under daily limit.
-  function isUnderLimit(uint amount) internal returns (bool);
-
-}
-
-
-/**
- * Nutz implements a price floor and a price ceiling on the token being
- * sold. It is based of the zeppelin token contract.
- */
-contract Nutz {
-
-
-  // returns balances of active holders
-  function balanceOf(address _owner) constant returns (uint);
-
-  function totalSupply() constant returns (uint256);
-
-  function activeSupply() constant returns (uint256);
-
-  // return remaining allowance
-  // if calling return allowed[address(this)][_spender];
-  // returns balance of ether parked to be withdrawn
-  function allowance(address _owner, address _spender) constant returns (uint256);
-
-  // returns either the salePrice, or if reserve does not suffice
-  // for active supply, returns maxFloor
-  function floor() constant returns (uint256);
-
-  // returns either the salePrice, or if reserve does not suffice
-  // for active supply, returns maxFloor
-  function ceiling() constant returns (uint256);
-
-  function powerPool() constant returns (uint256);
-
-
-  function _checkDestination(address _from, address _to, uint256 _value, bytes _data) internal;
-
-
-
-  // ############################################
-  // ########### ADMIN FUNCTIONS ################
-  // ############################################
-
-  function powerDown(address powerAddr, address _holder, uint256 _amountBabz) public ;
-
-
-  function asyncSend(address _pullAddr, address _dest, uint256 _amountWei) public ;
-
-
-  // ############################################
-  // ########### PUBLIC FUNCTIONS ###############
-  // ############################################
-
-  function approve(address _spender, uint256 _amountBabz) public;
-
-  function transfer(address _to, uint256 _amountBabz, bytes _data) public returns (bool);
-
-  function transfer(address _to, uint256 _amountBabz) public returns (bool);
-
-  function transData(address _to, uint256 _amountBabz, bytes _data) public returns (bool);
-
-  function transferFrom(address _from, address _to, uint256 _amountBabz, bytes _data) public returns (bool);
-
-  function transferFrom(address _from, address _to, uint256 _amountBabz);
-
-  function () public payable;
-
-  function purchase(uint256 _price) public payable;
-
-  function sell(uint256 _price, uint256 _amountBabz);
-
-  function powerUp(uint256 _amountBabz) public;
-
-}
-
-
-contract MarketEnabled is NutzEnabled {
-
-  uint256 constant INFINITY = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-
-  // address of the pull payemnt satelite
-  address public pullAddr;
-
-  // the Token sale mechanism parameters:
-  // purchasePrice is the number of NTZ received for purchase with 1 ETH
-  uint256 internal purchasePrice;
-
-  // floor is the number of NTZ needed, to receive 1 ETH in sell
-  uint256 internal salePrice;
-
-  function MarketEnabled(address _pullAddr, address _storageAddr, address _nutzAddr)
-    NutzEnabled(_nutzAddr, _storageAddr) {
-    pullAddr = _pullAddr;
-  }
-
-
-  function ceiling() constant returns (uint256) {
-    return purchasePrice;
-  }
-
-  // returns either the salePrice, or if reserve does not suffice
-  // for active supply, returns maxFloor
-  function floor() constant returns (uint256) {
-    if (nutzAddr.balance == 0) {
-      return INFINITY;
-    }
-    uint256 maxFloor = activeSupply().mul(1000000).div(nutzAddr.balance); // 1,000,000 WEI, used as price factor
-    // return max of maxFloor or salePrice
-    return maxFloor >= salePrice ? maxFloor : salePrice;
-  }
-
-  function moveCeiling(uint256 _newPurchasePrice) public onlyAdmins {
-    require(_newPurchasePrice <= salePrice);
-    purchasePrice = _newPurchasePrice;
-  }
-
-  function moveFloor(uint256 _newSalePrice) public onlyAdmins {
-    require(_newSalePrice >= purchasePrice);
-    // moveFloor fails if the administrator tries to push the floor so low
-    // that the sale mechanism is no longer able to buy back all tokens at
-    // the floor price if those funds were to be withdrawn.
-    if (_newSalePrice < INFINITY) {
-      require(nutzAddr.balance >= activeSupply().mul(1000000).div(_newSalePrice)); // 1,000,000 WEI, used as price factor
-    }
-    salePrice = _newSalePrice;
-  }
-
-  function purchase(address _sender, uint256 _value, uint256 _price) public onlyNutz whenNotPaused returns (uint256) {
-    // disable purchases if purchasePrice set to 0
-    require(purchasePrice > 0);
-    require(_price == purchasePrice);
-
-    uint256 amountBabz = purchasePrice.mul(_value).div(1000000); // 1,000,000 WEI, used as price factor
-    // avoid deposits that issue nothing
-    // might happen with very high purchase price
-    require(amountBabz > 0);
-
-    // make sure power pool grows proportional to economy
-    uint256 activeSup = activeSupply();
-    uint256 powPool = powerPool();
-    if (powPool > 0) {
-      uint256 powerShare = powPool.mul(amountBabz).div(activeSup.add(burnPool()));
-      _setPowerPool(powPool.add(powerShare));
-    }
-    _setActiveSupply(activeSup.add(amountBabz));
-    _setBabzBalanceOf(_sender, babzBalanceOf(_sender).add(amountBabz));
-    return amountBabz;
-  }
-
-  function sell(address _from, uint256 _price, uint256 _amountBabz) public onlyNutz whenNotPaused {
-    uint256 effectiveFloor = floor();
-    require(_amountBabz != 0);
-    require(effectiveFloor != INFINITY);
-    require(_price == effectiveFloor);
-
-    uint256 amountWei = _amountBabz.mul(1000000).div(effectiveFloor);  // 1,000,000 WEI, used as price factor
-    require(amountWei > 0);
-    // make sure power pool shrinks proportional to economy
-    uint256 powPool = powerPool();
-    uint256 activeSup = activeSupply();
-    if (powPool > 0) {
-      uint256 powerShare = powPool.mul(_amountBabz).div(activeSup);
-      _setPowerPool(powPool.sub(powerShare));
-    }
-    _setActiveSupply(activeSup.sub(_amountBabz));
-    _setBabzBalanceOf(_from, babzBalanceOf(_from).sub(_amountBabz));
-    Nutz(nutzAddr).asyncSend(pullAddr, _from, amountWei);
-  }
-
-
-  // withdraw excessive reserve - i.e. milestones
-  function allocateEther(uint256 _amountWei, address _beneficiary) public onlyAdmins {
-    require(_amountWei > 0);
-    // allocateEther fails if allocating those funds would mean that the
-    // sale mechanism is no longer able to buy back all tokens at the floor
-    // price if those funds were to be withdrawn.
-    require(nutzAddr.balance.sub(_amountWei) >= activeSupply().mul(1000000).div(salePrice)); // 1,000,000 WEI, used as price factor
-    Nutz(nutzAddr).asyncSend(pullAddr, _beneficiary, _amountWei);
-  }
-
-}
-
-
-
-contract Power {
-
-
-
-  function balanceOf(address _holder) constant returns (uint256);
-
-  function totalSupply() constant returns (uint256);
-
-  function activeSupply() constant returns (uint256);
-
-
-  // ############################################
-  // ########### ADMIN FUNCTIONS ################
-  // ############################################
-
-  function slashPower(address _holder, uint256 _value, bytes32 _data) public ;
-
-  function powerUp(address _holder, uint256 _value) public ;
-
-  // ############################################
-  // ########### PUBLIC FUNCTIONS ###############
-  // ############################################
-
-  // registers a powerdown request
-  function transfer(address _to, uint256 _amountPower) public returns (bool success);
-
-  function downtime() public returns (uint256);
-
-  function downTick(address _owner) public;
-
-  function downs(address _owner) constant public returns (uint256, uint256, uint256);
-
-}
-
-
-contract PowerEnabled is MarketEnabled {
-
-  // satelite contract addresses
-  address public powerAddr;
-
-  // maxPower is a limit of total power that can be outstanding
-  // maxPower has a valid value between outstandingPower and authorizedPow/2
-  uint256 public maxPower = 0;
-
-  // time it should take to power down
-  uint256 public downtime;
-
-  modifier onlyPower() {
-    require(msg.sender == powerAddr);
-    _;
-  }
-
-  function PowerEnabled(address _powerAddr, address _pullAddr, address _storageAddr, address _nutzAddr)
-    MarketEnabled(_pullAddr, _nutzAddr, _storageAddr) {
-    powerAddr = _powerAddr;
-  }
-
-  function setMaxPower(uint256 _maxPower) public onlyAdmins {
-    require(outstandingPower() <= _maxPower && _maxPower < authorizedPower());
-    maxPower = _maxPower;
-  }
-
-  function setDowntime(uint256 _downtime) public onlyAdmins {
-    downtime = _downtime;
-  }
-
-  // this is called when NTZ are deposited into the burn pool
-  function dilutePower(uint256 _amountBabz, uint256 _amountPower) public onlyAdmins {
-    uint256 authorizedPow = authorizedPower();
-    uint256 totalBabz = totalSupply();
-    if (authorizedPow == 0) {
-      // during the first capital increase, set value directly as authorized shares
-      _setAuthorizedPower((_amountPower > 0) ? _amountPower : _amountBabz.add(totalBabz));
-    } else {
-      // in later increases, expand authorized shares at same rate like economy
-      _setAuthorizedPower(authorizedPow.mul(totalBabz.add(_amountBabz)).div(totalBabz));
-    }
-    _setBurnPool(burnPool().add(_amountBabz));
-  }
-
-  function _slashPower(address _holder, uint256 _value, bytes32 _data) internal {
-    uint256 previouslyOutstanding = outstandingPower();
-    _setOutstandingPower(previouslyOutstanding.sub(_value));
-    // adjust size of power pool
-    uint256 powPool = powerPool();
-    uint256 slashingBabz = _value.mul(powPool).div(previouslyOutstanding);
-    _setPowerPool(powPool.sub(slashingBabz));
-    // put event into satelite contract
-    Power(powerAddr).slashPower(_holder, _value, _data);
-  }
-
-  function slashPower(address _holder, uint256 _value, bytes32 _data) public onlyAdmins {
-    _setPowerBalanceOf(_holder, powerBalanceOf(_holder).sub(_value));
-    _slashPower(_holder, _value, _data);
-  }
-
-  function slashDownRequest(uint256 _pos, address _holder, uint256 _value, bytes32 _data) public onlyAdmins {
-    var (total, left, start) = downs(_holder);
-    left = left.sub(_value);
-    _setDownRequest(_holder, total, left, start);
-    _slashPower(_holder, _value, _data);
-  }
-
-  // this is called when NTZ are deposited into the power pool
-  function powerUp(address _sender, address _from, uint256 _amountBabz) public onlyNutz whenNotPaused {
-    uint256 authorizedPow = authorizedPower();
-    require(authorizedPow != 0);
-    require(_amountBabz != 0);
-    uint256 totalBabz = totalSupply();
-    require(totalBabz != 0);
-    uint256 amountPow = _amountBabz.mul(authorizedPow).div(totalBabz);
-    // check pow limits
-    uint256 outstandingPow = outstandingPower();
-    require(outstandingPow.add(amountPow) <= maxPower);
-
-    if (_sender != _from) {
-      allowed[_from][_sender] = allowed[_from][_sender].sub(_amountBabz);
-    }
-
-    _setOutstandingPower(outstandingPow.add(amountPow));
-
-    uint256 powBal = powerBalanceOf(_from).add(amountPow);
-    require(powBal >= authorizedPow.div(10000)); // minShare = 10000
-    _setPowerBalanceOf(_from, powBal);
-    _setActiveSupply(activeSupply().sub(_amountBabz));
-    _setBabzBalanceOf(_from, babzBalanceOf(_from).sub(_amountBabz));
-    _setPowerPool(powerPool().add(_amountBabz));
-    Power(powerAddr).powerUp(_from, amountPow);
-  }
-
-  function powerTotalSupply() constant returns (uint256) {
-    uint256 issuedPower = authorizedPower().div(2);
-    // return max of maxPower or issuedPower
-    return maxPower >= issuedPower ? maxPower : issuedPower;
-  }
-
-  function _vestedDown(uint256 _total, uint256 _left, uint256 _start, uint256 _now) internal constant returns (uint256) {
-    if (_now <= _start) {
-      return 0;
-    }
-    // calculate amountVested
-    // amountVested is amount that can be withdrawn according to time passed
-    uint256 timePassed = _now.sub(_start);
-    if (timePassed > downtime) {
-     timePassed = downtime;
-    }
-    uint256 amountVested = _total.mul(timePassed).div(downtime);
-    uint256 amountFrozen = _total.sub(amountVested);
-    if (_left <= amountFrozen) {
-      return 0;
-    }
-    return _left.sub(amountFrozen);
-  }
-
-  function createDownRequest(address _owner, uint256 _amountPower) public onlyPower whenNotPaused {
-    // prevent powering down tiny amounts
-    // when powering down, at least totalSupply/minShare Power should be claimed
-    require(_amountPower >= authorizedPower().div(10000)); // minShare = 10000;
-    _setPowerBalanceOf(_owner, powerBalanceOf(_owner).sub(_amountPower));
-
-    var (, left, ) = downs(_owner);
-    uint256 total = _amountPower.add(left);
-    _setDownRequest(_owner, total, total, now);
-  }
-
-  // executes a powerdown request
-  function downTick(address _holder, uint256 _now) public onlyPower whenNotPaused {
-    var (total, left, start) = downs(_holder);
-    uint256 amountPow = _vestedDown(total, left, start, _now);
-
-    // prevent power down in tiny steps
-    uint256 minStep = total.div(10);
-    require(left <= minStep || minStep <= amountPow);
-
-    // calculate token amount representing share of power
-    uint256 amountBabz = amountPow.mul(totalSupply()).div(authorizedPower());
-
-    // transfer power and tokens
-    _setOutstandingPower(outstandingPower().sub(amountPow));
-    left = left.sub(amountPow);
-    _setPowerPool(powerPool().sub(amountBabz));
-    _setActiveSupply(activeSupply().add(amountBabz));
-    _setBabzBalanceOf(_holder, babzBalanceOf(_holder).add(amountBabz));
-    // down request completed
-    if (left == 0) {
-      start = 0;
-      total = 0;
-    }
-    // TODO
-    _setDownRequest(_holder, total, left, start);
-    Nutz(nutzAddr).powerDown(powerAddr, _holder, amountBabz);
-  }
-}
-
-
-contract Controller is PowerEnabled {
-
-  function Controller(address _powerAddr, address _pullAddr, address _nutzAddr, address _storageAddr) 
-    PowerEnabled(_powerAddr, _pullAddr, _nutzAddr, _storageAddr) {
-  }
-
-  function setContracts(address _storageAddr, address _nutzAddr, address _powerAddr, address _pullAddr) public onlyAdmins whenPaused {
-    storageAddr = _storageAddr;
-    nutzAddr = _nutzAddr;
-    powerAddr = _powerAddr;
-    pullAddr = _pullAddr;
-  }
-
-  function changeDailyLimit(uint256 _dailyLimit) public onlyAdmins {
-    PullPayment(pullAddr).changeDailyLimit(_dailyLimit);
-  }
-
-  function kill(address _newController) public onlyAdmins whenPaused {
-    if (powerAddr != address(0)) { Ownable(powerAddr).transferOwnership(msg.sender); }
-    if (pullAddr != address(0)) { Ownable(pullAddr).transferOwnership(msg.sender); }
-    if (nutzAddr != address(0)) { Ownable(nutzAddr).transferOwnership(msg.sender); }
-    if (storageAddr != address(0)) { Ownable(storageAddr).transferOwnership(msg.sender); }
-    selfdestruct(_newController);
-  }
-
-}
-
 
 /**
  * @title Ownable
@@ -770,6 +11,7 @@ contract Controller is PowerEnabled {
 contract Ownable {
   address public owner;
 
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -779,7 +21,6 @@ contract Ownable {
     owner = msg.sender;
   }
 
-
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -788,14 +29,370 @@ contract Ownable {
     _;
   }
 
-
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+}
 
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract Finalizable is Ownable {
+  bool public contractFinalized;
+
+  modifier notFinalized() {
+    require(!contractFinalized);
+    _;
+  }
+
+  function finalizeContract() onlyOwner {
+    contractFinalized = true;
+  }
+}
+
+contract Shared is Ownable, Finalizable {
+  uint internal constant DECIMALS = 8;
+  
+  address internal constant REWARDS_WALLET = 0x30b002d3AfCb7F9382394f7c803faFBb500872D8;
+  address internal constant FRIENDS_FAMILY_WALLET = 0xd328eF879f78cDa773a3dFc79B4e590f20C22223;
+  address internal constant CROWDSALE_WALLET = 0x028e1Ce69E379b1678278640c7387ecc40DAa895;
+  address internal constant LIFE_CHANGE_WALLET = 0xEe4284f98D0568c7f65688f18A2F74354E17B31a;
+  address internal constant LIFE_CHANGE_VESTING_WALLET = 0x2D354bD67707223C9aC0232cd0E54f22b03483Cf;
+}
+
+contract Controller is Shared, Pausable {
+  using SafeMath for uint;
+
+  bool public initialized;
+
+  ChristCoin public token;
+  Ledger public ledger;
+  address public crowdsale;
+
+  uint public vestingAmount;
+  uint public vestingPaid;
+  uint public vestingStart;
+  uint public vestingDuration;
+
+  function Controller(address _token, address _ledger, address _crowdsale) {
+    token = ChristCoin(_token);
+    ledger = Ledger(_ledger);
+    crowdsale = _crowdsale;
+  }
+
+  function setToken(address _address) onlyOwner notFinalized {
+    token = ChristCoin(_address);
+  }
+
+  function setLedger(address _address) onlyOwner notFinalized {
+    ledger = Ledger(_address);
+  }
+
+  function setCrowdsale(address _address) onlyOwner notFinalized {
+    crowdsale = _address;
+  }
+
+  modifier onlyToken() {
+    require(msg.sender == address(token));
+    _;
+  }
+
+  modifier onlyCrowdsale() {
+    require(msg.sender == crowdsale);
+    _;
+  }
+
+  modifier onlyTokenOrCrowdsale() {
+    require(msg.sender == address(token) || msg.sender == crowdsale);
+    _;
+  }
+
+  modifier notVesting() {
+    require(msg.sender != LIFE_CHANGE_VESTING_WALLET);
+    _;
+  }
+
+  function init() onlyOwner {
+    require(!initialized);
+    mintWithEvent(REWARDS_WALLET, 9 * (10 ** (9 + DECIMALS))); // 9 billion
+    mintWithEvent(FRIENDS_FAMILY_WALLET, 75 * (10 ** (6 + DECIMALS))); // 75 million
+    mintWithEvent(CROWDSALE_WALLET, 825 * (10 ** (6 + DECIMALS))); // 825 million
+    mintWithEvent(LIFE_CHANGE_WALLET, 100 * (10 ** (6 + DECIMALS))); // 100 million
+    initialized = true;
+  }
+
+  function totalSupply() onlyToken constant returns (uint) {
+    return ledger.totalSupply();
+  }
+
+  function balanceOf(address _owner) onlyTokenOrCrowdsale constant returns (uint) {
+    return ledger.balanceOf(_owner);
+  }
+
+  function allowance(address _owner, address _spender) onlyToken constant returns (uint) {
+    return ledger.allowance(_owner, _spender);
+  }
+
+  function transfer(address _from, address _to, uint _value) onlyToken notVesting whenNotPaused returns (bool success) {
+    return ledger.transfer(_from, _to, _value);
+  }
+
+  function transferWithEvent(address _from, address _to, uint _value) onlyCrowdsale returns (bool success) {
+    success = ledger.transfer(_from, _to, _value);
+    if (success) {
+      token.controllerTransfer(msg.sender, _to, _value);
+    }
+  }
+
+  function transferFrom(address _spender, address _from, address _to, uint _value) onlyToken notVesting whenNotPaused returns (bool success) {
+    return ledger.transferFrom(_spender, _from, _to, _value);
+  }
+
+  function approve(address _owner, address _spender, uint _value) onlyToken notVesting whenNotPaused returns (bool success) {
+    return ledger.approve(_owner, _spender, _value);
+  }
+
+  function burn(address _owner, uint _amount) onlyToken whenNotPaused returns (bool success) {
+    return ledger.burn(_owner, _amount);
+  }
+
+  function mintWithEvent(address _to, uint _amount) internal returns (bool success) {
+    success = ledger.mint(_to, _amount);
+    if (success) {
+      token.controllerTransfer(0x0, _to, _amount);
+    }
+  }
+
+  function startVesting(uint _amount, uint _duration) onlyCrowdsale {
+    require(vestingAmount == 0);
+    vestingAmount = _amount;
+    vestingPaid = 0;
+    vestingStart = now;
+    vestingDuration = _duration;
+  }
+
+  function withdrawVested(address _withdrawTo) returns (uint amountWithdrawn) {
+    require(msg.sender == LIFE_CHANGE_VESTING_WALLET);
+    require(vestingAmount > 0);
+    
+    uint _elapsed = now.sub(vestingStart);
+    uint _rate = vestingAmount.div(vestingDuration);
+    uint _unlocked = _rate.mul(_elapsed);
+
+    if (_unlocked > vestingAmount) {
+       _unlocked = vestingAmount;
+    }
+
+    if (_unlocked <= vestingPaid) {
+      amountWithdrawn = 0;
+      return;
+    }
+
+    amountWithdrawn = _unlocked.sub(vestingPaid);
+    vestingPaid = vestingPaid.add(amountWithdrawn);
+
+    ledger.transfer(LIFE_CHANGE_VESTING_WALLET, _withdrawTo, amountWithdrawn);
+    token.controllerTransfer(LIFE_CHANGE_VESTING_WALLET, _withdrawTo, amountWithdrawn);
+  }
+}
+
+contract Ledger is Shared {
+  using SafeMath for uint;
+
+  address public controller;
+  mapping(address => uint) public balanceOf;
+  mapping (address => mapping (address => uint)) public allowed;
+  uint public totalSupply;
+
+  function setController(address _address) onlyOwner notFinalized {
+    controller = _address;
+  }
+
+  modifier onlyController() {
+    require(msg.sender == controller);
+    _;
+  }
+
+  function transfer(address _from, address _to, uint _value) onlyController returns (bool success) {
+    balanceOf[_from] = balanceOf[_from].sub(_value);
+    balanceOf[_to] = balanceOf[_to].add(_value);
+    return true;
+  }
+
+  function transferFrom(address _spender, address _from, address _to, uint _value) onlyController returns (bool success) {
+    var _allowance = allowed[_from][_spender];
+    balanceOf[_to] = balanceOf[_to].add(_value);
+    balanceOf[_from] = balanceOf[_from].sub(_value);
+    allowed[_from][_spender] = _allowance.sub(_value);
+    return true;
+  }
+
+  function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
+    require((_value == 0) || (allowed[_owner][_spender] == 0));
+    allowed[_owner][_spender] = _value;
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) onlyController constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  function burn(address _from, uint _amount) onlyController returns (bool success) {
+    balanceOf[_from] = balanceOf[_from].sub(_amount);
+    totalSupply = totalSupply.sub(_amount);
+    return true;
+  }
+
+  function mint(address _to, uint _amount) onlyController returns (bool success) {
+    balanceOf[_to] += _amount;
+    totalSupply += _amount;
+    return true;
+  }
+}
+
+contract ChristCoin is Shared {
+  using SafeMath for uint;
+
+  string public name = "Christ Coin";
+  string public symbol = "CCLC";
+  uint8 public decimals = 8;
+
+  Controller public controller;
+
+  event Transfer(address indexed _from, address indexed _to, uint _value);
+  event Approval(address indexed _owner, address indexed _spender, uint _value);
+
+  function setController(address _address) onlyOwner notFinalized {
+    controller = Controller(_address);
+  }
+
+  modifier onlyController() {
+    require(msg.sender == address(controller));
+    _;
+  }
+
+  function balanceOf(address _owner) constant returns (uint) {
+    return controller.balanceOf(_owner);
+  }
+
+  function totalSupply() constant returns (uint) {
+    return controller.totalSupply();
+  }
+
+  function transfer(address _to, uint _value) returns (bool success) {
+    success = controller.transfer(msg.sender, _to, _value);
+    if (success) {
+      Transfer(msg.sender, _to, _value);
+    }
+  }
+
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    success = controller.transferFrom(msg.sender, _from, _to, _value);
+    if (success) {
+      Transfer(_from, _to, _value);
+    }
+  }
+
+  function approve(address _spender, uint _value) returns (bool success) {
+    success = controller.approve(msg.sender, _spender, _value);
+    if (success) {
+      Approval(msg.sender, _spender, _value);
+    }
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint) {
+    return controller.allowance(_owner, _spender);
+  }
+
+  function burn(uint _amount) onlyOwner returns (bool success) {
+    success = controller.burn(msg.sender, _amount);
+    if (success) {
+      Transfer(msg.sender, 0x0, _amount);
+    }
+  }
+
+  function controllerTransfer(address _from, address _to, uint _value) onlyController {
+    Transfer(_from, _to, _value);
+  }
+
+  function controllerApproval(address _from, address _spender, uint _value) onlyController {
+    Approval(_from, _spender, _value);
+  }
 }
