@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0xcfbe7a6cf90d022265ffc7e26b564bb455077c9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0x9C169d81420aAD7D8a0D6d9F295C3ba2C33575De
 */
-pragma solidity ^0.4.0;
 contract Ballot {
-
     struct Voter {
         uint weight;
         bool voted;
@@ -13,7 +11,6 @@ contract Ballot {
     struct Proposal {
         uint voteCount;
     }
-
     address chairperson;
     mapping(address => Voter) voters;
     Proposal[] proposals;
