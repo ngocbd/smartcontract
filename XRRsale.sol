@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XRRsale at 0xc40f35abf83710e0fe3c510ce8db4289603d26b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XRRsale at 0x95a3ef92b212c7e3ba66e513148a5cb77d84aea7
 */
 pragma solidity ^0.4.18;
 
@@ -90,14 +90,12 @@ contract XRRtoken {
 contract XRRsale is Ownable {
     using SafeMath for uint256;
 
-    XRRtoken public token;
-    address public wallet;
+    address public wallet = 0x3398BdC73b3e245187aAe7b231e453c0089AA04e;
+    XRRtoken public token = XRRtoken(0x0e75235647330B5e13cAD9115254C4B8E16272F8);
+    address public frozenVaults = 0xc684Bf3b56Ca914b7B0670845092420A661963F7;
 
     uint256 public totalRaiseWei = 0;
     uint256 public totalTokenRaiseWei = 0;
-
-    // Only for TestNet
-    //    uint PreSaleStart = now;
 
     // Pre-Sale Launch March 20 - April 5th
     uint PreSaleStart = 1521504000;
@@ -113,34 +111,25 @@ contract XRRsale is Ownable {
     uint ICOend = 1525910400;
 
     function XRRsale() public {
-        wallet = msg.sender;
-    }
 
-    function setToken(XRRtoken _token) public {
-        token = _token;
     }
-
-    function setWallet(address _wallet) public {
-        wallet = _wallet;
-    }
-
 
     function currentPrice() public view returns (uint256){
-        if (now > PreSaleStart && now < PreSaleEnd) return 26000;
-        else if (now > ICO1 && now < ICO2) return 12000;
-        else if (now > ICO2 && now < ICO3) return 11500;
-        else if (now > ICO3 && now < ICO4) return 11000;
-        else if (now > ICO4 && now < ICOend) return 10500;
+        if (now >= PreSaleStart && now < PreSaleEnd) return 26000;
+        else if (now >= ICO1 && now < ICO2) return 12000;
+        else if (now >= ICO2 && now < ICO3) return 11500;
+        else if (now >= ICO3 && now < ICO4) return 11000;
+        else if (now >= ICO4 && now < ICOend) return 10500;
         else return 0;
     }
 
 
     function checkAmount(uint256 _amount) public view returns (bool){
-        if (now > PreSaleStart && now < PreSaleEnd) return _amount >= 1 ether;
-        else if (now > ICO1 && now < ICO2) return _amount >= 0.1 ether;
-        else if (now > ICO2 && now < ICO3) return _amount >= 0.1 ether;
-        else if (now > ICO3 && now < ICO4) return _amount >= 0.1 ether;
-        else if (now > ICO4 && now < ICOend) return _amount >= 0.1 ether;
+        if (now >= PreSaleStart && now < PreSaleEnd) return _amount >= 1 ether;
+        else if (now >= ICO1 && now < ICO2) return _amount >= 0.1 ether;
+        else if (now >= ICO2 && now < ICO3) return _amount >= 0.1 ether;
+        else if (now >= ICO3 && now < ICO4) return _amount >= 0.1 ether;
+        else if (now >= ICO4 && now < ICOend) return _amount >= 0.1 ether;
         else return false;
     }
 
@@ -165,16 +154,25 @@ contract XRRsale is Ownable {
 
         totalTokenRaiseWei = totalTokenRaiseWei.add(tokens);
         token.transfer(msg.sender, tokens);
+        wallet.transfer(msg.value);
     }
 
     function sendTokens(address _to, uint256 _value) public onlyOwner {
         require(_value > 0);
         require(_value <= tokenTosale());
         require(currentPrice() > 0);
+        require(tokenTosale() >= _value);
 
         uint256 amount = _value.div(currentPrice());
         totalRaiseWei = totalRaiseWei.add(amount);
         totalTokenRaiseWei = totalTokenRaiseWei.add(_value);
         token.transfer(_to, _value);
+    }
+
+    function finishSale() public onlyOwner {
+        uint256 tokensToFrozen = 18000000 ether;
+        require(tokenTosale() >= tokensToFrozen);
+        // Frozen tokens for Bounty, Airdrop, Stakeholders
+        token.transfer(frozenVaults, tokensToFrozen);
     }
 }
