@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCToken at 0x28577A6d31559bd265Ce3ADB62d0458550F7b8a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCToken at 0xde115bd181400de3140719417164f838605f3f34
 */
 pragma solidity ^0.4.16;
 
@@ -10,7 +10,7 @@ contract CCCToken {
     string public name = 'Crypto Crash Course'; // To be used to certify that students passed the Crypto Crash Course
     string public symbol = 'CCC';
     uint8 public decimals = 18;
-    uint256 public totalSupply = 1000000000000000000000000000;
+    uint256 public totalSupply = 1000000000; // One Billion
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
