@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BobCoin at 0xaf9eb1dd043cab3316b3b8282b65cb19b69d5729
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BobCoin at 0x3Ef65B52E2238E9F4D56Bd725104Dea6Df19B9E5
 */
 pragma solidity ^0.4.18;
 
@@ -59,31 +59,12 @@ contract BobCoin is IERC20{
     string public constant name = "BobCoin";
     uint8 public constant decimals = 3;
     
-    //uint256 public constant RATE = 1000;
-    
-    //address public owner;
-    
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
     
-    
-    //function () payable{
-    //    createTokens();
-    //}
-    
     function BobCoin(){
         balances[msg.sender] = _totalSupply;
-        //owner = msg.sender;
     }
-    
-    //function createTokens() payable{
-    //    require(msg.value > 0);
-    //    
-    //    uint256 tokens = msg.value.mul(RATE);
-    //    balances[msg.sender] = balances[msg.sender].add(tokens);
-    //    _totalSupply = _totalSupply = _totalSupply.add(tokens);
-    //    owner.transfer(msg.value);
-    //}
     
     function totalSupply() constant returns (uint256 totalSupply){
         return _totalSupply;
@@ -93,7 +74,7 @@ contract BobCoin is IERC20{
         return balances[_owner];
     }
     
-    function transfer(address _to, uint256 _value) returns (bool sucess){
+    function transfer(address _to, uint256 _value) returns (bool success){
         require(
             balances[msg.sender] >= _value
             && _value > 0
