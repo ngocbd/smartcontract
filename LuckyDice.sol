@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyDice at 0x44ec074723ed296b8fc2b81a0f9210cb65e61077
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyDice at 0x85d3addef1a2b104edb5c1e9475b6d5496fd5138
 */
 pragma solidity ^0.4.18;
 
@@ -76,7 +76,6 @@ contract LuckyDice is DSSafeAddSub {
     /*
      * game vars
     */
-    uint constant public maxProfitDivisor = 1000000;
     uint constant public houseEdgeDivisor = 1000;
     uint constant public maxNumber = 30;
     uint constant public minNumber = 5;
@@ -87,7 +86,6 @@ contract LuckyDice is DSSafeAddSub {
     uint public contractBalance;
     uint public houseEdge;
     uint public maxProfit;
-    uint public maxProfitAsPercentOfHouse;
     uint public minBet;
     int public totalBets;
     uint public maxPendingPayouts;
@@ -106,6 +104,7 @@ contract LuckyDice is DSSafeAddSub {
     uint tempDiceValue;
     bytes tempRollResult;
     uint tempFullprofit;
+    bytes32 tempBetHash;
 
     /*
      * player vars
@@ -158,8 +157,8 @@ contract LuckyDice is DSSafeAddSub {
         /* init 960 = 96% (4% houseEdge)*/
         ownerSetHouseEdge(960);
 
-        /* 10,000 = 1%; 55,556 = 5.5556%  */
-        ownerSetMaxProfitAsPercentOfHouse(55556);
+        /* 0.5 ether  */
+        ownerSetMaxProfit(500000000000000000);
 
         /* init min bet (0.1 ether) */
         ownerSetMinBet(100000000000000000);
@@ -176,10 +175,11 @@ contract LuckyDice is DSSafeAddSub {
     betIsValid(msg.value, minRollLimit, maxRollLimit)
     {
         /* checks if bet was already made */
-        if (playerAddress[diceRollHash] != 0x0) throw;
+        if (playerBetDiceRollHash[diceRollHash] != 0x0 || diceRollHash == 0x0) throw;
 
-        /* checks hash sign */
-        if (casino != ecrecover(diceRollHash, v, r, s)) throw;
+        /* checks bet sign */
+        tempBetHash = sha256(diceRollHash, byte(minRollLimit), byte(maxRollLimit), msg.sender);
+        if (casino != ecrecover(tempBetHash, v, r, s)) throw;
 
         tempFullprofit = getFullProfit(msg.value, minRollLimit, maxRollLimit);
         playerProfit[diceRollHash] = getProfit(msg.value, tempFullprofit);
@@ -318,9 +318,6 @@ contract LuckyDice is DSSafeAddSub {
                 playerMinRollLimit[diceRollHash], playerMaxRollLimit[diceRollHash], playerRollResult[diceRollHash],
                 playerTempReward[diceRollHash], salt, 1);
 
-            /* update maximum profit */
-            setMaxProfit();
-
             /*
             * send win - external call to an untrusted contract
             * if send fails map reward value to playerPendingWithdrawals[address]
@@ -350,12 +347,8 @@ contract LuckyDice is DSSafeAddSub {
 
             /*
             *  safe adjust contractBalance
-            *  setMaxProfit
             */
             contractBalance = safeAdd(contractBalance, (playerTempBetValue[diceRollHash]));
-
-            /* update maximum profit */
-            setMaxProfit();
 
             return;
         }
@@ -389,14 +382,6 @@ contract LuckyDice is DSSafeAddSub {
     }
 
     /*
-    * internal function
-    * sets max profit
-    */
-    function setMaxProfit() internal {
-        maxProfit = (contractBalance * maxProfitAsPercentOfHouse) / maxProfitDivisor;
-    }
-
-    /*
     * owner address only functions
     */
     function()
@@ -405,8 +390,6 @@ contract LuckyDice is DSSafeAddSub {
     {
         /* safely update contract balance */
         contractBalance = safeAdd(contractBalance, msg.value);
-        /* update the maximum profit */
-        setMaxProfit();
     }
 
 
@@ -424,12 +407,11 @@ contract LuckyDice is DSSafeAddSub {
         houseEdge = newHouseEdge;
     }
 
-    /* only owner address can set maxProfitAsPercentOfHouse */
-    function ownerSetMaxProfitAsPercentOfHouse(uint newMaxProfitAsPercent) public
+    /* only owner address can set maxProfit*/
+    function ownerSetMaxProfit(uint newMaxProfit) public
     onlyOwner
     {
-        maxProfitAsPercentOfHouse = newMaxProfitAsPercent;
-        setMaxProfit();
+        maxProfit = newMaxProfit;
     }
 
     /* only owner address can set minBet */
@@ -452,8 +434,6 @@ contract LuckyDice is DSSafeAddSub {
     {
         /* safely update contract balance when sending out funds*/
         contractBalance = safeSub(contractBalance, amount);
-        /* update max profit */
-        setMaxProfit();
         if (!sendTo.send(amount)) throw;
         LogOwnerTransfer(sendTo, amount);
     }
