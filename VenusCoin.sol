@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VenusCoin at 0x2B48fBd3CAcb0B75dDD42cE0345dC831E291c73E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VenusCoin at 0x9329020B260A7e09A6271e0b719A2FE4bD96fA03
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.11;
 library SafeMath {
   function mul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
@@ -39,6 +39,48 @@ library SafeMath {
     if (!assertion) {
       throw;
     }
+  }
+}
+contract Ownable {
+    address public owner;
+    function Ownable() {
+        owner = msg.sender;
+    }
+    modifier onlyOwner {
+        if (msg.sender != owner) throw;
+        _;
+    }
+    function transferOwnership(address newOwner) onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+}
+/*
+ *  an emergency  mechanism.
+ */
+contract Pausable is Ownable {
+  bool public stopped;
+  modifier stopInEmergency {
+    if (stopped) {
+      throw;
+    }
+    _;
+  }
+  
+  modifier onlyInEmergency {
+    if (!stopped) {
+      throw;
+    }
+    _;
+  }
+  // called by the owner on emergency, triggers stopped state
+  function emergencyStop() external onlyOwner {
+    stopped = true;
+  }
+  // called by the owner on end of emergency, returns to normal state
+  function release() external onlyOwner onlyInEmergency {
+    stopped = false;
   }
 }
 contract ERC20Basic {
@@ -105,21 +147,30 @@ contract StandardToken is BasicToken, ERC20 {
 /**
  *  VenusCoin token contract. Implements
  */
-contract VenusCoin is StandardToken {
+contract VenusCoin is StandardToken, Ownable {
   string public constant name = "VenusCoin";
   string public constant symbol = "Venus";
-  uint public constant decimals = 5;
+  uint public constant decimals = 0;
   // Constructor
   function VenusCoin() {
-      totalSupply = 5000000000000000;
+      totalSupply = 50000000000;
       balances[msg.sender] = totalSupply; // Send all tokens to owner
+  }
+  /**
+   *  Burn away the specified amount of VenusCoin tokens
+   */
+  function burn(uint _value) onlyOwner returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Transfer(msg.sender, 0x0, _value);
+    return true;
   }
 }
 /*
   Tokensale Smart Contract for the VenusCoin project
   This smart contract collects ETH
 */
-contract Tokensale {
+contract Tokensale is Pausable {
     
     using SafeMath for uint;
     struct Beneficiar {
@@ -127,6 +178,8 @@ contract Tokensale {
         uint coinSent;
     }
     
+    /* Minimum amount to accept */
+    uint public constant MIN_ACCEPT_ETHER = 50000000000000 wei; // min sale price is 1/20000 ETH = 5*10**13 wei = 0.00005 ETH
     /* Number of VenusCoins per Ether */
     uint public constant COIN_PER_ETHER = 20000; // 20,000 VenusCoins
     /*
@@ -134,10 +187,14 @@ contract Tokensale {
     */
     /* VenusCoin contract reference */
     VenusCoin public coin;
+    /* Multisig contract that will receive the Ether */
+    address public multisigEther;
     /* Number of Ether received */
     uint public etherReceived;
     /* Number of VenusCoins sent to Ether contributors */
     uint public coinSentToEther;
+    /* Tokensale start time */
+    uint public startTime;
     /*  Beneficiar's Ether indexed by Ethereum address */
     mapping(address => Beneficiar) public beneficiars;
   
@@ -151,5 +208,65 @@ contract Tokensale {
     */
     function Tokensale(address _venusCoinAddress, address _to) {
         coin = VenusCoin(_venusCoinAddress);
+        multisigEther = _to;
     }
+    /* 
+     * The fallback function corresponds to a donation in ETH
+     */
+    function() stopInEmergency payable {
+        receiveETH(msg.sender);
+    }
+    /* 
+     * To call to start the Token's sale
+     */
+    function start() onlyOwner {
+        if (startTime != 0) throw; // Token's sale was already started
+        startTime = now ;              
+    }
+    
+    function receiveETH(address beneficiary) internal {
+        if (msg.value < MIN_ACCEPT_ETHER) throw; // Don't accept funding under a predefined threshold
+        
+        uint coinToSend = bonus(msg.value.mul(COIN_PER_ETHER).div(1 ether)); // Compute the number of VenusCoin to send 
+        Beneficiar beneficiar = beneficiars[beneficiary];
+        coin.transfer(beneficiary, coinToSend); // Transfer VenusCoins right now 
+        beneficiar.coinSent = beneficiar.coinSent.add(coinToSend);
+        beneficiar.weiReceived = beneficiar.weiReceived.add(msg.value); // Update the total wei collected     
+        etherReceived = etherReceived.add(msg.value); // Update the total wei collected 
+        coinSentToEther = coinSentToEther.add(coinToSend);
+        // Send events
+        LogCoinsEmited(msg.sender ,coinToSend);
+        LogReceivedETH(beneficiary, etherReceived); 
+    }
+    
+    /*
+     *Compute the VenusCoin bonus according to the bonus period
+     */
+    function bonus(uint amount) internal constant returns (uint) {
+        if (now < startTime.add(2 days)) return amount.add(amount.div(10));   // bonus 10%
+        return amount;
+    }
+    
+    /*  
+    * Failsafe drain
+    */
+    function drain() onlyOwner {
+        if (!owner.send(this.balance)) throw;
+    }
+    /**
+     * Allow to change the team multisig address in the case of emergency.
+     */
+    function setMultisig(address addr) onlyOwner public {
+        if (addr == address(0)) throw;
+        multisigEther = addr;
+    }
+    /**
+     * Manually back VenusCoin owner address.
+     */
+    function backVenusCoinOwner() onlyOwner public {
+        coin.transferOwnership(owner);
+    }
+  
+    
+    
 }
