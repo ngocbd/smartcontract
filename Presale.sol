@@ -1,107 +1,403 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x11b7890de965ed96dbd1af3f96f584ade732ecf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0xAf65F7d97B141d230829842b3C89c671f90e88b7
 */
-pragma solidity ^0.4.15;
+pragma solidity 0.4.18;
 
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    function mul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
-    function div(uint a, uint b) internal returns (uint) {
-        assert(b > 0);
-        uint c = a / b;
-        assert(a == b * c + a % b);
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
-    function sub(uint a, uint b) internal returns (uint) {
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
-     }
-    function add(uint a, uint b) internal returns (uint) {
-         uint c = a + b;
-         assert(c >= a);
-         return c;
-     }
-    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-        return a >= b ? a : b;
-     }
-
-    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-        return a < b ? a : b;
     }
 
-    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-        return a >= b ? a : b;
-    }
-
-    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-        return a < b ? a : b;
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
 
-contract tokenLUCG {
-    /* Public variables of the token */
-        string public name;
-        string public symbol;
-        uint8 public decimals;
-        uint256 public totalSupply = 0;
 
+contract PreSaleToken {
+    using SafeMath for uint256;
 
-        function tokenLUCG (string _name, string _symbol, uint8 _decimals){
-            name = _name;
-            symbol = _symbol;
-            decimals = _decimals;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event AllowExchanger(address indexed exchanger);
+    event RevokeExchanger(address indexed exchanger);
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+    event Exchange(address indexed from, uint256 exchangedValue, string symbol, uint256 grantedValue);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-        }
-    /* This creates an array with all balances */
-        mapping (address => uint256) public balanceOf;
+    /// The owner of the contract.
+    address public owner;
 
+    /// The total number of minted tokens, excluding destroyed tokens.
+    uint256 public totalSupply;
+
+    /// The token balance of each address.
+    mapping(address => uint256) balances;
+
+    /// The full list of addresses we have minted tokens for, stored for
+    /// exchange purposes.
+    address[] public holders;
+
+    /// Whether the token is still mintable.
+    bool public mintingFinished = false;
+
+    /// Addresses allowed to exchange the presale tokens for the final
+    /// and/or intermediary tokens.
+    mapping(address => bool) public exchangers;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier onlyExchanger() {
+        require(exchangers[msg.sender]);
+        _;
+    }
+
+    function PreSaleToken() public {
+        owner = msg.sender;
+    }
+
+    function allowExchanger(address _exchanger) onlyOwner public {
+        require(mintingFinished);
+        require(_exchanger != 0x0);
+        require(!exchangers[_exchanger]);
+
+        exchangers[_exchanger] = true;
+        AllowExchanger(_exchanger);
+    }
+
+    function exchange(
+        address _from,
+        uint256 _amount,
+        string _symbol,
+        uint256 _grantedValue
+    )
+        onlyExchanger
+        public
+        returns (bool)
+    {
+        require(mintingFinished); // Always true due to exchangers requiring the same condition
+        require(_from != 0x0);
+        require(!exchangers[_from]);
+        require(_amount > 0);
+        require(_amount <= balances[_from]);
+
+        balances[_from] = balances[_from].sub(_amount);
+        balances[msg.sender] = balances[msg.sender].add(_amount);
+        Exchange(
+            _from,
+            _amount,
+            _symbol,
+            _grantedValue
+        );
+        Transfer(_from, msg.sender, _amount);
+
+        return true;
+    }
+
+    function finishMinting() onlyOwner public returns (bool) {
+        require(!mintingFinished);
+
+        mintingFinished = true;
+        MintFinished();
+
+        return true;
+    }
+
+    function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
+        require(_to != 0x0);
+        require(!mintingFinished);
+        require(_amount > 0);
+
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        holders.push(_to);
+        Mint(_to, _amount);
+        Transfer(0x0, _to, _amount);
+
+        return true;
+    }
+
+    function revokeExchanger(address _exchanger) onlyOwner public {
+        require(mintingFinished);
+        require(_exchanger != 0x0);
+        require(exchangers[_exchanger]);
+
+        delete exchangers[_exchanger];
+        RevokeExchanger(_exchanger);
+    }
+
+    function transferOwnership(address _to) onlyOwner public {
+        require(_to != address(0));
+        OwnershipTransferred(owner, _to);
+        owner = _to;
+    }
+
+    function balanceOf(address _owner) public constant returns (uint256) {
+        return balances[_owner];
+    }
 }
 
-contract Presale is tokenLUCG {
 
-        using SafeMath for uint;
-        string name = 'Level Up Coin Gold';
-        string symbol = 'LUCG';
-        uint8 decimals = 18;
-        address manager;
-        address public ico;
+contract PreSale {
+    using SafeMath for uint256;
 
-        function Presale (address _manager) tokenLUCG (name, symbol, decimals){
-             manager = _manager;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event WalletChanged(address indexed previousWallet, address indexed newWallet);
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event Pause();
+    event Unpause();
+    event Withdrawal(address indexed wallet, uint256 weiAmount);
+    event Extended(uint256 until);
+    event Finalized();
+    event Refunding();
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
+    event Whitelisted(address indexed participant, uint256 weiAmount, uint32 bonusRate);
 
+    /// The owner of the contract.
+    address public owner;
+
+    /// The token we're selling.
+    PreSaleToken public token;
+
+    /// The minimum goal to reach. If the goal is not reached, finishing
+    /// the sale will enable refunds.
+    uint256 public goal;
+
+    /// The sale period.
+    uint256 public startTime;
+    uint256 public endTime;
+    uint256 public timeExtension;
+
+    /// The numnber of tokens to mint per wei.
+    uint256 public rate;
+
+    /// The total number of wei raised. Note that the contract's balance may
+    /// differ from this value if someone has decided to forcefully send us
+    /// ether.
+    uint256 public weiRaised;
+
+    /// The wallet that will receive the contract's balance once the sale
+    /// finishes and the minimum goal is met.
+    address public wallet;
+
+    /// The list of addresses that are allowed to participate in the sale,
+    /// up to what amount, and any special rate they may have.
+    mapping(address => uint256) public whitelisted;
+    mapping(address => uint32) public bonusRates;
+
+    /// The amount of wei invested by each investor.
+    mapping(address => uint256) public deposited;
+
+    /// An enumerable list of investors.
+    address[] public investors;
+
+    /// Whether the sale is paused.
+    bool public paused = false;
+
+    /// Whether the sale has finished, and when.
+    bool public finished = false;
+    uint256 public finishedAt;
+
+    /// Whether we're accepting refunds.
+    bool public refunding = false;
+
+    /// The total number of wei refunded.
+    uint256 public weiRefunded;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier saleOpen() {
+        require(!finished);
+        require(!paused);
+        require(now >= startTime);
+        require(now <= endTime + timeExtension);
+        _;
+    }
+
+    function PreSale(
+        uint256 _goal,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _rate,
+        address _wallet
+    )
+        public
+        payable
+    {
+        require(msg.value > 0);
+        require(_goal > 0);
+        require(_startTime >= now);
+        require(_endTime >= _startTime);
+        require(_rate > 0);
+        require(_wallet != 0x0);
+
+        owner = msg.sender;
+        goal = _goal;
+        startTime = _startTime;
+        endTime = _endTime;
+        rate = _rate;
+        wallet = _wallet;
+        token = new PreSaleToken();
+
+        wallet.transfer(msg.value);
+    }
+
+    function () public payable {
+        buyTokens(msg.sender);
+    }
+
+    function buyTokens(address _beneficiary) saleOpen public payable {
+        require(_beneficiary != address(0));
+        require(msg.value > 0);
+
+        uint256 weiAmount = msg.value;
+        uint256 newDeposited = deposited[_beneficiary].add(weiAmount);
+
+        require(newDeposited <= whitelisted[_beneficiary]);
+
+        uint32 bonusRate = bonusRates[_beneficiary];
+        uint256 tokens = weiAmount.mul(rate).mul(1000 + bonusRate).div(1000);
+
+        deposited[_beneficiary] = newDeposited;
+        investors.push(_beneficiary);
+
+        weiRaised = weiRaised.add(weiAmount);
+
+        token.mint(_beneficiary, tokens);
+        TokenPurchase(
+            msg.sender,
+            _beneficiary,
+            weiAmount,
+            tokens
+        );
+    }
+
+    function changeWallet(address _wallet) onlyOwner public payable {
+        require(_wallet != 0x0);
+        require(msg.value > 0);
+
+        WalletChanged(wallet, _wallet);
+        wallet = _wallet;
+
+        wallet.transfer(msg.value);
+    }
+
+    function extendTime(uint256 _timeExtension) onlyOwner public {
+        require(!finished);
+        require(now < endTime + timeExtension);
+        require(_timeExtension > 0);
+
+        timeExtension = timeExtension.add(_timeExtension);
+        require(timeExtension <= 7 days);
+
+        Extended(endTime.add(timeExtension));
+    }
+
+    function finish() onlyOwner public {
+        require(!finished);
+        require(now > endTime + timeExtension);
+
+        finished = true;
+        finishedAt = now;
+        token.finishMinting();
+
+        if (goalReached()) {
+            token.transferOwnership(owner);
+            withdraw();
+        } else {
+            refunding = true;
+            Refunding();
         }
 
-        event Transfer(address _from, address _to, uint256 amount);
-        event Burn(address _from, uint256 amount);
+        Finalized();
+    }
 
-        modifier onlyManager{
-             require(msg.sender == manager);
-            _;
-        }
+    function pause() onlyOwner public {
+        require(!paused);
+        paused = true;
+        Pause();
+    }
 
-        modifier onlyIco{
-             require(msg.sender == ico);
-            _;
-        }
-        function mintTokens(address _investor, uint256 _mintedAmount) public onlyManager {
-             balanceOf[_investor] = balanceOf[_investor].add(_mintedAmount);
-             totalSupply = totalSupply.add(_mintedAmount);
-             Transfer(this, _investor, _mintedAmount);
+    function refund(address _investor) public {
+        require(finished);
+        require(refunding);
+        require(deposited[_investor] > 0);
 
-        }
+        uint256 weiAmount = deposited[_investor];
+        deposited[_investor] = 0;
+        weiRefunded = weiRefunded.add(weiAmount);
+        Refunded(_investor, weiAmount);
 
-        function burnTokens(address _owner) public onlyIco{
-             uint  tokens = balanceOf[_owner];
-             require(balanceOf[_owner] != 0);
-             balanceOf[_owner] = 0;
-             totalSupply = totalSupply.sub(tokens);
-             Burn(_owner, tokens);
-        }
+        _investor.transfer(weiAmount);
+    }
 
-        function setIco(address _ico) onlyManager{
-            ico = _ico;
+    function transferOwnership(address _to) onlyOwner public {
+        require(_to != address(0));
+        OwnershipTransferred(owner, _to);
+        owner = _to;
+    }
+
+    function unpause() onlyOwner public {
+        require(paused);
+        paused = false;
+        Unpause();
+    }
+
+    function whitelist(
+        address _participant,
+        uint256 _weiAmount,
+        uint32 _bonusRate
+    )
+        onlyOwner
+        public
+    {
+        require(_participant != 0x0);
+        require(_bonusRate <= 1000);
+
+        whitelisted[_participant] = _weiAmount;
+        bonusRates[_participant] = _bonusRate;
+        Whitelisted(_participant, _weiAmount, _bonusRate);
+    }
+
+    function withdraw() onlyOwner public {
+        require(goalReached() || (finished && now > finishedAt + 14 days));
+
+        uint256 weiAmount = this.balance;
+
+        if (weiAmount > 0) {
+            wallet.transfer(weiAmount);
+            Withdrawal(wallet, weiAmount);
         }
+    }
+
+    function goalReached() public constant returns (bool) {
+        return weiRaised >= goal;
+    }
 }
