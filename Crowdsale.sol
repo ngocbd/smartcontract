@@ -1,394 +1,433 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x748f9a0ac36b123c7e4f687f7737f759628c4392
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x66345ae2b6fc2ce02684eee1aa1453257f77e635
 */
-pragma solidity ^0.4.16;
+pragma solidity ^ 0.4 .11;
 
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20 {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a * b;
+contract SafeMath {
+    function safeMul(uint a, uint b) internal returns(uint) {
+        uint c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
 
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    function safeDiv(uint a, uint b) internal returns(uint) {
+        assert(b > 0);
+        uint c = a / b;
+        assert(a == b * c + a % b);
         return c;
     }
 
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    function safeSub(uint a, uint b) internal returns(uint) {
         assert(b <= a);
         return a - b;
     }
-
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
+    
+    function safeAdd(uint a, uint b) internal returns(uint) {
+        uint c = a + b;
+        assert(c >= a && c >= b);
         return c;
     }
+
+}
+
+contract ERC20 {
+    uint public totalSupply;
+
+    function balanceOf(address who) constant returns(uint);
+
+    function allowance(address owner, address spender) constant returns(uint);
+
+    function transfer(address to, uint value) returns(bool ok);
+
+    function transferFrom(address from, address to, uint value) returns(bool ok);
+
+    function approve(address spender, uint value) returns(bool ok);
+
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
-    mapping(address => bool)  internal owners;
+    address public owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
     function Ownable() {
-        owners[msg.sender] = true;
+        owner = msg.sender;
     }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
+    function transferOwnership(address newOwner) onlyOwner {
+        if (newOwner != address(0)) owner = newOwner;
+    }
+
+    function kill() {
+        if (msg.sender == owner) selfdestruct(owner);
+    }
+
     modifier onlyOwner() {
-        require(owners[msg.sender] == true);
+        if (msg.sender == owner)
+        _;
+    }
+}
+
+contract Pausable is Ownable {
+    bool public stopped;
+
+    modifier stopInEmergency {
+        if (stopped) {
+            revert();
+        }
         _;
     }
 
-    function addOwner(address newAllowed) onlyOwner public {
-        owners[newAllowed] = true;
+    modifier onlyInEmergency {
+        if (!stopped) {
+            revert();
+        }
+        _;
     }
 
-    function removeOwner(address toRemove) onlyOwner public {
-        owners[toRemove] = false;
+    // Called by the owner in emergency, triggers stopped state
+    function emergencyStop() external onlyOwner {
+        stopped = true;
     }
 
+    // Called by the owner to end of emergency, returns to normal state
+    function release() external onlyOwner onlyInEmergency {
+        stopped = false;
+    }
 }
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BigToken is ERC20, Ownable {
-    using SafeMath for uint256;
 
-    string public name = "Big Token";
-    string public symbol = "BIG";
-    uint256 public decimals = 18;
-    uint256 public mintPerBlock = 333333333333333;
 
-    struct BigTransaction {
-        uint blockNumber;
-        uint256 amount;
+// Base contract supporting async send for pull payments.
+// Inherit from this contract and use asyncSend instead of send.
+contract PullPayment {
+    mapping(address => uint) public payments;
+
+    event RefundETH(address to, uint value);
+
+    // Store sent amount as credit to be pulled, called by payer
+    function asyncSend(address dest, uint amount) internal {
+        payments[dest] += amount;
+    }
+    
+    // Withdraw accumulated balance, called by payee
+    function withdrawPayments() internal returns (bool) {
+        address payee = msg.sender;
+        uint payment = payments[payee];
+
+        if (payment == 0) {
+            revert();
+        }
+
+        if (this.balance < payment) {
+            revert();
+        }
+
+        payments[payee] = 0;
+
+        if (!payee.send(payment)) {
+            revert();
+        }
+        RefundETH(payee, payment);
+        return true;
+    }
+}
+
+
+// Crowdsale Smart Contract
+// This smart contract collects ETH and in return sends GXC tokens to the Backers
+contract Crowdsale is SafeMath, Pausable, PullPayment {
+
+    struct Backer {
+        uint weiReceived; // amount of ETH contributed
+        uint GXCSent; // amount of tokens  sent        
     }
 
-    uint public commissionPercent = 10;
-    uint256 public totalTransactions = 0;
-    bool public enabledMint = true;
-    uint256 public totalMembers;
+    GXC public gxc; // DMINI contract reference   
+    address public multisigETH; // Multisig contract that will receive the ETH    
+    address public team; // Address at which the team GXC will be sent   
+    uint public ETHReceived; // Number of ETH received
+    uint public GXCSentToETH; // Number of GXC sent to ETH contributors
+    uint public startBlock; // Crowdsale start block
+    uint public endBlock; // Crowdsale end block
+    uint public maxCap; // Maximum number of GXC to sell
+    uint public minCap; // Minimum number of ETH to raise
+    uint public minInvestETH; // Minimum amount to invest
+    bool public crowdsaleClosed; // Is crowdsale still on going
+    uint public tokenPriceWei;
+    uint GXCReservedForPresale ;  
+    
 
-    mapping(address => mapping (address => uint256)) internal allowed;
-    mapping(uint256 => BigTransaction) public transactions;
-    mapping(address => uint256) public balances;
-    mapping(address => uint) public lastMint;
-    mapping(address => bool) invested;
-    mapping(address => bool) public confirmed;
-    mapping(address => bool) public members;
+    
+    uint multiplier = 10000000000; // to provide 10 decimal values
+    // Looping through Backer
+    mapping(address => Backer) public backers; //backer list
+    address[] public backersIndex ;   // to be able to itarate through backers when distributing the tokens. 
 
-    event Mint(address indexed to, uint256 amount);
-    event Commission(uint256 amount);
 
-    /**
-     * @dev transfer token for a specified address
-     * @param _to The address to transfer to.
-     * @param _value The amount to be transferred.
-     */
-    function transfer(address _to, uint256 _value) public returns (bool)  {
-        require(_to != address(0));
+    // @notice to verify if action is not performed out of the campaing range
+    modifier respectTimeFrame() {
+        if ((block.number < startBlock) || (block.number > endBlock)) revert();
+        _;
+    }
 
-        uint256 currentBalance = balances[msg.sender];
-        uint256 balanceToMint = getBalanceToMint(msg.sender);
-        uint256 commission = _value * commissionPercent / 100;
-        require((_value + commission) <= (currentBalance + balanceToMint));
+    modifier minCapNotReached() {
+        if (GXCSentToETH >= minCap) revert();
+        _;
+    }
 
-        if(balanceToMint > 0){
-            currentBalance = currentBalance.add(balanceToMint);
-            Mint(msg.sender, balanceToMint);
-            lastMint[msg.sender] = block.number;
-            totalSupply = totalSupply.add(balanceToMint);
+    // Events
+    event ReceivedETH(address backer, uint amount, uint tokenAmount);
+
+    // Crowdsale  {constructor}
+    // @notice fired when contract is crated. Initilizes all constnat variables.
+    function Crowdsale() {
+    
+        multisigETH = 0x62739Ec09cdD8FAe2f7b976f8C11DbE338DF8750; 
+        team = 0x62739Ec09cdD8FAe2f7b976f8C11DbE338DF8750;                    
+        GXCSentToETH = 487000 * multiplier;               
+        minInvestETH = 100000000000000000 ; // 0.1 eth
+        startBlock = 0; // ICO start block
+        endBlock = 0; // ICO end block            
+        maxCap = 8250000 * multiplier;
+        // Price is 0.001 eth                         
+        tokenPriceWei = 3004447000000000;
+                        
+        minCap = 500000 * multiplier;
+    }
+
+    // @notice Specify address of token contract
+    // @param _GXCAddress {address} address of GXC token contrac
+    // @return res {bool}
+    function updateTokenAddress(GXC _GXCAddress) public onlyOwner() returns(bool res) {
+        gxc = _GXCAddress;  
+        return true;    
+    }
+
+    // @notice modify this address should this be needed. 
+    function updateTeamAddress(address _teamAddress) public onlyOwner returns(bool){
+        team = _teamAddress;
+        return true; 
+    }
+
+    // @notice return number of contributors
+    // @return  {uint} number of contributors
+    function numberOfBackers()constant returns (uint){
+        return backersIndex.length;
+    }
+
+    // {fallback function}
+    // @notice It will call internal function which handels allocation of Ether and calculates GXC tokens.
+    function () payable {         
+        handleETH(msg.sender);
+    }
+
+    // @notice It will be called by owner to start the sale   
+    function start(uint _block) onlyOwner() {
+        startBlock = block.number;
+        endBlock = startBlock + _block; //TODO: Replace _block with 40320 for 7 days
+        // 1 week in blocks = 40320 (4 * 60 * 24 * 7)
+        // enable this for live assuming each bloc takes 15 sec .
+        crowdsaleClosed = false;
+    }
+
+    // @notice It will be called by fallback function whenever ether is sent to it
+    // @param  _backer {address} address of beneficiary
+    // @return res {bool} true if transaction was successful
+    function handleETH(address _backer) internal stopInEmergency respectTimeFrame returns(bool res) {
+
+        if (msg.value < minInvestETH) revert(); // stop when required minimum is not sent
+
+        uint GXCToSend = (msg.value * multiplier)/ tokenPriceWei ; // calculate number of tokens
+
+        // Ensure that max cap hasn't been reached
+        if (safeAdd(GXCSentToETH, GXCToSend) > maxCap) revert();
+
+        Backer storage backer = backers[_backer];
+
+         if ( backer.weiReceived  == 0)
+             backersIndex.push(_backer);
+
+        if (!gxc.transfer(_backer, GXCToSend)) revert(); // Transfer GXC tokens
+        backer.GXCSent = safeAdd(backer.GXCSent, GXCToSend);
+        backer.weiReceived = safeAdd(backer.weiReceived, msg.value);
+        ETHReceived = safeAdd(ETHReceived, msg.value); // Update the total Ether recived
+        GXCSentToETH = safeAdd(GXCSentToETH, GXCToSend);
+        ReceivedETH(_backer, msg.value, GXCToSend); // Register event
+        return true;
+    }
+
+
+    // @notice This function will finalize the sale.
+    // It will only execute if predetermined sale time passed or all tokens are sold.
+    function finalize() onlyOwner() {
+
+        if (crowdsaleClosed) revert();
+        
+        uint daysToRefund = 4*60*24*10;  //10 days        
+
+        if (block.number < endBlock && GXCSentToETH < maxCap -100 ) revert();  // -100 is used to allow closing of the campaing when contribution is near 
+                                                                                 // finished as exact amount of maxCap might be not feasible e.g. you can't easily buy few tokens. 
+                                                                                 // when min contribution is 0.1 Eth.  
+
+        if (GXCSentToETH < minCap && block.number < safeAdd(endBlock , daysToRefund)) revert();   
+
+       
+        if (GXCSentToETH > minCap) {
+            if (!multisigETH.send(this.balance)) revert();  // transfer balance to multisig wallet
+            if (!gxc.transfer(team,  gxc.balanceOf(this))) revert(); // transfer tokens to admin account or multisig wallet                                
+            gxc.unlock();    // release lock from transfering tokens. 
         }
-        
-        
-
-        if(block.number == transactions[totalTransactions - 1].blockNumber) {
-            transactions[totalTransactions - 1].amount = transactions[totalTransactions - 1].amount + (commission / totalMembers);
-        } else {
-            uint transactionID = totalTransactions++;
-            transactions[transactionID] = BigTransaction(block.number, commission / totalMembers);
+        else{
+            if (!gxc.burn(this, gxc.balanceOf(this))) revert();  // burn all the tokens remaining in the contract                       
         }
+
+        crowdsaleClosed = true;
         
-        balances[msg.sender] = currentBalance.sub(_value + commission);
-        balances[_to] = balances[_to].add(_value);
+    }
+
+ 
+
+  
+    // @notice Failsafe drain
+    function drain() onlyOwner(){
+        if (!owner.send(this.balance)) revert();
+    }
+
+    // @notice Failsafe transfer tokens for the team to given account 
+    function transferDevTokens(address _devAddress) onlyOwner returns(bool){
+        if (!gxc.transfer(_devAddress,  gxc.balanceOf(this))) 
+            revert(); 
+        return true;
+
+    }    
+
+
+    // @notice Prepare refund of the backer if minimum is not reached
+    // burn the tokens
+    function prepareRefund()  minCapNotReached internal returns (bool){
+        uint value = backers[msg.sender].GXCSent;
+
+        if (value == 0) revert();           
+        if (!gxc.burn(msg.sender, value)) revert();
+        uint ETHToSend = backers[msg.sender].weiReceived;
+        backers[msg.sender].weiReceived = 0;
+        backers[msg.sender].GXCSent = 0;
+        if (ETHToSend > 0) {
+            asyncSend(msg.sender, ETHToSend);
+            return true;
+        }else
+            return false;
+        
+    }
+
+    // @notice refund the backer
+    function refund() public returns (bool){
+
+        if (!prepareRefund()) revert();
+        if (!withdrawPayments()) revert();
+        return true;
+
+    }
+
+ 
+}
+
+// The GXC token
+contract GXC is ERC20, SafeMath, Ownable {
+    // Public variables of the token
+    string public name;
+    string public symbol;
+    uint8 public decimals; // How many decimals to show.
+    string public version = 'v0.1';
+    uint public initialSupply;
+    uint public totalSupply;
+    bool public locked;
+    address public crowdSaleAddress;
+    uint multiplier = 10000000000;        
+    
+    uint256 public totalMigrated;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+    
+
+    // Lock transfer during the ICO
+    modifier onlyUnlocked() {
+        if (msg.sender != crowdSaleAddress && locked && msg.sender != owner) revert();
+        _;
+    }
+
+    modifier onlyAuthorized() {
+        if ( msg.sender != crowdSaleAddress && msg.sender != owner) revert();
+        _;
+    }
+
+    // The GXC Token constructor
+    function GXC(address _crowdSaleAddress) {        
+        locked = true;  // Lock the transfer of tokens during the crowdsale
+        initialSupply = 10000000 * multiplier;
+        totalSupply = initialSupply;
+        name = 'GXC'; // Set the name for display purposes
+        symbol = 'GXC'; // Set the symbol for display purposes
+        decimals = 10; // Amount of decimals for display purposes
+        crowdSaleAddress = _crowdSaleAddress;               
+        balances[crowdSaleAddress] = totalSupply;       
+    }
+
+
+    function restCrowdSaleAddress(address _newCrowdSaleAddress) onlyAuthorized() {
+            crowdSaleAddress = _newCrowdSaleAddress;
+    }
+
+    
+
+    function unlock() onlyAuthorized {
+        locked = false;
+    }
+
+      function lock() onlyAuthorized {
+        locked = true;
+    }
+
+    function burn( address _member, uint256 _value) onlyAuthorized returns(bool) {
+        balances[_member] = safeSub(balances[_member], _value);
+        totalSupply = safeSub(totalSupply, _value);
+        Transfer(_member, 0x0, _value);
+        return true;
+    }
+
+    function transfer(address _to, uint _value) onlyUnlocked returns(bool) {
+        balances[msg.sender] = safeSub(balances[msg.sender], _value);
+        balances[_to] = safeAdd(balances[_to], _value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= allowed[_from][msg.sender]);
-
-        uint256 currentBalance = balances[_from];
-        uint256 balanceToMint = getBalanceToMint(_from);
-        uint256 commission = _value * commissionPercent / 100;
-        require((_value + commission) <= (currentBalance + balanceToMint));
-
-        if(balanceToMint > 0){
-            currentBalance = currentBalance.add(balanceToMint);
-            Mint(_from, balanceToMint);
-            lastMint[_from] = block.number;
-            totalSupply = totalSupply.add(balanceToMint);
-        }
-        
-        
-        if(block.number == transactions[totalTransactions - 1].blockNumber) {
-            transactions[totalTransactions - 1].amount = transactions[totalTransactions - 1].amount + (commission / totalMembers);
-        } else {
-            uint transactionID = totalTransactions++;
-            transactions[transactionID] = BigTransaction(block.number, commission / totalMembers);
-        }
-
-        balances[_from] = currentBalance.sub(_value + commission);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    /* A contract attempts to get the coins */
+    function transferFrom(address _from, address _to, uint256 _value) onlyUnlocked returns(bool success) {
+        if (balances[_from] < _value) revert(); // Check if the sender has enough
+        if (_value > allowed[_from][msg.sender]) revert(); // Check allowance
+        balances[_from] = safeSub(balances[_from], _value); // Subtract from the sender
+        balances[_to] = safeAdd(balances[_to], _value); // Add the same to the recipient
+        allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);
         Transfer(_from, _to, _value);
         return true;
     }
 
-
-    /**
-     * @dev Gets the balance of the specified address.
-     * @param _owner The address to query the the balance of.
-     * @return An uint256 representing the amount owned by the passed address.
-     */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        if(lastMint[_owner] != 0){
-            return balances[_owner] + getBalanceToMint(_owner);
-        } else {
-            return balances[_owner];
-        }
+    function balanceOf(address _owner) constant returns(uint balance) {
+        return balances[_owner];
     }
 
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
+    function approve(address _spender, uint _value) returns(bool) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+
+    function allowance(address _owner, address _spender) constant returns(uint remaining) {
         return allowed[_owner][_spender];
     }
-
-    /**
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function refreshBalance(address _address) public returns (uint256){
-        if(!members[_address]) return;
-        
-        uint256 balanceToMint = getBalanceToMint(_address);
-        totalSupply = totalSupply.add(balanceToMint);
-        balances[_address] = balances[_address] + balanceToMint;
-        lastMint[_address] = block.number;
-    }
-
-    function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(0x0, _to, _amount);
-        return true;
-    }
-
-    function getBalanceToMint(address _address) public constant returns (uint256){
-        if(!enabledMint) return 0;
-        if(!members[_address]) return 0;
-        if(lastMint[_address] == 0) return 0;
-
-        uint256 balanceToMint = (block.number - lastMint[_address]) * mintPerBlock;
-        
-        for(uint i = totalTransactions - 1; i >= 0; i--){
-            if(block.number == transactions[i].blockNumber) continue;
-            if(transactions[i].blockNumber < lastMint[_address]) return balanceToMint;
-            if(transactions[i].amount > mintPerBlock) {
-                balanceToMint = balanceToMint.add(transactions[i].amount - mintPerBlock);
-            }
-        }
-
-        return balanceToMint;
-    }
-
-    function stopMint() public onlyOwner{
-        enabledMint = false;
-    }
-
-    function startMint() public onlyOwner{
-        enabledMint = true;
-    }
-
-    function confirm(address _address) onlyOwner public {
-        confirmed[_address] = true;
-        if(!members[_address] && invested[_address]){
-            members[_address] = true;
-            totalMembers = totalMembers.add(1);
-            setLastMint(_address, block.number);
-        }
-    }
-
-    function unconfirm(address _address) onlyOwner public {
-        confirmed[_address] = false;
-        if(members[_address]){
-            members[_address] = false;
-            totalMembers = totalMembers.sub(1);
-        }
-    }
-    
-    function setLastMint(address _address, uint _block) onlyOwner public{
-        lastMint[_address] = _block;
-    }
-
-    function setCommission(uint _commission) onlyOwner public{
-        commissionPercent = _commission;
-    }
-
-    function setMintPerBlock(uint256 _mintPerBlock) onlyOwner public{
-        mintPerBlock = _mintPerBlock;
-    }
-
-    function setInvested(address _address) onlyOwner public{
-        invested[_address] = true;
-        if(confirmed[_address] && !members[_address]){
-            members[_address] = true;
-            totalMembers = totalMembers.add(1);
-            refreshBalance(_address);
-        }
-    }
-
-    function isMember(address _address) public constant returns(bool){
-        return members[_address];
-    }
-
-}
-
-
-contract Crowdsale is Ownable{
-
-    using SafeMath for uint;
-
-    BigToken public token;
-    uint public collected;
-    address public benefeciar;
-
-    function Crowdsale(address _token, address _benefeciar){
-        token = BigToken(_token);
-        benefeciar = _benefeciar;
-        owners[msg.sender] = true;
-    }
-
-    function () payable {
-        require(msg.value >= 0.01 ether);
-        uint256 amount = msg.value / 0.01 ether * 1 ether;
-
-        if(msg.value >= 100 ether && msg.value < 500 ether) amount = amount * 11 / 10;
-        if(msg.value >= 500 ether && msg.value < 1000 ether) amount = amount * 12 / 10;
-        if(msg.value >= 1000 ether && msg.value < 5000 ether) amount = amount * 13 / 10;
-        if(msg.value >= 5000 ether && msg.value < 10000 ether) amount = amount * 14 / 10;
-        if(msg.value >= 10000 ether) amount = amount * 15 / 10;
-
-        collected = collected.add(msg.value);
-
-        token.mint(msg.sender, amount);
-        token.setInvested(msg.sender);
-    }
-
-
-    function confirmAddress(address _address) public onlyOwner{
-        token.confirm(_address);
-    }
-
-    function unconfirmAddress(address _address) public onlyOwner{
-        token.unconfirm(_address);
-    }
-
-    function setBenefeciar(address _benefeciar) public onlyOwner{
-        benefeciar = _benefeciar;
-    }
-
-    function withdraw() public onlyOwner{
-        benefeciar.transfer(this.balance);
-    }
-
 }
