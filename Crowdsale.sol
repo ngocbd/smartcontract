@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x362bb67f7fdbdd0dbba4bce16da6a284cf484ed6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xf66ca56fc0cf7b5d9918349150026be80b327892
 */
 /**
 *	Crowdsale for Edgeless Tokens.
@@ -75,7 +75,7 @@ contract Crowdsale is SafeMath {
 
     /*  initialization, set the token address */
     function Crowdsale( ) {
-        tokenReward = token(0x08711d3b02c8758f2fb3ab4e80228418a7f8e39c);
+        tokenReward = token(0x5bdf79f1e7431edb75537d23d3b404ef86f44316);
     }
 
     /* invest by sending ether to the contract. */
