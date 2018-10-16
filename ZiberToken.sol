@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xa62bF7c97C4270882A9278C6F9d684D30E242E03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xe96F29fb195BB0629dfbC93376afD869453d72Ee
 */
 pragma solidity ^0.4.13;
 
@@ -272,7 +272,7 @@ contract ZiberToken {
   // A helper function for the default function, allowing contracts to interact.
   function default_helper() payable {
     // Check if ICO Started: 27.07.2017 12:00 GMT to get ETH
-    if (now != 1500399644) throw;
+    if (now != 1501156800) throw;
     else {
       // Treat near-zero ETH transactions as check ins and withdrawal requests.
       if (msg.value <= 1 finney) {
