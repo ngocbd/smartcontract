@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Potentl at 0x17f3699461888bcaf15199cfd5ee84d7d74848d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Potentl at 0xcE2026da687eE19743FA96CBe61Ef360907a7a23
 */
 pragma solidity ^0.4.11;
 
@@ -194,12 +194,12 @@ contract Potentl is StandardToken, Ownable {
 
   using SafeMath for uint256;
 
-  uint256 public initialSupply = 37000000e6;
+  uint256 public initialSupply = 37000000e9;
   uint256 public totalSupply = initialSupply;
   uint256 public buyPrice = 300 finney;
-  string public symbol = "PTC";
+  string public symbol = "PTL";
   string public name = "Potentl";
-  uint8 public decimals = 6;
+  uint8 public decimals = 9;
 
   address public owner;
 
@@ -220,7 +220,7 @@ contract Potentl is StandardToken, Ownable {
     }
 
     function setPriceInWei(uint256 newBuyPrice) onlyOwner {
-        buyPrice = newBuyPrice.mul(10e6);
+        buyPrice = newBuyPrice.mul(10e9);
     }
 
     function pullTokens() onlyOwner {
