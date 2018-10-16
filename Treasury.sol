@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Treasury at 0xa1021e9952031f3342b9b737d9bb1840e3a47568
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Treasury at 0x9241b4c67b6cdf9b99f5f50de21283d0441eff75
 */
 //
-// compiler: solcjs -o ./build --optimize --abi --bin <this file>
-//  version: 0.4.18+commit.9cf6e910.Emscripten.clang
+// compiler: 0.4.19+commit.c4cbbb05.Emscripten.clang
 //
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 // ---------------------------------------------------------------------------
 // Treasury smart contract. Owner (Treasurer) is only account that can submit
@@ -22,16 +21,13 @@ contract owned
 {
   address public treasurer;
   function owned() public { treasurer = msg.sender; }
-
+  function closedown() public onlyTreasurer { selfdestruct( treasurer ); }
+  function setTreasurer( address newTreasurer ) public onlyTreasurer
+  { treasurer = newTreasurer; }
   modifier onlyTreasurer {
     require( msg.sender == treasurer );
     _;
   }
-
-  function setTreasurer( address newTreasurer ) public onlyTreasurer
-  { treasurer = newTreasurer; }
-
-  function closedown() public onlyTreasurer { selfdestruct( treasurer ); }
 }
 
 contract Treasury is owned {
@@ -64,6 +60,7 @@ contract Treasury is owned {
 
   function add( address trustee ) public onlyTreasurer
   {
+    require( trustee != address(0) );
     require( trustee != treasurer ); // separate Treasurer and Trustees
 
     for (uint ix = 0; ix < trustees.length; ix++)
@@ -82,6 +79,7 @@ contract Treasury is owned {
       {
         flagged[ix] = isRaised;
         Flagged( trustees[ix], flagged[ix] );
+        break;
       }
   }
 
@@ -93,6 +91,7 @@ contract Treasury is owned {
         Replaced( trustees[ix], newer );
         trustees[ix] = newer;
         flagged[ix] = false;
+        break;
       }
   }
 
