@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProgressiveToken at 0x1e1e933ca258e41d15061c39f70358f009605282
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProgressiveToken at 0xa4f061ad427d0dcd51f511e639bab0a3497e428d
 */
 pragma solidity 0.4.21;
 
@@ -23,7 +23,7 @@ contract owned {
 
 contract token {
 	/* Public variables of the token */
-	string public standard = 'ICO Premier 0.1';
+	string public standard = 'DateMe 0.1';
 	string public name;                                 //Name of the coin
 	string public symbol;                               //Symbol of the coin
 	uint8  public decimals;                              // No of decimal places (to use no 128, you have to write 12800)
