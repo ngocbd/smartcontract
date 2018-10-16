@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockChain at 0x5e3346444010135322268a4630d2ed5f8d09446c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockChain at 0x599ede2a1fc719b8dbbd5a4bb1209511595acf9b
 */
 pragma solidity ^0.4.11;
 
@@ -86,7 +86,7 @@ contract LockChain is StandardToken, SafeMath {
 
     // metadata
     string public constant name = "LockChain";
-    string public constant symbol = "LOC";
+    string public constant symbol = "LOK";
     uint256 public constant decimals = 18;
     string public version = "1.0";
 
