@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xa4abcc19007990ee0b6cfae6289195c06f747496
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xb1d463018c65621e33ba69ac7f7c69a89aad1fb8
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'SUDO';
-	string public symbol = 'SUDO';
+	string public name = 'CANNABIS';
+	string public symbol = 'CANNABIS';
 	uint public decimals = 3;
 	uint public initialSupply = 100000000000;
 	string public publisher = 'TokenDone.io';
