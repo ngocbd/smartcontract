@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0x313C54EB9F08f1Be0F18e8ad505135fa7041A52f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0xde3ef098c2b8a1f1598a272e959c479b8376265d
 */
 pragma solidity ^0.4.11;
 /**
@@ -55,11 +55,11 @@ contract SafeMath {
 /**
  * ERC 20 token
  */
-contract Token is SafeMath {
+contract Token {
     function transfer(address _to, uint256 _value) returns (bool success) {
         if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] = sub(balances[msg.sender], _value);
-            balances[_to] = add(balances[_to], _value);
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
             Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
@@ -67,9 +67,9 @@ contract Token is SafeMath {
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] = add(balances[_to], _value);
-            balances[_from] = sub(balances[_from], _value);
-            allowed[_from][msg.sender] = sub(allowed[_from][msg.sender], _value);
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
             Transfer(_from, _to, _value);
             return true;
         } else { return false; }
@@ -114,7 +114,7 @@ contract Token is SafeMath {
     }
 }
 
-contract CHEXToken is Token {
+contract CHEXToken is Token, SafeMath {
 
     string public constant name = "CHEX Token";
     string public constant symbol = "CHX";
@@ -125,22 +125,19 @@ contract CHEXToken is Token {
     address public founder;
     address public owner;
     
-    uint public totalSupply = 2000000000 * 10**decimals; // 2b tokens, each divided to up to 10^decimals units.
+    uint public totalTokens = 2000000000 * 10**decimals; // 2b tokens, each divided to up to 10^decimals units.
     uint public etherCap = 2500000 * 10**decimals;
-    
-    uint public totalTokens = 0;
+
     uint public presaleSupply = 0;
     uint public presaleEtherRaised = 0;
 
     event Buy(address indexed recipient, uint eth, uint chx);
     event Deliver(address indexed recipient, uint chx, string _for);
 
-    uint public presaleAllocation = totalSupply / 2; //50% of token supply allocated for crowdsale
-    uint public ecosystemAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for the ecosystem fund
-    uint public reservedAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for internal
+    uint public presaleAllocation = totalTokens / 2; //50% of token supply allocated for crowdsale
+    uint public ecosystemAllocation = totalTokens / 4; //25% of token supply allocated post-crowdsale for the ecosystem fund
+    uint public reservedAllocation = totalTokens / 4; //25% of token supply allocated post-crowdsale for internal
     bool public ecosystemAllocated = false;
-
-    uint public constant MIN_ETHER = 10 finney;
 
     enum TokenSaleState {
         Initial,    //contract initialized, bonus token
@@ -156,7 +153,6 @@ contract CHEXToken is Token {
         owner = ownerInput;
         startBlock = startBlockInput;
         endBlock = endBlockInput;
-        
         updateTokenSaleState();
     }
 
@@ -189,7 +185,7 @@ contract CHEXToken is Token {
 
     function buy(address recipient) payable {
         if (recipient == 0x0) throw;
-        if (msg.value < MIN_ETHER) throw;
+        if (totalSupply >= totalTokens) throw;
         if (_saleState == TokenSaleState.Frozen) throw;
         if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
         if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleEtherRaised >= etherCap) throw;
@@ -200,16 +196,15 @@ contract CHEXToken is Token {
         if (tokens <= 0) throw;
         
         balances[recipient] = add(balances[recipient], tokens);
-        totalTokens = add(totalTokens, tokens);
+        totalSupply = add(totalSupply, tokens);
 
-        if (_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) {
+        if (_saleState <= TokenSaleState.Presale) {
             presaleEtherRaised = add(presaleEtherRaised, msg.value);
             presaleSupply = add(presaleSupply, tokens);
         }
 
         founder.transfer(msg.value);
-        
-        Transfer(0, recipient, tokens);
+            
         Buy(recipient, msg.value, tokens);
     }
 
@@ -219,21 +214,22 @@ contract CHEXToken is Token {
     }
 
     function deliver(address recipient, uint tokens, string _for) onlyInternal {
-        if (tokens <= 0) throw;
-        if (totalTokens >= totalSupply) throw;
+        if (tokens == 0) throw;
+        if (totalSupply >= totalTokens) throw;
         if (_saleState == TokenSaleState.Frozen) throw;
         if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
 
         updateTokenSaleState();
 
+        if (add(totalSupply, tokens) >= totalTokens) throw;
+        
         balances[recipient] = add(balances[recipient], tokens);
-        totalTokens = add(totalTokens, tokens);
+        totalSupply = add(totalSupply, tokens);
 
         if (_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) {
             presaleSupply = add(presaleSupply, tokens);
         }
-
-        Transfer(0, recipient, tokens);    
+            
         Deliver(recipient, tokens, _for);
     }
 
@@ -242,10 +238,10 @@ contract CHEXToken is Token {
         if (ecosystemAllocated) throw;
 
         balances[owner] = add(balances[owner], ecosystemAllocation);
-        totalTokens = add(totalTokens, ecosystemAllocation);
+        totalSupply = add(totalSupply, ecosystemAllocation);
 
         balances[founder] = add(balances[founder], reservedAllocation);
-        totalTokens = add(totalTokens, reservedAllocation);
+        totalSupply = add(totalSupply, reservedAllocation);
 
         ecosystemAllocated = true;
     }
