@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract oduwacoin at 0x4c63f81e7ed68546df673d06e27ccf4e697b3990
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract oduwacoin at 0x99654cc4b9057f73ec9e424009208c756ef64665
 */
 contract oduwacoin {
     /* Public variables of the token */
@@ -16,12 +16,12 @@ contract oduwacoin {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function oduwacoin() {
+    function Oduwacoin() {
 
          initialSupply = 21000000;
-         name ="oduwa";
-        decimals = 0;
-         symbol = "owc";
+         name ="Oduwacoin";
+        decimals = 2;
+         symbol = "OWC";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
