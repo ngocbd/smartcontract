@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapConversionRate at 0x9E07235e03530a6427c65D2b7D7eFF386B22d878
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapConversionRate at 0x2aF2f8CAAB1C8F94464C63fa055D89B1f2e17d05
 */
 pragma solidity 0.4.18;
 
@@ -174,6 +174,43 @@ contract Withdrawable is PermissionGroups {
     }
 }
 
+// File: contracts/wrapperContracts/WrapperBase.sol
+
+contract WrapperBase is Withdrawable {
+
+    PermissionGroups wrappedContract;
+
+    function WrapperBase(PermissionGroups _wrappedContract, address _admin) public {
+        require(_wrappedContract != address(0));
+        require(_admin != address(0));
+        wrappedContract = _wrappedContract;
+        admin = _admin;
+    }
+
+    function claimWrappedContractAdmin() public onlyAdmin {
+        wrappedContract.claimAdmin();
+    }
+
+    function transferWrappedContractAdmin (address newAdmin) public onlyAdmin {
+        wrappedContract.removeOperator(this);
+        wrappedContract.transferAdmin(newAdmin);
+    }
+
+    function addSignature(address[] storage existingSignatures) internal returns(bool allSigned) {
+        for(uint i = 0; i < existingSignatures.length; i++) {
+            if (msg.sender == existingSignatures[i]) revert();
+        }
+        existingSignatures.push(msg.sender);
+
+        if (existingSignatures.length == operatorsGroup.length) {
+            allSigned = true;
+            existingSignatures.length = 0;
+        } else {
+            allSigned = false;
+        }
+    }
+}
+
 // File: contracts/wrapperContracts/WrapConversionRate.sol
 
 contract ConversionRateWrapperInterface {
@@ -193,157 +230,197 @@ contract ConversionRateWrapperInterface {
     function getTokenControlInfo(ERC20 token) public view returns(uint, uint, uint);
 }
 
-contract WrapConversionRate is Withdrawable {
+contract WrapConversionRate is WrapperBase {
 
     ConversionRateWrapperInterface conversionRates;
 
     //add token parameters
-    ERC20 public addTokenPendingToken;
-    uint addTokenPendingMinimalResolution; // can be roughly 1 cent
-    uint addTokenPendingMaxPerBlockImbalance; // in twei resolution
-    uint addTokenPendingMaxTotalImbalance;
-    address[] public addTokenApproveSignatures;
-    
+    ERC20 addTokenToken;
+    uint addTokenMinimalResolution; // can be roughly 1 cent
+    uint addTokenMaxPerBlockImbalance; // in twei resolution
+    uint addTokenMaxTotalImbalance;
+    address[] addTokenApproveSignatures;
+    address[] addTokenResetSignatures;
+
     //set token control info parameters.
-    ERC20[] public setTokenInfoPendingTokenList;
-    uint[]  public setTokenInfoPendingPerBlockImbalance; // in twei resolution
-    uint[]  public setTokenInfoPendingMaxTotalImbalance;
-    address[] public setTokenInfoApproveSignatures;
+    ERC20[] tokenInfoTokenList;
+    uint[]  tokenInfoPerBlockImbalance; // in twei resolution
+    uint[]  tokenInfoMaxTotalImbalance;
+    bool public tokenInfoParametersReady;
+    address[] tokenInfoApproveSignatures;
+    address[] tokenInfoResetSignatures;
 
-    function WrapConversionRate(ConversionRateWrapperInterface _conversionRates, address _admin) public {
+    //general functions
+    function WrapConversionRate(ConversionRateWrapperInterface _conversionRates, address _admin) public
+        WrapperBase(PermissionGroups(address(_conversionRates)), _admin)
+    {
         require (_conversionRates != address(0));
-        require (_admin != address(0));
         conversionRates = _conversionRates;
-        admin = _admin;
+        tokenInfoParametersReady = false;
     }
 
-    function claimWrappedContractAdmin() public onlyAdmin {
-        conversionRates.claimAdmin();
-        conversionRates.addOperator(this);
-    }
-
-    function transferWrappedContractAdmin (address newAdmin) public onlyAdmin {
-        conversionRates.transferAdmin(newAdmin);
+    function getWrappedContract() public view returns (ConversionRateWrapperInterface _conversionRates) {
+        _conversionRates = conversionRates;
     }
 
     // add token functions
     //////////////////////
-    function addTokenToApprove(ERC20 token, uint minimalRecordResolution, uint maxPerBlockImbalance, uint maxTotalImbalance) public onlyOperator {
+    function setAddTokenData(ERC20 token, uint minimalRecordResolution, uint maxPerBlockImbalance, uint maxTotalImbalance) public onlyOperator {
         require(minimalRecordResolution != 0);
         require(maxPerBlockImbalance != 0);
         require(maxTotalImbalance != 0);
         require(token != address(0));
+        //can update only when data is reset
+        require(addTokenToken == address(0));
 
         //reset approve array. we have new parameters
         addTokenApproveSignatures.length = 0;
-        addTokenPendingToken = token;
-        addTokenPendingMinimalResolution = minimalRecordResolution; // can be roughly 1 cent
-        addTokenPendingMaxPerBlockImbalance = maxPerBlockImbalance; // in twei resolution
-        addTokenPendingMaxTotalImbalance = maxTotalImbalance;
-        // Here don't assume this add as signature as well. if its a single operator. Rather he call approve function
+        addTokenToken = token;
+        addTokenMinimalResolution = minimalRecordResolution; // can be roughly 1 cent
+        addTokenMaxPerBlockImbalance = maxPerBlockImbalance; // in twei resolution
+        addTokenMaxTotalImbalance = maxTotalImbalance;
     }
 
-    function approveAddToken() public onlyOperator {
-        for(uint i = 0; i < addTokenApproveSignatures.length; i++) {
-            if (msg.sender == addTokenApproveSignatures[i]) require(false);
-        }
-        addTokenApproveSignatures.push(msg.sender);
+    function signToApproveAddTokenData() public onlyOperator {
+        require(addTokenToken != address(0));
 
-        if (addTokenApproveSignatures.length == operatorsGroup.length) {
+        if(addSignature(addTokenApproveSignatures)) {
             // can perform operation.
             performAddToken();
+            resetAddTokenData();
         }
-//        addTokenApproveSignatures.length == 0;
+    }
+
+    function signToResetAddTokenData() public onlyOperator() {
+        require(addTokenToken != address(0));
+        if(addSignature(addTokenResetSignatures)) {
+            // can reset data
+            resetAddTokenData();
+            addTokenApproveSignatures.length = 0;
+        }
     }
 
     function performAddToken() internal {
-        conversionRates.addToken(addTokenPendingToken);
+        conversionRates.addToken(addTokenToken);
 
         //token control info
         conversionRates.setTokenControlInfo(
-            addTokenPendingToken,
-            addTokenPendingMinimalResolution,
-            addTokenPendingMaxPerBlockImbalance,
-            addTokenPendingMaxTotalImbalance
+            addTokenToken,
+            addTokenMinimalResolution,
+            addTokenMaxPerBlockImbalance,
+            addTokenMaxTotalImbalance
         );
 
         //step functions
         int[] memory zeroArr = new int[](1);
         zeroArr[0] = 0;
 
-        conversionRates.setQtyStepFunction(addTokenPendingToken, zeroArr, zeroArr, zeroArr, zeroArr);
-        conversionRates.setImbalanceStepFunction(addTokenPendingToken, zeroArr, zeroArr, zeroArr, zeroArr);
+        conversionRates.setQtyStepFunction(addTokenToken, zeroArr, zeroArr, zeroArr, zeroArr);
+        conversionRates.setImbalanceStepFunction(addTokenToken, zeroArr, zeroArr, zeroArr, zeroArr);
 
-        conversionRates.enableTokenTrade(addTokenPendingToken);
+        conversionRates.enableTokenTrade(addTokenToken);
+    }
+
+    function resetAddTokenData() internal {
+        addTokenToken = ERC20(address(0));
+        addTokenMinimalResolution = 0;
+        addTokenMaxPerBlockImbalance = 0;
+        addTokenMaxTotalImbalance = 0;
     }
 
     function getAddTokenParameters() public view returns(ERC20 token, uint minimalRecordResolution, uint maxPerBlockImbalance, uint maxTotalImbalance) {
-        token = addTokenPendingToken;
-        minimalRecordResolution = addTokenPendingMinimalResolution;
-        maxPerBlockImbalance = addTokenPendingMaxPerBlockImbalance; // in twei resolution
-        maxTotalImbalance = addTokenPendingMaxTotalImbalance;
+        token = addTokenToken;
+        minimalRecordResolution = addTokenMinimalResolution;
+        maxPerBlockImbalance = addTokenMaxPerBlockImbalance; // in twei resolution
+        maxTotalImbalance = addTokenMaxTotalImbalance;
+    }
+
+    function getAddTokenApproveSignatures() public view returns (address[] signatures) {
+        signatures = addTokenApproveSignatures;
+    }
+
+    function getAddTokenResetSignatures() public view returns (address[] signatures) {
+        signatures = addTokenResetSignatures;
     }
     
     //set token control info
     ////////////////////////
-    function tokenInfoSetPendingTokens(ERC20 [] tokens) public onlyOperator {
-        setTokenInfoApproveSignatures.length = 0;
-        setTokenInfoPendingTokenList = tokens;
+    function setTokenInfoTokenList(ERC20 [] tokens) public onlyOperator {
+        require(tokenInfoParametersReady == false);
+        tokenInfoTokenList = tokens;
     }
 
-    function tokenInfoSetMaxPerBlockImbalanceList(uint[] maxPerBlockImbalanceValues) public onlyOperator {
-        require(maxPerBlockImbalanceValues.length == setTokenInfoPendingTokenList.length);
-        setTokenInfoApproveSignatures.length = 0;
-        setTokenInfoPendingPerBlockImbalance = maxPerBlockImbalanceValues;
+    function setTokenInfoMaxPerBlockImbalanceList(uint[] maxPerBlockImbalanceValues) public onlyOperator {
+        require(tokenInfoParametersReady == false);
+        require(maxPerBlockImbalanceValues.length == tokenInfoTokenList.length);
+        tokenInfoPerBlockImbalance = maxPerBlockImbalanceValues;
     }
 
-    function tokenInfoSetMaxTotalImbalanceList(uint[] maxTotalImbalanceValues) public onlyOperator {
-        require(maxTotalImbalanceValues.length == setTokenInfoPendingTokenList.length);
-        setTokenInfoApproveSignatures.length = 0;
-        setTokenInfoPendingMaxTotalImbalance = maxTotalImbalanceValues;
+    function setTokenInfoMaxTotalImbalanceList(uint[] maxTotalImbalanceValues) public onlyOperator {
+        require(tokenInfoParametersReady == false);
+        require(maxTotalImbalanceValues.length == tokenInfoTokenList.length);
+        tokenInfoMaxTotalImbalance = maxTotalImbalanceValues;
     }
 
-    function approveSetTokenControlInfo() public onlyOperator {
-        for(uint i = 0; i < setTokenInfoApproveSignatures.length; i++) {
-            if (msg.sender == setTokenInfoApproveSignatures[i]) require(false);
-        }
-        setTokenInfoApproveSignatures.push(msg.sender);
+    function setTokenInfoParametersReady() {
+        require(tokenInfoParametersReady == false);
+        tokenInfoParametersReady = true;
+    }
 
-        if (setTokenInfoApproveSignatures.length == operatorsGroup.length) {
+    function signToApproveTokenControlInfo() public onlyOperator {
+        require(tokenInfoParametersReady == true);
+        if (addSignature(tokenInfoApproveSignatures)) {
             // can perform operation.
             performSetTokenControlInfo();
+            tokenInfoParametersReady = false;
+        }
+    }
+
+    function signToResetTokenControlInfo() public onlyOperator {
+        require(tokenInfoParametersReady == true);
+        if (addSignature(tokenInfoResetSignatures)) {
+            // can perform operation.
+            tokenInfoParametersReady = false;
         }
     }
 
     function performSetTokenControlInfo() internal {
-        require(setTokenInfoPendingTokenList.length == setTokenInfoPendingPerBlockImbalance.length);
-        require(setTokenInfoPendingTokenList.length == setTokenInfoPendingMaxTotalImbalance.length);
+        require(tokenInfoTokenList.length == tokenInfoPerBlockImbalance.length);
+        require(tokenInfoTokenList.length == tokenInfoMaxTotalImbalance.length);
 
         uint minimalRecordResolution;
         uint rxMaxPerBlockImbalance;
         uint rxMaxTotalImbalance;
 
-        for (uint i = 0; i < setTokenInfoPendingTokenList.length; i++) {
+        for (uint i = 0; i < tokenInfoTokenList.length; i++) {
             (minimalRecordResolution, rxMaxPerBlockImbalance, rxMaxTotalImbalance) =
-                conversionRates.getTokenControlInfo(setTokenInfoPendingTokenList[i]);
+                conversionRates.getTokenControlInfo(tokenInfoTokenList[i]);
             require(minimalRecordResolution != 0);
 
-            conversionRates.setTokenControlInfo(setTokenInfoPendingTokenList[i],
+            conversionRates.setTokenControlInfo(tokenInfoTokenList[i],
                                                 minimalRecordResolution,
-                                                setTokenInfoPendingPerBlockImbalance[i],
-                                                setTokenInfoPendingMaxTotalImbalance[i]);
+                                                tokenInfoPerBlockImbalance[i],
+                                                tokenInfoMaxTotalImbalance[i]);
         }
     }
 
+    function getControlInfoPerToken (uint index) public view returns(ERC20 token, uint _maxPerBlockImbalance, uint _maxTotalImbalance) {
+        require (tokenInfoTokenList.length > index);
+        require (tokenInfoPerBlockImbalance.length > index);
+        require (tokenInfoMaxTotalImbalance.length > index);
+
+        return(tokenInfoTokenList[index], tokenInfoPerBlockImbalance[index], tokenInfoMaxTotalImbalance[index]);
+    }
+
     function getControlInfoTokenlist() public view returns(ERC20[] tokens) {
-        tokens = setTokenInfoPendingTokenList;
+        tokens = tokenInfoTokenList;
     }
 
     function getControlInfoMaxPerBlockImbalanceList() public view returns(uint[] maxPerBlockImbalanceValues) {
-        maxPerBlockImbalanceValues = setTokenInfoPendingPerBlockImbalance;
+        maxPerBlockImbalanceValues = tokenInfoPerBlockImbalance;
     }
 
     function getControlInfoMaxTotalImbalanceList() public view returns(uint[] maxTotalImbalanceValues) {
-        maxTotalImbalanceValues = setTokenInfoPendingMaxTotalImbalance;
+        maxTotalImbalanceValues = tokenInfoMaxTotalImbalance;
     }
 }
