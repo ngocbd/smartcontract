@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract generic_holder at 0xea88C23690b9F12ac6941E8a229aa4f94C72B8Db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract generic_holder at 0x7998b7Fcf30D4aed870635155Cc62Aa55BE96F9A
 */
 pragma solidity ^0.4.15;
 
@@ -7,8 +7,8 @@ contract generic_holder {
     address owner;
     
     modifier onlyowner {
-        require(msg.sender == owner);
-        _;
+        if (owner == msg.sender)
+            _;
     }
     
     // constructor
@@ -20,12 +20,12 @@ contract generic_holder {
         owner = new_owner;
     }
     
-    function execute(address _to, uint _value, bytes _data) external onlyowner payable returns (bool){
+    function execute(address _to, uint _value, bytes _data) external onlyowner returns (bool){
         return _to.call.value(_value)(_data);
     }
 
-    function send(address _to) external onlyowner payable returns (bool){
-        return _to.call.gas(300000).value(msg.value)();
+    function send(address _to, uint _value) external onlyowner returns (bool){
+        return _to.send(_value); 
     }
     
     function get_owner() constant returns (address) {
