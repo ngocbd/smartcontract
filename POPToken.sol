@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POPToken at 0xc77a91bef771a0b62a81ef776bc5071713025dde
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POPToken at 0xaf34639af7b7eba6c80c48e1e89a70661d1aafef
 */
 pragma solidity ^0.4.13;
 
@@ -327,7 +327,7 @@ contract PausableToken is StandardToken, Pausable {
 contract POPToken is PausableToken {
 
     string public constant name = "PopCoin";
-    string public constant symbol = "POPCOIN";
+    string public constant symbol = "POPCO";
     uint public constant decimals = 18;
 
     uint256 public constant INITIAL_SUPPLY = 500000000*(10**decimals); // 500 million x 18 decimals to represent in wei (5000 for testing)
