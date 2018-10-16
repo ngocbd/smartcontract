@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xa3c0a687a6665b9f2f7e718215fbb9cb588283a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xd1894d59fb85913b26862fb6d188923d72f75d07
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.24;
 
 contract Factory {
   address developer = 0x007C67F0CDBea74592240d492Aef2a712DAFa094c3;
@@ -51,6 +51,11 @@ contract Broker {
     string detail;
     File[] documents;
   }
+  
+  struct BuyInfo{
+    address buyer;
+    bool completed;
+  }
 
   Item public item;
   address public seller = address(0);
@@ -65,7 +70,7 @@ contract Broker {
   address factory = 0x0;
   
   bool bBrokerRequired = true;
-  address[] public buyers;
+  BuyInfo[] public buyinfo;
 
 
   modifier onlySeller() {
@@ -97,6 +102,7 @@ contract Broker {
   event AbortedByBroker();
   event PurchaseConfirmed(address buyer);
   event ItemReceived();
+  event IndividualItemReceived(address buyer);
   event Validated();
   event ItemInfoChanged(string name, uint price, string detail, uint developerfee);
   event SellerChanged(address seller);
@@ -167,7 +173,19 @@ contract Broker {
     public 
     constant returns(address[])
   {
+    address[] memory buyers = new address[](buyinfo.length);
+    //uint val = address(this).balance / buyinfo.length;
+    for (uint256 x = 0; x < buyinfo.length; x++) {
+      buyers[x] = buyinfo[x].buyer;
+    }
     return (buyers);
+  }
+  
+  function getBuyerInfoAt(uint256 x)
+    public 
+    constant returns(address, bool)
+  {
+    return (buyinfo[x].buyer, buyinfo[x].completed);
   }
 
   function setBroker(address _address)
@@ -238,6 +256,21 @@ contract Broker {
     // validated = true;
     state = State.Validated;
   }
+  
+  function returnMoneyToBuyers()
+    private
+  {
+      require(state != State.Finished);
+      if(buyinfo.length>0){
+          uint val = address(this).balance / buyinfo.length;
+          for (uint256 x = 0; x < buyinfo.length; x++) {
+              if(buyinfo[x].completed==false){
+                buyinfo[x].buyer.transfer(val);
+              }
+          }
+      }
+      state = State.Finished;
+  }
 
   /// Abort the purchase and reclaim the ether.
   /// Can only be called by the seller before
@@ -245,31 +278,21 @@ contract Broker {
   function abort()
     public 
     onlySeller
-    inState(State.Created)
   {
-      emit AbortedBySeller();
-      state = State.Finished;
-      // validated = false;
-      seller.transfer(address(this).balance);
+    returnMoneyToBuyers();
+    emit AbortedBySeller();
+    // validated = false;
+    seller.transfer(address(this).balance);
   }
 
   function abortByBroker()
     public 
     onlyBroker
   {
-      if(!bBrokerRequired)
-        return;
-        
-      require(state != State.Finished);
-      state = State.Finished;
-      emit AbortedByBroker();
-      
-      if(buyers.length>0){
-          uint val = address(this).balance / buyers.length;
-          for (uint256 x = 0; x < buyers.length; x++) {
-              buyers[x].transfer(val);
-          }
-      }
+    if(!bBrokerRequired)
+      return;
+    returnMoneyToBuyers();
+    emit AbortedByBroker();
   }
 
   /// Confirm the purchase as buyer.
@@ -281,20 +304,25 @@ contract Broker {
     payable
   {
       if(bBrokerRequired){
-        if(state != State.Validated){
+        if(state != State.Validated || state != State.Locked){
           return;
         }
       }
       
-      state = State.Locked;
-      buyers.push(msg.sender);
-      emit PurchaseConfirmed(msg.sender);
+      if(state == State.Finished){
+        return;
+      }
       
+      state = State.Locked;
+      emit PurchaseConfirmed(msg.sender);
+      bool complete = false;
       if(!bBrokerRequired){
-		// send money right away
+    // send money right away
+        complete = true;
         seller.transfer(item.price-developerfee);
         developer.transfer(developerfee);
       }
+      buyinfo.push(BuyInfo(msg.sender, complete));
   }
 
   /// Confirm that you (the buyer) received the item.
@@ -317,6 +345,30 @@ contract Broker {
 
       emit ItemReceived();
   }
+  
+  //
+  function confirmReceivedAt(uint index)
+    public 
+    onlyBroker
+    inState(State.Locked)
+  {
+      // In this case the broker is confirming one by one,
+      // the other purchase should go on. So we don't change the status.
+      if(index>=buyinfo.length)
+        return;
+      if(buyinfo[index].completed)
+        return;
+
+      // NOTE: This actually allows both the buyer and the seller to
+      // block the refund - the withdraw pattern should be used.
+      seller.transfer(item.price-brokerFee-developerfee);
+      broker.transfer(brokerFee);
+      developer.transfer(developerfee);
+      
+      buyinfo[index].completed = true;
+
+      emit IndividualItemReceived(buyinfo[index].buyer);
+  }
 
   function getInfo() constant 
     public 
@@ -324,6 +376,13 @@ contract Broker {
   {
     return (state, item.name, item.price, item.detail, item.documents.length, 
         developerfee, seller, broker, bBrokerRequired);
+  }
+  
+  function getBalance() constant
+    public
+    returns (uint256)
+  {
+    return address(this).balance;
   }
 
   function getFileAt(uint index) 
