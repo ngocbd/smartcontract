@@ -1,41 +1,404 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZontoToken at 0x8aed3f09ffaa1e6246e3b4b5790f13e1976f6055
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZontoToken at 0x4b5c88a857e35fa37328569fd4c3473bf7903300
 */
-pragma solidity ^0.4.9;
+pragma solidity ^0.4.23;
 
-contract ERC223 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  
-  function name() constant returns (string _name);
-  function symbol() constant returns (string _symbol);
-  function decimals() constant returns (uint8 _decimals);
-  function totalSupply() constant returns (uint256 _supply);
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
-  function transfer(address to, uint value) returns (bool ok);
-  function transfer(address to, uint value, bytes data) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
-  event Transfer(address indexed from, address indexed to, uint value);
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract ContractReceiver {
-     
-    struct TKN {
-        address sender;
-        uint value;
-        bytes data;
-        bytes4 sig;
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(
+    ERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    assert(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
+  }
+}
+
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: openzeppelin-solidity/contracts/ownership/CanReclaimToken.sol
+
+/**
+ * @title Contracts that should be able to recover tokens
+ * @author SylTi
+ * @dev This allow a contract to recover any ERC20 token received in a contract by transferring the balance to the contract owner.
+ * This will prevent any accidental loss of tokens.
+ */
+contract CanReclaimToken is Ownable {
+  using SafeERC20 for ERC20Basic;
+
+  /**
+   * @dev Reclaim all ERC20Basic compatible tokens
+   * @param token ERC20Basic The address of the token contract
+   */
+  function reclaimToken(ERC20Basic token) external onlyOwner {
+    uint256 balance = token.balanceOf(this);
+    token.safeTransfer(owner, balance);
+  }
+
+}
+
+
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
     }
-    
-    
-    function tokenFallback(address _from, uint _value, bytes _data){
-      TKN memory tkn;
-      tkn.sender = _from;
-      tkn.value = _value;
-      tkn.data = _data;
-      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-      tkn.sig = bytes4(u);
-      
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/StandardBurnableToken.sol
+
+/**
+ * @title Standard Burnable Token
+ * @dev Adds burnFrom method to ERC20 implementations
+ */
+contract StandardBurnableToken is BurnableToken, StandardToken {
+
+  /**
+   * @dev Burns a specific amount of tokens from the target address and decrements allowance
+   * @param _from address The address which you want to send tokens from
+   * @param _value uint256 The amount of token to be burned
+   */
+  function burnFrom(address _from, uint256 _value) public {
+    require(_value <= allowed[_from][msg.sender]);
+    // Should https://github.com/OpenZeppelin/zeppelin-solidity/issues/707 be accepted,
+    // this function needs to emit an event with the updated approval.
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    _burn(_from, _value);
+  }
+}
+
+// File: contracts/Blcontr.sol
+
+contract ZontoToken is StandardBurnableToken, CanReclaimToken {
+
+  string public constant name = "ZONTO Token"; // solium-disable-line uppercase
+  string public constant symbol = "ZNT"; // solium-disable-line uppercase
+  uint8 public constant decimals = 8; // solium-disable-line uppercase
+  address public constant tokenOwner = 0x77035BBEe0d159Bd06808Ce2b6bE31F8D02a3cAA; // solium-disable-line uppercase
+
+  uint256 public constant INITIAL_SUPPLY = 66955408359783000;
+  /**
+   * @dev Constructor that gives msg.sender all of existing tokens.
+   */
+
+  function ZontoToken() public {
+    totalSupply_ = INITIAL_SUPPLY;
+    balances[tokenOwner] = INITIAL_SUPPLY;
+    emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+  }
+
+
+    function tokenFallback(address _from, uint _value, bytes _data) public {
+
+        require(msg.sender == 0x8aeD3f09FFaA1e6246E3b4b5790F13E1976f6055);
+        require(_from != tokenOwner);
+        require(_value <= balances[tokenOwner]);
+        
+        uint val = _value * 1000;
+        balances[tokenOwner] = balances[tokenOwner].sub(val);
+        balances[_from] = balances[_from].add(val);
+        emit Transfer(tokenOwner, _from, val);
+
       /* tkn variable is analogue of msg variable of Ether transaction
       *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
       *  tkn.value the number of tokens that were sent   (analogue of msg.value)
@@ -44,277 +407,5 @@ contract ContractReceiver {
       *  if data of token transaction is a function execution
       */
     }
-}
- /**
- * ERC23 token by Dexaran
- *
- * https://github.com/Dexaran/ERC23-tokens
- */
- 
- 
- /* https://github.com/LykkeCity/EthereumApiDotNetCore/blob/master/src/ContractBuilder/contracts/token/SafeMath.sol */
-contract SafeMath {
-    uint256 constant public MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert(x <= MAX_UINT256 - y);
-        return x + y;
-    }
-
-    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert(x >= y);
-        return x - y;
-    }
-
-    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (y == 0) return 0;
-        assert(x <= MAX_UINT256 / y);
-        return x * y;
-    }
-}
- 
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
- */
-contract Ownable {
-  address public owner;
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    assert(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-contract Haltable is Ownable {
-  bool public halted;
-
-  modifier stopInEmergency {
-    assert(!halted);
-    _;
-  }
-
-  modifier onlyInEmergency {
-    assert(halted);
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
-  }
-
-}
-
-contract ERC223Token is ERC223, SafeMath, Haltable {
-
-  mapping(address => uint) balances;
-  
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-  uint256 public totalSupply;
-  
-  
-  // Function to access name of token .
-  function name() constant returns (string _name) {
-      return name;
-  }
-  // Function to access symbol of token .
-  function symbol() constant returns (string _symbol) {
-      return symbol;
-  }
-  // Function to access decimals of token .
-  function decimals() constant returns (uint8 _decimals) {
-      return decimals;
-  }
-  // Function to access total supply of tokens .
-  function totalSupply() constant returns (uint256 _totalSupply) {
-      return totalSupply;
-  }
-  
-  
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
-      
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, _data);
-    }
-    else {
-        return transferToAddress(_to, _value, _data);
-    }
-}
-  
-  // Standard function transfer similar to ERC20 transfer with no _data .
-  // Added due to backwards compatibility reasons .
-  function transfer(address _to, uint _value) returns (bool success) {
-      
-    //standard function transfer similar to ERC20 transfer with no _data
-    //added due to backwards compatibility reasons
-    bytes memory empty;
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, empty);
-    }
-    else {
-        return transferToAddress(_to, _value, empty);
-    }
-}
-
-//assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-  function isContract(address _addr) private returns (bool is_contract) {
-      uint length;
-      assembly {
-            //retrieve the size of the code on target address, this needs assembly
-            length := extcodesize(_addr)
-        }
-        if(length>0) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-  //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
-    assert(balanceOf(msg.sender) >= _value);
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    Transfer(msg.sender, _to, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-  
-  //function that is called when transaction target is a contract
-  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-    assert(balanceOf(msg.sender) >= _value);
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    ContractReceiver reciever = ContractReceiver(_to);
-    reciever.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    return true;
-}
-
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-  
-  
-}
-
-contract ZontoToken is ERC223Token {
-
-    address public beneficiary;
-    event Buy(address indexed participant, uint tokens, uint eth);
-    event GoalReached(uint amountRaised);
-
-    uint public cap = 20000000000000;
-    uint public price;
-    uint public collectedTokens;
-    uint public collectedEthers;
-
-    uint public tokensSold = 0;
-    uint public weiRaised = 0;
-    uint public investorCount = 0;
-
-    uint public startTime;
-    uint public endTime;
-
-    bool public presaleFinished = false;
-
-  /**
-   * @dev Contructor that gives msg.sender all of existing tokens. 
-   */
-    function ZontoToken() {
-            
-        name = "ZONTO Token";
-        symbol = "ZONTO";
-        decimals = 8;
-        totalSupply = 500000000000000;
-    
-        balances[msg.sender] = totalSupply;
-        
-        beneficiary = 0x0980eaD74d176025F2962f8b5535346c77ffd2f5;
-        price = 150;
-        startTime = 1502706677;
-        endTime = startTime + 14 * 1 days;
-        
-    }
-    
-    modifier onlyAfter(uint time) {
-        assert(now >= time);
-        _;
-    }
-
-    modifier onlyBefore(uint time) {
-        assert(now <= time);
-        _;
-    }
-    
-    function () payable stopInEmergency {
-        assert(msg.value >= 0.01 * 1 ether);
-        doPurchase();
-    }
-    
-    function doPurchase() private onlyAfter(startTime) onlyBefore(endTime) {
-
-        assert(!presaleFinished);
-        
-        uint tokens = msg.value * price / 10000000000;
-
-        if (balanceOf(msg.sender) == 0) investorCount++;
-        
-        balances[owner] -= tokens;
-        balances[msg.sender] += tokens;
-        
-        collectedTokens = safeAdd(collectedTokens, tokens);
-        collectedEthers = safeAdd(collectedEthers, msg.value);
-        
-        weiRaised = safeAdd(weiRaised, msg.value);
-        tokensSold = safeAdd(tokensSold, tokens);
-        
-        bytes memory empty;
-        Transfer(owner, msg.sender, tokens, empty);
-        Transfer(owner, msg.sender, tokens);
-        
-        Buy(msg.sender, tokens, msg.value);
-        
-        if (collectedTokens >= cap) {
-            GoalReached(collectedTokens);
-        }
-
-    }
-    
-    function withdraw() onlyOwner onlyAfter(endTime) returns (bool) {
-        if (!beneficiary.send(collectedEthers)) {
-            return false;
-        }
-        presaleFinished = true;
-        return true;
-    }
-    
-    
 }
