@@ -1,12 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KpopCeleb at 0x124f967d50dedf23d9b1cc4ac42851513bc67c07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KpopCeleb at 0xc886d9b4de5f9b5578fabd9151571f5fb8869d9d
 */
 // KpopCeleb is a ERC-721 celeb (https://github.com/ethereum/eips/issues/721)
 // Kpop celebrity cards as digital collectibles
 // Kpop.io is the official website
 
 pragma solidity ^0.4.18;
-
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -173,23 +172,20 @@ contract KpopCeleb is ERC721 {
 
   /** START FUNCTIONS FOR AUTHORS **/
 
-  function createCeleb(string _name, uint _price, address _owner, uint[6] _traitValues, uint[6] _traitBoosters) public onlyAuthors {
+  function createCeleb(string _name, uint _price, uint[6] _traitValues, uint[6] _traitBoosters) public onlyAuthors {
     require(_price >= MIN_STARTING_PRICE);
 
-    address owner = _owner == 0x0 ? author : _owner;
-
     uint celebId = celebs.push(Celeb(_name)) - 1;
-    celebIdToOwner[celebId] = owner;
+    celebIdToOwner[celebId] = author;
     celebIdToPrice[celebId] = _price;
     celebIdToTraitValues[celebId] = _traitValues;
     celebIdToTraitBoosters[celebId] = _traitBoosters;
-    userToNumCelebs[owner]++;
+    userToNumCelebs[author]++;
   }
 
-  function updateCeleb(uint _celebId, string _name, uint[6] _traitValues, uint[6] _traitBoosters) public onlyAuthors {
+  function updateCeleb(uint _celebId, uint[6] _traitValues, uint[6] _traitBoosters) public onlyAuthors {
     require(_celebId >= 0 && _celebId < totalSupply());
 
-    celebs[_celebId].name = _name;
     celebIdToTraitValues[_celebId] = _traitValues;
     celebIdToTraitBoosters[_celebId] = _traitBoosters;
   }
