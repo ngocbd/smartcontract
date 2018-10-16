@@ -1,96 +1,141 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TTC at 0x2a8cef60776d931eb1200aa2a9877eb091cb34a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TTC at 0x99ac77522b6866a3770971bbf7f2c06b8e00fe55
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.16;
 
 
-contract TTC {
-    
-    
-    // function balanceOf(address _owner) public view returns (uint256 balance);
-    // function transfer(address _to, uint256 _value) public returns (bool success);
-    // function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    // function approve(address _spender, uint256 _value) public returns (bool success);
-    // function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value); 
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-    uint256 constant private MAX_UINT256 = 2**256 - 1;
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) public allowed;
-    
-    string public name;                   //fancy name: eg Simon Bucks
-    string public symbol;                 //An identifier: eg SBX
-    uint8 public decimals;                //How many decimals to show.
-    
-    uint256 public totalSupply;
-    
-    address admin;
-    mapping (address => bool) admin_list;
+library SafeMath {
+  function mul(uint a, uint b) internal pure  returns (uint) {
+    uint c = a * b;
+    require(a == 0 || c / a == b);
+    return c;
+  }
+  function div(uint a, uint b) internal pure returns (uint) {
+    require(b > 0);
+    uint c = a / b;
+    require(a == b * c + a % b);
+    return c;
+  }
+  function sub(uint a, uint b) internal pure returns (uint) {
+    require(b <= a);
+    return a - b;
+  }
+  function add(uint a, uint b) internal pure returns (uint) {
+    uint c = a + b;
+    require(c >= a);
+    return c;
+  }
+  function max64(uint64 a, uint64 b) internal  pure returns (uint64) {
+    return a >= b ? a : b;
+  }
+  function min64(uint64 a, uint64 b) internal  pure returns (uint64) {
+    return a < b ? a : b;
+  }
+  function max256(uint256 a, uint256 b) internal  pure returns (uint256) {
+    return a >= b ? a : b;
+  }
+  function min256(uint256 a, uint256 b) internal  pure returns (uint256) {
+    return a < b ? a : b;
+  }
+}
 
-    function TTC(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-    ) public {
-        admin = msg.sender;
-        admin_list[admin] = true;
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+contract ERC20Basic {
+  uint public totalSupply;
+  function balanceOf(address who) public constant returns (uint);
+  function transfer(address to, uint value) public;
+  event Transfer(address indexed from, address indexed to, uint value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint);
+  function transferFrom(address from, address to, uint value) public;
+  function approve(address spender, uint value) public;
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+
+contract BasicToken is ERC20Basic {
+  
+  using SafeMath for uint;
+  
+  mapping(address => uint) balances;
+
+  function transfer(address _to, uint _value) public{
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+  }
+
+  function balanceOf(address _owner) public constant returns (uint balance) {
+    return balances[_owner];
+  }
+}
+
+
+contract StandardToken is BasicToken, ERC20 {
+  mapping (address => mapping (address => uint)) allowed;
+
+  function transferFrom(address _from, address _to, uint _value) public {
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint _value) public{
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0)) ;
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+  }
+
+  function allowance(address _owner, address _spender) public constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+}
+
+contract Ownable {
+    address public owner;
+
+    function Ownable() public{
+        owner = msg.sender;
     }
 
-    
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        emit Transfer(msg.sender, _to, _value);
-        return true;
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        uint256 allowance = allowed[_from][msg.sender];
-        require(balances[_from] >= _value && allowance >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        if (allowance < MAX_UINT256) {
-            allowed[_from][msg.sender] -= _value;
+    function transferOwnership(address newOwner) onlyOwner public{
+        if (newOwner != address(0)) {
+            owner = newOwner;
         }
-        emit Transfer(_from, _to, _value);
-        return true;
     }
+}
 
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
+/**
+ *  TTC token contract. Implements
+ */
+contract TTC is StandardToken, Ownable {
+  string public constant name = "TTC";
+  string public constant symbol = "TTC";
+  uint public constant decimals = 18;
 
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }   
-    
-    function admin_setAdmin(address _target,bool _isAdmin) public returns (bool success) {
-        require(msg.sender == admin);
-        admin_list[_target] = _isAdmin;
-        return true;
-    }
-    
-    function admin_transfer(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(admin_list[msg.sender]);
-        require(balances[_from] >= _value);
-        balances[_from] -= _value;
-        balances[_to] += _value;
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-    
+
+  // Constructor
+  function TTC() public {
+      totalSupply = 1000000000000000000000000000;
+      balances[msg.sender] = totalSupply; // Send all tokens to owner
+  }
+
+  /**
+   *  Burn away the specified amount of SkinCoin tokens
+   */
+  function burn(uint _value) onlyOwner public returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Transfer(msg.sender, 0x0, _value);
+    return true;
+  }
+
 }
