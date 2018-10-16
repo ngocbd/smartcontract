@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0xbdfcdf0ad3c89df471808c687be20c169dffebd8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0x5a30b9d5df526e3ff1517497a8fae401fb28a712
 */
 pragma solidity ^0.4.14;
+
+
+//PoW Farm SEED token buying contract
+//http://www.PoWFarm.io
 
 
 contract SafeMath {
@@ -87,6 +91,11 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function transfer(address _to, uint _value) returns (bool success) {
+      
+      if (_value < 1) {
+          revert();
+      }
+      
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
@@ -94,6 +103,11 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+      
+      if (_value < 1) {
+          revert();
+      }
+      
     uint _allowance = allowed[_from][msg.sender];
 
     balances[_to] = safeAdd(balances[_to], _value);
@@ -130,21 +144,36 @@ contract StandardToken is ERC20, SafeMath {
 
 
 
+//PoW Farm SEED token buying contract
+//http://www.PoWFarm.io
 
 contract MintableToken is StandardToken {
   
     
-    uint256 public rate = 5000;
-    address public owner = msg.sender;
+    uint256 public rate = 5000;				//Each ETH will get you 5000 SEED - Minimum: 0.0002 ETH for 1 SEED
+    address public owner = msg.sender;		//Record the owner of the contract
 	uint256 public tokenAmount;
   
-    function name() constant returns (string) { return "kkTest103"; }
-    function symbol() constant returns (string) { return "kT103"; }
+    function name() constant returns (string) { return "SEED"; }
+    function symbol() constant returns (string) { return "SEED"; }
     function decimals() constant returns (uint8) { return 0; }
 	
 
 
   function mint(address receiver, uint amount) public {
+
+      if (amount != ((msg.value*rate)/1 ether)) {       //prevent minting tokens by calling this function directly.
+          revert();
+      }
+      
+      if (msg.value <= 0) {                 //Extra precaution to contract attack
+          revert();
+      }
+      
+      if (amount < 1) {                     //Extra precaution to contract attack
+          revert();
+      }
+
     totalSupply = safeAdd(totalSupply, amount);
     balances[receiver] = safeAdd(balances[receiver], amount);
 
@@ -159,16 +188,23 @@ contract MintableToken is StandardToken {
 	//Even if 0 ether is sent.
 function () payable {
 	    
-	if (msg.value == 0 || msg.value < 0) {		//If zero ether is sent, kill. Do nothing. 
+	if (msg.value <= 0) {		//If zero or less ether is sent, refund user. 
 		revert();
 	}
+	
 		
-	tokenAmount = 0;									//set the 'amount' var back to zero
+	tokenAmount = 0;								//set the 'amount' var back to zero
 	tokenAmount = ((msg.value*rate)/(1 ether));		//calculate the amount of tokens to give
+	
+	if (tokenAmount < 1) {
+        revert();
+    }
+      
 	mint(msg.sender, tokenAmount);
+	tokenAmount = 0;							//set the 'amount' var back to zero
 		
 		
-	owner.transfer(msg.value);					//Send the ETH to founder.
+	owner.transfer(msg.value);					//Send the ETH to PoW Farm.
 
 }  
   
