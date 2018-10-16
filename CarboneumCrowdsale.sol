@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarboneumCrowdsale at 0xf803646439b5af31382e9acf9bfe378f3d7d2e15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarboneumCrowdsale at 0xf6e4167819ed8ce74ec6eb7e8854a6438df17002
 */
 pragma solidity ^0.4.18;
 
@@ -510,6 +510,14 @@ contract CarboneumCrowdsale is CappedCrowdsale, AllowanceCrowdsale, Individually
     pre_sale_end = _preSaleEnd;
   }
 
+  function setRate(uint256 _rate) external onlyOwner {
+    rate = _rate;
+  }
+
+  function getRate() public view returns (uint256) {
+    return rate;
+  }
+
   /**
    * @dev Add bonus to pre-sale period.
    * @param _weiAmount Value in wei to be converted into tokens
@@ -517,10 +525,11 @@ contract CarboneumCrowdsale is CappedCrowdsale, AllowanceCrowdsale, Individually
    */
   function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
     uint256 newRate = rate;
-    if (now < pre_sale_end) { // solium-disable-line security/no-block-members
+    if (now < pre_sale_end) {// solium-disable-line security/no-block-members
       // Bonus 8%
       newRate += rate * 8 / 100;
     }
     return _weiAmount.mul(newRate);
   }
+
 }
