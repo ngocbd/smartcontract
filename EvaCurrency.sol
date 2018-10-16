@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0xa4cc7d5056c4f89ce2634f71757832ddeb9db8c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x0ab6e894c973932b64974bf9e91e93332e51a98c
 */
 pragma solidity ^0.4.23;
 
@@ -178,7 +178,7 @@ contract ERC20 is ERC20Basic {
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+  mapping(address => uint256) public balances;
 
   uint256 totalSupply_;
 
@@ -212,7 +212,6 @@ contract BasicToken is ERC20Basic {
   function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
-
 }
 
 
@@ -448,11 +447,33 @@ contract ComissionList is Claimable {
   }
 }
 
+contract AddressList is Claimable {
+    string public name;
+    mapping (address => bool) public onList;
+
+    function AddressList(string _name, bool nullValue) public {
+        name = _name;
+        onList[0x0] = nullValue;
+    }
+    event ChangeWhiteList(address indexed to, bool onList);
+
+    // Set whether _to is on the list or not. Whether 0x0 is on the list
+    // or not cannot be set here - it is set once and for all by the constructor.
+    function changeList(address _to, bool _onList) onlyOwner public {
+        require(_to != 0x0);
+        if (onList[_to] != _onList) {
+            onList[_to] = _onList;
+            ChangeWhiteList(_to, _onList);
+        }
+    }
+}
+
 contract EvaCurrency is PausableToken, BurnableToken {
   string public name = "EvaUSD";
   string public symbol = "EUSD";
 
   ComissionList public comissionList;
+  AddressList public moderList;
 
   uint8 public constant decimals = 3;
 
@@ -473,17 +494,18 @@ contract EvaCurrency is PausableToken, BurnableToken {
       symbol = _symbol;
   }
 
-  function setComissionList(ComissionList _comissionList) onlyOwner public {
+  function setComissionList(ComissionList _comissionList, AddressList _moderList) onlyOwner public {
     comissionList = _comissionList;
+    moderList = _moderList;
   }
 
-  modifier onlyStaker() {
-    require(msg.sender == staker);
+  modifier onlyModer() {
+    require(moderList.onList(msg.sender));
     _;
   }
 
   // ??????? ????? ?????????? ?? VRS
-  function transferOnBehalf(address _to, uint _amount, uint _nonce, uint8 _v, bytes32 _r, bytes32 _s) onlyStaker public returns (bool success) {
+  function transferOnBehalf(address _to, uint _amount, uint _nonce, uint8 _v, bytes32 _r, bytes32 _s) onlyModer public returns (bool success) {
     uint256 fee;
     uint256 resultAmount;
     bytes32 hash = keccak256(_to, _amount, _nonce, address(this));
@@ -500,10 +522,13 @@ contract EvaCurrency is PausableToken, BurnableToken {
     balances[staker] = balances[staker].add(fee);
     lastUsedNonce[sender] = _nonce;
     
+    emit Transfer(sender, _to, _amount);
+    emit Transfer(sender, address(0), fee);
     return true;
   }
 
-  function withdrawOnBehalf(uint _amount, string _paySystem, uint _nonce, uint8 _v, bytes32 _r, bytes32 _s) onlyStaker public returns (bool success) {
+  // ????? ? ???????? ?? VRS
+  function withdrawOnBehalf(uint _amount, string _paySystem, uint _nonce, uint8 _v, bytes32 _r, bytes32 _s) onlyModer public returns (bool success) {
     uint256 fee;
     uint256 resultAmount;
     bytes32 hash = keccak256(address(0), _amount, _nonce, address(this));
@@ -517,25 +542,27 @@ contract EvaCurrency is PausableToken, BurnableToken {
 
     balances[sender] = balances[sender].sub(_amount);
     balances[staker] = balances[staker].add(fee);
-    totalSupply_.sub(resultAmount);
+    totalSupply_ = totalSupply_.sub(resultAmount);
 
+    emit Transfer(sender, address(0), resultAmount);
     Burn(sender, resultAmount);
     return true;
   }
 
-  // ?????????? ??????? ????????????, ???-?? ?????????? ???????? ??? staker
+  // ?????????? ??????? ????????????
   // _to - ????? ???????????? ????????, _amount - ?????, _paySystem - ????????? ???????
-  function refill(address _to, uint256 _amount, string _paySystem) onlyStaker public returns (bool success) {
+  function refill(address _to, uint256 _amount, string _paySystem) onlyModer public returns (bool success) {
       uint256 fee;
       uint256 resultAmount;
 
       fee = comissionList.calcRefill(_paySystem, _amount);
       resultAmount = _amount.sub(fee);
 
-      balances[_to] = balances[staker].add(resultAmount);
+      balances[_to] = balances[_to].add(resultAmount);
       balances[staker] = balances[staker].add(fee);
-      totalSupply_.add(_amount);
+      totalSupply_ = totalSupply_.add(_amount);
 
+      emit Transfer(address(0), _to, resultAmount);
       Mint(_to, resultAmount);
       return true;
   }
