@@ -1,64 +1,68 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0xed8d3b7221453777f67622f5a4fea8e1b427d517
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0x7211f65a7876433635601b9480e57f812a3665d8
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 /**
-* Safe math library for division
-**/
-library SafeMath {
-	function mul(uint256 a, uint256 b) internal returns (uint256) {
-		uint256 c = a * b;
-		assert(a == 0 || c / a == b);
-		return c;
-  	}
+ * @title Ownable
+ * @dev Adds onlyOwner modifier. Subcontracts should implement checkOwner to check if caller is owner.
+ */
+contract Ownable {
+    modifier onlyOwner() {
+        checkOwner();
+        _;
+    }
 
-  	function div(uint256 a, uint256 b) internal returns (uint256) {
-		uint256 c = a / b;
-		return c;
-  	}
-
-	function sub(uint256 a, uint256 b) internal returns (uint256) {
-		assert(b <= a);
-		return a - b;
-	}
-
-	function add(uint256 a, uint256 b) internal returns (uint256) {
-		 uint256 c = a + b;
-		 assert(c >= a);
-		 return c;
-	}
+    function checkOwner() internal;
 }
 
 /**
-* Contract that will split any incoming Ether to its creator
-**/
-contract Forwarder  {
-	using SafeMath for uint256;
-	// Addresses to which any funds sent to this contract will be forwarded
-	address public destinationAddress80;
-	address public destinationAddress20;
+ * @title OwnableImpl
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract OwnableImpl is Ownable {
+    address public owner;
 
-	/**
-	* Create the contract, and set the destination addresses
-	**/
-	function Forwarder() {
-		// This is the escrow/ICO address for refunds
-		destinationAddress20 = 0xf6962cfe3b9618374097d51bc6691efb3974d06f;
-		// All other funds to be used per whitepaper guidelines
-		destinationAddress80 = 0xf030541A54e89cB22b3653a090b233A209E44F38;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function OwnableImpl() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    function checkOwner() internal {
+        require(msg.sender == owner);
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
+
+contract EtherReceiver {
+	function receiveWithData(bytes _data) payable public;
+}
+
+contract Forwarder is OwnableImpl {
+	function withdraw(address to, uint256 value) onlyOwner public {
+		to.transfer(value);
 	}
 
-	/**
-	* Default function; Gets called when Ether is deposited, and forwards it to destination addresses
-	**/
-	function () payable {
-		if (msg.value > 0) {
-			uint256 totalAmount = msg.value;
-			uint256 tokenValueAmount = totalAmount.div(5);
-			uint256 restAmount = totalAmount.sub(tokenValueAmount);
-			if (!destinationAddress20.send(tokenValueAmount)) revert();
-			if (!destinationAddress80.send(restAmount)) revert();
-		}
+	function forward(address to, bytes data) payable public {
+		uint256 commission = msg.value / 100;
+		EtherReceiver(to).receiveWithData.value(msg.value - commission)(data);
 	}
 }
