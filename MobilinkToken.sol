@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobilinkToken at 0x5884797151a74bde82a2fc5e251daa007b78633f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobilinkToken at 0xbc0752f6ca01e995c9ead3d67ea08a8013974a7f
 */
 pragma solidity 0.4.21;
 
@@ -140,7 +140,7 @@ contract MobilinkTokenConfig {
     string public constant NAME = "MobilinkToken";
     string public constant SYMBOL = "MOLK";
     uint public constant DECIMALS = 18;
-    uint public constant INITIAL_SUPPLY = 9000000000;
+    uint public constant INITIAL_SUPPLY = 9000000000 * (10 ** DECIMALS);
 }
 
 contract MobilinkToken is StandardToken, MobilinkTokenConfig {
