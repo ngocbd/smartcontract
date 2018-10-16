@@ -1,192 +1,159 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCAM at 0x24932ba6bb75f2c6bf71f83d536c20fe4990a326
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCAM at 0xc57d3f8fc60d8bc470cc4be31a5d989c222d56cc
 */
-pragma solidity ^0.4.18;
- 
-/* 
-  © SCAM
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
- 
-/*
-   ERC20 interface
-  see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
- 
-/*  SafeMath - the lowest gas library
-  Math operations with safety checks that throw on error
- */
-library SafeMath {
-    
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
- 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
- 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
- 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  
-}
- 
-/*
-Basic token
- Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-    
-  using SafeMath for uint256;
- 
-  mapping(address => uint256) balances;
- 
- function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
- 
-  /*
-  Gets the balance of the specified address.
-   param _owner The address to query the the balance of. 
-   return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
- 
-}
- 
-/* Implementation of the basic standard token.
-  https://github.com/ethereum/EIPs/issues/20
- */
-contract StandardToken is ERC20, BasicToken {
- 
-  mapping (address => mapping (address => uint256)) allowed;
- 
-  /*
-    Transfer tokens from one address to another
-    param _from address The address which you want to send tokens from
-    param _to address The address which you want to transfer to
-    param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
- 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
- 
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
- 
-  /*
-  Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   param _spender The address which will spend the funds.
-   param _value The amount of Roman Lanskoj's tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
- 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
- 
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
- 
-  /*
-  Function to check the amount of tokens that an owner allowed to a spender.
-  param _owner address The address which owns the funds.
-  param _spender address The address which will spend the funds.
-  return A uint256 specifing the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-}
-}
- 
-/*
-The Ownable contract has an owner address, and provides basic authorization control
- functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
- function Ownable() {
-    owner = msg.sender;
-  }
- 
-  /*
-  Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
- 
-  /*
-  Allows the current owner to transfer control of the contract to a newOwner.
-  param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
+/**
+     *-------------------------------------
+     * -- Scam coin - modified by Sanko as a mark of Cain for scams.
+     * -- This token will be sent to proven scammers to mark them
+     * -- FUCK YOU SCAMMERS
+     *-------------------------------------
+     * --ERC20 STANDARD TOKEN
+     * --ETHEREUM BLOCKCHAIN
+     * --Name: SCAM
+     * --Symbol: BEWARE:THIS IS A SCAM CONTRACT
+     * --Total Supply: 1000000000,00..SCAM
+     * --Decimal: 18
+     * ------------------------------------
+     * --Created by Luigi Di Benedetto Brescia(IT) copied by Sanko.
+     */
+
+pragma solidity ^0.4.16;
+
+contract owned {
+    address public owner;
+
+    function owned() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
 }
 
-    
-contract SCAM is StandardToken, Ownable {
-  string public constant name = "SCAM";
-  string public constant symbol = "SCAM";
-  uint public constant decimals = 3;
-  uint256 public initialSupply;
-    
-  function SCAM() { 
-     totalSupply = 80000000000 * 10 ** decimals;
-      balances[msg.sender] = totalSupply;
-      initialSupply = totalSupply; 
-        Transfer(0, this, totalSupply);
-        Transfer(this, msg.sender, totalSupply);
-  }
- function distribute(address[] addresses) onlyOwner {
-    // 10 000 000 * (10**3)
-    uint _value;
-    for (uint i = 0; i < addresses.length; i++) {
-      balances[owner] -= _value;
-      balances[addresses[i]] += _value;
-      Transfer(owner, addresses[i], _value);
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+
+contract SCAMERC20 {
+    string public name = "SCAM";
+    string public symbol = "BEWARE:THIS IS A SCAM CONTRACT";
+    uint8 public decimals = 18;
+    uint256 public totalSupply = 1000000000;
+
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Burn(address indexed from, uint256 value);
+
+    /**
+     * Costruttore
+     *
+     * Inizializzo nel costruttore i dati del token.
+     */
+    function SCAMERC20 () public {
+
     }
-  }
+
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        emit Transfer(_from, _to, _value); //emit per evitare di confondersi con un motodo(indica che è un evento)
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+
+
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);  
+        balanceOf[msg.sender] -= _value; 
+        totalSupply -= _value;
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                
+        require(_value <= allowance[_from][msg.sender]);    
+        balanceOf[_from] -= _value;                         
+        allowance[_from][msg.sender] -= _value;             
+        totalSupply -= _value;                              // Aggiorno
+        emit Burn(_from, _value);
+        return true;
+    }
+}
+
+/******************************************/
+/*       FUNZIONI AGGIUNTIVE              */
+/******************************************/
+
+contract SCAM is owned, SCAMERC20 {
+
+    mapping (address => bool) public frozenAccount;
+
+    event FrozenFunds(address target, bool frozen); //notifico il "congelamento"
+
+    function SCAM(
+    ) SCAMERC20() public {}
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require (_to != 0x0);                               
+        require (balanceOf[_from] >= _value);               
+        require (balanceOf[_to] + _value > balanceOf[_to]); 
+        require(!frozenAccount[_from]);                     
+        require(!frozenAccount[_to]);                       
+        balanceOf[_from] -= _value;                         
+        balanceOf[_to] += _value;                           
+        emit Transfer(_from, _to, _value);
+    }
+
+    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+        balanceOf[target] += mintedAmount;
+        totalSupply += mintedAmount;
+        emit Transfer(0, this, mintedAmount);
+        emit Transfer(this, target, mintedAmount);
+    }
+
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        emit FrozenFunds(target, freeze);
+    }
+
 }
