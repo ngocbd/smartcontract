@@ -1,18 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtchReward at 0xe7142edb1F51750A0b1d817c3AbB95979beA9aA0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtchReward at 0x789e00c123b1e1f65862caea6a615c069e672091
 */
 pragma solidity ^0.4.11;
 
 /**
  * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
  */
 contract Ownable {
   address public owner;
 
 
-  /**
+  /** 
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
@@ -22,7 +22,7 @@ contract Ownable {
 
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * @dev Throws if called by any account other than the owner. 
    */
   modifier onlyOwner() {
     if (msg.sender != owner) {
@@ -34,7 +34,7 @@ contract Ownable {
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param newOwner The address to transfer ownership to. 
    */
   function transferOwnership(address newOwner) onlyOwner {
     if (newOwner != address(0)) {
@@ -156,7 +156,7 @@ library SafeMath {
 
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
+ * @dev Basic version of StandardToken, with no allowances. 
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -186,7 +186,7 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
+  * @param _owner The address to query the the balance of. 
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -206,7 +206,7 @@ contract BasicToken is ERC20Basic {
 contract ReentrancyGuard {
 
   /**
-   * @dev We use a single lock for the whole contract.
+   * @dev We use a single lock for the whole contract. 
    */
   bool private rentrancy_lock = false;
 
@@ -253,9 +253,9 @@ contract EtchReward is Pausable, BasicToken, ReentrancyGuard {
     // @dev number of tokens one receives for every 1 ether they send
     uint public constant PRICE = 8;
 
-    // avg block time = 17.20 https://etherscan.io
-    uint public constant AVG_BLOCKS_24H = 5023;  // 3600 * 24 / 17.20
-    uint public constant AVG_BLOCKS_02W = 70325; // 3600 * 24 * 14 / 17.20
+    // avg block time = 15.2569 https://etherscan.io/chart/blocktime
+    uint public constant AVG_BLOCKS_24H = 5663;  // 3600 * 24 / 15.2569 = 5663.011489883266
+    uint public constant AVG_BLOCKS_02W = 79282; // 3600 * 24 * 14 / 15.2569 =  79282.16085836572
 
     uint public constant MAX_ETHER_24H = 40 ether;
     uint public constant ETHER_CAP     = 2660 ether;
@@ -388,7 +388,12 @@ contract EtchReward is Pausable, BasicToken, ReentrancyGuard {
         }
     }
 
+    uint public blockNumber = 0;
+
     function getBlock() public constant returns (uint) {
+        if(blockNumber != 0) {
+            return blockNumber;
+        }
         return block.number;
     }
 
