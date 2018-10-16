@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiningRigFarmer at 0x3b8b95eccce73667305b322fd89e5a148e262f62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiningRigFarmer at 0x7332077db22f7c1df320e757a77e8871377976da
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -8,7 +8,7 @@ pragma solidity ^0.4.18; // solhint-disable-line
 contract MiningRigFarmer{
     //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
     uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
-    uint256 public STARTING_SHRIMP=50;
+    uint256 public STARTING_SHRIMP=0;
     uint256 PSN=10000;
     uint256 PSNH=5000;
     bool public initialized=false;
