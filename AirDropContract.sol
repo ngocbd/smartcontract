@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0x227086ab72678903091d315b04a8dacade39647a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0xa719bec0625ed5bcb1df3f80c5c8d59a5d29b909
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.18;
 
-/// @title kryptono exchange AirDropContract for KNOW token
-/// @author Trong Cau Ta <trongcauhcmus@gmail.com>
-/// For more information, please visit kryptono.exchange
-
-/// @title ERC20
 contract ERC20 {
     uint public totalSupply;
 
@@ -24,7 +19,7 @@ contract ERC20 {
 contract AirDropContract {
 
     event AirDropped(address addr, uint amount);
-    address public owner = 0x00a107483c8a16a58871182a48d4ba1fbbb6a64c71;
+    address public owner = 0xa107483c8a16a58871182a48d4ba1fbbb6a64c71;
 
     function drop(
         address tokenAddress,
@@ -69,10 +64,5 @@ contract AirDropContract {
 
     function () payable public {
         revert();
-    }
-    
-    // withdraw any ERC20 token in this contract to owner
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public returns (bool success) {
-        return ERC20(tokenAddress).transfer(owner, tokens);
     }
 }
