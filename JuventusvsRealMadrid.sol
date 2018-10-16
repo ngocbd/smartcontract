@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JuventusvsRealMadrid at 0xe919351cd81e445ae93d31fab1bf0afc2c6f97f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JuventusvsRealMadrid at 0x7ba16ac939441baaf9c6703701950e49706049a1
 */
 pragma solidity ^0.4.11;
 
@@ -1034,8 +1034,8 @@ contract JuventusvsRealMadrid is usingOraclize {
   uint public constant COMMISSION = 0; // Commission for the owner
   uint public constant MIN_BET = 0.01 ether;
 
-  uint public EXPECTED_START = 1522780800; // When the bet's event is expected to start
-  uint public EXPECTED_END = 1522789800; // When the bet's event is expected to end
+  uint public EXPECTED_START = 1522780500; // When the bet's event is expected to start
+  uint public EXPECTED_END = 1523395800; // When the bet's event is expected to end
 
   uint public constant BETTING_OPENS = 1522660633;
   uint public BETTING_CLOSES = EXPECTED_START - 60; // Betting closes a minute before the bet event starts
@@ -1163,6 +1163,8 @@ contract JuventusvsRealMadrid is usingOraclize {
   }
 
   function callOracle(uint timeOrDelay, uint gas) private {
+    require(canceled != true && completed != true);
+
     // Make a call to the oracle —
     // usually a script hosted on IPFS that
     // Oraclize deploys, after a given delay. We
@@ -1177,7 +1179,7 @@ contract JuventusvsRealMadrid is usingOraclize {
     // ipfs.io/ipfs/<HASH>). Oraclize will then deploy this script.
     // Look over the Oraclize documentation to verify this info
     // for yourself.
-    oraclizeQueryId = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmZ7x9mEdGeMLcu642gLVgVkoPbr3E1mq4kXLQ72qNS95r', '166797', '166796', '${[decrypt] BOL9oNVNTYKmOMaEJC8gmazDmgCOLygAa5r3Nh9ytNI/IAUuFsCwB7TtcGpV0jeNzwh0CP6kD6py1HzZJMLCjOXN6ObHDspYt+mEwJ2qat5/T/YleRg4wYKKBvrg+RZ9T27ZDKdTraazqcaHsh+8fFE=}']", gas);
+    oraclizeQueryId = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmZ7x9mEdGeMLcu642gLVgVkoPbr3E1mq4kXLQ72qNS95r', '166797', '166796', '${[decrypt] BIpe/GtXuXmnXKZeGJi1GxcAw328majvCCuVqA8CYWmFU8HU7iHMMQqXQdxjuQR7SO1ZdSyk1Mi5qM1VqNcYFLCBbERDD2+yhwX+Yfe0YM6O34v9Um45YUdHtrJyuk/+7nIasafvUIwSpy5OEb2QQPo=}']", gas);
   }
 
   function makeOraclizeQuery(uint timeOrDelay, string datasource, string query, uint gas) private returns(bytes32) {
@@ -1201,8 +1203,7 @@ contract JuventusvsRealMadrid is usingOraclize {
     // The Oracle must always return
     // an integer (either 0 or 1, or if not then)
     // it should be 2
-    uint winner = parseInt(result);
-    if (winner != 0 && winner != 1) {
+    if (keccak256(result) != keccak256("0") && keccak256(result) != keccak256("1")) {
       // Reschedule winner determination,
       // unless we're past the point of
       // cancelation.
@@ -1215,7 +1216,7 @@ contract JuventusvsRealMadrid is usingOraclize {
       }
     }
     else {
-      setWinner(winner);
+      setWinner(parseInt(result));
     }
   }
 
