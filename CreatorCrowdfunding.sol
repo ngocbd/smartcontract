@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreatorCrowdfunding at 0x1bed48d6ce1a76d4e0578cfb234c6eb4ed0691fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreatorCrowdfunding at 0x7a203102ac51e7202e500b51ab6041aabb9dbe63
 */
 pragma solidity ^0.4.4;
 
@@ -361,7 +361,7 @@ contract Crowdfunding is Object, Recipient {
      * @dev Crowdfunding running checks
      */
     modifier onlyRunning {
-        bool isRunning = totalFunded + msg.value  < config.maxValue
+        bool isRunning = totalFunded  < config.maxValue
                       && block.number > config.startBlock
                       && block.number < config.stopBlock;
         if (!isRunning) throw;
