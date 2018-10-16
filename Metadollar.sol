@@ -1,65 +1,58 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract METADOLLAR at 0x49c07b3d352d41e568a5d04f0d6aee8af278fec1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract METADOLLAR at 0x24a7de87b3bd7298bbf8966fdf170c558d69ecc4
 */
-pragma solidity ^0.4.16;
-
+pragma solidity ^0.4.18;
+// 'Metadollar' CORE token contract
+//
+// Symbol      : DOL
+// Name        : METADOLLAR
+// Total supply: 1000,000,000,000
+// Decimals    : 18
  // ERC Token Standard #20 Interface
  // https://github.com/ethereum/EIPs/issues/20
- 
 // ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
+   
+   contract SafeMath {
+    function safeAdd(uint a, uint b) internal pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
+    function safeSub(uint a, uint b) internal pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
+    function safeMul(uint a, uint b) internal pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
+    function safeDiv(uint a, uint b) internal pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
 }
 
-
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+    
  contract ERC20Interface {
-	/// @notice Get the total token supply
-	function totalSupply() constant returns (uint256 totalAmount);
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-	/// @notice  Get the account balance of another account with address _owner
-	function balanceOf(address _owner) constant returns (uint256 balance);
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-	/// @notice  Send _value amount of tokens to address _to
-	function transfer(address _to, uint256 _value) returns (bool success);
-
-	/// @notice  Send _value amount of tokens from address _from to address _to
-	function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
-	/// @notice  Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-	/// @notice  If this function is called again it overwrites the current allowance with _value.
-	/// @notice  this function is required for some DEX functionality
-	function approve(address _spender, uint256 _value) returns (bool success);
-
-	/// @notice  Returns the amount which _spender is still allowed to withdraw from _owner
-	function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-	/// @notice  Triggered when tokens are transferred.
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-	/// @notice  Triggered whenever approve(address _spender, uint256 _value) is called.
-	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- }
- 
- contract owned{
+contract Owned{
 	address public owner;
-	address constant supervisor  = 0xEB53fF97ae33B0733CE14E7FDd3C4F90c1c4709b;
+	address constant supervisor  = 0x318B0f768f5c6c567227AA50B51B5b3078902f8C;
 	
 	function owned(){
 		owner = msg.sender;
@@ -76,29 +69,35 @@ contract SafeMath {
 	
 	event ownerChanged(address whoTransferredOwnership, address formerOwner, address newOwner);
  }
+ 
 
-contract METADOLLAR is ERC20Interface, owned, SafeMath {
+contract METADOLLAR is ERC20Interface, Owned, SafeMath {
+    
+    
 
 	string public constant name = "METADOLLAR";
 	string public constant symbol = "DOL";
 	uint public constant decimals = 18;
-	uint256 public _totalSupply = 1000000000000000000000000000;
-	uint256 public icoMin = 1000000000000000000000000000;					// = 300000; amount is in Tokens, 1.800.000
-	uint256 public preIcoLimit = 1000000000000000000;			// = 600000; amount is in tokens, 3.600.000
+	uint256 public _totalSupply = 1000000000000000000000000000000;
+	uint256 public icoMin = 1000000000000000;					
+	uint256 public icoLimit = 1000000000000000000000000000000;			
 	uint256 public countHolders = 0;				// count how many unique holders have tokens
 	uint256 public amountOfInvestments = 0;	// amount of collected wei
 	
-	uint256 preICOprice;									// price of 1 token in weis for the preICO time
-	uint256 ICOprice;										// price of 1 token in weis for the ICO time
-	uint256 public currentTokenPrice;				// current token price in weis
-	uint256 public sellPrice;								// buyback price of one token in weis
-	uint256 public commission1;
-	uint256 public commission2;
-	bool public preIcoIsRunning;
+	
+	uint256 public icoPrice;	
+	uint256 public dolRate = 1000;
+	uint256 public ethRate = 1;
+	uint256 public sellRate = 900;
+	uint256 public commissionRate = 1000;
+	uint256 public sellPrice;
+	uint256 public currentTokenPrice;				
+	uint256 public commission;	
+	
+	
+	bool public icoIsRunning;
 	bool public minimalGoalReached;
 	bool public icoIsClosed;
-	bool icoExitIsPossible;
-	
 
 	//Balances for each account
 	mapping (address => uint256) public tokenBalanceOf;
@@ -144,19 +143,15 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 
 	/// @notice Constructor of the contract
 	function STARTMETADOLLAR() {
-		preIcoIsRunning = true;
+		icoIsRunning = true;
 		minimalGoalReached = false;
-		icoExitIsPossible = false;
 		icoIsClosed = false;
 		tokenBalanceOf[this] += _totalSupply;
 		allowed[this][owner] = _totalSupply;
 		allowed[this][supervisor] = _totalSupply;
-		currentTokenPrice = 1000 * 1;	// initial price of 1 Token
-		preICOprice = 1000 * 1; 			// price of 1 token in weis for the preICO time, ca.6,- Euro
-		ICOprice = 1000 * 1;				// price of 1 token in weis for the ICO time, ca.10,- Euro
-		sellPrice = 1000;
-		commission1 = 1000;
-		commission2 = 950;
+		currentTokenPrice = 1 * 1;	// initial price of 1 Token
+		icoPrice = ethRate * dolRate;		
+		sellPrice = sellRate * ethRate;
 		updatePrices();
 	}
 
@@ -202,8 +197,11 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 	function buy() payable public {
 		require(!frozenAccount[msg.sender]);
 		require(msg.value > 0);
+		commission = msg.value/commissionRate; // % of wei tx
+        require(address(this).send(commission));
 		buyToken();
 	}
+	
 
 	/// @notice Sell tokens and receive ether from contract
 	function sell(uint256 amount) {
@@ -214,20 +212,23 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 		_transfer(msg.sender, this, amount);
 		uint256 revenue = amount * sellPrice;
 		require(this.balance >= revenue);
+		commission = msg.value/commissionRate; // % of wei tx
+        require(address(this).send(commission));
 		msg.sender.transfer(revenue);                		// sends ether to the seller: it's important to do this last to prevent recursion attacks
 	}
 	
-	/// @notice Allow user to sell maximum possible amount of tokens, depend on ether amount on contract
-	function sellMaximumPossibleAmountOfTokens() {
-		require(!frozenAccount[msg.sender]);
-		require(tokenBalanceOf[msg.sender] > 0);
-		require(this.balance > sellPrice);
-		if(tokenBalanceOf[msg.sender] * sellPrice <= this.balance) {
-			sell(tokenBalanceOf[msg.sender]);
-		}else {
-			sell(this.balance / sellPrice);
-		}
-	}
+   
+
+    function sell2(address _tokenAddress) public payable{
+        METADOLLAR token = METADOLLAR(_tokenAddress);
+        uint tokens = msg.value * sellPrice;
+        require(token.balanceOf(this) >= tokens);
+        commission = msg.value/commissionRate; // % of wei tx
+       require(address(this).send(commission));
+        token.transfer(msg.sender, tokens);
+    }
+
+	
 
 	/// @notice Transfer amount of tokens from own wallet to someone else
 	function transfer(address _to, uint256 _value) returns (bool success) {
@@ -247,8 +248,7 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 	/// @notice  The transferFrom method is used for a withdraw workflow, allowing contracts to send
 	/// @notice  tokens on your behalf, for example to "deposit" to a contract address and/or to charge
 	/// @notice  fees in sub-currencies; the command should fail unless the _from account has
-	/// @notice  deliberately authorized the sender of the message via some mechanism; we propose
-	/// @notice  these standardized APIs for approval:
+	/// @notice  deliberately authorized the sender of the message via some mechanism;
 	function transferFrom(address _from,	address _to,	uint256 _value) returns (bool success) {
 		assert(msg.sender != address(0));
 		assert(_from != address(0));
@@ -285,11 +285,10 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 		}
 	}
 
-	/// @notice Check if preICO is ended
-	function checkPreIcoStatus() internal {
-		if(tokenBalanceOf[this] <= _totalSupply - preIcoLimit) {
-			preIcoIsRunning = false;
-			preIcoEnded(preIcoLimit, "Token amount for preICO sold!");
+	/// @notice Check if ICO is ended
+	function checkIcoStatus() internal {
+		if(tokenBalanceOf[this] <= _totalSupply - icoLimit) {
+			icoIsRunning = false;
 		}
 	}
 
@@ -301,16 +300,12 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 		require(!frozenAccount[sender]);
 		require(value > 0);
 		require(currentTokenPrice > 0);
-		uint256 detracted = currentTokenPrice / (commission1 * commission2);
-		uint256 amount = value / detracted;			// calculates amount of tokens
-		uint256 moneyBack = value - (amount * detracted);
+		uint256 amount = value / currentTokenPrice;			// calculates amount of tokens
+		uint256 moneyBack = value - (amount * sellPrice);
 		require(tokenBalanceOf[this] >= amount);              		// checks if contract has enough to sell
 		amountOfInvestments = amountOfInvestments + (value - moneyBack);
 		updatePrices();
 		_transfer(this, sender, amount);
-		if(!minimalGoalReached) {
-			checkMinimalGoal();
-		}
 		if(moneyBack > 0) {
 			sender.transfer(moneyBack);
 		}
@@ -341,13 +336,13 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 	/// @notice Set current ICO prices in wei for one token
 	function updatePrices() internal {
 		uint256 oldPrice = currentTokenPrice;
-		if(preIcoIsRunning) {
-			checkPreIcoStatus();
+		if(icoIsRunning) {
+			checkIcoStatus();
 		}
-		if(preIcoIsRunning) {
-			currentTokenPrice = preICOprice;
+		if(icoIsRunning) {
+			currentTokenPrice = icoPrice;
 		}else{
-			currentTokenPrice = ICOprice;
+			currentTokenPrice = icoPrice;
 		}
 		
 		if(oldPrice != currentTokenPrice) {
@@ -355,41 +350,46 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 		}
 	}
 
-	/// @notice Set current preICO price in wei for one token
-	/// @param priceForPreIcoInWei - is the amount in wei for one token
-	function setPreICOPrice(uint256 priceForPreIcoInWei) isOwner {
-		require(priceForPreIcoInWei > 0);
-		require(preICOprice != priceForPreIcoInWei);
-		preICOprice = priceForPreIcoInWei;
-		updatePrices();
-	}
-
 	/// @notice Set current ICO price in wei for one token
 	/// @param priceForIcoInWei - is the amount in wei for one token
 	function setICOPrice(uint256 priceForIcoInWei) isOwner {
 		require(priceForIcoInWei > 0);
-		require(ICOprice != priceForIcoInWei);
-		ICOprice = priceForIcoInWei;
+		require(icoPrice != priceForIcoInWei);
+		icoPrice = priceForIcoInWei;
 		updatePrices();
 	}
 
-	/// @notice Set both prices at the same time
-	/// @param priceForPreIcoInWei - Price of the token in pre ICO
-	/// @param priceForIcoInWei - Price of the token in ICO
-	function setPrices(uint256 priceForPreIcoInWei, uint256 priceForIcoInWei) isOwner {
-		require(priceForPreIcoInWei > 0);
-		require(priceForIcoInWei > 0);
-		preICOprice = priceForPreIcoInWei;
-		ICOprice = priceForIcoInWei;
-		updatePrices();
-	}
+	
 
 	/// @notice Set the current sell price in wei for one token
 	/// @param priceInWei - is the amount in wei for one token
-	function setSellPrice(uint256 priceInWei) isOwner {
+	function setSellRate(uint256 priceInWei) isOwner {
 		require(priceInWei >= 0);
-		sellPrice = priceInWei;
+		sellRate = priceInWei;
 	}
+	
+	/// @notice Set the current commission rate
+	/// @param commissionRateInWei - commission rate
+	function setCommissionRate(uint256 commissionRateInWei) isOwner {
+		require(commissionRateInWei >= 0);
+		commissionRate = commissionRateInWei;
+	}
+	
+	/// @notice Set the current DOL rate in wei for one eth
+	/// @param dolInWei - is the amount in wei for one ETH
+	function setDolRate(uint256 dolInWei) isOwner {
+		require(dolInWei >= 0);
+		dolRate = dolInWei;
+	}
+	
+	/// @notice Set the current ETH rate in wei for one DOL
+	/// @param ethInWei - is the amount in wei for one DOL
+	function setEthRate(uint256 ethInWei) isOwner {
+		require(ethInWei >= 0);
+		ethRate = ethInWei;
+	}
+
+
 
 	/// @notice 'freeze? Prevent | Allow' 'account' from sending and receiving tokens
 	/// @param account - address to be frozen
@@ -445,7 +445,7 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 		allowed[this][newOwner] = tokenBalanceOf[this];
 	}
 
-	/// @notice Transfer ether from smartcontract to owner
+	/// @notice Transfer all ether from smartcontract to owner
 	function collect() isOwner {
         require(this.balance > 0);
 		withdraw(this.balance);
@@ -468,12 +468,6 @@ contract METADOLLAR is ERC20Interface, owned, SafeMath {
 		deposited(msg.sender, msg.value, "wei deposited");
 	}
 
-	/// @notice Allow user to exit ICO
-	/// @param exitAllowed - status if the exit is allowed
-	function allowIcoExit(bool exitAllowed) isOwner {
-		require(icoExitIsPossible != exitAllowed);
-		icoExitIsPossible = exitAllowed;
-	}
 
 	/// @notice Stop running ICO
 	/// @param icoIsStopped - status if this ICO is stopped
