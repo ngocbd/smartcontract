@@ -1,122 +1,86 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x010be8a86d416dbcf1e18a5ad59910f12a360ec7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xe28e08bc165ab3e2b1ad1594e255f7cf85916d02
 */
-pragma solidity ^0.4;
-
-
-contract ERC20 {
-   uint public totalSupply;
-   function balanceOf(address _account) public constant returns (uint balance);
-   function transfer(address _to, uint _value) public returns (bool success);
-   function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-   function approve(address _spender, uint _value) public returns (bool success);
-   function allowance(address _owner, address _spender) public constant returns (uint remaining);
-   event Transfer(address indexed _from, address indexed _to, uint _value);
-   event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
-
-
-contract Token is ERC20 {
-    // Balances for trading
-    mapping(address => uint256) public balances;
-
-
-    mapping(address => uint256) public investBalances;
-
-    mapping(address => mapping (address => uint)) allowed;
-
-    // Total amount of supplied tokens
-    uint256 public totalSupply;
-
-    // Information about token
-    string public constant name = "3D METAMORPHOSIS";
-    string public constant symbol = "MMS";
-    address public owner;
-    address public owner2;
-    uint8 public decimals = 6;
-
-    // If function has this modifier, only owner can execute this function
-    modifier onlyOwner() {
-        require(msg.sender == owner || msg.sender == owner2);
-        _;
+pragma solidity ^0.4.11;
+ 
+contract Token {
+    string public symbol = "";
+    string public name = "";
+    uint8 public constant decimals = 18;
+    uint256 _totalSupply = 0;
+    address owner = 0;
+    bool setupDone = false;
+   
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ 
+    mapping(address => uint256) balances;
+ 
+    mapping(address => mapping (address => uint256)) allowed;
+ 
+    function Token(address adr) {
+        owner = adr;        
     }
-
-
-
-
-    function Token() public {
-        owner = msg.sender;
-        totalSupply = 1000000000000;
-        balances[owner] = totalSupply;
+   
+    function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
+    {
+        if (msg.sender == owner && setupDone == false)
+        {
+            symbol = tokenSymbol;
+            name = tokenName;
+            _totalSupply = tokenSupply * 1000000000000000000;
+            balances[owner] = _totalSupply;
+            setupDone = true;
+        }
     }
-
-    // Change main owner address and transer tokens to new owner
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != owner);
-        balances[newOwner] = balances[owner];
-        balances[owner] = 0;
-        owner = newOwner;
+ 
+    function totalSupply() constant returns (uint256 totalSupply) {        
+        return _totalSupply;
     }
-
-    // Chech trade balance of account
-    function balanceOf(address _account) public constant returns (uint256 balance) {
-    return balances[_account];
+ 
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
-
- // Transfer tokens from your account to other account
-    function transfer(address _to, uint _value) public  returns (bool success) {
-        require(_to != 0x0);                               // Prevent transfer to 0x0 address.
-        require(balances[msg.sender] >= _value);           // Check if the sender has enough
-        balances[msg.sender] -= _value;                    // Subtract from the sender
-        balances[_to] += _value;                           // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);
-    return true;
-    }
-
-   // Transfer tokens from account (_from) to another account (_to)
-    function transferFrom(address _from, address _to, uint256 _amount) public  returns(bool) {
-        require(_amount <= allowed[_from][msg.sender]);
-        if (balances[_from] >= _amount && _amount > 0) {
-            balances[_from] -= _amount;
+ 
+    function transfer(address _to, uint256 _amount) returns (bool success) {
+        if (balances[msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
             balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+ 
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
             allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
             Transfer(_from, _to, _amount);
             return true;
-        }
-        else {
+        } else {
             return false;
-            }
+        }
     }
-
-    function approve(address _spender, uint _value) public  returns (bool success){
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-    return true;
+ 
+    function approve(address _spender, uint256 _amount) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
     }
-
-    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-    }
-
-    function add_tokens(address _to, uint256 _amount) public onlyOwner {
-        balances[owner] -= _amount;
-        investBalances[_to] += _amount;
-    }
-
-    // Transfer tokens from investBalance to Balncec for trading
-    function transferToken_toBalance(address _user, uint256 _amount) public onlyOwner {
-        investBalances[_user] -= _amount;
-        balances[_user] += _amount;
-    } 
-
-    // Transfer toknes from Balncec to investBalance
-    function transferToken_toInvestBalance(address _user, uint256 _amount) public onlyOwner {
-        balances[_user] -= _amount;
-        investBalances[_user] += _amount;
-    }  
-
-
-    function addOwner2(address _owner2) public onlyOwner {
-        owner2 = _owner2;
+ 
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 }
