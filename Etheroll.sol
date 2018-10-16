@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x7C07b7b34dA43f240Ed6d4EdaeFE9a986Aa01BfC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x2DD78551C49D739C4A0ae80E4F863E74bE39e1CB
 */
 //just updated the encrypted api key
 //updated contractBalance -= 57245901639344;
@@ -1398,14 +1398,14 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 	{        
         
         /* safely update contract balance to account for cost to call oraclize*/
-        contractBalance = safeSub(contractBalance, oraclize_getPrice("URL", 235000));
+        contractBalance = safeSub(contractBalance, 57245901639344);
 
         /*
         * assign partially encrypted query to oraclize
         * only the apiKey is encrypted 
         * integer query is in plain text
         */
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BMGDW5F78pK91YS9sdMtbbWSjb36uL0q2iGoYr3NPEVaKd/T+abqkmgIR6pDnDaN63WWEezt3bJ0Z+n7vyd+xWmGYEGwkckazp8MoyJKtzGWknBcTR61TfHv6+CUHr5g5v9ctjBM8qFjv+Ah7Xlx54X5GbnkmXo=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
+        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BLTe8VciIyWmeHuO/L7y8u0F8rPBJpkcvi/eX6rXg/Rx+xCLjQKvIc44PkJeV5CYtWBH5fwiBMnYHpWPpbgjNJaGrqBisy22XBv+WvP9GPwzDBlEkFK+YwsPaubyhZCgrCYfXEZAmNhnhqzTkV317yuwh97Bjvk=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
         	        
         /* total number of bets */
         totalBets += 1;
