@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChainToken at 0xe0d9460356ee91d224a0c4ec05afb6fb186c3c0e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChainToken at 0x18a42c6f86fcb5de404df3ec329ef4e3cbab12b4
 */
 pragma solidity ^0.4.15;
 //*************** SafeMath
@@ -98,9 +98,9 @@ contract ChainToken is ERC20,Ownable {
 
 	
 	
-	totalSupply = 6000000000*(10**18);	
+	totalSupply = 600000000*(10**18);	
 	balanceOf[msg.sender] = totalSupply;
-	name = "Time Exchange Coin";
+	name = "time exchange chain";
 	symbol = "TEC";
 	
 	walletArr.push(0x0AD8869081579E72eb4E0B90394079e448E4dF49);
