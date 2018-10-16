@@ -1,13 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHBCrowdsale at 0x2322ae6b59306bd8c5c37f1168746d563ed8de99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHBCrowdsale at 0x11a68e9806a5df5e674af404de1a8152a652aaf0
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.16;  
 /*
 ETHB Crowdsale Contract
 
-Contract developer: Fares A. Akel C.
-f.antonio.akel@gmail.com
-MIT PGP KEY ID: 078E41CB
+
 */
 
 /**
@@ -84,8 +82,8 @@ contract ETHBCrowdsale is admined{
     address public ethWallet;
     string public campaignUrl;
     uint256 public constant version = 1;
-    uint256 public exchangeRate = 20000000; //1 ETH (18decimals) = 500 ETHB (8decimals)
-                                                                         //(1*10^18)/(500*10^8) = 20000000 ETH/ETHB
+    uint256 public exchangeRate = 5**7; //1 ETH (18decimals) = 500 ETHB (8decimals)
+    									 //(1*10^18)/(500*10^8) = 1*5^7 ETH/ETHB
 
     event TokenWithdrawal(address _to,uint256 _withdraw);
 	event PayOut(address _to,uint256 _withdraw);
