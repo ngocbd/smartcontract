@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Issuer at 0x7b00cac9b094f775b7e2009e017c3600f06c944c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Issuer at 0x012bc399c3e8b75a506c9ff2b7ad413641f33102
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -244,6 +244,11 @@ contract Recoverable is Ownable {
   /// @return The amount of tokens (in smallest denominator) the contract owns
   function tokensToBeReturned(ERC20Basic token) public returns (uint) {
     return token.balanceOf(this);
+  }
+
+  /// @dev This will be invoked by the owner, when owner wants to rescue ethers
+  function recoverEthers() onlyOwner public {
+    owner.transfer(this.balance);
   }
 }
 
