@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FloraFicTokenCrowdsale at 0xd04b24BEC50F12200A65C3EB821c7b2c6b56Fb3e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FloraFicTokenCrowdsale at 0x3b6d80b6db62f51e2899b8ca7257c690670122d4
 */
 pragma solidity ^0.4.18;
 
@@ -402,20 +402,24 @@ contract FloraFicTokenCrowdsale is FinalizableCrowdsale {
   }
 
   function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-    uint256 sendWeiAmount = msg.value;
+    uint256 sendWeiAmount = _weiAmount;
     uint256 bonus = 0;
     uint256 currentRate = getCurrentRate();
     uint256 currentWeiAmount = currentRate.mul(_weiAmount);
-    if( sendWeiAmount >= 1000000000000000000 && sendWeiAmount < 5000000000000000000){
+    if( sendWeiAmount < 0.5 ether){
+        bonus = currentWeiAmount.mul(5).div(100);
+    } else if (sendWeiAmount >= 0.5 ether && sendWeiAmount < 1 ether){
+        bonus = currentWeiAmount.mul(7).div(100);
+    } else if (sendWeiAmount >= 1 ether && sendWeiAmount < 5 ether){
         bonus = currentWeiAmount.mul(10).div(100);
-    } else if (sendWeiAmount >= 5000000000000000000 && sendWeiAmount < 10000000000000000000){
+    } else if (sendWeiAmount >= 5 ether && sendWeiAmount < 10 ether){
+        bonus = currentWeiAmount.mul(15).div(100);
+    } else if (sendWeiAmount >= 10 ether && sendWeiAmount < 20 ether){
         bonus = currentWeiAmount.mul(20).div(100);
-    } else if (sendWeiAmount >= 10000000000000000000 && sendWeiAmount < 20000000000000000000){
-        bonus = currentWeiAmount.mul(50).div(100);
-    } else if (sendWeiAmount >= 20000000000000000000 && sendWeiAmount < 50000000000000000000){
-        bonus = currentWeiAmount.mul(75).div(100);
-    } else if (sendWeiAmount >= 50000000000000000000){
-        bonus = currentWeiAmount.mul(100).div(100);
+    } else if (sendWeiAmount >= 20 ether && sendWeiAmount < 50 ether){
+        bonus = currentWeiAmount.mul(25).div(100);
+    } else if (sendWeiAmount >= 50 ether){
+        bonus = currentWeiAmount.mul(30).div(100);
     }
     return currentWeiAmount.add(bonus);
   }
