@@ -1,14 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PREICO at 0x7afd1f4a9f1ce7adbe194381d275455cc47c32e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PREICO at 0x6aa222f0c196b7e79f7926bfbee7d1feb5f21986
 */
 // compiler: 0.4.19+commit.c4cbbb05.Emscripten.clang
 pragma solidity ^0.4.19;
 
 contract owned {
   address public owner;
-  function owned() public { owner = msg.sender; }
-  function changeOwner( address newowner ) public onlyOwner {owner = newowner;}
+
+  function owned() public {
+    owner = msg.sender;
+  }
+
+  function changeOwner( address newowner ) public onlyOwner {
+    owner = newowner;
+  }
+
   function closedown() public onlyOwner { selfdestruct(owner); }
+
   modifier onlyOwner {
     if (msg.sender != owner) { revert(); }
     _;
@@ -16,28 +24,28 @@ contract owned {
 }
 
 //
-// mutable record of holdings issued otherwise
+// mutable record of holdings
 //
 contract PREICO is owned {
 
-  event Holder( address holder );
+  event Holder( address indexed holder, uint amount );
 
   uint public totalSupply_;
+
   address[] holders_;
+
   mapping( address => uint ) public balances_;
 
-  function PREICO() public {
-    totalSupply_ = uint(0);
-  }
+  function PREICO() public {}
 
-  function() public payable { revert(); }
-
-  function count() public constant returns (uint) {
-    return holders_.length;
-  }
+  function count() public constant returns (uint) { return holders_.length; }
 
   function holderAt( uint ix ) public constant returns (address) {
-    return holders_[ix]; // throws
+    return holders_[ix];
+  }
+
+  function balanceOf( address hldr ) public constant returns (uint) {
+    return balances_[hldr];
   }
 
   function add( address holder, uint amount ) onlyOwner public
@@ -51,7 +59,7 @@ contract PREICO is owned {
     if (!isHolder(holder))
     {
       holders_.push( holder );
-      Holder( holder );
+      Holder( holder, amount );
     }
   }
 
