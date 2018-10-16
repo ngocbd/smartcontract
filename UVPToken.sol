@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UVPToken at 0xbf05ad27ad0412601e9495fab63c16422869be94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UVPToken at 0x66526ce5502de53968e95fa57cc7724c670dc8ea
 */
 pragma solidity ^0.4.15;
 
@@ -93,8 +93,8 @@ contract StandardToken is ERC20, SafeMath {
 }
 
 contract UVPToken is Ownable, StandardToken {
-    string public name = "Ultraviolet Protocol";
-    string public symbol = "UVP";
+    string public name = "UVP";
+    string public symbol = "Ultraviolet Protocol";
     uint public decimals = 18;
 
     uint public totalSupply = 500000000 ether;
