@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleCoinToken at 0xeb30eb5f931f5e794d1d19050c1514499327685d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleCoinToken at 0x2bb62ba9c0b21fdefbedf189705f3213d800dfb2
 */
 pragma solidity ^0.4.16;
 
@@ -211,13 +211,13 @@ contract BurnableToken is StandardToken {
 
 contract SimpleCoinToken is BurnableToken {
     
-  string public constant name = "Scam Coin token";
+  string public constant name = "Bitcoin Bank token";
    
-  string public constant symbol = "SCC";
+  string public constant symbol = "MBB";
     
   uint32 public constant decimals = 18;
 
-  uint256 public INITIAL_SUPPLY = 380000 * 1 ether;
+  uint256 public INITIAL_SUPPLY = 50000000 * 1 ether;
 
   function SimpleCoinToken() {
     totalSupply = INITIAL_SUPPLY;
@@ -245,12 +245,12 @@ contract Crowdsale is Ownable {
   uint rate;
 
   function Crowdsale() {
-    multisig = 0x157A032C79557103b561996890e32fede87D469D;
-    restricted = 0x99BBCe354a39B72A0d07e47574B038B9096Ac441;
-    restrictedPercent = 20;
-    rate = 1250*1 ether;
-    start = 1513771200;
-    period = 20;
+    multisig = 0xd347c4Ee7B3849E62E1211b6d144a699999C9b3c;
+    restricted = 0x085619ADf1FdC68b12aB7d2F2427a9a7aB2b4D37;
+    restrictedPercent = 40;
+    rate = 1000*1 ether;
+    start = 1517832000;
+    period = 70;
   }
 
   modifier saleIsOn() {
@@ -262,12 +262,12 @@ contract Crowdsale is Ownable {
     multisig.transfer(msg.value);
     uint tokens = rate.mul(msg.value).div(1 ether);
     uint bonusTokens = 0;
-     if(now <= start + 1 days) {
-      bonusTokens = tokens;
-    } else if(now > start + 1 days && now < start + 3 days) {
-      bonusTokens = tokens.div(2);
-    } else if(now >= start + 3 days && now < start + 7 days) {
+     if(now <= start + 20 days) {
+      bonusTokens = tokens.div(5);
+    } else if(now > start + 20 days && now < start + 35 days) {
       bonusTokens = tokens.div(10);
+    } else if(now >= start + 35 days && now < start + 50 days) {
+      bonusTokens = tokens.div(20);
     }
     uint tokensWithBonus = tokens.add(bonusTokens);
     token.transfer(msg.sender, tokensWithBonus);
