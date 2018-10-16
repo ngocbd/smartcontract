@@ -1,13 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Justo at 0xa0315928e750d79dfd674dcfd4a9fc6d41ee66f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Justo at 0x97044d715aa99bd34a36ce25aceabc0ffb357979
 */
 pragma solidity ^0.4.0;
-
 contract Justo {
-string public constant symbol = "Justo";
-  string public constant name = "JTO";
+string public constant symbol ="JTO";
+  string public constant name ="Justo";
   uint8 public constant decimals = 18;
-  uint256 public totalSupply = 10000000000 * (uint256(10)**decimals);
+  uint256 public totalSupply = 100000000000 * (uint256(10)**decimals);
   address public owner;
   uint256 public rate = 5000000000000;
   mapping(address => uint256) balances;
@@ -18,7 +17,7 @@ string public constant symbol = "Justo";
     }
 event Transfer(address indexed _from, address indexed _to, uint256 _value);
 event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-function Mint() public{
+function Justo() public{
   owner = msg.sender;
 }
 function () public payable {
