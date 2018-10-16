@@ -1,276 +1,108 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xdd5cec9019ec8449a5d01d0d8175e6519530d276
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0x156f9176717422089b49c90d9aa20af2841d582c
 */
-pragma solidity ^0.4.15;
-
-/**
- * @title Ownership interface
- *
- * Perminent ownership
- *
- * #created 01/10/2017
- * #author Frank Bonnet
- */
-contract IOwnership {
-
-    /**
-     * Returns true if `_account` is the current owner
-     *
-     * @param _account The address to test against
-     */
-    function isOwner(address _account) constant returns (bool);
-
-
-    /**
-     * Gets the current owner
-     *
-     * @return address The current owner
-     */
-    function getOwner() constant returns (address);
-}
+pragma solidity ^ 0.4.17;
 
 
 /**
- * @title Ownership
- *
- * Perminent ownership
- *
- * #created 01/10/2017
- * #author Frank Bonnet
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
-contract Ownership is IOwnership {
-
-    // Owner
-    address internal owner;
-
+contract Ownable {
+    address public owner;
+    
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
-     * The publisher is the inital owner
-     */
-    function Ownership() {
+    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+    * account.
+    */
+    function Ownable() public {
         owner = msg.sender;
     }
 
 
     /**
-     * Access is restricted to the current owner
-     */
-    modifier only_owner() {
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
 
     /**
-     * Returns true if `_account` is the current owner
-     *
-     * @param _account The address to test against
-     */
-    function isOwner(address _account) public constant returns (bool) {
-        return _account == owner;
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
     }
 
-
-    /**
-     * Gets the current owner
-     *
-     * @return address The current owner
-     */
-    function getOwner() public constant returns (address) {
-        return owner;
-    }
 }
 
 
-/**
- * @title Transferable ownership interface
- *
- * Enhances ownership by allowing the current owner to 
- * transfer ownership to a new owner
- *
- * #created 01/10/2017
- * #author Frank Bonnet
- */
-contract ITransferableOwnership {
+
+// Whitelist smart contract
+// This smart contract keeps list of addresses to whitelist
+contract WhiteList is Ownable {
+
     
+    mapping(address => bool) public whiteList;
+    uint public totalWhiteListed; //white listed users number
 
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner 
-     */
-    function transferOwnership(address _newOwner);
-}
+    event LogWhiteListed(address indexed user, uint whiteListedNum);
+    event LogWhiteListedMultiple(uint whiteListedNum);
+    event LogRemoveWhiteListed(address indexed user);
 
 
-/**
- * @title Transferable ownership
- *
- * Enhances ownership by allowing the current owner to 
- * transfer ownership to a new owner
- *
- * #created 01/10/2017
- * #author Frank Bonnet
- */
-contract TransferableOwnership is ITransferableOwnership, Ownership {
+    // @notice it will return status of white listing
+    // @return true if user is white listed and false if is not
+    function isWhiteListed(address _user) public view returns (bool) {
 
-
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner 
-     */
-    function transferOwnership(address _newOwner) public only_owner {
-        owner = _newOwner;
-    }
-}
-
-
-/**
- * @title IAuthenticator 
- *
- * Authenticator interface
- *
- * #created 15/10/2017
- * #author Frank Bonnet
- */
-contract IAuthenticator {
-    
-
-    /**
-     * Authenticate 
-     *
-     * Returns whether `_account` is authenticated or not
-     *
-     * @param _account The account to authenticate
-     * @return whether `_account` is successfully authenticated
-     */
-    function authenticate(address _account) constant returns (bool);
-}
-
-
-/**
- * @title IWhitelist 
- *
- * Whitelist authentication interface
- *
- * #created 04/10/2017
- * #author Frank Bonnet
- */
-contract IWhitelist is IAuthenticator {
-    
-
-    /**
-     * Returns whether an entry exists for `_account`
-     *
-     * @param _account The account to check
-     * @return whether `_account` is has an entry in the whitelist
-     */
-    function hasEntry(address _account) constant returns (bool);
-
-
-    /**
-     * Add `_account` to the whitelist
-     *
-     * If an account is currently disabled, the account is reenabled, otherwise 
-     * a new entry is created
-     *
-     * @param _account The account to add
-     */
-    function add(address _account);
-
-
-    /**
-     * Remove `_account` from the whitelist
-     *
-     * Will not actually remove the entry but disable it by updating
-     * the accepted record
-     *
-     * @param _account The account to remove
-     */
-    function remove(address _account);
-}
-
-
-/**
- * @title Whitelist 
- *
- * Whitelist authentication list
- *
- * #created 04/10/2017
- * #author Frank Bonnet
- */
-contract Whitelist is IWhitelist, TransferableOwnership {
-
-    struct Entry {
-        uint datetime;
-        bool accepted;
-        uint index;
+        return whiteList[_user]; 
     }
 
-    mapping (address => Entry) internal list;
-    address[] internal listIndex;
-
-
-    /**
-     * Returns whether an entry exists for `_account`
-     *
-     * @param _account The account to check
-     * @return whether `_account` is has an entry in the whitelist
-     */
-    function hasEntry(address _account) public constant returns (bool) {
-        return listIndex.length > 0 && _account == listIndex[list[_account].index];
+    // @notice it will remove whitelisted user
+    // @param _contributor {address} of user to unwhitelist
+    function removeFromWhiteList(address _user) onlyOwner() external returns (bool) {
+       
+        require(whiteList[_user] == true);
+        whiteList[_user] = false;
+        totalWhiteListed--;
+        LogRemoveWhiteListed(_user);
+        return true;
     }
 
+    // @notice it will white list one member
+    // @param _user {address} of user to whitelist
+    // @return true if successful
+    function addToWhiteList(address _user) onlyOwner() external returns (bool) {
 
-    /**
-     * Add `_account` to the whitelist
-     *
-     * If an account is currently disabled, the account is reenabled, otherwise 
-     * a new entry is created
-     *
-     * @param _account The account to add
-     */
-    function add(address _account) public only_owner {
-        if (!hasEntry(_account)) {
-            list[_account] = Entry(
-                now, true, listIndex.push(_account) - 1);
-        } else {
-            Entry storage entry = list[_account];
-            if (!entry.accepted) {
-                entry.accepted = true;
-                entry.datetime = now;
-            }
+        if (whiteList[_user] != true) {
+            whiteList[_user] = true;
+            totalWhiteListed++;
+            LogWhiteListed(_user, totalWhiteListed);            
         }
+        return true;
     }
 
+    // @notice it will white list multiple members
+    // @param _user {address[]} of users to whitelist
+    // @return true if successful
+    function addToWhiteListMultiple(address[] _users) onlyOwner() external returns (bool) {
 
-    /**
-     * Remove `_account` from the whitelist
-     *
-     * Will not acctually remove the entry but disable it by updating
-     * the accepted record
-     *
-     * @param _account The account to remove
-     */
-    function remove(address _account) public only_owner {
-        if (hasEntry(_account)) {
-            Entry storage entry = list[_account];
-            entry.accepted = false;
-            entry.datetime = now;
+         for (uint i = 0; i < _users.length; ++i) {
+
+            if (whiteList[_users[i]] != true) {
+                whiteList[_users[i]] = true;
+                totalWhiteListed++;                          
+            }           
         }
-    }
-
-
-    /**
-     * Authenticate 
-     *
-     * Returns whether `_account` is on the whitelist
-     *
-     * @param _account The account to authenticate
-     * @return whether `_account` is successfully authenticated
-     */
-    function authenticate(address _account) public constant returns (bool) {
-        return list[_account].accepted;
+         LogWhiteListedMultiple(totalWhiteListed); 
+         return true;
     }
 }
