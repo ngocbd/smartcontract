@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc71c2280b8802b52c957e356fa0b2d942f157ea5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa174a82186fc5b04f814410e7eeeb1d379b4b3f7
 */
 pragma solidity ^0.4.11;
 
@@ -51,7 +51,7 @@ contract Crowdsale {
   // token address
   address public addressOfTokenUsedAsReward;
 
-  uint256 public price = 300;
+  uint256 public price = 1000;
 
   token tokenReward;
 
@@ -77,10 +77,10 @@ contract Crowdsale {
 
   function Crowdsale() {
     //You will change this to your wallet where you need the ETH 
-    wallet = 0x6a3a52fF68f684A6D8402F450d52275F41246253;
+    wallet = 0xB703760134b1BCB4D22798487d306Dc3D3658060;
     // durationInMinutes = _durationInMinutes;
     //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0x657C449c76500BCaA9AdEd6C0E087fA28663E3ff;
+    addressOfTokenUsedAsReward = 0x56eE8C9BD1d445a3324ad83E86D8be309Db8f85d;
 
 
     tokenReward = token(addressOfTokenUsedAsReward);
