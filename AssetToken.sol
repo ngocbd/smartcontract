@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetToken at 0x6248211b830ce0191c7643b19f5ddb059e018672
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetToken at 0xec301991a364fd034f010b19b0f09fbdf5f83b10
 */
 pragma solidity ^0.4.11;
  
@@ -21,30 +21,30 @@ contract admined {
 
 }
 
-contract BitRS {
+contract AIO {
 
 	mapping (address => uint256) public balanceOf;
 	string public name;
 	string public symbol;
 	uint8 public decimal; 
-	uint256 public intialSupply=500000000;
+	uint256 public intialSupply=5000000;
 	uint256 public totalSupply;
 	
 	
 	event Transfer(address indexed from, address indexed to, uint256 value);
 
 
-	function BitRS(){
+	function AIO (){
 		balanceOf[msg.sender] = intialSupply;
 		totalSupply = intialSupply;
 		decimal = 0;
-		symbol = "BitRS";
-		name = "BitRS";
+		symbol = "AIO";
+		name = "AllInOne";
 	}
 
 	function transfer(address _to, uint256 _value){
-		require(balanceOf[msg.sender] > _value);
-		require(balanceOf[_to] + _value > balanceOf[_to]) ;
+		require(balanceOf[msg.sender] >= _value);
+		require(balanceOf[_to] + _value >= balanceOf[_to]) ;
 		
 
 		balanceOf[msg.sender] -= _value;
@@ -54,16 +54,16 @@ contract BitRS {
 
 }
 
-contract AssetToken is admined, BitRS{
+contract AssetToken is admined, AIO{
 	mapping (address => bool) public frozenAccount;
 
 	event FrozenFund(address target, bool frozen);
 
-	function AssetToken() BitRS (){
-		totalSupply = 500000000;
+	function AssetToken() AIO (){
+		totalSupply = 5000000;
 		admin = msg.sender;
-		balanceOf[admin] = 500000000;
-		totalSupply = 500000000;	
+		balanceOf[admin] = 5000000;
+		totalSupply = 5000000;	
 	}
 
 	function mintToken(address target, uint256 mintedAmount) onlyAdmin{
@@ -76,8 +76,8 @@ contract AssetToken is admined, BitRS{
 	function transfer(address _to, uint256 _value){
 	    require(!frozenAccount[_to]);
 		require(balanceOf[msg.sender] > 0);
-		require(balanceOf[msg.sender] > _value) ;
-		require(balanceOf[_to] + _value > balanceOf[_to]);
+		require(balanceOf[msg.sender] >= _value) ;
+		require(balanceOf[_to] + _value >= balanceOf[_to]);
 		
 		balanceOf[msg.sender] -= _value;
 		balanceOf[_to] += _value;
@@ -96,7 +96,6 @@ contract AssetToken is admined, BitRS{
 		Transfer(_from, _to, _value);
 
 	}
-
 	
 	
 	function destroyCoins(address _from, address _to, uint256 _value) onlyAdmin{
