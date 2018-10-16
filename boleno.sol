@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract boleno at 0x925B8C327d0065827977D08f8009Dba33ad9f450
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract boleno at 0xCA29db4221c111888a7e80b12eAc8a266Da3Ee0d
 */
 pragma solidity ^0.4.11;
 
@@ -133,7 +133,7 @@ contract boleno {
 
     // Claim sale Ethers. Can be executed by anyone.
     function claimSale(){
-      address dao = 0x400Be625f1308a56C19C38b1A21A50FCE8c62617;// Hardcoded address of the Bolenum private DAO
+      address dao = 0xE6237a036366b8003AeD725E8001BD91890be03F;// Hardcoded address of the Bolenum private DAO
       dao.transfer(this.balance);                           // Send all collected Ethers to the address
     }
 
