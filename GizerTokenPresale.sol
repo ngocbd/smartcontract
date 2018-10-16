@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GizerTokenPresale at 0x92683b8a2dbbc02d1c6303d5b4362a06e46f5616
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GizerTokenPresale at 0x22d982a8b875cc0f8994cd8a4a70872161fdc000
 */
 pragma solidity ^0.4.17;
 
@@ -224,16 +224,16 @@ contract GizerTokenPresale is ERC20Token {
   /* General crowdsale parameters */  
   
   uint public constant MIN_CONTRIBUTION = 1 ether / 10; // 0.1 Ether
-  uint public constant MAX_CONTRIBUTION = 2300 ether;
+  uint public constant MAX_CONTRIBUTION = 100 ether;
   
   /* Private sale */
 
-  uint public constant PRIVATE_SALE_MAX_ETHER = 1000 ether;
+  uint public constant PRIVATE_SALE_MAX_ETHER = 2300 ether;
   
   /* Presale parameters */
   
   uint public constant DATE_PRESALE_START = 1512050400; // 30-Nov-2017 14:00 UTC
-  uint public constant DATE_PRESALE_END   = 1512914400; // 10-Dec-2017 14:00 UTC
+  uint public constant DATE_PRESALE_END   = 1513260000; // 14-Dec-2017 14:00 UTC
   
   uint public constant TOKETH_PRESALE_ONE   = 1150 * E6; // presale wave 1 (  1-100)
   uint public constant TOKETH_PRESALE_TWO   = 1100 * E6; // presale wave 2 (101-500)
