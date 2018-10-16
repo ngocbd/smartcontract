@@ -1,6 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xaa929c976386d6c8e79c14bc16075d54e2693247
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x2a2b359eb02655296d3a6e7eaf311900d3089f4e
 */
+pragma solidity ^0.4.18;
+
+
 /** * @dev Math operations with safety checks that throw on error */
 library SafeMath {
 
@@ -241,11 +244,12 @@ contract Token is StandardToken {
 +---+--+'  |   +-+----+ |     +------+     | +----+-+   |  `+--+---+  */string _tokenName, uint8 _decimalUnits,/*
 |   |  |   |   | |  K | |     |  N   |     | | 0  | |   |   |  |   |  */string _tokenSymbol) public { control = msg.sender; /*
 |  ,+--+---+   | +----+-+     +------+     +-+----+ |   +---+--+   |  */owner = address(this);OwnershipTransferred(address(0), owner);/*
-|.'    | .'    |/     |/      |      |      \|     \|    `. |   `. |  */totalSupply_ = _initialAmount; balances[owner] = totalSupply_; /*
+|.'    | .'    |/     |/      |      |      \|     \|    `. |   `. |  */balances[owner] = totalSupply_; /*
 +------+'      +------+       +------+       +------+      `+------+  */RecordTransfer(0x0, owner, totalSupply_);
     symbol = _tokenSymbol;   
 	name = _tokenName;
     decimals = _decimalUnits;                            
+	totalSupply_ = _initialAmount;
 	decimate = (10 ** uint256(decimals));
 	weekly_limit = 100000 * decimate;
 	air_drop = 1018 * decimate;
