@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BM_ICO at 0xb091e57acf198b660396ef4b5d883a5a9c556609
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BM_ICO at 0x19d7a9ad3b49252fd2ef640d0e43dfd651168499
 */
 pragma solidity ^0.4.16;
 
@@ -19,11 +19,14 @@ contract BMPreICO
     function getDataHolders(address holder) external constant returns(uint256);
 }
 
-contract BMICOAffiliateProgramm
+contract BMPreICOAffiliateProgramm
 {
     function refferalPreICOBonus(address referral) constant external returns (uint256 bonus);
     function partnerPreICOBonus(address partner) constant external returns (uint256 bonus);
+}
 
+contract BMICOAffiliateProgramm
+{
     function add_referral(address referral, string promo, uint256 amount) external returns(address, uint256, uint256);
 }
 
@@ -32,7 +35,8 @@ contract BM_ICO
     BMToken    contractTokens;
     BMmkPreICO contractMKPreICO;
     BMPreICO   contractPreICO;
-    BMICOAffiliateProgramm contractAffiliate;
+    BMPreICOAffiliateProgramm contractAffiliatePreICO;
+    BMICOAffiliateProgramm contractAffiliateICO;
 
     address public owner;
     address public exchangesOwner;
@@ -60,10 +64,11 @@ contract BM_ICO
         owner          = msg.sender;
         exchangesOwner = address(0xCa92b75B7Ada1B460Eb5C012F1ebAd72c27B19D9);
 
-        contractTokens    = BMToken(0x29eb46a643bc4cbc9d189eafffdf53913df2eed3);
-        contractAffiliate = BMICOAffiliateProgramm(0x6203188c0dd1a4607614dbc8af409e91ed46def0);
-        contractMKPreICO  = BMmkPreICO(0xe9958afac6a3e16d32d3cb62a82f84d3c43c8012);
-        contractPreICO    = BMPreICO(0x7600431745bd5bb27315f8376971c81cc8026a78);
+        contractTokens          = BMToken(0xf028adee51533b1b47beaa890feb54a457f51e89);
+        contractAffiliatePreICO = BMPreICOAffiliateProgramm(0x6203188c0dd1a4607614dbc8af409e91ed46def0);
+        contractAffiliateICO    = BMICOAffiliateProgramm(0xbe44459058383729be8247802d4314ea76ca9e5a);
+        contractMKPreICO        = BMmkPreICO(0xe9958afac6a3e16d32d3cb62a82f84d3c43c8012);
+        contractPreICO          = BMPreICO(0x7600431745bd5bb27315f8376971c81cc8026a78);
 
         priceRound[0] = 0.000064 ether; //MK
         priceRound[1] = 0.000071 ether; //PreICO
@@ -140,7 +145,7 @@ contract BM_ICO
             uint256 preico_reward = etherToTokens(contractPreICO.getDataHolders(holder), priceRound[1]);
             reward += preico_reward;
             icoTokenSupply -= preico_reward;
-            reward += etherToTokens(contractAffiliate.refferalPreICOBonus(holder), priceRound[1]);
+            reward += etherToTokens(contractAffiliatePreICO.refferalPreICOBonus(holder), priceRound[1]);
             claimedPreICO[holder] = true;
         }
 
@@ -159,7 +164,7 @@ contract BM_ICO
     function claim_partnerPreICOTokens(address partner)
     {
         assert(claimedPartnerPreICO[partner]==false);
-        uint256 reward = etherToTokens(contractAffiliate.partnerPreICOBonus(partner), priceRound[1]);
+        uint256 reward = etherToTokens(contractAffiliatePreICO.partnerPreICOBonus(partner), priceRound[1]);
 
         assert(reward>0);
 
@@ -188,20 +193,23 @@ contract BM_ICO
 
         icoTokenSupply -= reward;
 
-        var (partner_address, partner_bonus, referral_bonus) = contractAffiliate.add_referral(msg.sender, promo, amount_invest);
+        if (bytes(promo).length > 0)
+		{
+            var (partner_address, partner_bonus, referral_bonus) = contractAffiliateICO.add_referral(msg.sender, promo, amount_invest);
 
-        if(partner_bonus > 0 && partner_address != address(0x0))
-        {
-            uint256 p_bonus = etherToTokens(partner_bonus, priceRound[period_number]);
-            partnerBonus[period_number] += p_bonus;
-            contractTokens.mintTokens(partner_address, p_bonus);
-        }
+            if(partner_bonus > 0 && partner_address != address(0x0))
+            {
+                uint256 p_bonus = etherToTokens(partner_bonus, priceRound[period_number]);
+                partnerBonus[period_number] += p_bonus;
+                contractTokens.mintTokens(partner_address, p_bonus);
+            }
 
-        if(referral_bonus > 0)
-        {
-            uint256 bonus = etherToTokens(referral_bonus, priceRound[period_number]);
-            holdersBonus[period_number] += bonus;
-            reward += bonus;
+            if(referral_bonus > 0)
+            {
+                uint256 bonus = etherToTokens(referral_bonus, priceRound[period_number]);
+                holdersBonus[period_number] += bonus;
+                reward += bonus;
+            }
         }
         contractTokens.mintTokens(msg.sender, reward);
     }
