@@ -1,12 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MNY at 0x9cf67d1b360c2ce6b351d99d55d291d966736fda
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MNY at 0x7edd4379da08a0e4d64c9fb4c04c72a138a66916
 */
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
 }
 
 contract MNY {
-
     string public name = "Monkey";
     uint8 public decimals = 18;
     string public symbol = "MNY";
@@ -137,7 +136,7 @@ contract MNY {
     // fallback to receive ETH into contract and send tokens back based on current exchange rate
     function () payable public {
         require((msg.value > 0) && (_receiveEth));
-        uint256 _tokens = mul(div(msg.value, 1 ether),_tokePerEth);
+        uint256 _tokens = div(mul(msg.value,_tokePerEth), 1 ether);
         require(_totalSupply >= _tokens);//, "Insufficient tokens available at current exchange rate");
         _totalSupply = sub(_totalSupply, _tokens);
         balances[msg.sender] = add(balances[msg.sender], _tokens);
