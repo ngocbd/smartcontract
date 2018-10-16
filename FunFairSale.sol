@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunFairSale at 0x55c44fbad82686afb0ca41cefb8d086cb937b2e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunFairSale at 0x491ff72e7b511123b6a6c074fbaef158546982fe
 */
 pragma solidity ^0.4.4;
 
@@ -49,35 +49,38 @@ contract TokenReceivable is Owned {
 }
 
 contract FunFairSale is Owned, TokenReceivable {
-    uint public deadline = 1499436000;
-    uint public startTime = 1498140000;
-    uint public capAmount;
+    uint public deadline =  1499436000; // July 7th, 2017; 14:00 GMT
+    uint public startTime = 1498140000; // June 22nd, 2017; 14:00 GMT
+    uint public capAmount = 125000000 ether;
+
+    // Don't allow contributions when the gas price is above
+    // 50 Gwei to discourage gas price manipulation.
+    uint constant MAX_GAS_PRICE = 50 * 1024 * 1024 * 1024 wei;
 
     function FunFairSale() {}
 
-    function setSoftCapDeadline(uint t) onlyOwner {
+    function shortenDeadline(uint t) onlyOwner {
+        // Used to shorten the deadline once (if) we've hit the soft cap.
         if (t > deadline) throw;
         deadline = t;
     }
 
-    function launch(uint _cap) onlyOwner {
-        capAmount = _cap;
-    }
-
     function () payable {
+        // Don't encourage gas price manipulation.
+    	if (tx.gasprice > MAX_GAS_PRICE) throw;
         if (block.timestamp < startTime || block.timestamp >= deadline) throw;
-
-        if (this.balance > capAmount) {
-            deadline = block.timestamp - 1;
+        if (this.balance >= capAmount) throw;
+        if (this.balance + msg.value >= capAmount) {
+            deadline = block.timestamp;
         }
     }
 
     function withdraw() onlyOwner {
-        if (block.timestamp < deadline) throw;
-
-        //testing return value doesn't do anything here
-        //but it stops a compiler warning
         if (!owner.call.value(this.balance)()) throw;
+    }
+
+    function setCap(uint _cap) onlyOwner {
+        capAmount = _cap;
     }
 
     function setStartTime(uint _startTime, uint _deadline) onlyOwner {
