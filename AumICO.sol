@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AumICO at 0x01805928b325078683818329526dab3f74865e10
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AumICO at 0x1532cd178f5c87c3c307675bcd37c27abef5dc96
 */
 pragma solidity ^0.4.18;
 
@@ -1125,6 +1125,7 @@ contract AumICO is usingOraclize, SafeMath {
 	address LEXTokenAddress; //Limited Exchange Token address, For future processing via Koinvex
 	address tokenContractAddress;
 	address tokenVaultAddress;
+	address superAdmin;
 	address admin;
 	address etherVault;
 	address etherGasProvider;
@@ -1142,13 +1143,20 @@ contract AumICO is usingOraclize, SafeMath {
 	
 	modifier onlyAdmin()
 	{
-	    require(msg.sender == admin);
+	    require(msg.sender == admin || msg.sender == superAdmin);
+	    _;
+	}
+	
+	modifier onlySuperAdmin()
+	{
+	    require(msg.sender == superAdmin);
 	    _;
 	}
 	
 	event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
 	function AumICO() public {
+	    superAdmin = msg.sender;
 	    admin = msg.sender;
 		etherPrice = 100055; // testing => $1,000.55
 		etherInContract = 0;
@@ -1372,6 +1380,10 @@ contract AumICO is usingOraclize, SafeMath {
 	
 	function getEtherInContract() public constant returns (uint) {
 		return etherInContract;
+	}
+	
+	function ChangeAdmin(address newAdminAddress) public onlySuperAdmin {
+		admin = newAdminAddress;
 	}
 	
 	function GetQueueLength() public onlyAdmin constant returns (uint) {
