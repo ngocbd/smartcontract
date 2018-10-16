@@ -1,7 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EphronTestCoin at 0xad8922ae880e7fabfe4c81bb8141f0b06a1d76fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EphronTestCoin at 0x82da3bcd871aa854a086dfa4dd05c7947d6bda1e
 */
 pragma solidity ^0.4.23;
+
+library SafeMath {
+    function mul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+
+    function sub(uint a, uint b) internal returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        assert(c >= a && c >= b);
+        return c;
+    }
+}
 
 contract Token {
 
@@ -90,6 +109,7 @@ contract StandardToken is Token {
 contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
+    event FundTransfer(address backer, uint amount, bool isContribution, uint _amountRaised);
 
     /*
     NOTE:
@@ -97,6 +117,7 @@ contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract n
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
+    using SafeMath for uint;
     string public name;                   // Token Name
     uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
     string public symbol;                 // An identifier: eg SBX, XPR etc..
@@ -104,30 +125,59 @@ contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract n
     uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
     address public fundsWallet;           // Where should the raised ETH go?
+    uint public start; 
+    uint public end;
+    uint public amountRaised;
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function EphronTestCoin() {
-        balances[msg.sender] = 100000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 100000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "EphronTestCoin";                                   // Set the name for display purposes (CHANGE THIS)
+    function EphronTestCoin(
+        uint startTime,
+        uint endTime,
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol,
+        uint256 etherCostOfEachToken
+        ) {
+        totalSupply = initialSupply;   
+        balances[msg.sender] = initialSupply;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = tokenName;                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 0;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "EPHTCN";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 1000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = tokenSymbol;                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = etherCostOfEachToken;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+        start = startTime;
+        end = endTime;
+    }
+    
+    // ---- FOR TEST ONLY ----
+    uint _current = 0;
+    function current() public returns (uint) {
+        // Override not in use
+        if(_current == 0) {
+            return now;
+        }
+        return _current;
+    }
+    function setCurrent(uint __current) {
+        _current = __current;
     }
 
     function() payable{
-        totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        require(balances[fundsWallet] >= amount);
-
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-
-        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
-
-        //Transfer ether to fundsWallet
+        totalEthInWei = totalEthInWei.add(msg.value);
+        uint256 amount = msg.value.mul(unitsOneEthCanBuy);
+        
+        //require(balances[fundsWallet] >= amount);
+        
+        require(current() >= start && current() <= end);
+        
+        balances[fundsWallet] = balances[fundsWallet].sub(amount);
+        balances[msg.sender] = balances[msg.sender].add(amount);
+        
+        amountRaised = amountRaised.add(amount);
+        FundTransfer(msg.sender, amount, true, amountRaised);
+        // FundTransfer(msg.sender, amount, true);
+        
         fundsWallet.transfer(msg.value);                               
     }
 
@@ -141,5 +191,17 @@ contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract n
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
+    }
+    modifier afterDeadline() { if (current() >= end) _; }
+    
+    function safeWithdrawal() afterDeadline {
+        uint amount = balances[msg.sender];
+        if (address(this).balance >= amount) {
+            balances[msg.sender] = 0;
+            if (amount > 0) {
+                msg.sender.transfer(amount);
+                FundTransfer(msg.sender, amount, false, amountRaised);
+            }
+        }
     }
 }
