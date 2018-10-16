@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HodlReligion at 0xe55624d839e48878e7bcb141cb188fdb2694bffa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HodlReligion at 0xc6f06604C8968F62d4D954f4a056027Da0Ed6a68
 */
 pragma solidity ^0.4.17;
 
@@ -134,7 +134,6 @@ contract HodlReligion is StandardToken {
         if(msg.value > 0){
             balances[msg.sender] += 10 ** 18; // 1 Token
             minted += 10 ** 18;
-            Transfer(0x0000000000000000000000000000000000000000, msg.sender, 10 ** 18);
         }
     }
 
