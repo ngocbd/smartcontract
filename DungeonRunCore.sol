@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DungeonRunCore at 0xcb3a7e9aa3816706d87bbaa350f1db20d79bbebd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DungeonRunCore at 0x0e6a831cc6cb7bfe0f3957adbd6d2d5d29be1b71
 */
 pragma solidity 0.4.19;
 
@@ -271,7 +271,7 @@ contract DungeonRunCore is Pausable, Destructible {
     uint public reviveFee = 0.02 ether;
 
     /// @dev 0.1 ether is provided as the initial jackpot.
-    uint public jackpot = 0.16 ether;
+    uint public jackpot = 0.1 ether;
 
     /**
      * @dev The dungeon run entrance fee will first be deposited to a pool first, when the hero is
@@ -435,7 +435,7 @@ contract DungeonRunCore is Pausable, Destructible {
             // Throws if not enough fee, and any exceeding fee will be transferred back to the player.
             require(msg.value >= entranceFee);
             entranceFeePool += entranceFee;
-            
+
             // Create level 1 monster, initial health is 1 * monsterHealth.
             heroIdToMonster[_heroId] = Monster(uint64(now), 1, monsterHealth, monsterHealth);
             monster = heroIdToMonster[_heroId];
@@ -515,6 +515,10 @@ contract DungeonRunCore is Pausable, Destructible {
         entranceFee = _newEntranceFee;
     }
 
+    function setReviveFee(uint _newReviveFee) onlyOwner external {
+        reviveFee = _newReviveFee;
+    }
+
 
     /*=======================================
     =      INTERNAL/PRIVATE FUNCTIONS       =
@@ -535,7 +539,7 @@ contract DungeonRunCore is Pausable, Destructible {
         // Calculate the damage by hero first.
         // The damage formula is (strength + power / (10 * rand)) / gasprice,
         // where rand is a random integer from 1 to 5.
-        damageByHero = (_heroStrength * 1e9 + heroPower * 1e9 / (10 * (1 + _getRandomNumber(5)))) / tx.gasprice;
+        damageByHero = (_heroStrength * 1e9 + heroPower * 1e9 / (10 * (1 + _getRandomNumber(5)))) / (tx.gasprice >= 0.5 * 1e9 ? tx.gasprice : 0.5 * 1e9);
         bool isMonsterDefeated = damageByHero >= monster.health;
 
         if (isMonsterDefeated) {
