@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegate at 0x450d10a0c61f2b007384128b626f28b757a75e49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegate at 0xc787ae8d6560fb77b82f42ced8ed39f94961e304
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-pragma solidity 0.4.18;
+pragma solidity 0.4.19;
 /// @title Utility Functions for uint
 /// @author Daniel Wang - <daniel@loopring.org>
 library MathUint {
@@ -93,7 +93,6 @@ library MathUint {
 /// @author Daniel Wang - <daniel@loopring.org>
 contract ERC20 {
     uint public totalSupply;
-	
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
     function balanceOf(address who) view public returns (uint256);
@@ -254,13 +253,6 @@ contract TokenTransferDelegate is Claimable {
             AddressDeauthorized(addr, index);
         }
     }
-    function isAddressAuthorized(address addr)
-        public
-        view
-        returns (bool)
-    {
-        return addressInfos[addr].authorized;
-    }
     function getLatestAuthorizedAddresses(uint max)
         external
         view
@@ -292,7 +284,7 @@ contract TokenTransferDelegate is Claimable {
         onlyAuthorized
         external
     {
-        if (value > 0 && from != to) {
+        if (value > 0 && from != to && to != 0x0) {
             require(
                 ERC20(token).transferFrom(from, to, value)
             );
@@ -320,7 +312,7 @@ contract TokenTransferDelegate is Claimable {
                     token.transferFrom(owner, prevOwner, uint(batch[i + 2]))
                 );
             }
-            if (owner != feeRecipient) {
+            if (feeRecipient != 0x0 && owner != feeRecipient) {
                 bytes32 item = batch[i + 3];
                 if (item != 0) {
                     require(
@@ -341,5 +333,12 @@ contract TokenTransferDelegate is Claimable {
                 }
             }
         }
+    }
+    function isAddressAuthorized(address addr)
+        public
+        view
+        returns (bool)
+    {
+        return addressInfos[addr].authorized;
     }
 }
