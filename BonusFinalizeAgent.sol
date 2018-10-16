@@ -1,12 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0xc8b96a94d4984d0b586ef21e775ff956ae2d2247
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0x0e086439b8081012a186660c10a7b61218870e0e
 */
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+pragma solidity ^0.4.11;
 
+// File: contracts/FinalizeAgent.sol
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -14,53 +11,82 @@
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.6;
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * Finalize agent defines what happens at the end of succeseful crowdsale.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * - Allocate tokens for founders, bounties and community
+ * - Make tokens transferable
+ * - etc.
  */
+contract FinalizeAgent {
 
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
-library SafeMathLib {
-
-  function times(uint a, uint b) returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
+  function isFinalizeAgent() public constant returns(bool) {
+    return true;
   }
 
-  function minus(uint a, uint b) returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
+  /** Return true if we can run finalizeCrowdsale() properly.
+   *
+   * This is a safety check function that doesn't allow crowdsale to begin
+   * unless the finalizer has been set up properly.
+   */
+  function isSane() public constant returns (bool);
 
-  function plus(uint a, uint b) returns (uint) {
-    uint c = a + b;
-    assert(c>=a);
-    return c;
-  }
+  /** Called once by crowdsale finalize() if the sale was success. */
+  function finalizeCrowdsale();
 
 }
 
+// File: contracts/zeppelin/contracts/token/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: contracts/zeppelin/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: contracts/FractionalERC20.sol
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.8;
 
 
+
+/**
+ * A token that defines fractional units as decimals.
+ */
+contract FractionalERC20 is ERC20 {
+
+  uint public decimals;
+
+}
+
+// File: contracts/zeppelin/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -94,11 +120,22 @@ contract Ownable {
    * @param newOwner The address to transfer ownership to.
    */
   function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
+    require(newOwner != address(0));
     owner = newOwner;
   }
 
 }
+
+// File: contracts/Haltable.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.6;
+
 
 
 /*
@@ -140,12 +177,15 @@ contract Haltable is Ownable {
 
 }
 
+// File: contracts/PricingStrategy.sol
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.6;
 
 /**
  * Interface for defining crowdsale pricing.
@@ -188,37 +228,48 @@ contract PricingStrategy {
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
+// File: contracts/SafeMathLib.sol
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.6;
 
 /**
- * Finalize agent defines what happens at the end of succeseful crowdsale.
+ * Safe unsigned safe math.
  *
- * - Allocate tokens for founders, bounties and community
- * - Make tokens transferable
- * - etc.
+ * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
+ *
+ * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
+ *
+ * Maintained here until merged to mainline zeppelin-solidity.
+ *
  */
-contract FinalizeAgent {
+library SafeMathLib {
 
-  function isFinalizeAgent() public constant returns(bool) {
-    return true;
+  function times(uint a, uint b) returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
   }
 
-  /** Return true if we can run finalizeCrowdsale() properly.
-   *
-   * This is a safety check function that doesn't allow crowdsale to begin
-   * unless the finalizer has been set up properly.
-   */
-  function isSane() public constant returns (bool);
+  function minus(uint a, uint b) returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
 
-  /** Called once by crowdsale finalize() if the sale was success. */
-  function finalizeCrowdsale();
+  function plus(uint a, uint b) returns (uint) {
+    uint c = a + b;
+    assert(c>=a);
+    return c;
+  }
 
 }
+
+// File: contracts/CrowdsaleBase.sol
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -231,56 +282,19 @@ contract FinalizeAgent {
 
 
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
 
 
 /**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * A token that defines fractional units as decimals.
- */
-contract FractionalERC20 is ERC20 {
-
-  uint public decimals;
-
-}
-
-
-
-/**
- * Abstract base contract for token sales.
+ * Crowdsale state machine without buy functionality.
  *
- * Handle
- * - start and end dates
- * - accepting investments
- * - minimum funding goal and refund
- * - various statistics during the crowdfund
- * - different pricing strategies
- * - different investment policies (require server side customer id, allow only whitelisted addresses)
+ * Implements basic state machine logic, but leaves out all buy functions,
+ * so that subclasses can implement their own buying logic.
  *
+ *
+ * For the default buy() implementation see Crowdsale.sol.
  */
-contract Crowdsale is Haltable {
+contract CrowdsaleBase is Haltable {
 
   /* Max investment count when we are still allowed to change the multisig address */
   uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
@@ -302,6 +316,12 @@ contract Crowdsale is Haltable {
   /* if the funding goal is not reached, investors may withdraw their funds */
   uint public minimumFundingGoal;
 
+  /* maximum investment per address */
+  uint public maximalInvestment = 0;
+
+  /* Seconds since the start of the funding during which the maximalInvestemnt cap is enforced */
+  uint public maximalInvestmentTimeTreshold = 3*60*60;
+
   /* the UNIX timestamp start date of the crowdsale */
   uint public startsAt;
 
@@ -313,6 +333,9 @@ contract Crowdsale is Haltable {
 
   /* How many wei of funding we have raised */
   uint public weiRaised = 0;
+
+  /* Calculate incoming funds from presale contracts and addresses */
+  uint public presaleWeiRaised = 0;
 
   /* How many distinct addresses have invested */
   uint public investorCount = 0;
@@ -326,23 +349,14 @@ contract Crowdsale is Haltable {
   /* Has this crowdsale been finalized */
   bool public finalized;
 
-  /* Do we need to have unique contributor id for each customer */
-  bool public requireCustomerId;
-
-  /**
-    * Do we verify that contributor has been cleared on the server side (accredited investors only).
-    * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
-    */
-  bool public requiredSignedAddress;
-
-  /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
-  address public signerAddress;
-
   /** How much ETH each address has invested to this crowdsale */
   mapping (address => uint256) public investedAmountOf;
 
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
+
+  /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
+  mapping (address => bool) public earlyParticipantWhitelist;
 
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
@@ -366,12 +380,17 @@ contract Crowdsale is Haltable {
   event Refund(address investor, uint weiAmount);
 
   // The rules were changed what kind of investments we accept
-  event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, address newSignerAddress);
+  event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, bool newRequireWhitelistedAddress, address newSignerAddress, address whitelisterAddress);
+
+  // Address early participation whitelist status changed
+  event Whitelisted(address addr, bool status);
 
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
 
-  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
+  State public testState;
+
+  function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maxInvestment) {
 
     owner = msg.sender;
 
@@ -403,17 +422,15 @@ contract Crowdsale is Haltable {
 
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
+
+    maximalInvestment = _maxInvestment;
   }
 
   /**
    * Don't expect to just send in money and get tokens.
    */
   function() payable {
-    invest(msg.sender);
-  }
-
-  function buyWithReferral(uint128 customerId) payable {
-    investWithCustomerId(msg.sender, customerId);
+    throw;
   }
 
   /**
@@ -423,13 +440,19 @@ contract Crowdsale is Haltable {
    * We must have not pressed the emergency brake.
    *
    * @param receiver The Ethereum address who receives the tokens
-   * @param customerId (optional) UUID v4 to track the successful payments on the server side
+   * @param customerId (optional) UUID v4 to track the successful payments on the server side'
    *
+   * @return tokenAmount How mony tokens were bought
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency private {
+  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
 
     // Determine if it's a good time to accept investment from this participant
-    if(getState() == State.Funding) {
+    if(getState() == State.PreFunding) {
+      // Are we whitelisted for early deposit
+      if(!earlyParticipantWhitelist[receiver]) {
+        throw;
+      }
+    } else if(getState() == State.Funding) {
       // Retail participants can only come in when the crowdsale is running
       // pass
     } else {
@@ -440,123 +463,45 @@ contract Crowdsale is Haltable {
     uint weiAmount = msg.value;
 
     // Account presale sales separately, so that they do not count against pricing tranches
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
-    if(tokenAmount == 0) {
-      // Dust transaction
-      throw;
-    }
+    // Dust transaction
+    require(tokenAmount != 0);
 
-    if (investedAmountOf[receiver] == 0) {
+    if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
     }
 
     // Update investor
     investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+
+    if(maximalInvestment > 0 && now < (startsAt + maximalInvestmentTimeTreshold)) {
+      require(investedAmountOf[receiver] <= maximalInvestment);
+    }
+
     tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
 
     // Update totals
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
 
-    // Check that we did not bust the cap
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
+    if(pricingStrategy.isPresalePurchase(receiver)) {
+        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
     }
+
+    // Check that we did not bust the cap
+    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
 
     assignTokens(receiver, tokenAmount);
 
-    // Pocket the money
+    // Pocket the money, or fail the crowdsale if we for some reason cannot send the money to our multisig
     if(!multisigWallet.send(weiAmount)) throw;
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
-  }
 
-  /**
-   * Preallocate tokens for the early investors.
-   *
-   * Preallocated tokens have been sold before the actual crowdsale opens.
-   * This function mints the tokens and moves the crowdsale needle.
-   *
-   * Investor count is not handled; it is assumed this goes for multiple investors
-   * and the token distribution happens outside the smart contract flow.
-   *
-   * No money is exchanged, as the crowdsale team already have received the payment.
-   *
-   * @param fullTokens tokens as full tokens - decimal places added internally
-   * @param weiPrice Price of a single full token in wei
-   *
-   */
-  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
-
-    uint tokenAmount = fullTokens * 10**token.decimals();
-    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
-
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
-
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
-
-    assignTokens(receiver, tokenAmount);
-
-    // Tell us invest was success
-    Invested(receiver, weiAmount, tokenAmount, 0);
-  }
-
-  /**
-   * Allow anonymous contributions to this crowdsale.
-   */
-  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-     bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;  // UUIDv4 sanity check
-     investInternal(addr, customerId);
-  }
-
-  /**
-   * Track who is the customer making the payment so we can send thank you email.
-   */
-  function investWithCustomerId(address addr, uint128 customerId) public payable {
-    if (requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    if (customerId == 0) throw;  // UUIDv4 sanity check
-    investInternal(addr, customerId);
-  }
-
-  /**
-   * Allow anonymous contributions to this crowdsale.
-   */
-  function invest(address addr) public payable {
-    if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    investInternal(addr, 0);
-  }
-
-  /**
-   * Invest to tokens, recognize the payer and clear his address.
-   *
-   */
-  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-    investWithSignedAddress(msg.sender, customerId, v, r, s);
-  }
-
-  /**
-   * Invest to tokens, recognize the payer.
-   *
-   */
-  function buyWithCustomerId(uint128 customerId) public payable {
-    investWithCustomerId(msg.sender, customerId);
-  }
-
-  /**
-   * The basic entry point to participate the crowdsale process.
-   *
-   * Pay for funding, get invested tokens back in the sender address.
-   */
-  function buy() public payable {
-    invest(msg.sender);
+    return tokenAmount;
   }
 
   /**
@@ -594,27 +539,6 @@ contract Crowdsale is Haltable {
   }
 
   /**
-   * Set policy do we need to have server-side customer ids for the investments.
-   *
-   */
-  function setRequireCustomerId(bool value) onlyOwner {
-    requireCustomerId = value;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
-  }
-
-  /**
-   * Set policy if all investors must be cleared on the server side first.
-   *
-   * This is e.g. for the accredited investor clearing.
-   *
-   */
-  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
-    requiredSignedAddress = value;
-    signerAddress = _signerAddress;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
-  }
-
-  /**
    * Allow crowdsale owner to close early or extend the crowdsale.
    *
    * This is useful e.g. for a manual soft cap implementation:
@@ -628,6 +552,10 @@ contract Crowdsale is Haltable {
 
     if(now > time) {
       throw; // Don't change past
+    }
+
+    if(startsAt > time) {
+      throw; // Prevent human mistakes
     }
 
     endsAt = time;
@@ -733,6 +661,17 @@ contract Crowdsale is Haltable {
     ownerTestValue = val;
   }
 
+  /**
+   * Allow addresses to do early participation.
+   *
+   * TODO: Fix spelling error in the name
+   */
+  function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
+    earlyParticipantWhitelist[addr] = status;
+    Whitelisted(addr, status);
+  }
+
+
   /** Interface marker. */
   function isCrowdsale() public constant returns (bool) {
     return true;
@@ -778,15 +717,10 @@ contract Crowdsale is Haltable {
   /**
    * Create new tokens or transfer issued tokens to the investor depending on the cap model.
    */
-  function assignTokens(address receiver, uint tokenAmount) private;
+  function assignTokens(address receiver, uint tokenAmount) internal;
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
+// File: contracts/Crowdsale.sol
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -794,131 +728,362 @@ contract Crowdsale is Haltable {
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.8;
 
 
 
-// Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
+
+
 
 
 
 /**
- * Math operations with safety checks
+ * Abstract base contract for token sales with the default buy entry points.
+ *
+ * Handle
+ * - start and end dates
+ * - accepting investments
+ * - minimum funding goal and refund
+ * - various statistics during the crowdfund
+ * - different pricing strategies
+ * - different investment policies (require server side customer id, allow only whitelisted addresses)
+ *
+ * Does not Handle
+ *
+ * - Token allocation (minting vs. transfer)
+ * - Cap rules
+ *
  */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
+contract Crowdsale is CrowdsaleBase {
+
+  /* Do we need to have unique contributor id for each customer */
+  bool public requireCustomerId;
+
+  /**
+    * Do we verify that contributor has been cleared on the server side (accredited investors only).
+    * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
+    */
+  bool public requiredSignedAddress;
+
+  /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
+  address public signerAddress;
+
+  /* Do we need to have unique contributor id for each customer */
+  bool public requireWhitelistedAddress;
+
+  /* Account that is allowed to whitelist addesses */
+  address public whitelisterAddress;
+
+  /* Mapping of whitelisted accounts */
+  mapping (address => bool) whitelist;
+
+
+  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maxInvestment) CrowdsaleBase(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal, _maxInvestment) {
+  }
+
+  /**
+   * Preallocate tokens for the early investors.
+   *
+   * Preallocated tokens have been sold before the actual crowdsale opens.
+   * This function mints the tokens and moves the crowdsale needle.
+   *
+   * Investor count is not handled; it is assumed this goes for multiple investors
+   * and the token distribution happens outside the smart contract flow.
+   *
+   * No money is exchanged, as the crowdsale team already have received the payment.
+   *
+   * @param fullTokens tokens as full tokens - decimal places added internally
+   * @param weiPrice Price of a single full token in wei
+   *
+   */
+  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
+
+    uint tokenAmount = fullTokens * 10**token.decimals();
+    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
+
+    weiRaised = weiRaised.plus(weiAmount);
+    tokensSold = tokensSold.plus(tokenAmount);
+
+    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+
+    assignTokens(receiver, tokenAmount);
+
+    // Tell us invest was success
+    Invested(receiver, weiAmount, tokenAmount, 0);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+    if(requireWhitelistedAddress) {
+      require(whitelist[addr]);
+    }
+
+    bytes32 hash = sha256(addr);
+    if (ecrecover(hash, v, r, s) != signerAddress) throw;
+    if(customerId == 0) throw;  // UUIDv4 sanity check
+    investInternal(addr, customerId);
+  }
+
+  /**
+   * Track who is the customer making the payment so we can send thank you email.
+   */
+  function investWithCustomerId(address addr, uint128 customerId) public payable {
+    if(requireWhitelistedAddress) {
+      require(whitelist[addr]);
+    }
+
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    if(customerId == 0) throw;  // UUIDv4 sanity check
+    investInternal(addr, customerId);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function invest(address addr) public payable {
+    if(requireWhitelistedAddress) {
+      require(whitelist[addr]);
+    }
+
+    if(requireCustomerId) throw; // Crowdsale needs to track participants for thank you email
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    investInternal(addr, 0);
+  }
+
+  /**
+   * Invest to tokens, recognize the payer and clear his address.
+   *
+   */
+  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+    investWithSignedAddress(msg.sender, customerId, v, r, s);
+  }
+
+  /**
+   * Invest to tokens, recognize the payer.
+   *
+   */
+  function buyWithCustomerIdWithChecksum(uint128 customerId, bytes1 checksum) public payable {
+    // see customerid.py
+    if (bytes1(sha3(customerId)) != checksum) throw;
+    investWithCustomerId(msg.sender, customerId);
+  }
+
+  /**
+   * Legacy API signature.
+   */
+  function buyWithCustomerId(uint128 customerId) public payable {
+    investWithCustomerId(msg.sender, customerId);
+  }
+
+  /**
+   * The basic entry point to participate the crowdsale process.
+   *
+   * Pay for funding, get invested tokens back in the sender address.
+   */
+  function buy() public payable {
+    invest(msg.sender);
+  }
+
+
+  /*
+   * Allow sending ETH directyl to the contract
+   *
+   */
+  function () public payable {
+    buy();
+  }
+
+
+  /**
+   * Set policy do we need to have server-side customer ids for the investments.
+   *
+   */
+  function setRequireCustomerId(bool value) onlyOwner {
+    requireCustomerId = value;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, requireWhitelistedAddress, signerAddress, whitelisterAddress);
+  }
+
+  /**
+   * Set policy if all investors must be cleared on the server side first.
+   *
+   * This is e.g. for the accredited investor clearing.
+   *
+   */
+  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
+    requiredSignedAddress = value;
+    signerAddress = _signerAddress;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, requireWhitelistedAddress, signerAddress, whitelisterAddress);
+  }
+
+  /**
+   * Set policy do we need to work only with whitelisted accounts.
+   *
+   */
+  function setRequireWhitelistedAddress(bool value, address _whitelistAddress) onlyOwner {
+    requireWhitelistedAddress = value;
+    whitelisterAddress = _whitelistAddress;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, requireWhitelistedAddress, signerAddress, whitelisterAddress);
+  }
+
+  /*
+   * Add KYC'ed addresses to the whitelist
+   */
+  function addToWhitelist(address[] _addresses) public onlyWhitelister {
+     for (uint32 i = 0; i < _addresses.length; i++) {
+         whitelist[_addresses[i]] = true;
+     }
+  }
+
+  function removeFromWhitelist(address[] _addresses) public onlyWhitelister {
+    for (uint32 i = 0; i < _addresses.length; i++) {
+        whitelist[_addresses[i]] = false;
+    }
+  }
+
+  function isWhitelistedAddress(address _address) public constant returns(bool whitelisted) {
+    return whitelist[_address];
+  }
+
+  modifier onlyWhitelister() {
+    require(msg.sender == whitelisterAddress);
+    _;
+  }
+
+}
+
+// File: contracts/zeppelin/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
     return c;
   }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
 }
 
-
+// File: contracts/zeppelin/contracts/token/BasicToken.sol
 
 /**
- * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
  */
-contract StandardToken is ERC20, SafeMath {
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
+  mapping(address => uint256) balances;
 
-  /* Actual balances of token holders */
-  mapping(address => uint) balances;
-
-  /* approve() allowances */
-  mapping (address => mapping (address => uint)) allowed;
-
-  /* Interface declaration */
-  function isToken() public constant returns (bool weAre) {
-    return true;
-  }
-
-  function transfer(address _to, uint _value) returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+}
+
+// File: contracts/zeppelin/contracts/token/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
+// File: contracts/StandardTokenExt.sol
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -926,151 +1091,26 @@ contract StandardToken is ERC20, SafeMath {
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.14;
+
+
+
 
 /**
- * Upgrade agent interface inspired by Lunyr.
+ * Standard EIP-20 token with an interface marker.
  *
- * Upgrade agent transfers tokens to a new contract.
- * Upgrade agent itself can be the token contract, or just a middle man contract doing the heavy lifting.
+ * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
+ *
  */
-contract UpgradeAgent {
+contract StandardTokenExt is StandardToken {
 
-  uint public originalSupply;
-
-  /** Interface marker */
-  function isUpgradeAgent() public constant returns (bool) {
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
     return true;
   }
-
-  function upgradeFrom(address _from, uint256 _value) public;
-
 }
 
-
-/**
- * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
- *
- * First envisioned by Golem and Lunyr projects.
- */
-contract UpgradeableToken is StandardToken {
-
-  /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
-  address public upgradeMaster;
-
-  /** The next contract where the tokens will be migrated. */
-  UpgradeAgent public upgradeAgent;
-
-  /** How many tokens we have upgraded by now. */
-  uint256 public totalUpgraded;
-
-  /**
-   * Upgrade states.
-   *
-   * - NotAllowed: The child contract has not reached a condition where the upgrade can bgun
-   * - WaitingForAgent: Token allows upgrade, but we don't have a new agent yet
-   * - ReadyToUpgrade: The agent is set, but not a single token has been upgraded yet
-   * - Upgrading: Upgrade agent is set and the balance holders can upgrade their tokens
-   *
-   */
-  enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
-
-  /**
-   * Somebody has upgraded some of his tokens.
-   */
-  event Upgrade(address indexed _from, address indexed _to, uint256 _value);
-
-  /**
-   * New upgrade agent available.
-   */
-  event UpgradeAgentSet(address agent);
-
-  /**
-   * Do not allow construction without upgrade master set.
-   */
-  function UpgradeableToken(address _upgradeMaster) {
-    upgradeMaster = _upgradeMaster;
-  }
-
-  /**
-   * Allow the token holder to upgrade some of their tokens to a new contract.
-   */
-  function upgrade(uint256 value) public {
-
-      UpgradeState state = getUpgradeState();
-      if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
-        // Called in a bad state
-        throw;
-      }
-
-      // Validate input value.
-      if (value == 0) throw;
-
-      balances[msg.sender] = safeSub(balances[msg.sender], value);
-
-      // Take tokens out from circulation
-      totalSupply = safeSub(totalSupply, value);
-      totalUpgraded = safeAdd(totalUpgraded, value);
-
-      // Upgrade agent reissues the tokens
-      upgradeAgent.upgradeFrom(msg.sender, value);
-      Upgrade(msg.sender, upgradeAgent, value);
-  }
-
-  /**
-   * Set an upgrade agent that handles
-   */
-  function setUpgradeAgent(address agent) external {
-
-      if(!canUpgrade()) {
-        // The token is not yet in a state that we could think upgrading
-        throw;
-      }
-
-      if (agent == 0x0) throw;
-      // Only a master can designate the next agent
-      if (msg.sender != upgradeMaster) throw;
-      // Upgrade has already begun for an agent
-      if (getUpgradeState() == UpgradeState.Upgrading) throw;
-
-      upgradeAgent = UpgradeAgent(agent);
-
-      // Bad interface
-      if(!upgradeAgent.isUpgradeAgent()) throw;
-      // Make sure that token supplies match in source and target
-      if (upgradeAgent.originalSupply() != totalSupply) throw;
-
-      UpgradeAgentSet(upgradeAgent);
-  }
-
-  /**
-   * Get the state of the token upgrade.
-   */
-  function getUpgradeState() public constant returns(UpgradeState) {
-    if(!canUpgrade()) return UpgradeState.NotAllowed;
-    else if(address(upgradeAgent) == 0x00) return UpgradeState.WaitingForAgent;
-    else if(totalUpgraded == 0) return UpgradeState.ReadyToUpgrade;
-    else return UpgradeState.Upgrading;
-  }
-
-  /**
-   * Change the upgrade master.
-   *
-   * This allows us to set a new owner for the upgrade mechanism.
-   */
-  function setUpgradeMaster(address master) public {
-      if (master == 0x0) throw;
-      if (msg.sender != upgradeMaster) throw;
-      upgradeMaster = master;
-  }
-
-  /**
-   * Child contract can enable to provide the condition when the upgrade can begun.
-   */
-  function canUpgrade() public constant returns(bool) {
-     return true;
-  }
-
-}
+// File: contracts/MintableToken.sol
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -1078,6 +1118,78 @@ contract UpgradeableToken is StandardToken {
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+
+
+
+
+
+pragma solidity ^0.4.6;
+
+/**
+ * A token that can increase its supply by another contract.
+ *
+ * This allows uncapped crowdsale by dynamically increasing the supply when money pours in.
+ * Only mint agents, contracts whitelisted by owner, can mint new tokens.
+ *
+ */
+contract MintableToken is StandardTokenExt, Ownable {
+
+  using SafeMathLib for uint;
+
+  bool public mintingFinished = false;
+
+  /** List of agents that are allowed to create new tokens */
+  mapping (address => bool) public mintAgents;
+
+  event MintingAgentChanged(address addr, bool state);
+  event Minted(address receiver, uint amount);
+
+  /**
+   * Create new tokens and allocate them to an address..
+   *
+   * Only callably by a crowdsale contract (mint agent).
+   */
+  function mint(address receiver, uint amount) onlyMintAgent canMint public {
+    totalSupply = totalSupply.plus(amount);
+    balances[receiver] = balances[receiver].plus(amount);
+
+    // This will make the mint transaction apper in EtherScan.io
+    // We can remove this after there is a standardized minting event
+    Transfer(0, receiver, amount);
+  }
+
+  /**
+   * Owner can allow a crowdsale contract to mint new tokens.
+   */
+  function setMintAgent(address addr, bool state) onlyOwner canMint public {
+    mintAgents[addr] = state;
+    MintingAgentChanged(addr, state);
+  }
+
+  modifier onlyMintAgent() {
+    // Only crowdsale contracts are allowed to mint new tokens
+    if(!mintAgents[msg.sender]) {
+        throw;
+    }
+    _;
+  }
+
+  /** Make sure we are not done yet. */
+  modifier canMint() {
+    if(mintingFinished) throw;
+    _;
+  }
+}
+
+// File: contracts/ReleasableToken.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.8;
 
 
 
@@ -1167,72 +1279,186 @@ contract ReleasableToken is ERC20, Ownable {
 
 }
 
+// File: contracts/UpgradeAgent.sol
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.6;
 
+/**
+ * Upgrade agent interface inspired by Lunyr.
+ *
+ * Upgrade agent transfers tokens to a new contract.
+ * Upgrade agent itself can be the token contract, or just a middle man contract doing the heavy lifting.
+ */
+contract UpgradeAgent {
+
+  uint public originalSupply;
+
+  /** Interface marker */
+  function isUpgradeAgent() public constant returns (bool) {
+    return true;
+  }
+
+  function upgradeFrom(address _from, uint256 _value) public;
+
+}
+
+// File: contracts/UpgradeableToken.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.8;
 
 
 
 
 
 /**
- * A token that can increase its supply by another contract.
+ * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
  *
- * This allows uncapped crowdsale by dynamically increasing the supply when money pours in.
- * Only mint agents, contracts whitelisted by owner, can mint new tokens.
- *
+ * First envisioned by Golem and Lunyr projects.
  */
-contract MintableToken is StandardToken, Ownable {
+contract UpgradeableToken is StandardTokenExt {
 
-  using SafeMathLib for uint;
+  /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
+  address public upgradeMaster;
 
-  bool public mintingFinished = false;
+  /** The next contract where the tokens will be migrated. */
+  UpgradeAgent public upgradeAgent;
 
-  /** List of agents that are allowed to create new tokens */
-  mapping (address => bool) public mintAgents;
-
-  event MintingAgentChanged(address addr, bool state  );
+  /** How many tokens we have upgraded by now. */
+  uint256 public totalUpgraded;
 
   /**
-   * Create new tokens and allocate them to an address..
+   * Upgrade states.
    *
-   * Only callably by a crowdsale contract (mint agent).
+   * - NotAllowed: The child contract has not reached a condition where the upgrade can bgun
+   * - WaitingForAgent: Token allows upgrade, but we don't have a new agent yet
+   * - ReadyToUpgrade: The agent is set, but not a single token has been upgraded yet
+   * - Upgrading: Upgrade agent is set and the balance holders can upgrade their tokens
+   *
    */
-  function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = totalSupply.plus(amount);
-    balances[receiver] = balances[receiver].plus(amount);
+  enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
 
-    // This will make the mint transaction apper in EtherScan.io
-    // We can remove this after there is a standardized minting event
-    Transfer(0, receiver, amount);
+  /**
+   * Somebody has upgraded some of his tokens.
+   */
+  event Upgrade(address indexed _from, address indexed _to, uint256 _value);
+
+  /**
+   * New upgrade agent available.
+   */
+  event UpgradeAgentSet(address agent);
+
+  /**
+   * Do not allow construction without upgrade master set.
+   */
+  function UpgradeableToken(address _upgradeMaster) {
+    upgradeMaster = _upgradeMaster;
   }
 
   /**
-   * Owner can allow a crowdsale contract to mint new tokens.
+   * Allow the token holder to upgrade some of their tokens to a new contract.
    */
-  function setMintAgent(address addr, bool state) onlyOwner canMint public {
-    mintAgents[addr] = state;
-    MintingAgentChanged(addr, state);
-  }
+  function upgrade(uint256 value) public {
 
-  modifier onlyMintAgent() {
-    // Only crowdsale contracts are allowed to mint new tokens
-    if(!mintAgents[msg.sender]) {
+      UpgradeState state = getUpgradeState();
+      if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
+        // Called in a bad state
         throw;
-    }
-    _;
+      }
+
+      // Validate input value.
+      if (value == 0) throw;
+
+      balances[msg.sender] = balances[msg.sender].sub(value);
+
+      // Take tokens out from circulation
+      totalSupply = totalSupply.sub(value);
+      totalUpgraded = totalUpgraded.add(value);
+
+      // Upgrade agent reissues the tokens
+      upgradeAgent.upgradeFrom(msg.sender, value);
+      Upgrade(msg.sender, upgradeAgent, value);
   }
 
-  /** Make sure we are not done yet. */
-  modifier canMint() {
-    if(mintingFinished) throw;
-    _;
+  /**
+   * Set an upgrade agent that handles
+   */
+  function setUpgradeAgent(address agent) external {
+
+      if(!canUpgrade()) {
+        // The token is not yet in a state that we could think upgrading
+        throw;
+      }
+
+      if (agent == 0x0) throw;
+      // Only a master can designate the next agent
+      if (msg.sender != upgradeMaster) throw;
+      // Upgrade has already begun for an agent
+      if (getUpgradeState() == UpgradeState.Upgrading) throw;
+
+      upgradeAgent = UpgradeAgent(agent);
+
+      // Bad interface
+      if(!upgradeAgent.isUpgradeAgent()) throw;
+      // Make sure that token supplies match in source and target
+      if (upgradeAgent.originalSupply() != totalSupply) throw;
+
+      UpgradeAgentSet(upgradeAgent);
   }
+
+  /**
+   * Get the state of the token upgrade.
+   */
+  function getUpgradeState() public constant returns(UpgradeState) {
+    if(!canUpgrade()) return UpgradeState.NotAllowed;
+    else if(address(upgradeAgent) == 0x00) return UpgradeState.WaitingForAgent;
+    else if(totalUpgraded == 0) return UpgradeState.ReadyToUpgrade;
+    else return UpgradeState.Upgrading;
+  }
+
+  /**
+   * Change the upgrade master.
+   *
+   * This allows us to set a new owner for the upgrade mechanism.
+   */
+  function setUpgradeMaster(address master) public {
+      if (master == 0x0) throw;
+      if (msg.sender != upgradeMaster) throw;
+      upgradeMaster = master;
+  }
+
+  /**
+   * Child contract can enable to provide the condition when the upgrade can begun.
+   */
+  function canUpgrade() public constant returns(bool) {
+     return true;
+  }
+
 }
+
+// File: contracts/CrowdsaleToken.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.8;
+
+
+
 
 
 
@@ -1333,6 +1559,18 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
 }
 
+// File: contracts/BonusFinalizeAgent.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.6;
+
+
+
 
 
 /**
@@ -1390,8 +1628,7 @@ contract BonusFinalizeAgent is FinalizeAgent {
     allocatedBonus = tokensSold.times(bonusBasePoints) / 10000;
 
     // move tokens to the team multisig wallet
-    //additional 770 000 tokens are generated for the bounty bonus campaign
-    token.mint(teamMultisig, allocatedBonus + 28021500000000);
+    token.mint(teamMultisig, allocatedBonus);
 
     // Make token transferable
     token.releaseTokenTransfer();
