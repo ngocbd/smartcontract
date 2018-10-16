@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LeeSungCoin at 0x6e5b3dbfb6a85d11e5d0d4a5618c53838da63900
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LeeSungCoin at 0x5f8c69fc7f3b302aad5e84beb6833f60efd361a2
 */
 pragma solidity ^0.4.19;
 
@@ -160,17 +160,18 @@ contract LeeSungCoin is ERC20Token
 {
 	uint constant E18 = 10**18;
 
-  	string public constant name 	= "Lee Sung Coin";
+  	string public constant name 	= "LeeSungCoin";
   	string public constant symbol 	= "LSC";
   	uint public constant decimals 	= 18;
 
 	address public wallet;
 	address public adminWallet;
+	address public IcoContract;
 
-	uint public constant totalCoinCap   = 200000000 * E18;
-	uint public constant icoCoinCap     = 140000000 * E18;
-	uint public constant mktCoinCap     =  60000000 * E18;
-	uint public constant preSaleCoinCap =  48000000 * E18;
+	uint public constant totalCoinCap   = 2000000000 * E18;
+	uint public constant icoCoinCap     = 1400000000 * E18;
+	uint public constant mktCoinCap     =  600000000 * E18;
+	uint public constant preSaleCoinCap =  480000000 * E18;
 
 	uint public coinPerEth = 20000 * E18;
 
@@ -198,12 +199,12 @@ contract LeeSungCoin is ERC20Token
 	uint public constant preSaleMinEth  = 1 ether;
 	uint public constant mainSaleMinEth =  1 ether / 2; // 0.5 Ether
 
+  	uint public priEtherReceived = 0; // Ether actually received by the contract
   	uint public icoEtherReceived = 0; // Ether actually received by the contract
 
     uint public coinIssuedTotal     = 0;
   	uint public coinIssuedIco       = 0;
   	uint public coinIssuedMkt       = 0;
-	uint public coinIssuedPrivate   = 0;
 	
 	uint public coinBurnIco = 0;
 	uint public coinBurnMkt = 0;
@@ -227,6 +228,10 @@ contract LeeSungCoin is ERC20Token
 		require( icoCoinCap + mktCoinCap == totalCoinCap );
 		wallet = owner;
 		adminWallet = owner;
+		
+		IcoContract = 0x6E5B3dBFB6a85D11e5d0d4A5618C53838Da63900;
+		priEtherReceived = 517 ether;
+		icoEtherReceived = 112260255293000000000;
   	}
 
   	function () payable public
@@ -361,30 +366,32 @@ contract LeeSungCoin is ERC20Token
 		
 		coinIssuedMkt   = coinIssuedMkt.add(coins);
 		coinIssuedTotal = coinIssuedTotal.add(coins);
+		tokensIssuedTotal = tokensIssuedTotal.add(coins);
 		
 		coinLocked[_participant] = true;
 		
 		Transfer(0x0, _participant, coins);
 		CoinMinted(_participant, coins, balances[_participant]);
   	}
-
-  	function mintPrivate(address _participant, uint _etherValue) onlyOwner public
-	{
-		uint coins = coinPerEth.mul(_etherValue);
-      	coins = coins.mul(100 + privateSaleBonus) / 100;
-
-		require( coins <= icoCoinCap.sub(coinIssuedIco) );
-		require( atNow() < preSaleFirstStartDate );
-
-		balances[_participant] = balances[_participant].add(coins);
-
-		coinIssuedPrivate   = coinIssuedPrivate.add(coins);
-		coinIssuedIco       = coinIssuedIco.add(coins);
-		coinIssuedTotal     = coinIssuedTotal.add(coins);
-
-		coinLocked[_participant] = true;
-		Transfer(0x0, _participant, coins);
-		CoinMinted(_participant, coins, balances[_participant]);
+  	
+  	function mintIcoTokenMultiple(address[] _addresses, uint[] _amounts) onlyOwner public
+  	{
+		uint coins = 0;
+		
+		for (uint i = 0; i < _addresses.length; i++)
+		{
+		    coins = _amounts[i] * E18;
+		    
+		    balances[_addresses[i]] = balances[_addresses[i]].add(coins);
+    
+		    coinIssuedIco       = coinIssuedIco.add(coins);
+		    coinIssuedTotal     = coinIssuedTotal.add(coins);
+		    tokensIssuedTotal   = tokensIssuedTotal.add(coins);
+    
+		    coinLocked[_addresses[i]] = true;
+		    Transfer(0x0, _addresses[i], coins);
+	        CoinMinted(_addresses[i], coins, balances[_addresses[i]]);
+		}
   	}
   	
   	function ownerWithdraw() external onlyOwner
@@ -465,19 +472,48 @@ contract LeeSungCoin is ERC20Token
         OwnerReclaim(_from, owner, amount);
     }
 
-	function burnCoins(uint _icoAmount, uint _mktAmount) onlyOwner public returns (bool success)
+	function burnIcoCoins() onlyOwner public returns (bool success)
 	{
-	    uint icoCoins = _icoAmount * E18;
-	    uint mktCoins = _mktAmount * E18;
+	    uint coins = 1400000000 * E18;
+	    coins = coins.sub(coinIssuedIco);
 	    
-	    uint totalBurnCoins = 0;
-	    totalBurnCoins = totalBurnCoins.add(icoCoins);
-	    totalBurnCoins = totalBurnCoins.add(mktCoins);
+	    address burner = msg.sender;
 	    
-	    coinBurnIco = coinBurnIco.add(icoCoins);
-	    coinBurnMkt = coinBurnMkt.add(mktCoins);
+		balances[burner] = balances[burner].add(coins);
+		
+		coinIssuedTotal = coinIssuedTotal.add(coins);
+		coinIssuedIco   = coinIssuedIco.add(coins);
+		tokensIssuedTotal = tokensIssuedTotal.add(coins);
+		
+		Transfer(0x0, burner, coins);
+		
+        coinIssuedTotal = coinIssuedTotal.sub(coins);
+        coinIssuedIco = coinIssuedIco.sub(coins);
+        coinBurnIco = coinBurnIco.add(coins);
+		
+		return super.burn(coins);
+	}
+
+	function burnMktCoins() onlyOwner public returns (bool success)
+	{
+	    uint coins = 600000000 * E18;
+	    coins = coins.sub(coinIssuedMkt);
 	    
-		return super.burn(totalBurnCoins);
+	    address burner = msg.sender;
+	    
+		balances[burner] = balances[burner].add(coins);
+		
+		coinIssuedTotal = coinIssuedTotal.add(coins);
+		coinIssuedIco   = coinIssuedIco.add(coins);
+		tokensIssuedTotal = tokensIssuedTotal.add(coins);
+		
+		Transfer(0x0, burner, coins);
+		
+        coinIssuedTotal = coinIssuedTotal.sub(coins);
+        coinIssuedMkt = coinIssuedMkt.sub(coins);
+        coinBurnMkt = coinBurnMkt.add(coins);
+		
+		return super.burn(coins);
 	}
 
 }
