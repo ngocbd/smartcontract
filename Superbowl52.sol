@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Superbowl52 at 0xa4ec44afee34feffbae5ce4218d3c06ebd70455e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Superbowl52 at 0x0c3dfe0a6940b2aa81d81418776012d7385c521e
 */
 pragma solidity ^0.4.18;
 
@@ -49,10 +49,6 @@ library SafeMath {
   }
 }
 
-// Contract written by MaximeHg
-// https://github.com/MaximeHg/sb52-contracts
-// Special thanks to moodysalem and its ethersquares contracts for the inspiration!
-// https://github.com/ethersquares/ethersquares-contracts
 
 contract BallotSB52 {
   using SafeMath for uint;
@@ -108,12 +104,7 @@ contract BallotSB52 {
   function closeBallot() public returns (uint) {
     require(!closed);
     require(now > votingEnd);
-    if((phiWon.mul(100000).div(totalVoters) == neWon.mul(100000).div(totalVoters)) && (threshold == 50000)) {
-      validResult = 9;
-      closed = true;
-      tie = true;
-      return validResult;
-    } else if(phiWon.mul(100000).div(totalVoters) >= threshold) {
+    if(phiWon.mul(100000).div(totalVoters) >= threshold) {
       validResult = 1;
       votingReward = bettingContract.getLosersOnePercent(2);
       majorityReward = (neWon * 50 finney).add(votingReward).div(phiWon);
@@ -155,11 +146,6 @@ contract BallotSB52 {
 
   function () public payable {}
 }
-
-// Contract written by MaximeHg
-// https://github.com/MaximeHg/sb52-contracts
-// Special thanks to moodysalem and its ethersquares contracts for the inspiration!
-// https://github.com/ethersquares/ethersquares-contracts
 
 contract Superbowl52 {
   using SafeMath for uint;
@@ -233,6 +219,7 @@ contract Superbowl52 {
   }
 
   function startVoting() public {
+    require(msg.sender == owner);
     require(votingOpen == false);
     require(withdrawalOpen == false);
     require(now >= GAME_START_TIME + 8 hours);
@@ -249,11 +236,8 @@ contract Superbowl52 {
     result = ballot.closeBallot();
     // ballot ends with success
     if (result == 1 || result == 2) {
-      withdrawalOpen = true;
-      votingOpen = false;
-    } else if (result == 9) {
-      votingOpen = false;
-      withdrawalOpen = false;
+        withdrawalOpen = true;
+        votingOpen = false;
     } else {
       threshold = threshold - 5000;
       ballot = new BallotSB52(threshold);
@@ -278,27 +262,18 @@ contract Superbowl52 {
     }
   }
 
-  // triggered only if tie in the final ballot
-  function breakTie(uint team) {
-    require(result == 9);
-    require(msg.sender == owner);
-    result = team;
-    withdrawalOpen = true;
-  }
-
-  function getWinnings(uint donation) public {
+  function getWinnings(address winner, uint donation) public {
     require(donation<=100);
     require(withdrawalOpen);
-    require(bets[msg.sender].claimed == false);
+    require(bets[winner].claimed == false);
     uint winnings = 0;
-    if (result == 1) winnings = (getPhiladelphiaBets(msg.sender).mul(winningPot)).div(philadelphiaBets);
-    else if (result == 2) winnings = (getNewEnglandBets(msg.sender).mul(winningPot)).div(newEnglandBets);
+    if (result == 1) winnings = (getPhiladelphiaBets(winner).mul(winningPot)).div(philadelphiaBets);
+    else if (result == 2) winnings = (getNewEnglandBets(winner).mul(winningPot)).div(newEnglandBets);
     else revert();
-    wins[msg.sender] = winnings;
+    wins[winner] = winnings;
     uint donated = winnings.mul(donation).div(100);
-    bets[msg.sender].claimed = true;
-    owner.transfer(donated);
-    msg.sender.transfer(winnings-donated);
+    bets[winner].claimed = true;
+    winner.transfer(winnings-donated);
   }
 
 }
