@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MDPToken at 0x01617196358c14628d032f9c5f7188f2fbcafd78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MDPToken at 0x3cfc5c7fa8db91de8efd633998097f8e96eff043
 */
+// 0.4.18+commit.9cf6e910.Emscripten.clang
 pragma solidity ^0.4.4;
 
 contract Token {
@@ -119,9 +120,9 @@ contract MDPToken is StandardToken {
 
     function MDPToken(
         ) {
-        balances[msg.sender] = 660000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 660000000000000;                        // Update total supply (100000 for example)
-        name = "MDP Token";                                   // Set the name for display purposes
+        totalSupply = 6600000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = totalSupply;                    // Give the creator all initial tokens (100000 for example)
+		name = "MDP Token";                                   // Set the name for display purposes
         decimals = 7;                            // Amount of decimals for display purposes
         symbol = "MDP";                               // Set the symbol for display purposes
     }
