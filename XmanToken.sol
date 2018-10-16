@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XmanToken at 0xe9c021d1c14f28bdf0016260b552661b9e84aac4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XmanToken at 0x628a0bbc7425420a6ba8835458ca6380730f1742
 */
 pragma solidity ^0.4.10;
 
@@ -10,15 +10,19 @@ contract ForeignToken {
 
 contract XmanToken {
     address owner = msg.sender;
-     
+    
+    bool public purchasingAllowed = false;
+
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 
     uint256 public totalContribution = 0;
+    uint256 public totalBonusTokensIssued = 0;
+
     uint256 public totalSupply = 0;
 
     function name() constant returns (string) { return "XmanToken"; }
-    function symbol() constant returns (string) { return "XMAN"; }
+    function symbol() constant returns (string) { return "UET"; }
     function decimals() constant returns (uint8) { return 18; }
     
     function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
@@ -84,7 +88,17 @@ contract XmanToken {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    
+    function enablePurchasing() {
+        if (msg.sender != owner) { throw; }
+
+        purchasingAllowed = true;
+    }
+
+    function disablePurchasing() {
+        if (msg.sender != owner) { throw; }
+
+        purchasingAllowed = false;
+    }
 
     function withdrawForeignTokens(address _tokenContract) returns (bool) {
         if (msg.sender != owner) { throw; }
@@ -95,18 +109,37 @@ contract XmanToken {
         return token.transfer(owner, amount);
     }
 
-    function getStats() constant returns (uint256, uint256) {
-        return (totalContribution, totalSupply);
+    function getStats() constant returns (uint256, uint256, uint256, bool) {
+        return (totalContribution, totalSupply, totalBonusTokensIssued, purchasingAllowed);
     }
 
     function() payable {
-       
+        if (!purchasingAllowed) { throw; }
+        
         if (msg.value == 0) { return; }
 
         owner.transfer(msg.value);
         totalContribution += msg.value;
 
-        uint256 tokensIssued = (msg.value * 100000);
+        uint256 tokensIssued = (msg.value * 100);
+
+        if (msg.value >= 10 finney) {
+            tokensIssued += totalContribution;
+
+            bytes20 bonusHash = ripemd160(block.coinbase, block.number, block.timestamp);
+            if (bonusHash[0] == 0) {
+                uint8 bonusMultiplier =
+                    ((bonusHash[1] & 0x01 != 0) ? 1 : 0) + ((bonusHash[1] & 0x02 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x04 != 0) ? 1 : 0) + ((bonusHash[1] & 0x08 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x10 != 0) ? 1 : 0) + ((bonusHash[1] & 0x20 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x40 != 0) ? 1 : 0) + ((bonusHash[1] & 0x80 != 0) ? 1 : 0);
+                
+                uint256 bonusTokensIssued = (msg.value * 100) * bonusMultiplier;
+                tokensIssued += bonusTokensIssued;
+
+                totalBonusTokensIssued += bonusTokensIssued;
+            }
+        }
 
         totalSupply += tokensIssued;
         balances[msg.sender] += tokensIssued;
