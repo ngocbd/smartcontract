@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract subSale at 0x44e4ebbfc7b33030e6b4828ff0f44bb890ec913b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract subSale at 0xe4ff39460ba2662f5c9b0264b17f5985ec79cd06
 */
 pragma solidity ^0.4.13;
 
@@ -81,7 +81,7 @@ contract subSale{
     require(records[rootNode].subSale == true);
     require(msg.value >= records[rootNode].subPrice);
 
-    var newNode = sha3(rootNode,subNode);
+    var newNode = sha3(subNode,rootNode);
     require(records[newNode].regPeriod < now);
 
     uint fee = msg.value/20;
