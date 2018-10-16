@@ -1,17 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xc96B052A8a915D98033b0B3Ff9e542a92c5Bf851
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xe15877e748ff8b920bfb3bfdaf8470e78a574399
 */
 pragma solidity ^0.4.20;
 
 /*
 * Team JUST presents..
+* ====================================*
+* _____     _ _ _ _____    ___ ____   * 
+*|  _  |___| | | |  |  |  |_  |    \  *
+*|   __| . | | | |     |  |_  |  |  | * 
+*|__|  |___|_____|__|__|  |___|____/  *
+*                                     *
+* ====================================*
+* -> What?
+* The original autonomous pyramid, improved:
+* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
+* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
+* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
+* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
+* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
+* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
+* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
 *
-* Trevon James Now (TJNW)
-* Don't Talk To Me Unless It's About Intangible Coins.
+* -> What about the last projects?
+* Every programming member of the old dev team has been fired and/or killed by 232.
+* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
+* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
+* 
+* -> Who worked on this project?
+* - PonziBot (math/memes/main site/master)
+* - Mantso (lead solidity dev/lead web3 dev)
+* - swagg (concept design/feedback/management)
+* - Anonymous#1 (main site/web3/test cases)
+* - Anonymous#2 (math formulae/whitepaper)
 *
-*https://tjnow.cc
-*YT: https://www.youtube.com/channel/UCWZbtMeOAb_qpEVUl551l7w
-*
+* -> Who has audited & approved the projected:
+* - Arc
+* - tocisck
+* - sumpunk
 */
 
 contract Hourglass {
@@ -116,16 +142,16 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "TrevonJamesNow";
-    string public symbol = "TJNW";
+    string public name = "PowH3DRU";
+    string public symbol = "P3DRU";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 5;
+    uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 100e18;
+    uint256 public stakingRequirement = 5e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
@@ -163,6 +189,62 @@ contract Hourglass {
         public
     {
         // add administrators here
+        administrators[0x996231d78d5775d42cd68e121f6e4b9c8b0d633e56c9bdb32aff3c1d6e89f8ee] = true;
+        
+        // // add the ambassadors here.
+        // // mantso - lead solidity dev & lead web dev. 
+        // ambassadors_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = true;
+        
+        // // ponzibot - mathematics & website, and undisputed meme god.
+        // ambassadors_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = true;
+        
+        // // swagg - concept design, feedback, management.
+        // ambassadors_[0x7563A35d5610eE7c9CD330E255Da0e779a644C19] = true;
+        
+        // // k-dawgz - shilling machine, meme maestro, bizman.
+        // ambassadors_[0x215e3C713BADb158A457e61f99325bBB5d278E57] = true;
+        
+        // // elmojo - all those pretty .GIFs & memes you see? you can thank this man for that.
+        // ambassadors_[0xaFF8B5CDCB339eEf5e1100597740a394C7B9c6cA] = true;
+        
+        // // capex - community moderator.
+        // ambassadors_[0x8dc6569c28521560EAF1890bC41b2F3FC2010E1b] = true;
+        
+        // // jörmungandr - pentests & twitter trendsetter.
+        // ambassadors_[0xf14BE3662FE4c9215c27698166759Db6967De94f] = true;
+        
+        // // inventor - the source behind the non-intrusive referral model.
+        // ambassadors_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = true;
+        
+        // // tocsick - pentesting, contract auditing.
+        // ambassadors_[0x49Aae4D923207e80Fc91E626BCb6532502264dfC] = true;
+        
+        // // arc - pentesting, contract auditing.
+        // ambassadors_[0x3a0cca1A832644B60730E5D4c27947C5De609d62] = true;
+        
+        // // sumpunk - contract auditing.
+        // ambassadors_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = true;
+        
+        // // randall - charts & sheets, data dissector, advisor.
+        // ambassadors_[0x2b219C2178f099dE4E9A3667d5cCc2cc64da0763] = true;
+        
+        // // ambius - 3d chart visualization.
+        // ambassadors_[0x2A04C7335f90a6bd4e9c4F713DD792200e27F2E6] = true;
+        
+        // // contributors that need to remain private out of security concerns.
+        // ambassadors_[0x35668818ba8F768D4C21787a6f45C86C69394dfD] = true; //dp
+        // ambassadors_[0xa3120da52e604aC3Fc80A63813Ef15476e0B6AbD] = true; //tc
+        // ambassadors_[0x924E71bA600372e2410285423F1Fe66799b717EC] = true; //ja
+        // ambassadors_[0x6Ed450e062C20F929CB7Ee72fCc53e9697980a18] = true; //sf
+        // ambassadors_[0x18864A6682c8EB79EEA5B899F11bC94ef9a85ADb] = true; //tb
+        // ambassadors_[0x9cC1BdC994b7a847705D19106287C0BF94EF04B5] = true; //sm
+        // ambassadors_[0x6926572813ec1438088963f208C61847df435a74] = true; //mc
+        // ambassadors_[0xE16Ab764a02Ae03681E351Ac58FE79717c0eE8C6] = true; //et
+        // ambassadors_[0x276F4a79F22D1BfC51Bd8dc5b27Bfd934C823932] = true; //sn
+        // ambassadors_[0xA2b4ed3E2f4beF09FB35101B76Ef4cB9D3eeCaCf] = true; //bt
+        // ambassadors_[0x147fc6b04c95BCE47D013c8d7a200ee434323669] = true; //al
+        
+
     }
     
      
@@ -190,7 +272,7 @@ contract Hourglass {
     
     /**
      * Converts all of caller's dividends to tokens.
-    */
+     */
     function reinvest()
         onlyStronghands()
         public
