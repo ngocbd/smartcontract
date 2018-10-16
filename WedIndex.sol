@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WedIndex at 0x84d9ec85c9c568eb332b7226a8f826d897e0a4a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WedIndex at 0xed2192afa8c062dfd6883759380b7f2d1dc6c0c0
 */
 pragma solidity ^0.4.16;
 
@@ -73,11 +73,6 @@ contract WedIndex is Owned {
         uint weddingdate;
         uint displaymultisig;
     }
-    
-    function numberOfIndex() constant public returns (uint) {
-        return indexarray.length;
-    }
-
 
     // make functions to write and read index entries and nubmer of entries
     function writeIndex(uint indexdate, string wedaddress, string partnernames, uint weddingdate, uint displaymultisig) {
