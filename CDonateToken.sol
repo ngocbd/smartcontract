@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CDonateToken at 0x7d176a3f8b4ac56fac1a610ad7e9e4fc263f0e5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CDonateToken at 0xf3be7d32621ddbe5ef8abfe7accbe769725cc2fe
 */
 pragma solidity ^0.4.16;
 
