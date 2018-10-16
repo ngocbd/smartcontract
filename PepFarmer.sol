@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0x2bac2b3245ca05b9e9cd319fa0f96418472ad7d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0xe6d152f30640b364c82c88f1c91bec5bb8934ec1
 */
 pragma solidity ^0.4.18;
 
@@ -62,7 +62,6 @@ contract PepFarmer {
     
     address public shop = 0x912D92502De8EC2B4057F7F3b39bB67B0418192b;
     address public object = 0xaC21cCcDE31280257784f02f7201465754E96B0b;
-    address public taxMan = 0xd5048F05Ed7185821C999e3e077A3d1baed0952c;
     
     mapping(address => uint256) public workDone;
     
@@ -78,15 +77,12 @@ contract PepFarmer {
             CornFarm(shop).buyObject(this);
         }
         
-        workDone[msg.sender] = workDone[msg.sender].add(uint256(95 ether));
-        workDone[taxMan] = workDone[taxMan].add(uint256(5 ether));
+        workDone[msg.sender] = workDone[msg.sender].add(uint256(100 ether));
     }
     
     function reapFarm() nonReentrant external {
         require(workDone[msg.sender] > 0);
         Corn(object).transfer(msg.sender, workDone[msg.sender]);
-        Corn(object).transfer(taxMan, workDone[taxMan]);
         workDone[msg.sender] = 0;
-        workDone[taxMan] = 0;
     }
 }
