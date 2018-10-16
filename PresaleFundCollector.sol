@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x9259b4e90c5980ad2cb16d685254c859f5eddde5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x2d3a6cf3172f967834b59709a12d8b415465bb4c
 */
 /**
  * Safe unsigned safe math.
