@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoggyEthPics at 0x1dcadad44aa14154e2393d83edf6c7c6f83cb795
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoggyEthPics at 0x57b9348158389befa686c2b8cdc6c9b7bcb09a04
 */
 pragma solidity ^0.4.19;
 
@@ -335,7 +335,7 @@ contract DoggyEthPics is ERC721, Ownable {
     doggyIdToPrice[newDoggyId] = _price;
 	
 	if (newDoggyId<3) //migration
-		doggyIdToDivs[newDoggyId] = address(this); //dividents address;
+		doggyIdToDivs[newDoggyId] = 0xa828476505d3b4db07aca0b69726eca39e5dea50; //dividents address;
 	else 
 		doggyIdToDivs[newDoggyId] = _owner; //dividents address;
 
