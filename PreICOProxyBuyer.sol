@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0xfc5ecc864a5f3ebbc0d63f4c4a968cab99a6c580
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x41c4413c7a2dcaa95b5e3441d8401f13e24d337c
 */
 /**
  * Safe unsigned safe math.
@@ -713,13 +713,7 @@ contract SafeMath {
  */
 contract StandardToken is ERC20, SafeMath {
 
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
-
-  /* Actual balances of token holders */
   mapping(address => uint) balances;
-
-  /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
   /**
@@ -743,7 +737,7 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
+    var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
     // if (_value > _allowance) throw;
@@ -787,7 +781,6 @@ contract StandardToken is ERC20, SafeMath {
   returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
       allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
 
@@ -807,7 +800,6 @@ contract StandardToken is ERC20, SafeMath {
       } else {
           allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
       }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
 
