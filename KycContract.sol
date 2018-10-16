@@ -1,19 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KycContract at 0x2f0a1bd676e786f9dd5543697341e717a4af61c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KycContract at 0xBD791314F50c8854866ce4DB764b3031d7a9A68E
 */
-contract ERC20TokenInterface {
-  function totalSupply() public constant returns (uint256 _totalSupply);
-  function balanceOf(address _owner) public constant returns (uint256 balance);
-  function transfer(address _to, uint256 _value) public returns (bool success);
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-  function approve(address _spender, uint256 _value) public returns (bool success);
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-
 contract Owned {
     address public owner;
     address public newOwner;
@@ -40,6 +27,19 @@ contract Owned {
     }
 
     event OwnerUpdate(address _prevOwner, address _newOwner);
+}
+
+
+contract ERC20TokenInterface {
+  function totalSupply() public constant returns (uint256 _totalSupply);
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) public returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+  function approve(address _spender, uint256 _value) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 
