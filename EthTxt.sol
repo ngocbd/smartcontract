@@ -1,57 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTxt at 0xe826783d800174bb643f091f599271eead159ba0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTxt at 0xbb06f9cc9d19f13a9deaf2bcc3c5ab893c982a51
 */
 pragma solidity ^0.4.18;
-
-contract EthTxt {
-
-  event NewText(string text, string code, address indexed submitter, uint timestamp);
-
-  struct StoredText {
-      string text;
-      address submitter;
-      uint timestamp;
-  }
-
-  uint storedTextCount = 0;
-
-  // change this to 0 for testnet / ropsten
-  uint blockoffset = 4000000;
-
-  mapping (string => StoredText) texts;
-
-  function archiveText(string _text) public {
-    // make sure _text is not an empty string
-    require(bytes(_text).length != 0);
-
-    var code = _generateShortLink();
-    // make sure code doesnt exist in map
-    require(bytes(getText(code)).length == 0);
-
-    // add text to map
-    texts[code] = StoredText(_text, msg.sender, now);
-    NewText(_text, code, msg.sender, now);
-    storedTextCount = storedTextCount + 1;
-  }
-
-  function getText(string _code) public view returns (string) {
-    return texts[_code].text;
-  }
-
-  function getTextCount() public view returns (uint) {
-    return storedTextCount;
-  }
-
-  // Generates a shortlink code
-  function _generateShortLink() private view returns (string) {
-      var s1 = strUtils.toBase58(uint256(msg.sender), 2);
-      var s2 = strUtils.toBase58(block.number - blockoffset, 11);
-
-      var s = strUtils.concat(s1, s2);
-      return s;
-  }
-
-}
 
 library strUtils {
     /* Converts given number to base58, limited by _maxLength symbols */
@@ -102,5 +52,60 @@ library strUtils {
 
         return string(bs3);
     }
+
+}
+
+contract EthTxt {
+
+  event NewText(string text, string code, address submitter, uint timestamp);
+
+  struct StoredText {
+      string text;
+      address submitter;
+      uint timestamp;
+  }
+
+  uint storedTextCount = 0;
+
+  // change this to 0 for testnet / ropsten
+  uint blockoffset = 4000000;
+
+  mapping (string => StoredText) texts;
+
+  // this is the constructor
+  function EthTxt() public {
+      // do nothing here
+  }
+
+  function archiveText(string _text) public {
+    // make sure _text is not an empty string
+    require(bytes(_text).length != 0);
+
+    var code = _generateShortLink();
+    // make sure code doesnt exist in map
+    require(bytes(getText(code)).length == 0);
+
+    // add text to map
+    texts[code] = StoredText(_text, msg.sender, now);
+    NewText(_text, code, msg.sender, now);
+    storedTextCount = storedTextCount + 1;
+  }
+
+  function getText(string _code) public view returns (string) {
+    return texts[_code].text;
+  }
+
+  function getTextCount() public view returns (uint) {
+    return storedTextCount;
+  }
+
+  // Generates a shortlink code
+  function _generateShortLink() private view returns (string) {
+      var s1 = strUtils.toBase58(uint256(msg.sender), 2);
+      var s2 = strUtils.toBase58(block.number - blockoffset, 11);
+
+      var s = strUtils.concat(s1, s2);
+      return s;
+  }
 
 }
