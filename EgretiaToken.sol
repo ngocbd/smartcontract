@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EgretiaToken at 0xe93c09f10130fce9f0e35ef9d0deb023e0d58cef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EgretiaToken at 0x8e1b448ec7adfc7fa35fc2e885678bd323176e34
 */
 pragma solidity ^0.4.23;
 
@@ -43,7 +43,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Contract() public {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -63,7 +63,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -97,7 +97,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    emit Pause();
+    Pause();
   }
 
   /**
@@ -105,7 +105,7 @@ contract Pausable is Ownable {
    */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    emit Unpause();
+    Unpause();
   }
 }
 
@@ -140,7 +140,7 @@ contract BasicToken is ERC20Basic {
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -174,7 +174,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
+    Transfer(_from, _to, _value);
     return true;
   }
 
@@ -190,7 +190,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
+    Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -216,7 +216,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -237,7 +237,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -272,7 +272,7 @@ contract EgretiaToken is PausableToken {
     uint public decimals = 18;
     uint public INITIAL_SUPPLY = 8000000000000000000000000000;
 
-    function Constructor() public {
+    function EgretiaToken() public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
     }
