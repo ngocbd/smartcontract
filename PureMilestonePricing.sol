@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PureMilestonePricing at 0x403d41f55cbac0375a7c90f7aba5ed2122d2087d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PureMilestonePricing at 0x88a584ae823fbcdc900a8f8bb1fb8c491087a633
 */
 /**
- * This smart contract is modified 2017 by 4new.co.uk to change milestone pricing suitable for 4NEW token's
- * requirements, where we do not allow any pre-ico addresses to participate in token sales. calculatePrice
- * function is also updated and corrected.
+ * This smart contract is modified 2017 by 4new.co.uk to change milestone pricing suitable for FRNCoin's
+ * requirements, where we do not allow any pre-ico addresses to participate in token sales.
  *
  * Licensed under the Apache License, version 2.0
  */
@@ -810,8 +809,7 @@ contract PureMilestonePricing is PricingStrategy, Ownable {
 
   // Store milestones in a fixed array, so that it can be seen in a blockchain explorer
   // Milestone 0 is always (0, 0)
-  // (TODO: change this when we confirm dynamic arrays are explorable)
-  Milestone[10] public milestones;
+  Milestone[5] public milestones;
 
   // How many active milestones we have
   uint public milestoneCount;
@@ -820,7 +818,7 @@ contract PureMilestonePricing is PricingStrategy, Ownable {
   /// @param _milestones uint[] milestones Pairs of (time, price)
   function PureMilestonePricing(uint[] _milestones) {
     // Need to have tuples, length check
-    require((_milestones.length % 2 == 0) && (_milestones.length < MAX_MILESTONE*2));
+    require((_milestones.length % 2 == 0) && (_milestones.length <= MAX_MILESTONE*2));
 
     milestoneCount = _milestones.length / 2;
 
@@ -896,5 +894,4 @@ contract PureMilestonePricing is PricingStrategy, Ownable {
   function() payable {
     require(false); // No money on this contract
   }
-
 }
