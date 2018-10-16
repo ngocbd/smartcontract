@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTCToken at 0xdb75bfc1ad984c5ceefa8ec6394596e20d789034
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTCToken at 0xc9906549d5f31b6c6a920441e4c2c33eedce97ab
 */
 pragma solidity ^0.4.13;
 
@@ -326,7 +326,7 @@ contract PausableToken is StandardToken, Pausable {
 
 contract RTCToken is PausableToken {
 
-    string public constant name = "RentyCoin";
+    string public constant name = "Rentything";
     string public constant symbol = "RTC";
     uint public constant decimals = 18;
 
