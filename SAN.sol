@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAN at 0x678aa5979b5a0e5b8e2fd5ab400a64616bc78aa3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAN at 0xc1cf225f89d47380a017da7f7d7fd8adf4b10bb7
 */
 pragma solidity ^0.4.11;
 
@@ -147,10 +147,10 @@ contract SubscriptionModule {
 contract SAN is Owned, ERC20 {
 
     string public constant name     = "SANtiment TEST token";
-    string public constant symbol   = "SAN.TEST.ET.1";
+    string public constant symbol   = "SAN.TEST.MAX.3";
     uint8  public constant decimals = 15;
 
-    address CROWDSALE_MINTER = 0xA643A2272B6170994872BB24759F4d928631d940;
+    address CROWDSALE_MINTER = 0xe86b6cD49Bcf43F94E3566CfAF5e0d136e3cF8fD;
     address public SUBSCRIPTION_MODULE = 0x00000000;
     address public beneficiary;
 
