@@ -1,21 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntegrativeWalletToken at 0xa7edeba1e5cf1d3a17d67ed590292ce7bb9e6cd8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntegrativeWalletToken at 0x77faed976e187f26b49e78be8418ab074a341f26
 */
 pragma solidity ^0.4.11;
 
-// ----------------------------------------------------------------------------
-// Integrative Wallet Token Crowdsale
-// Iwtoken.com
-// Taking ideas from @BokkyPooBah 
-// Developer from @Adatum
-// ----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
+    // Integrative Wallet Token & Crowdsale
+    // Iwtoken.com
+    // Developer from @Adatum
+    // Taking ideas from @BokkyPooBah 
+    // ----------------------------------------------------------------------------
+    
 
-/* Integrative Wallet Token */
-/* Integrative Wallet Token */
-
-// ----------------------------------------------------------------------------
-// Safe maths, borrowed from OpenZeppelin
-// ----------------------------------------------------------------------------
+     // ----------------------------------------------------------------------------
+     // Safe maths, borrowed from OpenZeppelin
+    // ----------------------------------------------------------------------------
 library SafeMath {
 
     // ------------------------------------------------------------------------
@@ -77,7 +75,7 @@ contract ERC20Token is Owned {
     // ------------------------------------------------------------------------
     // Total Supply
     // ------------------------------------------------------------------------
-    uint256 _totalSupply = 100000000;
+    uint256 _totalSupply = 100000000.000000000000000000;
 
     // ------------------------------------------------------------------------
     // Balances for each account
@@ -182,39 +180,37 @@ contract IntegrativeWalletToken is ERC20Token {
     // Token information
     // ------------------------------------------------------------------------
     string public constant symbol = "IWT";
-    string public constant name = "Integrative Wallet";
-    uint8 public constant decimals = 18;
+    string public constant name = "Integrative Wallet Token";
+    uint256 public constant decimals = 18;
+    uint256 public constant IWTfund = 55 * (10**6) * 10**decimals;   // 55m reserved for foundation and expenses.
 
-    // Do not use `now` here
-    uint256 public STARTDATE;
-    uint256 public ENDDATE;
+    // Initial date 2017-08-31 : 13 00 hs UTC
+    uint256 public constant STARTDATE = 1504184400;
+    uint256 public constant ENDDATE = STARTDATE + 28 days;
 
-    // @ 12.500.000 USD / 261.1470 ETH/USD or 50.000 ETH 
-	// Total CAP USD required 12.5 / 13 M Approximate  
-    uint256 public CAP;
+    // Cap USD 12.5 mil @ 196.88 ETH/USD -> 12.5m / 196.88 -> 63490 -> 63500
+    uint256 public constant CAP = 63500 ether;
 
     // Cannot have a constant address here - Solidity bug
-    // https://github.com/ethereum/solidity/issues/2441
-    address public multisig;
+    address public multisig = 0xf82D89f274e2C5FE9FD3202C5426ABE47D2099Cd;
+    address public iwtfundtokens = 0x1E408cE343F4a392B430dFC5E3e2fE3B6a9Cc580;
 
-    function IntegrativeWalletToken(uint256 _start, uint256 _end, uint256 _cap, address _multisig) {
-        STARTDATE = _start;
-        ENDDATE   = _end;
-        CAP       = _cap;
-        multisig  = _multisig;
-    }
-
-    // > new Date("2017-06-29T13:00:00").getTime()/1000
-    // 1498741200
 
     uint256 public totalEthers;
 
+    function IntegrativeWalletToken() {
+		
+	  balances[iwtfundtokens] = IWTfund;   // 55m IWT reserved for use Fundation
+
+    }
+
+  
     // ------------------------------------------------------------------------
     // Tokens per ETH
-    // Day  1    : 1,200 IWT = 1 Ether
-    // Days 2–14 : 1,000 IWT = 1 Ether
-    // Days 15–17: 800 IWT = 1 Ether
-    // Days 18–27: 600 IWT = 1 Ether
+    // Day  1-7  : 1,200 IWT = 1 Ether
+    // Days 8–14 : 1,000 IWT = 1 Ether
+    // Days 15–21: 800   IWT = 1 Ether
+    // Days 22–27: 600   IWT = 1 Ether
     // ------------------------------------------------------------------------
 	
     function buyPrice() constant returns (uint256) {
@@ -226,11 +222,11 @@ contract IntegrativeWalletToken is ERC20Token {
             return 0;
         } else if (at < (STARTDATE + 1 days)) {
             return 1200;
-        } else if (at < (STARTDATE + 15 days)) {
+        } else if (at < (STARTDATE + 8 days)) {
             return 1000;
-        } else if (at < (STARTDATE + 18 days)) {
+        } else if (at < (STARTDATE + 15 days)) {
             return 800;
-        } else if (at < (STARTDATE + 24 days)) {
+        } else if (at < (STARTDATE + 22 days)) {
             return 600;
         } else if (at <= ENDDATE) {
             return 600;
@@ -247,10 +243,6 @@ contract IntegrativeWalletToken is ERC20Token {
         proxyPayment(msg.sender);
     }
 
-
-    // ------------------------------------------------------------------------
-    // Exchanges can buy on behalf of participant
-    // ------------------------------------------------------------------------
     function proxyPayment(address participant) payable {
         // No contributions before the start of the crowdsale
         require(now >= STARTDATE);
@@ -264,46 +256,32 @@ contract IntegrativeWalletToken is ERC20Token {
         // Cannot exceed cap
         require(totalEthers <= CAP);
 
-        // What is the BET to ETH rate
+        // What is the IWT to ETH rate
         uint256 _buyPrice = buyPrice();
 
-        // Calculate #BET - this is safe as _buyPrice is known
+        // Calculate #IWT - this is safe as _buyPrice is known
         // and msg.value is restricted to valid values
         uint tokens = msg.value * _buyPrice;
 
         // Check tokens > 0
         require(tokens > 0);
-        // Compute tokens for foundation & bounties 55%
-        // Number of tokens restricted so maths is safe
-        uint multisigTokens = tokens * 55 / 100;
+   
 
-        // Add to total supply
-        //_totalSupply = _totalSupply.add(tokens);
-        //_totalSupply = _totalSupply.add(multisigTokens);
-        // Not used -> total supply on 100.000.000
-		
         // Add to balances
         balances[participant] = balances[participant].add(tokens);
-        balances[multisig] = balances[multisig].add(multisigTokens);
 
         // Log events
-        TokensBought(participant, msg.value, totalEthers, tokens,
-            multisigTokens, _totalSupply, _buyPrice);
+        TokensBought(participant, msg.value, totalEthers, tokens, _totalSupply, _buyPrice);
         Transfer(0x0, participant, tokens);
-        Transfer(0x0, multisig, multisigTokens);
 
         // Move the funds to a safe wallet
         multisig.transfer(msg.value);
     }
     event TokensBought(address indexed buyer, uint256 ethers, 
-        uint256 newEtherBalance, uint256 tokens, uint256 multisigTokens, 
+        uint256 newEtherBalance, uint256 tokens, 
         uint256 newTotalSupply, uint256 buyPrice);
 
 
-    // ------------------------------------------------------------------------
-    // Owner to add precommitment funding token balance before the crowdsale
-    // commences
-    // ------------------------------------------------------------------------
     function addPrecommitment(address participant, uint balance) onlyOwner {
         require(now < STARTDATE);
         require(balance > 0);
@@ -313,10 +291,6 @@ contract IntegrativeWalletToken is ERC20Token {
     }
 
 
-    // ------------------------------------------------------------------------
-    // Transfer the balance from owner's account to another account, with a
-    // check that the crowdsale is finalised
-    // ------------------------------------------------------------------------
     function transfer(address _to, uint _amount) returns (bool success) {
         // Cannot transfer before crowdsale ends or cap reached
         require(now > ENDDATE || totalEthers == CAP);
@@ -324,12 +298,6 @@ contract IntegrativeWalletToken is ERC20Token {
         return super.transfer(_to, _amount);
     }
 
-
-    // ------------------------------------------------------------------------
-    // Spender of tokens transfer an amount of tokens from the token owner's
-    // balance to another account, with a check that the crowdsale is
-    // finalised
-    // ------------------------------------------------------------------------
     function transferFrom(address _from, address _to, uint _amount) 
         returns (bool success)
     {
@@ -340,12 +308,18 @@ contract IntegrativeWalletToken is ERC20Token {
     }
 
 
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens
-    // ------------------------------------------------------------------------
     function transferAnyERC20Token(address tokenAddress, uint amount)
       onlyOwner returns (bool success) 
     {
         return ERC20Token(tokenAddress).transfer(owner, amount);
     }
+    
+    // ----------------------------------------------------------------------------
+    // Integrative Wallet Token & Crowdsale
+    // Iwtoken.com
+    // Developer from @Adatum
+    // Taking ideas from @BokkyPooBah 
+    // ----------------------------------------------------------------------------
+    
+    
 }
