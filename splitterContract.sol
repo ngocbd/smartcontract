@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract splitterContract at 0xce77769628eb122f299e2d07479119b3f751912c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract splitterContract at 0xda59ab6e4b9d9fb867b8a952f455c77ad92afa8e
 */
 pragma solidity ^0.4.11;
 
@@ -31,6 +31,7 @@ contract Ownable {
   }
 
 }
+
 
 contract splitterContract is Ownable{
 
