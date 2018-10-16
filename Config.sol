@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0x87d507e8758f86ce27d04ec4acfbf7a45426984b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0x462ae7f2ff2e072daf59d23fb858fa23aae524bd
 */
 pragma solidity ^0.4.20;
 
@@ -296,6 +296,17 @@ contract Config is Ownable, ConfigInterface
     {
         uint16 momGen = coreContract.getGeneration(_momId);
         uint16 dadGen = coreContract.getGeneration(_dadId);
-        return 500 szabo*(momGen + dadGen + 10)/2;
+
+        if (momGen == 0 && dadGen == 0)
+        {
+            uint16 momIndex = coreContract.getCooldownIndex(_momId);
+            uint16 dadIndex = coreContract.getCooldownIndex(_dadId);
+            uint16 sum = momIndex + dadIndex;
+            return 1 finney + 3 szabo*sum*sum;
+        }
+        else
+        {
+            return 500 szabo*(momGen + dadGen + 10)/2;
+        }
     }
 }
