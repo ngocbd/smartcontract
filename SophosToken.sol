@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SophosToken at 0x82f23a7dc57790600850d036968d90266fd72fa8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SophosToken at 0x9572b8c17fd8288c9e07fe65d37f554be350f114
 */
 pragma solidity ^0.4.21;
 
@@ -188,7 +188,7 @@ contract SophosToken is StandardToken {
     string public name = "Sophos";
     string public symbol = "SOPH";
     uint public decimals = 8 ;
-    uint public INITIAL_SUPPLY = 3000000000000000; // Initial supply is 30,000,000
+    uint public INITIAL_SUPPLY = 3 * (10 ** 7); // Initial supply is 30,000,000
 
     function SophosToken() {
         totalSupply = INITIAL_SUPPLY;
