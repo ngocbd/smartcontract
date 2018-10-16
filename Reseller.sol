@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reseller at 0xc377b44fa203c7aa62c510f022f253b2e3b5258c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reseller at 0x5adce2c8e78ca9102af302eab5937f7cefb0a266
 */
 pragma solidity ^0.4.11;
 
@@ -9,7 +9,7 @@ Status Reseller
 ========================
 
 Resells Status tokens from the crowdsale before transfers are enabled.
-Original Author: /u/Cintix
+Author: /u/Cintix
 
 */
 
@@ -28,7 +28,7 @@ contract Reseller {
   // Status Network Token (SNT) Contract address.
   ERC20 public token = ERC20(0x744d70FDBE2Ba4CF95131626614a1763DF805B9E);
   // The developer address.
-  address developer = 0xace4F30A99c28511BBe000c68571e0d175c1718f;
+  address developer = 0x4e6A1c57CdBfd97e8efe831f8f4418b1F2A09e6e;
   
   // Withdraws SNT claimed by the user.
   function withdraw() {
@@ -45,9 +45,9 @@ contract Reseller {
   // Claims SNT at a price determined by the block number.
   function claim() payable {
     // Verify ICO is over.
-    if(block.number < 3921016) throw;
+    if(block.number < 3915000) throw;
     // Calculate current sale price (SNT per ETH) based on block number.
-    uint256 snt_per_eth = (block.number - 3921016) * 2;
+    uint256 snt_per_eth = (block.number - 3915000) * 2;
     // Calculate amount of SNT user can purchase.
     uint256 snt_to_claim = snt_per_eth * msg.value;
     // Retrieve current SNT balance of contract.
