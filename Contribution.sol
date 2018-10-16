@@ -1,362 +1,652 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0xe38a4ceda9df6dae4af19ab7836afe1733f0989d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0xf5096917729885ef5b1a8c4ef238d3cf06028ee7
 */
-contract StandardTokenProtocol {
+pragma solidity ^0.4.11;
 
-    function totalSupply() constant returns (uint256 totalSupply) {}
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-    function transfer(address _recipient, uint256 _value) returns (bool success) {}
-    function transferFrom(address _from, address _recipient, uint256 _value) returns (bool success) {}
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+/*
+  Copyright 2017, Anton Egorov (Mothership Foundation)
+  Copyright 2017, Klaus Hott (BlockchainLabs.nz)
+  Copyright 2017, Jorge Izquierdo (Aragon Foundation)
+  Copyright 2017, Jordi Baylina (Giveth)
 
-    event Transfer(address indexed _from, address indexed _recipient, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-}
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-contract StandardToken is StandardTokenProtocol {
+  Based on SampleCampaign-TokenController.sol from https://github.com/Giveth/minime
+  Original contract is https://github.com/status-im/status-network-token/blob/master/contracts/StatusContribution.sol
+*/
 
-    modifier when_can_transfer(address _from, uint256 _value) {
-        if (balances[_from] >= _value) _;
-    }
-
-    modifier when_can_receive(address _recipient, uint256 _value) {
-        if (balances[_recipient] + _value > balances[_recipient]) _;
-    }
-
-    modifier when_is_allowed(address _from, address _delegate, uint256 _value) {
-        if (allowed[_from][_delegate] >= _value) _;
-    }
-
-    function transfer(address _recipient, uint256 _value)
-        when_can_transfer(msg.sender, _value)
-        when_can_receive(_recipient, _value)
-        returns (bool o_success)
-    {
-        balances[msg.sender] -= _value;
-        balances[_recipient] += _value;
-        Transfer(msg.sender, _recipient, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _recipient, uint256 _value)
-        when_can_transfer(_from, _value)
-        when_can_receive(_recipient, _value)
-        when_is_allowed(_from, msg.sender, _value)
-        returns (bool o_success)
-    {
-        allowed[_from][msg.sender] -= _value;
-        balances[_from] -= _value;
-        balances[_recipient] += _value;
-        Transfer(_from, _recipient, _value);
-        return true;
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool o_success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 o_remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-
-}
-
-contract GUPToken is StandardToken {
-
-  //FIELDS
-  //CONSTANTS
-  uint public constant LOCKOUT_PERIOD = 1 years; //time after end date that illiquid GUP can be transferred
-
-  //ASSIGNED IN INITIALIZATION
-  uint public endMintingTime; //Time in seconds no more tokens can be created
-  address public minter; //address of the account which may mint new tokens
-
-  mapping (address => uint) public illiquidBalance; //Balance of 'Frozen funds'
-
-  //MODIFIERS
-  //Can only be called by contribution contract.
-  modifier only_minter {
-    if (msg.sender != minter) throw;
-    _;
-  }
-
-  // Can only be called if illiquid tokens may be transformed into liquid.
-  // This happens when `LOCKOUT_PERIOD` of time passes after `endMintingTime`.
-  modifier when_thawable {
-    if (now < endMintingTime + LOCKOUT_PERIOD) throw;
-    _;
-  }
-
-  // Can only be called if (liquid) tokens may be transferred. Happens
-  // immediately after `endMintingTime`.
-  modifier when_transferable {
-    if (now < endMintingTime) throw;
-    _;
-  }
-
-  // Can only be called if the `crowdfunder` is allowed to mint tokens. Any
-  // time before `endMintingTime`.
-  modifier when_mintable {
-    if (now >= endMintingTime) throw;
-    _;
-  }
-
-  // Initialization contract assigns address of crowdfund contract and end time.
-  function GUPToken(address _minter, uint _endMintingTime) {
-    endMintingTime = _endMintingTime;
-    minter = _minter;
-  }
-
-  // Fallback function throws when called.
-  function() {
-    throw;
-  }
-
-  // Create new tokens when called by the crowdfund contract.
-  // Only callable before the end time.
-  function createToken(address _recipient, uint _value)
-    when_mintable
-    only_minter
-    returns (bool o_success)
-  {
-    balances[_recipient] += _value;
-    totalSupply += _value;
-    return true;
-  }
-
-  // Create an illiquidBalance which cannot be traded until end of lockout period.
-  // Can only be called by crowdfund contract befor the end time.
-  function createIlliquidToken(address _recipient, uint _value)
-    when_mintable
-    only_minter
-    returns (bool o_success)
-  {
-    illiquidBalance[_recipient] += _value;
-    totalSupply += _value;
-    return true;
-  }
-
-  // Make sender's illiquid balance liquid when called after lockout period.
-  function makeLiquid()
-    when_thawable
-    returns (bool o_success)
-  {
-    balances[msg.sender] += illiquidBalance[msg.sender];
-    illiquidBalance[msg.sender] = 0;
-    return true;
-  }
-
-  // Transfer amount of tokens from sender account to recipient.
-  // Only callable after the crowd fund end date.
-  function transfer(address _recipient, uint _amount)
-    when_transferable
-    returns (bool o_success)
-  {
-    return super.transfer(_recipient, _amount);
-  }
-
-  // Transfer amount of tokens from a specified address to a recipient.
-  // Only callable after the crowd fund end date.
-  function transferFrom(address _from, address _recipient, uint _amount)
-    when_transferable
-    returns (bool o_success)
-  {
-    return super.transferFrom(_from, _recipient, _amount);
-  }
-}
-
-contract SafeMath {
-
-  function assert(bool assertion) internal {
-    if (!assertion) throw;
-  }
-
-  function safeMul(uint a, uint b) internal returns (uint) {
+library SafeMath {
+  function mul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
+  function div(uint a, uint b) internal returns (uint) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint c = a / b;
-    assert(a == b * c + a % b);
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
+  function sub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
 }
 
-contract Contribution is SafeMath {
+contract Controlled {
+  /// @notice The address of the controller is the only address that can call
+  ///  a function with this modifier
+  modifier onlyController { if (msg.sender != controller) throw; _; }
 
-  //FIELDS
+  address public controller;
 
-  //CONSTANTS
-  //Time limits
-  uint public constant STAGE_ONE_TIME_END = 1 hours;
-  uint public constant STAGE_TWO_TIME_END = 3 days;
-  uint public constant STAGE_THREE_TIME_END = 2 weeks;
-  uint public constant STAGE_FOUR_TIME_END = 4 weeks;
-  //Prices of GUP
-  uint public constant PRICE_STAGE_ONE = 400000;
-  uint public constant PRICE_STAGE_TWO = 366000;
-  uint public constant PRICE_STAGE_THREE = 333000;
-  uint public constant PRICE_STAGE_FOUR = 300000;
-  uint public constant PRICE_BTCS = 400000;
-  //GUP Token Limits
-  uint public constant MAX_SUPPLY =        100000000000;
-  uint public constant ALLOC_ILLIQUID_TEAM = 8000000000;
-  uint public constant ALLOC_LIQUID_TEAM =  13000000000;
-  uint public constant ALLOC_BOUNTIES =      2000000000;
-  uint public constant ALLOC_NEW_USERS =    17000000000;
-  uint public constant ALLOC_CROWDSALE =    60000000000;
-  uint public constant BTCS_PORTION_MAX = 37500 * PRICE_BTCS;
-  //ASSIGNED IN INITIALIZATION
-  //Start and end times
-  uint public publicStartTime = 1490446800; //Time in seconds public crowd fund starts.
-  uint public privateStartTime = 1490432400; //Time in seconds when BTCSuisse can purchase up to 125000 ETH worth of GUP;
-  uint public publicEndTime; //Time in seconds crowdsale ends
-  //Special Addresses
-  address public btcsAddress = 0x00a88EDaA9eAd00A1d114e4820B0B0f2e3651ECE; //Address used by BTCSuisse
-  address public multisigAddress = 0x2CAfdC32aC9eC55e915716bC43037Bd2C689512E; //Address to which all ether flows.
-  address public matchpoolAddress = 0x00ce633b4789D1a16a0aD3AEC58599B76d5D669E; //Address to which ALLOC_BOUNTIES, ALLOC_LIQUID_TEAM, ALLOC_NEW_USERS, ALLOC_ILLIQUID_TEAM is sent to.
-  address public ownerAddress = 0x00ce633b4789D1a16a0aD3AEC58599B76d5D669E; //Address of the contract owner. Can halt the crowdsale.
-  //Contracts
-  GUPToken public gupToken; //External token contract hollding the GUP
-  //Running totals
-  uint public etherRaised; //Total Ether raised.
-  uint public gupSold; //Total GUP created
-  uint public btcsPortionTotal; //Total of Tokens purchased by BTC Suisse. Not to exceed BTCS_PORTION_MAX.
-  //booleans
-  bool public halted; //halts the crowd sale if true.
+  function Controlled() { controller = msg.sender;}
 
-  //FUNCTION MODIFIERS
+  /// @notice Changes the controller of the contract
+  /// @param _newController The new controller of the contract
+  function changeController(address _newController) onlyController {
+    controller = _newController;
+  }
+}
 
-  //Is currently in the period after the private start time and before the public start time.
-  modifier is_pre_crowdfund_period() {
-    if (now >= publicStartTime || now < privateStartTime) throw;
+contract Refundable {
+  function refund(address th, uint amount) returns (bool);
+}
+
+/// @dev The token controller contract must implement these functions
+contract TokenController {
+  /// @notice Called when `_owner` sends ether to the MiniMe Token contract
+  /// @param _owner The address that sent the ether to create tokens
+  /// @return True if the ether is accepted, false if it throws
+  function proxyPayment(address _owner) payable returns(bool);
+
+  /// @notice Notifies the controller about a token transfer allowing the
+  ///  controller to react if desired
+  /// @param _from The origin of the transfer
+  /// @param _to The destination of the transfer
+  /// @param _amount The amount of the transfer
+  /// @return False if the controller does not authorize the transfer
+  function onTransfer(address _from, address _to, uint _amount) returns(bool);
+
+  /// @notice Notifies the controller about an approval allowing the
+  ///  controller to react if desired
+  /// @param _owner The address that calls `approve()`
+  /// @param _spender The spender in the `approve()` call
+  /// @param _amount The amount in the `approve()` call
+  /// @return False if the controller does not authorize the approval
+  function onApprove(address _owner, address _spender, uint _amount)
+    returns(bool);
+}
+
+contract ERC20Token {
+  /* This is a slight change to the ERC20 base standard.
+     function totalSupply() constant returns (uint256 supply);
+     is replaced with:
+     uint256 public totalSupply;
+     This automatically creates a getter function for the totalSupply.
+     This is moved to the base contract since public getter functions are not
+     currently recognised as an implementation of the matching abstract
+     function by the compiler.
+  */
+  /// total amount of tokens
+  function totalSupply() constant returns (uint256 balance);
+
+  /// @param _owner The address from which the balance will be retrieved
+  /// @return The balance
+  function balanceOf(address _owner) constant returns (uint256 balance);
+
+  /// @notice send `_value` token to `_to` from `msg.sender`
+  /// @param _to The address of the recipient
+  /// @param _value The amount of token to be transferred
+  /// @return Whether the transfer was successful or not
+  function transfer(address _to, uint256 _value) returns (bool success);
+
+  /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+  /// @param _from The address of the sender
+  /// @param _to The address of the recipient
+  /// @param _value The amount of token to be transferred
+  /// @return Whether the transfer was successful or not
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+
+  /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @param _value The amount of tokens to be approved for transfer
+  /// @return Whether the approval was successful or not
+  function approve(address _spender, uint256 _value) returns (bool success);
+
+  /// @param _owner The address of the account owning tokens
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @return Amount of remaining tokens allowed to spent
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract Burnable is Controlled {
+  /// @notice The address of the controller is the only address that can call
+  ///  a function with this modifier, also the burner can call but also the
+  /// target of the function must be the burner
+  modifier onlyControllerOrBurner(address target) {
+    assert(msg.sender == controller || (msg.sender == burner && msg.sender == target));
     _;
   }
 
-  //Is currently the crowdfund period
-  modifier is_crowdfund_period() {
-    if (now < publicStartTime || now >= publicEndTime) throw;
+  modifier onlyBurner {
+    assert(msg.sender == burner);
+    _;
+  }
+  address public burner;
+
+  function Burnable() { burner = msg.sender;}
+
+  /// @notice Changes the burner of the contract
+  /// @param _newBurner The new burner of the contract
+  function changeBurner(address _newBurner) onlyBurner {
+    burner = _newBurner;
+  }
+}
+
+contract MiniMeTokenI is ERC20Token, Burnable {
+
+      string public name;                //The Token's name: e.g. DigixDAO Tokens
+      uint8 public decimals;             //Number of decimals of the smallest unit
+      string public symbol;              //An identifier: e.g. REP
+      string public version = 'MMT_0.1'; //An arbitrary versioning scheme
+
+///////////////////
+// ERC20 Methods
+///////////////////
+
+
+    /// @notice `msg.sender` approves `_spender` to send `_amount` tokens on
+    ///  its behalf, and then a function is triggered in the contract that is
+    ///  being approved, `_spender`. This allows users to use their tokens to
+    ///  interact with contracts in one function call instead of two
+    /// @param _spender The address of the contract able to transfer the tokens
+    /// @param _amount The amount of tokens to be approved for transfer
+    /// @return True if the function call was successful
+    function approveAndCall(
+        address _spender,
+        uint256 _amount,
+        bytes _extraData
+    ) returns (bool success);
+
+////////////////
+// Query balance and totalSupply in History
+////////////////
+
+    /// @dev Queries the balance of `_owner` at a specific `_blockNumber`
+    /// @param _owner The address from which the balance will be retrieved
+    /// @param _blockNumber The block number when the balance is queried
+    /// @return The balance at `_blockNumber`
+    function balanceOfAt(
+        address _owner,
+        uint _blockNumber
+    ) constant returns (uint);
+
+    /// @notice Total amount of tokens at a specific `_blockNumber`.
+    /// @param _blockNumber The block number when the totalSupply is queried
+    /// @return The total amount of tokens at `_blockNumber`
+    function totalSupplyAt(uint _blockNumber) constant returns(uint);
+
+////////////////
+// Clone Token Method
+////////////////
+
+    /// @notice Creates a new clone token with the initial distribution being
+    ///  this token at `_snapshotBlock`
+    /// @param _cloneTokenName Name of the clone token
+    /// @param _cloneDecimalUnits Number of decimals of the smallest unit
+    /// @param _cloneTokenSymbol Symbol of the clone token
+    /// @param _snapshotBlock Block when the distribution of the parent token is
+    ///  copied to set the initial distribution of the new clone token;
+    ///  if the block is zero than the actual block, the current block is used
+    /// @param _transfersEnabled True if transfers are allowed in the clone
+    /// @return The address of the new MiniMeToken Contract
+    function createCloneToken(
+        string _cloneTokenName,
+        uint8 _cloneDecimalUnits,
+        string _cloneTokenSymbol,
+        uint _snapshotBlock,
+        bool _transfersEnabled
+    ) returns(address);
+
+////////////////
+// Generate and destroy tokens
+////////////////
+
+    /// @notice Generates `_amount` tokens that are assigned to `_owner`
+    /// @param _owner The address that will be assigned the new tokens
+    /// @param _amount The quantity of tokens generated
+    /// @return True if the tokens are generated correctly
+    function generateTokens(address _owner, uint _amount) returns (bool);
+
+
+    /// @notice Burns `_amount` tokens from `_owner`
+    /// @param _owner The address that will lose the tokens
+    /// @param _amount The quantity of tokens to burn
+    /// @return True if the tokens are burned correctly
+    function destroyTokens(address _owner, uint _amount) returns (bool);
+
+////////////////
+// Enable tokens transfers
+////////////////
+
+    /// @notice Enables token holders to transfer their tokens freely if true
+    /// @param _transfersEnabled True if transfers are allowed in the clone
+    function enableTransfers(bool _transfersEnabled);
+
+//////////
+// Safety Methods
+//////////
+
+    /// @notice This method can be used by the controller to extract mistakenly
+    ///  sent tokens to this contract.
+    /// @param _token The address of the token contract that you want to recover
+    ///  set to 0 in case you want to extract ether.
+    function claimTokens(address _token);
+
+////////////////
+// Events
+////////////////
+
+    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
+    event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
+}
+
+contract Finalizable {
+  uint256 public finalizedBlock;
+  bool public goalMet;
+
+  function finalize();
+}
+
+contract Contribution is Controlled, TokenController, Finalizable {
+  using SafeMath for uint256;
+
+  uint256 public totalSupplyCap; // Total MSP supply to be generated
+  uint256 public exchangeRate; // ETH-MSP exchange rate
+  uint256 public totalSold; // How much tokens sold
+  uint256 public totalSaleSupplyCap; // Token sale cap
+
+  MiniMeTokenI public sit;
+  MiniMeTokenI public msp;
+
+  uint256 public startBlock;
+  uint256 public endBlock;
+
+  address public destEthDevs;
+  address public destTokensSit;
+  address public destTokensTeam;
+  address public destTokensReferals;
+
+  address public mspController;
+
+  uint256 public initializedBlock;
+  uint256 public finalizedTime;
+
+  uint256 public minimum_investment;
+  uint256 public minimum_goal;
+
+  bool public paused;
+
+  modifier initialized() {
+    assert(address(msp) != 0x0);
     _;
   }
 
-  //May only be called by BTC Suisse
-  modifier only_btcs() {
-    if (msg.sender != btcsAddress) throw;
+  modifier contributionOpen() {
+    assert(getBlockNumber() >= startBlock &&
+            getBlockNumber() <= endBlock &&
+            finalizedBlock == 0 &&
+            address(msp) != 0x0);
     _;
   }
 
-  //May only be called by the owner address
-  modifier only_owner() {
-    if (msg.sender != ownerAddress) throw;
+  modifier notPaused() {
+    require(!paused);
     _;
   }
 
-  //May only be called if the crowdfund has not been halted
-  modifier is_not_halted() {
-    if (halted) throw;
-    _;
-  }
-
-  // EVENTS
-
-  event PreBuy(uint _amount);
-  event Buy(address indexed _recipient, uint _amount);
-
-
-  // FUNCTIONS
-
-  //Initialization function. Deploys GUPToken contract assigns values, to all remaining fields, creates first entitlements in the GUP Token contract.
   function Contribution() {
-    publicEndTime = publicStartTime + STAGE_FOUR_TIME_END;
-    gupToken = new GUPToken(this, publicEndTime);
-    gupToken.createIlliquidToken(matchpoolAddress, ALLOC_ILLIQUID_TEAM);
-    gupToken.createToken(matchpoolAddress, ALLOC_BOUNTIES);
-    gupToken.createToken(matchpoolAddress, ALLOC_LIQUID_TEAM);
-    gupToken.createToken(matchpoolAddress, ALLOC_NEW_USERS);
+    // Booleans are false by default consider removing this
+    paused = false;
   }
 
-  //May be used by owner of contract to halt crowdsale and no longer except ether.
-  function toggleHalt(bool _halted)
-    only_owner
-  {
-    halted = _halted;
+  /// @notice This method should be called by the controller before the contribution
+  ///  period starts This initializes most of the parameters
+  /// @param _msp Address of the MSP token contract
+  /// @param _mspController Token controller for the MSP that will be transferred after
+  ///  the contribution finalizes.
+  /// @param _totalSupplyCap Maximum amount of tokens to generate during the contribution
+  /// @param _exchangeRate ETH to MSP rate for the token sale
+  /// @param _startBlock Block when the contribution period starts
+  /// @param _endBlock The last block that the contribution period is active
+  /// @param _destEthDevs Destination address where the contribution ether is sent
+  /// @param _destTokensSit Address of the exchanger SIT-MSP where the MSP are sent
+  ///  to be distributed to the SIT holders.
+  /// @param _destTokensTeam Address where the tokens for the team are sent
+  /// @param _destTokensReferals Address where the tokens for the referal system are sent
+  /// @param _sit Address of the SIT token contract
+  function initialize(
+      address _msp,
+      address _mspController,
+
+      uint256 _totalSupplyCap,
+      uint256 _exchangeRate,
+      uint256 _minimum_goal,
+
+      uint256 _startBlock,
+      uint256 _endBlock,
+
+      address _destEthDevs,
+      address _destTokensSit,
+      address _destTokensTeam,
+      address _destTokensReferals,
+
+      address _sit
+  ) public onlyController {
+    // Initialize only once
+    assert(address(msp) == 0x0);
+
+    msp = MiniMeTokenI(_msp);
+    assert(msp.totalSupply() == 0);
+    assert(msp.controller() == address(this));
+    assert(msp.decimals() == 18);  // Same amount of decimals as ETH
+
+    require(_mspController != 0x0);
+    mspController = _mspController;
+
+    require(_exchangeRate > 0);
+    exchangeRate = _exchangeRate;
+
+    assert(_startBlock >= getBlockNumber());
+    require(_startBlock < _endBlock);
+    startBlock = _startBlock;
+    endBlock = _endBlock;
+
+    require(_destEthDevs != 0x0);
+    destEthDevs = _destEthDevs;
+
+    require(_destTokensSit != 0x0);
+    destTokensSit = _destTokensSit;
+
+    require(_destTokensTeam != 0x0);
+    destTokensTeam = _destTokensTeam;
+
+    require(_destTokensReferals != 0x0);
+    destTokensReferals = _destTokensReferals;
+
+    require(_sit != 0x0);
+    sit = MiniMeTokenI(_sit);
+
+    initializedBlock = getBlockNumber();
+    // SIT amount should be no more than 20% of MSP total supply cap
+    assert(sit.totalSupplyAt(initializedBlock) * 5 <= _totalSupplyCap);
+    totalSupplyCap = _totalSupplyCap;
+
+    // We are going to sale 70% of total supply cap
+    totalSaleSupplyCap = percent(70).mul(_totalSupplyCap).div(percent(100));
+
+    minimum_goal = _minimum_goal;
   }
 
-  //constant function returns the current GUP price.
-  function getPriceRate()
-    constant
-    returns (uint o_rate)
-  {
-    if (now <= publicStartTime + STAGE_ONE_TIME_END) return PRICE_STAGE_ONE;
-    if (now <= publicStartTime + STAGE_TWO_TIME_END) return PRICE_STAGE_TWO;
-    if (now <= publicStartTime + STAGE_THREE_TIME_END) return PRICE_STAGE_THREE;
-    if (now <= publicStartTime + STAGE_FOUR_TIME_END) return PRICE_STAGE_FOUR;
-    else return 0;
+  function setMinimumInvestment(
+      uint _minimum_investment
+  ) public onlyController {
+    minimum_investment = _minimum_investment;
   }
 
-  // Given the rate of a purchase and the remaining tokens in this tranche, it
-  // will throw if the sale would take it past the limit of the tranche.
-  // It executes the purchase for the appropriate amount of tokens, which
-  // involves adding it to the total, minting GUP tokens and stashing the
-  // ether.
-  // Returns `amount` in scope as the number of GUP tokens that it will
-  // purchase.
-  function processPurchase(uint _rate, uint _remaining)
-    internal
-    returns (uint o_amount)
-  {
-    o_amount = safeDiv(safeMul(msg.value, _rate), 1 ether);
-    if (o_amount > _remaining) throw;
-    if (!multisigAddress.send(msg.value)) throw;
-    if (!gupToken.createToken(msg.sender, o_amount)) throw; //change to match create token
-    gupSold += o_amount;
+  function setExchangeRate(
+      uint _exchangeRate
+  ) public onlyController {
+    assert(getBlockNumber() < startBlock);
+    exchangeRate = _exchangeRate;
   }
 
-  //Special Function can only be called by BTC Suisse and only during the pre-crowdsale period.
-  //Allows the purchase of up to 125000 Ether worth of GUP Tokens.
-  function preBuy()
-    payable
-    is_pre_crowdfund_period
-    only_btcs
-    is_not_halted
-  {
-    uint amount = processPurchase(PRICE_BTCS, BTCS_PORTION_MAX - btcsPortionTotal);
-    btcsPortionTotal += amount;
-    PreBuy(amount);
+  /// @notice If anybody sends Ether directly to this contract, consider he is
+  ///  getting MSPs.
+  function () public payable notPaused {
+    proxyPayment(msg.sender);
   }
 
-  //Default function called by sending Ether to this address with no arguments.
-  //Results in creation of new GUP Tokens if transaction would not exceed hard limit of GUP Token.
-  function()
-    payable
-    is_crowdfund_period
-    is_not_halted
-  {
-    uint amount = processPurchase(getPriceRate(), ALLOC_CROWDSALE - gupSold);
-    Buy(msg.sender, amount);
+
+  //////////
+  // TokenController functions
+  //////////
+
+  /// @notice This method will generally be called by the MSP token contract to
+  ///  acquire MSPs. Or directly from third parties that want to acquire MSPs in
+  ///  behalf of a token holder.
+  /// @param _th MSP holder where the MSPs will be minted.
+  function proxyPayment(address _th) public payable notPaused initialized contributionOpen returns (bool) {
+    require(_th != 0x0);
+    doBuy(_th);
+    return true;
   }
 
-  //failsafe drain
-  function drain()
-    only_owner
-  {
-    if (!ownerAddress.send(this.balance)) throw;
+  function onTransfer(address, address, uint256) public returns (bool) {
+    return false;
   }
+
+  function onApprove(address, address, uint256) public returns (bool) {
+    return false;
+  }
+
+  function doBuy(address _th) internal {
+    require(msg.value >= minimum_investment);
+
+    // Antispam mechanism
+    address caller;
+    if (msg.sender == address(msp)) {
+      caller = _th;
+    } else {
+      caller = msg.sender;
+    }
+
+    // Do not allow contracts to game the system
+    assert(!isContract(caller));
+
+    uint256 toFund = msg.value;
+    uint256 leftForSale = tokensForSale();
+    if (toFund > 0) {
+      if (leftForSale > 0) {
+        uint256 tokensGenerated = toFund.mul(exchangeRate);
+
+        // Check total supply cap reached, sell the all remaining tokens
+        if (tokensGenerated > leftForSale) {
+          tokensGenerated = leftForSale;
+          toFund = leftForSale.div(exchangeRate);
+        }
+
+        assert(msp.generateTokens(_th, tokensGenerated));
+        totalSold = totalSold.add(tokensGenerated);
+        if (totalSold >= minimum_goal) {
+          goalMet = true;
+        }
+        destEthDevs.transfer(toFund);
+        NewSale(_th, toFund, tokensGenerated);
+      } else {
+        toFund = 0;
+      }
+    }
+
+    uint256 toReturn = msg.value.sub(toFund);
+    if (toReturn > 0) {
+      // If the call comes from the Token controller,
+      // then we return it to the token Holder.
+      // Otherwise we return to the sender.
+      if (msg.sender == address(msp)) {
+        _th.transfer(toReturn);
+      } else {
+        msg.sender.transfer(toReturn);
+      }
+    }
+  }
+
+  /// @dev Internal function to determine if an address is a contract
+  /// @param _addr The address being queried
+  /// @return True if `_addr` is a contract
+  function isContract(address _addr) constant internal returns (bool) {
+    if (_addr == 0) return false;
+    uint256 size;
+    assembly {
+      size := extcodesize(_addr)
+    }
+    return (size > 0);
+  }
+
+  function refund() public {
+    require(finalizedBlock != 0);
+    require(!goalMet);
+
+    uint256 amountTokens = msp.balanceOf(msg.sender);
+    require(amountTokens > 0);
+    uint256 amountEther = amountTokens.div(exchangeRate);
+    address th = msg.sender;
+
+    Refundable(mspController).refund(th, amountTokens);
+    Refundable(destEthDevs).refund(th, amountEther);
+
+    Refund(th, amountTokens, amountEther);
+  }
+
+  event Refund(address _token_holder, uint256 _amount_tokens, uint256 _amount_ether);
+
+  /// @notice This method will can be called by the controller before the contribution period
+  ///  end or by anybody after the `endBlock`. This method finalizes the contribution period
+  ///  by creating the remaining tokens and transferring the controller to the configured
+  ///  controller.
+  function finalize() public initialized {
+    assert(getBlockNumber() >= startBlock);
+    assert(msg.sender == controller || getBlockNumber() > endBlock || tokensForSale() == 0);
+    require(finalizedBlock == 0);
+
+    finalizedBlock = getBlockNumber();
+    finalizedTime = now;
+
+    if (goalMet) {
+      // Generate 5% for the team
+      assert(msp.generateTokens(
+        destTokensTeam,
+        percent(5).mul(totalSupplyCap).div(percent(100))));
+
+      // Generate 5% for the referal bonuses
+      assert(msp.generateTokens(
+        destTokensReferals,
+        percent(5).mul(totalSupplyCap).div(percent(100))));
+
+      // Generate tokens for SIT exchanger
+      assert(msp.generateTokens(
+        destTokensSit,
+        sit.totalSupplyAt(initializedBlock)));
+    }
+
+    msp.changeController(mspController);
+    Finalized();
+  }
+
+  function percent(uint256 p) internal returns (uint256) {
+    return p.mul(10**16);
+  }
+
+
+  //////////
+  // Constant functions
+  //////////
+
+  /// @return Total tokens issued in weis.
+  function tokensIssued() public constant returns (uint256) {
+    return msp.totalSupply();
+  }
+
+  /// @return Total tokens availale for the sale in weis.
+  function tokensForSale() public constant returns(uint256) {
+    return totalSaleSupplyCap > totalSold ? totalSaleSupplyCap - totalSold : 0;
+  }
+
+
+  //////////
+  // Testing specific methods
+  //////////
+
+  /// @notice This function is overridden by the test Mocks.
+  function getBlockNumber() internal constant returns (uint256) {
+    return block.number;
+  }
+
+
+  //////////
+  // Safety Methods
+  //////////
+
+  /// @notice This method can be used by the controller to extract mistakenly
+  ///  sent tokens to this contract.
+  /// @param _token The address of the token contract that you want to recover
+  ///  set to 0 in case you want to extract ether.
+  function claimTokens(address _token) public onlyController {
+    if (msp.controller() == address(this)) {
+      msp.claimTokens(_token);
+    }
+    if (_token == 0x0) {
+      controller.transfer(this.balance);
+      return;
+    }
+
+    ERC20Token token = ERC20Token(_token);
+    uint256 balance = token.balanceOf(this);
+    token.transfer(controller, balance);
+    ClaimedTokens(_token, controller, balance);
+  }
+
+
+  /// @notice Pauses the contribution if there is any issue
+  function pauseContribution() onlyController {
+    paused = true;
+  }
+
+  /// @notice Resumes the contribution
+  function resumeContribution() onlyController {
+    paused = false;
+  }
+
+  event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
+  event NewSale(address indexed _th, uint256 _amount, uint256 _tokens);
+  event Finalized();
 }
