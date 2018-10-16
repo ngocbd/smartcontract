@@ -1,8 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JincorToken at 0xff1bafaa5be1b39bcbc1f2c7c3c368421d677b77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JincorToken at 0x5ab14c104ba2771fd2a6ec6f616da1ad41d5b8a7
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.11;
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 /**
  * @title SafeMath
@@ -34,107 +45,9 @@ library SafeMath {
   }
 }
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-
-/*
- * Haltable
- *
- * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by requiring a state.
- *
- *
- * Originally envisioned in FirstBlood ICO contract.
- */
-contract Haltable is Ownable {
-  bool public halted = false;
-
-  modifier inNormalState {
-    require(!halted);
-    _;
-  }
-
-  modifier inEmergencyState {
-    require(halted);
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner inNormalState {
-    halted = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner inEmergencyState {
-    halted = false;
-  }
-}
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
+ * @dev Basic version of StandardToken, with no allowances. 
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -155,13 +68,24 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
+  * @param _owner The address to query the the balance of. 
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
 
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -234,21 +158,21 @@ contract Burnable is StandardToken {
   using SafeMath for uint;
 
   /* This notifies clients about the amount burnt */
-  event Burn(address indexed from, uint256 value);
+  event Burn(address indexed from, uint value);
 
-  function burn(uint256 _value) returns (bool success) {
-    require(balances[msg.sender] >= _value);                // Check if the sender has enough
-    balances[msg.sender] = balances[msg.sender].sub(_value);// Subtract from the sender
-    totalSupply = totalSupply.sub(_value);                                  // Updates totalSupply
+  function burn(uint _value) returns (bool success) {
+    require(_value > 0 && balances[msg.sender] >= _value);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    totalSupply = totalSupply.sub(_value);
     Burn(msg.sender, _value);
     return true;
   }
 
-  function burnFrom(address _from, uint256 _value) returns (bool success) {
-    require(balances[_from] >= _value);               // Check if the sender has enough
-    require(_value <= allowed[_from][msg.sender]);    // Check allowance
-    balances[_from] = balances[_from].sub(_value);    // Subtract from the sender
-    totalSupply = totalSupply.sub(_value);            // Updates totalSupply
+  function burnFrom(address _from, uint _value) returns (bool success) {
+    require(_from != 0x0 && _value > 0 && balances[_from] >= _value);
+    require(_value <= allowed[_from][msg.sender]);
+    balances[_from] = balances[_from].sub(_value);
+    totalSupply = totalSupply.sub(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Burn(_from, _value);
     return true;
@@ -267,6 +191,44 @@ contract Burnable is StandardToken {
   }
 }
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+}
 
 /**
  * @title JincorToken
@@ -275,10 +237,10 @@ contract Burnable is StandardToken {
  */
 contract JincorToken is Burnable, Ownable {
 
-  string public name = "Jincor Token";
-  string public symbol = "JCR";
-  uint256 public decimals = 18;
-  uint256 public INITIAL_SUPPLY = 35000000 * 1 ether;
+  string public constant name = "Jincor Token";
+  string public constant symbol = "JCR";
+  uint8 public constant decimals = 18;
+  uint public constant INITIAL_SUPPLY = 35000000 * 1 ether;
 
   /* The finalizer contract that allows unlift the transfer limits on this token */
   address public releaseAgent;
@@ -294,11 +256,11 @@ contract JincorToken is Burnable, Ownable {
    *
    */
   modifier canTransfer(address _sender) {
-    require(transferAgents[_sender] || released);
+    require(released || transferAgents[_sender]);
     _;
   }
 
-  /** The function can be called only before or after the tokens have been releasesd */
+  /** The function can be called only before or after the tokens have been released */
   modifier inReleaseState(bool releaseState) {
     require(releaseState == released);
     _;
@@ -312,7 +274,7 @@ contract JincorToken is Burnable, Ownable {
 
 
   /**
-   * @dev Contructor that gives msg.sender all of existing tokens.
+   * @dev Constructor that gives msg.sender all of existing tokens.
    */
   function JincorToken() {
     totalSupply = INITIAL_SUPPLY;
@@ -326,6 +288,7 @@ contract JincorToken is Burnable, Ownable {
    * Design choice. Allow reset the release agent to fix fat finger mistakes.
    */
   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
+    require(addr != 0x0);
 
     // We don't do interface check here as we might want to a normal wallet address to act as a release agent
     releaseAgent = addr;
@@ -339,6 +302,7 @@ contract JincorToken is Burnable, Ownable {
    * Owner can allow a particular address (a crowdsale contract) to transfer tokens despite the lock up period.
    */
   function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
+    require(addr != 0x0);
     transferAgents[addr] = state;
   }
 
@@ -352,11 +316,11 @@ contract JincorToken is Burnable, Ownable {
     return super.transferFrom(_from, _to, _value);
   }
 
-  function burn(uint256 _value) onlyOwner returns (bool success) {
+  function burn(uint _value) onlyOwner returns (bool success) {
     return super.burn(_value);
   }
 
-  function burnFrom(address _from, uint256 _value) onlyOwner returns (bool success) {
+  function burnFrom(address _from, uint _value) onlyOwner returns (bool success) {
     return super.burnFrom(_from, _value);
   }
 }
