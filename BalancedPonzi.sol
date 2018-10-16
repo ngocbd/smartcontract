@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BalancedPonzi at 0x09515Cb5e3aCaEf239Ab83d78B2F3e3764FcaB9B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BalancedPonzi at 0x55d035Ba1F4Ae932Cf98125b93D830d9858cd39F
 */
 contract BalancedPonzi {
     
@@ -29,6 +29,8 @@ contract BalancedPonzi {
     
     function() {
         
+        uint idx = persons.length;
+        
         if (msg.value != 9 ether) {
             throw;
         }
@@ -44,7 +46,6 @@ contract BalancedPonzi {
         }
         
         if (investor < 9) {
-            uint idx = persons.length;
             persons.length += 1;
             persons[idx].addr = msg.sender;
         }
@@ -54,7 +55,9 @@ contract BalancedPonzi {
             investor = 0;
         }
         
-        currentNiceGuy.send(1 ether);
+        if (idx != 0) {
+            currentNiceGuy.send(1 ether);
+        }
         
         while (this.balance > 10 ether) {
             persons[payoutIdx].addr.send(10 ether);
