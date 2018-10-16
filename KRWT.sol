@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x8e629f8ec677b05052538b18b0fff50b04bc8bd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0xca6bb5df1437ba15f8307e3b753c017fd32c3551
 */
 pragma solidity ^0.4.21;
 
@@ -413,7 +413,7 @@ contract ERC827Token is ERC827, StandardToken {
 
 }
 
-contract KRWT is  StandardToken {
+contract KRWT is  StandardToken, MintableToken, BurnableToken, PausableToken, ERC827Token {
     string constant public name = "Korean Won";
     string constant public symbol = "KRWT";
     uint8 constant public decimals = 8;
@@ -428,7 +428,6 @@ contract KRWT is  StandardToken {
     uint256 public constant INITIAL_SUPPLY = 100000000000 * (10 ** uint256(decimals));
 
     function KWRT () public {
-        balances[msg.sender] = totalSupply;
         totalSupply_ = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
         emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
