@@ -1,240 +1,230 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThankYouToken at 0x05a0b0eadd54d13ef3fe015f2ede197a822bc8fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThankYouToken at 0x2a64b1e6a21f450a0ed6a78559d42ee4bf079d10
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.18;
+
+
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+}
+
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal returns (uint256) {
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
 
-    function div(uint256 a, uint256 b) internal returns (uint256) {
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
-    function sub(uint256 a, uint256 b) internal returns (uint256) {
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
-    function add(uint256 a, uint256 b) internal returns (uint256) {
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
     }
 }
 
-contract Owned {
-    address public owner;
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        assert(msg.sender == owner);
-        _;
-    }
-
-
-    function transferOwnership(address newOwner) onlyOwner {
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-}
-
-contract ERC20 is Owned {
-
-    // Get the account balance of another account with address _owner
-    function balanceOf(address _owner) constant returns (uint256 balance);
-
-    // Send _value amount of tokens to address _to
-    function transfer(address _to, uint256 _value) returns (bool success);
-
-    // Send _value amount of tokens from address _from to address _to on the condition it is approved by _from
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    function approve(address _spender, uint256 _value) returns (bool success);
-
-    // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-    // Triggered when tokens are transferred.
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    // Triggered whenever approve(address _spender, uint256 _value) is called.
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-contract ThankYouToken is ERC20 {
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
 
-    // Total amount of token
-    uint256 public totalSupply;
-
-    // Balances for each account
     mapping(address => uint256) balances;
 
-    // Owner of account approves the transfer of an amount to another account
-    mapping (address => mapping (address => uint256)) allowed;
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
 
-    //Fix for the ERC20 short address attack
-    modifier onlyPayloadSize(uint256 size) {
-        assert(msg.data.length >= size + 4);
-        _;
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance){
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value
-        && allowed[_from][msg.sender] >= _value //the transfer is approved
-        && _value > 0
-        && balances[_to] + _value > balances[_to]) {
+}
 
-            balances[_to]   = balances[_to].add(_value);
-            balances[_from] = balances[_from].sub(_value);
-            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
 
-            Transfer(_from, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev Based on code by FirstBlood:
+ * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+    mapping (address => mapping (address => uint256)) internal allowed;
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
     }
 
-    function approve(address _spender, uint256 _value) onlyPayloadSize(2*32) returns (bool success) {
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+
         // To change the approve amount you first have to reduce the addresses`
         //  allowance to zero by calling `approve(_spender, 0)` if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) {
-            return false;
-        }
-        allowed[msg.sender][_spender] = _value;
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
+        allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
 
-    // Transfer the balance _value from owner's account (msg.sender) to another account (_to)
-    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool success) {
-        if (balances[msg.sender] >= _value && _value > 0 && balances[_to] + _value > balances[_to]) {
+    /**
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     */
+    function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
 
-            balances[msg.sender] = balances[msg.sender].sub(_value);
-            balances[_to] = balances[_to].add(_value);
-            Transfer(msg.sender, _to, _value);
-
-            return true;
+    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
         } else {
-            return false;
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
     }
 
+}
 
-    string public thankYou  = "ThankYou!";
-    string public name;
-    string public symbol;
-    uint256 public decimals = 18;
 
-    function ThankYouToken(uint256 _initialSupply) {
-        name = "ThankYou! Token";
-        symbol = "TYT";
-        totalSupply = _initialSupply;
-        balances[msg.sender] = _initialSupply;
+contract ThankYouToken is StandardToken {
+    string public constant name = "ThankYou";
+    string public constant symbol = "THNX";
+    uint8 public constant decimals = 18;
+    uint256 public INITIAL_SUPPLY =  21000000 * 1 ether;
+
+    function ThankYouToken() public {
+        totalSupply = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
     }
-    //---------------------------------------------------------------------------------------------------
-
-    //Number of purchases per address
-    mapping(address => uint256) numPurchasesPerAddress;
-
-    bool public crowdsaleClosed = true;
-    uint256 bonusMultiplier             = 50 * 10**decimals;
-    uint256 public bonusTokensIssued    = 0;
-    uint256 public freeTokensAvailable  = 10000 * 10**decimals;
-    uint256 public freeTokensIssued     = 0;
-    uint256 freeTokensPerAddress        = 2 * 10**decimals;
-    uint256 public contribution         = 0;
-    uint256 public totalTokensIssued    = 0;
-    // Accounts that have received the 2 TYT for free
-    mapping(address => bool) addressBonusReceived;
-
-    event BonusTokens(address _from, address _to, uint256 _bonusToken);
-    event FreeTokensIssued(address _from, address _to, uint256 _value);
-    event FreeTokenAdded(address _from, uint256 _value);
-
-    function openCrowdsale() onlyOwner {
-        crowdsaleClosed = false;
-    }
-
-    function stopCrowdsale() onlyOwner {
-        crowdsaleClosed = true;
-    }
-
-
-    function() payable {
-        if(msg.value == 0){
-            assert(!addressBonusReceived[msg.sender]);
-            assert(freeTokensAvailable >= freeTokensPerAddress);
-            assert(balances[owner] >= freeTokensPerAddress);
-
-            addressBonusReceived[msg.sender] = true;
-
-            freeTokensAvailable = freeTokensAvailable.sub(freeTokensPerAddress);
-            freeTokensIssued    = freeTokensIssued.add(freeTokensPerAddress);
-
-            balances[msg.sender] = balances[msg.sender].add(freeTokensPerAddress);
-            balances[owner] = balances[owner].sub(freeTokensPerAddress);
-
-            totalTokensIssued = totalTokensIssued.add(freeTokensPerAddress);
-
-            FreeTokensIssued(owner, msg.sender, freeTokensPerAddress);
-
-        } else {
-            assert(!crowdsaleClosed);
-
-            // 1 ETH = 1000 ThankYou tokens
-            uint256 tokensSent = (msg.value * 1000);
-            assert(balances[owner] >= tokensSent);
-
-            if(msg.value >= 50 finney){
-                numPurchasesPerAddress[msg.sender] = numPurchasesPerAddress[msg.sender].add(1);
-
-                uint256 bonusTokens = numPurchasesPerAddress[msg.sender].mul(bonusMultiplier);
-                tokensSent = tokensSent.add(bonusTokens);
-                bonusTokensIssued = bonusTokensIssued.add(bonusTokens);
-
-                assert(balances[owner] >= tokensSent);
-                BonusTokens(owner, msg.sender, bonusTokens);
-            }
-
-            owner.transfer(msg.value);
-            contribution = contribution.add(msg.value);
-
-            balances[owner] = balances[owner].sub(tokensSent);
-            totalTokensIssued = totalTokensIssued.add(tokensSent);
-            balances[msg.sender] = balances[msg.sender].add(tokensSent);
-            Transfer(address(this), msg.sender, tokensSent);
-        }
-
-    }
-
 }
