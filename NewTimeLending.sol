@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewTimeLending at 0x489ddc201d1f9c0c527cebe928946ceb7a09baad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewTimeLending at 0xbb8fe9837bd69925e2100041aa093276f39a7ce7
 */
 pragma solidity ^0.4.18;
 
@@ -189,9 +189,9 @@ return true;
 contract NewTimeLending is owned, TokenERC20  {
 
 //Modify these variables
-uint256 _initialSupply=28000000; 
+uint256 _initialSupply=25000000; 
 string _tokenName="NewTimeLending";  
-string _tokenSymbol="NTLC";
+string _tokenSymbol="NTC";
 
 mapping (address => bool) public frozenAccount;
 
