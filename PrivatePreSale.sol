@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivatePreSale at 0x19338dbc004f3cb0b764efe348a0caa5fe5c9c95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivatePreSale at 0x745ce2b9bfb9b615b37dbbe468adfe0f36e1023e
 */
 pragma solidity ^0.4.21;
 
@@ -275,7 +275,7 @@ contract PrivatePreSale is Claimable, KYCWhitelist, Pausable {
   // Token Wallet Address
   address public constant TOKEN_WALLET = 0x1EF91464240BB6E0FdE7a73E0a6f3843D3E07601;
   // Token adderss being sold
-  address public constant TOKEN_ADDRESS = 0x2169Cce281717d204FA0EcF846a6171e96234D72;
+  address public constant TOKEN_ADDRESS = 0x14121EEe7995FFDF47ED23cfFD0B5da49cbD6EB3;
   // Token being sold
   ERC20 public constant TOKEN = ERC20(TOKEN_ADDRESS);
   // Conversion Rate (Eth cost of 1 NRG) (Testing uses ETH price of $10 000)
