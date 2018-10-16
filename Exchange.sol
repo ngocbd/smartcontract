@@ -1,258 +1,187 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0xBcB03C4b10F04e568Abf88Df136F579038DD0eF1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
-contract Owned {
-
-    address public owner;
-
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function setOwner(address _newOwner) onlyOwner {
-        owner = _newOwner;
-    }
+contract Token {
+    bytes32 public standard;
+    bytes32 public name;
+    bytes32 public symbol;
+    uint256 public totalSupply;
+    uint8 public decimals;
+    bool public allowTransactions;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
 }
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
+contract Exchange {
+  function assert(bool assertion) {
+    if (!assertion) throw;
+  }
+  function safeMul(uint a, uint b) returns (uint) {
+    uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function safeSub(uint a, uint b) returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
+  function safeAdd(uint a, uint b) returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
     return c;
   }
-
-  function toUINT112(uint256 a) internal constant returns(uint112) {
-    assert(uint112(a) == a);
-    return uint112(a);
+  address public owner;
+  mapping (address => uint256) public invalidOrder;
+  event SetOwner(address indexed previousOwner, address indexed newOwner);
+  modifier onlyOwner {
+    assert(msg.sender == owner);
+    _;
+  }
+  function setOwner(address newOwner) onlyOwner {
+    SetOwner(owner, newOwner);
+    owner = newOwner;
+  }
+  function getOwner() returns (address out) {
+    return owner;
+  }
+  function invalidateOrdersBefore(address user, uint256 nonce) onlyAdmin {
+    if (nonce < invalidOrder[user]) throw;
+    invalidOrder[user] = nonce;
   }
 
-  function toUINT120(uint256 a) internal constant returns(uint120) {
-    assert(uint120(a) == a);
-    return uint120(a);
+  mapping (address => mapping (address => uint256)) public tokens; //mapping of token addresses to mapping of account balances
+
+  mapping (address => bool) public admins;
+  mapping (address => uint256) public lastActiveTransaction;
+  mapping (bytes32 => uint256) public orderFills;
+  address public feeAccount;
+  uint256 public inactivityReleasePeriod;
+  mapping (bytes32 => bool) public traded;
+  mapping (bytes32 => bool) public withdrawn;
+  event Order(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s);
+  event Cancel(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s);
+  event Trade(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address get, address give);
+  event Deposit(address token, address user, uint256 amount, uint256 balance);
+  event Withdraw(address token, address user, uint256 amount, uint256 balance);
+
+  function setInactivityReleasePeriod(uint256 expiry) onlyAdmin returns (bool success) {
+    if (expiry > 1000000) throw;
+    inactivityReleasePeriod = expiry;
+    return true;
   }
 
-  function toUINT128(uint256 a) internal constant returns(uint128) {
-    assert(uint128(a) == a);
-    return uint128(a);
+  function Exchange(address feeAccount_) {
+    owner = msg.sender;
+    feeAccount = feeAccount_;
+    inactivityReleasePeriod = 100000;
   }
-}
 
+  function setAdmin(address admin, bool isAdmin) onlyOwner {
+    admins[admin] = isAdmin;
+  }
 
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
+  modifier onlyAdmin {
+    if (msg.sender != owner && !admins[msg.sender]) throw;
+    _;
+  }
 
-contract Token {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    //uint256 public totalSupply;
-    function totalSupply() constant returns (uint256 supply);
+  function() external {
+    throw;
+  }
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
+  function depositToken(address token, uint256 amount) {
+    tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
+    lastActiveTransaction[msg.sender] = block.number;
+    if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
+    Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
+  }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
+  function deposit() payable {
+    tokens[address(0)][msg.sender] = safeAdd(tokens[address(0)][msg.sender], msg.value);
+    lastActiveTransaction[msg.sender] = block.number;
+    Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
+  }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-
-contract Exchange is Owned {
-
-    event onExchangeTokenToEther(address who, uint256 tokenAmount, uint256 etherAmount);
-
-    using SafeMath for uint256;
-
-    Token public token = Token(0xD850942eF8811f2A866692A623011bDE52a462C1);
-
-    // 1 ether = ? tokens
-    uint256 public rate = 4025;
-
-    // quota of token for every account that can be exchanged to ether
-    uint256 public tokenQuota = 402500 ether;
-
-    // quota of ether for every account that can be exchanged to token
-    // uint256 public etherQuota = 100 ether;
-
-    bool public tokenToEtherAllowed = true;
-    // bool public etherToTokenAllowed = false;
-
-    // uint256 public totalReturnedCredit;             //returned ven  
-
-
-    // struct QuotaUsed {
-    //     uint128 tokens;
-    //     uint128 ethers;
-    // }
-    mapping(address => uint256) accountQuotaUsed;
-
-    function Exchange() {
+  function withdraw(address token, uint256 amount) returns (bool success) {
+    if (safeSub(block.number, lastActiveTransaction[msg.sender]) < inactivityReleasePeriod) throw;
+    if (tokens[token][msg.sender] < amount) throw;
+    tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
+    if (token == address(0)) {
+      if (!msg.sender.send(amount)) throw;
+    } else {
+      if (!Token(token).transfer(msg.sender, amount)) throw;
     }
+    Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+  }
 
-    function () payable {
+  function adminWithdraw(address token, uint256 amount, address user, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeWithdrawal) onlyAdmin returns (bool success) {
+    bytes32 hash = keccak256(this, token, amount, user, nonce);
+    if (withdrawn[hash]) throw;
+    withdrawn[hash] = true;
+    if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) != user) throw;
+    if (feeWithdrawal > 50 finney) feeWithdrawal = 50 finney;
+    if (tokens[token][user] < amount) throw;
+    tokens[token][user] = safeSub(tokens[token][user], amount);
+    tokens[token][feeAccount] = safeAdd(tokens[token][feeAccount], safeMul(feeWithdrawal, amount) / 1 ether);
+    amount = safeMul((1 ether - feeWithdrawal), amount) / 1 ether;
+    if (token == address(0)) {
+      if (!user.send(amount)) throw;
+    } else {
+      if (!Token(token).transfer(user, amount)) throw;
     }
+    lastActiveTransaction[user] = block.number;
+    Withdraw(token, user, amount, tokens[token][user]);
+  }
 
+  function balanceOf(address token, address user) constant returns (uint256) {
+    return tokens[token][user];
+  }
 
-    function withdrawEther(address _address,uint256 _amount) onlyOwner {
-        require(_address != 0);
-        _address.transfer(_amount);
-    }
-
-    function withdrawToken(address _address, uint256 _amount) onlyOwner {
-        require(_address != 0);
-        token.transfer(_address, _amount);
-    }
-
-    function quotaUsed(address _account) constant returns(uint256 ) {
-        return accountQuotaUsed[_account];
-    }
-
-    //tested
-    function setRate(uint256 _rate) onlyOwner {
-        rate = _rate;
-    }
-
-    //tested
-    function setTokenQuota(uint256 _quota) onlyOwner {
-        tokenQuota = _quota;
-    }
-
-    // function setEtherQuota(uint256 _quota) onlyOwner {
-    //     etherQuota = _quota;
-    // }
-
-    //tested    
-    function setTokenToEtherAllowed(bool _allowed) onlyOwner {
-        tokenToEtherAllowed = _allowed;
-    }
-
-    // function setEtherToTokenAllowed(bool _allowed) onlyOwner {
-    //     etherToTokenAllowed = _allowed;
-    // }
-
-    function receiveApproval(address _from, uint256 _value, address /*_tokenContract*/, bytes /*_extraData*/) {
-        exchangeTokenToEther(_from, _value);
-    }
-
-    function exchangeTokenToEther(address _from, uint256 _tokenAmount) internal {
-        require(tokenToEtherAllowed);
-        require(msg.sender == address(token));
-        require(!isContract(_from));
-
-        uint256 quota = tokenQuota.sub(accountQuotaUsed[_from]);                
-
-        if (_tokenAmount > quota)
-            _tokenAmount = quota;
-        
-        uint256 balance = token.balanceOf(_from);
-        if (_tokenAmount > balance)
-            _tokenAmount = balance;
-
-        require(_tokenAmount>0);    //require the token should be above 0
-
-        //require(_tokenAmount > 0.01 ether);
-        require(token.transferFrom(_from, this, _tokenAmount));        
-
-        accountQuotaUsed[_from] = _tokenAmount.add(accountQuotaUsed[_from]);
-        
-        uint256 etherAmount = _tokenAmount / rate;
-        require(etherAmount > 0);
-        _from.transfer(etherAmount);
-
-        // totalReturnedCredit+=_tokenAmount;
-
-        onExchangeTokenToEther(_from, _tokenAmount, etherAmount);
-    }
-
-
-    //exchange EtherToToken??fallback???
-    //TokenToEther
-    //    function exchangeEtherToToken() payable {
-    //       require(etherToTokenAllowed);
-    //        require(!isContract(msg.sender));
-    //
-    //        uint256 quota = etherQuota.sub(accountQuotaUsed[msg.sender].ethers);
-
-    //        uint256 etherAmount = msg.value;
-    //        require(etherAmount >= 0.01 ether && etherAmount <= quota);
-    //        
-    //        uint256 tokenAmount = etherAmount * rate;
-
-    //        accountQuotaUsed[msg.sender].ethers = etherAmount.add(accountQuotaUsed[msg.sender].ethers).toUINT128();
-
-    //        require(token.transfer(msg.sender, tokenAmount));
-
-    //        onExchangeEtherToToken(msg.sender, tokenAmount, etherAmount);                                                        
-    //    }
-
-    function isContract(address _addr) constant internal returns(bool) {
-        uint size;
-        if (_addr == 0)
-            return false;
-        assembly {
-            size := extcodesize(_addr)
-        }
-        return size > 0;
-    }
+  function trade(uint256[8] tradeValues, address[4] tradeAddresses, uint8[2] v, bytes32[4] rs) onlyAdmin returns (bool success) {
+    /* amount is in amountBuy terms */
+    /* tradeValues
+       [0] amountBuy
+       [1] amountSell
+       [2] expires
+       [3] nonce
+       [4] amount
+       [5] tradeNonce
+       [6] feeMake
+       [7] feeTake
+     tradeAddressses
+       [0] tokenBuy
+       [1] tokenSell
+       [2] maker
+       [3] taker
+     */
+    if (invalidOrder[tradeAddresses[2]] > tradeValues[3]) throw;
+    bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
+    if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) != tradeAddresses[2]) throw;
+    bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]); 
+    if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) != tradeAddresses[3]) throw;
+    if (traded[tradeHash]) throw;
+    traded[tradeHash] = true;
+    if (tradeValues[6] > 100 finney) tradeValues[6] = 100 finney;
+    if (tradeValues[7] > 100 finney) tradeValues[7] = 100 finney;
+    if (safeAdd(orderFills[orderHash], tradeValues[4]) > tradeValues[0]) throw;
+    if (tokens[tradeAddresses[0]][tradeAddresses[3]] < tradeValues[4]) throw;
+    if (tokens[tradeAddresses[1]][tradeAddresses[2]] < (safeMul(tradeValues[1], tradeValues[4]) / tradeValues[0])) throw;
+    tokens[tradeAddresses[0]][tradeAddresses[3]] = safeSub(tokens[tradeAddresses[0]][tradeAddresses[3]], tradeValues[4]);
+    tokens[tradeAddresses[0]][tradeAddresses[2]] = safeAdd(tokens[tradeAddresses[0]][tradeAddresses[2]], safeMul(tradeValues[4], ((1 ether) - tradeValues[6])) / (1 ether));
+    tokens[tradeAddresses[0]][feeAccount] = safeAdd(tokens[tradeAddresses[0]][feeAccount], safeMul(tradeValues[4], tradeValues[6]) / (1 ether));
+    tokens[tradeAddresses[1]][tradeAddresses[2]] = safeSub(tokens[tradeAddresses[1]][tradeAddresses[2]], safeMul(tradeValues[1], tradeValues[4]) / tradeValues[0]);
+    tokens[tradeAddresses[1]][tradeAddresses[3]] = safeAdd(tokens[tradeAddresses[1]][tradeAddresses[3]], safeMul(safeMul(((1 ether) - tradeValues[7]), tradeValues[1]), tradeValues[4]) / tradeValues[0] / (1 ether));
+    tokens[tradeAddresses[1]][feeAccount] = safeAdd(tokens[tradeAddresses[1]][feeAccount], safeMul(safeMul(tradeValues[7], tradeValues[1]), tradeValues[4]) / tradeValues[0] / (1 ether));
+    orderFills[orderHash] = safeAdd(orderFills[orderHash], tradeValues[4]);
+    lastActiveTransaction[tradeAddresses[2]] = block.number;
+    lastActiveTransaction[tradeAddresses[3]] = block.number;
+  }
 }
