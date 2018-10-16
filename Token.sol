@@ -1,81 +1,151 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xaa5aa0a6422d54e614421f22b00945ffcab40477
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xc191fee2585eb7b4f632a817b56cfb57c9f10b69
 */
-pragma solidity >=0.4.10;
+pragma solidity ^0.4.11;
 
-contract Token {
-	event Transfer(address indexed from, address indexed to, uint value);
-	event Approval(address indexed owner, address indexed spender, uint value);
+contract ContractReceiver {
+     
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
+    }
+    
+    
+    function tokenFallback(address _from, uint _value, bytes _data){
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u);
+ 
+    }
+}
 
-	string constant public name = "Hodl Token";
-	string constant public symbol = "HODL";
-	uint8 constant public digits = 8;
-	mapping (address => uint) public balanceOf;
-	mapping (address => mapping (address => uint)) public allowance;
-	uint public totalSupply;
-	address public owner;
+contract SafeMath {
+    uint256 constant public MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-	function Token() {
-		owner = msg.sender;
-	}
+    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x > MAX_UINT256 - y) throw;
+        return x + y;
+    }
 
-	function transfer(address to, uint value) returns(bool) {
-		uint bal = balanceOf[msg.sender];
-		require(bal >= value);
-		balanceOf[msg.sender] = bal - value;
-		balanceOf[to] = balanceOf[to] + value;
-		Transfer(msg.sender, to, value);
-		return true;
-	}
+    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x < y) throw;
+        return x - y;
+    }
 
-	function approve(address spender, uint value) returns(bool) {
-		require(value == 0 || (allowance[msg.sender][spender] == 0 && balanceOf[msg.sender] >= value));
-		allowance[msg.sender][spender] = value;
-		Approval(msg.sender, spender, value);
-		return true;
-	}
+    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (y == 0) return 0;
+        if (x > MAX_UINT256 / y) throw;
+        return x * y;
+    }
+}
 
-	function transferFrom(address owner, address to, uint value) returns(bool) {
-		uint allowed = allowance[owner][msg.sender];
-		uint balance = balanceOf[owner];
-		require(allowed >= value && balance >= value);
-		allowance[owner][msg.sender] = allowed - value;
-		balanceOf[owner] = balance - value;
-		balanceOf[to] = balanceOf[to] + value;
-		Transfer(owner, to, value);
-		return true;
-	}
+contract Token is SafeMath{
 
-	function approval(address owner, address spender) constant returns(uint) {
-		return allowance[owner][spender];
-	}
-
-	function burn(uint amount) {
-		uint bal = balanceOf[msg.sender];
-		require(bal >= amount);
-		balanceOf[msg.sender] = bal - amount;
-		totalSupply -= amount;
-		Transfer(msg.sender, 0, amount);
-	}
-
-	function mint(address to, uint value) {
-		require(msg.sender == owner);
-		balanceOf[to] = balanceOf[to] + value;
-		totalSupply += value;
-		Transfer(0, to, value);
-	}
-
-	function multiMint(uint256[] bits) {
-		require(msg.sender == owner);
-		uint256 lomask = (1 << 96) - 1;
-		uint created = 0;
-		for (uint i=0; i<bits.length; i++) {
-			address a = address(bits[i]>>96);
-			uint value = bits[i]&lomask;
-			balanceOf[a] = balanceOf[a] + value;
-			Transfer(0, a, value);
-			created += value;
+  mapping(address => uint) balances;
+  
+  string public symbol = "";
+  string public name = "";
+  uint8 public decimals = 18;
+  uint256 public totalSupply = 0;
+  address owner = 0;
+  bool setupDone = false;
+  
+  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+  
+  function Token(address adr) {
+		owner = adr;        
+    }
+	
+	function SetupToken(string _tokenName, string _tokenSymbol, uint256 _tokenSupply)
+	{
+		if (msg.sender == owner && setupDone == false)
+		{
+			symbol = _tokenSymbol;
+			name = _tokenName;
+			totalSupply = _tokenSupply * 1000000000000000000;
+			balances[owner] = totalSupply;
+			setupDone = true;
 		}
-		totalSupply += created;
 	}
+  
+  function name() constant returns (string _name) {
+      return name;
+  }
+
+  function symbol() constant returns (string _symbol) {
+      return symbol;
+  }
+
+  function decimals() constant returns (uint8 _decimals) {
+      return decimals;
+  }
+
+  function totalSupply() constant returns (uint256 _totalSupply) {
+      return totalSupply;
+  }
+  
+  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
+      
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, _data);
+    }
+    else {
+        return transferToAddress(_to, _value, _data);
+    }
+}
+  
+  function transfer(address _to, uint _value) returns (bool success) {
+      
+    bytes memory empty;
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, empty);
+    }
+    else {
+        return transferToAddress(_to, _value, empty);
+    }
+}
+
+  function isContract(address _addr) private returns (bool is_contract) {
+      uint length;
+	  
+	  if (balanceOf(_addr) >=0 )
+	  
+      assembly {
+            length := extcodesize(_addr)
+        }
+        if(length>0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) throw;
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    Transfer(msg.sender, _to, _value, _data);
+    return true;
+  }
+  
+  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) throw;
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    ContractReceiver reciever = ContractReceiver(_to);
+    reciever.tokenFallback(msg.sender, _value, _data);
+    Transfer(msg.sender, _to, _value, _data);
+    return true;
+}
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
 }
