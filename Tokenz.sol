@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokenz at 0xf94b57e795d17361bcebc8fb574a4cecbce6a940
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokenz at 0xaa30f96f7576fdb195142b3d8efcf7cf712e1591
 */
 pragma solidity ^0.4.18;
 contract ERC20 {
@@ -73,9 +73,6 @@ contract Tokenz is Owned {
     uint256 maxtokens=this.balance/inRate;
     if (tokens>maxtokens) tokens=maxtokens;
     if (tokens<minLot) revert();
-    uint256 total=ERC20(token).balanceOf(msg.sender);
-    if (total<tokens) revert();
-    if (!ERC20(token).approve(address(this),tokens)) revert();
     if (!ERC20(token).transferFrom(msg.sender, address(this), tokens)) revert();
     uint256 sum = tokens*inRate;
     msg.sender.transfer(sum);
