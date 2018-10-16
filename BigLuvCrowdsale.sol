@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigLuvCrowdsale at 0x43ca6017e714123a2780cc1d556b45d13a911a3f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigLuvCrowdsale at 0x0fafe05e5a32ccbf7be5b9db8a4573e7bcf596df
 */
 pragma solidity ^0.4.18;
 
@@ -485,7 +485,13 @@ contract BigLuvCrowdsale is  TimedCrowdsale, MintedCrowdsale,Ownable {
   uint256 public constant DECIMAL_FACTOR = 10 ** uint256(18);
   uint256 public publicAllocationTokens = 50000000*DECIMAL_FACTOR;
 
-  
+   /**
+ 	* @dev BigLuvCrowdsale is a base contract for managing a token crowdsale.
+ 	* BigLuvCrowdsale have a start and end timestamps, where investors can make
+ 	* token purchases and the crowdsale will assign them tokens based
+ 	* on a token per ETH rate. Funds collected are forwarded to a wallet
+ 	* as they arrive.
+ 	*/
   function BigLuvCrowdsale(uint256 _starttime, uint256 _endTime, uint256 _rate, address _wallet,ERC20 _token)
   TimedCrowdsale(_starttime,_endTime)Crowdsale(_rate, _wallet,_token)
   {
@@ -504,6 +510,7 @@ contract BigLuvCrowdsale is  TimedCrowdsale, MintedCrowdsale,Ownable {
     uint256 weiAmount = msg.value;
     // calculate token amount to be created
     uint256 tokens = weiAmount.mul(rate);
+    publicAllocationTokens=publicAllocationTokens.sub(tokens);
     // update state
     weiRaised = weiRaised.add(weiAmount);
     _processPurchase(_beneficiary, tokens);
@@ -530,13 +537,24 @@ contract BigLuvCrowdsale is  TimedCrowdsale, MintedCrowdsale,Ownable {
     openingTime = _startTime;
     }
     
-     /**
+ /**
  * @dev Change crowdsale ClosingTime
  * @param  _endTime is End time in Seconds
  */
   function changeEndtime(uint256 _endTime) public onlyOwner {
     require(_endTime != 0); 
     closingTime = _endTime;
+    }
+ /**
+  * @param _to is beneficiary address
+  * @param _value  Amount if tokens
+  * @dev  Tokens transfer to beneficiary address only contract creator
+ */
+  function tokenTransferByAdmin(address _to, uint256 _value) onlyOwner {
+    require (_to != 0x0 && _value < publicAllocationTokens);
+    _processPurchase(_to, _value);
+    publicAllocationTokens=publicAllocationTokens.sub(_value);
+       
     }
  
 }
