@@ -1,205 +1,232 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCartel at 0xa77cf14e0bda66f94873498ed15e1eaf183d2fd0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCartel at 0xf223b61e5d30bf7b4adb38ddfba3190789a95738
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
+// site : https://ethercartel.com/
 
-
-contract EtherCartel{
-    //uint256 EGGS_TO_HATCH_1SHRIMP=1;
-    uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
-    uint256 public STARTING_SHRIMP=300;
+contract EtherCartel {
+    
+    address public superPowerFulDragonOwner;
+    uint256 public lastPrice = 200000000000000000;
+    uint public hatchingSpeed = 100;
+    uint256 public snatchedOn;
+    bool public isEnabled = false;
+    
+    function enableSuperDragon(bool enable) public {
+        require(msg.sender == ceoAddress);
+        isEnabled = enable;
+        superPowerFulDragonOwner = ceoAddress;
+        snatchedOn = now;
+    }
+    
+    function withDrawMoney(uint percentage) public {
+        require(msg.sender == ceoAddress);
+        uint256 myBalance = calculatePercentage(ceoEtherBalance, percentage);
+        ceoEtherBalance = ceoEtherBalance - myBalance;
+        ceoAddress.transfer(myBalance);
+    }
+    
+    function buySuperDragon() public payable {
+        require(isEnabled);
+        require(initialized);
+        uint currenPrice = SafeMath.add(SafeMath.div(SafeMath.mul(lastPrice, 4),100),lastPrice);
+        require(msg.value > currenPrice);
+        
+        uint256 timeSpent = SafeMath.sub(now, snatchedOn);
+        userReferralEggs[superPowerFulDragonOwner] += SafeMath.mul(hatchingSpeed,timeSpent);
+        
+        hatchingSpeed += SafeMath.div(SafeMath.sub(now, contractStarted), 60*60*24);
+        ceoEtherBalance += calculatePercentage(msg.value, 2);
+        superPowerFulDragonOwner.transfer(msg.value - calculatePercentage(msg.value, 2));
+        lastPrice = currenPrice;
+        superPowerFulDragonOwner = msg.sender;
+        snatchedOn = now;
+    }
+    
+    function claimSuperDragonEggs() public {
+        require(isEnabled);
+        require (msg.sender == superPowerFulDragonOwner);
+        uint256 timeSpent = SafeMath.sub(now, snatchedOn);
+        userReferralEggs[superPowerFulDragonOwner] += SafeMath.mul(hatchingSpeed,timeSpent);
+        snatchedOn = now;
+    }
+    
+    //uint256 EGGS_PER_Dragon_PER_SECOND=1;
+    uint256 public EGGS_TO_HATCH_1Dragon=86400;//for final version should be seconds in a day
+    uint256 public STARTING_Dragon=5;
+    
     uint256 PSN=10000;
     uint256 PSNH=5000;
+    
     bool public initialized=false;
     address public ceoAddress;
-    mapping (address => uint256) public hatcheryShrimp;
-    mapping (address => uint256) public claimedEggs;
+    uint public ceoEtherBalance;
+    uint public constant maxIceDragonsCount = 5;
+    uint public constant maxPremiumDragonsCount = 20;
+    
+    mapping (address => uint256) public iceDragons;
+    mapping (address => uint256) public premiumDragons;
+    mapping (address => uint256) public normalDragon;
+    mapping (address => uint256) public userHatchRate;
+    
+    mapping (address => uint256) public userReferralEggs;
     mapping (address => uint256) public lastHatch;
     mapping (address => address) public referrals;
+    
     uint256 public marketEggs;
-
-
-    // Additions 
-    mapping(address => bool) public hasDoubler;
-    uint256 public CurrentIcePrice = 0.01 ether;
-    uint256 public CurrentIceDelta = 0.001 ether;
-    uint256 public CurrentGoldPrice = 0.2 ether;
-    uint256 public CurrentGoldPercentIncrease = 200; // 200 = doubles in price 
-    uint256 public CurrentDevFee = 7;
-    address public GoldOwner;
-
-
-    constructor() public{
+    uint256 public contractStarted;
+    
+    constructor() public {
         ceoAddress=msg.sender;
-        GoldOwner=msg.sender;
     }
-
-    function BuyDoubler() public payable{
-        require(initialized);
-        require(msg.value >= CurrentIcePrice);
-        uint256 left;
-        uint256 excess=0;
-        if (msg.value > CurrentIcePrice){
-            excess = msg.value - CurrentIcePrice;
-            left = CurrentIcePrice;
-        }
-        else{
-            left = msg.value;
-        }
-
-
-        // save current eggs into the wallet of user 
-        uint256 eggs = getMyEggs();
-        claimedEggs[msg.sender] = SafeMath.add(claimedEggs[msg.sender], eggs);
-        // shrimp production all moved into claimed eggs 
-        lastHatch[msg.sender] = now;
-        hasDoubler[msg.sender] = true;
-        CurrentIcePrice = CurrentIcePrice + CurrentIceDelta;
-        ceoAddress.transfer(devFee(left));
-        if (excess > 0){
-            msg.sender.transfer(excess);
-        }
+    
+    function seedMarket(uint256 eggs) public payable {
+        require(marketEggs==0);
+        initialized=true;
+        marketEggs=eggs;
+        contractStarted = now;
     }
-
-    function BuyGold() public payable{
-        require(initialized);
-        require(msg.value >= CurrentGoldPrice);
-        require(msg.sender != GoldOwner);
-        uint256 left;
-        uint256 excess=0;
-        if (msg.value > CurrentGoldPrice){
-            excess = msg.value - CurrentGoldPrice;
-            left = CurrentGoldPrice;
-        }
-        else{
-            left = msg.value;
-        }
-
-        left = SafeMath.sub(left, devFee(left));
-
-        uint256 eggs = getMyEggs();
-        claimedEggs[msg.sender] = SafeMath.add(claimedEggs[msg.sender], eggs);
-        // shrimp production all moved into claimed eggs 
-        lastHatch[msg.sender] = now;
-
-        eggs = getEggsOff(GoldOwner);
-        claimedEggs[GoldOwner] = SafeMath.add(claimedEggs[GoldOwner], eggs);
-        // shrimp production all moved into claimed eggs 
-        lastHatch[GoldOwner] = now;
-
-
-        CurrentGoldPrice = SafeMath.div(SafeMath.mul(CurrentGoldPrice,CurrentGoldPercentIncrease),100);
-        address oldOwner = GoldOwner;
-        GoldOwner = msg.sender;
-
-        oldOwner.transfer(left);
-        if (excess > 0){
-            msg.sender.transfer(excess);
-        }
+    
+    function getMyEggs() public view returns(uint256){
+        return SafeMath.add(userReferralEggs[msg.sender], getEggsSinceLastHatch(msg.sender));
     }
-
-
-    function hatchEggs(address ref) public{
+    
+    function getEggsSinceLastHatch(address adr) public view returns(uint256){
+        uint256 secondsPassed = SafeMath.sub(now,lastHatch[adr]);
+        uint256 dragonCount = SafeMath.mul(iceDragons[adr], 10);
+        dragonCount = SafeMath.add(dragonCount, premiumDragons[adr]);
+        dragonCount = SafeMath.add(dragonCount, normalDragon[adr]);
+        return SafeMath.mul(secondsPassed, dragonCount);
+    }
+    
+    function getEggsToHatchDragon() public view returns (uint) {
+        uint256 timeSpent = SafeMath.sub(now,contractStarted); 
+        timeSpent = SafeMath.div(timeSpent, 3600);
+        return SafeMath.mul(timeSpent, 10);
+    }
+    
+    function getBalance() public view returns(uint256){
+        return address(this).balance;
+    }
+    
+    function getMyNormalDragons() public view returns(uint256) {
+        return SafeMath.add(normalDragon[msg.sender], premiumDragons[msg.sender]);
+    }
+    
+    function getMyIceDragon() public view returns(uint256) {
+        return iceDragons[msg.sender];
+    }
+    
+    function setUserHatchRate() internal {
+        if (userHatchRate[msg.sender] == 0) 
+            userHatchRate[msg.sender] = SafeMath.add(EGGS_TO_HATCH_1Dragon, getEggsToHatchDragon());
+    }
+    
+    function calculatePercentage(uint256 amount, uint percentage) public pure returns(uint256){
+        return SafeMath.div(SafeMath.mul(amount,percentage),100);
+    }
+    
+    function getFreeDragon() public {
         require(initialized);
-        if(referrals[msg.sender]==0 && referrals[msg.sender]!=msg.sender){
-            referrals[msg.sender]=ref;
+        require(normalDragon[msg.sender] == 0);
+        
+        lastHatch[msg.sender]=now;
+        normalDragon[msg.sender]=STARTING_Dragon;
+        setUserHatchRate();
+    }
+    
+    function buyDrangon() public payable {
+        require(initialized);
+        require(userHatchRate[msg.sender] != 0);
+        uint dragonPrice = getDragonPrice(userHatchRate[msg.sender], address(this).balance);
+        uint dragonAmount = SafeMath.div(msg.value, dragonPrice);
+        require(dragonAmount > 0);
+        
+        ceoEtherBalance += calculatePercentage(msg.value, 10);
+        premiumDragons[msg.sender] += dragonAmount;
+    }
+    
+    function buyIceDrangon() public payable {
+        require(initialized);
+        require(userHatchRate[msg.sender] != 0);
+        uint dragonPrice = getDragonPrice(userHatchRate[msg.sender], address(this).balance) * 8;
+        uint dragonAmount = SafeMath.div(msg.value, dragonPrice);
+        require(dragonAmount > 0);
+        
+        ceoEtherBalance += calculatePercentage(msg.value, 10);
+        iceDragons[msg.sender] += dragonAmount;
+    }
+    
+    function hatchEggs(address ref) public {
+        require(initialized);
+        
+        if(referrals[msg.sender] == 0 && referrals[msg.sender] != msg.sender) {
+            referrals[msg.sender] = ref;
         }
-        uint256 eggsUsed=getMyEggs();
-        uint256 newShrimp=SafeMath.div(eggsUsed,EGGS_TO_HATCH_1SHRIMP);
-        hatcheryShrimp[msg.sender]=SafeMath.add(hatcheryShrimp[msg.sender],newShrimp);
-        claimedEggs[msg.sender]=0;
+        
+        uint256 eggsProduced = getMyEggs();
+        
+        uint256 newDragon = SafeMath.div(eggsProduced,userHatchRate[msg.sender]);
+        
+        uint256 eggsConsumed = SafeMath.mul(newDragon, userHatchRate[msg.sender]);
+        
+        normalDragon[msg.sender] = SafeMath.add(normalDragon[msg.sender],newDragon);
+        userReferralEggs[msg.sender] = SafeMath.sub(eggsProduced, eggsConsumed); 
         lastHatch[msg.sender]=now;
         
         //send referral eggs
-        claimedEggs[referrals[msg.sender]]=SafeMath.add(claimedEggs[referrals[msg.sender]],SafeMath.div(eggsUsed,5));
+        userReferralEggs[referrals[msg.sender]]=SafeMath.add(userReferralEggs[referrals[msg.sender]],SafeMath.div(eggsConsumed,10));
         
-        //boost market to nerf shrimp hoarding
-        marketEggs=SafeMath.add(marketEggs,SafeMath.div(eggsUsed,10));
+        //boost market to nerf Dragon hoarding
+        marketEggs=SafeMath.add(marketEggs,SafeMath.div(eggsProduced,10));
     }
-    function sellEggs() public{
+    
+    function sellEggs() public {
         require(initialized);
-        uint256 hasEggs=getMyEggs();
-        uint256 eggValue=calculateEggSell(hasEggs);
-        uint256 fee=devFee(eggValue);
-        claimedEggs[msg.sender]=0;
+        uint256 hasEggs = getMyEggs();
+        uint256 eggValue = calculateEggSell(hasEggs);
+        uint256 fee = calculatePercentage(eggValue, 2);
+        userReferralEggs[msg.sender] = 0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
-        hatcheryShrimp[msg.sender]=SafeMath.div(SafeMath.mul(hatcheryShrimp[msg.sender],3),4);
-        ceoAddress.transfer(fee);
+        ceoEtherBalance += fee;
         msg.sender.transfer(SafeMath.sub(eggValue,fee));
     }
-    function buyEggs() public payable{
-        require(initialized);
-        uint256 eggsBought=calculateEggBuy(msg.value,SafeMath.sub(this.balance,msg.value));
-        eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
-        ceoAddress.transfer(devFee(msg.value));
-        claimedEggs[msg.sender]=SafeMath.add(claimedEggs[msg.sender],eggsBought);
+    
+    function getDragonPrice(uint eggs, uint256 eth) internal view returns (uint) {
+        uint dragonPrice = calculateEggSell(eggs, eth);
+        return calculatePercentage(dragonPrice, 140);
     }
+    
+    function getDragonPriceNo(uint eth) public view returns (uint) {
+        uint256 d = userHatchRate[msg.sender];
+        if (d == 0) 
+            d = SafeMath.add(EGGS_TO_HATCH_1Dragon, getEggsToHatchDragon());
+        return getDragonPrice(d, eth);
+    }
+    
     //magic trade balancing algorithm
     function calculateTrade(uint256 rt,uint256 rs, uint256 bs) public view returns(uint256){
         //(PSN*bs)/(PSNH+((PSN*rs+PSNH*rt)/rt));
         return SafeMath.div(SafeMath.mul(PSN,bs),SafeMath.add(PSNH,SafeMath.div(SafeMath.add(SafeMath.mul(PSN,rs),SafeMath.mul(PSNH,rt)),rt)));
     }
+    
     function calculateEggSell(uint256 eggs) public view returns(uint256){
-        return calculateTrade(eggs,marketEggs,this.balance);
+        return calculateTrade(eggs,marketEggs,address(this).balance);
     }
-    function calculateEggBuy(uint256 eth,uint256 contractBalance) public view returns(uint256){
+    
+    function calculateEggSell(uint256 eggs, uint256 eth) public view returns(uint256){
+        return calculateTrade(eggs,marketEggs,eth);
+    }
+    
+    
+    function calculateEggBuy(uint256 eth, uint256 contractBalance) public view returns(uint256){
         return calculateTrade(eth,contractBalance,marketEggs);
     }
-    function calculateEggBuySimple(uint256 eth) public view returns(uint256){
-        return calculateEggBuy(eth,this.balance);
-    }
-    function devFee(uint256 amount) public view returns(uint256){
-        return SafeMath.div(SafeMath.mul(amount,CurrentDevFee),100);
-    }
-    function seedMarket(uint256 eggs) public payable{
-        require(marketEggs==0);
-        initialized=true;
-        marketEggs=eggs;
-    }
-    function getFreeShrimp() public{
-        require(initialized);
-        require(hatcheryShrimp[msg.sender]==0);
-        lastHatch[msg.sender]=now;
-        hatcheryShrimp[msg.sender]=STARTING_SHRIMP;
-    }
-    function getBalance() public view returns(uint256){
-        return this.balance;
-    }
-    function getMyShrimp() public view returns(uint256){
-        return hatcheryShrimp[msg.sender];
-    }
-
-    function getEggsOff(address adr) public view returns (uint256){
-        uint256 ret = SafeMath.add(claimedEggs[adr],getEggsSinceLastHatch(adr));
-        if (hasDoubler[adr]){
-            ret = SafeMath.mul(ret,2);
-        }
-        if (adr == GoldOwner){
-            ret = SafeMath.mul(ret,4);
-        }
-        return ret;
     
-    }
-
-
-    function getMyEggs() public view returns(uint256){
-        uint256 ret = SafeMath.add(claimedEggs[msg.sender],getEggsSinceLastHatch(msg.sender));
-        if (hasDoubler[msg.sender]){
-            ret = SafeMath.mul(ret,2);
-        }
-        if (msg.sender == GoldOwner){
-            ret = SafeMath.mul(ret,4);
-        }
-        return ret;
-    }
-    function getEggsSinceLastHatch(address adr) public view returns(uint256){
-        uint256 secondsPassed=min(EGGS_TO_HATCH_1SHRIMP,SafeMath.sub(now,lastHatch[adr]));
-        return SafeMath.mul(secondsPassed,hatcheryShrimp[adr]);
-    }
-    function min(uint256 a, uint256 b) private pure returns (uint256) {
-        return a < b ? a : b;
+    function calculateEggBuySimple(uint256 eth) public view returns(uint256) {
+        return calculateEggBuy(eth, address(this).balance);
     }
 }
 
