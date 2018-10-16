@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SchmeckleTokenSale at 0xBE7507c3ae554C85BedA48310F014C4c15d9C338
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SchmeckleTokenSale at 0x79E50de3A0798033E1428A721a8085455A4128F2
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
 contract token { function transfer(address receiver, uint amount); }
 
@@ -9,18 +9,18 @@ contract SchmeckleTokenSale {
   int public currentStage;
   uint public priceInWei;
   uint public availableTokensOnCurrentStage;
-  token public tokenReward;
-  event SaleStageUp(int newSaleStage, uint newTokenPrice);
 
   address beneficiary;
   uint decimalBase;
   uint totalAmount;
+  token public tokenReward;
+  event SaleStageUp(int newSaleStage, uint newTokenPrice);
 
   function SchmeckleTokenSale() {
       beneficiary = msg.sender;
       priceInWei = 700 szabo;
       decimalBase = 1000000000000000000;
-      tokenReward = token(0xD7a1BF3Cc676Fc7111cAD65972C8499c9B98Fb6f);
+      tokenReward = token(0x0bB664f7b6FC928B2d1e5aA32182Ae07023Ed4aA);
       availableTokensOnCurrentStage = 2000000;
       totalAmount = 0;
       currentStage = -3;
