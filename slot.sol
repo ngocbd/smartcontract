@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slot at 0x221ea1b119b4aa2c6b4e2282ab0b621b1f54cf61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slot at 0xdb9822bb9885d844d1986a8949fce1a4ceb5f8b6
 */
 pragma solidity ^0.4.11;
 
@@ -1047,7 +1047,8 @@ contract DSMath {
     }
 
     function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x * y) >= x);
+        z = x * y;
+        assert(x == 0 || z / x == y);
     }
 
     function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
@@ -1075,7 +1076,8 @@ contract DSMath {
     }
 
     function hmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x * y) >= x);
+        z = x * y;
+        assert(x == 0 || z / x == y);
     }
 
     function hdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
@@ -1199,7 +1201,7 @@ contract LedgerProofVerifyI {
 
 contract Owned {
     address public owner;
-    
+
     modifier onlyOwner {
         assert(msg.sender == owner);
         _;
@@ -1208,28 +1210,32 @@ contract Owned {
     function Owned() {
         owner = msg.sender;
     }
+
 }
 
 contract oraclizeSettings is Owned {
-	uint constant ORACLIZE_PER_SPIN_GAS_LIMIT = 6100;
-	uint constant ORACLIZE_BASE_GAS_LIMIT = 200000;
-	uint safeGas = 9000;
-	
-	event newGasLimit(uint _gasLimit);
+    uint constant ORACLIZE_PER_SPIN_GAS_LIMIT = 6100;
+    uint constant ORACLIZE_BASE_GAS_LIMIT = 220000;
+    uint safeGas = 9000;
+    
+    event LOG_newGasLimit(uint _gasLimit);
 
-	function setSafeGas(uint _gas) 
-		onlyOwner 
-	{
-	    assert(ORACLIZE_BASE_GAS_LIMIT + safeGas >= ORACLIZE_BASE_GAS_LIMIT);
-	    assert(safeGas <= 25000);
-		safeGas = _gas;
-		newGasLimit(_gas);
-	}	
+    function setSafeGas(uint _gas) 
+            onlyOwner 
+    {
+        assert(ORACLIZE_BASE_GAS_LIMIT + _gas >= ORACLIZE_BASE_GAS_LIMIT);
+        assert(_gas <= 25000);
+        assert(_gas >= 9000); 
+
+        safeGas = _gas;
+        LOG_newGasLimit(_gas);
+    }       
 }
 
 contract HouseManaged is Owned {
     
     address public houseAddress;
+    address newOwner;
     bool public isStopped;
 
     event LOG_ContractStopped();
@@ -1257,19 +1263,26 @@ contract HouseManaged is Owned {
         isStopped = _isStopped;
     }
 
-    function changeHouse_and_Owner_Addresses(address newHouse, address newOwner)
+    function changeHouse(address _newHouse)
         onlyOwner {
 
-        assert(newHouse != address(0x0));
-        assert(newOwner != address(0x0));
+        assert(_newHouse != address(0x0)); 
         
-        owner = newOwner;
-        LOG_OwnerAddressChanged(owner, newOwner);
-        
-        houseAddress = newHouse;
-        LOG_HouseAddressChanged(houseAddress, newHouse);
+        houseAddress = _newHouse;
+        LOG_HouseAddressChanged(houseAddress, _newHouse);
     }
+        
+    function changeOwner(address _newOwner) onlyOwner {
+        newOwner = _newOwner; 
+    }     
 
+    function acceptOwnership() {
+        if (msg.sender == newOwner) {
+            owner = newOwner;       
+            LOG_OwnerAddressChanged(owner, newOwner);
+            delete newOwner;
+        }
+    }
 }
 
 contract usingInvestorsModule is HouseManaged, oraclizeSettings {
@@ -1294,9 +1307,9 @@ contract usingInvestorsModule is HouseManaged, oraclizeSettings {
     uint public investorsLosses = 0;
     bool profitDistributed;
     
-    event LOG_InvestorEntrance(address investor, uint amount);
-    event LOG_InvestorCapitalUpdate(address investor, int amount);
-    event LOG_InvestorExit(address investor, uint amount);
+    event LOG_InvestorEntrance(address indexed investor, uint amount);
+    event LOG_InvestorCapitalUpdate(address indexed investor, int amount);
+    event LOG_InvestorExit(address indexed investor, uint amount);
     event LOG_EmergencyAutoStop();
     
     event LOG_ZeroSend();
@@ -1331,13 +1344,7 @@ contract usingInvestorsModule is HouseManaged, oraclizeSettings {
         _;
         assert(numInvestors <= MAX_INVESTORS);
     }
-    
-    modifier onlyIfProfitNotDistributed {
-        if (!profitDistributed) {
-            _;
-        }
-    }
-    
+     
     function getBankroll()
         constant
         returns(uint) {
@@ -1369,14 +1376,14 @@ contract usingInvestorsModule is HouseManaged, oraclizeSettings {
         constant
         returns (uint) {
 
-        return investors[investorIDs[currentInvestor]].amountInvested * (investorsLosses) / invested;
+        return (investors[investorIDs[currentInvestor]].amountInvested * investorsLosses) / invested;
     }
 
     function getProfitShare(address currentInvestor)
         constant
         returns (uint) {
 
-        return investors[investorIDs[currentInvestor]].amountInvested * (investorsProfit) / invested;
+        return (investors[investorIDs[currentInvestor]].amountInvested * investorsProfit) / invested;
     }
 
     function getBalance(address currentInvestor)
@@ -1422,15 +1429,17 @@ contract usingInvestorsModule is HouseManaged, oraclizeSettings {
     }
 
     function profitDistribution()
-        private
-        onlyIfProfitNotDistributed {
+        private {
 
+        if (profitDistributed) return;
+                
         uint copyInvested;
 
         for (uint i = 1; i <= numInvestors; i++) {
             address currentInvestor = investors[i].investorAddress;
             uint profitOfInvestor = getProfitShare(currentInvestor);
             uint lossesOfInvestor = getLossesShare(currentInvestor);
+            
             //Check for overflow and underflow
             if ((investors[i].amountInvested + profitOfInvestor >= investors[i].amountInvested) &&
                 (investors[i].amountInvested + profitOfInvestor >= lossesOfInvestor))  {
@@ -1442,8 +1451,8 @@ contract usingInvestorsModule is HouseManaged, oraclizeSettings {
                 LOG_EmergencyAutoStop();
             }
 
-            if (copyInvested + investors[i].amountInvested >= copyInvested)
-                copyInvested += investors[i].amountInvested;
+            copyInvested += investors[i].amountInvested; 
+
         }
 
         delete investorsProfit;
@@ -1498,7 +1507,7 @@ contract usingInvestorsModule is HouseManaged, oraclizeSettings {
         uint currentID = investorIDs[currentInvestor];
         uint amountToReturn = getBalance(currentInvestor);
 
-        if ((invested >= investors[currentID].amountInvested)) {
+        if (invested >= investors[currentID].amountInvested) {
             invested -= investors[currentID].amountInvested;
             uint divestFeeAmount =  (amountToReturn*divestFee)/10000;
             amountToReturn -= divestFeeAmount;
@@ -1548,7 +1557,7 @@ contract usingInvestorsModule is HouseManaged, oraclizeSettings {
         if (this.balance < value) {
             LOG_ValueIsTooBig();
             return;
-        }
+	}
 
         if (!(addr.call.gas(safeGas).value(value)())) {
             LOG_FailedSend(addr, value);
@@ -1574,9 +1583,9 @@ contract EmergencyWithdrawalModule is usingInvestorsModule {
     WithdrawalProposal public proposedWithdrawal;
     
     event LOG_EmergencyWithdrawalProposed();
-    event LOG_EmergencyWithdrawalFailed(address withdrawalAddress);
-    event LOG_EmergencyWithdrawalSucceeded(address withdrawalAddress, uint amountWithdrawn);
-    event LOG_EmergencyWithdrawalVote(address investor, bool vote);
+    event LOG_EmergencyWithdrawalFailed(address indexed withdrawalAddress);
+    event LOG_EmergencyWithdrawalSucceeded(address indexed withdrawalAddress, uint amountWithdrawn);
+    event LOG_EmergencyWithdrawalVote(address indexed investor, bool vote);
     
     modifier onlyAfterProposed {
         assert(proposedWithdrawal.toAddress != 0);
@@ -1684,9 +1693,10 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
     
     uint public totalAmountWagered; 
     
-    event LOG_newSpinsContainer(bytes32 myid, address playerAddress, uint amountWagered, uint nSpins);
-    event LOG_SpinExecuted(bytes32 myid, address playerAddress, uint spinIndex, uint numberDrawn);
-    event LOG_SpinsContainerInfo(bytes32 myid, address playerAddress, uint netPayout);
+    event LOG_newSpinsContainer(bytes32 indexed myid, address indexed playerAddress, uint amountWagered, uint nSpins);
+    event LOG_SpinExecuted(bytes32 indexed myid, address indexed playerAddress, uint spinIndex, uint numberDrawn, uint grossPayoutForSpin);
+    event LOG_SpinsContainerInfo(bytes32 indexed myid, address indexed playerAddress, uint netPayout);
+
     LedgerProofVerifyI externalContract;
     
     function Slot(address _verifierAddr) {
@@ -1717,7 +1727,7 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
     }
     
     function isValidSize(uint _amountWagered) 
-        constant 
+        internal 
         returns(bool) {
             
         uint netPotentialPayout = (_amountWagered * (10000 - INVESTORS_EDGE) * multipliers[0])/ 10000; 
@@ -1731,14 +1741,18 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
              _;
         }
         else {
-            safeSend(spins[myid].playerAddress, spins[myid].amountWagered);
+            address playerAddress = spins[myid].playerAddress;
+            uint amountWagered = spins[myid].amountWagered;   
             delete spins[myid];
+            safeSend(playerAddress, amountWagered);
             return;
         }
     }
     
-	modifier onlyLessThanMaxSpins (uint _nSpins) {
+
+        modifier onlyValidNumberOfSpins (uint _nSpins) {
         assert(_nSpins <= MAX_SPINS);
+              assert(_nSpins > 0);
         _;
     }
     
@@ -1753,7 +1767,7 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
         The total gross expected payout is equal to the sum of all payout. Each 
         i-th payout is calculated:
                     amountWagered * multipliers[i] * probabilities[i] 
-        The resulting equation is:
+        The fairness condition can be expressed as the equation:
                     sum of aW * m[i] * p[i] = aW
         After having simplified the equation:
                         sum of m[i] * p[i] = 1
@@ -1780,40 +1794,34 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
 
     function buySpins(uint _nSpins) 
         payable 
-        onlyLessThanMaxSpins(_nSpins) 
-		onlyIfNotStopped {
+        onlyValidNumberOfSpins(_nSpins) 
+                    onlyIfNotStopped {
             
         uint gas = _nSpins*ORACLIZE_PER_SPIN_GAS_LIMIT + ORACLIZE_BASE_GAS_LIMIT + safeGas;
         uint oraclizeFee = OraclizeI(OAR.getAddress()).getPrice("random", gas);
         
         // Disallow bets that even when maximally winning are a loss for player 
         // due to oraclizeFee
-        if (oraclizeFee/multipliers[0] + oraclizeFee >= msg.value) revert();
-        
+        assert(oraclizeFee/multipliers[0] + oraclizeFee < msg.value);
         uint amountWagered = msg.value - oraclizeFee;
-        uint maxNetPotentialPayout = (amountWagered * (10000 - INVESTORS_EDGE) * multipliers[0])/10000; 
-        uint maxAllowedPayout = (CAPITAL_RISK * getBankroll())/10000;
+        assert(isValidSize(amountWagered));
         
-        if ((maxNetPotentialPayout <= maxAllowedPayout) && (amountWagered >= minBet)) {
-            bytes32 queryId = oraclize_newRandomDSQuery(0, 2*_nSpins, gas);
-             spins[queryId] = 
-                SpinsContainer(msg.sender,
-                                    _nSpins,
-                                    amountWagered
-                                );
-            
-            LOG_newSpinsContainer(queryId, msg.sender, amountWagered, _nSpins);
-            totalAmountWagered += amountWagered;
-        } else {
-            revert();
-        }
+        bytes32 queryId = oraclize_newRandomDSQuery(0, 2*_nSpins, gas);
+        spins[queryId] = 
+            SpinsContainer(msg.sender,
+                   _nSpins,
+                   amountWagered
+                  );
+        LOG_newSpinsContainer(queryId, msg.sender, amountWagered, _nSpins);
+        totalAmountWagered += amountWagered;
     }
     
     function executeSpins(bytes32 myid, bytes randomBytes) 
         private 
         returns(uint)
     {
-        uint amountWon = 0;
+        uint amountWonTotal = 0;
+        uint amountWonSpin = 0;
         uint numberDrawn = 0;
         uint rangeUpperEnd = 0;
         uint nSpins = spins[myid].nSpins;
@@ -1822,32 +1830,38 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
             // A number between 0 and 2**16, normalized over 0 - 10000
             numberDrawn = ((uint(randomBytes[i])*256 + uint(randomBytes[i+1]))*10000)/2**16;
             rangeUpperEnd = 0;
-            LOG_SpinExecuted(myid, spins[myid].playerAddress, i/2, numberDrawn);
+            amountWonSpin = 0;
             for (uint j = 0; j < probabilities.length; j++) {
                 rangeUpperEnd += probabilities[j];
                 if (numberDrawn < rangeUpperEnd) {
-                    amountWon += (spins[myid].amountWagered * multipliers[j]) / nSpins;
+                    amountWonSpin = (spins[myid].amountWagered * multipliers[j]) / nSpins;
+                    amountWonTotal += amountWonSpin;
                     break;
                 }
             }
+            LOG_SpinExecuted(myid, spins[myid].playerAddress, i/2, numberDrawn, amountWonSpin);
         }
-        return amountWon;
+        return amountWonTotal;
     }
     
     function sendPayout(bytes32 myid, uint payout) private {
 
-        if (payout >= spins[myid].amountWagered) {
-            investorsLosses += sub(payout, spins[myid].amountWagered);
-            payout = (payout*(10000 - INVESTORS_EDGE))/10000;
+        uint investorsFee = payout*INVESTORS_EDGE/10000; 
+        uint houseFee = payout*HOUSE_EDGE/10000;
+      
+        uint netPlayerPayout = sub(sub(payout,investorsFee), houseFee);
+        uint netCostForInvestors = add(netPlayerPayout, houseFee);
+
+        if (netCostForInvestors >= spins[myid].amountWagered) {
+            investorsLosses += sub(netCostForInvestors, spins[myid].amountWagered);
         }
         else {
-            uint tempProfit = add(investorsProfit, sub(spins[myid].amountWagered, payout));
-            investorsProfit += (sub(spins[myid].amountWagered, payout)*(10000 - HOUSE_EDGE))/10000;
-            safeSend(houseAddress, sub(tempProfit, investorsProfit));
+            investorsProfit += sub(spins[myid].amountWagered, netCostForInvestors);
         }
         
-        LOG_SpinsContainerInfo(myid, spins[myid].playerAddress, payout);
-        safeSend(spins[myid].playerAddress, payout);
+        LOG_SpinsContainerInfo(myid, spins[myid].playerAddress, netPlayerPayout);
+        safeSend(spins[myid].playerAddress, netPlayerPayout);
+        safeSend(houseAddress, houseFee);
     }
     
      function __callback(bytes32 myid, string result, bytes _proof) 
@@ -1856,7 +1870,7 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
         onlyIfEnoughFunds(myid)
         oraclize_randomDS_proofVerify(myid, result, _proof)
     {
-		
+                
         uint payout = executeSpins(myid, bytes(result));
         
         sendPayout(myid, payout);
@@ -1908,16 +1922,16 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
 
     // Returns minimal amount to wager to return a profit in case of max win
     function getMinAmountToWager(uint _nSpins)
-        onlyLessThanMaxSpins(_nSpins)
+        onlyValidNumberOfSpins(_nSpins)
         constant
-		returns(uint) {
+                returns(uint) {
         uint gas = _nSpins*ORACLIZE_PER_SPIN_GAS_LIMIT + ORACLIZE_BASE_GAS_LIMIT + safeGas;
         uint oraclizeFee = OraclizeI(OAR.getAddress()).getPrice("random", gas);
         return minBet + oraclizeFee/multipliers[0] + oraclizeFee;
     }
    
     function getMaxAmountToWager(uint _nSpins)
-        onlyLessThanMaxSpins(_nSpins)
+        onlyValidNumberOfSpins(_nSpins)
         constant
         returns(uint) {
 
