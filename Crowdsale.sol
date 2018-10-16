@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xf66ca56fc0cf7b5d9918349150026be80b327892
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0807a2d6a675e7196a3d9b1910700cae9795b72a
 */
 /**
 *	Crowdsale for Edgeless Tokens.
@@ -15,33 +15,7 @@ contract token {
 	function burn() {}
 }
 
-contract SafeMath {
-  //internals
-
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function safeSub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) throw;
-  }
-}
-
-
-contract Crowdsale is SafeMath {
+contract Crowdsale {
     /* tokens will be transfered from this address */
 	address public beneficiary = 0x003230bbe64eccd66f62913679c8966cf9f41166;
 	/* if the funding goal is not reached, investors may withdraw their funds */
@@ -75,7 +49,7 @@ contract Crowdsale is SafeMath {
 
     /*  initialization, set the token address */
     function Crowdsale( ) {
-        tokenReward = token(0x5bdf79f1e7431edb75537d23d3b404ef86f44316);
+        tokenReward = token(0xbe87e87965b96d8174eae4e3724a6d7417c488b0);
     }
 
     /* invest by sending ether to the contract. */
@@ -91,13 +65,11 @@ contract Crowdsale is SafeMath {
     *  this method allows to purchase tokens in behalf of another address.*/
     function invest(address receiver) payable{
     	uint amount = msg.value;
-    	uint price = getPrice();
-    	if(price > amount) throw;
-		uint numTokens = amount / price;
-		if (crowdsaleClosed||now<start||safeAdd(tokensSold,numTokens)>maxGoal) throw;
+		uint numTokens = amount / getPrice();
+		if (crowdsaleClosed||now<start||tokensSold+numTokens>maxGoal) throw;
 		if(!msWallet.send(amount)) throw;
-		balanceOf[receiver] = safeAdd(balanceOf[receiver],amount);
-		amountRaised = safeAdd(amountRaised, amount);
+		balanceOf[receiver] += amount;
+		amountRaised += amount;
 		tokensSold+=numTokens;
 		if(!tokenReward.transferFrom(beneficiary, receiver, numTokens)) throw;
         FundTransfer(receiver, amount, true, amountRaised);
