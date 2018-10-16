@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0x0b4ABe9E916E9c00CC80C4c473386D1116d5Bd8E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0x0AFC9430e3C5B0949A58f49Bc9d134DEe87c74D1
 */
 pragma solidity ^0.4.11;
 
@@ -7,14 +7,12 @@ contract PiggyBank
 {
     address creator;
     uint deposits;
-    uint unlockTime;
 
     /* Constructor */
     function PiggyBank() public
     {
         creator = msg.sender;
         deposits = 0;
-        unlockTime = now + 5 minutes;
     }
 
     function() payable
@@ -35,14 +33,9 @@ contract PiggyBank
         return deposits;
     }
 
-    function getUnlockTime() constant returns (uint)
-    {
-        return unlockTime;
-    }
-
     function kill()
     {
-        if( msg.sender == creator && now >= unlockTime )
+        if( msg.sender == creator )
             selfdestruct(creator);
     }
 }
