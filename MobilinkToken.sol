@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobilinkToken at 0xf50400935bec25cf89031146b8604371197f2cae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobilinkToken at 0x14fd3166ed2db411a47d13fba22322e3cc8f3b3e
 */
 pragma solidity 0.4.19;
 
@@ -270,7 +270,7 @@ contract Owned {
 
 contract MobilinkToken is BurnableToken, Owned {
     string public constant name = "Mobilink";
-    string public constant symbol = "MBX";
+    string public constant symbol = "MOBL";
     uint8 public constant decimals = 18;
 
     /// Maximum tokens to be allocated (9 billion)
