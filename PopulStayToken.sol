@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PopulStayToken at 0x8d60401e5b15e03a45d9a5c4adca090527909b80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PopulStayToken at 0x0f7f8ca2c9b617b4dabb1a16c3e2dc5d83faf907
 */
 pragma solidity ^0.4.18;
 
@@ -169,6 +169,11 @@ contract PopulStayToken is ERC20Interface, Owned {
     return true;
   }
 
+
+  // ------------------------------------------------------------------------
+  // Returns the amount of tokens approved by the owner that can be
+  // transferred to the spender's account
+  // ------------------------------------------------------------------------
   function allowance(address tokenOwner, address spender)
     public
     constant
@@ -178,7 +183,13 @@ contract PopulStayToken is ERC20Interface, Owned {
   }
 
 
- function approveAndCall(address spender, uint tokens, address _owneraddress, bytes32 _houseinfo, uint _from, uint _to ,uint _days)
+  // ------------------------------------------------------------------------
+  // Token owner can approve for `spender` to transferFrom(...) `tokens`
+  // from the token owner's account. The `spender` contract function
+  // `receiveApproval(...)` is then executed
+  // ------------------------------------------------------------------------
+  //"0x1439818dd11823c45fff01af0cd6c50934e27ac0",180,"0x14723a09acff6d2a60dcdf7aa4aff308fddc160c","0x7465737400000000000000000000000000000000000000000000000000000000",20,22,2
+  function approveAndCall(address spender, uint tokens, address _owneraddress, bytes32 _houseinfo, uint _from, uint _to ,uint _days)
      public
     returns (address _preorder)
   {
@@ -188,7 +199,9 @@ contract PopulStayToken is ERC20Interface, Owned {
   }
 
 
-
+  // ------------------------------------------------------------------------
+  // Don't accept ETH
+  // ------------------------------------------------------------------------
   function ()
     public
     payable
@@ -197,6 +210,9 @@ contract PopulStayToken is ERC20Interface, Owned {
   }
 
 
+  // ------------------------------------------------------------------------
+  // Owner can transfer out any accidentally sent ERC20 tokens
+  // ------------------------------------------------------------------------
   function transferAnyERC20Token(address tokenAddress, uint tokens)
     public
     onlyOwner
@@ -204,18 +220,7 @@ contract PopulStayToken is ERC20Interface, Owned {
   {
     return ERC20Interface(tokenAddress).transfer(owner, tokens);
   }
-  
-  function approveAndCall1(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-}
 
-}
-
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
 
 contract HouseInfoListing{
