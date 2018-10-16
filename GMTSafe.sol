@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMTSafe at 0xf63619f99a2d74cfe4030526bf16fcb95c71d452
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMTSafe at 0x277ef3ffe8faf7320726233ac4413bedd24ab3ef
 */
 pragma solidity 0.4.17;
 
@@ -138,8 +138,6 @@ contract GMTSafe {
     allocations[0x13B46bEA905dC7b8BA5A0cc3384cB67af62bBD5d] = 1000000 * 10**18;
     allocations[0xfdB892D3C0dA81F146537aBE224E92d104Ca0FCf] = 1000000 * 10**18;
     allocations[0xc0D51078dfe76238C80b44f91053887a61eF5bC8] = 500000 * 10**18;
-    allocations[0xfe1864D700899D9d744BC8d1FC79693E7d184556] = 500000 * 10**18;
-    allocations[0xEA836E0A52423ad49c234858016d82a40C2bd103] = 500000 * 10**18;  
     allocations[0xAA989BE25a160d4fb83b12d238133d86f9C1f388] = 450000 * 10**18;
   }
 
