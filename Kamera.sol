@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kamera at 0x306f04ccdd1c00aa725ad225daa5a920a0f7d1f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kamera at 0x71f7b56f9f8641f73ca71512a93857a7868d1443
 */
 pragma solidity ^0.4.8;
 
@@ -110,5 +110,5 @@ contract KameraToken is StandardToken {
     }
 }
 
-// Creates 5,000,000.000000000000000000 Kamera Tokens
-contract Kamera is KameraToken(5000000000000000000000000, "Kamera", 18, "KMR") {}
+// Creates 7,000,000.000000000000000000 Kamera Tokens
+contract Kamera is KameraToken(7000000000000000000000000, "Kamera", 18, "KMR") {}
