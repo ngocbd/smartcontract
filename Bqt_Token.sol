@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bqt_Token at 0xe9e9fe9b6a3f02c89960d0a256f2cda77d76f80d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bqt_Token at 0x9f93f5cf28448d0bae2dfd16a0b4a83b3c5ed726
 */
 // ----------------------------------------------------------------------------------------------
 // Developer Nechesov Andrey & ObjectMicro, Inc 
@@ -69,11 +69,11 @@ pragma solidity ^0.4.18;
       string public constant name = "BQT token";
       uint8 public constant decimals = 18; 
            
-      uint256 public constant maxTokens = 200*10**6*10**18; 
+      uint256 public constant maxTokens = 800*10**6*10**18; 
       uint256 public constant ownerSupply = maxTokens*51/100;
       uint256 _totalSupply = ownerSupply;  
 
-      uint256 public constant token_price = 10**18*1/250; 
+      uint256 public constant token_price = 10**18*1/800; 
       uint256 public pre_ico_start = 1506729600;
       uint256 public ico_start = 1518048000;
       uint256 public ico_finish = 1521936000; 
