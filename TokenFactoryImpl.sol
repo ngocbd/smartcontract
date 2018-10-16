@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactoryImpl at 0x622b809452d04f70a62ec428920a51733b634215
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactoryImpl at 0xe96d0e0c48ae747570c2c1586bbcd454239cb060
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -222,7 +222,7 @@ library MathUint {
         require(scale > 0);
         uint avg = 0;
         for (uint i = 0; i < len; i++) {
-            avg += arr[i];
+            avg = add(avg, arr[i]);
         }
         avg = avg / len;
         if (avg == 0) {
@@ -234,7 +234,7 @@ library MathUint {
         for (i = 0; i < len; i++) {
             item = arr[i];
             s = item > avg ? item - avg : avg - item;
-            cvs += mul(s, s);
+            cvs = add(cvs, mul(s, s));
         }
         return ((mul(mul(cvs, scale), scale) / avg) / avg) / (len - 1);
     }
@@ -250,8 +250,16 @@ contract ERC20Token is ERC20 {
     uint    public totalSupply_;
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) internal allowed;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
     function ERC20Token(
         string  _name,
         string  _symbol,
@@ -438,11 +446,12 @@ contract ERC20Token is ERC20 {
         bytes memory s = bytes(_symbol);
         require(s.length >= 3 && s.length <= 8);
         for (uint i = 0; i < s.length; i++) {
+            // make sure symbol contains only [A-Za-z._]
             require(
-                s[i] == 0x2E ||  // "."
-                s[i] == 0x5F ||  // "_"
-                s[i] >= 0x41 && s[i] <= 0x5A ||  // [A-Z]
-                s[i] >= 0x61 && s[i] <= 0x7A     // [a-z]
+                s[i] == 0x2E || (
+                s[i] == 0x5F) || (
+                s[i] >= 0x41 && s[i] <= 0x5A) || (
+                s[i] >= 0x61 && s[i] <= 0x7A)
             );
         }
         bytes memory n = bytes(_name);
@@ -493,72 +502,6 @@ contract TokenFactory {
         external
         returns (address addr);
 }
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/// @title Token Register Contract
-/// @dev This contract maintains a list of tokens the Protocol supports.
-/// @author Kongliang Zhong - <kongliang@loopring.org>,
-/// @author Daniel Wang - <daniel@loopring.org>.
-contract TokenRegistry {
-    event TokenRegistered(address addr, string symbol);
-    event TokenUnregistered(address addr, string symbol);
-    function registerToken(
-        address addr,
-        string  symbol
-        )
-        external;
-    function registerMintedToken(
-        address addr,
-        string  symbol
-        )
-        external;
-    function unregisterToken(
-        address addr,
-        string  symbol
-        )
-        external;
-    function areAllTokensRegistered(
-        address[] addressList
-        )
-        external
-        view
-        returns (bool);
-    function getAddressBySymbol(
-        string symbol
-        )
-        external
-        view
-        returns (address);
-    function isTokenRegisteredBySymbol(
-        string symbol
-        )
-        public
-        view
-        returns (bool);
-    function isTokenRegistered(
-        address addr
-        )
-        public
-        view
-        returns (bool);
-    function getTokens(
-        uint start,
-        uint count
-        )
-        public
-        view
-        returns (address[] addressList);
-}
 /// @title An Implementation of TokenFactory.
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
@@ -566,22 +509,12 @@ contract TokenFactoryImpl is TokenFactory {
     using AddressUtil for address;
     using StringUtil for string;
     mapping(bytes10 => address) public tokens;
-    address   public tokenRegistry;
-    address   public tokenTransferDelegate;
     /// @dev Disable default function.
     function ()
         payable
         public
     {
         revert();
-    }
-    function TokenFactoryImpl(
-        address _tokenRegistry
-        )
-        public
-    {
-        require(tokenRegistry == 0x0 && _tokenRegistry.isContract());
-        tokenRegistry = _tokenRegistry;
     }
     function createToken(
         string  name,
@@ -592,8 +525,6 @@ contract TokenFactoryImpl is TokenFactory {
         external
         returns (address addr)
     {
-        require(tokenRegistry != 0x0);
-        require(tokenTransferDelegate != 0x0);
         require(symbol.checkStringLength(3, 10));
         bytes10 symbolBytes = symbol.stringToBytes10();
         require(tokens[symbolBytes] == 0x0);
@@ -605,7 +536,6 @@ contract TokenFactoryImpl is TokenFactory {
             tx.origin
         );
         addr = address(token);
-        TokenRegistry(tokenRegistry).registerMintedToken(addr, symbol);
         tokens[symbolBytes] = addr;
         emit TokenCreated(
             addr,
