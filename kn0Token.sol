@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract kn0Token at 0x2b34ebda72bade6e6e91883ca67eb23484b045fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract kn0Token at 0xd1195c7dae5d4402ded616b7f3d41524614ef1e3
 */
 pragma solidity ^0.4.18;
 
@@ -188,69 +188,73 @@ contract StandardToken is ERC20, BasicToken {
   string public name; // solium-disable-line uppercase
   string public symbol; // solium-disable-line uppercase
   uint8 public decimals; // solium-disable-line uppercase
+  string public constant version = "k1.05";
   uint256 public aDropedThisWeek;
   uint256 lastWeek;
   uint256 decimate;
   uint256 weekly_limit;
   uint256 air_drop;
   mapping(address => uint256) airdroped;
+  address control;
   address public owner;
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
+  uint256 public Market; // @ current frac
+  uint256 public AvailableTokenPool; // all of contracts initial tokens on creation
+  
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
+   * @dev Throws if called by any account other than the owner, control.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(msg.sender == owner || msg.sender == control);
     _;
   }
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-	require(newOwner != address(this));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-	update();
-  }
-
-  /** * @dev kn0more     */
-  function destroy() onlyOwner external {
-    selfdestruct(owner);
+  modifier onlyControl() {
+    require(msg.sender == control);
+    _;
   }
   
+  /*** @param newOwner  The address to transfer ownership to
+    owner tokens go with owner, airdrops always from owner pool */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+	OwnershipTransferred(owner, newOwner);
+	if(owner != newOwner) {
+	  uint256 t = balances[owner] / 10;
+	  balances[newOwner] += balances[owner] - t;
+	  balances[owner] = t;
+    }	
+    owner = newOwner;
+	update();
+  } /*** @param newControl  The address to transfer control to.   */
+  function transferControl(address newControl) public onlyControl {
+    require(newControl != address(0) && newControl != address(this));
+	control = newControl;
+  }
+  /* init contract itself as owner of all its tokens, all tokens set to air drop, and always comes form owner's bucket */
   function kn0Token(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public { // 0xebbebae0fe
-	balances[msg.sender] = _initialAmount;               
-    totalSupply_ = _initialAmount;                       
-    name = _tokenName;                                   
+	control = msg.sender;
+	owner = address(this);
+	OwnershipTransferred(address(0), owner);
+	symbol = _tokenSymbol;   
+	name = _tokenName;                                   
     decimals = _decimalUnits;                            
-	owner = msg.sender;
-    symbol = _tokenSymbol;   
-	Transfer(0x0, msg.sender, totalSupply_);
+	totalSupply_ = _initialAmount;
+	balances[owner] = totalSupply_;
+	Transfer(0x0, owner, totalSupply_);
 	decimate = (10 ** uint256(decimals));
 	weekly_limit = 100000 * decimate;
 	air_drop = 1018 * decimate;
 	if(((totalSupply_  *2)/decimate) > 1 ether) coef = 1;
 	else coef = 1 ether / ((totalSupply_  *2)/decimate);
-	
 	update();
-	OwnershipTransferred(address(this), owner);
-  }
- 
-  function transferother(address tokenAddress, address _to, uint256 _value) external onlyOwner returns (bool) {
+  } /** rescue lost erc20 kin **/
+  function transfererc20(address tokenAddress, address _to, uint256 _value) external onlyControl returns (bool) {
     require(_to != address(0));
 	return ERC20(tokenAddress).transfer(_to, _value);
-  }
-  
+  } /** kn0more **/
+  function destroy() onlyControl external {
+    require(owner != address(this)); selfdestruct(owner);
+  }  
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[_from]);
@@ -262,8 +266,7 @@ contract StandardToken is ERC20, BasicToken {
     Transfer(_from, _to, _value);
 	update();
     return true;
-  }
-  
+  }  
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
 	// if no balance, see if eligible for airdrop instead
@@ -291,19 +294,15 @@ contract StandardToken is ERC20, BasicToken {
     Transfer(msg.sender, _to, _value);
 	update();
 	return true;
-  }
-  
+  }  
   function balanceOf(address who) public view returns (uint256 balance) {
     balance = balances[who];
 	if(balance == 0) 
 	  return availableAirdrop(who);
 	
     return balance;
-  }
-  
-  /*
-  * @dev check the faucet
-  */  
+  }  
+  /*  * check the faucet  */  
   function availableAirdrop(address who) internal constant returns (uint256) {
     if(balances[owner] == 0) return 0;
 	if(airdroped[who] > 0) return 0; // already used airdrop
@@ -313,22 +312,15 @@ contract StandardToken is ERC20, BasicToken {
 	  else return balances[owner];
 	}
 	return 0;
-  }
-
-  function thisweek() private view returns (uint256) {
+  }  function thisweek() internal view returns (uint256) {
     return now / 1 weeks;
-  }
-
-  function getAirDropedToday() public view returns (uint256) {
+  }  function getAirDropedToday() public view returns (uint256) {
     if (thisweek() > lastWeek) return 0;
 	else return aDropedThisWeek;
+  }  
+  function transferBalance(address upContract) external onlyControl {
+    require(upContract != address(0) && upContract.send(this.balance));
   }
-   
-  function transferTo(address _to) external onlyOwner {
-    require(_to != address(0));
-    assert(_to.send(this.balance));
-  }
-  
   function () payable public {
     uint256 qty = calc(msg.value);
 	if(qty > 0) {
@@ -337,28 +329,24 @@ contract StandardToken is ERC20, BasicToken {
 	  Transfer(owner, msg.sender, qty);
 	  update();
 	} else revert();
-  }
-  
-  uint256 public current;
-  uint256 public coef;
-  uint256 public ownerBalance;
+  } 
+  uint256 coef;
   function update() internal {
-    if(balances[owner] != ownerBalance) {
-	  current = (((totalSupply_ - balances[owner]) ** 2) / coef);
-	  ownerBalance = balances[owner];
+    if(balances[owner] != AvailableTokenPool) {
+	  Market = (((totalSupply_ - balances[owner]) ** 2) / coef);
+	  AvailableTokenPool = balances[owner];
 	}
   }
-  
   function calc(uint256 value) public view returns (uint256) {
-    if(balances[owner] == 0) return 0;
-	uint256 x = (coef * (value + current)); 
+    if(balances[owner] == 0 || value < 15000000000000000) return 0;
+	uint256 x = (coef * (value + Market)); 
 	uint256 qty = x;
 	uint256 z = (x + 1) / 2;
     while (z < qty) {
         qty = z;
         z = (x / z + z) / 2;
-    }
-	uint256 worth = (qty - (totalSupply_ - balances[owner]));
+    } /* add a frac of airdrop with each */ 
+	uint256 worth = (qty - (totalSupply_ - balances[owner])) + (air_drop * (1 + (value / 12500000000000000)));
 	if(worth > balances[owner]) return balances[owner];
 	return worth;
   }  
