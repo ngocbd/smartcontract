@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SnailChain at 0x7ecbcdef9ae2f5dce8a2e3b5de9ccfb9a11fd699
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SnailChain at 0xa71d6145af6f8782b5da19894dbf6ebd3eedb6b2
 */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -26,7 +26,7 @@ contract SnailChain   {
         balanceOf[msg.sender] =  3681391186 * 1000000000000000000;              // Give the creator all initial tokens
         totalSupply =  3681391186 * 1000000000000000000;                        // Update total supply
         name = "SnailChain";                                   // Set the name for display purposes
-        symbol = "SNL";                               // Set the symbol for display purposes
+        symbol = "SNA";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
