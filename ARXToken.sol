@@ -1,164 +1,400 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARXToken at 0xb0d926c1bc3d78064f3e1075d5bd9a24f35ae6c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARXToken at 0x64db5062c388e90448556b81354d14c6eb0ae9c8
 */
-pragma solidity ^0.4.13;
-// -------------------------------------------------
-// 0.4.13+commit.0fb4cb1a
-// [Assistive Reality ARX token ERC20 contract]
-// [Contact staff@aronline.io for any queries]
-// [Join us in changing the world]
-// [aronline.io]
-// -------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/issues/20
-// -------------------------------------------------
-// Security reviews completed 24/09/17 [passed OK]
-// Functional reviews completed 24/09/17 [passed OK]
-// Final code revision and regression test cycle complete 25/09/17 [passed OK]
-// -------------------------------------------------
+pragma solidity ^0.4.21;
 
-contract safeMath {
-  function safeMul(uint256 a, uint256 b) internal returns (uint256) {
-      uint256 c = a * b;
-      safeAssert(a == 0 || c / a == b);
-      return c;
+/*
+ * Creator: ARX (ArtisX) 
+ */
+
+/*
+ * Abstract Token Smart Contract
+ *
+ */
+
+ 
+ /*
+ * Safe Math Smart Contract. 
+ * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
+ */
+
+contract SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
-  function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
-      safeAssert(b > 0);
-      uint256 c = a / b;
-      safeAssert(a == b * c + a % b);
-      return c;
+  function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
 
-  function safeSub(uint256 a, uint256 b) internal returns (uint256) {
-      safeAssert(b <= a);
-      return a - b;
+  function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
-  function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
-      uint256 c = a + b;
-      safeAssert(c>=a && c>=b);
-      return c;
-  }
-
-  function safeAssert(bool assertion) internal {
-      if (!assertion) revert();
+  function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
-contract ERC20Interface is safeMath {
+
+
+
+/**
+ * ERC-20 standard token interface, as defined
+ * <a href="http://github.com/ethereum/EIPs/issues/20">here</a>.
+ */
+contract Token {
+  
+  function totalSupply() constant returns (uint256 supply);
   function balanceOf(address _owner) constant returns (uint256 balance);
   function transfer(address _to, uint256 _value) returns (bool success);
   function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
   function approve(address _spender, uint256 _value) returns (bool success);
-  function increaseApproval (address _spender, uint _addedValue) returns (bool success);
-  function decreaseApproval (address _spender, uint _subtractedValue) returns (bool success);
   function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-  event Buy(address indexed _sender, uint256 _eth, uint256 _ARX);
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract ARXToken is safeMath, ERC20Interface {
-  // token setup variables
-  string  public constant standard              = "ARX";
-  string  public constant name                  = "Assistive Reality ARX";
-  string  public constant symbol                = "ARX";
-  uint8   public constant decimals              = 18;                             // matched to wei for practicality
-  uint256 public constant totalSupply           = 318000000000000000000000000;    // 318000000000000000000000000 million + 18 decimals (presale maximum capped + ICO maximum capped + foundation 10%) static supply
 
-  // token mappings
-  mapping (address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
 
-  // ERC20 standard token possible events, matched to ICO and preSale contracts
-  event Buy(address indexed _sender, uint256 _eth, uint256 _ARX);
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-  // ERC20 token balanceOf query function
+/**
+ * Abstract Token Smart Contract that could be used as a base contract for
+ * ERC-20 token contracts.
+ */
+contract AbstractToken is Token, SafeMath {
+  /**
+   * Create new Abstract Token contract.
+   */
+  function AbstractToken () {
+    // Do nothing
+  }
+  
+  /**
+   * Get number of tokens currently belonging to given owner.
+   *
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
+   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
-      return balances[_owner];
+    return accounts [_owner];
   }
 
-  // ERC20 token transfer function with additional safety
-  function transfer(address _to, uint256 _amount) returns (bool success) {
-      require(!(_to == 0x0));
-      if ((balances[msg.sender] >= _amount)
-      && (_amount > 0)
-      && ((safeAdd(balances[_to],_amount) > balances[_to]))) {
-          balances[msg.sender] = safeSub(balances[msg.sender], _amount);
-          balances[_to] = safeAdd(balances[_to], _amount);
-          Transfer(msg.sender, _to, _amount);
-          return true;
-      } else {
-          return false;
-      }
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(_to != address(0));
+    if (accounts [msg.sender] < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (msg.sender, _to, _value);
+    return true;
   }
 
-  // ERC20 token transferFrom function with additional safety
-  function transferFrom(
-      address _from,
-      address _to,
-      uint256 _amount) returns (bool success) {
-      require(!(_to == 0x0));
-      if ((balances[_from] >= _amount)
-      && (allowed[_from][msg.sender] >= _amount)
-      && (_amount > 0)
-      && (safeAdd(balances[_to],_amount) > balances[_to])) {
-          balances[_from] = safeSub(balances[_from], _amount);
-          allowed[_from][msg.sender] = safeSub((allowed[_from][msg.sender]),_amount);
-          balances[_to] = safeAdd(balances[_to], _amount);
-          Transfer(_from, _to, _amount);
-          return true;
-      } else {
-          return false;
-      }
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transferFrom(address _from, address _to, uint256 _value)
+  returns (bool success) {
+    require(_to != address(0));
+    if (allowances [_from][msg.sender] < _value) return false;
+    if (accounts [_from] < _value) return false; 
+
+    if (_value > 0 && _from != _to) {
+	  allowances [_from][msg.sender] = safeSub (allowances [_from][msg.sender], _value);
+      accounts [_from] = safeSub (accounts [_from], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer(_from, _to, _value);
+    return true;
   }
 
-  // ERC20 allow _spender to withdraw, multiple times, up to the _value amount
-  function approve(address _spender, uint256 _amount) returns (bool success) {
-      //Fix for known double-spend https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM/edit#
-      //Input must either set allow amount to 0, or have 0 already set, to workaround issue
-
-      require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
-      allowed[msg.sender][_spender] = _amount;
-      Approval(msg.sender, _spender, _amount);
-      return true;
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   * @param _spender address to allow the owner of to transfer tokens from message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+   function approve (address _spender, uint256 _value) returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    Approval (msg.sender, _spender, _value);
+    return true;
   }
 
-  // ERC20 return allowance for given owner spender pair
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance(address _owner, address _spender) constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
   }
 
-  // ERC20 Updated increase approval process (to prevent double-spend attack but remove need to zero allowance before setting)
-  function increaseApproval (address _spender, uint _addedValue) returns (bool success) {
-      allowed[msg.sender][_spender] = safeAdd(allowed[msg.sender][_spender],_addedValue);
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) accounts;
 
-      // report new approval amount
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) private allowances;
+  
+}
+
+
+/**
+ * ArtisX token smart contract.
+ */
+contract ARXToken is AbstractToken {
+  /**
+   * Maximum allowed number of tokens in circulation.
+   * tokenSupply = tokensIActuallyWant * (10 ^ decimals)
+   */
+   
+   
+  uint256 constant MAX_TOKEN_COUNT = 10000000 * (10**2);
+   
+  /**
+   * Address of the owner of this smart contract.
+   */
+  address private owner;
+  
+  /**
+   * Frozen account list holder
+   */
+  mapping (address => bool) private frozenAccount;
+
+  /**
+   * Current number of tokens in circulation.
+   */
+  uint256 tokenCount = 0;
+  
+ 
+  /**
+   * True if tokens transfers are currently frozen, false otherwise.
+   */
+  bool frozen = false;
+  
+ 
+  /**
+   * Create new token smart contract and make msg.sender the
+   * owner of this smart contract.
+   */
+  function ARXToken () {
+    owner = msg.sender;
   }
 
-  // ERC20 Updated decrease approval process (to prevent double-spend attack but remove need to zero allowance before setting)
-  function decreaseApproval (address _spender, uint _subtractedValue) returns (bool success) {
-      uint oldValue = allowed[msg.sender][_spender];
-
-      if (_subtractedValue > oldValue) {
-        allowed[msg.sender][_spender] = 0;
-      } else {
-        allowed[msg.sender][_spender] = safeSub(oldValue,_subtractedValue);
-      }
-
-      // report new approval amount
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
+  /**
+   * Get total number of tokens in circulation.
+   *
+   * @return total number of tokens in circulation
+   */
+  function totalSupply() constant returns (uint256 supply) {
+    return tokenCount;
   }
 
-  // ERC20 Standard default function to assign initial supply variables and send balance to creator for distribution to ARX presale and ICO contract
-  function ARXToken() {
-      balances[msg.sender] = totalSupply;
+  string constant public name = "ArtisX";
+  string constant public symbol = "ARX";
+  uint8 constant public decimals = 2;
+  
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(!frozenAccount[msg.sender]);
+	if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
   }
+
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transferFrom(address _from, address _to, uint256 _value)
+    returns (bool success) {
+	require(!frozenAccount[_from]);
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
+  }
+
+   /**
+   * Change how many tokens given spender is allowed to transfer from message
+   * spender.  In order to prevent double spending of allowance,
+   * To change the approve amount you first have to reduce the addresses`
+   * allowance to zero by calling `approve(_spender, 0)` if it is not
+   * already 0 to mitigate the race condition described here:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value)
+    returns (bool success) {
+	require(allowance (msg.sender, _spender) == 0 || _value == 0);
+    return AbstractToken.approve (_spender, _value);
+  }
+
+  /**
+   * Create _value new tokens and give new created tokens to msg.sender.
+   * May only be called by smart contract owner.
+   *
+   * @param _value number of tokens to create
+   * @return true if tokens were created successfully, false otherwise
+   */
+  function createTokens(uint256 _value)
+    returns (bool success) {
+    require (msg.sender == owner);
+
+    if (_value > 0) {
+      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
+	  
+      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
+      tokenCount = safeAdd (tokenCount, _value);
+	  
+	  // adding transfer event and _from address as null address
+	  Transfer(0x0, msg.sender, _value);
+	  
+	  return true;
+    }
+	
+	  return false;
+    
+  }
+  
+
+  /**
+   * Set new owner for the smart contract.
+   * May only be called by smart contract owner.
+   *
+   * @param _newOwner address of new owner of the smart contract
+   */
+  function setOwner(address _newOwner) {
+    require (msg.sender == owner);
+
+    owner = _newOwner;
+  }
+
+  /**
+   * Freeze ALL token transfers.
+   * May only be called by smart contract owner.
+   */
+  function freezeTransfers () {
+    require (msg.sender == owner);
+
+    if (!frozen) {
+      frozen = true;
+      Freeze ();
+    }
+  }
+
+  /**
+   * Unfreeze ALL token transfers.
+   * May only be called by smart contract owner.
+   */
+  function unfreezeTransfers () {
+    require (msg.sender == owner);
+
+    if (frozen) {
+      frozen = false;
+      Unfreeze ();
+    }
+  }
+  
+  
+  /*A user is able to unintentionally send tokens to a contract 
+  * and if the contract is not prepared to refund them they will get stuck in the contract. 
+  * The same issue used to happen for Ether too but new Solidity versions added the payable modifier to
+  * prevent unintended Ether transfers. However, there’s no such mechanism for token transfers.
+  * so the below function is created
+  */
+  
+  function refundTokens(address _token, address _refund, uint256 _value) {
+    require (msg.sender == owner);
+    require(_token != address(this));
+    AbstractToken token = AbstractToken(_token);
+    token.transfer(_refund, _value);
+    RefundTokens(_token, _refund, _value);
+  }
+  
+  /**
+   * Freeze specific account
+   * May only be called by smart contract owner.
+   */
+  function freezeAccount(address _target, bool freeze) {
+      require (msg.sender == owner);
+	  require (msg.sender != _target);
+      frozenAccount[_target] = freeze;
+      FrozenFunds(_target, freeze);
+ }
+
+  /**
+   * Logged when token transfers were frozen.
+   */
+  event Freeze ();
+
+  /**
+   * Logged when token transfers were unfrozen.
+   */
+  event Unfreeze ();
+  
+  /**
+   * Logged when a particular account is frozen.
+   */
+  
+  event FrozenFunds(address target, bool frozen);
+
+
+  
+  /**
+   * when accidentally send other tokens are refunded
+   */
+  
+  event RefundTokens(address _token, address _refund, uint256 _value);
 }
