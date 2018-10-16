@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xD13F1855774bA57551B255Ae23E7855D48360e61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x41517d565189866a77b669afdfe4f23767de2349
 */
 pragma solidity ^0.4.16;
 
@@ -137,7 +137,7 @@ contract TokenERC20 {
     }
 
     /**
-     * Destroy tokens from other account
+     * Destroy tokens from other ccount
      *
      * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
      *
