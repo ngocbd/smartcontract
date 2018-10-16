@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xa32ccd1eab6569ea19622429d94b1ca7ea14c0bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xc3381616cd3e498b913f243a0f47038cf932bd2b
 */
 pragma solidity ^0.4.4;
 
@@ -107,11 +107,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 10000000000000000000000000;                
-        totalSupply = 10000000000000000000000000;                       
-        name = "Portugal Coin";                                    
+        balances[msg.sender] = 105000000000000000000000000;                
+        totalSupply = 105000000000000000000000000;                       
+        name = "Philippines Coin";                                    
         decimals = 18;                            
-        symbol = "PORC";                              
+        symbol = "PHIC";                              
     }
 
     /* Approves and then calls the receiving contract */
