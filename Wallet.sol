@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x253137971b86074021334FB5B7E03ebf2545ead3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x50f54ed2cafd4b7245e60557a6b56d9ac9193025
 */
 //sol Wallet
 // Multi-sig, daily-limited account proxy/wallet.
