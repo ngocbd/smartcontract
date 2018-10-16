@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REKTTokenSale at 0xaF30132d04Bc28126E0D479d40C8dFFd1BC056E2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REKTTokenSale at 0xf67382a1f8d2978abd238dfa84fa451efb98c8d6
 */
 pragma solidity ^0.4.13;
 
@@ -177,12 +177,12 @@ contract REKTTokenSale {
 
     function REKTTokenSale( address _admin,
     address _REKTMultiSigWallet,
-    REKT _token)
+    uint _totalTokenSupply)
     {
         admin = _admin;
         REKTMultiSigWallet = _REKTMultiSigWallet;
 
-        token = _token;
+        token = new REKT( _totalTokenSupply, _admin );
     }
 
     function setHaltSale( bool halt ) {
@@ -259,10 +259,6 @@ contract REKT is StandardToken, Ownable {
     validDestination(_to)
     returns (bool) {
         return super.transfer(_to, _value);
-    }
-
-    function setTokenSaleContract(address _tokenSaleContract) onlyOwner {
-        tokenSaleContract = _tokenSaleContract;
     }
 
     function transferFrom(address _from, address _to, uint _value)
