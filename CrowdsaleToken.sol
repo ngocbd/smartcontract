@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x5eec85dc63dd62bdb492ac1012b71201396945d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0xeb4756db5f0b9276c938e2537bb90593fc583d64
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.13;
 
 contract Ownable {
   address public owner;
