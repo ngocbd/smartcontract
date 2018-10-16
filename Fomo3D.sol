@@ -1,58 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo3D at 0xe4d9306C7C9a275AD286c1349c684E0f2626d0c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo3D at 0xc62b165F2e317BE858c10E651914d44A3c376776
 */
 pragma solidity ^0.4.20;
 
 /*
-* Team JUST presents..
-* ===================================*
-*  _____   ____    _    _    ____    *
-* |  ___/ / __ \  / \  / \  / __ \   *
-* | |___ | |  | |/   \/   \| |  | |  *
-* |  __/ | |  | || |\  /| || |  | |  *
-* | |    | |__| || | \/ | || |__| |  *
-* |_|     \____/ /_|    |_\ \____/   *
-* ===================================*
-*          _______  _____ 
-*          \____  / |___ \ 
-*              / /  ||  \ |
-*              \ \  ||  | |
-*         _____/  / ||__/ |
-*         \______/  |____/
-* 
-* The Final Solution To The Pyramids Ecosystem
-*
-*>20% dividend fee
-*>No administrators
-*>No ambassadors
-*
-* -> What?
-* The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
-*
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* P3D has like 6k ethereum inside. Why would you get in that late...
-* 
-* -> Who worked on this project?
-* - PonziBot (math/memes/main site/master)
-* - Mantso (lead solidity dev/lead web3 dev)
-* - swagg (concept design/feedback/management)
-* - Anonymous#1 (main site/web3/test cases)
-* - Anonymous#2 (math formulae/whitepaper)
-*
-* -> Who has audited & approved the projected:
-* - Arc
-* - tocisck
-* - sumpunk
+Team JUST presents...
+
+    ______ ________  ________ 
+    |  ___|  _  |  \/  |  _  |
+    | |_  | | | |      | | | |
+    |  _| | | | | |\/| | | | |
+    | |   \ \_/ / |  | \ \_/ /
+    \_|    \___/\_|  |_/\___/ 
+          ___________             
+         |____ |  _  \            
+             / / | | |            
+             \ \ | | |            
+         ____/ / |/ /             
+         \____/|___/        
+
+
+fomo3d.xyz
+
 */
 
 contract Fomo3D {
@@ -157,10 +126,10 @@ contract Fomo3D {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "FOMO3D";
+    string public name = "FOMO 3D";
     string public symbol = "F3D";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 5;
+    uint8 constant internal dividendFee_ = 4;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
