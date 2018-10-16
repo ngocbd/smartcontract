@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x85169e1f0d8c2f27dd44f1cfbb81172dfeafe7c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x3aaa5474a09804b08120e6e33bfc433367ab238c
 */
 pragma solidity ^0.4.6;
 
@@ -7,12 +7,12 @@ pragma solidity ^0.4.6;
 // ==== DISCLAIMER ====
 //
 // ETHEREUM IS STILL AN EXPEREMENTAL TECHNOLOGY.
-// ALTHOUGH THIS SMART CONTRACT WAS CREATED WITH GREAT CARE AND IN THE HOPE OF BEING USEFUL, NO GUARANTEES OF FLAWLESS OPERATION CAN BE GIVEN. 
-// IN PARTICULAR - SUBTILE BUGS, HACKER ATTACKS OR MALFUNCTION OF UNDERLYING TECHNOLOGY CAN CAUSE UNINTENTIONAL BEHAVIOUR. 
-// YOU ARE STRONGLY ENCOURAGED TO STUDY THIS SMART CONTRACT CAREFULLY IN ORDER TO UNDERSTAND POSSIBLE EDGE CASES AND RISKS. 
-// DON'T USE THIS SMART CONTRACT IF YOU HAVE SUBSTANTIAL DOUBTS OR IF YOU DON'T KNOW WHAT YOU ARE DOING.
+// ALTHOUGH THIS SMART CONTRACT CREATED WITH GREAT CARE AND IN HOPE TO BE USEFUL, NO GUARANTEES OF FLAWLES OPERATION CAN BE GIVEN. 
+// ESPECIALLY SUBTILE BUGS, HACKER ATTACS OR MALFUNCTION OF UNDERLYING TECHNOLOGY CAN CAUSE AN UNINTENTIONAL BEHAVIOUR. 
+// YOU ARE DEEPLY ENCORAGED TO STUDY THIS SMART CONTRACT CAREFULLY IN ORDER TO UNDERSTAND POSSIBLE EDGE CASES AND RISKS. 
+// DON'T USE THIS SMART CONTRACT IN CASE OF ANY SUBSTANTIONAL DOUBTS OR IF YOU DON'T KNOW WHAT ARE YOU DOING.
 //
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
+// THIS SOFTWARE IS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
 // AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
 // INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
 // OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
@@ -21,10 +21,10 @@ pragma solidity ^0.4.6;
 //
 //
 // ==== PARANOIA NOTICE ==== 
-// A careful reader will find some additional checks and excessive code, consuming some extra gas. This is intentional. 
-// Even though the contract should work without these parts, they make the code more secure in production and for future refactoring.
-// Also, they show more clearly what we have considered and addressed during development.
-// Discussion is welcome!
+// A careful reader will find here some unnecessary checks and excessive code consuming some extra valuable gas. It is intentionally. 
+// Even contract should works without these parts, they make the code more secure in production as well for future refactoring.
+// Additionally it shows more clearly what we have took care of.
+// You are welcome to discuss that places.
 // ====
 //
 
@@ -38,11 +38,10 @@ contract Presale {
 
     /* ====== configuration START ====== */
 
-    uint public constant PRESALE_START  = 3142163; /* approx. 08.02.2017 00:00 */
-    uint public constant PRESALE_END    = 3145693; /* approx. 08.02.2017 23:59 */
-    uint public constant WITHDRAWAL_END = 3151453; /* approx. 09.02.2017 23:59 */
-
-
+    uint public constant PRESALE_START  = 3128000; /* approx. 05.02.2017 13:50 CET */
+    uint public constant PRESALE_END    = 3128350; /* approx. 05.02.2017 15:00 CET */
+    uint public constant WITHDRAWAL_END = 3128470; /* approx. 05.02.2017 15:30 CET */
+    
     address public constant OWNER = 0x45d5426471D12b21C3326dD0cF96f6656F7d14b1;
 
     uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
