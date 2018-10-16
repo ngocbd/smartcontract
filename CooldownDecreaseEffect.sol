@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CooldownDecreaseEffect at 0x6f91f0f9ce8003b203247aa70d78a3c3a0dab630
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CooldownDecreaseEffect at 0xb35de956ee39898f08b95a4407aa6ff412db8e45
 */
 pragma solidity ^0.4.20;
+
+
+
 
 /**
  * @title Ownable
@@ -152,7 +155,7 @@ contract CutieCoreInterface
         uint16 generation
     );
 
-     function getGenes(uint40 _id)
+    function getGenes(uint40 _id)
         public
         view
         returns (
