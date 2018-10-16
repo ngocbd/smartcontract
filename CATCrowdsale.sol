@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CATCrowdsale at 0x3cfbba91afd3353f434c24b57f8a6a9c49b3f998
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CATCrowdsale at 0x9f89388141c632c4c6f36d1060d5f50604ee3abc
 */
 pragma solidity ^0.4.11;
 
@@ -27,11 +27,6 @@ pragma solidity ^0.4.11;
 //
 // CATCrowdsale
 //
-
-// Date.now()/1000+3600,  Date.now()/1000+3600*2, 4700, "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4"
-// 1508896220, 1509899832, 4700, "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4"
-// 1507909923, 1508514723, 4700, "0x0b8e27013dfA822bF1cc01b6Ae394B76DA230a03", "0x5F85A0e9DD5Bd2F11a54b208427b286e9B0B519F", "0x7F781d08FD165DBEE1D573Bdb79c43045442eac4", "0x98bf67b6a03DA7AcF2Ee7348FdB3F9c96425a130"
-// 1509120669, 1519120669, 3000, "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820", "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820", "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820"
 
 /**
  * @title SafeMath
@@ -387,17 +382,16 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 /**
-* @dev Pre main Bitcalve BTL token ERC20 contract
+* @dev Pre main Bitcalve CAT token ERC20 contract
 * Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
-* 
 */
-contract BTLToken is MintableToken, PausableToken {
+contract CAToken is MintableToken, PausableToken {
     
     // Metadata
-    string public constant symbol = "BTL";
-    string public constant name = "BitClave Token";
+    string public constant symbol = "CAT";
+    string public constant name = "BitClave - Consumer Activity Token";
     uint8 public constant decimals = 18;
-    string public constant version = "1.0";
+    string public constant version = "2.0";
 
     /**
     * @dev Override MintableTokenn.finishMinting() to add canMint modifier
@@ -412,13 +406,13 @@ contract BTLToken is MintableToken, PausableToken {
 * @dev Main Bitcalve PreCAT token ERC20 contract
 * Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
 */
-contract CAToken is BTLToken, Destructible {
+contract PreCAToken is CAToken, Destructible {
 
     // Metadata
-    string public constant symbol = "testCAT";
-    string public constant name = "testCAT";
+    string public constant symbol = "CAT";
+    string public constant name = "BitClave - Consumer Activity Token";
     uint8 public constant decimals = 18;
-    string public constant version = "1.0";
+    string public constant version = "1.1";
 
     // Overrided destructor
     function destroy() public onlyOwner {
@@ -576,16 +570,13 @@ contract BonusCrowdsale is Crowdsale, Ownable {
     
     // Members
     uint public tokenPriceInCents;
-    uint public tokenDecimals;
 
     /**
     * @dev Contructor
     * @param _tokenPriceInCents token price in USD cents. The price is fixed
-    * @param _tokenDecimals number of digits after decimal point for CAT token
     */
-    function BonusCrowdsale(uint256 _tokenPriceInCents, uint256 _tokenDecimals) public {
+    function BonusCrowdsale(uint256 _tokenPriceInCents) public {
         tokenPriceInCents = _tokenPriceInCents;
-        tokenDecimals = _tokenDecimals;
     }
 
     /**
@@ -690,6 +681,7 @@ contract BonusCrowdsale is Crowdsale, Ownable {
 }
 
 
+
 /**
 * @dev Parent crowdsale contract is extended with support for cap in tokens
 * Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
@@ -752,17 +744,17 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
    * executed entirely.
    */
   function finalization() internal {
-      isFinalized = isFinalized;
+    isFinalized = isFinalized;
   }
 }
 
 
-  /**
+   /**
    * @dev Main BitCalve Crowdsale contract. 
    * Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
    * 
    */
-contract CATCrowdsale is FinalizableCrowdsale, TokensCappedCrowdsale(CATCrowdsale.CAP), PausableCrowdsale(true), BonusCrowdsale(CATCrowdsale.TOKEN_USDCENT_PRICE, CATCrowdsale.DECIMALS) {
+contract CATCrowdsale is FinalizableCrowdsale, TokensCappedCrowdsale(CATCrowdsale.CAP), PausableCrowdsale(true), BonusCrowdsale(CATCrowdsale.TOKEN_USDCENT_PRICE) {
 
     // Constants
     uint256 public constant DECIMALS = 18;
@@ -847,7 +839,7 @@ contract CATCrowdsale is FinalizableCrowdsale, TokensCappedCrowdsale(CATCrowdsal
     * @return ERC20 contract associated with the crowdsale
     */
     function createTokenContract() internal returns(MintableToken) {
-        CAToken token = new CAToken();
+        PreCAToken token = new PreCAToken();
         token.pause();
         return token;
     }
@@ -877,14 +869,14 @@ contract CATCrowdsale is FinalizableCrowdsale, TokensCappedCrowdsale(CATCrowdsal
     * @dev Helper to Pause CAToken
     */
     function pauseTokens() public onlyOwner {
-        CAToken(token).pause();
+        PreCAToken(token).pause();
     }
 
     /**
     * @dev Helper to UnPause CAToken
     */
     function unpauseTokens() public onlyOwner {
-        CAToken(token).unpause();
+        PreCAToken(token).unpause();
     }
 
     /**
