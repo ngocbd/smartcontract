@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fifteen at 0xf204af93aa5da4364e30d3f92ea1d259cd8d6a7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fifteen at 0xfc5cda7a2ecdc31de3b060e988ddff7d000f66ed
 */
 // Puzzle "Fifteen". 
 // Numbers can be moved by puzzle owner to the empty place.
@@ -52,29 +52,38 @@ contract Fifteen is Payments {
   mapping (uint8 => mapping (uint8 => mapping (uint8 => uint8))) public fifteenPuzzles;
   mapping (uint8 => address) public puzzleIdOwner;
   mapping (uint8 => uint256) public puzzleIdPrice;
+  uint256 private prevBlock;
   uint256 public jackpot = 0;
   
-  function initNewGame() public onlyCoOwner payable {
+  function initNewGame(uint8[16] _Numbers) public onlyCoOwner payable {
      //set start win pot
+	 //for example [15,14,13,12,1,2,3,4,7,6,5,11,10,9,8,0]
 	 require (msg.value>0);
+	 require (_Numbers.length == 16);
 	 require (jackpot == 0); 
 	 jackpot = msg.value;
 	 
-	 uint8 row;
-	 uint8 col;
-	 uint8 num;
+	 uint8 row=1;
+	 uint8 col=1;
+	 uint8 key;
 	 
 	 for (uint8 puzzleId=1; puzzleId<=6; puzzleId++) {
-		num=15;
 		puzzleIdOwner[puzzleId] = address(this);
-		puzzleIdPrice[puzzleId] = 0.001 ether;
-		for (row=1; row<=4; row++) {
-			for (col=1; col<=4; col++) {
-				fifteenPuzzles[puzzleId][row][col]=num;
-				num--;
-			}
+		puzzleIdPrice[puzzleId] = 0.002 ether;
+	 }	
+	 for (key=0; key < 16; key++) {
+		fifteenPuzzles[1][row][col]=_Numbers[key];
+		fifteenPuzzles[2][row][col]=_Numbers[key];
+		fifteenPuzzles[3][row][col]=_Numbers[key];
+		fifteenPuzzles[4][row][col]=_Numbers[key];
+		fifteenPuzzles[5][row][col]=_Numbers[key];
+		fifteenPuzzles[6][row][col]=_Numbers[key];
+		if (col==4 || col==8 || col==12) {
+			col=0;
+			row++;
 		}
-	 }
+		col++;
+	 }		
 	 
   } 
 
@@ -91,6 +100,8 @@ contract Fifteen is Payments {
   }
   
   function changePuzzle(uint8 _puzzleId, uint8 _row, uint8 _col, uint8 _torow, uint8 _tocol) public gameNotStopped {  
+     
+	 require(block.number != prevBlock);
 	 require (msg.sender == puzzleIdOwner[_puzzleId]);
 	 require (fifteenPuzzles[_puzzleId][_torow][_tocol] == 0); //free place is number 0
 	 require (_row >= 1 && _row <= 4 && _col >= 1 && _col <= 4 && _torow >= 1 && _torow <= 4 && _tocol >= 1 && _tocol <= 4);
@@ -98,6 +109,8 @@ contract Fifteen is Payments {
 	 
 	 fifteenPuzzles[_puzzleId][_torow][_tocol] = fifteenPuzzles[_puzzleId][_row][_col];
 	 fifteenPuzzles[_puzzleId][_row][_col] = 0;
+	
+	 prevBlock = block.number;	 
 	 
 	 if (fifteenPuzzles[_puzzleId][1][1] == 1 && 
 	     fifteenPuzzles[_puzzleId][1][2] == 2 && 
@@ -151,6 +164,6 @@ contract Fifteen is Payments {
     require(jackpot > 0);
     _;
   }    
-	
+
 	
 }
