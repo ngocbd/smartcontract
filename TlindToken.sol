@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TlindToken at 0xc3637b113e0c7d6985321d7fcea7b06d38074d8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TlindToken at 0x9f749c323ff279e4fb7827be47749aeb52aff5bc
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.17;
 
 /**
  * @title ERC20Basic
@@ -477,7 +477,7 @@ contract CommonSale is StagedCrowdsale {
   }
 
   function createTokens() whenNotPaused isUnderHardCap saleIsOn payable {
-    require(msg.value > 100000000000000000);
+    require(msg.value >= 100000000000000000);
     uint milestoneIndex = currentMilestone();
     Milestone storage milestone = milestones[milestoneIndex];
     if(!isSoftcapOn) {
@@ -534,9 +534,6 @@ contract CommonSale is StagedCrowdsale {
 
 }
 
-
-// FIXME: needs to fix addresses and hardcap, softcap
-// ????????? ???? ?????? ? GMT, ? ????? ? UNIX ?????? ? ??????? ??????? http://www.onlineconversion.com/unix_time.htm
 contract Configurator is Ownable {
 
   MintableToken public token; 
@@ -549,13 +546,13 @@ contract Configurator is Ownable {
     address presaleMultisigWallet = 0x675cf930aefA144dA7e10ddBACC02f902A233eFC;
     address presaleBountyTokensWallet = 0x06B8fF8476425E45A3D2878e0a27BB79efd4Dde1;
     address presaleFoundersWallet = 0x27F1Ac3E29CBec9D225d98fF95B6933bD30E3F71;
-    uint presaleSoftcap = 0x0;
-    uint presaleHardcap = 0x0;
+    uint presaleSoftcap = 50000000000000000000;
+    uint presaleHardcap = 2000000000000000000000;
 
     address mainsaleMultisigWallet = 0xFb72502E9c56497BAC3B1c21DE434b371891CC05;
     address mainsaleBountyTokensWallet = 0xd08112054C8e01E33fAEE176531dEB087809CbB2;
     address mainsaleFoundersWallet = 0xDeFAE9a126bA5aA2537AaC481D9335827159D33B;
-    uint mainsaleHardcap = 0x0;
+    uint mainsaleHardcap = 25000000000000000000000000;
 
     token = new TlindToken();
 
@@ -571,8 +568,8 @@ contract Configurator is Ownable {
     presale.setFoundersTokensPercent(15);
     presale.setBountyTokensPercent(5);
     presale.setPrice(10000000000000000);
-    presale.addMilestone(8,300);
     presale.addMilestone(8,200);
+    presale.addMilestone(8,100);
     token.setSaleAgent(presale);	
 
     mainsale = new CommonSale();
@@ -592,67 +589,6 @@ contract Configurator is Ownable {
     mainsale.addMilestone(14,10);
     mainsale.addMilestone(14,5);
     mainsale.addMilestone(7,0);
-    
-    presale.setNextSale(mainsale);
-
-    token.transferOwnership(owner);
-    presale.transferOwnership(owner);
-    mainsale.transferOwnership(owner);
-  }
-
-}
-
-contract TestConfigurator is Ownable {
-
-  MintableToken public token; 
-
-  CommonSale public presale;
-
-  CommonSale public mainsale;
-
-  function deploy() {
-    address presaleMultisigWallet = 0x675cf930aefA144dA7e10ddBACC02f902A233eFC;
-    address presaleBountyTokensWallet = 0x06B8fF8476425E45A3D2878e0a27BB79efd4Dde1;
-    address presaleFoundersWallet = 0x27F1Ac3E29CBec9D225d98fF95B6933bD30E3F71;
-    uint presaleSoftcap = 1000000000000000000; // 1eth
-    uint presaleHardcap = 2000000000000000000; // 2eth
-
-    address mainsaleMultisigWallet = 0xFb72502E9c56497BAC3B1c21DE434b371891CC05;
-    address mainsaleBountyTokensWallet = 0xd08112054C8e01E33fAEE176531dEB087809CbB2;
-    address mainsaleFoundersWallet = 0xDeFAE9a126bA5aA2537AaC481D9335827159D33B;
-    uint mainsaleHardcap = 2500000000000000000; // 2.5eth
-
-    token = new TlindToken();
-
-    presale = new CommonSale();
-
-    presale.setToken(token);
-    presale.setSoftcap(presaleSoftcap);
-    presale.setHardcap(presaleHardcap);
-    presale.setMultisigWallet(presaleMultisigWallet);
-    presale.setFoundersTokensWallet(presaleFoundersWallet);
-    presale.setBountyTokensWallet(presaleBountyTokensWallet);
-    presale.setStart(1505984400);  //21.09.2017 09.00
-    presale.setFoundersTokensPercent(15);
-    presale.setBountyTokensPercent(5);
-    presale.setPrice(10000000000000000);
-    presale.addMilestone(1,200); //+200%
-    presale.addMilestone(1,30); //+30%
-    token.setSaleAgent(presale);	
-
-    mainsale = new CommonSale();
-
-    mainsale.setToken(token);
-    mainsale.setHardcap(mainsaleHardcap);
-    mainsale.setMultisigWallet(mainsaleMultisigWallet);
-    mainsale.setFoundersTokensWallet(mainsaleFoundersWallet);
-    mainsale.setBountyTokensWallet(mainsaleBountyTokensWallet);
-    mainsale.setStart(1506070800);  //22.09.2017 09.00
-    mainsale.setFoundersTokensPercent(15);
-    mainsale.setBountyTokensPercent(5);
-    mainsale.setPrice(10000000000000000);
-    mainsale.addMilestone(1,5); //+5%
-    mainsale.addMilestone(1,0);
     
     presale.setNextSale(mainsale);
 
