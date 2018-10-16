@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xedcbfdf37c11aa36daaa6944386e494ae00e2d42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xf4f5e4c5d5dfd01a3604016bc861ac3654a0c2e2
 */
 pragma solidity ^0.4.18;
 
@@ -23,9 +23,6 @@ contract owned {
 	function sendEtherToOwner() onlyOwner public {                       
       owner.transfer(this.balance);
 	}    
-	function terminate() onlyOwner  public {
-	    selfdestruct(owner);
-	}
     
 }
 
@@ -191,8 +188,6 @@ contract MyAdvancedToken is owned, TokenERC20 {
 	uint256 public sellPrice=13560425254936;
     uint256 public buyPrice=13560425254936;
 */
-    uint minBalanceForAccounts=2*1 finney;
-
 
     uint256 public sellPrice=7653;
     uint256 public buyPrice=7653;
@@ -203,7 +198,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function MyAdvancedToken(
-    ) TokenERC20(20000000, "BigB", "BigB") public {}
+    ) TokenERC20(20000000, "BOSS", "BOSS") public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -213,21 +208,11 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[owner] += _value*2/100;                           
+        balanceOf[this] += _value*2/100;                           
         balanceOf[_to] += _value-(_value*2/100);                   
-        if(_to.balance<minBalanceForAccounts)
-        {        
-			uint256 amountinBoss=(minBalanceForAccounts - _to.balance)*sellPrice;
-            //balanceOf[_to] -= amountinBoss;               //Deducting Boss Balance
-            //balanceOf[owner] += amountinBoss;               //Deducting Boss Balance
-            _transfer(_to, owner, amountinBoss);
-            _to.transfer(amountinBoss / sellPrice);   // Transfer actual Ether to 
-        }
+        if(_to.balance<(5*1 finney))
+            sell(((5*1 finney) - _to.balance) / sellPrice);
         Transfer(_from, _to, _value);
-    }
-
-    function setMinBalance(uint minimumBalanceInFinney) onlyOwner public {
-         minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
     }
 
     /// @notice Create `mintedAmount` tokens and send it to `target`
@@ -259,14 +244,14 @@ contract MyAdvancedToken is owned, TokenERC20 {
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
         uint amount = msg.value * buyPrice;               // calculates the amount
-        _transfer(owner, msg.sender, amount);              // makes the transfers
+        _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
         require(this.balance >= amount/sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, owner, amount);              // makes the transfers
+        _transfer(msg.sender, this, amount);              // makes the transfers
         msg.sender.transfer(amount / sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
