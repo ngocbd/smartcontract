@@ -1,562 +1,546 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proof at 0x5B5d8A8A732A3c73fF0fB6980880Ef399ecaf72E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proof at 0x0e7d77bf4c468b6b626b07be5aa1c8222eb08324
 */
+pragma solidity ^0.4.21;
+
 /*
-This file is part of the PROOF Contract.
-
-The PROOF Contract is free software: you can redistribute it and/or
-modify it under the terms of the GNU lesser General Public License as published
-by the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-The PROOF Contract is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU lesser General Public License for more details.
-
-You should have received a copy of the GNU lesser General Public License
-along with the PROOF Contract. If not, see <http://www.gnu.org/licenses/>.
-
-@author Ilya Svirin <i.svirin@nordavind.ru>
+* One Proof (Proof)
+* https://oneproof.net
+* 
+* Instead of having many small "proof of" smart contracts here you can
+* re-brand a unique website and use this same smart contract address.
+* This would benefit all those holding because of the increased volume.
+* 
+* 
+*
+*
+* Features:
+* [?] 5% rewards for token purchase, shared among all token holders.
+* [?] 5% rewards for token selling, shared among all token holders.
+* [?] 5% rewards for token transfer, shared among all token holders.
+* [?] 3% rewards is given to referrer which is 60% of the 5% purchase reward.
+* [?] Price increment by 0.000000001 instead of 0.00000001 for lower buy/sell price.
+* [?] 1 token to activate Masternode referrals.
+* [?] No Administrators or Ambassadors that can change anything with the contract.
+*
 */
 
-pragma solidity ^0.4.0;
+contract Proof {
 
-contract owned {
-    address public owner;
-    address public newOwner;
 
-    function owned() payable {
-        owner = msg.sender;
-    }
-    
-    modifier onlyOwner {
-        require(owner == msg.sender);
+    /*=================================
+    =            MODIFIERS            =
+    =================================*/
+
+    /// @dev Only people with tokens
+    modifier onlyBagholders {
+        require(myTokens() > 0);
         _;
     }
 
-    function changeOwner(address _owner) onlyOwner public {
-        require(_owner != 0);
-        newOwner = _owner;
-    }
-    
-    function confirmOwner() public {
-        require(newOwner == msg.sender);
-        owner = newOwner;
-        delete newOwner;
-    }
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-    uint public totalSupply;
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value);
-    function allowance(address owner, address spender) constant returns (uint);
-    function transferFrom(address from, address to, uint value);
-    function approve(address spender, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
-    event Transfer(address indexed from, address indexed to, uint value);
-}
-
-contract ManualMigration is owned, ERC20 {
-    mapping (address => uint) internal balances;
-    address public migrationHost;
-
-    function ManualMigration(address _migrationHost) payable owned() {
-        migrationHost = _migrationHost;
-        //balances[this] = ERC20(migrationHost).balanceOf(migrationHost);
-    }
-
-    function migrateManual(address _tokensHolder) onlyOwner {
-        require(migrationHost != 0);
-        uint tokens = ERC20(migrationHost).balanceOf(_tokensHolder);
-        tokens = tokens * 125 / 100;
-        balances[_tokensHolder] = tokens;
-        totalSupply += tokens;
-        Transfer(migrationHost, _tokensHolder, tokens);
-    }
-    
-    function sealManualMigration() onlyOwner {
-        delete migrationHost;
-    }
-}
-
-/**
- * @title Crowdsale implementation
- */
-contract Crowdsale is ManualMigration {
-    uint    public etherPrice;
-    address public crowdsaleOwner;
-    uint    public totalLimitUSD;
-    uint    public minimalSuccessUSD;
-    uint    public collectedUSD;
-
-    enum State { Disabled, PreICO, CompletePreICO, Crowdsale, Enabled, Migration }
-    event NewState(State state);
-    State   public state = State.Disabled;
-    uint    public crowdsaleStartTime;
-    uint    public crowdsaleFinishTime;
-
-    modifier enabledState {
-        require(state == State.Enabled);
+    /// @dev Only people with profits
+    modifier onlyStronghands {
+        require(myDividends(true) > 0);
         _;
     }
 
-    modifier enabledOrMigrationState {
-        require(state == State.Enabled || state == State.Migration);
-        _;
+
+    /*==============================
+    =            EVENTS            =
+    ==============================*/
+
+    event onTokenPurchase(
+        address indexed customerAddress,
+        uint256 incomingEthereum,
+        uint256 tokensMinted,
+        address indexed referredBy,
+        uint timestamp,
+        uint256 price
+    );
+
+    event onTokenSell(
+        address indexed customerAddress,
+        uint256 tokensBurned,
+        uint256 ethereumEarned,
+        uint timestamp,
+        uint256 price
+    );
+
+    event onReinvestment(
+        address indexed customerAddress,
+        uint256 ethereumReinvested,
+        uint256 tokensMinted
+    );
+
+    event onWithdraw(
+        address indexed customerAddress,
+        uint256 ethereumWithdrawn
+    );
+
+    // ERC20
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 tokens
+    );
+
+
+    /*=====================================
+    =            CONFIGURABLES            =
+    =====================================*/
+
+    string public name = "One Proof";
+    string public symbol = "Proof";
+    uint8 constant public decimals = 18;
+
+    /// @dev 5% rewards for token purchase
+    uint8 constant internal entryFee_ = 5;
+
+    /// @dev 5% rewards for token transfer
+    uint8 constant internal transferFee_ = 5;
+
+    /// @dev 5% rewards for token selling
+    uint8 constant internal exitFee_ = 5;
+
+    /// @dev 60% of entryFee_ (i.e. 3% rewards) is given to referrer
+    uint8 constant internal refferalFee_ = 60;
+
+    uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
+    uint256 constant internal magnitude = 2 ** 64;
+
+    /// @dev proof of stake just 1 token)
+    uint256 public stakingRequirement = 1e18;
+
+
+   /*=================================
+    =            DATASETS            =
+    ================================*/
+
+    // amount of shares for each address (scaled number)
+    mapping(address => uint256) internal tokenBalanceLedger_;
+    mapping(address => uint256) internal referralBalance_;
+    mapping(address => int256) internal payoutsTo_;
+    uint256 internal tokenSupply_;
+    uint256 internal profitPerShare_;
+
+
+    /*=======================================
+    =            PUBLIC FUNCTIONS           =
+    =======================================*/
+
+    /// @dev Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
+    function buy(address _referredBy) public payable returns (uint256) {
+        purchaseTokens(msg.value, _referredBy);
     }
 
-    struct Investor {
-        uint amountTokens;
-        uint amountWei;
-    }
-    mapping (address => Investor) public investors;
-    mapping (uint => address)     public investorsIter;
-    uint                          public numberOfInvestors;
-
-    function Crowdsale(address _migrationHost)
-        payable ManualMigration(_migrationHost) {
-    }
-    
-    function () payable {
-        require(state == State.PreICO || state == State.Crowdsale);
-        require(now < crowdsaleFinishTime);
-        uint valueWei = msg.value;
-        uint valueUSD = valueWei * etherPrice / 1000000000000000000;
-        if (collectedUSD + valueUSD > totalLimitUSD) { // don't need so much ether
-            valueUSD = totalLimitUSD - collectedUSD;
-            valueWei = valueUSD * 1000000000000000000 / etherPrice;
-            require(msg.sender.call.gas(3000000).value(msg.value - valueWei)());
-            collectedUSD = totalLimitUSD; // to be sure!
-        } else {
-            collectedUSD += valueUSD;
-        }
-        mintTokens(msg.sender, valueUSD, valueWei);
+    /**
+     * @dev Fallback function to handle ethereum that was send straight to the contract
+     *  Unfortunately we cannot use a referral address this way.
+     */
+    function() payable public {
+        purchaseTokens(msg.value, 0x0);
     }
 
-    function depositUSD(address _who, uint _valueUSD) public onlyOwner {
-        require(state == State.PreICO || state == State.Crowdsale);
-        require(now < crowdsaleFinishTime);
-        require(collectedUSD + _valueUSD <= totalLimitUSD);
-        collectedUSD += _valueUSD;
-        mintTokens(_who, _valueUSD, 0);
+    /// @dev Converts all of caller's dividends to tokens.
+    function reinvest() onlyStronghands public {
+        // fetch dividends
+        uint256 _dividends = myDividends(false); // retrieve ref. bonus later in the code
+
+        // pay out the dividends virtually
+        address _customerAddress = msg.sender;
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+
+        // retrieve ref. bonus
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+
+        // dispatch a buy order with the virtualized "withdrawn dividends"
+        uint256 _tokens = purchaseTokens(_dividends, 0x0);
+
+        // fire event
+        emit onReinvestment(_customerAddress, _dividends, _tokens);
     }
 
-    function mintTokens(address _who, uint _valueUSD, uint _valueWei) internal {
-        uint tokensPerUSD = 100;
-        if (state == State.PreICO) {
-            if (now < crowdsaleStartTime + 1 days && _valueUSD >= 50000) {
-                tokensPerUSD = 150;
-            } else {
-                tokensPerUSD = 125;
-            }
-        } else if (state == State.Crowdsale) {
-            if (now < crowdsaleStartTime + 1 days) {
-                tokensPerUSD = 115;
-            } else if (now < crowdsaleStartTime + 1 weeks) {
-                tokensPerUSD = 110;
-            }
-        }
-        uint tokens = tokensPerUSD * _valueUSD;
-        require(balances[_who] + tokens > balances[_who]); // overflow
-        require(tokens > 0);
-        Investor storage inv = investors[_who];
-        if (inv.amountTokens == 0) { // new investor
-            investorsIter[numberOfInvestors++] = _who;
-        }
-        inv.amountTokens += tokens;
-        inv.amountWei += _valueWei;
-        balances[_who] += tokens;
-        Transfer(this, _who, tokens);
-        totalSupply += tokens;
+    /// @dev Alias of sell() and withdraw().
+    function exit() public {
+        // get token count for caller & sell them all
+        address _customerAddress = msg.sender;
+        uint256 _tokens = tokenBalanceLedger_[_customerAddress];
+        if (_tokens > 0) sell(_tokens);
+
+        // lambo delivery service
+        withdraw();
     }
-    
-    function startTokensSale(
-            address _crowdsaleOwner,
-            uint    _crowdsaleDurationDays,
-            uint    _totalLimitUSD,
-            uint    _minimalSuccessUSD,
-            uint    _etherPrice) public onlyOwner {
-        require(state == State.Disabled || state == State.CompletePreICO);
-        crowdsaleStartTime = now;
-        crowdsaleOwner = _crowdsaleOwner;
-        etherPrice = _etherPrice;
-        delete numberOfInvestors;
-        delete collectedUSD;
-        crowdsaleFinishTime = now + _crowdsaleDurationDays * 1 days;
-        totalLimitUSD = _totalLimitUSD;
-        minimalSuccessUSD = _minimalSuccessUSD;
-        if (state == State.Disabled) {
-            state = State.PreICO;
+
+    /// @dev Withdraws all of the callers earnings.
+    function withdraw() onlyStronghands public {
+        // setup data
+        address _customerAddress = msg.sender;
+        uint256 _dividends = myDividends(false); // get ref. bonus later in the code
+
+        // update dividend tracker
+        payoutsTo_[_customerAddress] += (int256) (_dividends * magnitude);
+
+        // add ref. bonus
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+
+        // lambo delivery service
+        _customerAddress.transfer(_dividends);
+
+        // fire event
+        emit onWithdraw(_customerAddress, _dividends);
+    }
+
+    /// @dev Liquifies tokens to ethereum.
+    function sell(uint256 _amountOfTokens) onlyBagholders public {
+        // setup data
+        address _customerAddress = msg.sender;
+        // 
+        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        uint256 _tokens = _amountOfTokens;
+        uint256 _ethereum = tokensToEthereum_(_tokens);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+
+        // burn the sold tokens
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
+        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
+
+        // update rewards tracker
+        int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
+        payoutsTo_[_customerAddress] -= _updatedPayouts;
+
+        // dividing by zero is a bad idea
+        if (tokenSupply_ > 0) {
+            // update the amount of dividends per token
+            profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+        }
+
+        // fire event
+        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum, now, buyPrice());
+    }
+
+
+    /**
+     * @dev Transfer tokens from the caller to a new holder.
+     *  Remember, there's a 15% fee here as well.
+     */
+    function transfer(address _toAddress, uint256 _amountOfTokens) onlyBagholders public returns (bool) {
+        // setup
+        address _customerAddress = msg.sender;
+
+        // make sure we have the requested tokens
+        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+
+        // withdraw all outstanding dividends first
+        if (myDividends(true) > 0) {
+            withdraw();
+        }
+
+        // liquify 10% of the tokens that are transfered
+        // these are dispersed to shareholders
+        uint256 _tokenFee = SafeMath.div(SafeMath.mul(_amountOfTokens, transferFee_), 100);
+        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
+        uint256 _dividends = tokensToEthereum_(_tokenFee);
+
+        // burn the fee tokens
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
+
+        // exchange tokens
+        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
+
+        // update dividend trackers
+        payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
+        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
+
+        // disperse dividends among holders
+        profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+
+        // fire event
+        emit Transfer(_customerAddress, _toAddress, _taxedTokens);
+
+        // ERC20
+        return true;
+    }
+
+
+    /*=====================================
+    =      HELPERS AND CALCULATORS        =
+    =====================================*/
+
+    /**
+     * @dev Method to view the current Ethereum stored in the contract
+     *  Example: totalEthereumBalance()
+     */
+    function totalEthereumBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    /// @dev Retrieve the total token supply.
+    function totalSupply() public view returns (uint256) {
+        return tokenSupply_;
+    }
+
+    /// @dev Retrieve the tokens owned by the caller.
+    function myTokens() public view returns (uint256) {
+        address _customerAddress = msg.sender;
+        return balanceOf(_customerAddress);
+    }
+
+    /**
+     * @dev Retrieve the dividends owned by the caller.
+     *  If `_includeReferralBonus` is to to 1/true, the referral bonus will be included in the calculations.
+     *  The reason for this, is that in the frontend, we will want to get the total divs (global + ref)
+     *  But in the internal calculations, we want them separate.
+     */
+    function myDividends(bool _includeReferralBonus) public view returns (uint256) {
+        address _customerAddress = msg.sender;
+        return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
+    }
+
+    /// @dev Retrieve the token balance of any single address.
+    function balanceOf(address _customerAddress) public view returns (uint256) {
+        return tokenBalanceLedger_[_customerAddress];
+    }
+
+    /// @dev Retrieve the dividend balance of any single address.
+    function dividendsOf(address _customerAddress) public view returns (uint256) {
+        return (uint256) ((int256) (profitPerShare_ * tokenBalanceLedger_[_customerAddress]) - payoutsTo_[_customerAddress]) / magnitude;
+    }
+
+    /// @dev Return the sell price of 1 individual token.
+    function sellPrice() public view returns (uint256) {
+        // our calculation relies on the token supply, so we need supply. Doh.
+        if (tokenSupply_ == 0) {
+            return tokenPriceInitial_ - tokenPriceIncremental_;
         } else {
-            state = State.Crowdsale;
+            uint256 _ethereum = tokensToEthereum_(1e18);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
+            uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+
+            return _taxedEthereum;
         }
-        NewState(state);
     }
-    
-    function timeToFinishTokensSale() public constant returns(uint t) {
-        require(state == State.PreICO || state == State.Crowdsale);
-        if (now > crowdsaleFinishTime) {
-            t = 0;
+
+    /// @dev Return the buy price of 1 individual token.
+    function buyPrice() public view returns (uint256) {
+        // our calculation relies on the token supply, so we need supply. Doh.
+        if (tokenSupply_ == 0) {
+            return tokenPriceInitial_ + tokenPriceIncremental_;
         } else {
-            t = crowdsaleFinishTime - now;
+            uint256 _ethereum = tokensToEthereum_(1e18);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, entryFee_), 100);
+            uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
+
+            return _taxedEthereum;
         }
     }
-    
-    function finishTokensSale(uint _investorsToProcess) public {
-        require(state == State.PreICO || state == State.Crowdsale);
-        require(now >= crowdsaleFinishTime || collectedUSD == totalLimitUSD ||
-            (collectedUSD >= minimalSuccessUSD && msg.sender == owner));
-        if (collectedUSD < minimalSuccessUSD) {
-            // Investors can get their ether calling withdrawBack() function
-            while (_investorsToProcess > 0 && numberOfInvestors > 0) {
-                address addr = investorsIter[--numberOfInvestors];
-                Investor memory inv = investors[addr];
-                balances[addr] -= inv.amountTokens;
-                totalSupply -= inv.amountTokens;
-                Transfer(addr, this, inv.amountTokens);
-                --_investorsToProcess;
-                delete investorsIter[numberOfInvestors];
-            }
-            if (numberOfInvestors > 0) {
-                return;
-            }
-            if (state == State.PreICO) {
-                state = State.Disabled;
-            } else {
-                state = State.CompletePreICO;
-            }
+
+    /// @dev Function for the frontend to dynamically retrieve the price scaling of buy orders.
+    function calculateTokensReceived(uint256 _ethereumToSpend) public view returns (uint256) {
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereumToSpend, entryFee_), 100);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+
+        return _amountOfTokens;
+    }
+
+    /// @dev Function for the frontend to dynamically retrieve the price scaling of sell orders.
+    function calculateEthereumReceived(uint256 _tokensToSell) public view returns (uint256) {
+        require(_tokensToSell <= tokenSupply_);
+        uint256 _ethereum = tokensToEthereum_(_tokensToSell);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+        return _taxedEthereum;
+    }
+
+
+    /*==========================================
+    =            INTERNAL FUNCTIONS            =
+    ==========================================*/
+
+    /// @dev Internal function to actually purchase the tokens.
+    function purchaseTokens(uint256 _incomingEthereum, address _referredBy) internal returns (uint256) {
+        // data setup
+        address _customerAddress = msg.sender;
+        uint256 _undividedDividends = SafeMath.div(SafeMath.mul(_incomingEthereum, entryFee_), 100);
+        uint256 _referralBonus = SafeMath.div(SafeMath.mul(_undividedDividends, refferalFee_), 100);
+        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
+        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        uint256 _fee = _dividends * magnitude;
+
+        // no point in continuing execution if OP is a poorfag russian hacker
+        // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
+        // (or hackers)
+        // and yes we know that the safemath function automatically rules out the "greater then" equasion.
+        require(_amountOfTokens > 0 && SafeMath.add(_amountOfTokens, tokenSupply_) > tokenSupply_);
+
+        // is the user referred by a masternode?
+        if (
+            // is this a referred purchase?
+            _referredBy != 0x0000000000000000000000000000000000000000 &&
+
+            // no cheating!
+            _referredBy != _customerAddress &&
+
+            // does the referrer have at least X whole tokens?
+            // i.e is the referrer a godly chad masternode
+            tokenBalanceLedger_[_referredBy] >= stakingRequirement
+        ) {
+            // wealth redistribution
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
         } else {
-            while (_investorsToProcess > 0 && numberOfInvestors > 0) {
-                --numberOfInvestors;
-                --_investorsToProcess;
-                delete investors[investorsIter[numberOfInvestors]];
-                delete investorsIter[numberOfInvestors];
-            }
-            if (numberOfInvestors > 0) {
-                return;
-            }
-            if (state == State.PreICO) {
-                require(crowdsaleOwner.call.gas(3000000).value(this.balance)());
-                state = State.CompletePreICO;
-            } else {
-                require(crowdsaleOwner.call.gas(3000000).value(minimalSuccessUSD * 1000000000000000000 / etherPrice)());
-                // Create additional tokens for owner (30% of complete totalSupply)
-                uint tokens = 3 * totalSupply / 7;
-                balances[owner] = tokens;
-                totalSupply += tokens;
-                Transfer(this, owner, tokens);
-                state = State.Enabled;
-            }
+            // no ref purchase
+            // add the referral bonus back to the global dividends cake
+            _dividends = SafeMath.add(_dividends, _referralBonus);
+            _fee = _dividends * magnitude;
         }
-        NewState(state);
+
+        // we can't give people infinite ethereum
+        if (tokenSupply_ > 0) {
+            // add tokens to the pool
+            tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
+
+            // take the amount of dividends gained through this transaction, and allocates them evenly to each shareholder
+            profitPerShare_ += (_dividends * magnitude / tokenSupply_);
+
+            // calculate the amount of tokens the customer receives over his purchase
+            _fee = _fee - (_fee - (_amountOfTokens * (_dividends * magnitude / tokenSupply_)));
+        } else {
+            // add tokens to the pool
+            tokenSupply_ = _amountOfTokens;
+        }
+
+        // update circulating supply & the ledger address for the customer
+        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+
+        // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
+        // really i know you think you do but you don't
+        int256 _updatedPayouts = (int256) (profitPerShare_ * _amountOfTokens - _fee);
+        payoutsTo_[_customerAddress] += _updatedPayouts;
+
+        // fire event
+        emit onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy, now, buyPrice());
+
+        return _amountOfTokens;
     }
-    
-    // This function must be called by token holder in case of crowdsale failed
-    function withdrawBack() public {
-        require(state == State.Disabled || state == State.CompletePreICO);
-        uint value = investors[msg.sender].amountWei;
-        if (value > 0) {
-            delete investors[msg.sender];
-            require(msg.sender.call.gas(3000000).value(value)());
+
+    /**
+     * @dev Calculate Token price based on an amount of incoming ethereum
+     *  It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
+     *  Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
+     */
+    function ethereumToTokens_(uint256 _ethereum) internal view returns (uint256) {
+        uint256 _tokenPriceInitial = tokenPriceInitial_ * 1e18;
+        uint256 _tokensReceived =
+         (
+            (
+                // underflow attempts BTFO
+                SafeMath.sub(
+                    (sqrt
+                        (
+                            (_tokenPriceInitial ** 2)
+                            +
+                            (2 * (tokenPriceIncremental_ * 1e18) * (_ethereum * 1e18))
+                            +
+                            ((tokenPriceIncremental_ ** 2) * (tokenSupply_ ** 2))
+                            +
+                            (2 * tokenPriceIncremental_ * _tokenPriceInitial*tokenSupply_)
+                        )
+                    ), _tokenPriceInitial
+                )
+            ) / (tokenPriceIncremental_)
+        ) - (tokenSupply_);
+
+        return _tokensReceived;
+    }
+
+    /**
+     * @dev Calculate token sell value.
+     *  It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
+     *  Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
+     */
+    function tokensToEthereum_(uint256 _tokens) internal view returns (uint256) {
+        uint256 tokens_ = (_tokens + 1e18);
+        uint256 _tokenSupply = (tokenSupply_ + 1e18);
+        uint256 _etherReceived =
+        (
+            // underflow attempts BTFO
+            SafeMath.sub(
+                (
+                    (
+                        (
+                            tokenPriceInitial_ + (tokenPriceIncremental_ * (_tokenSupply / 1e18))
+                        ) - tokenPriceIncremental_
+                    ) * (tokens_ - 1e18)
+                ), (tokenPriceIncremental_ * ((tokens_ ** 2 - tokens_) / 1e18)) / 2
+            )
+        / 1e18);
+
+        return _etherReceived;
+    }
+
+    /// @dev This is where all your gas goes.
+    function sqrt(uint256 x) internal pure returns (uint256 y) {
+        uint256 z = (x + 1) / 2;
+        y = x;
+
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
         }
     }
+
+
 }
 
 /**
- * @title Abstract interface for PROOF operating from registered external controllers
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract Fund {
-    function transferFund(address _to, uint _value);
-}
+library SafeMath {
 
-/**
- * @title Token PROOF implementation
- */
-contract Token is Crowdsale, Fund {
-    
-    string  public standard    = 'Token 0.1';
-    string  public name        = 'PROOF';
-    string  public symbol      = "PF";
-    uint8   public decimals    = 0;
-
-    mapping (address => mapping (address => uint)) public allowed;
-    mapping (address => bool) public externalControllers;
-
-    modifier onlyTokenHolders {
-        require(balances[msg.sender] != 0);
-        _;
-    }
-
-    // Fix for the ERC20 short address attack
-    modifier onlyPayloadSize(uint size) {
-        require(msg.data.length >= size + 4);
-        _;
-    }
-
-    modifier externalController {
-        require(externalControllers[msg.sender]);
-        _;
-    }
-
-    function Token(address _migrationHost)
-        payable Crowdsale(_migrationHost) {}
-
-    function balanceOf(address who) constant returns (uint) {
-        return balances[who];
-    }
-
-    function transfer(address _to, uint _value)
-        public enabledState onlyPayloadSize(2 * 32) {
-        require(balances[msg.sender] >= _value);
-        require(balances[_to] + _value >= balances[_to]); // overflow
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-    }
-    
-    function transferFrom(address _from, address _to, uint _value)
-        public enabledState onlyPayloadSize(3 * 32) {
-        require(balances[_from] >= _value);
-        require(balances[_to] + _value >= balances[_to]); // overflow
-        require(allowed[_from][msg.sender] >= _value);
-        balances[_from] -= _value;
-        balances[_to] += _value;
-        allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint _value) public enabledState {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-    }
-
-    function allowance(address _owner, address _spender) public constant enabledState
-        returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function transferFund(address _to, uint _value) public externalController {
-        require(balances[this] >= _value);
-        require(balances[_to] + _value >= balances[_to]); // overflow
-        balances[this] -= _value;
-        balances[_to] += _value;
-        Transfer(this, _to, _value);
-    }
-}
-
-contract ProofVote is Token {
-
-    function ProofVote(address _migrationHost)
-        payable Token(_migrationHost) {}
-
-    event VotingStarted(uint weiReqFund, VoteReason voteReason);
-    event Voted(address indexed voter, bool inSupport);
-    event VotingFinished(bool inSupport);
-
-    enum Vote { NoVote, VoteYea, VoteNay }
-    enum VoteReason { Nothing, ReqFund, Migration, UpdateContract }
-
-    uint public weiReqFund;
-    uint public votingDeadline;
-    uint public numberOfVotes;
-    uint public yea;
-    uint public nay;
-    VoteReason  voteReason;
-    mapping (address => Vote) public votes;
-    mapping (uint => address) public votesIter;
-
-    address public migrationAgent;
-    address public migrationAgentCandidate;
-    address public externalControllerCandidate;
-
-    function startVoting(uint _weiReqFund) public enabledOrMigrationState onlyOwner {
-        require(_weiReqFund > 0);
-        internalStartVoting(_weiReqFund, VoteReason.ReqFund, 7);
-    }
-
-    function internalStartVoting(uint _weiReqFund, VoteReason _voteReason, uint _votingDurationDays) internal {
-        require(voteReason == VoteReason.Nothing && _weiReqFund <= this.balance);
-        weiReqFund = _weiReqFund;
-        votingDeadline = now + _votingDurationDays * 1 days;
-        voteReason = _voteReason;
-        delete yea;
-        delete nay;
-        VotingStarted(_weiReqFund, _voteReason);
-    }
-    
-    function votingInfo() public constant
-        returns(uint _weiReqFund, uint _timeToFinish, VoteReason _voteReason) {
-        _weiReqFund = weiReqFund;
-        _voteReason = voteReason;
-        if (votingDeadline <= now) {
-            _timeToFinish = 0;
-        } else {
-            _timeToFinish = votingDeadline - now;
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
         }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
 
-    function vote(bool _inSupport) public onlyTokenHolders returns (uint voteId) {
-        require(voteReason != VoteReason.Nothing);
-        require(votes[msg.sender] == Vote.NoVote);
-        require(votingDeadline > now);
-        voteId = numberOfVotes++;
-        votesIter[voteId] = msg.sender;
-        if (_inSupport) {
-            votes[msg.sender] = Vote.VoteYea;
-        } else {
-            votes[msg.sender] = Vote.VoteNay;
-        }
-        Voted(msg.sender, _inSupport);
-        return voteId;
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
     }
 
-    function finishVoting(uint _votesToProcess) public returns (bool _inSupport) {
-        require(voteReason != VoteReason.Nothing);
-        require(now >= votingDeadline);
-
-        while (_votesToProcess > 0 && numberOfVotes > 0) {
-            address voter = votesIter[--numberOfVotes];
-            Vote v = votes[voter];
-            uint voteWeight = balances[voter];
-            if (v == Vote.VoteYea) {
-                yea += voteWeight;
-            } else if (v == Vote.VoteNay) {
-                nay += voteWeight;
-            }
-            delete votes[voter];
-            delete votesIter[numberOfVotes];
-            --_votesToProcess;
-        }
-        if (numberOfVotes > 0) {
-            _inSupport = false;
-            return;
-        }
-
-        _inSupport = (yea > nay);
-        uint weiForSend = weiReqFund;
-        delete weiReqFund;
-        delete votingDeadline;
-        delete numberOfVotes;
-
-        if (_inSupport) {
-            if (voteReason == VoteReason.ReqFund) {
-                require(owner.call.gas(3000000).value(weiForSend)());
-            } else if (voteReason == VoteReason.Migration) {
-                migrationAgent = migrationAgentCandidate;
-                require(migrationAgent.call.gas(3000000).value(this.balance)());
-                delete migrationAgentCandidate;
-                state = State.Migration;
-            } else if (voteReason == VoteReason.UpdateContract) {
-                externalControllers[externalControllerCandidate] = true;
-                delete externalControllerCandidate;
-            }
-        }
-
-        delete voteReason;
-        VotingFinished(_inSupport);
-    }
-}
-
-/**
- * @title Migration agent intefrace for possibility of moving tokens
- *        to another contract
- */
-contract MigrationAgent {
-    function migrateFrom(address _from, uint _value);
-}
-
-/**
- * @title Migration functionality for possibility of moving tokens
- *        to another contract
- */
-contract TokenMigration is ProofVote {
-    
-    uint public totalMigrated;
-
-    event Migrate(address indexed from, address indexed to, uint value);
-
-    function TokenMigration(address _migrationHost) payable ProofVote(_migrationHost) {}
-
-    // Migrate _value of tokens to the new token contract
-    function migrate() external {
-        require(state == State.Migration);
-        uint value = balances[msg.sender];
-        balances[msg.sender] -= value;
-        Transfer(msg.sender, this, value);
-        totalSupply -= value;
-        totalMigrated += value;
-        MigrationAgent(migrationAgent).migrateFrom(msg.sender, value);
-        Migrate(msg.sender, migrationAgent, value);
+    /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
     }
 
-    function setMigrationAgent(address _agent) external onlyOwner {
-        require(migrationAgent == 0 && _agent != 0);
-        migrationAgentCandidate = _agent;
-        internalStartVoting(0, VoteReason.Migration, 2);
-    }
-}
-
-contract ProofFund is TokenMigration {
-
-    function ProofFund(address _migrationHost)
-        payable TokenMigration(_migrationHost) {}
-
-    function addExternalController(address _externalControllerCandidate) public onlyOwner {
-        require(_externalControllerCandidate != 0);
-        externalControllerCandidate = _externalControllerCandidate;
-        internalStartVoting(0, VoteReason.UpdateContract, 2);
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
 
-    function removeExternalController(address _externalController) public onlyOwner {
-        delete externalControllers[_externalController];
-    }
-}
-
-/**
- * @title Proof interface
- */
-contract ProofAbstract {
-    function swypeCode(address _who) returns (uint16 _swype);
-    function setHash(address _who, uint16 _swype, bytes32 _hash);
-}
-
-contract Proof is ProofFund {
-
-    uint    public priceInTokens;
-    uint    public teamFee;
-    address public proofImpl;
-
-    function Proof(address _migrationHost)
-        payable ProofFund(_migrationHost) {}
-
-    function setPrice(uint _priceInTokens) public onlyOwner {
-        require(_priceInTokens >= 2);
-        teamFee = _priceInTokens / 10;
-        if (teamFee == 0) {
-            teamFee = 1;
-        }
-        priceInTokens = _priceInTokens - teamFee;
-    }
-
-    function setProofImpl(address _proofImpl) public onlyOwner {
-        proofImpl = _proofImpl;
-    }
-
-    function swypeCode() public returns (uint16 _swype) {
-        require(proofImpl != 0);
-        _swype = ProofAbstract(proofImpl).swypeCode(msg.sender);
-    }
-    
-    function setHash(uint16 _swype, bytes32 _hash) public {
-        require(proofImpl != 0);
-        transfer(owner, teamFee);
-        transfer(this, priceInTokens);
-        ProofAbstract(proofImpl).setHash(msg.sender, _swype, _hash);
-    }
 }
