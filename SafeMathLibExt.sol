@@ -1,9 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x5DB0E0E99396CdC4776f920D569B20D289f1a9BF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0xA141cbA0bF0D56e2F983f830afd6E7DD06331293
 */
+// Created using ICO Wizard https://github.com/poanetwork/ico-wizard by POA Network 
 /**
- * Official Crowdsale Ethconnect.net
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
 pragma solidity ^0.4.6;
