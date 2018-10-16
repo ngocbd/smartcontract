@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Civiq at 0xe1cf8dca809bb6571cbef2efadba8d3e3e2613b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Civiq at 0xa6812630de074f79e3d64fdc732687f94634da66
 */
 pragma solidity ^0.4.8;
  
@@ -62,7 +62,7 @@ contract Civiq is ERC20Interface {
     }
  
     // Constructor
-    function Civiq() {
+    function FixedSupplyToken() {
         owner = msg.sender;
         balances[owner] = _totalSupply;
     }
