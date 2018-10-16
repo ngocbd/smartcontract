@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FranklinFarmer at 0x52b07eabddf1cc6b183cfb02c185399dabb67413
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FranklinFarmer at 0x87e5212a30135d562501143cec9f95ffb1de4e9f
 */
 pragma solidity ^0.4.20;
 
@@ -15,7 +15,7 @@ contract Ownable {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     constructor() public {
-        owner = 0x31F3b1089A2485D820D48Fe0D05798ee69806d83;
+        owner = 0x60FF5ceEB385434E162E5f2Fd22d2EC53f0B671f;
     }
 
     modifier onlyOwner() {
