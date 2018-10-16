@@ -1,29 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProvaSegura at 0xa7162282584f15005553d3de5ab6645037875024
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProvaSegura at 0x392f622bea9fd2b728f464e36c63a67e890e5e03
 */
 pragma solidity ^0.4.0;
 contract ProvaSegura {
 
     struct Prova {
-		bool existe;
+        bool existe;
         uint block_number;
+        string numero;
+        string data_hora;
+        string coordenadas;
     }
 
-    mapping(address => Prova) public provas;
-	address public owner;
+    mapping(bytes32 => Prova) public provas;
+    address public admin;
 
     function ProvaSegura() public {
-		owner = msg.sender;
+        admin = msg.sender;
+    }
+    
+    function TrocarAdmin(address _admin) public {
+        require(msg.sender == admin);
+        admin = _admin;
     }
 
-    function GuardaProva(address hash_) public {
-        require(msg.sender == owner);
-		require(!provas[hash_].existe);
-		provas[hash_].existe = true;
-		provas[hash_].block_number = block.number;
+    function GuardaProva(string _hash, string _numero, string _data_hora, string _coordenadas) public {
+        require(msg.sender == admin);
+        bytes32 hash = sha256(_hash);
+        require(!provas[hash].existe);
+        provas[hash].existe = true;
+        provas[hash].block_number = block.number;
+        provas[hash].numero = _numero;
+        provas[hash].data_hora = _data_hora;
+        provas[hash].coordenadas = _coordenadas;
     }
 
-    function ConsultaProva(address hash_) public constant returns (uint ret) {
-        ret = provas[hash_].block_number;
+    function ConsultaProva(string _hash) public constant returns (uint, string, string, string) {
+        bytes32 hash = sha256(_hash);
+        require(provas[hash].existe);
+        return (provas[hash].block_number, provas[hash].numero, provas[hash].data_hora, provas[hash].coordenadas);
     }
 }
