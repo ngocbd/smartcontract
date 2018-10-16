@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x06c9ae8f27dc7c1852d182bcbcaa8142e7e73724
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0xdd690d8824c00c84d64606ffb12640e932c1af56
 */
 pragma solidity 0.4.24;
 /**
-* TVC TOKEN Contract
+* TAVITT TOKEN Contract
 * ERC-20 Token Standard Compliant
 */
 
@@ -240,7 +240,7 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
 contract Asset is ERC20Token {
     string public name = 'Tavittcoin';
     uint8 public decimals = 8;
-    string public symbol = 'TVC';
+    string public symbol = 'TAVITT';
     string public version = '1';
 
     constructor() public {
