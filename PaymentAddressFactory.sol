@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentAddressFactory at 0x118a748e43615c8b82fa60db3c4132a1b28cf05d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentAddressFactory at 0x423e43056a73c7d04631b029da0383a0ba86e989
 */
-pragma solidity ^0.4.19;
+pragma solidity 0.4.23;
 
 
 /// @title Version
@@ -10,7 +10,7 @@ contract Version {
 
     /// @notice Constructor saves a public version of the deployed Contract.
     /// @param _version Semantic version of the contract.
-    function Version(string _version) internal {
+    constructor(string _version) internal {
         semanticVersion = _version;
     }
 }
@@ -27,7 +27,7 @@ contract Factory is Version {
 
     mapping(address => bool) public contracts;
 
-    function Factory(string _version) internal Version(_version) {}
+    constructor(string _version) internal Version(_version) {}
 
     function hasBeenDeployed(address _contract) public constant returns (bool) {
         return contracts[_contract];
@@ -39,7 +39,7 @@ contract Factory is Version {
         returns (bool)
     {
         contracts[_contract] = true;
-        FactoryAddedContract(_contract);
+        emit FactoryAddedContract(_contract);
         return true;
     }
 }
@@ -49,34 +49,31 @@ contract PaymentAddress {
     event PaymentMade(address indexed _payer, address indexed _collector, uint256 _value);
 
     address public collector;
-    bytes4 public identifier;
 
-    function PaymentAddress(address _collector, bytes4 _identifier) public {
+    constructor(address _collector) public {
         collector = _collector;
-        identifier = _identifier;
     }
 
     function () public payable {
+        emit PaymentMade(msg.sender, collector, msg.value);
         collector.transfer(msg.value);
-        PaymentMade(msg.sender, collector, msg.value);
     }
 }
 
 
 contract PaymentAddressFactory is Factory {
     // index of created contracts
-    mapping (bytes4 => address) public paymentAddresses;
+    mapping (address => address[]) public paymentAddresses;
 
-    function PaymentAddressFactory() public Factory("1.0.0") {}
+    constructor() public Factory("1.0.0") {}
 
     // deploy a new contract
-    function newPaymentAddress(address _collector, bytes4 _identifier)
+    function newPaymentAddress(address _collector)
         public
         returns(address newContract)
     {
-        require(paymentAddresses[_identifier] == address(0x0));
-        PaymentAddress paymentAddress = new PaymentAddress(_collector, _identifier);
-        paymentAddresses[_identifier] = paymentAddress;
+        PaymentAddress paymentAddress = new PaymentAddress(_collector);
+        paymentAddresses[_collector].push(paymentAddress);
         addContract(paymentAddress);
         return paymentAddress;
     }
