@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0x60e3026d3395b0df415fc0eaec84b745909fb703
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0xe9f8cde1b60461b7591375b3bc5f2a22a0a1b3e4
 */
 pragma solidity ^0.4.18;
 
@@ -194,6 +194,22 @@ contract Escrow is IEscrow, Ownable {
   modifier tokenRestricted() {
     require(msg.sender == address(token));
     _;
+  }
+
+  function getStatus(address _arbitrator, uint256 _transactionId) 
+      public view returns(address, address, uint256, uint256, uint256, bool) {
+    return(
+      escrows[_arbitrator][_transactionId].sender,
+      escrows[_arbitrator][_transactionId].recipient,
+      escrows[_arbitrator][_transactionId].value,
+      escrows[_arbitrator][_transactionId].fee,
+      escrows[_arbitrator][_transactionId].expiration,
+      escrows[_arbitrator][_transactionId].paid
+    );
+  }
+
+  function isUnlocked(address _arbitrator, uint256 _transactionId) public view returns(bool) {
+    return escrows[_arbitrator][_transactionId].expiration == 1;
   }
 
   /**
