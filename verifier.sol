@@ -1,61 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract verifier at 0x0b67e34a0e0b5cb2858f97c5dcf02c677e0aad16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Verifier at 0xd4e0477de9c484cdb6c5b075477d40e60a90a713
 */
 pragma solidity ^0.4.21;
-contract owned {
-    address public owner;
-    event Log(string s);
 
-    constructor()payable public {
-        owner = msg.sender;
+contract Verifier {
+    function recoverAddr(bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (address msgAddress) {
+        return ecrecover(msgHash, v, r, s);
     }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-    function isOwner()public{
-        if(msg.sender==owner)emit Log("Owner");
-        else{
-            emit Log("Not Owner");
-        }
-    }
-}
-contract verifier is owned{
-    struct action {
-        uint timestamp;
-        uint256 value;
-        address from;
-    }
-    mapping(string => mapping(uint => action))register;
-    mapping(string => uint256)transactionCount;
     
-    event actionLog(uint timestamp, uint256 value,address from);
-    event Blog(string);
-    
-    constructor()public payable{
-    }
-    function registerTransaction(string neo,address ethA,uint256 value)internal{
-        register[neo][transactionCount[neo]]=action(now,value,ethA);
-        transactionCount[neo]+=1;
-    }
-    function verifyYourself(string neo, uint256 value)public{
-        registerTransaction(neo,msg.sender,value);
-    }
-    function viewAll(string neo)public onlyOwner{
-        uint i;
-        for(i=0;i<transactionCount[neo];i++){
-            emit actionLog(register[neo][i].timestamp,
-                        register[neo][i].value,
-                        register[neo][i].from);
-        }
-    }
-    function viewSpecific(string neo, uint256 index)public onlyOwner{
-        emit actionLog(register[neo][index].timestamp,
-                        register[neo][index].value,
-                        register[neo][index].from);
+    function isSigned(address _addr, bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) public pure returns (bool msgSigned) {
+        return ecrecover(msgHash, v, r, s) == _addr;
     }
 }
