@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BWCOINToken at 0xca0dfc56241779f1f51866b79651b4c617c7c51b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BWCOINToken at 0xab8a6878edd15eed93a0d575be79bd003d0522b5
 */
 pragma solidity ^0.4.4;
 
@@ -118,9 +118,9 @@ contract BWCOINToken is StandardToken {
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function BWCOINToken() {
-        balances[msg.sender] = 25 * 1000000 * 10000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 25 * 1000000 * 10000;                        // Update total supply (100000 for example)
-        name = "BWCOIN";                                   // Set the name for display purposes
+        balances[msg.sender] = 25 * 1000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 25 * 1000000;                        // Update total supply (100000 for example)
+        name = "BWCOIN Token";                                   // Set the name for display purposes
         decimals = 4;                            // Amount of decimals for display purposes
         symbol = "BWC";                               // Set the symbol for display purposes
     }
