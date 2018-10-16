@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mjolnir at 0x2b31d4ed253744bc18a3f88ca7cdd579c47e8564
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mjolnir at 0xa358ab6ff1da56792b5b4eb18f0d9c4eef06345a
 */
 pragma solidity ^0.4.23;
 
@@ -82,12 +82,12 @@ contract Mjolnir is StandardToken {
     address public fundsWallet;          
 
     function Mjolnir() {
-        balances[msg.sender] = 128192000000000000000000;              
-        totalSupply = 128192000000000000000000;                 
+        balances[msg.sender] = 689276000000000000000000;              
+        totalSupply = 689276000000000000000000;                 
         name = "Mjolnir";                                  
         decimals = 18;                          
-        symbol = "MJG";                                 
-        unitsOneEthCanBuy = 2000;                            
+        symbol = "MJO";                                 
+        unitsOneEthCanBuy = 1700;                            
         fundsWallet = msg.sender;                    
     }
 
