@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0x74Aca0F1a40F7e0F3845DadF52C65060dE7749AF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0xd23f2533B726C9Cb1Fb9ed109b82e5A8F01c881e
 */
 pragma solidity ^0.4.8;
 
 // ----------------------------------------------------------------------------------------------
-// The Ripto Bux smart contract - to find out more, join the Incent Slack; http://incentinvites.herokuapp.com/
+// The Waves Community token smart contract - to find out more, join the Incent Slack; http://incentinvites.herokuapp.com/
 // A collaboration between Incent and Bok :)
 // Enjoy. (c) Incent Loyalty Pty Ltd and Bok Consulting Pty Ltd 2017. The MIT Licence.
 // ----------------------------------------------------------------------------------------------
 
 // Contract configuration
 contract TokenConfig {
-    string public constant symbol = "RBX";
-    string public constant name = "Ripto Bux";
+    string public constant symbol = "WBTC";
+    string public constant name = "Waves Bitcoin Token";
     uint8 public constant decimals = 8;  // 8 decimal places, the same as tokens on Wave
-    uint256 _totalSupply = 100000000000000000;
+    uint256 _totalSupply = 2100000000000000;
 }
 
 // ERC Token Standard #20 Interface
@@ -47,7 +47,7 @@ contract ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract RiptoBuxToken is ERC20Interface, TokenConfig {
+contract WavesBitcoinToken is ERC20Interface, TokenConfig {
     // Owner of this contract
     address public owner;
 
@@ -66,7 +66,7 @@ contract RiptoBuxToken is ERC20Interface, TokenConfig {
     }
 
     // Constructor
-    function RiptoBuxToken() {
+    function WavesBitcoinToken() {
         owner = msg.sender;
         balances[owner] = _totalSupply;
     }
@@ -132,7 +132,7 @@ contract RiptoBuxToken is ERC20Interface, TokenConfig {
     }
 }
 
-contract WavesEthereumSwap is RiptoBuxToken {
+contract WavesEthereumSwap is WavesBitcoinToken {
     event WavesTransfer(address indexed _from, string wavesAddress, uint256 amount);
 
     function moveToWaves(string wavesAddress, uint256 amount) {
