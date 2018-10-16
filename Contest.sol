@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contest at 0x9d7fe49ea59663abdd971c949e58b04a766d3667
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contest at 0xbfb3dbbfa6e5ebc69ac80773b82f38d2ac44dc7c
 */
 /**
 * The contract defining the contest, allowing participation and voting.
@@ -64,14 +64,14 @@ c4c = 0x87b0de512502f3e86fd22654b72a640c8e0f59cc;
 c4cfee = 1000;
 owner = msg.sender;
 
-deadlineParticipation=1500589800;
-deadlineVoting=1501453800;
-participationFee=25000000000000000;
-votingFee=4000000000000000;
-prizeOwner=400;
+deadlineParticipation=1501627320;
+deadlineVoting=1502836920;
+participationFee=10000000000000000;
+votingFee=3000000000000000;
+prizeOwner=300;
 prizeReferee=0;
 prizeWinners.push(6045);
-nLuckyVoters=3;
+nLuckyVoters=1;
 
 
 uint16 sumPrizes = prizeOwner;
