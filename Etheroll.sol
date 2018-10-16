@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xb69d539c777E7793Fda30f31633dE321e8feE613
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x7C07b7b34dA43f240Ed6d4EdaeFE9a986Aa01BfC
 */
 //just updated the encrypted api key
 //updated contractBalance -= 57245901639344;
@@ -1398,14 +1398,14 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 	{        
         
         /* safely update contract balance to account for cost to call oraclize*/
-        contractBalance -= 58245901639344;
+        contractBalance = safeSub(contractBalance, oraclize_getPrice("URL", 235000));
 
         /*
         * assign partially encrypted query to oraclize
         * only the apiKey is encrypted 
         * integer query is in plain text
         */
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BDsqRqF48Vv3jzZ/Kul9DRGhdQ6PJh6WIiDiwB6rTXKGxy3995Pl32KMk36S1Cp9LpRerFc8POQomGETJ4jr55MDhEstcG79YuyHYOOv07HA/c4HtG+7yQAa4uSd68XHnjkamoPWt1bwISsZ/Y3/hBatsO1FG40=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
+        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BMGDW5F78pK91YS9sdMtbbWSjb36uL0q2iGoYr3NPEVaKd/T+abqkmgIR6pDnDaN63WWEezt3bJ0Z+n7vyd+xWmGYEGwkckazp8MoyJKtzGWknBcTR61TfHv6+CUHr5g5v9ctjBM8qFjv+Ah7Xlx54X5GbnkmXo=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
         	        
         /* total number of bets */
         totalBets += 1;
