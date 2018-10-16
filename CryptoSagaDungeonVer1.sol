@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaDungeonVer1 at 0xa681aa05399c323442a6622a61717312a879ec25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaDungeonVer1 at 0x7e8a2e5876453ea41936c64678de81ae40522bb3
 */
 pragma solidity ^0.4.18;
 
@@ -1443,7 +1443,7 @@ contract CryptoSagaDungeonProgress is Claimable, AccessDeploy {
 
 /**
  * @title CryptoSagaDungeonVer1
- * @dev The actual gameplay is done by this contract.
+ * @dev The actual gameplay is done by this contract. Version 1.0.1.
  */
 contract CryptoSagaDungeonVer1 is Claimable, Pausable {
 
@@ -2050,15 +2050,15 @@ contract CryptoSagaDungeonVer1 is Claimable, Pausable {
       // In case lost.
       // Give baseline gold reward.
       _goldRewardGiven = goldReward / 25 * sqrt(_progress);
-      _expRewardGiven = expReward * _numberOfKilledEnemies / 4 / 5;
+      _expRewardGiven = expReward * _numberOfKilledEnemies / 4 / 5 * sqrt(_progress / 4 + 1);
     } else if (_isClearedBefore == true) {
       // Did win, but this progress has been already cleared before.
       _goldRewardGiven = goldReward / 5 * sqrt(_progress);
-      _expRewardGiven = expReward / 5;
+      _expRewardGiven = expReward / 5 * sqrt(_progress / 4 + 1);
     } else {
       // Firstly cleared the progress.
       _goldRewardGiven = goldReward * sqrt(_progress);
-      _expRewardGiven = expReward;
+      _expRewardGiven = expReward * sqrt(_progress / 4 + 1);
     }
 
     // Give reward Gold.
