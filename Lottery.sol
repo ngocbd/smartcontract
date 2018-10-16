@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x38321bbb97a3541bb3913c12201b35d504f7af39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xbb91f46a756af34bb987cc9bb5501de726f0d0ad
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
 
  
 
@@ -21,9 +21,9 @@ contract Lottery{
    // The tokens can never be stolen.
     modifier notPooh(address aContract)
     {
-        require(aContract != address(revContract));
+        require(aContract != address(poohContract));
         _;
-    }
+    } 
 
     modifier isOpenToPublic()
     {
@@ -42,7 +42,7 @@ contract Lottery{
         address depositer
     );
 
-    event WinnerPaid(
+   event WinnerPaid(
         uint256 amount,
         address winner
     );
@@ -52,7 +52,7 @@ contract Lottery{
     =            CONFIGURABLES            =
     =====================================*/
 
-    REV revContract;  //a reference to the REV contract
+    POOH poohContract;  //a reference to the POOH contract
     address owner;
     bool openToPublic = false; //Is this lottery open for public use
     uint256 ticketNumber = 0; //Starting ticket number
@@ -65,9 +65,9 @@ contract Lottery{
 
     constructor() public
     {
-        revContract = REV(0x05215FCE25902366480696F38C3093e31DBCE69A);
+        poohContract = POOH(0x4C29d75cc423E8Adaa3839892feb66977e295829);
         openToPublic = false;
-        owner = 0xc42559F88481e1Df90f64e5E9f7d7C6A34da5691;
+        owner = msg.sender;
     }
 
 
@@ -76,7 +76,7 @@ contract Lottery{
     function() payable public { }
 
 
-    function deposit()
+     function deposit()
        isOpenToPublic()
      payable public
      {
@@ -84,8 +84,8 @@ contract Lottery{
         require(msg.value >= 10000000000000000);
         address customerAddress = msg.sender;
 
-        //Use deposit to purchase REV tokens
-        revContract.buy.value(msg.value)(customerAddress);
+        //Use deposit to purchase POOH tokens
+        poohContract.buy.value(msg.value)(customerAddress);
         emit Deposit(msg.value, msg.sender);
 
         //if entry more than 0.01 ETH
@@ -93,7 +93,7 @@ contract Lottery{
         {
             uint extraTickets = SafeMath.div(msg.value, 10000000000000000); //each additional entry is 0.01 ETH
             
-            //Compute how many positions they get by how many REV they transferred in.
+            //Compute how many positions they get by how many POOH they transferred in.
             ticketNumber += extraTickets;
         }
 
@@ -101,7 +101,7 @@ contract Lottery{
         if(ticketNumber >= winningNumber)
         {
             //sell all tokens and cash out earned dividends
-            revContract.exit();
+            poohContract.exit();
 
             //lotteryFee
             payDev(owner);
@@ -109,60 +109,45 @@ contract Lottery{
             //payout winner
             payWinner(customerAddress);
 
-            //rinse and repea
-            resetLottery();
+           //rinse and repea
+           resetLottery();
         }
         else
         {
-            ticketNumber++;
+           ticketNumber++;
         }
     }
 
-    //Number of REV tokens currently in the Lottery pool
+    //Number of POOH tokens currently in the Lottery pool
     function myTokens() public view returns(uint256)
     {
-        return revContract.myTokens();
+        return poohContract.myTokens();
     }
-
 
      //Lottery's divs
     function myDividends() public view returns(uint256)
     {
-        return revContract.myDividends(true);
+        return poohContract.myDividends(true);
     }
 
    //Lottery's ETH balance
-    function ethBalance() public view returns (uint256)
-    {
-        return address(this).balance;
-    }
+   function ethBalance() public view returns (uint256)
+   {
+       return address(this).balance;
+   }
 
 
      /*======================================
      =          OWNER ONLY FUNCTIONS        =
      ======================================*/
 
-    //give the people access to play
+   //give the people access to play
     function openToThePublic()
        onlyOwner()
         public
     {
         openToPublic = true;
         resetLottery();
-    }
-
-    //If this doesn't work as expected, cash out and send to owner to disperse ETH back to players
-    function emergencyStop()
-        onlyOwner()
-        public
-    {
-       // cash out token pool and send to owner to distribute back to players
-        revContract.exit();
-        uint balance = address(this).balance;
-        owner.transfer(balance);
-
-        //make lottery closed to public
-        openToPublic = false;
     }
 
 
@@ -187,7 +172,8 @@ contract Lottery{
      //pay winner
     function payWinner(address winner) internal
     {
-        uint balance = address(this).balance;
+        //need to have 0.05 ETH balance left over for the next round.
+        uint balance = SafeMath.sub(address(this).balance, 50000000000000000);
         winner.transfer(balance);
 
         emit WinnerPaid(balance, winner);
@@ -200,20 +186,12 @@ contract Lottery{
         dev.transfer(balance);
     }
 
-    function resetLottery() internal
-    {
-        ticketNumber = 1;
-        winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
-    }
-
-    function resetLotteryManually() public
-    onlyOwner()
-    {
-        ticketNumber = 1;
-        winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
-    }
-
-
+   function resetLottery() internal
+   isOpenToPublic()
+   {
+       ticketNumber = 1;
+       winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
+   }
 }
 
 
@@ -223,8 +201,8 @@ contract ERC20Interface
     function transfer(address to, uint256 tokens) public returns (bool success);
 }
 
-//Need to ensure the Lottery contract knows what a REV token is
-contract REV
+//Need to ensure the Lottery contract knows what a POOH token is
+contract POOH
 {
     function buy(address) public payable returns(uint256);
     function exit() public;
@@ -237,10 +215,17 @@ library SafeMath {
     /**
     * @dev Integer division of two numbers, truncating the quotient.
     */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
+    function div(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        uint256 c = a / b;
+        return c;
+    }
+    
+     /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
     }
 }
