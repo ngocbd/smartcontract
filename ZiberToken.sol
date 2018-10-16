@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xea7cbf19027087ba91ad110e95a5c2a532d35100
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xE15422570cB3Cd88Bd7eF87f14c6cA7C43F77398
 */
 pragma solidity ^0.4.13;
 
@@ -65,8 +65,7 @@ contract ZiberToken {
   // The ZBR Token address and sale address are the same.
   DaoToken public token = DaoToken(0xa9d585CE3B227d69985c3F7A866fE7d0e510da50);
   // The developer address.
-  address developer_address = 0x00119E4b6fC1D931f63FFB26B3EaBE2C4E779533; 
-  //0x650887B33BFA423240ED7Bc4BD26c66075E3bEaf;
+  address developer_address = 0x650887B33BFA423240ED7Bc4BD26c66075E3bEaf;
 
 
   /* This creates an array with all balances */
