@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UHubToken at 0x2de9b766701b4d1468ae44b376dca65d31db243f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UHubToken at 0x19aea60e2fd6ac54ecf2576292c8fc7046429c37
 */
 pragma solidity ^0.4.16;
 
+// SafeMath
 contract SafeMath {
      function safeMul(uint a, uint b) internal returns (uint) {
           uint c = a * b;
@@ -24,6 +25,7 @@ contract SafeMath {
 
 // Standard token interface (ERC 20)
 // https://github.com/ethereum/EIPs/issues/20
+// Token
 contract Token is SafeMath {
      // Functions:
      /// @return total amount of tokens
@@ -60,7 +62,7 @@ contract Token is SafeMath {
      event Transfer(address indexed _from, address indexed _to, uint256 _value);
      event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-
+//StdToken
 contract StdToken is Token {
      // Fields:
      mapping(address => uint256) balances;
@@ -117,7 +119,7 @@ contract StdToken is Token {
           return allowed[_owner][_spender];
      }
 }
-
+// UHubToken
 contract UHubToken is StdToken
 {
 /// Fields:
@@ -154,7 +156,7 @@ contract UHubToken is StdToken
     }
 
     State public currentState = State.Init;
-    bool public enableTransfers = false;
+    bool public enableTransfers = true;
 
     address public teamTokenBonus = 0;
 
@@ -173,6 +175,12 @@ contract UHubToken is StdToken
     modifier onlyTokenManager()
     {
         require(msg.sender==tokenManager); 
+        _; 
+    }
+    
+    modifier onlyTokenCrowner()
+    {
+        require(msg.sender==escrow); 
         _; 
     }
 
@@ -274,7 +282,18 @@ contract UHubToken is StdToken
         currentState = _nextState;
         // enable/disable transfers
         //enable transfers only after ICOFinished, disable otherwise
-        enableTransfers = (currentState==State.ICOFinished);
+        //enableTransfers = (currentState==State.ICOFinished);
+    }
+    
+    function DisableTransfer() public onlyTokenManager
+    {
+        enableTransfers = false;
+    }
+    
+    
+    function EnableTransfer() public onlyTokenManager
+    {
+        enableTransfers = true;
     }
 
     function withdrawEther() public onlyTokenManager
@@ -302,9 +321,14 @@ contract UHubToken is StdToken
     }
 
 /// Setters/getters
-    function setTokenManager(address _mgr) public onlyTokenManager
+    function ChangeTokenManager(address _mgr) public onlyTokenManager
     {
         tokenManager = _mgr;
+    }
+    
+    function ChangeCrowner(address _mgr) public onlyTokenCrowner
+    {
+        escrow = _mgr;
     }
 
     // Default fallback function
