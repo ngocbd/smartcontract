@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract knuckCrowdsaleOne at 0x0daed428b7ceff56541532e45b55033563699079
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract knuckCrowdsaleOne at 0xed729b839322574294133c88780e809bc56abaec
 */
 pragma solidity ^0.4.16;
 
@@ -29,7 +29,7 @@ contract knuckCrowdsaleOne {
         address addressOfTokenUsedAsReward
     ) {
         beneficiary = ifSuccessfulSendTo;
-        price = CostOfEachKnuck * 1 szabo;
+        price = CostOfEachKnuck * 1 wei;
         knuckReward = token(addressOfTokenUsedAsReward);
     }
 
@@ -42,14 +42,11 @@ contract knuckCrowdsaleOne {
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
-        knuckReward.transfer(msg.sender, amount / price);
+        knuckReward.transfer(msg.sender, ((amount / price) * 1 ether));
         FundTransfer(msg.sender, amount, true);
-                    if (beneficiary.send(amountRaised)) {
-                FundTransfer(beneficiary, amountRaised, false);
-            } 
-            else {
-                
-    }
-
+        beneficiary.transfer(amount); 
+        FundTransfer(beneficiary, amount, false);
+            
+       
 }
     }
