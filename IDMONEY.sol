@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDMONEY at 0x870f62518f97b70f20bcca000b8385cab048b007
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDMONEY at 0x28b85bc9e851271214fe70f433874b9aedc5a94a
 */
-pragma solidity 0.4.20;
+pragma solidity 0.4.21;
 
 /**
  * @title SafeMath
@@ -82,7 +82,7 @@ contract IDMONEY is ERC20
     mapping(address => uint256) public tokensinvestor;   //checks number of tokens for investor
     mapping(address => mapping(address => uint)) allowed;
 
-    uint constant public minimumInvestment = 1 ether; // 1 ether is minimum minimumInvestment
+    uint constant public minimumInvestment = .1 ether; // .1 ether is minimum minimumInvestment
     uint bonus;
     uint c;
     uint256 lefttokens;
@@ -122,13 +122,13 @@ contract IDMONEY is ERC20
         balances[founderThree] = 2100000 * 10 ** 18; //2.1 million given to founderThree
         balances[storage1] = 9000000 * 10 ** 18; // 9 million given to storage1
         stage = Stages.NOTSTARTED;
-        Transfer(0, superAdmin, balances[superAdmin]);
-        Transfer(0, socialOne, balances[socialOne]);
-        Transfer(0, socialTwo, balances[socialTwo]);
-        Transfer(0, founderOne, balances[founderOne]);
-        Transfer(0, founderTwo, balances[founderTwo]);
-        Transfer(0, founderThree, balances[founderThree]);
-        Transfer(0, storage1, balances[storage1]);
+       emit Transfer(0, superAdmin, balances[superAdmin]);
+       emit Transfer(0, socialOne, balances[socialOne]);
+       emit Transfer(0, socialTwo, balances[socialTwo]);
+       emit Transfer(0, founderOne, balances[founderOne]);
+       emit Transfer(0, founderTwo, balances[founderTwo]);
+       emit Transfer(0, founderThree, balances[founderThree]);
+       emit Transfer(0, storage1, balances[storage1]);
     }
 
     function () public payable atStage(Stages.ICO)
@@ -166,7 +166,7 @@ contract IDMONEY is ERC20
         stage = Stages.ICO;
         stopped = false;
         balances[address(this)] = 10000000 * 10 ** 18; // 10 million to smart contract initially
-        Transfer(0, address(this), balances[address(this)]);
+      emit Transfer(0, address(this), balances[address(this)]);
     }
 
 
@@ -218,7 +218,7 @@ contract IDMONEY is ERC20
         balances[address(this)] = (balances[address(this)]).sub(tokensclaim);
         balances[receiver] = (balances[receiver]).add(tokensclaim);
         tokensinvestor[receiver] = 0;
-        Transfer(address(this), receiver, balances[receiver]);
+      emit  Transfer(address(this), receiver, balances[receiver]);
     }
 
     function end_ICO() external onlySuperAdmin atStage(Stages.ICO)
@@ -227,7 +227,7 @@ contract IDMONEY is ERC20
         lefttokens = balances[address(this)];
         balances[superAdmin]=(balances[superAdmin]).add(lefttokens);
         balances[address(this)] = 0;
-        Transfer(address(this), superAdmin, lefttokens);
+       emit Transfer(address(this), superAdmin, lefttokens);
 
     }
 
@@ -253,7 +253,7 @@ contract IDMONEY is ERC20
         balances[_from] = (balances[_from]).sub(_amount);
         allowed[_from][msg.sender] = (allowed[_from][msg.sender]).sub(_amount);
         balances[_to] = (balances[_to]).add(_amount);
-        Transfer(_from, _to, _amount);
+      emit  Transfer(_from, _to, _amount);
         return true;
     }
 
@@ -262,7 +262,7 @@ contract IDMONEY is ERC20
     function approve(address _spender, uint256 _amount)public returns(bool success) {
         require(_spender != 0x0);
         allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+      emit  Approval(msg.sender, _spender, _amount);
         return true;
     }
 
@@ -277,7 +277,7 @@ contract IDMONEY is ERC20
         require(balances[msg.sender] >= _amount && _amount >= 0);
         balances[msg.sender] = (balances[msg.sender]).sub(_amount);
         balances[_to] = (balances[_to]).add(_amount);
-        Transfer(msg.sender, _to, _amount);
+      emit Transfer(msg.sender, _to, _amount);
         return true;
     }
 
@@ -292,7 +292,8 @@ contract IDMONEY is ERC20
 
 
     function drain() external onlyOwner {
-        superAdmin.transfer(this.balance);
+         address myAddress = this;
+        superAdmin.transfer(myAddress.balance);
     }
 
 }
