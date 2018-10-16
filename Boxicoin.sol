@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Boxicoin at 0x74a53c71c5737983370af37C5C04A3B0c31825C5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BOXICOIN at 0x4F09Ea83feeD21ccA65F51A4CAAE1E6D212F5C50
 */
-contract Boxicoin {
+contract BOXICOIN {
     /* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
@@ -16,7 +16,7 @@ contract Boxicoin {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Boxicoin() {
+    function BOXICOIN() {
 
          initialSupply = 10000000000;
         name ="BOXICOIN";
