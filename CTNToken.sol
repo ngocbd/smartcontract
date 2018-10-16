@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTNToken at 0xaf6df2ef65e7b52da7a75ab35f39c1684f659df9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTNToken at 0x4c8c52d8cc106b71cee9a3417711a5b93a3fbef6
 */
 pragma solidity ^0.4.15;
 
@@ -197,7 +197,7 @@ modifier canMint() {
 
 
 /**
-* Initializing the token with the owner and the amount of coins excluding the token sale
+* Initializing the token, setting the owner, initial supply & vault
 */
 function CTNToken() public {
     initialSupply = 4500000 * 1 ether;
@@ -208,33 +208,37 @@ function CTNToken() public {
 }
 
 /**
-* To get the total supply of CTN coins 
+* Obtain current total supply of CTN tokens 
 */
 function totalSupply() public constant returns (uint256 totalAmount) {
       totalAmount = totalTokens;
 }
 
 /**
-* To get the total supply of CTN coins 
+* Get the initial supply of CTN coins 
 */
 function baseSupply() public constant returns (uint256 initialAmount) {
       initialAmount = initialSupply;
 }
 
 /**
-* Returns the balance of the wallet
+* Returns the balance of a wallet
 */ 
 function balanceOf(address _address) public constant returns (uint256 balance) {
     return balances[_address];
 }
 
 
+/**
+* Transfer CTN between wallets
+*/ 
 function transfer(address _to, uint256 _amount) public isTradable returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_amount);
     balances[_to] = balances[_to].add(_amount);
     Transfer(msg.sender, _to, _amount);
     return true;
 }
+
   /**
   * Send _amount of tokens from address _from to address _to
   * The transferFrom method is used for a withdraw workflow, allowing contracts to send
@@ -343,22 +347,22 @@ uint256 bonusCap;
 uint256 tokensPerETH;
 
 /** 
-* //the start time of the sale (new Date("Dec 15 2017 18:00:00 GMT").getTime() / 1000)
+* //the start time of the sale (new Date("Dec 22 2017 18:00:00 GMT").getTime() / 1000)
 */
-uint256 public start = 1513360800;
+uint256 public start = 1513965600;
 
 
 /**
- * The end time of the sale (new Date("Jan 15 2018 18:00:00 GMT").getTime() / 1000)
+ * The end time of the sale (new Date("Jan 22 2018 18:00:00 GMT").getTime() / 1000)
  */ 
-uint256 public end = 1516039200;
+uint256 public end = 1516644000;
 
 
 
 /**
- * Two months after the sale ends used to retrieve unclaimed refunds (new Date("Mar 15 2018 18:00:00 GMT").getTime() / 1000)
+ * Two months after the sale ends used to retrieve unclaimed refunds (new Date("Mar 22 2018 18:00:00 GMT").getTime() / 1000)
  */
-uint256 public twoMonthsLater = 1521136800;
+uint256 public twoMonthsLater = 1521741600;
 
 
 /**
