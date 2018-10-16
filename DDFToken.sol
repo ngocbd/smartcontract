@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DDFToken at 0x90d5f8b59eec630824182d434d63cf643120ab7b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DDFToken at 0xcc4ef9eeaf656ac1a2ab886743e98e97e090ed38
 */
 pragma solidity ^0.4.11;
 
@@ -259,7 +259,7 @@ contract DDFToken is StandardToken, SafeMath {
     bool public isFinalized;              // switched to true in operational state
     uint256 public fundingStartTime;
     uint256 public fundingEndTime;
-    uint256 public constant ddftFund = 1 * (10**6) * 10**decimals;   // 1m DDFT reserved for DDF use
+    uint256 public constant ddftFund = 25 * (10**5) * 10**decimals;   // 1m DDFT reserved for DDF use
     uint256 public constant tokenExchangeRate = 1000;               // 1000 DDFT tokens per 1 ETH
     uint256 public constant tokenCreationCap =  250 * (10**6) * 10**decimals;
     uint256 public constant tokenCreationMin =  1 * (10**6) * 10**decimals;
