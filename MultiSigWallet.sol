@@ -1,33 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x0f64Db5a527850B8Fc8025F9c49Adb734fdf43eD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x3b505511a928c04423df358b8f1fa7d231fb2a49
 */
 /**
  * Originally from https://github.com/ConsenSys/MultiSigWallet
  */
 
-pragma solidity ^0.4.11;
 
-
-contract owned {
-    address public owner;
-
-    function owned() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
-}
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSig is owned {
+contract MultiSigWallet {
+
     uint constant public MAX_OWNER_COUNT = 50;
 
     event Confirmation(address indexed sender, uint indexed transactionId);
@@ -111,13 +94,21 @@ contract MultiSig is owned {
         _;
     }
 
+    /// @dev Fallback function allows to deposit ether.
+    function()
+        payable
+    {
+        if (msg.value > 0)
+            Deposit(msg.sender, msg.value);
+    }
+
     /*
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
     /// @param _owners List of initial owners.
     /// @param _required Number of required confirmations.
-    function MultiSig(address[] _owners, uint _required)
+    function MultiSigWallet(address[] _owners, uint _required)
         public
         validRequirement(_owners.length, _required)
     {
@@ -141,9 +132,6 @@ contract MultiSig is owned {
     {
         isOwner[owner] = true;
         owners.push(owner);
-
-        changeRequirement(owners.length / 2 + 1);
-
         OwnerAddition(owner);
     }
 
@@ -161,10 +149,8 @@ contract MultiSig is owned {
                 break;
             }
         owners.length -= 1;
-
-        //if (required > owners.length)
-        //    changeRequirement(owners.length);
-        changeRequirement(owners.length / 2 + 1);
+        if (required > owners.length)
+            changeRequirement(owners.length);
         OwnerRemoval(owner);
     }
 
@@ -206,7 +192,6 @@ contract MultiSig is owned {
     /// @return Returns transaction ID.
     function submitTransaction(address destination, uint value, bytes data)
         public
-        ownerExists(msg.sender)
         returns (uint transactionId)
     {
         transactionId = addTransaction(destination, value, data);
@@ -244,6 +229,16 @@ contract MultiSig is owned {
         public
         notExecuted(transactionId)
     {
+        if (isConfirmed(transactionId)) {
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
+                Execution(transactionId);
+            else {
+                ExecutionFailure(transactionId);
+                tx.executed = false;
+            }
+        }
     }
 
     /// @dev Returns the confirmation status of a transaction.
@@ -373,80 +368,5 @@ contract MultiSig is owned {
         _transactionIds = new uint[](to - from);
         for (i=from; i<to; i++)
             _transactionIds[i - from] = transactionIdsTemp[i];
-    }
-}
-
-contract MultiSigWallet is MultiSig {
-    function MultiSigWallet(address[] _owners, uint _required)
-        public
-        MultiSig( _owners, _required)
-    {    
-    }
-
-    /// @dev Fallback function allows to deposit ether.
-    function()
-        payable
-    {
-        if (msg.value > 0)
-            Deposit(msg.sender, msg.value);
-    }
-
-    /// @dev Allows anyone to execute a confirmed transaction.
-    /// @param transactionId Transaction ID.
-    function executeTransaction(uint transactionId)
-        public
-        notExecuted(transactionId)
-    {
-        if (isConfirmed(transactionId)) {
-            Transaction tx = transactions[transactionId];
-
-            if (tx.destination.call.value(tx.value)(tx.data)) {
-                tx.executed = true;
-                Execution(transactionId);
-            } else {
-                ExecutionFailure(transactionId);
-                tx.executed = false;
-            }
-        }
-    }
-}
-
-
-
-contract token {function transfer(address receiver, uint amount) returns (bool success);}
-
-contract MultiSigToken is MultiSig {
-    token public tokenFactory ;
-
-    function MultiSigToken(address[] _owners, uint _required, token _addressOfTokenFactory)
-        public
-        MultiSig( _owners, _required)
-    {    
-        tokenFactory = token(_addressOfTokenFactory);
-    }
-
-    // @dev This unnamed function is called whenever someone tries to send ether to it 
-    function()
-    {
-        throw; // Prevents accidental sending of ether
-    }
-
-    /// @dev Allows anyone to execute a confirmed transaction.
-    /// @param transactionId Transaction ID.
-    function executeTransaction(uint transactionId)
-        public
-        notExecuted(transactionId)
-    {
-        if (isConfirmed(transactionId)) {
-            Transaction tx = transactions[transactionId];
-
-            if (tokenFactory.transfer(tx.destination, tx.value)) {
-                tx.executed = true;
-                Execution(transactionId);
-            } else {
-                tx.executed = false;
-                ExecutionFailure(transactionId);
-            }
-        }
     }
 }
