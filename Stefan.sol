@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Stefan at 0x17e63292c5e70c5968f7e908e65d742d7abbcfdd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Stefan at 0x358898a0a781f195a30ecb76056e47456b2ed170
 */
 pragma solidity ^0.4.18;
 
@@ -402,18 +402,20 @@ contract Ownable {
 
 }
 
+
+
 contract Stefan is ERC827Token, Ownable {
 
   // Token Name
-  string public constant name = "Stefan";
+  string public constant NAME = "Stefan";
 
   // Token Symbol
-  string public constant symbol = "STF";
+  string public constant SYMBOL = "STF";
 
   // Token Decimals
-  uint public constant decimals = 18;
+  uint public constant DECIMALS = 18;
 
-  bool public available = true;
+  bool public available = false;
   uint256 public yearlyFee = 500 ether;
   mapping(address => Retainer) public retainers;
 
