@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelpCoin at 0x90b26210085cf3eaa254e3077403a3e5cd5da3f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelpCoin at 0x698797a625a833A287Ee086bcf2b71aEa184F070
 */
 pragma solidity ^0.4.4;
 
@@ -93,32 +93,47 @@ contract HelpCoin is StandardToken { // CHANGE THIS. Update the contract name.
 
     /*
     NOTE:
-helpcoin helpcoin helpcoin helpcoin
+    The following variables are OPTIONAL vanities. One does not have to include them.
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   // Token 
+    string public name;                   // Token Name
     uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol;                 // An identifier: ..
+    string public symbol;                 // An identifier: eg SBX, XPR etc..
     string public version = 'H1.0'; 
-    uint256 public HelpCoin ;     // How many units of your coin can be bought by 1 ETH?
+    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
-    address  fundsWallet;           // Where should the raised ETH go?
+    address public fundsWallet;           // Where should the raised ETH go?
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function HelpCoin() {
-        balances[msg.sender] = 1000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 1000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 200000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 200000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "HelpCoin";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 0;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "HPC";                                             // Set the symbol for display purposes (CHANGE THIS)
-                                              // Set the price of your token for the ICO (CHANGE THIS)
+        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        symbol = "HELP";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 100000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
-                                
 
-/* Approves and then calls the receiving contract */
+    function() payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        if (balances[fundsWallet] < amount) {
+            return;
+        }
+
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);                               
+    }
+
+    /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
