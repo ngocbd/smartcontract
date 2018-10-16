@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAILER at 0x9b44d55d9daa9d941ec54b23d75b50e8c8806a27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAILER at 0xfc5201a5f4c47f15ea98bca12eff0bf809f402f0
 */
 pragma solidity ^0.4.4;
 
@@ -121,7 +121,7 @@ contract SAILER is StandardToken {
         ) {
         balances[msg.sender] = 21000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 21000000000000000000000000;                       // Update total supply (100000 for example)
-        name = "CRYPTO SAILERS";                                              // Set the name for display purposes
+        name = "SAILER";                                              // Set the name for display purposes
         decimals = 18;                                                   // Amount of decimals for display purposes
         symbol = "SAIL";                                            // Set the symbol for display purposes
     }
