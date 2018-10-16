@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Token at 0x7b79387dd30dc6848dd2308c825b6802e99abc84
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Token at 0x1422a103db05e3d3c3b003f57db5cb519469ab3b
 */
-// VERSION M(A)
+// VERSION M
 
 pragma solidity ^0.4.8;
 
