@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelay at 0x12f8c63034aac487396b70db04aba5c84ded1886
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelay at 0x4d54be5a62f5d9fcf4b17c7ab6e68822c142ec6b
 */
 /**
  * 
@@ -1204,13 +1204,13 @@ contract FlightDelay is usingOraclize {
 	string constant oraclize_RatingsBaseUrl =
 		"[URL] json(https://api.flightstats.com/flex/ratings/rest/v1/json/flight/";
 	string constant oraclizeRatingsQuery =
-		"?${[decrypt] BN0pJDw6e65XSHqRe1zGji/QU9y5NgK9eTda3VmITxeRgncyGQewbTE+46EFY/waH5KXoHWSb0d/Wpwm1rE5SVeA5SvXrSZCKHw13krbK8D/F/RqL9/VoAx8fGJnYsWQ1q2G5lZbiY9sd6sKhozb/epq4GpcHpdjNf111/pJTwHttxsrUno/}).ratings[0]['observations','late15','late30','late45','cancelled','diverted']";
+		"?${[decrypt] BGHdZ9cDNIfZogzCYUU+esupKmGPoVvNE38mj1ELQZHv9MybFpzBp90QQN6j33fzU2UvvX/NqE02z1bGJ9yY5X3Az/dLou0DdWTc/Pu9vYXaq8oTuq9Zyqjg+VQ9T6k/OrASsgCF8P9z+/vW3FO5odhpmqCrwUpvLZTAbhcNyCYjbnA16XUW}).ratings[0]['observations','late15','late30','late45','cancelled','diverted']";
 
 	// [URL] json(https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/LH/410/dep/2016/09/01?appId={appId}&appKey={appKey})
 	string constant oraclize_StatusBaseUrl =
 	  "[URL] json(https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/";
 	string constant oraclizeStatusQuery =
-		"?${[decrypt] BN0pJDw6e65XSHqRe1zGji/QU9y5NgK9eTda3VmITxeRgncyGQewbTE+46EFY/waH5KXoHWSb0d/Wpwm1rE5SVeA5SvXrSZCKHw13krbK8D/F/RqL9/VoAx8fGJnYsWQ1q2G5lZbiY9sd6sKhozb/epq4GpcHpdjNf111/pJTwHttxsrUno/}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
+		"?${[decrypt] BGHdZ9cDNIfZogzCYUU+esupKmGPoVvNE38mj1ELQZHv9MybFpzBp90QQN6j33fzU2UvvX/NqE02z1bGJ9yY5X3Az/dLou0DdWTc/Pu9vYXaq8oTuq9Zyqjg+VQ9T6k/OrASsgCF8P9z+/vW3FO5odhpmqCrwUpvLZTAbhcNyCYjbnA16XUW}).flightStatuses[0]['status','delays','operationalTimes']";
 
 
 	// the policy structure: this structure keeps track of the individual parameters of a policy.
@@ -1389,19 +1389,6 @@ contract FlightDelay is usingOraclize {
 
 	}
 
-	// fix issue with _departureYMD
-    function toYMD (uint departure) returns (string) {
-        uint diff = (departure - 1472601600) / 86400;
-        uint8 d1 = uint8(diff / 10);
-        uint8 d2 = uint8(diff - 10*d1);
-        string memory str = '/dep/2016/09/xx';
-        bytes memory strb = bytes(str);
-        strb[13] = bytes1(d1+48);
-        strb[14] = bytes1(d2+48);
-		return(string(strb));
-    }
-
-
 	// create new policy
 	function newPolicy(
 		string _carrierFlightNumber, 
@@ -1411,7 +1398,6 @@ contract FlightDelay is usingOraclize {
 		) 
 		notInMaintenance {
 
-		_departureYearMonthDay = toYMD(_departureTime);
 		// sanity checks:
 
 		// don't accept too low or too high policies
