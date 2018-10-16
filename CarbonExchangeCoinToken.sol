@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbonExchangeCoinToken at 0x5d357c787c66ac1b09edc55e37abb28f3cc5b928
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbonExchangeCoinToken at 0x0eb152d2bba8af722d7e296a1f223d819c3bbb1f
 */
 /** ????token */
 
@@ -198,9 +198,9 @@ contract CarbonExchangeCoinToken is owned, TokenERC20 {
 	
 	function CarbonExchangeCoinToken() public {
 		owner = msg.sender;
-		totalSupply = 50000000000.000000000000000000;
+		totalSupply = 50000000000000000000000000000;
 		balanceOf[owner]=totalSupply;
-		tokenName="CarbonExchangeCoinToken";
+		tokenName="Carbon Exchange Coin Token";
 		tokenSymbol="CEC";
 	}
 
