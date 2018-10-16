@@ -1,166 +1,127 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BUZZ at 0x3a3cbb3b2ebfc8bc93a18adc5e4df810f2b698d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Buzz at 0x7ec5d18ba6bdfe9c264fe29f9921788e2dac5c07
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.16;
 
-//
-// BUZZ is a voucher used as payment within Buzz.im website. 
-// You can use this token to pay for advertising on the network.
-// Ofcourse you can also use Fiat currencies and pay with credit
-// card, but the amount of Buzz credited to your account will be
-// converted according to current exchange rate on decetralized
-// exchanges.
-//
+contract Token {
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-contract Base {
-    modifier only(address allowed) {
-        require(msg.sender == allowed);
-        _;
-    }
-}
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-contract Owned is Base {
-    address public owner;
-    address newOwner;
-    function Owned() public {
-        owner = msg.sender;
-    }
-    function transferOwnership(address _newOwner) only(owner) public {
-        newOwner = _newOwner;
-    }
-    function acceptOwnership() only(newOwner) public {
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-    event OwnershipTransferred(address indexed _from, address indexed _to);
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
 }
 
-contract ERC20 is Owned {
-    using SafeMath for uint;
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-    function transfer(address _to, uint _value) isStartedOnly public returns (bool success) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
+
+
+contract StandardToken is Token {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
-    function transferFrom(address _from, address _to, uint _value) isStartedOnly public returns (bool success) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
-    function balanceOf(address _owner) constant public returns (uint balance) {
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
-    function approve_fixed(address _spender, uint _currentValue, uint _value) isStartedOnly public returns (bool success) {
-        if(allowed[msg.sender][_spender] == _currentValue){
-            allowed[msg.sender][_spender] = _value;
-            Approval(msg.sender, _spender, _value);
-            return true;
-        } else {
-            return false;
-        }
-    }
-    function approve(address _spender, uint _value) isStartedOnly public returns (bool success) {
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
-    function allowance(address _owner, address _spender) constant public returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
-    uint public totalSupply;
-    bool    public isStarted = false;
-    modifier isStartedOnly() {
-        require(isStarted);
-        _;
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
 
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
 }
 
-contract BUZZ is ERC20 {
-    using SafeMath for uint;
-    string public name = "Buzz.im";
-    string public symbol = "BUZZ";
-    uint8 public decimals = 18;
-    modifier isNotStartedOnly() {
-        require(!isStarted);
-        _;
-    }
-    function getTotalSupply()
-    public
-    constant
-    returns(uint)
-    {
-        return totalSupply;
-    }
-    
-    // Bootstrap the contract and make the tokens
-    // transferrable. No more minting will be possible.
-    function start()
-    public
-    only(owner)
-    isNotStartedOnly
-    {
-        isStarted = true;
+
+contract Buzz is StandardToken {
+
+    function () {
+        throw;
     }
 
-    function multiTransfer(address[] dests, uint[] values) public
-    only(owner)
-    isStartedOnly
-    returns (uint) {
-        uint i = 0;
-        while (i < dests.length) {
-           transfer(dests[i], values[i]);
-           i += 1;
-        }
-        return(i);
+    /* Public variables of the token */
+
+    string public name;                   
+    uint8 public decimals;                
+    string public symbol;                 
+    string public version = 'H1.0';    
+
+
+    function Buzz(
+        ) {
+        balances[msg.sender] = 100000000000000000;
+        totalSupply = 100000000000000000;
+        name = "Buzzshare";
+        decimals = 8;
+        symbol = "BUZZ";
     }
 
-    //
-    // before start:
-    // 
-    function mint(address _to, uint _amount) public
-    only(owner)
-    isNotStartedOnly
-    returns(bool)
-    {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
 }
