@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PinkyToken at 0xd198ae437005abfad5a115ff01d52786167def29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PinkyToken at 0xd317ff47dc7e1423e5e050870a66332833e5fd88
 */
 pragma solidity ^0.4.16;
 
@@ -53,7 +53,7 @@ contract PinkyToken is owned {
 	using SafeMath for uint256;
 	
     // Public variables of the token
-    string public name = "Pinky";
+    string public name = "Pinky Token";
     string public symbol = "PNY";
     uint8 public decimals = 0;
     uint256 public totalSupply = 10000000;
