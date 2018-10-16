@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0xbcff2d15c698d3874bc29aa170c89fd7a6146a4b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0x488872fB7c7DBE61018E7a65F88aA4b239649d62
 */
-pragma solidity ^0.4.12;
+pragma solidity ^0.4.11;
 /**
  * Overflow aware uint math functions.
  */
@@ -126,12 +126,14 @@ contract CHEXToken is Token {
     address public owner;
     
     uint public totalSupply = 2000000000 * 10**decimals; // 2b tokens, each divided to up to 10^decimals units.
+    uint public etherCap = 2500000 * 10**decimals;
     
     uint public totalTokens = 0;
     uint public presaleSupply = 0;
     uint public presaleEtherRaised = 0;
 
     event Buy(address indexed recipient, uint eth, uint chx);
+    event Deliver(address indexed recipient, uint chx, string _for);
 
     uint public presaleAllocation = totalSupply / 2; //50% of token supply allocated for crowdsale
     uint public strategicAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for strategic supply
@@ -139,7 +141,8 @@ contract CHEXToken is Token {
     bool public strategicAllocated = false;
     bool public reserveAllocated = false;
 
-    uint public transferLockup = 172800; //no transfers until 30 days after crowdsale begins (assumes 100 day crowdsale)
+    uint public transferLockup = 5760; //no transfers until 1 day after sale is over
+    uint public strategicLockup = 80640; //strategic supply locked until 14 days after sale is over
     uint public reserveLockup = 241920; //first wave of reserve locked until 42 days after sale is over
 
     uint public reserveWave = 0; //increments each time 10% of reserve is allocated, to a max of 10
@@ -167,44 +170,12 @@ contract CHEXToken is Token {
     }
 
     function price() constant returns(uint) {
-        if (_saleState == TokenSaleState.Initial) return 12002;
+        if (_saleState == TokenSaleState.Initial) return 6001;
         if (_saleState == TokenSaleState.Presale) {
             uint percentRemaining = pct((endBlock - block.number), (endBlock - startBlock), 3);
-            return 6000 + 6 * percentRemaining;
+            return 3000 + 3 * percentRemaining;
         }
-        return 6000;
-    }
-
-    function() payable {
-        buy(msg.sender);
-    }
-
-    function buy(address recipient) payable {
-        if (recipient == 0x0) throw;
-        if (msg.value < MIN_ETHER) throw;
-        if (_saleState == TokenSaleState.Frozen) throw;
-        
-        updateTokenSaleState();
-
-        uint tokens = mul(msg.value, price());
-        uint nextTotal = add(totalTokens, tokens);
-        uint nextPresaleTotal = add(presaleSupply, tokens);
-
-        if (nextTotal >= totalSupply) throw;
-        if (nextPresaleTotal >= presaleAllocation) throw;
-        
-        balances[recipient] = add(balances[recipient], tokens);
-        presaleSupply = nextPresaleTotal;
-        totalTokens = nextTotal;
-
-        if (_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) {
-            presaleEtherRaised = add(presaleEtherRaised, msg.value);
-        }
-
-        founder.transfer(msg.value);
-        
-        Transfer(0, recipient, tokens);
-        Buy(recipient, msg.value, tokens);
+        return 3000;
     }
 
     function updateTokenSaleState () {
@@ -221,13 +192,44 @@ contract CHEXToken is Token {
         }
     }
 
+    function() payable {
+        buy(msg.sender);
+    }
+
+    function buy(address recipient) payable {
+        if (recipient == 0x0) throw;
+        if (msg.value < MIN_ETHER) throw;
+        if (totalTokens >= totalSupply) throw;
+        if (_saleState == TokenSaleState.Frozen) throw;
+        if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
+        if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleEtherRaised >= etherCap) throw;
+
+        updateTokenSaleState();
+        uint tokens = mul(msg.value, price());
+
+        if (tokens == 0) throw;
+        
+        balances[recipient] = add(balances[recipient], tokens);
+        totalTokens = add(totalTokens, tokens);
+
+        if (_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) {
+            presaleEtherRaised = add(presaleEtherRaised, msg.value);
+            presaleSupply = add(presaleSupply, tokens);
+        }
+
+        founder.transfer(msg.value);
+        
+        Transfer(0, recipient, tokens);
+        Buy(recipient, msg.value, tokens);
+    }
+
     function transfer(address _to, uint256 _value) returns (bool success) {
-        if (block.number <= startBlock + transferLockup && msg.sender != founder && msg.sender != owner) throw;
+        if (block.number <= endBlock + transferLockup && msg.sender != founder && msg.sender != owner) throw;
         return super.transfer(_to, _value);
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (block.number <= startBlock + transferLockup && msg.sender != founder && msg.sender != owner) throw;
+        if (block.number <= endBlock + transferLockup && msg.sender != founder && msg.sender != owner) throw;
         return super.transferFrom(_from, _to, _value);
     }
 
@@ -236,15 +238,33 @@ contract CHEXToken is Token {
         _;
     }
 
+    function deliver(address recipient, uint tokens, string _for) onlyInternal {
+        if (tokens == 0) throw;
+        if (totalTokens >= totalSupply) throw;
+        if (_saleState == TokenSaleState.Frozen) throw;
+        if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
+
+        updateTokenSaleState();
+
+        balances[recipient] = add(balances[recipient], tokens);
+        totalTokens = add(totalTokens, tokens);
+
+        if (_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) {
+            presaleSupply = add(presaleSupply, tokens);
+        }
+
+        Transfer(0, recipient, tokens);    
+        Deliver(recipient, tokens, _for);
+    }
+
     function allocateStrategicTokens() onlyInternal {
+        if (block.number <= endBlock + strategicLockup) throw;
         if (strategicAllocated) throw;
 
         balances[owner] = add(balances[owner], strategicAllocation);
         totalTokens = add(totalTokens, strategicAllocation);
 
         strategicAllocated = true;
-
-        Transfer(0, owner, strategicAllocation);
     }
 
     function allocateReserveTokens() onlyInternal {
@@ -258,8 +278,6 @@ contract CHEXToken is Token {
         if (reserveWave >= 10) {
             reserveAllocated = true;
         }
-
-        Transfer(0, founder, reserveWaveTokens);
     }
 
     function freeze() onlyInternal {
