@@ -1,200 +1,302 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xedb02890a8b6622b0b5b39a012166c16d667c44b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xf2fe041b99cc26153063227246eb00e01a959262
 */
 pragma solidity ^0.4.19;
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who)public constant returns (uint256);
-  function transfer(address to, uint256 value)public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
- 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value)public returns (bool);
-  function approve(address spender, uint256 value)public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
- 
-library SafeMath {
-    
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+
+library SafeMath { //standart library for uint
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0 || b == 0){
+        return 0;
+    }
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
- 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
- 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
- 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-  
 }
- 
-contract BasicToken is ERC20Basic {
-    
-  using SafeMath for uint256;
- 
-  mapping(address => uint256) balances;
- 
-   function transfer(address _to, uint256 _value) public returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-  
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
- 
-}
- 
-contract StandardToken is ERC20, BasicToken {
- 
-  mapping (address => mapping (address => uint256)) allowed;
- 
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
- 
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
- 
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
- 
-}
- 
+
+//standart contract to identify owner
 contract Ownable {
-    
+
   address public owner;
- 
-  function Ownable() public {
-    owner = msg.sender;
-  }
- 
+
+  address public newOwner;
+
+  address public techSupport;
+
+  address public newTechSupport;
+
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
- 
-}
- 
-contract MintableToken is StandardToken, Ownable {
-    
-  event Mint(address indexed to, uint256 amount);
-  
-  event MintFinished();
- 
-  bool public mintingFinished = false;
- 
-  modifier canMint() {
-    require(!mintingFinished);
+
+  modifier onlyTechSupport() {
+    require(msg.sender == techSupport);
     _;
   }
- 
-  function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
+
+  function Ownable() public {
+    owner = msg.sender;
   }
 
-  function finishMinting() public onlyOwner returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
+  function transferOwnership(address _newOwner) public onlyOwner {
+    require(_newOwner != address(0));
+    newOwner = _newOwner;
+  }
+
+  function acceptOwnership() public {
+    if (msg.sender == newOwner) {
+      owner = newOwner;
+    }
+  }
+
+  function transferTechSupport (address _newSupport) public{
+    require (msg.sender == owner || msg.sender == techSupport);
+    newTechSupport = _newSupport;
+  }
+
+  function acceptSupport() public{
+    if(msg.sender == newTechSupport){
+      techSupport = newTechSupport;
+    }
+  }
+
+}
+
+//Abstract Token contract
+contract CQTToken{
+  function setCrowdsaleContract (address) public{}
+  function sendCrowdsaleTokens(address, uint256)  public {}
+  function burnTokens(address) {}
+  function getCrowdsaleTokens() public view returns(uint) {}
+  function burnSomeTokens(uint _value) public{}
+}
+
+//Crowdsale contract
+contract Crowdsale is Ownable{
+
+  using SafeMath for uint;
+  function pow(uint256 a, uint256 b) public pure returns (uint256){ //power function
+   return (a**b);
+  }
+
+  uint decimals = 8;
+  // Token contract address
+  CQTToken public token;
+
+  // Constructor
+  function Crowdsale(address _tokenAddress, address _owner) public{
+    token = CQTToken(_tokenAddress);
+    owner = _owner;
+    techSupport = msg.sender;
+    //test parameter
+    // techSupport = 0x8C0F5211A006bB28D4c694dC76632901664230f9;
+    token.setCrowdsaleContract(this);
+  }
+
+  // Buy constants
+  uint minDeposit = 10000000000000000;
+
+  //Canadian time - (-5 hours to UTC)
+  // preIco constants
+  uint public preIcoStart = 1519189260; //21.02.2018 1519189260
+  uint public preIcoFinish = 1521694740; //21.03.2018
+
+  uint preIcoMaxCap = 60000000*pow(10,decimals);
+  uint tokenPrice = 50000000000000;
+
+
+  // Ico constants
+  uint public icoStart = 1521867660; //24.03.2018
+  uint public icoFinish = 1524632340; //24.04.2018
+
+  uint icoMinCap = 100000000*pow(10,decimals);
+  uint icoMaxCap = 550000000*pow(10,decimals);
+
+  //check is now preICO
+  function isPreIco(uint _time) public view returns (bool){
+    if((preIcoStart <= _time) && (_time <= preIcoFinish)){
+      return true;
+    }
+    return false;
+  }
+
+  //check is now ICO
+  function isIco(uint _time) public view returns (bool){
+    if((icoStart <= _time) && (_time <= icoFinish)){
+      return true;
+    }
+    return false;
+  }
+
+  //Crowdsale variables
+  uint public preIcoTokensSold = 0;
+  uint public icoTokensSold = 0;
+  uint public tokensSold = 0;
+  uint public ethCollected = 0;
+
+  //investors ether balance contains here
+  mapping (address => uint) investorBalances;
+
+  //fallback function (when investor send ether to contract)
+  function() public payable{
+    if (now > icoFinish){
+      finishCrowdsale();
+    }
+    require(isIco(now) || isPreIco(now));
+    require(msg.value >= minDeposit);
+    require(buy(msg.sender,msg.value,now)); //redirect to func buy
+  }
+
+  function sendTokensManually(address _address, uint _value) public onlyTechSupport{
+    token.sendCrowdsaleTokens(_address, _value);
+    if(isPreIco(now)){
+      preIcoTokensSold = preIcoTokensSold.add(_value);
+    }
+    if(isIco(now)){
+      icoTokensSold = icoTokensSold.add(_value);
+    }
+    tokensSold = tokensSold.add(_value);
   }
   
-}
- 
-contract GRV is MintableToken {
-    
-    string public constant name = "Graviton";
-    
-    string public constant symbol = "GRV";
-    
-    uint32 public constant decimals = 23;
-    
-}
+  //function buy Tokens
+  function buy(address _address, uint _value, uint _time/*, bool _manual*/) internal returns (bool){
+    require(token.getCrowdsaleTokens() > 0);
 
-contract Crowdsale is Ownable {
-    
-    using SafeMath for uint;
-    address public restricted;
-    GRV public token = new GRV();
-    uint public start;
-    uint public rate;
-    bool public isOneToken = false;
-    bool public isFinish = false;
-    
-    mapping(address => uint) public balances;
+    uint tokensForSend = 0;
 
-    function StopCrowdsale() public onlyOwner {
-        if (isFinish) {
-           isFinish =false;
-        } else isFinish =true;
+    if (isPreIco(_time)){
+      require (preIcoMaxCap > preIcoTokensSold);
+      tokensForSend = etherToTokens(_value);
+      preIcoTokensSold = preIcoTokensSold.add(tokensForSend);
+      owner.transfer(this.balance);
     }
 
-    function Crowdsale() public {
-      restricted = 0x444dA98a3037802B3ad51658b831E9aCd1A03Ca5;
-      rate = 10000000000000000000000;
-      start = 1517368500;
-    }
- 
-    modifier saleIsOn() {
-      require(now > start && !isFinish);
-      _;
-    }
+    if (isIco(_time)){
+      // Token contract will automatically throws if Crowdsale balance < tokensForSend
+      // require (icoMaxCap > icoTokensSold);
+      tokensForSend = etherToTokens(_value);
 
-    function createTokens() public saleIsOn payable {
-      uint tokens = rate.mul(msg.value).div(1 ether);
-      uint finishdays=90-now.sub(start).div(1 days);
-      uint bonusTokens = 0;
+      //If user cant buy all tokens we need to give ether back for him 
+      if(tokensForSend.add(tokensSold) > token.getCrowdsaleTokens()){
+        tokensForSend = token.getCrowdsaleTokens();
+        uint ethToTake = tokensForSend.mul(tokenPrice).div(pow(10,decimals));
 
-//Bonus
-      if(finishdays < 0) {
-          finishdays=0;
+        uint etherSendBack = _value.sub(ethToTake);
+        _address.transfer(etherSendBack);
+        icoTokensSold = icoTokensSold.add(tokensForSend);
+
+        tokensSold = tokensSold.add(tokensForSend);
+        token.sendCrowdsaleTokens(_address, tokensForSend);
+
+        ethCollected = ethCollected.add(ethToTake);
+        investorBalances[_address] = investorBalances[_address].add(ethToTake);
+        owner.transfer(this.balance);
+
+        return true;
       }
-      bonusTokens = tokens.mul(finishdays).div(100);
-      tokens = tokens.add(bonusTokens);
-      token.mint(msg.sender, tokens);
-      balances[msg.sender] = balances[msg.sender].add(msg.value);
 
-//for restricted 
-      if (!isOneToken){
-        tokens = tokens.add(1000000000000000000);
-        isOneToken=true;
+      investorBalances[_address] = investorBalances[_address].add(_value);
+      icoTokensSold = icoTokensSold.add(tokensForSend);
+    }
+
+    tokensSold = tokensSold.add(tokensForSend);
+    token.sendCrowdsaleTokens(_address, tokensForSend);
+
+    if (isIcoTrue()){
+      owner.transfer(this.balance);
+    }
+
+    ethCollected = ethCollected.add(_value);
+    return true;
+  }
+
+  //convert ether to tokens (without decimals)
+  function etherToTokens(uint _value) public view returns(uint) {
+    uint res = _value.mul(pow(10,decimals)).div(tokenPrice);
+
+    if (now < preIcoStart || isPreIco(now)){
+      return res.add(res*40/100);
+    }
+
+    if (now > preIcoFinish && now < icoStart){
+      return res.add(res*30/100);
+    }
+
+    if (isIco(now)){
+      if(icoStart + 7 days <= now){
+        return res.add(res*30/100);
       }
-      token.mint(restricted, tokens); 
-      balances[restricted] = balances[restricted].add(msg.value); 
-      restricted.transfer(this.balance); 
+      if(icoStart + 14 days <= now){
+        return res.add(res*20/100);
+      }
+      if(icoStart + 21 days <= now){
+        return res.add(res*10/100);
+      }
+    return res;
+    }
 
+    return 0;
+  }
+
+  //function check is ICO complete (minCap exceeded)
+  function isIcoTrue() public view returns (bool){
+    if (tokensSold >= icoMinCap){
+      return true;
     }
- 
-    function() external payable {
-      createTokens();
+  return false;
+  }
+
+  //Contract can change ICO finish date up to 7 days, but only one time
+  bool public isTryedFinishCrowdsale = false;
+  bool public isBurnActive = false;
+
+  function finishCrowdsale () public {
+    require (now > icoFinish);
+
+    if(!isTryedFinishCrowdsale){
+      if(tokensSold >= 610000000*pow(10,decimals)){
+        isBurnActive = true;  
+      }else{
+        icoFinish = icoFinish + 7 days;
+      }
+      isTryedFinishCrowdsale = true;
+    }else{
+      isBurnActive = true;
     }
+  }
+  
+  //Owner can burn some tokens in Token Contract
+  function burnSomeTokens (uint _value) public onlyOwner{
+    require(isBurnActive);
+    token.burnSomeTokens(_value);
+  }
+
+  //if ICO failed and now = ICO finished date +3 days then investor can withdrow his ether
+  function refund() public{
+    require (!isIcoTrue());
+    require (icoFinish + 3 days <= now);
+
+    token.burnTokens(msg.sender);
+    msg.sender.transfer(investorBalances[msg.sender]);
+    investorBalances[msg.sender] = 0;
+  }
 }
