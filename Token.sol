@@ -1,446 +1,373 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x7025bab2ec90410de37f488d1298204cd4d6b29d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd4c9d782c41c5c96f0d91ceee7d6dd1c8441b3bf
 */
-pragma solidity ^0.4.19;
+/*! gbcoin.sol | (c) 2017 Develop by BelovITLab, autor my.life.cookie | License: MIT */
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+/*
+
+    Russian
+
+    ??? ????? GB Systems:
+    ??? Geo Blockchain ???????, ??????? ?? ????????????? ?? ? ????? ?????? ? ??????. ? ??? ???? ???? 
+    ?????????????? ?????, ????????? ? ????????? ??????? GBPay - ?????? Visa, MasterCard, UnionPay. 
+    ??? ?????????? ??????? ????? ????????? ?????? ??????? ? ?????? ????????? ???????????. ??? ??, 
+    ?????????????? ???????? ????????? ? ?????, ????? ??????????? ???????????? ??? ??????? ??? ?????? 
+    ???????, ????? ?????????? API ???? ? ???????????? ??? ??????????? ????? ??????? ??? ????? ????????. 
+    ??????? ???????? ??????? ???????????? ? ????? ????????, ??? ????????? ????????? ?????????? ???????? 
+    ?? ???? ????. ? ????? ??????? ????? ????? ???????? ??????? GB Wallet, ??? ????? ??????? ???????????? 
+    ? ???????????? ?????? ????? ??????. ???????? GB Network ???????? ??????? ??????? ?????????? ??????????? 
+    ????, ??? ????? ??????? ????????, ? ????????? ??????? ????? ?????????? NFC, ????? ???????? ? ???? 
+    ?????????, ? ????? ???????? ? ?????????? ?????? ? ?????? ????? ?????? ???????. ??? ?? ???????? ???? 
+    ??????????? ???????????? ?? ??????????? ?????????. ?? ?? ?????? ? ? ????????????????? ?????, ??????? 
+    ????? ????????????? ? ?? ????????????? ? ????? ??????. ????? ??????? ?? ????? ??????? ????? ????????? 
+    ? ???? ????.
+    
+    ?????? ????????? ??????????? ?? ???? ????? ???????, ??????????? ??????????? ????? ??? ????? ? ????? 
+    ????????  ???? ???????, ? ???????????? ??????, ? ??????????? ????? ????????? ???????? ? ????? ????????? 
+    GBPay, ? ? ??????????????  ????? ????????? Blockchain, ???? ?????? ?????????, ?????????????? ????? ? 
+    ????????? ???????, ??? ??? ?? 1,2%. ?????? ????? ???????? ? ????? ??????? ???, ??? ????????? ????????? 
+    ??????? ? ???????? ?? ??????? ? ????? ????? ??????? ????. ??? ?????? ? ???????, ?? ??????? ????? GBCoin, 
+    ??????? ????? ???????? ?? ???? ?????????? ?????????? ??????? GB Systems, ??? ?????????? ????????????? 
+    ?????????????? ?????? ???????, ??????? ????? ????????? ??? ???? ???????? ? ?????. 
+    
+    ? ????? ??????? GB Systems ??????????: Grande Bank, Grande Finance, GB Network, GBMarkets, GB Wallet, 
+    Charity Foundation, GBPay.
+    
+    ?? ??? ?? ????? ????????????? ??????????????? ???????, ????????????????, ????????? ????????????, 
+    ??? ??????????? ????????, ?????????? ?????????? ? ?????????????? ??????, ?????? ?? ????????????? 
+    ??????????, ??????????? ? ???????? ?????????????, ???????? ?????, ????????? ???????, ??? ?? ????? 
+    ?????  ?????????? ????? ????????????? GBCoin ?????? ????? ? ?????? ???????, ?????????? ?? 
+    ????????????? ??????? ? ?????????????,  ?? ??????? ?????????? ????? ??????????? ???????? ?????? 
+    ? cash back ? ??????????? ????????? ????????? ? ?????? ??????. 
+    
+    ? ???? ?? ?????? ????? ??? ? ????? ??????? ? ?? ????? ????? ?????????? ? ????????? ?????????. 
+    ???????? ? ???????? ??? ???? ????????.
+
+
+
+    English
+
+    What is GB Systems:
+    It is Geo Blockchain system which does not become attached to one country and banks. 
+    We have the processing center, acquiring and GBPay payment provider - this analog  Visa, MasterCard, 
+    UnionPay. All transactions which will take place in system and banks of partners instantly. Also, 
+    the connected partner companies and banks, have an opportunity to use all system for the business, 
+    by integration of an API code and to use all opportunities of our system for the clients. It is 
+    profitable to each partner to cooperate with our system what to allow to increase the number of 
+    clients around the world. In our system there will be soon a cold purse of GB Wallet where it is 
+    possible to keep cryptocurrency and national currency of any country. The GB Network company will 
+    allow each client to purchase the virtual account where it is possible to store means and to make 
+    purchase by the application NFC, one contact to the Post to the Terminal and also to buy and pay 
+    services and goods through online system. Also the company gives the chance to earn on the partner 
+    program. We did not forget also about charity foundation which will be mezhudnarodny and not to 
+    become attached to one country. A part of means from our system will come to this fund. To partners 
+    it is allowed to banks on by our system, to imitate plastic cards for the and our clients of all 
+    system, in national currency, using our payment service provider with our GBPay logo, and with use 
+    of our Blockchain platform where acquiring, a processing center and a payment service provider, 
+    all this for 1,2% enters. There are no borders between the countries in our system that allows 
+    to make payments and transfers for second in any a globe point. For work in system, we created 
+    a token of GBCoin which will be responsible for all functionality of the GB Systems financial 
+    system as internal world transactional currency of system which will attach all our companies 
+    and banks.
+
+    Our system is already connected Grande Bank, Grande Finance, GB Network, GBMarkets, GB Wallet, 
+    Charity Foundation, GBPay.
+
+*/
+
+pragma solidity 0.4.18;
+
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
-  address public owner;
-  
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    address public owner;
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() internal {
-    owner = msg.sender;
-  }
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+    modifier onlyOwner() { require(msg.sender == owner); _; }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+    function Ownable() {
+        owner = msg.sender;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
+contract Pausable is Ownable {
+    bool public paused = false;
 
-/**
- * @title Authorizable
- * @dev The Authorizable contract has authorized addresses, and provides basic authorization control
- * functions, this simplifies the implementation of "multiple user permissions".
- */
-contract Authorizable is Ownable {
-  mapping(address => bool) public authorized;
-  
-  event AuthorizationSet(address indexed addressAuthorized, bool indexed authorization);
+    event Pause();
+    event Unpause();
 
-  /**
-   * @dev The Authorizable constructor sets the first `authorized` of the contract to the sender
-   * account.
-   */ 
-  function Authorizable() public {
-	authorized[msg.sender] = true;
-  }
+    modifier whenNotPaused() { require(!paused); _; }
+    modifier whenPaused() { require(paused); _; }
 
-  /**
-   * @dev Throws if called by any account other than the authorized.
-   */
-  modifier onlyAuthorized() {
-    require(authorized[msg.sender]);
-    _;
-  }
-
- /**
-   * @dev Allows the current owner to set an authorization.
-   * @param addressAuthorized The address to change authorization.
-   */
-  function setAuthorized(address addressAuthorized, bool authorization) onlyOwner public {
-    AuthorizationSet(addressAuthorized, authorization);
-    authorized[addressAuthorized] = authorization;
-  }
-  
+    function pause() onlyOwner whenNotPaused {
+        paused = true;
+        Pause();
+    }
+    
+    function unpause() onlyOwner whenPaused {
+        paused = false;
+        Unpause();
+    }
 }
 
+contract ERC20 {
+    uint256 public totalSupply;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function balanceOf(address who) constant returns (uint256);
+    function transfer(address to, uint256 value) returns (bool);
+    function transferFrom(address from, address to, uint256 value) returns (bool);
+    function allowance(address owner, address spender) constant returns (uint256);
+    function approve(address spender, uint256 value) returns (bool);
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+contract StandardToken is ERC20 {
+    using SafeMath for uint256;
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address => uint256)) allowed;
 
-  mapping(address => uint256) balances;
+    function balanceOf(address _owner) constant returns(uint256 balance) {
+        return balances[_owner];
+    }
 
-  /**
-  * @dev transfer token from an address to another specified address 
-  * @param _sender The address to transfer from.
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transferFunction(address _sender, address _to, uint256 _value) internal returns (bool) {
-    require(_to != address(0));
-    require(_to != address(this));
-    require(_value <= balances[_sender]);
+    function transfer(address _to, uint256 _value) returns(bool success) {
+        require(_to != address(0));
 
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[_sender] = balances[_sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(_sender, _to, _value);
-    return true;
-  }
-  
-  /**
-  * @dev transfer token for a specified address (BasicToken transfer method)
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-	return transferFunction(msg.sender, _to, _value);
-  }
-  
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-}
-
-contract ERC223TokenCompatible is BasicToken {
-  using SafeMath for uint256;
-  
-  event Transfer(address indexed from, address indexed to, uint256 value, bytes indexed data);
-
-  // Function that is called when a user or another contract wants to transfer funds .
-	function transfer(address _to, uint256 _value, bytes _data, string _custom_fallback) public returns (bool success) {
-		require(_to != address(0));
-        require(_to != address(this));
-		require(_value <= balances[msg.sender]);
-		// SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-		if( isContract(_to) ) {
-			_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data);
-		} 
-		Transfer(msg.sender, _to, _value, _data);
-		return true;
-	}
 
-	// Function that is called when a user or another contract wants to transfer funds .
-	function transfer(address _to, uint256 _value, bytes _data) public returns (bool success) {
-		return transfer( _to, _value, _data, "tokenFallback(address,uint256,bytes)");
-	}
+        Transfer(msg.sender, _to, _value);
 
-	//assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-	function isContract(address _addr) private view returns (bool is_contract) {
-		uint256 length;
-		assembly {
-            //retrieve the size of the code on target address, this needs assembly
-            length := extcodesize(_addr)
-		}
-		return (length>0);
+        return true;
     }
-}
 
+    function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
+        require(_to != address(0));
 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
+        var _allowance = allowed[_from][msg.sender];
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
 
+        Transfer(_from, _to, _value);
 
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_to != address(this));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        return true;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
 
-}
+    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 
+    function approve(address _spender, uint256 _value) returns(bool success) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
-/**
- * @title Startable
- * @dev Base contract which allows owner to implement an start mechanism without ever being stopped more.
- */
-contract Startable is Ownable, Authorizable {
-  event Start();
+        allowed[msg.sender][_spender] = _value;
 
-  bool public started = false;
+        Approval(msg.sender, _spender, _value);
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is started.
-   */
-  modifier whenStarted() {
-	require( started || authorized[msg.sender] );
-    _;
-  }
+        return true;
+    }
 
-  /**
-   * @dev called by the owner to start, go to normal state
-   */
-  function start() onlyOwner public {
-    started = true;
-    Start();
-  }
-}
+    function increaseApproval(address _spender, uint _addedValue) returns(bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
 
-/**
- * @title Startable token
- *
- * @dev StandardToken modified with startable transfers.
- **/
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
 
-contract StartToken is Startable, ERC223TokenCompatible, StandardToken {
+        return true;
+    }
 
-  function transfer(address _to, uint256 _value) public whenStarted returns (bool) {
-    return super.transfer(_to, _value);
-  }
-  function transfer(address _to, uint256 _value, bytes _data) public whenStarted returns (bool) {
-    return super.transfer(_to, _value, _data);
-  }
-  function transfer(address _to, uint256 _value, bytes _data, string _custom_fallback) public whenStarted returns (bool) {
-    return super.transfer(_to, _value, _data, _custom_fallback);
-  }
+    function decreaseApproval(address _spender, uint _subtractedValue) returns(bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
 
-  function transferFrom(address _from, address _to, uint256 _value) public whenStarted returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
+        if(_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
 
-  function approve(address _spender, uint256 _value) public whenStarted returns (bool) {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenStarted returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenStarted returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
-
-contract HumanStandardToken is StandardToken, StartToken {
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        approve(_spender, _value);
-        require(_spender.call(bytes4(keccak256("receiveApproval(address,uint256,bytes)")), msg.sender, _value, _extraData));
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        
         return true;
     }
 }
 
-contract BurnToken is StandardToken {
-
+contract BurnableToken is StandardToken {
     event Burn(address indexed burner, uint256 value);
 
-    /**
-     * @dev Function to burn tokens.
-     * @param _burner The address of token holder.
-     * @param _value The amount of token to be burned.
-     */
-    function burnFunction(address _burner, uint256 _value) internal returns (bool) {
+    function burn(uint256 _value) public {
         require(_value > 0);
-		require(_value <= balances[_burner]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-        balances[_burner] = balances[_burner].sub(_value);
+        address burner = msg.sender;
+
+        balances[burner] = balances[burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
-        Burn(_burner, _value);
-		return true;
-    }
-    
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-	function burn(uint256 _value) public returns(bool) {
-        return burnFunction(msg.sender, _value);
-    }
-	
-	/**
-	* @dev Burns tokens from one address
-	* @param _from address The address which you want to burn tokens from
-	* @param _value uint256 the amount of tokens to be burned
-	*/
-	function burnFrom(address _from, uint256 _value) public returns (bool) {
-		require(_value <= allowed[_from][msg.sender]); // check if it has the budget allowed
-		burnFunction(_from, _value);
-		allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-		return true;
-	}
-}
 
-contract OriginToken is Authorizable, BasicToken, BurnToken {
-    
-    /**
-     * @dev transfer token from tx.orgin to a specified address (onlyAuthorized contract)
-     */ 
-    function originTransfer(address _to, uint256 _value) onlyAuthorized public returns (bool) {
-	    return transferFunction(tx.origin, _to, _value);
-    }
-    
-    /**
-     * @dev Burns a specific amount of tokens from tx.orgin. (onlyAuthorized contract)
-     * @param _value The amount of token to be burned.
-     */	
-	function originBurn(uint256 _value) onlyAuthorized public returns(bool) {
-        return burnFunction(tx.origin, _value);
+        Burn(burner, _value);
     }
 }
 
-contract Token is ERC223TokenCompatible, StandardToken, StartToken, HumanStandardToken, BurnToken, OriginToken {
-    uint8 public decimals = 18;
+contract MintableToken is StandardToken, Ownable {
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
 
-    string public name = "MasterXriba";
+    bool public mintingFinished = false;
+    uint public MAX_SUPPLY;
 
-    string public symbol = "XRA";
+    modifier canMint() { require(!mintingFinished); _; }
 
-    uint256 public initialSupply;
+    function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool success) {
+        require(totalSupply.add(_amount) <= MAX_SUPPLY);
 
-    function Token() public {
-        totalSupply = 350000000 * 10 ** uint(decimals);  
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
+
+        return true;
+    }
+
+    function finishMinting() onlyOwner public returns(bool success) {
+        mintingFinished = true;
+
+        MintFinished();
+
+        return true;
+    }
+}
+
+/*
+    ICO GBCoin
+    - ??????? ??????? ?????????? (????? 40 000 000 ???????, ?????? ??????????? ?? ????? Crowdsale)
+    - ???? ?????? ?? ????? ??????: 1 ETH = 20 ??????? (1 Eth (~500$) / 20 = ~25$) (???? ????? ???????? ?? ????? ICO)
+    - ??????????? ? ???????????? ????? ???????: 1 ETH ? 10 000 ETH
+    - ??????? ?? ??????? 20 000 000 (50%)
+    - 20 000 000 (50%) ??????? ?????????? ??????????? ?? ????? ???????? ??????
+    - ???????? ?? ??????? ??????? ?????????? ???????????
+    - ???????? Crowdsale ?????????? ? ??????? ??????? `withdraw()`:?????????????? ?????? ? ?????????? ??????? ?????????? ???????????, ?????? ??????? ???????????
+    - ??????? ???? ?????? ?????????? ???????? `setTokenPrice(_value)`, ??? `_value` - ???-?? ??????? ?????????? ?? 1 Ether, ????? ????????? ?????? ???????? ?????? ?? ????? ????? ??????????????, ????? ?????????? Crowdsale ??????? ?????????? ???????????
+*/
+
+contract Token is BurnableToken, MintableToken {
+    string public name = "GBCoin";
+    string public symbol = "GBCN";
+    uint256 public decimals = 18;
+
+    function Token() {
+        MAX_SUPPLY = 40000000 * 1 ether;                                            // Maximum amount tokens
+        mint(0xb942E28245d39ab4482e7C9972E07325B5653642, 20000000 * 1 ether);       
+    }
+}
+
+contract Crowdsale is Pausable {
+    using SafeMath for uint;
+
+    Token public token;
+    address public beneficiary = 0xb942E28245d39ab4482e7C9972E07325B5653642;        
+
+    uint public collectedWei;
+    uint public tokensSold;
+
+    uint public tokensForSale = 20000000 * 1 ether;                                 // Amount tokens for sale
+    uint public priceTokenWei = 1 ether / 25;                                       // 1 Eth (~875$) / 25 = ~35$
+
+    bool public crowdsaleFinished = false;
+
+    event NewContribution(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
+    event Withdraw();
+
+    function Crowdsale() {
+        token = new Token();
+    }
+
+    function() payable {
+        purchase();
+    }
+
+    function setTokenPrice(uint _value) onlyOwner whenPaused {
+        require(!crowdsaleFinished);
+        priceTokenWei = 1 ether / _value;
+    }
+    
+    function purchase() whenNotPaused payable {
+        require(!crowdsaleFinished);
+        require(tokensSold < tokensForSale);
+        require(msg.value >= 0.01 ether && msg.value <= 10000 * 1 ether);
+
+        uint sum = msg.value;
+        uint amount = sum.div(priceTokenWei).mul(1 ether);
+        uint retSum = 0;
         
-        initialSupply = totalSupply;
+        if(tokensSold.add(amount) > tokensForSale) {
+            uint retAmount = tokensSold.add(amount).sub(tokensForSale);
+            retSum = retAmount.mul(priceTokenWei).div(1 ether);
+
+            amount = amount.sub(retAmount);
+            sum = sum.sub(retSum);
+        }
+
+        tokensSold = tokensSold.add(amount);
+        collectedWei = collectedWei.add(sum);
+
+        beneficiary.transfer(sum);
+        token.mint(msg.sender, amount);
+
+        if(retSum > 0) {
+            msg.sender.transfer(retSum);
+        }
+
+        NewContribution(msg.sender, amount, sum);
+    }
+
+    function withdraw() onlyOwner {
+        require(!crowdsaleFinished);
         
-        balances[msg.sender] = totalSupply;
+        if(tokensForSale.sub(tokensSold) > 0) {
+            token.mint(beneficiary, tokensForSale.sub(tokensSold));
+        }
+
+        token.finishMinting();
+        token.transferOwnership(beneficiary);
+
+        crowdsaleFinished = true;
+
+        Withdraw();
+    }
+
+    function balanceOf(address _owner) constant returns(uint256 balance) {
+        return token.balanceOf(_owner);
     }
 }
