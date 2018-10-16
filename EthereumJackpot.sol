@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumJackpot at 0x957cf177fd2777f062b63bbf0661facf99c9391c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumJackpot at 0xc0e6c996f3642c3ff3287ef01375fa7b72702797
 */
 pragma solidity ^0.4.19;
 
@@ -288,47 +288,47 @@ contract EthereumJackpot is Random32BigInteger {
     // in case lottery tickets weren't sold due some time 
     // anybody who bought a ticket can 
     // ask to refund money (- comission to send them) 
-    function refund(uint8 lotteryId) public {
+    // function refund(uint8 lotteryId) public {
         
-        // refund state could be reached only from `running` state
-        require (state[lotteryId] == State.Running);
-        require (block.timestamp > (started[lotteryId] + lifetime[lotteryId]));
-        require (ticketsSold[lotteryId] < maxTickets[lotteryId]);
+    //     // refund state could be reached only from `running` state
+    //     require (state[lotteryId] == State.Running);
+    //     require (block.timestamp > (started[lotteryId] + lifetime[lotteryId]));
+    //     require (ticketsSold[lotteryId] < maxTickets[lotteryId]);
         
-        // check if its a person which plays this lottery
-        // or it's a lottery owner
+    //     // check if its a person which plays this lottery
+    //     // or it's a lottery owner
         
-        require(msg.sender == owner  || playerInfoMappings[lotteryId][msg.sender].changedOn > started[lotteryId]);
+    //     require(msg.sender == owner  || playerInfoMappings[lotteryId][msg.sender].changedOn > started[lotteryId]);
         
-        uint256 notSend = 0;
+    //     uint256 notSend = 0;
         
-        // disallow re-entrancy
-        // refund process
-        state[lotteryId] = State.Refund; 
+    //     // disallow re-entrancy
+    //     // refund process
+    //     state[lotteryId] = State.Refund; 
         
-        for (uint16 i = 0; i < maxTickets[lotteryId]; i++) {
+    //     for (uint16 i = 0; i < maxTickets[lotteryId]; i++) {
             
-            address tOwner = ticketsAllocator[lotteryId][i];
+    //         address tOwner = ticketsAllocator[lotteryId][i];
             
-            if (tOwner != address(0)) {
-                uint256 value = playerInfoMappings[lotteryId][tOwner].ticketsCount*ticketPrice[lotteryId];
+    //         if (tOwner != address(0)) {
+    //             uint256 value = playerInfoMappings[lotteryId][tOwner].ticketsCount*ticketPrice[lotteryId];
                     
-                bool sendResult = tOwner.send(value);
-                if (!sendResult) {
-                    LostPayment(tOwner,value);
-                    notSend += value;
-                }
-            }
-        }
+    //             bool sendResult = tOwner.send(value);
+    //             if (!sendResult) {
+    //                 LostPayment(tOwner,value);
+    //                 notSend += value;
+    //             }
+    //         }
+    //     }
         
-        // send rest to owner if there any
-        if (notSend > 0) {
-            owner.send(notSend);
-        }
+    //     // send rest to owner if there any
+    //     if (notSend > 0) {
+    //         owner.send(notSend);
+    //     }
         
-        // start new lottery 
-        clearState(lotteryId);
-    }
+    //     // start new lottery 
+    //     clearState(lotteryId);
+    // }
     
     // this method determines current game winner
     function getWinner(uint8 lotteryId) private view returns(uint16,address) {
