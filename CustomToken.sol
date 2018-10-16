@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x96e8618de1191989939e28161c59c6d1c49028c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf392835e6EB8C5B9B5654132C648b5cEb44ebef6
 */
 pragma solidity ^0.4.19;
 
@@ -45,46 +45,13 @@ contract BaseToken {
     }
 }
 
-contract AirdropToken is BaseToken {
-    uint256 public airAmount;
-    uint256 public airBegintime;
-    uint256 public airEndtime;
-    address public airSender;
-    uint32 public airLimitCount;
-
-    mapping (address => uint32) public airCountOf;
-
-    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
-
-    function airdrop() public payable {
-        require(now >= airBegintime && now <= airEndtime);
-        require(msg.value == 0);
-        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
-            revert();
-        }
-        _transfer(airSender, msg.sender, airAmount);
-        airCountOf[msg.sender] += 1;
-        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
-    }
-}
-
-contract CustomToken is BaseToken, AirdropToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000000000000;
-        name = 'PenZiBi';
-        symbol = 'PZB';
+        totalSupply = 32000000000000000000000000;
+        name = 'Artso';
+        symbol = 'ASO';
         decimals = 18;
-        balanceOf[0xed1cbf659d5a8dd9e42c95c54c5f789db8fa4bfc] = totalSupply;
-        Transfer(address(0), 0xed1cbf659d5a8dd9e42c95c54c5f789db8fa4bfc, totalSupply);
-
-        airAmount = 8888000000000000000000;
-        airBegintime = 1524355200;
-        airEndtime = 1526947200;
-        airSender = 0xed1cbf659d5a8dd9e42c95c54c5f789db8fa4bfc;
-        airLimitCount = 1;
-    }
-
-    function() public payable {
-        airdrop();
+        balanceOf[0x58cbc34576efc4f2591fbc6258f89961e7e34d48] = totalSupply;
+        Transfer(address(0), 0x58cbc34576efc4f2591fbc6258f89961e7e34d48, totalSupply);
     }
 }
