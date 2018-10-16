@@ -1,415 +1,309 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainSale at 0x419a87c4deeb99817a5413b14b3a71bbd23c4fb8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mainsale at 0x269e92d0795694d3e2258d3262412b71ed729032
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.18;
+
+// File: contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
   address public owner;
 
-  /** 
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
+
   /**
-   * @dev Throws if called by any account other than the owner. 
+   * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
+
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to. 
+   * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
 }
 
+// File: contracts/NextSaleAgentFeature.sol
 
-/**
- * @title Authorizable
- * @dev Allows to authorize access to certain function calls
- * 
- * ABI
- * [{"constant": true,"inputs": [{"name": "authorizerIndex","type": "uint256"}],"name": "getAuthorizer","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_addr","type": "address"}],"name": "addAuthorized","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [{"name": "_addr","type": "address"}],"name": "isAuthorized","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "view","type": "function"},{"inputs": [],"payable": false,"stateMutability": "nonpayable","type": "constructor"}]
- */
-contract Authorizable {
+contract NextSaleAgentFeature is Ownable {
 
-  address[] authorizers;
-  mapping(address => uint) authorizerIndex;
+  address public nextSaleAgent;
 
-  /**
-   * @dev Throws if called by any account tat is not authorized. 
-   */
-  modifier onlyAuthorized {
-    require(isAuthorized(msg.sender));
-    _;
-  }
-
-  /**
-   * @dev Contructor that authorizes the msg.sender. 
-   */
-  function Authorizable() {
-    authorizers.length = 2;
-    authorizers[1] = msg.sender;
-    authorizerIndex[msg.sender] = 1;
-  }
-
-  /**
-   * @dev Function to get a specific authorizer
-   * @param authorizerIndex index of the authorizer to be retrieved.
-   * @return The address of the authorizer.
-   */
-  function getAuthorizer(uint authorizerIndex) external constant returns(address) {
-    return address(authorizers[authorizerIndex + 1]);
-  }
-
-  /**
-   * @dev Function to check if an address is authorized
-   * @param _addr the address to check if it is authorized.
-   * @return boolean flag if address is authorized.
-   */
-  function isAuthorized(address _addr) constant returns(bool) {
-    return authorizerIndex[_addr] > 0;
-  }
-
-  /**
-   * @dev Function to add a new authorizer
-   * @param _addr the address to add as a new authorizer.
-   */
-  function addAuthorized(address _addr) external onlyAuthorized {
-    authorizerIndex[_addr] = authorizers.length;
-    authorizers.length++;
-    authorizers[authorizers.length - 1] = _addr;
+  function setNextSaleAgent(address newNextSaleAgent) public onlyOwner {
+    nextSaleAgent = newNextSaleAgent;
   }
 
 }
 
+// File: contracts/DevWallet.sol
+
+contract DevWallet {
+
+  uint public date = 1525255200;
+  uint public limit = 4500000000000000000;
+  address public wallet = 0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770;
+
+  function withdraw() public {
+    require(now >= date);
+    wallet.transfer(this.balance);
+  }
+
+  function () public payable {}
+
+}
+
+// File: contracts/PercentRateProvider.sol
+
+contract PercentRateProvider is Ownable {
+
+  uint public percentRate = 100;
+
+  function setPercentRate(uint newPercentRate) public onlyOwner {
+    percentRate = newPercentRate;
+  }
+
+}
+
+// File: contracts/math/SafeMath.sol
 
 /**
- * Math operations with safety checks
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint a, uint b) internal returns (uint) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
+    uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint a, uint b) internal returns (uint) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
 }
 
-
-/**
- * @title ExchangeRate
- * @dev Allows updating and retrieveing of Conversion Rates for ABLE tokens
- *
- * ABI
- * [{"constant": false,"inputs": [{"name": "_symbol","type": "string"},{"name": "_rate","type": "uint256"}],"name": "updateRate","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "data","type": "uint256[]"}],"name": "updateRates","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [{"name": "_symbol","type": "string"}],"name": "getRate","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "owner","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [{"name": "","type": "bytes32"}],"name": "rates","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "newOwner","type": "address"}],"name": "transferOwnership","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"anonymous": false,"inputs": [{"indexed": false,"name": "timestamp","type": "uint256"},{"indexed": false,"name": "symbol","type": "bytes32"},{"indexed": false,"name": "rate","type": "uint256"}],"name": "RateUpdated","type": "event"}]
- */
-contract ExchangeRate is Ownable {
-
-  event RateUpdated(uint timestamp, bytes32 symbol, uint rate);
-
-  mapping(bytes32 => uint) public rates;
-
-  /**
-   * @dev Allows the current owner to update a single rate.
-   * @param _symbol The symbol to be updated. 
-   * @param _rate the rate for the symbol. 
-   */
-  function updateRate(string _symbol, uint _rate) public onlyOwner {
-    rates[sha3(_symbol)] = _rate;
-    RateUpdated(now, sha3(_symbol), _rate);
-  }
-
-  /**
-   * @dev Allows the current owner to update multiple rates.
-   * @param data an array that alternates sha3 hashes of the symbol and the corresponding rate . 
-   */
-  function updateRates(uint[] data) public onlyOwner {
-    require(data.length % 2 == 0);
-    uint i = 0;
-    while (i < data.length / 2) {
-      bytes32 symbol = bytes32(data[i * 2]);
-      uint rate = data[i * 2 + 1];
-      rates[symbol] = rate;
-      RateUpdated(now, symbol, rate);
-      i++;
-    }
-  }
-
-  /**
-   * @dev Allows the anyone to read the current rate.
-   * @param _symbol the symbol to be retrieved. 
-   */
-  function getRate(string _symbol) public constant returns(uint) {
-    return rates[sha3(_symbol)];
-  }
-
-}
-
-
-/**
- * @title HardCap
- * @dev Allows updating and retrieveing of Conversion HardCap for ABLE tokens
- *
- * ABI
- * [{"constant": true,"inputs": [{"name": "_symbol","type": "string"}],"name": "getCap","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "owner","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_symbol","type": "string"},{"name": "_cap","type": "uint256"}],"name": "updateCap","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "data","type": "uint256[]"}],"name": "updateCaps","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "getHardCap","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [{"name": "","type": "bytes32"}],"name": "caps","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "newOwner","type": "address"}],"name": "transferOwnership","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"anonymous": false,"inputs": [{"indexed": false,"name": "timestamp","type": "uint256"},{"indexed": false,"name": "symbol","type": "bytes32"},{"indexed": false,"name": "rate","type": "uint256"}],"name": "CapUpdated","type": "event"}]
- */
-contract HardCap is Ownable {
-  using SafeMath for uint;
-  event CapUpdated(uint timestamp, bytes32 symbol, uint rate);
-  
-  mapping(bytes32 => uint) public caps;
-  uint hardcap = 0;
-
-  /**
-   * @dev Allows the current owner to update a single cap.
-   * @param _symbol The symbol to be updated. 
-   * @param _cap the cap for the symbol. 
-   */
-  function updateCap(string _symbol, uint _cap) public onlyOwner {
-    caps[sha3(_symbol)] = _cap;
-    hardcap = hardcap.add(_cap) ;
-    CapUpdated(now, sha3(_symbol), _cap);
-  }
-
-  /**
-   * @dev Allows the current owner to update multiple caps.
-   * @param data an array that alternates sha3 hashes of the symbol and the corresponding cap . 
-   */
-  function updateCaps(uint[] data) public onlyOwner {
-    require(data.length % 2 == 0);
-    uint i = 0;
-    while (i < data.length / 2) {
-      bytes32 symbol = bytes32(data[i * 2]);
-      uint cap = data[i * 2 + 1];
-      caps[symbol] = cap;
-      hardcap = hardcap.add(cap);
-      CapUpdated(now, symbol, cap);
-      i++;
-    }
-  }
-
-  /**
-   * @dev Allows the anyone to read the current cap.
-   * @param _symbol the symbol to be retrieved. 
-   */
-  function getCap(string _symbol) public constant returns(uint) {
-    return caps[sha3(_symbol)];
-  }
-  
-  /**
-   * @dev Allows the anyone to read the current hardcap.
-   */
-  function getHardCap() public constant returns(uint) {
-    return hardcap;
-  }
-
-}
-
+// File: contracts/token/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  event Transfer(address indexed from, address indexed to, uint value);
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint);
-  function transferFrom(address from, address to, uint value);
-  function approve(address spender, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
+// File: contracts/token/BasicToken.sol
 
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
+ * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
-  using SafeMath for uint;
+  using SafeMath for uint256;
 
-  mapping(address => uint) balances;
-
-  /**
-   * @dev Fix for the ERC20 short address attack.
-   */
-  modifier onlyPayloadSize(uint size) {
-     require(msg.data.length >= size + 4);
-     _;
-  }
+  mapping(address => uint256) balances;
 
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
+    return true;
   }
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint representing the amount owned by the passed address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint balance) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
 
+// File: contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: contracts/token/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
  *
- * @dev Implemantation of the basic standart token.
+ * @dev Implementation of the basic standard token.
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is BasicToken, ERC20 {
+contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint)) allowed;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint the amout of tokens to be transfered
+   * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
-    var _allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
-
-    balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Transfer(_from, _to, _value);
+    return true;
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on beahlf of msg.sender.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint _value) {
-
-    //  To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require(_value == 0);
-    require(allowed[msg.sender][_spender] == 0);
-
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
+    return true;
   }
 
   /**
-   * @dev Function to check the amount of tokens than an owner allowed to a spender.
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint specifing the amount of tokens still avaible for the spender.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+  function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
 }
 
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
+// File: contracts/MintableToken.sol
 
 contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint value);
+
+  event Mint(address indexed to, uint256 amount);
+
   event MintFinished();
 
   bool public mintingFinished = false;
-  uint public totalSupply = 0;
 
+  address public saleAgent;
 
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
+  function setSaleAgent(address newSaleAgnet) public {
+    require(msg.sender == saleAgent || msg.sender == owner);
+    saleAgent = newSaleAgnet;
   }
 
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint _amount) onlyOwner canMint returns (bool) {
+  function mint(address _to, uint256 _amount) public returns (bool) {
+    require(msg.sender == saleAgent && !mintingFinished);
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
@@ -420,7 +314,8 @@ contract MintableToken is StandardToken, Ownable {
    * @dev Function to stop minting new tokens.
    * @return True if the operation was successful.
    */
-  function finishMinting() onlyOwner returns (bool) {
+  function finishMinting() public returns (bool) {
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
     mintingFinished = true;
     MintFinished();
     return true;
@@ -428,226 +323,464 @@ contract MintableToken is StandardToken, Ownable {
 
 }
 
+// File: contracts/REPUToken.sol
 
-/**
- * @title AbleTokoen
- * @dev The main ABLE token contract
- * 
- * ABI 
- * [{"constant": true,"inputs": [],"name": "mintingFinished","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "name","outputs": [{"name": "","type": "string"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_spender","type": "address"},{"name": "_value","type": "uint256"}],"name": "approve","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "totalSupply","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_from","type": "address"},{"name": "_to","type": "address"},{"name": "_value","type": "uint256"}],"name": "transferFrom","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [],"name": "startTrading","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "decimals","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_to","type": "address"},{"name": "_amount","type": "uint256"}],"name": "mint","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "tradingStarted","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [{"name": "_owner","type": "address"}],"name": "balanceOf","outputs": [{"name": "balance","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [],"name": "stopTrading","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [],"name": "finishMinting","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "owner","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "symbol","outputs": [{"name": "","type": "string"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_to","type": "address"},{"name": "_value","type": "uint256"}],"name": "transfer","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [{"name": "_owner","type": "address"},{"name": "_spender","type": "address"}],"name": "allowance","outputs": [{"name": "remaining","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "newOwner","type": "address"}],"name": "transferOwnership","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"anonymous": false,"inputs": [{"indexed": true,"name": "to","type": "address"},{"indexed": false,"name": "value","type": "uint256"}],"name": "Mint","type": "event"},{"anonymous": false,"inputs": [],"name": "MintFinished","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"name": "owner","type": "address"},{"indexed": true,"name": "spender","type": "address"},{"indexed": false,"name": "value","type": "uint256"}],"name": "Approval","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"name": "from","type": "address"},{"indexed": true,"name": "to","type": "address"},{"indexed": false,"name": "value","type": "uint256"}],"name": "Transfer","type": "event"}]
- */
-contract AbleToken is MintableToken {
+contract REPUToken is MintableToken {
 
-  string public name = "ABLE Token";
-  string public symbol = "ABLE";
-  uint public decimals = 18;
+  string public constant name = 'REPU';
 
-  bool public tradingStarted = false;
+  string public constant symbol = 'REPU';
 
-  /**
-   * @dev modifier that throws if trading has not started yet
-   */
-  modifier hasStartedTrading() {
-    require(tradingStarted);
+  uint32 public constant decimals = 18;
+
+}
+
+// File: contracts/CommonSale.sol
+
+contract CommonSale is PercentRateProvider {
+
+  using SafeMath for uint;
+
+  address public wallet;
+
+  address public directMintAgent;
+
+  uint public price;
+
+  uint public start;
+
+  uint public minInvestedLimit;
+
+  REPUToken public token;
+
+  DevWallet public devWallet;
+
+  bool public devWalletLocked;
+
+  uint public hardcap;
+
+  uint public invested;
+
+  modifier isUnderHardcap() {
+    require(invested < hardcap);
     _;
   }
 
-  /**
-   * @dev Allows the owner to enable the trading.
-   */
-  function startTrading() onlyOwner {
-    tradingStarted = true;
-  }
-  
-  /**
-   * @dev Allows the owner to disable the trading.
-   */
-  function stopTrading() onlyOwner {
-    tradingStarted = false;
+  function setHardcap(uint newHardcap) public onlyOwner {
+    hardcap = newHardcap;
   }
 
-  /**
-   * @dev Allows anyone to transfer the ABLE tokens once trading has started
-   * @param _to the recipient address of the tokens. 
-   * @param _value number of tokens to be transfered. 
-   */
-  function transfer(address _to, uint _value) hasStartedTrading {
-    super.transfer(_to, _value);
+  modifier onlyDirectMintAgentOrOwner() {
+    require(directMintAgent == msg.sender || owner == msg.sender);
+    _;
   }
 
-   /**
-   * @dev Allows anyone to transfer the ABLE tokens once trading has started
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint _value) hasStartedTrading {
-    super.transferFrom(_from, _to, _value);
+  modifier minInvestLimited(uint value) {
+    require(value >= minInvestedLimit);
+    _;
+  }
+
+  function setStart(uint newStart) public onlyOwner {
+    start = newStart;
+  }
+
+  function setMinInvestedLimit(uint newMinInvestedLimit) public onlyOwner {
+    minInvestedLimit = newMinInvestedLimit;
+  }
+
+  function setDirectMintAgent(address newDirectMintAgent) public onlyOwner {
+    directMintAgent = newDirectMintAgent;
+  }
+
+  function setWallet(address newWallet) public onlyOwner {
+    wallet = newWallet;
+  }
+
+  function setPrice(uint newPrice) public onlyOwner {
+    price = newPrice;
+  }
+
+  function setToken(address newToken) public onlyOwner {
+    token = REPUToken(newToken);
+  }
+
+  function setDevWallet(address newDevWallet) public onlyOwner {
+    require(!devWalletLocked);
+    devWallet = DevWallet(newDevWallet);
+    devWalletLocked = true;
+  }
+
+  function calculateTokens(uint _invested) internal returns(uint);
+
+  function mintTokensExternal(address to, uint tokens) public onlyDirectMintAgentOrOwner {
+    mintTokens(to, tokens);
+  }
+
+  function mintTokens(address to, uint tokens) internal {
+    token.mint(this, tokens);
+    token.transfer(to, tokens);
+  }
+
+  function endSaleDate() public view returns(uint);
+
+  function mintTokensByETHExternal(address to, uint _invested) public onlyDirectMintAgentOrOwner returns(uint) {
+    return mintTokensByETH(to, _invested);
+  }
+
+  function mintTokensByETH(address to, uint _invested) internal isUnderHardcap returns(uint) {
+    invested = invested.add(_invested);
+    uint tokens = calculateTokens(_invested);
+    mintTokens(to, tokens);
+    return tokens;
+  }
+
+  function devWithdraw() internal {
+    uint received = devWallet.balance;
+    uint limit = devWallet.limit();
+    if (received < limit) {
+      uint shouldSend = limit.sub(received);
+      uint value;
+      if (msg.value < shouldSend) {
+        value = msg.value;
+      } else {
+        value = shouldSend;
+      }
+      devWallet.transfer(value);
+    }
+  }
+
+  function fallback() internal minInvestLimited(msg.value) returns(uint) {
+    require(now >= start && now < endSaleDate());
+    if (devWallet != address(0)) {
+      devWithdraw();
+    }
+    wallet.transfer(this.balance);
+    return mintTokensByETH(msg.sender, msg.value);
+  }
+
+  function () public payable {
+    fallback();
   }
 
 }
 
+// File: contracts/RetrieveTokensFeature.sol
 
-/**
- * @title MainSale
- * @dev The main ABLE token sale contract
- * 
- * ABI
- * [{"constant": false,"inputs": [{"name": "_multisigVault","type": "address"}],"name": "setMultisigVault","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [],"name": "startTrading","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [{"name": "authorizerIndex","type": "uint256"}],"name": "getAuthorizer","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "exchangeRate","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "altDeposits","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_salePeriod","type": "string"}],"name": "setSalePeriod","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "recipient","type": "address"},{"name": "tokens","type": "uint256"}],"name": "authorizedCreateTokens","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "ethDeposits","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [],"name": "stopTrading","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [],"name": "finishMinting","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "owner","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_exchangeRate","type": "address"}],"name": "setExchangeRate","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "salePeriod","outputs": [{"name": "","type": "string"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_token","type": "address"}],"name": "retrieveTokens","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "totalAltDeposits","type": "uint256"}],"name": "setAltDeposit","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "start","outputs": [{"name": "","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "recipient","type": "address"}],"name": "createTokens","outputs": [],"payable": true,"stateMutability": "payable","type": "function"},{"constant": false,"inputs": [{"name": "_addr","type": "address"}],"name": "addAuthorized","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "multisigVault","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "newOwner","type": "address"}],"name": "transferOwnership","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "_start","type": "uint256"}],"name": "setStart","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [],"name": "hardCap","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "token","outputs": [{"name": "","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_hardCap","type": "address"}],"name": "setHardCap","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [{"name": "_addr","type": "address"}],"name": "isAuthorized","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "view","type": "function"},{"payable": true,"stateMutability": "payable","type": "fallback"},{"anonymous": false,"inputs": [{"indexed": false,"name": "recipient","type": "address"},{"indexed": false,"name": "ether_amount","type": "uint256"},{"indexed": false,"name": "pay_amount","type": "uint256"},{"indexed": false,"name": "exchangerate","type": "uint256"}],"name": "TokenSold","type": "event"},{"anonymous": false,"inputs": [{"indexed": false,"name": "recipient","type": "address"},{"indexed": false,"name": "pay_amount","type": "uint256"}],"name": "AuthorizedCreate","type": "event"},{"anonymous": false,"inputs": [{"indexed": false,"name": "hardcap","type": "uint256[]"}],"name": "hardcapChanged","type": "event"},{"anonymous": false,"inputs": [{"indexed": false,"name": "salePeriod","type": "uint256"}],"name": "salePreiodChanged","type": "event"},{"anonymous": false,"inputs": [],"name": "MainSaleClosed","type": "event"}]
- */
-contract MainSale is Ownable, Authorizable {
+contract RetrieveTokensFeature is Ownable {
+
+  function retrieveTokens(address to, address anotherToken) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(to, alienToken.balanceOf(this));
+  }
+
+}
+
+// File: contracts/ValueBonusFeature.sol
+
+contract ValueBonusFeature is PercentRateProvider {
+
   using SafeMath for uint;
-  event TokenSold(address recipient, uint ether_amount, uint pay_amount, uint exchangerate);
-  event AuthorizedCreate(address recipient, uint pay_amount);
-  event hardcapChanged(uint[] hardcap);
-  event salePreiodChanged(uint salePeriod);
-  event MainSaleClosed();
 
-  AbleToken public token = new AbleToken();
-
-  address public multisigVault;
-  
-  ExchangeRate public exchangeRate;
-  HardCap public hardCap;
-  string public salePeriod = "";
-  uint public ethDeposits = 0;
-  uint public altDeposits = 0;
-  uint public start = 1519614000; // Mon, 26 Feb 2018 12:00:00 GMT+09:00
-
-  /**
-   * @dev modifier to allow token creation only when the sale IS ON
-   */
-  modifier saleIsOn() {
-    require(now > start && now < start + 30 days);
-    _;
+  struct ValueBonus {
+    uint from;
+    uint bonus;
   }
 
-  /**
-   * @dev modifier to allow token creation only when the hardcap has not been reached
-   */
-  modifier isUnderHardCap() {
-    require(ethDeposits + altDeposits <= hardCap.getCap(salePeriod));
-    _;
+  ValueBonus[] public valueBonuses;
+
+  function addValueBonus(uint from, uint bonus) public onlyOwner {
+    valueBonuses.push(ValueBonus(from, bonus));
   }
 
-  /**
-   * @dev Allows anyone to create tokens by depositing ether.
-   * @param recipient the recipient to receive tokens. 
-   */
-  function createTokens(address recipient) public isUnderHardCap saleIsOn payable {
-    uint rate;
-    rate = exchangeRate.getRate(salePeriod);
-    uint tokens = rate.mul(msg.value);
-    ethDeposits = ethDeposits.add(msg.value);
-    token.mint(recipient, tokens);
-    require(multisigVault.send(msg.value));
-    TokenSold(recipient, msg.value, tokens, rate);
-  }
-
-
-  /**
-   * @dev Allows to set the toal alt deposit measured in ETH to make sure the hardcap includes other deposits
-   * @param totalAltDeposits total amount ETH equivalent
-   */
-  function setAltDeposit(uint totalAltDeposits) public onlyOwner {
-    altDeposits = totalAltDeposits;
-  }
-
-  /**
-   * @dev Allows authorized acces to create tokens. This is used for Bitcoin and ERC20 deposits
-   * @param recipient the recipient to receive tokens.
-   * @param tokens the number of tokens to be created. 
-   */
-  function authorizedCreateTokens(address recipient, uint tokens) public onlyAuthorized {
-    token.mint(recipient, tokens);
-    AuthorizedCreate(recipient, tokens);
-  }
-
-
-  /**
-   * @dev Allows the owner to set the starting time.
-   * @param _start the new _start
-   */
-  function setStart(uint _start) public onlyOwner {
-    start = _start;
-  }
-
-  /**
-   * @dev Allows the owner to set the multisig contract.
-   * @param _multisigVault the multisig contract address
-   */
-  function setMultisigVault(address _multisigVault) public onlyOwner {
-    if (_multisigVault != address(0)) {
-      multisigVault = _multisigVault;
+  function getValueBonusTokens(uint tokens, uint _invested) public view returns(uint) {
+    uint valueBonus = getValueBonus(_invested);
+    if (valueBonus == 0) {
+      return 0;
     }
+    return tokens.mul(valueBonus).div(percentRate);
   }
 
-  /**
-   * @dev Allows the owner to set the exchangerate contract.
-   * @param _exchangeRate the exchangerate address
-   */
-  function setExchangeRate(address _exchangeRate) public onlyOwner {
-    exchangeRate = ExchangeRate(_exchangeRate);
-  }
-  
-  /**
-   * @dev Allows the owner to set the hardcap contract.
-   * @param _hardCap the hardcap address
-   */
-  function setHardCap(address _hardCap) public onlyOwner {
-    hardCap = HardCap(_hardCap);
-  }
-  
-  /**
-   * @dev Allows the owner to set the saleperiod.
-   * @param _salePeriod the saleperiod
-   */
-  function setSalePeriod(string _salePeriod) public onlyOwner {
-    salePeriod = _salePeriod;
-    ethDeposits = 0;
+  function getValueBonus(uint value) public view returns(uint) {
+    uint bonus = 0;
+    for (uint i = 0; i < valueBonuses.length; i++) {
+      if (value >= valueBonuses[i].from) {
+        bonus = valueBonuses[i].bonus;
+      } else {
+        return bonus;
+      }
+    }
+    return bonus;
   }
 
-  /**
-   * @dev Allows the owner to finish the minting. This will create the 
-   * restricted tokens and then close the minting.
-   * Then the ownership of the ABLE token contract is transfered 
-   * to this owner.
-   */
-  function finishMinting() public onlyOwner {
+}
+
+// File: contracts/REPUCommonSale.sol
+
+contract REPUCommonSale is ValueBonusFeature, RetrieveTokensFeature, CommonSale {
+
+
+}
+
+// File: contracts/StagedCrowdsale.sol
+
+contract StagedCrowdsale is Ownable {
+
+  using SafeMath for uint;
+
+  struct Milestone {
+    uint period;
+    uint bonus;
+  }
+
+  uint public totalPeriod;
+
+  Milestone[] public milestones;
+
+  function milestonesCount() public view returns(uint) {
+    return milestones.length;
+  }
+
+  function addMilestone(uint period, uint bonus) public onlyOwner {
+    require(period > 0);
+    milestones.push(Milestone(period, bonus));
+    totalPeriod = totalPeriod.add(period);
+  }
+
+  function removeMilestone(uint8 number) public onlyOwner {
+    require(number < milestones.length);
+    Milestone storage milestone = milestones[number];
+    totalPeriod = totalPeriod.sub(milestone.period);
+
+    delete milestones[number];
+
+    for (uint i = number; i < milestones.length - 1; i++) {
+      milestones[i] = milestones[i+1];
+    }
+
+    milestones.length--;
+  }
+
+  function changeMilestone(uint8 number, uint period, uint bonus) public onlyOwner {
+    require(number < milestones.length);
+    Milestone storage milestone = milestones[number];
+
+    totalPeriod = totalPeriod.sub(milestone.period);
+
+    milestone.period = period;
+    milestone.bonus = bonus;
+
+    totalPeriod = totalPeriod.add(period);
+  }
+
+  function insertMilestone(uint8 numberAfter, uint period, uint bonus) public onlyOwner {
+    require(numberAfter < milestones.length);
+
+    totalPeriod = totalPeriod.add(period);
+
+    milestones.length++;
+
+    for (uint i = milestones.length - 2; i > numberAfter; i--) {
+      milestones[i + 1] = milestones[i];
+    }
+
+    milestones[numberAfter + 1] = Milestone(period, bonus);
+  }
+
+  function clearMilestones() public onlyOwner {
+    require(milestones.length > 0);
+    for (uint i = 0; i < milestones.length; i++) {
+      delete milestones[i];
+    }
+    milestones.length -= milestones.length;
+    totalPeriod = 0;
+  }
+
+  function lastSaleDate(uint start) public view returns(uint) {
+    return start + totalPeriod * 1 days;
+  }
+
+  function currentMilestone(uint start) public view returns(uint) {
+    uint previousDate = start;
+    for (uint i = 0; i < milestones.length; i++) {
+      if (now >= previousDate && now < previousDate + milestones[i].period * 1 days) {
+        return i;
+      }
+      previousDate = previousDate.add(milestones[i].period * 1 days);
+    }
+    revert();
+  }
+
+}
+
+// File: contracts/Mainsale.sol
+
+contract Mainsale is StagedCrowdsale, REPUCommonSale {
+
+  address public foundersTokensWallet;
+
+  address public advisorsTokensWallet;
+
+  address public bountyTokensWallet;
+
+  address public lotteryTokensWallet;
+
+  uint public foundersTokensPercent;
+
+  uint public advisorsTokensPercent;
+
+  uint public bountyTokensPercent;
+
+  uint public lotteryTokensPercent;
+
+  function setFoundersTokensPercent(uint newFoundersTokensPercent) public onlyOwner {
+    foundersTokensPercent = newFoundersTokensPercent;
+  }
+
+  function setAdvisorsTokensPercent(uint newAdvisorsTokensPercent) public onlyOwner {
+    advisorsTokensPercent = newAdvisorsTokensPercent;
+  }
+
+  function setBountyTokensPercent(uint newBountyTokensPercent) public onlyOwner {
+    bountyTokensPercent = newBountyTokensPercent;
+  }
+
+  function setLotteryTokensPercent(uint newLotteryTokensPercent) public onlyOwner {
+    lotteryTokensPercent = newLotteryTokensPercent;
+  }
+
+  function setFoundersTokensWallet(address newFoundersTokensWallet) public onlyOwner {
+    foundersTokensWallet = newFoundersTokensWallet;
+  }
+
+  function setAdvisorsTokensWallet(address newAdvisorsTokensWallet) public onlyOwner {
+    advisorsTokensWallet = newAdvisorsTokensWallet;
+  }
+
+  function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
+    bountyTokensWallet = newBountyTokensWallet;
+  }
+
+  function setLotteryTokensWallet(address newLotteryTokensWallet) public onlyOwner {
+    lotteryTokensWallet = newLotteryTokensWallet;
+  }
+
+  function calculateTokens(uint _invested) internal returns(uint) {
+    uint milestoneIndex = currentMilestone(start);
+    Milestone storage milestone = milestones[milestoneIndex];
+    uint tokens = _invested.mul(price).div(1 ether);
+    uint valueBonusTokens = getValueBonusTokens(tokens, _invested);
+    if (milestone.bonus > 0) {
+      tokens = tokens.add(tokens.mul(milestone.bonus).div(percentRate));
+    }
+    return tokens.add(valueBonusTokens);
+  }
+
+  function finish() public onlyOwner {
+    uint summaryTokensPercent = bountyTokensPercent.add(foundersTokensPercent).add(advisorsTokensPercent).add(lotteryTokensPercent);
+    uint mintedTokens = token.totalSupply();
+    uint allTokens = mintedTokens.mul(percentRate).div(percentRate.sub(summaryTokensPercent));
+    uint foundersTokens = allTokens.mul(foundersTokensPercent).div(percentRate);
+    uint advisorsTokens = allTokens.mul(advisorsTokensPercent).div(percentRate);
+    uint bountyTokens = allTokens.mul(bountyTokensPercent).div(percentRate);
+    uint lotteryTokens = allTokens.mul(lotteryTokensPercent).div(percentRate);
+    mintTokens(foundersTokensWallet, foundersTokens);
+    mintTokens(advisorsTokensWallet, advisorsTokens);
+    mintTokens(bountyTokensWallet, bountyTokens);
+    mintTokens(lotteryTokensWallet, lotteryTokens);
     token.finishMinting();
+  }
+
+  function endSaleDate() public view returns(uint) {
+    return lastSaleDate(start);
+  }
+
+}
+
+// File: contracts/Presale.sol
+
+contract Presale is NextSaleAgentFeature, StagedCrowdsale, REPUCommonSale {
+
+  function calculateTokens(uint _invested) internal returns(uint) {
+    uint milestoneIndex = currentMilestone(start);
+    Milestone storage milestone = milestones[milestoneIndex];
+    uint tokens = _invested.mul(price).div(1 ether);
+    uint valueBonusTokens = getValueBonusTokens(tokens, _invested);
+    if (milestone.bonus > 0) {
+      tokens = tokens.add(tokens.mul(milestone.bonus).div(percentRate));
+    }
+    return tokens.add(valueBonusTokens);
+  }
+
+  function finish() public onlyOwner {
+    token.setSaleAgent(nextSaleAgent);
+  }
+
+  function endSaleDate() public view returns(uint) {
+    return lastSaleDate(start);
+  }
+
+}
+
+// File: contracts/ClosedRound.sol
+
+contract ClosedRound is NextSaleAgentFeature, REPUCommonSale {
+
+  uint public maxLimit; 
+
+  uint public end;
+
+  function calculateTokens(uint _invested) internal returns(uint) {
+    uint tokens = _invested.mul(price).div(1 ether);
+    return tokens.add(getValueBonusTokens(tokens, _invested));
+  }
+
+  function setMaxLimit(uint newMaxLimit) public onlyOwner {
+    maxLimit = newMaxLimit;
+  }
+
+  function setEnd(uint newEnd) public onlyOwner {
+    end = newEnd;
+  }
+
+  function finish() public onlyOwner {
+    token.setSaleAgent(nextSaleAgent);
+  }
+
+  function fallback() internal returns(uint) {
+    require(msg.value <= maxLimit);
+    return super.fallback();
+  }
+
+  function endSaleDate() public view returns(uint) {
+    return end;
+  }
+
+}
+
+// File: contracts/Configurator.sol
+
+contract Configurator is Ownable {
+
+  REPUToken public token;
+
+  ClosedRound public closedRound;
+
+  Presale public presale;
+
+  Mainsale public mainsale;
+
+  DevWallet public devWallet;
+
+  function deploy() public onlyOwner {
+    token = new REPUToken();
+    closedRound = new ClosedRound();
+    presale = new Presale();
+    mainsale = new Mainsale();
+    devWallet = new DevWallet();
+    
     token.transferOwnership(owner);
-    MainSaleClosed();
-  }
-  
-  /**
-   * @dev Allows the owner to start the trading ABLE tokens. 
-   */
-  function startTrading() public onlyOwner {
-    token.startTrading();
-  }
-  
-  /**
-   * @dev Allows the owner to stop the trading ABLE tokens. 
-   */
-  function stopTrading() public onlyOwner {
-    token.stopTrading();
-  }
-
-  /**
-   * @dev Allows the owner to transfer ERC20 tokens to the multi sig vault
-   * @param _token the contract address of the ERC20 contract
-   */
-  function retrieveTokens(address _token) public onlyOwner {
-    ERC20 token = ERC20(_token);
-    token.transfer(multisigVault, token.balanceOf(this));
-  }
-
-  /**
-   * @dev Fallback function which receives ether and created the appropriate number of tokens for the 
-   * msg.sender.
-   */
-  function() external payable {
-    createTokens(msg.sender);
-  }
+    presale.transferOwnership(owner);
+    mainsale.transferOwnership(owner);
+ }
 
 }
