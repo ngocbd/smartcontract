@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XBV at 0xf4467cae19c5a53b9fdcd4ded678826805aa1927
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XBV at 0x126e4e3da27a7a1e70562079f022bceb0cb9560a
 */
 pragma solidity ^ 0.4 .19;
 
@@ -12,6 +12,44 @@ contract ERC223ReceivingContract {
  * @param _data  Transaction metadata.
  */
     function tokenFallback(address _from, uint _value, bytes _data);
+}
+
+
+contract Contract {function XBVHandler( address _from, uint256 _value );}
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
 
@@ -68,20 +106,26 @@ contract ERC20 {
 
 }
 
+contract ERC223 is ERC20 {
 
-contract XBV is ERC20  {
+    function transfer(address to, uint value, bytes data) returns(bool ok);
+    event Transfer(address indexed from, address indexed to, uint value, bytes data );
+ 
+}
+
+
+contract XBV is ERC223  {
 
     using SafeMath
     for uint256;
     /* Public variables of the token */
-    string public standard = 'XBV 2.2';
+    string public standard = 'XBV 2.1';
     string public name;
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
     uint256 public initialSupply;
-    bool initialize;
-
+    
     mapping( address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
@@ -104,9 +148,9 @@ contract XBV is ERC20  {
         name = "BlockVentureCoin"; // Set the name for display purposes
         symbol = "XBV"; // Set the symbol for display purposes
         decimals = decimalUnits; // Amount of decimals for display purposes
-    }
+      
 
-   
+    }
 
 
 
