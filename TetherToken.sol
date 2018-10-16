@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TetherToken at 0xabdf147870235fcfc34153828c769a70b3fae01f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TetherToken at 0x3721a8e6239a8d0489a13725265dd02657ed3b57
 */
 pragma solidity ^0.4.18;
-
-// Deployed will@ethfinex.com 31/12/17
 
 /**
  * @title SafeMath
@@ -249,7 +247,7 @@ contract StandardTokenWithFees is StandardToken, Ownable {
 
   uint public constant MAX_UINT = 2**256 - 1;
 
-  function calcFee(uint _value) constant returns (uint) {
+  function calcFee(uint _value) public constant returns (uint) {
     uint fee = (_value.mul(basisPointsRate)).div(10000);
     if (fee > maximumFee) {
         fee = maximumFee;
@@ -379,6 +377,7 @@ contract TetherToken is Pausable, StandardTokenWithFees, BlackList {
 
     address public upgradedAddress;
     bool public deprecated;
+    string public bitcoin_multisig_vault = '3GS8tqpyvCMAGT8hkwDKBdhWcYzL4GcA21';
 
     //  The contract can be initialized with a number of tokens
     //  All the tokens are deposited to the owner address
