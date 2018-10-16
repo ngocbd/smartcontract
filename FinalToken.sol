@@ -1,14 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FinalToken at 0x798840b77a0c35f985963b706879fe76fe2f2255
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FinalToken at 0x7b55e5a0aec97c7fa3594393c3471c79a1204890
 */
 pragma solidity ^0.4.18;
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant public returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
+
 
 contract Ownable {
   address public owner;
@@ -83,35 +101,18 @@ contract Pausable is Ownable {
   }
 }
 
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant public returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant public returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
 }
 
 contract BasicToken is ERC20Basic {
@@ -154,7 +155,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _value uint256 the amout of tokens to be transfered
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
+    uint256 _allowance = allowed[_from][msg.sender];
     require (_value <= _allowance);
     balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
@@ -194,7 +195,7 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract MintableToken is StandardToken, Ownable {
-  uint256 public constant maxSupply = 120000000000000000000000000000;
+  uint256 public constant maxSupply = 1000000000000000000000000000;
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
 
@@ -233,7 +234,7 @@ contract MintableToken is StandardToken, Ownable {
 
 contract PausableToken is StandardToken, Pausable {
 
-  function transfer(address _to, uint _value) whenNotPaused public returns (bool) {
+  function transfer(address _to, uint256 _value) whenNotPaused public returns (bool) {
     return super.transfer(_to, _value);
   }
 
@@ -243,16 +244,12 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 
+//FinalToken included in this file for test purpose
 contract FinalToken is PausableToken, MintableToken {
-
-    string public constant symbol = "SUGAR";
-
-    string public constant name = "SUGAR";
-
-    uint8 public constant decimals = 18;
-
-	
-	function FinalToken(address _to, uint256 _initialSupply) public{
-	    mint(_to, _initialSupply);
+	string public constant name = "Truxen";
+    string public constant symbol = "TXE";
+    uint8 public decimals = 18;
+	function FinalToken(address _mintTo, uint256 _initialSupply) public {
+	    mint(_mintTo, _initialSupply);
     }
 }
