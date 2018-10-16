@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DunkPayToken at 0x2e76886f251caf2efe6853b181cea3385cc3a24b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DunkPayToken at 0x946863a91e9a67bb5c11fc42d0998baebfa2727f
 */
 pragma solidity ^0.4.16;
 
@@ -115,7 +115,7 @@ contract TokenERC20 is Pausable{
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    uint256 public totalSupplyForDivision;
+    uint256 totalSupplyForDivision;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf; 
@@ -236,11 +236,10 @@ contract TokenERC20 is Pausable{
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        totalSupplyForDivision -= _value;                              // Update totalSupply
+        totalSupplyForDivision = totalSupply;                              // Update totalSupply
         emit Burn(msg.sender, _value);
         return true;
     }
-
     /**
      * Destroy tokens from other account
      *
@@ -255,7 +254,7 @@ contract TokenERC20 is Pausable{
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
         totalSupply -= _value;                              // Update totalSupply
-        totalSupplyForDivision -= _value;                              // Update totalSupply
+        totalSupplyForDivision = totalSupply;                              // Update totalSupply
         emit Burn(_from, _value);
         return true;
     }
@@ -282,12 +281,13 @@ contract DunkPayToken is TokenERC20 {
         buyPrice = 1000;
         sellPrice = 1000;
         
-        name = "BitcoinYo Token";
-        symbol = "BTY";
+        name = "DunkPay Token";
+        symbol = "DNK";
         totalSupply = buyPrice * 10000 * 10 ** uint256(decimals);
         balanceOf[msg.sender] = buyPrice * 5100 * 10 ** uint256(decimals);              
         balanceOf[this] = totalSupply - balanceOf[msg.sender];
         buySupply = balanceOf[this];
+        allowance[this][msg.sender] = buySupply;
         totalSupplyForDivision = totalSupply;// Set the symbol for display purposes
         totalEth = address(this).balance;
     }
@@ -324,6 +324,9 @@ contract DunkPayToken is TokenERC20 {
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
+        
+        buySupply = balanceOf[this]; //For Additonal Supply.
+        allowance[this][msg.sender] = buySupply;
         emit Transfer(_from, _to, _value);
     }
 
@@ -333,7 +336,9 @@ contract DunkPayToken is TokenERC20 {
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        totalSupplyForDivision += mintedAmount;
+        
+        buySupply = balanceOf[this]; //For Additonal Supply.
+        allowance[this][msg.sender] = buySupply;
         emit Transfer(0, this, mintedAmount);
         emit Transfer(this, target, mintedAmount);
     }
@@ -349,10 +354,10 @@ contract DunkPayToken is TokenERC20 {
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
     /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice, uint256 newBuySupply) onlyOwner public {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
-        
+        buySupply = newBuySupply;
     }
 
     function transfer(address _to, uint256 _value) public whenNotPaused {
@@ -417,11 +422,8 @@ contract DunkPayToken is TokenERC20 {
 
     function bankrupt(address[] _holders) onlyOwner whenPaused public {
         uint256 restBalance = balanceOf[this];
-        balanceOf[this] -= restBalance;                        // Subtract from the targeted balance
-        totalSupply -= restBalance;                              // Update totalSupply
-        totalSupplyForDivision -= restBalance;                             // Update totalSupply
+        totalSupplyForDivision = totalSupply - restBalance;                             // Update totalSupply
         totalEth = address(this).balance;
-        
         for (uint i = 0; i < _holders.length; i++) {
           uint zeros = getZero(totalSupplyForDivision);
           uint256 amount = percent(balanceOf[_holders[i]],totalSupplyForDivision , zeros) * totalEth;
