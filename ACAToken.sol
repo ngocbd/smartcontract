@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACAToken at 0x5846282f218a96ea184be5a67b098d652c411fc1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACAToken at 0x18f0fce09b6e5c8e1d48269b530041838ae5c8cb
 */
 pragma solidity ^0.4.19;
 
@@ -47,6 +47,41 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
+}
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
 contract ERC20Basic {
@@ -123,7 +158,7 @@ contract ACAToken is ERC20 {
 
         balances[owner] = totalSupply_;
         approve(admin, totalSupply_);
-        Genesis(owner, totalSupply_);
+        emit Genesis(owner, totalSupply_);
     }
 
     // permission related
@@ -132,7 +167,7 @@ contract ACAToken is ERC20 {
         require(newOwner != admin);
 
         owner = newOwner;
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
     }
 
     function transferAdmin(address _newAdmin) public onlyOwner {
@@ -141,7 +176,7 @@ contract ACAToken is ERC20 {
         require(_newAdmin != owner);
 
         admin = _newAdmin;
-        AdminTransferred(admin, _newAdmin);
+        emit AdminTransferred(admin, _newAdmin);
     }
 
     function setTransferable(bool _transferable) public onlyAdmin {
@@ -154,13 +189,13 @@ contract ACAToken is ERC20 {
 
     function transferLock() public returns (bool) {
         transferLocked[msg.sender] = true;
-        TransferLock(msg.sender, true);
+        emit TransferLock(msg.sender, true);
         return true;
     }
 
     function manageTransferLock(address _target, bool _value) public onlyOwner returns (bool) {
         transferLocked[_target] = _value;
-        TransferLock(_target, _value);
+        emit TransferLock(_target, _value);
         return true;
     }
 
@@ -179,7 +214,7 @@ contract ACAToken is ERC20 {
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -198,13 +233,13 @@ contract ACAToken is ERC20 {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
     function approve(address _spender, uint256 _value) public canTransfer(msg.sender, _spender) returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -214,7 +249,7 @@ contract ACAToken is ERC20 {
 
     function increaseApproval(address _spender, uint _addedValue) public canTransfer(msg.sender, _spender) returns (bool) {
         allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -225,7 +260,7 @@ contract ACAToken is ERC20 {
         } else {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -237,7 +272,7 @@ contract ACAToken is ERC20 {
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
         totalSupply_ = totalSupply_.sub(_value);
-        Burn(burner, _value);
+        emit Burn(burner, _value);
     }
 
     function emergencyERC20Drain(ERC20 _token, uint256 _amount) public onlyOwner {
