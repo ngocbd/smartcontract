@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PHXFlip at 0xe790109f9b35aeee52a0bb8c6e1de0dad55ec71d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PHXFlip at 0x6973f1005ee0893aeecc94ce1d30d7efa5e389e8
 */
 pragma solidity ^0.4.20;
 
@@ -12,6 +12,13 @@ pragma solidity ^0.4.20;
             \'__'\/
 
  Developer:  TechnicalRise
+ 
+ ** Updated with low (3%) house edge
+ ** and contract events
+ 
+ *   © 2018 TechnicalRise.  Written in March 2018.  
+ *   All rights reserved.  Do not copy, adapt, or otherwise use without permission.
+ *   https://www.reddit.com/user/TechnicalRise/
  
 */
 
@@ -36,6 +43,8 @@ contract PHXFlip is PHXReceivingContract {
 
     address public constant PHXTKNADDR = 0x14b759A158879B133710f4059d32565b4a66140C;
     PHXInterface public PHXTKN;
+    
+    event result(address indexed _roller, uint _wager, uint _payout, uint indexed _rollednumber);
 
 	function PHXFlip() public {
 	    PHXTKN = PHXInterface(PHXTKNADDR); // Initialize the PHX Contract
@@ -47,17 +56,23 @@ contract PHXFlip is PHXReceivingContract {
 	  require(_humanSender(_from)); // Check that this is a non-contract sender
 	  require(_phxToken(msg.sender));
 	  
+	  uint _balance = PHXTKN.balanceOf(this);
 	  uint _possibleWinnings = 2 * _value;
+	  uint _rollednumber = _prand(100) + 1;
 	  // This doesn't require the PHX Balance to be greater than double the bet
 	  // So check the contract's PHX Balance before wagering!
-	  if(_prand(2) == 1) { // i.e. if it's "heads"
-	      if(PHXTKN.balanceOf(this) >= _possibleWinnings) {
+	  if(_rollednumber < 48) { // i.e. 1-47 wins, 48-100 loses
+	      if(_balance >= _possibleWinnings) {
 	          PHXTKN.transfer(_from, _possibleWinnings);
+	          emit result(_from, _value, _possibleWinnings, _rollednumber);
 	      } else {
-	          PHXTKN.transfer(_from,PHXTKN.balanceOf(this));
+	          PHXTKN.transfer(_from,_balance);
+	          emit result(_from, _value, _balance, _rollednumber);
 	      }
 	  } else {
-	      // And if you don't win, you just don't win, and it keeps your money
+	      // And if you don't win, you get a Rise so that you know you lost
+	      PHXTKN.transfer(_from, 1);
+	      emit result(_from, _value, 1, _rollednumber);
 	  }
     }
     
@@ -68,7 +83,6 @@ contract PHXFlip is PHXReceivingContract {
     // and calls this contract from it -- but we don't accept transactions
     // from foreign contracts, lessening that risk
     function _prand(uint _modulo) private view returns (uint) {
-        require((1 < _modulo) && (_modulo <= 10000)); // Keep it greater than 0, less than 10K.
         uint seed1 = uint(block.coinbase); // Get Miner's Address
         uint seed2 = now; // Get the timestamp
         return uint(keccak256(seed1, seed2)) % _modulo;
@@ -81,9 +95,7 @@ contract PHXFlip is PHXReceivingContract {
     // Determine if the "_from" address is a contract
     function _humanSender(address _from) private view returns (bool) {
       uint codeLength;
-      assembly {
-          codeLength := extcodesize(_from)
-      }
+      assembly { codeLength := extcodesize(_from)  }
       return (codeLength == 0); // If this is "true" sender is most likely  a Wallet
     }
 }
