@@ -1,15 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WubCoin at 0x2664877980f2684c9e9be07a50330e85847c5241
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WubCoin at 0x022011f8e71ec0766ab8688574f4fd0c880ccd3e
 */
 pragma solidity ^0.4.11;
 
 /**
- * Thank you for checking out WubCoin
+ * Thank you for checking out WUB
  *
- * WubCoin powers a new generation of electronic music producers, teachers and events.
- * For more information visit http://wubcoin.com
+ * WUB is the token that powers New Sound For Japan, an event brand that seeks
+ * out the best and most talented producers and DJs in the world and puts
+ * together historical festivals and raves.
  *
- * Copyright by Stefan K.K https://stefan.co.jp
+ * https://www.newsoundforjapan.com
+ * 
+ * Copyright by Stefan K.K. All Rights Reserved.
  */
 
 /**
@@ -24,58 +27,53 @@ contract ERC223ReceivingContract {
  * @param _value Amount of tokens.
  * @param _data  Transaction metadata.
  */
-    function tokenFallback(address _from, uint _value, bytes _data);
+    function tokenFallback(address _from, uint _value, bytes _data) public;
 }
 
 /**
  * Math operations with safety checks
  */
 library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
+  function mul(uint a, uint b) pure internal returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint a, uint b) internal returns (uint) {
+  function div(uint a, uint b) pure internal returns (uint) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint a, uint b) internal returns (uint) {
+  function sub(uint a, uint b) pure internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint a, uint b) internal returns (uint) {
+  function add(uint a, uint b) pure internal returns (uint) {
     uint c = a + b;
     assert(c >= a);
     return c;
   }
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
     return a >= b ? a : b;
   }
 
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
     return a < b ? a : b;
   }
 
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
     return a >= b ? a : b;
   }
 
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
     return a < b ? a : b;
   }
 
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
 }
 
 contract ERC20CompatibleToken {
@@ -95,14 +93,24 @@ contract ERC20CompatibleToken {
     * @param _value uint256 the amount of tokens to be transferred
     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        uint codeLength;
+        bytes memory empty;
+
+        assembly {
+            // Retrieve the size of the code on target address, this needs assembly .
+            codeLength := extcodesize(_to)
+        }
         require(_to != address(0));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
-
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        if(codeLength>0) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(_from, _value, empty);
+        }
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -118,7 +126,7 @@ contract ERC20CompatibleToken {
    */
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -140,7 +148,7 @@ contract ERC20CompatibleToken {
    */
     function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
         allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -151,17 +159,16 @@ contract ERC20CompatibleToken {
         } else {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 }
 
 contract ERC223Interface {
     uint public totalSupply;
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value);
-    function transfer(address to, uint value, bytes data);
-    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+    function balanceOf(address who) constant public returns (uint);
+    function transfer(address to, uint value) public;
+    function transfer(address to, uint value, bytes data) public;
 }
 
 
@@ -176,15 +183,15 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
     uint8   public decimals = 18;
     uint256 public totalSupply = 15000000 * 10 ** 18;
 
-    function WubCoin(address companyWallet) {
+    constructor(address companyWallet) public {
         balances[companyWallet] = balances[companyWallet].add(totalSupply);
-        Transfer(0x0, companyWallet, totalSupply);
+        emit Transfer(0x0, companyWallet, totalSupply);
     }
 
     /**
      * We don't accept payments to the token contract directly.
      */
-    function() payable {
+    function() public payable {
         revert();
     }
 
@@ -200,7 +207,7 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
      * @param _value Amount of tokens that will be transferred.
      * @param _data  Transaction metadata.
      */
-    function transfer(address _to, uint _value, bytes _data) {
+    function transfer(address _to, uint _value, bytes _data) public {
         // Standard function transfer similar to ERC20 transfer with no _data .
         // Added due to backwards compatibility reasons .
         uint codeLength;
@@ -216,7 +223,7 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
             receiver.tokenFallback(msg.sender, _value, _data);
         }
-        Transfer(msg.sender, _to, _value, _data);
+        emit Transfer(msg.sender, _to, _value);
     }
 
     /**
@@ -228,7 +235,7 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
      * @param _to    Receiver address.
      * @param _value Amount of tokens that will be transferred.
      */
-    function transfer(address _to, uint _value) {
+    function transfer(address _to, uint _value) public {
         uint codeLength;
         bytes memory empty;
 
@@ -243,7 +250,7 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
             receiver.tokenFallback(msg.sender, _value, empty);
         }
-        Transfer(msg.sender, _to, _value, empty);
+        emit Transfer(msg.sender, _to, _value);
     }
 
 
@@ -253,7 +260,7 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
      * @param _owner   The address whose balance will be returned.
      * @return balance Balance of the `_owner`.
      */
-    function balanceOf(address _owner) constant returns (uint balance) {
+    function balanceOf(address _owner) public constant returns (uint balance) {
         return balances[_owner];
     }
 }
