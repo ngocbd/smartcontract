@@ -1,380 +1,689 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xe2b7d18eb4a6358b78483ff095408f240a96596e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6fff3806bbac52a20e0d79bc538d527f6a22c96b
 */
-// Copyright New Alchemy Limited, 2017. All rights reserved.
+/// auth.sol -- widely-used access control pattern for Ethereum
 
-pragma solidity >=0.4.10;
+// Copyright (C) 2015, 2016, 2017  DappHub, LLC
 
-// from Zeppelin
-contract SafeMath {
-    function safeMul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
-        require(a == 0 || c / a == b);
-        return c;
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+
+pragma solidity ^0.4.13;
+
+contract Authority {
+    function canCall(address src, address dst, bytes4 sig) constant returns (bool);
+}
+
+contract AuthEvents {
+    event LogSetAuthority (address indexed authority);
+    event LogSetOwner     (address indexed owner);
+    event UnauthorizedAccess (address caller, bytes4 sig);
+}
+
+contract Auth is AuthEvents {
+    Authority  public  authority;
+    address public owner;
+
+    function Auth() {
+        owner = msg.sender;
+        LogSetOwner(msg.sender);
     }
 
-    function safeSub(uint a, uint b) internal returns (uint) {
-        require(b <= a);
-        return a - b;
+    function setOwner(address owner_) auth {
+        owner = owner_;
+        LogSetOwner(owner);
     }
 
-    function safeAdd(uint a, uint b) internal returns (uint) {
-        uint c = a + b;
-        require(c>=a && c>=b);
-        return c;
+    function setAuthority(Authority authority_) auth {
+        authority = authority_;
+        LogSetAuthority(authority);
+    }
+
+    modifier auth {
+        require(isAuthorized(msg.sender, msg.sig));
+        _;
+    }
+
+    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
+        if (src == address(this)) {
+            return true;
+        } else if (src == owner && authority == Authority(0)) {
+            /*the owner has privileges only as long as no Authority has been defined*/
+            return true;
+        } else if (authority == Authority(0)) {
+            UnauthorizedAccess(src, sig);
+            return false;
+        } else {
+            return authority.canCall(src, this, sig);
+        }
     }
 }
+/*
+   Copyright 2017 DappHub, LLC
 
-contract Owned {
-	address public owner;
-	address newOwner;
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-	function Owned() {
-		owner = msg.sender;
-	}
+       http://www.apache.org/licenses/LICENSE-2.0
 
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
 
-	function changeOwner(address _newOwner) onlyOwner {
-		newOwner = _newOwner;
-	}
+// Token standard API
+// https://github.com/ethereum/EIPs/issues/20
 
-	function acceptOwnership() {
-		if (msg.sender == newOwner) {
-			owner = newOwner;
-		}
-	}
+contract ERC20Events {
+    event Transfer( address indexed from, address indexed to, uint value);
+    event Approval( address indexed owner, address indexed spender, uint value);
 }
 
-contract Pausable is Owned {
-	bool public paused;
+contract ERC20 is ERC20Events{
+    function totalSupply() constant returns (uint supply);
+    function balanceOf( address who ) constant returns (uint value);
+    function allowance( address owner, address spender ) constant returns (uint _allowance);
 
-	function pause() onlyOwner {
-		paused = true;
-	}
+    function transfer( address to, uint value) returns (bool ok);
+    function transferFrom( address from, address to, uint value) returns (bool ok);
+    function approve( address spender, uint value ) returns (bool ok);
 
-	function unpause() onlyOwner {
-		paused = false;
-	}
+}
+/// math.sol -- mixin for inline numerical wizardry
 
-	modifier notPaused() {
-		require(!paused);
-		_;
-	}
+// Copyright (C) 2015, 2016, 2017  DappHub, LLC
+
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+
+contract Math {
+    
+    /*
+    standard uint256 functions
+     */
+
+    function add(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        require((z = x + y) >= x);
+    }
+
+    function sub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        require((z = x - y) <= x);
+    }
+
+    function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        z = x * y;
+        require(z == 0 || z >= (x > y ? x : y));
+    }
+
+    function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        require(y > 0);
+        z = x / y;
+    }
+
+    function min(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        return x <= y ? x : y;
+    }
+    function max(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        return x >= y ? x : y;
+    }
+
+    /*
+    uint128 functions (h is for half)
+     */
+
+
+    function hadd(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        require((z = x + y) >= x);
+    }
+
+    function hsub(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        require((z = x - y) <= x);
+    }
+
+    function hmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        require((z = x * y) >= x);
+    }
+
+    function hdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        require(y > 0);
+        z = x / y;
+    }
+
+    function hmin(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        return x <= y ? x : y;
+    }
+    function hmax(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        return x >= y ? x : y;
+    }
+
+
+    /*
+    int256 functions
+     */
+
+    function imin(int256 x, int256 y) constant internal returns (int256 z) {
+        return x <= y ? x : y;
+    }
+    function imax(int256 x, int256 y) constant internal returns (int256 z) {
+        return x >= y ? x : y;
+    }
+
+    /*
+    WAD math
+     */
+
+    uint128 constant WAD = 10 ** 18;
+
+    function wadd(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hadd(x, y);
+    }
+
+    function wsub(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hsub(x, y);
+    }
+
+    function wmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * y + WAD / 2) / WAD);
+    }
+
+    function wdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * WAD + y / 2) / y);
+    }
+
+    function wmin(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hmin(x, y);
+    }
+    function wmax(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hmax(x, y);
+    }
+
+    /*
+    RAY math
+     */
+
+    uint128 constant RAY = 10 ** 27;
+
+    function radd(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hadd(x, y);
+    }
+
+    function rsub(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hsub(x, y);
+    }
+
+    function rmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * y + RAY / 2) / RAY);
+    }
+
+    function rdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * RAY + y / 2) / y);
+    }
+
+    function rpow(uint128 x, uint64 n) constant internal returns (uint128 z) {
+        // This famous algorithm is called "exponentiation by squaring"
+        // and calculates x^n with x as fixed-point and n as regular unsigned.
+        //
+        // It's O(log n), instead of O(n) for naive repeated multiplication.
+        //
+        // These facts are why it works:
+        //
+        //  If n is even, then x^n = (x^2)^(n/2).
+        //  If n is odd,  then x^n = x * x^(n-1),
+        //   and applying the equation for even x gives
+        //    x^n = x * (x^2)^((n-1) / 2).
+        //
+        //  Also, EVM division is flooring and
+        //    floor[(n-1) / 2] = floor[n / 2].
+
+        z = n % 2 != 0 ? x : RAY;
+
+        for (n /= 2; n != 0; n /= 2) {
+            x = rmul(x, x);
+
+            if (n % 2 != 0) {
+                z = rmul(z, x);
+            }
+        }
+    }
+
+    function rmin(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hmin(x, y);
+    }
+    function rmax(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hmax(x, y);
+    }
+
+    function cast(uint256 x) constant internal returns (uint128 z) {
+        require((z = uint128(x)) == x);
+    }
+
 }
 
-contract Finalizable is Owned {
-	bool public finalized;
+contract Migrations {
+  address public owner;
+  uint public last_completed_migration;
 
-	function finalize() onlyOwner {
-		finalized = true;
-	}
+  modifier restricted() {
+    if (msg.sender == owner) _;
+  }
 
-	modifier notFinalized() {
-		require(!finalized);
-		_;
-	}
+  function Migrations() {
+    owner = msg.sender;
+  }
+
+  function setCompleted(uint completed) restricted {
+    last_completed_migration = completed;
+  }
+
+  function upgrade(address new_address) restricted {
+    Migrations upgraded = Migrations(new_address);
+    upgraded.setCompleted(last_completed_migration);
+  }
+}
+/// note.sol -- the `note' modifier, for logging calls as events
+
+// Copyright (C) 2017  DappHub, LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+
+
+contract Note {
+    event LogNote(
+        bytes4   indexed sig,
+        address  indexed guy,
+        bytes32  indexed foo,
+        bytes32  indexed bar,
+        uint wad,
+        bytes fax
+    ) anonymous;
+
+    modifier note {
+        bytes32 foo;
+        bytes32 bar;
+
+        assembly {
+        foo := calldataload(4)
+        bar := calldataload(36)
+        }
+
+        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+
+        _;
+    }
+}
+/// stop.sol -- mixin for enable/disable functionality
+
+// Copyright (C) 2017  DappHub, LLC
+
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+
+
+contract Stoppable is Auth, Note {
+
+    bool public stopped;
+
+    modifier stoppable {
+        require (!stopped);
+        _;
+    }
+    function stop() auth note {
+        stopped = true;
+    }
+    function start() auth note {
+        stopped = false;
+    }
+
+}// token.sol -- ERC20 implementation with minting and burning
+
+// Copyright (C) 2015, 2016, 2017  DappHub, LLC
+
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+
+
+contract Token is ERC20, Stoppable {
+
+    bytes32 public symbol;    
+    string public name; // Optional token name
+    uint256 public decimals = 18; // standard token precision. override to customize
+    TokenLogic public logic;
+
+    function Token(string name_, bytes32 symbol_) {
+        name = name_;
+        symbol = symbol_;
+    }
+
+    function setLogic(TokenLogic logic_) auth note returns(bool){
+        logic = logic_;
+        return true;
+    }
+
+    function setOwner(address owner_) auth {
+        uint wad = balanceOf(owner);
+        logic.transfer(owner, owner_, wad);
+        Transfer(owner, owner_, wad);
+        logic.setOwner(owner_);
+        super.setOwner(owner_);
+    }
+
+
+    function totalSupply() constant returns (uint256){
+        return logic.totalSupply();
+    }
+
+    function balanceOf( address who ) constant returns (uint value) {
+        return logic.balanceOf(who);
+    }
+
+    function allowance( address owner, address spender ) constant returns (uint _allowance) {
+        return logic.allowance(owner, spender);
+    }
+
+    function transfer(address dst, uint wad) stoppable note returns (bool) {
+        bool retVal = logic.transfer(msg.sender, dst, wad);
+        Transfer(msg.sender, dst, wad);
+        return retVal;
+    }
+    
+    function transferFrom(address src, address dst, uint wad) stoppable note returns (bool) {
+        bool retVal = logic.transferFrom(src, dst, wad);
+        Transfer(src, dst, wad);
+        return retVal;
+    }
+
+    function approve(address guy, uint wad) stoppable note returns (bool) {
+        return logic.approve(msg.sender, guy, wad);
+    }
+
+    function push(address dst, uint128 wad) returns (bool) {
+        return transfer(dst, wad);
+    }
+
+    function pull(address src, uint128 wad) returns (bool) {
+        return transferFrom(src, msg.sender, wad);
+    }
+
+    function mint(uint128 wad) auth stoppable note {
+        logic.mint(wad);
+        Transfer(this, msg.sender, wad);
+    }
+
+    function burn(uint128 wad) auth stoppable note {
+        logic.burn(msg.sender, wad);
+    }
+
+    function setName(string name_) auth {
+        name = name_;
+    }
+
+    function setSymbol(bytes32 symbol_) auth {
+        symbol = symbol_;
+    }
+
+    function () payable {
+        require(msg.value > 0);
+        uint wad = logic.handlePayment(msg.sender, msg.value);
+        Transfer(this, msg.sender, wad);
+    }
+
+/*special functions for ICO*/
+    function transferEth(address dst, uint wad) {
+        require(msg.sender == address(logic));
+        require(wad < this.balance);
+        dst.transfer(wad);
+    }
+
+/*this function is called from logic to trigger the correct event upon receiving ETH*/
+    function triggerTansferEvent(address src,  address dst, uint wad) {
+        require(msg.sender == address(logic));
+        Transfer(src, dst, wad);
+    }
+
+    function payout(address dst) auth {
+        require(dst != address(0));
+        dst.transfer(this.balance);
+    }
+
 }
 
-contract IToken {
-	function transfer(address _to, uint _value) returns (bool);
-	function balanceOf(address owner) returns(uint);
-}
+contract TokenData is Auth {
+    uint256 public supply;
+    mapping (address => uint256) public balances;
+    mapping (address => mapping (address => uint256)) public approvals;
+    address token;
 
-// In case someone accidentally sends token to one of these contracts,
-// add a way to get them back out.
-contract TokenReceivable is Owned {
-	function claimTokens(address _token, address _to) onlyOwner returns (bool) {
-		IToken token = IToken(_token);
-		return token.transfer(_to, token.balanceOf(this));
-	}
-}
+    modifier tokenOnly {
+        assert(msg.sender == token);
+        _;
+    }
 
-contract EventDefinitions {
-	event Transfer(address indexed from, address indexed to, uint value);
-	event Approval(address indexed owner, address indexed spender, uint value);
-}
+    function TokenData(address token_, uint supply_, address owner_) {
+        token = token_;
+        supply = supply_;
+        owner = owner_;
+        balances[owner] = supply;
+    }
 
-contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
-	// Set these appropriately before you deploy
-	string constant public name = "Mock1";
-	uint8 constant public decimals = 2;
-	string constant public symbol = "MACH1";
-	Controller public controller;
-	string public motd;
-	event Motd(string message);
+    function setOwner(address owner_) tokenOnly {
+        owner = owner_;
+        LogSetOwner(owner);
+    }
 
-	// functions below this line are onlyOwner
+    function setToken(address token_) auth {
+        token = token_;
+    }
 
-	// set "message of the day"
-	function setMotd(string _m) onlyOwner {
-		motd = _m;
-		Motd(_m);
-	}
+    function setSupply(uint supply_) tokenOnly {
+        supply = supply_;
+    }
 
-	function setController(address _c) onlyOwner notFinalized {
-		controller = Controller(_c);
-	}
+    function setBalances(address guy, uint balance) tokenOnly {
+        balances[guy] = balance;
+    }
 
-	// functions below this line are public
+    function setApprovals(address src, address guy, uint wad) tokenOnly {
+        approvals[src][guy] = wad;
+    }
 
-	function balanceOf(address a) constant returns (uint) {
-		return controller.balanceOf(a);
-	}
+}/// base.sol -- basic ERC20 implementation
 
-	function totalSupply() constant returns (uint) {
-		return controller.totalSupply();
-	}
+// Copyright (C) 2015, 2016, 2017  DappHub, LLC
 
-	function allowance(address _owner, address _spender) constant returns (uint) {
-		return controller.allowance(_owner, _spender);
-	}
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
 
-	function transfer(address _to, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.transfer(msg.sender, _to, _value)) {
-			Transfer(msg.sender, _to, _value);
-			return true;
-		}
-		return false;
-	}
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
 
-	function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3) notPaused returns (bool success) {
-		if (controller.transferFrom(msg.sender, _from, _to, _value)) {
-			Transfer(_from, _to, _value);
-			return true;
-		}
-		return false;
-	}
+contract TokenLogic is ERC20Events, Math, Stoppable {
 
-	function approve(address _spender, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
-		// promote safe user behavior
-		if (controller.approve(msg.sender, _spender, _value)) {
-			Approval(msg.sender, _spender, _value);
-			return true;
-		}
-		return false;
-	}
+    TokenData public data;
+    Token public token;
+    uint public tokensPerWei=300;
+    uint public icoStart=1503756000; // = Aug 26 2017 2pm GMT
+    uint public icoEnd;   //1504188000 = Aug 31 2017 2pm GMT
+    uint public icoSale; //the number of tokens sold during the ICO
+    uint public maxIco = 90000000000000000000000000; // the maximum number of tokens sold during ICO
 
-	function increaseApproval (address _spender, uint _addedValue) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.increaseApproval(msg.sender, _spender, _addedValue)) {
-			uint newval = controller.allowance(msg.sender, _spender);
-			Approval(msg.sender, _spender, newval);
-			return true;
-		}
-		return false;
-	}
+    address[] contributors;
 
-	function decreaseApproval (address _spender, uint _subtractedValue) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.decreaseApproval(msg.sender, _spender, _subtractedValue)) {
-			uint newval = controller.allowance(msg.sender, _spender);
-			Approval(msg.sender, _spender, newval);
-			return true;
-		}
-		return false;
-	}
+    function TokenLogic(Token token_, TokenData data_, uint icoStart_, uint icoHours_) {
+        require(token_ != Token(0x0));
 
-	modifier onlyPayloadSize(uint numwords) {
-		assert(msg.data.length >= numwords * 32 + 4);
-		_;
-	}
+        if(data_ == address(0x0)) {
+            data = new TokenData(this, 120000000000000000000000000, msg.sender);
+        } else {
+            data = data_;
+        }
+        token = token_;
+        icoStart = icoStart_;
+        icoEnd = icoStart + icoHours_ * 3600;
+    }
 
-	function burn(uint _amount) notPaused {
-		controller.burn(msg.sender, _amount);
-		Transfer(msg.sender, 0x0, _amount);
-	}
+    modifier tokenOnly {
+        assert(msg.sender == address(token) || msg.sender == address(this));
+        _;
+    }
 
-	// functions below this line are onlyController
+    function contributorCount() constant returns(uint) {
+        return contributors.length;
+    }
 
-	modifier onlyController() {
-		assert(msg.sender == address(controller));
-		_;
-	}
+    function setOwner(address owner_) tokenOnly {
+        owner = owner_;
+        LogSetOwner(owner);
+        data.setOwner(owner);
+    }
 
-	// In the future, when the controller supports multiple token
-	// heads, allow the controller to reconstitute the transfer and
-	// approval history.
+    function setToken(Token token_) auth {
+        token = token_;
+    }
 
-	function controllerTransfer(address _from, address _to, uint _value) onlyController {
-		Transfer(_from, _to, _value);
-	}
+    function setIcoStart(uint icoStart_, uint icoHours_) auth {
+        icoStart = icoStart_;
+        icoEnd = icoStart + icoHours_ * 3600;
+    }
 
-	function controllerApprove(address _owner, address _spender, uint _value) onlyController {
-		Approval(_owner, _spender, _value);
-	}
-}
+    function setTokensPerWei(uint tokensPerWei_) auth {
+        require(tokensPerWei_ > 0);
+        tokensPerWei = tokensPerWei_;
+    }
 
-contract Controller is Owned, Finalizable {
-	Ledger public ledger;
-	Token public token;
+    function totalSupply() constant returns (uint256) {
+        return data.supply();
+    }
 
-	function Controller() {
-	}
+    function balanceOf(address src) constant returns (uint256) {
+        return data.balances(src);
+    }
 
-	// functions below this line are onlyOwner
+    function allowance(address src, address guy) constant returns (uint256) {
+        return data.approvals(src, guy);
+    }
+    
+    function transfer(address src, address dst, uint wad) tokenOnly returns (bool) {
+        require(balanceOf(src) >= wad);
+        
+        data.setBalances(src, sub(data.balances(src), wad));
+        data.setBalances(dst, add(data.balances(dst), wad));
+        
+        return true;
+    }
+    
+    function transferFrom(address src, address dst, uint wad) tokenOnly returns (bool) {
+        require(data.balances(src) >= wad);
+        require(data.approvals(src, dst) >= wad);
+        
+        data.setApprovals(src, dst, sub(data.approvals(src, dst), wad));
+        data.setBalances(src, sub(data.balances(src), wad));
+        data.setBalances(dst, add(data.balances(dst), wad));
+        
+        return true;
+    }
+    
+    function approve(address src, address guy, uint256 wad) tokenOnly returns (bool) {
 
-	function setToken(address _token) onlyOwner {
-		token = Token(_token);
-	}
+        data.setApprovals(src, guy, wad);
+        
+        Approval(src, guy, wad);
+        
+        return true;
+    }
 
-	function setLedger(address _ledger) onlyOwner {
-		ledger = Ledger(_ledger);
-	}
+    function mint(uint128 wad) tokenOnly {
+        data.setBalances(data.owner(), add(data.balances(data.owner()), wad));
+        data.setSupply(add(data.supply(), wad));
+    }
 
-	modifier onlyToken() {
-		require(msg.sender == address(token));
-		_;
-	}
+    function burn(address src, uint128 wad) tokenOnly {
+        data.setBalances(src, sub(data.balances(src), wad));
+        data.setSupply(sub(data.supply(), wad));
+    }
 
-	modifier onlyLedger() {
-		require(msg.sender == address(ledger));
-		_;
-	}
+    function returnIcoInvestments(uint contributorIndex) auth {
+        /*this can only be done after the ICO close date and if less than 20mio tokens were sold*/
+        require(now > icoEnd && icoSale < 20000000000000000000000000);
 
-	// public functions
+        address src = contributors[contributorIndex];
+        require(src != address(0));
 
-	function totalSupply() constant returns (uint) {
-		return ledger.totalSupply();
-	}
+        uint srcBalance = balanceOf(src);
 
-	function balanceOf(address _a) constant returns (uint) {
-		return ledger.balanceOf(_a);
-	}
+        /*transfer the sent ETH amount minus a 5 finney (0.005 ETH ~ 1USD) tax to pay for Gas*/
+        token.transferEth(src, sub(div(srcBalance, tokensPerWei), 5 finney));
 
-	function allowance(address _owner, address _spender) constant returns (uint) {
-		return ledger.allowance(_owner, _spender);
-	}
+        /*give back the tokens*/
+        data.setBalances(src, sub(data.balances(src), srcBalance));
+        data.setBalances(owner, add(data.balances(owner), srcBalance));
+        token.triggerTansferEvent(src, owner, srcBalance);
 
-	// functions below this line are onlyLedger
+        /*reset the address after the transfer to avoid errors*/
+        contributors[contributorIndex] = address(0);
+    }
 
-	// let the ledger send transfer events (the most obvious case
-	// is when we mint directly to the ledger and need the Transfer()
-	// events to appear in the token)
-	function ledgerTransfer(address from, address to, uint val) onlyLedger {
-		token.controllerTransfer(from, to, val);
-	}
+    function handlePayment(address src, uint eth) tokenOnly returns (uint){
+        require(eth > 0);
+        /*the time stamp has to be between the start and end times of the ICO*/
+        require(now >= icoStart && now <= icoEnd);
+        /*no more than 90 mio tokens shall be sold in the ICO*/
+        require(icoSale < maxIco);
 
-	// functions below this line are onlyToken
+        uint tokenAmount = mul(tokensPerWei, eth);
+//first 10 hours
+        if(now < icoStart + (10 * 3600)) {
+            tokenAmount = tokenAmount * 125 / 100;
+        }
+//10 to 34 hours
+        else if(now < icoStart + (34 * 3600)) {
+            tokenAmount = tokenAmount * 115 / 100;
+        }
+//34 to 58 hours
+        else if(now < icoStart + (58 * 3600)) {
+            tokenAmount = tokenAmount * 105 / 100;
+        }
 
-	function transfer(address _from, address _to, uint _value) onlyToken returns (bool success) {
-		return ledger.transfer(_from, _to, _value);
-	}
+        icoSale += tokenAmount;
+        if(icoSale > maxIco) {
+            uint excess = sub(icoSale, maxIco);
+            tokenAmount = sub(tokenAmount, excess);
+            token.transferEth(src, div(excess, tokensPerWei));
+            icoSale = maxIco;
+        }
 
-	function transferFrom(address _spender, address _from, address _to, uint _value) onlyToken returns (bool success) {
-		return ledger.transferFrom(_spender, _from, _to, _value);
-	}
+        require(balanceOf(owner) >= tokenAmount);
 
-	function approve(address _owner, address _spender, uint _value) onlyToken returns (bool success) {
-		return ledger.approve(_owner, _spender, _value);
-	}
+        data.setBalances(owner, sub(data.balances(owner), tokenAmount));
+        data.setBalances(src, add(data.balances(src), tokenAmount));
+        contributors.push(src);
 
-	function increaseApproval (address _owner, address _spender, uint _addedValue) onlyToken returns (bool success) {
-		return ledger.increaseApproval(_owner, _spender, _addedValue);
-	}
+        token.triggerTansferEvent(owner, src, tokenAmount);
 
-	function decreaseApproval (address _owner, address _spender, uint _subtractedValue) onlyToken returns (bool success) {
-		return ledger.decreaseApproval(_owner, _spender, _subtractedValue);
-	}
-
-	function burn(address _owner, uint _amount) onlyToken {
-		ledger.burn(_owner, _amount);
-	}
-}
-
-contract Ledger is Owned, SafeMath, Finalizable {
-	Controller public controller;
-	mapping(address => uint) public balanceOf;
-	mapping (address => mapping (address => uint)) public allowance;
-	uint public totalSupply;
-	uint public mintingNonce;
-	bool public mintingStopped;
-
-	// functions below this line are onlyOwner
-
-	function Ledger() {
-	}
-
-	function setController(address _controller) onlyOwner notFinalized {
-		controller = Controller(_controller);
-	}
-
-	function stopMinting() onlyOwner {
-		mintingStopped = true;
-	}
-
-	function multiMint(uint nonce, uint256[] bits) onlyOwner {
-		require(!mintingStopped);
-		if (nonce != mintingNonce) return;
-		mintingNonce += 1;
-		uint256 lomask = (1 << 96) - 1;
-		uint created = 0;
-		for (uint i=0; i<bits.length; i++) {
-			address a = address(bits[i]>>96);
-			uint value = bits[i]&lomask;
-			balanceOf[a] = balanceOf[a] + value;
-			controller.ledgerTransfer(0, a, value);
-			created += value;
-		}
-		totalSupply += created;
-	}
-
-	// functions below this line are onlyController
-
-	modifier onlyController() {
-		require(msg.sender == address(controller));
-		_;
-	}
-
-	function transfer(address _from, address _to, uint _value) onlyController returns (bool success) {
-		if (balanceOf[_from] < _value) return false;
-
-		balanceOf[_from] = safeSub(balanceOf[_from], _value);
-		balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-		return true;
-	}
-
-	function transferFrom(address _spender, address _from, address _to, uint _value) onlyController returns (bool success) {
-		if (balanceOf[_from] < _value) return false;
-
-		var allowed = allowance[_from][_spender];
-		if (allowed < _value) return false;
-
-		balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-		balanceOf[_from] = safeSub(balanceOf[_from], _value);
-		allowance[_from][_spender] = safeSub(allowed, _value);
-		return true;
-	}
-
-	function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
-		// require user to set to zero before resetting to nonzero
-		if ((_value != 0) && (allowance[_owner][_spender] != 0)) {
-			return false;
-		}
-
-		allowance[_owner][_spender] = _value;
-		return true;
-	}
-
-	function increaseApproval (address _owner, address _spender, uint _addedValue) onlyController returns (bool success) {
-		uint oldValue = allowance[_owner][_spender];
-		allowance[_owner][_spender] = safeAdd(oldValue, _addedValue);
-		return true;
-	}
-
-	function decreaseApproval (address _owner, address _spender, uint _subtractedValue) onlyController returns (bool success) {
-		uint oldValue = allowance[_owner][_spender];
-		if (_subtractedValue > oldValue) {
-			allowance[_owner][_spender] = 0;
-		} else {
-			allowance[_owner][_spender] = safeSub(oldValue, _subtractedValue);
-		}
-		return true;
-	}
-
-	function burn(address _owner, uint _amount) onlyController {
-		balanceOf[_owner] = safeSub(balanceOf[_owner], _amount);
-		totalSupply = safeSub(totalSupply, _amount);
-	}
+        return tokenAmount;
+    }
 }
