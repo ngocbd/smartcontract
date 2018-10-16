@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonBattle at 0x65ca30af89af5a048cc8b715101171fbca6452b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonBattle at 0xc43eae20ae38d1e11bab5b57178777096908dbd6
 */
 pragma solidity ^0.4.16;
 
@@ -380,13 +380,6 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
         }
         classInfo.ancestors = ancestors;
     }
-    
-    function fastSetCacheClassInfo(uint32 _classId1, uint32 _classId2, uint32 _classId3, uint32 _classId4) onlyModerators requireDataContract requireWorldContract public {
-        setCacheClassInfo(_classId1);
-        setCacheClassInfo(_classId2);
-        setCacheClassInfo(_classId3);
-        setCacheClassInfo(_classId4);
-    }    
      
     function withdrawEther(address _sendTo, uint _amount) onlyModerators external {
         if (_amount > this.balance) {
@@ -528,7 +521,7 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
         (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(_objId);
-        return (obj.trainer == _owner && obj.classId != 21);
+        return (obj.trainer == _owner);
     }
     
     function getObjExp(uint64 _objId) constant public returns(uint32, uint32) {
@@ -551,7 +544,7 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
         uint i = 0;
         uint8 level = getLevel(exp);
         for(i=0; i < STAT_COUNT; i+=1) {
-            stats[i] = data.getElementInArrayType(ArrayType.STAT_BASE, _objId, i);
+            stats[i] += data.getElementInArrayType(ArrayType.STAT_BASE, _objId, i);
         }
         for(i=0; i < cacheClasses[classId].steps.length; i++) {
             stats[i] += uint16(safeMult(cacheClasses[classId].steps[i], level*3));
@@ -600,27 +593,27 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
     function getGasonSupport(uint32 _classId, SupporterData _sup) constant private returns(uint16 defenseSupport) {
         uint i = 0;
         uint8 classType = 0;
-        defenseSupport = 0;
         for (i = 0; i < cacheClasses[_classId].types.length; i++) {
             classType = cacheClasses[_classId].types[i];
              if (_sup.isGason1) {
                 if (classType == _sup.type1) {
-                    defenseSupport += gasonBuffPercentage;
+                    defenseSupport += 1;
                     continue;
                 }
             }
             if (_sup.isGason2) {
                 if (classType == _sup.type2) {
-                    defenseSupport += gasonBuffPercentage;
+                    defenseSupport += 1;
                     continue;
                 }
             }
             if (_sup.isGason3) {
                 if (classType == _sup.type3) {
-                    defenseSupport += gasonBuffPercentage;
+                    defenseSupport += 1;
                     continue;
                 }
             }
+            defenseSupport = defenseSupport * gasonBuffPercentage;
         }
     }
     
@@ -660,16 +653,16 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
         uint16 bDefenseBuff = getGasonSupport(bClassId, att.bsup);
         
         // add attack
-        aStats[1] += aStats[1] * att.aAttackSupport / 100;
-        aStats[3] += aStats[3] * att.aAttackSupport / 100;
-        bStats[1] += bStats[1] * att.bAttackSupport / 100;
-        bStats[3] += bStats[3] * att.bAttackSupport / 100;
+        aStats[1] += aStats[1] * att.aAttackSupport;
+        aStats[3] += aStats[3] * att.aAttackSupport;
+        bStats[1] += bStats[1] * att.bAttackSupport;
+        bStats[3] += bStats[3] * att.bAttackSupport;
         
         // add offense
-        aStats[2] += aStats[2] * aDefenseBuff / 100;
-        aStats[4] += aStats[4] * aDefenseBuff / 100;
-        bStats[2] += bStats[2] * bDefenseBuff / 100;
-        bStats[4] += bStats[4] * bDefenseBuff / 100;
+        aStats[2] += aStats[2] * aDefenseBuff;
+        aStats[4] += aStats[4] * aDefenseBuff;
+        bStats[2] += bStats[2] * bDefenseBuff;
+        bStats[4] += bStats[4] * bDefenseBuff;
         
     }
     
