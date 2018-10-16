@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arascacoin at 0x7d5404ea3344745f80d039c28efbe44742935593
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arascacoin at 0x253f6e0bfe6c7675e8513b4c132f00b00b951d5e
 */
 pragma solidity ^0.4.18;
 
@@ -35,6 +35,7 @@ library SafeMath {
         return c;
     }
 }
+
 
 /**
  * @title Ownable
@@ -73,6 +74,7 @@ contract Ownable {
     }
 }
 
+
 /**
  * @title ERC223
  * @dev ERC223 contract interface with ERC20 functions and events
@@ -103,6 +105,7 @@ contract ERC223 {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
+
 /**
  * @title ContractReceiver
  * @dev Contract that is working with ERC223 tokens
@@ -124,7 +127,7 @@ contract ERC223 {
         uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
         tkn.sig = bytes4(u);
 
-        /*
+        /**
          * tkn variable is analogue of msg variable of Ether transaction
          * tkn.sender is person who initiated this token transaction (analogue of msg.sender)
          * tkn.value the number of tokens that were sent (analogue of msg.value)
@@ -134,9 +137,10 @@ contract ERC223 {
     }
 }
 
+
 /**
  * @title Arascacoin
- * @author Arascacoin project
+ * @author Arascacoin Project
  * @dev Arascacoin is an ERC223 Token with ERC20 functions and events
  *      Fully backward compatible with ERC20
  */
@@ -165,7 +169,7 @@ contract Arascacoin is ERC223, Ownable {
      * @dev Constructor is called only once and can not be called again
      */
     function Arascacoin() public {
-        balanceOf[owner] = totalSupply;
+        balanceOf[msg.sender] = totalSupply;
     }
 
     function name() public view returns (string _name) {
