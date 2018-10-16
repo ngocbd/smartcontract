@@ -1,48 +1,34 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moon at 0xe5db2f299bc4dcae6fab5b1940efaa59b65f2a9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moon at 0xaaa73b4a5411a4249b723722cb1bdabfaed495c2
 */
 pragma solidity ^0.4.20;
 
 /*
+Welcome to Moon Inc. (Beta)
+PRESENTED BY
+APPX MATTHEW
+CAPTAIN CRAZY SPACE PANTS
+JANITOR LINK
+LEGAL AUTHORITY MAN
+MAJOR MINID
 
-        _.._
-       .' .-'`
-      /  /
-      |  |
-      \  \
-       '._'-._
-          ```
-*
-* 
-* This source code is a copy of POWH3D
-*
+This is only the beta with 1/1000 pricing
 */
 
 contract Moon {
-    /*=================================
-    =            MODIFIERS            =
-    =================================*/
-    // only people with tokens
+    
     modifier onlyBagholders() {
         require(myTokens() > 0);
         _;
     }
     
-    // only people with profits
+    
     modifier onlyStronghands() {
         require(myDividends(true) > 0);
         _;
     }
     
-    // administrators can:
-    // -> change the name of the contract
-    // -> change the name of the token
-    // -> change the PoS difficulty (How many tokens it costs to hold a masternode, in case it gets crazy high later)
-    // they CANNOT:
-    // -> take funds
-    // -> disable withdrawals
-    // -> kill the contract
-    // -> change the price of tokens
+    
     modifier onlyAdministrator(){
         address _customerAddress = msg.sender;
         require(administrators[keccak256(_customerAddress)]);
@@ -50,25 +36,22 @@ contract Moon {
     }
     
     
-    // ensures that the first tokens in the contract will be equally distributed
-    // meaning, no divine dump will be ever possible
-    // result: healthy longevity.
+    
     modifier antiEarlyWhale(uint256 _amountOfEthereum){
         address _customerAddress = msg.sender;
         
-        // are we still in the vulnerable phase?
-        // if so, enact anti early whale protocol 
+        
         if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
             require(
-                // is the customer in the ambassador list?
+                
                 ambassadors_[_customerAddress] == true &&
                 
-                // does the customer purchase exceed the max ambassador quota?
+                
                 (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
                 
             );
             
-            // updated the accumulated quota    
+              
             ambassadorAccumulatedQuota_[_customerAddress] = SafeMath.add(ambassadorAccumulatedQuota_[_customerAddress], _amountOfEthereum);
         
             // execute
@@ -82,9 +65,7 @@ contract Moon {
     }
     
     
-    /*==============================
-    =            EVENTS            =
-    ==============================*/
+    
     event onTokenPurchase(
         address indexed customerAddress,
         uint256 incomingEthereum,
@@ -120,10 +101,10 @@ contract Moon {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "Moon";
+    string public name = "Moon Inc Beta";
     string public symbol = "Moon";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 10;
+    uint8 constant internal dividendFee_ = 4;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -138,9 +119,7 @@ contract Moon {
     
     
     
-   /*================================
-    =            DATASETS            =
-    ================================*/
+   
     // amount of shares for each address (scaled number)
     mapping(address => uint256) internal tokenBalanceLedger_;
     mapping(address => uint256) internal referralBalance_;
@@ -157,9 +136,7 @@ contract Moon {
     
 
 
-    /*=======================================
-    =            PUBLIC FUNCTIONS            =
-    =======================================*/
+    
     /*
     * -- APPLICATION ENTRY POINTS --  
     */
@@ -359,7 +336,7 @@ contract Moon {
        
     }
     
-    /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
+    
     /**
      * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
      */
