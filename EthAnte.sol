@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAnte at 0xc9010d9ae0f893d176ed1901868cf0b9e6e47763
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAnte at 0xbcece7241c116bfcf7e61ca018dfcec7204f803f
 */
 /*
 *
@@ -33,8 +33,8 @@ contract EthAnte {
     uint public timeOut;
     uint public kBalance;
     uint public feeRate;
-    address public TechnicalRise = 0x7c0Bf55bAb08B4C1eBac3FC115C394a739c62538;
-    address public lastBidder;
+    address TechnicalRise = 0x7c0Bf55bAb08B4C1eBac3FC115C394a739c62538;
+    address lastBidder;
     
     function EthAnte() public payable { 
         lastBidder = msg.sender;
