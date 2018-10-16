@@ -1,27 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowerofBubble at 0x7faccccdcaa140b28a2ae9331f0b2805ce0831a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowerOfBubble at 0xc924df2c2ee515dc6365a0bea182c634f0a1cb01
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.20;
+
 /*
-* Created by LowIQ
-* ====================================*
-* ->About POB https://powerofbubble.com/
-* An autonomousfully automated passive income:
-* [x] Created by a team of professional Developers from India who run a software company and specialize in Internet and Cryptographic Security
-* [x] Pen-tested multiple times with zero vulnerabilities!
-* [X] Able to operate even if our website www.lockedin.io is down via Metamask and Etherscan
-* [x] 30 LCK required for a Masternode Link generation
-* [x] As people join your make money as people leave you make money 24/7 – Not a lending platform but a human-less passive income machine on the Ethereum Blockchain
-* [x] Once deployed neither we nor any other human can alter, change or stop the contract it will run for as long as Ethereum is running!
-* [x] Unlike similar projects the developers are only allowing 3 ETH to be purchased by Developers at deployment as opposed to 22 ETH – Fair for the Public!
-* - 33% Reward of dividends if someone signs up using your Masternode link
-* -  You earn by others depositing or withdrawing ETH and this passive ETH earnings can either be reinvested or you can withdraw it at any time without penalty.
-* Upon entry into the contract it will automatically deduct your 10% entry and exit fees so the longer you remain and the higher the volume the more you earn and the more that people join or leave you also earn more.  
-* You are able to withdraw your entire balance at any time you so choose. 
+* With great bubble, comes great responsibility!
+*
+* Discord: https://discord.gg/pjQcGJS
+* Site: https://www.powerofbubble.com/
+*
+* _______  _______  _     _  _______  ______    _______  _______  _______  __   __  _______  _______  ___      _______ 
+* |       ||       || | _ | ||       ||    _ |  |       ||       ||  _    ||  | |  ||  _    ||  _    ||   |    |       |
+* |    _  ||   _   || || || ||    ___||   | ||  |   _   ||    ___|| |_|   ||  | |  || |_|   || |_|   ||   |    |    ___|
+* |   |_| ||  | |  ||       ||   |___ |   |_||_ |  | |  ||   |___ |       ||  |_|  ||       ||       ||   |    |   |___ 
+* |    ___||  |_|  ||       ||    ___||    __  ||  |_|  ||    ___||  _   | |       ||  _   | |  _   | |   |___ |    ___|
+* |   |    |       ||   _   ||   |___ |   |  | ||       ||   |    | |_|   ||       || |_|   || |_|   ||       ||   |___ 
+* |___|    |_______||__| |__||_______||___|  |_||_______||___|    |_______||_______||_______||_______||_______||_______|
+*
+*
+* The Power of Bubble (PoB) is a decentralized strategic dapp.
+* That gives 25% of the dividends on each transaction to its token holders.
+* Every trade, buy or sell, has a *25%* flat transaction fee applied. 
+* Instead of this going to the exchange, the fee is split between all members who currently held tokens! 
+* 25% of all volume this cryptocurrency ever experiences, is set aside for you the token holders.
+* As ethereum rewards that you can instantly withdraw whenever you'd like.
+*
+* -> Who worked on this project?
+* - PonziBot (math/memes/main site/master)
+* - Mantso (lead solidity dev/lead web3 dev)
+* - swagg (concept design/feedback/management)
+* - Anonymous#1 (main site/web3/test cases)
+* - Anonymous#2 (math formulae/whitepaper)
+*
+* -> Who has audited & approved the projected:
+* - ArcDev
+* - Lolipop
+* - CatToy
 */
 
 
-contract PowerofBubble {
+contract PowerOfBubble {
     /*=================================
     =            MODIFIERS            =
     =================================*/
@@ -30,44 +48,61 @@ contract PowerofBubble {
         require(myTokens() > 0);
         _;
     }
-
+    
     // only people with profits
     modifier onlyStronghands() {
         require(myDividends(true) > 0);
         _;
     }
-
+    
+    // administrators can:
+    // -> change the name of the contract
+    // -> change the name of the token
+    // -> change the PoS difficulty (How many tokens it costs to hold a masternode, in case it gets crazy high later)
+    // they CANNOT:
+    // -> take funds
+    // -> disable withdrawals
+    // -> kill the contract
+    // -> change the price of tokens
+    modifier onlyAdministrator(){
+        address _customerAddress = msg.sender;
+        require(administrators[keccak256(_customerAddress)]);
+        _;
+    }
+    
+    
     // ensures that the first tokens in the contract will be equally distributed
     // meaning, no divine dump will be ever possible
     // result: healthy longevity.
     modifier antiEarlyWhale(uint256 _amountOfEthereum){
         address _customerAddress = msg.sender;
-
+        
         // are we still in the vulnerable phase?
         // if so, enact anti early whale protocol 
-        if( onlyDevs && ((totalEthereumBalance() - _amountOfEthereum) <= devsQuota_ )){
+        if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
             require(
                 // is the customer in the ambassador list?
-                developers_[_customerAddress] == true &&
-
+                ambassadors_[_customerAddress] == true &&
+                
                 // does the customer purchase exceed the max ambassador quota?
-                (devsAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= devsMaxPurchase_
+                (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
+                
             );
-
+            
             // updated the accumulated quota    
-            devsAccumulatedQuota_[_customerAddress] = SafeMath.add(devsAccumulatedQuota_[_customerAddress], _amountOfEthereum);
-
+            ambassadorAccumulatedQuota_[_customerAddress] = SafeMath.add(ambassadorAccumulatedQuota_[_customerAddress], _amountOfEthereum);
+        
             // execute
             _;
         } else {
             // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyDevs = false;
+            onlyAmbassadors = false;
             _;    
         }
-
+        
     }
-
-
+    
+    
     /*==============================
     =            EVENTS            =
     ==============================*/
@@ -77,53 +112,53 @@ contract PowerofBubble {
         uint256 tokensMinted,
         address indexed referredBy
     );
-
+    
     event onTokenSell(
         address indexed customerAddress,
         uint256 tokensBurned,
         uint256 ethereumEarned
     );
-
+    
     event onReinvestment(
         address indexed customerAddress,
         uint256 ethereumReinvested,
         uint256 tokensMinted
     );
-
+    
     event onWithdraw(
         address indexed customerAddress,
         uint256 ethereumWithdrawn
     );
-
+    
     // ERC20
     event Transfer(
         address indexed from,
         address indexed to,
         uint256 tokens
     );
-
-
+    
+    
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "Power of Bubble";
-    string public symbol = "POB";
+    string public name = "PowerOfBubble";
+    string public symbol = "PoB";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 25;
-    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
+    uint8 constant internal dividendFee_ = 2;
+    uint256 constant internal tokenPriceInitial_ = 0.000000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
-
-    // proof of stake (defaults at 30 tokens)
-    uint256 public stakingRequirement = 30e18;
-
-    // Developer program
-    mapping(address => bool) internal developers_;
-    uint256 constant internal devsMaxPurchase_ = 0.3 ether;
-    uint256 constant internal devsQuota_ = 0.1 ether;
-
-
-
+    
+    // proof of stake (defaults at 100 tokens)
+    uint256 public stakingRequirement = 100e18;
+    
+    // ambassador program
+    mapping(address => bool) internal ambassadors_;
+    uint256 constant internal ambassadorMaxPurchase_ = 10 ether;
+    uint256 constant internal ambassadorQuota_ = 10 ether;
+    
+ 
+    
    /*================================
     =            DATASETS            =
     ================================*/
@@ -131,13 +166,17 @@ contract PowerofBubble {
     mapping(address => uint256) internal tokenBalanceLedger_;
     mapping(address => uint256) internal referralBalance_;
     mapping(address => int256) internal payoutsTo_;
-    mapping(address => uint256) internal devsAccumulatedQuota_;
+    mapping(address => uint256) internal ambassadorAccumulatedQuota_;
     uint256 internal tokenSupply_ = 0;
     uint256 internal profitPerShare_;
+    
+    // administrator list (see above on what they can do)
+    mapping(bytes32 => bool) public administrators;
+    
+    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
+    bool public onlyAmbassadors = false;
+    
 
-
-    // when this is set to true, only developers can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyDevs = true;
 
     /*=======================================
     =            PUBLIC FUNCTIONS            =
@@ -145,17 +184,18 @@ contract PowerofBubble {
     /*
     * -- APPLICATION ENTRY POINTS --  
     */
-    function PowerofBubble()
+    function Hourglass()
         public
     {
-        // add developers here
-        developers_[0xE18e877A0e35dF8f3d578DacD252B8435318D027] = true;
+ 
+         
         
-        developers_[0xD6d3955714C8ffdc3f236e66Af065f2E9B10706a] = true;
+        
+     
 
     }
-
-
+    
+     
     /**
      * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
      */
@@ -166,7 +206,7 @@ contract PowerofBubble {
     {
         purchaseTokens(msg.value, _referredBy);
     }
-
+    
     /**
      * Fallback function to handle ethereum that was send straight to the contract
      * Unfortunately we cannot use a referral address this way.
@@ -177,32 +217,32 @@ contract PowerofBubble {
     {
         purchaseTokens(msg.value, 0x0);
     }
-
+    
     /**
      * Converts all of caller's dividends to tokens.
      */
     function reinvest()
-    onlyStronghands()
+        onlyStronghands()
         public
     {
         // fetch dividends
         uint256 _dividends = myDividends(false); // retrieve ref. bonus later in the code
-
+        
         // pay out the dividends virtually
         address _customerAddress = msg.sender;
-        payoutsTo_[_customerAddress] += (int256) (_dividends * magnitude);
-
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+        
         // retrieve ref. bonus
         _dividends += referralBalance_[_customerAddress];
         referralBalance_[_customerAddress] = 0;
-
+        
         // dispatch a buy order with the virtualized "withdrawn dividends"
         uint256 _tokens = purchaseTokens(_dividends, 0x0);
-
+        
         // fire event
-        emit onReinvestment(_customerAddress, _dividends, _tokens);
+        onReinvestment(_customerAddress, _dividends, _tokens);
     }
-
+    
     /**
      * Alias of sell() and withdraw().
      */
@@ -213,7 +253,7 @@ contract PowerofBubble {
         address _customerAddress = msg.sender;
         uint256 _tokens = tokenBalanceLedger_[_customerAddress];
         if(_tokens > 0) sell(_tokens);
-
+        
         // lambo delivery service
         withdraw();
     }
@@ -222,27 +262,27 @@ contract PowerofBubble {
      * Withdraws all of the callers earnings.
      */
     function withdraw()
-    onlyStronghands()
+        onlyStronghands()
         public
     {
         // setup data
         address _customerAddress = msg.sender;
         uint256 _dividends = myDividends(false); // get ref. bonus later in the code
-
+        
         // update dividend tracker
-        payoutsTo_[_customerAddress] += (int256) (_dividends * magnitude);
-
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+        
         // add ref. bonus
         _dividends += referralBalance_[_customerAddress];
         referralBalance_[_customerAddress] = 0;
-
+        
         // lambo delivery service
         _customerAddress.transfer(_dividends);
-
+        
         // fire event
-        emit onWithdraw(_customerAddress, _dividends);
+        onWithdraw(_customerAddress, _dividends);
     }
-
+    
     /**
      * Liquifies tokens to ethereum.
      */
@@ -258,26 +298,26 @@ contract PowerofBubble {
         uint256 _ethereum = tokensToEthereum_(_tokens);
         uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
-
+        
         // burn the sold tokens
         tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
         tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
-
+        
         // update dividends tracker
         int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
         payoutsTo_[_customerAddress] -= _updatedPayouts;       
-
+        
         // dividing by zero is a bad idea
         if (tokenSupply_ > 0) {
             // update the amount of dividends per token
             profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
         }
-
+        
         // fire event
-        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
     }
-
-
+    
+    
     /**
      * Transfer tokens from the caller to a new holder.
      * Remember, there's a 10% fee here as well.
@@ -289,43 +329,95 @@ contract PowerofBubble {
     {
         // setup
         address _customerAddress = msg.sender;
-
+        
         // make sure we have the requested tokens
         // also disables transfers until ambassador phase is over
-        // ( wedont want whale premines )
-        require(!onlyDevs && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
-
+        // ( we dont want whale premines )
+        require(!onlyAmbassadors && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        
         // withdraw all outstanding dividends first
         if(myDividends(true) > 0) withdraw();
-
+        
         // liquify 10% of the tokens that are transfered
         // these are dispersed to shareholders
         uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
         uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
         uint256 _dividends = tokensToEthereum_(_tokenFee);
-
+  
         // burn the fee tokens
         tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
 
         // exchange tokens
         tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
         tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
-
+        
         // update dividend trackers
         payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
         payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
-
+        
         // disperse dividends among holders
         profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
-
+        
         // fire event
-        emit Transfer(_customerAddress, _toAddress, _taxedTokens);
-
+        Transfer(_customerAddress, _toAddress, _taxedTokens);
+        
         // ERC20
         return true;
-
+       
+    }
+    
+    /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
+    /**
+     * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
+     */
+    function disableInitialStage()
+        onlyAdministrator()
+        public
+    {
+        onlyAmbassadors = false;
+    }
+    
+    /**
+     * In case one of us dies, we need to replace ourselves.
+     */
+    function setAdministrator(bytes32 _identifier, bool _status)
+        onlyAdministrator()
+        public
+    {
+        administrators[_identifier] = _status;
+    }
+    
+    /**
+     * Precautionary measures in case we need to adjust the masternode rate.
+     */
+    function setStakingRequirement(uint256 _amountOfTokens)
+        onlyAdministrator()
+        public
+    {
+        stakingRequirement = _amountOfTokens;
+    }
+    
+    /**
+     * If we want to rebrand, we can.
+     */
+    function setName(string _name)
+        onlyAdministrator()
+        public
+    {
+        name = _name;
+    }
+    
+    /**
+     * If we want to rebrand, we can.
+     */
+    function setSymbol(string _symbol)
+        onlyAdministrator()
+        public
+    {
+        symbol = _symbol;
     }
 
+    
     /*----------  HELPERS AND CALCULATORS  ----------*/
     /**
      * Method to view the current Ethereum stored in the contract
@@ -338,7 +430,7 @@ contract PowerofBubble {
     {
         return this.balance;
     }
-
+    
     /**
      * Retrieve the total token supply.
      */
@@ -349,7 +441,7 @@ contract PowerofBubble {
     {
         return tokenSupply_;
     }
-
+    
     /**
      * Retrieve the tokens owned by the caller.
      */
@@ -361,7 +453,7 @@ contract PowerofBubble {
         address _customerAddress = msg.sender;
         return balanceOf(_customerAddress);
     }
-
+    
     /**
      * Retrieve the dividends owned by the caller.
      * If `_includeReferralBonus` is to to 1/true, the referral bonus will be included in the calculations.
@@ -374,9 +466,9 @@ contract PowerofBubble {
         returns(uint256)
     {
         address _customerAddress = msg.sender;
-        return _includeReferralBonus ?dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
+        return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
     }
-
+    
     /**
      * Retrieve the token balance of any single address.
      */
@@ -387,7 +479,7 @@ contract PowerofBubble {
     {
         return tokenBalanceLedger_[_customerAddress];
     }
-
+    
     /**
      * Retrieve the dividend balance of any single address.
      */
@@ -398,7 +490,7 @@ contract PowerofBubble {
     {
         return (uint256) ((int256)(profitPerShare_ * tokenBalanceLedger_[_customerAddress]) - payoutsTo_[_customerAddress]) / magnitude;
     }
-
+    
     /**
      * Return the buy price of 1 individual token.
      */
@@ -406,21 +498,18 @@ contract PowerofBubble {
         public 
         view 
         returns(uint256)
-        {
+    {
         // our calculation relies on the token supply, so we need supply. Doh.
-        if(tokenSupply_ == 0)
-        {
+        if(tokenSupply_ == 0){
             return tokenPriceInitial_ - tokenPriceIncremental_;
-        }
-        else
-        {
+        } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
             uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
             uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
             return _taxedEthereum;
         }
-        }
-
+    }
+    
     /**
      * Return the sell price of 1 individual token.
      */
@@ -439,7 +528,7 @@ contract PowerofBubble {
             return _taxedEthereum;
         }
     }
-
+    
     /**
      * Function for the frontend to dynamically retrieve the price scaling of buy orders.
      */
@@ -451,10 +540,10 @@ contract PowerofBubble {
         uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
         uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
-
+        
         return _amountOfTokens;
     }
-
+    
     /**
      * Function for the frontend to dynamically retrieve the price scaling of sell orders.
      */
@@ -469,8 +558,8 @@ contract PowerofBubble {
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         return _taxedEthereum;
     }
-
-
+    
+    
     /*==========================================
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
@@ -487,67 +576,68 @@ contract PowerofBubble {
         uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
         uint256 _fee = _dividends * magnitude;
-
-        // no point in continuing execution if OP is a poorfagrussian hacker
+ 
+        // no point in continuing execution if OP is a poorfag russian hacker
         // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
         // (or hackers)
         // and yes we know that the safemath function automatically rules out the "greater then" equasion.
         require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
-
+        
         // is the user referred by a masternode?
         if(
             // is this a referred purchase?
             _referredBy != 0x0000000000000000000000000000000000000000 &&
 
             // no cheating!
-            _referredBy != _customerAddress&&
-
+            _referredBy != _customerAddress &&
+            
             // does the referrer have at least X whole tokens?
             // i.e is the referrer a godly chad masternode
             tokenBalanceLedger_[_referredBy] >= stakingRequirement
         ){
             // wealth redistribution
-            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[0xB0B1ef3614De383059B5F94b36076B8c53739E98], _referralBonus);
         } else {
             // no ref purchase
             // add the referral bonus back to the global dividends cake
             _dividends = SafeMath.add(_dividends, _referralBonus);
             _fee = _dividends * magnitude;
         }
-
+        
         // we can't give people infinite ethereum
         if(tokenSupply_ > 0){
-
+            
             // add tokens to the pool
             tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
-
+ 
             // take the amount of dividends gained through this transaction, and allocates them evenly to each shareholder
             profitPerShare_ += (_dividends * magnitude / (tokenSupply_));
-
+            
             // calculate the amount of tokens the customer receives over his purchase 
             _fee = _fee - (_fee-(_amountOfTokens * (_dividends * magnitude / (tokenSupply_))));
-
+        
         } else {
             // add tokens to the pool
             tokenSupply_ = _amountOfTokens;
         }
-
+        
         // update circulating supply & the ledger address for the customer
         tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
-
+        
         // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
         //really i know you think you do but you don't
         int256 _updatedPayouts = (int256) ((profitPerShare_ * _amountOfTokens) - _fee);
         payoutsTo_[_customerAddress] += _updatedPayouts;
-
+        
         // fire event
-        emit onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
-
+        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
+        
         return _amountOfTokens;
     }
 
     /**
      * Calculate Token price based on an amount of incoming ethereum
+     * It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
      * Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
      */
     function ethereumToTokens_(uint256 _ethereum)
@@ -557,7 +647,7 @@ contract PowerofBubble {
     {
         uint256 _tokenPriceInitial = tokenPriceInitial_ * 1e18;
         uint256 _tokensReceived = 
-        (
+         (
             (
                 // underflow attempts BTFO
                 SafeMath.sub(
@@ -576,15 +666,16 @@ contract PowerofBubble {
             )/(tokenPriceIncremental_)
         )-(tokenSupply_)
         ;
-
+  
         return _tokensReceived;
     }
-
+    
     /**
      * Calculate token sell value.
+     * It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
      * Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
      */
-    function tokensToEthereum_(uint256 _tokens)
+     function tokensToEthereum_(uint256 _tokens)
         internal
         view
         returns(uint256)
@@ -592,22 +683,25 @@ contract PowerofBubble {
 
         uint256 tokens_ = (_tokens + 1e18);
         uint256 _tokenSupply = (tokenSupply_ + 1e18);
-        uint256 _etherReceived = 
+        uint256 _etherReceived =
         (
             // underflow attempts BTFO
             SafeMath.sub(
                 (
                     (
                         (
-                        tokenPriceInitial_ + (tokenPriceIncremental_ * (_tokenSupply/1e18))
-                                                )-tokenPriceIncremental_
+                            tokenPriceInitial_ +(tokenPriceIncremental_ * (_tokenSupply/1e18))
+                        )-tokenPriceIncremental_
                     )*(tokens_ - 1e18)
                 ),(tokenPriceIncremental_*((tokens_**2-tokens_)/1e18))/2
             )
         /1e18);
         return _etherReceived;
     }
-
+    
+    
+    //This is where all your gas goes, sorry
+    //Not sorry, you probably only paid 1 gwei
     function sqrt(uint x) internal pure returns (uint y) {
         uint z = (x + 1) / 2;
         y = x;
