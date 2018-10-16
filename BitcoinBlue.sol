@@ -1,104 +1,82 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinBlue at 0xac0f978ef9a25c06132c36b99e73f3c217d8674e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinBlue at 0x848ae4cc01c97297cdb4465bc06b8bcdf27996ba
 */
-pragma solidity ^0.4.13;
-
-//Bitcoin Blue official / bitcoinred.io for official contracts
-
-contract ERC20 {
-     function totalSupply() constant returns (uint256 totalSupply);
-     function balanceOf(address _owner) constant returns (uint256 balance);
-     function transfer(address _to, uint256 _value) returns (bool success);
-     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-     function approve(address _spender, uint256 _value) returns (bool success);
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- }
-  
-  contract BitcoinBlue is ERC20 {
-     string public constant symbol = "BTCB";
-     string public constant name = "Bitcoin Blue";
-     uint8 public constant decimals = 8;
-     uint256 _totalSupply = 16000000 * 10**8;
-     
-
-     address public owner;
-  
-     mapping(address => uint256) balances;
-  
-     mapping(address => mapping (address => uint256)) allowed;
-     
-  
-     function BitcoinBlue() {
-         owner = msg.sender;
-         balances[owner] = _totalSupply;
-     }
-     
-     modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+pragma solidity ^ 0.4 .9;
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-     
-     
-     function distributeBTCB(uint256 _amount, address[] addresses) onlyOwner {
-         for (uint i = 0; i < addresses.length; i++) {
-             balances[owner] -= _amount * 10**8;
-             balances[addresses[i]] += _amount * 10**8;
-             Transfer(owner, addresses[i], _amount * 10**8);
-         }
-     }
-     
-  
-     function totalSupply() constant returns (uint256 totalSupply) {
-         totalSupply = _totalSupply;
-     }
-  
 
-     function balanceOf(address _owner) constant returns (uint256 balance) {
+    function div(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a / b;
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+contract BitcoinBlue {
+    using SafeMath
+    for uint256;
+    mapping(address => mapping(address => uint256)) allowed;
+    mapping(address => uint256) balances;
+    uint256 public totalSupply;
+    uint256 public decimals;
+    address public owner;
+    bytes32 public symbol;
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed _owner, address indexed spender, uint256 value);
+
+    function BitcoinBlue() {
+        totalSupply = 36000000;
+        symbol = 'BTCB';
+        owner = 0x1fd3ca06f0e5d6079666c8f502bd490e67d3980c;
+        balances[owner] = totalSupply;
+        decimals = 0;
+    }
+
+    function balanceOf(address _owner) constant returns(uint256 balance) {
         return balances[_owner];
-     }
- 
-     function transfer(address _to, uint256 _amount) returns (bool success) {
-         if (balances[msg.sender] >= _amount 
-            && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(msg.sender, _to, _amount);
-            return true;
-         } else {
-             return false;
-         }
-     }
-     
-     
-     function transferFrom(
-         address _from,
-         address _to,
-         uint256 _amount
-     ) returns (bool success) {
-         if (balances[_from] >= _amount
-             && allowed[_from][msg.sender] >= _amount
-             && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[_from] -= _amount;
-             allowed[_from][msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(_from, _to, _amount);
-             return true;
-         } else {
-            return false;
-         }
-     }
- 
-     function approve(address _spender, uint256 _amount) returns (bool success) {
-         allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-         return true;
-     }
-  
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-         return allowed[_owner][_spender];
+    }
+
+    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    function transfer(address _to, uint256 _value) returns(bool) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns(bool) {
+        var _allowance = allowed[_from][msg.sender];
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) returns(bool) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function() {
+        revert();
     }
 }
