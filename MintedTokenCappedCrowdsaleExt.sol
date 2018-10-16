@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0xACf1351BF74EA3e668cCD9a451884BcEF1296dAc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x9875FE006D796A1A7533596ebF778B575aC01ED0
 */
+// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
 pragma solidity ^0.4.8;
 /**
@@ -433,6 +434,10 @@ contract CrowdsaleExt is Haltable {
         throw;
       }
     }
+    // Check that we did not bust the cap
+    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
+      throw;
+    }
     if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
@@ -445,10 +450,6 @@ contract CrowdsaleExt is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
     if(pricingStrategy.isPresalePurchase(receiver)) {
         presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
-    }
-    // Check that we did not bust the cap
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
     }
     assignTokens(receiver, tokenAmount);
     // Pocket the money
@@ -881,36 +882,27 @@ contract MintableTokenExt is StandardToken, Ownable {
   /** List of agents that are allowed to create new tokens */
   mapping (address => bool) public mintAgents;
   event MintingAgentChanged(address addr, bool state  );
-  /** inPercentageUnit is percents of tokens multiplied to 10 up to percents decimals.
-  * For example, for reserved tokens in percents 2.54%
-  * inPercentageUnit = 254
-  * inPercentageDecimals = 2
-  */
   struct ReservedTokensData {
     uint inTokens;
-    uint inPercentageUnit;
-    uint inPercentageDecimals;
+    uint inPercentage;
   }
   mapping (address => ReservedTokensData) public reservedTokensList;
   address[] public reservedTokensDestinations;
   uint public reservedTokensDestinationsLen = 0;
-  function setReservedTokensList(address addr, uint inTokens, uint inPercentageUnit, uint inPercentageDecimals) onlyOwner {
+  function setReservedTokensList(address addr, uint inTokens, uint inPercentage) onlyOwner {
     reservedTokensDestinations.push(addr);
     reservedTokensDestinationsLen++;
-    reservedTokensList[addr] = ReservedTokensData({inTokens:inTokens, inPercentageUnit:inPercentageUnit, inPercentageDecimals: inPercentageDecimals});
+    reservedTokensList[addr] = ReservedTokensData({inTokens:inTokens, inPercentage:inPercentage});
   }
   function getReservedTokensListValInTokens(address addr) constant returns (uint inTokens) {
     return reservedTokensList[addr].inTokens;
   }
-  function getReservedTokensListValInPercentageUnit(address addr) constant returns (uint inPercentageUnit) {
-    return reservedTokensList[addr].inPercentageUnit;
+  function getReservedTokensListValInPercentage(address addr) constant returns (uint inPercentage) {
+    return reservedTokensList[addr].inPercentage;
   }
-  function getReservedTokensListValInPercentageDecimals(address addr) constant returns (uint inPercentageDecimals) {
-    return reservedTokensList[addr].inPercentageDecimals;
-  }
-  function setReservedTokensListMultiple(address[] addrs, uint[] inTokens, uint[] inPercentageUnit, uint[] inPercentageDecimals) onlyOwner {
+  function setReservedTokensListMultiple(address[] addrs, uint[] inTokens, uint[] inPercentage) onlyOwner {
     for (uint iterator = 0; iterator < addrs.length; iterator++) {
-      setReservedTokensList(addrs[iterator], inTokens[iterator], inPercentageUnit[iterator], inPercentageDecimals[iterator]);
+      setReservedTokensList(addrs[iterator], inTokens[iterator], inPercentage[iterator]);
     }
   }
   /**
