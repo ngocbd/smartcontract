@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoMultiWallet at 0x1365b4ce628e26ae1bcab699e9558f011c62e488
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoMultiWallet at 0xdb0d31ab475f4841b35337c564dcb923084145e4
 */
 pragma solidity ^0.4.16;
 
@@ -9,7 +9,7 @@ contract Ownable
 
 	function Ownable() public	
 	{ 
-		m_addrOwner = msg.sender; 
+		m_addrOwner = msg.sender;
 	}
 
 	modifier onlyOwner() 
@@ -60,6 +60,13 @@ contract IcoMultiWallet is Ownable
 	{
 	}
 
+	// ---
+	
+	function() public payable 
+	{ 
+		depositFunds();
+	}	
+	
 	// ---
 	
 	function depositFunds() public payable
