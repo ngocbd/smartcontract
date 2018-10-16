@@ -1,84 +1,200 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xad43e8ba48a974e6dc5a385d87fc8cd1fe94a408
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xedb02890a8b6622b0b5b39a012166c16d667c44b
 */
 pragma solidity ^0.4.19;
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who)public constant returns (uint256);
+  function transfer(address to, uint256 value)public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+ 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value)public returns (bool);
+  function approve(address spender, uint256 value)public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+ 
+library SafeMath {
+    
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+ 
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+ 
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+ 
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  
+}
+ 
+contract BasicToken is ERC20Basic {
+    
+  using SafeMath for uint256;
+ 
+  mapping(address => uint256) balances;
+ 
+   function transfer(address _to, uint256 _value) public returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+  
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+ 
+}
+ 
+contract StandardToken is ERC20, BasicToken {
+ 
+  mapping (address => mapping (address => uint256)) allowed;
+ 
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+ 
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+ 
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+ 
+}
+ 
+contract Ownable {
+    
+  address public owner;
+ 
+  function Ownable() public {
+    owner = msg.sender;
+  }
+ 
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+ 
+}
+ 
+contract MintableToken is StandardToken, Ownable {
+    
+  event Mint(address indexed to, uint256 amount);
+  
+  event MintFinished();
+ 
+  bool public mintingFinished = false;
+ 
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+ 
+  function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
 
-interface token {
-    function transfer(address receiver, uint amount);
+  function finishMinting() public onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+  
+}
+ 
+contract GRV is MintableToken {
+    
+    string public constant name = "Graviton";
+    
+    string public constant symbol = "GRV";
+    
+    uint32 public constant decimals = 23;
+    
 }
 
-contract Crowdsale {
-    address public beneficiary;
-    uint public amountRaised;
-    token public tokenReward;
-    uint256 public soldTokensCounter;
-    uint public price = 0.000142857 ether;
-    bool public crowdsaleClosed = false;
-    bool public adminVer = false;
-    mapping(address => uint256) public balanceOf;
+contract Crowdsale is Ownable {
+    
+    using SafeMath for uint;
+    address public restricted;
+    GRV public token = new GRV();
+    uint public start;
+    uint public rate;
+    bool public isOneToken = false;
+    bool public isFinish = false;
+    
+    mapping(address => uint) public balances;
 
-
-    event GoalReached(address recipient, uint totalAmountRaised);
-    event FundTransfer(address backer, uint amount, uint price, bool isContribution);
-
-    /**
-     * Constrctor function
-     *
-     * Setup the owner
-     */
-    function Crowdsale() {
-        beneficiary = 0xA4047af02a2Fd8e6BB43Cfe8Ab25292aC52c73f4;
-        tokenReward = token(0x12AC8d8F0F48b7954bcdA736AF0576a12Dc8C387);
+    function StopCrowdsale() public onlyOwner {
+        if (isFinish) {
+           isFinish =false;
+        } else isFinish =true;
     }
 
-    modifier onlyOwner {
-        require(msg.sender == beneficiary);
-        _;
+    function Crowdsale() public {
+      restricted = 0x444dA98a3037802B3ad51658b831E9aCd1A03Ca5;
+      rate = 10000000000000000000000;
+      start = 1517368500;
+    }
+ 
+    modifier saleIsOn() {
+      require(now > start && !isFinish);
+      _;
     }
 
-    /**
-     * Check ownership
-     */
-    function checkAdmin() onlyOwner {
-        adminVer = true;
-    }
+    function createTokens() public saleIsOn payable {
+      uint tokens = rate.mul(msg.value).div(1 ether);
+      uint finishdays=90-now.sub(start).div(1 days);
+      uint bonusTokens = 0;
 
-    /**
-     * Return unsold tokens to beneficiary address
-     */
-    function getUnsoldTokens(uint val_) onlyOwner {
-        tokenReward.transfer(beneficiary, val_);
-    }
+//Bonus
+      if(finishdays < 0) {
+          finishdays=0;
+      }
+      bonusTokens = tokens.mul(finishdays).div(100);
+      tokens = tokens.add(bonusTokens);
+      token.mint(msg.sender, tokens);
+      balances[msg.sender] = balances[msg.sender].add(msg.value);
 
-    /**
-     * Return unsold tokens to beneficiary address with decimals
-     */
-    function getUnsoldTokensWithDecimals(uint val_, uint dec_) onlyOwner {
-        val_ = val_ * 10 ** dec_;
-        tokenReward.transfer(beneficiary, val_);
-    }
+//for restricted 
+      if (!isOneToken){
+        tokens = tokens.add(1000000000000000000);
+        isOneToken=true;
+      }
+      token.mint(restricted, tokens); 
+      balances[restricted] = balances[restricted].add(msg.value); 
+      restricted.transfer(this.balance); 
 
-    /**
-     * Close/Open crowdsale
-     */
-    function closeCrowdsale(bool closeType) onlyOwner {
-        crowdsaleClosed = closeType;
     }
-
-    /**
-     * Fallback function
-     *
-     * The function without name is the default function that is called whenever anyone sends funds to a contract
-     */
-    function () payable {
-        require(!crowdsaleClosed && msg.value <= 2 ether);                                  //1 ether is minimum to contribute                                                                
-        uint amount = msg.value;                                                           //save users eth value
-        balanceOf[msg.sender] += amount;                                                   //save users eth value in balance list 
-        amountRaised += amount;                                                            //update total amount of crowdsale
-        uint sendTokens = (amount / price) * 10 ** uint256(18);                            //calculate user's tokens
-        tokenReward.transfer(msg.sender, sendTokens);                                      //send tokens to user
-        soldTokensCounter += sendTokens;                                                   //update total sold tokens counter
-        FundTransfer(msg.sender, amount, price, true);                                     //pin transaction data in blockchain
-        if (beneficiary.send(amount)) { FundTransfer(beneficiary, amount, price, false); } //send users amount to beneficiary
+ 
+    function() external payable {
+      createTokens();
     }
 }
