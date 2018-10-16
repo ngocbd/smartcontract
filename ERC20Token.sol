@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x0f0f3c0d90019001934167858344b69a5912b8b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x7492781cc8423b8ceb8f207da574e083e2cfccbe
 */
 pragma solidity ^0.4.4;
 
@@ -40,6 +40,7 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
 }
+
 
 
 contract StandardToken is Token {
@@ -89,6 +90,7 @@ contract StandardToken is Token {
 }
 
 
+//name this contract whatever you'd like
 contract ERC20Token is StandardToken {
 
     function () {
@@ -98,19 +100,30 @@ contract ERC20Token is StandardToken {
 
     /* Public variables of the token */
 
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 999999999;               // Give the creator all initial tokens (100000 for example)
-        totalSupply          = 999999999;                        // Update total supply (100000 for example)
-        name = "That feeling shared by many";                                   // Set the name for display purposes
+        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000;                        // Update total supply (100000 for example)
+        name = "Wealthier";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "OMOU";                               // Set the symbol for display purposes
+        symbol = "WCC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
