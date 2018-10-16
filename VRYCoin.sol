@@ -1,11 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRYCoin at 0x71186cc94d4bd4aad5bc2e5e329e32a9f70e1ac6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRYCoin at 0x8a8cc09bf792e032174420590976a25907c6b32f
 */
 pragma solidity ^0.4.20;
-
-// OFFICIAL PRE-ICO TOKENS SALE FOR PROJECT:iVeryone(VRY) https://ivery.one/
-// VRY tokens will be automatically sent to buyer's wallet after buyer send ETH to contract address
-// Pre-ICO token price: 1 ETH = 1000 VRY
 
 /**
  * @title SafeMath
@@ -130,21 +126,21 @@ contract StandardToken is ERC20 {
 }
 
 contract VRYCoin is StandardToken {
-  string public constant name = "VRY";
+  string public constant name = "Very Token";
   string public constant symbol = "VRY";
   uint8 public constant decimals = 18;
   
   address private fundsWallet;
 
   function VRYCoin() public {
-    totalSupply = 1000000000000000000000000000000;
+    totalSupply = 10000000000000000000000000000;
     balances[msg.sender] = totalSupply;
     fundsWallet = msg.sender;
   }
   
   function() payable{   
         fundsWallet.transfer(msg.value);
-        uint256 unitsOneEthCanBuy = 1000;
+        uint256 unitsOneEthCanBuy = 100000;
         uint256 amount = msg.value * unitsOneEthCanBuy;
         if (balances[fundsWallet] < amount) {
             return;
