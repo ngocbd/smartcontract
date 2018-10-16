@@ -1,196 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATMToken at 0x696a89e6dfa39b1c8ecf9ad86e826205ed17a8d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATMToken at 0x9b11efcaaa1890f6ee52c6bb7cf8153ac5d74139
 */
-contract Owned {
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner) ;
-        _;
-    }
-
-    address public owner;
-
-    /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    address public newOwner;
-
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    ///  an unowned neutral vault, however that cannot be undone
-    function changeOwner(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
-    }
-
-    function acceptOwnership() {
-        if (msg.sender == newOwner) {
-            owner = newOwner;
-        }
-    }
-}
-
-contract SafeMath {
-    
-    /*
-    standard uint256 functions
-     */
-
-    function add(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x + y) >= x);
-    }
-
-    function sub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x - y) <= x);
-    }
-
-    function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x * y) >= x);
-    }
-
-    function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        z = x / y;
-    }
-
-    function min(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x <= y ? x : y;
-    }
-    function max(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x >= y ? x : y;
-    }
-
-    /*
-    uint128 functions (h is for half)
-     */
-
-
-    function hadd(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x + y) >= x);
-    }
-
-    function hsub(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x - y) <= x);
-    }
-
-    function hmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x * y) >= x);
-    }
-
-    function hdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = x / y;
-    }
-
-    function hmin(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        return x <= y ? x : y;
-    }
-    function hmax(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        return x >= y ? x : y;
-    }
-
-
-    /*
-    int256 functions
-     */
-
-    function imin(int256 x, int256 y) constant internal returns (int256 z) {
-        return x <= y ? x : y;
-    }
-    function imax(int256 x, int256 y) constant internal returns (int256 z) {
-        return x >= y ? x : y;
-    }
-
-    /*
-    WAD math
-     */
-
-    uint128 constant WAD = 10 ** 18;
-
-    function wadd(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hadd(x, y);
-    }
-
-    function wsub(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hsub(x, y);
-    }
-
-    function wmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y + WAD / 2) / WAD);
-    }
-
-    function wdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * WAD + y / 2) / y);
-    }
-
-    function wmin(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmin(x, y);
-    }
-    function wmax(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmax(x, y);
-    }
-
-    /*
-    RAY math
-     */
-
-    uint128 constant RAY = 10 ** 27;
-
-    function radd(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hadd(x, y);
-    }
-
-    function rsub(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hsub(x, y);
-    }
-
-    function rmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y + RAY / 2) / RAY);
-    }
-
-    function rdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * RAY + y / 2) / y);
-    }
-
-    function rpow(uint128 x, uint64 n) constant internal returns (uint128 z) {
-        // This famous algorithm is called "exponentiation by squaring"
-        // and calculates x^n with x as fixed-point and n as regular unsigned.
-        //
-        // It's O(log n), instead of O(n) for naive repeated multiplication.
-        //
-        // These facts are why it works:
-        //
-        //  If n is even, then x^n = (x^2)^(n/2).
-        //  If n is odd,  then x^n = x * x^(n-1),
-        //   and applying the equation for even x gives
-        //    x^n = x * (x^2)^((n-1) / 2).
-        //
-        //  Also, EVM division is flooring and
-        //    floor[(n-1) / 2] = floor[n / 2].
-
-        z = n % 2 != 0 ? x : RAY;
-
-        for (n /= 2; n != 0; n /= 2) {
-            x = rmul(x, x);
-
-            if (n % 2 != 0) {
-                z = rmul(z, x);
-            }
-        }
-    }
-
-    function rmin(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmin(x, y);
-    }
-    function rmax(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmax(x, y);
-    }
-
-    function cast(uint256 x) constant internal returns (uint128 z) {
-        assert((z = uint128(x)) == x);
-    }
-
-}
 contract ERC20Token {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -236,6 +46,36 @@ contract ERC20Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+contract Owned {
+    /// @dev `owner` is the only address that can call a function with this
+    /// modifier
+    modifier onlyOwner() {
+        require(msg.sender == owner) ;
+        _;
+    }
+
+    address public owner;
+
+    /// @notice The Constructor assigns the message sender to be `owner`
+    function Owned() {
+        owner = msg.sender;
+    }
+
+    address public newOwner;
+
+    /// @notice `owner` can step down and assign some other address to this role
+    /// @param _newOwner The address of the new owner. 0x0 can be used to create
+    ///  an unowned neutral vault, however that cannot be undone
+    function changeOwner(address _newOwner) onlyOwner {
+        newOwner = _newOwner;
+    }
+
+    function acceptOwnership() {
+        if (msg.sender == newOwner) {
+            owner = newOwner;
+        }
+    }
+}
 contract StandardToken is ERC20Token {
     function transfer(address _to, uint256 _value) returns (bool success) {
         if (balances[msg.sender] >= _value && _value > 0) {
@@ -289,20 +129,18 @@ contract ATMToken is StandardToken, Owned {
     string public constant symbol = "ATM";
     string public version = "1.0";
     uint256 public constant decimals = 8;
-    bool public disabled;
-    mapping(address => bool) public isATMHolder;
-    address[] public ATMHolders;
+    bool public disabled = false;
+    uint256 public constant MILLION = (10**6 * 10**decimals);
     // constructor
-    function ATMToken(uint256 _amount) {
-        totalSupply = _amount; //????ATM????
-        balances[msg.sender] = _amount;
+    function ATMToken() {
+        totalSupply = 10000 * MILLION; //????ATM????
+
+        balances[0x7b6a1147417f7dff06c77c4026fdc25c227c26c2] = 9200 * MILLION;
+        balances[0xe2aa115842743a189fc01610203d2ff04c59d74a] = 800 * MILLION;
     }
 
     function getATMTotalSupply() external constant returns(uint256) {
         return totalSupply;
-    }
-    function getATMHoldersNumber() external constant returns(uint256) {
-        return ATMHolders.length;
     }
 
     //??????,?????ATM??
@@ -312,19 +150,11 @@ contract ATMToken is StandardToken, Owned {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         require(!disabled);
-        if(isATMHolder[_to] == false){
-            isATMHolder[_to] = true;
-            ATMHolders.push(_to);
-        }
         return super.transfer(_to, _value);
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         require(!disabled);
-        if(isATMHolder[_to] == false){
-            isATMHolder[_to] = true;
-            ATMHolders.push(_to);
-        }
         return super.transferFrom(_from, _to, _value);
     }
     function kill() external onlyOwner {
