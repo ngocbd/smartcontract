@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0xeb907a50921e052cbee233811beaf0839d2a98fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0x5e9182b4954dbc43a2b080754017a2b0c40f9ee6
 */
 pragma solidity ^0.4.8;
 
@@ -172,9 +172,7 @@ contract Advertisement {
 		require (timestampList.length == nonces.length);
 		//Expect ordered array arranged in ascending order
 		for(uint i = 0; i < timestampList.length-1; i++){
-			uint256 timestamp_diff = timestampList[i+1]-timestampList[i];
-
-			require((timestamp_diff / 1000) == 10);
+			require((timestampList[i+1]-timestampList[i]) == 10000);
 		}
 
 		require(!userAttributions[msg.sender][bidId]);
