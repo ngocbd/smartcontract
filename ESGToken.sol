@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESGToken at 0x500b7bb5e2a96454ebc1dd12718863c8edac7eba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESGToken at 0x67ccdc29e59e1c65dee7283fa6c8b5bb4ce5cb8d
 */
 pragma solidity >=0.4.10;
 
@@ -96,7 +96,7 @@ contract ESGToken is Owned {
     string public name = "ESG Token";               // Name of token
     string public symbol = "ESG";                   // Token symbol
     uint256 public decimals = 3;                    // Decimals for the token
-    uint256 public currentSupply;                   // Current supply of tokens
+    uint256 public totalSupply;                   // Current supply of tokens
     uint256 public supplyCap;                       // Hard cap on supply of tokens
     address public ICOcontroller;                   // Controlling contract from ICO
     address public timelockTokens;                  // Address for locked management tokens
@@ -133,7 +133,7 @@ contract ESGToken is Owned {
 
     ---------------------------------------------------------------------------------------- */
     function ESGToken() {
-        currentSupply = 0;                      // Starting supply is zero
+        totalSupply = 0;                      // Starting supply is zero
         supplyCap = 0;                          // Hard cap supply in Tokens set by ICO
         tokenParametersSet = false;             // Ensure parameters are set
         controllerSet = false;                  // Ensure controller is set
@@ -203,9 +203,7 @@ contract ESGToken is Owned {
 
     /*  ----------------------------------------------------------------------------------------
 
-    Dev:    Gets the balance of the address owner
-
-    Param:  _owner  Address of the owner querying their balance
+    Dev:    ERC20 protocols
     
     ---------------------------------------------------------------------------------------- */
     function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -229,12 +227,13 @@ contract ESGToken is Owned {
         uint256 amount = SafeMath.safeMul(_amount, (10**decimals));             // Tokens minted using unit parameter supplied
 
         // Ensure that supplyCap is set and that new tokens don't breach cap
-        assert(supplyCap > 0 && amount > 0 && SafeMath.safeAdd(currentSupply, amount) <= supplyCap);
+        assert(supplyCap > 0 && amount > 0 && SafeMath.safeAdd(totalSupply, amount) <= supplyCap);
         
         balanceOf[_address] = SafeMath.safeAdd(balanceOf[_address], amount);    // Add tokens to address
-        currentSupply = SafeMath.safeAdd(currentSupply, amount);                // Add to supply
+        totalSupply = SafeMath.safeAdd(totalSupply, amount);                // Add to supply
         
         Mint(_address, amount);
+        Transfer(0x0, _address, amount);
     }
     
     /*  ----------------------------------------------------------------------------------------
@@ -374,7 +373,7 @@ contract ESGToken is Owned {
             Update sender's balance of tokens
         */
         balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _amount);
-        currentSupply = SafeMath.safeSub(currentSupply, _amount);
+        totalSupply = SafeMath.safeSub(totalSupply, _amount);
 
         // Call burn function
         result = esgAssetHolder.burn(msg.sender, _amount);
