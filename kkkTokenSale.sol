@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract kkkTokenSale at 0x48946d2452E72103703ad5317c9fa7b3a3D9b5a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KkkTokenSale at 0x980f4331c1d4188d4cf876bef10fe946de70478d
 */
+// Copyright (C) 2017 DappHub, LLC
+
 // Copyright (C) 2017 DappHub, LLC
 
 pragma solidity ^0.4.11;
@@ -446,14 +448,34 @@ contract DSToken is DSTokenBase(0), DSStop {
 }
 
 
-contract kkkTokenSale is DSStop, DSMath, DSExec {
 
-    DSToken public kkk;
+//////////////////////////////////////////////////
+//
+//import "ds-token/token.sol";
+//
+//    import "ds-stop/stop.sol";
+//        import "ds-auth/auth.sol";
+//        import "ds-note/note.sol";
+//
+//    import "ds-token/base.sol";
+//        import "erc20/erc20.sol";
+//        import "ds-math/math.sol";
+//
+//import "ds-exec/exec.sol";
+//import "ds-auth/auth.sol";
+//import "ds-note/note.sol";
+//import "ds-math/math.sol";
 
-    // kkk PRICES (ETH/kkk)
+
+
+contract KkkTokenSale is DSStop, DSMath, DSExec {
+
+    DSToken public key;
+
+    // KEY PRICES (ETH/KEY)
     uint128 public constant PUBLIC_SALE_PRICE = 200000 ether;
 
-    uint128 public constant TOTAL_SUPPLY = 10 ** 11 * 1 ether;  // 100 billion kkk in total
+    uint128 public constant TOTAL_SUPPLY = 10 ** 11 * 1 ether;  // 100 billion KEY in total
 
     uint128 public constant SELL_SOFT_LIMIT = TOTAL_SUPPLY * 12 / 100; // soft limit is 12% , 60000 eth
     uint128 public constant SELL_HARD_LIMIT = TOTAL_SUPPLY * 16 / 100; // hard limit is 16% , 80000 eth
@@ -475,9 +497,10 @@ contract kkkTokenSale is DSStop, DSMath, DSExec {
     uint128 public sold;
     uint128 public constant soldByChannels = 40000 * 200000 ether; // 2 ICO websites, each 20000 eth
 
-    function kkkTokenSale(uint startTime_, address destFoundation_) {
+    function KkkTokenSale(uint startTime_, address destFoundation_) {
 
-        kkk = new DSToken("kkk");
+        key = new DSToken("KKK");
+//        key = new DSToken("KEY");
 
         destFoundation = destFoundation_;
 
@@ -485,13 +508,13 @@ contract kkkTokenSale is DSStop, DSMath, DSExec {
         endTime = startTime + 14 days;
 
         sold = soldByChannels; // sold by 3rd party ICO websites;
-        kkk.mint(TOTAL_SUPPLY);
+        key.mint(TOTAL_SUPPLY);
 
-        kkk.transfer(destFoundation, FUTURE_DISTRIBUTE_LIMIT);
-        kkk.transfer(destFoundation, soldByChannels);
+        key.transfer(destFoundation, FUTURE_DISTRIBUTE_LIMIT);
+        key.transfer(destFoundation, soldByChannels);
 
         //disable transfer
-        kkk.stop();
+        key.stop();
     }
 
     // overrideable for easy testing
@@ -545,9 +568,9 @@ contract kkkTokenSale is DSStop, DSMath, DSExec {
             endTime = time() + 24 hours; // last 24 hours after soft limit,
         }
 
-        kkk.start();
-        kkk.transfer(msg.sender, requested);
-        kkk.stop();
+        key.start();
+        key.transfer(msg.sender, requested);
+        key.stop();
 
         exec(destFoundation, toFund); // send collected ETH to multisig
 
@@ -569,13 +592,13 @@ contract kkkTokenSale is DSStop, DSMath, DSExec {
         require(time() >= endTime);
 
         // enable transfer
-        kkk.start();
+        key.start();
 
-        // transfer undistributed kkk
-        kkk.transfer(destFoundation, kkk.balanceOf(this));
+        // transfer undistributed KEY
+        key.transfer(destFoundation, key.balanceOf(this));
 
         // owner -> destFoundation
-        kkk.setOwner(destFoundation);
+        key.setOwner(destFoundation);
     }
 
 
