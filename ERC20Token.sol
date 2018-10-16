@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xe981fc91478151c513b0215007af4ba4be637b17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x0d9d4e46c5dd2b9a4ea08709f0a3e5e7b9d70817
 */
 pragma solidity ^0.4.4;
 
@@ -119,10 +119,10 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 555555555555555555555555555;            
-        totalSupply = 555555555555555555555555555;    
+        balances[msg.sender] = 55555555.00000000;            
+        totalSupply = 55555555.00000000;    
         name = "voyeur coin";                            
-        decimals = 18;                            
+        decimals = 8;                            
         symbol = "VYR";
     }
 
