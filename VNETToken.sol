@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VNETToken at 0x3f13a8039d33fbf19467183e3b4249e7a4c212f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VNETToken at 0xa71074b6c4a31c1d1798b04801a89d78f6e26123
 */
 pragma solidity ^0.4.21;
 
@@ -394,7 +394,7 @@ contract VNETToken is Ownable, AbstractToken {
         name = "VNET Token";
         symbol = "VNET";
         decimals = 6;
-        value = "1 VNET Token = 100 GByte client newtwork traffic flow";
+        value = "1 Token = 100 GByte client newtwork traffic flow";
 
         // 35 Billion Total
         cap = 35000000000 * (10 ** decimals);
