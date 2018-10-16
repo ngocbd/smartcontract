@@ -1,115 +1,90 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x4490f9807965c49a2471bd7b121a80f0b3861e5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x57f82f1bc6c6ab01ddd9476ddaddfee6f03d1932
 */
 pragma solidity ^0.4.18;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+library SafeMath {
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+    function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((c = a - b) <= a);
+    }
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((c = a + b) >= a);
+    }
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((b == 0 || (c = a * b) / b == a));
+    }
+    function div(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a / b;
+    }
 }
 
-contract PreSale is Ownable {
-    uint256 constant public INCREASE_RATE = 350000000000000;
-    uint256 constant public START_TIME = 1514228838;
-    uint256 constant public END_TIME =   1524251238;
+interface Token {
+    function mintTokens(address _recipient, uint _value) external returns(bool success);
+    function balanceOf(address _holder) public returns(uint256 tokens);
+    function totalSupply() public returns(uint256 _totalSupply);
+}
 
-    uint256 public eggsSold;
-    mapping (address => uint32) public eggs;
-
-    bool private paused = false; 
-
-    function PreSale() payable public {
-    }
-
-    event EggsPurchased(address indexed purchaser, uint256 value, uint32 quantity);
+contract Presale {
+    using SafeMath for uint256;
     
-    event EggsRedeemed(address indexed sender, uint256 eggs);
+    Token public tokenContract;
 
-    function bulkPurchageEgg() payable public {
-        require(now > START_TIME);
-        require(now < END_TIME);
-        require(paused == false);
-        require(msg.value >= (eggPrice() * 5 + INCREASE_RATE * 10));
-        eggs[msg.sender] = eggs[msg.sender] + 5;
-        eggsSold = eggsSold + 5;
-        EggsPurchased(msg.sender, msg.value, 5);
-    }
+    address public beneficiaryAddress;
+    uint256 public tokensPerEther;
+    uint256 public minimumContribution;
+    uint256 public startTime;
+    uint256 public endTime;
+    uint256 public hardcapInEther;
+    uint256 public fundsRaised;
     
-    function purchaseEgg() payable public {
-        require(now > START_TIME);
-        require(now < END_TIME);
-        require(paused == false);
-        require(msg.value >= eggPrice());
 
-        eggs[msg.sender] = eggs[msg.sender] + 1;
-        eggsSold = eggsSold + 1;
-        
-        EggsPurchased(msg.sender, msg.value, 1);
-    }
+    mapping (address => uint256) public contributionBy;
     
-    function redeemEgg(address targetUser) public returns(uint256) {
-        require(paused == false);
-        require(eggs[targetUser] > 0);
+    event ContributionReceived(address contributer, uint256 amount, uint256 totalContributions,uint totalAmountRaised);
+    event FundsWithdrawn(uint256 funds, address beneficiaryAddress);
 
-        EggsRedeemed(targetUser, eggs[targetUser]);
-
-        var userEggs = eggs[targetUser];
-        eggs[targetUser] = 0;
-        return userEggs;
+    function Presale(
+        address _beneficiaryAddress,
+        uint256 _tokensPerEther,
+        uint256 _minimumContributionInFinney,
+        uint256 _startTime,
+        uint256 _saleLengthinHours,
+        address _tokenContractAddress,
+        uint256 _hardcapInEther) {
+        startTime = _startTime;
+        endTime = startTime + (_saleLengthinHours * 1 hours);
+        beneficiaryAddress = _beneficiaryAddress;
+        tokensPerEther = _tokensPerEther;
+        minimumContribution = _minimumContributionInFinney * 1 finney;
+        tokenContract = Token(_tokenContractAddress);
+        hardcapInEther = _hardcapInEther * 1 ether;
     }
 
-    function eggPrice() view public returns(uint256) {
-        return (eggsSold + 1) * INCREASE_RATE;
+    function () public payable {
+        require(presaleOpen());
+        require(msg.value >= minimumContribution);
+        uint256 contribution = msg.value;
+        uint256 refund;
+        if(this.balance > hardcapInEther){
+            refund = this.balance.sub(hardcapInEther);
+            contribution = msg.value.sub(refund);
+            msg.sender.transfer(refund);
+        }
+        fundsRaised = fundsRaised.add(contribution);
+        contributionBy[msg.sender] = contributionBy[msg.sender].add(contribution);
+        tokenContract.mintTokens(msg.sender, contribution.mul(tokensPerEther));
+        ContributionReceived(msg.sender, contribution, contributionBy[msg.sender], this.balance);
     }
 
-    function withdrawal() onlyOwner public {
-        owner.transfer(this.balance);
-    }
 
-    function pause() onlyOwner public {
-        paused = true;
-    }
-    
-    function resume() onlyOwner public {
-        paused = false;
-    }
+    function presaleOpen() public view returns(bool) {return(now >= startTime &&
+                                                            now <= endTime &&
+                                                            fundsRaised < hardcapInEther);} 
 
-    function isPaused () onlyOwner public view returns(bool) {
-        return paused;
+    function withdrawFunds() public {
+        require(this.balance > 0);
+        beneficiaryAddress.transfer(this.balance);
+        FundsWithdrawn(this.balance, beneficiaryAddress);
     }
 }
