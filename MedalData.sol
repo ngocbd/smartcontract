@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MedalData at 0xcd3627f4024509fce76461188a86bdceea53dfc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MedalData at 0x33a104dcbed81961701900c06fd14587c908eaa3
 */
 pragma solidity ^0.4.18;
 
@@ -97,11 +97,41 @@ contract SafeMath {
 }
 
 
+
+
+contract IMedalData is AccessControl {
+  
+    modifier onlyOwnerOf(uint256 _tokenId) {
+    require(ownerOf(_tokenId) == msg.sender);
+    _;
+  }
+   
+function totalSupply() public view returns (uint256);
+function setMaxTokenNumbers()  onlyCREATOR external;
+function balanceOf(address _owner) public view returns (uint256);
+function tokensOf(address _owner) public view returns (uint256[]) ;
+function ownerOf(uint256 _tokenId) public view returns (address);
+function approvedFor(uint256 _tokenId) public view returns (address) ;
+function transfer(address _to, uint256 _tokenId) public onlyOwnerOf(_tokenId);
+function approve(address _to, uint256 _tokenId) public onlyOwnerOf(_tokenId);
+function takeOwnership(uint256 _tokenId) public;
+function _createMedal(address _to, uint8 _seriesID) onlySERAPHIM public ;
+function getCurrentTokensByType(uint32 _seriesID) public constant returns (uint32);
+function getMedalType (uint256 _tokenId) public constant returns (uint8);
+function _burn(uint256 _tokenId) onlyOwnerOf(_tokenId) external;
+function isApprovedFor(address _owner, uint256 _tokenId) internal view returns (bool) ;
+function clearApprovalAndTransfer(address _from, address _to, uint256 _tokenId) internal;
+function clearApproval(address _owner, uint256 _tokenId) private;
+function addToken(address _to, uint256 _tokenId) private ;
+function removeToken(address _from, uint256 _tokenId) private;
+}
+
+
 /**
  * @title ERC721Token
  * Generic implementation for the required functionality of the ERC721 standard
  */
-contract MedalData is ERC721, AccessControl, SafeMath {
+contract MedalData is ERC721, AccessControl, SafeMath, IMedalData {
   
   // Total amount of tokens
   uint256 private totalTokens;
@@ -146,7 +176,7 @@ contract MedalData is ERC721, AccessControl, SafeMath {
     return totalTokens;
   }
   
-  function setMaxTokenNumbers() external onlyCREATOR {
+  function setMaxTokenNumbers() onlyCREATOR external  {
       maxTokenNumbers[0] = 5000;
       maxTokenNumbers[1] = 5000;
       maxTokenNumbers[2] = 5000;
@@ -236,7 +266,7 @@ contract MedalData is ERC721, AccessControl, SafeMath {
   * @param _to The address that will own the minted token
   */
   
-  function _createMedal(address _to, uint8 _seriesID) public  {
+  function _createMedal(address _to, uint8 _seriesID)  onlySERAPHIM public {
     require(_to != address(0));
    if (currentTokenNumbers[_seriesID] <= maxTokenNumbers[_seriesID]) {
     medalType[totalTokens] = _seriesID;
@@ -258,7 +288,7 @@ contract MedalData is ERC721, AccessControl, SafeMath {
   * @dev Burns a specific token
   * @param _tokenId uint256 ID of the token being burned by the msg.sender
   */
-  function _burn(uint256 _tokenId) onlyOwnerOf(_tokenId) internal {
+  function _burn(uint256 _tokenId) onlyOwnerOf(_tokenId) external {
     if (approvedFor(_tokenId) != 0) {
       clearApproval(msg.sender, _tokenId);
     }
