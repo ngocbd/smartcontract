@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelpMeTokenPart3 at 0xa949966baa94d94248d13e446b2a301480f6815a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelpMeTokenPart3 at 0x9c97b8cc86b3c4ceec555b07d30420c25d16989a
 */
 pragma solidity ^0.4.18;
 
@@ -20,7 +20,7 @@ contract HelpMeTokenPart3 {
     
     mapping(address => bool) thank_you;
     bool public stop_it = false;
-    address constant helpMeTokenPart1 = 0xd1a3ace46c98e028229974217201433e7163c4dd;
+    address constant helpMeTokenPart1 = 0xf6228fcD2A2FbcC29F629663689987bDcdbA5d13;
     
     modifier onlyPart1() {
         require(msg.sender == helpMeTokenPart1);
@@ -46,7 +46,7 @@ contract HelpMeTokenPart3 {
     function thankYou(address _a) public onlyPart1 returns(bool)
     {
         thank_you[_a] = true;
-        emit Transfer(_a, address(this), num);
+        emit Transfer(_a, address(this), num * 1 ether);
         return true;
     }
     
