@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0xf46dbdd823ff23efe1cd21f71f030c2e48c97fe9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x033e698da77de33120c703e373f43525b10f8e68
 */
 // <ORACLIZE_API>
 /*
@@ -1142,9 +1142,9 @@ contract EthFlip is usingOraclize {
     owner = msg.sender;
     
     // Carry-over from old contract
-    totalPayouts = 14429060000000000000;
-    totalWins = 71;
-    totalLosses = 70;
+    totalPayouts = 1728380000000000000;
+    totalWins = 10;
+    totalLosses = 15;
   }
   
   // Fallback
@@ -1301,12 +1301,7 @@ contract EthFlip is usingOraclize {
   }
   
   function getUnprocessedQueryList() constant public returns (uint[] _unprocessedQueryList) {
-    if (unprocessedQueryList.length > 0) {
-      return unprocessedQueryList;
-    } else {
-      uint[] memory empty;
-      return empty;
-    }
+    return unprocessedQueryList;
   }
   
   function getUnprocessedQueryBytes32(uint _unprocessedQueryHash) constant public returns (bytes32 _unprocessedQueryBytes32) {
