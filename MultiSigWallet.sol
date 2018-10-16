@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x46309389fb1bf3adf73cfee86d0ded347adb88f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x606af0bd4501855914b50e2672c5926b896737ef
 */
-pragma solidity ^0.4.11;
-
+pragma solidity 0.4.10;
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -10,15 +9,15 @@ contract MultiSigWallet {
 
     uint constant public MAX_OWNER_COUNT = 50;
 
-    event Confirmation(address indexed _sender, uint indexed _transactionId);
-    event Revocation(address indexed _sender, uint indexed _transactionId);
-    event Submission(uint indexed _transactionId);
-    event Execution(uint indexed _transactionId);
-    event ExecutionFailure(uint indexed _transactionId);
-    event Deposit(address indexed _sender, uint _value);
-    event OwnerAddition(address indexed _owner);
-    event OwnerRemoval(address indexed _owner);
-    event RequirementChange(uint _required);
+    event Confirmation(address indexed sender, uint indexed transactionId);
+    event Revocation(address indexed sender, uint indexed transactionId);
+    event Submission(uint indexed transactionId);
+    event Execution(uint indexed transactionId);
+    event ExecutionFailure(uint indexed transactionId);
+    event Deposit(address indexed sender, uint value);
+    event OwnerAddition(address indexed owner);
+    event OwnerRemoval(address indexed owner);
+    event RequirementChange(uint required);
 
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
@@ -295,7 +294,7 @@ contract MultiSigWallet {
                 count += 1;
     }
 
-    /// @dev Returns total number of transactions after filters are applied.
+    /// @dev Returns total number of transactions after filers are applied.
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return Total number of transactions after filters are applied.
