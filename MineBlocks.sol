@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MineBlocks at 0x47d47c1f174bf9e7322974998e62968cec96257c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MineBlocks at 0x8e0f8adfb17c48f5837228018ace3c711168458d
 */
 pragma solidity ^0.4.19;
 
@@ -34,11 +34,7 @@ library SafeMath {
 }
 
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+
 contract Ownable {
   address public owner;
 
@@ -46,28 +42,20 @@ contract Ownable {
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
+
   function Ownable() internal {
     owner = msg.sender;
   }
 
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
+
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
+
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
@@ -79,7 +67,7 @@ contract Ownable {
 
 //////////////////////////////////////////////////////////////
 //                                                          //
-//  MineBlocks, ERC20  //
+//  MineBlocks, Shareholder's ERC20  //
 //                                                          //
 //////////////////////////////////////////////////////////////
 
@@ -96,28 +84,21 @@ contract MineBlocks is Ownable {
 
  event Approval(address indexed owner, address indexed spender, uint256 value);
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
+
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
-
+    if(block.number>blockEndICO || msg.sender==owner){
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     holded[_to]=block.number;
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
+    }
   }
 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
+
   function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
@@ -126,12 +107,6 @@ contract MineBlocks is Ownable {
   mapping (address => mapping (address => uint256)) internal allowed;
 
 
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[_from]);
@@ -147,58 +122,26 @@ contract MineBlocks is Ownable {
   }
 
 
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
+
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
+
   function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
+
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
+
   function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -218,8 +161,13 @@ contract MineBlocks is Ownable {
     uint8 public constant decimals = 8; // hardcoded to be a constant
 
     // Contract variables and constants
-    uint256 public constant minPrice = 10e12;
+    uint256 public constant minPrice = 1500000000000000;
+    uint256 public blockEndICO = block.number + uint256(259200);
     uint256 public buyPrice = minPrice;
+
+    uint256 constant initialSupply=1000000000000000;
+    string constant tokenName="MineBlocks Token";
+    string constant tokenSymbol="MBK";
 
     uint256 public tokenReward = 0;
     // constant to simplify conversion of token amounts into integer form
@@ -227,13 +175,13 @@ contract MineBlocks is Ownable {
     
     // Spread in parts per 100 millions, such that expressing percentages is 
     // just to append the postfix 'e6'. For example, 4.53% is: spread = 4.53e6
-    address public mineblocksAddr = 0x0d518b5724C6aee0c7F1B2eB1D89d62a2a7b1b58;
+    address public MineBlocksAddr = 0x0d518b5724C6aee0c7F1B2eB1D89d62a2a7b1b58;
 
     //Declare logging events
     event LogDeposit(address sender, uint amount);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MineBlocks(uint256 initialSupply, string tokenName, string tokenSymbol) public {
+    function MineBlocks() public {
         balances[msg.sender] = initialSupply; // Give the creator all initial tokens
         totalSupply = initialSupply;  // Update total supply
         name = tokenName;             // Set the name for display purposes
@@ -249,69 +197,85 @@ contract MineBlocks is Ownable {
     modifier status() {
         _;  // modified function code should go before prices update
 
-		if(balances[this]>900000000000000){
-			buyPrice=1500000000000000;
-		}else if(balances[this]>800000000000000 && balances[this]<=900000000000000){
+    if(balances[this]>600000000000000){
+      buyPrice=1500000000000000;
+    }else if(balances[this]>500000000000000 && balances[this]<=600000000000000){
 
-			buyPrice=2000000000000000;
-		}else if(balances[this]>700000000000000 && balances[this]<=800000000000000){
+      buyPrice=2000000000000000;
+    }else if(balances[this]>400000000000000 && balances[this]<=500000000000000){
 
-			buyPrice=2500000000000000;
-		}else if(balances[this]>600000000000000 && balances[this]<=700000000000000){
+      buyPrice=2500000000000000;
+    }else if(balances[this]>300000000000000 && balances[this]<=400000000000000){
 
-			buyPrice=3000000000000000;
-		}else{
+      buyPrice=3000000000000000;
+    }else{
 
-			buyPrice=4000000000000000;
-		}
-
+      buyPrice=4000000000000000;
+    }
         
     }
 
     function deposit() public payable status returns(bool success) {
         // Check for overflows;
         assert (this.balance + msg.value >= this.balance); // Check for overflows
-   		tokenReward=this.balance/totalSupply;
+      tokenReward=this.balance/totalSupply;
         //executes event to reflect the changes
         LogDeposit(msg.sender, msg.value);
         
         return true;
     }
 
-	function withdrawReward() public status{
+  function withdrawReward() public status{
 
-		
-		   if(block.number-holded[msg.sender]>172800){ //1 month
+    
+      if(block.number-holded[msg.sender]>172800){ //1 month
+     //// if(block.number-holded[msg.sender]>10){
 
-			holded[msg.sender]=block.number;
+      holded[msg.sender]=block.number;
 
-			//send eth to owner address
-			msg.sender.transfer(tokenReward*balances[msg.sender]);
-			
-			//executes event ro register the changes
-			LogWithdrawal(msg.sender, tokenReward*balances[msg.sender]);
+      //send eth to owner address
+      msg.sender.transfer(tokenReward*balances[msg.sender]);
+      
+      //executes event ro register the changes
+      LogWithdrawal(msg.sender, tokenReward*balances[msg.sender]);
 
-		}
-	}
+    }
+  }
 
 
-	event LogWithdrawal(address receiver, uint amount);
-	
-	function withdraw(uint value) public onlyOwner {
-		//send eth to owner address
-		msg.sender.transfer(value);
-		//executes event ro register the changes
-		LogWithdrawal(msg.sender, value);
-	}
+  event LogWithdrawal(address receiver, uint amount);
+  
+  function withdraw(uint value) public onlyOwner {
+    //send eth to owner address
+    msg.sender.transfer(value);
+    //executes event ro register the changes
+    LogWithdrawal(msg.sender, value);
+  }
+
+
+    function transferBuy(address _to, uint256 _value) internal returns (bool) {
+      require(_to != address(0));
+      require(_value <= balances[this]);
+
+      // SafeMath.sub will throw if there is not enough balance.
+      balances[this] = balances[this].sub(_value);
+      holded[_to]=block.number;
+      balances[_to] = balances[_to].add(_value);
+      Transfer(this, _to, _value);
+      return true;
+      
+    }
+
 
     function buy() public payable status{
-        require (msg.sender.balance >= msg.value);  // Check if the sender has enought eth to buy
-        assert (msg.sender.balance + msg.value >= msg.sender.balance); //check for overflows
+      require (msg.sender.balance >= msg.value);  // Check if the sender has enought eth to buy
+      assert (msg.sender.balance + msg.value >= msg.sender.balance); //check for overflows
          
-        uint256 tokenAmount = (msg.value / buyPrice)*tokenUnit ;  // calculates the amount
+      uint256 tokenAmount = (msg.value / buyPrice)*tokenUnit ;  // calculates the amount
 
-        this.transfer(msg.sender, tokenAmount);
-        mineblocksAddr.transfer(msg.value);
+      transferBuy(msg.sender, tokenAmount);
+      MineBlocksAddr.transfer(msg.value);
+    
     }
 
 
