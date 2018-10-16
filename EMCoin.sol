@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EMCoin at 0x22d583f97c600978a160885172703c750a5209be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract emcoin at 0x1873c7d2437f3afc90240ae9b6da4753bfee5615
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract EMCoin {
+contract emcoin {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 8;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -28,7 +28,7 @@ contract EMCoin {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function EMCoin(
+    function emcoin(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
