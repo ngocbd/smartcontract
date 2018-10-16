@@ -1,18 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HussyToken at 0xd0b6676ee485b53d4df756a6df89ac048259de01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HussyToken at 0x974872edc6e82f6a5744deebd1519c7ac209b91c
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
 library SafeMath {
 
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -22,9 +22,9 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
@@ -38,8 +38,8 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -75,10 +75,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -87,7 +86,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
@@ -119,7 +118,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -135,7 +134,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -161,7 +160,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -182,7 +181,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -194,7 +193,7 @@ contract HussyToken is StandardToken {
   uint public decimals = 18;
   uint public INITIAL_SUPPLY = 100000000 * (10 ** uint256(decimals));
 
-  function HussyToken() public {
+  constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
     emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
