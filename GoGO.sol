@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoGO at 0x819fbfd76595700f2d44a337de5549dd6970d568
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOGO at 0x53fbb9b0eceaf54a58a973dee0ea4bae8197828b
 */
 pragma solidity ^0.4.16;
 
@@ -91,7 +91,7 @@ contract StandardToken is Token {
 
 
 //name this contract whatever you'd like
-contract GoGO is StandardToken {
+contract GOGO is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
@@ -112,7 +112,7 @@ contract GoGO is StandardToken {
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 
-    function GoGO(
+    function GOGO(
         ) {
         balances[msg.sender] = 15616622200000;
         totalSupply = 15616622200000;
