@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Intermediary at 0x82df5022fbcfdd877830371d7713f0181a554c9c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Intermediary at 0x124446eff5787b036aa062a2ef5321ce607437ba
 */
 pragma solidity ^0.4.8;
 
@@ -16,8 +16,6 @@ contract mortal {
 	}
 }
 
-
-
 contract Aquarium{
   function receive(address receiver, uint8 animalType, uint32[] ids) payable {}
 }
@@ -26,8 +24,6 @@ contract Aquarium{
 contract Intermediary is mortal{
   Aquarium aquarium;
   uint[] values;
-  
-  event NewAquarium(address aqua);
   
   function Intermediary(){
     
@@ -48,11 +44,8 @@ contract Intermediary is mortal{
   }
   
   function setAquarium(address aqua){
-    if(msg.sender==owner){
-      aquarium = Aquarium(aqua);
-      NewAquarium(aqua);
-    }
-      
+      if(msg.sender==owner)
+        aquarium = Aquarium(aqua);
   }
   
   function slice(uint32[] array, uint8 from, uint8 number) returns (uint32[] sliced){
