@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GigsToken at 0x06ea7f6e403b68b228423cec502deb793c1c6c18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GigsToken at 0x08ec0c80d98ffc16397b09db8b69b9fae9714915
 */
 pragma solidity ^0.4.16;
 
@@ -40,17 +40,15 @@ contract GigsToken {
     /**For unlimited supply set _totalSupply to 0, delete the word "constant", 
      *and uncomment "_totalSupply" in createTokens()
      */
-    uint public constant _totalSupply = 16000000; 
+    uint public constant _totalSupply = 21000000; 
     
-    string public constant symbol = "GIX";
-    string public constant name = "Blockchain Gigs";
+    string public constant symbol = "BETH";
+    string public constant name = "Bitcoin Ether";
     uint8 public constant decimals = 18;
 	uint256 public constant totalSupply = _totalSupply * 10 ** uint256(decimals);
     
     // 1 ether = 500 gigs
-    uint256 public constant RATE = 500;
-    
-    address public owner; 
+    uint256 public constant RATE = 500; 
     
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -62,33 +60,32 @@ contract GigsToken {
         createTokens();
     }
     
-    function GigsToken() {
+    function GigsToken() public {
         balances[msg.sender] = totalSupply;
-        owner = msg.sender;
     }
     
-    function createTokens() payable {
+    function createTokens() public payable {
         require(msg.value > 0);
         uint256 tokens = msg.value.mul(RATE);
         balances[msg.sender] = balances[msg.sender].add(tokens);
         
         //_totalSupply = _totalSupply.add(tokens);
         
-        owner.transfer(msg.value);
+        //owner.transfer(msg.value);
     }
     
-    function balanceOf(address _owner) constant returns (uint256 balance){
+    function balanceOf(address _owner) public constant returns (uint256 balance){
         return balances[_owner];
     }
-    function transfer(address _to, uint256 _value) returns (bool success) {
-		 require(_to != 0x0);
+    function transfer(address _to, uint256 _value) internal returns (bool success) {
+		require(_to != 0x0);
         require(balances[msg.sender] >= _value && _value > 0);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success){
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success){
 		 require(_to != 0x0);
         require(allowed [_from][msg.sender] >= 0 && balances[_from] >= _value && _value > 0);
         balances[_from] = balances[_from].sub(_value);
@@ -98,14 +95,13 @@ contract GigsToken {
         return true;
         
     }
-    function approve(address _spender, uint256 _value) returns (bool success){
+    function approve(address _spender, uint256 _value) public returns (bool success){
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining){
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining){
         return allowed[_owner][_spender];
     }
     
-
 }
