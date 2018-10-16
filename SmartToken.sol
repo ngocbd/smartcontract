@@ -1,585 +1,327 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0xc21f593c55f3e6a7f96e7c3f103c4d6bff8e5559
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0xd7b524e6578029d7ca3950f7879b86f7f9bc1a4c
 */
-pragma solidity ^0.4.23;
-pragma experimental "v0.5.0";
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.4.16;
 
-library AddressExtension {
-
-  function isValid(address _address) internal pure returns (bool) {
-    return 0 != _address;
-  }
-
-  function isAccount(address _address) internal view returns (bool result) {
-    assembly {
-      result := iszero(extcodesize(_address))
+/// @title SafeMath
+/// @dev Math operations with safety checks that throw on error
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-  }
 
-  function toBytes(address _address) internal pure returns (bytes b) {
-   assembly {
-      let m := mload(0x40)
-      mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, _address))
-      mstore(0x40, add(m, 52))
-      b := m
+    function div(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a / b;
+        return c;
     }
-  }
+
+    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-library Math {
+/// @title ERC20 Standard Token interface
+contract IERC20Token {
+    function name() public constant returns (string) { name; }
+    function symbol() public constant returns (string) { symbol; }
+    function decimals() public constant returns (uint8) { decimals; }
+    function totalSupply() public constant returns (uint256) { totalSupply; }
+    function balanceOf(address _owner) public constant returns (uint256 balance) { _owner; balance; }
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) { _owner; _spender; remaining; }
 
-  struct Fraction {
-    uint256 numerator;
-    uint256 denominator;
-  }
-
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 r) {
-    r = a * b;
-    require((a == 0) || (r / a == b));
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256 r) {
-    r = a / b;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256 r) {
-    require((r = a - b) <= a);
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256 r) {
-    require((r = a + b) >= a);
-  }
-
-  function min(uint256 x, uint256 y) internal pure returns (uint256 r) {
-    return x <= y ? x : y;
-  }
-
-  function max(uint256 x, uint256 y) internal pure returns (uint256 r) {
-    return x >= y ? x : y;
-  }
-
-  function mulDiv(uint256 value, uint256 m, uint256 d) internal pure returns (uint256 r) {
-    r = value * m;
-    if (r / value == m) {
-      r /= d;
-    } else {
-      r = mul(value / d, m);
-    }
-  }
-
-  function mulDivCeil(uint256 value, uint256 m, uint256 d) internal pure returns (uint256 r) {
-    r = value * m;
-    if (r / value == m) {
-      r /= d;
-      if (r % d != 0) {
-        r += 1;
-      }
-    } else {
-      r = mul(value / d, m);
-      if (value % d != 0) {
-        r += 1;
-      }
-    }
-  }
-
-  function mul(uint256 x, Fraction memory f) internal pure returns (uint256) {
-    return mulDiv(x, f.numerator, f.denominator);
-  }
-
-  function mulCeil(uint256 x, Fraction memory f) internal pure returns (uint256) {
-    return mulDivCeil(x, f.numerator, f.denominator);
-  }
-
-  function div(uint256 x, Fraction memory f) internal pure returns (uint256) {
-    return mulDiv(x, f.denominator, f.numerator);
-  }
-
-  function divCeil(uint256 x, Fraction memory f) internal pure returns (uint256) {
-    return mulDivCeil(x, f.denominator, f.numerator);
-  }
+    function transfer(address _to, uint256 _value) public returns (bool);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+    function approve(address _spender, uint256 _value) public returns (bool);
 }
 
-contract FsTKAuthority {
+/// @title ERC20 Standard Token implementation
+contract ERC20Token is IERC20Token {
+    using SafeMath for uint256;
 
-  function isAuthorized(address sender, address _contract, bytes data) public view returns (bool);
-  function isApproved(bytes32 hash, uint256 approveTime, bytes approveToken) public view returns (bool);
-  function validate() public pure returns (bool);
+    string public standard = 'Token 0.1';
+    string public name = '';
+    string public symbol = '';
+    uint8 public decimals = 0;
+    uint256 public totalSupply = 0;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    function ERC20Token(string _name, string _symbol, uint8 _decimals) {
+        require(bytes(_name).length > 0 && bytes(_symbol).length > 0);
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
+    }
+
+    modifier validAddress(address _address) {
+        require(_address != 0x0);
+        _;
+    }
+
+    function transfer(address _to, uint256 _value) public validAddress(_to) returns (bool) {
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public validAddress(_to) returns (bool) {
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public validAddress(_spender) returns (bool) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 }
 
-contract ERC20 {
-
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-
-  function balanceOf(address owner) public view returns (uint256);
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
+contract IOwned {
+    function owner() public constant returns (address) { owner; }
+    function transferOwnership(address _newOwner) public;
 }
 
-contract SecureERC20 is ERC20 {
-
-  event SetERC20ApproveChecking(bool approveChecking);
-
-  function approve(address spender, uint256 expectedValue, uint256 newValue) public returns (bool);
-  function increaseAllowance(address spender, uint256 value) public returns (bool);
-  function decreaseAllowance(address spender, uint256 value, bool strict) public returns (bool);
-  function setERC20ApproveChecking(bool approveChecking) public;
+contract Owned is IOwned {
+    address public owner;
+    function Owned() {
+        owner = msg.sender;
+    }
+    modifier validAddress(address _address) {
+        require(_address != 0x0);
+        _;
+    }
+    modifier onlyOwner {
+        assert(msg.sender == owner);
+        _;
+    }
+    function transferOwnership(address _newOwner) validAddress(_newOwner) onlyOwner {
+        require(_newOwner != owner);
+        
+        owner = _newOwner;
+    }
 }
 
-contract FsTKToken {
+/// @title BXN contract interface
+contract ISmartToken {
+    function initialSupply() public constant returns (uint256) { initialSupply; }
 
-  event SetupDirectDebit(address indexed debtor, address indexed receiver, DirectDebitInfo info);
-  event TerminateDirectDebit(address indexed debtor, address indexed receiver);
-  event WithdrawDirectDebitFailure(address indexed debtor, address indexed receiver);
+    function totalSoldTokens() public constant returns (uint256) { totalSoldTokens; }
+    function totalProjectToken() public constant returns (uint256) { totalProjectToken; }
 
-  event SetMetadata(string metadata);
-  event SetLiquid(bool liquidity);
-  event SetDelegate(bool isDelegateEnable);
-  event SetDirectDebit(bool isDirectDebitEnable);
-
-  struct DirectDebitInfo {
-    uint256 amount;
-    uint256 startTime;
-    uint256 interval;
-  }
-  struct DirectDebit {
-    DirectDebitInfo info;
-    uint256 epoch;
-  }
-  struct Instrument {
-    uint256 allowance;
-    DirectDebit directDebit;
-  }
-  struct Account {
-    uint256 balance;
-    uint256 nonce;
-    mapping (address => Instrument) instruments;
-  }
-
-  function spendableAllowance(address owner, address spender) public view returns (uint256);
-  function transfer(uint256[] data) public returns (bool);
-  function transferAndCall(address to, uint256 value, bytes data) public payable returns (bool);
-  function delegateTransferAndCall(
-    uint256 nonce,
-    uint256 gasAmount,
-    address to,
-    uint256 value,
-    bytes data,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  ) public returns (bool);
-
-  function directDebitOf(address debtor, address receiver) public view returns (DirectDebit);
-  function setupDirectDebit(address receiver, DirectDebitInfo info) public returns (bool);
-  function terminateDirectDebit(address receiver) public returns (bool);
-  function withdrawDirectDebit(address debtor) public returns (bool);
-  function withdrawDirectDebit(address[] debtors, bool strict) public returns (bool result);
+    function fundingEnabled() public constant returns (bool) { fundingEnabled; }
+    function transfersEnabled() public constant returns (bool) { transfersEnabled; }
 }
 
-contract AbstractToken is SecureERC20, FsTKToken {
-  using AddressExtension for address;
-  using Math for uint256;
+/// @title BXN contract - crowdfunding code for BXN Project
+contract SmartToken is ISmartToken, ERC20Token, Owned {
+    using SafeMath for uint256;
+ 
+    // The current initial token supply.
+    uint256 public initialSupply = 80000000 ether;
 
-  modifier liquid {
-    require(isLiquid);
-     _;
-  }
-  modifier canUseDirectDebit {
-    require(isDirectDebitEnable);
-     _;
-  }
+    // Cold wallet for distribution of tokens.
+    address public fundingWallet;
 
-  bool public erc20ApproveChecking;
-  bool public isLiquid = true;
-  bool public isDelegateEnable;
-  bool public isDirectDebitEnable;
-  string public metadata;
-  mapping(address => Account) internal accounts;
+    // The flag indicates if the BXN contract is in Funding state.
+    bool public fundingEnabled = true;
 
-  constructor(string _metadata) public {
-    metadata = _metadata;
-  }
+    // The maximum tokens available for sale.
+    uint256 public maxSaleToken;
 
-  function balanceOf(address owner) public view returns (uint256) {
-    return accounts[owner].balance;
-  }
+    // Total number of tokens sold.
+    uint256 public totalSoldTokens;
+    // Total number of tokens for BXN Project.
+    uint256 public totalProjectToken;
+    uint256 private totalLockToken;
 
-  function allowance(address owner, address spender) public view returns (uint256) {
-    return accounts[owner].instruments[spender].allowance;
-  }
+    // The flag indicates if the BXN contract is in eneble / disable transfers.
+    bool public transfersEnabled = true; 
 
-  function transfer(address to, uint256 value) public liquid returns (bool) {
-    Account storage senderAccount = accounts[msg.sender];
-    uint256 senderBalance = senderAccount.balance;
-    require(value <= senderBalance);
+    // Wallets, which allowed the transaction during the crowdfunding.
+    mapping (address => bool) private fundingWallets;
+    // Wallets B2BX Project, which will be locked the tokens
+    mapping (address => allocationLock) public allocations;
 
-    senderAccount.balance = senderBalance - value;
-    accounts[to].balance += value;
-
-    emit Transfer(msg.sender, to, value);
-    return true;
-  }
-
-  function transferFrom(address from, address to, uint256 value) public liquid returns (bool) {
-    Account storage fromAccount = accounts[from];
-    uint256 fromBalance = fromAccount.balance;
-    Instrument storage senderInstrument = fromAccount.instruments[msg.sender];
-    uint256 senderAllowance = senderInstrument.allowance;
-    require(value <= fromBalance);
-    require(value <= senderAllowance);
-
-    fromAccount.balance = fromBalance - value;
-    senderInstrument.allowance = senderAllowance - value;
-    accounts[to].balance += value;
-
-    emit Transfer(from, to, value);
-    return true;
-  }
-
-  function approve(address spender, uint256 value) public returns (bool) {
-    Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
-    if (erc20ApproveChecking) {
-      require((value == 0) || (spenderInstrument.allowance == 0));
-    }
-    spenderInstrument.allowance = value;
-
-    emit Approval(msg.sender, spender, value);
-    return true;
-  }
-
-  function setERC20ApproveChecking(bool approveChecking) public {
-    emit SetERC20ApproveChecking(erc20ApproveChecking = approveChecking);
-  }
-
-  function approve(address spender, uint256 expectedValue, uint256 newValue) public returns (bool) {
-    Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
-    require(spenderInstrument.allowance == expectedValue);
-
-    spenderInstrument.allowance = newValue;
-
-    emit Approval(msg.sender, spender, newValue);
-    return true;
-  }
-
-  function increaseAllowance(address spender, uint256 value) public returns (bool) {
-    Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
-
-    uint256 newValue = spenderInstrument.allowance.add(value);
-    spenderInstrument.allowance = newValue;
-
-    emit Approval(msg.sender, spender, newValue);
-    return true;
-  }
-
-  function decreaseAllowance(address spender, uint256 value, bool strict) public returns (bool) {
-    Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
-
-    uint256 currentValue = spenderInstrument.allowance;
-    uint256 newValue;
-    if (strict) {
-      newValue = currentValue.sub(value);
-    } else if (value < currentValue) {
-      newValue = currentValue - value;
-    }
-    spenderInstrument.allowance = newValue;
-
-    emit Approval(msg.sender, spender, newValue);
-    return true;
-  }
-
-  function setMetadata0(string _metadata) internal {
-    emit SetMetadata(metadata = _metadata);
-  }
-
-  function setLiquid0(bool liquidity) internal {
-    emit SetLiquid(isLiquid = liquidity);
-  }
-
-  function setDelegate(bool delegate) public {
-    emit SetDelegate(isDelegateEnable = delegate);
-  }
-
-  function setDirectDebit(bool directDebit) public {
-    emit SetDirectDebit(isDirectDebitEnable = directDebit);
-  }
-
-  function spendableAllowance(address owner, address spender) public view returns (uint256) {
-    Account storage ownerAccount = accounts[owner];
-    return Math.min(
-      ownerAccount.instruments[spender].allowance,
-      ownerAccount.balance
-    );
-  }
-
-  function transfer(uint256[] data) public liquid returns (bool) {
-    Account storage senderAccount = accounts[msg.sender];
-    uint256 totalValue;
-    for (uint256 i = 0; i < data.length; i++) {
-      address receiver = address(data[i] >> 96);
-      uint256 value = data[i] & 0xffffffffffffffffffffffff;
-
-      totalValue = totalValue.add(value);
-      accounts[receiver].balance += value;
-
-      emit Transfer(msg.sender, receiver, value);
+    struct allocationLock {
+        uint256 value;
+        uint256 end;
+        bool locked;
     }
 
-    uint256 senderBalance = senderAccount.balance;
-    require(totalValue <= senderBalance);
-    senderAccount.balance = senderBalance - totalValue;
+    event Finalize(address indexed _from, uint256 _value);
+    event Lock(address indexed _from, address indexed _to, uint256 _value, uint256 _end);
+    event Unlock(address indexed _from, address indexed _to, uint256 _value);
+    event DisableTransfers(address indexed _from);
 
-    return true;
-  }
+    /// @notice BXN Project - Initializing crowdfunding.
+    /// @dev Constructor.
+    function SmartToken() ERC20Token("BITTXN", "BXN", 18) {
+        // The main, cold wallet for the distribution of tokens.
+        fundingWallet = msg.sender; 
 
-  function transferAndCall(address to, uint256 value, bytes data) public payable liquid returns (bool) {
-    require(to != address(this));
-    require(transfer(to, value));
-    require(data.length >= 68);
-    assembly {
-        mstore(add(data, 36), value)
-        mstore(add(data, 68), caller)
-    }
-    require(to.call.value(msg.value)(data));
-    return true;
-  }
+        maxSaleToken = initialSupply.mul(100).div(100);
 
-  function delegateTransferAndCall(
-    uint256 nonce,
-    uint256 gasAmount,
-    address to,
-    uint256 value,
-    bytes data,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  )
-    public
-    liquid
-    returns (bool)
-  {
-    require(isDelegateEnable);
-    require(to != address(this));
+        balanceOf[fundingWallet] = maxSaleToken;
+        totalSupply = initialSupply;
 
-    address signer = ecrecover(
-      keccak256(nonce, gasAmount, to, value, data),
-      v,
-      r,
-      s
-    );
-    Account storage signerAccount = accounts[signer];
-    require(nonce == signerAccount.nonce);
-    signerAccount.nonce = nonce.add(1);
-    uint256 signerBalance = signerAccount.balance;
-    uint256 total = value.add(gasAmount);
-    require(total <= signerBalance);
-
-    signerAccount.balance = signerBalance - total;
-    accounts[to].balance += value;
-    emit Transfer(signer, to, value);
-    accounts[msg.sender].balance += gasAmount;
-    emit Transfer(signer, msg.sender, gasAmount);
-
-    if (!to.isAccount()) {
-      require(data.length >= 68);
-      assembly {
-        mstore(add(data, 36), value)
-        mstore(add(data, 68), signer)
-      }
-      require(to.call(data));
+        fundingWallets[fundingWallet] = true;
+        fundingWallets[0x39ee193486cC7A1A24bBaF84a301e8DD1265c11D] = true;
+        fundingWallets[0xBc5814406436173aCc1BD17398110b4F405C124A] = true;
+        fundingWallets[0xFc3aCeB2e8Bf624F0A924a6106fBC9e5FfBccD45] = true;
+        fundingWallets[0x6da56D0c21F7B2D32a1b411E806A6b4Ce4b51034] = true;
+        fundingWallets[0xc55c8D13CD5DA748c30918f899447983B53d896b] = true;
     }
 
-    return true;
-  }
+    // Validates an address - currently only checks that it isn't null.
+    modifier validAddress(address _address) {
+        require(_address != 0x0);
+        _;
+    }
 
-  function directDebitOf(address debtor, address receiver) public view returns (DirectDebit) {
-    return accounts[debtor].instruments[receiver].directDebit;
-  }
-
-  function setupDirectDebit(
-    address receiver,
-    DirectDebitInfo info
-  )
-    public
-    returns (bool)
-  {
-    accounts[msg.sender].instruments[receiver].directDebit = DirectDebit({
-      info: info,
-      epoch: 0
-    });
-
-    emit SetupDirectDebit(msg.sender, receiver, info);
-    return true;
-  }
-
-  function terminateDirectDebit(address receiver) public returns (bool) {
-    delete accounts[msg.sender].instruments[receiver].directDebit;
-
-    emit TerminateDirectDebit(msg.sender, receiver);
-    return true;
-  }
-
-  function calculateTotalDirectDebitAmount(uint256 amount, uint256 epochNow, uint256 epochLast) pure private returns (uint256) {
-    require(amount > 0);
-    require(epochNow > epochLast);
-    return (epochNow - epochLast).mul(amount);
-  }
-
-  function withdrawDirectDebit(address debtor) public liquid canUseDirectDebit returns (bool) {
-    Account storage debtorAccount = accounts[debtor];
-    uint256 debtorBalance = debtorAccount.balance;
-    DirectDebit storage directDebit = debtorAccount.instruments[msg.sender].directDebit;
-    uint256 epoch = block.timestamp.sub(directDebit.info.startTime) / directDebit.info.interval + 1;
-    uint256 amount = calculateTotalDirectDebitAmount(directDebit.info.amount, epoch, directDebit.epoch);
-    require(amount <= debtorBalance);
-
-    debtorAccount.balance = debtorBalance - amount;
-    accounts[msg.sender].balance += amount;
-    directDebit.epoch = epoch;
-
-    emit Transfer(debtor, msg.sender, amount);
-    return true;
-  }
-
-  function withdrawDirectDebit(address[] debtors, bool strict) public liquid canUseDirectDebit returns (bool result) {
-    Account storage receiverAccount = accounts[msg.sender];
-    result = true;
-
-    for (uint256 i = 0; i < debtors.length; i++) {
-      address debtor = debtors[i];
-      Account storage debtorAccount = accounts[debtor];
-      uint256 debtorBalance = debtorAccount.balance;
-      DirectDebit storage directDebit = debtorAccount.instruments[msg.sender].directDebit;
-      uint256 epoch = block.timestamp.sub(directDebit.info.startTime) / directDebit.info.interval + 1;
-      uint256 amount = calculateTotalDirectDebitAmount(directDebit.info.amount, epoch, directDebit.epoch);
-
-      if (amount > debtorBalance) {
-        if (strict) {
-          revert();
+    modifier transfersAllowed(address _address) {
+        if (fundingEnabled) {
+            require(fundingWallets[_address]);
         }
-        result = false;
-        emit WithdrawDirectDebitFailure(debtor, msg.sender);
-      } else {
-        debtorAccount.balance = debtorBalance - amount;
-        receiverAccount.balance += amount;
-        directDebit.epoch = epoch;
 
-        emit Transfer(debtor, msg.sender, amount);
-      }
+        require(transfersEnabled);
+        _;
     }
-  }
-}
 
-contract Authorizable {
+    /// @notice This function is disabled during the crowdfunding.
+    /// @dev Send tokens.
+    /// @param _to address      The address of the tokens recipient.
+    /// @param _value _value    The amount of token to be transferred.
+    function transfer(address _to, uint256 _value) public validAddress(_to) transfersAllowed(msg.sender) returns (bool) {
+        return super.transfer(_to, _value);
+    }
 
-  event SetFsTKAuthority(FsTKAuthority indexed _address);
+    /// @notice This function is disabled during the crowdfunding.
+    /// @dev Send from tokens.
+    /// @param _from address    The address of the sender of the token
+    /// @param _to address      The address of the tokens recipient.
+    /// @param _value _value    The amount of token to be transferred.
+    function transferFrom(address _from, address _to, uint256 _value) public validAddress(_to) transfersAllowed(_from) returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
 
-  modifier onlyFsTKAuthorized {
-    require(fstkAuthority.isAuthorized(msg.sender, this, msg.data));
-    _;
-  }
-  modifier onlyFsTKApproved(bytes32 hash, uint256 approveTime, bytes approveToken) {
-    require(fstkAuthority.isApproved(hash, approveTime, approveToken));
-    _;
-  }
+    /// @notice This function can accept for blocking no more than "totalProjectToken".
+    /// @dev Lock tokens to a specified address.
+    /// @param _to address      The address to lock tokens to.
+    /// @param _value uint256   The amount of tokens to be locked.
+    /// @param _end uint256     The end of the lock period.
+    function lock(address _to, uint256 _value, uint256 _end) internal validAddress(_to) onlyOwner returns (bool) {
+        require(_value > 0);
 
-  FsTKAuthority internal fstkAuthority;
+        assert(totalProjectToken > 0);
 
-  constructor(FsTKAuthority _fstkAuthority) internal {
-    fstkAuthority = _fstkAuthority;
-  }
+        // Check that this lock doesn't exceed the total amount of tokens currently available for totalProjectToken.
+        totalLockToken = totalLockToken.add(_value);
+        assert(totalProjectToken >= totalLockToken);
 
-  function setFsTKAuthority(FsTKAuthority _fstkAuthority) public onlyFsTKAuthorized {
-    require(_fstkAuthority.validate());
-    emit SetFsTKAuthority(fstkAuthority = _fstkAuthority);
-  }
-}
+        // Make sure that a single address can be locked tokens only once.
+        require(allocations[_to].value == 0);
 
-contract IssuerContract {
-  using AddressExtension for address;
+        // Assign a new lock.
+        allocations[_to] = allocationLock({
+            value: _value,
+            end: _end,
+            locked: true
+        });
 
-  event SetIssuer(address indexed _address);
+        Lock(this, _to, _value, _end);
 
-  modifier onlyIssuer {
-    require(issuer == msg.sender);
-    _;
-  }
+        return true;
+    }
 
-  address public issuer;
+    /// @notice Only the owner of a locked wallet can unlock the tokens.
+    /// @dev Unlock tokens at the address to the caller function.
+    function unlock() external {
+        require(allocations[msg.sender].locked);
+        require(now >= allocations[msg.sender].end);
+        
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(allocations[msg.sender].value);
 
-  constructor(address _issuer) internal {
-    issuer = _issuer;
-  }
+        allocations[msg.sender].locked = false;
 
-  function setIssuer(address _address) public onlyIssuer {
-    emit SetIssuer(issuer = _address);
-  }
-}
+        Transfer(this, msg.sender, allocations[msg.sender].value);
+        Unlock(this, msg.sender, allocations[msg.sender].value);
+    }
 
-contract SmartToken is AbstractToken, IssuerContract, Authorizable {
+    /// @notice BXN Allocation - finalize crowdfunding & time-locked vault of tokens allocated
+    /// to BXN company, developers and Airdrop program.
+    function finalize() external onlyOwner {
+        require(fundingEnabled);
 
-  string public name;
-  string public symbol;
-  uint256 public totalSupply;
-  uint8 public constant decimals = 18;
+        // Get total sold tokens on the fundingWallet.
+        // totalSoldTokens is 80% of the total number of tokens.
+        totalSoldTokens = maxSaleToken.sub(balanceOf[fundingWallet]);
 
-  constructor(
-    address _issuer,
-    FsTKAuthority _fstkAuthority,
-    string _name,
-    string _symbol,
-    uint256 _totalSupply,
-    string _metadata
-  )
-    AbstractToken(_metadata)
-    IssuerContract(_issuer)
-    Authorizable(_fstkAuthority)
-    public
-  {
-    name = _name;
-    symbol = _symbol;
-    totalSupply = _totalSupply;
+        // totalProjectToken = totalSoldTokens * 50 / 50 (50% this is BXN Project & 50% this is totalSoldTokens)
+        //
+        // |----------totalSoldTokens-----totalProjectToken|
+        // |================50%====|================50%====|
+        // |totalSupply=(totalSoldTokens+totalProjectToken)|
+        totalProjectToken = totalSoldTokens.mul(50).div(50);
 
-    accounts[_issuer].balance = _totalSupply;
-    emit Transfer(address(0), _issuer, _totalSupply);
-  }
+        // BXN Prodject allocations tokens.
+        // 90% of the totalProjectToken tokens (== 45% totalSupply) go to BXN Company.
+        lock(0xf03eb5eD89Da5ccAC43498A2C56434e30505AB09, totalProjectToken.mul(90).div(100), now);
+        // 10% of the totalProjectToken tokens (== 5% totalSupply) go to Airdrop program.
+        lock(0xCAF7149Ef61E54F72ACdC7f44a05E5d7D1Db134B, totalProjectToken.mul(10).div(100), now);
+        
+        // Zeroing a cold wallet.
+        balanceOf[fundingWallet] = 0;
 
-  function setERC20ApproveChecking(bool approveChecking) public onlyIssuer {
-    AbstractToken.setERC20ApproveChecking(approveChecking);
-  }
+        // End of crowdfunding.
+        fundingEnabled = false;
 
-  function setDelegate(bool delegate) public onlyIssuer {
-    AbstractToken.setDelegate(delegate);
-  }
+        // End of crowdfunding.
+        Transfer(this, fundingWallet, 0);
+        Finalize(msg.sender, totalSupply);
+    }
+    /// @notice Disable all transfers in case of a vulnerability found in the contract or other systems.
+    /// @dev Disable transfers in BXN contract.
+    function disableTransfers() external onlyOwner {
+        require(transfersEnabled);
 
-  function setDirectDebit(bool directDebit) public onlyIssuer {
-    AbstractToken.setDirectDebit(directDebit);
-  }
+        transfersEnabled = false;
 
-  function setMetadata(
-    string infoUrl,
-    uint256 approveTime,
-    bytes approveToken
-  )
-    public
-    onlyIssuer
-    onlyFsTKApproved(keccak256(approveTime, this, msg.sig, infoUrl), approveTime, approveToken)
-  {
-    setMetadata0(infoUrl);
-  }
+        DisableTransfers(msg.sender);
+    }
 
-  function setLiquid(
-    bool liquidity,
-    uint256 approveTime,
-    bytes approveToken
-  )
-    public
-    onlyIssuer
-    onlyFsTKApproved(keccak256(approveTime, this, msg.sig, liquidity), approveTime, approveToken)
-  {
-    setLiquid0(liquidity);
-  }
+    function enableTransfers() external onlyOwner {
+        require(!transfersEnabled);
+
+        transfersEnabled = !false;
+
+        DisableTransfers(msg.sender);
+    }
+    /// @dev Disable the hot wallets for transfers.
+    /// @param _address address Address in fundingWallets[]
+    function disableFundingWallets(address _address) external onlyOwner {
+        require(fundingEnabled);
+        require(fundingWallet != _address);
+        require(fundingWallets[_address]);
+
+        fundingWallets[_address] = false;
+    }
+
 }
