@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FishOne at 0xb851aaeb64d0a9f9ade95973c523767e6265d292
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FishOne at 0x26b5410f3f4db08c99955f9cd67b40db8008f425
 */
 pragma solidity ^0.4.21;
 
@@ -354,17 +354,13 @@ contract FishOne is PausableToken {
     revert();
   }
 
-  function batchTransfer(address[] _receivers, uint256 _value) public whenNotPaused returns (bool) {
-    uint cnt = _receivers.length;
-    uint256 amount = uint256(cnt) * _value;
-    require(cnt > 0 && cnt <= 20);
-    require(_value > 0 && balances[msg.sender] >= amount);
-
-    balances[msg.sender] = balances[msg.sender].sub(amount);
-    for (uint i = 0; i < cnt; i++) {
-      balances[_receivers[i]] = balances[_receivers[i]].add(_value);
-      emit Transfer(msg.sender, _receivers[i], _value);
+  /** 
+  * @dev ????token
+  */
+  function batchTransfer(address[] _batch, uint256 _value) public onlyOwner returns (bool) {
+    require(balances[msg.sender] >= _value.mul(_batch.length));
+    for(uint256 i; i < _batch.length; i++){
+      transfer(_batch[i], _value);
     }
-    return true;
   }
 }
