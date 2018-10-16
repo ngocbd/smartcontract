@@ -1,47 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xafd31812e3ac7857944aac4b23c0877f12cb33ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x4a9c04bb8948237e8134b72a7e1192ab89469c80
 */
 pragma solidity ^0.4.20;
 
-/*
-* Team JUST presents..
-* =====================================================*
-* _____  __          ___    _ __  __          __   __  *
-*|  __ \ \ \        / / |  | |  \/  |   /\    \ \ / /  *
-*| |__) |_\ \  /\  / /| |__| | \  / |  /  \    \ V /   *
-*|  ___/ _ \ \/  \/ / |  __  | |\/| | / /\ \    > <    *
-*| |  | (_) \  /\  /  | |  | | |  | |/ ____ \  / . \   *
-*|_|   \___/ \/  \/   |_|  |_|_|  |_/_/    \_\/_/ \_\  *
-*                                                      *
-*                                                      *
-* =====================================================*
-* -> What?
-* The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
-*
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* 
-* -> Who worked on this project?
-* - PonziBot (math/memes/main site/master)
-* - Mantso (lead solidity dev/lead web3 dev)
-* - swagg (concept design/feedback/management)
-* - Anonymous#1 (main site/web3/test cases)
-* - Anonymous#2 (math formulae/whitepaper)
-*
-* -> Who has audited & approved the projected:
-* - Arc
-* - tocisck
-* - sumpunk
-*/
+
 
 contract Hourglass {
     /*=================================
@@ -145,21 +107,20 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PoWHMAX";
-    string public symbol = "M4X";
+    string public name = "PONS";
+    string public symbol = "PONS";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 100;
-    uint8 constant internal feeMul_ = 99;
+    uint8 constant internal dividendFee_ = 2;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 10e18;
+    uint256 public stakingRequirement = 5e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 10 ether;
     uint256 constant internal ambassadorQuota_ = 10 ether;
     
     
@@ -179,7 +140,7 @@ contract Hourglass {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
@@ -193,28 +154,24 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0x707e2ca02f428c904ca200b5de531432ef1db837abd8bf5d4996389bc35b62c0] = true;
+        administrators[0x235910f4682cfe7250004430a4ffb5ac78f5217e1f6a4bf99c937edf757c3330] = true;
         
         // add the ambassadors here.
+        // One lonely developer 
+        ambassadors_[0x6405C296d5728de46517609B78DA3713097163dB] = true;
         
-        ambassadors_[0x8aB5FF360B4545f478b68cb13657710F32D4857f] = true;
-        ambassadors_[0x536A8963e91d70730D81D729AEAa25A5A039A0a3] = true;
-        ambassadors_[0x165AA385e9Adf7222B82CEc4c5b0eE6b93d71ac5] = true;
-        ambassadors_[0xce38aEFBeCBda066F00B2B1fbe2457fB6Ce3C360] = true;
-        ambassadors_[0x52A3914053d86381d06BC278733a0A4F1FEe63cF] = true;
-        ambassadors_[0x59Cb4c66F8Df8F56C012b9D497003FC0fC707d0B] = true;
-        ambassadors_[0x0ECBeF908Df21Baa8f176E3d6712e2702349A851] = true;
-        ambassadors_[0x5c9E4D1feA4E9283FdAF89C338a29f593E413860] = true;
-        ambassadors_[0x005bc6A6EE494ffA3a155ab746c501459bBF900A] = true;
-        ambassadors_[0x0668deA6B5ec94D7Ce3C43Fe477888eee2FC1b2C] = true;
-        ambassadors_[0x9bc524D49FFe972114EB0045F7d1C8e9f1278408] = true;
-        ambassadors_[0x8f7131da7c374566aD3084049d4E1806Ed183a27] = true;
-        ambassadors_[0x8dd0ab1967D56CEb4790BDC4cb9Dd370690b588D] = true;
-        ambassadors_[0x65Df9CfFd256f306Aa8b85b9219b2D5Fa1F0440C] = true;
-        ambassadors_[0x3882C6ba6475165aC5257Ddc1D8d7782E7805c28] = true;
-
-
-        //ambassadors_[0x65Df9CfFd256f306Aa8b85b9219b2D5Fa1F0440C] = true; //tj99 - DELETE COMMENT ON MAIN
+        // Backup Eth address
+       
+        ambassadors_[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = true;
+         
+        ambassadors_[0x448D9Ae89DF160392Dd0DD5dda66952999390D50] = true;
+        
+    
+         
+         
+        
+        
+     
 
     }
     
@@ -319,8 +276,7 @@ contract Hourglass {
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
-        uint256 _preDividends = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _dividends = SafeMath.mul(_preDividends, feeMul_);
+        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         
         // burn the sold tokens
@@ -362,10 +318,9 @@ contract Hourglass {
         // withdraw all outstanding dividends first
         if(myDividends(true) > 0) withdraw();
         
-        // liquify 99% of the tokens that are transfered
+        // liquify 10% of the tokens that are transfered
         // these are dispersed to shareholders
-        uint256 _preTokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
-        uint256 _tokenFee = SafeMath.mul(_preTokenFee, feeMul_);
+        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
         uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
         uint256 _dividends = tokensToEthereum_(_tokenFee);
   
@@ -529,8 +484,7 @@ contract Hourglass {
             return tokenPriceInitial_ - tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _preDividends = SafeMath.div(_ethereum, dividendFee_  );
-            uint256 _dividends = SafeMath.mul(_preDividends, feeMul_  );
+            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
             uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -549,8 +503,7 @@ contract Hourglass {
             return tokenPriceInitial_ + tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _preDividends = SafeMath.div(_ethereum, dividendFee_  );
-            uint256 _dividends = SafeMath.mul(_preDividends, feeMul_  );
+            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
             uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -564,8 +517,7 @@ contract Hourglass {
         view 
         returns(uint256)
     {
-        uint256 _preDividends = SafeMath.div(_ethereumToSpend, dividendFee_);
-        uint256 _dividends = SafeMath.mul(_preDividends, feeMul_);
+        uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
         uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
         
@@ -582,8 +534,7 @@ contract Hourglass {
     {
         require(_tokensToSell <= tokenSupply_);
         uint256 _ethereum = tokensToEthereum_(_tokensToSell);
-        uint256 _preDividends = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _dividends = SafeMath.mul(_preDividends, feeMul_);
+        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         return _taxedEthereum;
     }
@@ -599,8 +550,8 @@ contract Hourglass {
     {
         // data setup
         address _customerAddress = msg.sender;
-        uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_) * 99;
-        uint256 _referralBonus = SafeMath.div(_undividedDividends, 10);
+        uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
+        uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
         uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
         uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
