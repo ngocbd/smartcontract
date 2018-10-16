@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleEthBank at 0x2c9eb11db6b0dcb18fe8644003ee53f6b4588341
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleEthBank at 0xd2Be917aFD50b81b585A5a96866658f9F90D811B
 */
 pragma solidity ^0.4.19;
 
@@ -32,6 +32,7 @@ contract SimpleEthBank {
         accountExists[msg.sender] = true;
         Deposit(msg.sender, msg.value);
     }
+
     function withdraw(uint amount) public {
         require(accountExists[msg.sender] && accountBalances[msg.sender] >= amount);
         accountBalances[msg.sender] -= amount;
@@ -40,7 +41,9 @@ contract SimpleEthBank {
     }
 
     function transfer(address to, uint amount) public {
-        require(accountExists[msg.sender] && accountExists[to] && accountBalances[msg.sender] >= amount);
+        require(accountExists[msg.sender] && accountExists[to]);
+        require(msg.sender != to);
+        require(accountBalances[msg.sender] >= amount);
         accountBalances[to] += amount;
         Transfer(msg.sender, to, amount);
     }
