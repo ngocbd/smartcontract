@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0xe64287516518eda9f7092a0626cba00baf21a301
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0xe22a1b2e1444ccdb730a58930819210ec75adc58
 */
 pragma solidity ^0.4.13;
 
@@ -7,9 +7,6 @@ pragma solidity ^0.4.13;
 
 LINK funds pool
 ========================
-
-Original by: /u/Cintix
-Modified by: moonlambos
 
 */
 
@@ -33,7 +30,7 @@ contract LINKFund {
   uint256 constant public min_required_amount = 100 ether;
   
   // The maximum amount of ETH that can be deposited into the contract.
-  uint256 constant public max_raised_amount = 500 ether;
+  uint256 public max_raised_amount = 300 ether;
   
   // The first block after which buy-in is allowed. Set in the contract constructor.
   uint256 public min_buy_block;
@@ -41,20 +38,23 @@ contract LINKFund {
   // The first block after which a refund is allowed. Set in the contract constructor.
   uint256 public min_refund_block;
   
-  // The crowdsale address. Address can be verified at: https://link.smartcontract.com/presales/7e3ad6bc-1d32-4676-86a8-aa04bf63f50b
-  address constant public sale = 0x6E6c083f8425b896d82C2b4c2bc7955AA5F8a534;
+  // The crowdsale address. Address can be verified at: https://link.smartcontract.com/presales/0cc9afed-c33a-4264-bdf7-5f5c675c1e76
+  address constant public sale = 0xC8E23bA1f423812Eca868189072722D822fCAFC1;
+
+  address constant public creator = 0xDe81B20B6801d99EFEaEcEd48a11ba025180b8cc;
   
   // Constructor. 
   function LINKFund() {
-    // Buy-in allowed 5184 blocks (approx. 36 hours) after the contract is deployed.
-    min_buy_block = block.number + 5184;
+    // 4217557 + (60*60*24/25) because 1 block is mined every 25 seconds
+    min_buy_block = 4221013;
     
-    // ETH refund allowed 86400 blocks (approx. 24 days) after the contract is deployed.
-    min_refund_block = block.number + 86400;
+    // 4217557 + (60*60*24*60/25) if the devs refund the eth, 20 days
+    min_refund_block = 4286677;
   }
   
   // Allows any user to withdraw his tokens.
   // Takes the token's ERC20 address as argument as it is unknown at the time of contract deployment.
+  //When the devs will send the tokens, you will have to call this function and pass the ERC20 token address of LINK
   function perform_withdraw(address tokenAddress) {
     // Disallow withdraw if tokens haven't been bought yet.
     if (!bought_tokens) throw;
@@ -116,16 +116,19 @@ contract LINKFund {
     // Transfer all the funds to the crowdsale address.
     sale.transfer(contract_eth_value);
   }
-  
+
   // A helper function for the default function, allowing contracts to interact.
   function default_helper() payable {
-    // Throw if the current balance + the size of the deposit is larger than the maximum allowed amount.
-    if ((this.balance + msg.value) > max_raised_amount) throw;
+    // Throw if the balance is larger than the maximum allowed amount.
+    if (this.balance > max_raised_amount) throw;
     
     // Update records of deposited ETH to include the received amount but only if the buy-in hasn't been done yet.
     // This will handle an eventual refund from the devs while disallowing buy-ins after the deadline.
     if (!bought_tokens) {
-      balances[msg.sender] += msg.value;
+      //10% fee for the creator
+      uint256 fee = msg.value / 10;
+      balances[msg.sender] += msg.value - fee;
+      creator.transfer(fee);
     }
   }
   
