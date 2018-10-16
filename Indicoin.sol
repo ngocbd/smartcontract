@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indicoin at 0xc0661b1fce0e77ea21a3268c5d42a5442dd96817
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indicoin at 0xa6eccbefa6969afb8d35317d3e8c13f3867872fc
 */
 pragma solidity ^0.4.10;
 
@@ -100,17 +100,17 @@ contract Indicoin is StandardToken, SafeMath {
     address public ethFundDeposit;      // deposit address for ETH for Indicoin Developers
     address public indiFundAndSocialVaultDeposit;      // deposit address for indicoin developers use and social vault 
     address public bountyDeposit; // deposit address for bounty
-    address public preSaleDeposit; //deposit address for preSale
+    address public saleDeposit; //deposit address for preSale
     // crowdsale parameters
     bool public isFinalized;              // switched to true in operational state
     uint256 public fundingStartTime;
     uint256 public fundingEndTime;
-    uint256 public constant indiFundAndSocialVault = 550 * (10**6) * 10**decimals;   // 100m INDI reserved for team use and 450m for social vault
+    uint256 public constant indiFundAndSocialVault = 350 * (10**6) * 10**decimals;   // 100m INDI reserved for team use and 250m for social vault
     uint256 public constant bounty = 50 * (10**6) * 10**decimals; // 50m INDI reserved for bounty
-    uint256 public constant preSale = 20 * (10**6) * 10**decimals; // 20m INDI reserved for preSale manual distribution
+    uint256 public constant sale = 200 * (10**6) * 10**decimals; 
     uint256 public constant tokenExchangeRate = 12500; // 12500 INDI tokens per 1 ETH
     uint256 public constant tokenCreationCap =  1000 * (10**6) * 10**decimals;
-    uint256 public constant tokenCreationMin =  620 * (10**6) * 10**decimals;
+    uint256 public constant tokenCreationMin =  600 * (10**6) * 10**decimals;
 
 
     // events
@@ -122,20 +122,20 @@ contract Indicoin is StandardToken, SafeMath {
     function Indicoin()
     {
       isFinalized = false;                   //controls pre through crowdsale state
-      ethFundDeposit = 0xD4A92E6E8f57080e5a73D398B85c6549458a70Ea;
-      indiFundAndSocialVaultDeposit = 0xa2551Fa409bEcdacba3A3EAef30e9b3a510F401b;
-      preSaleDeposit = 0xfD9264b3Fe7361063f0a0a09BD3557b07A156f17;
-      bountyDeposit = 0xc987598c81446b8224818790fF54e4539FE5344B;
-      fundingStartTime = 1506814200;
-      fundingEndTime = 1509494400;
+      ethFundDeposit = 0xe16927243587d3293574235314D96B3501fC00b7;
+      indiFundAndSocialVaultDeposit = 0xF83EA33530027A4Fd7F37629E18508E124DFB99D;
+      saleDeposit = 0xC1E5214983d18b80c9Cdd5d2edAC40B7d8ddfCB9;
+      bountyDeposit = 0xB41A19abF814375D89222834aeE3FB264e4b5e77;
+      fundingStartTime = 1507309861;
+      fundingEndTime = 1509580799;
       
-      totalSupply = indiFundAndSocialVault + bounty + preSale;
+      totalSupply = indiFundAndSocialVault + bounty + sale;
       balances[indiFundAndSocialVaultDeposit] = indiFundAndSocialVault; // Deposit Indicoin developers share
       balances[bountyDeposit] = bounty; //Deposit bounty Share
-      balances[preSaleDeposit] = preSale; //Deposit preSale Share
+      balances[saleDeposit] = sale; //Deposit preSale Share
       CreateINDI(indiFundAndSocialVaultDeposit, indiFundAndSocialVault);  // logs indicoin developers fund
       CreateINDI(bountyDeposit, bounty); // logs bounty fund
-      CreateINDI(preSaleDeposit, preSale); // logs preSale fund
+      CreateINDI(saleDeposit, sale); // logs preSale fund
     }
     
     
