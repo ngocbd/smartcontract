@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BookERC20EthV1 at 0x8216deae8744a0286c8c53d8f237b65f661644e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BookERC20EthV1 at 0xf8d15960aa6aaf5972dc54cf002951553906c7bd
 */
 pragma solidity ^0.4.11;
 
@@ -15,8 +15,10 @@ contract ERC20 {
   event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
-// UbiTok.io limit order book with an "nice" ERC20 token as base, ETH as quoted, and standard fees.
+// UbiTok.io on-chain continuous limit order book matching engine.
+// This variation is for a "nice" ERC20 token as base, ETH as quoted, and standard fees with reward token.
 // Copyright (c) Bonnag Limited. All Rights Reserved.
+// Version 1.0.0.
 //
 contract BookERC20EthV1 {
 
@@ -88,6 +90,11 @@ contract BookERC20EthV1 {
     uint128 prevOrderId;
   }
   
+  // It should be possible to reconstruct the expected state of the contract given:
+  //  - ClientPaymentEvent log history
+  //  - ClientOrderEvent log history
+  //  - Calling getOrder for the other immutable order fields of orders referenced by ClientOrderEvent
+  
   enum ClientPaymentEventType {
     Deposit,
     Withdraw,
@@ -117,7 +124,8 @@ contract BookERC20EthV1 {
   event ClientOrderEvent(
     address indexed client,
     ClientOrderEventType clientOrderEventType,
-    uint128 orderId
+    uint128 orderId,
+    uint maxMatches
   );
 
   enum MarketOrderEventType {
@@ -132,8 +140,9 @@ contract BookERC20EthV1 {
     PartialFill
   }
 
-  // these events can be used to build an order book or watch for fills
-  // note that the orderId and price are those of the maker
+  // Technically not needed but these events can be used to maintain an order book or
+  // watch for fills. Note that the orderId and price are those of the maker.
+
   event MarketOrderEvent(
     uint256 indexed eventTimestamp,
     uint128 indexed orderId,
@@ -232,7 +241,7 @@ contract BookERC20EthV1 {
   //      0  = invalid (can be used as marker value)
   //      1  = buy at maximum price (0.999 * 10 ** 6)
   //    ...  = other buy prices in descending order
-  //   5401  = buy at 1.00
+  //   5400  = buy at 1.00
   //    ...  = other buy prices in descending order
   //  10800  = buy at minimum price (0.100 * 10 ** -5)
   //  10801  = sell at minimum price (0.100 * 10 ** -5)
@@ -585,8 +594,8 @@ contract BookERC20EthV1 {
       uint128 orderId, uint16 price, uint sizeBase, Terms terms, uint maxMatches
     ) public {
     address client = msg.sender;
-    require(client != 0 && orderId != 0 && orderForOrderId[orderId].client == 0);
-    ClientOrderEvent(client, ClientOrderEventType.Create, orderId);
+    require(orderId != 0 && orderForOrderId[orderId].client == 0);
+    ClientOrderEvent(client, ClientOrderEventType.Create, orderId, maxMatches);
     orderForOrderId[orderId] =
       Order(client, price, sizeBase, terms, Status.Unknown, ReasonCode.None, 0, 0, 0, 0);
     uint128 previousMostRecentOrderIdForClient = mostRecentOrderIdForClient[client];
@@ -633,6 +642,7 @@ contract BookERC20EthV1 {
     if (status != Status.Open && status != Status.NeedsGas) {
       return;
     }
+    ClientOrderEvent(client, ClientOrderEventType.Cancel, orderId, 0);
     if (status == Status.Open) {
       removeOpenOrderFromBook(orderId);
       MarketOrderEvent(block.timestamp, orderId, MarketOrderEventType.Remove, order.price,
@@ -650,6 +660,7 @@ contract BookERC20EthV1 {
     if (order.status != Status.NeedsGas) {
       return;
     }
+    ClientOrderEvent(client, ClientOrderEventType.Continue, orderId, maxMatches);
     order.status = Status.Unknown;
     processOrder(orderId, maxMatches);
   }
@@ -815,6 +826,8 @@ contract BookERC20EthV1 {
   //
   // matchStopReason returned will be one of MaxMatches, Satisfied or BookExhausted.
   //
+  // Calling with maxMatches == 0 is ok - and expected when the order is a maker-only order.
+  //
   function matchAgainstBook(
       uint128 orderId, uint theirPriceStart, uint theirPriceEnd, uint maxMatches
     ) internal returns (
@@ -858,6 +871,7 @@ contract BookERC20EthV1 {
           if (matchStopReason == MatchStopReason.PriceExhausted) {
             matchStopReason = MatchStopReason.None;
           } else if (matchStopReason != MatchStopReason.None) {
+            // we might still have changes in dbm to write back - see later
             break;
           }
         }
