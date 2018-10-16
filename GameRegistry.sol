@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameRegistry at 0xC1ce17303ef35C128B499eD091F39008B3a57389
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameRegistry at 0xad87e48d553C2308dccaB428537F6d0809593bA4
 */
 contract GameRegistry {
 
@@ -16,31 +16,47 @@ contract GameRegistry {
     }
 
     // This mapping keeps the records of this Registry.
-    mapping(address => Record) records;
+    mapping(address => Record) private records;
 
     // Keeps the total numbers of records in this Registry.
-    uint public numRecords;
+    uint private numRecords;
 
     // Keeps a list of all keys to interate the recoreds.
     address[] private keys;
 
     // The owner of this registry.
-    address owner;
+    address private owner;
 
-    uint public REGISTRATION_COST = 100 finney;
-    uint public TRANSFER_COST = 10 finney;
-    uint public VALUE_DISTRIBUTION_KEY_OWNERS = 50;
+    uint private KEY_HOLDER_SHARE  = 50;
+    uint private REGISTRATION_COST = 500 finney;
+    uint private TRANSFER_COST     = 0;
 
     // Constructor
     function GameRegistry() {
         owner = msg.sender;
     }
+    
+    // public interface to the directory of games
+    function theGames(uint rindex) constant returns(address contractAddress, string description, string url, address submittedBy, uint time) {
+        Record record = records[keys[rindex]];
+        contractAddress = keys[rindex];
+        description = record.description;
+        url = record.url;
+        submittedBy = record.owner;
+        time = record.time;
+    }
 
-    function distributeValue() {
+    function settings() constant public returns(uint registrationCost, uint percentSharedWithKeyHolders) {
+        registrationCost            = REGISTRATION_COST / 1 finney;
+        percentSharedWithKeyHolders = KEY_HOLDER_SHARE;
+    }
+
+    function distributeValue() private {
         if (msg.value == 0) {
             return;
         }
-        uint ownerPercentage = 100 - VALUE_DISTRIBUTION_KEY_OWNERS;
+        // share value with all key holders
+        uint ownerPercentage  = 100 - KEY_HOLDER_SHARE;
         uint valueForRegOwner = (ownerPercentage * msg.value) / 100;
         owner.send(valueForRegOwner);
         uint valueForEachOwner = (msg.value - valueForRegOwner) / numRecords;
@@ -53,7 +69,7 @@ contract GameRegistry {
     }
 
     // This is the function that actually inserts a record. 
-    function register(address key, string description, string url) {
+    function addGame(address key, string description, string url) {
         // Only allow registration if received value >= REGISTRATION_COST
         if (msg.value < REGISTRATION_COST) {
             // Return value back to sender.
@@ -76,6 +92,8 @@ contract GameRegistry {
         }
     }
 
+    function () { distributeValue(); }
+
     // Updates the values of the given record.
     function update(address key, string description, string url) {
         // Only the owner can update his record.
@@ -85,18 +103,7 @@ contract GameRegistry {
         }
     }
 
-    // Unregister a given record
-    function unregister(address key) {
-        if (records[key].owner == msg.sender) {
-            uint keysIndex = records[key].keysIndex;
-            delete records[key];
-            numRecords--;
-            keys[keysIndex] = keys[keys.length - 1];
-            records[keys[keysIndex]].keysIndex = keysIndex;
-            keys.length--;
-        }
-    }
-
+/*
     // Transfer ownership of a given record.
     function transfer(address key, address newOwner) {
         // Only allow transfer if received value >= TRANSFER_COST
@@ -112,22 +119,14 @@ contract GameRegistry {
             records[key].owner = newOwner;
         }
     }
+*/
 
     // Tells whether a given key is registered.
-    function isRegistered(address key) returns(bool) {
+    function isRegistered(address key) private constant returns(bool) {
         return records[key].time != 0;
     }
 
-    function getRecordAtIndex(uint rindex) returns(address key, address owner, uint time, string description, string url) {
-        Record record = records[keys[rindex]];
-        key = keys[rindex];
-        owner = record.owner;
-        time = record.time;
-        description = record.description;
-        url = record.url;
-    }
-
-    function getRecord(address key) returns(address owner, uint time, string description, string url) {
+    function getRecord(address key) private constant returns(address owner, uint time, string description, string url) {
         Record record = records[key];
         owner = record.owner;
         time = record.time;
@@ -138,19 +137,28 @@ contract GameRegistry {
     // Returns the owner of the given record. The owner could also be get
     // by using the function getRecord but in that case all record attributes 
     // are returned.
-    function getOwner(address key) returns(address) {
+    function getOwner(address key) private constant returns(address) {
         return records[key].owner;
     }
 
     // Returns the registration time of the given record. The time could also
     // be get by using the function getRecord but in that case all record attributes
     // are returned.
-    function getTime(address key) returns(uint) {
+    function getTime(address key) private constant returns(uint) {
         return records[key].time;
     }
 
+    // Registry owner can use this function to withdraw any surplus value owned by
+    // the registry.
+    function maintain(uint value, uint cost) {
+        if (msg.sender == owner) {
+            msg.sender.send(value);
+            REGISTRATION_COST = cost;
+        }
+    }
+
     // Returns the total number of records in this registry.
-    function getTotalRecords() returns(uint) {
+    function getTotalRecords() private constant returns(uint) {
         return numRecords;
     }
 
@@ -159,14 +167,6 @@ contract GameRegistry {
     function returnValue() internal {
         if (msg.value > 0) {
             msg.sender.send(msg.value);
-        }
-    }
-
-    // Registry owner can use this function to withdraw any value owned by
-    // the registry.
-    function withdraw(uint value) {
-        if (msg.sender == owner) {
-            msg.sender.send(value);
         }
     }
 
