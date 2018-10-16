@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecoveryWithTenant at 0xade85d1796008281dbf4baaedb2790d3fea8d89d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecoveryWithTenant at 0xcab39d1c7383fc9682a1221bffacbce2bdd967ca
 */
 pragma solidity ^0.4.4;
 
@@ -76,7 +76,7 @@ contract RecoveryWithTenant {
     }
     
     function configure(address _tenant, address _callDestination, uint _nonce, uint8 _v, bytes32 _r, bytes32 _s) noEther onlyOracle returns (bool) {
-        if(tenant != oracle && !_checkSigned(sha3(tenant, _callDestination, _nonce), _nonce, _v, _r, _s))
+        if(tenant != oracle && !_checkSigned(sha3(_tenant, _callDestination, _nonce), _nonce, _v, _r, _s))
             return false;
         tenant = _tenant;
         callDestination = _callDestination;
