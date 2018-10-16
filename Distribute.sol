@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0xd3fbe96f1a1264c0c20099747aef15b28d571e01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0xb07097789653cf09322bf03d4f12b90635cf721c
 */
 pragma solidity ^0.4.11;
 
@@ -24,7 +24,7 @@ contract Distribute {
 
 	// ICO multisig address
 	address public multisig = 0x91e65a0e5ff0F0E8fBA65F3636a7cd74f4c9f0E2; // ZIL Wallet
-
+	
 	// Tokens to withhold per person (to cover gas costs)  // SEE ABOVE
 	uint public withhold = 0;  // NOT USED WITH ZIL, SEE ABOVE
 
@@ -54,57 +54,59 @@ contract Distribute {
 		
 		admins.push(msg.sender);
 		admins.push(0x91e65a0e5ff0F0E8fBA65F3636a7cd74f4c9f0E2);
-
+		
 		// ------------------------- PAYEES ----------------------- //
-
-		payees.push(Payee({addr:0x9e7De6F979a72908a0Be23429433813D8bC94a83, contributionWei:40000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xEA8356f5e9B8206EaCDc3176B2AfEcB4F44DD1b8, contributionWei:40000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x739EB2b1eF52dF7eb8666D70b1608118AF8c2e30, contributionWei:40000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xb72b7B33Af65CF47785D70b02c7E896482b77205, contributionWei:40000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x491b972AC0E1B26ca9F382493Ce26a8c458a6Ca5, contributionWei:37000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xfBFcb29Ff159a686d2A0A3992E794A3660EAeFE4, contributionWei:30000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xBAB1033f57B5a4DdD009dd7cdB601b49ed5c0F58, contributionWei:30000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xecc996953e976a305ee585a9c7bbbcc85d1c467b, contributionWei:30000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x5BF688EEb7857748CdD99d269DFa08B3f56f900B, contributionWei:30000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x0eD760957da606b721D4E68238392a2EB03B940B, contributionWei:30000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xfa97c22a03d8522988c709c24283c0918a59c795, contributionWei:30000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x0AC776c3109f673B9737Ca1b208B20084cf931B8, contributionWei:25000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xF1BB2d74C9A0ad3c6478A3b87B417132509f673F, contributionWei:25000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xd71932c505beeb85e488182bcc07471a8cfa93cb, contributionWei:25000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xfBfE2A528067B1bb50B926D79e8575154C1dC961, contributionWei:25000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xe6c769559926F615CFe6bac952e28A40525c9CF6, contributionWei:22000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x6944bd031a455eF1db6f3b3761290D8200245f64, contributionWei:21000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xacedc52037D18C39f38E5A3A78a80e32ffFA34D3, contributionWei:20000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xeC6CAF005C7b8Db6b51dAf125443a6bCe292dFc3, contributionWei:20000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xe204f47c00bf581d3673b194ac2b1d29950d6ad3, contributionWei:20000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xf41Dcd2a852eC72440426EA70EA686E8b67e4922, contributionWei:20000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x589bD9824EA125BF59a76A6CB79468336955dCEa, contributionWei:20000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x1240Cd12B3A0F324272d729613473A5Aed241607, contributionWei:20000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xdD7194415d1095916aa54a301d954A9a82c591EC, contributionWei:20000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xce38acf94281f16259a1eee2a4f61ccc537296ff, contributionWei:20000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xD291Cd1ad826eF30D40aA44799b5BA6F33cC26de, contributionWei:15000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x7166C092902A0345d9124d90C7FeA75450E3e5b6, contributionWei:15000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xbbe343ED0E7823F4E0F3420D20c6Eb9789c14AD8, contributionWei:15000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xDC95764e664AA9f3E090494989231BD2486F5de0, contributionWei:15000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xA664beecd0e6E04EE48f5B4Fb5183bd548b4A912, contributionWei:15000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x00D7b44598E95Abf195e4276f42a3e07F9D130E3, contributionWei:15000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x48daFCfd4F76d6274039bc1c459E69A6daA434CC, contributionWei:12000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xADBD3F608677bEF61958C13Fd6d758bd7A9a25d6, contributionWei:10500000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x044a9c43e95aa9fd28eea25131a62b602d304f1f, contributionWei:10000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x20Ec8fE549CD5978bcCC184EfAeE20027eD0c154, contributionWei:10000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xecFe6c6676a25Ee86f2B717011AA52394d43E17a, contributionWei:10000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x0D032b245004849D50cd3FF7a84bf9f8057f24F9, contributionWei:10000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x64CD180d8382b153e3acb6218c54b498819D3905, contributionWei:10000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x59FD8C50d174d9683DA90A515C30fc4997bDc556, contributionWei:10000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x83CA062Ea4a1725B9E7841DFCB1ae342a10d8c1F, contributionWei:6000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x2c1f43348d4bDFFdA271bD2b8Bae04f3d3542DAE, contributionWei:5000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x78d4F243a7F6368f1684C85eDBAC6F2C344B7739, contributionWei:5000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x8d4f315df4860758E559d63734BD96Fd3C9f86d8, contributionWei:5000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x0584e184Eb509FA6417371C8A171206658792Da0, contributionWei:2000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x861038738e10bA2963F57612179957ec521089cD, contributionWei:1800000000000000000, paid:false}));		
-		payees.push(Payee({addr:0xCbB913B805033226f2c6b11117251c0FF1A3431D, contributionWei:1000000000000000000, paid:false}));		
-		payees.push(Payee({addr:0x3E08FC7Cb11366c6E0091fb0fD64E0E5F8190bCa, contributionWei:1000000000000000000, paid:false}));		
-
+		
+		payees.push(Payee({addr:0x28d804bf2212e220bc2b7b6252993db8286df07f, contributionWei:1058514661000000000000, paid:false}));
+		payees.push(Payee({addr:0x20A2F38c02a27292afEc7C90609e5Bd413Ab4DD9, contributionWei:942000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x5F0f119419b528C804C9BbBF15455d36450406B4, contributionWei:760000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x31C715aD3403F85060614bE744FCb8826d33E8Df, contributionWei:530000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xE2Ae58AFecF6195D51DA29250f8Db4C8F3222440, contributionWei:471200000000000000000, paid:false}));
+		payees.push(Payee({addr:0x296b436529DC64C03E9cEB77F032a04071D6c057, contributionWei:400000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x8dCd6294cE580bc6D17304a0a5023289dffED7d6, contributionWei:365000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xb9C336A4bA0f25eaa67ee5Ca89ECF3491a1407f3, contributionWei:300000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xA534F5b9a5D115563A28FccC5C92ada771da236E, contributionWei:288000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x82e4ad6af565598e5af655c941d4d8995f9783db, contributionWei:270000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xA4f8506E30991434204BC43975079aD93C8C5651, contributionWei:260000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x000354015865e6A7F83B8973418c9a0CF6B6DA3C, contributionWei:238000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x00505D0a66A0646c85095bBFd75f57c4e1C431ba, contributionWei:225000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x9ebab12563968d8255f546831ec4833449234fFa, contributionWei:200000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xFf651EAD42b8EeA0B9cB88EDc92704ef6af372Ce, contributionWei:200000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x001f95c5a0e8B7Dce28311F334345a330EF7c3c5, contributionWei:200000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x608a8116eA6A3607f6d444AFBD9bEce6d8308c6C, contributionWei:160000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x0Be0D78fA3af2fc0863c6AC3fD8e13411B2471b4, contributionWei:155000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x85591bFABB18Be044fA98D72F7093469C588483C, contributionWei:140000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xb09E4B177856C95003E806e2f07dDCA38257df6D, contributionWei:125000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x2B3f65Ed823d1D44790fBd96BD51Fa22196Fff82, contributionWei:120000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xa722F9F5D744D508C155fCEb9245CA57B5D13Bb5, contributionWei:120000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x00694C41975E95e435461192aBb86C56A3c2e66f, contributionWei:115000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xd20718bbE781951CaEA1FaE92f922E6Ddbde529A, contributionWei:107500000000000000000, paid:false}));
+		payees.push(Payee({addr:0x867D6B56809D4545A7F53E1d4faBE9086FDeb60B, contributionWei:106000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x00566011c133ccBD50aB7088DFA1434e31e42946, contributionWei:105000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x008C4142Cc1B40D30557DFb976cDc1ba1F75d11a, contributionWei:101000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x82e4D78C6c62D461251fA5A1D4Deb9F0fE378E30, contributionWei:100000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x0466A804c880Cd5F225486A5D0f556be25B6fCC8, contributionWei:100000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x660E067602dC965F10928B933F21bA6dCb2ece9C, contributionWei:100000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x5bc788e50c6eb950fed19ddb488fad9bbb22300e, contributionWei:100000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x78577F346253c63266C6E6603797bBc4F20d2d20, contributionWei:100000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xe6497414EB0b19BbeB1d41451cA096ad1656Fa17, contributionWei:85000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xf506D090bFcBc73D1E9ea9770aB0d428515Ac858, contributionWei:80000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x8E6340BB3F73DF84214ec52A446E03AE6DdFfC21, contributionWei:72000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x8F212180bF6B8178559a67268502057Fb0043Dd9, contributionWei:70000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x410a99f620D6382ce5e78b697519668817aFbD5D, contributionWei:67000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xCAbA2231Bc28f0fCE76FEa1f97e4c9225899B4eE, contributionWei:60000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xF1EA52AC3B0998B76e2DB8394f91224c06BEEf1c, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x46cCc6b127D6d4d04080Da2D3bb5Fa9Fb294708a, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x2a7B8545c9f66e82Ac8237D47a609f0cb884C3cE, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x63DEFE2bC3567e3309a31b27261fE839Ed35ae3A, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xFFfe1F5D42DC16AF7c05D0Aa24D2C649A869B367, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x0AF8997f94229407C53620cd30C6d9e37653221d, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x0007216e1eBC0E02B7A45448bECA6e3faA6E4694, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x4a4d944301507a175824de2dae490e9aeca5c347, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0xc9cc554d35824fdc3b086ac22e62a5b11c1bde90, contributionWei:50000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x00B15358eE23E65ad02F07Bd66FB556c21C6b613, contributionWei:47000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x0006b0A9bf479Bc741265073E34fCf646Ff0BC90, contributionWei:47000000000000000000, paid:false}));
+		payees.push(Payee({addr:0x8f8Ce7C2Ae0860F7F12C613FD85CC82ba292F6eB, contributionWei:45000000000000000000, paid:false}));
 
 	}
 
