@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHYOLO at 0x577feb0b1805ec2dda594e1cf5e40d29893d49dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHYOLO at 0x46df22eda6a25745b172c558a6e9792a65d80f6d
 */
 pragma solidity ^0.4.11;
 
@@ -64,16 +64,16 @@ contract ETHYOLO is IERC20 {
     
     using SafeMath for uint256;
     
-    uint public constant _totalSupply = 99994138888;
-
+    uint public _totalSupply = 99994138888;
+    uint public INITIAL_SUPPLY = 4999706944;
     string public constant symbol = "EYO";
     string public constant name = "ETHYOLO COIN";
     uint8 public constant decimals = 18;
     // replace with your fund collection multisig address
-    address public constant multisig = "0xBAa21da3f332eBeAF33eB25412a8a82A160B4531";
+    address public constant multisig = "0x82Ee855ecA88c30029582917a536d1A7ce3886d2";
     
-    // 1 ether = 74138888 EYO
-    uint256 public constant RATE = 74138888;
+    // 1 ether = 75000000 EYO
+    uint256 public constant RATE = 75000000;
     
     address public owner;
     
@@ -93,6 +93,7 @@ contract ETHYOLO is IERC20 {
         
         uint256 tokens= msg.value.mul(RATE);
         balances[msg.sender] = balances[msg.sender].add(tokens);
+        _totalSupply = _totalSupply.add(tokens);
         
         
         owner.transfer(msg.value);
@@ -101,8 +102,11 @@ contract ETHYOLO is IERC20 {
     
     function totalSupply() constant returns (uint256 _totalSupply) {
         return _totalSupply;
-
+    }
     
+    function INITIAL_SUPPLY() {
+        INITIAL_SUPPLY = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
     }
     
     function balanceOf(address _owner) constant returns (uint256 balance) {
