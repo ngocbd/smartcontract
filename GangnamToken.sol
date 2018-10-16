@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GangnamToken at 0x614970620abf764822539c31e826ddd1635bf173
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GangnamToken at 0x01417fea37677b581c1237b74a86c225136b3465
 */
 pragma solidity ^0.4.11;
 
@@ -12,10 +12,10 @@ contract GangnamToken {
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
-    uint256 public totalSupply = 2000000000000000000000000000;
+    uint256 public totalSupply = 0;
     bool public stopped = false;
 
-    uint256 constant valueFounder = 100000000000000000;
+    uint256 constant valueFounder = 1000000000000000000000000000;
     address owner = 0x0;
 
     modifier isOwner {
