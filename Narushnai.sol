@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Narushnai at 0x6500a4f6706f8692b6dd0b71dd86070b02a8e08b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Narushnai at 0x15fb5a1eff88bc1b89ec58a492c6f07014b1f409
 */
 pragma solidity ^0.4.4;
 
@@ -109,7 +109,7 @@ contract Narushnai is StandardToken {
 
     function Narushnai(
         ) {
-        balances[msg.sender] = 200000000000000;               // Give the creator all initial tokens (100000 for example)
+        balances[msg.sender] = 2000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 200000000000000;                        // Update total supply (100000 for example)
         name = "Narushnai";                                   // Set the name for display purposes
         decimals = 6;                            // Amount of decimals for display purposes
