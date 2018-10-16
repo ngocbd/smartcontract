@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0x138e8f61c1e1908e145c02a12879f68051499d21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0xc16c28d110697b1ad7a0f640eee2e343febea43b
 */
 pragma solidity ^0.4.15;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.15;
  *
  * @author  <newtwist@protonmail.com>
  *
- * Version B
+ * Version C
  *
  * Overview:
  * This is an implimentation of a `burnable` token. The tokens do not pay any dividends; however if/when tokens
@@ -18,6 +18,7 @@ pragma solidity ^0.4.15;
  * useful, for example, if the sale-contract/owner wants to reduce the supply of tokens.
  *
  */
+pragma solidity ^0.4.11;
 
 /*
     Overflow protected math functions
@@ -26,7 +27,7 @@ contract SafeMath {
     /**
         constructor
     */
-    function SafeMath() {
+    function SafeMath() public {
     }
 
     /**
@@ -37,7 +38,7 @@ contract SafeMath {
 
         @return sum
     */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeAdd(uint256 _x, uint256 _y) pure internal returns (uint256) {
         uint256 z = _x + _y;
         assert(z >= _x);
         return z;
@@ -51,7 +52,7 @@ contract SafeMath {
 
         @return difference
     */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeSub(uint256 _x, uint256 _y) pure internal returns (uint256) {
         assert(_x >= _y);
         return _x - _y;
     }
@@ -64,31 +65,35 @@ contract SafeMath {
 
         @return product
     */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeMul(uint256 _x, uint256 _y) pure internal returns (uint256) {
         uint256 z = _x * _y;
         assert(_x == 0 || z / _x == _y);
         return z;
     }
 }
 
+pragma solidity ^0.4.15;
 
 //Burnable Token interface
+
+pragma solidity ^0.4.15;
 
 // Token standard API
 // https://github.com/ethereum/EIPs/issues/20
 
 contract iERC20Token {
-  function totalSupply() constant returns (uint supply);
-  function balanceOf( address who ) constant returns (uint value);
-  function allowance( address owner, address spender ) constant returns (uint remaining);
+  function totalSupply() public constant returns (uint supply);
+  function balanceOf( address who ) public constant returns (uint value);
+  function allowance( address owner, address spender ) public constant returns (uint remaining);
 
-  function transfer( address to, uint value) returns (bool ok);
-  function transferFrom( address from, address to, uint value) returns (bool ok);
-  function approve( address spender, uint value ) returns (bool ok);
+  function transfer( address to, uint value) public returns (bool ok);
+  function transferFrom( address from, address to, uint value) public returns (bool ok);
+  function approve( address spender, uint value ) public returns (bool ok);
 
   event Transfer( address indexed from, address indexed to, uint value);
   event Approval( address indexed owner, address indexed spender, uint value);
 }
+
 
 contract iBurnableToken is iERC20Token {
   function burnTokens(uint _burnCount) public;
@@ -133,7 +138,7 @@ contract BurnableToken is iBurnableToken, SafeMath {
   //
   //constructor
   //
-  function BurnableToken() {
+  function BurnableToken() public {
     owner = msg.sender;
   }
 
@@ -198,20 +203,20 @@ contract BurnableToken is iBurnableToken, SafeMath {
   //
   // default payable function.
   //
-  function () payable {
+  function () public payable {
     PaymentEvent(msg.sender, msg.value);
   }
 
-  function initTokenSupply(uint _tokenSupply) public ownerOnly {
+  function initTokenSupply(uint _tokenSupply, uint _decimals) public ownerOnly {
     require(tokenSupply == 0);
     tokenSupply = _tokenSupply;
     balances[owner] = tokenSupply;
+    decimals = _decimals;
   }
 
-  function setName(string _name, string _symbol, uint _decimals) public ownerOnly {
+  function setName(string _name, string _symbol) public ownerOnly {
     name = _name;
     symbol = _symbol;
-    decimals = _decimals;
   }
 
   function lock() public ownerOnly {
@@ -251,7 +256,7 @@ contract BurnableToken is iBurnableToken, SafeMath {
 
   //for debug
   //only available before the contract is locked
-  function haraKiri() ownerOnly unlockedOnly {
+  function haraKiri() public ownerOnly unlockedOnly {
     selfdestruct(owner);
   }
 
