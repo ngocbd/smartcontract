@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmbrosusSale at 0x761d0ca58b3b34ccf4f66438f9d6378e2f063dce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmbrosusSale at 0x9d96377782be3d27dc5e498e239cc84ce8480855
 */
 //! By Parity Technologies, 2017.
 //! Released under the Apache Licence 2.
@@ -214,9 +214,9 @@ contract AmbrosusSale {
   /// Constructor.
   function AmbrosusSale() {
     tokens = new AmberToken();
-    tokens.mint(0x00C269e9D02188E39C9922386De631c6AED5b4d4, 144590975014280560863612000);
-    saleRevenue += 144590975014280560863612000;
-    totalSold += 144590975014280560863612000;
+    tokens.mint(0x00C269e9D02188E39C9922386De631c6AED5b4d4, 143375759490000000000000000);
+    saleRevenue += 143375759490000000000000;
+    totalSold += 143375759490000000000000000;
 
   }
 
@@ -509,7 +509,7 @@ contract AmbrosusSale {
   /// The certifier resource. TODO: set address
   Certifier public constant CERTIFIER = Certifier(0x7b1Ab331546F021A40bd4D09fFb802261CaACcc9);
   // Who can halt/unhalt/kill?
-  address public constant ADMINISTRATOR = 0x11bf17b890a80080a8f9c1673d2951296a6f3d91;
+  address public constant ADMINISTRATOR = 0x00C269e9D02188E39C9922386De631c6AED5b4d4;
   // Who can prepurchase?
   address public constant PREPURCHASER = 0x00D426e9F24E0F426706A1aBf96E375014684C78;
   // Who gets the stash? Should not release funds during minting process.
