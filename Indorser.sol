@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indorser at 0x09e33737e4b56ffd7fa092fae2109662141ab87f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indorser at 0x646c3166fd54f1017ca756adb5b3dd211d086a4c
 */
 pragma solidity ^0.4.11;
 
@@ -12,27 +12,29 @@ contract Ownable {
   address public owner;
 
 
-  /**
+  /** 
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
   function Ownable() {
-    owner = msg.sender;
+    owner = 0x49Ec316BaaE29EA79F86D21CE4B7f81e688e6A6F;
   }
 
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * @dev Throws if called by any account other than the owner. 
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    if (msg.sender != owner) {
+      throw;
+    }
     _;
   }
 
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param newOwner The address to transfer ownership to. 
    */
   function transferOwnership(address newOwner) onlyOwner {
     if (newOwner != address(0)) {
@@ -47,6 +49,7 @@ contract Token{
 }
 
 contract Indorser is Ownable {
+
     function multisend(address _tokenAddr, address[] _to, uint256[] _value)
     returns (bool _success) {
         assert(_to.length == _value.length);
