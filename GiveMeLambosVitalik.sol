@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiveMeLambosVitalik at 0x657ccd6a9816a49da1bce76ff5245de29ce73807
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiveMeLambosVitalik at 0x8002546267f59b750471b08e3d41a016c6f03fc2
 */
 pragma solidity ^0.4.21;
 
@@ -15,7 +15,7 @@ contract GiveMeLambosVitalik{
         
         for (uint256 numLambos = 0; numLambos < gib; numLambos++) {
             lamboContract.mint(address(0x0));
-            lamboContract.transfer(msg.sender, lamboContract.balanceOf(address(this)));
+            lamboContract.transfer(msg.sender, 1);
         }
     }
 }
