@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0x4BF8AA9D458C14dF5fb407a2aa2E9ECCcDc9fa79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0xa12a5ABF5b1607EEF863BDd20549404AfA2Ea9A3
 */
 pragma solidity ^0.4.11;
 /**
@@ -133,7 +133,7 @@ contract CHEXToken is Token {
     uint public presaleEtherRaised = 0;
 
     event Buy(address indexed recipient, uint eth, uint chx);
-    event Deliver(address indexed recipient, uint chx, string _for);
+    event Deliver(address indexed recipient, uint chx, bytes32 _for);
 
     uint public presaleAllocation = totalSupply / 2; //50% of token supply allocated for crowdsale
     uint public strategicAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for strategic supply
@@ -237,8 +237,9 @@ contract CHEXToken is Token {
         _;
     }
 
-    function deliver(address recipient, uint tokens, string _for) onlyInternal {
+    function deliver(address recipient, uint tokens, bytes32 _for) onlyInternal {
         if (tokens <= 0) throw;
+        if (_for == 0) throw;
         if (totalTokens >= totalSupply) throw;
         if (_saleState == TokenSaleState.Frozen) throw;
         if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
