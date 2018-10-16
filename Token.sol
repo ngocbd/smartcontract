@@ -1,421 +1,404 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x72ec7945722d9eef1f1775cfb91ce5aa6941de01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x8a95ca448a52c0adf0054bb3402dc5e09cd6b232
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
-contract useContractWeb {
-
-  ContractWeb internal web = ContractWeb(0x5F9489D7FfC63ce0bDCD282D14E595A865B259d7);
-
-}
-
-contract Owned {
-
-  address public owner = msg.sender;
-
-  function transferOwner(address _newOwner) onlyOwner public returns (bool) {
-    owner = _newOwner;
-    return true;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
   }
 
-  modifier onlyOwner {
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-}
 
-contract CheckPayloadSize {
-
-  modifier onlyPayloadSize(uint256 _size) {
-    require(msg.data.length >= _size + 4);
-    _;
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
 }
 
-contract CanTransferTokens is CheckPayloadSize, Owned {
+contract HasNoContracts is Ownable {
 
-  function transferCustomToken(address _token, address _to, uint256 _value) onlyPayloadSize(3 * 32) onlyOwner public returns (bool) {
-    Token tkn = Token(_token);
-    return tkn.transfer(_to, _value);
-  }
-
-}
-
-contract SafeMath {
-
-  function add(uint256 x, uint256 y) pure internal returns (uint256) {
-    require(x <= x + y);
-    return x + y;
-  }
-
-  function sub(uint256 x, uint256 y) pure internal returns (uint256) {
-    require(x >= y);
-    return x - y;
-  }
-
-}
-
-contract CheckIfContract {
-
-  function isContract(address _addr) view internal returns (bool) {
-    uint256 length;
-    if (_addr == address(0x0)) return false;
-    assembly {
-      length := extcodesize(_addr)
-    }
-    if(length > 0) {
-      return true;
-    } else {
-      return false;
-    }
+  /**
+   * @dev Reclaim ownership of Ownable contracts
+   * @param contractAddr The address of the Ownable to be reclaimed.
+   */
+  function reclaimContract(address contractAddr) external onlyOwner {
+    Ownable contractInst = Ownable(contractAddr);
+    contractInst.transferOwnership(owner);
   }
 }
 
-contract ContractReceiver {
+contract HasNoEther is Ownable {
 
-  TKN internal fallback;
-
-  struct TKN {
-    address sender;
-    uint256 value;
-    bytes data;
-    bytes4 sig;
+  /**
+  * @dev Constructor that rejects incoming Ether
+  * @dev The `payable` flag is added so we can access `msg.value` without compiler warning. If we
+  * leave out payable, then Solidity will allow inheriting contracts to implement a payable
+  * constructor. By doing it this way we prevent a payable constructor from working. Alternatively
+  * we could use assembly to access msg.value.
+  */
+  function HasNoEther() payable {
+    require(msg.value == 0);
   }
 
-  function getFallback() view public returns (TKN) {
-    return fallback;
+  /**
+   * @dev Disallows direct send by settings a default function without the `payable` flag.
+   */
+  function() external {
   }
 
-
-  function tokenFallback(address _from, uint256 _value, bytes _data) public returns (bool) {
-    TKN memory tkn;
-    tkn.sender = _from;
-    tkn.value = _value;
-    tkn.data = _data;
-    uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-    tkn.sig = bytes4(u);
-    fallback = tkn;
-    return true;
+  /**
+   * @dev Transfer all Ether held by the contract to the owner.
+   */
+  function reclaimEther() external onlyOwner {
+    assert(owner.send(this.balance));
   }
-
 }
 
-contract Token1st {
-
-  address public currentTradingSystem;
-  address public currentExchangeSystem;
-
-  mapping(address => uint) public balanceOf;
-  mapping(address => mapping (address => uint)) public allowance;
-  mapping(address => mapping (address => uint)) public tradingBalanceOf;
-  mapping(address => mapping (address => uint)) public exchangeBalanceOf;
-
-  /* @notice get balance of a specific address */
-  function getBalanceOf(address _address) view public returns (uint amount){
-    return balanceOf[_address];
-  }
-
-  event Transfer (address _to, address _from, uint _decimalAmount);
-
-  /* A contract or user attempts to get the coins */
-  function transferDecimalAmountFrom(address _from, address _to, uint _value) public returns (bool success) {
-    require(balanceOf[_from]
-      - tradingBalanceOf[_from][currentTradingSystem]
-      - exchangeBalanceOf[_from][currentExchangeSystem] >= _value);                 // Check if the sender has enough
-    require(balanceOf[_to] + (_value) >= balanceOf[_to]);  // Check for overflows
-    require(_value <= allowance[_from][msg.sender]);   // Check allowance
-    balanceOf[_from] -= _value;                          // Subtract from the sender
-    balanceOf[_to] += _value;                            // Add the same to the recipient
-    allowance[_from][msg.sender] -= _value;
-    Transfer(_to, _from, _value);
-    return true;
-  }
-
-    /* Allow another contract or user to spend some tokens in your behalf */
-  function approveSpenderDecimalAmount(address _spender, uint _value) public returns (bool success) {
-    allowance[msg.sender][_spender] = _value;
-    return true;
-  }
-
-}
-
-contract ContractWeb is CanTransferTokens, CheckIfContract {
-
-      //contract name | contract info
-  mapping(string => contractInfo) internal contracts;
-
-  event ContractAdded(string _name, address _referredTo);
-  event ContractEdited(string _name, address _referredTo);
-  event ContractMadePermanent(string _name);
-
-  struct contractInfo {
-    address contractAddress;
-    bool isPermanent;
-  }
-
-  function getContractAddress(string _name) view public returns (address) {
-    return contracts[_name].contractAddress;
-  }
-
-  function isContractPermanent(string _name) view public returns (bool) {
-    return contracts[_name].isPermanent;
-  }
-
-  function setContract(string _name, address _address) onlyPayloadSize(2 * 32) onlyOwner public returns (bool) {
-    require(isContract(_address));
-    require(this != _address);
-    require(contracts[_name].contractAddress != _address);
-    require(contracts[_name].isPermanent == false);
-    address oldAddress = contracts[_name].contractAddress;
-    contracts[_name].contractAddress = _address;
-    if(oldAddress == address(0x0)) {
-      ContractAdded(_name, _address);
-    } else {
-      ContractEdited(_name, _address);
-    }
-    return true;
-  }
-
-  function makeContractPermanent(string _name) onlyOwner public returns (bool) {
-    require(contracts[_name].contractAddress != address(0x0));
-    require(contracts[_name].isPermanent == false);
-    contracts[_name].isPermanent = true;
-    ContractMadePermanent(_name);
-    return true;
-  }
-
-  function tokenSetup(address _Tokens1st, address _Balancecs, address _Token, address _Conversion, address _Distribution) onlyPayloadSize(5 * 32) onlyOwner public returns (bool) {
-    setContract("Token1st", _Tokens1st);
-    setContract("Balances", _Balancecs);
-    setContract("Token", _Token);
-    setContract("Conversion", _Conversion);
-    setContract("Distribution", _Distribution);
-    return true;
-  }
-
-}
-
-contract Balances is CanTransferTokens, SafeMath, useContractWeb {
-
-  mapping(address => uint256) internal _balances;
-
-  function get(address _account) view public returns (uint256) {
-    return _balances[_account];
-  }
-
-  function tokenContract() view internal returns (address) {
-    return web.getContractAddress("Token");
-  }
-
-  function Balances() public {
-    _balances[msg.sender] = 190 * 1000000 * 1000000000000000000;
-  }
-
-  modifier onlyToken {
-    require(msg.sender == tokenContract());
-    _;
-  }
-
-  function transfer(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) onlyToken public returns (bool success) {
-  _balances[_from] = sub(_balances[_from], _value);
-  _balances[_to] = add(_balances[_to], _value);
-  return true;
-  }
-
-}
-
-contract Token is CanTransferTokens, SafeMath, CheckIfContract, useContractWeb {
-
-  string public symbol = "SHC";
-  string public name = "ShineCoin";
-  uint8 public decimals = 18;
-  uint256 public totalSupply = 190 * 1000000 * 1000000000000000000;
-
-  mapping (address => mapping (address => uint256)) internal _allowance;
-
-    // ERC20 Events
-  event Approval(address indexed from, address indexed to, uint256 value);
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    // ERC223 Event
-  event Transfer(address indexed from, address indexed to, uint256 value, bytes indexed data);
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-  function balanceOf(address _account) view public returns (uint256) {
-    return Balances(balancesContract()).get(_account);
-  }
+  mapping(address => uint256) balances;
 
-  function allowance(address _from, address _to) view public returns (uint256 remaining) {
-    return _allowance[_from][_to];
-  }
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
 
-  function balancesContract() view internal returns (address) {
-    return web.getContractAddress("Balances");
-  }
-
-  function Token() public {
-    bytes memory empty;
-    Transfer(this, msg.sender, 190 * 1000000 * 1000000000000000000);
-    Transfer(this, msg.sender, 190 * 1000000 * 1000000000000000000, empty);
-  }
-
-  function transfer(address _to, uint256 _value, bytes _data, string _custom_fallback) onlyPayloadSize(4 * 32) public returns (bool success) {
-    if(isContract(_to)) {
-      require(Balances(balancesContract()).get(msg.sender) >= _value);
-      Balances(balancesContract()).transfer(msg.sender, _to, _value);
-      ContractReceiver receiver = ContractReceiver(_to);
-      require(receiver.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-      Transfer(msg.sender, _to, _value);
-      Transfer(msg.sender, _to, _value, _data);
-      return true;
-    } else {
-      return transferToAddress(_to, _value, _data);
-    }
-  }
-
-  function transfer(address _to, uint256 _value, bytes _data) onlyPayloadSize(3 * 32) public returns (bool success) {
-    if(isContract(_to)) {
-      return transferToContract(_to, _value, _data);
-    }
-    else {
-      return transferToAddress(_to, _value, _data);
-    }
-  }
-
-  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool success) {
-    bytes memory empty;
-    if(isContract(_to)) {
-      return transferToContract(_to, _value, empty);
-    }
-    else {
-      return transferToAddress(_to, _value, empty);
-    }
-  }
-
-  function transferToAddress(address _to, uint256 _value, bytes _data) internal returns (bool success) {
-    require(Balances(balancesContract()).get(msg.sender) >= _value);
-    Balances(balancesContract()).transfer(msg.sender, _to, _value);
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value, _data);
     return true;
   }
 
-  function transferToContract(address _to, uint256 _value, bytes _data) internal returns (bool success) {
-    require(Balances(balancesContract()).get(msg.sender) >= _value);
-    Balances(balancesContract()).transfer(msg.sender, _to, _value);
-    ContractReceiver receiver = ContractReceiver(_to);
-    receiver.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) public returns (bool) {
-    bytes memory empty;
-    require(_value > 0 && _allowance[_from][msg.sender] >= _value && Balances(balancesContract()).get(_from) >= _value);
-    _allowance[_from][msg.sender] = sub(_allowance[_from][msg.sender], _value);
-    if(msg.sender != _to && isContract(_to)) {
-      Balances(balancesContract()).transfer(_from, _to, _value);
-      ContractReceiver receiver = ContractReceiver(_to);
-      receiver.tokenFallback(_from, _value, empty);
-    } else {
-      Balances(balancesContract()).transfer(_from, _to, _value);
-    }
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
+    assert(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
+  }
+}
+
+contract CanReclaimToken is Ownable {
+  using SafeERC20 for ERC20Basic;
+
+  /**
+   * @dev Reclaim all ERC20Basic compatible tokens
+   * @param token ERC20Basic The address of the token contract
+   */
+  function reclaimToken(ERC20Basic token) external onlyOwner {
+    uint256 balance = token.balanceOf(this);
+    token.safeTransfer(owner, balance);
+  }
+
+}
+
+contract HasNoTokens is CanReclaimToken {
+
+ /**
+  * @dev Reject all ERC23 compatible tokens
+  * @param from_ address The address that is transferring the tokens
+  * @param value_ uint256 the amount of the specified token
+  * @param data_ Bytes The data passed from the caller.
+  */
+  function tokenFallback(address from_, uint256 value_, bytes data_) external {
+    revert();
+  }
+
+}
+
+contract NoOwner is HasNoEther, HasNoTokens, HasNoContracts {
+}
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    uint256 _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
-    Transfer(_from, _to, _value, empty);
     return true;
   }
 
-  function approve(address _spender, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool) {
-    _allowance[msg.sender][_spender] = add(_allowance[msg.sender][_spender], _value);
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
-}
-
-contract Conversion is CanTransferTokens, useContractWeb {
-
-  function token1stContract() view internal returns (address) {
-    return web.getContractAddress("Token1st");
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
   }
 
-  function tokenContract() view internal returns (address) {
-    return web.getContractAddress("Token");
-  }
-
-  function deposit() onlyOwner public returns (bool) {
-    require(Token(tokenContract()).allowance(owner, this) > 0);
-    return Token(tokenContract()).transferFrom(owner, this, Token(tokenContract()).allowance(owner, this));
-  }
-
-  function convert() public returns (bool) {
-    uint256 senderBalance = Token1st(token1stContract()).getBalanceOf(msg.sender);
-    require(Token1st(token1stContract()).allowance(msg.sender, this) >= senderBalance);
-    Token1st(token1stContract()).transferDecimalAmountFrom(msg.sender, owner, senderBalance);
-    return Token(tokenContract()).transfer(msg.sender, senderBalance * 10000000000);
-  }
-
-}
-
-contract Distribution is CanTransferTokens, SafeMath, useContractWeb {
-
-  uint256 public liveSince;
-  uint256 public withdrawn;
-
-  function withdrawnReadable() view public returns (uint256) {
-    return withdrawn / 1000000000000000000;
-  }
-
-  function secondsLive() view public returns (uint256) {
-    if(liveSince != 0) {
-      return now - liveSince;
-    }
-  }
-
-  function allowedSince() view public returns (uint256) {
-    return secondsLive() * 380265185769276972;
-  }
-
-  function allowedSinceReadable() view public returns (uint256) {
-    return secondsLive() * 380265185769276972 / 1000000000000000000;
-  }
-
-  function stillAllowed() view public returns (uint256) {
-    return allowedSince() - withdrawn;
-  }
-
-  function stillAllowedReadable() view public returns (uint256) {
-    uint256 _1 = allowedSince() - withdrawn;
-    return _1 / 1000000000000000000;
-  }
-
-  function tokenContract() view internal returns (address) {
-    return web.getContractAddress("Token");
-  }
-
-  function makeLive() onlyOwner public returns (bool) {
-    require(liveSince == 0);
-    liveSince = now;
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue)
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function deposit() onlyOwner public returns (bool) {
-    require(Token(tokenContract()).allowance(owner, this) > 0);
-    return Token(tokenContract()).transferFrom(owner, this, Token(tokenContract()).allowance(owner, this));
+  function decreaseApproval (address _spender, uint _subtractedValue)
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
-  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) onlyOwner public returns (bool) {
-    require(stillAllowed() >= _value && _value > 0 && liveSince != 0);
-    withdrawn = add(withdrawn, _value);
-    return Token(tokenContract()).transfer(_to, _value);
+}
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
   }
 
-  function transferReadable(address _to, uint256 _value) onlyPayloadSize(2 * 32) onlyOwner public returns (bool) {
-    require(stillAllowed() >= _value * 1000000000000000000 && stillAllowed() != 0 && liveSince != 0);
-    withdrawn = add(withdrawn, _value * 1000000000000000000);
-    return Token(tokenContract()).transfer(_to, _value * 1000000000000000000);
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(0x0, _to, _amount);
+    return true;
   }
 
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
+contract Token is MintableToken, NoOwner {
+    string constant public version = "1.0.0";
+
+    string public name;
+
+    string public symbol;
+
+    uint8 public decimals;
+
+    enum TimeMode {
+        Block,
+        Timestamp
+    }
+
+    TimeMode public timeMode;
+
+    mapping (address => uint256) public releaseTimes;
+
+    function Token(
+        string _name,
+        string _symbol,
+        uint8 _decimals,
+        address[] _recipients,
+        uint256[] _amounts,
+        uint256[] _releaseTimes,
+        uint8 _timeMode
+    )
+    public
+    {
+        require(_recipients.length == _amounts.length);
+        require(_recipients.length == _releaseTimes.length);
+
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
+        timeMode = TimeMode(_timeMode);
+
+        // Mint pre-distributed tokens
+        for (uint8 i = 0; i < _recipients.length; i++) {
+            mint(_recipients[i], _amounts[i]);
+            if (_releaseTimes[i] > 0) {
+                releaseTimes[_recipients[i]] = _releaseTimes[i];
+            }
+        }
+    }
+
+    function transfer(address _to, uint256 _value)
+    public
+    returns (bool)
+    {
+        // Transfer is forbidden until minting is finished
+        require(mintingFinished);
+
+        // Transfer of time-locked funds is forbidden
+        require(!timeLocked(msg.sender));
+
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value)
+    public
+    returns (bool)
+    {
+        // Transfer is forbidden until minting is finished
+        require(mintingFinished);
+
+        // Transfer of time-locked funds is forbidden
+        require(!timeLocked(_from));
+
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    // Checks if funds of a given address are time-locked
+    function timeLocked(address _spender)
+    public
+    returns (bool)
+    {
+        if (releaseTimes[_spender] == 0) {
+            return false;
+        }
+
+        // If time-lock is expired, delete it
+        var _time = timeMode == TimeMode.Timestamp ? block.timestamp : block.number;
+        if (releaseTimes[_spender] <= _time) {
+            delete releaseTimes[_spender];
+            return false;
+        }
+
+        return true;
+    }
 }
