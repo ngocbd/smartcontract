@@ -1,23 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUTokenContract at 0x5c2111c74406f31a84cbaa1e78c14ece4880c0d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUTokenContract at 0x69376a827c8b3e1cac60c340ef2441c2128ac539
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.16;
 
 contract FUTokenContract {
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals;
     uint256 public totalSupply;
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
 
-        /* Initializes contract with initial supply tokens to the creator of the contract */
-    constructor(uint256 initialSupply, string tokenName, string tokenSymbol) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    constructor(uint256 initialSupply, string tokenName, string tokenSymbol, uint8 decimalUnits) public {
+        totalSupply = initialSupply;
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
     }
 
     /* Send coins */
