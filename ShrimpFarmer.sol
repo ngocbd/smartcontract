@@ -1,19 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0xdc078ff399d0001c31454e83896e8881d164fb95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0x1d3aa397363129069aa5957c5b817110918b7523
 */
 pragma solidity ^0.4.18; // solhint-disable-line
+/**
+ * ShrimpFarm 2.0
+ * Anti-bot 50 Starting.
+ * Anti-whale 25% reduction in shrimp eggs when selling shrimp.
+ **/
 
-// similar as shrimpfarmer, with three changes:
-// A. one third of your snails die when you sell eggs
-// B. you can transfer ownership of the devfee through sacrificing snails
-// C. the "free" 300 snails cost 0.001 eth (in line with the mining fee)
-
-// bots should have a harder time, and whales can compete for the devfee
 
 contract ShrimpFarmer{
     //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
     uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
-    uint256 public STARTING_SHRIMP=300;
+    uint256 public STARTING_SHRIMP=50;
     uint256 PSN=10000;
     uint256 PSNH=5000;
     bool public initialized=false;
@@ -23,15 +22,7 @@ contract ShrimpFarmer{
     mapping (address => uint256) public lastHatch;
     mapping (address => address) public referrals;
     uint256 public marketEggs;
-    uint256 public snailmasterReq=100000;
     function ShrimpFarmer() public{
-        ceoAddress=msg.sender;
-    }
-    function becomeSnailmaster() public{
-        require(initialized);
-        require(hatcheryShrimp[msg.sender]>=snailmasterReq);
-        hatcheryShrimp[msg.sender]=SafeMath.sub(hatcheryShrimp[msg.sender],snailmasterReq);
-        snailmasterReq=SafeMath.add(snailmasterReq,100000);//+100k shrimps each time
         ceoAddress=msg.sender;
     }
     function hatchEggs(address ref) public{
@@ -56,8 +47,7 @@ contract ShrimpFarmer{
         uint256 hasEggs=getMyEggs();
         uint256 eggValue=calculateEggSell(hasEggs);
         uint256 fee=devFee(eggValue);
-        // kill one third of the owner's snails on egg sale
-        hatcheryShrimp[msg.sender]=SafeMath.mul(SafeMath.div(hatcheryShrimp[msg.sender],3),2);
+        hatcheryShrimp[msg.sender]=SafeMath.mul(SafeMath.div(hatcheryShrimp[msg.sender],4),3);
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
@@ -66,7 +56,7 @@ contract ShrimpFarmer{
     }
     function buyEggs() public payable{
         require(initialized);
-        uint256 eggsBought=calculateEggBuy(msg.value,SafeMath.sub(this.balance,msg.value));
+        uint256 eggsBought=calculateEggBuy(msg.value,SafeMath.sub(address(this).balance,msg.value));
         eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
         ceoAddress.transfer(devFee(msg.value));
         claimedEggs[msg.sender]=SafeMath.add(claimedEggs[msg.sender],eggsBought);
@@ -77,38 +67,33 @@ contract ShrimpFarmer{
         return SafeMath.div(SafeMath.mul(PSN,bs),SafeMath.add(PSNH,SafeMath.div(SafeMath.add(SafeMath.mul(PSN,rs),SafeMath.mul(PSNH,rt)),rt)));
     }
     function calculateEggSell(uint256 eggs) public view returns(uint256){
-        return calculateTrade(eggs,marketEggs,this.balance);
+        return calculateTrade(eggs,marketEggs,address(this).balance);
     }
     function calculateEggBuy(uint256 eth,uint256 contractBalance) public view returns(uint256){
         return calculateTrade(eth,contractBalance,marketEggs);
     }
     function calculateEggBuySimple(uint256 eth) public view returns(uint256){
-        return calculateEggBuy(eth,this.balance);
+        return calculateEggBuy(eth,address(this).balance);
     }
-    function devFee(uint256 amount) public view returns(uint256){
-        return SafeMath.div(SafeMath.mul(amount,4),100);
+    function devFee(uint256 amount) public pure returns(uint256){
+        return SafeMath.div(SafeMath.mul(amount,5),100);
     }
     function seedMarket(uint256 eggs) public payable{
         require(marketEggs==0);
         initialized=true;
         marketEggs=eggs;
     }
-    function getFreeShrimp() public payable{
+    function getFreeShrimp() public{
         require(initialized);
-        require(msg.value==0.001 ether); //similar to mining fee, prevents bots
-        ceoAddress.transfer(msg.value); //snailmaster gets this entrance fee
         require(hatcheryShrimp[msg.sender]==0);
         lastHatch[msg.sender]=now;
         hatcheryShrimp[msg.sender]=STARTING_SHRIMP;
     }
     function getBalance() public view returns(uint256){
-        return this.balance;
+        return address(this).balance;
     }
     function getMyShrimp() public view returns(uint256){
         return hatcheryShrimp[msg.sender];
-    }
-    function getSnailmasterReq() public view returns(uint256){
-        return snailmasterReq;
     }
     function getMyEggs() public view returns(uint256){
         return SafeMath.add(claimedEggs[msg.sender],getEggsSinceLastHatch(msg.sender));
