@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentProcessor at 0x127b933fb908abdc87def027fb0522d7d4b24c21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentProcessor at 0xA674f3cF4b74DD13536c3a75cc2CB6Ec64Adf56a
 */
 pragma solidity 0.4.18;
 
@@ -54,6 +54,12 @@ contract Ownable {
  */
 contract Restricted is Ownable {
 
+    //MonethaAddress set event
+    event MonethaAddressSet(
+        address _address,
+        bool _isMonethaAddress
+    );
+
     mapping (address => bool) public isMonethaAddress;
 
     /**
@@ -69,8 +75,9 @@ contract Restricted is Ownable {
      */
     function setMonethaAddress(address _address, bool _isMonethaAddress) onlyOwner public {
         isMonethaAddress[_address] = _isMonethaAddress;
-    }
 
+        MonethaAddressSet(_address, _isMonethaAddress);
+    }
 }
 
 // File: zeppelin-solidity/contracts/ownership/Contactable.sol
@@ -484,7 +491,7 @@ contract MonethaGateway is Pausable, Contactable, Destructible, Restricted {
 
     using SafeMath for uint256;
     
-    string constant VERSION = "0.3";
+    string constant VERSION = "0.4";
 
     /**
      *  Fee permille of Monetha fee.
@@ -519,17 +526,18 @@ contract MonethaGateway is Pausable, Contactable, Destructible, Restricted {
      *  acceptPayment accept payment from PaymentAcceptor, forwards it to merchant's wallet
      *      and collects Monetha fee.
      *  @param _merchantWallet address of merchant's wallet for fund transfer
+     *  @param _monethaFee is a fee collected by Monetha
      */
-    function acceptPayment(address _merchantWallet) external payable onlyMonetha whenNotPaused {
+    function acceptPayment(address _merchantWallet, uint _monethaFee) external payable onlyMonetha whenNotPaused {
         require(_merchantWallet != 0x0);
+        require(_monethaFee >= 0 && _monethaFee <= FEE_PERMILLE.mul(msg.value).div(1000)); // Monetha fee cannot be greater than 1.5% of payment
 
-        uint merchantIncome = msg.value.sub(FEE_PERMILLE.mul(msg.value).div(1000));
-        uint monethaIncome = msg.value.sub(merchantIncome);
+        uint merchantIncome = msg.value.sub(_monethaFee);
 
         _merchantWallet.transfer(merchantIncome);
-        monethaVault.transfer(monethaIncome);
+        monethaVault.transfer(_monethaFee);
 
-        PaymentProcessed(_merchantWallet, merchantIncome, monethaIncome);
+        PaymentProcessed(_merchantWallet, merchantIncome, _monethaFee);
     }
 
     /**
@@ -547,6 +555,8 @@ contract MonethaGateway is Pausable, Contactable, Destructible, Restricted {
         require(msg.sender == admin || msg.sender == owner);
 
         isMonethaAddress[_address] = _isMonethaAddress;
+
+        MonethaAddressSet(_address, _isMonethaAddress);
     }
 
     /**
@@ -579,7 +589,14 @@ contract PaymentProcessor is Pausable, Destructible, Contactable, Restricted {
 
     using SafeMath for uint256;
 
-    string constant VERSION = "0.3";
+    string constant VERSION = "0.4";
+
+    /**
+     *  Fee permille of Monetha fee.
+     *  1 permille = 0.1 %
+     *  15 permille = 1.5%
+     */
+    uint public constant FEE_PERMILLE = 15;
 
     /// MonethaGateway contract for payment processing
     MonethaGateway public monethaGateway;
@@ -600,7 +617,7 @@ contract PaymentProcessor is Pausable, Destructible, Contactable, Restricted {
     struct Order {
         State state;
         uint price;
-        uint creationTime;
+        uint fee;
         address paymentAcceptor;
         address originAddress;
     }
@@ -654,23 +671,24 @@ contract PaymentProcessor is Pausable, Destructible, Contactable, Restricted {
      *  @param _price Price of the order 
      *  @param _paymentAcceptor order payment acceptor
      *  @param _originAddress buyer address
-     *  @param _orderCreationTime order creation time
+     *  @param _fee Monetha fee
      */
     function addOrder(
         uint _orderId,
         uint _price,
         address _paymentAcceptor,
         address _originAddress,
-        uint _orderCreationTime
+        uint _fee
     ) external onlyMonetha whenNotPaused atState(_orderId, State.Null)
     {
         require(_orderId > 0);
         require(_price > 0);
+        require(_fee >= 0 && _fee <= FEE_PERMILLE.mul(_price).div(1000)); // Monetha fee cannot be greater than 1.5% of price
 
         orders[_orderId] = Order({
             state: State.Created,
             price: _price,
-            creationTime: _orderCreationTime,
+            fee: _fee,
             paymentAcceptor: _paymentAcceptor,
             originAddress: _originAddress
         });
@@ -800,8 +818,7 @@ contract PaymentProcessor is Pausable, Destructible, Contactable, Restricted {
         external onlyMonetha whenNotPaused
         atState(_orderId, State.Paid) transition(_orderId, State.Finalized)
     {
-
-        monethaGateway.acceptPayment.value(orders[_orderId].price)(merchantWallet);
+        monethaGateway.acceptPayment.value(orders[_orderId].price)(merchantWallet, orders[_orderId].fee);
 
         updateDealConditions(
             _orderId,
