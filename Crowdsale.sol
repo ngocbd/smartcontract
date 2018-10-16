@@ -1,294 +1,183 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x74fc42895c70be48e290504c50682cf2c9af5b8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xedb2675b05d3c89cd2800b8f23567bb77a990fe4
 */
 pragma solidity ^0.4.11;
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Ownable {
-    address public owner;
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
+ */
+contract token { function transfer(address receiver, uint amount){  } }
+contract Crowdsale {
+  using SafeMath for uint256;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  // uint256 durationInMinutes;
+  // address where funds are collected
+  address public wallet;
+  // token address
+  address public addressOfTokenUsedAsReward;
 
-    modifier onlyOwner() { require(msg.sender == owner); _; }
+  uint256 public price = 300;
+  uint256 public minBuy;
+  uint256 public maxBuy;
 
-    function Ownable() {
-        owner = msg.sender;
+  token tokenReward;
+
+  // mapping (address => uint) public contributions;
+  
+
+
+  // start and end timestamps where investments are allowed (both inclusive)
+  uint256 public startTime;
+  // uint256 public endTime;
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale() {
+    //You will change this to your wallet where you need the ETH 
+    wallet = 0xc076b054EF62aCCE747175F698FC3Dbec9B7A36F;
+    // durationInMinutes = _durationInMinutes;
+    //Here will come the checksum address we got
+    addressOfTokenUsedAsReward = 0xd62e9252F1615F5c1133F060CF091aCb4b0faa2b;
+
+
+    tokenReward = token(addressOfTokenUsedAsReward);
+  }
+
+  bool public started = false;
+
+  function startSale(uint256 _delayInMinutes){
+    if (msg.sender != wallet) throw;
+    startTime = now + _delayInMinutes*1 minutes;
+    started = true;
+  }
+
+  function stopSale(){
+    if(msg.sender != wallet) throw;
+    started = false;
+  }
+
+  function setPrice(uint256 _price){
+    if(msg.sender != wallet) throw;
+    price = _price;
+  }
+
+  function setMinBuy(uint256 _minBuy){
+    if(msg.sender!=wallet) throw;
+    minBuy = _minBuy;
+  }
+
+  function setMaxBuy(uint256 _maxBuy){
+    if(msg.sender != wallet) throw;
+    maxBuy = _maxBuy;
+  }
+
+  function changeWallet(address _wallet){
+    if(msg.sender != wallet) throw;
+    wallet = _wallet;
+  }
+
+  function changeTokenReward(address _token){
+    if(msg.sender!=wallet) throw;
+    tokenReward = token(_token);
+  }
+
+  // fallback function can be used to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be sent
+    uint256 tokens = (weiAmount) * price;//weiamount * price 
+
+    if(minBuy!=0){
+      if(tokens < minBuy*10**18) throw;
     }
 
-    function transferOwnership(address newOwner) onlyOwner {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+    if(maxBuy!=0){
+      if(tokens > maxBuy*10**18) throw;
     }
-}
 
-contract Pausable is Ownable {
-    bool public paused = false;
-
-    event Pause();
-    event Unpause();
-
-    modifier whenNotPaused() { require(!paused); _; }
-    modifier whenPaused() { require(paused); _; }
-
-    function pause() onlyOwner whenNotPaused {
-        paused = true;
-        Pause();
-    }
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
     
-    function unpause() onlyOwner whenPaused {
-        paused = false;
-        Unpause();
+    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
+    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
+
+    tokenReward.transfer(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    // wallet.transfer(msg.value);
+    if (!wallet.send(msg.value)) {
+      throw;
     }
-}
+  }
 
-contract ERC20 {
-    uint256 public totalSupply;
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = started&&(now>=startTime);
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    function balanceOf(address who) constant returns (uint256);
-    function transfer(address to, uint256 value) returns (bool);
-    function transferFrom(address from, address to, uint256 value) returns (bool);
-    function allowance(address owner, address spender) constant returns (uint256);
-    function approve(address spender, uint256 value) returns (bool);
-}
-
-contract StandardToken is ERC20 {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) allowed;
-
-    function balanceOf(address _owner) constant returns(uint256 balance) {
-        return balances[_owner];
-    }
-
-    function transfer(address _to, uint256 _value) returns(bool success) {
-        require(_to != address(0));
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-
-        Transfer(msg.sender, _to, _value);
-
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
-        require(_to != address(0));
-
-        var _allowance = allowed[_from][msg.sender];
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-
-        Transfer(_from, _to, _value);
-
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function approve(address _spender, uint256 _value) returns(bool success) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-        allowed[msg.sender][_spender] = _value;
-
-        Approval(msg.sender, _spender, _value);
-
-        return true;
-    }
-
-    function increaseApproval(address _spender, uint _addedValue) returns(bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) returns(bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-
-        if(_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        
-        return true;
-    }
-}
-
-contract BurnableToken is StandardToken {
-    event Burn(address indexed burner, uint256 value);
-
-    function burn(uint256 _value) public {
-        require(_value > 0);
-
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
-}
-
-/*
-    ICO ????-???
-    - ??????? ??????? ?????????? (????? 10 000 000 ???????, ?????? ?? ???????)
-    - ???? ?????? ?????????????: 1 ETH = 3000 ???????
-    - ??????????? ? ???????????? ????? ???????: 0.001 ETH ? 100 ETH
-    - ??????? ?? ??????? ?? PreICO 2 000 000
-    - ???????? ?? ??????? ??????? ????? ?? ?????????
-    - Crowdsale ????????? ?? ???????
-    - ???????? Crowdsale ?????????? ? ??????? ??????? `withdraw()`
-    - `withdraw(false)` ???????? ?????????? ????????: ?????????? ???????, ?? ???????????? ?????? ? ???????? ?? ????????? ?????????? ???????????
-    - `withdraw(true)` ???????? ??????????? ????????: ?????????? ??????? ? ?? ???????????? ?????? ?????????? ???????????, ??????????? ??????????? ??????? ????????? ???????? `refund()`
-    - ???????? ????? ??????? ???? ???????? ??????? ??????? `refund()` ????? ?????????? ?????????? ???????? `withdraw(true)`
-*/
-contract Token is BurnableToken, Ownable {
-    string public name = "RealStart Token";
-    string public symbol = "RST";
-    uint256 public decimals = 18;
-    
-    uint256 public INITIAL_SUPPLY = 10000000 * 1 ether;                             // Amount tokens
-
-    function Token() {
-        totalSupply = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-    }
-}
-
-contract Crowdsale is Pausable {
-    using SafeMath for uint;
-
-    Token public token;
-    address public beneficiary = 0xe97be260bB25d84860592524E5086C07c3cb3C0c;        // Beneficiary
-
-    uint public collectedWei;
-    uint public refundedWei;
-    uint public tokensSold;
-
-    uint public tokensForSale = 2000000 * 1 ether;                                 // Amount tokens for sale
-    uint public priceTokenWei = 1 ether / 2000;
-    uint public priceTokenWeiPreICO = 333333333333333; // 1 ether / 3000;
-
-    uint public startTime = 1513299600;                                             
-    uint public endTime = 1517360399;                                               
-    bool public crowdsaleFinished = false;
-    bool public refundOpen = false;
-
-    mapping(address => uint256) saleBalances; 
-
-    event NewContribution(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
-    event Refunded(address indexed holder, uint256 etherAmount);
-    event Withdraw();
-
-    function Crowdsale() {
-        token = new Token();
-    }
-
-    function() payable {
-        purchase();
-    }
-    
-    /// @dev Test purchase: new Crowdsale(); $0.purchase()(10); new $0.token.Token(); $2.balanceOf(@0) == 2e+22
-    /// @dev Test min purchase: new Crowdsale(); !$0.purchase()(0.0009); $0.purchase()(0.001)
-    /// @dev Test max purchase: new Crowdsale(); !$0.purchase()(10001); $0.purchase()(10000)
-    function purchase() whenNotPaused payable {
-        require(!crowdsaleFinished);
-        require(now >= startTime && now < endTime);
-        require(tokensSold < tokensForSale);
-        require(msg.value >= 0.001 * 1 ether && msg.value <= 100 * 1 ether);
-
-        uint sum = msg.value;
-        uint amount = sum.div(priceTokenWeiPreICO).mul(1 ether);
-        uint retSum = 0;
-        
-        if(tokensSold.add(amount) > tokensForSale) {
-            uint retAmount = tokensSold.add(amount).sub(tokensForSale);
-            retSum = retAmount.mul(priceTokenWeiPreICO).div(1 ether);
-
-            amount = amount.sub(retAmount);
-            sum = sum.sub(retSum);
-        }
-
-        tokensSold = tokensSold.add(amount);
-        collectedWei = collectedWei.add(sum);
-        saleBalances[msg.sender] = saleBalances[msg.sender].add(sum);
-
-        token.transfer(msg.sender, amount);
-
-        if(retSum > 0) {
-            msg.sender.transfer(retSum);
-        }
-
-        NewContribution(msg.sender, amount, sum);
-    }
-
-    /// @dev Test withdraw: new Crowdsale(); $0.purchase()(1000); $0.purchase()(1000)[1]; $0.withdraw(false); new $0.token.Token(); $4.owner() == @5
-    function withdraw(bool refund) onlyOwner {
-        require(!crowdsaleFinished);
-
-        if(token.balanceOf(this) > 0) {
-            token.transfer(beneficiary, token.balanceOf(this));
-        }
-
-        if(refund && tokensSold < tokensForSale) {
-            refundOpen = true;
-        }
-        else {
-            beneficiary.transfer(this.balance);
-        }
-        
-        token.transferOwnership(beneficiary);
-        crowdsaleFinished = true;
-
-        Withdraw();
-    }
-    
-    function refund() {
-        require(crowdsaleFinished);
-        require(refundOpen);
-        require(saleBalances[msg.sender] > 0);
-
-        uint sum = saleBalances[msg.sender];
-
-        saleBalances[msg.sender] = 0;
-        refundedWei = refundedWei.add(sum);
-
-        msg.sender.transfer(sum);
-        
-        Refunded(msg.sender, sum);
-    }
+  function withdrawTokens(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward.transfer(wallet,_amount);
+  }
 }
