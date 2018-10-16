@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matthew at 0xa1c1983aa3599657a74cf5a563e880eedc57ae4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matthew at 0x40360631db85eddab268dd1b6ffea4377733e125
 */
 pragma solidity ^0.4.6;
 
@@ -11,11 +11,11 @@ contract Matthew {
     address owner;
     address whale;
     uint256 blockheight;
-    uint256 period = 40; //180 blocks ~ 42 min, 300 blocks ~ 1h 10 min;
+    uint256 period = 18; //180 blocks ~ 42 min, 300 blocks ~ 1h 10 min;
     uint constant DELTA = 0.1 ether;
     uint constant WINNERTAX_PRECENT = 10;
     bool mustBeDestroyed = false;
-    uint newPeriod = period;
+    uint newPeriod = 5;
     
     event MatthewWon(string msg, address winner, uint value,  uint blocknumber);
     event StakeIncreased(string msg, address staker, uint value, uint blocknumber);
@@ -63,15 +63,7 @@ contract Matthew {
     }
     
     function getPeriod() constant returns (uint){
-        return period;
-    }
-    
-    function getNewPeriod() constant returns (uint){
-        return newPeriod;
-    }
-    
-    function getDestroyedWhenRoundOver() constant returns (bool){
-        return mustBeDestroyed;
+        period;
     }
     
     //how long until a Matthew wins?
