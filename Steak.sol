@@ -1,130 +1,117 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Steak at 0x880d6adb5bb4c8a7f578d31a4ddb0c48bc590fa3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STEAK at 0x7dd7f56d697cc0f2b52bd55c057f378f1fe6ab4b
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
-
-/**
- *
- *  STEAK TOKEN (BOV)
- *
- *  Make bank by eating flank. See https://steaktoken.com.
- *
- */
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
- library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
- contract Ownable {
-  address public owner;
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-
-
-contract SteakToken is Ownable {
-
+contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  string public name = "Steak Token";
-  string public symbol = "BOV";
-  uint public decimals = 18;
-  uint public totalSupply;      // Total BOV in circulation.
-
   mapping(address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
 
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed ownerAddress, address indexed spenderAddress, uint256 value);
-  event Mint(address indexed to, uint256 amount);
-  event MineFinished();
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-  function transfer(address _to, uint256 _value) returns (bool) {
-    if(msg.data.length < (2 * 32) + 4) { revert(); } // protect against short address attack
+    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
 
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
+}
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    balances[_to] = balances[_to].add(_value);
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
     balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-   function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -134,469 +121,314 @@ contract SteakToken is Ownable {
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-   function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
-    /**
-   * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
    */
-   function mint(address _to, uint256 _amount) internal returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
 }
 
+contract STEAK is StandardToken {
 
+    uint256 public initialSupply;
+    // the original supply, just for posterity, since totalSupply
+    //  will decrement on burn
 
+    string public constant name   = "$TEAK";
+    string public constant symbol = "$TEAK";
+    // ^ whether or not to include the `$` here will probably be contested
+    //   but it's more important to me that the joke is obvious, even if it's overdone
+    //   by displaying as `$$TEAK`
+    uint8 public constant decimals = 18;
+    //  (^ can we please get around to standardizing on 18 decimals?)
 
+    address public tokenSaleContract;
 
-
-
-
-/**
- * @title AuctionCrowdsale 
- * @dev The owner starts and ends the crowdsale manually.
- * Players can make token purchases during the crowdsale
- * and their tokens can be claimed after the sale ends.
- * Players receive an amount proportional to their investment.
- */
- contract AuctionCrowdsale is SteakToken {
-  using SafeMath for uint;
-
-  uint public initialSale;                  // Amount of BOV tokens being sold during crowdsale.
-
-  bool public saleStarted;
-  bool public saleEnded;
-
-  uint public absoluteEndBlock;             // Anybody can end the crowdsale and trigger token distribution if beyond this block number.
-
-  uint256 public weiRaised;                 // Total amount raised in crowdsale.
-
-  address[] public investors;               // Investor addresses
-  uint public numberOfInvestors;
-  mapping(address => uint256) public investments; // How much each address has invested.
-
-  mapping(address => bool) public claimed;      // Keep track of whether each investor has been awarded their BOV tokens.
-
-
-  bool public bovBatchDistributed;              // TODO: this can be removed with manual crowdsale end-time
-
-  uint public initialPrizeWeiValue;             // The first steaks mined will be awarded BOV equivalent to this ETH value. Set in Steak() initializer.
-  uint public initialPrizeBov;                  // Initial mining prize in BOV units. Set in endCrowdsale() or endCrowdsalePublic().
-
-  uint public dailyHashExpires;        // When the dailyHash expires. Will be roughly around 3am EST.
-
-
-
-
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   */ 
-   event TokenInvestment(address indexed purchaser, address indexed beneficiary, uint256 value);
-
-
-
-   // Sending ETH to this contract's address registers the investment.
-   function () payable {
-    invest(msg.sender);
-  }
-
-
-  // Participate in the crowdsale.
-  // Records how much each address has invested.
-  function invest(address beneficiary) payable {
-    require(beneficiary != 0x0);
-    require(validInvestment());
-
-    uint256 weiAmount = msg.value;
-
-    uint investedAmount = investments[beneficiary];
-
-    forwardFunds();
-
-    if (investedAmount > 0) { // If they've already invested, increase their balance.
-      investments[beneficiary] = investedAmount + weiAmount; // investedAmount.add(weiAmount);
-    } else { // If new investor
-      investors.push(beneficiary);
-      numberOfInvestors += 1;
-      investments[beneficiary] = weiAmount;
-    }
-    weiRaised = weiRaised.add(weiAmount);
-    TokenInvestment(msg.sender, beneficiary, weiAmount);
-  }
-
-
-
-  // @return true if the transaction can invest
-  function validInvestment() internal constant returns (bool) {
-    bool withinPeriod = saleStarted && !saleEnded;
-    bool nonZeroPurchase = (msg.value > 0);
-    return withinPeriod && nonZeroPurchase;
-  }
-
-
-
-
-  // Distribute 10M tokens proportionally amongst all investors. Can be called by anyone after the crowdsale ends.
-  // ClaimTokens() can be run by individuals to claim their tokens.
-  function distributeAllTokens() public {
-
-    require(!bovBatchDistributed);
-    require(crowdsaleHasEnded());
-
-    // Allocate BOV proportionally to each investor.
-
-    for (uint i=0; i < numberOfInvestors; i++) {
-      address investorAddr = investors[i];
-      if (!claimed[investorAddr]) { // If the investor hasn't already claimed their BOV.
-        claimed[investorAddr] = true;
-        uint amountInvested = investments[investorAddr];
-        uint bovEarned = amountInvested.mul(initialSale).div(weiRaised);
-        mint(investorAddr, bovEarned);
-      }
+    modifier validDestination(address to)
+    {
+        require(to != address(this));
+        _;
     }
 
-    bovBatchDistributed = true;
+    function STEAK(uint tokenTotalAmount)
+    public
+    {
+        initialSupply = tokenTotalAmount * (10 ** uint256(decimals));
+        totalSupply = initialSupply;
+
+        // Mint all tokens to crowdsale.
+        balances[msg.sender] = totalSupply;
+        Transfer(address(0x0), msg.sender, totalSupply);
+
+        tokenSaleContract = msg.sender;
+    }
+
+    /**
+     * @dev override transfer token for a specified address to add validDestination
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
+    function transfer(address _to, uint _value)
+        public
+        validDestination(_to)
+        returns (bool)
+    {
+        return super.transfer(_to, _value);
+    }
+
+    /**
+     * @dev override transferFrom token for a specified address to add validDestination
+     * @param _from The address to transfer from.
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
+    function transferFrom(address _from, address _to, uint _value)
+        public
+        validDestination(_to)
+        returns (bool)
+    {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    event Burn(address indexed _burner, uint _value);
+
+    /**
+     * @dev burn tokens
+     * @param _value The amount to be burned.
+     * @return always true (necessary in case of override)
+     */
+    function burn(uint _value)
+        public
+        returns (bool)
+    {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(msg.sender, _value);
+        Transfer(msg.sender, address(0x0), _value);
+        return true;
+    }
+
+    /**
+     * @dev burn tokens on the behalf of someone
+     * @param _from The address of the owner of the token.
+     * @param _value The amount to be burned.
+     * @return always true (necessary in case of override)
+     */
+    function burnFrom(address _from, uint256 _value)
+        public
+        returns(bool)
+    {
+        assert(transferFrom(_from, msg.sender, _value));
+        return burn(_value);
+    }
+}
+
+contract StandardCrowdsale {
+    using SafeMath for uint256;
+
+    // The token being sold
+    StandardToken public token; // Request Modification : change to not mintable
+
+    // start and end timestamps where investments are allowed (both inclusive)
+    uint256 public startTime;
+    uint256 public endTime;
+
+    // address where funds are collected
+    address public wallet;
+
+    // how many token units a buyer gets per wei
+    uint256 public rate;
+
+    // amount of raised money in wei
+    uint256 public weiRaised;
+
+    /**
+     * event for token purchase logging
+     * @param purchaser who paid for the tokens
+     * @param value weis paid for purchase
+     * @param amount amount of tokens purchased
+     */
+    event TokenPurchase(address indexed purchaser, uint256 value, uint256 amount);
+
+    function StandardCrowdsale(
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _rate,
+        address _wallet)
+        public
+    {
+        // require(_startTime >= now); // Steak Network Modification
+        require(_endTime >= _startTime);
+        require(_rate > 0);
+        require(_wallet != 0x0);
+
+        startTime = _startTime;
+        endTime = _endTime;
+        rate = _rate;
+        wallet = _wallet;
+
+        token = createTokenContract(); // Request Modification : change to StandardToken + position
+    }
+
+    // creates the token to be sold.
+    // Request Modification : change to StandardToken
+    // override this method to have crowdsale of a specific mintable token.
+    function createTokenContract()
+        internal
+        returns(StandardToken)
+    {
+        return new StandardToken();
+    }
+
+    // fallback function can be used to buy tokens
+    function ()
+        public
+        payable
+    {
+        buyTokens();
+    }
+
+    // low level token purchase function
+    // Request Modification : change to not mint but transfer from this contract
+    function buyTokens()
+        public
+        payable
+    {
+        require(validPurchase());
+
+        uint256 weiAmount = msg.value;
+
+        // calculate token amount to be created
+        uint256 tokens = weiAmount.mul(rate);
+
+        // update state
+        weiRaised = weiRaised.add(weiAmount);
+
+        require(token.transfer(msg.sender, tokens)); // Request Modification : changed here - tranfer instead of mintable
+        TokenPurchase(msg.sender, weiAmount, tokens);
+
+        forwardFunds();
+    }
+
+    // send ether to the fund collection wallet
+    // override to create custom fund forwarding mechanisms
+    function forwardFunds()
+        internal
+    {
+        wallet.transfer(msg.value);
+    }
+
+    // @return true if the transaction can buy tokens
+    function validPurchase()
+        internal
+        returns(bool)
+    {
+        bool withinPeriod = now >= startTime && now <= endTime;
+        bool nonZeroPurchase = msg.value != 0;
+        return withinPeriod && nonZeroPurchase;
+    }
+
+    // @return true if crowdsale event has ended
+    function hasEnded()
+        public
+        constant
+        returns(bool)
+    {
+        return now > endTime;
+    }
+
+    modifier onlyBeforeSale() {
+        require(now < startTime);
+        _;
+    }
+}
+
+contract CappedCrowdsale is StandardCrowdsale {
+  using SafeMath for uint256;
+
+  uint256 public cap;
+
+  function CappedCrowdsale(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
   }
 
-
-  // Claim your BOV; allocates BOV proportionally to this investor.
-  // Can be called by investors to claim their BOV after the crowdsale ends.
-  // distributeAllTokens() is a batch alternative to this.
-  function claimTokens(address origAddress) public {
-    require(crowdsaleHasEnded());
-    require(claimed[origAddress] == false);
-    uint amountInvested = investments[origAddress];
-    uint bovEarned = amountInvested.mul(initialSale).div(weiRaised);
-    claimed[origAddress] = true;
-    mint(origAddress, bovEarned);
+  // overriding Crowdsale#validPurchase to add extra cap logic
+  // @return true if investors can buy at the moment
+  // Request Modification : delete constant because needed in son contract
+  function validPurchase() internal returns (bool) {
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return super.validPurchase() && withinCap;
   }
 
-
-  // Investors: see how many BOV you are currently entitled to (before the end of the crowdsale and distribution of tokens).
-  function getCurrentShare(address addr) public constant returns (uint) {
-    require(!bovBatchDistributed && !claimed[addr]); // Tokens cannot have already been distributed.
-    uint amountInvested = investments[addr];
-    uint currentBovShare = amountInvested.mul(initialSale).div(weiRaised);
-    return currentBovShare;
-  }
-
-
-
-  // send ether to the fund collection wallet
-  function forwardFunds() internal {
-    owner.transfer(msg.value);
-  }
-
-
-  // The owner manually starts the crowdsale at a pre-determined time.
-  function startCrowdsale() onlyOwner {
-    require(!saleStarted && !saleEnded);
-    saleStarted = true;
-  }
-
-  // endCrowdsale() and endCrowdsalePublic() moved to Steak contract
-    // Normally, the owner will end the crowdsale at the pre-determined time.
-  function endCrowdsale() onlyOwner {
-    require(saleStarted && !saleEnded);
-    dailyHashExpires = now; // Will end crowdsale at 3am EST, so expiration time will roughly be around 3am.
-    saleEnded = true;
-    setInitialPrize();
-  }
-
-  // Normally, Madame BOV ends the crowdsale at the pre-determined time, but if Madame BOV fails to do so, anybody can trigger endCrowdsalePublic() after absoluteEndBlock.
-  function endCrowdsalePublic() public {
-    require(block.number > absoluteEndBlock);
-    require(saleStarted && !saleEnded);
-    dailyHashExpires = now;
-    saleEnded = true;
-    setInitialPrize();
-  }
-
-
-  // Calculate initial mining prize (0.0357 ether's worth of BOV). This is called in endCrowdsale().
-  function setInitialPrize() internal returns (uint) {
-    require(crowdsaleHasEnded());
-    require(initialPrizeBov == 0); // Can only be set once
-    uint tokenUnitsPerWei = initialSale.div(weiRaised);
-    initialPrizeBov = tokenUnitsPerWei.mul(initialPrizeWeiValue);
-    return initialPrizeBov;
-  }
-
-
+  // overriding Crowdsale#hasEnded to add cap logic
   // @return true if crowdsale event has ended
-  function crowdsaleHasEnded() public constant returns (bool) {
-    return saleStarted && saleEnded;
+  function hasEnded() public constant returns (bool) {
+    bool capReached = weiRaised >= cap;
+    return super.hasEnded() || capReached;
   }
-
-  function getInvestors() public returns (address[]) {
-    return investors;
-  }
-
 
 }
 
+contract InfiniteCappedCrowdsale is StandardCrowdsale, CappedCrowdsale {
+    using SafeMath for uint256;
 
+    /**
+        @param _cap the maximum number of tokens
+        @param _rate tokens per wei received
+        @param _wallet the wallet that receives the funds
+     */
+    function InfiniteCappedCrowdsale(uint256 _cap, uint256 _rate, address _wallet)
+        CappedCrowdsale(_cap)
+        StandardCrowdsale(0, uint256(int256(-1)), _rate, _wallet)
+        public
+    {
 
-
-
-
-
-contract Steak is AuctionCrowdsale {
-  // using SafeMath for uint;
-
-  bytes32 public dailyHash;            // The last five digits of the dailyHash must be included in steak pictures.
-
-
-  Submission[] public submissions;          // All steak pics
-  uint public numSubmissions;
-
-  Submission[] public approvedSubmissions;
-  mapping (address => uint) public memberId;    // Get member ID from address.
-  Member[] public members;                      // Index is memberId
-
-  uint public halvingInterval;                  // BOV award is halved every x steaks
-  uint public numberOfHalvings;                 // How many times the BOV reward per steak is halved before it returns 0. 
-
-
-
-  uint public lastMiningBlock;                  // No mining after this block. Set in initializer.
-
-  bool public ownerCredited;    // Has the owner been credited BOV yet?
-
-  event PicAdded(address msgSender, uint submissionID, address recipient, bytes32 propUrl); // Need msgSender so we can watch for this event.
-  event Judged(uint submissionID, bool position, address voter, bytes32 justification);
-  event MembershipChanged(address member, bool isMember);
-
-  struct Submission {
-    address recipient;    // Would-be BOV recipient
-    bytes32 url;           // IMGUR url; 32-char max
-    bool judged;          // Has an admin voted?
-    bool submissionApproved;// Has it been approved?
-    address judgedBy;     // Admin who judged this steak
-    bytes32 adminComments; // Admin should leave feedback on non-approved steaks. 32-char max.
-    bytes32 todaysHash;   // The hash in the image should match this hash.
-    uint awarded;         // Amount awarded
-  }
-
-  // Members can vote on steak
-  struct Member {
-    address member;
-    bytes32 name;
-    uint memberSince;
-  }
-
-
-  modifier onlyMembers {
-    require(memberId[msg.sender] != 0); // member id must be in the mapping
-    _;
-  }
-
-
-  function Steak() {
-
-    owner = msg.sender;
-    initialSale = 10000000 * 1000000000000000000; // 10M BOV units are awarded in the crowdsale.
-
-    // Normally, the owner both starts and ends the crowdsale.
-    // To guarantee that the crowdsale ends at some maximum point (at that tokens are distributed),
-    // we calculate the absoluteEndBlock, the block beyond which anybody can end the crowdsale and distribute tokens.
-    uint blocksPerHour = 212;
-    uint maxCrowdsaleLifeFromLaunchDays = 40; // After about this many days from launch, anybody can end the crowdsale and distribute / claim their tokens. 
-    absoluteEndBlock = block.number + (blocksPerHour * 24 * maxCrowdsaleLifeFromLaunchDays);
-
-    uint miningDays = 365; // Approximately how many days BOV can be mined from the launch of the contract.
-    lastMiningBlock = block.number + (blocksPerHour * 24 * miningDays);
-
-    dailyHashExpires = now;
-
-    halvingInterval = 500;    // How many steaks get awarded the given getSteakPrize() amount before the reward is halved.
-    numberOfHalvings = 8;      // How many times the steak prize gets halved before no more prize is awarded.
-
-    // initialPrizeWeiValue = 50 finney; // 0.05 ether == 50 finney == 2.80 USD * 5 == 14 USD
-    initialPrizeWeiValue = (357 finney / 10); // 0.0357 ether == 35.7 finney == 2.80 USD * 3.57 == 9.996 USD
-
-    // To finish initializing, owner calls initMembers() and creditOwner() after launch.
-  }
-
-
-  // Add Madame BOV as a beef judge.
-  function initMembers() onlyOwner {
-    addMember(0, '');                        // Must add an empty first member
-    addMember(msg.sender, 'Madame BOV');
-  }
-
-
-
-  // Send 1M BOV to Madame BOV. 
-  function creditOwner() onlyOwner {
-    require(!ownerCredited);
-    uint ownerAward = initialSale / 10;  // 10% of the crowdsale amount.
-    ownerCredited = true;   // Can only be run once.
-    mint(owner, ownerAward);
-  }
-
-
-
-
-
-
-  /* Add beef judge */
-  function addMember(address targetMember, bytes32 memberName) onlyOwner {
-    uint id;
-    if (memberId[targetMember] == 0) {
-      memberId[targetMember] = members.length;
-      id = members.length++;
-      members[id] = Member({member: targetMember, memberSince: now, name: memberName});
-    } else {
-      id = memberId[targetMember];
-      // Member m = members[id];
     }
-    MembershipChanged(targetMember, true);
-  }
+}
 
-  function removeMember(address targetMember) onlyOwner {
-    if (memberId[targetMember] == 0) revert();
+contract ICS is InfiniteCappedCrowdsale {
 
-    memberId[targetMember] = 0;
-
-    for (uint i = memberId[targetMember]; i<members.length-1; i++){
-      members[i] = members[i+1];
-    }
-    delete members[members.length-1];
-    members.length--;
-  }
+    uint256 public constant TOTAL_SUPPLY = 975220000000;
+    uint256 public constant ARBITRARY_VALUATION_IN_ETH = 33;
+    // ^ arbitrary valuation of ~$10k
+    uint256 public constant ETH_TO_WEI = (10 ** 18);
+    uint256 public constant TOKEN_RATE = (TOTAL_SUPPLY / ARBITRARY_VALUATION_IN_ETH);
+    // 29552121212 $TEAK per wei
 
 
+    function ICS(address _wallet)
+        InfiniteCappedCrowdsale(ARBITRARY_VALUATION_IN_ETH * ETH_TO_WEI, TOKEN_RATE, _wallet)
+        public
+    {
 
-  /* Submit a steak picture. (After crowdsale has ended.)
-  *  WARNING: Before taking the picture, call getDailyHash() and  minutesToPost()
-  *  so you can be sure that you have the correct dailyHash and that it won't expire before you post it.
-  */
-  function submitSteak(address addressToAward, bytes32 steakPicUrl)  returns (uint submissionID) {
-    require(crowdsaleHasEnded());
-    require(block.number <= lastMiningBlock); // Cannot submit beyond this block.
-    submissionID = submissions.length++; // Increase length of array
-    Submission storage s = submissions[submissionID];
-    s.recipient = addressToAward;
-    s.url = steakPicUrl;
-    s.judged = false;
-    s.submissionApproved = false;
-    s.todaysHash = getDailyHash(); // Each submission saves the hash code the user should take picture of in steak picture.
-
-    PicAdded(msg.sender, submissionID, addressToAward, steakPicUrl);
-    numSubmissions = submissionID+1;
-
-    return submissionID;
-  }
-
-  // Retrieving any Submission must be done via this function, not `submissions()`
-  function getSubmission(uint submissionID) public constant returns (address recipient, bytes32 url, bool judged, bool submissionApproved, address judgedBy, bytes32 adminComments, bytes32 todaysHash, uint awarded) {
-    Submission storage s = submissions[submissionID];
-    recipient = s.recipient;
-    url = s.url;                 // IMGUR url
-    judged = s.judged;           // Has an admin voted?
-    submissionApproved = s.submissionApproved;  // Has it been approved?
-    judgedBy = s.judgedBy;           // Admin who judged this steak
-    adminComments = s.adminComments; // Admin should leave feedback on non-approved steaks
-    todaysHash = s.todaysHash;       // The hash in the image should match this hash.
-    awarded = s.awarded;         // Amount awarded   // return (users[index].salaryId, users[index].name, users[index].userAddress, users[index].salary);
-    // return (recipient, url, judged, submissionApproved, judgedBy, adminComments, todaysHash, awarded);
-  }
-
-
-
-  // Members judge steak pics, providing justification if necessary.
-  function judge(uint submissionNumber, bool supportsSubmission, bytes32 justificationText) onlyMembers {
-    Submission storage s = submissions[submissionNumber];         // Get the submission.
-    require(!s.judged);                                     // Musn't be judged.
-
-    s.judged = true;
-    s.judgedBy = msg.sender;
-    s.submissionApproved = supportsSubmission;
-    s.adminComments = justificationText;    // Admin can add comments whether approved or not
-
-    if (supportsSubmission) { // If it passed muster, credit the user and admin.
-      uint prizeAmount = getSteakPrize(); // Calculate BOV prize
-      s.awarded = prizeAmount;            // Record amount in the Submission
-      mint(s.recipient, prizeAmount);     // Credit the user's account
-
-      // Credit the member one-third of the prize amount.
-      uint adminAward = prizeAmount.div(3);
-      mint(msg.sender, adminAward);
-
-      approvedSubmissions.push(s);
     }
 
-    Judged(submissionNumber, supportsSubmission, msg.sender, justificationText);
-  }
-
-
-  // Calculate how many BOV are rewarded per approved steak pic.
-  function getSteakPrize() public constant returns (uint) {
-    require(initialPrizeBov > 0); // crowdsale must be over (endCrowdsale() calls setInitialPrize())
-    uint halvings = numberOfApprovedSteaks().div(halvingInterval);
-    if (halvings > numberOfHalvings) {  // After 8 halvings, no more BOV is awarded.
-      return 0;
+    function createTokenContract() internal returns (StandardToken) {
+        return new STEAK(TOTAL_SUPPLY);
     }
-
-    uint prize = initialPrizeBov;
-
-    prize = prize >> halvings; // Halve the initial prize "halvings"-number of times.
-    return prize;
-  }
-
-
-  function numberOfApprovedSteaks() public constant returns (uint) {
-    return approvedSubmissions.length;
-  }
-
-
-  // Always call this before calling dailyHash and submitting a steak.
-  // If expired, the new hash is set to the last block's hash.
-  function getDailyHash() public returns (bytes32) {
-    if (dailyHashExpires > now) { // If the hash hasn't expired yet, return it.
-      return dailyHash;
-    } else { // Udderwise, set the new dailyHash and dailyHashExpiration.
-
-      // Get hash from the last block.
-      bytes32 newHash = block.blockhash(block.number-1);
-      dailyHash = newHash;
-
-      // Set the new expiration, jumping ahead in 24-hour increments so the expiration time remains roughly constant from day to day (e.g. 3am).
-      uint nextExpiration = dailyHashExpires + 24 hours; // It will already be expired, so set it to next possible date.
-      while (nextExpiration < now) { // if it's still in the past, advance by 24 hours.
-        nextExpiration += 24 hours;
-      }
-      dailyHashExpires = nextExpiration;
-      return newHash;
-    }
-  }
-
-  // Returns the amount of minutes to post with the current dailyHash
-  function minutesToPost() public constant returns (uint) {
-    if (dailyHashExpires > now) {
-      return (dailyHashExpires - now) / 60; // returns minutes
-    } else {
-      return 0;
-    }
-  }
-
-  function currentBlock() public constant returns (uint) {
-    return block.number;
-  }
 }
