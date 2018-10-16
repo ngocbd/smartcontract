@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0x0E9A33dA82D8016aeB563021abf6BFf9078DD313
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0x46d66b51247f8ab0dbc25cfbf5131203ee454521
 */
 pragma solidity ^0.4.0;
 
@@ -99,7 +99,7 @@ contract Distribute is Ownable{
 
     for(uint i = 0; i < _addrs.length; ++i){
 
-      tokenReward.transfer(_addrs[i],20*10**8);
+      tokenReward.transfer(_addrs[i],500*10**8);
 
     }
 
