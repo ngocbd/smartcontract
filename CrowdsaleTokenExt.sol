@@ -1,7 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xcA28c919dD7646Adb04A480f6086E9d14edAa6a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xb09345CE9A795EfE675197838E5aCde392B71317
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
 
 
@@ -111,17 +110,13 @@ contract SafeMath {
 
 }
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -210,9 +205,7 @@ contract StandardToken is ERC20, SafeMath {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -220,9 +213,7 @@ contract StandardToken is ERC20, SafeMath {
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -373,9 +364,7 @@ contract UpgradeableToken is StandardToken {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -469,18 +458,14 @@ contract ReleasableToken is ERC20, Ownable {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
