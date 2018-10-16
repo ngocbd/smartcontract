@@ -1,504 +1,174 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyToken at 0xe2458F579D48b666E00A1c7F38918FD39ab21628
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyToken at 0xae67bda07aa55a943ced6b5c6a837c23219cdb33
 */
-pragma solidity 0.4.14;
+pragma solidity ^0.4.11;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
- */
-contract Ownable {
-  address public owner;
-
-
-  /** 
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev revert()s if called by any account other than the owner. 
-   */
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      revert();
-    }
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to. 
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-
-
-/**
- * Math operations with safety checks
- */
-library SafeMath {
-  
-  
-  function mul256(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div256(uint256 a, uint256 b) internal returns (uint256) {
-    require(b > 0); // Solidity automatically revert()s when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub256(uint256 a, uint256 b) internal returns (uint256) {
-    require(b <= a);
-    return a - b;
-  }
-
-  function add256(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }  
-  
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-}
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev ERC20 interface with allowances. 
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value);
-  function approve(address spender, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-   * @dev Fix for the ERC20 short address attack.
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       revert();
-     }
-     _;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) {
-    balances[msg.sender] = balances[msg.sender].sub256(_value);
-    balances[_to] = balances[_to].add256(_value);
-    Transfer(msg.sender, _to, _value);
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-
-
-
-/**
- * @title Standard ERC20 token
- * @dev Implemantation of the basic standart token.
- */
-contract StandardToken is BasicToken, ERC20 {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already revert() if this condition is not met
-    // if (_value > _allowance) revert();
-
-    balances[_to] = balances[_to].add256(_value);
-    balances[_from] = balances[_from].sub256(_value);
-    allowed[_from][msg.sender] = _allowance.sub256(_value);
-    Transfer(_from, _to, _value);
-  }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) {
-
-    //  To change the approve amount you first have to reduce the addresses
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-  }
-
-  /**
-   * @dev Function to check the amount of tokens than an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint specifing the amount of tokens still avaible for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-
-}
-
-
-
-/**
- * @title LuckyToken
- * @dev The main Lucky token contract
- * 
- */
+contract owned {
+    address public owner;
  
-contract LuckyToken is StandardToken, Ownable{
-  string public name = "Lucky888Coin";
-  string public symbol = "LKY";
-  uint public decimals = 18;
+    function owned() public {
+        owner = msg.sender;
+    }
 
-  event TokenBurned(uint256 value);
-  
-  function LuckyToken() {
-    totalSupply = (10 ** 8) * (10 ** decimals);
-    balances[msg.sender] = totalSupply;
-  }
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 
-  /**
-   * @dev Allows the owner to burn the token
-   * @param _value number of tokens to be burned.
-   */
-  function burn(uint _value) onlyOwner {
-    require(balances[msg.sender] >= _value);
-    balances[msg.sender] = balances[msg.sender].sub256(_value);
-    totalSupply = totalSupply.sub256(_value);
-    TokenBurned(_value);
-  }
-
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
 }
 
-/**
- * @title InitialTeuTokenSale
- * @dev The Initial TEU token sale contract
- * 
- */
-contract initialTeuTokenSale is Ownable {
-  using SafeMath for uint256;
-  event LogPeriodStart(uint period);
-  event LogCollectionStart(uint period);
-  event LogContribution(address indexed contributorAddress, uint256 weiAmount, uint period);
-  event LogCollect(address indexed contributorAddress, uint256 tokenAmount, uint period); 
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-  LuckyToken                                       private  token; 
-  mapping(uint => address)                       private  walletOfPeriod;
-  uint256                                        private  minContribution = 0.1 ether;
-  uint                                           private  saleStart;
-  bool                                           private  isTokenCollectable = false;
-  mapping(uint => uint)                          private  periodStart;
-  mapping(uint => uint)                          private  periodDeadline;
-  mapping(uint => uint256)                       private  periodTokenPool;
+contract LuckyToken is owned {
+    // Public variables of the token
+    string public name = "Lucky Token";
+    string public symbol = "LUC";
+    uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
+    uint256 public totalSupply = 10000000000000000000000000;
+    address public crowdsaleContract;
 
-  mapping(uint => mapping (address => uint256))  private  contribution;  
-  mapping(uint => uint256)                       private  periodContribution;  
-  mapping(uint => mapping (address => bool))     private  collected;  
-  mapping(uint => mapping (address => uint256))  private  tokenCollected;  
-  
-  uint public totalPeriod = 0;
-  uint public currentPeriod = 0;
+    uint sendingBanPeriod = 1525521600;           // 05.05.2018
 
+    // This creates an array with all balances
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-  /**
-   * @dev Initialise the contract
-   * @param _tokenAddress address of TEU token
-   * @param _walletPeriod1 address of period 1 wallet
-   * @param _walletPeriod2 address of period 2 wallet
-   * @param _tokenPoolPeriod1 amount of pool of token in period 1
-   * @param _tokenPoolPeriod2 amount of pool of token in period 2
-   * @param _saleStartDate start date / time of the token sale
-   */
-  function initTokenSale (address _tokenAddress
-  , address _walletPeriod1, address _walletPeriod2
-  , uint256 _tokenPoolPeriod1, uint256 _tokenPoolPeriod2
-  , uint _saleStartDate) onlyOwner {
-    assert(totalPeriod == 0);
-    assert(_tokenAddress != address(0));
-    assert(_walletPeriod1 != address(0));
-    assert(_walletPeriod2 != address(0));
-    walletOfPeriod[1] = _walletPeriod1;
-    walletOfPeriod[2] = _walletPeriod2;
-    periodTokenPool[1] = _tokenPoolPeriod1;
-    periodTokenPool[2] = _tokenPoolPeriod2;
-    token = LuckyToken(_tokenAddress);
-    assert(token.owner() == owner);
-    setPeriodStart(_saleStartDate);
- 
-  }
-  
-  
-  /**
-   * @dev Allows the owner to set the starting time.
-   * @param _saleStartDate the new sales start date / time
-   */  
-  function setPeriodStart(uint _saleStartDate) onlyOwner beforeSaleStart private {
-    totalPeriod = 0;
-    saleStart = _saleStartDate;
+    // This generates a public event on the blockchain that will notify clients
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    // This notifies clients about the amount burnt
+    event Burn(address indexed from, uint256 value);
     
-    uint period1_contributionInterval = 14 days;
-    uint period1_collectionInterval = 14 days;
-    uint period2_contributionInterval = 7 days;
+    modifier canSend() {
+        require ( msg.sender == owner ||  now > sendingBanPeriod || msg.sender == crowdsaleContract);
+        _;
+    }
     
-    addPeriod(saleStart, saleStart + period1_contributionInterval);
-    addPeriod(saleStart + period1_contributionInterval + period1_collectionInterval, saleStart + period1_contributionInterval + period1_collectionInterval + period2_contributionInterval);
+    /**
+     * Constructor
+     */
+    function LuckyToken(
+    ) public {
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+    }
+    
+    function setCrowdsaleContract(address contractAddress) public onlyOwner {
+        crowdsaleContract = contractAddress;
+    }
+     
+    /**
+     * Internal transfer, only can be called by this contract
+     */
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balanceOf[_from] >= _value);
+        // Check for overflows
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        // Save this for an assertion in the future
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        // Subtract from the sender
+        balanceOf[_from] -= _value;
+        // Add the same to the recipient
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
 
-    currentPeriod = 1;    
-  } 
-  
-  function addPeriod(uint _periodStart, uint _periodDeadline) onlyOwner beforeSaleEnd private {
-    require(_periodStart >= now && _periodDeadline > _periodStart && (totalPeriod == 0 || _periodStart > periodDeadline[totalPeriod]));
-    totalPeriod = totalPeriod + 1;
-    periodStart[totalPeriod] = _periodStart;
-    periodDeadline[totalPeriod] = _periodDeadline;
-    periodContribution[totalPeriod] = 0;
-  }
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public canSend {
+        _transfer(msg.sender, _to, _value);
+    }
 
+    /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` in behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public canSend returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
 
-  /**
-   * @dev Call this method to let the contract to go into next period of sales
-   */
-  function goNextPeriod() onlyOwner public {
-    for (uint i = 1; i <= totalPeriod; i++) {
-        if (currentPeriod < totalPeriod && now >= periodStart[currentPeriod + 1]) {
-            currentPeriod = currentPeriod + 1;
-            isTokenCollectable = false;
-            LogPeriodStart(currentPeriod);
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
         }
     }
-    
-  }
 
-  /**
-   * @dev Call this method to let the contract to allow token collection after the contribution period
-   */  
-  function goTokenCollection() onlyOwner public {
-    require(currentPeriod > 0 && now > periodDeadline[currentPeriod] && !isTokenCollectable);
-    isTokenCollectable = true;
-    LogCollectionStart(currentPeriod);
-  }
-
-  /**
-   * @dev modifier to allow contribution only when the sale is ON
-   */
-  modifier saleIsOn() {
-    require(currentPeriod > 0 && now >= periodStart[currentPeriod] && now < periodDeadline[currentPeriod]);
-    _;
-  }
-  
-  /**
-   * @dev modifier to allow collection only when the collection is ON
-   */
-  modifier collectIsOn() {
-    require(isTokenCollectable && currentPeriod > 0 && now > periodDeadline[currentPeriod] && (currentPeriod == totalPeriod || now < periodStart[currentPeriod + 1]));
-    _;
-  }
-  
-  /**
-   * @dev modifier to ensure it is before start of first period of sale
-   */  
-  modifier beforeSaleStart() {
-    require(totalPeriod == 0 || now < periodStart[1]);
-    _;  
-  }
-  /**
-   * @dev modifier to ensure it is before the deadline of last sale period
-   */  
-   
-  modifier beforeSaleEnd() {
-    require(currentPeriod == 0 || now < periodDeadline[totalPeriod]);
-    _;
-  }
-  /**
-   * @dev modifier to ensure it is after the deadline of last sale period
-   */ 
-  modifier afterSaleEnd() {
-    require(currentPeriod > 0 && now > periodDeadline[totalPeriod]);
-    _;
-  }
-  
-  modifier overMinContribution() {
-    require(msg.value >= minContribution);
-    _;
-  }
-  
-  
-  /**
-   * @dev record the contribution of a contribution 
-   */
-  function contribute() private saleIsOn overMinContribution {
-    contribution[currentPeriod][msg.sender] = contribution[currentPeriod][msg.sender].add256(msg.value);
-    periodContribution[currentPeriod] = periodContribution[currentPeriod].add256(msg.value);
-    assert(walletOfPeriod[currentPeriod].send(msg.value));
-    LogContribution(msg.sender, msg.value, currentPeriod);
-  }
-
-  /**
-   * @dev Allows contributor to collect all token alloted for all period after preiod deadline
-   */
-  function collectToken() public collectIsOn {
-    uint256 _tokenCollected = 0;
-    for (uint i = 1; i <= totalPeriod; i++) {
-        if (!collected[i][msg.sender] && contribution[i][msg.sender] > 0)
-        {
-            _tokenCollected = contribution[i][msg.sender].mul256(periodTokenPool[i]).div256(periodContribution[i]);
-
-            collected[i][msg.sender] = true;
-            token.transfer(msg.sender, _tokenCollected);
-
-            tokenCollected[i][msg.sender] = _tokenCollected;
-            LogCollect(msg.sender, _tokenCollected, i);
-        }
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
     }
-  }
 
-
-  /**
-   * @dev Allow owner to transfer out the token in the contract
-   * @param _to address to transfer to
-   * @param _amount amount to transfer
-   */  
-  function transferTokenOut(address _to, uint256 _amount) public onlyOwner {
-    token.transfer(_to, _amount);
-  }
-
-  /**
-   * @dev Allow owner to transfer out the ether in the contract
-   * @param _to address to transfer to
-   * @param _amount amount to transfer
-   */  
-  function transferEtherOut(address _to, uint256 _amount) public onlyOwner {
-    assert(_to.send(_amount));
-  }  
-
-  /**
-   * @dev to get the contribution amount of any contributor under different period
-   * @param _period period to get the contribution amount
-   * @param _contributor contributor to get the conribution amount
-   */  
-  function contributionOf(uint _period, address _contributor) public constant returns (uint256) {
-    return contribution[_period][_contributor] ;
-  }
-
-  /**
-   * @dev to get the total contribution amount of a given period
-   * @param _period period to get the contribution amount
-   */  
-  function periodContributionOf(uint _period) public constant returns (uint256) {
-    return periodContribution[_period];
-  }
-
-  /**
-   * @dev to check if token is collected by any contributor under different period
-   * @param _period period to get the collected status
-   * @param _contributor contributor to get collected status
-   */  
-  function isTokenCollected(uint _period, address _contributor) public constant returns (bool) {
-    return collected[_period][_contributor] ;
-  }
-  
-  /**
-   * @dev to get the amount of token collected by any contributor under different period
-   * @param _period period to get the amount
-   * @param _contributor contributor to get amont
-   */  
-  function tokenCollectedOf(uint _period, address _contributor) public constant returns (uint256) {
-    return tokenCollected[_period][_contributor] ;
-  }
-
-  /**
-   * @dev Fallback function which receives ether and create the appropriate number of tokens for the 
-   * msg.sender.
-   */
-  function() external payable {
-    contribute();
-  }
-
+    /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
 }
