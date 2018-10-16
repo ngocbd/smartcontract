@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x08ade307321221677e837c8150bdbd4e891daf09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x65C52Ae9b15dD6F30902E9f8164C91E912EE2Be3
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.17;
 
 contract Vault {
     
@@ -10,51 +10,53 @@ contract Vault {
     event TransferOwnership(address indexed from, address indexed to);
     
     address Owner;
+    function transferOwnership(address to) public onlyOwner {
+        TransferOwnership(Owner, to); Owner = to;
+    }
+    
     mapping (address => uint) public Deposits;
     uint minDeposit;
     bool Locked;
     uint Date;
 
-    function initVault() isOpen payable {
+    function init() payable open {
         Owner = msg.sender;
         minDeposit = 0.5 ether;
         Locked = false;
         deposit();
     }
 
-    function() payable { deposit(); }
+    function SetReleaseDate(uint NewDate) {
+        Date = NewDate;
+    }
 
-    function deposit() payable addresses {
+    function() public payable { deposit(); }
+
+    function deposit() public payable {
         if (msg.value > 0) {
-            if (msg.value >= MinimumDeposit()) Deposits[msg.sender] += msg.value;
+            if (msg.value >= MinimumDeposit())
+                Deposits[msg.sender] += msg.value;
             Deposit(msg.sender, msg.value);
         }
     }
 
-    function withdraw(uint amount) payable onlyOwner { withdrawTo(msg.sender, amount); }
+    function withdraw(uint amount) public payable { withdrawTo(msg.sender, amount); }
     
-    function withdrawTo(address to, uint amount) onlyOwner {
+    function withdrawTo(address to, uint amount) public onlyOwner {
         if (WithdrawalEnabled()) {
             uint max = Deposits[msg.sender];
             if (max > 0 && amount <= max) {
-                Withdrawal(to, amount);
                 to.transfer(amount);
+                Withdrawal(to, amount);
             }
         }
     }
 
-    function transferOwnership(address to) onlyOwner { TransferOwnership(Owner, to); Owner = to; }
-    function MinimumDeposit() constant returns (uint) { return minDeposit; }
-    function ReleaseDate() constant returns (uint) { return Date; }
-    function WithdrawalEnabled() internal returns (bool) { return Date > 0 && Date <= now; }
-    function SetReleaseDate(uint NewDate) { Date = NewDate; }
-    function lock() { Locked = true; }
+    function MinimumDeposit() public constant returns (uint) { return minDeposit; }
+    function ReleaseDate() public constant returns (uint) { return Date; }
+    function WithdrawalEnabled() constant internal returns (bool) { return Date > 0 && Date <= now; }
+    function lock() public { Locked = true; }
     modifier onlyOwner { if (msg.sender == Owner) _; }
-    modifier isOpen { if (!Locked) _; }
-    modifier addresses {
-        uint size;
-        assembly { size := extcodesize(caller) }
-        if (size > 0) return;
-        _;
-    }
+    modifier open { if (!Locked) _; }
+    function kill() { require(this.balance == 0); selfdestruct(Owner); }
 }
