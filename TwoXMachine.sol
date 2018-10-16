@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwoXMachine at 0x9b94eda69ebed489cf5e0b1f484295fd7fd5ba03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwoXMachine at 0x364bf7acd034b5e883978a5160381a05f0afc18d
 */
 pragma solidity ^0.4.18;
 
@@ -48,7 +48,7 @@ contract TwoXMachine {
     uint256 value = SafeMath.div(SafeMath.mul(msg.value, 95), 100);
 
     // HNNNNNNGGGGGG
-    uint256 valueMultiplied = SafeMath.div(SafeMath.mul(msg.value, 25), 100);
+    uint256 valueMultiplied = SafeMath.div(SafeMath.mul(msg.value, 169), 100);
 
     contractTotalInvested += msg.value;
     totalInvested[msg.sender] += msg.value;
