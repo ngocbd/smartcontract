@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InRiddimCrowdsale at 0xb515C702EA8D0F8E1D19499De2b40FEc90d9832D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InRiddimCrowdsale at 0xA3d3F829adfeBceaEb7f439ADF9157043929a6Ed
 */
 pragma solidity ^0.4.15;
 
@@ -21,14 +21,14 @@ contract InRiddimCrowdsale {
     /*/
 
     string public name = "InRiddim";
-    string public  symbol = "RIDM";
+    string public  symbol = "IRDM";
     uint   public decimals = 18;
 
-    uint public constant PRICE = 400; // 400 RIDM per ETH
+    uint public constant PRICE = 400; // 400 IRDM per ETH
     
     //  price
     // Cap is 127500 ETH
-    // 1 ETH = 400 RIDM tokens
+    // 1 ETH = 400 IRDM tokens
 
     uint public constant TOKEN_SUPPLY_LIMIT = PRICE * 250000 * (1 ether / 1 wei);
     // CAP 100000000
