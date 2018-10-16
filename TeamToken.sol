@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamToken at 0x24ce35feecb226fb2238ebf551212cc8ad99cf28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamToken at 0xfdb5e362030992e3e285ad251908cbcc4fedd80e
 */
 pragma solidity ^0.4.21;
 
@@ -245,8 +245,7 @@ contract TeamToken is StandardToken, Ownable {
         totalSupply_ = totalSupply_.sub(_value);
         uint256 weiAmount = price.mul(_value);
         msg.sender.transfer(weiAmount);
-        emit Transfer(msg.sender, _to, _value);
-        emit Sell(_to, msg.sender, _value, weiAmount);
+        emit Sell(address(this), msg.sender, _value, weiAmount);
         return true;
     }
 
@@ -265,7 +264,6 @@ contract TeamToken is StandardToken, Ownable {
         uint256 amount = msg.value.div(price);
         balances_[msg.sender] = balances_[msg.sender].add(amount);
         totalSupply_ = totalSupply_.add(amount);
-        emit Transfer(address(this), msg.sender, amount);
         emit Buy(address(this), msg.sender, amount, msg.value);
     }
 
