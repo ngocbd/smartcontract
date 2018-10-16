@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYCCrowdsale at 0x5de9f32b2665bb2cdc23bfb51b03e2a2985ecc87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYCCrowdsale at 0x51aa4e547b5bc5176e3e816b2dc72d701f7f5511
 */
 pragma solidity 0.4.21;
 
@@ -950,10 +950,10 @@ contract PickCrowdsale is CappedCrowdsale {
   }
 
   function setStages() external onlyOwner onlyOnce(stagesSet) {
-    stages.createStage(1, startTime.add(1 weeks), 10000000000, 10000000, 175000000000);  //Deadline 1 day (86400)  after start - price: 0.001  - min: 90 - cap: 1,250,000
-    stages.createStage(2, startTime.add(2 weeks), 11000000000, 5000000, 300000000000); //Deadline 2 days (172800) after start - price: 0.0011 - min: 60 - cap: 3,000,000 
-    stages.createStage(3, startTime.add(4 weeks), 12000000000, 2500000, 575000000000);  //Deadline 4 days (345600) after start - price: 0.0012 - cap: 5,750,000 
-    stages.createStage(4, endTime, 15000000000, 1000000, 2000000000000);               //Deadline 1 week after start - price: 0.0015 - cap: 20,000,000 
+    stages.createStage(1, startTime.add(1 days), 100000000, 10000000, 175000000000);  //Deadline 1 day (86400)  after start - price: 0.001  - min: 90 - cap: 1,250,000
+    stages.createStage(2, startTime.add(2 days), 110000000, 5000000, 300000000000); //Deadline 2 days (172800) after start - price: 0.0011 - min: 60 - cap: 3,000,000 
+    stages.createStage(3, startTime.add(3 days), 120000000, 2500000, 575000000000);  //Deadline 4 days (345600) after start - price: 0.0012 - cap: 5,750,000 
+    stages.createStage(4, endTime, 150000000, 1000000, 2000000000000);               //Deadline 1 week after start - price: 0.0015 - cap: 20,000,000 
     stagesSet = true;
   }
 
