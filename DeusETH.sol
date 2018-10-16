@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeusETH at 0x3b2501c8830184a659cb65bd1f02a2733310bf00
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeusETH at 0x3178ABbC96938f3C19cE6E9f4aEd5be03d5e721E
 */
 pragma solidity 0.4.19;
 
@@ -73,7 +73,7 @@ contract DeusETH {
         revert();
     }
 
-    function setEpisodeManager(address _episodeManager) public onlyOwner {
+    function setEpisodeManager(address _episodeManager) public {
         require(!managerSet);
         episodeManager = _episodeManager;
         managerSet = true;
