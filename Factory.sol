@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xd1894d59fb85913b26862fb6d188923d72f75d07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xf3021a6c271d044dc5f6181bbf7bfbaf9fe16538
 */
 pragma solidity ^0.4.24;
 
 contract Factory {
-  address developer = 0x007C67F0CDBea74592240d492Aef2a712DAFa094c3;
-  
+  address developer = 0x0033F8dAcBc75F53549298100E85102be995CdBF59;
+
   event ContractCreated(address creator, address newcontract, uint timestamp, string contract_type);
     
   function setDeveloper (address _dev) public {
@@ -64,7 +64,7 @@ contract Broker {
   // Minimum 0.1 Finney (0.0001 eth ~ 25Cent) to 0.01% of the price.
   uint    public developerfee = 0.1 finney;
   uint    minimumdeveloperfee = 0.1 finney;
-  address developer = 0x007C67F0CDBea74592240d492Aef2a712DAFa094c3;
+  address developer = 0x0033F8dAcBc75F53549298100E85102be995CdBF59;
   // bool public validated;
   address creator = 0x0;
   address factory = 0x0;
@@ -304,7 +304,7 @@ contract Broker {
     payable
   {
       if(bBrokerRequired){
-        if(state != State.Validated || state != State.Locked){
+        if(state != State.Validated && state != State.Locked){
           return;
         }
       }
@@ -332,18 +332,16 @@ contract Broker {
     onlyBroker
     inState(State.Locked)
   {
+      if(buyinfo.length>0){
+          for (uint256 x = 0; x < buyinfo.length; x++) {
+              confirmReceivedAt(x);
+          }
+      }
+      
       // It is important to change the state first because
       // otherwise, the contracts called using `send` below
       // can call in again here.
       state = State.Finished;
-
-      // NOTE: This actually allows both the buyer and the seller to
-      // block the refund - the withdraw pattern should be used.
-      seller.transfer(address(this).balance-brokerFee-developerfee);
-      broker.transfer(brokerFee);
-      developer.transfer(developerfee);
-
-      emit ItemReceived();
   }
   
   //
