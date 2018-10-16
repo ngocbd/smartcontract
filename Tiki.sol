@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tiki at 0x195372637a71048a8babc6a851fd43f341f0d23d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tiki at 0x1039a89bf880e68404ae7d44b8553693ef2e06de
 */
 contract Tiki {
     /* Public variables of the token */
@@ -21,7 +21,7 @@ contract Tiki {
          initialSupply = 21000000;
          name ="Tiki";
         decimals = 0;
-         symbol = "TK";
+         symbol = "B";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
