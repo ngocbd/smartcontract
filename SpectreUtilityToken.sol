@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpectreUtilityToken at 0xaadb05f449072d275833baf7c82e8fca4ee46575
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpectreUtilityToken at 0x2c82c73d5b34aa015989462b2948cd616a37641f
 */
 pragma solidity ^0.4.15;
 
@@ -820,9 +820,9 @@ contract SpectreUtilityToken is SpectreToken {
         _tokenFactory,
         0x0,                     // no parent token
         0,                       // no snapshot block number from parent
-        "Spectre Utility Token",           // Token name
-        6,                       // Decimals
-        "SXU",                   // Symbol
+        "Spectre.ai U-Token",           // Token name
+        18,                       // Decimals
+        "SXUT",                   // Symbol
         true                    // Enable transfers
       )
     {}
