@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GamityToken at 0x35d492bee1e166e30ce63eeaec050afd9e7340b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GamityToken at 0xdaf44abc11eba1a7b0332ce5cce2ba0b2a9f727b
 */
 pragma solidity ^0.4.13;
 
@@ -236,26 +236,26 @@ contract Pausable is Ownable {
 
 /**
  * @title Gamity Token
- * @dev ERC20 Gamity Token (GMT)
+ * @dev ERC20 Gamity Token (GMTY)
  *
- * GMT Tokens are divisible by 1e8 (100,000,000) base
+ * GMTY Tokens are divisible by 1e18 (1000,000,000,000,000,000) base
  * units referred to as 'Grains'.
  *
- * GMT are displayed using 8 decimal places of precision.
+ * GMTY are displayed using 18 decimal places of precision.
  *
- * 1 GMT is equivalent to:
- *   100000000 == 1 * 10**8 == 1e8 == One Hundred Million Grains
+ * 1 GMTY is equivalent to:
+ *   1000000000000000000 == 1 * 10**18 == 1e18
  *
- * All initial GMT Grains are assigned to the creator of
+ * All initial GMTY Grains are assigned to the creator of
  * this contract.
  *
  */
 contract GamityToken is StandardToken, Pausable {
 
-  string public constant name = 'preGamity';                       // Set the token name for display
-  string public constant symbol = 'preGMT';                                       // Set the token symbol for display
-  uint8 public constant decimals = 8;                                          // Set the number of decimals for display
-  uint256 public constant INITIAL_SUPPLY = 500000 * 10**uint256(decimals); // 500000 GMT specified in Grains
+  string public constant name = 'Gamity';                       // Set the token name for display
+  string public constant symbol = 'GMTY';                                       // Set the token symbol for display
+  uint8 public constant decimals = 18;                                          // Set the number of decimals for display
+  uint256 public constant INITIAL_SUPPLY = 500000 * 10**uint256(decimals); // 500000 GMTY specified in Grains
 
   /**
    * @dev GamityToken Constructor
