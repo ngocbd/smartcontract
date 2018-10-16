@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0x35d3bcec3031cd342377d1258c506f46ce913625
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0x9c0c2c6d734d075a013c822b0cfea8917a3f5e75
 */
 pragma solidity ^0.4.11;
 
@@ -128,7 +128,7 @@ contract PricingMechanism is Haltable, SafeMath{
     }
     function setPricing() onlyOwner{
         uint factor = 10 ** decimals;
-        priceList.push(PriceTier(uint(safeDiv(1 ether, 400 * factor)),0,5000 ether));
+        priceList.push(PriceTier(uint(safeDiv(1 ether, 100 * factor)),0,5000 ether));
         priceList.push(PriceTier(uint((1 ether - (10 wei * factor)) / (90 * factor)),0,5000 ether));
         priceList.push(PriceTier(uint(1 ether / (80* factor)),0,5000 ether));
         priceList.push(PriceTier(uint((1 ether - (50 wei * factor)) / (70* factor)),0,5000 ether));
