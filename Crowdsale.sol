@@ -1,27 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1C6C8e0C6B93b81c0aB3cA4E16EAc96f02175F73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x6e428d863aa57b457b038ab1f0e34d77f736bae3
 */
 pragma solidity ^0.4.18;
 
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
 library SafeMath {
-    
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
@@ -29,9 +12,9 @@ library SafeMath {
   }
 
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); 
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); 
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
@@ -45,318 +28,374 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-  
 }
 
-contract Ownable {
-    
+contract IOwned {
+  function owner() public constant returns (address) { owner; }
+  function transferOwnership(address _newOwner) public;
+}
+
+contract Owned is IOwned {
   address public owner;
 
-  
-  function Ownable() {
+  function Owned() public {
     owner = msg.sender;
   }
-  
-  modifier onlyOwner() {
-    require(msg.sender == owner);
+
+  modifier validAddress(address _address) {
+    require(_address != 0x0);
     _;
+  }
+  modifier onlyOwner {
+    assert(msg.sender == owner);
+    _;
+  }
+  
+  function transferOwnership(address _newOwner) public validAddress(_newOwner) onlyOwner {
+    require(_newOwner != owner);
+    
+    owner = _newOwner;
   }
 }
 
-contract Crowdsale is Ownable {
-    
-    using SafeMath for uint256;
-    
-    address public multisig;
 
-   
 
-   
+contract IERC20Token {
+  function name() public constant returns (string) { name; }
+  function symbol() public constant returns (string) { symbol; }
+  function decimals() public constant returns (uint8) { decimals; }
+  function totalSupply() public constant returns (uint256) { totalSupply; }
+  function balanceOf(address _owner) public constant returns (uint256 balance) { _owner; balance; }
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) { _owner; _spender; remaining; }
 
-   
- ERC20 public token;
-    uint public startTime;
+  function transfer(address _to, uint256 _value) public returns (bool);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+  function approve(address _spender, uint256 _value) public returns (bool);
+}
+
+contract ERC20Token is IERC20Token {
+  using SafeMath for uint256;
+
+  string public standard = 'Token 0.1';
+  string public name = '';
+  string public symbol = '';
+  uint8 public decimals = 0;
+  uint256 public totalSupply = 0;
+  mapping (address => uint256) public balanceOf;
+  mapping (address => mapping (address => uint256)) public allowance;
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+  function ERC20Token(string _name, string _symbol, uint8 _decimals) public {
+    require(bytes(_name).length > 0 && bytes(_symbol).length > 0);
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+  }
+
+  modifier validAddress(address _address) {
+    require(_address != 0x0);
+    _;
+  }
+
+  function transfer(address _to, uint256 _value) public validAddress(_to) returns (bool) {
+    balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+    balanceOf[_to] = balanceOf[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
     
-  
-    uint public endTime;
+    return true;
+  }
 
-    uint256 public hardcap;
+  function transferFrom(address _from, address _to, uint256 _value) public validAddress(_to) returns (bool) {
+    allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+    balanceOf[_from] = balanceOf[_from].sub(_value);
+    balanceOf[_to] = balanceOf[_to].add(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
 
-    uint public rate;
-    
-    uint public bonusPercent;
-    
-  
-    
-  
-  uint256 public tokensSold = 0;
+  function approve(address _spender, uint256 _value) public validAddress(_spender) returns (bool) {
+    require(_value == 0 || allowance[msg.sender][_spender] == 0);
+    allowance[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+}
 
+
+contract ISerenityToken {
+  function initialSupply () public constant returns (uint256) { initialSupply; }
+
+  function totalSoldTokens () public constant returns (uint256) { totalSoldTokens; }
+  function totalProjectToken() public constant returns (uint256) { totalProjectToken; }
+
+  function fundingEnabled() public constant returns (bool) { fundingEnabled; }
+  function transfersEnabled() public constant returns (bool) { transfersEnabled; }
+}
+
+contract SerenityToken is ISerenityToken, ERC20Token, Owned {
+  using SafeMath for uint256;
  
-  uint256 public weiRaised = 0;
-  
-  
-  uint public investorCount = 0;
-    
-  mapping (address => uint256) public investedAmountOf;
+  address public fundingWallet;
+  bool public fundingEnabled = true;
+  uint256 public maxSaleToken = 3500000;
+  uint256 public initialSupply = 350000 ether;
+  uint256 public totalSoldTokens;
+  uint256 public totalProjectToken;
+  uint256 private totalLockToken;
+  bool public transfersEnabled = false; 
 
- 
-  mapping (address => uint256) public tokenAmountOf;
- 
+  mapping (address => bool) private fundingWallets;
+  mapping (address => allocationLock) public allocations;
 
-  
-  struct Promo {
-        uint bonus;
-        uint EndTime;
-    }
- 
- mapping (address => Promo) PromoList;
- mapping (uint=>uint) amountBonus;
- uint public level_1_amount=50 ether;
- uint public level_2_amount=100 ether;
- uint public level_3_amount=250 ether;
- uint public level_4_amount=500 ether;
- uint public level_5_amount=1000 ether;
- uint public level_6_amount=100000 ether;
- uint public level_7_amount=1000000 ether;
- uint public level_8_amount=1000000 ether;
- uint public level_9_amount=1000000 ether;
- uint public level_1_percent=20;
- uint public level_2_percent=25;
- uint public level_3_percent=30;
- uint public level_4_percent=35;
- uint public level_5_percent=40;
- uint public level_6_percent=40;
- uint public level_7_percent=40;
- uint public level_8_percent=40;
- uint public level_9_percent=40;
- bool public canExchange=true;
-    function Crowdsale() {
-        multisig =0x7c27f68b0d5afffb668da3e046adfba6ea1f6bc3;
-     
-       bonusPercent=130;
-        rate =5000;
-        startTime =1510704000;
-        endTime=1513382399;
-     
-        hardcap = 1000000000000000;
-        token=ERC20(0x292317a267adfb97d1b4e3ffd04f9da399cf973b);
-        
+  struct allocationLock {
+    uint256 value;
+    uint256 end;
+    bool locked;
+  }
+
+  event Finalize(address indexed _from, uint256 _value);
+  event Lock(address indexed _from, address indexed _to, uint256 _value, uint256 _end);
+  event Unlock(address indexed _from, address indexed _to, uint256 _value);
+  event DisableTransfers(address indexed _from);
+
+  function SerenityToken() ERC20Token("SERENITY INVEST", "SERENITY", 18) public {
+    fundingWallet = msg.sender; 
+
+    balanceOf[fundingWallet] = maxSaleToken;
+
+    fundingWallets[fundingWallet] = true;
+    fundingWallets[0x47c8F28e6056374aBA3DF0854306c2556B104601] = true;
+  }
+
+  modifier validAddress(address _address) {
+    require(_address != 0x0);
+    _;
+  }
+
+  modifier transfersAllowed(address _address) {
+    if (fundingEnabled) {
+      require(fundingWallets[_address]);
     }
 
+    require(transfersEnabled);
+    _;
+  }
+
+  function transfer(address _to, uint256 _value) public validAddress(_to) transfersAllowed(msg.sender) returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public validAddress(_to) transfersAllowed(_from) returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function lock(address _to, uint256 _value, uint256 _end) internal validAddress(_to) onlyOwner returns (bool) {
+    require(_value > 0);
+
+    assert(totalProjectToken > 0);
+    totalLockToken = totalLockToken.add(_value);
+    assert(totalProjectToken >= totalLockToken);
+
+    require(allocations[_to].value == 0);
+
+    // Assign a new lock.
+    allocations[_to] = allocationLock({
+      value: _value,
+      end: _end,
+      locked: true
+    });
+
+    Lock(this, _to, _value, _end);
+
+    return true;
+  }
+
+  function unlock() external {
+    require(allocations[msg.sender].locked);
+    require(now >= allocations[msg.sender].end);
+    
+    balanceOf[msg.sender] = balanceOf[msg.sender].add(allocations[msg.sender].value);
+
+    allocations[msg.sender].locked = false;
+
+    Transfer(this, msg.sender, allocations[msg.sender].value);
+    Unlock(this, msg.sender, allocations[msg.sender].value);
+  }
+
+  function finalize() external onlyOwner {
+    require(fundingEnabled);
+    
+    totalSoldTokens = maxSaleToken.sub(balanceOf[fundingWallet]);
+
+    totalProjectToken = totalSoldTokens.mul(15).div(100);
+
+    lock(0x47c8F28e6056374aBA3DF0854306c2556B104601, totalProjectToken, now);
+    
+    // Zeroing a cold wallet.
+    balanceOf[fundingWallet] = 0;
+
+    // End of crowdfunding.
+    fundingEnabled = false;
+    transfersEnabled = true;
+
+    // End of crowdfunding.
+    Transfer(this, fundingWallet, 0);
+    Finalize(msg.sender, totalSupply);
+  }
+
+  function disableTransfers() external onlyOwner {
+    require(transfersEnabled);
+
+    transfersEnabled = false;
+
+    DisableTransfers(msg.sender);
+  }
+
+  function disableFundingWallets(address _address) external onlyOwner {
+    require(fundingEnabled);
+    require(fundingWallet != _address);
+    require(fundingWallets[_address]);
+
+    fundingWallets[_address] = false;
+  }
+}
 
 
-  
-    function setEndTime(uint _endTime) public onlyOwner{
-         require(_endTime>=now&&_endTime>=startTime);
-        endTime=_endTime;
-    }
-    
-     function setHardcap(uint256 _hardcap) public onlyOwner{
-       
-        hardcap=_hardcap;
-    }
-    
-   function setPromo(address _address,uint _amount,uint _endtime) public onlyOwner{
-       
-       PromoList[_address].bonus=_amount;
-        PromoList[_address].EndTime=_endtime;
-    }
-     function resetAmountBonuses() public onlyOwner
-     {
- level_1_amount=0;
- level_2_amount=0;
- level_3_amount=0;
- level_4_amount=0;
- level_5_amount=0;
- level_6_amount=0;
- level_7_amount=0;
- level_8_amount=0;
- level_9_amount=0;
- level_1_percent=0;
- level_2_percent=0;
- level_3_percent=0;
- level_4_percent=0;
- level_5_percent=0;
- level_6_percent=0;
- level_7_percent=0;
- level_8_percent=0;
- level_9_percent=0;
-    }
-     function setAmountBonuses(uint _level,uint _amount,uint _percent) public onlyOwner
-     {
-         if (_level==1) 
-         {
-           level_1_amount=(_amount).mul(1 ether);
-          level_1_percent=_percent;
-         }
-        else if (_level==2) 
-         {
-           level_2_amount=_amount.mul(1 ether);
-          level_2_percent=_percent;
-         }
-       else  if (_level==3) 
-         {
-           level_3_amount=_amount.mul(1 ether);
-          level_3_percent=_percent;
-         }
-      else   if (_level==4) 
-         {
-           level_4_amount=_amount.mul(1 ether);
-          level_4_percent=_percent;
-         }
-      else   if (_level==5) 
-         {
-           level_5_amount=_amount.mul(1 ether);
-          level_5_percent=_percent;
-         }
-     else    if (_level==6) 
-         {
-           level_6_amount=_amount.mul(1 ether);
-          level_6_percent=_percent;
-         }
-       else  if (_level==7) 
-         {
-           level_7_amount=_amount.mul(1 ether);
-          level_7_percent=_percent;
-         }
-      else   if (_level==8) 
-         {
-           level_8_amount=_amount.mul(1 ether);
-          level_8_percent=_percent;
-         }
-       else  if (_level==9) 
-         {
-           level_9_amount=_amount.mul(1 ether);
-          level_9_percent=_percent;
-         }
-     }
- 
-    
 
-    
-    
-    
-    modifier saleIsOn(){
-         require(now > startTime && now <= endTime);
-         _;
+contract Crowdsale {
+  using SafeMath for uint256;
+
+  SerenityToken public token;
+
+  mapping(uint256 => uint8) icoWeeksDiscounts; 
+
+  uint256 public preStartTime = 1510704000;
+  uint256 public preEndTime = 1512086400; 
+
+  bool public isICOStarted = false; 
+  uint256 public icoStartTime; 
+  uint256 public icoEndTime; 
+
+  address public wallet = 0x47c8F28e6056374aBA3DF0854306c2556B104601;
+  uint256 public tokensPerEth = 10;
+  uint256 public weiRaised;
+  uint256 public ethRaised;
+
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+  modifier validAddress(address _address) {
+    require(_address != 0x0);
+    _;
+  }
+
+  function Crowdsale() public {
+    token = createTokenContract();
+    initDiscounts();
+  }
+
+  function initDiscounts() internal {
+    icoWeeksDiscounts[0] = 40;
+    icoWeeksDiscounts[1] = 35;
+    icoWeeksDiscounts[2] = 30;
+    icoWeeksDiscounts[3] = 25;
+    icoWeeksDiscounts[4] = 20;
+    icoWeeksDiscounts[5] = 10;
+  }
+
+  function createTokenContract() internal returns (SerenityToken) {
+    return new SerenityToken();
+  }
+
+  function () public payable {
+    buyTokens(msg.sender);
+  }
+
+  function getTimeDiscount() internal returns(uint8) {
+    require(isICOStarted == true);
+    require(icoStartTime < now);
+    require(icoEndTime > now);
+
+    uint256 weeksPassed = (now - icoStartTime) / 7 days;
+    return icoWeeksDiscounts[weeksPassed];
+  } 
+
+  function getTotalSoldDiscount() internal returns(uint8) {
+    require(isICOStarted == true);
+    require(icoStartTime < now);
+    require(icoEndTime > now);
+
+    uint256 totalSold = token.totalSoldTokens();
+
+    if (totalSold < 150000)
+      return 50;
+    else if (totalSold < 250000)
+      return 40;
+    else if (totalSold < 500000)
+      return 35;
+    else if (totalSold < 700000)
+      return 30;
+    else if (totalSold < 1100000)
+      return 25;
+    else if (totalSold < 2100000)
+      return 20;
+    else if (totalSold < 3500000)
+      return 10;
+  }
+
+  function getDiscount() internal constant returns (uint8) {
+    if (!isICOStarted)
+      return 50;
+    else {
+      uint8 timeDiscount = getTimeDiscount();
+      uint8 totalSoldDiscount = getTotalSoldDiscount();
+
+      if (timeDiscount < totalSoldDiscount)
+        return timeDiscount;
+      else 
+        return totalSoldDiscount;
     }
-    
-    modifier isUnderHardCap() {
-   
-       require(tokensSold <= hardcap);
-        _;
-    }
-    
-    modifier isCanExchange(){
-       require(canExchange);
-       _;
-       }
-   
-   function calcToken()
+  }
+
+  function buyTokens(address beneficiary) public validAddress(beneficiary) payable {
+    require(validPurchase());
+    require(msg.value > 1 ether);
+
+    uint256 ethAmount = msg.value / 1 ether;
+
+    uint8 discountPercents = getDiscount();
+    uint256 costWithDiscount = tokensPerEth.div(100 - discountPercents).mul(100);
+    uint256 tokens = ethAmount.mul(costWithDiscount);
+
+    weiRaised = weiRaised.add(ethAmount * 1 ether);
+
+    token.transfer(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, ethAmount * 1 ether , tokens);
+
+    forwardFunds();
+  }
+
+  function activeteICO(uint256 _icoEndTime) public {
+    require(msg.sender == wallet);
+    require(_icoEndTime >= now);
+    require(_icoEndTime >= preEndTime);
+    require(isICOStarted == false);
       
-        returns (uint256)
-    {
-         uint bonus;
-        uint256  tokens=0;
-         bonus=bonusPercent;
-       if (PromoList[msg.sender].EndTime >=now)
-        {
-           bonus += PromoList[msg.sender].bonus; 
-        }
-       
-        
-           
-            if (msg.value>=level_1_amount && msg.value<level_2_amount )
-            {
-            bonus+=level_1_percent;
-            }
-            else
-             if (msg.value>=level_2_amount && msg.value<level_3_amount )
-            {
-            bonus+=level_2_percent;
-            }
-             else
-             if (msg.value>=level_3_amount && msg.value<level_4_amount )
-            {
-            bonus+=level_3_percent;
-            }
-             else
-             if (msg.value>=level_4_amount && msg.value<level_5_amount )
-            {
-            bonus+=level_4_percent;
-            }
-             else
-             if (msg.value>=level_5_amount && msg.value<level_6_amount )
-            {
-            bonus+=level_5_percent;
-            }
-         else
-             if (msg.value>=level_6_amount && msg.value<level_7_amount )
-            {
-            bonus+=level_6_percent;
-            }
-            else
-             if (msg.value>=level_7_amount && msg.value<level_8_amount )
-            {
-            bonus+=level_7_percent;
-            }
-             else
-             if (msg.value>=level_8_amount && msg.value<level_9_amount )
-            {
-            bonus+=level_8_percent;
-            }
-       else
-             if (msg.value>=level_9_amount)
-            {
-            bonus+=level_9_percent;
-            }
-             uint256 multiplier = 10 **6;
-         tokens = multiplier.mul(msg.value).div(1 ether).mul(rate).div(100).mul(bonus);
-        
-        
-       
-        return tokens;
-    }
-       function exchange() public isCanExchange {
-     // address myAdrress=this;
-     ERC20  oldToken=ERC20(0x12a35383cA24ceb44cdcBBecbEb7baCcB5F3754A);
-    ERC20   newToken=ERC20(0x292317a267AdFb97d1b4E3Ffd04f9Da399cf973b);
-       
+    isICOStarted = true;
+    icoEndTime = _icoEndTime;
+  }
 
-     uint  oldTokenAmount=oldToken.balanceOf(msg.sender);
-     //oldToken.approve(myAdrress,oldTokenAmount);
-      oldToken.transferFrom(msg.sender,0x0a6d9df476577C0D4A24EB50220fad007e444db8,oldTokenAmount);
- newToken.transferFrom(0x0a6d9df476577C0D4A24EB50220fad007e444db8,msg.sender,oldTokenAmount*105/40);
-    
-       
-   }
-    function createTokens() payable saleIsOn isUnderHardCap {
-        
-      
-      
-      uint256 tokens=calcToken();
-        
-         
-        assert (tokens >= 10000);
-    
-        
-       
-       token.transferFrom(0x0a6d9df476577C0D4A24EB50220fad007e444db8,msg.sender, tokens);
-        if(investedAmountOf[msg.sender] == 0) {
-      
-       investorCount++;
-        }
-        investedAmountOf[msg.sender] = investedAmountOf[msg.sender].add(msg.value);
-        tokenAmountOf[msg.sender] = tokenAmountOf[msg.sender].add(tokens);
-        
-        weiRaised = weiRaised.add(msg.value);
-    tokensSold = tokensSold.add(tokens);  
-    
-     multisig.transfer(msg.value);
-    }
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
 
-    function() external payable {
-        createTokens();
-    }
+  function validPurchase() internal constant returns (bool) {
+    bool withinPresalePeriod = now >= preStartTime && now <= preEndTime;
+    bool withinICOPeriod = isICOStarted && now >= icoStartTime && now <= icoEndTime;
+
+    bool nonZeroPurchase = msg.value != 0;
     
+    return (withinPresalePeriod || withinICOPeriod) && nonZeroPurchase;
+  }
 }
