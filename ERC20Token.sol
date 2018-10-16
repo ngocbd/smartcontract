@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x25fbfbf498bd7d61803fee4974262dccdb105629
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x3ede28c3004674f83cd4335b1e3a0aafa028a8d4
 */
 pragma solidity ^0.4.4;
 
@@ -109,9 +109,9 @@ contract ERC20Token is StandardToken {
         ) {
         balances[msg.sender] = 5500000000000000000000000;                
         totalSupply = 5500000000000000000000000;                       
-        name = "Finland Coin";                                    
+        name = "Denmark Coin";                                    
         decimals = 18;                            
-        symbol = "FINC";                              
+        symbol = "DENC";                              
     }
 
     /* Approves and then calls the receiving contract */
