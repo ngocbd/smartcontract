@@ -1,62 +1,91 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Certification at 0x5ce39b9e59ce54bb42fbf4b218de1059669e7e50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Certification at 0xf67986956e5aaa3adb2a9ddb8c99ab857b48df72
 */
 pragma solidity ^0.4.18;
 
-contract Certification  {
+// File: zeppelin/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
 
   /**
-    * Address of certifier contract this certificate belongs to.
-    */
-  address public certifierAddress;
-
-  string public CompanyName;
-  string public Norm;
-  string public CertID;
-  string public issued;
-  string public expires;
-  string public Scope;
-  string public issuingBody;
-
-  /**
-    * Constructor.
-    *
-    * @param _CompanyName Name of company name the certificate is issued to.
-    * @param _Norm The norm.
-    * @param _CertID Unique identifier of the certificate.
-    * @param _issued Timestamp (Unix epoch) when the certificate was issued.
-    * @param _expires Timestamp (Unix epoch) when the certificate will expire.
-    * @param _Scope The scope of the certificate.
-    * @param _issuingBody The issuer of the certificate.
-    */
-  function Certification(string _CompanyName,
-      string _Norm,
-      string _CertID,
-      string _issued,
-      string _expires,
-      string _Scope,
-      string _issuingBody) public {
-
-      certifierAddress = msg.sender;
-
-      CompanyName = _CompanyName;
-      Norm =_Norm;
-      CertID = _CertID;
-      issued = _issued;
-      expires = _expires;
-      Scope = _Scope;
-      issuingBody = _issuingBody;
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
   }
 
+
   /**
-    * Extinguish this certificate.
-    *
-    * This can be done the same certifier contract which has created
-    * the certificate in the first place only.
-    */
-  function deleteCertificate() public {
-      require(msg.sender == certifierAddress);
-      selfdestruct(tx.origin);
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: contracts/Certification.sol
+
+contract Certification is Ownable {
+
+  struct Certifier {
+    bool valid;
+    string id;
+  }
+
+  mapping (address => Certifier) public certifiers;
+
+  event Certificate(bytes32 indexed certHash, bytes32 innerHash, address indexed certifier);
+  event Revocation(bytes32 indexed certHash, bool invalid);
+
+  function setCertifierInfo(address certifier, bool valid, string id)
+  onlyOwner public {
+    certifiers[certifier] = Certifier({
+      valid: valid,
+      id: id
+    });
+  }
+
+  function computeCertHash(address certifier, bytes32 innerHash) pure public returns (bytes32) {
+    return keccak256(certifier, innerHash);
+  }
+
+  function certify(bytes32 innerHash) public {
+    require(certifiers[msg.sender].valid);
+    Certificate(
+      computeCertHash(msg.sender, innerHash),
+      innerHash, msg.sender
+    );
+  }
+
+  function revoke(bytes32 innerHash, address certifier, bool invalid) public {
+    require(msg.sender == owner
+      || (certifiers[msg.sender].valid && msg.sender == certifier)
+    );
+    Revocation(computeCertHash(certifier, innerHash), invalid);
   }
 
 }
