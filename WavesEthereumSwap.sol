@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0x2c875e5ea4706b1978a41b59edf2d3af31d60e70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0xac44b0c61c20c5063e22d3a0ff67f13afdfed103
 */
 pragma solidity ^0.4.2;
 
@@ -49,6 +49,7 @@ contract IncentCoffeeToken is ERC20Interface {
     /* copied from Bok's github - https://github.com/bokkypoobah/TokenTrader/wiki/GNT-%E2%80%90-Golem-Network-Token */
     string public constant name = "Incent Coffee Token";
     string public constant symbol = "INCOF";
+    string public constant wavesAssetId = "4rmhfoscYcjz1imNDvtz45doouvrQqDpbX7xdfLB4guF";
     uint8 public constant decimals = 0;  // 0 decimal places, the same as tokens on Wave
 
     // Owner of this contract
@@ -143,7 +144,7 @@ contract IncentCoffeeToken is ERC20Interface {
 
 contract WavesEthereumSwap is IncentCoffeeToken {
 
- event WavesTransfer(address indexed _from, string wavesAddress, uint256 amount);
+ event WavesTransfer(address indexed _from, string indexed wavesAddress, uint256 amount);
 
  function moveToWaves(string wavesAddress, uint256 amount) {
 
