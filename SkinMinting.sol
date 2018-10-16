@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkinMinting at 0xe75e8cf3e820f1f8af1e2f7c679cacf57aaf7f73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkinMinting at 0x3465cd9ce5624e5b3d5eaccd816df4a8c0c31fda
 */
 pragma solidity ^0.4.18;
 
@@ -181,7 +181,7 @@ contract SkinMix is SkinBase {
 
 
     // Pre-paid ether for synthesization, will be returned to user if the synthesization failed (minus gas).
-    uint256 public prePaidFee = 2500000 * 5000000000; // (0.15million gas * 5 gwei)
+    uint256 public prePaidFee = 1000000 * 3000000000; // (1million gas * 3 gwei)
 
     // Events
     event MixStart(address account, uint256 skinAId, uint256 skinBId);
@@ -318,7 +318,7 @@ contract SkinMarket is SkinMix {
 
     // Cut ratio for a transaction
     // Values 0-10,000 map to 0%-100%
-    uint128 public trCut = 290;
+    uint128 public trCut = 400;
 
     // Sale orders list 
     mapping (uint256 => uint256) public desiredPrice;
