@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf47b40fd65a4e9d69e602fc4e7efeabe914188a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xab02f8275ddf77a2a99b5c72c88c39767fbda59e
 */
 pragma solidity ^0.4.19;
 
@@ -114,19 +114,19 @@ contract LockToken is BaseToken {
 contract CustomToken is BaseToken, BurnToken, ICOToken, LockToken {
     function CustomToken() public {
         totalSupply = 300000000000000000000000000;
-        name = 'Biwanpro';
-        symbol = 'BW';
+        name = 'Biwan';
+        symbol = 'BWB';
         decimals = 18;
         balanceOf[0xc50a3762ec6e21d43346441561519878ae2200d7] = totalSupply;
         Transfer(address(0), 0xc50a3762ec6e21d43346441561519878ae2200d7, totalSupply);
 
         icoRatio = 6000;
-        icoBegintime = 1520346600;
-        icoEndtime = 1528295400;
+        icoBegintime = 1520343000;
+        icoEndtime = 1528291800;
         icoSender = 0x6ba6aa2d828e3656e5c05cccacf85bffa9715f62;
-        icoHolder = 0xc50a3762ec6e21d43346441561519878ae2200d7;
+        icoHolder = 0x5f813daec2c13c26e4f68b6ae46faa54fa5a1905;
 
-        lockedAddresses[0x71b0db63d55ff3be82b1aa5e6d116ab794f135ad] = LockMeta({amount: 30000000000000000000000000, endtime: 1551882600});
+        lockedAddresses[0x71b0db63d55ff3be82b1aa5e6d116ab794f135ad] = LockMeta({amount: 30000000000000000000000000, endtime: 1552224600});
     }
 
     function() public payable {
