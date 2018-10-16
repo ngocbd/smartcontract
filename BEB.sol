@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEB at 0xcafda83c50843e755cb4315ef0fb30923335a376
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEB at 0x3fc39066ba6e199514ce2ad6abf45b8ab4a83599
 */
 pragma solidity ^0.4.18;
 
@@ -72,7 +72,7 @@ contract BEB is SafeMath{
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
         decimals = decimalUnits;                            // Amount of decimals for display purposes
-		owner = holder;
+		owner = msg.sender;
     }
 
     /* Send coins */
@@ -135,7 +135,13 @@ contract BEB is SafeMath{
         Unfreeze(msg.sender, _value);
         return true;
     }
-
+	
+	// transfer balance to owner
+	function withdrawEther(uint256 amount) public {
+		require(msg.sender == owner);
+		owner.transfer(amount);
+	}
+	
 	// can accept ether
 	function() payable public{
     }
