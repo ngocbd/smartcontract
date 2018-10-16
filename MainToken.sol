@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x379ed0faceee897531731c56491485dc072b59e2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x558de732c4df06ce25ff3bb784e034d1c9ecb2d2
 */
 pragma solidity 0.4.21;
 
@@ -660,8 +660,8 @@ contract MainToken is SafeCheckToken,AccidentallyTokens {
 
   address public TokenWalletHolder;
 
-  string public constant name = "EQI Token";
-  string public constant symbol = "EQI";
+  string public constant name = "EQI";
+  string public constant symbol = "EQI Token";
   uint8 public constant decimals = 18;
 
   uint256 public constant INITIAL_SUPPLY = 880000000 * (10 ** uint256(decimals));
