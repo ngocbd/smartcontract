@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeToken at 0x1de860e4ab425ecc432c24205462ca63e3e788e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeToken at 0x2323426db4738ebc50c9363fc2f67e140522987c
 */
 pragma solidity ^0.4.18;
 
@@ -26,8 +26,9 @@ pragma solidity ^0.4.18;
 ///  token using the token distribution at a given block, this will allow DAO's
 ///  and DApps to upgrade their features in a decentralized manner without
 ///  affecting the original token
-
 /// @dev It is ERC20 compliant, but still needs to under go further testing.
+
+
 contract Controlled {
     /// @notice The address of the controller is the only address that can call
     ///  a function with this modifier
@@ -171,7 +172,8 @@ contract MiniMeToken is Controlled {
     /// @return Whether the transfer was successful or not
     function transfer(address _to, uint256 _amount) public returns (bool success) {
         require(transfersEnabled);
-        return doTransfer(msg.sender, _to, _amount);
+        doTransfer(msg.sender, _to, _amount);
+        return true;
     }
 
     /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
@@ -191,10 +193,11 @@ contract MiniMeToken is Controlled {
             require(transfersEnabled);
 
             // The standard ERC 20 transferFrom functionality
-            if (allowed[_from][msg.sender] < _amount) return false;
+            require(allowed[_from][msg.sender] >= _amount);
             allowed[_from][msg.sender] -= _amount;
         }
-        return doTransfer(_from, _to, _amount);
+        doTransfer(_from, _to, _amount);
+        return true;
     }
 
     /// @dev This is the actual transfer function in the token contract, it can
@@ -204,10 +207,11 @@ contract MiniMeToken is Controlled {
     /// @param _amount The amount of tokens to be transferred
     /// @return True if the transfer was successful
     function doTransfer(address _from, address _to, uint _amount
-    ) internal returns(bool) {
+    ) internal {
 
            if (_amount == 0) {
-               return true;
+               Transfer(_from, _to, _amount);    // Follow the spec to louch the event when transfer 0
+               return;
            }
 
            require(parentSnapShotBlock < block.number);
@@ -216,11 +220,10 @@ contract MiniMeToken is Controlled {
            require((_to != 0) && (_to != address(this)));
 
            // If the amount being transfered is more than the balance of the
-           //  account the transfer returns false
+           //  account the transfer throws
            var previousBalanceFrom = balanceOfAt(_from, block.number);
-           if (previousBalanceFrom < _amount) {
-               return false;
-           }
+
+           require(previousBalanceFrom >= _amount);
 
            // Alerts the token controller of the transfer
            if (isContract(controller)) {
@@ -240,7 +243,6 @@ contract MiniMeToken is Controlled {
            // An event to make the transfer easy to find on the blockchain
            Transfer(_from, _to, _amount);
 
-           return true;
     }
 
     /// @param _owner The address that's balance is being requested
