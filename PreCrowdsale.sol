@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreCrowdsale at 0x2ed86079b04a35402b473323927e7ea722e8057b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreCrowdsale at 0xF9d3402066E3a483f4ca7abFa78DEC61635E561f
 */
 pragma solidity ^0.4.11;
 
@@ -225,6 +225,22 @@ contract TKRPToken is StandardToken {
 contract PreCrowdsale is Ownable {
     using SafeMath for uint256;
 
+    /* 
+    * Stores the contribution in wei
+    * Stores the amount received in TKRP
+    */
+    struct Contributor {
+        uint256 contributed;
+        uint256 received;
+    }
+
+    /* Backers are keyed by their address containing a Contributor struct */
+    mapping(address => Contributor) public contributors;
+
+    /* Events to emit when a contribution has successfully processed */
+    event TokensSent(address indexed to, uint256 value);
+    event ContributionReceived(address indexed to, uint256 value);
+
     /* Constants */
     uint256 public constant TOKEN_CAP = 500000;
     uint256 public constant MINIMUM_CONTRIBUTION = 10 finney;
@@ -234,10 +250,16 @@ contract PreCrowdsale is Ownable {
     /* Public Variables */
     TKRPToken public token;
     address public preCrowdsaleOwner;
+    uint256 public etherReceived;
     uint256 public tokensSent;
     uint256 public preCrowdsaleStartTime;
     uint256 public preCrowdsaleEndTime;
-    bool public crowdSaleIsRunning = false;
+
+    /* Modifier to check whether the preCrowdsale is running */
+    modifier preCrowdsaleRunning() {
+        if (now > preCrowdsaleEndTime || now < preCrowdsaleStartTime) throw;
+        _;
+    }
 
     /**
     * @dev Fallback function which invokes the processContribution function
@@ -252,16 +274,8 @@ contract PreCrowdsale is Ownable {
     /**
     * @dev Fallback function which invokes the processContribution function
     */
-    function() payable {
-        if (!crowdSaleIsRunning) throw;
-        if (msg.value < MINIMUM_CONTRIBUTION) throw;
-
-        uint256 contributionInTokens = msg.value.mul(TOKENS_PER_ETHER).div(1 ether);
-        if (contributionInTokens.add(tokensSent) > TOKEN_CAP) throw; 
-
-        /* Send the tokens */
-        token.transfer(msg.sender, contributionInTokens);
-        tokensSent = tokensSent.add(contributionInTokens);
+    function() preCrowdsaleRunning payable {
+        processContribution(msg.sender);
     }
 
     /**
@@ -270,7 +284,6 @@ contract PreCrowdsale is Ownable {
     function start() onlyOwner {
         if (preCrowdsaleStartTime != 0) throw;
 
-        crowdSaleIsRunning = true;
         preCrowdsaleStartTime = now;            
         preCrowdsaleEndTime = now + PRE_CROWDSALE_DURATION;    
     }
@@ -291,6 +304,32 @@ contract PreCrowdsale is Ownable {
         }
 
         if (!preCrowdsaleOwner.send(this.balance)) throw;
-        crowdSaleIsRunning = false;
+    }
+
+    /**
+    * @dev Processes the contribution given, sends the tokens and emits events
+    * @param sender The address of the contributor
+    */
+    function processContribution(address sender) internal {
+        if (msg.value < MINIMUM_CONTRIBUTION) throw;
+
+        uint256 contributionInTokens = msg.value.mul(TOKENS_PER_ETHER).div(1 ether);
+        if (contributionInTokens.add(tokensSent) > TOKEN_CAP) throw; 
+
+        /* Send the tokens */
+        token.transfer(sender, contributionInTokens);
+
+        /* Create a contributor struct and store the contributed/received values */
+        Contributor contributor = contributors[sender];
+        contributor.received = contributor.received.add(contributionInTokens);
+        contributor.contributed = contributor.contributed.add(msg.value);
+
+        // /* Update the total amount of tokens sent and ether received */
+        etherReceived = etherReceived.add(msg.value);
+        tokensSent = tokensSent.add(contributionInTokens);
+
+        // /* Emit log events */
+        TokensSent(sender, contributionInTokens);
+        ContributionReceived(sender, msg.value);
     }
 }
