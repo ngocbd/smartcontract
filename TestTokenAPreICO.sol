@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestTokenAPreICO at 0x15bec22b1e00e9fa3997f61cbbe444aea8a35890
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestTokenAPreICO at 0x86cfeb74146108f7988c790b6c3b3aa88fbbfd59
 */
 pragma solidity ^0.4.15;
 /**
@@ -512,8 +512,8 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 contract TestTokenA is MintableToken {
-  string public constant name = "TestTokenA";
-  string public constant symbol = "ZNX";
+  string public constant name = "Atom Token";
+  string public constant symbol = "ATT";
   uint8 public constant decimals = 18;
   uint256 public constant initialSupply = 65000000 * (10 ** uint256(decimals));    // number of tokens in reserve
   /*
