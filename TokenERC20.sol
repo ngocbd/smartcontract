@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x63f6f13e4bf0ba92ea3ff5aa40769fb4533da3bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x54fe56d168a8c847dbf13dd6e0fcfffa4e55d467
 */
 pragma solidity ^0.4.16;
 
@@ -10,15 +10,24 @@ contract TokenERC20 {
     string public name;
     string public symbol;
     uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
+    // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
+    // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
+    // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
 
+    /**
+     * Constrctor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
+     */
     function TokenERC20(
         uint256 initialSupply,
         string tokenName,
