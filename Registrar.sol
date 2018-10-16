@@ -1,159 +1,110 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0xb98fdd97f3da105e6b166461afac208981bc786b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0xee2157c15a43be80faac64801ed89c8d8e2c4d3a
 */
-// Copyright (c) 2016 Chronicled, Inc. All rights reserved.
-// http://explorer.chronicled.org
-// http://demo.chronicled.org
-// http://chronicled.org
+pragma solidity ^0.4.0;
+
 
 contract Registrar {
-    address public registrar;
+    address public owner;
 
-    /**
-
-    * Created event, gets triggered when a new registrant gets created
-    * event
-    * @param registrant - The registrant address.
-    * @param registrar - The registrar address.
-    * @param data - The data of the registrant.
-    */
-    event Created(address indexed registrant, address registrar, bytes data);
-
-    /**
-    * Updated event, gets triggered when a new registrant id Updated
-    * event
-    * @param registrant - The registrant address.
-    * @param registrar - The registrar address.
-    * @param data - The data of the registrant.
-    */
-    event Updated(address indexed registrant, address registrar, bytes data, bool active);
-
-    /**
-    * Error event.
-    * event
-    * @param code - The error code.
-    * 1: Permission denied.
-    * 2: Duplicate Registrant address.
-    * 3: No such Registrant.
-    */
-    event Error(uint code);
-
-    struct Registrant {
-        address addr;
-        bytes data;
-        bool active;
-    }
-
-    mapping(address => uint) public registrantIndex;
-    Registrant[] public registrants;
-
-    /**
-    * Function can't have ether.
-    * modifier
-    */
-    modifier noEther() {
-        if (msg.value > 0) throw;
-        _
-    }
-
-    modifier isRegistrar() {
-      if (msg.sender != registrar) {
-        Error(1);
-        return;
-      }
-      else {
-        _
-      }
-    }
-
-    /**
-    * Construct registry with and starting registrants lenght of one, and registrar as msg.sender
-    * constructor
-    */
     function Registrar() {
-        registrar = msg.sender;
-        registrants.length++;
+        owner = msg.sender;
     }
 
-    /**
-    * Add a registrant, only registrar allowed
-    * public_function
-    * @param _registrant - The registrant address.
-    * @param _data - The registrant data string.
-    */
-    function add(address _registrant, bytes _data) isRegistrar noEther returns (bool) {
-        if (registrantIndex[_registrant] > 0) {
-            Error(2); // Duplicate registrant
-            return false;
+    modifier onlyowner { if (msg.sender != owner) throw; _; }
+
+    function transferOwner(address newOwner) public onlyowner {
+        owner = newOwner;
+    }
+
+    Registrar public parent;
+
+    function setParent(address parentAddress) public onlyowner {
+        parent = Registrar(parentAddress);
+    }
+
+    mapping (bytes32 => bytes32) records;
+    mapping (bytes32 => string) stringRecords;
+    mapping (bytes32 => bool) recordExists;
+
+
+    function set(string key, bytes32 value) public onlyowner {
+        // Compute the fixed length key
+        bytes32 _key = sha3(key);
+
+        // Set the value
+        records[_key] = value;
+        recordExists[_key] = true;
+    }
+
+    function get(string key) constant returns (bytes32) {
+        // Compute the fixed length key
+        bytes32 _key = sha3(key);
+
+        if (!recordExists[_key]) {
+            if (address(parent) == 0x0) {
+                // Do return unset keys
+                throw;
+            } else {
+                // Delegate to the parent.
+                return parent.get(key);
+            }
         }
-        uint pos = registrants.length++;
-        registrants[pos] = Registrant(_registrant, _data, true);
-        registrantIndex[_registrant] = pos;
-        Created(_registrant, msg.sender, _data);
-        return true;
+
+        return records[_key];
     }
 
-    /**
-    * Edit a registrant, only registrar allowed
-    * public_function
-    * @param _registrant - The registrant address.
-    * @param _data - The registrant data string.
-    */
-    function edit(address _registrant, bytes _data, bool _active) isRegistrar noEther returns (bool) {
-        if (registrantIndex[_registrant] == 0) {
-            Error(3); // No such registrant
-            return false;
+    function exists(string key) constant returns (bool) {
+        // Compute the fixed length key
+        bytes32 _key = sha3(key);
+
+        return recordExists[_key];
+    }
+
+    function setAddress(string key, address value) public onlyowner {
+        set(key, bytes32(value));
+    }
+
+    function getAddress(string key) constant returns (address) {
+        return address(get(key));
+    }
+
+    function setUInt(string key, uint value) public onlyowner {
+        set(key, bytes32(value));
+    }
+
+    function getUInt(string key) constant returns (uint) {
+        return uint(get(key));
+    }
+
+    function setInt(string key, int value) public onlyowner {
+        set(key, bytes32(value));
+    }
+
+    function getInt(string key) constant returns (int) {
+        return int(get(key));
+    }
+
+    function setBool(string key, bool value) public onlyowner {
+        if (value) {
+            set(key, bytes32(0x1));
+        } else {
+            set(key, bytes32(0x0));
         }
-        Registrant registrant = registrants[registrantIndex[_registrant]];
-        registrant.data = _data;
-        registrant.active = _active;
-        Updated(_registrant, msg.sender, _data, _active);
-        return true;
     }
 
-    /**
-    * Set new registrar address, only registrar allowed
-    * public_function
-    * @param _registrar - The new registrar address.
-    */
-    function setNextRegistrar(address _registrar) isRegistrar noEther returns (bool) {
-        registrar = _registrar;
-        return true;
+    function getBool(string key) constant returns (bool) {
+        return get(key) != bytes32(0x0);
     }
 
-    /**
-    * Get if a regsitrant is active or not.
-    * constant_function
-    * @param _registrant - The registrant address.
-    */
-    function isActiveRegistrant(address _registrant) constant returns (bool) {
-        uint pos = registrantIndex[_registrant];
-        return (pos > 0 && registrants[pos].active);
+    function setString(string key, string value) public onlyowner {
+        bytes32 valueHash = sha3(value);
+        set(key, valueHash);
+        stringRecords[valueHash] = value;
     }
 
-    /**
-    * Get all the registrants.
-    * constant_function
-    */
-    function getRegistrants() constant returns (address[]) {
-        address[] memory result = new address[](registrants.length-1);
-        for (uint j = 1; j < registrants.length; j++) {
-            result[j-1] = registrants[j].addr;
-        }
-        return result;
-    }
-
-    /**
-    * Function to reject value sends to the contract.
-    * fallback_function
-    */
-    function () noEther {}
-
-    /**
-    * Desctruct the smart contract. Since this is first, alpha release of Open Registry for IoT, updated versions will follow.
-    * Registry's discontinue must be executed first.
-    */
-    function discontinue() isRegistrar noEther {
-      selfdestruct(msg.sender);
+    function getString(string key) public returns (string) {
+        bytes32 valueHash = get(key);
+        return stringRecords[valueHash];
     }
 }
