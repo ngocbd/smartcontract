@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty at 0x5730e1cfe3c663062aa1370746ec128abc5475a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty at 0x9220231d7cd5425edcae2f354aa078f624c441e5
 */
 pragma solidity ^0.4.15;
 
@@ -239,8 +239,6 @@ contract Bounty is Ownable {
    function Bounty(address _tokenContractAddress) public {
       require(_tokenContractAddress != address(0));
       lamdenTau = LamdenTau(_tokenContractAddress);
-      
-      
    }
 
    function returnTokens() onlyOwner {
@@ -249,7 +247,9 @@ contract Bounty is Ownable {
    }
 
    function issueTokens() onlyOwner  {
-      
+      uint256 balance = lamdenTau.balanceOf(this);
+      require(balance > 0);
+
       lamdenTau.transfer(0x2D5089a716ddfb0e917ea822B2fa506A3B075997, 2160000000000000000000);
       lamdenTau.transfer(0xe195cC6e1F738Df5bB114094cE4fbd7162CaD617, 720000000000000000000);
       lamdenTau.transfer(0xfd052EC542Db2d8d179C97555434C12277a2da90, 708000000000000000000);
@@ -280,7 +280,6 @@ contract Bounty is Ownable {
       lamdenTau.transfer(0x01e6c7F612798c5C63775712F3C090F10bE120bC, 258000000000000000000);
       lamdenTau.transfer(0xf4C2D2bd0448709Fe3169e98813ff036Ae16f1a9, 2160000000000000000000);
       lamdenTau.transfer(0x5752ae7b663b57819de59945176835ff43805622, 69000000000000000000);
-      uint256 balance = lamdenTau.balanceOf(this);
       lamdenTau.transfer(msg.sender, balance);
    }
 
