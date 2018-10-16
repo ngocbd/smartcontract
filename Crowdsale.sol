@@ -1,302 +1,289 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xf2fe041b99cc26153063227246eb00e01a959262
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xBBC4261Fa8d253Ba1861e6d87946A50487A3b8c8
 */
-pragma solidity ^0.4.19;
+pragma solidity 0.4.18;
 
-library SafeMath { //standart library for uint
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0 || b == 0){
-        return 0;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-//standart contract to identify owner
+interface token {
+    function transfer(address receiver, uint amount) public;
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
+    address public owner;
 
-  address public owner;
 
-  address public newOwner;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  address public techSupport;
 
-  address public newTechSupport;
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  modifier onlyTechSupport() {
-    require(msg.sender == techSupport);
-    _;
-  }
-
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  function transferOwnership(address _newOwner) public onlyOwner {
-    require(_newOwner != address(0));
-    newOwner = _newOwner;
-  }
-
-  function acceptOwnership() public {
-    if (msg.sender == newOwner) {
-      owner = newOwner;
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
     }
-  }
 
-  function transferTechSupport (address _newSupport) public{
-    require (msg.sender == owner || msg.sender == techSupport);
-    newTechSupport = _newSupport;
-  }
 
-  function acceptSupport() public{
-    if(msg.sender == newTechSupport){
-      techSupport = newTechSupport;
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
-  }
+
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 
 }
 
-//Abstract Token contract
-contract CQTToken{
-  function setCrowdsaleContract (address) public{}
-  function sendCrowdsaleTokens(address, uint256)  public {}
-  function burnTokens(address) {}
-  function getCrowdsaleTokens() public view returns(uint) {}
-  function burnSomeTokens(uint _value) public{}
+
+/*
+ * Haltable
+ *
+ * Abstract contract that allows children to implement an
+ * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
+ *
+ *
+ * Originally envisioned in FirstBlood ICO contract.
+ */
+contract Haltable is Ownable {
+    bool public halted;
+
+    modifier stopInEmergency {
+        if (halted) revert();
+        _;
+    }
+
+    modifier onlyInEmergency {
+        if (!halted) revert();
+        _;
+    }
+
+    // called by the owner on emergency, triggers stopped state
+    function halt() external onlyOwner {
+        halted = true;
+    }
+
+    // called by the owner on end of emergency, returns to normal state
+    function unhalt() external onlyOwner onlyInEmergency {
+        halted = false;
+    }
+
 }
 
-//Crowdsale contract
-contract Crowdsale is Ownable{
+////////////////////////////////////////////////////////////////////////////////////////
 
-  using SafeMath for uint;
-  function pow(uint256 a, uint256 b) public pure returns (uint256){ //power function
-   return (a**b);
-  }
+contract Crowdsale  is Haltable {
+    using SafeMath for uint256;
+    event FundTransfer(address backer, uint amount, bool isContribution);
+    // Crowdsale end time has been changed
+    event EndsAtChanged(uint deadline);
+    event CSClosed(bool crowdsaleClosed);
 
-  uint decimals = 8;
-  // Token contract address
-  CQTToken public token;
+    address public beneficiary;
+    uint public amountRaised;
+    uint public amountAvailable;
+    uint public deadline;
+    uint public price;
+    token public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    bool public crowdsaleClosed = false;
 
-  // Constructor
-  function Crowdsale(address _tokenAddress, address _owner) public{
-    token = CQTToken(_tokenAddress);
-    owner = _owner;
-    techSupport = msg.sender;
-    //test parameter
-    // techSupport = 0x8C0F5211A006bB28D4c694dC76632901664230f9;
-    token.setCrowdsaleContract(this);
-  }
+    uint public numTokensLeft;
+    uint public numTokensSold;
+    /* the UNIX timestamp end date of the crowdsale */
+    //    uint public newDeadline;
 
-  // Buy constants
-  uint minDeposit = 10000000000000000;
+    /**
+     * Constrctor function
+     *
+     * Setup the owner
+     */
+    function Crowdsale(
+        address ifSuccessfulSendTo,
+        address addressOfTokenUsedAsReward,
+        uint unixTimestampEnd,
+        uint initialTokenSupply
+    ) public {
+        owner = msg.sender;
 
-  //Canadian time - (-5 hours to UTC)
-  // preIco constants
-  uint public preIcoStart = 1519189260; //21.02.2018 1519189260
-  uint public preIcoFinish = 1521694740; //21.03.2018
+        if(unixTimestampEnd == 0) {
+            revert();
+        }
+        uint dec = 1000000000;
+        numTokensLeft = initialTokenSupply.mul(dec);
+        deadline = unixTimestampEnd;
 
-  uint preIcoMaxCap = 60000000*pow(10,decimals);
-  uint tokenPrice = 50000000000000;
+        // Don't mess the dates
+        if(now >= deadline) {
+            revert();
+        }
 
-
-  // Ico constants
-  uint public icoStart = 1521867660; //24.03.2018
-  uint public icoFinish = 1524632340; //24.04.2018
-
-  uint icoMinCap = 100000000*pow(10,decimals);
-  uint icoMaxCap = 550000000*pow(10,decimals);
-
-  //check is now preICO
-  function isPreIco(uint _time) public view returns (bool){
-    if((preIcoStart <= _time) && (_time <= preIcoFinish)){
-      return true;
-    }
-    return false;
-  }
-
-  //check is now ICO
-  function isIco(uint _time) public view returns (bool){
-    if((icoStart <= _time) && (_time <= icoFinish)){
-      return true;
-    }
-    return false;
-  }
-
-  //Crowdsale variables
-  uint public preIcoTokensSold = 0;
-  uint public icoTokensSold = 0;
-  uint public tokensSold = 0;
-  uint public ethCollected = 0;
-
-  //investors ether balance contains here
-  mapping (address => uint) investorBalances;
-
-  //fallback function (when investor send ether to contract)
-  function() public payable{
-    if (now > icoFinish){
-      finishCrowdsale();
-    }
-    require(isIco(now) || isPreIco(now));
-    require(msg.value >= minDeposit);
-    require(buy(msg.sender,msg.value,now)); //redirect to func buy
-  }
-
-  function sendTokensManually(address _address, uint _value) public onlyTechSupport{
-    token.sendCrowdsaleTokens(_address, _value);
-    if(isPreIco(now)){
-      preIcoTokensSold = preIcoTokensSold.add(_value);
-    }
-    if(isIco(now)){
-      icoTokensSold = icoTokensSold.add(_value);
-    }
-    tokensSold = tokensSold.add(_value);
-  }
-  
-  //function buy Tokens
-  function buy(address _address, uint _value, uint _time/*, bool _manual*/) internal returns (bool){
-    require(token.getCrowdsaleTokens() > 0);
-
-    uint tokensForSend = 0;
-
-    if (isPreIco(_time)){
-      require (preIcoMaxCap > preIcoTokensSold);
-      tokensForSend = etherToTokens(_value);
-      preIcoTokensSold = preIcoTokensSold.add(tokensForSend);
-      owner.transfer(this.balance);
+        beneficiary = ifSuccessfulSendTo;
+        price = 0.000000000000166666 ether;
+        tokenReward = token(addressOfTokenUsedAsReward);
     }
 
-    if (isIco(_time)){
-      // Token contract will automatically throws if Crowdsale balance < tokensForSend
-      // require (icoMaxCap > icoTokensSold);
-      tokensForSend = etherToTokens(_value);
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function () public stopInEmergency payable {
+        require(!crowdsaleClosed);
+        uint amount = msg.value;
+        uint leastAmount = 600000000000;
+        uint numTokens = amount.div(price);
 
-      //If user cant buy all tokens we need to give ether back for him 
-      if(tokensForSend.add(tokensSold) > token.getCrowdsaleTokens()){
-        tokensForSend = token.getCrowdsaleTokens();
-        uint ethToTake = tokensForSend.mul(tokenPrice).div(pow(10,decimals));
+        uint stageOne = 1520856000;// 03/12/2018 @ 12:00pm (UTC) -- 40% bonus before
+        uint stageTwo = 1521460800;// 03/19/2018 @ 12:00pm (UTC) -- 20% bonus before
+        uint stageThree = 1522065600;// 03/26/2018 @ 12:00pm (UTC) -- 15%  bonus before
+        uint stageFour = 1522670400;// 04/02/2018 @ 12:00pm (UTC) -- 10%  bonus before
+        // end date -- 1523275199 @ 04/09/2018 @ 11:59am (UTC)  -- 0%   bonus before
 
-        uint etherSendBack = _value.sub(ethToTake);
-        _address.transfer(etherSendBack);
-        icoTokensSold = icoTokensSold.add(tokensForSend);
+        uint numBonusTokens;
+        uint totalNumTokens;
 
-        tokensSold = tokensSold.add(tokensForSend);
-        token.sendCrowdsaleTokens(_address, tokensForSend);
+        /////////////////////////////
+        //  Next step is to add in a check to see once the new price goes live
+        ////////////////////////////
+        if(now < stageOne)
+        {
+            //  40% Presale bonus
+            numBonusTokens = (numTokens.div(100)).mul(40);
+            totalNumTokens = numTokens.add(numBonusTokens);
+        }
+        else if(now < stageTwo)
+        {
+            //  20% bonus
+            numBonusTokens = (numTokens.div(100)).mul(20);
+            totalNumTokens = numTokens.add(numBonusTokens);
+        }
+        else if(now < stageThree){
+            //  15% bonus
+            numBonusTokens = (numTokens.div(100)).mul(15);
+            totalNumTokens = numTokens.add(numBonusTokens);
+        }
+        else if(now < stageFour){
+            //  10% bonus
+            numBonusTokens = (numTokens.div(100)).mul(10);
+            totalNumTokens = numTokens.add(numBonusTokens);
+        }
+        else{
+            numBonusTokens = 0;
+            totalNumTokens = numTokens.add(numBonusTokens);
+        }
 
-        ethCollected = ethCollected.add(ethToTake);
-        investorBalances[_address] = investorBalances[_address].add(ethToTake);
-        owner.transfer(this.balance);
-
-        return true;
-      }
-
-      investorBalances[_address] = investorBalances[_address].add(_value);
-      icoTokensSold = icoTokensSold.add(tokensForSend);
+        // do not sell less than 100 tokens at a time.
+        if (numTokens <= leastAmount) {
+            revert();
+        } else {
+            balanceOf[msg.sender] = balanceOf[msg.sender].add(amount);
+            amountRaised = amountRaised.add(amount);
+            amountAvailable = amountAvailable.add(amount);
+            numTokensSold = numTokensSold.add(totalNumTokens);
+            numTokensLeft = numTokensLeft.sub(totalNumTokens);
+            tokenReward.transfer(msg.sender, totalNumTokens);
+            FundTransfer(msg.sender, amount, true);
+        }
     }
 
-    tokensSold = tokensSold.add(tokensForSend);
-    token.sendCrowdsaleTokens(_address, tokensForSend);
-
-    if (isIcoTrue()){
-      owner.transfer(this.balance);
+    ///////////////////////////////////////////////////////////
+    //     * Withdraw received funds
+    ///////////////////////////////////////////////////////////
+    function safeWithdrawal() public onlyOwner{
+        if(amountAvailable < 0)
+        {
+            revert();
+        }
+        else
+        {
+            uint amtA = amountAvailable;
+            amountAvailable = 0;
+            beneficiary.transfer(amtA);
+        }
     }
 
-    ethCollected = ethCollected.add(_value);
-    return true;
-  }
-
-  //convert ether to tokens (without decimals)
-  function etherToTokens(uint _value) public view returns(uint) {
-    uint res = _value.mul(pow(10,decimals)).div(tokenPrice);
-
-    if (now < preIcoStart || isPreIco(now)){
-      return res.add(res*40/100);
+    ///////////////////////////////////////////////////////////
+    // Withdraw tokens
+    ///////////////////////////////////////////////////////////
+    function withdrawTheUnsoldTokens() public onlyOwner afterDeadline{
+        if(numTokensLeft <= 0)
+        {
+            revert();
+        }
+        else
+        {
+            uint ntl = numTokensLeft;
+            numTokensLeft=0;
+            tokenReward.transfer(beneficiary, ntl);
+            crowdsaleClosed = true;
+            CSClosed(crowdsaleClosed);
+        }
     }
 
-    if (now > preIcoFinish && now < icoStart){
-      return res.add(res*30/100);
+    /////////////////////////////////////////////////////////////
+    // give the crowdsale a new newDeadline
+    ////////////////////////////////////////////////////////////
+
+    modifier afterDeadline() { if (now >= deadline) _; }
+
+    function setDeadline(uint time) public onlyOwner {
+        if(now > time || msg.sender==beneficiary)
+        {
+            revert(); // Don't change past
+        }
+        deadline = time;
+        EndsAtChanged(deadline);
     }
 
-    if (isIco(now)){
-      if(icoStart + 7 days <= now){
-        return res.add(res*30/100);
-      }
-      if(icoStart + 14 days <= now){
-        return res.add(res*20/100);
-      }
-      if(icoStart + 21 days <= now){
-        return res.add(res*10/100);
-      }
-    return res;
-    }
-
-    return 0;
-  }
-
-  //function check is ICO complete (minCap exceeded)
-  function isIcoTrue() public view returns (bool){
-    if (tokensSold >= icoMinCap){
-      return true;
-    }
-  return false;
-  }
-
-  //Contract can change ICO finish date up to 7 days, but only one time
-  bool public isTryedFinishCrowdsale = false;
-  bool public isBurnActive = false;
-
-  function finishCrowdsale () public {
-    require (now > icoFinish);
-
-    if(!isTryedFinishCrowdsale){
-      if(tokensSold >= 610000000*pow(10,decimals)){
-        isBurnActive = true;  
-      }else{
-        icoFinish = icoFinish + 7 days;
-      }
-      isTryedFinishCrowdsale = true;
-    }else{
-      isBurnActive = true;
-    }
-  }
-  
-  //Owner can burn some tokens in Token Contract
-  function burnSomeTokens (uint _value) public onlyOwner{
-    require(isBurnActive);
-    token.burnSomeTokens(_value);
-  }
-
-  //if ICO failed and now = ICO finished date +3 days then investor can withdrow his ether
-  function refund() public{
-    require (!isIcoTrue());
-    require (icoFinish + 3 days <= now);
-
-    token.burnTokens(msg.sender);
-    msg.sender.transfer(investorBalances[msg.sender]);
-    investorBalances[msg.sender] = 0;
-  }
+    ///////////////////////////////////////////////////////////////////////////////////////////////
 }
