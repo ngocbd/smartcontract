@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xf85112919e478fcf33423012ed2ddc36bed6c512
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xfd0cc0f0e20bb5aa423b08de4cab70a53cf1ffda
 */
 pragma solidity ^0.4.16;
 
@@ -31,7 +31,7 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20() public {
-        totalSupply = 1000000 * 10 ** uint256(18);  // Update total supply with the decimal amount
+        totalSupply = 10000000000 * 10 ** uint256(18);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;           // Give the creator all initial tokens
         name = 'Global Gold Coin';                      // Set the name for display purposes
         symbol = 'GGC';                                // Set the symbol for display purposes
