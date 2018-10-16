@@ -1,104 +1,103 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xde86f709f9001a155a4a7fd40f0f4bcdbe41b4db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xF29A03e88c425116C979892d475f5CDDF1F742ce
 */
-pragma solidity ^0.4.16;
-
-// param :: "0x8fD8eCA1E7fA9BA32DA609c90D01a674c332fFB1", 1000000, 2400, 484, "0x7ee2724fd59caa0b5daf33601ca394f1aa8c6e6b"
+pragma solidity ^0.4.18;
 
 interface token {
-    function transfer(address receiver, uint amount);
+    function transfer(address receiver, uint amount) public;
+}
+
+/*
+ * SafeMath - Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 contract Crowdsale {
-    address public beneficiary;
-    uint public fundingGoal;
-    uint public amountRaised;
-    uint public deadline;
-    uint public price;
+    using SafeMath for uint256;
+
+    address public owner;
+    uint256 public amountRaised;
+    uint256 public amountRaisedPhase;
+    uint256 public price;
     token public tokenReward;
     mapping(address => uint256) public balanceOf;
-    bool fundingGoalReached = false;
-    bool crowdsaleClosed = false;
 
-    event GoalReached(address recipient, uint totalAmountRaised);
     event FundTransfer(address backer, uint amount, bool isContribution);
 
-    /**
-     * Constrctor function
-     *
-     * Setup the owner
-     */
-    function Crowdsale(
-        address ifSuccessfulSendTo,
-        uint fundingGoalInWei,
-        uint durationInMinutes,
-        uint weiCostOfEachToken,
-        address addressOfTokenUsedAsReward
-    ) {
-        beneficiary = ifSuccessfulSendTo;
-        fundingGoal = fundingGoalInWei * 10 ** 11 wei;
-        deadline = now + durationInMinutes * 1 minutes;
-        price = weiCostOfEachToken * 10 ** 11 wei;
-        tokenReward = token(addressOfTokenUsedAsReward);
+    /*
+    * Throws if called by any account other than the owner
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
 
-    /**
-     * Fallback function
-     *
-     * The function without name is the default function that is called whenever anyone sends funds to a contract
+    /*
+     * Constrctor function - setup the owner
      */
-    function () payable {
-        require(!crowdsaleClosed);
-        uint amount = msg.value;
-        balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-        tokenReward.transfer(msg.sender, (amount * 10 ** 18) / price);
+    function Crowdsale(
+        address ownerAddress,
+        uint256 weiCostPerToken,
+        address rewardTokenAddress
+    ) public {
+        owner = ownerAddress;
+        price = weiCostPerToken;
+        tokenReward = token(rewardTokenAddress);
+    }
+
+    /*
+     * Fallback function - called when funds are sent to the contract
+     */
+    function () public payable {
+        uint256 amount = msg.value;
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(amount);
+        amountRaised = amountRaised.add(amount);
+        amountRaisedPhase = amountRaisedPhase.add(amount);
+        tokenReward.transfer(msg.sender, amount.mul(10**4).div(price));
         FundTransfer(msg.sender, amount, true);
     }
 
-    modifier afterDeadline() { if (now >= deadline) _; }
-
-    /**
-     * Check if goal was reached
-     *
-     * Checks if the goal or time limit has been reached and ends the campaign
+    /*
+     * Withdraw the funds safely
      */
-    function checkGoalReached() afterDeadline {
-        if (amountRaised >= fundingGoal){
-            fundingGoalReached = true;
-            GoalReached(beneficiary, amountRaised);
-        }
-        crowdsaleClosed = true;
+    function safeWithdrawal() public onlyOwner {
+        uint256 withdraw = amountRaisedPhase;
+        amountRaisedPhase = 0;
+        FundTransfer(owner, withdraw, false);
+        owner.transfer(withdraw);
     }
 
-
-    /**
-     * Withdraw the funds
-     *
-     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
-     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
-     * the amount they contributed.
+    /*
+     * Transfers the current balance to the owner and terminates the contract
      */
-    function safeWithdrawal() afterDeadline {
-        if (!fundingGoalReached) {
-            uint amount = balanceOf[msg.sender];
-            balanceOf[msg.sender] = 0;
-            if (amount > 0) {
-                if (msg.sender.send(amount)) {
-                    FundTransfer(msg.sender, amount, false);
-                } else {
-                    balanceOf[msg.sender] = amount;
-                }
-            }
-        }
-
-        if (fundingGoalReached && beneficiary == msg.sender) {
-            if (beneficiary.send(amountRaised)) {
-                FundTransfer(beneficiary, amountRaised, false);
-            } else {
-                //If we fail to send the funds to beneficiary, unlock funders balance
-                fundingGoalReached = false;
-            }
-        }
+    function destroy() public onlyOwner {
+        selfdestruct(owner);
+    }
+    function destroyAndSend(address _recipient) public onlyOwner {
+        selfdestruct(_recipient);
     }
 }
