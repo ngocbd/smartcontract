@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorChanger at 0xd3e4ca9b4f0568ddb896dba2861e88c6c26e5375
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorChanger at 0xb82decbeb38fa165d787594f38aa25e4ca00124f
 */
 pragma solidity ^0.4.11;
 
@@ -898,8 +898,7 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
             IEtherToken etherToken = IEtherToken(toToken);
             etherToken.withdrawTo(msg.sender, _amount);
         }
-        // no need to transfer the tokens if the sender is the local contract
-        else if (msg.sender != address(this)) {
+        else {
             // not ETH, transfer the tokens to the caller
             assert(toToken.transfer(msg.sender, _amount));
         }
@@ -990,7 +989,7 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         @param _amount  amount to claim
     */
     function claimTokens(IERC20Token _token, address _from, uint256 _amount) private {
-        // no need to claim the tokens if the source is the local contract
+        // no need to do a transfer if the source is the local contract
         if (_from == address(this))
             return;
 
