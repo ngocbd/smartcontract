@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChristCoin at 0xd348e07a2806505b856123045d27aeed90924b50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChristCoin at 0x07837872a605461981127653c6d21e45c9cf1805
 */
 pragma solidity ^0.4.11;
 
@@ -37,6 +37,36 @@ contract Ownable {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
+  }
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
@@ -84,36 +114,6 @@ contract Pausable is Ownable {
   }
 }
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
 contract Finalizable is Ownable {
   bool public contractFinalized;
 
@@ -131,10 +131,63 @@ contract Shared is Ownable, Finalizable {
   uint internal constant DECIMALS = 8;
   
   address internal constant REWARDS_WALLET = 0x30b002d3AfCb7F9382394f7c803faFBb500872D8;
-  address internal constant FRIENDS_FAMILY_WALLET = 0xd328eF879f78cDa773a3dFc79B4e590f20C22223;
   address internal constant CROWDSALE_WALLET = 0x028e1Ce69E379b1678278640c7387ecc40DAa895;
   address internal constant LIFE_CHANGE_WALLET = 0xEe4284f98D0568c7f65688f18A2F74354E17B31a;
   address internal constant LIFE_CHANGE_VESTING_WALLET = 0x2D354bD67707223C9aC0232cd0E54f22b03483Cf;
+}
+
+contract Ledger is Shared {
+  using SafeMath for uint;
+
+  address public controller;
+  mapping(address => uint) public balanceOf;
+  mapping (address => mapping (address => uint)) public allowed;
+  uint public totalSupply;
+
+  function setController(address _address) onlyOwner notFinalized {
+    controller = _address;
+  }
+
+  modifier onlyController() {
+    require(msg.sender == controller);
+    _;
+  }
+
+  function transfer(address _from, address _to, uint _value) onlyController returns (bool success) {
+    balanceOf[_from] = balanceOf[_from].sub(_value);
+    balanceOf[_to] = balanceOf[_to].add(_value);
+    return true;
+  }
+
+  function transferFrom(address _spender, address _from, address _to, uint _value) onlyController returns (bool success) {
+    var _allowance = allowed[_from][_spender];
+    balanceOf[_to] = balanceOf[_to].add(_value);
+    balanceOf[_from] = balanceOf[_from].sub(_value);
+    allowed[_from][_spender] = _allowance.sub(_value);
+    return true;
+  }
+
+  function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
+    require((_value == 0) || (allowed[_owner][_spender] == 0));
+    allowed[_owner][_spender] = _value;
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) onlyController constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  function burn(address _from, uint _amount) onlyController returns (bool success) {
+    balanceOf[_from] = balanceOf[_from].sub(_amount);
+    totalSupply = totalSupply.sub(_amount);
+    return true;
+  }
+
+  function mint(address _to, uint _amount) onlyController returns (bool success) {
+    balanceOf[_to] += _amount;
+    totalSupply += _amount;
+    return true;
+  }
 }
 
 contract Controller is Shared, Pausable {
@@ -192,8 +245,7 @@ contract Controller is Shared, Pausable {
   function init() onlyOwner {
     require(!initialized);
     mintWithEvent(REWARDS_WALLET, 9 * (10 ** (9 + DECIMALS))); // 9 billion
-    mintWithEvent(FRIENDS_FAMILY_WALLET, 75 * (10 ** (6 + DECIMALS))); // 75 million
-    mintWithEvent(CROWDSALE_WALLET, 825 * (10 ** (6 + DECIMALS))); // 825 million
+    mintWithEvent(CROWDSALE_WALLET, 900 * (10 ** (6 + DECIMALS))); // 900 million
     mintWithEvent(LIFE_CHANGE_WALLET, 100 * (10 ** (6 + DECIMALS))); // 100 million
     initialized = true;
   }
@@ -270,60 +322,6 @@ contract Controller is Shared, Pausable {
 
     ledger.transfer(LIFE_CHANGE_VESTING_WALLET, _withdrawTo, amountWithdrawn);
     token.controllerTransfer(LIFE_CHANGE_VESTING_WALLET, _withdrawTo, amountWithdrawn);
-  }
-}
-
-contract Ledger is Shared {
-  using SafeMath for uint;
-
-  address public controller;
-  mapping(address => uint) public balanceOf;
-  mapping (address => mapping (address => uint)) public allowed;
-  uint public totalSupply;
-
-  function setController(address _address) onlyOwner notFinalized {
-    controller = _address;
-  }
-
-  modifier onlyController() {
-    require(msg.sender == controller);
-    _;
-  }
-
-  function transfer(address _from, address _to, uint _value) onlyController returns (bool success) {
-    balanceOf[_from] = balanceOf[_from].sub(_value);
-    balanceOf[_to] = balanceOf[_to].add(_value);
-    return true;
-  }
-
-  function transferFrom(address _spender, address _from, address _to, uint _value) onlyController returns (bool success) {
-    var _allowance = allowed[_from][_spender];
-    balanceOf[_to] = balanceOf[_to].add(_value);
-    balanceOf[_from] = balanceOf[_from].sub(_value);
-    allowed[_from][_spender] = _allowance.sub(_value);
-    return true;
-  }
-
-  function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
-    require((_value == 0) || (allowed[_owner][_spender] == 0));
-    allowed[_owner][_spender] = _value;
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) onlyController constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  function burn(address _from, uint _amount) onlyController returns (bool success) {
-    balanceOf[_from] = balanceOf[_from].sub(_amount);
-    totalSupply = totalSupply.sub(_amount);
-    return true;
-  }
-
-  function mint(address _to, uint _amount) onlyController returns (bool success) {
-    balanceOf[_to] += _amount;
-    totalSupply += _amount;
-    return true;
   }
 }
 
