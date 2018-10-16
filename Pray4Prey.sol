@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pray4Prey at 0xb919b2903e07293bc84372471a7081ecb69e8d36
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pray4Prey at 0x0851185501ba44e84fd8af13ade44846f00890b7
 */
-pragma solidity ^0.4.8;
-
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -33,7 +31,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-pragma solidity ^0.4.0;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
+pragma solidity ^0.4.8;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -314,6 +312,7 @@ contract usingOraclize {
 
 }
 // </ORACLIZE_API>
+
 
 library strings {
     struct slice {
@@ -1003,7 +1002,12 @@ contract mortal {
 	}
 }
 
-contract Pray4Prey is mortal, usingOraclize {
+
+contract transferable {
+	function receive(address player, uint8 animalType, uint32[] animalIds) payable {}
+}
+
+contract Pray4Prey is mortal, usingOraclize, transferable {
 	using strings
 	for * ;
 
@@ -1026,11 +1030,12 @@ contract Pray4Prey is mortal, usingOraclize {
 	/** the value of each animal type (cost - fee), so it's not necessary to compute it each time*/
 	uint128[] public values;
 	/** the fee to be paid each time an animal is bought in percent*/
-	uint8  fee;
+	uint8 fee;
+	/** specifies if animals may be transfered from old contract version */
+	bool transferAllowed;
 
-	/** total number of animals in the game 
-	(!=sum of the lengths of the prey animals arrays, since those arrays contain holes) */
-	uint16 public numAnimals;
+	/** total number of animals in the game (uint32 because of multiplication issues) */
+	uint32 public numAnimals;
 	/** The maximum of animals allowed in the game */
 	uint16 public maxAnimals;
 	/** number of animals per type */
@@ -1038,9 +1043,9 @@ contract Pray4Prey is mortal, usingOraclize {
 
 
 	/** the query string getting the random numbers from oraclize**/
-	string  randomQuery;
+	string randomQuery;
 	/** the type of the oraclize query**/
-	string  queryType;
+	string queryType;
 	/** the timestamp of the next attack **/
 	uint public nextAttackTimestamp;
 	/** gas provided for oraclize callback (attack)**/
@@ -1052,28 +1057,28 @@ contract Pray4Prey is mortal, usingOraclize {
 	/** is fired when new animals are purchased (who bought how many animals of which type?) */
 	event newPurchase(address player, uint8 animalType, uint8 amount, uint32 startId);
 	/** is fired when a player leaves the game */
-	event newExit(address player, uint256 totalBalance);
-	/** is fired when an attack occures*/
+	event newExit(address player, uint256 totalBalance, uint32[] removedAnimals);
+	/** is fired when an attack occures */
 	event newAttack(uint32[] killedAnimals);
+	/** is fired when a single animal is sold **/
+	event newSell(uint32 animalId, address player, uint256 value);
 
 
-	/** expected parameters: the costs per animal type and the game fee in percent 
-	 *   assumes that the cheapest animal is stored in [0]
-	 */
-	function Pray4Prey() {
-		costs = [100000000000000000,200000000000000000,500000000000000000,1000000000000000000,5000000000000000000];
+	/** initializes the contract parameters	 (would be constructor if it wasn't for the gas limit)*/
+	function init() {
+		if(msg.sender != owner) throw;
+		costs = [100000000000000000, 200000000000000000, 500000000000000000, 1000000000000000000, 5000000000000000000];
 		fee = 5;
 		for (uint8 i = 0; i < costs.length; i++) {
 			values.push(costs[i] - costs[i] / 100 * fee);
 		}
 		maxAnimals = 300;
-		/*randomQuery = "https://www.random.org/integers/?num=10&min=0&max=10000&col=1&base=10&format=plain&rnd=new";
-		queryType = "URL";*/
 		randomQuery = "10 random numbers between 1 and 1000";
 		queryType = "WolframAlpha";
-		oraclizeGas = 400000;
-		nextId = 1;
-		oldest = 1;
+		oraclizeGas = 600000;
+		transferAllowed = true; //allow transfer from old contract
+		nextId = 150;
+		oldest = 150;
 	}
 
 	/** The fallback function runs whenever someone sends ether
@@ -1096,61 +1101,72 @@ contract Pray4Prey is mortal, usingOraclize {
 	 *  as many animals as possible are bought with msg.value
 	 */
 	function addAnimals(uint8 animalType) payable {
+		giveAnimals(animalType, msg.sender);
+	}
+
+	/** buy animals of a given type forsomeone else
+	 *  as many animals as possible are bought with msg.value
+	 */
+	function giveAnimals(uint8 animalType, address receiver) payable {
 		uint8 amount = uint8(msg.value / costs[animalType]);
-		if (animalType >= costs.length || msg.value < costs[animalType] ||  numAnimals + amount >= maxAnimals) throw;
+		if (animalType >= costs.length || msg.value < costs[animalType] || numAnimals + amount >= maxAnimals) throw;
 		//if type exists, enough ether was transferred and there are less than maxAnimals animals in the game
 		for (uint8 j = 0; j < amount; j++) {
-			addAnimal(animalType);
+			addAnimal(animalType, receiver, nextId);
+			nextId++;
 		}
 		numAnimalsXType[animalType] += amount;
-		newPurchase(msg.sender, animalType, amount, nextId-amount);
+		newPurchase(receiver, animalType, amount, nextId - amount);
 	}
 
 	/**
 	 *  adds a single animal of the given type
 	 */
-	function addAnimal(uint8 animalType) internal {
+	function addAnimal(uint8 animalType, address receiver, uint32 nId) internal {
 		if (numAnimals < ids.length)
-			ids[numAnimals] = nextId;
+			ids[numAnimals] = nId;
 		else
-			ids.push(nextId);
-		animals[nextId] = Animal(animalType, values[animalType], msg.sender);
-		nextId++;
+			ids.push(nId);
+		if(nId<oldest) 
+			oldest = nId;
+		animals[nId] = Animal(animalType, values[animalType], receiver);
 		numAnimals++;
 	}
+
 
 
 	/** leave the game
 	 * pays out the sender's winBalance and removes him and his animals from the game
 	 * */
 	function exit() {
-		uint balance = cleanUp(msg.sender); //delete the animals
-		newExit(msg.sender, balance); //fire the event to notify the client
-		if (!msg.sender.send(balance)) throw;
-	}
-
-	/**
-	 * Deletes the animals of a given player
-	 * */
-	function cleanUp(address playerAddress) internal returns(uint playerBalance){
+		uint32[] memory removed = new uint32[](50);
+		uint8 count;
 		uint32 lastId;
+		uint playerBalance;
 		for (uint16 i = 0; i < numAnimals; i++) {
-			if (animals[ids[i]].owner == playerAddress) {
+			if (animals[ids[i]].owner == msg.sender) {
 				//first delete all animals at the end of the array
-				while (numAnimals > 0 && animals[ids[numAnimals - 1]].owner == playerAddress) {
+				while (numAnimals > 0 && animals[ids[numAnimals - 1]].owner == msg.sender) {
 					numAnimals--;
 					lastId = ids[numAnimals];
 					numAnimalsXType[animals[lastId].animalType]--;
-					playerBalance+=animals[lastId].value;
+					playerBalance += animals[lastId].value;
+					removed[count] = lastId;
+					count++;
+					if (lastId == oldest) oldest = 0;
 					delete animals[lastId];
 				}
 				//if the last animal does not belong to the player, replace the players animal by this last one
 				if (numAnimals > i + 1) {
-				    playerBalance+=animals[ids[i]].value;
+					playerBalance += animals[ids[i]].value;
+					removed[count] = ids[i];
+					count++;
 					replaceAnimal(i);
 				}
 			}
 		}
+		newExit(msg.sender, playerBalance, removed); //fire the event to notify the client
+		if (!msg.sender.send(playerBalance)) throw;
 	}
 
 
@@ -1158,11 +1174,12 @@ contract Pray4Prey is mortal, usingOraclize {
 	 * Replaces the animal with the given id with the last animal in the array
 	 * */
 	function replaceAnimal(uint16 index) internal {
-		numAnimalsXType[animals[ids[index]].animalType]--;
+		uint32 animalId = ids[index];
+		numAnimalsXType[animals[animalId].animalType]--;
 		numAnimals--;
-		uint32 lastId = ids[numAnimals];
-		animals[ids[index]] = animals[lastId];
-		ids[index] = lastId;
+		if (animalId == oldest) oldest = 0;
+		delete animals[animalId];
+		ids[index] = ids[numAnimals];
 		delete ids[numAnimals];
 	}
 
@@ -1182,7 +1199,7 @@ contract Pray4Prey is mortal, usingOraclize {
 	 */
 	function triggerAttack(uint32 inseconds, uint128 gasAmount) internal {
 		nextAttackTimestamp = now + inseconds;
-		nextAttackId = oraclize_query(nextAttackTimestamp, queryType, randomQuery, gasAmount );
+		nextAttackId = oraclize_query(nextAttackTimestamp, queryType, randomQuery, gasAmount);
 	}
 
 	/**
@@ -1193,7 +1210,7 @@ contract Pray4Prey is mortal, usingOraclize {
 		if (msg.sender != oraclize_cbAddress() || myid != nextAttackId) throw; // just to be sure the calling address is the Oraclize authorized one and the callback is the expected one   
 		uint128 pot;
 		uint16 random;
-		uint16 howmany = numAnimals < 100 ? (numAnimals < 10 ? 1 : numAnimals / 10) : 10; //do not kill more than 10%, but at least one
+		uint32 howmany = numAnimals < 100 ? (numAnimals < 10 ? 1 : numAnimals / 10) : 10; //do not kill more than 10%, but at least one
 		uint16[] memory randomNumbers = getNumbersFromString(result, ",", howmany);
 		uint32[] memory killedAnimals = new uint32[](howmany);
 		for (uint8 i = 0; i < howmany; i++) {
@@ -1201,7 +1218,7 @@ contract Pray4Prey is mortal, usingOraclize {
 			killedAnimals[i] = ids[random];
 			pot += killAnimal(random);
 		}
-		uint128 neededGas = oraclizeGas + 10000*numAnimals;
+		uint128 neededGas = oraclizeGas + 10000 * numAnimals;
 		uint128 gasCost = uint128(neededGas * tx.gasprice);
 		if (pot > gasCost)
 			distribute(uint128(pot - gasCost)); //distribute the pot minus the oraclize gas costs
@@ -1225,29 +1242,27 @@ contract Pray4Prey is mortal, usingOraclize {
 	function killAnimal(uint16 index) internal returns(uint128 animalValue) {
 		animalValue = animals[ids[index]].value;
 		replaceAnimal(index);
-		if (ids[index] == oldest)
-			oldest = 0;
 	}
 
 	/**
 	 * finds the oldest animal
 	 * */
-	function findOldest() internal returns(uint128 animalValue) {
+	function findOldest() {
 		oldest = ids[0];
-		for (uint16 i = 1; i < numAnimals; i++){
-			if(ids[i] < oldest)//the oldest animal has the lowest id
+		for (uint16 i = 1; i < numAnimals; i++) {
+			if (ids[i] < oldest) //the oldest animal has the lowest id
 				oldest = ids[i];
 		}
 	}
 
 
 	/** distributes the given amount among the surviving fishes*/
-	function distribute(uint128 amount) internal {
+	function distribute(uint128 totalAmount) internal {
 		//pay 10% to the oldest fish
 		if (oldest == 0)
 			findOldest();
-		animals[oldest].value += amount / 10;
-		amount = amount / 10 * 9;
+		animals[oldest].value += totalAmount / 10;
+		uint128 amount = totalAmount / 10 * 9;
 		//distribute the rest according to their type
 		uint128 valueSum;
 		uint128[] memory shares = new uint128[](values.length);
@@ -1255,11 +1270,9 @@ contract Pray4Prey is mortal, usingOraclize {
 			if (numAnimalsXType[v] > 0) valueSum += values[v];
 		}
 		for (uint8 m = 0; m < values.length; m++) {
-		    if(numAnimalsXType[m] > 0)
-			    shares[m] = amount / valueSum * values[m] / numAnimalsXType[m];
+			if (numAnimalsXType[m] > 0)
+				shares[m] = amount * values[m] / valueSum / numAnimalsXType[m];
 		}
-		
-
 		for (uint16 i = 0; i < numAnimals; i++) {
 			animals[ids[i]].value += shares[animals[ids[i]].animalType];
 		}
@@ -1285,64 +1298,101 @@ contract Pray4Prey is mortal, usingOraclize {
 	function stop() {
 		if (!(msg.sender == owner)) throw;
 		for (uint16 i = 0; i < numAnimals; i++) {
-			animals[ids[i]].owner.send(animals[ids[i]].value);
+			if(!animals[ids[i]].owner.send(animals[ids[i]].value)) throw;
 		}
 		kill();
 	}
 
+
 	/**
-	 * adds a new animal type to the game
-	 * max. number of animal types: 100
-	 * the cost may not be lower than costs[0]
+	 * sell the animal of the given id
 	 * */
-	function addAnimalType(uint128 cost) {
-		if (!(msg.sender == owner)) throw;
-		costs.push(cost);
-		values.push(cost / 100 * fee);
+	function sellAnimal(uint32 animalId) {
+		if (msg.sender != animals[animalId].owner) throw;
+		uint128 val = animals[animalId].value;
+		uint16 animalIndex;
+		for (uint16 i = 0; i < ids.length; i++) {
+			if (ids[i] == animalId) {
+				animalIndex = i;
+				break;
+			}
+		}
+		replaceAnimal(animalIndex);
+		if (!msg.sender.send(val)) throw;
+		newSell(animalId, msg.sender, val);
 	}
 
-	function sellAnimal(uint32 animalId){
-        if(msg.sender!=animals[animalId].owner) throw;
-        uint128 val = animals[animalId].value;
-        uint16 animalIndex;
-        for(uint16 i = 0; i < ids.length; i++){
-            if(ids[i]==animalId){
-                animalIndex = i;
-                break;
-            }
-        }
-        replaceAnimal(animalIndex);
-        if(!msg.sender.send(val)) throw;
-    }
+	/** transfers animals from one contract to another.
+	 *   for easier contract update.
+	 * */
+	function transfer(address contractAddress) {
+		transferable newP4P = transferable(contractAddress);
+		uint8[] memory numXType = new uint8[](costs.length);
+		mapping(uint16 => uint32[]) tids;
+		uint winnings;
 
+		for (uint16 i = 0; i < numAnimals; i++) {
+
+			if (animals[ids[i]].owner == msg.sender) {
+				Animal a = animals[ids[i]];
+				numXType[a.animalType]++;
+				winnings += a.value - values[a.animalType];
+				tids[a.animalType].push(ids[i]);
+				replaceAnimal(i);
+				i--;
+			}
+		}
+		for (i = 0; i < costs.length; i++){
+			if(numXType[i]>0){
+				newP4P.receive.value(numXType[i]*values[i])(msg.sender, uint8(i), tids[i]);
+			}
+			
+		}
+			
+		if(winnings>0 && !msg.sender.send(winnings)) throw;
+	}
+	
+	/**
+	*	receives animals from an old contract version.
+	* todo: evtl reset oldest
+	* */
+	function receive(address receiver, uint8 animalType, uint32[] oldids) payable {
+		if(!transferAllowed) throw; //for now manually allowing and disallowing, in next version instead only allow calls from old contract address
+		if (msg.value < oldids.length * values[animalType]) throw;
+		for (uint8 i = 0; i < oldids.length; i++) {
+			if (animals[oldids[i]].value == 0) {
+				addAnimal(animalType, receiver, oldids[i]);
+			} else {
+				addAnimal(animalType, receiver, nextId);
+				nextId++;
+			}
+		}
+	}
+
+	
+	
 	/****************** GETTERS *************************/
 
 
-	function getPlayerBalance(address playerAddress) constant returns(uint128 playerBalance) {
-		for (uint16 i = 0; i < numAnimals; i++) {
-			if (animals[ids[i]].owner == playerAddress) playerBalance += animals[ids[i]].value;
-		}
+	function getAnimal(uint32 animalId) constant returns(uint8, uint128, address) {
+		return (animals[animalId].animalType, animals[animalId].value, animals[animalId].owner);
 	}
-	
-	function getAnimal(uint32 animalId) constant returns(uint8, uint128, address){
-		return (animals[animalId].animalType,animals[animalId].value,animals[animalId].owner);
-	}
-	
+
 	function get10Animals(uint16 startIndex) constant returns(uint32[10] animalIds, uint8[10] types, uint128[10] values, address[10] owners) {
-		uint16 endIndex= startIndex+10 > numAnimals? numAnimals: startIndex+10;
+		uint32 endIndex = startIndex + 10 > numAnimals ? numAnimals : startIndex + 10;
 		uint8 j = 0;
 		uint32 id;
-		for (uint16 i = startIndex; i < endIndex; i++){
-			id=ids[i];
+		for (uint16 i = startIndex; i < endIndex; i++) {
+			id = ids[i];
 			animalIds[j] = id;
 			types[j] = animals[id].animalType;
 			values[j] = animals[id].value;
 			owners[j] = animals[id].owner;
 			j++;
 		}
-		
+
 	}
-	
+
 
 	function getFees() constant returns(uint) {
 		uint reserved = 0;
@@ -1363,7 +1413,11 @@ contract Pray4Prey is mortal, usingOraclize {
 		if (!(msg.sender == owner)) throw;
 		maxAnimals = number;
 	}
-
+	
+	function setTransferAllowance(bool isAllowed){
+		if (!(msg.sender == owner)) throw;
+		transferAllowed = isAllowed;
+	}
 
 	/************* HELPERS ****************/
 
@@ -1377,7 +1431,7 @@ contract Pray4Prey is mortal, usingOraclize {
 	/**
 	 * converts a string of numbers being separated by a given delimiter into an array of numbers (#howmany) 
 	 */
-	function getNumbersFromString(string s, string delimiter, uint16 howmany) constant internal returns(uint16[] numbers) {
+	function getNumbersFromString(string s, string delimiter, uint32 howmany) constant internal returns(uint16[] numbers) {
 		strings.slice memory myresult = s.toSlice();
 		strings.slice memory delim = delimiter.toSlice();
 		numbers = new uint16[](howmany);
