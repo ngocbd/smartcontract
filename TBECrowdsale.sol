@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBECrowdsale at 0xa5f169399a678bfd87a97b933cc33c8217e0cc9a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBECrowdsale at 0xedeebaf43f17d90a2799aa21fef016efe472d411
 */
 pragma solidity ^0.4.16;
 
@@ -15,11 +15,15 @@ contract TBECrowdsale {
     address public owner = 0x0;
     uint256 public startDate;
     uint256 public endDate;
+    uint256 public bonusDate;
+    uint256 public tokenCap;
 
     mapping (address => bool) public whitelist;
     mapping (address => bool) public categorie1;
     mapping (address => bool) public categorie2;
+    mapping (address => bool) public tokenAddress;
     mapping (address => uint256) public balanceOfEther;
+    mapping (address => uint256) public balanceOf;
 
     modifier isCreator() {
         require(msg.sender == creator);
@@ -33,8 +37,13 @@ contract TBECrowdsale {
         price = 8000;
         startDate = now;
         endDate = startDate + 30 days;
+        bonusDate = startDate + 5 days;
+        tokenCap = 2400000000000000000000;
         tokenReward = Token(0x647972c6A5bD977Db85dC364d18cC05D3Db70378);
+        
     }
+
+
 
     function setOwner(address _owner) isCreator public {
         owner = _owner;      
@@ -52,8 +61,14 @@ contract TBECrowdsale {
         endDate = _endDate;      
     }
     
+    function setbonusDate(uint256 _bonusDate) isCreator public {
+        bonusDate = _bonusDate;      
+    }
     function setPrice(uint256 _price) isCreator public {
         price = _price;      
+    }
+     function settokenCap(uint256 _tokenCap) isCreator public {
+        tokenCap = _tokenCap;      
     }
 
     function addToWhitelist(address _address) isCreator public {
@@ -86,13 +101,13 @@ contract TBECrowdsale {
         require(now < endDate);
         require(whitelist[msg.sender]);
         
-        if (categorie1[msg.sender]) {
-            require(balanceOfEther[msg.sender] <= 2);
+        if (categorie1[msg.sender] == false) {
+            // require(tokenAddress.balanceOf[msg.sender] <= tokenCap);
         }
 
         uint256 amount = msg.value * price;
 
-        if (now > startDate && now <= startDate + 5) {
+        if (now > startDate && now <= bonusDate) {
             uint256 _amount = amount / 10;
             amount += _amount * 3;
         }
