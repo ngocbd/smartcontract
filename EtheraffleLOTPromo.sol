@@ -1,8 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheraffleLOTPromo at 0xb0991c05510b34aa5386f1c1d87222a3e66c835f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheraffleLOTPromo at 0xcca9fc3289157a3197ce467e253d99e23c2cb19b
 */
 pragma solidity^0.4.21;
-
+/*
+ *      ##########################################
+ *      ##########################################
+ *      ###                                    ###
+ *      ###          ???? & ??? ?????          ###
+ *      ###                 at                 ###
+ *      ###          ??????????.???          ###
+ *      ###                                    ###
+ *      ##########################################
+ *      ##########################################
+ *
+ *      Welcome to the ?????????? ??? ????? promotional contract!
+ *      First you should go and play ?????????? @ ?????://??????????.???
+ *      Then you'll have earnt free ??? ?????? via this very promotion!
+ *      Next you should learn about our ??? @ ?????://??????????.???/???
+ *      Then take part by buying even more ??? ??????! 
+ *      And don't forget to play ?????????? some more because it's brilliant!
+ *
+ *      If you want to chat to us you have loads of options:
+ *      On ???????? @ ?????://?.??/??????????
+ *      Or on ??????? @ ?????://???????.???/??????????
+ *      Or on ?????? @ ?????://??????????.??????.???
+ *
+ *      ?????????? - the only ????? ????????????? & ?????????? blockchain lottery.
+ */
 contract EtheraffleInterface {
     uint public tktPrice;
     function getUserNumEntries(address _entrant, uint _week) public view returns (uint) {}
@@ -12,22 +36,7 @@ contract LOTInterface {
     function transfer(address _to, uint _value) public {}
     function balanceOf(address _owner) public view returns (uint) {}
 }
-/*
- * @everyone    
- *              Welcome to the ?????????? ??? ????? promotional contract!
- *              First you should go and play ?????????? @ ?????://??????????.???
- *              Then you'll have earnt free ??? ?????? via this very promotion!
- *              Next you should learn about our ??? @ ?????://??????????.???/???
- *              Then take part by buying even more ??? ??????! 
- *              And don't forget to play ?????????? some more because it's brilliant!
- *
- *              If you want to chat to us you have loads of options:
- *              On ???????? @ ?????://?.??/??????????
- *              Or on ??????? @ ?????://???????.???/??????????
- *              Or on ?????? @ ?????://??????????.??????.???
- *
- *              ?????????? - the only ????? ????????????? & ?????????? blockchain lottery.
- */
+
 contract EtheraffleLOTPromo {
     
     bool    public isActive;
@@ -37,7 +46,7 @@ contract EtheraffleLOTPromo {
     uint    constant public TIER1END   = 1523491200; // Thur 12th April 2018
     uint    constant public TIER2END   = 1525305600; // Thur 3rd May 2018
     uint    constant public TIER3END   = 1527724800; // Thur 31st May 2018
-    address constant public ETHERAFFLE = 0x97f535e98cf250CDd7Ff0cb9B29E4548b609A0bd;
+    address constant public ETHERAFFLE = 0x97f535e98cf250CDd7Ff0cb9B29E4548b609A0bd; // ER multisig wallet address
     
     LOTInterface LOTContract;
     EtheraffleInterface etheraffleContract;
@@ -59,12 +68,16 @@ contract EtheraffleLOTPromo {
     /*
      * @dev     Constructor - sets promo running and instantiates required
      *          contracts.
+     *
+     * @param _LOT      Address of the LOT token contract
+     * @param _ER       Address of the Etheraffle contract
      */
-    function EtheraffleLOTPromo() public {
+    function EtheraffleLOTPromo(address _LOT, address _ER) public {
         isActive           = true;
-        LOTContract        = LOTInterface(0xAfD9473dfe8a49567872f93c1790b74Ee7D92A9F);
-        etheraffleContract = EtheraffleInterface(0x4251139bF01D46884c95b27666C9E317DF68b876);
+        LOTContract        = LOTInterface(_LOT);
+        etheraffleContract = EtheraffleInterface(_ER);
     }
+    
     /*
      * @dev     Function used to redeem promotional LOT owed. Use weekNo of 
      *          0 to get current week number. Requires user not to have already 
@@ -177,6 +190,17 @@ contract EtheraffleLOTPromo {
      */
     function getPromoLOTEarnt(uint _entries) public view returns (uint) {
         return (_entries * getRate() * getTktPrice()) / (1 * 10 ** 18);
+    }
+    /*
+     * @dev     Allows contract addresses to be changed in the event of 
+     *          future contract upgrades.
+     *
+     * @param _LOT      Address of the LOT token contract
+     * @param _ER       Address of the Etheraffle contract
+     */
+    function updateAddresses(address _LOT, address _ER) external onlyEtheraffle {
+        LOTContract        = LOTInterface(_LOT);
+        etheraffleContract = EtheraffleInterface(_ER);
     }
     /*
      * @dev     Scuttles contract, sending any remaining LOT tokens back 
