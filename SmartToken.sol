@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x34aC5Ad2D404723eC362f4F5b272602055851f67
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x164a1229f4826c9dd70ee3d9f4f3d7b68a172153
 */
 pragma solidity ^0.4.18;
-
 
 /*
     Utilities & Common Modifiers
@@ -76,6 +75,61 @@ contract Utils {
     }
 }
 
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public view returns (address) {}
+
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+}
+
+/*
+    Provides support and utilities for contract ownership
+*/
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
+
+    /**
+        @dev constructor
+    */
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    // allows execution by the owner only
+    modifier ownerOnly {
+        assert(msg.sender == owner);
+        _;
+    }
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
 
 /*
     ERC20 Standard Token interface
@@ -93,7 +147,6 @@ contract IERC20Token {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
     function approve(address _spender, uint256 _value) public returns (bool success);
 }
-
 
 /**
     ERC20 Standard Token implementation
@@ -195,72 +248,12 @@ contract ERC20Token is IERC20Token, Utils {
     }
 }
 
-
-/*
-    Owned contract interface
-*/
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public view returns (address) {}
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-}
-
-
-/*
-    Provides support and utilities for contract ownership
-*/
-contract Owned is IOwned {
-    address public owner;
-    address public newOwner;
-
-    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
-
-    /**
-        @dev constructor
-    */
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract ownership
-        the new owner still needs to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new contract owner
-    */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /**
-        @dev used by a new owner to accept an ownership transfer
-    */
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
-
-
 /*
     Token Holder interface
 */
 contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
-
 
 /*
     We consider every contract to be a 'token holder' since it's currently not possible
@@ -295,7 +288,6 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     }
 }
 
-
 /*
     Smart Token interface
 */
@@ -304,7 +296,6 @@ contract ISmartToken is IOwned, IERC20Token {
     function issue(address _to, uint256 _amount) public;
     function destroy(address _from, uint256 _amount) public;
 }
-
 
 /*
     Smart Token v0.3
