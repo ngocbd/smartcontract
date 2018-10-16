@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FaradTokenSwap at 0xfd82ffc0d08dcfd902cbf6e48550033b01f919cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FaradTokenSwap at 0x2ca70f6f8ebd683d5afc20d426839ef40e063f02
 */
 /**
  * Copyright (C) Virtue Fintech FZ-LLC, Dubai
@@ -118,14 +118,14 @@ contract FaradTokenSwap is Guarded, Ownable {
 
     string public version = '0.1.2';
 
-    uint256 public startBlock = 4280263;                // 16th September 2017, 00:00:00 - 1505520000
-    uint256 public endBlock = 4305463;                  // 22nd September 2017, 23:59:59 - 1506124799
+    uint256 public startBlock = 4280263;                // 16th September 2017, 00:00:00
+    uint256 public endBlock = 4445863;                  // 30th October 2017, 23:59:59
 
     uint256 public totalEtherCap = 1184834 ether;       // Total raised for ICO, at USD 211/ether
     uint256 public weiRaised = 0;                       // wei raised in this ICO
     uint256 public minContrib = 0.05 ether;             // min contribution accepted
 
-    address public wallet = 0xebb0bfcbe121Ab1C04769De8a0501840E6C2bB9c;
+    address public wallet = 0x82bF3620e9c73AC57C3b9bA4F7d89E1A40641E6e;
 
     event Contribution(address indexed _contributor, uint256 _amount);
 
