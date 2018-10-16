@@ -1,199 +1,101 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreTgeExperty at 0x87710139a7dd3f5be464acb1af9b016a8361b97d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreTgeExperty at 0xeaf2ed8cddb811593705e6f2b0c312ebbe0a0a75
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.4;
 
-// import "browser/ERC223BasicToken.sol";
+contract PreTgeExperty {
 
-// import "browser/SafeMath.sol";
-
-/**
- * Math operations with safety checks
- */
-library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
+  // TGE
+  struct Contributor {
+    address addr;
+    uint256 amount;
+    uint256 timestamp;
+    bool rejected;
   }
+  Contributor[] public contributors;
+  mapping(address => bool) public isWhitelisted;
+  address public managerAddr;
 
-  function div(uint a, uint b) internal returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+  // wallet
+  struct Tx {
+    address founder;
+    address destAddr;
+    bool active;
   }
-
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
-
-// end import
-
-
-contract ERC223Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  function transfer(address to, uint value, bytes data);
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
-}
-
- /*
- * Contract that is working with ERC223 tokens
- */
-contract ERC223ReceivingContract {
-  function tokenFallback(address _from, uint _value, bytes _data);
-}
-
-
-contract ERC223BasicToken is ERC223Basic {
-  using SafeMath for uint;
-
-  mapping(address => uint) balances;
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address to, uint value, bytes data) {
-    // Standard function transfer similar to ERC20 transfer with no _data .
-    // Added due to backwards compatibility reasons .
-    uint codeLength;
-
-    assembly {
-      // Retrieve the size of the code on target address, this needs assembly .
-      codeLength := extcodesize(to)
-    }
-
-    balances[msg.sender] = balances[msg.sender].sub(value);
-    balances[to] = balances[to].add(value);
-    if (codeLength > 0) {
-      ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
-      receiver.tokenFallback(msg.sender, value, data);
-    }
-    Transfer(msg.sender, to, value, data);
-  }
-
-  // Standard function transfer similar to ERC20 transfer with no _data .
-  // Added due to backwards compatibility reasons .
-  function transfer(address to, uint value) {
-    uint codeLength;
-
-    assembly {
-      // Retrieve the size of the code on target address, this needs assembly .
-      codeLength := extcodesize(to)
-    }
-
-    balances[msg.sender] = balances[msg.sender].sub(value);
-    balances[to] = balances[to].add(value);
-    if (codeLength > 0) {
-      ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
-      bytes memory empty;
-      receiver.tokenFallback(msg.sender, value, empty);
-    }
-    Transfer(msg.sender, to, value, empty);
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-}
-// end import
-
-contract PreTgeExperty is ERC223BasicToken {
-
-  // token constants
-  string public constant name = "Pre-TGE Experty Token";
-  string public constant symbol = "PEXY";
-  uint8 public constant decimals = 18;
-
-  // pre-tge variables
-  uint8 public basicRate = 100;
-  uint8 public preTgeBonus = 45;
-  address public preTgeManager;
-  address public multisigWallet;
-  bool public isClosed = false;
-
-  // keep track of burned tokens here
-  mapping(address => uint) public burnedTokens;
+  mapping (address => bool) public founders;
+  Tx[] public txs;
   
   // preICO constructor
-  function PreTgeExperty() {
-    multisigWallet = 0x60f4025c67477edf3a8eda7d1bf6b3b035a664eb;
-    preTgeManager = 0x009A55A3c16953A359484afD299ebdC444200EdB;
+  function PreTgeExperty() public {
+    managerAddr = 0x71e2f5362fdf6A48ab726E1D3ef1Cd4B087436fC;
+    founders[0xCE05A8Aa56E1054FAFC214788246707F5258c0Ae] = true;
+    founders[0xBb62A710BDbEAF1d3AD417A222d1ab6eD08C37f5] = true;
+    founders[0x009A55A3c16953A359484afD299ebdC444200EdB] = true;
+  }
+  
+  // whitelist address
+  function whitelist(address addr) public isManager {
+    isWhitelisted[addr] = true;
+  }
+
+  function reject(uint256 idx) public isManager {
+    // contributor must exist
+    assert(contributors[idx].addr != 0);
+    // contribution cant be rejected
+    assert(!contributors[idx].rejected);
+
+    // de-whitelist address
+    isWhitelisted[contributors[idx].addr] = false;
+
+    // reject contribution
+    contributors[idx].rejected = true;
+
+    // return ETH to contributor
+    contributors[idx].addr.transfer(contributors[idx].amount);
   }
 
   // contribute function
-  function() payable {
-    // throw if pre-tge is closed
-    if (isClosed) throw;
+  function() public payable {
+    // allow to contribute only whitelisted KYC addresses
+    assert(isWhitelisted[msg.sender]);
 
-    uint ethers = msg.value;
-
-    // calculate tokens amount and pre-tge bonus
-    uint tokens = ethers * basicRate;
-    uint bonus = ethers * preTgeBonus;
-
-    // generate new tokens
-    uint sum = tokens + bonus;
-    balances[msg.sender] += sum;
-    totalSupply += sum;
-
-    // send ethers to secure wallet
-    multisigWallet.transfer(ethers);
+    // save contributor for further use
+    contributors.push(Contributor({
+      addr: msg.sender,
+      amount: msg.value,
+      timestamp: block.timestamp,
+      rejected: false
+    }));
   }
 
-  // allow to burn pre-tge tokens in order to teleport them to new contract
-  function burnTokens(uint amount) {
-    if (amount > balances[msg.sender]) throw;
-
-    balances[msg.sender] = balances[msg.sender].sub(amount);
-    burnedTokens[msg.sender] = burnedTokens[msg.sender].add(amount);
+  // one of founders can propose destination address for ethers
+  function proposeTx(address destAddr) public isFounder {
+    txs.push(Tx({
+      founder: msg.sender,
+      destAddr: destAddr,
+      active: true
+    }));
   }
 
-  // allow contract manager to decrease bonus over time
-  function changeBonus(uint8 _preTgeBonus) {
-    if (msg.sender != preTgeManager) throw;
-
-    // we can only decrease bonus
-    if (_preTgeBonus > preTgeBonus) throw;
-
-    preTgeBonus = _preTgeBonus;
+  // another founder can approve specified tx and send it to destAddr
+  function approveTx(uint8 txIdx) public isFounder {
+    assert(txs[txIdx].founder != msg.sender);
+    assert(txs[txIdx].active);
+    
+    txs[txIdx].active = false;
+    txs[txIdx].destAddr.transfer(this.balance);
   }
 
-  // allow contract manager to close pre-tge
-  function close() {
-    if (msg.sender != preTgeManager) throw;
-
-    isClosed = true;
+  // isManager modifier
+  modifier isManager() {
+    if (msg.sender == managerAddr) {
+      _;
+    }
   }
-
+  
+  // check if msg.sender is founder
+  modifier isFounder() {
+    require(founders[msg.sender]);
+    _;
+  }
 }
