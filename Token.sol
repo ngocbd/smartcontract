@@ -1,369 +1,211 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xb17c57d1431d0f14a2bf44c72f4fbe3e656ec85d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xcbc7556d2b75e2171e0c4236bf5c6afacdded6db
 */
-// Unattributed material copyright New Alchemy Limited, 2017. All rights reserved.
-pragma solidity >=0.4.10;
+pragma solidity 0.4.18;
 
-// from Zeppelin
-contract SafeMath {
-    function safeMul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
-        require(a == 0 || c / a == b);
-        return c;
-    }
 
-    function safeSub(uint a, uint b) internal returns (uint) {
-        require(b <= a);
-        return a - b;
-    }
-
-    function safeAdd(uint a, uint b) internal returns (uint) {
-        uint c = a + b;
-        require(c>=a && c>=b);
-        return c;
-    }
-}
-// end from Zeppelin
-
-contract Owned {
-	address public owner;
-	address newOwner;
-
-	function Owned() {
-		owner = msg.sender;
-	}
-
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
-
-	function changeOwner(address _newOwner) onlyOwner {
-		newOwner = _newOwner;
-	}
-
-	function acceptOwnership() {
-		if (msg.sender == newOwner) {
-			owner = newOwner;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+		if (a == 0) {
+			return 0;
 		}
+		uint256 c = a * b;
+		assert(c / a == b);
+		return c;
+	}
+
+	function div(uint256 a, uint256 b) internal pure returns (uint256) {
+		// assert(b > 0); // Solidity automatically throws when dividing by 0
+		uint256 c = a / b;
+		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
+		return c;
+	}
+
+	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+		assert(b <= a);
+		return a - b;
+	}
+
+	function add(uint256 a, uint256 b) internal pure returns (uint256) {
+		uint256 c = a + b;
+		assert(c >= a);
+		return c;
 	}
 }
 
-contract Pausable is Owned {
-	bool public paused;
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+	uint256 public totalSupply;
+	function balanceOf(address who) public view returns (uint256);
+	function transfer(address to, uint256 value) public returns (bool);
+	event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-	function pause() onlyOwner {
-		paused = true;
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+	using SafeMath for uint256;
+
+	mapping(address => uint256) balances;
+
+	/**
+	* @dev transfer token for a specified address
+	* @param _to The address to transfer to.
+	* @param _value The amount to be transferred.
+	*/
+	function transfer(address _to, uint256 _value) public returns (bool) {
+		require(_to != address(0));
+		require(_value <= balances[msg.sender]);
+
+		// SafeMath.sub will throw if there is not enough balance.
+		balances[msg.sender] = balances[msg.sender].sub(_value);
+		balances[_to] = balances[_to].add(_value);
+		Transfer(msg.sender, _to, _value);
+		return true;
 	}
 
-	function unpause() onlyOwner {
-		paused = false;
-	}
-
-	modifier notPaused() {
-		require(!paused);
-		_;
+	/**
+	* @dev Gets the balance of the specified address.
+	* @param _owner The address to query the the balance of.
+	* @return An uint256 representing the amount owned by the passed address.
+	*/
+	function balanceOf(address _owner) public view returns (uint256 balance) {
+		return balances[_owner];
 	}
 }
 
-contract Finalizable is Owned {
-	bool public finalized;
-
-	function finalize() onlyOwner {
-		finalized = true;
-	}
-
-	modifier notFinalized() {
-		require(!finalized);
-		_;
-	}
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+	function allowance(address owner, address spender) public view returns (uint256);
+	function transferFrom(address from, address to, uint256 value) public returns (bool);
+	function approve(address spender, uint256 value) public returns (bool);
+	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract IToken {
-	function transfer(address _to, uint _value) returns (bool);
-	function balanceOf(address owner) returns(uint);
-}
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
 
-contract TokenReceivable is Owned {
-	function claimTokens(address _token, address _to) onlyOwner returns (bool) {
-		IToken token = IToken(_token);
-		return token.transfer(_to, token.balanceOf(this));
-	}
-}
+	mapping (address => mapping (address => uint256)) internal allowed;
 
-contract EventDefinitions {
-	event Transfer(address indexed from, address indexed to, uint value);
-	event Approval(address indexed owner, address indexed spender, uint value);
-}
 
-contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
-	string constant public name = "DOC Token";
-	uint8 constant public decimals = 18;
-	string constant public symbol = "DOC";
-	Controller public controller;
-	string public motd;
-	event Motd(string message);
+	/**
+	 * @dev Transfer tokens from one address to another
+	 * @param _from address The address which you want to send tokens from
+	 * @param _to address The address which you want to transfer to
+	 * @param _value uint256 the amount of tokens to be transferred
+	 */
+	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+		require(_to != address(0));
+		require(_value <= balances[_from]);
+		require(_value <= allowed[_from][msg.sender]);
 
-	// functions below this line are onlyOwner
-
-	function setMotd(string _m) onlyOwner {
-		motd = _m;
-		Motd(_m);
-	}
-
-	function setController(address _c) onlyOwner notFinalized {
-		controller = Controller(_c);
-	}
-
-	// functions below this line are public
-
-	function balanceOf(address a) constant returns (uint) {
-		return controller.balanceOf(a);
-	}
-
-	function totalSupply() constant returns (uint) {
-		return controller.totalSupply();
-	}
-
-	function allowance(address _owner, address _spender) constant returns (uint) {
-		return controller.allowance(_owner, _spender);
-	}
-
-	function transfer(address _to, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.transfer(msg.sender, _to, _value)) {
-			Transfer(msg.sender, _to, _value);
-			return true;
-		}
-		return false;
-	}
-
-	function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3) notPaused returns (bool success) {
-		if (controller.transferFrom(msg.sender, _from, _to, _value)) {
-			Transfer(_from, _to, _value);
-			return true;
-		}
-		return false;
-	}
-
-	function approve(address _spender, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
-		// promote safe user behavior
-		if (controller.approve(msg.sender, _spender, _value)) {
-			Approval(msg.sender, _spender, _value);
-			return true;
-		}
-		return false;
-	}
-
-	function increaseApproval (address _spender, uint _addedValue) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.increaseApproval(msg.sender, _spender, _addedValue)) {
-			uint newval = controller.allowance(msg.sender, _spender);
-			Approval(msg.sender, _spender, newval);
-			return true;
-		}
-		return false;
-	}
-
-	function decreaseApproval (address _spender, uint _subtractedValue) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.decreaseApproval(msg.sender, _spender, _subtractedValue)) {
-			uint newval = controller.allowance(msg.sender, _spender);
-			Approval(msg.sender, _spender, newval);
-			return true;
-		}
-		return false;
-	}
-
-	modifier onlyPayloadSize(uint numwords) {
-		assert(msg.data.length >= numwords * 32 + 4);
-		_;
-	}
-
-	function burn(uint _amount) notPaused {
-		controller.burn(msg.sender, _amount);
-		Transfer(msg.sender, 0x0, _amount);
-	}
-
-	// functions below this line are onlyController
-
-	modifier onlyController() {
-		assert(msg.sender == address(controller));
-		_;
-	}
-
-	function controllerTransfer(address _from, address _to, uint _value) onlyController {
+		balances[_from] = balances[_from].sub(_value);
+		balances[_to] = balances[_to].add(_value);
+		allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
 		Transfer(_from, _to, _value);
-	}
-
-	function controllerApprove(address _owner, address _spender, uint _value) onlyController {
-		Approval(_owner, _spender, _value);
-	}
-}
-
-contract Controller is Owned, Finalizable {
-	Ledger public ledger;
-	Token public token;
-
-	function Controller() {
-	}
-
-	// functions below this line are onlyOwner
-
-	function setToken(address _token) onlyOwner {
-		token = Token(_token);
-	}
-
-	function setLedger(address _ledger) onlyOwner {
-		ledger = Ledger(_ledger);
-	}
-
-	modifier onlyToken() {
-		require(msg.sender == address(token));
-		_;
-	}
-
-	modifier onlyLedger() {
-		require(msg.sender == address(ledger));
-		_;
-	}
-
-	// public functions
-
-	function totalSupply() constant returns (uint) {
-		return ledger.totalSupply();
-	}
-
-	function balanceOf(address _a) constant returns (uint) {
-		return ledger.balanceOf(_a);
-	}
-
-	function allowance(address _owner, address _spender) constant returns (uint) {
-		return ledger.allowance(_owner, _spender);
-	}
-
-	// functions below this line are onlyLedger
-
-	function ledgerTransfer(address from, address to, uint val) onlyLedger {
-		token.controllerTransfer(from, to, val);
-	}
-
-	// functions below this line are onlyToken
-
-	function transfer(address _from, address _to, uint _value) onlyToken returns (bool success) {
-		return ledger.transfer(_from, _to, _value);
-	}
-
-	function transferFrom(address _spender, address _from, address _to, uint _value) onlyToken returns (bool success) {
-		return ledger.transferFrom(_spender, _from, _to, _value);
-	}
-
-	function approve(address _owner, address _spender, uint _value) onlyToken returns (bool success) {
-		return ledger.approve(_owner, _spender, _value);
-	}
-
-	function increaseApproval (address _owner, address _spender, uint _addedValue) onlyToken returns (bool success) {
-		return ledger.increaseApproval(_owner, _spender, _addedValue);
-	}
-
-	function decreaseApproval (address _owner, address _spender, uint _subtractedValue) onlyToken returns (bool success) {
-		return ledger.decreaseApproval(_owner, _spender, _subtractedValue);
-	}
-
-	function burn(address _owner, uint _amount) onlyToken {
-		ledger.burn(_owner, _amount);
-	}
-}
-
-contract Ledger is Owned, SafeMath, Finalizable, TokenReceivable {
-	Controller public controller;
-	mapping(address => uint) public balanceOf;
-	mapping (address => mapping (address => uint)) public allowance;
-	uint public totalSupply;
-	uint public mintingNonce;
-	bool public mintingStopped;
-
-	// functions below this line are onlyOwner
-
-	function Ledger() {
-	}
-
-	function setController(address _controller) onlyOwner notFinalized {
-		controller = Controller(_controller);
-	}
-
-	function stopMinting() onlyOwner {
-		mintingStopped = true;
-	}
-
-	function multiMint(uint nonce, uint256[] bits) external onlyOwner {
-		require(!mintingStopped);
-		if (nonce != mintingNonce) return;
-		mintingNonce += 1;
-		uint256 lomask = (1 << 96) - 1;
-		uint created = 0;
-		for (uint i=0; i<bits.length; i++) {
-			address a = address(bits[i]>>96);
-			uint value = bits[i]&lomask;
-			balanceOf[a] = balanceOf[a] + value;
-			controller.ledgerTransfer(0, a, value);
-			created += value;
-		}
-		totalSupply += created;
-	}
-
-	// functions below this line are onlyController
-
-	modifier onlyController() {
-		require(msg.sender == address(controller));
-		_;
-	}
-
-	function transfer(address _from, address _to, uint _value) onlyController returns (bool success) {
-		if (balanceOf[_from] < _value) return false;
-
-		balanceOf[_from] = safeSub(balanceOf[_from], _value);
-		balanceOf[_to] = safeAdd(balanceOf[_to], _value);
 		return true;
 	}
 
-	function transferFrom(address _spender, address _from, address _to, uint _value) onlyController returns (bool success) {
-		if (balanceOf[_from] < _value) return false;
-
-		var allowed = allowance[_from][_spender];
-		if (allowed < _value) return false;
-
-		balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-		balanceOf[_from] = safeSub(balanceOf[_from], _value);
-		allowance[_from][_spender] = safeSub(allowed, _value);
+	/**
+	 * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+	 *
+	 * Beware that changing an allowance with this method brings the risk that someone may use both the old
+	 * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+	 * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+	 * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+	 * @param _spender The address which will spend the funds.
+	 * @param _value The amount of tokens to be spent.
+	 */
+	function approve(address _spender, uint256 _value) public returns (bool) {
+		allowed[msg.sender][_spender] = _value;
+		Approval(msg.sender, _spender, _value);
 		return true;
 	}
 
-	function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
-		// require user to set to zero before resetting to nonzero
-		if ((_value != 0) && (allowance[_owner][_spender] != 0)) {
-			return false;
-		}
+	/**
+	 * @dev Function to check the amount of tokens that an owner allowed to a spender.
+	 * @param _owner address The address which owns the funds.
+	 * @param _spender address The address which will spend the funds.
+	 * @return A uint256 specifying the amount of tokens still available for the spender.
+	 */
+	function allowance(address _owner, address _spender) public view returns (uint256) {
+		return allowed[_owner][_spender];
+	}
 
-		allowance[_owner][_spender] = _value;
+	/**
+	 * @dev Increase the amount of tokens that an owner allowed to a spender.
+	 *
+	 * approve should be called when allowed[_spender] == 0. To increment
+	 * allowed value is better to use this function to avoid 2 calls (and wait until
+	 * the first transaction is mined)
+	 * From MonolithDAO Token.sol
+	 * @param _spender The address which will spend the funds.
+	 * @param _addedValue The amount of tokens to increase the allowance by.
+	 */
+	function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+		allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+		Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
 		return true;
 	}
 
-	function increaseApproval (address _owner, address _spender, uint _addedValue) onlyController returns (bool success) {
-		uint oldValue = allowance[_owner][_spender];
-		allowance[_owner][_spender] = safeAdd(oldValue, _addedValue);
-		return true;
-	}
-
-	function decreaseApproval (address _owner, address _spender, uint _subtractedValue) onlyController returns (bool success) {
-		uint oldValue = allowance[_owner][_spender];
+	/**
+	 * @dev Decrease the amount of tokens that an owner allowed to a spender.
+	 *
+	 * approve should be called when allowed[_spender] == 0. To decrement
+	 * allowed value is better to use this function to avoid 2 calls (and wait until
+	 * the first transaction is mined)
+	 * From MonolithDAO Token.sol
+	 * @param _spender The address which will spend the funds.
+	 * @param _subtractedValue The amount of tokens to decrease the allowance by.
+	 */
+	function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+		uint oldValue = allowed[msg.sender][_spender];
 		if (_subtractedValue > oldValue) {
-			allowance[_owner][_spender] = 0;
+			allowed[msg.sender][_spender] = 0;
 		} else {
-			allowance[_owner][_spender] = safeSub(oldValue, _subtractedValue);
+			allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
 		}
+		Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
 		return true;
 	}
 
-	function burn(address _owner, uint _amount) onlyController {
-		balanceOf[_owner] = safeSub(balanceOf[_owner], _amount);
-		totalSupply = safeSub(totalSupply, _amount);
+}
+
+/**
+* Nagri Token is fixed supply ERC20 token.
+*/
+contract Token is StandardToken {
+	string public constant symbol = "NGR";
+	string public constant name = "Nagri Token";
+	uint8 public constant decimals = 18;
+
+	/**
+	 * @dev Constructor that gives msg.sender all of existing tokens.
+	 */
+	function Token (uint256 _totalSupply) public {
+		// total supply must not be zero
+		require(_totalSupply > 0);
+		totalSupply = _totalSupply;
+		// init token balance of the owner, all tokens go to him
+		balances[msg.sender] = _totalSupply;
 	}
 }
