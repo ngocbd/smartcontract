@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCBCYCoin at 0xCe3e204d66aa45585Ee8FEB97DECFbABEed28fA2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCBcyCoin at 0x298420e5b0dC1fCAaA49185CeF90FEd12d356038
 */
 pragma solidity ^0.4.18;
 
@@ -41,7 +41,7 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract BCBCYCoin is ERC20 {
+contract BCBcyCoin is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
@@ -50,7 +50,7 @@ contract BCBCYCoin is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;
 
     string public constant name = "BCB Candy";
-    string public constant symbol = "BCBCY";
+    string public constant symbol = "BCBcy";
     uint public constant decimals = 8;
     uint256 public totalSupply = 1700000000e8;
 
