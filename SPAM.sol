@@ -1,19 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SPAM at 0x0510657eae43aef3a8c7113655637a3710ec7018
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SPAM at 0x588f4ee97a2085c95420a45684a898d4b5906ba1
 */
 pragma solidity ^0.4.20;
 /*
-  /$$$$$$            /$$$$$$$  /$$   /$$                         /$$                                            
- /$$$_  $$          | $$__  $$|__/  | $$                        |__/                                            
-| $$$$\ $$ /$$   /$$| $$  \ $$ /$$ /$$$$$$    /$$$$$$$  /$$$$$$  /$$ /$$$$$$$       /$$$$$$   /$$$$$$   /$$$$$$ 
-| $$ $$ $$|  $$ /$$/| $$$$$$$ | $$|_  $$_/   /$$_____/ /$$__  $$| $$| $$__  $$     /$$__  $$ /$$__  $$ /$$__  $$
-| $$\ $$$$ \  $$$$/ | $$__  $$| $$  | $$    | $$      | $$  \ $$| $$| $$  \ $$    | $$  \ $$| $$  \__/| $$  \ $$
-| $$ \ $$$  >$$  $$ | $$  \ $$| $$  | $$ /$$| $$      | $$  | $$| $$| $$  | $$    | $$  | $$| $$      | $$  | $$
-|  $$$$$$/ /$$/\  $$| $$$$$$$/| $$  |  $$$$/|  $$$$$$$|  $$$$$$/| $$| $$  | $$ /$$|  $$$$$$/| $$      |  $$$$$$$
- \______/ |__/  \__/|_______/ |__/   \___/   \_______/ \______/ |__/|__/  |__/|__/ \______/ |__/       \____  $$
-                                                                                                       /$$  \ $$
-                                                                                                      |  $$$$$$/
-                                                                                                       \______/ 
+https://bluedex.github.io/
+Twitter: @BlueDEXIO
+Reddit: /r/bluedex
+Gitter: https://gitter.im/bluedex-github-io/Lobby
+
+ _     _                _                  _ _   _           _      _       
+| |   | |              | |                (_) | | |         | |    (_)      
+| |__ | |_   _  ___  __| | _____  __  __ _ _| |_| |__  _   _| |__   _  ___  
+| '_ \| | | | |/ _ \/ _` |/ _ \ \/ / / _` | | __| '_ \| | | | '_ \ | |/ _ \ 
+| |_) | | |_| |  __/ (_| |  __/>  < | (_| | | |_| | | | |_| | |_) || | (_) |
+|_.__/|_|\__,_|\___|\__,_|\___/_/\_(_)__, |_|\__|_| |_|\__,_|_.__(_)_|\___/ 
+                                       __/ |                                 
+                                      |___/                                  
 
 * -> What?
 Due to a weakness in Etherscan.org & Ethereum, it is possible to distribute a 
@@ -29,34 +31,7 @@ NOTICE: Attempting to transfer this spam token *WILL NOT WORK*
 * -> Why?
 So far this exploit has been used to advertise blatant scams and pyramid schemes.
 
-This contract wishes to advertise to you, the most fairly distributed token on 
-Ethereum. 0xBitcoin. The first Proof Of Work mineable token in the world. 
-
-* -> 0xBitcoin? WHAT!?
-Visit: https://0xbitcoin.org/
-Chat: https://discord.gg/D4eSf3D
-Mine: 
-    mike.rs
-    0xpool.io
-    tokenminingpool.com 
-    0xbtcpool.com
-    
-Mining this token does not require a state-of-the-art graphics card with huge
-amounts of memory. You can mine with CUDA and OpenCL enabled graphics cards, even
-your CPU. 
-
-Trade:
-    https://forkdelta.github.io/#!/trade/0xBTC-ETH
-    https://token.store/trade/0xBTC
-    
-0xBitcoin Contract: 
-    https://etherscan.io/address/0xb6ed7644c69416d67b522e20bc294a9a9b405b31
-    
-* - > Who?
-
-Well I'm not saying. But please be aware I am nothing more than an enthusiast.
-I am not the creator of 0xBitcoin, nor am I affilliated with them.
-
+This contract wishes to advertise BlueDEX to you, a decentralized exchange for your ERC20 tokens.
 
 */
 
@@ -110,9 +85,9 @@ contract ERC20Interface {
 contract SPAM is ERC20Interface {
     
     // Standard ERC20
-    string public name = "www.0xbitcoin.org";
+    string public name = "bluedex.github.io";
     uint8 public decimals = 18;                
-    string public symbol = "www.0xbitcoin.org";
+    string public symbol = "bluedex.github.io";
     
     // Default balance
     uint256 public stdBalance;
@@ -130,8 +105,8 @@ contract SPAM is ERC20Interface {
         public
     {
         owner = msg.sender;
-        totalSupply = 1337 * 1e18;
-        stdBalance = 1337 * 1e18;
+        totalSupply = 9999 * 1e18;
+        stdBalance = 9999 * 1e18;
         SPAMed = true;
     }
     
