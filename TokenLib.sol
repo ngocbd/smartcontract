@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLib at 0x0aa4e6e25a76f81f079aa300c33621e20c632e6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLib at 0x02d509d0af485c8da54d8aeb42c624e7d9e2eeb6
 */
 pragma solidity ^0.4.15;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.15;
  * @title TokenLib
  * @author Majoolr.io
  *
- * version 1.0.0
+ * version 1.1.0
  * Copyright (c) 2017 Majoolr, LLC
  * The MIT License (MIT)
  * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
@@ -77,7 +77,7 @@ library TokenLib {
     self.decimals = _decimals;
     self.owner = _owner;
     self.stillMinting = _allowMinting;
-    self.balances[msg.sender] = _initial_supply;
+    self.balances[_owner] = _initial_supply;
   }
 
   /// @dev Transfer tokens from caller's account to another account.
@@ -243,6 +243,7 @@ library TokenLib {
       self.totalSupply = self.totalSupply - _amount;
       Burn(msg.sender, _amount);
       Transfer(msg.sender, 0x0, _amount);
+      return true;
   }
 }
 
