@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xf26244dcfc30c732dfa87fcae8094cd32bdee331
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xaf22fbf1596739a1b753153f589db97f94431b10
 */
 pragma solidity ^0.4.8;
 contract Token{
@@ -83,12 +83,12 @@ contract HumanStandardToken is StandardToken {
     string public symbol;               //token??: eg SBX
     string public version = 'H0.1';    //??
 
-    function HumanStandardToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
-        balances[msg.sender] = _initialAmount; // ??token?????????
-        totalSupply = _initialAmount;         // ??????
-        name = _tokenName;                   // token??
-        decimals = _decimalUnits;           // ????
-        symbol = _tokenSymbol;             // token??
+    function HumanStandardToken() {
+        balances[msg.sender] = 71000000000; // ??token?????????
+        totalSupply = 71000000000;         // ??????
+        name = "Mother Fucker Coin";                   // token??
+        decimals = 1;           // ????
+        symbol = "CNMB";             // token??
     }
 
     /* Approves and then calls the receiving contract */
