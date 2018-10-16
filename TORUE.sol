@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TORUE at 0x00138bd67465733ae1bedfd2105a6ffa83af97d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TORUE at 0xb5c26476200d5665ee6f2ee155d72327043495a4
 */
 pragma solidity ^0.4.18;
 
@@ -251,18 +251,17 @@ contract TORUE is ERC223Interface,ERC20Interface,Owned {
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         
-        bytes memory empty;
         if(isContract(_to)) {
+            bytes memory empty;
             ReceivingContract rc = ReceivingContract(_to);
             rc.tokenFallback(msg.sender, _value, empty);
         }
-        Transfer(msg.sender, _to, _value, empty);
         Transfer(_from, _to, _value);
         return true;
     }
     
     function transferFrom(address _from, address _to, uint256 _value, bytes _data) public isRunning returns (bool) {
-        require(compatible20);
+        require(compatible223);
         require(isUnlocked(_from));
         require(isUnlocked(_to));
         
@@ -318,6 +317,7 @@ contract TORUE is ERC223Interface,ERC20Interface,Owned {
     
     function burn(uint256 _value) public isRunning {
         require(_value > 0);
+        require(_value <= balances[msg.sender]);
 
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
@@ -366,14 +366,13 @@ contract TORUE is ERC223Interface,ERC20Interface,Owned {
     function transfer(address _to, uint _value) public isRunning returns (bool ok) {
         require(isUnlockedBoth(_to));
         require(balances[msg.sender] >= _value);
-        bytes memory empty;
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         if(isContract(_to)) {
+            bytes memory empty;
             ReceivingContract rc = ReceivingContract(_to);
             rc.tokenFallback(msg.sender, _value, empty);
         }
-        Transfer(msg.sender, _to, _value, empty);
         Transfer(msg.sender, _to, _value);
         return true;
     }
