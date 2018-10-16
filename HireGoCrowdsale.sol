@@ -1,8 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HireGoCrowdsale at 0x47349ebb01fa27bb3ad72995ff7182d949851a93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HireGoCrowdsale at 0x88D94bB541257000FE7F01989a58cb70Ba06d7AC
 */
 pragma solidity ^0.4.18;
 
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
@@ -33,6 +38,13 @@ library SafeMath {
 }
 
 
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
     uint256 public totalSupply;
     function balanceOf(address who) public view returns (uint256);
@@ -41,6 +53,11 @@ contract ERC20Basic {
 }
 
 
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 is ERC20Basic {
     function allowance(address owner, address spender) public view returns (uint256);
     function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -48,6 +65,13 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
 contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
 
@@ -81,43 +105,14 @@ contract BasicToken is ERC20Basic {
 }
 
 
-contract Ownable {
-    address public owner;
 
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
-}
-
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
     mapping (address => mapping (address => uint256)) internal allowed;
@@ -192,6 +187,11 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
 contract BurnableToken is StandardToken {
 
     event Burn(address indexed burner, uint256 value);
@@ -212,6 +212,59 @@ contract BurnableToken is StandardToken {
         Burn(burner, _value);
     }
 }
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+}
+
+
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
 
 contract MintableToken is StandardToken, Ownable {
     event Mint(address indexed to, uint256 amount);
@@ -251,6 +304,7 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 
+
 contract HireGoToken is MintableToken, BurnableToken {
 
     string public constant name = "HireGo";
@@ -265,6 +319,12 @@ contract HireGoToken is MintableToken, BurnableToken {
 }
 
 
+
+
+/*
+ * ICO Start time - 1520164800 - March 4, 2018 12:00:00 PM
+ * Default ICO End time - 1527379199 - May 26, 2018 11:59:59 AM
+*/
 contract HireGoCrowdsale is Ownable {
 
     using SafeMath for uint;
@@ -274,26 +334,21 @@ contract HireGoCrowdsale is Ownable {
 
     bool public isRefundAllowed;
 
+    uint public presaleStartTime;
+    uint public presaleEndTime;
     uint public icoStartTime;
     uint public icoEndTime;
+
     uint public totalWeiRaised;
-    uint public weiRaised;
+    uint internal weiRaised;
     uint public hardCap; // amount of ETH collected, which marks end of crowd sale
     uint public tokensDistributed; // amount of bought tokens
     uint public foundersTokensUnlockTime;
 
-    /*         Bonus variables          */
-    uint internal baseBonus1 = 135;
-    uint internal baseBonus2 = 130;
-    uint internal baseBonus3 = 125;
-    uint internal baseBonus4 = 115;
-    uint public manualBonus;
-    /* * * * * * * * * * * * * * * * * * */
 
-    uint public waveCap1;
-    uint public waveCap2;
-    uint public waveCap3;
-    uint public waveCap4;
+    /*         Bonus variables          */
+    uint internal presaleBonus = 135;
+    /* * * * * * * * * * * * * * * * * * */
 
     uint public rate; // how many token units a buyer gets per wei
     uint private icoMinPurchase; // In ETH
@@ -322,32 +377,33 @@ contract HireGoCrowdsale is Ownable {
     }
 
     modifier crowdsaleInProgress() {
-        bool withinPeriod = (now >= icoStartTime && now <= icoEndTime);
+        bool withinPeriod = ((now >= presaleStartTime && now <=presaleEndTime) || (now >= icoStartTime && now <= icoEndTime));
         require(withinPeriod);
         _;
     }
 
-    function HireGoCrowdsale(uint _icoStartTime, uint _icoEndTime, address _wallet) public {
+    function HireGoCrowdsale(uint _presaleStartTime,  address _wallet) public {
         require (
-          _icoStartTime > now &&
-          _icoEndTime > _icoStartTime
+          _presaleStartTime > now
         );
 
-        icoStartTime = _icoStartTime;
-        icoEndTime = _icoEndTime;
-        foundersTokensUnlockTime = icoEndTime.add(180 days);
+        presaleStartTime = _presaleStartTime;
+        presaleEndTime = presaleStartTime.add(4 weeks);
+        icoStartTime = presaleEndTime.add(1 minutes);
+        setIcoEndTime();
+
         wallet = _wallet;
 
         rate = 250 szabo; // wei per 1 token (0.00025ETH)
 
-        hardCap = 11836 ether;
+        hardCap = 15000 ether;
         icoMinPurchase = 50 finney; // 0.05 ETH
         isRefundAllowed = false;
+    }
 
-        waveCap1 = 2777 ether;
-        waveCap2 = waveCap1.add(2884 ether);
-        waveCap3 = waveCap2.add(4000 ether);
-        waveCap4 = waveCap3.add(2174 ether);
+    function setIcoEndTime() internal {
+          icoEndTime = icoStartTime.add(6 weeks);
+          foundersTokensUnlockTime = icoEndTime.add(180 days);
     }
 
     // fallback function can be used to buy tokens
@@ -371,7 +427,7 @@ contract HireGoCrowdsale is Ownable {
     // Owner can allow or disallow refunds even if soft cap is reached. Should be used in case KYC is not passed.
     // WARNING: owner should transfer collected ETH back to contract before allowing to refund, if he already withdrawn ETH.
     function toggleRefunds() public onlyOwner {
-        isRefundAllowed = true;
+        isRefundAllowed = !isRefundAllowed;
     }
 
     // Sends ordered tokens to investors after ICO end if soft cap is reached
@@ -432,12 +488,44 @@ contract HireGoCrowdsale is Ownable {
 
     function finishIco() public onlyOwner {
         icoEndTime = now;
+        foundersTokensUnlockTime = icoEndTime.add(180 days);
     }
 
-    function distribute_for_founders() public onlyOwner foundersTokensUnlocked {
-        uint to_send = 40000000E18; //40m
+    function finishPresale() public onlyOwner {
+        presaleEndTime = now;
+    }
+
+    function distributeForFoundersAndTeam() public onlyOwner foundersTokensUnlocked {
+        uint to_send = 25000000E18; //25m
         checkAndMint(to_send);
         token.transfer(wallet, to_send);
+    }
+
+    function distributeForBountiesAndAdvisors() public onlyOwner {
+        uint to_send = 15000000E18; //15m
+        checkAndMint(to_send);
+        token.transfer(wallet, to_send);
+    }
+
+    // Used to delay start of ICO
+    function updateIcoStartTime(uint _startTime) public onlyOwner {
+      require (
+        icoStartTime > now &&
+        _startTime > now &&
+        presaleEndTime < _startTime
+      );
+
+      icoStartTime = _startTime;
+      setIcoEndTime();
+    }
+
+    // After pre-sale made need to reduced hard cap depending on tokens sold
+    function updateHardCap(uint _newHardCap) public onlyOwner hardCapNotReached {
+        require (
+          _newHardCap < hardCap
+        );
+
+        hardCap = _newHardCap;
     }
 
     function transferOwnershipToken(address _to) public onlyOwner {
@@ -485,31 +573,10 @@ contract HireGoCrowdsale is Ownable {
     function calculateBonus(uint _baseAmount) internal returns (uint) {
         require(_baseAmount > 0);
 
-        if (now >= icoStartTime && now < icoEndTime) {
-            return calculateBonusIco(_baseAmount);
+        if (now >= presaleStartTime && now < presaleEndTime) {
+            return _baseAmount.mul(presaleBonus).div(100);
         }
         else return _baseAmount;
-    }
-
-    // Calculates bonuses, specific for the ICO
-    // Contains date and volume based bonuses
-    function calculateBonusIco(uint _baseAmount) internal returns(uint) {
-        if(totalWeiRaised < waveCap1) {
-            return _baseAmount.mul(baseBonus1).div(100);
-        }
-        else if(totalWeiRaised >= waveCap1 && totalWeiRaised < waveCap2) {
-            return _baseAmount.mul(baseBonus2).div(100);
-        }
-        else if(totalWeiRaised >= waveCap2 && totalWeiRaised < waveCap3) {
-            return _baseAmount.mul(baseBonus3).div(100);
-        }
-        else if(totalWeiRaised >= waveCap3 && totalWeiRaised < waveCap4) {
-            return _baseAmount.mul(baseBonus4).div(100);
-        }
-        else {
-            // No bonus
-            return _baseAmount;
-        }
     }
 
     // Checks if more tokens should be minted based on amount of sold tokens, required additional tokens and total supply.
