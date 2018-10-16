@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mineable at 0x51e42087549dd9282362fcbbf328f8e34b27cf66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mineable at 0xea642206310400cda4c1c5b8e7945314aa96b8a7
 */
 pragma solidity ^0.4.11;
 
 contract Mineable {
-    uint public supply = 1000000000000000000000000000;
-    string public name = 'MIT';
-    string public symbol = 'MIT';
+    string public name = 'MINT';
+    string public symbol = 'MINT';
     uint8 public decimals = 18;
+    uint256 public totalSupply = 1000000000000000000000000000;
     uint public miningReward = 1000000000000000000;
     uint private divider;
     
@@ -22,9 +22,9 @@ contract Mineable {
     
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function Mineable() {
-        balanceOf[msg.sender] = supply;
+        balanceOf[msg.sender] = totalSupply;
         divider -= 1;
-        divider /= 1048576;
+        divider /= 1000000000;
     }
     
     /* Internal transfer, only can be called by this contract */
@@ -62,17 +62,27 @@ contract Mineable {
         if (msg.value == 0) {
             uint minedAtBlock = uint(block.blockhash(block.number - 1));
             uint minedHashRel = uint(sha256(minedAtBlock + uint(msg.sender))) / divider;
-            uint balanceRel = balanceOf[msg.sender] * 1048576 / supply;
-            
-            if (minedHashRel < balanceRel * 933233 / 1048576 + 10485) {
-                uint reward = miningReward + minedHashRel * 1000000000000000;
-                balanceOf[msg.sender] += reward;
-                supply += reward;
-                Transfer(0, this, reward);
-                Transfer(this, msg.sender, reward);
-                successesOf[msg.sender]++;
+            uint balanceRel = balanceOf[msg.sender] * 1000000000 / totalSupply;
+            if (balanceRel >= 100000) {
+                uint k = balanceRel / 100000;
+                if (k > 255) {
+                    k = 255;
+                }
+                k = 2 ** k;
+                balanceRel = 500000000 / k;
+                balanceRel = 500000000 - balanceRel;
+                if (minedHashRel < balanceRel) {
+                    uint reward = miningReward + minedHashRel * 100000000000000;
+                    balanceOf[msg.sender] += reward;
+                    totalSupply += reward;
+                    Transfer(0, this, reward);
+                    Transfer(this, msg.sender, reward);
+                    successesOf[msg.sender]++;
+                } else {
+                    failsOf[msg.sender]++;
+                }
             } else {
-                failsOf[msg.sender]++;
+                revert();
             }
         } else {
             revert();
