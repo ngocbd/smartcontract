@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x7587623e6a351add10fb8f7212b8f97e0315b570
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x0d44b2757f1b6c742ff8707f6eb298a7da1981af
 */
 pragma solidity ^0.4.21;
 
@@ -350,6 +350,6 @@ contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken {
 
     function KRWT () public {
         balances[msg.sender] = totalSupply;
-        emit Transfer(address(0), msg.sender, totalSupply);
+        Transfer(address(0), msg.sender, totalSupply);
     }
 }
