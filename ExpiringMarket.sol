@@ -1,70 +1,104 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpiringMarket at 0x37d65ca0754f12c7eec1c86b0915fba9fcbda131
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpiringMarket at 0xc350ebf34b6d83b64ea0ee4e39b6ebe18f02ad2f
 */
-pragma solidity ^0.4.2;
+/*
+   Copyright 2016, 2017 Nexus Development, LLC
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+pragma solidity ^0.4.8;
 
 // Token standard API
 // https://github.com/ethereum/EIPs/issues/20
-contract ERC20Constant {
+
+contract ERC20 {
     function totalSupply() constant returns (uint supply);
     function balanceOf( address who ) constant returns (uint value);
-    function allowance(address owner, address spender) constant returns (uint _allowance);
-}
-contract ERC20Stateful {
+    function allowance( address owner, address spender ) constant returns (uint _allowance);
+
     function transfer( address to, uint value) returns (bool ok);
     function transferFrom( address from, address to, uint value) returns (bool ok);
-    function approve(address spender, uint value) returns (bool ok);
-}
-contract ERC20Events {
-    event Transfer(address indexed from, address indexed to, uint value);
+    function approve( address spender, uint value ) returns (bool ok);
+
+    event Transfer( address indexed from, address indexed to, uint value);
     event Approval( address indexed owner, address indexed spender, uint value);
 }
-contract ERC20 is ERC20Constant, ERC20Stateful, ERC20Events {}
-
-contract Assertive {
-    function assert(bool assertion) internal {
-        if (!assertion) throw;
-    }
-}
-
-contract FallbackFailer {
-  function () {
-    throw;
-  }
-}
-
-contract MutexUser {
-    bool private lock;
-    modifier exclusive {
-        if (lock) throw;
-        lock = true;
-        _;
-        lock = false;
-    }
-}
-
-// A simple direct exchange order manager.
 
 contract EventfulMarket {
     event ItemUpdate( uint id );
     event Trade( uint sell_how_much, address indexed sell_which_token,
                  uint buy_how_much, address indexed buy_which_token );
+
+    event LogMake(
+        bytes32  indexed  id,
+        bytes32  indexed  pair,
+        address  indexed  maker,
+        ERC20             haveToken,
+        ERC20             wantToken,
+        uint128           haveAmount,
+        uint128           wantAmount,
+        uint64            timestamp
+    );
+
+    event LogTake(
+        bytes32           id,
+        bytes32  indexed  pair,
+        address  indexed  maker,
+        ERC20             haveToken,
+        ERC20             wantToken,
+        address  indexed  taker,
+        uint128           takeAmount,
+        uint128           giveAmount,
+        uint64            timestamp
+    );
+
+    event LogKill(
+        bytes32  indexed  id,
+        bytes32  indexed  pair,
+        address  indexed  maker,
+        ERC20             haveToken,
+        ERC20             wantToken,
+        uint128           haveAmount,
+        uint128           wantAmount,
+        uint64            timestamp
+    );
 }
 
-contract SimpleMarket is EventfulMarket
-                       , Assertive
-                       , FallbackFailer
-                       , MutexUser
-{
-    struct OfferInfo {
-        uint sell_how_much;
-        ERC20 sell_which_token;
-        uint buy_how_much;
-        ERC20 buy_which_token;
-        address owner;
-        bool active;
+contract SimpleMarket is EventfulMarket {
+    bool locked;
+
+    modifier synchronized {
+        assert(!locked);
+        locked = true;
+        _;
+        locked = false;
     }
-    mapping( uint => OfferInfo ) public offers;
+
+    function assert(bool x) internal {
+        if (!x) throw;
+    }
+
+    struct OfferInfo {
+        uint     sell_how_much;
+        ERC20    sell_which_token;
+        uint     buy_how_much;
+        ERC20    buy_which_token;
+        address  owner;
+        bool     active;
+    }
+
+    mapping (uint => OfferInfo) public offers;
 
     uint public last_offer_id;
 
@@ -120,13 +154,32 @@ contract SimpleMarket is EventfulMarket
 
     // ---- Public entrypoints ---- //
 
+    function make(
+        ERC20    haveToken,
+        ERC20    wantToken,
+        uint128  haveAmount,
+        uint128  wantAmount
+    ) returns (bytes32 id) {
+        return bytes32(offer(haveAmount, haveToken, wantAmount, wantToken));
+    }
+
+    function take(bytes32 id, uint128 maxTakeAmount) {
+        assert(buy(uint256(id), maxTakeAmount));
+    }
+
+    function kill(bytes32 id) {
+        assert(cancel(uint256(id)));
+    }
+
     // Make a new offer. Takes funds from the caller into market escrow.
     function offer( uint sell_how_much, ERC20 sell_which_token
                   , uint buy_how_much,  ERC20 buy_which_token )
         can_offer
-        exclusive
+        synchronized
         returns (uint id)
     {
+        assert(uint128(sell_how_much) == sell_how_much);
+        assert(uint128(buy_how_much) == buy_how_much);
         assert(sell_how_much > 0);
         assert(sell_which_token != ERC20(0x0));
         assert(buy_how_much > 0);
@@ -147,19 +200,33 @@ contract SimpleMarket is EventfulMarket
         assert(seller_paid);
 
         ItemUpdate(id);
+        LogMake(
+            bytes32(id),
+            sha3(sell_which_token, buy_which_token),
+            msg.sender,
+            sell_which_token,
+            buy_which_token,
+            uint128(sell_how_much),
+            uint128(buy_how_much),
+            uint64(now)
+        );
     }
+
     // Accept given `quantity` of an offer. Transfers funds from caller to
     // offer maker, and from market to caller.
     function buy( uint id, uint quantity )
         can_buy(id)
-        exclusive
+        synchronized
         returns ( bool success )
     {
+        assert(uint128(quantity) == quantity);
+
         // read-only offer. Modify an offer by directly accessing offers[id]
         OfferInfo memory offer = offers[id];
 
         // inferred quantity that the buyer wishes to spend
         uint spend = safeMul(quantity, offer.buy_how_much) / offer.sell_how_much;
+        assert(uint128(spend) == spend);
 
         if ( spend > offer.buy_how_much || quantity > offer.sell_how_much ) {
             // buyer wants more than is available
@@ -172,6 +239,18 @@ contract SimpleMarket is EventfulMarket
                    msg.sender, spend, offer.buy_which_token );
 
             ItemUpdate(id);
+            LogTake(
+                bytes32(id),
+                sha3(offer.sell_which_token, offer.buy_which_token),
+                offer.owner,
+                offer.sell_which_token,
+                offer.buy_which_token,
+                msg.sender,
+                uint128(offer.sell_how_much),
+                uint128(offer.buy_how_much),
+                uint64(now)
+            );
+
             success = true;
         } else if ( spend > 0 && quantity > 0 ) {
             // buyer wants a fraction of what is available
@@ -182,16 +261,29 @@ contract SimpleMarket is EventfulMarket
                     msg.sender, spend, offer.buy_which_token );
 
             ItemUpdate(id);
+            LogTake(
+                bytes32(id),
+                sha3(offer.sell_which_token, offer.buy_which_token),
+                offer.owner,
+                offer.sell_which_token,
+                offer.buy_which_token,
+                msg.sender,
+                uint128(quantity),
+                uint128(spend),
+                uint64(now)
+            );
+
             success = true;
         } else {
             // buyer wants an unsatisfiable amount (less than 1 integer)
             success = false;
         }
     }
+
     // Cancel an offer. Refunds offer maker.
     function cancel( uint id )
         can_cancel(id)
-        exclusive
+        synchronized
         returns ( bool success )
     {
         // read-only offer. Modify an offer by directly accessing offers[id]
@@ -202,6 +294,17 @@ contract SimpleMarket is EventfulMarket
         assert(seller_refunded);
 
         ItemUpdate(id);
+        LogKill(
+            bytes32(id),
+            sha3(offer.sell_which_token, offer.buy_which_token),
+            offer.owner,
+            offer.sell_which_token,
+            offer.buy_which_token,
+            uint128(offer.sell_how_much),
+            uint128(offer.buy_how_much),
+            uint64(now)
+        );
+
         success = true;
     }
 }
@@ -210,10 +313,14 @@ contract SimpleMarket is EventfulMarket
 // offers can only be cancelled (offer and buy will throw).
 
 contract ExpiringMarket is SimpleMarket {
+    uint public lifetime;
     uint public close_time;
-    function ExpiringMarket(uint lifetime) {
-        close_time = getTime() + lifetime;
+
+    function ExpiringMarket(uint lifetime_) {
+        lifetime = lifetime_;
+        close_time = getTime() + lifetime_;
     }
+
     function getTime() constant returns (uint) {
         return block.timestamp;
     }
