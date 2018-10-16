@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0xea9c15f733ee4cd9e24c97bdddd66077a757b474
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x5c310678d08322bc68194054b67416de7eb91a2c
 */
-pragma solidity ^0.4.21;
+pragma solidity 0.4.21;
 
 contract ERC20Interface {
     function totalSupply() public constant returns (uint256);
@@ -15,6 +15,11 @@ contract ERC20Interface {
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
+contract FLMContract {
+    function withdraw() public;
+    function buy() public payable returns(uint256);
+    function myTokens() public view returns(uint256);
+}
 
 contract Owned {
     address public owner;
@@ -46,19 +51,14 @@ contract BoomerangLiquidity is Owned {
         require(msg.sender == owner);
         _;
     }
-    
-    modifier notFlm(address aContract){
-        require(aContract != flmContract);
-        _;
-    }
 
     uint public multiplier;
     uint public payoutOrder = 0;
-    address flmContract;
+    FLMContract flmContract;
 
     function BoomerangLiquidity(uint multiplierPercent, address aFlmContract) public {
         multiplier = multiplierPercent;
-        flmContract = aFlmContract;
+        flmContract = FLMContract(aFlmContract);
     }
     
     
@@ -83,7 +83,7 @@ contract BoomerangLiquidity is Owned {
         require(balance > 1);
         uint investment = balance / 2;
         balance =- investment;
-        flmContract.call.value(investment).gas(1000000)();
+        flmContract.buy.value(investment)();
         while (balance > 0) {
             uint payoutToSend = balance < participants[payoutOrder].payout ? balance : participants[payoutOrder].payout;
             if(payoutToSend > 0){
@@ -99,15 +99,21 @@ contract BoomerangLiquidity is Owned {
         }
     }
     
-
+    function myTokens()
+        public
+        view
+        returns(uint256) {
+        return flmContract.myTokens();    
+    }
     
     function withdraw() public {
-        flmContract.call(bytes4(keccak256("withdraw()")));
+        flmContract.withdraw.gas(1000000)();
     }
     
     function donate() payable public {
     }
     
+    //THIS CONTRACT IS FOR TESTING. IF THIS IS HERE, DO NOT INVEST REAL MONEY.
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
