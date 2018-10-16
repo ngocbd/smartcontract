@@ -1,51 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthMashMount at 0x2cc58ad556a857ebd6835cbc142c0c2acd16d86d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthMashMount at 0xadea1a12d74a54e914cecfcd024223d40d68d7eb
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.23;
 
 contract EthMashMount {
 
     address public owner;
     mapping (address => uint) public withdrawals;
 
-    uint round;
-    mapping (uint => address[]) participants;
+    int round;
+    mapping (int => address[3]) public participants;
     
-    event Log(address indexed user, uint action, uint price);
-
     constructor() public {
         owner = msg.sender;
         round = 1;
-        participants[1].push(owner);
-    }
-
-    modifier whenOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function ownerWithdraw(uint amount) external whenOwner {
-        owner.transfer(amount);
-    }
-
-    function ownerDestroy() external whenOwner {
-        selfdestruct(owner);
-    }
-
-    function publicGetRound() view public returns (uint) {
-        return round;
-    }
-
-    function publicGetParticipants(uint index) view public returns (uint) {
-        return participants[index].length;
-    }
-
-    function publicGetParticipant(uint index, uint participant) view public returns (address) {
-        return participants[index][participant];
+        participants[1][0] = owner;
     }
 
     function publicGetBalance(address player) view public returns (uint) {
         return withdrawals[player];
+    }
+
+    function publicGetState() view public returns (address[3][7]) {
+        return [
+            participants[round - 6],
+            participants[round - 5],
+            participants[round - 4],
+            participants[round - 3],
+            participants[round - 2],
+            participants[round - 1],
+            participants[round]
+        ];
     }
 
     function userWithdraw() public {
@@ -53,25 +38,26 @@ contract EthMashMount {
         uint amount = withdrawals[msg.sender];
         withdrawals[msg.sender] = 0;
         msg.sender.transfer(amount);
-        emit Log(msg.sender, 0, amount);
     }
 
     function userRegister() public payable {
         require(msg.value == 105 finney);
-        emit Log(msg.sender, 1, msg.value);
-        participants[round].push(msg.sender);
+        
+        withdrawals[owner] += 5 finney;
+        participants[round][1] = msg.sender;
 
-        uint reward = 100 finney;
-        uint random = (uint(blockhash(block.number - 1)) + uint(participants[round][0]) + uint(msg.sender));
+        uint random = (uint(blockhash(block.number - 1)) + uint(participants[round][0]) + uint(participants[round][1]));
 
         if (random % 2 == 0) {
-            withdrawals[participants[round][0]] += reward;
-            emit Log(participants[round][0], 2, reward);
+            participants[round][2] = participants[round][0];
+            withdrawals[participants[round][0]] += 100 finney;
+            
         } else {
-            round++;
-            participants[round].push(msg.sender);
-            withdrawals[msg.sender] += reward;
-            emit Log(msg.sender, 2, reward);
+            participants[round][2] = participants[round][1];
+            withdrawals[participants[round][1]] += 100 finney;
         }
+        
+        round++;
+        participants[round][0] = participants[round - 1][2];
     }
 }
