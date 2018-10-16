@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x21fcf6e1046f7de62557e64470447f8e516919ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x230a83ae51be8b6393f545214fbd39d7a8d3d4ee
 */
 pragma solidity ^0.4.23;
 
@@ -500,8 +500,6 @@ contract EvaCurrency is PausableToken, BurnableToken {
     balances[staker] = balances[staker].add(fee);
     lastUsedNonce[sender] = _nonce;
     
-    emit Transfer(sender, address(0), _amount);
-    emit Transfer(address(0), _to, resultAmount);
     return true;
   }
 
@@ -519,9 +517,8 @@ contract EvaCurrency is PausableToken, BurnableToken {
 
     balances[sender] = balances[sender].sub(_amount);
     balances[staker] = balances[staker].add(fee);
-    totalSupply_ = totalSupply_.sub(resultAmount);
+    totalSupply_ =totalSupply_.sub(resultAmount);
 
-    emit Transfer(sender, address(0), resultAmount);
     Burn(sender, resultAmount);
     return true;
   }
@@ -535,11 +532,10 @@ contract EvaCurrency is PausableToken, BurnableToken {
       fee = comissionList.calcRefill(_paySystem, _amount);
       resultAmount = _amount.sub(fee);
 
-      balances[_to] = balances[_to].add(resultAmount);
+      balances[_to] = balances[staker].add(resultAmount);
       balances[staker] = balances[staker].add(fee);
       totalSupply_ = totalSupply_.add(_amount);
 
-      emit Transfer(address(0), _to, resultAmount);
       Mint(_to, resultAmount);
       return true;
   }
