@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x17fbfdef25f2b39e2181c509bce6842640474b0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xbd3576583bb2a615e32040485f83df45a8133891
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.17;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -18,7 +18,7 @@ contract Token {
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
-    function balanceOf(address _owner) public view returns (uint256 balance);
+    function balanceOf(address _owner) public returns (uint256 balance);
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
@@ -87,7 +87,7 @@ contract StandardToken is Token {
         return true;
     }
 
-    function balanceOf(address _owner) public view returns (uint256 balance) {
+    function balanceOf(address _owner) public returns (uint256 balance) {
         return balances[_owner];
     }
 
