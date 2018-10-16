@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xf56a188f3f8d02685ab14f8a89be47df5e87af32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x9e762daeb001DC7778D0Eb043d530357f0c4666c
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.11;
 
 // <ORACLIZE_API>
 /*
@@ -33,7 +33,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-pragma solidity ^0.4.0;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
+//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -1029,19 +1029,13 @@ contract usingOraclize {
 
 contract Dice is usingOraclize {
 
-    uint constant pwin = 7500; //probability of winning (10000 = 100%)
     uint constant edge = 190; //edge percentage (10000 = 100%)
     uint constant maxWin = 100; //max win (before edge is taken) as percentage of bankroll (10000 = 100%)
-    uint constant minBet = 2000 finney;
-    uint constant maxInvestors = 10; //maximum number of investors
-    uint constant houseEdge = 90; //edge percentage (10000 = 100%)
-    uint constant divestFee = 50; //divest fee percentage (10000 = 100%)
-    uint constant emergencyWithdrawalRatio = 10; //ratio percentage (100 = 100%)
+    uint constant minBet = 10 finney;
 
     uint safeGas = 2300;
     uint constant ORACLIZE_GAS_LIMIT = 175000;
     uint constant INVALID_BET_MARKER = 99999;
-    uint constant EMERGENCY_TIMEOUT = 3 days;
 
     struct Investor {
         address investorAddress;
@@ -1053,6 +1047,7 @@ contract Dice is usingOraclize {
         address playerAddress;
         uint amountBet;
         uint numberRolled;
+        uint pwin;
     }
 
     struct WithdrawalProposal {
@@ -1060,79 +1055,49 @@ contract Dice is usingOraclize {
         uint atTime;
     }
 
-    //Starting at 1
-    mapping(address => uint) public investorIDs;
-    mapping(uint => Investor) public investors;
-    uint public numInvestors = 0;
-
-    uint public invested = 0;
-
     address public owner;
-    address public houseAddress;
-    bool public isStopped;
-
-    WithdrawalProposal public proposedWithdrawal;
 
     mapping (bytes32 => Bet) public bets;
     bytes32[] public betsKeys;
 
     uint public investorsProfit = 0;
     uint public investorsLosses = 0;
-    bool profitDistributed;
+    uint public amountBets = 0;
+    uint public amountWon = 0;
+    bool public isStopped = false;
 
-    event LOG_NewBet(address playerAddress, uint amount);
-    event LOG_BetWon(address playerAddress, uint numberRolled, uint amountWon);
-    event LOG_BetLost(address playerAddress, uint numberRolled);
-    event LOG_EmergencyWithdrawalProposed();
-    event LOG_EmergencyWithdrawalFailed(address withdrawalAddress);
-    event LOG_EmergencyWithdrawalSucceeded(address withdrawalAddress, uint amountWithdrawn);
+    event LOG_NewBet(address playerAddress, uint amount, uint pwin, bytes32 id);
+    event LOG_BetWon(address playerAddress, uint numberRolled, uint amountWon, bytes32 id);
+    event LOG_BetLost(address playerAddress, uint numberRolled, uint amountLost, bytes32 id);
     event LOG_FailedSend(address receiver, uint amount);
     event LOG_ZeroSend();
-    event LOG_InvestorEntrance(address investor, uint amount);
-    event LOG_InvestorCapitalUpdate(address investor, int amount);
-    event LOG_InvestorExit(address investor, uint amount);
-    event LOG_ContractStopped();
-    event LOG_ContractResumed();
-    event LOG_OwnerAddressChanged(address oldAddr, address newOwnerAddress);
-    event LOG_HouseAddressChanged(address oldAddr, address newHouseAddress);
+    event LOG_OwnerAddressChanged(address oldowner, address newowner);
     event LOG_GasLimitChanged(uint oldGasLimit, uint newGasLimit);
-    event LOG_EmergencyAutoStop();
-    event LOG_EmergencyWithdrawalVote(address investor, bool vote);
     event LOG_ValueIsTooBig();
     event LOG_SuccessfulSend(address addr, uint amount);
+    event LOG_IncreaseInvestment(uint amount);
+    event LOG_Payout(address addr, uint amount);
+
+    event Log(uint text);
 
     function Dice() {
-        oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
+        // OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
         owner = msg.sender;
-        houseAddress = msg.sender;
+        oraclize_setNetwork(networkID_auto);
+        // oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
     }
 
     //SECTION I: MODIFIERS AND HELPER FUNCTIONS
 
     //MODIFIERS
 
-    modifier onlyIfNotStopped {
-        if (isStopped) throw;
-        _;
-    }
-
-    modifier onlyIfStopped {
-        if (!isStopped) throw;
-        _;
-    }
-
-    modifier onlyInvestors {
-        if (investorIDs[msg.sender] == 0) throw;
-        _;
-    }
-
-    modifier onlyNotInvestors {
-        if (investorIDs[msg.sender] != 0) throw;
-        _;
-    }
-
     modifier onlyOwner {
         if (owner != msg.sender) throw;
+        _;
+    }
+
+    modifier onlyIfNotStopped {
+        if (isStopped) throw;
         _;
     }
 
@@ -1141,23 +1106,13 @@ contract Dice is usingOraclize {
         _;
     }
 
-    modifier onlyMoreThanMinInvestment {
-        if (msg.value <= getMinInvestment()) throw;
-        _;
-    }
-
-    modifier onlyMoreThanZero {
-        if (msg.value == 0) throw;
-        _;
-    }
-
     modifier onlyIfBetExist(bytes32 myid) {
         if(bets[myid].playerAddress == address(0x0)) throw;
         _;
     }
 
-    modifier onlyIfBetSizeIsStillCorrect(bytes32 myid) {
-        if ((((bets[myid].amountBet * ((10000 - edge) - pwin)) / pwin ) <= (maxWin * getBankroll()) / 10000)  && (bets[myid].amountBet >= minBet)) {
+    modifier onlyIfBetSizeIsStillCorrect(bytes32 myid, uint pwin) {
+        if ((((bets[myid].amountBet * ((10000 - edge) - pwin)) / pwin ) <= getBankroll())  && (bets[myid].amountBet >= minBet)) {
              _;
         }
         else {
@@ -1177,28 +1132,18 @@ contract Dice is usingOraclize {
         _;
     }
 
-    modifier onlyWinningBets(uint numberRolled) {
+    modifier onlyWinningBets(uint numberRolled, uint pwin) {
         if (numberRolled - 1 < pwin) {
             _;
         }
     }
 
-    modifier onlyLosingBets(uint numberRolled) {
+    modifier onlyLosingBets(uint numberRolled, uint pwin) {
         if (numberRolled - 1 >= pwin) {
             _;
         }
     }
 
-    modifier onlyAfterProposed {
-        if (proposedWithdrawal.toAddress == 0) throw;
-        _;
-    }
-
-    modifier onlyIfProfitNotDistributed {
-        if (!profitDistributed) {
-            _;
-        }
-    }
 
     modifier onlyIfValidGas(uint newGasLimit) {
         if (ORACLIZE_GAS_LIMIT + newGasLimit < ORACLIZE_GAS_LIMIT) throw;
@@ -1211,52 +1156,10 @@ contract Dice is usingOraclize {
         _;
     }
 
-    modifier onlyIfEmergencyTimeOutHasPassed {
-        if (proposedWithdrawal.atTime + EMERGENCY_TIMEOUT > now) throw;
-        _;
-    }
-
-    modifier investorsInvariant {
-        _;
-        if (numInvestors > maxInvestors) throw;
-    }
-
     //CONSTANT HELPER FUNCTIONS
 
-    function getBankroll()
-        constant
-        returns(uint) {
-
-        if ((invested < investorsProfit) ||
-            (invested + investorsProfit < invested) ||
-            (invested + investorsProfit < investorsLosses)) {
-            return 0;
-        }
-        else {
-            return invested + investorsProfit - investorsLosses;
-        }
-    }
-
-    function getMinInvestment()
-        constant
-        returns(uint) {
-
-        if (numInvestors == maxInvestors) {
-            uint investorID = searchSmallestInvestor();
-            return getBalance(investors[investorID].investorAddress);
-        }
-        else {
-            return 0;
-        }
-    }
-
-    function getStatus()
-        constant
-        returns(uint, uint, uint, uint, uint, uint, uint, uint) {
-
-        uint bankroll = getBankroll();
-        uint minInvestment = getMinInvestment();
-        return (bankroll, pwin, edge, maxWin, minBet, (investorsProfit - investorsLosses), minInvestment, betsKeys.length);
+    function getBankroll() constant returns(uint) {
+      return this.balance;
     }
 
     function getBet(uint id)
@@ -1276,78 +1179,8 @@ contract Dice is usingOraclize {
         return betsKeys.length;
     }
 
-    function getMinBetAmount()
-        constant
-        returns(uint) {
-
-        uint oraclizeFee = OraclizeI(OAR.getAddress()).getPrice("URL", ORACLIZE_GAS_LIMIT + safeGas);
-        return oraclizeFee + minBet;
-    }
-
-    function getMaxBetAmount()
-        constant
-        returns(uint) {
-
-        uint oraclizeFee = OraclizeI(OAR.getAddress()).getPrice("URL", ORACLIZE_GAS_LIMIT + safeGas);
-        uint betValue =  (maxWin * getBankroll()) * pwin / (10000 * (10000 - edge - pwin));
-        return betValue + oraclizeFee;
-    }
-
-    function getLossesShare(address currentInvestor)
-        constant
-        returns (uint) {
-
-        return investors[investorIDs[currentInvestor]].amountInvested * (investorsLosses) / invested;
-    }
-
-    function getProfitShare(address currentInvestor)
-        constant
-        returns (uint) {
-
-        return investors[investorIDs[currentInvestor]].amountInvested * (investorsProfit) / invested;
-    }
-
-    function getBalance(address currentInvestor)
-        constant
-        returns (uint) {
-
-        uint invested = investors[investorIDs[currentInvestor]].amountInvested;
-        uint profit = getProfitShare(currentInvestor);
-        uint losses = getLossesShare(currentInvestor);
-
-        if ((invested + profit < profit) ||
-            (invested + profit < invested) ||
-            (invested + profit < losses))
-            return 0;
-        else
-            return invested + profit - losses;
-    }
-
-    function searchSmallestInvestor()
-        constant
-        returns(uint) {
-
-        uint investorID = 1;
-        for (uint i = 1; i <= numInvestors; i++) {
-            if (getBalance(investors[i].investorAddress) < getBalance(investors[investorID].investorAddress)) {
-                investorID = i;
-            }
-        }
-
-        return investorID;
-    }
-
-    function changeOraclizeProofType(byte _proofType)
-        onlyOwner {
-
-        if (_proofType == 0x00) throw;
-        oraclize_setProof( _proofType |  proofStorage_IPFS );
-    }
-
-    function changeOraclizeConfig(bytes32 _config)
-        onlyOwner {
-
-        oraclize_setConfig(_config);
+    function totalWon() constant returns (uint) {
+        return amountWon;
     }
 
     // PRIVATE HELPERS FUNCTION
@@ -1367,87 +1200,42 @@ contract Dice is usingOraclize {
 
         if (!(addr.call.gas(safeGas).value(value)())) {
             LOG_FailedSend(addr, value);
-            if (addr != houseAddress) {
+            if (addr != owner) {
                 //Forward to house address all change
-                if (!(houseAddress.call.gas(safeGas).value(value)())) LOG_FailedSend(houseAddress, value);
+                if (!(owner.call.gas(safeGas).value(value)())) LOG_FailedSend(owner, value);
             }
         }
 
         LOG_SuccessfulSend(addr,value);
     }
 
-    function addInvestorAtID(uint id)
-        private {
-
-        investorIDs[msg.sender] = id;
-        investors[id].investorAddress = msg.sender;
-        investors[id].amountInvested = msg.value;
-        invested += msg.value;
-
-        LOG_InvestorEntrance(msg.sender, msg.value);
-    }
-
-    function profitDistribution()
-        private
-        onlyIfProfitNotDistributed {
-
-        uint copyInvested;
-
-        for (uint i = 1; i <= numInvestors; i++) {
-            address currentInvestor = investors[i].investorAddress;
-            uint profitOfInvestor = getProfitShare(currentInvestor);
-            uint lossesOfInvestor = getLossesShare(currentInvestor);
-            //Check for overflow and underflow
-            if ((investors[i].amountInvested + profitOfInvestor >= investors[i].amountInvested) &&
-                (investors[i].amountInvested + profitOfInvestor >= lossesOfInvestor))  {
-                investors[i].amountInvested += profitOfInvestor - lossesOfInvestor;
-                LOG_InvestorCapitalUpdate(currentInvestor, (int) (profitOfInvestor - lossesOfInvestor));
-            }
-            else {
-                isStopped = true;
-                LOG_EmergencyAutoStop();
-            }
-
-            if (copyInvested + investors[i].amountInvested >= copyInvested)
-                copyInvested += investors[i].amountInvested;
-        }
-
-        delete investorsProfit;
-        delete investorsLosses;
-        invested = copyInvested;
-
-        profitDistributed = true;
-    }
-
     // SECTION II: BET & BET PROCESSING
 
-    function()
-        payable {
-
-        bet();
+    function() payable {
+        bet(5000);
     }
 
-    function bet()
-        payable
-        onlyIfNotStopped {
-
+    function bet(uint pwin) payable public onlyIfNotStopped {
         uint oraclizeFee = OraclizeI(OAR.getAddress()).getPrice("URL", ORACLIZE_GAS_LIMIT + safeGas);
         if (oraclizeFee >= msg.value) throw;
         uint betValue = msg.value - oraclizeFee;
-        if ((((betValue * ((10000 - edge) - pwin)) / pwin ) <= (maxWin * getBankroll()) / 10000) && (betValue >= minBet)) {
-            LOG_NewBet(msg.sender, betValue);
-            bytes32 myid =
-                oraclize_query(
-                    "nested",
-                    "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BInT/tttdnvIEIGsSQhIw4GurDVM5N97+W5tMGkfy/wEaYbMtOYUN5NMUgfaVhcKLudwXyllHrZu3qAhI6CkLzFj7Rd5l6oGfidceioI9hOWSSd60t2Uir0QinujPq4NWiX8/VW6wAO7E+5t9c1BQX5vcEjdDbA=},\"n\":1,\"min\":1,\"max\":10000${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
-                    ORACLIZE_GAS_LIMIT + safeGas
-                );
-            bets[myid] = Bet(msg.sender, betValue, 0);
+
+     if ((((betValue * (10000 - edge)) / pwin) <= (getBankroll()) / 30) && (betValue >= minBet)) {        
+           bytes32 myid =
+                 oraclize_query("nested", 
+        "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateIntegers\",\"params\":{\"apiKey\":\"${[decrypt] BHvgt4Bhec2IJyErKzdCVu3FSzo6mKW10ZDb38Ruyj6bOCyzY5738oLb8a5fGGfMhjcVjabuo9YOJ+f83/lXZELZQSmMAwbhg+thjUJZMoBLsFmAnD17UjEPPr1ffUNfAn7AI74sB3AwVh3296JCtcEVWn66}\",\"n\":1,\"min\":1,\"max\":10000,\"replacement\":true${[identity] \"}\"},\"id\":1${[identity] \"}\"}']");    
+                
+            LOG_NewBet(msg.sender, betValue, pwin, myid);
+            bets[myid] = Bet(msg.sender, betValue, 0, pwin);
             betsKeys.push(myid);
+            amountBets += 1;
+            
         }
         else {
             throw;
-        }
+        }    
+        
+        
     }
 
     function __callback(bytes32 myid, string result, bytes proof)
@@ -1455,21 +1243,17 @@ contract Dice is usingOraclize {
         onlyIfBetExist(myid)
         onlyIfNotProcessed(myid)
         onlyIfValidRoll(myid, result)
-        onlyIfBetSizeIsStillCorrect(myid)  {
+        onlyIfBetSizeIsStillCorrect(myid, bets[myid].pwin)  {
 
         uint numberRolled = parseInt(result);
         bets[myid].numberRolled = numberRolled;
-        isWinningBet(bets[myid], numberRolled);
-        isLosingBet(bets[myid], numberRolled);
-        delete profitDistributed;
+        isWinningBet(bets[myid], numberRolled, myid);
+        isLosingBet(bets[myid], numberRolled, myid);
     }
 
-    function isWinningBet(Bet thisBet, uint numberRolled)
-        private
-        onlyWinningBets(numberRolled) {
-
-        uint winAmount = (thisBet.amountBet * (10000 - edge)) / pwin;
-        LOG_BetWon(thisBet.playerAddress, numberRolled, winAmount);
+    function isWinningBet(Bet thisBet, uint numberRolled, bytes32 myid) private onlyWinningBets(numberRolled, thisBet.pwin) {
+        uint winAmount = (thisBet.amountBet * (10000 - edge)) / thisBet.pwin;
+        LOG_BetWon(thisBet.playerAddress, numberRolled, winAmount, myid );
         safeSend(thisBet.playerAddress, winAmount);
 
         //Check for overflow and underflow
@@ -1478,14 +1262,12 @@ contract Dice is usingOraclize {
                 throw;
             }
 
+        amountWon += winAmount;
         investorsLosses += winAmount - thisBet.amountBet;
     }
 
-    function isLosingBet(Bet thisBet, uint numberRolled)
-        private
-        onlyLosingBets(numberRolled) {
-
-        LOG_BetLost(thisBet.playerAddress, numberRolled);
+    function isLosingBet(Bet thisBet, uint numberRolled, bytes32 myid) private onlyLosingBets(numberRolled, thisBet.pwin) {
+        LOG_BetLost(thisBet.playerAddress, numberRolled, thisBet.amountBet, myid);
         safeSend(thisBet.playerAddress, 1);
 
         //Check for overflow and underflow
@@ -1495,205 +1277,46 @@ contract Dice is usingOraclize {
                 throw;
             }
 
-        uint totalProfit = investorsProfit + (thisBet.amountBet - 1); //added based on audit feedback
-        investorsProfit += (thisBet.amountBet - 1)*(10000 - houseEdge)/10000;
-        uint houseProfit = totalProfit - investorsProfit; //changed based on audit feedback
-        safeSend(houseAddress, houseProfit);
+        investorsProfit += (thisBet.amountBet - 1);
     }
 
     //SECTION III: INVEST & DIVEST
 
-    function increaseInvestment()
-        payable
-        onlyIfNotStopped
-        onlyMoreThanZero
-        onlyInvestors  {
-
-        profitDistribution();
-        investors[investorIDs[msg.sender]].amountInvested += msg.value;
-        invested += msg.value;
+    function invest() payable public 
+    onlyOwner
+    onlyIfNotStopped {
+        LOG_IncreaseInvestment(msg.value);
     }
 
-    function newInvestor()
-        payable
-        onlyIfNotStopped
-        onlyMoreThanZero
-        onlyNotInvestors
-        onlyMoreThanMinInvestment
-        investorsInvariant {
-
-        profitDistribution();
-
-        if (numInvestors == maxInvestors) {
-            uint smallestInvestorID = searchSmallestInvestor();
-            divest(investors[smallestInvestorID].investorAddress);
-        }
-
-        numInvestors++;
-        addInvestorAtID(numInvestors);
+    function divest(uint value) public onlyOwner {
+        safeSend(owner, value);
+        LOG_Payout(owner, value);
     }
 
-    function divest()
-        onlyInvestors {
-
-        divest(msg.sender);
+    function getProfits() public onlyOwner {
+     uint value = investorsProfit - investorsLosses;
+     safeSend(owner, value);
+     investorsProfit = 0;
+     investorsLosses = 0;
     }
 
 
-    function divest(address currentInvestor)
-        private
-        investorsInvariant {
-
-        profitDistribution();
-        uint currentID = investorIDs[currentInvestor];
-        uint amountToReturn = getBalance(currentInvestor);
-
-        if ((invested >= investors[currentID].amountInvested)) {
-            invested -= investors[currentID].amountInvested;
-            uint divestFeeAmount =  (amountToReturn*divestFee)/10000;
-            amountToReturn -= divestFeeAmount;
-
-            delete investors[currentID];
-            delete investorIDs[currentInvestor];
-
-            //Reorder investors
-            if (currentID != numInvestors) {
-                // Get last investor
-                Investor lastInvestor = investors[numInvestors];
-                //Set last investor ID to investorID of divesting account
-                investorIDs[lastInvestor.investorAddress] = currentID;
-                //Copy investor at the new position in the mapping
-                investors[currentID] = lastInvestor;
-                //Delete old position in the mappping
-                delete investors[numInvestors];
-            }
-
-            numInvestors--;
-            safeSend(currentInvestor, amountToReturn);
-            safeSend(houseAddress, divestFeeAmount);
-            LOG_InvestorExit(currentInvestor, amountToReturn);
-        } else {
-            isStopped = true;
-            LOG_EmergencyAutoStop();
-        }
-    }
-
-    function forceDivestOfAllInvestors()
-        onlyOwner {
-
-        uint copyNumInvestors = numInvestors;
-        for (uint i = 1; i <= copyNumInvestors; i++) {
-            divest(investors[1].investorAddress);
-        }
-    }
-
-    /*
-    The owner can use this function to force the exit of an investor from the
-    contract during an emergency withdrawal in the following situations:
-        - Unresponsive investor
-        - Investor demanding to be paid in other to vote, the facto-blackmailing
-        other investors
-    */
-    function forceDivestOfOneInvestor(address currentInvestor)
-        onlyOwner
-        onlyIfStopped {
-
-        divest(currentInvestor);
-        //Resets emergency withdrawal proposal. Investors must vote again
-        delete proposedWithdrawal;
-    }
 
     //SECTION IV: CONTRACT MANAGEMENT
 
-    function stopContract()
-        onlyOwner {
-
-        isStopped = true;
-        LOG_ContractStopped();
-    }
-
-    function resumeContract()
-        onlyOwner {
-
-        isStopped = false;
-        LOG_ContractResumed();
-    }
-
-    function changeHouseAddress(address newHouse)
-        onlyOwner {
-
-        if (newHouse == address(0x0)) throw; //changed based on audit feedback
-        houseAddress = newHouse;
-        LOG_HouseAddressChanged(houseAddress, newHouse);
-    }
-
-    function changeOwnerAddress(address newOwner)
-        onlyOwner {
-
+    function changeOwnerAddress(address newOwner) onlyOwner {
         if (newOwner == address(0x0)) throw;
         owner = newOwner;
         LOG_OwnerAddressChanged(owner, newOwner);
     }
 
-    function changeGasLimitOfSafeSend(uint newGasLimit)
-        onlyOwner
-        onlyIfValidGas(newGasLimit) {
-
+    function changeGasLimitOfSafeSend(uint newGasLimit) onlyOwner onlyIfValidGas(newGasLimit) {
         safeGas = newGasLimit;
         LOG_GasLimitChanged(safeGas, newGasLimit);
     }
 
-    //SECTION V: EMERGENCY WITHDRAWAL
-
-    function voteEmergencyWithdrawal(bool vote)
-        onlyInvestors
-        onlyAfterProposed
-        onlyIfStopped {
-
-        investors[investorIDs[msg.sender]].votedForEmergencyWithdrawal = vote;
-        LOG_EmergencyWithdrawalVote(msg.sender, vote);
+    function kill() public onlyOwner {
+        isStopped = true;
+        selfdestruct(owner);
     }
-
-    function proposeEmergencyWithdrawal(address withdrawalAddress)
-        onlyIfStopped
-        onlyOwner {
-
-        //Resets previous votes
-        for (uint i = 1; i <= numInvestors; i++) {
-            delete investors[i].votedForEmergencyWithdrawal;
-        }
-
-        proposedWithdrawal = WithdrawalProposal(withdrawalAddress, now);
-        LOG_EmergencyWithdrawalProposed();
-    }
-
-    function executeEmergencyWithdrawal()
-        onlyOwner
-        onlyAfterProposed
-        onlyIfStopped
-        onlyIfEmergencyTimeOutHasPassed {
-
-        uint numOfVotesInFavour;
-        uint amountToWithdraw = this.balance;
-
-        for (uint i = 1; i <= numInvestors; i++) {
-            if (investors[i].votedForEmergencyWithdrawal == true) {
-                numOfVotesInFavour++;
-                delete investors[i].votedForEmergencyWithdrawal;
-            }
-        }
-
-        if (numOfVotesInFavour >= emergencyWithdrawalRatio * numInvestors / 100) {
-            if (!proposedWithdrawal.toAddress.send(amountToWithdraw)) {
-                LOG_EmergencyWithdrawalFailed(proposedWithdrawal.toAddress);
-            }
-            else {
-                LOG_EmergencyWithdrawalSucceeded(proposedWithdrawal.toAddress, amountToWithdraw);
-            }
-        }
-        else {
-            throw;
-        }
-    }
-
 }
