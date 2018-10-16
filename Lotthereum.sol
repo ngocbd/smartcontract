@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotthereum at 0x5e6ed16d845a46b9f863a256e7a3194f2a9e8b5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotthereum at 0x3c563651318b6b2cf555207a1e611bb577fff446
 */
 pragma solidity ^0.4.11;
 
@@ -39,6 +39,7 @@ contract Lotthereum is Mortal {
     Round[] private rounds;
     mapping (uint => Bet[]) bets;
     mapping (address => uint) private balances;
+    mapping (uint => address[]) winners;
 
     struct Round {
         uint id;
@@ -92,8 +93,17 @@ contract Lotthereum is Mortal {
     function payout() internal {
         for (uint i = 0; i < bets[currentRound].length; i++) {
             if (bets[currentRound][i].bet == rounds[currentRound].number) {
-                balances[bets[currentRound][i].origin] += rounds[currentRound].prize;
-                RoundWinner(bets[currentRound][i].origin, rounds[currentRound].prize);
+                uint id = winners[currentRound].length;
+                winners[currentRound].length += 1;
+                winners[currentRound][id] = bets[currentRound][i].origin;
+            }
+        }
+
+        if (winners[currentRound].length > 0) {
+            uint prize = rounds[currentRound].prize / winners[currentRound].length;
+            for (i = 0; i < winners[currentRound].length; i++) {
+                balances[winners[currentRound][i]] += prize;
+                RoundWinner(winners[currentRound][i], prize);
             }
         }
     }
