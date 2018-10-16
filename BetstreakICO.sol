@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetstreakICO at 0x25a4289eeBa56c9Fc1Ec5376C83EcC7F930Ed071
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetstreakICO at 0x69A5b8f0A12269f3AF7EB57278d78414a1A9EEb4
 */
 pragma solidity ^0.4.11;
 
@@ -179,6 +179,20 @@ contract BetstreakICO is owned, safeMath {
           return "campaign cannot be changed";
       }
     }
+
+    
+    
+    function SetupPreSale(bool _isCrowdSaleSetup) onlyOwner returns (bytes32 response) {
+      
+      if ((msg.sender == admin))
+      {
+      isCrowdSaleSetup = _isCrowdSaleSetup;
+          
+      return "Executed.";
+          
+        }
+    }
+    
 
 
     function setPrice() {
