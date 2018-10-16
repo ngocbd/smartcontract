@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VOISE at 0x82665764ea0b58157E1e5E9bab32F68c76Ec0CdF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VOISE at 0x83eea00d838f92dec4d1475697b9f4d3537b56e3
 */
 pragma solidity ^0.4.6;
  
@@ -32,8 +32,8 @@ contract VOISE is SafeMath {
     /* Public variables of the token */
     string public standard = 'ERC20';
     string public name = 'VOISE';
-    string public symbol = 'VSM';
-    uint8 public decimals = 0;
+    string public symbol = 'VOISE';
+    uint8  public decimals = 8;
     uint256 public totalSupply;
     address public owner;
     uint256 public startTime = 1492560000;
@@ -53,10 +53,10 @@ contract VOISE is SafeMath {
     /* Initializes contract with initial supply tokens and gives them to the voise team adress */
     function VOISE() {
         
-        owner = 0xbB93222C54f72ae99b2539a44093f2ED62533EBE;
+        owner = msg.sender;
         
-        balanceOf[owner] = 100000000;              // All of them are stored in the voise team adress until they are bought
-        totalSupply = 100000000;                   // total supply of tokens
+        balanceOf[owner] = 82557800000000000;   // All of them are stored in the voise team adress until they are bought
+        totalSupply = 82557800000000000; // total supply of tokens
     }
  
     /* Send some of your tokens to a given address (Press bounties) */
@@ -85,22 +85,6 @@ contract VOISE is SafeMath {
         allowance[_from][msg.sender] = safeSub(_allowance,_value);
         Transfer(_from, _to, _value);
         return true;
-    }
- 
- 
-    /* to be called when ICO is closed, burns the remaining tokens.
-    *  for the bounty program (3%).
-    *  for  team (5%)  */
-    
-    function burn(){
-        //if tokens have not been burned already and the ICO ended, burn them
-        if(!burned && now>startTime){
-            uint difference = safeSub(balanceOf[owner], 8000000);
-            balanceOf[owner] = 8000000;
-            totalSupply = safeSub(totalSupply, difference);
-            burned = true;
-            Burned(difference);
-        }
     }
  
 }
