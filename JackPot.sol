@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jackpot at 0x0e9a67c02b7de4482125cdd3afa28306e7259b30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jackpot at 0xf375eccc4e37e0a52da7984a85361b356631d5dd
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.18;
 
 contract Jackpot {
 
@@ -12,7 +12,6 @@ contract Jackpot {
     uint public  winnerLimit = 1;
     uint public JackpotPeriods = 1;
     address public diceRollAddress;
-    uint256 seed;
 
     mapping (uint=>address) public winnerHistory;
     address[] public tempPlayer;
@@ -79,9 +78,8 @@ contract Jackpot {
         jackpotPersent = newPersent;
     }
 
-    function rand() internal returns (uint256) {
-        seed = uint256(keccak256(seed, blockhash(block.number - 1), block.coinbase, block.difficulty));
-        return seed;
+    function rand() internal view returns (uint256) {
+        return uint256(keccak256(msg.sender, blockhash(block.number - 1), block.coinbase, block.difficulty));
     }
 
 
