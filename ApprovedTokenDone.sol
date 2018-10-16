@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xff23f9c35922479c2d8bfe3637c48c2917875878
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x44643c4ae7247851ec0d7d715ca39a4ac8dc6599
 */
 pragma solidity ^0.4.13;
 
@@ -153,10 +153,10 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'KITTIES';
-	string public symbol = 'KITTIES';
-	uint public decimals = 0;
-	uint public initialSupply = 600000000;
+	string public name = 'GREENCHIP';
+	string public symbol = 'GREENCHIP';
+	uint public decimals = 3;
+	uint public initialSupply = 100000000000;
 	string public publishier = 'TokenDone.io';
 	uint public CreationTime;
 	
