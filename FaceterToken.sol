@@ -1,614 +1,325 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FaceterToken at 0x4695c7AC68eb86c1079c7d7D53Af2F42DB8a6799
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FaceterToken at 0x55dab76c74cce8fc64b9f7de91afdfb76eaef7b3
 */
-pragma solidity 0.4.15;
+pragma solidity 0.4.20;
 
-contract RegistryICAPInterface {
-    function parse(bytes32 _icap) constant returns(address, bytes32, bool);
-    function institutions(bytes32 _institution) constant returns(address);
-}
-
-contract EToken2Interface {
-    function registryICAP() constant returns(RegistryICAPInterface);
-    function baseUnit(bytes32 _symbol) constant returns(uint8);
-    function description(bytes32 _symbol) constant returns(string);
-    function owner(bytes32 _symbol) constant returns(address);
-    function isOwner(address _owner, bytes32 _symbol) constant returns(bool);
-    function totalSupply(bytes32 _symbol) constant returns(uint);
-    function balanceOf(address _holder, bytes32 _symbol) constant returns(uint);
-    function isLocked(bytes32 _symbol) constant returns(bool);
-    function issueAsset(bytes32 _symbol, uint _value, string _name, string _description, uint8 _baseUnit, bool _isReissuable) returns(bool);
-    function reissueAsset(bytes32 _symbol, uint _value) returns(bool);
-    function revokeAsset(bytes32 _symbol, uint _value) returns(bool);
-    function setProxy(address _address, bytes32 _symbol) returns(bool);
-    function lockAsset(bytes32 _symbol) returns(bool);
-    function proxyTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
-    function proxyApprove(address _spender, uint _value, bytes32 _symbol, address _sender) returns(bool);
-    function allowance(address _from, address _spender, bytes32 _symbol) constant returns(uint);
-    function proxyTransferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference, address _sender) returns(bool);
-}
-
-contract AssetInterface {
-    function _performTransferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
-    function _performTransferToICAPWithReference(bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
-    function _performApprove(address _spender, uint _value, address _sender) returns(bool);    
-    function _performTransferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
-    function _performTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
-    function _performGeneric(bytes, address) payable {
-        revert();
-    }
-}
-
-contract ERC20Interface {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed from, address indexed spender, uint256 value);
-
-    function totalSupply() constant returns(uint256 supply);
-    function balanceOf(address _owner) constant returns(uint256 balance);
-    function transfer(address _to, uint256 _value) returns(bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool success);
-    function approve(address _spender, uint256 _value) returns(bool success);
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining);
-
-    // function symbol() constant returns(string);
-    function decimals() constant returns(uint8);
-    // function name() constant returns(string);
-}
-
-contract AssetProxyInterface {
-    function _forwardApprove(address _spender, uint _value, address _sender) returns(bool);
-    function _forwardTransferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
-    function _forwardTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
-    function balanceOf(address _owner) constant returns(uint);
-}
-
-contract Bytes32 {
-    function _bytes32(string _input) internal constant returns(bytes32 result) {
-        assembly {
-            result := mload(add(_input, 32))
-        }
-    }
-}
-
-contract ReturnData {
-    function _returnReturnData(bool _success) internal {
-        assembly {
-            let returndatastart := msize()
-            mstore(0x40, add(returndatastart, returndatasize))
-            returndatacopy(returndatastart, 0, returndatasize)
-            switch _success case 0 { revert(returndatastart, returndatasize) } default { return(returndatastart, returndatasize) }
-        }
-    }
-
-    function _assemblyCall(address _destination, uint _value, bytes _data) internal returns(bool success) {
-        assembly {
-            success := call(div(mul(gas, 63), 64), _destination, _value, add(_data, 32), mload(_data), 0, 0)
-        }
-    }
-}
 
 /**
- * @title EToken2 Asset Proxy.
- *
- * Proxy implements ERC20 interface and acts as a gateway to a single EToken2 asset.
- * Proxy adds etoken2Symbol and caller(sender) when forwarding requests to EToken2.
- * Every request that is made by caller first sent to the specific asset implementation
- * contract, which then calls back to be forwarded onto EToken2.
- *
- * Calls flow: Caller ->
- *             Proxy.func(...) ->
- *             Asset._performFunc(..., Caller.address) ->
- *             Proxy._forwardFunc(..., Caller.address) ->
- *             Platform.proxyFunc(..., symbol, Caller.address)
- *
- * Generic call flow: Caller ->
- *             Proxy.unknownFunc(...) ->
- *             Asset._performGeneric(..., Caller.address) ->
- *             Asset.unknownFunc(...)
- *
- * Asset implementation contract is mutable, but each user have an option to stick with
- * old implementation, through explicit decision made in timely manner, if he doesn't agree
- * with new rules.
- * Each user have a possibility to upgrade to latest asset contract implementation, without the
- * possibility to rollback.
- *
- * Note: all the non constant functions return false instead of throwing in case if state change
- * didn't happen yet.
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract FaceterToken is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData {
-    // Assigned EToken2, immutable.
-    EToken2Interface public etoken2;
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    // Assigned symbol, immutable.
-    bytes32 public etoken2Symbol;
 
-    // Assigned name, immutable. For UI.
-    string public name;
-    string public symbol;
 
-    /**
-     * Sets EToken2 address, assigns symbol and name.
-     *
-     * Can be set only once.
-     *
-     * @param _etoken2 EToken2 contract address.
-     * @param _symbol assigned symbol.
-     * @param _name assigned name.
-     *
-     * @return success.
-     */
-    function init(EToken2Interface _etoken2, string _symbol, string _name) returns(bool) {
-        if (address(etoken2) != 0x0) {
-            return false;
-        }
-        etoken2 = _etoken2;
-        etoken2Symbol = _bytes32(_symbol);
-        name = _name;
-        symbol = _symbol;
-        return true;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    /**
-     * Only EToken2 is allowed to call.
-     */
-    modifier onlyEToken2() {
-        if (msg.sender == address(etoken2)) {
-            _;
-        }
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+    Transfer(burner, address(0), _value);
+  }
+}
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-    /**
-     * Only current asset owner is allowed to call.
-     */
-    modifier onlyAssetOwner() {
-        if (etoken2.isOwner(msg.sender, etoken2Symbol)) {
-            _;
-        }
-    }
+}
 
-    /**
-     * Returns asset implementation contract for current caller.
-     *
-     * @return asset implementation contract.
-     */
-    function _getAsset() internal returns(AssetInterface) {
-        return AssetInterface(getVersionFor(msg.sender));
-    }
 
-    function recoverTokens(uint _value) onlyAssetOwner() returns(bool) {
-        return this.transferWithReference(msg.sender, _value, 'Tokens recovery');
-    }
+contract FaceterToken is Ownable, BurnableToken, StandardToken {
+	string public constant name = "TEST1101 Token";
+	string public constant symbol = "TEST1101";
+	uint8 public constant decimals = 18;
 
-    /**
-     * Returns asset total supply.
-     *
-     * @return asset total supply.
-     */
-    function totalSupply() constant returns(uint) {
-        return etoken2.totalSupply(etoken2Symbol);
-    }
+	bool public paused = true;
+	mapping(address => bool) public whitelist;
 
-    /**
-     * Returns asset balance for a particular holder.
-     *
-     * @param _owner holder address.
-     *
-     * @return holder balance.
-     */
-    function balanceOf(address _owner) constant returns(uint) {
-        return etoken2.balanceOf(_owner, etoken2Symbol);
-    }
+	modifier whenNotPaused() {
+		require(!paused || whitelist[msg.sender]);
+		_;
+	}
 
-    /**
-     * Returns asset allowance from one holder to another.
-     *
-     * @param _from holder that allowed spending.
-     * @param _spender holder that is allowed to spend.
-     *
-     * @return holder to spender allowance.
-     */
-    function allowance(address _from, address _spender) constant returns(uint) {
-        return etoken2.allowance(_from, _spender, etoken2Symbol);
-    }
+	function FaceterToken(address holder, address buffer) public {
+		Transfer(address(0), holder, balances[holder] = totalSupply_ = uint256(10)**(9 + decimals));
+		addToWhitelist(holder);
+		addToWhitelist(buffer);
+	}
 
-    /**
-     * Returns asset decimals.
-     *
-     * @return asset decimals.
-     */
-    function decimals() constant returns(uint8) {
-        return etoken2.baseUnit(etoken2Symbol);
-    }
+	function unpause() public onlyOwner {
+		paused = false;
+	}
 
-    /**
-     * Transfers asset balance from the caller to specified receiver.
-     *
-     * @param _to holder address to give to.
-     * @param _value amount to transfer.
-     *
-     * @return success.
-     */
-    function transfer(address _to, uint _value) returns(bool) {
-        return transferWithReference(_to, _value, '');
-    }
+	function addToWhitelist(address addr) public onlyOwner {
+		whitelist[addr] = true;
+	}
 
-    /**
-     * Transfers asset balance from the caller to specified receiver adding specified comment.
-     * Resolves asset implementation contract for the caller and forwards there arguments along with
-     * the caller address.
-     *
-     * @param _to holder address to give to.
-     * @param _value amount to transfer.
-     * @param _reference transfer comment to be included in a EToken2's Transfer event.
-     *
-     * @return success.
-     */
-    function transferWithReference(address _to, uint _value, string _reference) returns(bool) {
-        return _getAsset()._performTransferWithReference(_to, _value, _reference, msg.sender);
-    }
+	function transfer(address to, uint256 value) public whenNotPaused returns (bool) {
+		return super.transfer(to, value);
+	}
 
-    /**
-     * Transfers asset balance from the caller to specified ICAP.
-     *
-     * @param _icap recipient ICAP to give to.
-     * @param _value amount to transfer.
-     *
-     * @return success.
-     */
-    function transferToICAP(bytes32 _icap, uint _value) returns(bool) {
-        return transferToICAPWithReference(_icap, _value, '');
-    }
-
-    /**
-     * Transfers asset balance from the caller to specified ICAP adding specified comment.
-     * Resolves asset implementation contract for the caller and forwards there arguments along with
-     * the caller address.
-     *
-     * @param _icap recipient ICAP to give to.
-     * @param _value amount to transfer.
-     * @param _reference transfer comment to be included in a EToken2's Transfer event.
-     *
-     * @return success.
-     */
-    function transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) returns(bool) {
-        return _getAsset()._performTransferToICAPWithReference(_icap, _value, _reference, msg.sender);
-    }
-
-    /**
-     * Prforms allowance transfer of asset balance between holders.
-     *
-     * @param _from holder address to take from.
-     * @param _to holder address to give to.
-     * @param _value amount to transfer.
-     *
-     * @return success.
-     */
-    function transferFrom(address _from, address _to, uint _value) returns(bool) {
-        return transferFromWithReference(_from, _to, _value, '');
-    }
-
-    /**
-     * Prforms allowance transfer of asset balance between holders adding specified comment.
-     * Resolves asset implementation contract for the caller and forwards there arguments along with
-     * the caller address.
-     *
-     * @param _from holder address to take from.
-     * @param _to holder address to give to.
-     * @param _value amount to transfer.
-     * @param _reference transfer comment to be included in a EToken2's Transfer event.
-     *
-     * @return success.
-     */
-    function transferFromWithReference(address _from, address _to, uint _value, string _reference) returns(bool) {
-        return _getAsset()._performTransferFromWithReference(_from, _to, _value, _reference, msg.sender);
-    }
-
-    /**
-     * Performs transfer call on the EToken2 by the name of specified sender.
-     *
-     * Can only be called by asset implementation contract assigned to sender.
-     *
-     * @param _from holder address to take from.
-     * @param _to holder address to give to.
-     * @param _value amount to transfer.
-     * @param _reference transfer comment to be included in a EToken2's Transfer event.
-     * @param _sender initial caller.
-     *
-     * @return success.
-     */
-    function _forwardTransferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) onlyImplementationFor(_sender) returns(bool) {
-        return etoken2.proxyTransferFromWithReference(_from, _to, _value, etoken2Symbol, _reference, _sender);
-    }
-
-    /**
-     * Prforms allowance transfer of asset balance between holders.
-     *
-     * @param _from holder address to take from.
-     * @param _icap recipient ICAP address to give to.
-     * @param _value amount to transfer.
-     *
-     * @return success.
-     */
-    function transferFromToICAP(address _from, bytes32 _icap, uint _value) returns(bool) {
-        return transferFromToICAPWithReference(_from, _icap, _value, '');
-    }
-
-    /**
-     * Prforms allowance transfer of asset balance between holders adding specified comment.
-     * Resolves asset implementation contract for the caller and forwards there arguments along with
-     * the caller address.
-     *
-     * @param _from holder address to take from.
-     * @param _icap recipient ICAP address to give to.
-     * @param _value amount to transfer.
-     * @param _reference transfer comment to be included in a EToken2's Transfer event.
-     *
-     * @return success.
-     */
-    function transferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) returns(bool) {
-        return _getAsset()._performTransferFromToICAPWithReference(_from, _icap, _value, _reference, msg.sender);
-    }
-
-    /**
-     * Performs allowance transfer to ICAP call on the EToken2 by the name of specified sender.
-     *
-     * Can only be called by asset implementation contract assigned to sender.
-     *
-     * @param _from holder address to take from.
-     * @param _icap recipient ICAP address to give to.
-     * @param _value amount to transfer.
-     * @param _reference transfer comment to be included in a EToken2's Transfer event.
-     * @param _sender initial caller.
-     *
-     * @return success.
-     */
-    function _forwardTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) onlyImplementationFor(_sender) returns(bool) {
-        return etoken2.proxyTransferFromToICAPWithReference(_from, _icap, _value, _reference, _sender);
-    }
-
-    /**
-     * Sets asset spending allowance for a specified spender.
-     * Resolves asset implementation contract for the caller and forwards there arguments along with
-     * the caller address.
-     *
-     * @param _spender holder address to set allowance to.
-     * @param _value amount to allow.
-     *
-     * @return success.
-     */
-    function approve(address _spender, uint _value) returns(bool) {
-        return _getAsset()._performApprove(_spender, _value, msg.sender);
-    }
-
-    /**
-     * Performs allowance setting call on the EToken2 by the name of specified sender.
-     *
-     * Can only be called by asset implementation contract assigned to sender.
-     *
-     * @param _spender holder address to set allowance to.
-     * @param _value amount to allow.
-     * @param _sender initial caller.
-     *
-     * @return success.
-     */
-    function _forwardApprove(address _spender, uint _value, address _sender) onlyImplementationFor(_sender) returns(bool) {
-        return etoken2.proxyApprove(_spender, _value, etoken2Symbol, _sender);
-    }
-
-    /**
-     * Emits ERC20 Transfer event on this contract.
-     *
-     * Can only be, and, called by assigned EToken2 when asset transfer happens.
-     */
-    function emitTransfer(address _from, address _to, uint _value) onlyEToken2() {
-        Transfer(_from, _to, _value);
-    }
-
-    /**
-     * Emits ERC20 Approval event on this contract.
-     *
-     * Can only be, and, called by assigned EToken2 when asset allowance set happens.
-     */
-    function emitApprove(address _from, address _spender, uint _value) onlyEToken2() {
-        Approval(_from, _spender, _value);
-    }
-
-    /**
-     * Resolves asset implementation contract for the caller and forwards there transaction data,
-     * along with the value. This allows for proxy interface growth.
-     */
-    function () payable {
-        _getAsset()._performGeneric.value(msg.value)(msg.data, msg.sender);
-        _returnReturnData(true);
-    }
-
-    // Interface functions to allow specifying ICAP addresses as strings.
-    function transferToICAP(string _icap, uint _value) returns(bool) {
-        return transferToICAPWithReference(_icap, _value, '');
-    }
-
-    function transferToICAPWithReference(string _icap, uint _value, string _reference) returns(bool) {
-        return transferToICAPWithReference(_bytes32(_icap), _value, _reference);
-    }
-
-    function transferFromToICAP(address _from, string _icap, uint _value) returns(bool) {
-        return transferFromToICAPWithReference(_from, _icap, _value, '');
-    }
-
-    function transferFromToICAPWithReference(address _from, string _icap, uint _value, string _reference) returns(bool) {
-        return transferFromToICAPWithReference(_from, _bytes32(_icap), _value, _reference);
-    }
-
-    /**
-     * Indicates an upgrade freeze-time start, and the next asset implementation contract.
-     */
-    event UpgradeProposed(address newVersion);
-    event UpgradePurged(address newVersion);
-    event UpgradeCommited(address newVersion);
-    event OptedOut(address sender, address version);
-    event OptedIn(address sender, address version);
-
-    // Current asset implementation contract address.
-    address latestVersion;
-
-    // Proposed next asset implementation contract address.
-    address pendingVersion;
-
-    // Upgrade freeze-time start.
-    uint pendingVersionTimestamp;
-
-    // Timespan for users to review the new implementation and make decision.
-    uint constant UPGRADE_FREEZE_TIME = 3 days;
-
-    // Asset implementation contract address that user decided to stick with.
-    // 0x0 means that user uses latest version.
-    mapping(address => address) userOptOutVersion;
-
-    /**
-     * Only asset implementation contract assigned to sender is allowed to call.
-     */
-    modifier onlyImplementationFor(address _sender) {
-        if (getVersionFor(_sender) == msg.sender) {
-            _;
-        }
-    }
-
-    /**
-     * Returns asset implementation contract address assigned to sender.
-     *
-     * @param _sender sender address.
-     *
-     * @return asset implementation contract address.
-     */
-    function getVersionFor(address _sender) constant returns(address) {
-        return userOptOutVersion[_sender] == 0 ? latestVersion : userOptOutVersion[_sender];
-    }
-
-    /**
-     * Returns current asset implementation contract address.
-     *
-     * @return asset implementation contract address.
-     */
-    function getLatestVersion() constant returns(address) {
-        return latestVersion;
-    }
-
-    /**
-     * Returns proposed next asset implementation contract address.
-     *
-     * @return asset implementation contract address.
-     */
-    function getPendingVersion() constant returns(address) {
-        return pendingVersion;
-    }
-
-    /**
-     * Returns upgrade freeze-time start.
-     *
-     * @return freeze-time start.
-     */
-    function getPendingVersionTimestamp() constant returns(uint) {
-        return pendingVersionTimestamp;
-    }
-
-    /**
-     * Propose next asset implementation contract address.
-     *
-     * Can only be called by current asset owner.
-     *
-     * Note: freeze-time should not be applied for the initial setup.
-     *
-     * @param _newVersion asset implementation contract address.
-     *
-     * @return success.
-     */
-    function proposeUpgrade(address _newVersion) onlyAssetOwner() returns(bool) {
-        // Should not already be in the upgrading process.
-        if (pendingVersion != 0x0) {
-            return false;
-        }
-        // New version address should be other than 0x0.
-        if (_newVersion == 0x0) {
-            return false;
-        }
-        // Don't apply freeze-time for the initial setup.
-        if (latestVersion == 0x0) {
-            latestVersion = _newVersion;
-            return true;
-        }
-        pendingVersion = _newVersion;
-        pendingVersionTimestamp = now;
-        UpgradeProposed(_newVersion);
-        return true;
-    }
-
-    /**
-     * Cancel the pending upgrade process.
-     *
-     * Can only be called by current asset owner.
-     *
-     * @return success.
-     */
-    function purgeUpgrade() onlyAssetOwner() returns(bool) {
-        if (pendingVersion == 0x0) {
-            return false;
-        }
-        UpgradePurged(pendingVersion);
-        delete pendingVersion;
-        delete pendingVersionTimestamp;
-        return true;
-    }
-
-    /**
-     * Finalize an upgrade process setting new asset implementation contract address.
-     *
-     * Can only be called after an upgrade freeze-time.
-     *
-     * @return success.
-     */
-    function commitUpgrade() returns(bool) {
-        if (pendingVersion == 0x0) {
-            return false;
-        }
-        if (pendingVersionTimestamp + UPGRADE_FREEZE_TIME > now) {
-            return false;
-        }
-        latestVersion = pendingVersion;
-        delete pendingVersion;
-        delete pendingVersionTimestamp;
-        UpgradeCommited(latestVersion);
-        return true;
-    }
-
-    /**
-     * Disagree with proposed upgrade, and stick with current asset implementation
-     * until further explicit agreement to upgrade.
-     *
-     * @return success.
-     */
-    function optOut() returns(bool) {
-        if (userOptOutVersion[msg.sender] != 0x0) {
-            return false;
-        }
-        userOptOutVersion[msg.sender] = latestVersion;
-        OptedOut(msg.sender, latestVersion);
-        return true;
-    }
-
-    /**
-     * Implicitly agree to upgrade to current and future asset implementation upgrades,
-     * until further explicit disagreement.
-     *
-     * @return success.
-     */
-    function optIn() returns(bool) {
-        delete userOptOutVersion[msg.sender];
-        OptedIn(msg.sender, latestVersion);
-        return true;
-    }
-
-    // Backwards compatibility.
-    function multiAsset() constant returns(EToken2Interface) {
-        return etoken2;
-    }
+	function transferFrom(address from, address to, uint256 value) public whenNotPaused returns (bool) {
+		return super.transferFrom(from, to, value);
+	}
 }
