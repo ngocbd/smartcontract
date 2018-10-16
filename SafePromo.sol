@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafePromo at 0xa567ac6585682e9d36aae3a4219f572e5eeb3d24
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafePromo at 0x2077db08d450d842189b94dea8e3eb95980a8b61
 */
 /*                   -:////:-.                    
               `:ohmMMMMMMMMMMMMmho:`              
            `+hMMMMMMMMMMMMMMMMMMMMMMh+`           
          .yMMMMMMMmyo/:----:/oymMMMMMMMy.         
        `sMMMMMMy/`              `/yMMMMMMs`       
-      -NMMMMNo`    ./sydddhys/.    `oNMMMMN-        *** End-to-End Encrypted Email & File Storage ***
+      -NMMMMNo`    ./sydddhys/.    `oNMMMMN-        *** Secure Email & File Storage for Ethereum Community ***
      /MMMMMy`   .sNMMMMMMMMMMMMmo.   `yMMMMM/       
-    :MMMMM+   `yMMMMMMNmddmMMMMMMMs`   +MMMMM:      SAFE TOKENS SALE IS IN PROGRESS!
+    :MMMMM+   `yMMMMMMNmddmMMMMMMMs`   +MMMMM:      'SAFE' TOKENS SALE IS IN PROGRESS!
     mMMMMo   .NMMMMNo-  ``  -sNMMMMm.   oMMMMm      
    /MMMMm   `mMMMMy`  `hMMm:  `hMMMMm    mMMMM/     https://safe.ad
    yMMMMo   +MMMMd    .NMMM+    mMMMM/   oMMMMy     
-   hMMMM/   sMMMMs     :MMy     yMMMMo   /MMMMh     Live project with thousands active users!
+   hMMMM/   sMMMMs     :MMy     yMMMMo   /MMMMh     Live project with thousands of active users!
    yMMMMo   +MMMMd     yMMN`   `mMMMM:   oMMMMy   
-   /MMMMm   `mMMMMh`  `MMMM/   +MMMMd    mMMMM/     In late 2018 Safe services will be paid by SAFE tokens only!
+   /MMMMm   `mMMMMh`  `MMMM/   +MMMMd    mMMMM/     In late 2018 Safe services will be paid by 'SAFE' tokens only!
     mMMMMo   .mMMMMNs-`'`'`    /MMMMm- `sMMMMm    
     :MMMMM+   `sMMMMMMMmmmmy.   hMMMMMMMMMMMN-      
      /MMMMMy`   .omMMMMMMMMMy    +mMMMMMMMMy.     
@@ -28,7 +28,7 @@
 
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 contract SafePromo {
 
@@ -47,8 +47,8 @@ contract SafePromo {
 
 		for(uint256 i = 0; i < _recipients.length; i++){
 
-			_recipients[i].transfer(77777777777);
-			emit Transfer(address(this), _recipients[i], 777777777777);
+			_recipients[i].transfer(7777777777);
+			emit Transfer(address(this), _recipients[i], 77777777777);
 
 		}
 
