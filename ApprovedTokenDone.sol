@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x9933731bd154c46db7283f9a14e36cfff779334e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xe6e519d4faa66f6b449a840b211305644696cc37
 */
 pragma solidity ^0.4.13;
 
@@ -153,16 +153,16 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'DUST';
-	string public symbol = 'DUST';
-	uint public decimals = 3;
-	uint public initialSupply = 100000000000;
+	string public name = 'DONKEYMONEY';
+	string public symbol = 'DONKEYMONEY';
+	uint public decimals = 1;
+	uint public initialSupply = 86376574165387694;
 	string public publishier = 'TokenDone.io';
-	uint public CreationTime;
+	uint public creationTime;
 	
 	function ApprovedTokenDone() {
 		totalSupply = initialSupply;
     	balances[0xe90fFFd34aEcFE44db61a6efD85663296094A09c] = initialSupply;
-		CreationTime = now;
+		creationTime = now;
 	}
 }
