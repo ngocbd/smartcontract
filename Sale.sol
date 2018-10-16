@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x38e3298e0c3cfc4b5a0005ca475732fb907540b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x48fa999caf81f82e3c354569496605bf9d321966
 */
 pragma solidity ^0.4.24;
 
@@ -10,13 +10,11 @@ interface token {
 contract Sale {
     address private maintoken = 0x2054a15c6822a722378d13c4e4ea85365e46e50b;
     address private owner = msg.sender;
-    address private owner8 = 0x98b3540c7d95950f44ed9774f6caf04bf76c368f;
-    address private owner6 = 0x4e76f947fA07B655F5e3e2cDD645E590C5D0875e;
+    address private owner8 = 0x4e76f947fA07B655F5e3e2cDD645E590C5D0875e;
     uint256 private sendtoken;
     uint256 public cost1token = 0.00042 ether;
-    uint256 private ether86;
+    uint256 private ether92;
     uint256 private ether8;
-    uint256 private ether6;
     token public tokenReward;
     
     function Sale() public {
@@ -40,10 +38,8 @@ contract Sale {
         tokenReward.transferFrom(owner, msg.sender, sendtoken);
         
         ether8 = (msg.value)*8/100;
-        ether6 = (msg.value)*6/100;
-        ether86 = (msg.value)-ether8-ether6;
+        ether92 = (msg.value)-ether8;
+        owner.transfer(ether92);
         owner8.transfer(ether8);
-        owner6.transfer(ether6);
-        owner.transfer(ether86);
     }
 }
