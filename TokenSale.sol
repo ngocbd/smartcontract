@@ -1,36 +1,63 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x4b8007bc4e1efd3ef9b553d68a1f5b111730c49c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xf7d24c5e3dcaa07f942f1c307361cdcaacc3e05c
 */
 pragma solidity ^0.4.13;
 
-contract Ownable {
-  address public owner;
+contract Controllable {
+  address public controller;
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
    */
-  function Ownable() {
-    owner = msg.sender;
+  function Controllable() public {
+    controller = msg.sender;
   }
 
   /**
    * @dev Throws if called by any account other than the owner.
    */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
+  modifier onlyController() {
+    require(msg.sender == controller);
     _;
   }
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param newController The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+  function transferControl(address newController) public onlyController {
+    if (newController != address(0)) {
+      controller = newController;
     }
   }
+
+}
+
+contract ProofTokenInterface is Controllable {
+
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+  event ClaimedTokens(address indexed _token, address indexed _owner, uint _amount);
+  event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+
+  function totalSupply() public constant returns (uint);
+  function totalSupplyAt(uint _blockNumber) public constant returns(uint);
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function balanceOfAt(address _owner, uint _blockNumber) public constant returns (uint);
+  function transfer(address _to, uint256 _amount) public returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success);
+  function approve(address _spender, uint256 _amount) public returns (bool success);
+  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+  function mint(address _owner, uint _amount) public returns (bool);
+  function importPresaleBalances(address[] _addresses, uint256[] _balances, address _presaleAddress) public returns (bool);
+  function lockPresaleBalances() public returns (bool);
+  function finishMinting() public returns (bool);
+  function enableTransfers(bool _transfersEnabled) public;
+  function createCloneToken(uint _snapshotBlock, string _cloneTokenName, string _cloneTokenSymbol) public returns (address);
 
 }
 
@@ -60,13 +87,44 @@ library SafeMath {
   }
 }
 
+contract Ownable {
+  address public owner;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+}
+
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
 
   bool public paused = false;
 
-  function Pausable() {}
+  function Pausable() public {}
 
   /**
    * @dev modifier to allow actions only when the contract IS paused
@@ -87,7 +145,7 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to pause, triggers stopped state
    */
-  function pause() onlyOwner whenNotPaused returns (bool) {
+  function pause() public onlyOwner whenNotPaused returns (bool) {
     paused = true;
     Pause();
     return true;
@@ -96,7 +154,7 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to unpause, returns to normal state
    */
-  function unpause() onlyOwner whenPaused returns (bool) {
+  function unpause() public onlyOwner whenPaused returns (bool) {
     paused = false;
     Unpause();
     return true;
@@ -108,19 +166,19 @@ contract TokenSale is Pausable {
   using SafeMath for uint256;
 
   ProofTokenInterface public proofToken;
-  uint256 public weiRaised;
-  uint256 public rate;
+  uint256 public totalWeiRaised;
+  uint256 public tokensMinted;
+  uint256 public totalSupply;
   uint256 public contributors;
   uint256 public decimalsMultiplier;
-  uint256 public startBlock;
-  uint256 public endBlock;
+  uint256 public startTime;
+  uint256 public endTime;
   uint256 public remainingTokens;
   uint256 public allocatedTokens;
   bool public finalized;
 
   uint256 public constant BASE_PRICE_IN_WEI = 88000000000000000;
 
-  uint256 public constant TOTAL_TOKENS = 2 * 1181031 * (10 ** 18);
   uint256 public constant PUBLIC_TOKENS = 1181031 * (10 ** 18);
   uint256 public constant TOTAL_PRESALE_TOKENS = 112386712924725508802400;
   uint256 public constant TOKENS_ALLOCATED_TO_PROOF = 1181031 * (10 ** 18);
@@ -149,14 +207,14 @@ contract TokenSale is Pausable {
 
   function TokenSale(
     address _tokenAddress,
-    uint256 _startBlock,
-    uint256 _endBlock) {
+    uint256 _startTime,
+    uint256 _endTime) public {
     require(_tokenAddress != 0x0);
-    require(_startBlock > 0);
-    require(_endBlock > _startBlock);
+    require(_startTime > 0);
+    require(_endTime > _startTime);
 
-    startBlock = _startBlock;
-    endBlock = _endBlock;
+    startTime = _startTime;
+    endTime = _endTime;
     proofToken = ProofTokenInterface(_tokenAddress);
 
     decimalsMultiplier = (10 ** 18);
@@ -166,27 +224,30 @@ contract TokenSale is Pausable {
   /**
    * High level token purchase function
    */
-  function() payable {
+  function() public payable {
     buyTokens(msg.sender);
   }
 
   /**
    * Low level token purchase function
-   * @param beneficiary will receive the tokens.
+   * @param _beneficiary will receive the tokens.
    */
-  function buyTokens(address beneficiary) payable whenNotPaused whenNotFinalized {
-    require(beneficiary != 0x0);
+  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
+    require(_beneficiary != 0x0);
     require(validPurchase());
 
     uint256 weiAmount = msg.value;
     uint256 priceInWei = getPriceInWei();
+    totalWeiRaised = totalWeiRaised.add(weiAmount);
+
     uint256 tokens = weiAmount.mul(decimalsMultiplier).div(priceInWei);
+    tokensMinted = tokensMinted.add(tokens);
+    require(tokensMinted < tokenCap);
 
-    weiRaised = weiRaised.add(weiAmount);
     contributors = contributors.add(1);
-    proofToken.mint(beneficiary, tokens);
 
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    proofToken.mint(_beneficiary, tokens);
+    TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
     forwardFunds();
   }
 
@@ -195,15 +256,15 @@ contract TokenSale is Pausable {
    * Get the price in wei for current premium
    * @return price
    */
-  function getPriceInWei() public returns (uint256) {
+  function getPriceInWei() constant public returns (uint256) {
 
     uint256 price;
 
-    if (weiRaised < firstCheckpoint) {
+    if (totalWeiRaised < firstCheckpoint) {
       price = firstCheckpointPrice;
-    } else if (weiRaised < secondCheckpoint) {
+    } else if (totalWeiRaised < secondCheckpoint) {
       price = secondCheckpointPrice;
-    } else if (weiRaised < thirdCheckpoint) {
+    } else if (totalWeiRaised < thirdCheckpoint) {
       price = thirdCheckpointPrice;
     } else {
       price = BASE_PRICE_IN_WEI;
@@ -224,14 +285,12 @@ contract TokenSale is Pausable {
   * Validates the purchase (period, minimum amount, within cap)
   * @return {bool} valid
   */
-  function validPurchase() internal returns (bool) {
-    uint256 current = block.number;
-    bool withinPeriod = current >= startBlock && current <= endBlock;
-    uint256 weiAmount = weiRaised.add(msg.value);
+  function validPurchase() internal constant returns (bool) {
+    uint256 current = now;
+    bool withinPeriod = current >= startTime && current <= endTime;
     bool nonZeroPurchase = msg.value != 0;
-    bool withinCap = cap.mul(BASE_PRICE_IN_WEI) >= weiAmount;
 
-    return withinCap && nonZeroPurchase && withinPeriod;
+    return nonZeroPurchase && withinPeriod;
   }
 
   /**
@@ -287,6 +346,11 @@ contract TokenSale is Pausable {
     proofToken.transferControl(_newController);
   }
 
+
+  function enableTransfers(bool _transfersEnabled) public onlyOwner {
+    proofToken.enableTransfers(_transfersEnabled);
+  }
+
   /**
   * Allocates Proof tokens to the given Proof Token wallet
   * @param _tokens {uint256}
@@ -298,10 +362,11 @@ contract TokenSale is Pausable {
   /**
   * Finalize the token sale (can only be called by owner)
   */
-  function finalize() onlyOwner {
+  function finalize() public onlyOwner {
     require(paused);
 
     proofToken.finishMinting();
+    proofToken.enableTransfers(true);
     Finalized();
 
     finalized = true;
@@ -311,64 +376,5 @@ contract TokenSale is Pausable {
     require(!paused);
     _;
   }
-
-}
-
-contract Controllable {
-  address public controller;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
-   */
-  function Controllable() {
-    controller = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyController() {
-    require(msg.sender == controller);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newController The address to transfer ownership to.
-   */
-  function transferControl(address newController) onlyController {
-    if (newController != address(0)) {
-      controller = newController;
-    }
-  }
-
-}
-
-contract ProofTokenInterface is Controllable {
-
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-  event ClaimedTokens(address indexed _token, address indexed _owner, uint _amount);
-  event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-
-  function totalSupply() constant returns (uint);
-  function totalSupplyAt(uint _blockNumber) constant returns(uint);
-  function balanceOf(address _owner) constant returns (uint256 balance);
-  function balanceOfAt(address _owner, uint _blockNumber) constant returns (uint);
-  function transfer(address _to, uint256 _amount) returns (bool success);
-  function transferFrom(address _from, address _to, uint256 _amount) returns (bool success);
-  function doTransfer(address _from, address _to, uint _amount) internal returns(bool);
-  function approve(address _spender, uint256 _amount) returns (bool success);
-  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) returns (bool success);
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-  function mint(address _owner, uint _amount) returns (bool);
-  function importPresaleBalances(address[] _addresses, uint256[] _balances, address _presaleAddress) returns (bool);
-  function lockPresaleBalances() returns (bool);
-  function finishMinting() returns (bool);
-  function enableTransfers(bool _transfersEnabled);
-  function createCloneToken(uint _snapshotBlock, string _cloneTokenName, string _cloneTokenSymbol) returns (address);
 
 }
