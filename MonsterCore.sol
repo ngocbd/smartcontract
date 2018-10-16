@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MonsterCore at 0x5dbd2e33f4aceeefba9d7d542913ba3e82216b7b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MonsterCore at 0xec8e410316bd8d45cf660fdfd1fbd9eeafe9ed6c
 */
 pragma solidity ^0.4.11;
 
@@ -131,17 +131,17 @@ contract ClockAuctionBase {
 
     // Represents an auction on an NFT
     struct Auction {
-    // Current owner of NFT
-    address seller;
-    // Price (in wei) at beginning of auction
-    uint128 startingPrice;
-    // Price (in wei) at end of auction
-    uint128 endingPrice;
-    // Duration (in seconds) of auction
-    uint64 duration;
-    // Time when auction started
-    // NOTE: 0 if this auction has been concluded
-    uint64 startedAt;
+        // Current owner of NFT
+        address seller;
+        // Price (in wei) at beginning of auction
+        uint128 startingPrice;
+        // Price (in wei) at end of auction
+        uint128 endingPrice;
+        // Duration (in seconds) of auction
+        uint64 duration;
+        // Time when auction started
+        // NOTE: 0 if this auction has been concluded
+        uint64 startedAt;
     }
 
     // Reference to contract tracking NFT ownership
@@ -195,10 +195,10 @@ contract ClockAuctionBase {
         tokenIdToAuction[_tokenId] = _auction;
 
         AuctionCreated(
-        uint256(_tokenId),
-        uint256(_auction.startingPrice),
-        uint256(_auction.endingPrice),
-        uint256(_auction.duration)
+            uint256(_tokenId),
+            uint256(_auction.startingPrice),
+            uint256(_auction.endingPrice),
+            uint256(_auction.duration)
         );
     }
 
@@ -303,10 +303,10 @@ contract ClockAuctionBase {
         }
 
         return _computeCurrentPrice(
-        _auction.startingPrice,
-        _auction.endingPrice,
-        _auction.duration,
-        secondsPassed
+            _auction.startingPrice,
+            _auction.endingPrice,
+            _auction.duration,
+            secondsPassed
         );
     }
 
@@ -315,10 +315,10 @@ contract ClockAuctionBase {
     ///  When testing, make this function public and turn on
     ///  `Current price computation` test suite.
     function _computeCurrentPrice(
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration,
-    uint256 _secondsPassed
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration,
+        uint256 _secondsPassed
     )
     internal
     pure
@@ -400,8 +400,8 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         address nftAddress = address(nonFungibleContract);
 
         require(
-        msg.sender == owner ||
-        msg.sender == nftAddress
+            msg.sender == owner ||
+            msg.sender == nftAddress
         );
         // We are using this boolean method to make sure that even if one fails it will still work
         nftAddress.transfer(this.balance);
@@ -415,11 +415,11 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  price and ending price (in seconds).
     /// @param _seller - Seller, if not the message sender
     function createAuction(
-    uint256 _tokenId,
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration,
-    address _seller
+        uint256 _tokenId,
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration,
+        address _seller
     )
     external
     whenNotPaused
@@ -433,11 +433,11 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         require(_owns(msg.sender, _tokenId));
         _escrow(msg.sender, _tokenId);
         Auction memory auction = Auction(
-        _seller,
-        uint128(_startingPrice),
-        uint128(_endingPrice),
-        uint64(_duration),
-        uint64(now)
+            _seller,
+            uint128(_startingPrice),
+            uint128(_endingPrice),
+            uint64(_duration),
+            uint64(now)
         );
         _addAuction(_tokenId, auction);
     }
@@ -491,11 +491,11 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     view
     returns
     (
-    address seller,
-    uint256 startingPrice,
-    uint256 endingPrice,
-    uint256 duration,
-    uint256 startedAt
+        address seller,
+        uint256 startingPrice,
+        uint256 endingPrice,
+        uint256 duration,
+        uint256 startedAt
     ) {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -1069,7 +1069,7 @@ contract GeneScience {
 
     }
 
-    function sqrt(uint256 x) public pure returns (uint256 y) {
+    function sqrt(uint256 x) internal pure returns (uint256 y) {
         uint256 z = (x + 1) / 2;
         y = x;
         while (z < y) {
@@ -1083,21 +1083,21 @@ contract GeneScience {
         var a = uint32((genes >> 8) & 0xFF);
         var d = uint32((genes >> 16) & 0xFF);
         var s = uint32((genes >> 24) & 0xFF);
-        //      var gender = uint32((genes >> 32) & 0x1);
+//      var gender = uint32((genes >> 32) & 0x1);
         var bgColor = uint8((genes >> 33) & 0xFF);
         var (ra, rd, rs) = getBaseStats(code);
 
 
         max_cp = uint32(sqrt(uint256(ra + a) * uint256(ra + a) * uint256(rd + d) * uint256(rs + s) * 3900927938993281/10000000000000000 / 100));
         if(max_cp < 10)
-        max_cp = 10;
+            max_cp = 10;
 
         if(generation < 10)
-        max_cp += (10 - generation) * 50;
+            max_cp += (10 - generation) * 50;
 
         // bgColor
         if(bgColor >= 8)
-        bgColor = 0;
+            bgColor = 0;
 
         max_cp += bgColor * 25;
         return max_cp;
@@ -1126,15 +1126,15 @@ contract GeneScience {
     function mixGenes(uint256 genes1, uint256 genes2, uint256 targetBlock) public returns (uint256) {
 
         uint8 code;
-        var r = random(3);
+        var r = random(10);
 
-        // 60 percent of parents DNA
+        // 20% percent of parents DNA
         if(r == 0)
-        code = getCode(genes1);
+            code = getCode(genes1);
         else if(r == 1)
-        code = getCode(genes2);
+            code = getCode(genes2);
         else
-        code = randomCode();
+            code = randomCode();
 
         // 70% percent of parents DNA
         var attack = random(3) == 0 ? uint8(random(32)) : uint8(randomBetween(getAttack(genes1), getAttack(genes2)));
@@ -1174,7 +1174,6 @@ contract GeneScience {
     }
 }
 
-
 /// @title Clock auction modified for sale of monsters
 /// @notice We omit a fallback function to prevent accidental sends to this contract.
 contract SaleClockAuction is ClockAuction {
@@ -1198,11 +1197,11 @@ contract SaleClockAuction is ClockAuction {
     /// @param _duration - Length of auction (in seconds).
     /// @param _seller - Seller, if not the message sender
     function createAuction(
-    uint256 _tokenId,
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration,
-    address _seller
+        uint256 _tokenId,
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration,
+        address _seller
     )
     external
     {
@@ -1215,11 +1214,11 @@ contract SaleClockAuction is ClockAuction {
         require(msg.sender == address(nonFungibleContract));
         _escrow(_seller, _tokenId);
         Auction memory auction = Auction(
-        _seller,
-        uint128(_startingPrice),
-        uint128(_endingPrice),
-        uint64(_duration),
-        uint64(now)
+            _seller,
+            uint128(_startingPrice),
+            uint128(_endingPrice),
+            uint64(_duration),
+            uint64(now)
         );
         _addAuction(_tokenId, auction);
     }
@@ -1253,8 +1252,6 @@ contract SaleClockAuction is ClockAuction {
 
 }
 
-
-
 /// @title Reverse auction modified for siring
 /// @notice We omit a fallback function to prevent accidental sends to this contract.
 contract SiringClockAuction is ClockAuction {
@@ -1275,11 +1272,11 @@ contract SiringClockAuction is ClockAuction {
     /// @param _duration - Length of auction (in seconds).
     /// @param _seller - Seller, if not the message sender
     function createAuction(
-    uint256 _tokenId,
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration,
-    address _seller
+        uint256 _tokenId,
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration,
+        address _seller
     )
     external
     {
@@ -1292,11 +1289,11 @@ contract SiringClockAuction is ClockAuction {
         require(msg.sender == address(nonFungibleContract));
         _escrow(_seller, _tokenId);
         Auction memory auction = Auction(
-        _seller,
-        uint128(_startingPrice),
-        uint128(_endingPrice),
-        uint64(_duration),
-        uint64(now)
+            _seller,
+            uint128(_startingPrice),
+            uint128(_endingPrice),
+            uint64(_duration),
+            uint64(now)
         );
         _addAuction(_tokenId, auction);
     }
@@ -1378,9 +1375,9 @@ contract MonsterAccessControl {
 
     modifier onlyCLevel() {
         require(
-        msg.sender == cooAddress ||
-        msg.sender == ceoAddress ||
-        msg.sender == cfoAddress
+            msg.sender == cooAddress ||
+            msg.sender == ceoAddress ||
+            msg.sender == cfoAddress
         );
         _;
     }
@@ -1466,46 +1463,46 @@ contract MonsterBase is MonsterAccessControl {
     ///  is important because of the byte-packing rules used by Ethereum.
     ///  Ref: http://solidity.readthedocs.io/en/develop/miscellaneous.html
     struct Monster {
-    // The Monster's genetic code is packed into these 256-bits, the format is
-    // sooper-sekret! A monster's genes never change.
-    uint256 genes;
+        // The Monster's genetic code is packed into these 256-bits, the format is
+        // sooper-sekret! A monster's genes never change.
+        uint256 genes;
 
-    // The timestamp from the block when this monster came into existence.
-    uint64 birthTime;
+        // The timestamp from the block when this monster came into existence.
+        uint64 birthTime;
 
-    // The minimum timestamp after which this monster can engage in breeding
-    // activities again. This same timestamp is used for the pregnancy
-    // timer (for matrons) as well as the siring cooldown.
-    uint64 cooldownEndBlock;
+        // The minimum timestamp after which this monster can engage in breeding
+        // activities again. This same timestamp is used for the pregnancy
+        // timer (for matrons) as well as the siring cooldown.
+        uint64 cooldownEndBlock;
 
-    // The ID of the parents of this monster, set to 0 for gen0 monsters.
-    // Note that using 32-bit unsigned integers limits us to a "mere"
-    // 4 billion monsters. This number might seem small until you realize
-    // that Ethereum currently has a limit of about 500 million
-    // transactions per year! So, this definitely won't be a problem
-    // for several years (even as Ethereum learns to scale).
-    uint32 matronId;
-    uint32 sireId;
+        // The ID of the parents of this monster, set to 0 for gen0 monsters.
+        // Note that using 32-bit unsigned integers limits us to a "mere"
+        // 4 billion monsters. This number might seem small until you realize
+        // that Ethereum currently has a limit of about 500 million
+        // transactions per year! So, this definitely won't be a problem
+        // for several years (even as Ethereum learns to scale).
+        uint32 matronId;
+        uint32 sireId;
 
-    // Set to the ID of the sire monster for matrons that are pregnant,
-    // zero otherwise. A non-zero value here is how we know a monster
-    // is pregnant. Used to retrieve the genetic material for the new
-    // monster when the birth transpires.
-    uint32 siringWithId;
+        // Set to the ID of the sire monster for matrons that are pregnant,
+        // zero otherwise. A non-zero value here is how we know a monster
+        // is pregnant. Used to retrieve the genetic material for the new
+        // monster when the birth transpires.
+        uint32 siringWithId;
 
-    // Set to the index in the cooldown array (see below) that represents
-    // the current cooldown duration for this Monster. This starts at zero
-    // for gen0 monsters, and is initialized to floor(generation/2) for others.
-    // Incremented by one for each successful breeding action, regardless
-    // of whether this monster is acting as matron or sire.
-    uint16 cooldownIndex;
+        // Set to the index in the cooldown array (see below) that represents
+        // the current cooldown duration for this Monster. This starts at zero
+        // for gen0 monsters, and is initialized to floor(generation/2) for others.
+        // Incremented by one for each successful breeding action, regardless
+        // of whether this monster is acting as matron or sire.
+        uint16 cooldownIndex;
 
-    // The "generation number" of this monster. Monsters minted by the CK contract
-    // for sale are called "gen0" and have a generation number of 0. The
-    // generation number of all other monsters is the larger of the two generation
-    // numbers of their parents, plus one.
-    // (i.e. max(matron.generation, sire.generation) + 1)
-    uint16 generation;
+        // The "generation number" of this monster. Monsters minted by the CK contract
+        // for sale are called "gen0" and have a generation number of 0. The
+        // generation number of all other monsters is the larger of the two generation
+        // numbers of their parents, plus one.
+        // (i.e. max(matron.generation, sire.generation) + 1)
+        uint16 generation;
     }
 
     /*** CONSTANTS ***/
@@ -1604,11 +1601,11 @@ contract MonsterBase is MonsterAccessControl {
     /// @param _genes The monster's genetic code.
     /// @param _owner The inital owner of this monster, must be non-zero (except for the unMonster, ID 0)
     function _createMonster(
-    uint256 _matronId,
-    uint256 _sireId,
-    uint256 _generation,
-    uint256 _genes,
-    address _owner
+        uint256 _matronId,
+        uint256 _sireId,
+        uint256 _generation,
+        uint256 _genes,
+        address _owner
     )
     internal
     returns (uint)
@@ -1628,15 +1625,15 @@ contract MonsterBase is MonsterAccessControl {
         }
 
         Monster memory _monster = Monster({
-        genes : _genes,
-        birthTime : uint64(now),
-        cooldownEndBlock : 0,
-        matronId : uint32(_matronId),
-        sireId : uint32(_sireId),
-        siringWithId : 0,
-        cooldownIndex : cooldownIndex,
-        generation : uint16(_generation)
-        });
+            genes : _genes,
+            birthTime : uint64(now),
+            cooldownEndBlock : 0,
+            matronId : uint32(_matronId),
+            sireId : uint32(_sireId),
+            siringWithId : 0,
+            cooldownIndex : cooldownIndex,
+            generation : uint16(_generation)
+            });
         uint256 newKittenId = monsters.push(_monster) - 1;
 
         // It's probably never going to happen, 4 billion monsters is A LOT, but
@@ -1645,12 +1642,12 @@ contract MonsterBase is MonsterAccessControl {
 
         // emit the birth event
         Birth(
-        _owner,
-        newKittenId,
-        uint256(_monster.matronId),
-        uint256(_monster.sireId),
-        _monster.genes,
-        uint16(_generation)
+            _owner,
+            newKittenId,
+            uint256(_monster.matronId),
+            uint256(_monster.sireId),
+            _monster.genes,
+            uint16(_generation)
         );
 
         // This will assign ownership, and also emit the Transfer event as
@@ -1780,8 +1777,8 @@ contract MonsterOwnership is MonsterBase, ERC721 {
     /// @param _tokenId The ID of the Monster to transfer.
     /// @dev Required for ERC-721 compliance.
     function transfer(
-    address _to,
-    uint256 _tokenId
+        address _to,
+        uint256 _tokenId
     )
     external
     whenNotPaused
@@ -1801,7 +1798,7 @@ contract MonsterOwnership is MonsterBase, ERC721 {
         // You can only send your own monster.
         require(_owns(msg.sender, _tokenId));
 
-        // Reassign ownership, clear pending approvals, emit Transfer event.
+            // Reassign ownership, clear pending approvals, emit Transfer event.
         _transfer(msg.sender, _to, _tokenId);
     }
 
@@ -1812,8 +1809,8 @@ contract MonsterOwnership is MonsterBase, ERC721 {
     /// @param _tokenId The ID of the Monster that can be transferred if this call succeeds.
     /// @dev Required for ERC-721 compliance.
     function approve(
-    address _to,
-    uint256 _tokenId
+        address _to,
+        uint256 _tokenId
     )
     external
     whenNotPaused
@@ -1836,9 +1833,9 @@ contract MonsterOwnership is MonsterBase, ERC721 {
     /// @param _tokenId The ID of the Monster to be transferred.
     /// @dev Required for ERC-721 compliance.
     function transferFrom(
-    address _from,
-    address _to,
-    uint256 _tokenId
+        address _from,
+        address _to,
+        uint256 _tokenId
     )
     external
     whenNotPaused
@@ -1914,7 +1911,7 @@ contract MonsterOwnership is MonsterBase, ERC721 {
         // Copy word-length chunks while possible
         for (; _len >= 32; _len -= 32) {
             assembly {
-            mstore(_dest, mload(_src))
+                mstore(_dest, mload(_src))
             }
             _dest += 32;
             _src += 32;
@@ -1923,9 +1920,9 @@ contract MonsterOwnership is MonsterBase, ERC721 {
         // Copy remaining bytes
         uint256 mask = 256 ** (32 - _len) - 1;
         assembly {
-        let srcpart := and(mload(_src), not(mask))
-        let destpart := and(mload(_dest), mask)
-        mstore(_dest, or(destpart, srcpart))
+            let srcpart := and(mload(_src), not(mask))
+            let destpart := and(mload(_dest), mask)
+            mstore(_dest, or(destpart, srcpart))
         }
     }
 
@@ -1938,8 +1935,8 @@ contract MonsterOwnership is MonsterBase, ERC721 {
         uint256 bytesPtr;
 
         assembly {
-        outputPtr := add(outputString, 32)
-        bytesPtr := _rawBytes
+            outputPtr := add(outputString, 32)
+            bytesPtr := _rawBytes
         }
 
         _memcpy(outputPtr, bytesPtr, _stringLength);
@@ -2088,10 +2085,10 @@ contract MonsterBreeding is MonsterOwnership {
     /// @param _sire A reference to the Monster struct of the potential sire.
     /// @param _sireId The sire's ID
     function _isValidMatingPair(
-    Monster storage _matron,
-    uint256 _matronId,
-    Monster storage _sire,
-    uint256 _sireId
+        Monster storage _matron,
+        uint256 _matronId,
+        Monster storage _sire,
+        uint256 _sireId
     )
     private
     view
@@ -2231,11 +2228,11 @@ contract MonsterBreeding is MonsterOwnership {
 
         // Test that these monsters are a valid mating pair.
         require(_isValidMatingPair(
-        matron,
-        _matronId,
-        sire,
-        _sireId
-        ));
+                matron,
+                _matronId,
+                sire,
+                _sireId
+            ));
 
         // All checks passed, monster gets pregnant!
         _breedWith(_matronId, _sireId);
@@ -2251,14 +2248,12 @@ contract MonsterBreeding is MonsterOwnership {
     ///  are willing to pay the gas!), but the new monster always goes to the mother's owner.
     function giveBirth(uint256 _matronId)
     external
+    onlyCOO
     whenNotPaused
     returns (uint256)
     {
         // Grab a reference to the matron in storage.
         Monster storage matron = monsters[_matronId];
-
-        // Check that the matron's owner.
-        require(_owns(msg.sender, _matronId));
 
         // Check that the matron is a valid monster.
         require(matron.birthTime != 0);
@@ -2347,10 +2342,10 @@ contract MonsterAuction is MonsterBreeding {
     /// @dev Put a monster up for auction.
     ///  Does some ownership trickery to create auctions in one tx.
     function createSaleAuction(
-    uint256 _monsterId,
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration
+        uint256 _monsterId,
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration
     )
     external
     whenNotPaused
@@ -2367,11 +2362,11 @@ contract MonsterAuction is MonsterBreeding {
         // Sale auction throws if inputs are invalid and clears
         // transfer and sire approval after escrowing the monster.
         saleAuction.createAuction(
-        _monsterId,
-        _startingPrice,
-        _endingPrice,
-        _duration,
-        msg.sender
+            _monsterId,
+            _startingPrice,
+            _endingPrice,
+            _duration,
+            msg.sender
         );
     }
 
@@ -2379,10 +2374,10 @@ contract MonsterAuction is MonsterBreeding {
     ///  Performs checks to ensure the monster can be sired, then
     ///  delegates to reverse auction.
     function createSiringAuction(
-    uint256 _monsterId,
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration
+        uint256 _monsterId,
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration
     )
     external
     whenNotPaused
@@ -2396,11 +2391,11 @@ contract MonsterAuction is MonsterBreeding {
         // Siring auction throws if inputs are invalid and clears
         // transfer and sire approval after escrowing the monster.
         siringAuction.createAuction(
-        _monsterId,
-        _startingPrice,
-        _endingPrice,
-        _duration,
-        msg.sender
+            _monsterId,
+            _startingPrice,
+            _endingPrice,
+            _duration,
+            msg.sender
         );
     }
 
@@ -2409,8 +2404,8 @@ contract MonsterAuction is MonsterBreeding {
     /// @param _sireId - ID of the sire on auction.
     /// @param _matronId - ID of the matron owned by the bidder.
     function bidOnSiringAuction(
-    uint256 _sireId,
-    uint256 _matronId
+        uint256 _sireId,
+        uint256 _matronId
     )
     external
     payable
@@ -2476,17 +2471,17 @@ contract MonsterMinting is MonsterAuction {
 
         uint256 genes = _genes;
         if(genes == 0)
-        genes = geneScience.randomGenes();
+            genes = geneScience.randomGenes();
 
         uint256 monsterId = _createMonster(0, 0, 0, genes, address(this));
         _approve(monsterId, saleAuction);
 
         saleAuction.createAuction(
-        monsterId,
-        _computeNextGen0Price(),
-        0,
-        GEN0_AUCTION_DURATION,
-        address(this)
+            monsterId,
+            _computeNextGen0Price(),
+            0,
+            GEN0_AUCTION_DURATION,
+            address(this)
         );
 
         gen0CreatedCount++;
@@ -2573,7 +2568,7 @@ contract MonsterCore is MonsterMinting {
         cfoAddress = msg.sender;
 
         // start with the mythical monster 0 - so we don't have generation-0 parent issues
-        _createMonster(0, 0, 0, uint256(57896044618658097711785492504343953926634992332820282019728792004021511462807), address(0));
+        _createMonster(0, 0, 0, uint256(-1), address(0));
     }
 
     /// @dev Used to mark the smart contract as upgraded, in case there is a serious
@@ -2593,8 +2588,8 @@ contract MonsterCore is MonsterMinting {
     ///  two auction contracts. (Hopefully, we can prevent user accidents.)
     function() external payable {
         require(
-        msg.sender == address(saleAuction) ||
-        msg.sender == address(siringAuction)
+            msg.sender == address(saleAuction) ||
+            msg.sender == address(siringAuction)
         );
     }
 
@@ -2604,16 +2599,16 @@ contract MonsterCore is MonsterMinting {
     external
     view
     returns (
-    bool isGestating,
-    bool isReady,
-    uint256 cooldownIndex,
-    uint256 nextActionAt,
-    uint256 siringWithId,
-    uint256 birthTime,
-    uint256 matronId,
-    uint256 sireId,
-    uint256 generation,
-    uint256 genes
+        bool isGestating,
+        bool isReady,
+        uint256 cooldownIndex,
+        uint256 nextActionAt,
+        uint256 siringWithId,
+        uint256 birthTime,
+        uint256 matronId,
+        uint256 sireId,
+        uint256 generation,
+        uint256 genes
     ) {
         Monster storage monster = monsters[_id];
 
