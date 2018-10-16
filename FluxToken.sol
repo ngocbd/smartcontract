@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FluxToken at 0x9e113ce2b98be87f97d415d0d2478016f95eba77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FluxToken at 0xd0bb51fb630f4cb5e2c7dff44380aa3c2a9518bf
 */
 pragma solidity ^0.4.4;
 
-contract Flux {
+contract FLUX {
 
     /// @return total amount of Fluxs
     function totalSupply() constant returns (uint256 supply) {}
@@ -43,7 +43,7 @@ contract Flux {
 
 
 
-contract StandardFlux is Flux {
+contract StandardFlux is FLUX {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -117,7 +117,7 @@ contract FluxToken is StandardFlux {
 
 //make sure this function name matches the contract name above. So if you're Flux is called TutorialFlux, make sure the //contract name above is also TutorialFlux instead of ERC20Flux
 
-    function FluxToken(
+    function FLUX(
         ) {
         balances[msg.sender] = 100000000000000000000000000;               // Give the creator all initial Fluxs (100000 for example)
         totalSupply = 100000000000000000000000000;                        // Update total supply (100000 for example)
