@@ -1,116 +1,266 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mjolnir at 0xa358ab6ff1da56792b5b4eb18f0d9c4eef06345a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mjolnir at 0x688dc3f750ae8ea87372ed31b6f3141c86a6e01f
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
+/*-------------------------------------------------------------------------*/
+// Mjolnir is the Official Token for Mjolnir Guard Platform
+// Https://www.mjolnirguard.co
+// All the git source are available on Mjolnir Guard Github
+/*-------------------------------------------------------------------------*/
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+/*-------------------------------------------------------------------------*/
+contract owned {
+    address public owner;
 
-//* This is the Main Contract For Mjolnir Token
-//* All of the function have been tested by Mjolnir Devs
+    function owned() {
+        owner = msg.sender;
+    }
 
-// contract Token Loaded from .../localdata/Mjolnir.sol
-// contract StandardToken Loaded from .../localdata/StandardToken.sol
-// approveAndCall Loaded from .../localdata/approveAndCall.sol
+    modifier onlyOwner {
+        if (msg.sender != owner) throw;
+        _;
+    }
 
-contract Token {
-
-    function totalSupply() constant returns (uint256 supply) {}
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+    function transferOwnership(address newOwner) onlyOwner {
+        if (newOwner == 0x0) throw;
+        owner = newOwner;
+    }
 }
+/*-------------------------------------------------------------------------*/
+/**
+ * Overflow aware uint math functions.
+ */
+contract SafeMath {
+  //internals
 
-contract StandardToken is Token {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) throw;
+  }
+}
+/*-------------------------------------------------------------------------*/
+contract Mjolnir is owned, SafeMath {
+	
+	string 	public MjolnirWebsite	= "https://mjolnirguard.co";
+	address public MjolnirAddress 	= this;
+	address public creator 				= msg.sender;
+    string 	public name 				= "Mjolnir";
+    string 	public symbol 				= "MJR";
+    uint8 	public decimals 			= 18;											    
+    uint256 public totalSupply 			= 9859716997000000000000000000;
+    uint256 public buyPrice 			= 3500000;
+	uint256 public sellPrice 			= 3500000;
+   	
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+	mapping (address => bool) public frozenAccount;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);				
+    event FundTransfer(address backer, uint amount, bool isContribution);
+     // This notifies clients about the amount burnt
+    event Burn(address indexed from, uint256 value);
+	event FrozenFunds(address target, bool frozen);
+    
+    /**
+     * Constrctor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
+     */
+    function Mjolnir() public {
+        balanceOf[msg.sender] = totalSupply;    											
+		creator = msg.sender;
+    }
+    /**
+     * Internal transfer, only can be called by this contract
+     */
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balanceOf[_from] >= _value);
+        // Check for overflows
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        // Subtract from the sender
+        balanceOf[_from] -= _value;
+        // Add the same to the recipient
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
+    
+    /// @notice Buy tokens from contract by sending ether
+    function () payable internal {
+        uint amount = msg.value * buyPrice ; 
+		uint amountRaised;
+		uint bonus = 0;
+		
+		bonus = getBonus(amount);
+		amount = amount +  bonus;
+		
+		//amount = now ;
+		
+        require(balanceOf[creator] >= amount);               				
+        require(msg.value > 0);
+		amountRaised = safeAdd(amountRaised, msg.value);                    
+		balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], amount);     
+        balanceOf[creator] = safeSub(balanceOf[creator], amount);           
+        Transfer(creator, msg.sender, amount);               				
+        creator.transfer(amountRaised);
+    }
+	
+	/// @notice Create `mintedAmount` tokens and send it to `target`
+    /// @param target Address to receive the tokens
+    /// @param mintedAmount the amount of tokens it will receive
+    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+        balanceOf[target] += mintedAmount;
+        totalSupply += mintedAmount;
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+	
+	/**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+	
+    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+    /// @param target Address to be frozen
+    /// @param freeze either to freeze it or not
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-contract Mjolnir is StandardToken { 
-    
-    string public name;                   
-    uint8 public decimals;                
-    string public symbol;                 
-    string public version = 'H1.0'; 
-    uint256 public unitsOneEthCanBuy;     
-    uint256 public totalEthInWei;          
-    address public fundsWallet;          
-
-    function Mjolnir() {
-        balances[msg.sender] = 689276000000000000000000;              
-        totalSupply = 689276000000000000000000;                 
-        name = "Mjolnir";                                  
-        decimals = 18;                          
-        symbol = "MJO";                                 
-        unitsOneEthCanBuy = 1700;                            
-        fundsWallet = msg.sender;                    
+    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
+    /// @param newSellPrice Price the users can sell to the contract
+    /// @param newBuyPrice Price users can buy from the contract
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
     }
-
-    function() public payable{
-        totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        require(balances[fundsWallet] >= amount);
-
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-
-        Transfer(fundsWallet, msg.sender, amount);
-
-        fundsWallet.transfer(msg.value);                               
-    }
-    
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+	
+	
+	/**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
+        Burn(msg.sender, _value);
         return true;
     }
-}
-
-//* All the Git Code was provided by Ethereum.org and modified by Mjolnir Developer
+	
+	/**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
+	
+	function getBonus(uint _amount) constant private returns (uint256) {
+        
+		if(now >= 1524873600 && now <= 1527551999) { 
+            return _amount * 100 / 100;
+        }
+		
+		if(now >= 1527552000 && now <= 1530316799) { 
+            return _amount * 100 / 100;
+        }
+		
+		if(now >= 1530316800 && now <= 1532995199) { 
+            return _amount * 100 / 100;
+        }
+		
+		if(now >= 1532995200 && now <= 1535759999) { 
+            return _amount * 100 / 100;
+        }
+		
+		if(now >= 1535760000 && now <= 1538438399) { 
+            return _amount * 100 / 100;
+        }
+		
+        return 0;
+    }
+	
+	/// @notice Sell `amount` tokens to contract
+    /// @param amount amount of tokens to be sold
+    function sell(uint256 amount) public {
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+    }
+	
+ }
+/*-------------------------------------------------------------------------*/
