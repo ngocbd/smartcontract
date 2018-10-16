@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gifto at 0x5438b0938fb88a979032f45b87d2d1aeffe5cc28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gifto at 0xc5bbae50781be1669306b9e001eff57a2957b09d
 */
 pragma solidity ^0.4.18;
 
@@ -19,6 +19,15 @@ contract ERC20Interface {
  
     // Send _value amount of tokens to address _to
     function transfer(address _to, uint256 _value) public returns (bool success);
+    
+    // transfer _value amount of token approved by address _from
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    // approve an address with _value amount of tokens
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    // get remaining token approved by _owner to _spender
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
   
     // Triggered when tokens are transferred.
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -28,41 +37,47 @@ contract ERC20Interface {
 }
  
 contract Gifto is ERC20Interface {
-    uint public constant decimals = 5;
+    uint256 public constant decimals = 5;
 
-    string public constant symbol = "Gifto";
+    string public constant symbol = "GTO";
     string public constant name = "Gifto";
 
-    bool public _selling = false;//initial not selling
-    uint public _totalSupply = 10 ** 14; // total supply is 10^14 unit, equivalent to 10^9 Gifto
-    uint public _originalBuyPrice = 10 ** 10; // original buy in wei of one unit. Ajustable.
+    bool public _selling = true;//initial selling
+    uint256 public _totalSupply = 10 ** 14; // total supply is 10^14 unit, equivalent to 10^9 Gifto
+    uint256 public _originalBuyPrice = 43 * 10**7; // original buy 1ETH = 4300 Gifto = 43 * 10**7 unit
 
     // Owner of this contract
     address public owner;
  
     // Balances Gifto for each account
-    mapping(address => uint256) balances;
+    mapping(address => uint256) private balances;
+    
+    // Owner of account approves the transfer of an amount to another account
+    mapping(address => mapping (address => uint256)) private allowed;
 
     // List of approved investors
-    mapping(address => bool) approvedInvestorList;
+    mapping(address => bool) private approvedInvestorList;
     
-    // mapping Deposit
-    mapping(address => uint256) deposit;
-    
-    // buyers buy token deposit
-    address[] buyers;
+    // deposit
+    mapping(address => uint256) private deposit;
     
     // icoPercent
-    uint _icoPercent = 10;
+    uint256 public _icoPercent = 10;
     
     // _icoSupply is the avalable unit. Initially, it is _totalSupply
-    uint public _icoSupply = _totalSupply * _icoPercent / 100;
+    uint256 public _icoSupply = _totalSupply * _icoPercent / 100;
     
-    // minimum buy 0.1 ETH
-    uint public _minimumBuy = 10 ** 17;
+    // minimum buy 0.3 ETH
+    uint256 public _minimumBuy = 3 * 10 ** 17;
     
-    // maximum buy 30 ETH
-    uint public _maximumBuy = 30 * 10 ** 18;
+    // maximum buy 25 ETH
+    uint256 public _maximumBuy = 25 * 10 ** 18;
+
+    // totalTokenSold
+    uint256 public totalTokenSold = 0;
+    
+    // tradable
+    bool public tradable = false;
     
     /**
      * Functions with this modifier can only be executed by the owner
@@ -73,27 +88,11 @@ contract Gifto is ERC20Interface {
     }
 
     /**
-     * Functions with this modifier can only be executed by users except owners
-     */
-    modifier onlyNotOwner() {
-        require(msg.sender != owner);
-        _;
-    }
-
-    /**
      * Functions with this modifier check on sale status
      * Only allow sale if _selling is on
      */
     modifier onSale() {
-        require(_selling && (_icoSupply > 0) );
-        _;
-    }
-
-    /**
-     * Functions with this modifier check the validity of original buy price
-     */
-    modifier validOriginalBuyPrice() {
-        require(_originalBuyPrice > 0);
+        require(_selling);
         _;
     }
     
@@ -111,30 +110,59 @@ contract Gifto is ERC20Interface {
      * total deposit must less than equal maximumBuyPrice
      */
     modifier validValue(){
-        // if value < _minimumBuy OR total deposit of msg.sender > maximumBuyPrice
+        // require value >= _minimumBuy AND total deposit of msg.sender <= maximumBuyPrice
         require ( (msg.value >= _minimumBuy) &&
                 ( (deposit[msg.sender] + msg.value) <= _maximumBuy) );
+        _;
+    }
+    
+    /**
+     * 
+     */
+    modifier isTradable(){
+        require(tradable == true || msg.sender == owner);
         _;
     }
 
     /// @dev Fallback function allows to buy ether.
     function()
         public
+        payable {
+        buyGifto();
+    }
+    
+    /// @dev buy function allows to buy ether. for using optional data
+    function buyGifto()
+        public
         payable
-        validValue {
-        // check the first buy => push to Array
-        if (deposit[msg.sender] == 0 && msg.value != 0){
-            // add new buyer to List
-            buyers.push(msg.sender);
-        }
-        // increase amount deposit of buyer
+        onSale
+        validValue
+        validInvestor {
+        uint256 requestedUnits = (msg.value * _originalBuyPrice) / 10**18;
+        require(balances[owner] >= requestedUnits);
+        // prepare transfer data
+        balances[owner] -= requestedUnits;
+        balances[msg.sender] += requestedUnits;
+        
+        // increase total deposit amount
         deposit[msg.sender] += msg.value;
+        
+        // check total and auto turnOffSale
+        totalTokenSold += requestedUnits;
+        if (totalTokenSold >= _icoSupply){
+            _selling = false;
+        }
+        
+        // submit transfer
+        Transfer(owner, msg.sender, requestedUnits);
+        owner.transfer(msg.value);
     }
 
     /// @dev Constructor
     function Gifto() 
         public {
         owner = msg.sender;
+        setBuyPrice(_originalBuyPrice);
         balances[owner] = _totalSupply;
         Transfer(0x0, owner, _totalSupply);
     }
@@ -148,34 +176,55 @@ contract Gifto is ERC20Interface {
         return _totalSupply;
     }
     
+    /// @dev Enables sale 
+    function turnOnSale() onlyOwner 
+        public {
+        _selling = true;
+    }
+
+    /// @dev Disables sale
+    function turnOffSale() onlyOwner 
+        public {
+        _selling = false;
+    }
+    
+    function turnOnTradable() 
+        public
+        onlyOwner{
+        tradable = true;
+    }
+    
     /// @dev set new icoPercent
     /// @param newIcoPercent new value of icoPercent
     function setIcoPercent(uint256 newIcoPercent)
         public 
-        onlyOwner
-        returns (bool){
+        onlyOwner {
         _icoPercent = newIcoPercent;
         _icoSupply = _totalSupply * _icoPercent / 100;
-    }
-    
-    /// @dev set new _minimumBuy
-    /// @param newMinimumBuy new value of _minimumBuy
-    function setMinimumBuy(uint256 newMinimumBuy)
-        public 
-        onlyOwner
-        returns (bool){
-        _minimumBuy = newMinimumBuy;
     }
     
     /// @dev set new _maximumBuy
     /// @param newMaximumBuy new value of _maximumBuy
     function setMaximumBuy(uint256 newMaximumBuy)
         public 
-        onlyOwner
-        returns (bool){
+        onlyOwner {
         _maximumBuy = newMaximumBuy;
     }
- 
+
+    /// @dev Updates buy price (owner ONLY)
+    /// @param newBuyPrice New buy price (in unit)
+    function setBuyPrice(uint256 newBuyPrice) 
+        onlyOwner 
+        public {
+        require(newBuyPrice>0);
+        _originalBuyPrice = newBuyPrice; // 3000 Gifto = 3000 00000 unit
+        // control _maximumBuy_USD = 10,000 USD, Gifto price is 0.1USD
+        // maximumBuy_Gifto = 100,000 Gifto = 100,000,00000 unit
+        // 3000 Gifto = 1ETH => maximumETH = 100,000,00000 / _originalBuyPrice
+        // 100,000,00000/3000 0000 ~ 33ETH => change to wei
+        _maximumBuy = 10**18 * 10000000000 /_originalBuyPrice;
+    }
+        
     /// @dev Gets account's balance
     /// @param _addr Address of the account
     /// @return Account balance
@@ -195,45 +244,6 @@ contract Gifto is ERC20Interface {
         return approvedInvestorList[_addr];
     }
     
-    /// @dev filter buyers in list buyers
-    /// @param isInvestor type buyers, is investor or not
-    function filterBuyers(bool isInvestor)
-        private
-        constant
-        returns(address[] filterList){
-        address[] memory filterTmp = new address[](buyers.length);
-        uint count = 0;
-        for (uint i = 0; i < buyers.length; i++){
-            if(approvedInvestorList[buyers[i]] == isInvestor){
-                filterTmp[count] = buyers[i];
-                count++;
-            }
-        }
-        
-        filterList = new address[](count);
-        for (i = 0; i < count; i++){
-            if(filterTmp[i] != 0x0){
-                filterList[i] = filterTmp[i];
-            }
-        }
-    }
-    
-    /// @dev filter buyers are investor in list deposited
-    function getInvestorBuyers()
-        public
-        constant
-        returns(address[]){
-        return filterBuyers(true);
-    }
-    
-    /// @dev filter normal Buyers in list buyer deposited
-    function getNormalBuyers()
-        public
-        constant
-        returns(address[]){
-        return filterBuyers(false);
-    }
-    
     /// @dev get ETH deposit
     /// @param _addr address get deposit
     /// @return amount deposit of an buyer
@@ -242,81 +252,35 @@ contract Gifto is ERC20Interface {
         constant
         returns(uint256){
         return deposit[_addr];
-    }
+}
     
-    /// @dev get total deposit of buyers
-    /// @return amount ETH deposit
-    function getTotalDeposit()
-        public
-        constant
-        returns(uint256 totalDeposit){
-        totalDeposit = 0;
-        for (uint i = 0; i < buyers.length; i++){
-            totalDeposit += deposit[buyers[i]];
-        }
-    }
-    
-    /// @dev delivery token for buyer
-    /// @param isInvestor transfer token for investor or not
-    ///         true: investors
-    ///         false: not investors
-    function deliveryToken(bool isInvestor)
-        public
+    /// @dev Adds list of new investors to the investors list and approve all
+    /// @param newInvestorList Array of new investors addresses to be added
+    function addInvestorList(address[] newInvestorList)
         onlyOwner
-        validOriginalBuyPrice {
-        //sumary deposit of investors
-        uint256 sum = 0;
-        
-        for (uint i = 0; i < buyers.length; i++){
-            if(approvedInvestorList[buyers[i]] == isInvestor) {
-                
-                // compute amount token of each buyer
-                uint256 requestedUnits = deposit[buyers[i]] / _originalBuyPrice;
-                
-                //check requestedUnits > _icoSupply
-                if(requestedUnits <= _icoSupply && requestedUnits > 0 ){
-                    // prepare transfer data
-                    // NOTE: make sure balances owner greater than _icoSupply
-                    balances[owner] -= requestedUnits;
-                    balances[buyers[i]] += requestedUnits;
-                    _icoSupply -= requestedUnits;
-                    
-                    // submit transfer
-                    Transfer(owner, buyers[i], requestedUnits);
-                    
-                    // reset deposit of buyer
-                    sum += deposit[buyers[i]];
-                    deposit[buyers[i]] = 0;
-                }
-            }
+        public {
+        for (uint256 i = 0; i < newInvestorList.length; i++){
+            approvedInvestorList[newInvestorList[i]] = true;
         }
-        //transfer total ETH of investors to owner
-        owner.transfer(sum);
     }
-    
-    /// @dev return ETH for normal buyers
-    function returnETHforNormalBuyers()
-        public
-        onlyOwner{
-        for(uint i = 0; i < buyers.length; i++){
-            // buyer not approve investor
-            if (!approvedInvestorList[buyers[i]]) {
-                // get deposit of buyer
-                uint256 buyerDeposit = deposit[buyers[i]];
-                // reset deposit of buyer
-                deposit[buyers[i]] = 0;
-                // return deposit amount for buyer
-                buyers[i].transfer(buyerDeposit);
-            }
+
+    /// @dev Removes list of investors from list
+    /// @param investorList Array of addresses of investors to be removed
+    function removeInvestorList(address[] investorList)
+        onlyOwner
+        public {
+        for (uint256 i = 0; i < investorList.length; i++){
+            approvedInvestorList[investorList[i]] = false;
         }
     }
  
-    /// @dev Transfers the balance from Multisig wallet to an account
+    /// @dev Transfers the balance from msg.sender to an account
     /// @param _to Recipient address
     /// @param _amount Transfered amount in unit
     /// @return Transfer status
     function transfer(address _to, uint256 _amount)
         public 
+        isTradable
         returns (bool) {
         // if sender's balance has enough unit and amount >= 0, 
         //      and the sum is not overflow,
@@ -328,91 +292,57 @@ contract Gifto is ERC20Interface {
             balances[msg.sender] -= _amount;
             balances[_to] += _amount;
             Transfer(msg.sender, _to, _amount);
-            
             return true;
-
         } else {
-            revert();
+            return false;
         }
     }
-
-    /// @dev Enables sale 
-    function turnOnSale() onlyOwner 
-        public {
-        _selling = true;
-    }
-
-    /// @dev Disables sale
-    function turnOffSale() onlyOwner 
-        public {
-        _selling = false;
-    }
-
-    /// @dev Gets selling status
-    function isSellingNow() 
-        public 
-        constant
-        returns (bool) {
-        return _selling;
-    }
-
-    /// @dev Updates buy price (owner ONLY)
-    /// @param newBuyPrice New buy price (in unit)
-    function setBuyPrice(uint newBuyPrice) 
-        onlyOwner 
-        public {
-        _originalBuyPrice = newBuyPrice;
-    }
-
-    /// @dev Adds list of new investors to the investors list and approve all
-    /// @param newInvestorList Array of new investors addresses to be added
-    function addInvestorList(address[] newInvestorList)
-        onlyOwner
-        public {
-        for (uint i = 0; i < newInvestorList.length; i++){
-            approvedInvestorList[newInvestorList[i]] = true;
+     
+    // Send _value amount of tokens from address _from to address _to
+    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+    // fees in sub-currencies; the command should fail unless the _from account has
+    // deliberately authorized the sender of the message via some mechanism; we propose
+    // these standardized APIs for approval:
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    )
+    public
+    isTradable
+    returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
         }
     }
-
-    /// @dev Removes list of investors from list
-    /// @param investorList Array of addresses of investors to be removed
-    function removeInvestorList(address[] investorList)
-        onlyOwner
-        public {
-        for (uint i = 0; i < investorList.length; i++){
-            approvedInvestorList[investorList[i]] = false;
-        }
-    }
-
-    /// @dev Buys Gifto
-    /// @return Amount of requested units 
-    function buy() payable
-        onlyNotOwner 
-        validOriginalBuyPrice
-        validInvestor
-        onSale 
+    
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    function approve(address _spender, uint256 _amount) 
         public
-        returns (uint256 amount) {
-        // convert buy amount in wei to number of unit want to buy
-        uint requestedUnits = msg.value / _originalBuyPrice ;
-        
-        //check requestedUnits <= _icoSupply
-        require(requestedUnits <= _icoSupply);
-
-        // prepare transfer data
-        balances[owner] -= requestedUnits;
-        balances[msg.sender] += requestedUnits;
-        
-        // decrease _icoSupply
-        _icoSupply -= requestedUnits;
-
-        // submit transfer
-        Transfer(owner, msg.sender, requestedUnits);
-
-        //transfer ETH to owner
-        owner.transfer(msg.value);
-        
-        return requestedUnits;
+        isTradable
+        returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+    
+    // get allowance
+    function allowance(address _owner, address _spender) 
+        public
+        constant 
+        returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
     
     /// @dev Withdraws Ether in contract (Owner only)
