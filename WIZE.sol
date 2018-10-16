@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIZE at 0x9b9676bcaa45b3f22f22543e539992dcefd93943
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIZE at 0x000621424c60951cb69e9d75d64b79813846d498
 */
 pragma solidity ^0.4.13;
 
@@ -229,11 +229,11 @@ contract WIZE is StandardToken, Ownable, Destructible, HasNoEther, HasNoTokens  
 
 	string public name = "WIZE";
 	string public symbol = "WIZE";
-	uint256 public decimals = 6;
+	uint256 public decimals = 8;
 
 	function WIZE() {
-		balances[0x2D665c024bDeC12187cC96A7AcE22efFD3C40603] = 2000000E6;
-		balances[0xDa8BE6E2F555a753d4B0DfF6B5518F262D097Bc7] = 98000000E6;
+		totalSupply = 100e6 * 10**decimals;
+		balances[0x14010814F3d6fBDe4970E4f7B36CdfFB23B5FA4A] = totalSupply;
 	}
 
 }
