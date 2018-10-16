@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EphronTestCoin at 0x82da3bcd871aa854a086dfa4dd05c7947d6bda1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EphronTestCoin at 0x6733c1532eaf339f73d005667b28b1e69849b4fb
 */
 pragma solidity ^0.4.23;
 
@@ -109,7 +109,7 @@ contract StandardToken is Token {
 contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
-    event FundTransfer(address backer, uint amount, bool isContribution, uint _amountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
     /*
     NOTE:
@@ -127,7 +127,6 @@ contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract n
     address public fundsWallet;           // Where should the raised ETH go?
     uint public start; 
     uint public end;
-    uint public amountRaised;
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
@@ -143,7 +142,7 @@ contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract n
         balances[msg.sender] = initialSupply;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = tokenName;                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 0;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = tokenSymbol;                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "EPHTCN";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = etherCostOfEachToken;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
         start = startTime;
@@ -164,20 +163,17 @@ contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract n
     }
 
     function() payable{
-        totalEthInWei = totalEthInWei.add(msg.value);
-        uint256 amount = msg.value.mul(unitsOneEthCanBuy);
-        
-        //require(balances[fundsWallet] >= amount);
-        
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(balances[fundsWallet] >= amount);
         require(current() >= start && current() <= end);
-        
-        balances[fundsWallet] = balances[fundsWallet].sub(amount);
-        balances[msg.sender] = balances[msg.sender].add(amount);
-        
-        amountRaised = amountRaised.add(amount);
-        FundTransfer(msg.sender, amount, true, amountRaised);
-        // FundTransfer(msg.sender, amount, true);
-        
+
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
         fundsWallet.transfer(msg.value);                               
     }
 
@@ -200,7 +196,7 @@ contract EphronTestCoin is StandardToken { // CHANGE THIS. Update the contract n
             balances[msg.sender] = 0;
             if (amount > 0) {
                 msg.sender.transfer(amount);
-                FundTransfer(msg.sender, amount, false, amountRaised);
+                FundTransfer(msg.sender, amount, false);
             }
         }
     }
