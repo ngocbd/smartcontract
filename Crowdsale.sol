@@ -1,513 +1,688 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc00daa94bb04d9c8bb55c115135e5b60584b884d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x85eafc29690c6d64c8513499b6bea8864fbeb6d7
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.23;
 
-
-library SafeMath {
-  function mul(uint a, uint b) internal pure  returns (uint) {
-    uint c = a * b;
-    require(a == 0 || c / a == b);
-    return c;
-  }
-  function div(uint a, uint b) internal pure returns (uint) {
-    require(b > 0);
-    uint c = a / b;
-    require(a == b * c + a % b);
-    return c;
-  }
-  function sub(uint a, uint b) internal pure returns (uint) {
-    require(b <= a);
-    return a - b;
-  }
-  function add(uint a, uint b) internal pure returns (uint) {
-    uint c = a + b;
-    require(c >= a);
-    return c;
-  }
-  function max64(uint64 a, uint64 b) internal  pure returns (uint64) {
-    return a >= b ? a : b;
-  }
-  function min64(uint64 a, uint64 b) internal  pure returns (uint64) {
-    return a < b ? a : b;
-  }
-  function max256(uint256 a, uint256 b) internal  pure returns (uint256) {
-    return a >= b ? a : b;
-  }
-  function min256(uint256 a, uint256 b) internal  pure returns (uint256) {
-    return a < b ? a : b;
-  }
-}
-
-contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) public constant returns (uint);
-  function transfer(address to, uint value) public;
-  event Transfer(address indexed from, address indexed to, uint value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint);
-  function transferFrom(address from, address to, uint value) public;
-  function approve(address spender, uint value) public;
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-
-
-contract BasicToken is ERC20Basic {
-  
-  using SafeMath for uint;
-  
-  mapping(address => uint) balances;
-
-  function transfer(address _to, uint _value) public{
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-  }
-
-  function balanceOf(address _owner) public constant returns (uint balance) {
-    return balances[_owner];
-  }
-}
-
-
-contract StandardToken is BasicToken, ERC20 {
-  mapping (address => mapping (address => uint)) allowed;
-
-  function transferFrom(address _from, address _to, uint _value) public {
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint _value) public{
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0)) ;
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-  }
-
-  function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-}
-
-contract Ownable {
-    address public owner;
-
-    function Ownable() public{
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-    function transferOwnership(address newOwner) onlyOwner public{
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-}
-
+// File: contracts/OpenZeppelin/ERC20Basic.sol
 
 /**
- *  TTC token contract. Implements
+ * @title ERC20
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract TTC is StandardToken, Ownable {
-  string public constant name = "TTC";
-  string public constant symbol = "TTC";
-  uint public constant decimals = 18;
+contract ERC20 {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
+// File: contracts/OpenZeppelin/SafeMath.sol
 
-  // Constructor
-  function TTC() public {
-      totalSupply = 1000000000000000000000000000;
-      balances[msg.sender] = totalSupply; // Send all tokens to owner
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+*/
+
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
   /**
-   *  Burn away the specified amount of SkinCoin tokens
-   */
-  function burn(uint _value) onlyOwner public returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-    Transfer(msg.sender, 0x0, _value);
-    return true;
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
 
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Crowdsale is Ownable{
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale,
+ * allowing investors to purchase tokens with ether.
+ */
+
+contract Crowdsale {
+  using SafeMath for uint256;
+
+  // The token being sold
+  ERC20 public token;
+
+  // Address where funds are collected
+  address public wallet;
+
+  // Address of the contract owner
+  address public owner;
+
+  // The rate of tokens per ether. Only applied for the first tier, the first
+  // 150 million tokens sold
+  uint256 public rate;
+
+  // Amount of wei raised
+  uint256 public weiRaised;
+
+  // Amount of sold tokens
+  uint256 public soldTokens;
+
+  // Amount of tokens processed
+  uint256 public processedTokens;
+
+  // Amount of unsold tokens to burn
+  uint256 public unSoldTokens;
+
+  // Amount of locked tokens
+  uint256 public lockedTokens;
+
+  // Amount of alocated tokens
+  uint256 public allocatedTokens;
+
+  // Amount of distributed tokens
+  uint256 public distributedTokens;
+
+  // ICO state paused or not
+  bool public paused = false;
+
+  // Minimal amount to exchange in ETH
+  uint256 public minPurchase = 53 finney;
+
+  // Keeping track of current round
+  uint256 public currentRound;
+
+  // We can only sell maximum total amount- 1,000,000,000 tokens during the ICO
+  uint256 public constant maxTokensRaised = 1000000000E4;
+
+  // Timestamp when the crowdsale starts 01/01/2018 @ 00:00am (UTC);
+  uint256 public startTime = 1527703200;
+
+  // Timestamp when the initial round ends (UTC);
+  uint256 public currentRoundStart = startTime;
+
+  // Timestamp when the crowdsale ends 07/07/2018 @ 00:00am (UTC);
+  uint256 public endTime = 1532386740;
+
+  // Timestamp when locked tokens become unlocked 21/09/2018 @ 00:00am (UTC);
+  uint256 public lockedTill = 1542931200;
+
+  // Timestamp when approved tokens become available 21/09/2018 @ 00:00am (UTC);
+  uint256 public approvedTill = 1535328000;
+
+  // How much each user paid for the crowdsale
+  mapping(address => uint256) public crowdsaleBalances;
+
+  // How many tokens each user got for the crowdsale
+  mapping(address => uint256) public tokensBought;
+
+  // How many tokens each user got for the crowdsale as bonus
+  mapping(address => uint256) public bonusBalances;
+
+  // How many tokens each user got locked
+  mapping(address => uint256) public lockedBalances;
+
+  // How many tokens each user got pre-delivered
+  mapping(address => uint256) public allocatedBalances;
+
+  // If user is approved to withdraw tokens
+  mapping(address => bool) public approved;
+
+  // How many tokens each user got distributed
+  mapping(address => uint256) public distributedBalances;
+
+  // Bonus levels per each round
+  mapping (uint256 => uint256) public bonusLevels;
+
+  // Rate levels per each round
+  mapping (uint256 => uint256) public rateLevels;
+
+  // Cap levels per each round
+  mapping (uint256 => uint256) public capLevels;
+
+  // To track list of contributors
+  address[] public allocatedAddresses;              
+
+
+  /**
+   * Event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+  event Pause();
+  event Unpause();
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+
+  function setNewBonusLevel (uint256 _bonusIndex, uint256 _bonusValue) onlyOwner external {
+    bonusLevels[_bonusIndex] = _bonusValue;
+  }
+
+  function setNewRateLevel (uint256 _rateIndex, uint256 _rateValue) onlyOwner external {
+    rateLevels[_rateIndex] = _rateValue;
+  }
+
+  function setMinPurchase (uint256 _minPurchase) onlyOwner external {
+    minPurchase = _minPurchase;
+  }
+
+   // @notice Set's the rate of tokens per ether for each round
+  function setNewRatesCustom (uint256 _r1, uint256 _r2, uint256 _r3, uint256 _r4, uint256 _r5, uint256 _r6) onlyOwner external {
+    require(_r1 > 0 && _r2 > 0 && _r3 > 0 && _r4 > 0 && _r5 > 0 && _r6 > 0);
+    rateLevels[1] = _r1;
+    rateLevels[2] = _r2;
+    rateLevels[3] = _r3;
+    rateLevels[4] = _r4;
+    rateLevels[5] = _r5;
+    rateLevels[6] = _r6;
+  }
+
+   // @notice Set's the rate of tokens per ether for each round
+  function setNewRatesBase (uint256 _r1) onlyOwner external {
+    require(_r1 > 0);
+    rateLevels[1] = _r1;
+    rateLevels[2] = _r1.div(2);
+    rateLevels[3] = _r1.div(3);
+    rateLevels[4] = _r1.div(4);
+    rateLevels[5] = _r1.div(5);
+    rateLevels[6] = _r1.div(5);
+  }
+
+  /**
+   * @param _rate Number of token units a buyer gets per ETH
+   * @param _wallet Address where collected funds will be forwarded to
+   * @param _token Address of the token being sold
+   */
+
+  constructor(uint256 _rate, address _wallet, address _owner, ERC20 _token) public {
+    require(_rate > 0);
+    require(_wallet != address(0));
+    require(_token != address(0));
+
+    wallet = _wallet;
+    token = _token;
+    owner = _owner;
+
+    soldTokens = 0;
+    unSoldTokens = 0;
+    processedTokens = 0;
+
+    lockedTokens = 0;
+    distributedTokens = 0;
+
+    currentRound = 1;
+
+    //bonus values per each round;
+    bonusLevels[1] =  5;
+    bonusLevels[2] = 10;
+    bonusLevels[3] = 15;
+    bonusLevels[4] = 20;
+    bonusLevels[5] = 50;
+    bonusLevels[6] = 0;
+
+    //rate values per each round;
+    rateLevels[1] = _rate;
+    rateLevels[2] = _rate.div(2);
+    rateLevels[3] = _rate.div(3);
+    rateLevels[4] = _rate.div(4);
+    rateLevels[5] = _rate.div(5);
+    rateLevels[6] = _rate.div(5);
+
+    //cap values per each round
+    capLevels[1] = 150000000E4;
+    capLevels[2] = 210000000E4;
+    capLevels[3] = 255000000E4;
+    capLevels[4] = 285000000E4;
+    capLevels[5] = 300000000E4;
+    capLevels[6] = maxTokensRaised;
+
+  }
+
+  // -----------------------------------------
+  // Crowdsale interface
+  // -----------------------------------------
+
+  function () external payable whenNotPaused {
+    buyTokens(msg.sender);
+  }
+
+  /**
+   * @dev low level token purchase
+   * @param _beneficiary Address performing the token purchase
+   */
+  function buyTokens(address _beneficiary) public payable whenNotPaused {
+
+    uint256 amountPaid = msg.value;
+    _preValidatePurchase(_beneficiary, amountPaid);
+
+    uint256 tokens = 0;
+    uint256 bonusTokens = 0;
+    uint256 fullTokens = 0;
+
+    // Round 1
+    if(processedTokens < capLevels[1]) {
+
+        tokens = _getTokensAmount(amountPaid, 1);
+        bonusTokens = _getBonusAmount(tokens, 1);
+        fullTokens = tokens.add(bonusTokens);
+
+        // If the amount of tokens that you want to buy gets out of round 1
+        if(processedTokens.add(fullTokens) > capLevels[1]) {
+            tokens = _calculateExcessTokens(amountPaid, 1);
+            bonusTokens = _calculateExcessBonus(tokens, 1);
+            setCurrentRound(2);
+        }
+
+    // Round 2
+    } else if(processedTokens >= capLevels[1] && processedTokens < capLevels[2]) {
+        tokens = _getTokensAmount(amountPaid, 2);
+        bonusTokens = _getBonusAmount(tokens, 2);
+        fullTokens = tokens.add(bonusTokens);
+
+        // If the amount of tokens that you want to buy gets out of round 2
+        if(processedTokens.add(fullTokens) > capLevels[2]) {
+            tokens = _calculateExcessTokens(amountPaid, 2);
+            bonusTokens = _calculateExcessBonus(tokens, 2);
+            setCurrentRound(3);
+        }
+
+    // Round 3
+    } else if(processedTokens >= capLevels[2] && processedTokens < capLevels[3]) {
+         tokens = _getTokensAmount(amountPaid, 3);
+         bonusTokens = _getBonusAmount(tokens, 3);
+         fullTokens = tokens.add(bonusTokens);
+
+         // If the amount of tokens that you want to buy gets out of round 3
+         if(processedTokens.add(fullTokens) > capLevels[3]) {
+            tokens = _calculateExcessTokens(amountPaid, 3);
+            bonusTokens = _calculateExcessBonus(tokens, 3);
+            setCurrentRound(4);
+         }
+
+    // Round 4
+    } else if(processedTokens >= capLevels[3] && processedTokens < capLevels[4]) {
+         tokens = _getTokensAmount(amountPaid, 4);
+         bonusTokens = _getBonusAmount(tokens, 4);
+         fullTokens = tokens.add(bonusTokens);
+
+         // If the amount of tokens that you want to buy gets out of round 4
+         if(processedTokens.add(fullTokens) > capLevels[4]) {
+            tokens = _calculateExcessTokens(amountPaid, 4);
+            bonusTokens = _calculateExcessBonus(tokens, 4);
+            setCurrentRound(5);
+         }
+
+    // Round 5
+    } else if(processedTokens >= capLevels[4] && processedTokens < capLevels[5]) {
+         tokens = _getTokensAmount(amountPaid, 5);
+         bonusTokens = _getBonusAmount(tokens, 5);
+         fullTokens = tokens.add(bonusTokens);
+
+         // If the amount of tokens that you want to buy gets out of round 5
+         if(processedTokens.add(fullTokens) > capLevels[5]) {
+            tokens = _calculateExcessTokens(amountPaid, 5);
+            bonusTokens = 0;
+            setCurrentRound(6);
+         }
+
+    // Round 6
+    } else if(processedTokens >= capLevels[5]) {
+        tokens = _getTokensAmount(amountPaid, 6);
+    }
+
+    // update state
+    weiRaised = weiRaised.add(amountPaid);
+    fullTokens = tokens.add(bonusTokens);
+    soldTokens = soldTokens.add(fullTokens);
+    processedTokens = processedTokens.add(fullTokens);
+
+    // Keep a record of how many tokens everybody gets in case we need to do refunds
+    tokensBought[msg.sender] = tokensBought[msg.sender].add(tokens);
+
+    // Kepp a record of how many wei everybody contributed in case we need to do refunds
+    crowdsaleBalances[msg.sender] = crowdsaleBalances[msg.sender].add(amountPaid);
+
+    // Kepp a record of how many token everybody got as bonus to display in
+    bonusBalances[msg.sender] = bonusBalances[msg.sender].add(bonusTokens);
+
+   // Combine bought tokens with bonus tokens before sending to investor
+    uint256 totalTokens = tokens.add(bonusTokens);
+
+    // Distribute the token
+    _processPurchase(_beneficiary, totalTokens);
+    emit TokenPurchase(
+      msg.sender,
+      _beneficiary,
+      amountPaid,
+      totalTokens
+    );
+  }
+
+  // -----------------------------------------
+  // Internal interface (extensible)
+  // -----------------------------------------
+
+  /**
+   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) view internal {
+
+    require(_beneficiary != address(0));
+    require(_weiAmount != 0);
+
+    bool withinPeriod = hasStarted() && hasNotEnded();
+    bool nonZeroPurchase = msg.value > 0;
+    bool withinTokenLimit = processedTokens < maxTokensRaised;
+    bool minimumPurchase = msg.value >= minPurchase;
+
+    require(withinPeriod);
+    require(nonZeroPurchase);
+    require(withinTokenLimit);
+    require(minimumPurchase);
+  }
+
+
+  /**
+   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
+   * @param _beneficiary Address receiving the tokens
+   * @param _tokenAmount Number of tokens to be purchased
+   */
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    uint256 _tokensToPreAllocate = _tokenAmount.div(2);
+    uint256 _tokensToLock = _tokenAmount.sub(_tokensToPreAllocate);
     
-    using SafeMath for uint;
+    //record address for future distribution
+    allocatedAddresses.push(_beneficiary);    
 
-    struct Backer {
-        uint weiReceived; 
-        uint coinSent;
-        uint coinReadyToSend;
-    }
-
-    /*
-    * Constants
-    */
-
-    /**
-    * ICO Phases.
-    *
-    * - PreStart:   tokens are not yet sold/issued
-    * - PreIco:     new tokens sold/issued at the discounted price
-    * - PauseIco:   tokens are not sold/issued
-    * - MainIco     new tokens sold/issued at the regular price
-    * - AfterIco:   tokens are not sold/issued
-    */
-    enum Phases {PreStart, PreIco, PauseIco, MainIco, AfterIco}
-
-    /* Maximum number of TTC to pre ico sell */
-    uint public constant PRE_MAX_CAP = 25000000000000000000000000; // 25,000,000 TTC
-
-    /* Maximum number of TTC to main ico sell */
-    uint public constant MAIN_MAX_CAP = 125000000000000000000000000; // 125,000,000 TTC
-
-    /* Minimum amount to invest */
-    uint public constant MIN_INVEST_ETHER = 100 finney;
-
-    /* Crowdsale period */
-    uint private constant PRE_START_TIME = 1520820000;  // 2018-03-12 10:00 AM (UTC + 08:00)
-    uint private constant PRE_END_TIME = 1521079200;    // 2018-03-15 10:00 AM (UTC + 08:00)
-    uint private constant MAIN_START_TIME = 1522029600; // 2018-03-26 10:00 AM (UTC + 08:00)
-    uint private constant MAIN_END_TIME = 1524189600;   // 2018-04-20 10:00 AM (UTC + 08:00)
-
-    /* Number of TTC per Ether */
-    uint public constant PRE_COIN_PER_ETHER_ICO = 5000000000000000000000; // 5,000 TTC
-    uint public constant MAIN_COIN_PER_ETHER_ICO = 4000000000000000000000; // 4,000 TTC
-
-    /*
-    * Variables
-    */
-    /* TTC contract reference */
-    TTC public coin;
-
-    /*Maximum Ether for one address during pre ico or main ico */
-    uint public maximumCoinsPerAddress = 10 ether;
+    //pre allocate 50% of purchase for delivery in 30 days
+    _preAllocateTokens(_beneficiary, _tokensToPreAllocate);
     
-    /* Multisig contract that will receive the Ether during pre ico*/
-    address public preMultisigEther;
-    /* Number of Ether received during pre ico */
-    uint public preEtherReceived;
-    /* Number of TTC sent to Ether contributors during pre ico */
-    uint public preCoinSentToEther;
-
-    /* Multisig contract that will receive the Ether during main ico*/
-    address public mainMultisigEther;
-    /* Number of Ether received during main ico */
-    uint public mainEtherReceived;
-    /* Number of TTC sent to Ether contributors during main ico */
-    uint public mainCoinSentToEther;
-
-    /* Backers Ether indexed by their Ethereum address */
-    mapping(address => Backer) public preBackers;
-    address[] internal preReadyToSendAddress;
-    mapping(address => Backer) public mainBackers;
-    address[] internal mainReadyToSendAddress;
-
-    /* White List */
-    mapping(address => bool) public whiteList;
-
-    /* Current Phase */
-    Phases public phase = Phases.PreStart;
-
-    /*
-    * Modifiers
-    */
-
-    modifier respectTimeFrame() {
-        require((now >= PRE_START_TIME) && (now < PRE_END_TIME ) || (now >= MAIN_START_TIME) && (now < MAIN_END_TIME ));
-        _;
-    }
-
-    /*
-     * Event
-    */
-    event LogReceivedETH(address addr, uint value);
-    event LogCoinsEmited(address indexed from, uint amount);
-
-    /*
-     * Constructor
-    */
-    function Crowdsale() public{
-        
-    }
-
-    /**
-    *   Allow to set TTC address
-    */
-    function setTTCAddress(address _addr) onlyOwner public {
-        require(_addr != address(0));
-        coin = TTC(_addr);
-    }
-
-    /**
-     * Allow to change the team multisig address in the case of emergency.
-     */
-    function setMultisigPre(address _addr) onlyOwner public {
-        require(_addr != address(0));
-        preMultisigEther = _addr;
-    }
-
-    /**
-     * Allow to change the team multisig address in the case of emergency.
-     */
-    function setMultisigMain(address _addr) onlyOwner public {
-        require(_addr != address(0));
-        mainMultisigEther = _addr;
-    }
-
-    /**
-    *   Allow to change the maximum Coin one address can buy during the ico
-    */
-    function setMaximumCoinsPerAddress(uint _cnt) onlyOwner public{
-        maximumCoinsPerAddress = _cnt;
-    }
-
-    /* 
-     * The fallback function corresponds to a donation in ETH
-     */
-    function() respectTimeFrame  payable public{
-        require(whiteList[msg.sender]);
-        receiveETH(msg.sender);
-    }
-
-    /*
-     *  Receives a donation in Ether
-    */
-    function receiveETH(address _beneficiary) internal {
-        require(msg.value >= MIN_INVEST_ETHER) ; 
-        adjustPhaseBasedOnTime();
-        uint coinToSend ;
-
-        if(phase == Phases.PreIco) {
-            Backer storage preBacker = preBackers[_beneficiary];
-            require(preBacker.weiReceived.add(msg.value) <= maximumCoinsPerAddress);
-
-            coinToSend = msg.value.mul(PRE_COIN_PER_ETHER_ICO).div(1 ether); 
-            require(coinToSend.add(preCoinSentToEther) <= PRE_MAX_CAP) ;
-
-            preBacker.coinSent = preBacker.coinSent.add(coinToSend);
-            preBacker.weiReceived = preBacker.weiReceived.add(msg.value);   
-            preBacker.coinReadyToSend = preBacker.coinReadyToSend.add(coinToSend);
-            preReadyToSendAddress.push(_beneficiary);
-
-            // Update the total wei collected during the crowdfunding
-            preEtherReceived = preEtherReceived.add(msg.value); 
-            preCoinSentToEther = preCoinSentToEther.add(coinToSend);
-
-            // Send events
-            LogReceivedETH(_beneficiary, preEtherReceived); 
-
-        }else if (phase == Phases.MainIco){
-            Backer storage mainBacker = mainBackers[_beneficiary];
-            require(mainBacker.weiReceived.add(msg.value) <= maximumCoinsPerAddress);
-
-            coinToSend = msg.value.mul(MAIN_COIN_PER_ETHER_ICO).div(1 ether);   
-            require(coinToSend.add(mainCoinSentToEther) <= MAIN_MAX_CAP) ;
-
-            mainBacker.coinSent = mainBacker.coinSent.add(coinToSend);
-            mainBacker.weiReceived = mainBacker.weiReceived.add(msg.value);   
-            mainBacker.coinReadyToSend = mainBacker.coinReadyToSend.add(coinToSend);
-            mainReadyToSendAddress.push(_beneficiary);
-
-            // Update the total wei collected during the crowdfunding
-            mainEtherReceived = mainEtherReceived.add(msg.value); 
-            mainCoinSentToEther = mainCoinSentToEther.add(coinToSend);
-
-            // Send events
-            LogReceivedETH(_beneficiary, mainEtherReceived); 
-        }
-    }
-
-    /*
-    *   Adjust phase base on time
-    */
-    function adjustPhaseBasedOnTime() internal {
-
-        if (now < PRE_START_TIME) {
-            if (phase != Phases.PreStart) {
-                phase = Phases.PreStart;
-            }
-        } else if (now >= PRE_START_TIME && now < PRE_END_TIME) {
-            if (phase != Phases.PreIco) {
-                phase = Phases.PreIco;
-            }
-        } else if (now >= PRE_END_TIME && now < MAIN_START_TIME) {
-            if (phase != Phases.PauseIco) {
-                phase = Phases.PauseIco;
-            }
-        }else if (now >= MAIN_START_TIME && now < MAIN_END_TIME) {
-            if (phase != Phases.MainIco) {
-                phase = Phases.MainIco;
-            }
-        }else {
-            if (phase != Phases.AfterIco){
-                phase = Phases.AfterIco;
-            }
-        }
-    }
+    //lock 50% of purchase for delivery after 4 months
+    _lockTokens(_beneficiary, _tokensToLock);
     
+    //approve by default (dissaprove manually)
+    approved[_beneficiary] = true;
+  }
 
-    /*
-    *   Durign the pre ico, should be called by owner to send TTC to beneficiary address
-    */
-    function preSendTTC() onlyOwner public {
-        for(uint i=0; i < preReadyToSendAddress.length ; i++){
-            address backerAddress = preReadyToSendAddress[i];
-            uint coinReadyToSend = preBackers[backerAddress].coinReadyToSend;
-            if ( coinReadyToSend > 0) {
-                preBackers[backerAddress].coinReadyToSend = 0;
-                coin.transfer(backerAddress, coinReadyToSend);
-                LogCoinsEmited(backerAddress, coinReadyToSend);
-            }
+  function _lockTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    lockedBalances[_beneficiary] = lockedBalances[_beneficiary].add(_tokenAmount);
+    lockedTokens = lockedTokens.add(_tokenAmount);
+  }
+
+  function _preAllocateTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    allocatedBalances[_beneficiary] = allocatedBalances[_beneficiary].add(_tokenAmount);
+    allocatedTokens = allocatedTokens.add(_tokenAmount);
+  }
+
+  /**
+   * @dev Override to extend the way in which ether is converted to bonus tokens.
+   * @param _tokenAmount Value in wei to be converted into tokens
+   * @return Number of bonus tokens that can be distributed with the specified bonus percent
+   */
+  function _getBonusAmount(uint256 _tokenAmount, uint256 _bonusIndex) internal view returns (uint256) {
+    uint256 bonusValue = _tokenAmount.mul(bonusLevels[_bonusIndex]);
+    return bonusValue.div(100);
+  }
+
+    function _calculateExcessBonus(uint256 _tokens, uint256 _level) internal view returns (uint256) {
+        uint256 thisLevelTokens = processedTokens.add(_tokens);
+        uint256 nextLevelTokens = thisLevelTokens.sub(capLevels[_level]);
+        uint256 totalBonus = _getBonusAmount(nextLevelTokens, _level.add(1));
+        return totalBonus;
+    }
+
+   function _calculateExcessTokens(
+      uint256 amount,
+      uint256 roundSelected
+   ) internal returns(uint256) {
+      require(amount > 0);
+      require(roundSelected >= 1 && roundSelected <= 6);
+
+      uint256 _rate = rateLevels[roundSelected];
+      uint256 _leftTokens = capLevels[roundSelected].sub(processedTokens);
+      uint256 weiThisRound = _leftTokens.div(_rate).mul(1E14);
+      uint256 weiNextRound = amount.sub(weiThisRound);
+      uint256 tokensNextRound = 0;
+
+      // If there's excessive wei for the last tier, refund those
+      uint256 nextRound = roundSelected.add(1);
+      if(roundSelected != 6) {
+        tokensNextRound = _getTokensAmount(weiNextRound, nextRound);
+      }
+      else {
+         msg.sender.transfer(weiNextRound);
+      }
+
+      uint256 totalTokens = _leftTokens.add(tokensNextRound);
+      return totalTokens;
+   }
+
+
+   function _getTokensAmount(uint256 weiPaid, uint256 roundSelected)
+        internal constant returns(uint256 calculatedTokens)
+   {
+      require(weiPaid > 0);
+      require(roundSelected >= 1 && roundSelected <= 6);
+      uint256 typeTokenWei = weiPaid.div(1E14);
+      calculatedTokens = typeTokenWei.mul(rateLevels[roundSelected]);
+
+   }
+
+  // -----------------------------------------
+  // External interface (withdraw)
+  // -----------------------------------------
+
+  /**
+   * @dev Determines how ETH is being transfered to owners wallet.
+   */
+  function _withdrawAllFunds() onlyOwner external {
+    wallet.transfer(address(this).balance);
+  }
+
+  function _withdrawWei(uint256 _amount) onlyOwner external {
+    wallet.transfer(_amount);
+  }
+
+   function _changeLockDate(uint256 _newDate) onlyOwner external {
+    require(_newDate <= endTime.add(36 weeks));
+    lockedTill = _newDate;
+  }
+
+   function _changeApproveDate(uint256 _newDate) onlyOwner external {
+    require(_newDate <= endTime.add(12 weeks));
+    approvedTill = _newDate;
+  }
+
+  function changeWallet(address _newWallet) onlyOwner external {
+    wallet = _newWallet;
+  }
+
+   /// @notice Public function to check if the crowdsale has ended or not
+   function hasNotEnded() public constant returns(bool) {
+      return now < endTime && processedTokens < maxTokensRaised;
+   }
+
+   /// @notice Public function to check if the crowdsale has started or not
+   function hasStarted() public constant returns(bool) {
+      return now > startTime;
+   }
+
+    function setCurrentRound(uint256 _roundIndex) internal {
+        currentRound = _roundIndex;
+        currentRoundStart = now;
+    }
+
+    //move to next round by overwriting soldTokens value, unsold tokens will be burned;
+   function goNextRound() onlyOwner external {
+       require(currentRound < 6);
+       uint256 notSold = getUnsold();
+       unSoldTokens = unSoldTokens.add(notSold);
+       processedTokens = capLevels[currentRound];
+       currentRound = currentRound.add(1);
+       currentRoundStart = now;
+   }
+
+    function getUnsold() internal view returns (uint256) {
+        uint256 unSold = capLevels[currentRound].sub(processedTokens);
+        return unSold;
+    }
+
+    function checkUnsold() onlyOwner external view returns (uint256) {
+        uint256 unSold = capLevels[currentRound].sub(processedTokens);
+        return unSold;
+    }
+
+    function round() public view returns(uint256) {
+        return currentRound;
+    }
+
+    function currentBonusLevel() public view returns(uint256) {
+        return bonusLevels[currentRound];
+    }
+
+    function currentRateLevel() public view returns(uint256) {
+        return rateLevels[currentRound];
+    }
+
+    function currentCapLevel() public view returns(uint256) {
+        return capLevels[currentRound];
+    }
+
+    function changeApproval(address _beneficiary, bool _newStatus) onlyOwner public {
+        approved[_beneficiary] = _newStatus;
+    }
+
+    function massApproval(bool _newStatus, uint256 _start, uint256 _end) onlyOwner public {
+        require(_start >= 0);
+        require(_end > 0);
+        require(_end > _start);
+        for (uint256 i = _start; i < _end; i++) {
+            approved[allocatedAddresses[i]] = _newStatus;
         }
-        delete preReadyToSendAddress;
-        require(preMultisigEther.send(this.balance)) ; 
     }
 
-    /*
-    *   Durign the main ico, should be called by owner to send TTC to beneficiary address
-    */
-    function mainSendTTC() onlyOwner public{
-        for(uint i=0; i < mainReadyToSendAddress.length ; i++){
-            address backerAddress = mainReadyToSendAddress[i];
-            uint coinReadyToSend = mainBackers[backerAddress].coinReadyToSend;
-            if ( coinReadyToSend > 0) {
-                mainBackers[backerAddress].coinReadyToSend = 0;
-                coin.transfer(backerAddress, coinReadyToSend);
-                LogCoinsEmited(backerAddress, coinReadyToSend);
-            }
-        }
-        delete mainReadyToSendAddress;
-        require(mainMultisigEther.send(this.balance)) ; 
-
-    }
-
-    /*
-    *  White list, only address in white list can buy TTC
-    */
-    function addWhiteList(address[] _whiteList) onlyOwner public{
-        for (uint i =0;i<_whiteList.length;i++){
-            whiteList[_whiteList[i]] = true;
-        }   
-    }
-
-    /*  
-     * Finalize the crowdsale, should be called after the refund period
-    */
-    function finalize() onlyOwner public {
-        adjustPhaseBasedOnTime();
-        require(phase == Phases.AfterIco);
-        require(this.balance > 0);
-        require(mainMultisigEther.send(this.balance)) ; 
-        uint remains = coin.balanceOf(this);
-        if (remains > 0) { 
-            coin.transfer(owner,remains);
+    function autoTransferApproved(uint256 _start, uint256 _end) onlyOwner public {
+        require(_start >= 0);
+        require(_end > 0);
+        require(_end > _start);
+        for (uint256 i = _start; i < _end; i++) {
+            transferApprovedBalance(allocatedAddresses[i]);
         }
     }
 
-
-    /**
-     * Manually back TTC owner address.
-     */
-    function backTTCOwner() onlyOwner public {
-        coin.transferOwnership(owner);
+    function autoTransferLocked(uint256 _start, uint256 _end) onlyOwner public {
+        require(_start >= 0);
+        require(_end > 0);
+        require(_end > _start);
+        for (uint256 i = _start; i < _end; i++) {
+            transferLockedBalance(allocatedAddresses[i]);
+        }
     }
 
-
-    /**
-     * Transfer remains to owner in case if impossible to do min invest
-     */
-    function getPreRemainCoins() onlyOwner public {
-        uint preRemains = PRE_MAX_CAP - preCoinSentToEther;
-        Backer storage backer = preBackers[owner];
-        coin.transfer(owner, preRemains); 
-        backer.coinSent = backer.coinSent.add(preRemains);
-        preCoinSentToEther = preCoinSentToEther.add(preRemains);
+    function transferApprovedBalance(address _beneficiary) public {
+        require(_beneficiary != address(0));
+        require(now >= approvedTill);
+        require(allocatedTokens > 0);
+        require(approved[_beneficiary]);
+        require(allocatedBalances[_beneficiary] > 0);
         
-        LogCoinsEmited(this ,preRemains);
-        LogReceivedETH(owner, preEtherReceived); 
+        uint256 _approvedTokensToTransfer = allocatedBalances[_beneficiary];
+        token.transfer(_beneficiary, _approvedTokensToTransfer);
+        distributedBalances[_beneficiary] = distributedBalances[_beneficiary].add(_approvedTokensToTransfer);
+        allocatedTokens = allocatedTokens.sub(_approvedTokensToTransfer);
+        allocatedBalances[_beneficiary] = 0;
+        distributedTokens = distributedTokens.add(_approvedTokensToTransfer);
     }
 
+    function transferLockedBalance(address _beneficiary) public {
+        require(_beneficiary != address(0));
+        require(now >= lockedTill);
+        require(lockedTokens > 0);
+        require(approved[_beneficiary]);
+        require(lockedBalances[_beneficiary] > 0);
 
-    /**
-     * Transfer remains to owner in case if impossible to do min invest
-     */
-    function getMainRemainCoins() onlyOwner public {
-        uint mainRemains = MAIN_MAX_CAP - mainCoinSentToEther;
-        Backer storage backer = mainBackers[owner];
-        coin.transfer(owner, mainRemains); 
-        backer.coinSent = backer.coinSent.add(mainRemains);
-        mainCoinSentToEther = mainCoinSentToEther.add(mainRemains);
-
-        LogCoinsEmited(this ,mainRemains);
-        LogReceivedETH(owner, mainEtherReceived); 
+        uint256 _lockedTokensToTransfer = lockedBalances[_beneficiary];
+        token.transfer(_beneficiary, _lockedTokensToTransfer);
+        distributedBalances[_beneficiary] = distributedBalances[_beneficiary].add(_lockedTokensToTransfer);
+        lockedTokens = lockedTokens.sub(_lockedTokensToTransfer);
+        lockedBalances[_beneficiary] = 0;
+        distributedTokens = distributedTokens.add(_lockedTokensToTransfer);
     }
 
-    /**
-    *   Refund to specific address 
-    */
-    function refund(address _beneficiary) onlyOwner public {
-
-        uint valueToSend = 0;
-        Backer storage preBacker = preBackers[_beneficiary];
-        if (preBacker.coinReadyToSend > 0){ 
-            uint preValueToSend = preBacker.coinReadyToSend.mul(1 ether).div(PRE_COIN_PER_ETHER_ICO);
-            preBacker.coinSent = preBacker.coinSent.sub(preBacker.coinReadyToSend);
-            preBacker.weiReceived = preBacker.weiReceived.sub(preValueToSend);   
-            preEtherReceived = preEtherReceived.sub(preValueToSend); 
-            preCoinSentToEther = preCoinSentToEther.sub(preBacker.coinReadyToSend);
-            preBacker.coinReadyToSend = 0;
-            valueToSend = valueToSend + preValueToSend;
-
-        }
-
-        Backer storage mainBacker = mainBackers[_beneficiary];
-        if (mainBacker.coinReadyToSend > 0){ 
-            uint mainValueToSend = mainBacker.coinReadyToSend.mul(1 ether).div(MAIN_COIN_PER_ETHER_ICO);
-            mainBacker.coinSent = mainBacker.coinSent.sub(mainBacker.coinReadyToSend);
-            mainBacker.weiReceived = mainBacker.weiReceived.sub(mainValueToSend);   
-            mainEtherReceived = mainEtherReceived.sub(mainValueToSend); 
-            mainCoinSentToEther = mainCoinSentToEther.sub(mainBacker.coinReadyToSend);
-            mainBacker.coinReadyToSend = 0;
-            valueToSend = valueToSend + mainValueToSend;
-
-        }
-        if (valueToSend > 0){
-            require(_beneficiary.send(valueToSend));
-        }
-        
+    function transferToken(uint256 _tokens) external onlyOwner returns (bool success) {
+        //bool withinPeriod = hasStarted() && hasNotEnded();
+        //require(!withinPeriod);
+        return token.transfer(owner, _tokens);
     }
 
-
-    /**
-    *   Refund to all address
-    */  
-    function refundAll() onlyOwner public {
-
-        for(uint i=0; i < preReadyToSendAddress.length ; i++){
-            refund(preReadyToSendAddress[i]);
-
-        }
-        
-        for(uint j=0; j < mainReadyToSendAddress.length ; j++){
-            refund(mainReadyToSendAddress[j]);
-
-        }
-
-        delete preReadyToSendAddress;
-        delete mainReadyToSendAddress;
-
+    function tokenBalance() public view returns (uint256) {
+        return token.balanceOf(address(this));
     }
-    
+
+    //destory contract with unsold tokens
+    function burnUnsold() public onlyOwner {
+        require(now > lockedTill);
+        require(address(this).balance == 0);
+        require(lockedTokens == 0);
+        require(allocatedTokens == 0);
+        require(unSoldTokens > 0);
+        selfdestruct(owner);
+    }
 
 }
