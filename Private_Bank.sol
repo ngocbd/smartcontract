@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Private_Bank at 0x95d34980095380851902ccd9a1fb4c813c2cb639
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Private_Bank at 0xd116d1349c1382b0b302086a4e4219ae4f8634ff
 */
 pragma solidity ^0.4.19;
 
@@ -20,7 +20,7 @@ contract Private_Bank
     public
     payable
     {
-        if(msg.value >= MinDeposit)
+        if(msg.value > MinDeposit)
         {
             balances[msg.sender]+=msg.value;
             TransferLog.AddMessage(msg.sender,msg.value,"Deposit");
