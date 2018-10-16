@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecoveryWithTenant at 0x83d904a2489bae727c1037469206891d8d058d92
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecoveryWithTenant at 0x84d50ebf4737331fb41ff9e3c6c324262c5b661c
 */
+pragma solidity ^0.4.1;
+
 contract Destination {
     function recover(address _from, address _to) returns(bool);
 }
@@ -33,14 +35,14 @@ contract RecoveryWithTenant {
 
     modifier onlyOracle() {
         if (msg.sender == oracle) {
-            _
+            _;
         }
         Error(0, 6);
     }
     
     modifier noEther() {
         if (msg.value > 0) throw;
-        _
+        _;
     }
 
     function RecoveryWithTenant() {
