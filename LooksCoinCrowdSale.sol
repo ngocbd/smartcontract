@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LooksCoinCrowdSale at 0x94394EbE010332c5A40d946658779d26dA3aC92B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LooksCoinCrowdSale at 0xab29470ee3eb017ed2e60cec6a28133124f3e5e2
 */
 pragma solidity ^0.4.19;
 
 /*
 * LooksCoin token sale contract
 *
-* Refer to https://lookrev.com/tokensale/ for more information.
+* Refer to https://lookscoin.com for more information.
 * 
 * Developer: LookRev
 *
@@ -30,7 +30,7 @@ function allowance(address _owner, address _spender) constant public returns (ui
 /**
 * Provides methods to safely add, subtract and multiply uint256 numbers.
 */
-contract SafeMath {
+library SafeMath {
     /**
      * Add two uint256 values, revert in case of overflow.
      *
@@ -38,7 +38,7 @@ contract SafeMath {
      * @param b second value to add
      * @return a + b
      */
-    function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
+    function add(uint256 a, uint256 b) internal returns (uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
@@ -51,7 +51,7 @@ contract SafeMath {
      * @param b value to subtract
      * @return a - b
      */
-    function safeSub(uint256 a, uint256 b) internal returns (uint256) {
+    function sub(uint256 a, uint256 b) internal returns (uint256) {
         assert(a >= b);
         return a - b;
     }
@@ -63,7 +63,7 @@ contract SafeMath {
      * @param b second value to multiply
      * @return a * b
      */
-    function safeMul(uint256 a, uint256 b) internal returns (uint256) {
+    function mul(uint256 a, uint256 b) internal returns (uint256) {
         if (a == 0 || b == 0) return 0;
         uint256 c = a * b;
         assert(c / a == b);
@@ -77,7 +77,7 @@ contract SafeMath {
      * @param b second value denominator
      * @return a / b
      */
-    function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
+    function div(uint256 a, uint256 b) internal returns (uint256) {
         assert(b != 0); // Solidity automatically throws when dividing by 0
         uint256 c = a / b;
         assert(a == b * c + a % b); // There is no case in which this doesn't hold
@@ -117,7 +117,6 @@ contract Ownable {
 
     /**
      * Accept the contract ownership by the new owner.
-     *
      */
     function acceptOwnership() {
         require(msg.sender == newOwner);
@@ -131,7 +130,8 @@ contract Ownable {
 /**
 * Standard Token Smart Contract
 */
-contract StandardToken is ERC20, SafeMath {
+contract StandardToken is ERC20 {
+    using SafeMath for uint256;
 
     /**
      * Mapping from addresses of token holders to the numbers of tokens belonging
@@ -152,14 +152,14 @@ contract StandardToken is ERC20, SafeMath {
     mapping (address => mapping (address => uint256)) spentamount;
 
     /**
-     * Mapping of the addition of the addresse of buyers.
+     * Mapping of the addition of patrons.
      */
-    mapping (address => bool) buyerAppended;
+    mapping (address => bool) patronAppended;
 
     /**
-     * Mapping of the addition of addresses of buyers.
+     * Mapping of the addresses of patrons.
      */
-    address[] buyers;
+    address[] patrons;
 
     /**
      * Mapping of the addresses of VIP token holders.
@@ -168,19 +168,16 @@ contract StandardToken is ERC20, SafeMath {
 
     /**
     * Mapping for VIP rank for qualified token holders
-    * Higher VIP ranking (with earlier timestamp) has higher bidding priority when
-    * competing for the same product or service on platform. 
-    * Higher VIP ranking address can outbid other lower ranking addresses only once per 
-    * selling window or promotion period.
-    * Usage of the VIP ranking and bid priority will be described on token website.
+    * Higher VIP rank (with earlier timestamp) has higher bidding priority when
+    * competing for the same product or service on platform.
     */
     mapping (address => uint256) viprank;
 
     /**
      * Get number of tokens currently belonging to given owner.
      *
-     * @param _owner address to get number of tokens currently belonging to the
-     *        owner of
+     * @param _owner address to get number of tokens currently belonging to its owner
+     *
      * @return number of tokens currently belonging to the owner of given address
      */
     function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -197,8 +194,8 @@ contract StandardToken is ERC20, SafeMath {
     function transfer(address _to, uint256 _value) returns (bool success) {
         require(_to != 0x0);
         if (balances[msg.sender] < _value) return false;
-        balances[msg.sender] = safeSub(balances[msg.sender],_value);
-        balances[_to] = safeAdd(balances[_to],_value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
@@ -219,9 +216,9 @@ contract StandardToken is ERC20, SafeMath {
         if (balances[_from] < _value) return false;
         if (_value > allowed[_from][msg.sender]) return false;
 
-        balances[_from] = safeSub(balances[_from],_value);
-        allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender],_value);
-        balances[_to] = safeAdd(balances[_to],_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
         Transfer(_from, _to, _value);
         return true;
     }
@@ -237,7 +234,7 @@ contract StandardToken is ERC20, SafeMath {
     function approve(address _spender, uint256 _value) returns (bool success) {
 
         // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender, 0)` if it is not
+        //  allowance to zero by calling approve(_spender, 0) if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
         if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) {
@@ -271,33 +268,42 @@ contract StandardToken is ERC20, SafeMath {
 /**
  * LooksCoin Token
  *
- * VIP ranking is recorded at the time when the token holding address first meet VIP coin 
- * holding level.
- * VIP ranking is valid for the lifetime of a token wallet address, as long as it meets 
- * VIP coin holding level.
- * VIP ranking is used to calculate priority when competing with other bids for the
- * same product or service on the platform. 
- * Higher VIP ranking (with earlier timestamp) has higher priority.
- * Higher VIP ranking address can outbid other lower ranking wallet addresse owners only once
+ * LooksCoin Token is an utility token that can be purchased through crowdsale or earned on
+ * the LookRev platform. It can be spent to purchase creative products and services on
+ * LookRev platform.
+ *
+ * VIP rank is used to calculate priority when competing with other bids
+ * for the same product or service on the platform. 
+ * Higher VIP rank (with earlier timestamp) has higher priority.
+ * Higher VIP rank wallet address owner can outbid other lower ranking owners only once
  * per selling window or promotion period.
- * Usage of the LooksCoin, VIP ranking and bid priority will be described on token website.
+ * VIP rank is recorded at the time when the wallet address first reach VIP LooksCoin 
+ * holding level for a token purchaser.
+ * VIP rank is valid for the lifetime of a wallet address on the platform, as long as it 
+ * meets the VIP holding level.
+
+ * Usage of the LooksCoin, VIP rank and token utilities are described on the website
+ * https://lookscoin.com.
  *
  */
 contract LooksCoin is StandardToken, Ownable {
 
-    uint256 public constant decimals = 0;
+    /**
+     * Number of decimals of the smallest unit
+     */
+    uint256 public constant decimals = 18;
 
     /**
-     * Minimium contribution to record a VIP rank
+     * VIP Holding Level. Minimium token holding amount to record a VIP rank.
      * Token holding address needs have at least 24000 LooksCoin to be ranked as VIP
      * VIP rank can only be set through purchasing tokens
-    */
-    uint256 public constant VIP_MINIMUM = 24000;
+     */
+    uint256 public constant VIP_MINIMUM = 24000e18;
 
     /**
      * Initial number of tokens.
      */
-    uint256 constant INITIAL_TOKENS_COUNT = 100000000;
+    uint256 constant INITIAL_TOKENS_COUNT = 100000000e18;
 
     /**
      * Crowdsale contract address.
@@ -307,19 +313,13 @@ contract LooksCoin is StandardToken, Ownable {
     /**
      * Init Placeholder
      */
-    address coinmaster = address(0x33169f40d18c6c2590901db23000D84052a11F54);
+    address coinmaster = address(0xd3c79e4AD654436d59AfD61363Bc2B927d2fb680);
 
     /**
-     * Create new LooksCoin token Smart Contract.
-     * Contract is needed in _tokenSaleContract address.
-     *
-     * @param _tokenSaleContract of crowdsale contract
-     *
+     * Create new LooksCoin token smart contract.
      */
-    function LooksCoin(address _tokenSaleContract) {
-        assert(_tokenSaleContract != 0x0);
+    function LooksCoin() {
         owner = coinmaster;
-        tokenSaleContract = _tokenSaleContract;
         balances[owner] = INITIAL_TOKENS_COUNT;
         totalSupply = INITIAL_TOKENS_COUNT;
     }
@@ -343,20 +343,20 @@ contract LooksCoin is StandardToken, Ownable {
     }
 
     /**
-     * @dev Set new sale manage contract.
+     * @dev Set new token sale contract.
      * May only be called by owner.
      *
-     * @param _newSaleManageContract new token sale manage contract.
+     * @param _newTokenSaleContract new token sale manage contract.
      */
-    function setSaleManageContract(address _newSaleManageContract) {
+    function setTokenSaleContract(address _newTokenSaleContract) {
         require(msg.sender == owner);
-        assert(_newSaleManageContract != 0x0);
-        tokenSaleContract = _newSaleManageContract;
+        assert(_newTokenSaleContract != 0x0);
+        tokenSaleContract = _newTokenSaleContract;
     }
 
     /**
      * Get VIP rank of a given owner.
-     * VIP ranking is valid for the lifetime of a token wallet address, 
+     * VIP rank is valid for the lifetime of a token wallet address, 
      * as long as it meets VIP holding level.
      *
      * @param _to participant address to get the vip rank
@@ -371,15 +371,15 @@ contract LooksCoin is StandardToken, Ownable {
 
     /**
      * Check and update VIP rank of a given token buyer.
-     * Contribution timestamp is recorded for VIP rank
-     * Recorded timestamp for VIP ranking should always be earlier than the current time
+     * Contribution timestamp is recorded for VIP rank.
+     * Recorded timestamp for VIP rank should always be earlier than the current time.
      *
-     * @param _to address to check the vip rank
+     * @param _to address to check the vip rank.
      * @return rank vip rank of the owner of given address if any
      */
     function updateVIPRank(address _to) returns (uint256 rank) {
         // Contribution timestamp is recorded for VIP rank
-        // Recorded timestamp for VIP ranking should always be earlier than current time
+        // Recorded timestamp for VIP rank should always be earlier than current time
         if (balances[_to] >= VIP_MINIMUM && viprank[_to] == 0) {
             viprank[_to] = now;
             vips.push(_to);
@@ -401,8 +401,8 @@ contract LooksCoin is StandardToken, Ownable {
         assert(_to != 0x0);
         require(_value > 0);
 
-        balances[_to] = safeAdd(balances[_to], _value);
-        totalSupply = safeAdd(totalSupply, _value);
+        balances[_to] = balances[_to].add(_value);
+        totalSupply = totalSupply.add(_value);
         updateVIPRank(_to);
         TokenRewardsAdded(_to, _value);
     }
@@ -420,20 +420,16 @@ contract LooksCoin is StandardToken, Ownable {
         assert(_to != 0x0);
         if (balances[msg.sender] < _value) return false;
 
-        balances[msg.sender] = safeSub(balances[msg.sender],_value);
-        balances[_to] = safeAdd(balances[_to],_value);
-        spentamount[msg.sender][_to] = safeAdd(spentamount[msg.sender][_to], _value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        spentamount[msg.sender][_to] = spentamount[msg.sender][_to].add(_value);
 
         SpentTokens(msg.sender, _to, _value);
-        if(!buyerAppended[msg.sender]) {
-            buyerAppended[msg.sender] = true;
-            buyers.push(msg.sender);
+        if(!patronAppended[msg.sender]) {
+            patronAppended[msg.sender] = true;
+            patrons.push(msg.sender);
         }
         return true;
-    }
-
-    function getSpentAmount(address _who, address _to) constant returns (uint256) {
-        return spentamount[_who][_to];
     }
 
     event Burn(address indexed burner, uint256 value);
@@ -450,26 +446,48 @@ contract LooksCoin is StandardToken, Ownable {
         if (_value > totalSupply) return false;
         if (_value > balances[burner]) return false;
         
-        balances[burner] = safeSub(balances[burner],_value);
-        totalSupply = safeSub(totalSupply,_value);
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
         Burn(burner, _value);
         return true;
     }
 
-    function getVIPOwner(uint256 index) constant returns (address) {
+    /**
+     * Get the VIP owner at the index.
+     *
+     * @param index of the VIP owner on the VIP list
+     * @return address of the VIP owner
+     */
+    function getVIPOwner(uint256 index) constant returns (address vipowner) {
         return (vips[index]);
     }
 
-    function getVIPCount() constant returns (uint256) {
+    /**
+     * Get the count of VIP owners.
+     *
+     * @return count of VIP owners list.
+     */
+    function getVIPCount() constant returns (uint256 count) {
         return vips.length;
     }
 
-    function getBuyer(uint256 index) constant returns (address) {
-        return (buyers[index]);
+    /**
+     * Get the patron at the index.
+     *
+     * @param index of the patron on the patron list
+     * @return address of the patron
+     */
+    function getPatron(uint256 index) constant returns (address patron) {
+        return (patrons[index]);
     }
 
-    function getBuyersCount() constant returns (uint256) {
-        return buyers.length;
+    /**
+     * Get the count of patrons.
+     *
+     * @return number of patrons.
+     */
+    function getPatronsCount() constant returns (uint256 count) {
+        return patrons.length;
     }
 }
 
@@ -477,37 +495,42 @@ contract LooksCoin is StandardToken, Ownable {
  * LooksCoin CrowdSale Contract
  *
  * The token sale controller, allows contributing ether in exchange for LooksCoin.
- * The price (exchange rate with ETH) is 2400 LOOKS per ETH at crowdsale.
- * VIP ranking is recorded at the time when the token holding address first meet VIP coin holding level.
- * VIP ranking is valid for the lifetime of a token wallet address, as long as it meets VIP coin holding level.
- * VIP ranking is used to calculate priority when competing with other bids for the
- * same product or service on the platform. 
- * Higher VIP ranking (with earlier timestamp) has higher priority.
- * Higher VIP ranking address can outbid other lower ranking addresses only once per selling window 
- * or promotion period.
- * Usage of the LooksCoin, VIP ranking and bid priority will be described on token website.
+ * The price (exchange rate with ETH) is 2400 LooksCoin per ETH at crowdsale.
+ *
+ * VIP rank is used to calculate priority when competing with other bids
+ * for the same product or service on the platform. 
+ * Higher VIP rank (with earlier timestamp) has higher priority.
+ * Higher VIP rank wallet address owner can outbid other lower ranking owners only once
+ * per selling window or promotion period.
+ * VIP rank is recorded at the time when the wallet address first reach VIP LooksCoin 
+ * holding level for a token purchaser.
+ * VIP rank is valid for the lifetime of a wallet address on the platform, as long as it 
+ * meets the VIP holding level.
+ *
  *
  * LooksCoin CrowdSale Bonus
  *******************************************************************************************************************
- * First Ten (10) VIP token holders get 20% bonus of the LOOKS tokens in their VIP addresses
- * Eleven (11th) to Fifty (50th) VIP token holders get 10% bonus of the LOOKS tokens in their VIP addresses
- * Fifty One (51th) to One Hundred (100th) VIP token holders get 5% bonus of the LOOKS tokens in their VIP addresses
+ * First Ten (1st to 10th) VIP owners get 20% bonus LooksCoin in their VIP wallet addresses
+ * Eleven (11th) to Fifty (50th) VIP owners get 10% bonus of the LooksCoin in their VIP wallet addresses
+ * Fifty One (51th) to One Hundred (100th) VIP owners get 5% bonus of the LooksCoin in their VIP wallet addresses
  *******************************************************************************************************************
  *
- * Bonus tokens will be distributed by coin master when LooksCoin has 100 VIP rank token wallet addresses
- *
+ * Bonus LooksCoin will be distributed by coin master when LooksCoin has 100 VIP wallet addresses
+ * Bonus is calculated as:
+ *   Percentage of Bonus * Amount of LooksCoin at the wallet address at the time recorded on the VIP rank timestamp
+ * 
  */
 contract LooksCoinCrowdSale {
     LooksCoin public looksCoin;
     ERC20 public preSaleToken;
 
     // initial price in wei (numerator)
-    uint256 public constant TOKEN_PRICE_N = 1e18;
+    uint256 public constant TOKEN_PRICE_N = 1;
     // initial price in wei (denominator)
     uint256 public constant TOKEN_PRICE_D = 2400;
     // 1 ETH = 2,400 LOOKS tokens
 
-    address saleController = 0x0;
+    address public saleController = 0x0;
 
     // Amount of imported tokens from preSale
     uint256 public importedTokens = 0;
@@ -543,14 +566,12 @@ contract LooksCoinCrowdSale {
     }
 
     /**
-     * Create new LOOKS token Smart Contract, make message sender to be the
-     * owner of smart contract, issue given number of tokens and give them to
-     * message sender.
+     * Create new crowdsale smart contract, make message sender to be the
+     * owner of smart contract.
      */
     function LooksCoinCrowdSale() {
         saleController = msg.sender;
         fundstorage = msg.sender;
-        looksCoin = new LooksCoin(this);
 
         preSaleToken = ERC20(0x253C7dd074f4BaCb305387F922225A4f737C08bd);
     }
@@ -563,6 +584,28 @@ contract LooksCoinCrowdSale {
     {
         require(msg.sender == saleController);
         currentState = _newState;
+    }
+
+    /**
+    * @dev Set token contract address
+    * @param _tokenContract address of LooksCoin token contract
+    */
+    function setTokenContract(address _tokenContract)
+    {
+        require(msg.sender == saleController);
+        assert(_tokenContract != 0x0);
+        looksCoin = LooksCoin(_tokenContract);
+    }
+
+    /**
+    * @dev Set token contract address for migration
+    * @param _prevTokenContract address of token contract for migration
+    */
+    function setMigrateTokenContract(address _prevTokenContract)
+    {
+        require(msg.sender == saleController);
+        assert(_prevTokenContract != 0x0);
+        preSaleToken = ERC20(_prevTokenContract);
     }
 
     /**
@@ -581,35 +624,32 @@ contract LooksCoinCrowdSale {
      * Set new wallet address for the smart contract.
      * May only be called by smart contract owner.
      *
-     * @param _fundstorage new wallet address of the smart contract
+     * @param _fundstorage new wallet address of the smart contract.
      */
     function setWallet(address _fundstorage) {
         require(msg.sender == saleController);
         assert(_fundstorage != 0x0);
         fundstorage = _fundstorage;
-        WalletUpdated(fundstorage);
     }
-    event WalletUpdated(address newWallet);
 
     /**
-    * saves info if account's tokens were imported from pre-CrowdSale
+    * saves info if account's tokens were imported from previous sale.
     */
     mapping (address => bool) private importedFromPreSale;
 
     event TokensImport(address indexed participant, uint256 tokens, uint256 totalImport);
     /**
-    * Imports account's tokens from pre-Sale. 
-    * It can be done only by account owner or CrowdSale manager
+    * Imports account's tokens from previous sale
+    * It can be done only by account owner or sale controller
     * @param _account Address of account which tokens will be imported
     */
     function importTokens(address _account) returns (bool success) {
-        // only token holder or manager can do import
+        // only token holder or sale controller can do import
         require(currentState == State.Running);
         require(msg.sender == saleController || msg.sender == _account);
         require(!importedFromPreSale[_account]);
 
-        // Token decimals in PreSale was 18
-        uint256 preSaleBalance = preSaleToken.balanceOf(_account) / TOKEN_PRICE_N;
+        uint256 preSaleBalance = preSaleToken.balanceOf(_account);
 
         if (preSaleBalance == 0) return false;
 
@@ -625,6 +665,7 @@ contract LooksCoinCrowdSale {
         buyTokens();
     }
 
+    event Transfer(address indexed _from, address indexed _to, uint _value);
     event TokensBought(address indexed buyer, uint256 ethers, uint256 tokens, uint256 tokensSold);
     /**
      * Accept ethers to buy tokens during the token sale
@@ -643,9 +684,11 @@ contract LooksCoinCrowdSale {
         looksCoin.rewardTokens(msg.sender, tokens);
         tokensSold = tokensSold + tokens;
 
-        // Transfer the contributed ethers to the crowdsale fundstorage
-        assert(fundstorage.send(msg.value));
+        // Log the tokens purchased 
+        Transfer(0x0, msg.sender, tokens);
         TokensBought(msg.sender, msg.value, tokens, tokensSold);
+
+        assert(fundstorage.send(msg.value));
         return tokens;
     }
 }
