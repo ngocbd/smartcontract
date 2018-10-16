@@ -1,18 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenboxToken at 0x4b24f0c8230c06e0d7caf722ace3f22ba5b80c33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenboxToken at 0x3a92bd396aef82af98ebc0aa9030d25a23b11c6b
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
 
 /// @title Abstract ERC20 token interface
 contract AbstractToken {
 
-    function totalSupply() constant returns (uint256) {}
-    function balanceOf(address owner) constant returns (uint256 balance);
-    function transfer(address to, uint256 value) returns (bool success);
-    function transferFrom(address from, address to, uint256 value) returns (bool success);
-    function approve(address spender, uint256 value) returns (bool success);
-    function allowance(address owner, address spender) constant returns (uint256 remaining);
+    function balanceOf(address owner) public view returns (uint256 balance);
+    function transfer(address to, uint256 value) public returns (bool success);
+    function transferFrom(address from, address to, uint256 value) public returns (bool success);
+    function approve(address spender, uint256 value) public returns (bool success);
+    function allowance(address owner, address spender) public view returns (uint256 remaining);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -73,7 +72,7 @@ contract StandardToken is AbstractToken, Owned {
     /// @dev Transfers sender's tokens to a given address. Returns success.
     /// @param _to Address of token receiver.
     /// @param _value Number of tokens to transfer.
-    function transfer(address _to, uint256 _value) returns (bool success) {
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
@@ -89,7 +88,7 @@ contract StandardToken is AbstractToken, Owned {
     /// @param _from Address from where tokens are withdrawn.
     /// @param _to Address to where tokens are sent.
     /// @param _value Number of tokens to transfer.
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
       if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
             balances[_to] += _value;
             balances[_from] -= _value;
@@ -104,14 +103,14 @@ contract StandardToken is AbstractToken, Owned {
 
     /// @dev Returns number of tokens owned by given address.
     /// @param _owner Address of token owner.
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
     /// @dev Sets approved amount of tokens for spender. Returns success.
     /// @param _spender Address of allowed account.
     /// @param _value Number of approved tokens.
-    function approve(address _spender, uint256 _value) returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -123,7 +122,7 @@ contract StandardToken is AbstractToken, Owned {
     /// @dev Returns number of allowed tokens for given address.
     /// @param _owner Address of token owner.
     /// @param _spender Address of token spender.
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
       return allowed[_owner][_spender];
     }
 
@@ -133,31 +132,31 @@ contract StandardToken is AbstractToken, Owned {
 /// @title SafeMath contract - Math operations with safety checks.
 /// @author OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
 contract SafeMath {
-    function mul(uint a, uint b) internal returns (uint) {
+    function mul(uint a, uint b) internal pure returns (uint) {
         uint c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
 
-    function div(uint a, uint b) internal returns (uint) {
+    function div(uint a, uint b) internal pure returns (uint) {
         assert(b > 0);
         uint c = a / b;
         assert(a == b * c + a % b);
         return c;
     }
 
-    function sub(uint a, uint b) internal returns (uint) {
+    function sub(uint a, uint b) internal pure returns (uint) {
         assert(b <= a);
         return a - b;
     }
 
-    function add(uint a, uint b) internal returns (uint) {
+    function add(uint a, uint b) internal pure returns (uint) {
         uint c = a + b;
         assert(c >= a);
         return c;
     }
 
-    function pow(uint a, uint b) internal returns (uint) {
+    function pow(uint a, uint b) internal pure returns (uint) {
         uint c = a ** b;
         assert(c >= a);
         return c;
@@ -172,7 +171,7 @@ contract Token is StandardToken, SafeMath {
     // Time of the contract creation
     uint public creationTime;
 
-    function Token() {
+    function Token() public {
         creationTime = now;
     }
 
@@ -190,6 +189,7 @@ contract Token is StandardToken, SafeMath {
     /// @dev Multiplies the given number by 10^(decimals)
     function withDecimals(uint number, uint decimals)
         internal
+        pure
         returns (uint)
     {
         return mul(number, pow(10, decimals));
@@ -205,23 +205,18 @@ contract TokenboxToken is Token {
      * Token meta data
      */
     string constant public name = "Tokenbox";
-    //TODO: Fix before production
+ 
     string constant public symbol = "TBX";
     uint8 constant public decimals = 18;
 
     // Address where Foundation tokens are allocated
-    address constant public foundationReserve = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    address constant public foundationReserve = address(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
 
     // Address where all tokens for the ICO stage are initially allocated
-    address constant public icoAllocation = 0x1111111111111111111111111111111111111111;
+    address constant public icoAllocation = address(0x1111111111111111111111111111111111111111);
 
     // Address where all tokens for the PreICO are initially allocated
-    address constant public preIcoAllocation = 0x2222222222222222222222222222222222222222;
-
-    // TGE start date. 11/14/2017 @ 12:00pm (UTC)
-    uint256 constant public startDate = 1510660800;
-    // TGE duration is 14 days
-    uint256 constant public duration = 14 days;
+    address constant public preIcoAllocation = address(0x2222222222222222222222222222222222222222);
 
     // Vesting date to withdraw 15% of total sold tokens, 11/28/2018 @ 12:00pm (UTC)
     uint256 constant public vestingDateEnd = 1543406400;
@@ -230,22 +225,20 @@ contract TokenboxToken is Token {
     uint256 public totalPicoUSD = 0;
     uint8 constant public usdDecimals = 12;
 
-    // Public key of the signer
-    address public signer;
-
     // Foundation multisignature wallet, all Ether is collected there
     address public multisig;
 
-    bool public finalised = false;
+    bool public migrationCompleted = false;
 
     // Events
-    event InvestmentInETH(address investor, uint256 tokenPriceInWei, uint256 investedInWei, uint256 investedInPicoUsd, uint256 tokensNumber, bytes32 hash);
+    event InvestmentInETH(address investor, uint256 tokenPriceInWei, uint256 investedInWei, uint256 investedInPicoUsd, uint256 tokensNumber, uint256 originalTransactionHash);
     event InvestmentInBTC(address investor, uint256 tokenPriceInSatoshi, uint256 investedInSatoshi, uint256 investedInPicoUsd, uint256 tokensNumber, string btcAddress);
     event InvestmentInUSD(address investor, uint256 tokenPriceInPicoUsd, uint256 investedInPicoUsd, uint256 tokensNumber);
     event PresaleInvestment(address investor, uint256 investedInPicoUsd, uint256 tokensNumber);
 
     /// @dev Contract constructor, sets totalSupply
-    function TokenboxToken(address _signer, address _multisig, uint256 _preIcoTokens )
+    function TokenboxToken(address _multisig, uint256 _preIcoTokens)
+        public
     {
         // Overall, 31,000,000 TBX tokens are distributed
         totalSupply = withDecimals(31000000, decimals);
@@ -259,44 +252,28 @@ contract TokenboxToken is Token {
         balances[foundationReserve] = 0;
 
         // The rest of the tokens is available for sale (75% of totalSupply)
-        balances[icoAllocation] = div(mul(totalSupply, 75), 100)  - preIcoTokens;
+        balances[icoAllocation] = div(mul(totalSupply, 75), 100) - preIcoTokens;
 
-        signer = _signer;
         multisig = _multisig;
     }
 
-    modifier icoIsActive {
-        require(now >= startDate && now < startDate + duration);
+    modifier migrationIsActive {
+        require(!migrationCompleted);
         _;
     }
 
-    modifier icoIsCompleted {
-        require(now >= startDate + duration);
-        _;
-    }
-
-    modifier onlyOwnerOrSigner {
-        require((msg.sender == owner) || (msg.sender == signer));
+    modifier migrationIsCompleted {
+        require(migrationCompleted);
         _;
     }
 
     /// @dev Settle an investment made in ETH and distribute tokens
-    function invest(address investor, uint256 tokenPriceInPicoUsd, uint256 investedInWei, bytes32 hash, uint8 v, bytes32 r, bytes32 s, uint256 WeiToUSD)
+    function ethInvestment(address investor, uint256 tokenPriceInPicoUsd, uint256 investedInWei, uint256 originalTransactionHash, uint256 usdToWei)
         public
-        icoIsActive
-        payable
+        migrationIsActive
+        onlyOwner
     {
-        // Check the hash
-        require(sha256(uint(investor) << 96 | tokenPriceInWei) == hash);
-
-        // Check the signature
-        require(ecrecover(hash, v, r, s) == signer);
-
-        // Difference between the value argument and actual value should not be
-        // more than 0.005 ETH (gas commission)
-        require(sub(investedInWei, msg.value) <= withDecimals(5, 15));
-
-        uint tokenPriceInWei = div(mul(tokenPriceInPicoUsd, WeiToUSD), pow(10, usdDecimals));
+        uint tokenPriceInWei = div(mul(tokenPriceInPicoUsd, usdToWei), pow(10, usdDecimals));
 
         // Number of tokens to distribute
         uint256 tokensNumber = div(withDecimals(investedInWei, decimals), tokenPriceInWei);
@@ -304,23 +281,19 @@ contract TokenboxToken is Token {
         // Check if there is enough tokens left
         require(balances[icoAllocation] >= tokensNumber);
 
-        // Send Ether to the multisig
-        require(multisig.send(msg.value));
+        uint256 investedInPicoUsd = div(withDecimals(investedInWei, usdDecimals), usdToWei);
 
-        uint256 investedInPicoUsd = div(withDecimals(investedInWei, usdDecimals), WeiToUSD);
-
-        investInUSD(investor, investedInPicoUsd, tokensNumber);
-
-        InvestmentInETH(investor, tokenPriceInWei, investedInWei, investedInPicoUsd, tokensNumber, hash);
+        usdInvestment(investor, investedInPicoUsd, tokensNumber);
+        InvestmentInETH(investor, tokenPriceInWei, investedInWei, investedInPicoUsd, tokensNumber, originalTransactionHash);
     }
 
     /// @dev Settle an investment in BTC and distribute tokens.
-    function investInBTC(address investor, uint256 tokenPriceInPicoUsd, uint256 investedInSatoshi, string btcAddress, uint256 satoshiToUSD)
+    function btcInvestment(address investor, uint256 tokenPriceInPicoUsd, uint256 investedInSatoshi, string btcAddress, uint256 usdToSatoshi)
         public
-        icoIsActive
-        onlyOwnerOrSigner
+        migrationIsActive
+        onlyOwner
     {
-        uint tokenPriceInSatoshi = div(mul(tokenPriceInPicoUsd, satoshiToUSD), pow(10, usdDecimals));
+        uint tokenPriceInSatoshi = div(mul(tokenPriceInPicoUsd, usdToSatoshi), pow(10, usdDecimals));
 
         // Number of tokens to distribute
         uint256 tokensNumber = div(withDecimals(investedInSatoshi, decimals), tokenPriceInSatoshi);
@@ -328,30 +301,17 @@ contract TokenboxToken is Token {
         // Check if there is enough tokens left
         require(balances[icoAllocation] >= tokensNumber);
 
-        uint256 investedInPicoUsd = div(withDecimals(investedInSatoshi, usdDecimals), satoshiToUSD);
+        uint256 investedInPicoUsd = div(withDecimals(investedInSatoshi, usdDecimals), usdToSatoshi);
 
-        investInUSD(investor, investedInPicoUsd, tokensNumber);
-
+        usdInvestment(investor, investedInPicoUsd, tokensNumber);
         InvestmentInBTC(investor, tokenPriceInSatoshi, investedInSatoshi, investedInPicoUsd, tokensNumber, btcAddress);
     }
 
-    // @dev Invest in USD
-    function investInUSD(address investor, uint256 investedInPicoUsd, uint256 tokensNumber)
-        private
-    {
-      totalPicoUSD = add(totalPicoUSD, investedInPicoUsd);
-
-      // Allocate tokens to an investor
-      balances[icoAllocation] -= tokensNumber;
-      balances[investor] += tokensNumber;
-      Transfer(icoAllocation, investor, tokensNumber);
-    }
-
     // @dev Wire investment
-    function wireInvestInUSD(address investor, uint256 tokenPriceInUsdCents, uint256 investedInUsdCents)
+    function wireInvestment(address investor, uint256 tokenPriceInUsdCents, uint256 investedInUsdCents)
         public
-        icoIsActive
-        onlyOwnerOrSigner
+        migrationIsActive
+        onlyOwner
      {
 
        uint256 tokensNumber = div(withDecimals(investedInUsdCents, decimals), tokenPriceInUsdCents);
@@ -363,14 +323,39 @@ contract TokenboxToken is Token {
        uint256 investedInPicoUsd = withDecimals(investedInUsdCents, usdDecimals - 2);
        uint256 tokenPriceInPicoUsd = withDecimals(tokenPriceInUsdCents, usdDecimals - 2);
 
-       investInUSD(investor, investedInPicoUsd, tokensNumber);
+       usdInvestment(investor, investedInPicoUsd, tokensNumber);
 
        InvestmentInUSD(investor, tokenPriceInPicoUsd, investedInPicoUsd, tokensNumber);
     }
 
-    // @dev Presale tokens distribution
-    function preIcoDistribution(address investor, uint256 investedInUsdCents, uint256 tokensNumber)
+    // @dev Invest in USD
+    function usdInvestment(address investor, uint256 investedInPicoUsd, uint256 tokensNumber)
+        private
+    {
+      totalPicoUSD = add(totalPicoUSD, investedInPicoUsd);
+
+      // Allocate tokens to an investor
+      balances[icoAllocation] -= tokensNumber;
+      balances[investor] += tokensNumber;
+      Transfer(icoAllocation, investor, tokensNumber);
+    }
+
+    // @dev Repeat a transaction from the old contract during the migration
+    function migrateTransfer(address _from, address _to, uint256 amount, uint256 originalTransactionHash)
         public
+        migrationIsActive
+        onlyOwner
+    {   
+        require(balances[_from] >= amount);
+        balances[_from] -= amount;
+        balances[_to] += amount;
+        Transfer(_from, _to, amount);
+    }
+
+    // @dev Presale tokens distribution
+    function preIcoInvestment(address investor, uint256 investedInUsdCents, uint256 tokensNumber)
+        public
+        migrationIsActive
         onlyOwner
     {
       uint256 tokensNumberWithDecimals = withDecimals(tokensNumber, decimals);
@@ -384,6 +369,7 @@ contract TokenboxToken is Token {
       Transfer(preIcoAllocation, investor, tokensNumberWithDecimals);
 
       uint256 investedInPicoUsd = withDecimals(investedInUsdCents, usdDecimals - 2);
+
       // Add investment to totalPicoUSD collected
       totalPicoUSD = add(totalPicoUSD, investedInPicoUsd);
 
@@ -394,6 +380,7 @@ contract TokenboxToken is Token {
     /// @dev Allow token withdrawals from Foundation reserve
     function allowToWithdrawFromReserve()
         public
+        migrationIsCompleted
         onlyOwner
     {
         require(now >= vestingDateEnd);
@@ -406,9 +393,11 @@ contract TokenboxToken is Token {
     // @dev Withdraws tokens from Foundation reserve
     function withdrawFromReserve(uint amount)
         public
+        migrationIsCompleted
         onlyOwner
     {
         require(now >= vestingDateEnd);
+
         // Withdraw tokens from Foundation reserve to multisig address
         require(transferFrom(foundationReserve, multisig, amount));
     }
@@ -421,44 +410,52 @@ contract TokenboxToken is Token {
         multisig = _multisig;
     }
 
-    /// @dev Changes signer address
-    function changeSigner(address _signer)
+    function transfer(address _to, uint256 _value)
         public
-        onlyOwner
+        migrationIsCompleted
+        returns (bool success) 
     {
-        signer = _signer;
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value)
+        public
+        migrationIsCompleted
+        returns (bool success)
+    {
+        return super.transferFrom(_from, _to, _value);
     }
 
     /// @dev Burns the rest of the tokens after the crowdsale end and
     /// send 10% tokens of totalSupply to team address
     function finaliseICO()
         public
+        migrationIsActive
         onlyOwner
-        icoIsCompleted
     {
-        require(!finalised);
+        // Total number of tokents sold during the ICO + preICO
+        uint256 tokensSold = sub(div(mul(totalSupply, 75), 100), balanceOf(icoAllocation));
 
-        //total sold during ICO
-        totalSupply = sub(totalSupply, balanceOf(icoAllocation));
-        totalSupply = sub(totalSupply, withDecimals(7750000, decimals));
+        // 0.75 * totalSupply = tokensSold
+        totalSupply = div(mul(tokensSold, 100), 75);
 
-        //send 5% bounty + 7.5% of total sold tokens to team address
+        // Send 5% bounty + 7.5% of total supply to team address
         balances[multisig] = div(mul(totalSupply, 125), 1000);
+        Transfer(icoAllocation, multisig, balanceOf(multisig));
 
-        //lock 12.5% of sold tokens to team address for one year
+        // Lock 12.5% of total supply to team address for one year
         balances[foundationReserve] = div(mul(totalSupply, 125), 1000);
+        Transfer(icoAllocation, foundationReserve, balanceOf(foundationReserve));
 
-        totalSupply = add(totalSupply, mul(balanceOf(foundationReserve), 2));
-
-        //burn the rest of tokens
+        // Burn the rest of tokens
+        Transfer(icoAllocation, 0x0000000000000000000000000000000000000000, balanceOf(icoAllocation));
         balances[icoAllocation] = 0;
 
-        finalised = true;
+        migrationCompleted = true;
     }
 
     function totalUSD()
-      public
-      constant
+      public view
       returns (uint)
     {
        return div(totalPicoUSD, pow(10, usdDecimals));
