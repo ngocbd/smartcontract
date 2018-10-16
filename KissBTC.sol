@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KissBTC at 0x01BFBb9b1a2Abe32ceB0A9f2291E5D7E36e38b20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KissBTC at 0x6777c314B412F0196aCA852632969F63e7971340
 */
 // <ORACLIZE_API>
 /*
