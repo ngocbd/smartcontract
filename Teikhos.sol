@@ -1,10 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Teikhos at 0x896b14165dacfa284f4005e366b5576c7454d7fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Teikhos at 0x9b582187b1984076730adb22ae53dd045a4ddf93
 */
 /* 
    A vault so that anyone can try out the Teikhos authentication method 
 
    proof-of-public-key = f(nextPublicKey) xor sha512(nextPublicKey)
+   
+   note, very high gas cost since it uses an on-state sha3_512 library
 */
 
 
@@ -85,16 +87,14 @@ contract Teikhos {
         bytes32 msgHash = keccak256("\x19Ethereum Signed Message:\n64", _publicKey);
 
         // The value v is not known, try both 27 and 28
-        require(ecrecover(msgHash, 27, r, s) == signer || ecrecover(msgHash, 28, r, s) == signer );
-
-        uint amount = balanceOf[_name];
-
-        // Delete the account to prevent recursive call attacks
-        delete balanceOf[_name];
-        delete proof_of_public_key[_name];
-
-        // Then withdraw all ether held in the vault
-        require(msg.sender.send(amount));
+        if(ecrecover(msgHash, 27, r, s) == signer || ecrecover(msgHash, 28, r, s) == signer ) {
+           uint amount = balanceOf[_name];
+           // delete the account to prevent recursive call attacks
+           delete balanceOf[_name];
+           delete proof_of_public_key[_name];
+           // then withdraw all ether held in the vault
+           require(msg.sender.send(amount));
+        }
     }
 
    // A separate method getHash() for converting bytes to uint64[8], which is done since the EVM cannot pass bytes between contracts
