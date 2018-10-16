@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoyToken at 0x83812eea2a6781e44553cfc18fa0bd455cf0c953
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoyToken at 0x9d48749d862e2b53a789f57e91dc482459343ddf
 */
 pragma solidity ^0.4.18;
 /**
@@ -190,17 +190,18 @@ contract MoyToken is StandardToken {
   string public constant symbol = "MOY";
   uint8 public constant decimals = 18; // 18 decimal to fully comply with exchanges and wallets.
 
-  uint256 public constant totalSupplyWithDecimals = 60000000000000000000000000; //60 million unique tokens for a single distribution and 18 decimal places to fully comply on exchanges and wallets. 
-  uint256 public constant openSaleSupply = 30000000000000000000000000;
-  uint256 public constant mineableSupply = 30000000000000000000000000;
-  //string public constant tokenIssueDate = "12-27-2017"
+  uint256 constant supplyWithDecimals = 60000000000000000000000000; //60 million unique tokens for a single distribution and 18 decimal places to fully comply on exchanges and wallets. 
+  uint256 public constant tokenSupply = 60000000;
+  uint256 public constant openSaleSupply = 30000000;
+  uint256 public constant minableSupply = 30000000;
+
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
    */
   function MoyToken()public {
-    
-    balances[msg.sender] = totalSupplyWithDecimals;
+    totalSupply = supplyWithDecimals;
+    balances[msg.sender] = supplyWithDecimals;
 
   }
 }
