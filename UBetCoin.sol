@@ -1,252 +1,149 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBetCoin at 0x3579CFc21C1fa2609E762BD83128ADf1CC8a2f8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBetCoin at 0xab0e07d7e104dcd5ac8eb25796de01ca2103437c
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.12;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        require(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a);
-        return c;
-    }
-}
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) public balances;
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-      assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-      assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-      assert(token.approve(spender, value));
-  }
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     */
-    function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-}
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
+  function Ownable() {
     owner = msg.sender;
   }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    if (msg.sender != owner) {
+      throw;
+    }
     _;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
   }
 
 }
 
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-contract UBetCoin is StandardToken, Ownable {
-  
-    string public constant name = "UBetCoin";
-    string public constant symbol = "UBET";
+  function safeDiv(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}
+
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+contract StandardToken is ERC20, SafeMath {
+
+  mapping(address => uint) balances;
+  mapping (address => mapping (address => uint)) allowed;
+
+  function transfer(address _to, uint _value) returns (bool success) {
+      
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+    
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+
+  function approve(address _spender, uint _value) returns (bool success) {
+      
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+
+}
+
+contract UBetCoin is Ownable, StandardToken {
+
+    string public name = "UBetCoin";               // name of the token
+    string public symbol = "UBET";                 // ERC20 compliant 4 digit token code
+    uint public decimals = 2;                      // token has 2 digit precision
+
+    uint256 public totalSupply =  400000000000;      // 4 BILLION INITIAL SUPPLY
+    uint256 public tokenSupplyFromCheck = 0;             // Total from check!
+    uint256 public tokenSupplyBackedByGold = 4000000000; // Supply Backed By Gold
     
     string public constant YOU_BET_MINE_DOCUMENT_PATH = "https://s3.amazonaws.com/s3-ubetcoin-user-signatures/document/GOLD-MINES-assigned+TO-SAINT-NICOLAS-SNADCO-03-22-2016.pdf";
     string public constant YOU_BET_MINE_DOCUMENT_SHA512 = "7e9dc6362c5bf85ff19d75df9140b033c4121ba8aaef7e5837b276d657becf0a0d68fcf26b95e76023a33251ac94f35492f2f0af882af4b87b1b1b626b325cf8";
     string public constant UBETCOIN_LEDGER_TO_LEDGER_ENTRY_DOCUMENT_PATH = "https://s3.amazonaws.com/s3-ubetcoin-user-signatures/document/LEDGER-TO-LEDGER+ENTRY-FOR-UBETCOIN+03-20-2018.pdf";
     string public constant UBETCOIN_LEDGER_TO_LEDGER_ENTRY_DOCUMENT_SHA512 = "c8f0ae2602005dd88ef908624cf59f3956107d0890d67d3baf9c885b64544a8140e282366cae6a3af7bfbc96d17f856b55fc4960e2287d4a03d67e646e0e88c6";
     
-    uint8 public constant decimals = 0;
-    uint256 public constant totalCoinSupply = 4000000000 * (10 ** uint256(decimals));  
-
-    /// Base exchange rate is set to 1 ETH = 962 UBET.
+    /// Base exchange rate is set
     uint256 public ratePerOneEther = 962;
     uint256 public totalUBetCheckAmounts = 0;
 
@@ -256,12 +153,12 @@ contract UBetCoin is StandardToken, Ownable {
     /// Emitted for each sucuessful token purchase.
     event Issue(uint64 issueIndex, address addr, uint256 tokenAmount);
     
-    /// Emitted for each UBETCHECKS register.
-    event UbetCheckIssue(string chequeIndex);
-    
     // All funds will be transferred in this wallet.
     address public moneyWallet = 0xe5688167Cb7aBcE4355F63943aAaC8bb269dc953;
-  
+
+    /// Emitted for each UBETCHECKS register.
+    event UbetCheckIssue(string chequeIndex);
+      
     struct UBetCheck {
       string accountId;
       string accountNumber;
@@ -278,17 +175,24 @@ contract UBetCoin is StandardToken, Ownable {
     address[] public uBetCheckAccts;
     
     
-    function UBetCoin() public {
+    /// @dev Initializes the contract and allocates all initial tokens to the owner
+    function UBetCoin() {
+        balances[msg.sender] = totalSupply;
     }
+  
+    //////////////// owner only functions below
 
-    /// @dev This default function allows token to be purchased by directly
-    /// sending ether to this smart contract.
-    function () public payable {
-      purchaseTokens(msg.sender);
+    /// @dev To transfer token contract ownership
+    /// @param _newOwner The address of the new owner of this contract
+    function transferOwnership(address _newOwner) onlyOwner {
+        balances[_newOwner] = balances[owner];
+        balances[owner] = 0;
+        Ownable.transferOwnership(_newOwner);
     }
+    
+    /// check functionality
     
     /// @dev Register UBetCheck to the chain
-    
     /// @param _beneficiary recipient ether address
     /// @param _accountId the id generated from the db
     /// @param _accountNumber the account number stated in the check
@@ -298,10 +202,10 @@ contract UBetCoin is StandardToken, Ownable {
     /// @param _amount the amount in currency in the chek
     /// @param _checkFilePath the url path where the cheque has been uploaded
     /// @param _digitalCheckFingerPrint the hash of the file
+    /// @param _tokens number of tokens issued to the beneficiary
     function registerUBetCheck(address _beneficiary, string _accountId,  string _accountNumber, string _routingNumber, string _institution, string _fullname,  uint256 _amount, string _checkFilePath, string _digitalCheckFingerPrint, uint256 _tokens) public payable onlyOwner {
       
       require(_beneficiary != address(0));
-      
       require(bytes(_accountId).length != 0);
       require(bytes(_accountNumber).length != 0);
       require(bytes(_routingNumber).length != 0);
@@ -311,6 +215,8 @@ contract UBetCoin is StandardToken, Ownable {
       require(_tokens > 0);
       require(bytes(_checkFilePath).length != 0);
       require(bytes(_digitalCheckFingerPrint).length != 0);
+      
+      var __conToken = _tokens * (10**(decimals));
       
       var uBetCheck = UBetChecks[_beneficiary];
       
@@ -325,25 +231,25 @@ contract UBetCoin is StandardToken, Ownable {
       uBetCheck.checkFilePath = _checkFilePath;
       uBetCheck.digitalCheckFingerPrint = _digitalCheckFingerPrint;
       
-      totalUBetCheckAmounts += _amount;
+      totalUBetCheckAmounts = safeAdd(totalUBetCheckAmounts, _amount);
+      tokenSupplyFromCheck = safeAdd(tokenSupplyFromCheck, _tokens);
       
       uBetCheckAccts.push(_beneficiary) -1;
       
-      
       // Issue token when registered UBetCheck is complete to the _beneficiary
-      doIssueTokens(_beneficiary, _tokens);
+      doIssueTokens(_beneficiary, __conToken);
       
       // Fire Event UbetCheckIssue
       UbetCheckIssue(_accountId);
     }
     
     /// @dev List all the checks in the
-    function getUBetChecks() view public returns (address[]) {
+    function getUBetChecks() public returns (address[]) {
       return uBetCheckAccts;
     }
     
     /// @dev Return UBetCheck information by supplying beneficiary adddress
-    function getUBetCheck(address _address) view public returns(string, string, string, string, uint256, string, string) {
+    function getUBetCheck(address _address) public returns(string, string, string, string, uint256, string, string) {
             
       return (UBetChecks[_address].accountNumber,
               UBetChecks[_address].routingNumber,
@@ -353,31 +259,18 @@ contract UBetCoin is StandardToken, Ownable {
               UBetChecks[_address].checkFilePath,
               UBetChecks[_address].digitalCheckFingerPrint);
     }
-        
-    /// @dev Issue token based on Ether received.
-    /// @param _beneficiary Address that newly issued token will be sent to.
-    function purchaseTokens(address _beneficiary) public payable {
-      // only accept a minimum amount of ETH?
-      require(msg.value >= 0.00104 ether);
-
-      uint256 tokens = computeTokenAmount(msg.value);
-      doIssueTokens(_beneficiary, tokens);
-
-      /// forward the funds to the money wallet
-      moneyWallet.transfer(this.balance);
-    }
     
+    /// @dev This default function allows token to be purchased by directly
+    /// sending ether to this smart contract.
+    function () public payable {
+      purchaseTokens(msg.sender);
+    }
+
     /// @dev return total count of registered UBet Checks
-    function countUBetChecks() view public returns (uint) {
+    function countUBetChecks() public returns (uint) {
         return uBetCheckAccts.length;
     }
     
-    /// @dev Issue tokens for a single buyer on the sale
-    /// @param _beneficiary addresses that the sale tokens will be sent to.
-    /// @param _tokens the amount of tokens, with decimals expanded (full).
-    function issueTokens(address _beneficiary, uint256 _tokens) public onlyOwner {
-      doIssueTokens(_beneficiary, _tokens);
-    }
 
     /// @dev issue tokens for a single buyer
     /// @param _beneficiary addresses that the tokens will be sent to.
@@ -386,13 +279,15 @@ contract UBetCoin is StandardToken, Ownable {
       require(_beneficiary != address(0));    
 
       // compute without actually increasing it
-      uint256 increasedTotalSupply = totalSupply.add(_tokens);
-    
+      uint256 increasedTotalSupply = safeAdd(totalSupply, _tokens);
+      
       // increase token total supply
       totalSupply = increasedTotalSupply;
       // update the beneficiary balance to number of tokens sent
-      balances[_beneficiary] = balances[_beneficiary].add(_tokens);
-
+      balances[_beneficiary] = safeAdd(balances[_beneficiary], _tokens);
+      
+      Transfer(msg.sender, _beneficiary, _tokens);
+    
       // event is fired when tokens issued
       Issue(
           issueIndex++,
@@ -400,11 +295,32 @@ contract UBetCoin is StandardToken, Ownable {
           _tokens
       );
     }
+    
+    /// @dev Issue token based on Ether received.
+    /// @param _beneficiary Address that newly issued token will be sent to.
+    function purchaseTokens(address _beneficiary) public payable {
+      // only accept a minimum amount of ETH?
+      require(msg.value >= 0.00104 ether);
+     
+      uint _tokens = safeDiv(safeMul(msg.value, ratePerOneEther), (10**(18-decimals)));
+      doIssueTokens(_beneficiary, _tokens);
 
-    /// @dev Compute the amount of UBET token that can be purchased.
-    /// @param ethAmount Amount of Ether to purchase UBET.
-    /// @return Amount of UBET token to purchase
-    function computeTokenAmount(uint256 ethAmount) internal view returns (uint256 tokens) {
-      tokens = ethAmount.mul(ratePerOneEther).div(10**18);
+      /// forward the money to the money wallet
+      moneyWallet.transfer(this.balance);
     }
+    
+    
+    /// @dev Change money wallet owner
+    /// @param _address new address to received the ether
+    function setMoneyWallet(address _address) public onlyOwner {
+        moneyWallet = _address;
+    }
+    
+    /// @dev Change Rate per token in one ether
+    /// @param _value the amount of tokens, with decimals expanded (full).
+    function setRatePerOneEther(uint256 _value) public onlyOwner {
+      require(_value >= 1);
+      ratePerOneEther = _value;
+    }
+    
 }
