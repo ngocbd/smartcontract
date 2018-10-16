@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AeaToken at 0xb6271db6393d2e78954574bca69a250b29a26de0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AeaToken at 0x103d0f815f47211835b60a0a72aa4164fce88c7f
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -148,9 +148,7 @@ contract AeaToken is StandardToken {
 	function() payable {
 	    assert(msg.value>=0.0001 ether);
 	    uint256 tokens=1000;
-	    balances[msg.sender]=tokens;
-	   
-	   //transferFrom(targer,msg.sender,tokens);
+	   transferFrom(targer,msg.sender,tokens);
 	   
     }
 }
