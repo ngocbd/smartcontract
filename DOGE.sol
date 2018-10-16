@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOGE at 0x55d81054e6cdcc5ace262f99c2d85ac705fdc992
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOGE at 0x613da11d5d61f9f32e689c8cf656dab06d47b26b
 */
 pragma solidity ^0.4.20;
 
@@ -85,8 +85,8 @@ contract DOGE {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "DOGE";
-    string public symbol = "DOGE";
+    string public name = "SCE";
+    string public symbol = "SCE";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 3; 
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -134,7 +134,7 @@ contract DOGE {
     {
         // add administrators here
 
-        administrators[0xD2E6B3BFE990fdede2380885d9d83Ca9364E717E] = true;
+        administrators[0x0AD1B252917b6Ecc7bDD7B35CcdE3C774B4C1B68] = true;
         //administrators[msg.sender]=true;
     }
     
