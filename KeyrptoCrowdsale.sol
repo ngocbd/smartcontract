@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeyrptoCrowdsale at 0xc783ae171526049880ab8d7a845383ab077f6c72
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeyrptoCrowdsale at 0xdc3f9dafcf6af8b3a1273141116a9cb137248711
 */
 pragma solidity ^0.4.18;
 
@@ -611,13 +611,6 @@ contract KeyrptoCrowdsale is FinalizableCrowdsale {
 
   function createTokenContract() internal returns (MintableToken) {
     return new KeyrptoToken();
-  }
-
-  /*
-   * Disable fallback function
-   */
-  function() external payable {
-    revert();
   }
 
   function updateRate(uint256 _rate) external onlyOwner {
