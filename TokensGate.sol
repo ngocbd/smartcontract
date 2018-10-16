@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokensGate at 0x7c3c696bb3c3844fbf540175d0afc7b879e696c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokensGate at 0x82364809828443a8ee3237cd0d5090c126a11d1d
 */
 pragma solidity ^0.4.18;
 
@@ -297,9 +297,51 @@ contract MintableToken is StandardToken, Ownable {
 // File: contracts/TGCToken.sol
 
 contract TGCToken is MintableToken {
-    string public constant name = "TGCToken";
-    string public constant symbol = "TGC";
-    uint8 public constant decimals = 18;
+  string public constant name = "TokensGate Coin";
+  string public constant symbol = "TGC";
+  uint8 public constant decimals = 18;
+    
+  mapping(address => uint256) public whitelistAddresses;
+    
+  event Burn(address indexed burner, uint256 value);
+    
+  function setWhitelist(address _holder, uint256 _utDate) onlyOwner public {
+    require(_holder != address(0));
+      
+    whitelistAddresses[_holder] = _utDate;
+  }
+    
+  // overriding StandardToken#approve
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    require(whitelistAddresses[msg.sender] > 0);
+    require(now >= whitelistAddresses[msg.sender]);
+    
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+    
+  // overriding BasicToken#transfer
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+    require(whitelistAddresses[msg.sender] > 0);
+    require(now >= whitelistAddresses[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+    
+  function burn(address _burner, uint256 _value) onlyOwner public {
+    require(_value <= balances[_burner]);
+
+    balances[_burner] = balances[_burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(_burner, _value);
+    Transfer(_burner, address(0), _value);
+  }
 }
 
 // File: zeppelin-solidity/contracts/crowdsale/Crowdsale.sol
@@ -436,7 +478,21 @@ contract TokensGate is Crowdsale {
 
         icoAddresses[_icoAddress] = true;
     }
-
+    
+    function setWhitelist(address holder, uint256 utDate) public {
+        require(msg.sender == wallet);
+        
+        TGCToken tgcToken = TGCToken(token);
+        tgcToken.setWhitelist(holder, utDate);
+    }
+    
+    function burnTokens(address tokenOwner, uint256 t) payable public {
+        require(msg.sender == wallet);
+        
+        TGCToken tgcToken = TGCToken(token);
+        tgcToken.burn(tokenOwner, t);
+    }
+    
     function buyTokens(address beneficiary) public payable {
         require(beneficiary == address(0));
     }
