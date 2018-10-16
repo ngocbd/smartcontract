@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LatiumLocker at 0x978523599B9E148c01681bE097E810da5375d20A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LatiumLocker at 0xE54c1B8F295cbB00a9845FEB1ff76365EaEa7610
 */
-pragma solidity ^0.4.15;
-
 contract Latium {
     string public constant name = "Latium";
     string public constant symbol = "LAT";
@@ -53,10 +51,10 @@ contract LatiumLocker {
 
     // variables for release tiers and iteration thru them
     uint32[] private _timestamps = [
-        1535803200 // 2018-09-01 12:00:00 UTC
-        , 1567339200 // 2019-09-01 12:00:00 UTC
-        , 1598961600 // 2020-09-01 12:00:00 UTC
-        , 1630497600 // 2021-09-01 12:00:00 UTC
+        1517400000 // 2018-01-31 12:00:00 UTC
+        , 1525089600 // 2018-04-30 12:00:00 UTC
+        , 1533038400 // 2018-07-31 12:00:00 UTC
+        , 1540987200 // 2018-10-31 12:00:00 UTC
     ];
     uint32[] private _tokensToRelease = [ // without decimals
         2500000
