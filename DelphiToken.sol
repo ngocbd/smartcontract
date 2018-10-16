@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DelphiToken at 0x346c3be6aebEBaF5Cb766a75aDc9827EfbB7E41A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DelphiToken at 0x20de3bc97b6865cb5fdff2b62dec87aac7009932
 */
 pragma solidity ^0.4.10;
 
@@ -41,10 +41,8 @@ contract StandardToken is Token {
         public
         returns (bool)
     {
-        if (balances[msg.sender] < _value) {
-            // Balance too low
-            throw;
-        }
+        if (balances[msg.sender] < _value) throw;           // Insufficient funds
+        if (balances[_to] + _value < balances[_to]) throw;  // Check for overflows
         balances[msg.sender] -= _value;
         balances[_to] += _value;
         Transfer(msg.sender, _to, _value);
@@ -121,7 +119,7 @@ contract DelphiToken is StandardToken {
      */
     string constant public name = "Delphi";
     string constant public symbol = "DEL";
-    uint8 constant public decimals = 18;
+    uint constant public tokenDecimals = 10**18;
 
     /*
      *  Public functions
@@ -129,8 +127,12 @@ contract DelphiToken is StandardToken {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function DelphiToken() public {
-        uint256 initialSupply = 10000000 * 10**18;
-        totalSupply = initialSupply;
+        uint256 initialSupply = 10000000 * tokenDecimals;
         balances[msg.sender] = initialSupply;
+    }
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
     }
 }
