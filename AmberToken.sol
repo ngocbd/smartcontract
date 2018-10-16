@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmberToken at 0x39283b6660f216b788b00a547f8c4d3dfebb9a2f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmberToken at 0x807e534b163e28ed1c210ff2392d91d913f8637f
 */
 //! By Parity Technologies, 2017.
 //! Released under the Apache Licence 2.
@@ -503,7 +503,7 @@ contract AmbrosusSale {
 	uint constant public LIQUID_ALLOCATION_PPM = 263000;
 
 	/// The certifier resource. TODO: set address
-	Certifier public constant CERTIFIER = Certifier(0x7b1Ab331546F021A40bd4D09fFb802261CaACcc9);
+	Certifier public constant CERTIFIER = Certifier(0x1e2F058C43ac8965938F6e9CA286685A3E63F24E);
 	// Who can halt/unhalt/kill?
 	address public constant ADMINISTRATOR = 0x11bF17B890a80080A8F9C1673D2951296a6F3D91;
 	// Who can prepurchase?
@@ -511,7 +511,7 @@ contract AmbrosusSale {
 	// Who gets the stash? Should not release funds during minting process.
 	address public constant TREASURY = 0xB47aD434C6e401473F1d3442001Ac69cda1dcFDd;
 	// When does the contribution period begin?
-	uint public constant BEGIN_TIME = 1505986211;
+	uint public constant BEGIN_TIME = 1506168000;
 	// How long does the sale last for?
 	uint public constant DURATION = 30 days;
 	// When does the period end?
