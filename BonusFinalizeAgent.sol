@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0x0ebbd3a6b3294c4518f796602be2b37ee2382ec8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0x06d41544ef626698a2e368f71fbdd8fbe5d1b867
 */
 /**
  * Safe unsigned safe math.
