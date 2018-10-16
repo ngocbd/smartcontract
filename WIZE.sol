@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIZE at 0xa010cfd6e52336eb25adacafb005c516645193dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIZE at 0x93589349e5cf2a2a79da23472856bc64e6894e48
 */
 pragma solidity ^0.4.13;
 
@@ -182,6 +182,26 @@ contract BasicToken is ERC20Basic {
 
 }
 
+contract BurnableToken is BasicToken {
+
+    event Burn(address indexed burner, uint256 value);
+
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint256 _value) public {
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
+}
+
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -277,7 +297,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract WIZE is StandardToken, Destructible, HasNoEther, HasNoTokens  {
+contract WIZE is StandardToken, BurnableToken, HasNoEther, HasNoTokens  {
 
 	string public name = "WIZE";
 	string public symbol = "WIZE";
@@ -285,8 +305,9 @@ contract WIZE is StandardToken, Destructible, HasNoEther, HasNoTokens  {
 
 	function WIZE() public
 	{
-		address master = 0x14010814F3d6fBDe4970E4f7B36CdfFB23B5FA4A;
-		balances[master] = 210e6 * 10**8;
+		totalSupply = 500e6 * 10**8;
+		address master = 0x85406Be474d0dd0590A2Ec60A61E4e4045AC986D;
+		balances[master] = totalSupply;
 		Transfer(0x0, master, balances[master]);
 	}
 }
