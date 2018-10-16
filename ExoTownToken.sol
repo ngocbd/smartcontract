@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExoTownToken at 0xda8d86e6211b2d575f7976640f8556ebb66d766e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExoTownToken at 0xacb677dacac7c7b1ee4131cd071c89bad6c852f4
 */
 pragma solidity ^0.4.11;
 
@@ -66,7 +66,7 @@ contract AbstractToken {
 }
 
 contract IcoLimits {
-    uint constant privateSaleStart = 1511676000; // 11/26/2017 @ 06:00am (UTC)
+    uint constant privateSaleStart = 1511740800; // 11/27/2017 @ 12:00am (UTC)
     uint constant privateSaleEnd   = 1512172799; // 12/01/2017 @ 11:59pm (UTC)
 
     uint constant presaleStart     = 1512172800; // 12/02/2017 @ 12:00am (UTC)
