@@ -1,31 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xc182CbAa9b194BcAaBc87c468950B859fBa732a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xD64f60148A99C12d18C9CEc6140B772364814c83
 */
 pragma solidity ^0.4.13;
 
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-
-
-contract owned {
-    address public owner;
-
-    function owned() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
-}
-
-
-contract MyToken is owned{
+contract MyToken {
     /* Public variables of the token */
     string public name;
     string public symbol;
@@ -56,8 +36,8 @@ contract MyToken is owned{
     function MyToken() {
         balanceOf[msg.sender] = 3000000;              // Give the creator all initial tokens
         totalSupply = 3000000;                        // Update total supply
-        name = 'GamityTest4';                                   // Set the name for display purposes
-        symbol = 'GMTEST4';                                     // Set the symbol for display purposes
+        name = 'GamityTest3';                                   // Set the name for display purposes
+        symbol = 'GMTEST3';                                     // Set the symbol for display purposes
         decimals = 0;                                       // Amount of decimals for display purposes
     }
 
@@ -131,8 +111,9 @@ contract MyToken is owned{
         return true;
     }
     
-        
-
+    
+    
+    
     
     function voteFor()  returns (bool success){   
         voted[msg.sender] = 1;    
@@ -150,7 +131,8 @@ contract MyToken is owned{
     
     
     
-   function SetVotingDescripion(string description)  onlyOwner returns (bool success){    
+   function newVoting(string description)  returns (bool success){    
+        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
         votingDescription=description;
         return true; 
     }
@@ -167,8 +149,8 @@ contract MyToken is owned{
     
     
     
-    function setPrice(uint256 newSellPrice) onlyOwner {
-        require(newSellPrice > 0); 
+    function setPrice(uint256 newSellPrice) {
+        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
         sellPrice = newSellPrice;
     }
      
@@ -183,7 +165,8 @@ contract MyToken is owned{
         return revenue;                                   // ends function and returns
     }
     
-    function getTokens() onlyOwner  returns (uint amount) {
+    function getTokens() returns (uint amount){
+        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
         require(balanceOf[this] >= amount);               // checks if it has enough to sell
         balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
         balanceOf[this] -= amount;                        // subtracts amount from seller's balance
@@ -191,12 +174,14 @@ contract MyToken is owned{
         return amount;                                    // ends function and returns
     }
     
-    function sendEther() payable onlyOwner returns (bool success) {
+    function sendEther() payable returns (bool success){
+        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
         return true;                                   // ends function and returns
     }
 
     
-    function getEther(uint amount) onlyOwner returns (bool success) {
+    function getEther(uint amount)  returns (bool success){
+        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
         require(msg.sender.send(amount));                 // sends ether to the seller: it's important to do this last to prevent recursion attacks
         return true;                                  // ends function and returns
     }
