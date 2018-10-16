@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0xcb1cc66e52c6a93077c15d08503aa57560364cde
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0x049135b904148a0cf263f064d7f7c702dd34d72e
 */
 pragma solidity ^ 0.4.21;
 
 pragma solidity ^0.4.10;
-
 
 /**
  * @title SafeMath
@@ -60,6 +59,7 @@ pragma solidity ^0.4.10;
 contract ERC223ReceivingContract { 
     function tokenFallback(address _from, uint _value, bytes _data) public;
 }
+
 pragma solidity ^0.4.21;
 
 /**
@@ -99,6 +99,8 @@ contract Ownable {
 	}
 
 }
+
+pragma solidity ^0.4.21;
 
 /**
  * @title RefundVault
@@ -164,6 +166,7 @@ contract RefundVault is Ownable {
 		emit Refunded(investor, depositedValue);
 	}
 }
+pragma solidity ^0.4.21;
 
 /**
  * @title BonusScheme
@@ -178,7 +181,7 @@ contract BonusScheme is Ownable {
 	* Defining timestamps for bonuscheme from White Paper. 
 	* The start of bonuses is 15 May 2018 and the end is 23 June 2018. 
 	* There are 2 seconds in between changing the phases.  */
-	uint256 startOfFirstBonus = 1525892100;
+	uint256 startOfFirstBonus = 1526021400;
 	uint256 endOfFirstBonus = (startOfFirstBonus - 1) + 5 minutes;	
 	uint256 startOfSecondBonus = (startOfFirstBonus + 1) + 5 minutes;
 	uint256 endOfSecondBonus = (startOfSecondBonus - 1) + 5 minutes;
@@ -297,8 +300,8 @@ contract StandardToken is ERC20, ERC223, Ownable {
 		totalWeiRaised = 0;
 		tokensSold = 0;
 		softCap = 20000 * 10 ** uint(_decimals);
-		start = 1525891800;
-		end = 1525893600;
+		start = 1526021100;
+		end = 1526023500;
 		crowdsaleClosed = false;
 	}
 
@@ -435,7 +438,6 @@ contract StandardToken is ERC20, ERC223, Ownable {
 		uint256 bonusTokens = bonusScheme.getBonusTokens(_tokenAmount); // Calculate bonus token amount
 		if (balances[bonusScheme] < bonusTokens) { // If the bonus scheme does not have enough tokens, send all remaining
 			bonusTokens = balances[bonusScheme];
-			balances[bonusScheme] = 0;
 		}
 		if (bonusTokens > 0) { // If there are no tokens left in bonus scheme, we do not need transaction.
 			balances[bonusScheme] = balances[bonusScheme].sub(bonusTokens);
