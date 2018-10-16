@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABCoinICO at 0x2a3147b1033467b4ab448aa6429905a8e49917ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABCoinICO at 0x7559d3b25f8ee3e11b73ea0827caf1b2d3d33021
 */
 contract Constants {
 	uint256 public constant PRE_ICO_RISK_PERCENTAGE = 5;
