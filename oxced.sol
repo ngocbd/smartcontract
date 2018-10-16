@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract oxced at 0xc046732d0e3155933f8bbe6592fd0ed8a2df8fe0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract oxced at 0xe0e60fbf1566a4c83e92e6686c3afa887f9f5a41
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.4;
 
 contract Token {
 
@@ -108,13 +108,13 @@ contract oxced is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function oxced() {
-        balances[msg.sender] = 10000000000;               
-        totalSupply = 10000000000;                        
-        name = "oxced";                                   
-        decimals = 18;         
-        symbol = "OXCED";     
-        unitsOneEthCanBuy = 1.000;              
-        fundsWallet = msg.sender;         
+        balances[msg.sender] = 1000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (oxced)
+        totalSupply = 1000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "oxced";                                   // Set the name for display purposes (CHANGE THIS)
+        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        symbol = "OXCED";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 1000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
     function() payable{
