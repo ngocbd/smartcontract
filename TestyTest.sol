@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestyTest at 0x2b0e91a530bac5e0563a7f8d40ea7fb34cfadc3f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestyTest at 0x1e83cdd27d0b34c727c417759585e87e2770c28c
 */
 /*
 file:   TestyTestTest.sol
@@ -359,7 +359,6 @@ event IncreaseSupply(address indexed burner, uint256 value);
         preventReentry() {
             require(_value > 0);
             totalSupply = totalSupply.add(_value);
-            balances[owner] = balances[owner].add(_value);
             emit IncreaseSupply(msg.sender, _value);
     }
 
