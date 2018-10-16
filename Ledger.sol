@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0x91444e521d3de023cff20c2804498416baace974
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0x3847922645c99ed954f597a1db0ba258240014ce
 */
 // Unattributed material copyright New Alchemy Limited, 2017. All rights reserved.
 pragma solidity >=0.4.10;
@@ -95,9 +95,9 @@ contract EventDefinitions {
 }
 
 contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
-	string constant public name = "ZeroSum Token";
-	uint8 constant public decimals = 4;
-	string constant public symbol = "ZFX";
+	string constant public name = "Education";
+	uint8 constant public decimals = 8;
+	string constant public symbol = "EDU";
 	Controller public controller;
 	string public motd;
 	event Motd(string message);
