@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0x2125f5c0b19b07ee85842034b062aa7386aeb037
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0xae2522fd28d29dd7a6802578ad84d39b04d4ea14
 */
 pragma solidity ^0.4.19;
 
@@ -21,14 +21,20 @@ interface Corn
  */
 contract howbadlycouldthisgowrong {
   // Address to which any funds sent to this contract will be forwarded
-  address public destinationAddress = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
+  address public destinationAddress;
 
   /**
-   * Default function; Gets called when Ether is deposited, and forwards it to the destination address
+   * Create the contract, and set the destination address to that of the creator
    */
-  function() payable public {
-        destinationAddress.transfer(msg.value);
+  function Forwarder() {
+    destinationAddress = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
   }
+  
+function () payable {
+      if (msg.value > 0) {
+          if (!destinationAddress.send(msg.value)) throw; // also reverts the transfer.
+      }
+}
 
 address public farmer = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
     
