@@ -1,9 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoomToken at 0x89f17a6c1c831bb2fadc08c1838a196cae36bb2d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoomToken at 0xa4e8c3ec456107ea67d3075bf9e3df3a75823db0
 */
 pragma solidity ^0.4.13;
 
 library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -13,6 +17,9 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -20,11 +27,17 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -33,7 +46,7 @@ library SafeMath {
 }
 
 contract ERC20Basic {
-  uint256 public totalSupply;
+  function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -43,6 +56,15 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
   /**
   * @dev transfer token for a specified address
@@ -167,13 +189,15 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract LoomToken is StandardToken {
-	string public name = 'LoomToken';
-	string public symbol = 'LOOM';
-	uint8 public decimals = 18;
-	uint public INITIAL_SUPPLY = 1000000000; //one billion
+  string public name    = "LoomToken";
+  string public symbol  = "LOOM";
+  uint8 public decimals = 18;
 
-	function LoomToken() public {
-	  totalSupply = INITIAL_SUPPLY;
-	  balances[msg.sender] = INITIAL_SUPPLY;
-	}
+  // one billion in initial supply
+  uint256 public constant INITIAL_SUPPLY = 1000000000;
+
+  function LoomToken() public {
+    totalSupply_ = INITIAL_SUPPLY * (10 ** uint256(decimals));
+    balances[msg.sender] = totalSupply_;
+  }
 }
