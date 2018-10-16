@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x888 at 0x1fdf98b7a206b0112b54f5173c0e72899a4b5a20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x888 at 0x2a5f2d62d58f3a05b554b699fcdd1f832474764d
 */
 contract ERC20Basic {
   uint256 public totalSupply;
@@ -146,6 +146,8 @@ contract x888 is StandardToken, Owned
     string public symbol = "X888";
     uint8 public constant decimals = 6;
     
+    uint256 version = 10010010001;
+    
     uint256 public totalSupply = 5125387888 * (uint256(10) ** decimals);
 
     uint256 public exchFee = uint256(1 * (uint256(10) ** (decimals - 2)));
@@ -195,7 +197,7 @@ contract x888 is StandardToken, Owned
         stuff.transfer(msg.value.mul(40).div(100));
         Clearing(teama, msg.value.mul(40).div(100));
         teama.transfer(msg.value.mul(40).div(100));
-        if(partner != adviser)
+        if(partner != adviser && balances[adviser]!=0)
         {
           Clearing(adviser, msg.value.mul(20).div(100));
           adviser.transfer(msg.value.mul(20).div(100));
@@ -207,12 +209,9 @@ contract x888 is StandardToken, Owned
           teama.transfer(msg.value.mul(10).div(100));
         } 
       }
-      if(partner != stuff)
-      {
-        balances[baseowner] = balances[baseowner].sub(tokenAmount);
-        balances[partner] = balances[partner].add(tokenAmount);
-        Transfer(baseowner, partner, tokenAmount);
-      }
+      balances[baseowner] = balances[baseowner].sub(tokenAmount);
+      balances[partner] = balances[partner].add(tokenAmount);
+      Transfer(baseowner, partner, tokenAmount);
     }
     
     function() payable public
@@ -245,19 +244,19 @@ contract x888 is StandardToken, Owned
 
     function getDeflator() constant returns (uint256)
     {
-        if (now <= startTimestamp + 14 days)//38% 
+        if (now <= startTimestamp + 28 days)//38% 
         {
             return 138;
-        }else if (now <= startTimestamp + 28 days)//23% 
+        }else if (now <= startTimestamp + 56 days)//23% 
         {
             return 123;
-        }else if (now <= startTimestamp + 42 days)//15% 
+        }else if (now <= startTimestamp + 84 days)//15% 
         {
             return 115;
-        }else if (now <= startTimestamp + 56 days)//9%
+        }else if (now <= startTimestamp + 112 days)//9%
         {
             return 109;
-        }else if (now <= startTimestamp + 70 days)//5%
+        }else if (now <= startTimestamp + 140 days)//5%
         {
             return 105;
         }else
@@ -293,6 +292,7 @@ contract x888 is StandardToken, Owned
 
     function getTrader(uint256 id) public constant returns (
         bool    valid,
+        address trade,
         address owner,
         address asset,
         uint256 buyPrice,
@@ -304,10 +304,11 @@ contract x888 is StandardToken, Owned
     {
       if(id < makersCount)
       {
-        valid = _verify[_mks[id]];
+        trade = _mks[id];
+        valid = _verify[trade];
         if (valid) 
         {
-            TokenTrader t = TokenTrader(_mks[id]);
+            TokenTrader t = TokenTrader(trade);
             owner         = t.owner();
             asset         = t.asset();
             buyPrice      = t.buyPrice();
@@ -332,7 +333,7 @@ contract x888 is StandardToken, Owned
         require (asset != 0x0);
         require(buyPrice > 0 && sellPrice > 0);
         require(buyPrice < sellPrice);
-        require (units > 0);
+        require(units > 0);
 
         trader = new TokenTrader(
             asset,
