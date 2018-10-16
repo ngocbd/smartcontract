@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividends at 0x09470436bd5b44c7ebdb75eee2478ec172eaabf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividends at 0x33555a3130fc40082a566005714eeec369e62fc8
 */
 pragma solidity ^0.4.21;
 
@@ -45,36 +45,43 @@ contract Dividends {
         // PREMINED TOKENS 
         
         // EG
-        balanceOf[msg.sender] =  8000000* (10 ** uint256(decimals));// was: TokenSupply - 400000;
+        balanceOf[ address(0x690F34053ddC11bdFF95D44bdfEb6B0b83CBAb58)] =  8000000* (10 ** uint256(decimals));// was: TokenSupply - 400000;
         // HE
-        balanceOf[address(0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285)] = 200000* (10 ** uint256(decimals));
+        balanceOf[ address(0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285)] = 200000* (10 ** uint256(decimals));
         // PG
-        balanceOf[address(0x26581d1983ced8955C170eB4d3222DCd3845a092)] = 200000* (10 ** uint256(decimals));
+        balanceOf[ address(0x26581d1983ced8955C170eB4d3222DCd3845a092)] = 200000* (10 ** uint256(decimals));
 
         // BOUGHT tokens in the OLD contract         
-        balanceOf[address(0x3130259deEdb3052E24FAD9d5E1f490CB8CCcaa0)] = 100000* (10 ** uint256(decimals));
-        balanceOf[address(0x4f0d861281161f39c62B790995fb1e7a0B81B07b)] = 200000* (10 ** uint256(decimals));
-        balanceOf[address(0x36E058332aE39efaD2315776B9c844E30d07388B)] =  20000* (10 ** uint256(decimals));
-        balanceOf[address(0x1f2672E17fD7Ec4b52B7F40D41eC5C477fe85c0c)] =  40000* (10 ** uint256(decimals));
-        balanceOf[address(0xedDaD54E9e1F8dd01e815d84b255998a0a901BbF)] =  20000* (10 ** uint256(decimals));
-        balanceOf[address(0x0a3239799518E7F7F339867A4739282014b97Dcf)] = 500000* (10 ** uint256(decimals));
-        balanceOf[address(0x29A9c76aD091c015C12081A1B201c3ea56884579)] = 600000* (10 ** uint256(decimals));
-        balanceOf[address(0x0668deA6B5ec94D7Ce3C43Fe477888eee2FC1b2C)] = 100000* (10 ** uint256(decimals));
-        balanceOf[address(0x0982a0bf061f3cec2a004b4d2c802F479099C971)] =  20000* (10 ** uint256(decimals));
+        balanceOf[ address(0x3130259deEdb3052E24FAD9d5E1f490CB8CCcaa0)] = 97000* (10 ** uint256(decimals));
+        balanceOf[ address(0x4f0d861281161f39c62B790995fb1e7a0B81B07b)] = 199800* (10 ** uint256(decimals));
+        balanceOf[ address(0x36E058332aE39efaD2315776B9c844E30d07388B)] =  20000* (10 ** uint256(decimals));
+        balanceOf[ address(0x1f2672E17fD7Ec4b52B7F40D41eC5C477fe85c0c)] =  40000* (10 ** uint256(decimals));
+        balanceOf[ address(0xedDaD54E9e1F8dd01e815d84b255998a0a901BbF)] =  20000* (10 ** uint256(decimals));
+        balanceOf[ address(0x0a3239799518E7F7F339867A4739282014b97Dcf)] = 499000* (10 ** uint256(decimals));
+        balanceOf[ address(0x29A9c76aD091c015C12081A1B201c3ea56884579)] = 600000* (10 ** uint256(decimals));
+        balanceOf[ address(0x0668deA6B5ec94D7Ce3C43Fe477888eee2FC1b2C)] = 100000* (10 ** uint256(decimals));
+        balanceOf[ address(0x0982a0bf061f3cec2a004b4d2c802F479099C971)] =  20000* (10 ** uint256(decimals));
+        
+        balanceOf [address(	0xA78EfC3A01CB8f2F47137B97f9546B46275f54a6)] =  3000* (10 ** uint256(decimals));
+        balanceOf [address(	0x522273122b20212FE255875a4737b6F50cc72006)] =  1000* (10 ** uint256(decimals));
+        balanceOf [address(	0xc1c51098ff73f311ECD6E855e858225F531812c4)] =  200* (10 ** uint256(decimals));
 
         // Etherscan likes it very much if we emit these events 
-        emit Transfer(0x0, msg.sender, 8000000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x690F34053ddC11bdFF95D44bdfEb6B0b83CBAb58, 8000000* (10 ** uint256(decimals)));
         emit Transfer(0x0, 0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285, 200000* (10 ** uint256(decimals)));
         emit Transfer(0x0, 0x26581d1983ced8955C170eB4d3222DCd3845a092, 200000* (10 ** uint256(decimals)));
-        emit Transfer(0x0, 0x3130259deEdb3052E24FAD9d5E1f490CB8CCcaa0, 100000* (10 ** uint256(decimals)));
-        emit Transfer(0x0, 0x4f0d861281161f39c62B790995fb1e7a0B81B07b, 200000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x3130259deEdb3052E24FAD9d5E1f490CB8CCcaa0, 97000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x4f0d861281161f39c62B790995fb1e7a0B81B07b, 199800* (10 ** uint256(decimals)));
         emit Transfer(0x0, 0x36E058332aE39efaD2315776B9c844E30d07388B, 20000* (10 ** uint256(decimals)));
         emit Transfer(0x0, 0x1f2672E17fD7Ec4b52B7F40D41eC5C477fe85c0c, 40000* (10 ** uint256(decimals)));
         emit Transfer(0x0, 0xedDaD54E9e1F8dd01e815d84b255998a0a901BbF, 20000* (10 ** uint256(decimals)));
-        emit Transfer(0x0, 0x0a3239799518E7F7F339867A4739282014b97Dcf, 500000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x0a3239799518E7F7F339867A4739282014b97Dcf, 499000* (10 ** uint256(decimals)));
         emit Transfer(0x0, 0x29A9c76aD091c015C12081A1B201c3ea56884579, 600000* (10 ** uint256(decimals)));
         emit Transfer(0x0, 0x0668deA6B5ec94D7Ce3C43Fe477888eee2FC1b2C, 100000* (10 ** uint256(decimals)));
         emit Transfer(0x0, 0x0982a0bf061f3cec2a004b4d2c802F479099C971, 20000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0xA78EfC3A01CB8f2F47137B97f9546B46275f54a6, 3000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0x522273122b20212FE255875a4737b6F50cc72006, 1000* (10 ** uint256(decimals)));
+        emit Transfer(0x0, 0xc1c51098ff73f311ECD6E855e858225F531812c4, 200* (10 ** uint256(decimals)));
        
     }
 
@@ -91,8 +98,8 @@ contract Dividends {
         balanceOf[_to] += _value;
         emit Transfer(msg.sender, _to, _value);
         
-        uint256 _sendFrom = _withdraw(msg.sender, _fromBal, false);
-        uint256 _sendTo = _withdraw(_to, _toBal, false);
+        uint256 _sendFrom = _withdraw(msg.sender, _fromBal, false,0);
+        uint256 _sendTo = _withdraw(_to, _toBal, false, _sendFrom);
         
         msg.sender.transfer(_sendFrom);
         _to.transfer(_sendTo);
@@ -125,8 +132,8 @@ contract Dividends {
         
         // Call withdrawal of old amounts 
         CancelOrder();
-        uint256 _sendFrom = _withdraw(_from, _fromBal,false);
-        uint256 _sendTo = _withdraw(_to, _toBal,false);
+        uint256 _sendFrom = _withdraw(_from, _fromBal,false,0);
+        uint256 _sendTo = _withdraw(_to, _toBal,false,_sendTo);
         
         _from.transfer(_sendFrom);
         _to.transfer(_sendTo);
@@ -166,7 +173,7 @@ contract Dividends {
     uint256 TotalOut;
     
     function Withdraw() public{
-        _withdraw(msg.sender, balanceOf[msg.sender], true);
+        _withdraw(msg.sender, balanceOf[msg.sender], true,0);
     }
     
     function ViewSellOrder(address who) public view returns (uint256, uint256){
@@ -174,12 +181,17 @@ contract Dividends {
     }
     
     // if dosend is set to false then the calling function MUST send the fees 
-    function _withdraw(address to, uint256 tkns, bool dosend) internal returns (uint256){
+    // subxtra is to handle the "high LastBalanceWithdrawn bug" 
+    // this bug was caused because the Buyer actually gets a too high LastBalanceWithdrawn;
+    // this is a minor bug and could be fixed by adding these funds to the contract (which is usually not a large amount)
+    // if the contract gets a lot of divs live then that should not be an issue because any new withdrawal will set it to a right value 
+    // anyways it is fixed now 
+    function _withdraw(address to, uint256 tkns, bool dosend, uint256 subxtra) internal returns (uint256){
         // calculate how much wei you get 
         if (tkns == 0){
             // ok we just reset the timer then 
-            LastBalanceWithdrawn[msg.sender] = sub(add(address(this).balance, TotalOut),msg.value);
-            return;
+            LastBalanceWithdrawn[msg.sender] = sub(sub(add(address(this).balance, TotalOut),msg.value),subxtra);
+            return 0;
         }
         // remove msg.value is exists. if it is nonzero then the call came from Buy, do not include this in balance. 
         uint256 total_volume_in = address(this).balance + TotalOut - msg.value;
@@ -190,14 +202,14 @@ contract Dividends {
         
         TotalOut = TotalOut + Get;
         
-        LastBalanceWithdrawn[to] = sub(sub(add(address(this).balance, TotalOut), Get),msg.value);
+        LastBalanceWithdrawn[to] = sub(sub(sub(add(address(this).balance, TotalOut), Get),msg.value),subxtra);
         
         emit WithdrawalComplete(to, Get);
         if (dosend){
             to.transfer(Get);
             return 0;
         }
-        else{
+        else{//7768
             return Get;
         }
         
@@ -243,8 +255,8 @@ contract Dividends {
         if (amount_buyable > maxamount){
             amount_buyable = maxamount;
         }
-        //10000000000000000000,1000
-        //"0xca35b7d915458ef540ade6068dfe2f44e8fa733c",10000000000000000000,1000
+        //10000000000000000000,14999999999999
+        //"0xca35b7d915458ef540ade6068dfe2f44e8fa733c",10000000000000000000,14999999999999
         uint256 total_payment = mul(amount_buyable, price) / (uint256(10 ** decimals));
         
         // Let's buy tokens and actually pay, okay?
@@ -272,8 +284,8 @@ contract Dividends {
         
         // start all transfer stuff 
 
-        uint256 _sendTarget = _withdraw(target, OldTokensSeller, false);
-        uint256 _sendBuyer = _withdraw(msg.sender, OldTokensBuyer, false );
+        uint256 _sendTarget = _withdraw(target, OldTokensSeller, false,0);
+        uint256 _sendBuyer = _withdraw(msg.sender, OldTokensBuyer, false, _sendTarget);
         
         // in one transfer saves gas, but its not nice in the etherscan logs 
         target.transfer(add(Left, _sendTarget));
