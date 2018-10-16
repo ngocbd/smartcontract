@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AUMXToken at 0x17cba58578eecaee898242a02edac75b8cc17231
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AUMXToken at 0x53ebb10ca7f91e6c90d7ce9249cea70e75948b16
 */
 pragma solidity ^0.4.18;
 
 /**************************************************************
 *
-* Alteum Token
+* Alteum Token v1.1
 * AUMX ERC223 Token Standard
 * Author: Lex Garza 
 * by ALTEUM / Copanga
@@ -30,7 +30,8 @@ contract ERC223 {
   function transfer(address to, uint value, bytes data) public returns (bool ok);
   function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
   
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event ERC223Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
 }
 
 
@@ -142,7 +143,8 @@ contract AUMXToken is ERC223, SafeMath{
 			balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
 			balances[_to] = safeAdd(balanceOf(_to), _value);
 			assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-			Transfer(msg.sender, _to, _value, _data);
+			Transfer(msg.sender, _to, _value);
+			ERC223Transfer(msg.sender, _to, _value, _data);
 			return true;
 		}
 		else {
@@ -190,7 +192,8 @@ contract AUMXToken is ERC223, SafeMath{
 		if (balanceOf(msg.sender) < _value) revert();
 		balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
 		balances[_to] = safeAdd(balanceOf(_to), _value);
-		Transfer(msg.sender, _to, _value, _data);
+		Transfer(msg.sender, _to, _value);
+		ERC223Transfer(msg.sender, _to, _value, _data);
 		return true;
 	}
 	  
@@ -201,7 +204,8 @@ contract AUMXToken is ERC223, SafeMath{
 		balances[_to] = safeAdd(balanceOf(_to), _value);
 		ContractReceiver receiver = ContractReceiver(_to);
 		receiver.tokenFallback(msg.sender, _value, _data);
-		Transfer(msg.sender, _to, _value, _data);
+		Transfer(msg.sender, _to, _value);
+		ERC223Transfer(msg.sender, _to, _value, _data);
 		return true;
 	}
 	
@@ -215,7 +219,8 @@ contract AUMXToken is ERC223, SafeMath{
 		allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);
 		balances[_to] = safeAdd(balanceOf(_to), _value);
 		bytes memory empty;
-		Transfer(_from, _to, _value, empty);
+		Transfer(_from, _to, _value);
+		ERC223Transfer(_from, _to, _value, empty);
 		return true;
 	}
 
