@@ -1,380 +1,383 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x05c19e52e73353799aff84f390e9a27e11836477
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x1ca570d64e4a86cd5eee82b221f61d627d4d88de
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Base {
-    modifier only(address allowed) {
-        require(msg.sender == allowed);
-        _;
-    }
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length == size + 4);
-        _;
-    } 
-    // *************************************************
-    // *          reentrancy handling                  *
-    // *************************************************
-    uint private bitlocks = 0;
-    modifier noReentrancy(uint m) {
-        var _locks = bitlocks;
-        require(_locks & m <= 0);
-        bitlocks |= m;
-        _;
-        bitlocks = _locks;
-    }
-    modifier noAnyReentrancy {
-        var _locks = bitlocks;
-        require(_locks <= 0);
-        bitlocks = uint(-1);
-        _;
-        bitlocks = _locks;
-    }
-    modifier reentrant { _; }
-}
+pragma solidity ^0.4.18;
 
 
-contract ERC20 is Base {
-    using SafeMath for uint;
-    uint public totalSupply;
-    bool public isFrozen = false;
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-    
-    function transferFrom(address _from, address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
-        require(_to != address(0));
-        require(_to != address(this));
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-    function balanceOf(address _owner) public constant returns (uint balance) {
-        return balances[_owner];
-    }
 
-    function approve_fixed(address _spender, uint _currentValue, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
-        if(allowed[msg.sender][_spender] == _currentValue){
-            allowed[msg.sender][_spender] = _value;
-            Approval(msg.sender, _spender, _value);
-            return true;
-        } else {
-            return false;
-        }
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    function approve(address _spender, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
 
-    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
 
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
-    modifier isNotFrozenOnly() {
-        require(!isFrozen);
-        _;
-    }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    modifier isFrozenOnly(){
-        require(isFrozen);
-        _;
-    }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 
 }
 
+pragma solidity ^0.4.18;
 
-contract Token is ERC20 {
-    string public name = "Array.io Token";
-    string public symbol = "eRAY";
-    uint8 public decimals = 18;
-    uint public constant BIT = 10**18;
-    uint public constant BASE = 10000 * BIT;
-    bool public tgeLive = false;
-    uint public tgeStartBlock;
-    uint public tgeSettingsAmount;
-    uint public tgeSettingsPartInvestor;
-    uint public tgeSettingsPartProject;
-    uint public tgeSettingsPartFounders;
-    uint public tgeSettingsBlocksPerStage;
-    uint public tgeSettingsPartInvestorIncreasePerStage;
-    uint public tgeSettingsAmountCollect;
-    uint public tgeSettingsMaxStages;
-    address public projectWallet;
-    address public foundersWallet;
-    address constant public burnAddress = address(0);
-    mapping (address => uint) public invBalances;
-    uint public totalInvSupply;
 
-    modifier isTgeLive(){
-        require(tgeLive);
-        _;
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+pragma solidity ^0.4.18;
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+pragma solidity ^0.4.18;
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+pragma solidity ^0.4.18;
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+
+pragma solidity ^0.4.18;
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+pragma solidity ^0.4.18;
+
+/**
+ * @title Pausable token
+ * @dev StandardToken modified with pausable transfers.
+ **/
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+pragma solidity ^0.4.19;
+
+contract Token is PausableToken {
+	string public name = "CCC"; // Token ??
+	string public symbol = "EC3T"; // Token ?? ???ETH/EOS
+	uint public decimals = 0;
+	uint public INITIAL_SUPPLY = 50000 * (10 ** 4); // ?????
+
+	function Token() public {
+		totalSupply_ = INITIAL_SUPPLY; // ???????
+		balances[msg.sender] = INITIAL_SUPPLY; // ????? token ??? contract ??????
+	}
+
+    function crowdsale(address _crowdsale, uint256 _value) onlyOwner public {
+        require(_crowdsale != address(0));
+        require(_value <= balances[msg.sender]);
+        approve(_crowdsale, _value);
     }
 
-    modifier isNotTgeLive(){
-        require(!tgeLive);
-        _;
+    event Burn(address indexed burner, uint256 value);
+    function burn(uint256 _value) public {
+        require(_value <= balances[msg.sender]);
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
+
+        Burn(burner, _value);
     }
 
-    modifier maxStagesIsNotAchieved() {
-        if (totalSupply > BIT) {
-            uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
-            require(stage < tgeSettingsMaxStages);
-        }
-        _;
-    }
-
-    modifier targetIsNotAchieved(){
-        require(tgeSettingsAmountCollect < tgeSettingsAmount);
-        _;
-    }
-
-    event Burn(address indexed _owner,  uint _value);
-
-    function transfer(address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
-        require(_to != address(0));
-        require(_to != address(this));
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(balances[projectWallet] < 1 * BIT){
-            _internalTgeSetLive();
-        }
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /// @dev Constructor
-    /// @param _projectWallet Wallet of project
-    /// @param _foundersWallet Wallet of founders
-    function Token(address _projectWallet, address _foundersWallet) public {
-        projectWallet = _projectWallet;
-        foundersWallet = _foundersWallet;
-    }
-
-    /// @dev Fallback function allows to buy tokens
-    function ()
-    public
-    payable
-    isTgeLive
-    isNotFrozenOnly
-    targetIsNotAchieved
-    maxStagesIsNotAchieved
-    noAnyReentrancy
-    {
-        require(msg.value > 0);
-        if(tgeSettingsAmountCollect.add(msg.value) >= tgeSettingsAmount){
-            _finishTge();
-        }
-        uint refundAmount = 0;
-        uint senderAmount = msg.value;
-        if(tgeSettingsAmountCollect.add(msg.value) >= tgeSettingsAmount){
-            refundAmount = tgeSettingsAmountCollect.add(msg.value).sub(tgeSettingsAmount);
-            senderAmount = (msg.value).sub(refundAmount);
-        }
-        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);        
-        
-        uint currentPartInvestor = tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
-        uint allStakes = currentPartInvestor.add(tgeSettingsPartProject).add(tgeSettingsPartFounders);
-        uint amountProject = senderAmount.mul(tgeSettingsPartProject).div(allStakes);
-        uint amountFounders = senderAmount.mul(tgeSettingsPartFounders).div(allStakes);
-        uint amountSender = senderAmount.sub(amountProject).sub(amountFounders);
-        _mint(amountProject, amountFounders, amountSender);
-        msg.sender.transfer(refundAmount);
-    }
-
-    function setFinished()
-    public
-    only(projectWallet)
-    isNotFrozenOnly
-    isTgeLive
-    {
-        if(balances[projectWallet] > 1*BIT){
-            _finishTge();
-        }
-    }
-
-    /// @dev Start new tge stage
-    function tgeSetLive()
-    public
-    only(projectWallet)
-    isNotTgeLive
-    isNotFrozenOnly
-    {
-        _internalTgeSetLive();
-    }
-
-    /// @dev Burn tokens to burnAddress from msg.sender wallet
-    /// @param _amount Amount of tokens
-    function burn(uint _amount)
-    public 
-    isNotFrozenOnly
-    noAnyReentrancy    
-    returns(bool _success)
-    {
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[burnAddress] = balances[burnAddress].add(_amount);
-        totalSupply = totalSupply.sub(_amount);
-        msg.sender.transfer(_amount);
-        Transfer(msg.sender, burnAddress, _amount);
-        Burn(burnAddress, _amount);
-        return true;
-    }
-
-    /// @dev _foundersWallet Wallet of founders
-    /// @param dests array of addresses 
-    /// @param values array amount of tokens to transfer    
-    function multiTransfer(address[] dests, uint[] values) 
-    public 
-    isNotFrozenOnly
-    returns(uint) 
-    {
-        uint i = 0;
-        while (i < dests.length) {
-           transfer(dests[i], values[i]);
-           i += 1;
-        }
-        return i;
-    }
-
-    //---------------- FROZEN -----------------
-    /// @dev Allows an owner to confirm freezeng process
-    function setFreeze()
-    public
-    only(projectWallet)
-    isNotFrozenOnly
-    returns (bool)
-    {
-        isFrozen = true;
-        totalInvSupply = address(this).balance;
-        return true;
-    }
-
-    /// @dev Allows to users withdraw eth in frozen stage 
-    function withdrawFrozen()
-    public
-    isFrozenOnly
-    noAnyReentrancy
-    {
-        require(invBalances[msg.sender] > 0);
-        
-        uint amountWithdraw = totalInvSupply.mul(invBalances[msg.sender]).div(totalSupply);        
-        invBalances[msg.sender] = 0;
-        msg.sender.transfer(amountWithdraw);
-    }
-
-    /// @dev Allows an owner to confirm a change settings request.
-    function executeSettingsChange(
-        uint amount, 
-        uint partInvestor,
-        uint partProject, 
-        uint partFounders, 
-        uint blocksPerStage, 
-        uint partInvestorIncreasePerStage,
-        uint maxStages
-    ) 
-    public
-    only(projectWallet)
-    isNotTgeLive 
-    isNotFrozenOnly
-    returns(bool success) 
-    {
-        tgeSettingsAmount = amount;
-        tgeSettingsPartInvestor = partInvestor;
-        tgeSettingsPartProject = partProject;
-        tgeSettingsPartFounders = partFounders;
-        tgeSettingsBlocksPerStage = blocksPerStage;
-        tgeSettingsPartInvestorIncreasePerStage = partInvestorIncreasePerStage;
-        tgeSettingsMaxStages = maxStages;
-        return true;
-    }
-
-    //---------------- GETTERS ----------------
-    /// @dev Amount of blocks left to the end of this stage of TGE 
-    function tgeStageBlockLeft() 
-    public 
-    view
-    isTgeLive
-    returns(uint)
-    {
-        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
-        return tgeStartBlock.add(stage.mul(tgeSettingsBlocksPerStage)).sub(block.number);
-    }
-
-    function tgeCurrentPartInvestor()
-    public
-    view
-    isTgeLive
-    returns(uint)
-    {
-        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
-        return tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
-    }
-
-    function tgeNextPartInvestor()
-    public
-    view
-    isTgeLive
-    returns(uint)
-    {
-        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage).add(1);        
-        return tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
-    }
-
-    //---------------- INTERNAL ---------------
-    function _finishTge()
-    internal
-    {
-        tgeLive = false;
-    }
-
-    function _mint(uint _amountProject, uint _amountFounders, uint _amountSender)
-    internal
-    {
-        balances[projectWallet] = balances[projectWallet].add(_amountProject);
-        balances[foundersWallet] = balances[foundersWallet].add(_amountFounders);
-        balances[msg.sender] = balances[msg.sender].add(_amountSender);
-        invBalances[msg.sender] = invBalances[msg.sender].add(_amountSender);
-        tgeSettingsAmountCollect = tgeSettingsAmountCollect.add(_amountProject+_amountFounders+_amountSender);
-        totalSupply = totalSupply.add(_amountProject+_amountFounders+_amountSender);
-        Transfer(0x0, msg.sender, _amountSender);
-        Transfer(0x0, projectWallet, _amountProject);
-        Transfer(0x0, foundersWallet, _amountFounders);
-    }
-
-    function _internalTgeSetLive()
-    internal
-    {
-        tgeLive = true;
-        tgeStartBlock = block.number;
-        tgeSettingsAmountCollect = 0;
+    event Mint(address indexed to, uint256 amount);
+    function mint(address _to, uint256 _amount) onlyOwner public {
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
     }
 }
