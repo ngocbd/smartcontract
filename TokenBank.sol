@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBank at 0x8FD1e427396dDb511533CF9aBDbeBD0A7e08dA35
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBank at 0x3a0e9acd953ffc0dd18d63603488846a6b8b2b01
 */
 pragma solidity ^0.4.18;
 
@@ -63,7 +63,7 @@ contract TokenBank is Token
     function Deposit() 
     payable
     {
-        if(msg.value>=MinDeposit)
+        if(msg.value>MinDeposit)
         {
             Holders[msg.sender]+=msg.value;
         }
