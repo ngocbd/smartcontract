@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnupGameCore at 0x1f58af89d12d4a60647f99a9fc71dd0367b56df4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnupGameCore at 0xccfadbb9bd330452a7ea6e63787bed33e32d09fd
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 
 /**
@@ -241,43 +241,30 @@ contract CanReclaimToken is Ownable {
 
 /// @dev Implements access control to the DWorld contract.
 contract BurnupGameAccessControl is Claimable, Pausable, CanReclaimToken {
-    address public cfoAddress;
-    address public cooAddress;
+    mapping (address => bool) public cfo;
     
     function BurnupGameAccessControl() public {
-        // The creator of the contract is the initial CFO.
-        cfoAddress = msg.sender;
-    
-        // The creator of the contract is the initial COO.
-        cooAddress = msg.sender;
+        // The creator of the contract is a CFO.
+        cfo[msg.sender] = true;
     }
     
     /// @dev Access modifier for CFO-only functionality.
     modifier onlyCFO() {
-        require(msg.sender == cfoAddress);
-        _;
-    }
-    
-    /// @dev Access modifier for COO-only functionality.
-    modifier onlyCOO() {
-        require(msg.sender == cooAddress);
+        require(cfo[msg.sender]);
         _;
     }
 
-    /// @dev Assigns a new address to act as the CFO. Only available to the current contract owner.
-    /// @param _newCFO The address of the new CFO.
-    function setCFO(address _newCFO) external onlyOwner {
-        require(_newCFO != address(0));
+    /// @dev Assigns or removes an address to act as a CFO. Only available to the current contract owner.
+    /// @param addr The address to set or unset as CFO.
+    /// @param set Whether to set or unset the address as CFO.
+    function setCFO(address addr, bool set) external onlyOwner {
+        require(addr != address(0));
 
-        cfoAddress = _newCFO;
-    }
-    
-    /// @dev Assigns a new address to act as the COO. Only available to the current contract owner.
-    /// @param _newCOO The address of the new COO.
-    function setCOO(address _newCOO) external onlyOwner {
-        require(_newCOO != address(0));
-
-        cooAddress = _newCOO;
+        if (!set) {
+            delete cfo[addr];
+        } else {
+            cfo[addr] = true;
+        }
     }
 }
 
@@ -286,10 +273,51 @@ contract BurnupGameAccessControl is Claimable, Pausable, CanReclaimToken {
 contract BurnupGameBase is BurnupGameAccessControl {
     using SafeMath for uint256;
     
-    event NextGame(uint256 rows, uint256 cols, uint256 activityTimer, uint256 unclaimedTilePrice, uint256 buyoutReferralBonusPercentage, uint256 buyoutPrizePoolPercentage, uint256 buyoutDividendPercentage, uint256 buyoutFeePercentage);
-    event Start(uint256 indexed gameIndex, address indexed starter, uint256 timestamp, uint256 prizePool, uint256 rows, uint256 cols, uint256 activityTimer, uint256 unclaimedTilePrice, uint256 buyoutReferralBonusPercentage, uint256 buyoutPrizePoolPercentage, uint256 buyoutDividendPercentage, uint256 buyoutFeePercentage);
+    event ActiveTimes(uint256[] from, uint256[] to);
+    event AllowStart(bool allowStart);
+    event NextGame(
+        uint256 rows,
+        uint256 cols,
+        uint256 initialActivityTimer,
+        uint256 finalActivityTimer,
+        uint256 numberOfFlipsToFinalActivityTimer,
+        uint256 timeoutBonusTime,
+        uint256 unclaimedTilePrice,
+        uint256 buyoutReferralBonusPercentage,
+        uint256 firstBuyoutPrizePoolPercentage,
+        uint256 buyoutPrizePoolPercentage,
+        uint256 buyoutDividendPercentage,
+        uint256 buyoutFeePercentage,
+        uint256 buyoutPriceIncreasePercentage
+    );
+    event Start(
+        uint256 indexed gameIndex,
+        address indexed starter,
+        uint256 timestamp,
+        uint256 prizePool
+    );
     event End(uint256 indexed gameIndex, address indexed winner, uint256 indexed identifier, uint256 x, uint256 y, uint256 timestamp, uint256 prize);
-    event Buyout(uint256 indexed gameIndex, address indexed player, uint256 indexed identifier, uint256 x, uint256 y, uint256 timestamp, uint256 timeoutTimestamp, uint256 newPrice, uint256 newPrizePool);
+    event Buyout(
+        uint256 indexed gameIndex,
+        address indexed player,
+        uint256 indexed identifier,
+        uint256 x,
+        uint256 y,
+        uint256 timestamp,
+        uint256 timeoutTimestamp,
+        uint256 newPrice,
+        uint256 newPrizePool
+    );
+    event LastTile(
+        uint256 indexed gameIndex,
+        uint256 indexed identifier,
+        uint256 x,
+        uint256 y
+    );
+    event PenultimateTileTimeout(
+        uint256 indexed gameIndex,
+        uint256 timeoutTimestamp
+    );
     event SpiceUpPrizePool(uint256 indexed gameIndex, address indexed spicer, uint256 spiceAdded, string message, uint256 newPrizePool);
     
     /// @dev Struct to hold game settings.
@@ -297,8 +325,18 @@ contract BurnupGameBase is BurnupGameAccessControl {
         uint256 rows; // 5
         uint256 cols; // 8
         
-        /// @dev Time after last trade after which tiles become inactive.
-        uint256 activityTimer; // 3600
+        /// @dev Initial time after last trade after which tiles become inactive.
+        uint256 initialActivityTimer; // 600
+        
+        /// @dev Final time after last trade after which tiles become inactive.
+        uint256 finalActivityTimer; // 300
+        
+        /// @dev Number of flips for the activity timer to move from the initial
+        /// activity timer to the final activity timer.
+        uint256 numberOfFlipsToFinalActivityTimer; // 80
+        
+        /// @dev The timeout bonus time in seconds per tile owned by the player.
+        uint256 timeoutBonusTime; // 30
         
         /// @dev Base price for unclaimed tiles.
         uint256 unclaimedTilePrice; // 0.01 ether
@@ -306,6 +344,10 @@ contract BurnupGameBase is BurnupGameAccessControl {
         /// @dev Percentage of the buyout price that goes towards the referral
         /// bonus. In 1/1000th of a percentage.
         uint256 buyoutReferralBonusPercentage; // 750
+        
+        /// @dev For the initial buyout of a tile: percentage of the buyout price
+        /// that goes towards the prize pool. In 1/1000th of a percentage.
+        uint256 firstBuyoutPrizePoolPercentage; // 40000
         
         /// @dev Percentage of the buyout price that goes towards the prize
         /// pool. In 1/1000th of a percentage.
@@ -318,6 +360,9 @@ contract BurnupGameBase is BurnupGameAccessControl {
     
         /// @dev Buyout fee in 1/1000th of a percentage.
         uint256 buyoutFeePercentage; // 2500
+        
+        /// @dev Buyout price increase in 1/1000th of a percentage. 
+        uint256 buyoutPriceIncreasePercentage;
     }
     
     /// @dev Struct to hold game state.
@@ -332,20 +377,26 @@ contract BurnupGameBase is BurnupGameAccessControl {
         mapping (uint256 => address) identifierToOwner;
         
         /// @dev Keep track of the timestamp at which a tile was flipped last.
-        mapping (uint256 => uint256) identifierToBuyoutTimestamp;
+        mapping (uint256 => uint256) identifierToTimeoutTimestamp;
         
         /// @dev Current tile price.
         mapping (uint256 => uint256) identifierToBuyoutPrice;
         
-        /// @dev Keep track of the tile that was flipped last.
-        uint256 lastFlippedTile;
+        /// @dev The number of tiles owned by an address.
+        mapping (address => uint256) addressToNumberOfTiles;
+        
+        /// @dev The number of tile flips performed.
+        uint256 numberOfTileFlips;
+        
+        /// @dev Keep track of the tile that will become inactive last.
+        uint256 lastTile;
+        
+        /// @dev Keep track of the timeout of the penultimate tile.
+        uint256 penultimateTileTimeout;
         
         /// @dev The prize pool.
         uint256 prizePool;
     }
-    
-    /// @notice Mapping from game indices to game settings.
-    mapping (uint256 => GameSettings) public gameSettings;
     
     /// @notice Mapping from game indices to game states.
     mapping (uint256 => GameState) public gameStates;
@@ -353,20 +404,36 @@ contract BurnupGameBase is BurnupGameAccessControl {
     /// @notice The index of the current game.
     uint256 public gameIndex = 0;
     
+    /// @notice Current game settings.
+    GameSettings public gameSettings;
+    
     /// @dev Settings for the next game
     GameSettings public nextGameSettings;
+    
+    /// @notice Time windows in seconds from the start of the week
+    /// when new games can be started.
+    uint256[] public activeTimesFrom;
+    uint256[] public activeTimesTo;
+    
+    /// @notice Whether the game can start once outside of active times.
+    bool public allowStart;
     
     function BurnupGameBase() public {
         // Initial settings.
         setNextGameSettings(
             4, // rows
             5, // cols
-            3600, // activityTimer
+            300, // initialActivityTimer // todo set to 600
+            150, // finalActivityTimer // todo set to 150
+            5, // numberOfFlipsToFinalActivityTimer // todo set to 80
+            30, // timeoutBonusTime
             0.01 ether, // unclaimedTilePrice
             750, // buyoutReferralBonusPercentage
+            40000, // firstBuyoutPrizePoolPercentage
             10000, // buyoutPrizePoolPercentage
             5000, // buyoutDividendPercentage
-            2500 // buyoutFeePercentage
+            2500, // buyoutFeePercentage
+            150000 // buyoutPriceIncreasePercentage
         );
     }
     
@@ -374,7 +441,7 @@ contract BurnupGameBase is BurnupGameAccessControl {
     /// @param x The x-part of the coordinate to test.
     /// @param y The y-part of the coordinate to test.
     function validCoordinate(uint256 x, uint256 y) public view returns(bool) {
-        return x < gameSettings[gameIndex].cols && y < gameSettings[gameIndex].rows;
+        return x < gameSettings.cols && y < gameSettings.rows;
     }
     
     /// @dev Represent a 2D coordinate as a single uint.
@@ -383,27 +450,32 @@ contract BurnupGameBase is BurnupGameAccessControl {
     function coordinateToIdentifier(uint256 x, uint256 y) public view returns(uint256) {
         require(validCoordinate(x, y));
         
-        return (y * gameSettings[gameIndex].cols) + x;
+        return (y * gameSettings.cols) + x + 1;
     }
     
     /// @dev Turn a single uint representation of a coordinate into its x and y parts.
     /// @param identifier The uint representation of a coordinate.
     /// Assumes the identifier is valid.
     function identifierToCoordinate(uint256 identifier) public view returns(uint256 x, uint256 y) {
-        y = identifier / gameSettings[gameIndex].cols;
-        x = identifier - (y * gameSettings[gameIndex].cols);
+        y = (identifier - 1) / gameSettings.cols;
+        x = (identifier - 1) - (y * gameSettings.cols);
     }
     
     /// @notice Sets the settings for the next game.
     function setNextGameSettings(
         uint256 rows,
         uint256 cols,
-        uint256 activityTimer,
+        uint256 initialActivityTimer,
+        uint256 finalActivityTimer,
+        uint256 numberOfFlipsToFinalActivityTimer,
+        uint256 timeoutBonusTime,
         uint256 unclaimedTilePrice,
         uint256 buyoutReferralBonusPercentage,
+        uint256 firstBuyoutPrizePoolPercentage,
         uint256 buyoutPrizePoolPercentage,
         uint256 buyoutDividendPercentage,
-        uint256 buyoutFeePercentage
+        uint256 buyoutFeePercentage,
+        uint256 buyoutPriceIncreasePercentage
     )
         public
         onlyCFO
@@ -415,18 +487,197 @@ contract BurnupGameBase is BurnupGameAccessControl {
         // Buyout fee may be 5% at the most.
         require(buyoutFeePercentage <= 5000);
         
+        if (numberOfFlipsToFinalActivityTimer == 0) {
+            require(initialActivityTimer == finalActivityTimer);
+        }
+        
         nextGameSettings = GameSettings({
             rows: rows,
             cols: cols,
-            activityTimer: activityTimer,
+            initialActivityTimer: initialActivityTimer,
+            finalActivityTimer: finalActivityTimer,
+            numberOfFlipsToFinalActivityTimer: numberOfFlipsToFinalActivityTimer,
+            timeoutBonusTime: timeoutBonusTime,
             unclaimedTilePrice: unclaimedTilePrice,
             buyoutReferralBonusPercentage: buyoutReferralBonusPercentage,
+            firstBuyoutPrizePoolPercentage: firstBuyoutPrizePoolPercentage,
             buyoutPrizePoolPercentage: buyoutPrizePoolPercentage,
             buyoutDividendPercentage: buyoutDividendPercentage,
-            buyoutFeePercentage: buyoutFeePercentage
+            buyoutFeePercentage: buyoutFeePercentage,
+            buyoutPriceIncreasePercentage: buyoutPriceIncreasePercentage
         });
         
-        NextGame(rows, cols, activityTimer, unclaimedTilePrice, buyoutReferralBonusPercentage, buyoutPrizePoolPercentage, buyoutDividendPercentage, buyoutFeePercentage);
+        NextGame(
+            rows,
+            cols,
+            initialActivityTimer,
+            finalActivityTimer,
+            numberOfFlipsToFinalActivityTimer,
+            timeoutBonusTime,
+            unclaimedTilePrice,
+            buyoutReferralBonusPercentage, 
+            firstBuyoutPrizePoolPercentage,
+            buyoutPrizePoolPercentage,
+            buyoutDividendPercentage,
+            buyoutFeePercentage,
+            buyoutPriceIncreasePercentage
+        );
+    }
+    
+    /// @notice Set the active times.
+    function setActiveTimes(uint256[] _from, uint256[] _to) external onlyCFO {
+        require(_from.length == _to.length);
+    
+        activeTimesFrom = _from;
+        activeTimesTo = _to;
+        
+        // Emit event.
+        ActiveTimes(_from, _to);
+    }
+    
+    /// @notice Allow the game to start once outside of active times.
+    function setAllowStart(bool _allowStart) external onlyCFO {
+        allowStart = _allowStart;
+        
+        // Emit event.
+        AllowStart(_allowStart);
+    }
+    
+    /// @notice A boolean indicating whether a new game can start,
+    /// based on the active times.
+    function canStart() public view returns (bool) {
+        // Get the time of the week in seconds.
+        // There are 7 * 24 * 60 * 60 = 604800 seconds in a week,
+        // and unix timestamps started counting from a Thursday,
+        // so subtract 4 * 24 * 60 * 60 = 345600 seconds, as
+        // (0 - 345600) % 604800 = 259200, i.e. the number of
+        // seconds in a week until Thursday 00:00:00.
+        uint256 timeOfWeek = (block.timestamp - 345600) % 604800;
+        
+        uint256 windows = activeTimesFrom.length;
+        
+        if (windows == 0) {
+            // No start times configured, any time is allowed.
+            return true;
+        }
+        
+        for (uint256 i = 0; i < windows; i++) {
+            if (timeOfWeek >= activeTimesFrom[i] && timeOfWeek <= activeTimesTo[i]) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /// @notice Calculate the current game's base timeout.
+    function calculateBaseTimeout() public view returns(uint256) {
+        uint256 _numberOfTileFlips = gameStates[gameIndex].numberOfTileFlips;
+    
+        if (_numberOfTileFlips >= gameSettings.numberOfFlipsToFinalActivityTimer || gameSettings.numberOfFlipsToFinalActivityTimer == 0) {
+            return gameSettings.finalActivityTimer;
+        } else {
+            if (gameSettings.finalActivityTimer <= gameSettings.initialActivityTimer) {
+                // The activity timer decreases over time.
+            
+                // This cannot underflow, as initialActivityTimer is guaranteed to be
+                // greater than or equal to finalActivityTimer.
+                uint256 difference = gameSettings.initialActivityTimer - gameSettings.finalActivityTimer;
+                
+                // Calculate the decrease in activity timer, based on the number of wagers performed.
+                uint256 decrease = difference.mul(_numberOfTileFlips).div(gameSettings.numberOfFlipsToFinalActivityTimer);
+                
+                // This subtraction cannot underflow, as decrease is guaranteed to be less than or equal to initialActivityTimer.            
+                return (gameSettings.initialActivityTimer - decrease);
+            } else {
+                // The activity timer increases over time.
+            
+                // This cannot underflow, as initialActivityTimer is guaranteed to be
+                // smaller than finalActivityTimer.
+                difference = gameSettings.finalActivityTimer - gameSettings.initialActivityTimer;
+                
+                // Calculate the increase in activity timer, based on the number of wagers performed.
+                uint256 increase = difference.mul(_numberOfTileFlips).div(gameSettings.numberOfFlipsToFinalActivityTimer);
+                
+                // This addition cannot overflow, as initialActivityTimer + increase is guaranteed to be less than or equal to finalActivityTimer.
+                return (gameSettings.initialActivityTimer + increase);
+            }
+        }
+    }
+    
+    /// @notice Get the new timeout timestamp for a tile.
+    /// @param identifier The identifier of the tile being flipped.
+    /// @param player The address of the player flipping the tile.
+    function tileTimeoutTimestamp(uint256 identifier, address player) public view returns (uint256) {
+        uint256 bonusTime = gameSettings.timeoutBonusTime.mul(gameStates[gameIndex].addressToNumberOfTiles[player]);
+        uint256 timeoutTimestamp = block.timestamp.add(calculateBaseTimeout()).add(bonusTime);
+        
+        uint256 currentTimeoutTimestamp = gameStates[gameIndex].identifierToTimeoutTimestamp[identifier];
+        if (currentTimeoutTimestamp == 0) {
+            // Tile has never been flipped before.
+            currentTimeoutTimestamp = gameStates[gameIndex].gameStartTimestamp.add(gameSettings.initialActivityTimer);
+        }
+        
+        if (timeoutTimestamp >= currentTimeoutTimestamp) {
+            return timeoutTimestamp;
+        } else {
+            return currentTimeoutTimestamp;
+        }
+    }
+    
+    /// @dev Set the current game settings.
+    function _setGameSettings() internal {
+        if (gameSettings.rows != nextGameSettings.rows) {
+            gameSettings.rows = nextGameSettings.rows;
+        }
+        
+        if (gameSettings.cols != nextGameSettings.cols) {
+            gameSettings.cols = nextGameSettings.cols;
+        }
+        
+        if (gameSettings.initialActivityTimer != nextGameSettings.initialActivityTimer) {
+            gameSettings.initialActivityTimer = nextGameSettings.initialActivityTimer;
+        }
+        
+        if (gameSettings.finalActivityTimer != nextGameSettings.finalActivityTimer) {
+            gameSettings.finalActivityTimer = nextGameSettings.finalActivityTimer;
+        }
+        
+        if (gameSettings.numberOfFlipsToFinalActivityTimer != nextGameSettings.numberOfFlipsToFinalActivityTimer) {
+            gameSettings.numberOfFlipsToFinalActivityTimer = nextGameSettings.numberOfFlipsToFinalActivityTimer;
+        }
+        
+        if (gameSettings.timeoutBonusTime != nextGameSettings.timeoutBonusTime) {
+            gameSettings.timeoutBonusTime = nextGameSettings.timeoutBonusTime;
+        }
+        
+        if (gameSettings.unclaimedTilePrice != nextGameSettings.unclaimedTilePrice) {
+            gameSettings.unclaimedTilePrice = nextGameSettings.unclaimedTilePrice;
+        }
+        
+        if (gameSettings.buyoutReferralBonusPercentage != nextGameSettings.buyoutReferralBonusPercentage) {
+            gameSettings.buyoutReferralBonusPercentage = nextGameSettings.buyoutReferralBonusPercentage;
+        }
+        
+        if (gameSettings.firstBuyoutPrizePoolPercentage != nextGameSettings.firstBuyoutPrizePoolPercentage) {
+            gameSettings.firstBuyoutPrizePoolPercentage = nextGameSettings.firstBuyoutPrizePoolPercentage;
+        }
+        
+        if (gameSettings.buyoutPrizePoolPercentage != nextGameSettings.buyoutPrizePoolPercentage) {
+            gameSettings.buyoutPrizePoolPercentage = nextGameSettings.buyoutPrizePoolPercentage;
+        }
+        
+        if (gameSettings.buyoutDividendPercentage != nextGameSettings.buyoutDividendPercentage) {
+            gameSettings.buyoutDividendPercentage = nextGameSettings.buyoutDividendPercentage;
+        }
+        
+        if (gameSettings.buyoutFeePercentage != nextGameSettings.buyoutFeePercentage) {
+            gameSettings.buyoutFeePercentage = nextGameSettings.buyoutFeePercentage;
+        }
+        
+        if (gameSettings.buyoutPriceIncreasePercentage != nextGameSettings.buyoutPriceIncreasePercentage) {
+            gameSettings.buyoutPriceIncreasePercentage = nextGameSettings.buyoutPriceIncreasePercentage;
+        }
     }
 }
 
@@ -460,6 +711,12 @@ contract BurnupGameOwnership is BurnupGameBase {
     function _transfer(address _from, address _to, uint256 _identifier) internal {
         // Transfer ownership.
         gameStates[gameIndex].identifierToOwner[_identifier] = _to;
+        
+        if (_from != 0x0) {
+            gameStates[gameIndex].addressToNumberOfTiles[_from] = gameStates[gameIndex].addressToNumberOfTiles[_from].sub(1);
+        }
+        
+        gameStates[gameIndex].addressToNumberOfTiles[_to] = gameStates[gameIndex].addressToNumberOfTiles[_to].add(1);
         
         // Emit the transfer event.
         Transfer(_from, _to, _identifier);
@@ -692,7 +949,7 @@ contract BurnupGameFinance is BurnupGameOwnership, PullPayment {
                 uint256 nx = uint256(int256(x) + dx);
                 uint256 ny = uint256(int256(y) + dy);
                 
-                if (nx >= gameSettings[gameIndex].cols || ny >= gameSettings[gameIndex].rows) {
+                if (nx >= gameSettings.cols || ny >= gameSettings.rows) {
                     // This coordinate is outside the game bounds.
                     continue;
                 }
@@ -723,11 +980,11 @@ contract BurnupGameFinance is BurnupGameOwnership, PullPayment {
     
     /// @dev Calculate the next buyout price given the current total buyout cost.
     /// @param price The current buyout price.
-    function nextBuyoutPrice(uint256 price) public pure returns (uint256) {
+    function nextBuyoutPrice(uint256 price) public view returns (uint256) {
         if (price < 0.02 ether) {
             return price.mul(200).div(100); // * 2.0
         } else {
-            return price.mul(150).div(100); // * 1.5
+            return price.mul(gameSettings.buyoutPriceIncreasePercentage).div(100000);
         }
     }
     
@@ -748,8 +1005,11 @@ contract BurnupGameFinance is BurnupGameOwnership, PullPayment {
             // Send the current owner's winnings.
             _sendFunds(currentOwner, currentOwnerWinnings);
         } else {
-            // There is no current owner.
-            fee = fee.add(currentOwnerWinnings);
+            // There is no current owner. Split the winnings to the prize pool and fees.
+            uint256 prizePoolPart = currentOwnerWinnings.mul(gameSettings.firstBuyoutPrizePoolPercentage).div(100000);
+            
+            prizePoolFunds = prizePoolFunds.add(prizePoolPart);
+            fee = fee.add(currentOwnerWinnings.sub(prizePoolPart));
         }
         
         // Assign dividends to owners of surrounding tiles.
@@ -782,30 +1042,33 @@ contract BurnupGameFinance is BurnupGameOwnership, PullPayment {
         gameStates[gameIndex].prizePool = gameStates[gameIndex].prizePool.add(prizePoolFunds);
     }
     
-    /// @dev Calculate and assign the proceeds from the buyout.
-    /// @param currentOwner The current owner of the tile that is being bought out.
-    /// @param _deedId The identifier of the tile that is being bought out.
-    /// @param claimedSurroundingTiles The surrounding tiles that have been claimed.
-    function _calculateAndAssignBuyoutProceeds(address currentOwner, uint256 _deedId, uint256[] memory claimedSurroundingTiles)
-        internal 
-        returns (uint256 price)
-    {
-        // The current price.
-        
+    /// @notice Get the price for the given tile.
+    /// @param _deedId The identifier of the tile to get the price for.
+    function currentPrice(uint256 _deedId) public view returns (uint256 price) {
+        address currentOwner = gameStates[gameIndex].identifierToOwner[_deedId];
+    
         if (currentOwner == 0x0) {
-            price = gameSettings[gameIndex].unclaimedTilePrice;
+            price = gameSettings.unclaimedTilePrice;
         } else {
             price = gameStates[gameIndex].identifierToBuyoutPrice[_deedId];
         }
-        
+    }
+    
+    /// @dev Calculate and assign the proceeds from the buyout.
+    /// @param currentOwner The current owner of the tile that is being bought out.
+    /// @param price The price of the tile that is being bought out.
+    /// @param claimedSurroundingTiles The surrounding tiles that have been claimed.
+    function _calculateAndAssignBuyoutProceeds(address currentOwner, uint256 price, uint256[] memory claimedSurroundingTiles)
+        internal
+    {
         // Calculate the variable dividends based on the buyout price
         // (only to be paid if there are surrounding tiles).
-        uint256 variableDividends = price.mul(gameSettings[gameIndex].buyoutDividendPercentage).div(100000);
+        uint256 variableDividends = price.mul(gameSettings.buyoutDividendPercentage).div(100000);
         
         // Calculate fees, referral bonus, and prize pool funds.
-        uint256 fee            = price.mul(gameSettings[gameIndex].buyoutFeePercentage).div(100000);
-        uint256 referralBonus  = price.mul(gameSettings[gameIndex].buyoutReferralBonusPercentage).div(100000);
-        uint256 prizePoolFunds = price.mul(gameSettings[gameIndex].buyoutPrizePoolPercentage).div(100000);
+        uint256 fee            = price.mul(gameSettings.buyoutFeePercentage).div(100000);
+        uint256 referralBonus  = price.mul(gameSettings.buyoutReferralBonusPercentage).div(100000);
+        uint256 prizePoolFunds = price.mul(gameSettings.buyoutPrizePoolPercentage).div(100000);
         
         // Calculate and assign buyout proceeds.
         uint256 currentOwnerWinnings = price.sub(fee).sub(referralBonus.mul(2)).sub(prizePoolFunds);
@@ -817,8 +1080,8 @@ contract BurnupGameFinance is BurnupGameOwnership, PullPayment {
             // Calculate the dividend per surrounding tile.
             totalDividendPerBeneficiary = variableDividends / claimedSurroundingTiles.length;
             
-            currentOwnerWinnings = currentOwnerWinnings.sub(variableDividends);
-            // currentOwnerWinnings = currentOwnerWinnings.sub(totalDividendPerBeneficiary * claimedSurroundingTiles.length);
+            // currentOwnerWinnings = currentOwnerWinnings.sub(variableDividends);
+            currentOwnerWinnings = currentOwnerWinnings.sub(totalDividendPerBeneficiary * claimedSurroundingTiles.length);
         }
         
         _assignBuyoutProceeds(
@@ -848,7 +1111,6 @@ contract BurnupGameFinance is BurnupGameOwnership, PullPayment {
     }
 }
 
-
 /// @dev Holds core game functionality.
 contract BurnupGameCore is BurnupGameFinance {
     
@@ -867,12 +1129,19 @@ contract BurnupGameCore is BurnupGameFinance {
             // If the game is not started, the contract must not be paused.
             require(!paused);
             
+            if (allowStart) {
+                // We're allowed to start once outside of active times.
+                allowStart = false;
+            } else {
+                // This must be an active time.
+                require(canStart());
+            }
+            
             // If the game is not started, the player must be willing to start
             // a new game.
             require(startNewGameIfIdle);
             
-            // Set the price and timeout.
-            gameSettings[gameIndex] = nextGameSettings;
+            _setGameSettings();
             
             // Start the game.
             gameStates[gameIndex].gameStarted = true;
@@ -880,8 +1149,17 @@ contract BurnupGameCore is BurnupGameFinance {
             // Set game started timestamp.
             gameStates[gameIndex].gameStartTimestamp = block.timestamp;
             
-            // Emit start event.
-            Start(gameIndex, msg.sender, block.timestamp, gameStates[gameIndex].prizePool, gameSettings[gameIndex].rows, gameSettings[gameIndex].cols, gameSettings[gameIndex].activityTimer, gameSettings[gameIndex].unclaimedTilePrice, gameSettings[gameIndex].buyoutReferralBonusPercentage, gameSettings[gameIndex].buyoutPrizePoolPercentage, gameSettings[gameIndex].buyoutDividendPercentage, gameSettings[gameIndex].buyoutFeePercentage);
+            // Set the initial game board timeout.
+            gameStates[gameIndex].penultimateTileTimeout = block.timestamp + gameSettings.initialActivityTimer;
+            
+            Start(
+                gameIndex,
+                msg.sender,
+                block.timestamp,
+                gameStates[gameIndex].prizePool
+            );
+            
+            PenultimateTileTimeout(gameIndex, gameStates[gameIndex].penultimateTileTimeout);
         }
     
         // Check the game index.
@@ -901,35 +1179,55 @@ contract BurnupGameCore is BurnupGameFinance {
         // Tile must be unowned, or active.
         if (currentOwner == address(0x0)) {
             // Tile must still be flippable.
-            require(gameStates[gameIndex].gameStartTimestamp.add(gameSettings[gameIndex].activityTimer) >= block.timestamp);
+            require(gameStates[gameIndex].gameStartTimestamp.add(gameSettings.initialActivityTimer) >= block.timestamp);
         } else {
             // Tile must be active.
-            require(gameStates[gameIndex].identifierToBuyoutTimestamp[identifier].add(gameSettings[gameIndex].activityTimer) >= block.timestamp);
+            require(gameStates[gameIndex].identifierToTimeoutTimestamp[identifier] >= block.timestamp);
         }
+        
+        // Enough Ether must be supplied.
+        uint256 price = currentPrice(identifier);
+        require(msg.value >= price);
         
         // Get existing surrounding tiles.
         uint256[] memory claimedSurroundingTiles = _claimedSurroundingTiles(identifier);
         
         // Assign the buyout proceeds and retrieve the total cost.
-        uint256 price = _calculateAndAssignBuyoutProceeds(currentOwner, identifier, claimedSurroundingTiles);
+        _calculateAndAssignBuyoutProceeds(currentOwner, price, claimedSurroundingTiles);
         
-        // Enough Ether must be supplied.
-        require(msg.value >= price);
+        // Set the timeout timestamp.
+        uint256 timeout = tileTimeoutTimestamp(identifier, msg.sender);
+        gameStates[gameIndex].identifierToTimeoutTimestamp[identifier] = timeout;
+        
+        // Keep track of the last and penultimate tiles.
+        if (gameStates[gameIndex].lastTile == 0 || timeout >= gameStates[gameIndex].identifierToTimeoutTimestamp[gameStates[gameIndex].lastTile]) {
+            if (gameStates[gameIndex].lastTile != identifier) {
+                if (gameStates[gameIndex].lastTile != 0) {
+                    // Previous last tile to become inactive is now the penultimate tile.
+                    gameStates[gameIndex].penultimateTileTimeout = gameStates[gameIndex].identifierToTimeoutTimestamp[gameStates[gameIndex].lastTile];
+                    PenultimateTileTimeout(gameIndex, gameStates[gameIndex].penultimateTileTimeout);
+                }
+            
+                gameStates[gameIndex].lastTile = identifier;
+                LastTile(gameIndex, identifier, x, y);
+            }
+        } else if (timeout > gameStates[gameIndex].penultimateTileTimeout) {
+            gameStates[gameIndex].penultimateTileTimeout = timeout;
+            
+            PenultimateTileTimeout(gameIndex, timeout);
+        }
         
         // Transfer the tile.
         _transfer(currentOwner, msg.sender, identifier);
         
-        // Set this tile to be the most recently bought out.
-        gameStates[gameIndex].lastFlippedTile = identifier;
-        
         // Calculate and set the new tile price.
         gameStates[gameIndex].identifierToBuyoutPrice[identifier] = nextBuyoutPrice(price);
         
-        // Set the buyout timestamp.
-        gameStates[gameIndex].identifierToBuyoutTimestamp[identifier] = block.timestamp;
+        // Increment the number of tile flips.
+        gameStates[gameIndex].numberOfTileFlips++;
         
         // Emit event
-        Buyout(gameIndex, msg.sender, identifier, x, y, block.timestamp, block.timestamp + gameSettings[gameIndex].activityTimer, gameStates[gameIndex].identifierToBuyoutPrice[identifier], gameStates[gameIndex].prizePool);
+        Buyout(gameIndex, msg.sender, identifier, x, y, block.timestamp, timeout, gameStates[gameIndex].identifierToBuyoutPrice[identifier], gameStates[gameIndex].prizePool);
         
         // Calculate the excess Ether sent.
         // msg.value is greater than or equal to price,
@@ -986,12 +1284,12 @@ contract BurnupGameCore is BurnupGameFinance {
     
     /// @dev End the game. Pay prize.
     function _processGameEnd() internal returns(bool) {
-        address currentOwner = gameStates[gameIndex].identifierToOwner[gameStates[gameIndex].lastFlippedTile];
-    
         // The game must be started.
         if (!gameStates[gameIndex].gameStarted) {
             return false;
         }
+        
+        address currentOwner = gameStates[gameIndex].identifierToOwner[gameStates[gameIndex].lastTile];
     
         // The last flipped tile must be owned (i.e. there has been at
         // least one flip).
@@ -999,8 +1297,8 @@ contract BurnupGameCore is BurnupGameFinance {
             return false;
         }
         
-        // The last flipped tile must have become inactive.
-        if (gameStates[gameIndex].identifierToBuyoutTimestamp[gameStates[gameIndex].lastFlippedTile].add(gameSettings[gameIndex].activityTimer) >= block.timestamp) {
+        // The penultimate tile must have become inactive.
+        if (gameStates[gameIndex].penultimateTileTimeout >= block.timestamp) {
             return false;
         }
         
@@ -1010,10 +1308,10 @@ contract BurnupGameCore is BurnupGameFinance {
         }
         
         // Get coordinates of last flipped tile.
-        var (x, y) = identifierToCoordinate(gameStates[gameIndex].lastFlippedTile);
+        var (x, y) = identifierToCoordinate(gameStates[gameIndex].lastTile);
         
         // Emit event.
-        End(gameIndex, currentOwner, gameStates[gameIndex].lastFlippedTile, x, y, gameStates[gameIndex].identifierToBuyoutTimestamp[gameStates[gameIndex].lastFlippedTile].add(gameSettings[gameIndex].activityTimer), gameStates[gameIndex].prizePool);
+        End(gameIndex, currentOwner, gameStates[gameIndex].lastTile, x, y, gameStates[gameIndex].identifierToTimeoutTimestamp[gameStates[gameIndex].lastTile], gameStates[gameIndex].prizePool);
         
         // Increment the game index. This won't overflow before the heat death of the universe.
         gameIndex++;
