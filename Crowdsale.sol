@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xede4b572070a80844edbd2b0fb75d38aab312e95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x87681d81d46e15e6d74181f32fa7d4ce996be0cd
 */
 pragma solidity ^0.4.21;
 
 interface token {
-    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
 }
 
 contract Crowdsale {
     address public owner;
-    address public SSOTHEALTH_FUNDS_ADDRESS = 0x4F1Fa6F553AF4696f00FCad6f495D3F1eB1BE2fe;   // SSOT Health Funds address
-    address public SEHR_WALLET_ADDRESS = 0xcA027bF2179325B9D31689cdbFbf242aF34c79DE;        // SEHR Main token wallet
-    token public tokenReward = token(0xE8c881422CA4c2ab9a9bC9d58e75178e0e28eEd5);           // SEHR contract address
+    address public SSOTHEALTH_FUNDS_ADDRESS = 0x0089C7EC084355019A057abEDF4E8F6864242465;   // SSOT Health Funds address
+    address public SEHR_WALLET_ADDRESS = 0x00efA609EC93Db54a7977691CCa920e623f07258;        // SEHR Main token wallet
+    token public tokenReward = token(0xEE660Bef1Ee1697F63554c92e372fc862f384810);           // SEHR contract address
     uint public fundingGoal = 100000000 * 1 ether;  // 100,000,000 SEHRs softcap 
     uint public hardCap = 500000000 * 1 ether;      // 500,000,000 SEHRs hardcap
     uint public amountRaised = 0;
@@ -33,7 +33,7 @@ contract Crowdsale {
      *
      * Setup the owner
      */
-    function Crowdsale() public
+    function Crowdsale() 
     {
         startTime = now;
         deadline = now + 62 days;
@@ -50,7 +50,7 @@ contract Crowdsale {
      *
      * The function without name is the default function that is called whenever anyone sends funds to a contract
      */
-    function () payable isCrowdsale beforeDeadline public {
+    function () payable isCrowdsale beforeDeadline {
         uint amount = msg.value;
         
         if(amount == 0 ) revert();   // Need to send some ether at least
@@ -61,6 +61,7 @@ contract Crowdsale {
         }
         
         uint tokenAmount = (amount / price) * 1 ether; // We compute the number of tokens to issue
+        address sehrWallet = SEHR_WALLET_ADDRESS;
         
         if(sehrRaised < fundingGoal) {  // Bonus available for any tokens bought before softcap is reached
             
@@ -82,7 +83,7 @@ contract Crowdsale {
         sehrRaised += tokenAmount;
         
         tokenReward.transferFrom(SEHR_WALLET_ADDRESS, msg.sender, tokenAmount); // will automatically throw is there are not enough funds remaining in the contract
-        emit FundTransfer(msg.sender, amount, true);
+        FundTransfer(msg.sender, amount, true);
     }
 
 
@@ -91,10 +92,10 @@ contract Crowdsale {
      *
      * Checks if the goal or time limit has been reached and ends the campaign
      */
-    function checkGoalReached() afterDeadline public {
+    function checkGoalReached() afterDeadline {
         if (sehrRaised >= fundingGoal){
             fundingGoalReached = true;
-            emit GoalReached(SSOTHEALTH_FUNDS_ADDRESS, amountRaised);
+            GoalReached(SSOTHEALTH_FUNDS_ADDRESS, amountRaised);
         }
         crowdsaleClosed = true;
         checkDone = true;
@@ -108,13 +109,13 @@ contract Crowdsale {
      * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
      * the amount they contributed.
      */
-    function safeWithdrawal() afterDeadline isCheckDone public{
+    function safeWithdrawal() afterDeadline isCheckDone{
         if (!fundingGoalReached) {
             uint amount = balanceOf[msg.sender];
             balanceOf[msg.sender] = 0;
             if (amount > 0) {
                 if (msg.sender.send(amount)) {
-                    emit FundTransfer(msg.sender, amount, false);
+                    FundTransfer(msg.sender, amount, false);
                 } else {
                     balanceOf[msg.sender] = amount;
                 }
@@ -123,7 +124,7 @@ contract Crowdsale {
 
         if (fundingGoalReached && SSOTHEALTH_FUNDS_ADDRESS == msg.sender) {
             if (SSOTHEALTH_FUNDS_ADDRESS.send(amountRaised)) {
-                emit FundTransfer(SSOTHEALTH_FUNDS_ADDRESS, amountRaised, false);
+                FundTransfer(SSOTHEALTH_FUNDS_ADDRESS, amountRaised, false);
             } else {
                 //If we fail to send the funds to beneficiary, unlock funders balance
                 fundingGoalReached = false;
@@ -131,7 +132,7 @@ contract Crowdsale {
         }
     }
     
-    function hardCapReached() public {
+    function hardCapReached() {
         if(sehrRaised == hardCap) {
             deadline = now;
         }
