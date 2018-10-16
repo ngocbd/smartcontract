@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RequestERC20 at 0x9ebce8a14762045db554d0626f857d0a32351c85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RequestERC20 at 0xc77ceefa6960174accca0c6fdecb5dbd95042cda
 */
 pragma solidity 0.4.18;
 
@@ -995,7 +995,8 @@ contract RequestCollectInterface is Pausable {
         onlyOwner
     {
         rateFeesNumerator = _rateFeesNumerator;
-        UpdateRateFees(_rateFeesNumerator, _rateFeesDenominator);
+        rateFeesDenominator = _rateFeesDenominator;
+        UpdateRateFees(rateFeesNumerator, rateFeesDenominator);
     }
 
     /*
@@ -1007,7 +1008,7 @@ contract RequestCollectInterface is Pausable {
         onlyOwner
     {
         maxFees = _newMaxFees;
-        UpdateMaxFees(_newMaxFees);
+        UpdateMaxFees(maxFees);
     }
 
     /*
