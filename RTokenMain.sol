@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTokenMain at 0xa039177733cc7D3d075190253D4103aBe25d75db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTokenMain at 0x8c65898CcEaA73209F579653fa5523b7B13972bd
 */
 pragma solidity 0.4.8;
 
@@ -35,9 +35,8 @@ contract RTokenBase {
   event Transfer(address indexed from, address indexed to, uint256 value);
 
   /* Constructor */
-  function RTokenBase(uint256 initialAmt, string tokenName, string tokenSymbol, uint8 decimalUnits, bool independent) payable {
-    if(independent)
-      balanceMap[msg.sender] = initialAmt;
+  function RTokenBase(uint256 initialAmt, string tokenName, string tokenSymbol, uint8 decimalUnits) payable {
+    balanceMap[msg.sender] = initialAmt;
     totalSupply = initialAmt;
     name = tokenName;
     symbol = tokenSymbol;
@@ -103,7 +102,7 @@ contract RTokenMain is owned, RTokenBase {
   event FrozenFunds(address target, bool frozen);
 
   function RTokenMain(uint256 initialAmt, string tokenName, string tokenSymbol, uint8 decimals, address centralMinter)
-    RTokenBase(initialAmt, tokenName, tokenSymbol, decimals, false) {
+    RTokenBase(initialAmt, tokenName, tokenSymbol, decimals) {
       if(centralMinter != 0)
         owner = centralMinter;
       balanceMap[owner] = initialAmt;
