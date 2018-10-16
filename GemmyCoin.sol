@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GemmyCoin at 0xf30aead79ddf74e8b5438f247a36f2b58b5a8c6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GemmyCoin at 0x62beebfe8eb4f852d47328e0d9bf5e517bce943f
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 // Made By PinkCherry - insanityskan@gmail.com - https://blog.naver.com/soolmini
 
 library SafeMath
@@ -89,43 +89,42 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
 
     uint public totalSupply;
     
-    uint constant public saleSupply = 4000000000 * E18;
-    uint constant public rewardPoolSupply = 2500000000 * E18;
-    uint constant public foundationSupply = 500000000 * E18;
-    uint constant public gemmyMusicSupply = 1500000000 * E18;
-    uint constant public advisorSupply = 700000000 * E18;
-    uint constant public mktSupply = 800000000 * E18;
-    uint constant public maxSupply = 10000000000 * E18;
+    uint constant public saleSupply         =  3500000000 * E18;
+    uint constant public rewardPoolSupply   =  2500000000 * E18;
+    uint constant public gemmyMusicSupply   =  1500000000 * E18;
+    uint constant public advisorSupply      =   700000000 * E18;
+    uint constant public mktSupply          =  1500000000 * E18;
+    uint constant public etcSupply          =   300000000 * E18;
+    uint constant public maxSupply          = 10000000000 * E18;
     
     uint public coinIssuedSale = 0;
     uint public coinIssuedRewardPool = 0;
-    uint public coinIssuedFoundation = 0;
     uint public coinIssuedGemmyMusic = 0;
     uint public coinIssuedAdvisor = 0;
     uint public coinIssuedMkt = 0;
+    uint public coinIssuedEtc = 0;
     uint public coinIssuedTotal = 0;
     uint public coinIssuedBurn = 0;
     
     uint public saleEtherReceived = 0;
 
     uint constant private E18 = 1000000000000000000;
-    uint constant private ethPerCoin = 35000;
     
     uint private UTC9 = 9 * 60 * 60;
     uint public privateSaleDate = 1526223600 + UTC9;        // 2018-05-14 00:00:00 (UTC + 9)
     uint public privateSaleEndDate = 1527951600 + UTC9;     // 2018-06-03 00:00:00 (UTC + 9)
     
     uint public firstPreSaleDate = 1528038000 + UTC9;       // 2018-06-04 00:00:00 (UTC + 9)
-    uint public firstPreSaleEndDate = 1528988400 + UTC9;    // 2018-06-15 00:00:00 (UTC + 9)
+    uint public firstPreSaleEndDate = 1530198000 + UTC9;    // 2018-06-29 00:00:00 (UTC + 9)
     
-    uint public secondPreSaleDate = 1529852400 + UTC9;      // 2018-06-25 00:00:00 (UTC + 9)
-    uint public secondPreSaleEndDate = 1530802800 + UTC9;   // 2018-07-06 00:00:00 (UTC + 9)
+    uint public secondPreSaleDate = 1530457200 + UTC9;      // 2018-07-02 00:00:00 (UTC + 9)
+    uint public secondPreSaleEndDate = 1531407600 + UTC9;   // 2018-07-13 00:00:00 (UTC + 9)
     
-    uint public firstCrowdSaleDate = 1531062000 + UTC9;     // 2018-07-09 00:00:00 (UTC + 9)
-    uint public firstCrowdSaleEndDate = 1532012400 + UTC9;  // 2018-07-20 00:00:00 (UTC + 9)
+    uint public firstCrowdSaleDate = 1531666800 + UTC9;     // 2018-07-16 00:00:00 (UTC + 9)
+    uint public firstCrowdSaleEndDate = 1532962800 + UTC9;  // 2018-07-31 00:00:00 (UTC + 9)
 
-    uint public secondCrowdSaleDate = 1532271600 + UTC9;    // 2018-07-23 00:00:00 (UTC + 9)
-    uint public secondCrowdSaleEndDate = 1532962800 + UTC9; // 2018-07-31 00:00:00 (UTC + 9)
+    uint public secondCrowdSaleDate = 1534086000 + UTC9;    // 2018-08-13 00:00:00 (UTC + 9)
+    uint public secondCrowdSaleEndDate = 1535641200 + UTC9; // 2018-08-31 00:00:00 (UTC + 9)
     
     bool public totalCoinLock;
     uint public gemmyMusicLockTime;
@@ -152,10 +151,10 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
     event RemoveAdvisorFirstLock(address _who);
     event RemoveAdvisorSecondLock(address _who);
     event WithdrawRewardPool(address _who, uint _value);
-    event WithdrawFoundation(address _who, uint _value);
     event WithdrawGemmyMusic(address _who, uint _value);
     event WithdrawAdvisor(address _who, uint _value);
     event WithdrawMkt(address _who, uint _value);
+    event WithdrawEtc(address _who, uint _value);
     event ChangeWallet(address _who);
     event BurnCoin(uint _value);
     event RefundCoin(address _who, uint _value);
@@ -164,13 +163,13 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
     {
         name = "GemmyMusicCoin";
         decimals = 18;
-        symbol = "GMM";
+        symbol = "GMC";
         totalSupply = 0;
         
         owner = msg.sender;
         wallet = msg.sender;
         
-        require(maxSupply == saleSupply + rewardPoolSupply + foundationSupply + gemmyMusicSupply + advisorSupply + mktSupply);
+        require(maxSupply == saleSupply + rewardPoolSupply + gemmyMusicSupply + advisorSupply + mktSupply + etcSupply);
         
         totalCoinLock = true;
         gemmyMusicLockTime = privateSaleDate + (365 * 24 * 60 * 60);
@@ -191,6 +190,7 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
     
     function buyCoin() private
     {
+        uint ethPerCoin = 0;
         uint saleTime = 0; // 1 : privateSale, 2 : firstPreSale, 3 : secondPreSale, 4 : firstCrowdSale, 5 : secondCrowdSale
         uint coinBonus = 0;
         
@@ -201,26 +201,31 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
         
         if( nowTime >= privateSaleDate && nowTime < privateSaleEndDate )
         {
+            ethPerCoin = 36000;
             saleTime = 1;
-            coinBonus = 40;
+            coinBonus = 30;
         }
         else if( nowTime >= firstPreSaleDate && nowTime < firstPreSaleEndDate )
         {
+            ethPerCoin = 27000;
             saleTime = 2;
             coinBonus = 20;
         }
         else if( nowTime >= secondPreSaleDate && nowTime < secondPreSaleEndDate )
         {
+            ethPerCoin = 20500;
             saleTime = 3;
-            coinBonus = 15;
+            coinBonus = 10;
         }
         else if( nowTime >= firstCrowdSaleDate && nowTime < firstCrowdSaleEndDate )
         {
+            ethPerCoin = 15900;
             saleTime = 4;
             coinBonus = 5;
         }
         else if( nowTime >= secondCrowdSaleDate && nowTime < secondCrowdSaleEndDate )
         {
+            ethPerCoin = 12200;
             saleTime = 5;
             coinBonus = 0;
         }
@@ -433,23 +438,6 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
         emit WithdrawRewardPool(_who, coins);
     }
     
-    function withdrawFoundation(address _who, uint _value) onlyOwner public
-    {
-        uint coins = _value * E18;
-        
-        require(foundationSupply >= coinIssuedFoundation.add(coins));
-
-        totalSupply = totalSupply.add(coins);
-        coinIssuedFoundation = coinIssuedFoundation.add(coins);
-        coinIssuedTotal = coinIssuedTotal.add(coins);
-
-        balances[_who] = balances[_who].add(coins);
-        personalLocks[_who] = true;
-
-        emit Transfer(0x0, msg.sender, coins);
-        emit WithdrawFoundation(_who, coins);
-    }
-    
     function withdrawGemmyMusic(address _who, uint _value) onlyOwner public
     {
         uint coins = _value * E18;
@@ -501,6 +489,23 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
 
         emit Transfer(0x0, msg.sender, coins);
         emit WithdrawMkt(_who, coins);
+    }
+    
+    function withdrawEtc(address _who, uint _value) onlyOwner public
+    {
+        uint coins = _value * E18;
+        
+        require(etcSupply >= coinIssuedEtc.add(coins));
+
+        totalSupply = totalSupply.add(coins);
+        coinIssuedEtc = coinIssuedEtc.add(coins);
+        coinIssuedTotal = coinIssuedTotal.add(coins);
+
+        balances[_who] = balances[_who].add(coins);
+        personalLocks[_who] = true;
+
+        emit Transfer(0x0, msg.sender, coins);
+        emit WithdrawEtc(_who, coins);
     }
     
     function burnCoin() onlyOwner public
