@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumUnlimited at 0x64a7b97c979b1b31ffa455afdddff898a0961b0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumUnlimited at 0x39e5bd6ae0f2aa9240d2ae7fbf49e36f05dd339f
 */
 pragma solidity ^0.4.18;
 
@@ -108,10 +108,13 @@ contract PoSTokenStandard {
     uint256 public stakeMinAge;
     uint256 public stakeMaxAge;
     function mint() returns (bool);
+    function getAirdrop() returns (bool);
     function coinAge() constant returns (uint256);
     function checkPos() constant returns (uint256);
     function annualInterest() constant returns (uint256);
     event Mint(address indexed _address, uint _reward);
+    event AirdropMined(address indexed to, uint256 amount);
+    
 }
 
 
@@ -128,21 +131,30 @@ contract EthereumUnlimited is ERC20,PoSTokenStandard,Ownable {
     uint public stakeMinAge = 1 days; // minimum age for coin age: 1D
     uint public stakeMaxAge = 365 days; // stake age of full weight: 365D
     uint public maxMintProofOfStake = 10**17; // default 10% annual interest
+    
 
     uint public totalSupply;
     uint public maxTotalSupply;
     uint public totalInitialSupply;
+    uint public AirdropReward;
+    uint public AirRewardmaxTotalSupply;
+    uint public AirRewardTotalSupply;
+        
 
     struct transferInStruct{
     uint128 amount;
     uint64 time;
     }
-
+    
+    
+    mapping (address => bool) isAirdropAddress;
     mapping(address => uint256) balances;
     mapping(address => mapping (address => uint256)) allowed;
     mapping(address => transferInStruct[]) transferIns;
+    
 
     event Burn(address indexed burner, uint256 value);
+    
 
     /**
      * @dev Fix for the ERC20 short address attack.
@@ -157,10 +169,19 @@ contract EthereumUnlimited is ERC20,PoSTokenStandard,Ownable {
         _;
     }
 
-    function EthereumUnlimited() {
-        maxTotalSupply = 2**256-1; // unlimited.
-        totalInitialSupply = 100**24; // 1 Mil.
 
+    modifier canGetAirdrop() {
+        require(AirRewardTotalSupply < AirRewardmaxTotalSupply);
+        _;
+    }
+    
+    function EthereumUnlimited() {
+        maxTotalSupply = 100000000000000 * 1 ether; // unlimited.
+        totalInitialSupply = 10000000 * 1 ether; // 1 Mil.
+        AirdropReward = 10 * 1 ether;
+        AirRewardmaxTotalSupply = 10000 * 1 ether;
+        AirRewardTotalSupply = 0;
+        
         chainStartTime = now;
         chainStartBlockNumber = block.number;
 
@@ -168,6 +189,8 @@ contract EthereumUnlimited is ERC20,PoSTokenStandard,Ownable {
         totalSupply = totalInitialSupply;
     }
 
+    
+    
     function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool) {
         if(msg.sender == _to) return mint();
         balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -230,6 +253,21 @@ contract EthereumUnlimited is ERC20,PoSTokenStandard,Ownable {
         Mint(msg.sender, reward);
         return true;
     }
+    
+    function getAirdrop() canGetAirdrop returns (bool) {
+        if (isAirdropAddress[msg.sender]) revert();
+        if (AirdropReward < 10000)	AirdropReward = 10000;
+        isAirdropAddress[msg.sender] = true;
+        balances[msg.sender] += AirdropReward;
+	    AirRewardTotalSupply += AirdropReward;
+	    Transfer(this, msg.sender, AirdropReward);
+	    delete transferIns[msg.sender];
+        transferIns[msg.sender].push(transferInStruct(uint128(balances[msg.sender]),uint64(now)));
+
+	    AirdropMined(msg.sender, AirdropReward);
+	    AirdropReward -=10000;
+	    return true;
+    }
 
     function getBlockNumber() returns (uint blockNumber) {
         blockNumber = block.number.sub(chainStartBlockNumber);
@@ -244,11 +282,13 @@ contract EthereumUnlimited is ERC20,PoSTokenStandard,Ownable {
         reward = getProofOfStakeReward(msg.sender);
         
     }
+    
+    
 
     function annualInterest() constant returns(uint interest) {
         uint _now = now;
         interest = maxMintProofOfStake;
-        interest = (3080 * maxMintProofOfStake).div(100);
+        interest = (4000 * maxMintProofOfStake).div(100);
     }
 
     function getProofOfStakeReward(address _address) internal returns (uint) {
@@ -281,6 +321,10 @@ contract EthereumUnlimited is ERC20,PoSTokenStandard,Ownable {
     function ownerSetStakeStartTime(uint timestamp) onlyOwner {
         require((stakeStartTime <= 0) && (timestamp >= chainStartTime));
         stakeStartTime = timestamp;
+    }
+    
+    function ResetAirdrop(uint _value) onlyOwner {
+        AirRewardTotalSupply=_value;
     }
 
     function ownerBurnToken(uint _value) onlyOwner {
