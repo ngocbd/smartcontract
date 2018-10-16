@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lunar at 0x7da1a87cf22415eea5c7a1f096532a1f648faf54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lunar at 0xc2a95957466f2eda086f309008731c94fdbd0747
 */
 pragma solidity ^0.4.23;
 
@@ -470,10 +470,12 @@ contract ReferenceToken is Ownable, ERC20, ValidatedToken {
 
 
 contract Lunar is ReferenceToken {
+    uint256 constant DECIMAL_SHIFT = 10 ** 18;
+    
     constructor(TokenValidator _validator)
       ReferenceToken("Lunar Token - SAMPLE NO VALUE", "LNRX", 1, _validator)
       public {
-          uint256 supply = 5000000;
+          uint256 supply = 5000000 * DECIMAL_SHIFT;
 
           mTotalSupply = supply;
           mBalances[msg.sender] = supply;
