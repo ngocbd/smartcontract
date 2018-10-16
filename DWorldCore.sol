@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DWorldCore at 0xd4df33983ff82ce4469c6ea3cff390403e58d90a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DWorldCore at 0x752c4e4e90846c5673c3791b9809f71b7d4a638a
 */
 pragma solidity ^0.4.18;
 
@@ -406,6 +406,9 @@ contract DWorldBase is DWorldAccessControl {
     mapping (uint256 => address) identifierToApproved;
     mapping (address => uint256) ownershipDeedCount;
     
+    // Boolean indicating whether the plot was bought before the migration.
+    mapping (uint256 => bool) public identifierIsOriginal;
+    
     /// @dev Event fired when a plot's data are changed. The plot
     /// data are not stored in the contract directly, instead the
     /// data are logged to the block. This gives significant
@@ -738,83 +741,503 @@ contract DWorldDeed is DWorldBase, ERC721, ERC721Metadata {
 }
 
 
-/// @dev Implements renting functionality.
-contract DWorldRenting is DWorldDeed {
-    event Rent(address indexed renter, uint256 indexed deedId, uint256 rentPeriodEndTimestamp, uint256 rentPeriod);
-    mapping (uint256 => address) identifierToRenter;
-    mapping (uint256 => uint256) identifierToRentPeriodEndTimestamp;
+/// @dev Holds functionality for finance related to plots.
+contract DWorldFinance is DWorldDeed {
+    /// Total amount of Ether yet to be paid to auction beneficiaries.
+    uint256 public outstandingEther = 0 ether;
+    
+    /// Amount of Ether yet to be paid per beneficiary.
+    mapping (address => uint256) public addressToEtherOwed;
+    
+    /// Base price for unclaimed plots.
+    uint256 public unclaimedPlotPrice = 0.0125 ether;
+    
+    /// Dividend per plot surrounding a new claim, in 1/1000th of percentages
+    /// of the base unclaimed plot price.
+    uint256 public claimDividendPercentage = 50000;
+    
+    /// Percentage of the buyout price that goes towards dividends.
+    uint256 public buyoutDividendPercentage = 5000;
+    
+    /// Buyout fee in 1/1000th of a percentage.
+    uint256 public buyoutFeePercentage = 3500;
+    
+    /// Number of free claims per address.
+    mapping (address => uint256) freeClaimAllowance;
+    
+    /// Initial price paid for a plot.
+    mapping (uint256 => uint256) public initialPricePaid;
+    
+    /// Current plot price.
+    mapping (uint256 => uint256) public identifierToBuyoutPrice;
+    
+    /// Boolean indicating whether the plot has been bought out at least once.
+    mapping (uint256 => bool) identifierToBoughtOutOnce;
+    
+    /// @dev Event fired when dividend is paid for a new plot claim.
+    event ClaimDividend(address indexed from, address indexed to, uint256 deedIdFrom, uint256 indexed deedIdTo, uint256 dividend);
+    
+    /// @dev Event fired when a buyout is performed.
+    event Buyout(address indexed buyer, address indexed seller, uint256 indexed deedId, uint256 winnings, uint256 totalCost, uint256 newPrice);
+    
+    /// @dev Event fired when dividend is paid for a buyout.
+    event BuyoutDividend(address indexed from, address indexed to, uint256 deedIdFrom, uint256 indexed deedIdTo, uint256 dividend);
+    
+    /// @dev Event fired when the buyout price is manually changed for a plot.
+    event SetBuyoutPrice(uint256 indexed deedId, uint256 newPrice);
+    
+    /// @dev The time after which buyouts will be enabled. Set in the DWorldCore constructor.
+    uint256 public buyoutsEnabledFromTimestamp;
+    
+    /// @notice Sets the new price for unclaimed plots.
+    /// @param _unclaimedPlotPrice The new price for unclaimed plots.
+    function setUnclaimedPlotPrice(uint256 _unclaimedPlotPrice) external onlyCFO {
+        unclaimedPlotPrice = _unclaimedPlotPrice;
+    }
+    
+    /// @notice Sets the new dividend percentage for unclaimed plots.
+    /// @param _claimDividendPercentage The new dividend percentage for unclaimed plots.
+    function setClaimDividendPercentage(uint256 _claimDividendPercentage) external onlyCFO {
+        // Claim dividend percentage must be 10% at the least.
+        // Claim dividend percentage may be 100% at the most.
+        require(10000 <= _claimDividendPercentage && _claimDividendPercentage <= 100000);
+        
+        claimDividendPercentage = _claimDividendPercentage;
+    }
+    
+    /// @notice Sets the new dividend percentage for buyouts.
+    /// @param _buyoutDividendPercentage The new dividend percentage for buyouts.
+    function setBuyoutDividendPercentage(uint256 _buyoutDividendPercentage) external onlyCFO {
+        // Buyout dividend must be 2% at the least.
+        // Buyout dividend percentage may be 12.5% at the most.
+        require(2000 <= _buyoutDividendPercentage && _buyoutDividendPercentage <= 12500);
+        
+        buyoutDividendPercentage = _buyoutDividendPercentage;
+    }
+    
+    /// @notice Sets the new fee percentage for buyouts.
+    /// @param _buyoutFeePercentage The new fee percentage for buyouts.
+    function setBuyoutFeePercentage(uint256 _buyoutFeePercentage) external onlyCFO {
+        // Buyout fee may be 5% at the most.
+        require(0 <= _buyoutFeePercentage && _buyoutFeePercentage <= 5000);
+        
+        buyoutFeePercentage = _buyoutFeePercentage;
+    }
+    
+    /// @notice The claim dividend to be paid for each adjacent plot, and
+    /// as a flat dividend for each buyout.
+    function claimDividend() public view returns (uint256) {
+        return unclaimedPlotPrice.mul(claimDividendPercentage).div(100000);
+    }
+    
+    /// @notice Set the free claim allowance for an address.
+    /// @param addr The address to set the free claim allowance for.
+    /// @param allowance The free claim allowance to set.
+    function setFreeClaimAllowance(address addr, uint256 allowance) external onlyCFO {
+        freeClaimAllowance[addr] = allowance;
+    }
+    
+    /// @notice Get the free claim allowance of an address.
+    /// @param addr The address to get the free claim allowance of.
+    function freeClaimAllowanceOf(address addr) external view returns (uint256) {
+        return freeClaimAllowance[addr];
+    }
+    
+    /// @dev Assign balance to an account.
+    /// @param addr The address to assign balance to.
+    /// @param amount The amount to assign.
+    function _assignBalance(address addr, uint256 amount) internal {
+        addressToEtherOwed[addr] = addressToEtherOwed[addr].add(amount);
+        outstandingEther = outstandingEther.add(amount);
+    }
+    
+    /// @dev Find the _claimed_ plots surrounding a plot.
+    /// @param _deedId The identifier of the plot to get the surrounding plots for.
+    function _claimedSurroundingPlots(uint256 _deedId) internal view returns (uint256[] memory) {
+        var (x, y) = identifierToCoordinate(_deedId);
+        
+        // Find all claimed surrounding plots.
+        uint256 claimed = 0;
+        
+        // Create memory buffer capable of holding all plots.
+        uint256[] memory _plots = new uint256[](8);
+        
+        // Loop through all neighbors.
+        for (int256 dx = -1; dx <= 1; dx++) {
+            for (int256 dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) {
+                    // Skip the center (i.e., the plot itself).
+                    continue;
+                }
+                
+                // Get the coordinates of this neighboring identifier.
+                uint256 neighborIdentifier = coordinateToIdentifier(
+                    uint256(int256(x) + dx) % 65536,
+                    uint256(int256(y) + dy) % 65536
+                );
+                
+                if (identifierToOwner[neighborIdentifier] != 0x0) {
+                    _plots[claimed] = neighborIdentifier;
+                    claimed++;
+                }
+            }
+        }
+        
+        // Memory arrays cannot be resized, so copy all
+        // plots from the buffer to the plot array.
+        uint256[] memory plots = new uint256[](claimed);
+        
+        for (uint256 i = 0; i < claimed; i++) {
+            plots[i] = _plots[i];
+        }
+        
+        return plots;
+    }
+    
+    /// @dev Assign claim dividend to an address.
+    /// @param _from The address who paid the dividend.
+    /// @param _to The dividend beneficiary.
+    /// @param _deedIdFrom The identifier of the deed the dividend is being paid for.
+    /// @param _deedIdTo The identifier of the deed the dividend is being paid to.
+    function _assignClaimDividend(address _from, address _to, uint256 _deedIdFrom, uint256 _deedIdTo) internal {
+        uint256 _claimDividend = claimDividend();
+        
+        // Trigger event.
+        ClaimDividend(_from, _to, _deedIdFrom, _deedIdTo, _claimDividend);
+        
+        // Assign the dividend.
+        _assignBalance(_to, _claimDividend);
+    }
 
-    /// @dev Checks if a given address rents a particular plot.
-    /// @param _renter The address of the renter to check for.
-    /// @param _deedId The plot identifier to check for.
-    function _rents(address _renter, uint256 _deedId) internal view returns (bool) {
-        return identifierToRenter[_deedId] == _renter && identifierToRentPeriodEndTimestamp[_deedId] >= now;
-    }
-    
-    /// @dev Rent out a deed to an address.
-    /// @param _to The address to rent the deed out to.
-    /// @param _rentPeriod The rent period in seconds.
-    /// @param _deedId The identifier of the deed to rent out.
-    function _rentOut(address _to, uint256 _rentPeriod, uint256 _deedId) internal {
-        // Set the renter and rent period end timestamp
-        uint256 rentPeriodEndTimestamp = now.add(_rentPeriod);
-        identifierToRenter[_deedId] = _to;
-        identifierToRentPeriodEndTimestamp[_deedId] = rentPeriodEndTimestamp;
+    /// @dev Calculate and assign the dividend payable for the new plot claim.
+    /// A new claim pays dividends to all existing surrounding plots.
+    /// @param _deedId The identifier of the new plot to calculate and assign dividends for.
+    /// Assumed to be valid.
+    function _calculateAndAssignClaimDividends(uint256 _deedId)
+        internal
+        returns (uint256 totalClaimDividend)
+    {
+        // Get existing surrounding plots.
+        uint256[] memory claimedSurroundingPlots = _claimedSurroundingPlots(_deedId);
         
-        Rent(_to, _deedId, rentPeriodEndTimestamp, _rentPeriod);
-    }
-    
-    /// @notice Rents a plot out to another address.
-    /// @param _to The address of the renter, can be a user or contract.
-    /// @param _rentPeriod The rent time period in seconds.
-    /// @param _deedId The identifier of the plot to rent out.
-    function rentOut(address _to, uint256 _rentPeriod, uint256 _deedId) external whenNotPaused {
-        uint256[] memory _deedIds = new uint256[](1);
-        _deedIds[0] = _deedId;
+        // Keep track of the claim dividend.
+        uint256 _claimDividend = claimDividend();
+        totalClaimDividend = 0;
         
-        rentOutMultiple(_to, _rentPeriod, _deedIds);
-    }
-    
-    /// @notice Rents multiple plots out to another address.
-    /// @param _to The address of the renter, can be a user or contract.
-    /// @param _rentPeriod The rent time period in seconds.
-    /// @param _deedIds The identifiers of the plots to rent out.
-    function rentOutMultiple(address _to, uint256 _rentPeriod, uint256[] _deedIds) public whenNotPaused {
-        // Safety check to prevent against an unexpected 0x0 default.
-        require(_to != address(0));
-        
-        // Disallow transfers to this contract to prevent accidental misuse.
-        require(_to != address(this));
-        
-        for (uint256 i = 0; i < _deedIds.length; i++) {
-            uint256 _deedId = _deedIds[i];
-            
-            require(validIdentifier(_deedId));
-        
-            // There should not be an active renter.
-            require(identifierToRentPeriodEndTimestamp[_deedId] < now);
-            
-            // One can only rent out their own plots.
-            require(_owns(msg.sender, _deedId));
-            
-            _rentOut(_to, _rentPeriod, _deedId);
+        // Assign claim dividend.
+        for (uint256 i = 0; i < claimedSurroundingPlots.length; i++) {
+            if (identifierToOwner[claimedSurroundingPlots[i]] != msg.sender) {
+                totalClaimDividend = totalClaimDividend.add(_claimDividend);
+                _assignClaimDividend(msg.sender, identifierToOwner[claimedSurroundingPlots[i]], _deedId, claimedSurroundingPlots[i]);
+            }
         }
     }
     
-    /// @notice Returns the address of the currently assigned renter and
-    /// end time of the rent period of a given plot.
-    /// @param _deedId The identifier of the deed to get the renter and 
-    /// rent period for.
-    function renterOf(uint256 _deedId) external view returns (address _renter, uint256 _rentPeriodEndTimestamp) {
-        require(validIdentifier(_deedId));
-    
-        if (identifierToRentPeriodEndTimestamp[_deedId] < now) {
-            // There is no active renter
-            _renter = address(0);
-            _rentPeriodEndTimestamp = 0;
+    /// @dev Calculate the next buyout price given the current total buyout cost.
+    /// @param totalCost The current total buyout cost.
+    function nextBuyoutPrice(uint256 totalCost) public pure returns (uint256) {
+        if (totalCost < 0.05 ether) {
+            return totalCost * 2;
+        } else if (totalCost < 0.2 ether) {
+            return totalCost * 170 / 100; // * 1.7
+        } else if (totalCost < 0.5 ether) {
+            return totalCost * 150 / 100; // * 1.5
         } else {
-            _renter = identifierToRenter[_deedId];
-            _rentPeriodEndTimestamp = identifierToRentPeriodEndTimestamp[_deedId];
+            return totalCost.mul(125).div(100); // * 1.25
+        }
+    }
+    
+    /// @notice Get the buyout cost for a given plot.
+    /// @param _deedId The identifier of the plot to get the buyout cost for.
+    function buyoutCost(uint256 _deedId) external view returns (uint256) {
+        // The current buyout price.
+        uint256 price = identifierToBuyoutPrice[_deedId];
+    
+        // Get existing surrounding plots.
+        uint256[] memory claimedSurroundingPlots = _claimedSurroundingPlots(_deedId);
+    
+        // The total cost is the price plus flat rate dividends based on claim dividends.
+        uint256 flatDividends = claimDividend().mul(claimedSurroundingPlots.length);
+        return price.add(flatDividends);
+    }
+    
+    /// @dev Assign the proceeds of the buyout.
+    /// @param _deedId The identifier of the plot that is being bought out.
+    function _assignBuyoutProceeds(
+        address currentOwner,
+        uint256 _deedId,
+        uint256[] memory claimedSurroundingPlots,
+        uint256 currentOwnerWinnings,
+        uint256 totalDividendPerBeneficiary,
+        uint256 totalCost
+    )
+        internal
+    {
+        // Calculate and assign the current owner's winnings.
+        
+        Buyout(msg.sender, currentOwner, _deedId, currentOwnerWinnings, totalCost, nextBuyoutPrice(totalCost));
+        _assignBalance(currentOwner, currentOwnerWinnings);
+        
+        // Assign dividends to owners of surrounding plots.
+        for (uint256 i = 0; i < claimedSurroundingPlots.length; i++) {
+            address beneficiary = identifierToOwner[claimedSurroundingPlots[i]];
+            BuyoutDividend(msg.sender, beneficiary, _deedId, claimedSurroundingPlots[i], totalDividendPerBeneficiary);
+            _assignBalance(beneficiary, totalDividendPerBeneficiary);
+        }
+    }
+    
+    /// @dev Calculate and assign the proceeds from the buyout.
+    /// @param currentOwner The current owner of the plot that is being bought out.
+    /// @param _deedId The identifier of the plot that is being bought out.
+    /// @param claimedSurroundingPlots The surrounding plots that have been claimed.
+    function _calculateAndAssignBuyoutProceeds(address currentOwner, uint256 _deedId, uint256[] memory claimedSurroundingPlots)
+        internal 
+        returns (uint256 totalCost)
+    {
+        // The current price.
+        uint256 price = identifierToBuyoutPrice[_deedId];
+    
+        // The total cost is the price plus flat rate dividends based on claim dividends.
+        uint256 flatDividends = claimDividend().mul(claimedSurroundingPlots.length);
+        totalCost = price.add(flatDividends);
+        
+        // Calculate the variable dividends based on the buyout price
+        // (only to be paid if there are surrounding plots).
+        uint256 variableDividends = price.mul(buyoutDividendPercentage).div(100000);
+        
+        // Calculate fees.
+        uint256 fee = price.mul(buyoutFeePercentage).div(100000);
+        
+        // Calculate and assign buyout proceeds.
+        uint256 currentOwnerWinnings = price.sub(fee);
+        
+        uint256 totalDividendPerBeneficiary;
+        if (claimedSurroundingPlots.length > 0) {
+            // If there are surrounding plots, variable dividend is to be paid
+            // based on the buyout price..
+            currentOwnerWinnings = currentOwnerWinnings.sub(variableDividends);
+            
+            // Calculate the dividend per surrounding plot.
+            totalDividendPerBeneficiary = flatDividends.add(variableDividends) / claimedSurroundingPlots.length;
+        }
+        
+        _assignBuyoutProceeds(
+            currentOwner,
+            _deedId,
+            claimedSurroundingPlots,
+            currentOwnerWinnings,
+            totalDividendPerBeneficiary,
+            totalCost
+        );
+    }
+    
+    /// @notice Buy the current owner out of the plot.
+    function buyout(uint256 _deedId) external payable whenNotPaused {
+        buyoutWithData(_deedId, "", "", "", "");
+    }
+    
+    /// @notice Buy the current owner out of the plot.
+    function buyoutWithData(uint256 _deedId, string name, string description, string imageUrl, string infoUrl)
+        public
+        payable
+        whenNotPaused 
+    {
+        // Buyouts must be enabled.
+        require(buyoutsEnabledFromTimestamp <= block.timestamp);
+    
+        address currentOwner = identifierToOwner[_deedId];
+    
+        // The plot must be owned before it can be bought out.
+        require(currentOwner != 0x0);
+        
+        // Get existing surrounding plots.
+        uint256[] memory claimedSurroundingPlots = _claimedSurroundingPlots(_deedId);
+        
+        // Assign the buyout proceeds and retrieve the total cost.
+        uint256 totalCost = _calculateAndAssignBuyoutProceeds(currentOwner, _deedId, claimedSurroundingPlots);
+        
+        // Ensure the message has enough value.
+        require(msg.value >= totalCost);
+        
+        // Transfer the plot.
+        _transfer(currentOwner, msg.sender, _deedId);
+        
+        // Set the plot data
+        SetData(_deedId, name, description, imageUrl, infoUrl);
+        
+        // Calculate and set the new plot price.
+        identifierToBuyoutPrice[_deedId] = nextBuyoutPrice(totalCost);
+        
+        // Indicate the plot has been bought out at least once
+        if (!identifierToBoughtOutOnce[_deedId]) {
+            identifierToBoughtOutOnce[_deedId] = true;
+        }
+        
+        // Calculate the excess Ether sent.
+        // msg.value is greater than or equal to totalCost,
+        // so this cannot underflow.
+        uint256 excess = msg.value - totalCost;
+        
+        if (excess > 0) {
+            // Refund any excess Ether (not susceptible to re-entry attack, as
+            // the owner is assigned before the transfer takes place).
+            msg.sender.transfer(excess);
+        }
+    }
+    
+    /// @notice Calculate the maximum initial buyout price for a plot.
+    /// @param _deedId The identifier of the plot to get the maximum initial buyout price for.
+    function maximumInitialBuyoutPrice(uint256 _deedId) public view returns (uint256) {
+        // The initial buyout price can be set to 4x the initial plot price
+        // (or 100x for the original pre-migration plots).
+        uint256 mul = 4;
+        
+        if (identifierIsOriginal[_deedId]) {
+            mul = 100;
+        }
+        
+        return initialPricePaid[_deedId].mul(mul);
+    }
+    
+    /// @notice Test whether a buyout price is valid.
+    /// @param _deedId The identifier of the plot to test the buyout price for.
+    /// @param price The buyout price to test.
+    function validInitialBuyoutPrice(uint256 _deedId, uint256 price) public view returns (bool) {        
+        return (price >= unclaimedPlotPrice && price <= maximumInitialBuyoutPrice(_deedId));
+    }
+    
+    /// @notice Manually set the initial buyout price of a plot.
+    /// @param _deedId The identifier of the plot to set the buyout price for.
+    /// @param price The value to set the buyout price to.
+    function setInitialBuyoutPrice(uint256 _deedId, uint256 price) public whenNotPaused {
+        // One can only set the buyout price of their own plots.
+        require(_owns(msg.sender, _deedId));
+        
+        // The initial buyout price can only be set if the plot has never been bought out before.
+        require(!identifierToBoughtOutOnce[_deedId]);
+        
+        // The buyout price must be valid.
+        require(validInitialBuyoutPrice(_deedId, price));
+        
+        // Set the buyout price.
+        identifierToBuyoutPrice[_deedId] = price;
+        
+        // Trigger the buyout price event.
+        SetBuyoutPrice(_deedId, price);
+    }
+}
+
+
+/// @dev Holds functionality for minting new plot deeds.
+contract DWorldMinting is DWorldFinance {       
+    /// @notice Buy an unclaimed plot.
+    /// @param _deedId The unclaimed plot to buy.
+    /// @param _buyoutPrice The initial buyout price to set on the plot.
+    function claimPlot(uint256 _deedId, uint256 _buyoutPrice) external payable whenNotPaused {
+        claimPlotWithData(_deedId, _buyoutPrice, "", "", "", "");
+    }
+       
+    /// @notice Buy an unclaimed plot.
+    /// @param _deedId The unclaimed plot to buy.
+    /// @param _buyoutPrice The initial buyout price to set on the plot.
+    /// @param name The name to give the plot.
+    /// @param description The description to add to the plot.
+    /// @param imageUrl The image url for the plot.
+    /// @param infoUrl The info url for the plot.
+    function claimPlotWithData(uint256 _deedId, uint256 _buyoutPrice, string name, string description, string imageUrl, string infoUrl) public payable whenNotPaused {
+        uint256[] memory _deedIds = new uint256[](1);
+        _deedIds[0] = _deedId;
+        
+        claimPlotMultipleWithData(_deedIds, _buyoutPrice, name, description, imageUrl, infoUrl);
+    }
+    
+    /// @notice Buy unclaimed plots.
+    /// @param _deedIds The unclaimed plots to buy.
+    /// @param _buyoutPrice The initial buyout price to set on the plot.
+    function claimPlotMultiple(uint256[] _deedIds, uint256 _buyoutPrice) external payable whenNotPaused {
+        claimPlotMultipleWithData(_deedIds, _buyoutPrice, "", "", "", "");
+    }
+    
+    /// @notice Buy unclaimed plots.
+    /// @param _deedIds The unclaimed plots to buy.
+    /// @param _buyoutPrice The initial buyout price to set on the plot.
+    /// @param name The name to give the plots.
+    /// @param description The description to add to the plots.
+    /// @param imageUrl The image url for the plots.
+    /// @param infoUrl The info url for the plots.
+    function claimPlotMultipleWithData(uint256[] _deedIds, uint256 _buyoutPrice, string name, string description, string imageUrl, string infoUrl) public payable whenNotPaused {
+        uint256 buyAmount = _deedIds.length;
+        uint256 etherRequired;
+        if (freeClaimAllowance[msg.sender] > 0) {
+            // The sender has a free claim allowance.
+            if (freeClaimAllowance[msg.sender] > buyAmount) {
+                // Subtract from allowance.
+                freeClaimAllowance[msg.sender] -= buyAmount;
+                
+                // No ether is required.
+                etherRequired = 0;
+            } else {
+                uint256 freeAmount = freeClaimAllowance[msg.sender];
+                
+                // The full allowance has been used.
+                delete freeClaimAllowance[msg.sender];
+                
+                // The subtraction cannot underflow, as freeAmount <= buyAmount.
+                etherRequired = unclaimedPlotPrice.mul(buyAmount - freeAmount);
+            }
+        } else {
+            // The sender does not have a free claim allowance.
+            etherRequired = unclaimedPlotPrice.mul(buyAmount);
+        }
+        
+        uint256 offset = plots.length;
+        
+        // Allocate additional memory for the plots array
+        // (this is more efficient than .push-ing each individual
+        // plot, as that requires multiple dynamic allocations).
+        plots.length = plots.length.add(_deedIds.length);
+        
+        for (uint256 i = 0; i < _deedIds.length; i++) { 
+            uint256 _deedId = _deedIds[i];
+            require(validIdentifier(_deedId));
+            
+            // The plot must be unowned (a plot deed cannot be transferred to
+            // 0x0, so once a plot is claimed it will always be owned by a
+            // non-zero address).
+            require(identifierToOwner[_deedId] == address(0));
+            
+            // Create the plot
+            plots[offset + i] = uint32(_deedId);
+            
+            // Transfer the new plot to the sender.
+            _transfer(address(0), msg.sender, _deedId);
+            
+            // Set the plot data.
+            _setPlotData(_deedId, name, description, imageUrl, infoUrl);
+            
+            // Calculate and assign claim dividends.
+            uint256 claimDividends = _calculateAndAssignClaimDividends(_deedId);
+            etherRequired = etherRequired.add(claimDividends);
+            
+            // Set the initial price paid for the plot.
+            initialPricePaid[_deedId] = unclaimedPlotPrice.add(claimDividends);
+            
+            // Set the initial buyout price. Throws if it does not succeed.
+            setInitialBuyoutPrice(_deedId, _buyoutPrice);
+        }
+        
+        // Ensure enough ether is supplied.
+        require(msg.value >= etherRequired);
+        
+        // Calculate the excess ether sent
+        // msg.value is greater than or equal to etherRequired,
+        // so this cannot underflow.
+        uint256 excess = msg.value - etherRequired;
+        
+        if (excess > 0) {
+            // Refund any excess ether (not susceptible to re-entry attack, as
+            // the owner is assigned before the transfer takes place).
+            msg.sender.transfer(excess);
         }
     }
 }
@@ -1186,314 +1609,484 @@ contract ClockAuction is ClockAuctionBase, Pausable {
 }
 
 
-contract SaleAuction is ClockAuction {
-    function SaleAuction(address _deedContractAddress, uint256 _fee) ClockAuction(_deedContractAddress, _fee) public {}
+/// @dev Defines base data structures for DWorld.
+contract OriginalDWorldBase is DWorldAccessControl {
+    using SafeMath for uint256;
     
-    /// @dev Allows other contracts to check whether this is the expected contract.
-    bool public isSaleAuction = true;
+    /// @dev All minted plots (array of plot identifiers). There are
+    /// 2^16 * 2^16 possible plots (covering the entire world), thus
+    /// 32 bits are required. This fits in a uint32. Storing
+    /// the identifiers as uint32 instead of uint256 makes storage
+    /// cheaper. (The impact of this in mappings is less noticeable,
+    /// and using uint32 in the mappings below actually *increases*
+    /// gas cost for minting).
+    uint32[] public plots;
+    
+    mapping (uint256 => address) identifierToOwner;
+    mapping (uint256 => address) identifierToApproved;
+    mapping (address => uint256) ownershipDeedCount;
+    
+    /// @dev Event fired when a plot's data are changed. The plot
+    /// data are not stored in the contract directly, instead the
+    /// data are logged to the block. This gives significant
+    /// reductions in gas requirements (~75k for minting with data
+    /// instead of ~180k). However, it also means plot data are
+    /// not available from *within* other contracts.
+    event SetData(uint256 indexed deedId, string name, string description, string imageUrl, string infoUrl);
+    
+    /// @notice Get all minted plots.
+    function getAllPlots() external view returns(uint32[]) {
+        return plots;
+    }
+    
+    /// @dev Represent a 2D coordinate as a single uint.
+    /// @param x The x-coordinate.
+    /// @param y The y-coordinate.
+    function coordinateToIdentifier(uint256 x, uint256 y) public pure returns(uint256) {
+        require(validCoordinate(x, y));
+        
+        return (y << 16) + x;
+    }
+    
+    /// @dev Turn a single uint representation of a coordinate into its x and y parts.
+    /// @param identifier The uint representation of a coordinate.
+    function identifierToCoordinate(uint256 identifier) public pure returns(uint256 x, uint256 y) {
+        require(validIdentifier(identifier));
+    
+        y = identifier >> 16;
+        x = identifier - (y << 16);
+    }
+    
+    /// @dev Test whether the coordinate is valid.
+    /// @param x The x-part of the coordinate to test.
+    /// @param y The y-part of the coordinate to test.
+    function validCoordinate(uint256 x, uint256 y) public pure returns(bool) {
+        return x < 65536 && y < 65536; // 2^16
+    }
+    
+    /// @dev Test whether an identifier is valid.
+    /// @param identifier The identifier to test.
+    function validIdentifier(uint256 identifier) public pure returns(bool) {
+        return identifier < 4294967296; // 2^16 * 2^16
+    }
+    
+    /// @dev Set a plot's data.
+    /// @param identifier The identifier of the plot to set data for.
+    function _setPlotData(uint256 identifier, string name, string description, string imageUrl, string infoUrl) internal {
+        SetData(identifier, name, description, imageUrl, infoUrl);
+    }
 }
 
 
-contract RentAuction is ClockAuction {
-    function RentAuction(address _deedContractAddress, uint256 _fee) ClockAuction(_deedContractAddress, _fee) public {}
+/// @dev Holds deed functionality such as approving and transferring. Implements ERC721.
+contract OriginalDWorldDeed is OriginalDWorldBase, ERC721, ERC721Metadata {
     
-    /// @dev Allows other contracts to check whether this is the expected contract.
-    bool public isRentAuction = true;
-    
-    mapping (uint256 => uint256) public identifierToRentPeriod;
-    
-    /// @notice Create an auction for a given deed. Be careful when calling
-    /// createAuction for a RentAuction, that this overloaded function (including
-    /// the _rentPeriod parameter) is used. Otherwise the rent period defaults to
-    /// a week.
-    /// Must previously have been given approval to take ownership of the deed.
-    /// @param _deedId The identifier of the deed to create an auction for.
-    /// @param _startPrice The starting price of the auction.
-    /// @param _endPrice The ending price of the auction.
-    /// @param _duration The duration in seconds of the dynamic pricing part of the auction.
-    /// @param _rentPeriod The rent period in seconds being auctioned.
-    function createAuction(
-        uint256 _deedId,
-        uint256 _startPrice,
-        uint256 _endPrice,
-        uint256 _duration,
-        uint256 _rentPeriod
-    )
-        external
-    {
-        // Require the rent period to be at least one hour.
-        require(_rentPeriod >= 3600);
-        
-        // Require there to be no active renter.
-        DWorldRenting dWorldRentingContract = DWorldRenting(deedContract);
-        var (renter,) = dWorldRentingContract.renterOf(_deedId);
-        require(renter == address(0));
-    
-        // Set the rent period.
-        identifierToRentPeriod[_deedId] = _rentPeriod;
-    
-        // Throws (reverts) if creating the auction fails.
-        createAuction(_deedId, _startPrice, _endPrice, _duration);
+    /// @notice Name of the collection of deeds (non-fungible token), as defined in ERC721Metadata.
+    function name() public pure returns (string _deedName) {
+        _deedName = "DWorld Plots";
     }
     
-    /// @dev Perform the bid win logic (in this case: give renter status to the winner).
-    /// @param _seller The address of the seller.
-    /// @param _winner The address of the winner.
-    /// @param _deedId The identifier of the deed.
-    /// @param _price The price the auction was bought at.
-    function _winBid(address _seller, address _winner, uint256 _deedId, uint256 _price) internal {
-        DWorldRenting dWorldRentingContract = DWorldRenting(deedContract);
+    /// @notice Symbol of the collection of deeds (non-fungible token), as defined in ERC721Metadata.
+    function symbol() public pure returns (string _deedSymbol) {
+        _deedSymbol = "DWP";
+    }
     
-        uint256 rentPeriod = identifierToRentPeriod[_deedId];
-        if (rentPeriod == 0) {
-            rentPeriod = 604800; // 1 week by default
+    /// @dev ERC-165 (draft) interface signature for itself
+    bytes4 internal constant INTERFACE_SIGNATURE_ERC165 = // 0x01ffc9a7
+        bytes4(keccak256('supportsInterface(bytes4)'));
+
+    /// @dev ERC-165 (draft) interface signature for ERC721
+    bytes4 internal constant INTERFACE_SIGNATURE_ERC721 = // 0xda671b9b
+        bytes4(keccak256('ownerOf(uint256)')) ^
+        bytes4(keccak256('countOfDeeds()')) ^
+        bytes4(keccak256('countOfDeedsByOwner(address)')) ^
+        bytes4(keccak256('deedOfOwnerByIndex(address,uint256)')) ^
+        bytes4(keccak256('approve(address,uint256)')) ^
+        bytes4(keccak256('takeOwnership(uint256)'));
+        
+    /// @dev ERC-165 (draft) interface signature for ERC721
+    bytes4 internal constant INTERFACE_SIGNATURE_ERC721Metadata = // 0x2a786f11
+        bytes4(keccak256('name()')) ^
+        bytes4(keccak256('symbol()')) ^
+        bytes4(keccak256('deedUri(uint256)'));
+    
+    /// @notice Introspection interface as per ERC-165 (https://github.com/ethereum/EIPs/issues/165).
+    /// Returns true for any standardized interfaces implemented by this contract.
+    /// (ERC-165 and ERC-721.)
+    function supportsInterface(bytes4 _interfaceID) external pure returns (bool) {
+        return (
+            (_interfaceID == INTERFACE_SIGNATURE_ERC165)
+            || (_interfaceID == INTERFACE_SIGNATURE_ERC721)
+            || (_interfaceID == INTERFACE_SIGNATURE_ERC721Metadata)
+        );
+    }
+    
+    /// @dev Checks if a given address owns a particular plot.
+    /// @param _owner The address of the owner to check for.
+    /// @param _deedId The plot identifier to check for.
+    function _owns(address _owner, uint256 _deedId) internal view returns (bool) {
+        return identifierToOwner[_deedId] == _owner;
+    }
+    
+    /// @dev Approve a given address to take ownership of a deed.
+    /// @param _from The address approving taking ownership.
+    /// @param _to The address to approve taking ownership.
+    /// @param _deedId The identifier of the deed to give approval for.
+    function _approve(address _from, address _to, uint256 _deedId) internal {
+        identifierToApproved[_deedId] = _to;
+        
+        // Emit event.
+        Approval(_from, _to, _deedId);
+    }
+    
+    /// @dev Checks if a given address has approval to take ownership of a deed.
+    /// @param _claimant The address of the claimant to check for.
+    /// @param _deedId The identifier of the deed to check for.
+    function _approvedFor(address _claimant, uint256 _deedId) internal view returns (bool) {
+        return identifierToApproved[_deedId] == _claimant;
+    }
+    
+    /// @dev Assigns ownership of a specific deed to an address.
+    /// @param _from The address to transfer the deed from.
+    /// @param _to The address to transfer the deed to.
+    /// @param _deedId The identifier of the deed to transfer.
+    function _transfer(address _from, address _to, uint256 _deedId) internal {
+        // The number of plots is capped at 2^16 * 2^16, so this cannot
+        // be overflowed.
+        ownershipDeedCount[_to]++;
+        
+        // Transfer ownership.
+        identifierToOwner[_deedId] = _to;
+        
+        // When a new deed is minted, the _from address is 0x0, but we
+        // do not track deed ownership of 0x0.
+        if (_from != address(0)) {
+            ownershipDeedCount[_from]--;
+            
+            // Clear taking ownership approval.
+            delete identifierToApproved[_deedId];
         }
-    
-        // Rent the deed out to the winner.
-        dWorldRentingContract.rentOut(_winner, identifierToRentPeriod[_deedId], _deedId);
         
-        // Transfer the deed back to the seller.
-        _transfer(_seller, _deedId);
+        // Emit the transfer event.
+        Transfer(_from, _to, _deedId);
     }
     
-    /// @dev Remove an auction.
-    /// @param _deedId The identifier of the deed for which the auction should be removed.
-    function _removeAuction(uint256 _deedId) internal {
-        delete identifierToAuction[_deedId];
-        delete identifierToRentPeriod[_deedId];
+    // ERC 721 implementation
+    
+    /// @notice Returns the total number of deeds currently in existence.
+    /// @dev Required for ERC-721 compliance.
+    function countOfDeeds() public view returns (uint256) {
+        return plots.length;
     }
-}
+    
+    /// @notice Returns the number of deeds owned by a specific address.
+    /// @param _owner The owner address to check.
+    /// @dev Required for ERC-721 compliance
+    function countOfDeedsByOwner(address _owner) public view returns (uint256) {
+        return ownershipDeedCount[_owner];
+    }
+    
+    /// @notice Returns the address currently assigned ownership of a given deed.
+    /// @dev Required for ERC-721 compliance.
+    function ownerOf(uint256 _deedId) external view returns (address _owner) {
+        _owner = identifierToOwner[_deedId];
 
-
-/// @dev Holds functionality for minting new plot deeds.
-contract DWorldMinting is DWorldRenting {
-    uint256 public unclaimedPlotPrice = 0.0025 ether;
-    mapping (address => uint256) freeClaimAllowance;
-    
-    /// @notice Sets the new price for unclaimed plots.
-    /// @param _unclaimedPlotPrice The new price for unclaimed plots.
-    function setUnclaimedPlotPrice(uint256 _unclaimedPlotPrice) external onlyCFO {
-        unclaimedPlotPrice = _unclaimedPlotPrice;
+        require(_owner != address(0));
     }
     
-    /// @notice Set the free claim allowance for an address.
-    /// @param addr The address to set the free claim allowance for.
-    /// @param allowance The free claim allowance to set.
-    function setFreeClaimAllowance(address addr, uint256 allowance) external onlyCFO {
-        freeClaimAllowance[addr] = allowance;
-    }
-    
-    /// @notice Get the free claim allowance of an address.
-    /// @param addr The address to get the free claim allowance of.
-    function freeClaimAllowanceOf(address addr) external view returns (uint256) {
-        return freeClaimAllowance[addr];
-    }
-       
-    /// @notice Buy an unclaimed plot.
-    /// @param _deedId The unclaimed plot to buy.
-    function claimPlot(uint256 _deedId) external payable whenNotPaused {
-        claimPlotWithData(_deedId, "", "", "", "");
-    }
-       
-    /// @notice Buy an unclaimed plot.
-    /// @param _deedId The unclaimed plot to buy.
-    /// @param name The name to give the plot.
-    /// @param description The description to add to the plot.
-    /// @param imageUrl The image url for the plot.
-    /// @param infoUrl The info url for the plot.
-    function claimPlotWithData(uint256 _deedId, string name, string description, string imageUrl, string infoUrl) public payable whenNotPaused {
+    /// @notice Approve a given address to take ownership of a deed.
+    /// @param _to The address to approve taking owernship.
+    /// @param _deedId The identifier of the deed to give approval for.
+    /// @dev Required for ERC-721 compliance.
+    function approve(address _to, uint256 _deedId) external whenNotPaused {
         uint256[] memory _deedIds = new uint256[](1);
         _deedIds[0] = _deedId;
         
-        claimPlotMultipleWithData(_deedIds, name, description, imageUrl, infoUrl);
+        approveMultiple(_to, _deedIds);
     }
     
-    /// @notice Buy unclaimed plots.
-    /// @param _deedIds The unclaimed plots to buy.
-    function claimPlotMultiple(uint256[] _deedIds) external payable whenNotPaused {
-        claimPlotMultipleWithData(_deedIds, "", "", "", "");
-    }
+    /// @notice Approve a given address to take ownership of multiple deeds.
+    /// @param _to The address to approve taking ownership.
+    /// @param _deedIds The identifiers of the deeds to give approval for.
+    function approveMultiple(address _to, uint256[] _deedIds) public whenNotPaused {
+        // Ensure the sender is not approving themselves.
+        require(msg.sender != _to);
     
-    /// @notice Buy unclaimed plots.
-    /// @param _deedIds The unclaimed plots to buy.
-    /// @param name The name to give the plots.
-    /// @param description The description to add to the plots.
-    /// @param imageUrl The image url for the plots.
-    /// @param infoUrl The info url for the plots.
-    function claimPlotMultipleWithData(uint256[] _deedIds, string name, string description, string imageUrl, string infoUrl) public payable whenNotPaused {
-        uint256 buyAmount = _deedIds.length;
-        uint256 etherRequired;
-        if (freeClaimAllowance[msg.sender] > 0) {
-            // The sender has a free claim allowance.
-            if (freeClaimAllowance[msg.sender] > buyAmount) {
-                // Subtract from allowance.
-                freeClaimAllowance[msg.sender] -= buyAmount;
-                
-                // No ether is required.
-                etherRequired = 0;
-            } else {
-                uint256 freeAmount = freeClaimAllowance[msg.sender];
-                
-                // The full allowance has been used.
-                delete freeClaimAllowance[msg.sender];
-                
-                // The subtraction cannot underflow, as freeAmount <= buyAmount.
-                etherRequired = unclaimedPlotPrice.mul(buyAmount - freeAmount);
-            }
-        } else {
-            // The sender does not have a free claim allowance.
-            etherRequired = unclaimedPlotPrice.mul(buyAmount);
-        }
-        
-        // Ensure enough ether is supplied.
-        require(msg.value >= etherRequired);
-        
-        uint256 offset = plots.length;
-        
-        // Allocate additional memory for the plots array
-        // (this is more efficient than .push-ing each individual
-        // plot, as that requires multiple dynamic allocations).
-        plots.length = plots.length.add(_deedIds.length);
-        
-        for (uint256 i = 0; i < _deedIds.length; i++) { 
+        for (uint256 i = 0; i < _deedIds.length; i++) {
             uint256 _deedId = _deedIds[i];
-            require(validIdentifier(_deedId));
             
-            // The plot must be unowned (a plot deed cannot be transferred to
-            // 0x0, so once a plot is claimed it will always be owned by a
-            // non-zero address).
-            require(identifierToOwner[_deedId] == address(0));
+            // Require the sender is the owner of the deed.
+            require(_owns(msg.sender, _deedId));
             
-            // Create the plot
-            plots[offset + i] = uint32(_deedId);
-            
-            // Transfer the new plot to the sender.
-            _transfer(address(0), msg.sender, _deedId);
-            
-            // Set the plot data.
-            _setPlotData(_deedId, name, description, imageUrl, infoUrl);
+            // Perform the approval.
+            _approve(msg.sender, _to, _deedId);
         }
+    }
+    
+    /// @notice Transfer a deed to another address. If transferring to a smart
+    /// contract be VERY CAREFUL to ensure that it is aware of ERC-721, or your
+    /// deed may be lost forever.
+    /// @param _to The address of the recipient, can be a user or contract.
+    /// @param _deedId The identifier of the deed to transfer.
+    /// @dev Required for ERC-721 compliance.
+    function transfer(address _to, uint256 _deedId) external whenNotPaused {
+        uint256[] memory _deedIds = new uint256[](1);
+        _deedIds[0] = _deedId;
         
-        // Calculate the excess ether sent
-        // msg.value is greater than or equal to etherRequired,
-        // so this cannot underflow.
-        uint256 excess = msg.value - etherRequired;
+        transferMultiple(_to, _deedIds);
+    }
+    
+    /// @notice Transfers multiple deeds to another address. If transferring to
+    /// a smart contract be VERY CAREFUL to ensure that it is aware of ERC-721,
+    /// or your deeds may be lost forever.
+    /// @param _to The address of the recipient, can be a user or contract.
+    /// @param _deedIds The identifiers of the deeds to transfer.
+    function transferMultiple(address _to, uint256[] _deedIds) public whenNotPaused {
+        // Safety check to prevent against an unexpected 0x0 default.
+        require(_to != address(0));
         
-        if (excess > 0) {
-            // Refund any excess ether (not susceptible to re-entry attack, as
-            // the owner is assigned before the transfer takes place).
-            msg.sender.transfer(excess);
+        // Disallow transfers to this contract to prevent accidental misuse.
+        require(_to != address(this));
+    
+        for (uint256 i = 0; i < _deedIds.length; i++) {
+            uint256 _deedId = _deedIds[i];
+            
+            // One can only transfer their own plots.
+            require(_owns(msg.sender, _deedId));
+
+            // Transfer ownership
+            _transfer(msg.sender, _to, _deedId);
+        }
+    }
+    
+    /// @notice Transfer a deed owned by another address, for which the calling
+    /// address has previously been granted transfer approval by the owner.
+    /// @param _deedId The identifier of the deed to be transferred.
+    /// @dev Required for ERC-721 compliance.
+    function takeOwnership(uint256 _deedId) external whenNotPaused {
+        uint256[] memory _deedIds = new uint256[](1);
+        _deedIds[0] = _deedId;
+        
+        takeOwnershipMultiple(_deedIds);
+    }
+    
+    /// @notice Transfer multiple deeds owned by another address, for which the
+    /// calling address has previously been granted transfer approval by the owner.
+    /// @param _deedIds The identifier of the deed to be transferred.
+    function takeOwnershipMultiple(uint256[] _deedIds) public whenNotPaused {
+        for (uint256 i = 0; i < _deedIds.length; i++) {
+            uint256 _deedId = _deedIds[i];
+            address _from = identifierToOwner[_deedId];
+            
+            // Check for transfer approval
+            require(_approvedFor(msg.sender, _deedId));
+
+            // Reassign ownership (also clears pending approvals and emits Transfer event).
+            _transfer(_from, msg.sender, _deedId);
+        }
+    }
+    
+    /// @notice Returns a list of all deed identifiers assigned to an address.
+    /// @param _owner The owner whose deeds we are interested in.
+    /// @dev This method MUST NEVER be called by smart contract code. It's very
+    /// expensive and is not supported in contract-to-contract calls as it returns
+    /// a dynamic array (only supported for web3 calls).
+    function deedsOfOwner(address _owner) external view returns(uint256[]) {
+        uint256 deedCount = countOfDeedsByOwner(_owner);
+
+        if (deedCount == 0) {
+            // Return an empty array.
+            return new uint256[](0);
+        } else {
+            uint256[] memory result = new uint256[](deedCount);
+            uint256 totalDeeds = countOfDeeds();
+            uint256 resultIndex = 0;
+            
+            for (uint256 deedNumber = 0; deedNumber < totalDeeds; deedNumber++) {
+                uint256 identifier = plots[deedNumber];
+                if (identifierToOwner[identifier] == _owner) {
+                    result[resultIndex] = identifier;
+                    resultIndex++;
+                }
+            }
+
+            return result;
+        }
+    }
+    
+    /// @notice Returns a deed identifier of the owner at the given index.
+    /// @param _owner The address of the owner we want to get a deed for.
+    /// @param _index The index of the deed we want.
+    function deedOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256) {
+        // The index should be valid.
+        require(_index < countOfDeedsByOwner(_owner));
+
+        // Loop through all plots, accounting the number of plots of the owner we've seen.
+        uint256 seen = 0;
+        uint256 totalDeeds = countOfDeeds();
+        
+        for (uint256 deedNumber = 0; deedNumber < totalDeeds; deedNumber++) {
+            uint256 identifier = plots[deedNumber];
+            if (identifierToOwner[identifier] == _owner) {
+                if (seen == _index) {
+                    return identifier;
+                }
+                
+                seen++;
+            }
+        }
+    }
+    
+    /// @notice Returns an (off-chain) metadata url for the given deed.
+    /// @param _deedId The identifier of the deed to get the metadata
+    /// url for.
+    /// @dev Implementation of optional ERC-721 functionality.
+    function deedUri(uint256 _deedId) external pure returns (string uri) {
+        require(validIdentifier(_deedId));
+    
+        var (x, y) = identifierToCoordinate(_deedId);
+    
+        // Maximum coordinate length in decimals is 5 (65535)
+        uri = "https://dworld.io/plot/xxxxx/xxxxx";
+        bytes memory _uri = bytes(uri);
+        
+        for (uint256 i = 0; i < 5; i++) {
+            _uri[27 - i] = byte(48 + (x / 10 ** i) % 10);
+            _uri[33 - i] = byte(48 + (y / 10 ** i) % 10);
         }
     }
 }
 
 
-/// @dev Implements DWorld auction functionality.
-contract DWorldAuction is DWorldMinting {
-    SaleAuction public saleAuctionContract;
-    RentAuction public rentAuctionContract;
+/// @dev Migrate original data from the old contract.
+contract DWorldUpgrade is DWorldMinting {
+    OriginalDWorldDeed originalContract;
+    ClockAuction originalSaleAuction;
+    ClockAuction originalRentAuction;
     
-    /// @notice set the contract address of the sale auction.
-    /// @param _address The address of the sale auction.
-    function setSaleAuctionContractAddress(address _address) external onlyOwner {
-        SaleAuction _contract = SaleAuction(_address);
+    /// @notice Keep track of whether we have finished migrating.
+    bool public migrationFinished = false;
     
-        require(_contract.isSaleAuction());
-        
-        saleAuctionContract = _contract;
-    }
+    /// @dev Keep track of how many plots have been transferred so far.
+    uint256 migrationNumPlotsTransferred = 0;
     
-    /// @notice Set the contract address of the rent auction.
-    /// @param _address The address of the rent auction.
-    function setRentAuctionContractAddress(address _address) external onlyOwner {
-        RentAuction _contract = RentAuction(_address);
-    
-        require(_contract.isRentAuction());
-        
-        rentAuctionContract = _contract;
-    }
-    
-    /// @notice Create a sale auction.
-    /// @param _deedId The identifier of the deed to create a sale auction for.
-    /// @param _startPrice The starting price of the sale auction.
-    /// @param _endPrice The ending price of the sale auction.
-    /// @param _duration The duration in seconds of the dynamic pricing part of the sale auction.
-    function createSaleAuction(uint256 _deedId, uint256 _startPrice, uint256 _endPrice, uint256 _duration)
-        external
-        whenNotPaused
+    function DWorldUpgrade(
+        address originalContractAddress,
+        address originalSaleAuctionAddress,
+        address originalRentAuctionAddress
+    )
+        public
     {
-        require(_owns(msg.sender, _deedId));
-        
-        // Prevent creating a sale auction if no sale auction contract is configured.
-        require(address(saleAuctionContract) != address(0));
-    
-        // Approve the deed for transferring to the sale auction.
-        _approve(msg.sender, address(saleAuctionContract), _deedId);
-    
-        // Auction contract checks input values (throws if invalid) and places the deed into escrow.
-        saleAuctionContract.createAuction(_deedId, _startPrice, _endPrice, _duration);
-    }
-    
-    /// @notice Create a rent auction.
-    /// @param _deedId The identifier of the deed to create a rent auction for.
-    /// @param _startPrice The starting price of the rent auction.
-    /// @param _endPrice The ending price of the rent auction.
-    /// @param _duration The duration in seconds of the dynamic pricing part of the rent auction.
-    /// @param _rentPeriod The rent period in seconds being auctioned.
-    function createRentAuction(uint256 _deedId, uint256 _startPrice, uint256 _endPrice, uint256 _duration, uint256 _rentPeriod)
-        external
-        whenNotPaused
-    {
-        require(_owns(msg.sender, _deedId));
-        
-        // Prevent creating a rent auction if no rent auction contract is configured.
-        require(address(rentAuctionContract) != address(0));
-        
-        // Approve the deed for transferring to the rent auction.
-        _approve(msg.sender, address(rentAuctionContract), _deedId);
-        
-        // Throws if the auction is invalid (e.g. deed is already rented out),
-        // and places the deed into escrow.
-        rentAuctionContract.createAuction(_deedId, _startPrice, _endPrice, _duration, _rentPeriod);
-    }
-    
-    /// @notice Allow the CFO to capture the free balance available
-    /// in the auction contracts.
-    function withdrawFreeAuctionBalances() external onlyCFO {
-        saleAuctionContract.withdrawFreeBalance();
-        rentAuctionContract.withdrawFreeBalance();
-    }
-    
-    /// @notice Allow withdrawing balances from the auction contracts
-    /// in a single step.
-    function withdrawAuctionBalances() external {
-        // Withdraw from the sale contract if the sender is owed Ether.
-        if (saleAuctionContract.addressToEtherOwed(msg.sender) > 0) {
-            saleAuctionContract.withdrawAuctionBalance(msg.sender);
-        }
-        
-        // Withdraw from the rent contract if the sender is owed Ether.
-        if (rentAuctionContract.addressToEtherOwed(msg.sender) > 0) {
-            rentAuctionContract.withdrawAuctionBalance(msg.sender);
+        if (originalContractAddress != 0) {
+            _startMigration(originalContractAddress, originalSaleAuctionAddress, originalRentAuctionAddress);
+        } else {
+            migrationFinished = true;
         }
     }
     
-    /// @dev This contract is only payable by the auction contracts.
-    function() public payable {
-        require(
-            msg.sender == address(saleAuctionContract) ||
-            msg.sender == address(rentAuctionContract)
-        );
+    /// @dev Migrate data from the original contract. Assumes the original
+    /// contract is paused, and remains paused for the duration of the
+    /// migration.
+    /// @param originalContractAddress The address of the original contract.
+    function _startMigration(
+        address originalContractAddress,
+        address originalSaleAuctionAddress,
+        address originalRentAuctionAddress
+    )
+        internal
+    {
+        // Set contracts.
+        originalContract = OriginalDWorldDeed(originalContractAddress);
+        originalSaleAuction = ClockAuction(originalSaleAuctionAddress);
+        originalRentAuction = ClockAuction(originalRentAuctionAddress);
+        
+        // Start paused.
+        paused = true;
+        
+        // Get count of original plots.
+        uint256 numPlots = originalContract.countOfDeeds();
+        
+        // Allocate storage for the plots array (this is more
+        // efficient than .push-ing each individual plot, as
+        // that requires multiple dynamic allocations).
+        plots.length = numPlots;
+    }
+    
+    function migrationStep(uint256 numPlotsTransfer) external onlyOwner whenPaused {
+        // Migration must not be finished yet.
+        require(!migrationFinished);
+    
+        // Get count of original plots.
+        uint256 numPlots = originalContract.countOfDeeds();
+    
+        // Loop through plots and assign to original owner.
+        uint256 i;
+        for (i = migrationNumPlotsTransferred; i < numPlots && i < migrationNumPlotsTransferred + numPlotsTransfer; i++) {
+            uint32 _deedId = originalContract.plots(i);
+            
+            // Set plot.
+            plots[i] = _deedId;
+            
+            // Get the original owner and transfer.
+            address owner = originalContract.ownerOf(_deedId);
+            
+            // If the owner of the plot is an auction contract,
+            // get the actual owner of the plot.
+            address seller;
+            if (owner == address(originalSaleAuction)) {
+                (seller, ) = originalSaleAuction.getAuction(_deedId);
+                owner = seller;
+            } else if (owner == address(originalRentAuction)) {
+                (seller, ) = originalRentAuction.getAuction(_deedId);
+                owner = seller;
+            }
+            
+            _transfer(address(0), owner, _deedId);
+            
+            // Set the initial price paid for the plot.
+            initialPricePaid[_deedId] = 0.0125 ether;
+            
+            // The initial buyout price.
+            uint256 _initialBuyoutPrice = 0.050 ether;
+            
+            // Set the initial buyout price.
+            identifierToBuyoutPrice[_deedId] = _initialBuyoutPrice;
+            
+            // Trigger the buyout price event.
+            SetBuyoutPrice(_deedId, _initialBuyoutPrice);
+            
+            // Mark the plot as being an original.
+            identifierIsOriginal[_deedId] = true;
+        }
+        
+        migrationNumPlotsTransferred += numPlotsTransfer;
+        
+        // Finished migration.
+        if (i == numPlots) {
+            migrationFinished = true;
+        }
     }
 }
 
 
 /// @dev Implements highest-level DWorld functionality.
-contract DWorldCore is DWorldAuction {
+contract DWorldCore is DWorldUpgrade {
     /// If this contract is broken, this will be used to publish the address at which an upgraded contract can be found
     address public upgradedContractAddress;
     event ContractUpgrade(address upgradedContractAddress);
 
+    function DWorldCore(
+        address originalContractAddress,
+        address originalSaleAuctionAddress,
+        address originalRentAuctionAddress,
+        uint256 buyoutsEnabledAfterHours
+    )
+        DWorldUpgrade(originalContractAddress, originalSaleAuctionAddress, originalRentAuctionAddress)
+        public 
+    {
+        buyoutsEnabledFromTimestamp = block.timestamp + buyoutsEnabledAfterHours * 3600;
+    }
+    
     /// @notice Only to be used when this contract is significantly broken,
     /// and an upgrade is required.
     function setUpgradedContractAddress(address _upgradedContractAddress) external onlyOwner whenPaused {
@@ -1507,9 +2100,8 @@ contract DWorldCore is DWorldAuction {
         whenNotPaused
     {
         // The sender requesting the data update should be
-        // the owner (without an active renter) or should
-        // be the active renter.
-        require(_owns(msg.sender, _deedId) && identifierToRentPeriodEndTimestamp[_deedId] < now || _rents(msg.sender, _deedId));
+        // the owner.
+        require(_owns(msg.sender, _deedId));
     
         // Set the data
         _setPlotData(_deedId, name, description, imageUrl, infoUrl);
@@ -1527,8 +2119,33 @@ contract DWorldCore is DWorldAuction {
         }
     }
     
-    /// @notice Allow the CFO to withdraw balance available to this contract.
-    function withdrawBalance() external onlyCFO {
-        cfoAddress.transfer(this.balance);
+    /// @notice Withdraw Ether owed to the sender.
+    function withdrawBalance() external {
+        uint256 etherOwed = addressToEtherOwed[msg.sender];
+        
+        // Ensure Ether is owed to the sender.
+        require(etherOwed > 0);
+         
+        // Set Ether owed to 0.
+        delete addressToEtherOwed[msg.sender];
+        
+        // Subtract from total outstanding balance. etherOwed is guaranteed
+        // to be less than or equal to outstandingEther, so this cannot
+        // underflow.
+        outstandingEther -= etherOwed;
+        
+        // Transfer Ether owed to the sender (not susceptible to re-entry
+        // attack, as the Ether owed is set to 0 before the transfer takes place).
+        msg.sender.transfer(etherOwed);
+    }
+    
+    /// @notice Withdraw (unowed) contract balance.
+    function withdrawFreeBalance() external onlyCFO {
+        // Calculate the free (unowed) balance. This never underflows, as
+        // outstandingEther is guaranteed to be less than or equal to the
+        // contract balance.
+        uint256 freeBalance = this.balance - outstandingEther;
+        
+        cfoAddress.transfer(freeBalance);
     }
 }
