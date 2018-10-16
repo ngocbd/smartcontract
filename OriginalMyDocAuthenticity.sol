@@ -1,43 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OriginalMyDocAuthenticity at 0x0b5dcd8cf2e32c2cebead397ea857d2e8547f297
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OriginalMyDocAuthenticity at 0x5515c7c8420d203a30eea9cdbf166e84ab7900c7
 */
 pragma solidity ^0.4.11;
 
-contract accessControlled {
-    address public owner;
-    mapping (address => bool) public registrator;
-    
-    function accessControlled() {
-        registrator[msg.sender] = true;
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        if ( msg.sender != owner ) throw;
-        _;
-    }
-
-    modifier onlyRegistrator {
-        if ( !registrator[msg.sender] ) throw;
-        _;
-    }
-    
-    function transferOwnership( address newOwner ) onlyOwner {
-        owner = newOwner;
-    }
-
-    function updateRegistratorStatus( address registratorAddress, bool status ) onlyOwner {
-        registrator[registratorAddress] = status;
-    }
-
-}
-
-
-contract OriginalMyDocAuthenticity is accessControlled {
+contract OriginalMyDocAuthenticity {
     
   mapping (string => uint) private authenticity;
 
-  function storeAuthenticity(string sha256) onlyRegistrator {
+  function storeAuthenticity(string sha256) {
     if (checkAuthenticity(sha256) == 0) {
         authenticity[sha256] = now;
     }   
