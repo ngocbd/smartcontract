@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifCrowdsale at 0x5a91baB64ECe3428fC4E6B1CB327cd00387B5dEd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifCrowdsale at 0x14dBDe02e1CAAc6C1B8B543577eBf0Af6A7a5c7f
 */
 pragma solidity ^0.4.15;
 
