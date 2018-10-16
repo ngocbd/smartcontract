@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZipToken at 0xcf3365ad90ca71151dbb89dabf247988f200e97d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZipToken at 0x3b96990a8ef293cdd37c8e1ad3d210a0166f40e1
 */
 pragma solidity ^0.4.18;
 
@@ -342,11 +342,11 @@ contract PausableToken is StandardToken, Pausable {
 // File: contracts/ZipToken.sol
 
 contract ZipToken is PausableToken {
-    string public constant name = "ZIPT Convertible";
-    string public constant symbol = "ZIPTC";
-    uint8 public constant decimals = 18;
+    string public constant NAME = "ZIPT Convertible";
+    string public constant SYMBOL = "ZIPTC";
+    uint8 public constant DECIMALS = 18;
     uint public constant TOTAL_TOKEN_AMOUNT = 1000000000;
-    uint public constant INITIAL_SUPPLY = TOTAL_TOKEN_AMOUNT * 10**uint(decimals);
+    uint public constant INITIAL_SUPPLY = TOTAL_TOKEN_AMOUNT * 10**uint(DECIMALS);
     bool public filled = false;
 
     function ZipToken() public {
