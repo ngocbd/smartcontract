@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AkilosToken at 0x9fcaa52277a0641ea23911ef3c6e040d1f085730
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AkilosToken at 0xa2d900d5461f1c3bfd323b9d4f7fabea40286386
 */
 pragma solidity ^0.4.21;
 
@@ -141,5 +141,6 @@ contract AkilosToken is EIP20Interface, Ownable, SafeMath, Mintable {
     function mint(address _to, uint256 _value) public onlyMinter {
         totalSupply = safeAdd(totalSupply, _value);
         balances[_to] = safeAdd(balances[_to], _value);
+        emit Transfer(0x0, _to, _value);
     }
 }
