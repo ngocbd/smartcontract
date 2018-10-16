@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Valens at 0x62adf30f45febaea183455c17b8d8a6e203c1c24
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Valens at 0xe9cf416af86e48c62cd3980c4d6850f9ba535521
 */
 pragma solidity ^0.4.4;
 
@@ -38,10 +38,8 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+
 }
-
-
 
 contract StandardToken is Token {
 
@@ -89,14 +87,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-
-//name this contract whatever you'd like
-contract Valens is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
+contract Valens is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
@@ -106,24 +97,39 @@ contract Valens is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public name;                   // Token Name
+    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
+    string public symbol;                 // An identifier: eg SBX, XPR etc..
+    string public version = 'H1.0'; 
+    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
+    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
+    address public fundsWallet;           // Where should the raised ETH go?
 
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
+    // This is a constructor function 
+    // which means the following function name has to match the contract name declared above
+    function Valens() {
+        balances[msg.sender] = 12000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 12000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "Valens";                                   // Set the name for display purposes (CHANGE THIS)
+        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        symbol = "VLNS";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 1000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+    }
 
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+    function() payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        if (balances[fundsWallet] < amount) {
+        }
 
-    function Valens(
-        ) {
-        balances[msg.sender] = 10000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000;                        // Update total supply (100000 for example)
-        name = "Valens";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "VLN";                               // Set the symbol for display purposes
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);                               
     }
 
     /* Approves and then calls the receiving contract */
