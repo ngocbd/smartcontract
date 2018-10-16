@@ -1,13 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pub at 0x80d9b122dc3a16fdc41f96cf010ffe7e38d227c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pub at 0x2a0f713aa953442eaca9ea47083f656170e67ba4
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 contract Pub {
     struct Publication {
         address source;
+        uint256 timestamp;
         string title;
-        string body;
+        // must be bytes in order to support files
+        bytes body;
     }
 
     mapping (address => uint256[]) public allByAuthor;
@@ -17,14 +19,29 @@ contract Pub {
 
     function Pub() public { }
 
+    function publishBytes(string _title, bytes _body)
+    external
+    returns (uint256) {
+        uint256 index = all.length;
+        all.push(Publication(
+            msg.sender,
+            now,
+            _title,
+            _body
+        ));
+        allByAuthor[msg.sender].push(index);
+        return index;
+    }
+
     function publish(string _title, string _body)
     external
     returns (uint256) {
         uint256 index = all.length;
         all.push(Publication(
             msg.sender,
+            now,
             _title,
-            _body
+            bytes(_body)
         ));
         allByAuthor[msg.sender].push(index);
         return index;
