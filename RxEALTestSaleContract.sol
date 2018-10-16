@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RxEALTestSaleContract at 0x228d84c133756eeff8d8cd180364828988fbdb30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RxEALTestSaleContract at 0xc921dc114987cb3b5ee26e1856e4d4db14ce5c8e
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.21;
 
 
 
