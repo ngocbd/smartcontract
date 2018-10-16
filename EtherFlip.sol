@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherFlip at 0x3023d5ee05ebee74b61f940433b7783eac1f221e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherFlip at 0xE5a04D98538231b0fAb9ABa60cd73cE4fF3039DF
 */
 // <ORACLIZE_API>
 /*
@@ -1040,7 +1040,7 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
-// EtherFlip v1.5
+// EtherFlip v1.6
 
 contract token { function transfer(address receiver, uint amount){ receiver; amount; } }
 
@@ -1058,7 +1058,7 @@ contract EtherFlip is usingOraclize {
     
     //~ Events
     event newRandomValue(bytes, address, uint);
-    event proofFailed(bool);
+    event proofFailed(address, uint);
     
     //~ Tokens
     token public flipTokenReward;
@@ -1141,9 +1141,9 @@ contract EtherFlip is usingOraclize {
     
     function __callback(bytes32 _queryId, string _result, bytes _proof) oraclizeAction { 
         uint amount = playerAmount[_queryId];
-        if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0) {
+        if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0 || _proof.length == 0) {
             // the proof verification has failed
-            proofFailed(true);
+            proofFailed(playerAddress[_queryId], amount);
             playerAddress[_queryId].transfer(amount);
             delete playerAddress[_queryId];
             delete playerAmount[_queryId];
