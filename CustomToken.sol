@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x8489a5ae19d3da2a88426c99d02c123ba3a0147b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x5de961c448d0745c32839c8d9cf479e61f101076
 */
 pragma solidity ^0.4.19;
 
@@ -45,13 +45,69 @@ contract BaseToken {
     }
 }
 
-contract CustomToken is BaseToken {
+contract ICOToken is BaseToken {
+    // 1 ether = icoRatio token
+    uint256 public icoRatio;
+    uint256 public icoBegintime;
+    uint256 public icoEndtime;
+    address public icoSender;
+    address public icoHolder;
+
+    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
+    event Withdraw(address indexed from, address indexed holder, uint256 value);
+
+    function ico() public payable {
+        require(now >= icoBegintime && now <= icoEndtime);
+        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
+        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
+            revert();
+        }
+        _transfer(icoSender, msg.sender, tokenValue);
+        ICO(msg.sender, msg.value, tokenValue);
+    }
+
+    function withdraw() public {
+        uint256 balance = this.balance;
+        icoHolder.transfer(balance);
+        Withdraw(msg.sender, icoHolder, balance);
+    }
+}
+
+contract LockToken is BaseToken {
+    struct LockMeta {
+        uint256 amount;
+        uint256 endtime;
+    }
+    
+    mapping (address => LockMeta) public lockedAddresses;
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(balanceOf[_from] >= _value);
+        LockMeta storage meta = lockedAddresses[_from];
+        require(now >= meta.endtime || meta.amount <= balanceOf[_from] - _value);
+        super._transfer(_from, _to, _value);
+    }
+}
+
+contract CustomToken is BaseToken, ICOToken, LockToken {
     function CustomToken() public {
-        totalSupply = 10000000000000000000000000000;
-        name = 'zbcoin';
-        symbol = 'ZBCT';
+        totalSupply = 2100000000000000000000000000;
+        name = 'ekkoblockchaintoken';
+        symbol = 'ebkt';
         decimals = 18;
-        balanceOf[0x82e897EA30E96767c3B5098a962DABB47D6f8BB3] = totalSupply;
-        Transfer(address(0), 0x82e897EA30E96767c3B5098a962DABB47D6f8BB3, totalSupply);
+        balanceOf[0x1a5e273c23518af490ca89d31c23dadd9f3df3a5] = totalSupply;
+        Transfer(address(0), 0x1a5e273c23518af490ca89d31c23dadd9f3df3a5, totalSupply);
+
+        icoRatio = 8000;
+        icoBegintime = 1522512000;
+        icoEndtime = 1538323200;
+        icoSender = 0xd780eaf3d801d8a9b037c9429d456fe7645f7a9b;
+        icoHolder = 0xd780eaf3d801d8a9b037c9429d456fe7645f7a9b;
+
+        lockedAddresses[0xaf2775351ce665f6f430abee07bd88110cd63703] = LockMeta({amount: 630000000000000000000000000, endtime: 1556640000});
+    }
+
+    function() public payable {
+        ico();
     }
 }
