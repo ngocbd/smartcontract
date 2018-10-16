@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenCoin at 0x8e637ad72819f3a8feb65a41576d2dd370f4f196
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenCoin at 0x781643835810707ad98db8928c49a5fcc956b584
 */
 pragma solidity ^0.4.16;
+
 library SafeMath {
   function mul(uint256 a, uint256 b) constant public returns (uint256) {
     uint256 c = a * b;
