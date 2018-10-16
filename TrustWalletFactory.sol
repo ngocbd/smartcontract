@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustWalletFactory at 0xaf98a2bc242d93b5206b2ea7cf26e31d82c5873b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustWalletFactory at 0x903db1bf91cc22964cccfbe1a1875eb3b989f32a
 */
 pragma solidity ^0.4.19;
 contract TrustWallet {
@@ -8,7 +8,7 @@ contract TrustWallet {
         // How many seconds the user has to wait between initiating the
         // transaction and finalizing the transaction. This cannot be
         // changed.
-        uint waiting_time;
+        uint delay;
 
         address added_by;
         uint time_added;
@@ -34,8 +34,6 @@ contract TrustWallet {
 
         // True if this trasaction was executed. If false, this means it was canceled.
         bool is_executed;
-        // True if the execution call was successful
-        bool execution_successful;
     }
 
     Transaction[] public transactions;
@@ -59,26 +57,16 @@ contract TrustWallet {
     }
 
     // Returns true if there is a transaction pending.
-    function isTransactionPending() public constant returns (bool) {
+    function isTransactionPending() internal constant returns (bool) {
         if (transactions.length == 0) return false;
         return transactions[transactions.length - 1].time_initiated > 0 &&
             transactions[transactions.length - 1].time_finalized == 0;
     }
 
-    // Returns the balance of this contract.
-    function balance() public constant returns (uint) {
-        return address(this).balance;
-    }
-
-    // Returns the balance of this contract.
-    function transactionCount() public constant returns (uint) {
-        return transactions.length;
-    }
-
     // Constructor. Creates the first user.
     function TrustWallet(address first_user) public {
         users[first_user] = User({
-            waiting_time: 0,
+            delay: 0,
             time_added: now,
             added_by: 0x0,
             time_removed: 0,
@@ -104,12 +92,11 @@ contract TrustWallet {
             time_initiated: now,
             finalized_by: 0x0,
             time_finalized: 0,
-            is_executed: false,
-            execution_successful: false
+            is_executed: false
         }));
     }
 
-    // Executes the transaction. The waiting_time of the the transaction
+    // Executes the transaction. The delay of the the transaction
     // initiated_by must have passed in order to call this function. Any active
     // user is able to call this function.
     function executeTransaction()
@@ -118,35 +105,35 @@ contract TrustWallet {
         transactionMustBePending()
     {
         Transaction storage transaction = transactions[transactions.length - 1];
-        require(now > transaction.time_initiated + users[transaction.initiated_by].waiting_time);
+        require(now > transaction.time_initiated + users[transaction.initiated_by].delay);
         transaction.is_executed = true;
         transaction.time_finalized = now;
         transaction.finalized_by = msg.sender;
-        transaction.execution_successful = transaction.destination.call.value(
-            transaction.value)(transaction.data);
+        require(transaction.destination.call.value(transaction.value)(transaction.data));
     }
 
-    // Cancels the transaction. The waiting_time of the user who is trying
-    // to cancel must be lower or equal to the waiting_time of the
+    // Cancels the transaction. The delay of the user who is trying
+    // to cancel must be lower or equal to the delay of the
     // transaction initiated_by.
     function cancelTransaction()
         public
         onlyActiveUsersAllowed()
         transactionMustBePending()
     {
-        // Users with a higher priority can do this
         Transaction storage transaction = transactions[transactions.length - 1];
-        // Either the sender is a higher priority user
-        require(users[msg.sender].waiting_time <=
-            users[transaction.initiated_by].waiting_time);
+        // Either the sender is a higher priority user, or twice the waiting time of
+        // the user trying to cancel has passed. This is to prevent transactions from
+        // getting "stuck" if the call() fails when trying to execute the transaction.
+        require(users[msg.sender].delay <= users[transaction.initiated_by].delay ||
+            now - transaction.time_initiated > users[msg.sender].delay * 2);
         transaction.time_finalized = now;
         transaction.finalized_by = msg.sender;
     }
 
     // Adds a user to the wallet. The waiting time of the new user must
-    // be greater or equal to the waiting_time of the sender. A user that
+    // be greater or equal to the delay of the sender. A user that
     // already exists or was removed cannot be added. To prevent spam,
-    // a user must wait waiting_time before adding another user.
+    // a user must wait delay before adding another user.
     function addUser(address new_user, uint new_user_time)
         public
         onlyActiveUsersAllowed()
@@ -155,34 +142,34 @@ contract TrustWallet {
         require(users[new_user].time_removed == 0);
 
         User storage sender = users[msg.sender];
-        require(now > sender.waiting_time + sender.time_added_another_user);
-        require(new_user_time >= sender.waiting_time);
+        require(now > sender.delay + sender.time_added_another_user);
+        require(new_user_time >= sender.delay);
 
         sender.time_added_another_user = now;
         users[new_user] = User({
-            waiting_time: new_user_time,
+            delay: new_user_time,
             time_added: now,
             added_by: msg.sender,
             time_removed: 0,
             removed_by: 0x0,
-            // The new user will have to wait one waiting_time before being
+            // The new user will have to wait one delay before being
             // able to add a new user.
             time_added_another_user: now
         });
         userAddresses.push(new_user);
     }
 
-    // Removes a user. The sender must have a lower or equal waiting_time
+    // Removes a user. The sender must have a lower or equal delay
     // as the user that she is trying to remove.
     function removeUser(address userAddr)
         public
         onlyActiveUsersAllowed()
     {
-        require(users[userAddr].time_removed == 0);
         require(users[userAddr].time_added != 0);
+        require(users[userAddr].time_removed == 0);
 
         User storage sender = users[msg.sender];
-        require(sender.waiting_time <= users[userAddr].waiting_time);
+        require(sender.delay <= users[userAddr].delay);
 
         users[userAddr].removed_by = msg.sender;
         users[userAddr].time_removed = now;
