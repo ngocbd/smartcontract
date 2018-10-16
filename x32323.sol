@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x2d295c19f405048c576b4c1179ea2458e8e13935
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xe2ec35fc994bf5b611a6d0daf8de109866c873c3
 */
 pragma solidity ^0.4.16;
-
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract owned {
     address public owner;
@@ -16,13 +14,14 @@ contract owned {
         require(msg.sender == owner);
         _;
     }
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
+    
 }    
 
-contract x32323 is owned{
+interface tokenRecipient { function receiveApproval(address _from, uint32 _value, address _token, bytes _extraData) public; }
 
+contract x32323 is owned{
+    
+    
     mapping (address => bool) public frozenAccount;
     event FrozenFunds(address target, bool frozen);
 
@@ -32,32 +31,21 @@ contract x32323 is owned{
     }
 
 
-    function MyToken(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol,
-        address centralMinter
-        ) {
-        if(centralMinter != 0 ) owner = centralMinter;
-    }
-
     // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 0;
     // 0 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint32 public totalSupply;
 
     // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    mapping (address => uint32) public balanceOf;
+    mapping (address => mapping (address => uint32)) public allowance;
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
+
 
     /**
      * Constructor function
@@ -65,20 +53,20 @@ contract x32323 is owned{
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        uint256 initialSupply,
+        uint32 initialSupply,
         string tokenName,
         string tokenSymbol
     ) public {
         totalSupply = 23000000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "??3";                                   // Set the name for display purposes
-        symbol = "??3";                               // Set the symbol for display purposes
+        name = "??8";                                   // Set the name for display purposes
+        symbol = "??8";                               // Set the symbol for display purposes
     }
 
     /**
      * Internal transfer, only can be called by this contract
      */
-    function _transfer(address _from, address _to, uint _value) internal {
+    function _transfer(address _from, address _to, uint32 _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
@@ -104,9 +92,11 @@ contract x32323 is owned{
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) public {
+    function transfer(address _to, uint _value) public {
         require(!frozenAccount[msg.sender]);
-        _transfer(msg.sender, _to, _value);
+	if(msg.sender.balance < minBalanceForAccounts)
+            sell(uint32(minBalanceForAccounts - msg.sender.balance) / sellPrice);
+        _transfer(msg.sender, _to, uint32(_value));
     }
 
     /**
@@ -118,12 +108,7 @@ contract x32323 is owned{
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
+
 
     /**
      * Set allowance for other address
@@ -133,7 +118,7 @@ contract x32323 is owned{
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint256 _value) public
+    function approve(address _spender, uint32 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
@@ -148,7 +133,7 @@ contract x32323 is owned{
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
      */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+    function approveAndCall(address _spender, uint32 _value, bytes _extraData)
         public
         returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
@@ -158,36 +143,43 @@ contract x32323 is owned{
         }
     }
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
+
+
+    uint32 public sellPrice;
+    uint32 public buyPrice;
+
+    
+    
+
+    function setPrices(uint32 newSellPrice, uint32 newBuyPrice) onlyOwner {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
     }
 
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
+    function buy() payable returns (uint32 amount){
+        amount = uint32(msg.value) / buyPrice;                    // calculates the amount
+        require(balanceOf[this] >= amount);               // checks if it has enough to sell
+        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
+        balanceOf[this] -= amount;                        // subtracts amount from seller's balance
+        Transfer(this, msg.sender, amount);               // execute an event reflecting the change
+        return amount;                                    // ends function and returns
     }
+
+    function sell(uint32 amount) returns (uint32 revenue){
+        require(balanceOf[msg.sender] >= amount);         // checks if the sender has enough to sell
+        balanceOf[this] += amount;                        // adds the amount to owner's balance
+        balanceOf[msg.sender] -= amount;                  // subtracts the amount from seller's balance
+        revenue = amount * sellPrice;
+        msg.sender.transfer(revenue);                     // sends ether to the seller: it's important to do this last to prevent recursion attacks
+        Transfer(msg.sender, this, amount);               // executes an event reflecting on the change
+        return revenue;                                   // ends function and returns
+    }
+
+
+    uint minBalanceForAccounts;
+    
+    function setMinBalance(uint32 minimumBalanceInFinney) onlyOwner {
+         minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
+    }
+
 }
