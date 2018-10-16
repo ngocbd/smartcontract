@@ -1,19 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x68662fae9167d1e3eb6fd0ed7c416826faa20b0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x2dc0170450e66af2d3f5c56aa0b20ec4a254902e
 */
-pragma solidity ^0.4.2;
-
-contract mortal {
-    /* Define variable owner of the type address*/
-    address owner;
-
-    /* this function is executed at initialization and sets the owner of the contract */
-    function mortal() { owner = msg.sender; }
-
-    /* Function to recover the funds on the contract */
-    function kill() { if (msg.sender == owner) selfdestruct(owner); }
-}
-
+pragma solidity ^0.4.6;
 contract owned {
     address public owner;
 
@@ -107,11 +95,12 @@ contract token {
     }
 }
 
-contract MyAdvancedToken is owned, token, mortal {
+contract MyAdvancedToken is owned, token {
 
-    uint256 public sellPrice;
     uint256 public buyPrice;
     uint256 public totalSupply;
+    uint256 public claim;
+    bool public claimStatus;
 
     mapping (address => bool) public frozenAccount;
 
@@ -119,9 +108,15 @@ contract MyAdvancedToken is owned, token, mortal {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken() token (1000000000, "Welfare Token Fund", 3, "WTF") {
-        owner = 0x00e199840Fe2a772282A770F9eAb2Ab3e6B0cbDe;      // Sets the owner as specified (if centralMinter is not specified the owner is msg.sender)
-        balanceOf[owner] = 1000000000;                   // Give the owner all initial tokens
+    function MyAdvancedToken(
+        uint256 initialSupply,
+        string tokenName,
+        uint8 decimalUnits,
+        string tokenSymbol,
+        address centralMinter
+    ) token (initialSupply, tokenName, decimalUnits, tokenSymbol) {
+        if(centralMinter != 0 ) owner = centralMinter;      // Sets the owner as specified (if centralMinter is not specified the owner is msg.sender)
+        balanceOf[owner] = initialSupply;                   // Give the owner all initial tokens
     }
 
     /* Send coins */
@@ -160,8 +155,7 @@ contract MyAdvancedToken is owned, token, mortal {
         FrozenFunds(target, freeze);
     }
 
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-        sellPrice = newSellPrice;
+    function setPrices(uint256 newBuyPrice) onlyOwner {
         buyPrice = newBuyPrice;
     }
 
@@ -173,11 +167,32 @@ contract MyAdvancedToken is owned, token, mortal {
         Transfer(this, msg.sender, amount);                // execute an event reflecting the change
     }
 
+    /* Insurance claim data */
+    
+    function setClaim(uint256 _claim)  onlyOwner{
+        claim = _claim;
+    }
+    
+    function claimAmount() returns (uint256) {
+        return claim;
+    }
+    
+    function setClaimStatus(bool _status) onlyOwner {
+        claimStatus = _status;
+    }
+    
+    function getClaimStatus() returns (bool) {
+        return claimStatus;
+    }
+    
+    /* Sell position and collect claim*/
+
     function sell(uint256 amount) {
+        if(getClaimStatus() == false) throw;                // checks if party can make a claim
         if (balanceOf[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
         balanceOf[this] += amount;                         // adds the amount to owner's balance
         balanceOf[msg.sender] -= amount;                   // subtracts the amount from seller's balance
-        if (!msg.sender.send(amount * sellPrice)) {        // sends ether to the seller. It's important
+        if (!msg.sender.send(claim)) {        // sends ether to the seller. It's important
             throw;                                         // to do this last to avoid recursion attacks
         } else {
             Transfer(msg.sender, this, amount);            // executes an event reflecting on the change
