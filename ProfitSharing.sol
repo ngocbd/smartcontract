@@ -1,8 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProfitSharing at 0x3f3195776df995bdd7efd702d07d5818d8a24ba6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProfitSharing at 0x6822aaf4ab22e6cca8352a927b9ae0a8fdb58d9d
 */
 pragma solidity ^0.4.11;
 
+contract Ownable {
+  address public owner;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+}
 
 /*
     Copyright 2016, Jordi Baylina
@@ -616,41 +649,6 @@ library SafeMath {
   }
 }
 
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-
 contract ProfitSharing is Ownable {
   using SafeMath for uint;
 
@@ -690,9 +688,10 @@ contract ProfitSharing is Ownable {
   {
     uint256 currentSupply = miniMeToken.totalSupplyAt(block.number);
     uint256 dividendIndex = dividends.length;
+    uint256 blockNumber = SafeMath.sub(block.number, 1);
     dividends.push(
       Dividend(
-        block.number,
+        blockNumber,
         getNow(),
         msg.value,
         0,
@@ -700,7 +699,7 @@ contract ProfitSharing is Ownable {
         false
       )
     );
-    DividendDeposited(msg.sender, block.number, msg.value, currentSupply, dividendIndex);
+    DividendDeposited(msg.sender, blockNumber, msg.value, currentSupply, dividendIndex);
   }
 
   function claimDividend(uint256 _dividendIndex) public
@@ -740,9 +739,10 @@ contract ProfitSharing is Ownable {
     uint256 currentSupply = miniMeToken.totalSupplyAt(block.number);
     uint256 remainingAmount = SafeMath.sub(dividend.amount, dividend.claimedAmount);
     uint256 dividendIndex = dividends.length;
+    uint256 blockNumber = SafeMath.sub(block.number, 1);
     dividends.push(
       Dividend(
-        block.number,
+        blockNumber,
         getNow(),
         remainingAmount,
         0,
@@ -750,7 +750,7 @@ contract ProfitSharing is Ownable {
         false
       )
     );
-    DividendRecycled(msg.sender, block.number, remainingAmount, currentSupply, dividendIndex);
+    DividendRecycled(msg.sender, blockNumber, remainingAmount, currentSupply, dividendIndex);
   }
 
   //Function is mocked for tests
