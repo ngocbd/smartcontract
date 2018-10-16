@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProWalletToken at 0xae57725a23984dc94f82cc3b343185f00386feb8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProWalletToken at 0x808067e2f6e266319f71b2e21bdf99b59ead05c6
 */
+pragma solidity ^0.4.14;
+
 // Modified by jjv360 for ProWallet
 //
 // ----------------------------------------------------------------------------------------------
@@ -32,7 +34,7 @@ contract ERC20Interface {
     // Returns the amount which _spender is still allowed to withdraw from _owner
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
 
-    // Triggered when tokens are transferred.
+    // Triggered when tokens are transferred or generated.
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
     // Triggered whenever approve(address _spender, uint256 _value) is called.
@@ -44,9 +46,9 @@ contract ProWalletToken is ERC20Interface {
 
     // Variables
     string public constant symbol = "TST";
-    string public constant name = "Test";
+    string public constant name = "TestFlex";
     uint8 public constant decimals = 18;
-    uint256 _totalSupply = 100000000000000000000;
+    uint256 _totalSupply = 120000000000000000000;
 
     // Owner of this contract
     address public owner;
@@ -69,6 +71,30 @@ contract ProWalletToken is ERC20Interface {
     function ProWalletToken() {
         owner = msg.sender;
         balances[owner] = _totalSupply;
+    }
+
+    // Creates more tokens and sends them to the owner's account
+    function generate(uint256 _amount) onlyOwner returns (bool success) {
+
+        // Check conditions
+        if (_amount > 0 && balances[owner] + _amount > balances[owner]) {
+
+            // Success, add tokens to owner account
+            balances[owner] += _amount;
+
+            // Trigger the transfer event
+            Transfer(0, owner, _amount);
+
+            // Return success
+            return true;
+
+        } else {
+
+            // Conditions failed
+            return false;
+
+        }
+
     }
 
     // Returns the count of all tokens in existence
@@ -132,6 +158,7 @@ contract ProWalletToken is ERC20Interface {
 
             // Conditions failed
             return false;
+
         }
 
     }
