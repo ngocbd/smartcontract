@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittiesDNA at 0xd6f5193f52e8031c5e7cf81549b6a4ccfdf660e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittiesDNA at 0x74947f5aa38e170048bc4c84825fc58d9a1ed58a
 */
 pragma solidity ^0.4.18;
 
