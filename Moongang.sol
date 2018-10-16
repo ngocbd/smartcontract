@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x86666b7c369a848e2fc729eae39af7f8c3a2712e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x53acdca2213bec8140e2618dfb6bc71a2a2c7080
 */
 // Author : shift
 
@@ -65,7 +65,7 @@ contract Moongang {
   }
 
   modifier underMaxAmount {
-    uint256 correct_amount = SafeMath.div(SafeMath.mul(min_amount, 100), 99);
+    uint256 correct_amount = SafeMath.div(SafeMath.mul(max_amount, 100), 99);
     require(max_amount == 0 || this.balance <= correct_amount);
     _;
   }
