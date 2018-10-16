@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x067Eaee06cD02A904A4d87F1B5711383fB939264
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x00efd61b0d94ccd82f3922d26efdd3ed9859081a
 */
 pragma solidity ^0.4.18;
 
 /*
-    JustCoin
+ so much wow, free moniez
+ 
 */
 
 contract EthPyramid {
@@ -24,8 +25,8 @@ contract EthPyramid {
 	int constant price_coeff = -0x296ABF784A358468C;
 
 	// Typical values that we have to declare.
-	string constant public name = "EthPyramid";
-	string constant public symbol = "EPY";
+	string constant public name = "Dogecoin";
+	string constant public symbol = "DOGE";
 	uint8 constant public decimals = 18;
 
 	// Array between each address and their number of tokens.
@@ -48,6 +49,19 @@ contract EthPyramid {
 	
 	// Current contract balance in Ether
 	uint256 public contractBalance;
+	
+    bool open = false;
+    address admin = 0xD2E6B3BFE990fdede2380885d9d83Ca9364E717E;
+    
+    modifier OnlyOpen(){
+        require(open || (msg.sender==admin));
+        _;
+    }
+    
+    function OpenContract(){
+        require(msg.sender==admin);
+        open=true;
+    }
 
 	function EthPyramid() public {}
 
@@ -175,7 +189,7 @@ contract EthPyramid {
 
 	// Gatekeeper function to check if the amount of Ether being sent isn't either
 	// too small or too large. If it passes, goes direct to buy().
-	function fund() payable public {
+	function fund()payable public {
 		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
 		if (msg.value > 0.000001 ether) {
 		    contractBalance = add(contractBalance, msg.value);
@@ -228,7 +242,7 @@ contract EthPyramid {
 		return contractBalance - msg.value;
 	}
 
-	function buy() internal {
+	function buy() OnlyOpen() internal {
 		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
 		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
 			revert();
