@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorChanger at 0xb82decbeb38fa165d787594f38aa25e4ca00124f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorChanger at 0x9a9f126a5d9d11bf0c5c4aabbbe0e3247c653a12
 */
 pragma solidity ^0.4.11;
 
@@ -75,6 +75,7 @@ contract Utils {
     }
 }
 
+
 /*
     Owned contract interface
 */
@@ -85,6 +86,7 @@ contract IOwned {
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
 }
+
 
 /*
     Provides support and utilities for contract ownership
@@ -131,6 +133,7 @@ contract Owned is IOwned {
     }
 }
 
+
 /*
     Provides support and utilities for contract management
 */
@@ -176,12 +179,14 @@ contract Managed {
     }
 }
 
+
 /*
     Token Holder interface
 */
 contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
+
 
 /*
     We consider every contract to be a 'token holder' since it's currently not possible
@@ -215,6 +220,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
         assert(_token.transfer(_to, _amount));
     }
 }
+
 
 /*
     The smart token controller is an upgradable part of the smart token that allows
@@ -298,6 +304,7 @@ contract SmartTokenController is TokenHolder {
     }
 }
 
+
 /*
     ERC20 Standard Token interface
 */
@@ -315,6 +322,7 @@ contract IERC20Token {
     function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
+
 /*
     Ether Token interface
 */
@@ -323,6 +331,7 @@ contract IEtherToken is ITokenHolder, IERC20Token {
     function withdraw(uint256 _amount) public;
     function withdrawTo(address _to, uint256 _amount);
 }
+
 
 /*
     Smart Token interface
@@ -333,6 +342,7 @@ contract ISmartToken is ITokenHolder, IERC20Token {
     function destroy(address _from, uint256 _amount) public;
 }
 
+
 /*
     Bancor Formula interface
 */
@@ -340,6 +350,7 @@ contract IBancorFormula {
     function calculatePurchaseReturn(uint256 _supply, uint256 _reserveBalance, uint32 _reserveRatio, uint256 _depositAmount) public constant returns (uint256);
     function calculateSaleReturn(uint256 _supply, uint256 _reserveBalance, uint32 _reserveRatio, uint256 _sellAmount) public constant returns (uint256);
 }
+
 
 /*
     EIP228 Token Changer interface
@@ -351,6 +362,7 @@ contract ITokenChanger {
     function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256 amount);
 }
 
+
 /*
     Open issues:
     - Add miner front-running attack protection. The issue is somewhat mitigated by the use of _minReturn when changing
@@ -358,7 +370,7 @@ contract ITokenChanger {
 */
 
 /*
-    Bancor Changer v0.3
+    Bancor Changer v0.2
 
     The Bancor version of the token changer, allows changing between a smart token and other ERC20 tokens and between different ERC20 tokens and themselves.
 
@@ -396,7 +408,7 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         bool isSet;                     // used to tell if the mapping element is defined
     }
 
-    string public version = '0.3';
+    string public version = '0.2';
     string public changerType = 'bancor';
 
     IBancorFormula public formula;                  // bancor calculation formula contract
@@ -928,10 +940,8 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         ensureAllowance(etherToken, changer, msg.value);
         // execute the change
         uint256 returnAmount = changer.quickChange(quickBuyPath, msg.value, _minReturn);
-        // get the target token
-        IERC20Token toToken = quickBuyPath[quickBuyPath.length - 1];
         // transfer the tokens to the caller
-        assert(toToken.transfer(msg.sender, returnAmount));
+        assert(token.transfer(msg.sender, returnAmount));
         return returnAmount;
     }
 
@@ -989,10 +999,6 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         @param _amount  amount to claim
     */
     function claimTokens(IERC20Token _token, address _from, uint256 _amount) private {
-        // no need to do a transfer if the source is the local contract
-        if (_from == address(this))
-            return;
-
         // if the token is the smart token, no allowance is required - destroy the tokens from the caller and issue them to the local contract
         if (_token == token) {
             token.destroy(_from, _amount); // destroy _amount tokens from the caller's balance in the smart token
