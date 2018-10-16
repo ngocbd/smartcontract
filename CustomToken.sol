@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xd0ed0c2ce0e004610b391edd708bb544acd4935a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xa8f876e68c84d783fc28a75b9309eb51872a347c
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 100000000000000000000000000;
-        name = 'AFD';
-        symbol = 'AFD';
-        decimals = 18;
-        balanceOf[0x5eeae4727711db2bed8099866a6a2301a9f4937b] = totalSupply;
-        Transfer(address(0), 0x5eeae4727711db2bed8099866a6a2301a9f4937b, totalSupply);
+        totalSupply = 1000000000000000000;
+        name = 'TrvelChainV';
+        symbol = 'TEC';
+        decimals = 10;
+        balanceOf[0xeb339f3c2970c2e2ae81d92017d1e1c967beccf1] = totalSupply;
+        Transfer(address(0), 0xeb339f3c2970c2e2ae81d92017d1e1c967beccf1, totalSupply);
     }
 }
