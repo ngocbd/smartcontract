@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEC at 0x583f2ea75193621c018589297a5603b0f275fd22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEC at 0x0dc3f6c12741b61e5145c1d05340f8a0315fecc1
 */
 pragma solidity ^0.4.4;
 
@@ -106,7 +106,7 @@ contract WEC is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "World Entertainment Coin";                   //
+    string public name = "World Entertainment Chain";                   //
     uint8 public decimals = 2;                //
     string public symbol = "WEC";                 //
     string public version = 'H1.0';       //
@@ -121,7 +121,7 @@ contract WEC is StandardToken {
         ) {
         balances[msg.sender] = 100000000000;               // 
         totalSupply = 100000000000;                        // 
-        name = "World Entertainment Coin";                                   // 
+        name = "World Entertainment Chain";                                   // 
         decimals = 2;                            // 
         symbol = "WEC";                               // 
     }
