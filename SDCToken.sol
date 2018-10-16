@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDCToken at 0x2fd1af0af36d267b5f0bb1d8df17cb373028af03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDCToken at 0x762d0666217d92764d0052a630b131507fba2bd4
 */
 pragma solidity ^0.4.16;
 
@@ -189,9 +189,11 @@ contract SDCToken is StandardToken {
   string public symbol = "SDC";
   uint public decimals = 18;
   
+  bool public initialized = false;
+  
   function SDCToken() {
     totalSupply = 500000000000000000000000000;
-    balances[msg.sender] = totalSupply;
+    balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
   }
 
 }
