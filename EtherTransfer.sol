@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTransfer at 0xb6Db69e99f7E3ccB352FaBde7D98A8FAe0De4297
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTransfer at 0xCF0c7e3Ad3b2C82BdDd286A301aFaAFd185F30EC
 */
 contract AmIOnTheFork {
     function forked() constant returns(bool);
@@ -30,37 +30,24 @@ contract Owned{
 contract EtherTransfer is Owned{
 
     //"If you are good at something, never do it for free" - Joker
-    //Fee is 0.05% (it's mean you send 1 ETH fee is 0.0005 ETH)
+    //Fee is 0.1% (it's mean you send 1 ETH fee is 0.001 ETH)
     //Notice Fee is not include transaction fee
-    uint constant Fee = 5;
-    uint constant Decs = 10000;
-
-    bool public IsEthereum = false; 
+    uint constant Fee = 1;
+    uint constant Decs = 1000;
 
     //Events log
     event ETHTransfer(address indexed From,address indexed To, uint Value);
-    event ETCReturn(address indexed Return, uint Value);
-
     event ETCTransfer(address indexed From,address indexed To, uint Value);
-    event ETHReturn(address indexed Return, uint Value);
     
     //Is Vitalik Buterin on the Fork ? >_<
     AmIOnTheFork IsHeOnTheFork = AmIOnTheFork(0x2bd2326c993dfaef84f696526064ff22eba5b362);
-
-    //Construction function
-    function EtherTransfer(){
-        IsEthereum = IsHeOnTheFork.forked();
-    }
 
     //Only send ETH
     function SendETH(address ETHAddress) returns(bool){
         uint Value = msg.value - (msg.value*Fee/Decs);
         //It is forked chain ETH
-        if(IsEthereum && ETHAddress.send(Value)){
+        if(IsHeOnTheFork.forked() && ETHAddress.send(Value)){
             ETHTransfer(msg.sender, ETHAddress, Value);
-            return true;
-        }else if(!IsEthereum && msg.sender.send(msg.value)){
-            ETCReturn(msg.sender, msg.value);
             return true;
         }
         //No ETC is trapped
@@ -71,11 +58,8 @@ contract EtherTransfer is Owned{
     function SendETC(address ETCAddress) returns(bool){
         uint Value = msg.value - (msg.value*Fee/Decs);
         //It is non-forked chain ETC
-        if(!IsEthereum && ETCAddress.send(Value)){
+        if(!IsHeOnTheFork.forked() && ETCAddress.send(Value)){
             ETCTransfer(msg.sender, ETCAddress, Value);
-            return true;
-        } else if(IsEthereum && msg.sender.send(msg.value)){
-            ETHReturn(msg.sender, msg.value);
             return true;
         }
         //No ETH is trapped
