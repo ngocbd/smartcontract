@@ -1,23 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0xb589ef3af084cc5ec905d23112520ec168478582
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x6022c6c5de7c4ab22b070c36c3d5763669777f68
 */
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-
 /**
  * Safe unsigned safe math.
  *
@@ -124,10 +107,31 @@ contract Haltable is Ownable {
  */
 contract PricingStrategy {
 
+  /** Interface declaration. */
+  function isPricingStrategy() public constant returns (bool) {
+    return true;
+  }
+
+  /** Self check if all references are correctly set.
+   *
+   * Checks that pricing strategy matches crowdsale parameters.
+   */
+  function isSane(address crowdsale) public constant returns (bool) {
+    return true;
+  }
+
   /**
    * When somebody tries to buy tokens for X eth, calculate how many tokens they get.
+   *
+   *
+   * @param value - What is the value of the transaction send in as wei
+   * @param tokensSold - how much tokens have been sold this far
+   * @param weiRaised - how much money has been raised this far
+   * @param msgSender - who is the investor of this transaction
+   * @param decimals - how many decimal units the token has
+   * @return Amount of tokens the investor receives
    */
-  function calculatePrice(uint value, uint tokensSold, uint weiRaised) public constant returns (uint tokenAmount);
+  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
 
@@ -144,8 +148,44 @@ contract FinalizeAgent {
     return true;
   }
 
+  /** Return true if we can run finalizeCrowdsale() properly.
+   *
+   * This is a safety check function that doesn't allow crowdsale to begin
+   * unless the finalizer has been set up properly.
+   */
+  function isSane() public constant returns (bool);
+
   /** Called once by crowdsale finalize() if the sale was success. */
   function finalizeCrowdsale();
+
+}
+
+
+
+
+/*
+ * ERC20 interface
+ * see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+/**
+ * A token that defines fractional units as decimals.
+ */
+contract FractionalERC20 is ERC20 {
+
+  uint public decimals;
 
 }
 
@@ -167,7 +207,7 @@ contract Crowdsale is Haltable {
   using SafeMathLib for uint;
 
   /* The token we are selling */
-  ERC20 public token;
+  FractionalERC20 public token;
 
   /* How we are going to price our offering */
   PricingStrategy public pricingStrategy;
@@ -177,9 +217,6 @@ contract Crowdsale is Haltable {
 
   /* tokens will be transfered from this address */
   address public multisigWallet;
-
-  /* The party who holds the full token pool and has approve()'ed tokens for this crowdsale */
-  address public beneficiary;
 
   /* if the funding goal is not reached, investors may withdraw their funds */
   uint public minimumFundingGoal;
@@ -214,36 +251,34 @@ contract Crowdsale is Haltable {
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
 
+  /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
+  uint public ownerTestValue;
+
   /** State machine
    *
-   * - Prefunding: We have not started yet
+   * - Preparing: All contract initialization calls and variables have not been set yet
+   * - Prefunding: We have not passed start time yet
    * - Funding: Active crowdsale
    * - Success: Minimum funding goal reached
    * - Failure: Minimum funding goal not reached before ending time
    * - Finalized: The finalized has been called and succesfully executed
    * - Refunding: Refunds are loaded on the contract for reclaim.
    */
-  enum State{Unknown, PreFunding, Funding, Success, Failure, Finalized, Refunding}
+  enum State{Unknown, Preparing, PreFunding, Funding, Success, Failure, Finalized, Refunding}
 
   event Invested(address investor, uint weiAmount, uint tokenAmount);
   event Refund(address investor, uint weiAmount);
 
-  function Crowdsale(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal) {
+  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
 
-    token = ERC20(_token);
+    token = FractionalERC20(_token);
 
-    pricingStrategy = PricingStrategy(_pricingStrategy);
+    setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
     if(multisigWallet == 0) {
-        throw;
-    }
-
-    // TODO: remove beneficiary from the base class
-    beneficiary = _beneficiary;
-    if(beneficiary == 0) {
         throw;
     }
 
@@ -286,14 +321,14 @@ contract Crowdsale is Haltable {
   function invest(address receiver) inState(State.Funding) stopInEmergency payable public {
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold);
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
       throw;
     }
 
-    if(investedAmountOf[receiver] != 0) {
+    if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
     }
@@ -332,11 +367,9 @@ contract Crowdsale is Haltable {
   /**
    * Finalize a succcesful crowdsale.
    *
-   * Anybody can call to trigger the end of the crowdsale.
-   *
-   * Call the contract that provides post-crowdsale actions, like releasing the tokens.
+   * The owner can triggre a call the contract that provides post-crowdsale actions, like releasing the tokens.
    */
-  function finalize() public inState(State.Success) stopInEmergency {
+  function finalize() public inState(State.Success) onlyOwner stopInEmergency {
 
     // Already finalized
     if(finalized) {
@@ -351,11 +384,30 @@ contract Crowdsale is Haltable {
     finalized = true;
   }
 
-  function setFinalizeAgent(FinalizeAgent addr) onlyOwner inState(State.PreFunding) {
+  /**
+   * Allow to (re)set finalize agent.
+   *
+   * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
+   */
+  function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
 
     // Don't allow setting bad agent
     if(!finalizeAgent.isFinalizeAgent()) {
+      throw;
+    }
+  }
+
+  /**
+   * Allow to (re)set pricing strategy.
+   *
+   * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
+   */
+  function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
+    pricingStrategy = _pricingStrategy;
+
+    // Don't allow setting bad agent
+    if(!pricingStrategy.isPricingStrategy()) {
       throw;
     }
   }
@@ -396,11 +448,19 @@ contract Crowdsale is Haltable {
    */
   function getState() public constant returns (State) {
     if(finalized) return State.Finalized;
+    else if (address(finalizeAgent) == 0) return State.Preparing;
+    else if (!finalizeAgent.isSane()) return State.Preparing;
+    else if (!pricingStrategy.isSane(address(this))) return State.Preparing;
     else if (block.timestamp < startsAt) return State.PreFunding;
     else if (block.timestamp <= endsAt && !isCrowdsaleFull()) return State.Funding;
     else if (isMinimumGoalReached()) return State.Success;
     else if (!isMinimumGoalReached() && weiRaised > 0 && loadedRefund >= weiRaised) return State.Refunding;
     else return State.Failure;
+  }
+
+  /** This is for manual testing of multisig wallet interaction */
+  function setOwnerTestValue(uint val) onlyOwner {
+    ownerTestValue = val;
   }
 
   //
@@ -412,6 +472,7 @@ contract Crowdsale is Haltable {
     if(getState() != state) throw;
     _;
   }
+
 
   //
   // Abstract functions
@@ -428,7 +489,7 @@ contract Crowdsale is Haltable {
    * @param weiAmount The amount of wei the investor tries to invest in the current transaction
    * @param tokenAmount The amount of tokens we try to give to the investor in the current transaction
    * @param weiRaisedTotal What would be our total raised balance after this transaction
-   * @param tokensSoldTotal What would be our total sold tokens countafter this transaction
+   * @param tokensSoldTotal What would be our total sold tokens count after this transaction
    *
    * @return true if taking this investment would break our cap rules
    */
