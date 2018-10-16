@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfBitConnect at 0xd35be56e4ed6818d09e6f95b9c744c4607fda453
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfBitConnect at 0x27f8493696a224c40af66b745062c77e2b474671
 */
 pragma solidity ^0.4.20;
 
@@ -8,12 +8,12 @@ pragma solidity ^0.4.20;
 * =============================================================================*
 *  ATTENTION!                                                                  *
 *                                                                              *
-*                                                                              *
-*                                                                              *
+*            POBC.ml POBC.ml POBC.ml TO BUY THE TOKENS                         *
+*               THE TRUE PONZI SCHEME FOR EVERYONE                             *
 *                                                                              *
 *      THE ONE AND ONLY MANS NOT HOT                                           *
 *  Proof Of BITCONNEEEEEECT    10% in 10% out dont join if you dont want to :) *
-*  dont cry if you miss out                                                    *
+*  dont cry if you miss out     C a p t a i n A h a b  luv u                   *
 * =============================================================================*
 *                                                                              *
 */
