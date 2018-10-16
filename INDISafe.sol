@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INDISafe at 0xfe5ccf35b40e2533fba7a0e17c2763b9543ab608
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INDISafe at 0x718bea7a9a70368955dba5ce657d0695fa04e024
 */
 pragma solidity ^0.4.18;
 contract Token {
@@ -57,7 +57,7 @@ contract StandardToken is Token {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
-// requires 50,000,000 INDI deposited here for investors and collaborations and NGOs
+// requires 50,000,000 INDI deposited here for Team
 contract INDISafe {
   mapping (address => uint256) allocations;
   uint256 public unlockDate;
