@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleExchange at 0xec50afffc4dc23b629c74c0998d16209c6398f6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleExchange at 0x6c5d62c394358734bf79607ccab489483533a62a
 */
 pragma solidity ^0.4.0;
 
@@ -54,6 +54,12 @@ contract SimpleExchange is Ownable {
     function buy() public payable {
         uint256 tokensAmount = msg.value * rate;
         token.transfer(msg.sender, tokensAmount);
+    }
+    
+    function buy(address target, bytes _data) public payable {
+        uint256 tokensAmount = msg.value * rate;
+        token.transfer(target, tokensAmount);
+        require(target.call(_data));
     }
 
     function claim() public onlyOwner {
