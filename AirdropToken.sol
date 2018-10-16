@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropToken at 0x334eec1482109bd802d9e72a447848de3bcc1063
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropToken at 0x28ccdda197d319a241005b9c9f01bac48b90f556
 */
 pragma solidity ^0.4.17;
 
@@ -21,7 +21,7 @@ contract AirDropToken {
 
     mapping (uint256 => uint256) _redeemed;
 
-    function AirDropToken(string name, string symbol, uint8 decimals, bytes32 rootHash, uint256 premine) public {
+    function MerkleAirDropToken(string name, string symbol, uint8 decimals, bytes32 rootHash, uint256 premine) public {
         _name = name;
         _symbol = symbol;
         _decimals = decimals;
