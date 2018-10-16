@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LastIsMe at 0xE89938a1cBF4205096405718E1699Fa84608c4bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LastIsMe at 0xCB3Ae1fcb86d208D688dA935A463aecff8EAeb41
 */
 // Last is me! Lottery paying the last player
 //
