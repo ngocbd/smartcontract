@@ -1,19 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateBank at 0x463f235748bc7862DEaA04d85b4B16AC8faFEF39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateBank at 0xB93430ce38AC4A6Bb47fB1fc085eA669353fD89E
 */
 pragma solidity ^0.4.19;
 
 contract PrivateBank
 {
-    mapping (address => uint) balances;
-    
-    function GetBal() 
-    public
-    returns(uint) 
-    {
-        return balances[msg.sender];
-    }
-    
+    mapping (address => uint) public balances;
+        
     uint public MinDeposit = 1 ether;
     
     Log TransferLog;
@@ -37,8 +30,7 @@ contract PrivateBank
     function CashOut(uint _am)
     {
         if(_am<=balances[msg.sender])
-        {
-            
+        {            
             if(msg.sender.call.value(_am)())
             {
                 balances[msg.sender]-=_am;
