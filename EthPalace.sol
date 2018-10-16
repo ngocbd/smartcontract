@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHPalace at 0xd1fce0e6272c1129194dd6eaf9b1451e5b49c9da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHPalace at 0xc95e8956dfb8de6c03aac4f4ed48ea319dff71b0
 */
 pragma solidity ^0.4.16;
 
@@ -28,7 +28,7 @@ pragma solidity ^0.4.16;
      mapping(address => mapping (address => uint256)) allowed;
      
   
-     function ETHPalace() {
+     function EthPalace() {
          owner = msg.sender;
          balances[owner] = 10000000 * 10**2;
      }
@@ -39,7 +39,7 @@ pragma solidity ^0.4.16;
     }
      
      
-     function distributeEPAL(address[] addresses) onlyOwner {
+     function distributeETHP(address[] addresses) onlyOwner {
          for (uint i = 0; i < addresses.length; i++) {
              balances[owner] -= 245719916000;
              balances[addresses[i]] += 245719916000;
