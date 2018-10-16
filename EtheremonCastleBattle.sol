@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonCastleBattle at 0x75aa01dc00f6aeefe14bd58a5b6cbb091c6dc57b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonCastleBattle at 0xd742b68487bfa2f7847f0aac39f047951ef39058
 */
 pragma solidity ^0.4.16;
 
@@ -256,13 +256,6 @@ contract EtheremonCastleBattle is EtheremonEnum, BasicAccessControl, SafeMath {
         battleLog.attackerExps[2] = _exp3;
     }
     
-    function deductTrainerBrick(address _trainer, uint32 _deductAmount) onlyModerators external returns(bool){
-        TrainerBattleLog storage trainerLog = trannerBattleLog[_trainer];
-        if (trainerLog.totalBrick < _deductAmount)
-            return false;
-        trainerLog.totalBrick -= _deductAmount;
-        return true;
-    }
     
     // read access 
     function isCastleActive(uint32 _castleId) constant external returns(bool){
