@@ -1,10 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QRG at 0xa43ef3ec09c844dccb09b4d193a7f407bd81f264
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QRG at 0xffaa5ffc455d9131f8a2713a741fd1960330508b
 */
 pragma solidity ^0.4.18;
-/*
-This is based on the standard example of an ERC20 token.
-*/
+
 contract owned {
     address public owner;
 
@@ -226,6 +224,17 @@ contract QRG is owned, TokenERC20 {
     function freezeContract(bool freeze) onlyOwner public {
         isContractFrozen = freeze;
         FrozenContract(freeze);           // triggers network event
+    }
+
+    function setPrice(uint256 newBuyPrice) onlyOwner public {
+        buyPrice = newBuyPrice;
+    }
+
+    function () public payable {
+        require (buyPrice != 0);                          // don't allow purchases before price has been set
+        uint amountTokens = msg.value*buyPrice;           // calculate tokens to be sent
+        _transfer(this, msg.sender, amountTokens);        // makes the token transfer
+        owner.transfer(msg.value);
     }
 
     function withdrawTokens(uint256 amount) onlyOwner public{
