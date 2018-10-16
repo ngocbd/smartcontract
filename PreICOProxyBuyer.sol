@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x3918249900ecad5ee86f84c2c498303fc52614a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x70396c561849d1ed656c6e0d2a04b83131c0c645
 */
 /**
  * Math operations with safety checks
@@ -441,6 +441,7 @@ contract Crowdsale is Haltable {
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
 
+
     // Check that we did not bust the cap
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
       throw;
@@ -453,6 +454,7 @@ contract Crowdsale is Haltable {
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
+
   }
 
   /**
@@ -668,6 +670,9 @@ contract Crowdsale is Haltable {
 
   /**
    * Investors can claim refund.
+   *
+   * Note that any refunds from proxy buyers should be handled separately,
+   * and not through this contract.
    */
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
@@ -679,7 +684,7 @@ contract Crowdsale is Haltable {
   }
 
   /**
-   * @return true if the crowdsale has raised enough money to be a succes
+   * @return true if the crowdsale has raised enough money to be a successful.
    */
   function isMinimumGoalReached() public constant returns (bool reached) {
     return weiRaised >= minimumFundingGoal;
@@ -797,20 +802,7 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  /**
-   *
-   * Fix for the ERC20 short address attack
-   *
-   * http://vessenes.com/the-erc20-short-address-attack-explained/
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
+  function transfer(address _to, uint _value) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
@@ -909,7 +901,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   enum State{Unknown, Funding, Distributing, Refunding}
 
   /** Somebody loaded their investment money */
-  event Invested(address investor, uint value);
+  event Invested(address investor, uint value, uint128 customerId);
 
   /** Refund claimed */
   event Refunded(address investor, uint value);
@@ -961,7 +953,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   /**
    * Participate to a presale.
    */
-  function invest() public stopInEmergency payable {
+  function invest(uint128 customerId) private {
 
     // Cannot invest anymore through crowdsale when moving has begun
     if(getState() != State.Funding) throw;
@@ -990,8 +982,17 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       throw;
     }
 
-    Invested(investor, msg.value);
+    Invested(investor, msg.value, customerId);
   }
+
+  function investWithId(uint128 customerId) public stopInEmergency payable {
+    invest(customerId);
+  }
+
+  function investWithoutId() public stopInEmergency payable {
+    invest(0x0);
+  }
+
 
   /**
    * Load funds to the crowdsale for all investors.
@@ -1088,6 +1089,9 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
+    // This was originally "send()" but was replaced with call.value()() to
+    // forward gas, if there happens to be a complicated multisig implementation
+    // which would need more gas than the gas stipend:
     if(!(investor.call.value(amount)())) throw;
     Refunded(investor, amount);
   }
