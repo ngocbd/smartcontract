@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x47f0dce56d14aa902212231bdd788f9e6b889311
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x9300f4e6b9f1a17fb65642f51019ea263e005e47
 */
 pragma solidity 0.4.20;
 
@@ -1040,10 +1040,10 @@ contract nbagame is usingOraclize {
   TeamType public winningTeam = TeamType.None;
 
   // -----------------------------------------------------------------------------------------------------
-	string[NUM_TEAMS] public TEAM_NAMES = ["Houston Rockets", "Milwaukee Bucks"];
-	string public searchString = "Rockets vs Bucks March 7, 2018 Winner";
+	string[NUM_TEAMS] public TEAM_NAMES = ["Boston Celtics", "Minnesota Timberwolves"];
+	string public searchString = "Celtics vs Timberwolves March 8, 2018 Winner";
 	uint public constant BETTING_OPENS = 1520125200;
-	uint public constant BETTING_CLOSES = 1520470800; // Close 5 minutes after scheduled game start
+	uint public constant BETTING_CLOSES = 1520557200; // Close 5 minutes after scheduled game start
   // -----------------------------------------------------------------------------------------------------
    
   uint public constant TOTAL_POOL_COMMISSION = 10; // Total pool commission psuedo 5% (10% from losing side bet)
