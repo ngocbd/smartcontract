@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GnosisToken at 0x6810e776880c02933d47db1b9fc05908e5386b96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GnosisToken at 0xef37e3a452fd3041144c04d993aa0b498a106ac4
 */
-pragma solidity 0.4.10;
+pragma solidity 0.4.4;
 
 
-/// @title Abstract token contract - Functions to be implemented by token contracts.
 contract Token {
     function transfer(address to, uint256 value) returns (bool success);
     function transferFrom(address from, address to, uint256 value) returns (bool success);
@@ -14,6 +13,12 @@ contract Token {
     function totalSupply() constant returns (uint256 supply) {}
     function balanceOf(address owner) constant returns (uint256 balance);
     function allowance(address owner, address spender) constant returns (uint256 remaining);
+
+    // Token meta data
+    // Those are not abstract functions, because solc won't recognize generated getter functions for public variables as functions.
+    function name() constant returns (string) {}
+    function symbol() constant returns (string) {}
+    function decimals() constant returns (uint8) {}
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -112,7 +117,7 @@ contract StandardToken is Token {
 }
 
 
-/// @title Gnosis token contract
+/// @title Gnosis token contract - Holds tokens of Gnosis.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract GnosisToken is StandardToken {
 
@@ -138,14 +143,12 @@ contract GnosisToken is StandardToken {
             throw;
         totalSupply = 10000000 * 10**18;
         balances[dutchAuction] = 9000000 * 10**18;
-        Transfer(0, dutchAuction, balances[dutchAuction]);
         uint assignedTokens = balances[dutchAuction];
         for (uint i=0; i<owners.length; i++) {
             if (owners[i] == 0)
                 // Address should not be null.
                 throw;
             balances[owners[i]] += tokens[i];
-            Transfer(0, owners[i], tokens[i]);
             assignedTokens += tokens[i];
         }
         if (assignedTokens != totalSupply)
