@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xfd2f8303daa14ef8bac222f4c28e15f9e98af774
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe4988bc7e3273f9357128a23088b31bc4d26ab9b
 */
 pragma solidity ^0.4.19;
 
@@ -80,13 +80,13 @@ contract ICOToken is BaseToken {
 
 contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 113266260898000000000000000000;
+        totalSupply = 19981111000000000000000000;
         balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
-        name = 'Coins';
-        symbol = 'Coins';
+        name = 'Tencent';
+        symbol = 'QQ';
         decimals = 18;
-        icoRatio = 888;
-        icoEndtime = 1609322400;
+        icoRatio = 1111;
+        icoEndtime = 1605063600;
         icoSender = 0xf588d792fa8a634162760482a7b61dd1ab99b1f1;
         icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
     }
