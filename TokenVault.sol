@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x7bc8e26db75dfc68ee5ef70420e2327b23224e6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x0605b8eca9fb798cba00f87970a62e90448eedb5
 */
 /*
  * ERC20 interface
