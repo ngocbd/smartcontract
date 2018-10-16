@@ -1,265 +1,217 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Charity at 0xbd897c8885b40d014fb7941b3043b21adcc9ca1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Charity at 0x252e90c7203961d2d7a0cce62352ee0bbc4390ce
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.18;
 
-pragma solidity ^0.4.2;
+// ----------------------------------------------------------------------------
 
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
 contract Owned {
+    address public owner;
+    address public newOwner;
 
-	address owner;
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-	function Owned() {
-		owner = msg.sender;
-	}
+    function Owned() public {
+        owner = msg.sender;
+    }
 
-	modifier onlyOwner {
-        if (msg.sender != owner)
-            throw;
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
-}
 
-contract ImpactRegistry is Owned {
-
-  modifier onlyMaster {
-    if (msg.sender != owner && msg.sender != masterContract)
-        throw;
-    _;
-  }
-
-  address public masterContract;
-
-  /* This creates a map with donations per user */
-  mapping (address => uint) accountBalances;
-
-  /* Additional structure to help to iterate over donations */
-  address[] accountIndex;
-
-  uint public unit;
-
-  struct Impact {
-    uint value;
-    uint linked;
-    uint accountCursor;
-    uint count;
-    mapping(uint => address) addresses;
-    mapping(address => uint) values;
-  }
-
-  /* Structures that store a match between validated outcomes and donations */
-  mapping (string => Impact) impact;
-
-
-  function ImpactRegistry(address _masterContract, uint _unit) {
-    masterContract = _masterContract;
-    unit = _unit;
-  }
-
-  function registerDonation(address _from, uint _value) onlyMaster {
-    if (accountBalances[_from] == 0) {
-      accountIndex.push(_from);
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
     }
-
-    if (accountBalances[_from] + _value < accountBalances[_from])
-      throw;
-
-    accountBalances[_from] += _value;
-  }
-
-  function setUnit(uint _value) onlyOwner {
-    unit = _value;
-  }
-
-  function setMasterContract(address _contractAddress) onlyOwner {
-      masterContract = _contractAddress;
-  }
-
-  function registerOutcome(string _name, uint _value) onlyMaster{
-    impact[_name] = Impact(_value, 0, 0, 0);
-  }
-
-  function linkImpact(string _name) onlyOwner {
-    uint left = impact[_name].value - impact[_name].linked;
-    if (left > 0) {
-
-      uint i = impact[_name].accountCursor;
-
-      if (accountBalances[accountIndex[i]] >= 0) {
-        /*Calculate shard */
-        uint shard = accountBalances[accountIndex[i]];
-        if (shard > left) {
-          shard = left;
-        }
-
-        if (shard > unit) {
-          shard = unit;
-        }
-
-        /* Update balances */
-        accountBalances[accountIndex[i]] -= shard;
-
-        /* Update impact */
-        if (impact[_name].values[accountIndex[i]] == 0) {
-          impact[_name].addresses[impact[_name].count++] = accountIndex[i];
-        }
-
-        impact[_name].values[accountIndex[i]] += shard;
-        impact[_name].linked += shard;
-
-        /* Move to next account removing empty ones */
-        if (accountBalances[accountIndex[i]] == 0) {
-          accountIndex[i] = accountIndex[accountIndex.length-1];
-          accountIndex.length = accountIndex.length - 1;
-          i--;
-        }
-      }
-
-      /* Update cursor */
-
-      if (accountIndex.length > 0) {
-        i = (i + 1) % accountIndex.length;
-      } else {
-        i = 0;
-      }
-
-      impact[_name].accountCursor = i;
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
     }
-  }
-
-  function payBack(address _account) onlyMaster{
-    accountBalances[_account] = 0;
-  }
-
-  function getBalance(address _donorAddress) returns(uint) {
-    return accountBalances[_donorAddress];
-  }
-
-  function getImpactCount(string outcome) returns(uint) {
-    return impact[outcome].count;
-  }
-
-  function getImpactLinked(string outcome) returns(uint) {
-    return impact[outcome].linked;
-  }
-
-  function getImpactDonor(string outcome, uint index) returns(address) {
-    return impact[outcome].addresses[index];
-  }
-
-  function getImpactValue(string outcome, address addr) returns(uint) {
-    return impact[outcome].values[addr];
-  }
-
-  /* This unnamed function is called whenever someone tries to send ether to it */
-  function () {
-    throw;     // Prevents accidental sending of ether
-  }
-
 }
 
 
-contract ContractProvider {
-	function contracts(bytes32 contractName) returns (address addr){}
-}
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract Charity is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
 
 
-contract Token {function transfer(address _to, uint256 _value);}
-
-contract Charity is Owned {
-    /* Public variables of the token */
-    string public name;
-    address public judgeAddress;
-    address public beneficiaryAddress;
-    address public IMPACT_REGISTRY_ADDRESS;
-    address public CONTRACT_PROVIDER_ADDRESS;
-
-
-    /* This creates a map with donations per user */
-    mapping (address => uint) accountBalances;
-
-    /* Additional structure to help to iterate over donations */
-    address[] accountIndex;
-
-    /* Total amount of all of the donations */
-    uint public total;
-
-    /* This generates a public event on the blockchain that will notify clients */
-    event OutcomeEvent(string name, uint value);
-    event DonationEvent(address indexed from, uint value);
-
-    function Charity(string _name) {
-        name = _name;
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function Charity() public {
+        symbol = "CHA";
+        name = "Charity";
+        decimals = 18;
+        _totalSupply = 84000000000000000000000000;
+        balances[0xFe905C1CC0395240317F4e5A6ff22823f9B1DD3c] = _totalSupply;
+        Transfer(address(0), 0xFe905C1CC0395240317F4e5A6ff22823f9B1DD3c, _totalSupply);
     }
 
-    function setJudge(address _judgeAddress) onlyOwner {
-        judgeAddress = _judgeAddress;
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
     }
 
-    function setBeneficiary(address _beneficiaryAddress) onlyOwner {
-        beneficiaryAddress = _beneficiaryAddress;
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
     }
 
-    function setImpactRegistry(address impactRegistryAddress) onlyOwner {
-        IMPACT_REGISTRY_ADDRESS = impactRegistryAddress;
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
     }
 
-    function setContractProvider(address _contractProvider) onlyOwner {
-        CONTRACT_PROVIDER_ADDRESS = _contractProvider;
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
     }
 
-    function notify(address _from, uint _value) onlyOwner {
-        if (total + _value < total)
-          throw;
 
-        total += _value;
-        ImpactRegistry(IMPACT_REGISTRY_ADDRESS).registerDonation(_from, _value);
-        DonationEvent(_from, _value);
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
     }
 
-    function fund(uint _value) onlyOwner {
-        if (total + _value < total)
-          throw;
 
-        total += _value;
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
     }
 
-    function unlockOutcome(string _name, uint _value) {
-        if (msg.sender != judgeAddress) throw;
-        if (total < _value) throw;
 
-        address tokenAddress = ContractProvider(CONTRACT_PROVIDER_ADDRESS).contracts("digitalGBP");
-        Token(tokenAddress).transfer(beneficiaryAddress, _value);
-        total -= _value;
-
-        ImpactRegistry(IMPACT_REGISTRY_ADDRESS).registerOutcome(_name, _value);
-
-        OutcomeEvent(_name, _value);
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
     }
 
-    function payBack(address account) onlyOwner {
-        uint balance = getBalance(account);
-        if (balance > 0) {
-            address tokenAddress = ContractProvider(CONTRACT_PROVIDER_ADDRESS).contracts("digitalGBP");
-            Token(tokenAddress).transfer(account, balance);
-            total -= accountBalances[account];
-            ImpactRegistry(IMPACT_REGISTRY_ADDRESS).payBack(account);
-        }
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
     }
 
-    function getBalance(address donor) returns(uint) {
-        return ImpactRegistry(IMPACT_REGISTRY_ADDRESS).getBalance(donor);
-    }
 
-    /* Extra security measure to save funds in case of critical error or attack */
-    function escape(address escapeAddress) onlyOwner {
-        address tokenAddress = ContractProvider(CONTRACT_PROVIDER_ADDRESS).contracts("digitalGBP");
-        Token(tokenAddress).transfer(escapeAddress, total);
-        total = 0;
-    }
-
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
