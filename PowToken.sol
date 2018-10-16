@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWToken at 0x0f26cfc5fb0fa89c05d86c0333545727aa896a75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWToken at 0xE662633c87954743416B2638a8f50eC5720ac928
 */
 pragma solidity ^0.4.18;
 /**
@@ -81,7 +81,6 @@ contract BasicToken is ERC20Basic {
   function balanceOf(address _owner) constant public returns (uint256 balance) {
     return balances[_owner];
   }
-
 }
 
 /**
@@ -177,7 +176,6 @@ contract StandardToken is ERC20, BasicToken {
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
-
 }
 
 /**
@@ -188,46 +186,21 @@ contract POWToken is StandardToken {
 
   string public constant name = "POWToken";
   string public constant symbol = "POW";
-  uint8 public constant decimals = 18; // 18 decimal to fully comply with ERC20 Standard.
+  uint8 public constant decimals = 18; // 18 decimal to fully comply with exchanges and wallets.
 
-//30 million POWtokens will be distributed via CrowdSale for Early Adopters. 
-//30 million POWtokens will be available only by mining or staking in-game with the previously distributed tokens.
+  uint256 public constant INITIAL_SUPPLY = 60000000000000000000000000; //60 million unique POWtokens generation event.
+  //Since number of tokens is limited, the price of each token will increase as the number of users and demand increases. 
+
+//30 million tokens will be distributed via CrowdSale for Early Adopters. 
+//30 million tokens will be available only by mining or staking in-game with the previously distributed tokens.
 //All tokens are transferable through the Ethereum Blockchain. 
 //All tokens are redeemable for tournament prizes and ether at regular token prize in-platform. 
-//Since number of tokens is limited, the price of each token will increase as the number of users and demand increases. 
 
-  uint256 public constant totalSupplyWithDecimals = 60000000000000000000000000; //60 million unique tokens for a single distribution and 18 decimal places to fully comply with ERC20 Standard. 
-  
-  uint256 public mineableSupply;                        //Amount of POWTokens stored for in-platform mining, staking and prizes.
-  address public mineableTokenStorageContract;          //Smart Contract to store in-platform tokens.
-  uint256 public openSaleSupply;                        //Amount of POWTokens distributed to Early Adpoters. 
-  address public openDistributionContract;              //Smart Contract to store tokens for Open Distribution (CrowdSale).
-
-  //No tokens for founders. Full-transparency distribution.
-
-  string public tokenCreationDate;
-          
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
    */
   function POWToken()public {
-    
-    balances[msg.sender] = totalSupplyWithDecimals;
-
+    totalSupply = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
   }
-
-
-// setup contract addresses.
-  function setupFunctionalAddresses(address _mineableTokenStorageContract, address _OpenDistributionContract) public returns (bytes32 response) {
-      
-          mineableSupply = 30000000000000000000000000;                           
-          mineableTokenStorageContract = _mineableTokenStorageContract;
-          openSaleSupply = 30000000000000000000000000;
-          openDistributionContract = _OpenDistributionContract;
-          tokenCreationDate = "December-27-2017";
-          
-          return "Addresses Setup.";
-
-         }
-    
 }
