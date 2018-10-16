@@ -1,7 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x4bc153a215bcc0f8ce0d2a2f80bcfe502ef24fdd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x9f01ffd2b8291a68b5151606900a0eb922282bc8
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.20;
+contract TokenConfig{
+
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+  uint public initialSupply;
+  uint256 currentTotalSupply=0;
+  uint256 airdropNum;
+   mapping(address=>bool) touched;
+}
 contract Token{
     // token???????public??????getter????????totalSupply().
     uint256 public totalSupply;
@@ -31,7 +41,7 @@ contract Token{
     _value);
 }
 
-contract StandardToken is Token {
+contract StandardToken is Token,TokenConfig{
     function transfer(address _to, uint256 _value) returns (bool success) {
         //??totalSupply ??????? (2^256 - 1).
         //??????????????token??????????????????
@@ -55,10 +65,15 @@ contract StandardToken is Token {
         Transfer(_from, _to, _value);//????????
         return true;
     }
+    
     function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+        if(!touched[_owner]&&currentTotalSupply<totalSupply){
+		touched[_owner]=true;
+		currentTotalSupply+=airdropNum;
+		balances[_owner]+=airdropNum;
+		}
+		return balances[_owner];
     }
-
 
     function approve(address _spender, uint256 _value) returns (bool success)   
     {
@@ -75,30 +90,21 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
 }
 
-contract HumanStandardToken is StandardToken { 
-
-    /* Public variables of the token */
-    string public name;                   //??: eg Simon Bucks
-    uint8 public decimals;               //????????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;               //token??: eg SBX
+contract HumanStandardToken is StandardToken{ 
     string public version = 'H0.1';    //??
-
-    function HumanStandardToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
+    function HumanStandardToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol, uint256 kongtounumber) {
         balances[msg.sender] = _initialAmount; // ??token?????????
         totalSupply = _initialAmount;         // ??????
         name = _tokenName;                   // token??
         decimals = _decimalUnits;           // ????
         symbol = _tokenSymbol;             // token??
+		airdropNum=kongtounumber;
     }
-
     /* Approves and then calls the receiving contract */
     
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
         return true;
     }
