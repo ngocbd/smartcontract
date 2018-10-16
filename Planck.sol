@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Planck at 0x51bd52881f99fc8bb938562c7473487d9b58c6a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Planck at 0x9f2e9cf0026d4ac4bd34124dcc8a831842c479b0
 */
 pragma solidity ^0.4.4;
 
@@ -87,16 +87,10 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract Planck is StandardToken { // CHANGE THIS. Update the contract name.
+contract Planck is StandardToken {
 
     /* Public variables of the token */
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
     string public name;                   // Token Name
     uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
     string public symbol;                 // An identifier: eg SBX, XPR etc..
@@ -108,12 +102,12 @@ contract Planck is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function Planck() {
-        balances[msg.sender] = 17000000000000000000000000;               
-        totalSupply = 17000000000000000000000000;                        
+        balances[msg.sender] = 40000000000000000000000000;               
+        totalSupply = 40000000000000000000000000;                        
         name = "Planck";                                   
         decimals = 18;                                               
         symbol = "PLNK";                                             
-        unitsOneEthCanBuy = 28100;                                     
+        unitsOneEthCanBuy = 4210;                                     
         fundsWallet = msg.sender;                                    
     }
 
