@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DWorldCore at 0x752c4e4e90846c5673c3791b9809f71b7d4a638a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DWorldCore at 0xb8bf73550f251562d308882e032225a700a7b9bc
 */
 pragma solidity ^0.4.18;
 
@@ -2059,7 +2059,7 @@ contract DWorldUpgrade is DWorldMinting {
             identifierIsOriginal[_deedId] = true;
         }
         
-        migrationNumPlotsTransferred += numPlotsTransfer;
+        migrationNumPlotsTransferred += i;
         
         // Finished migration.
         if (i == numPlots) {
