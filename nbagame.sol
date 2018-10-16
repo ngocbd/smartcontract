@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0xec357c7ec21e6e102dcd4c92aa556d459bd2eba3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x05064de4d8fcc27c0aad610277ff3e40d422e3f2
 */
-pragma solidity 0.4.20;
+pragma solidity 0.4.19;
 
 // <ORACLIZE_API>
 /*
@@ -1035,27 +1035,27 @@ contract nbagame is usingOraclize {
   address[2] public BOOKIES = [0x0161C8d35f0B603c7552017fe9642523f70d7B6A, 0x8B756b564d6FDFC1d0164174c514B0431ACC2409];
 
   uint public constant NUM_TEAMS = 2;
-  string[NUM_TEAMS] public TEAM_NAMES = ["Houston Rockets", "Minnesota Timberwolves"];
-  enum TeamType { HRockets, MTimberwolves, None }
+  string[NUM_TEAMS] public TEAM_NAMES = ["Oklahoma City Thunder", "Golden State Warriors"];
+  enum TeamType { OKCThunder, GSWarriors, None }
   TeamType public winningTeam = TeamType.None;
 
   uint public constant BOOKIE_POOL_COMMISSION = 10; // The bookies take pseudo 5% (10% from the losing side bet)
   uint public constant MINIMUM_BET = 0.01 ether; // 0.01 ETH is min bet
 
   uint public constant BETTING_OPENS = 1518905100; // Currently before deployment
-  uint public constant BETTING_CLOSES = 1519434300; // Feb 23, 8:05pm EST
+  uint public constant BETTING_CLOSES = 1519522500; // Feb 24, 8:35pm EST
   uint public constant PAYOUT_ATTEMPT_INTERVAL = 43200; // 12 hours
-  uint public constant BET_RELEASE_DATE = 1519607100; // Feb 25, 8:05pm EST
-  uint public constant PAYOUT_DATE = BETTING_CLOSES + PAYOUT_ATTEMPT_INTERVAL; // Feb 24, 8:05am EST
+  uint public constant BET_RELEASE_DATE = 1519695300; // Feb 26, 8:35pm EST
+  uint public constant PAYOUT_DATE = BETTING_CLOSES + PAYOUT_ATTEMPT_INTERVAL; // Feb 24, 8:35am EST
 
   bool public scheduledPayout;
   bool public payoutCompleted;
   
-  struct Better {
+  struct Bettor {
     uint[NUM_TEAMS] amountsBet;
   }
-  mapping(address => Better) betterInfo;
-  address[] betters;
+  mapping(address => Bettor) bettorInfo;
+  address[] bettors;
   uint[NUM_TEAMS] public totalAmountsBet;
   uint public numberOfBets;
   uint public totalBetAmount;
@@ -1101,7 +1101,7 @@ contract nbagame is usingOraclize {
     // at the delay passed. This can be triggered
     // multiple times, but as soon as the payout occurs
     // the function does not do anything
-    oraclize_query(pingDelay, "WolframAlpha", "Rockets vs Timberwolves on February 23, 2018 Winner");
+    oraclize_query(pingDelay, "WolframAlpha", "Thunder vs Warriors on February 24, 2018 Winner");
   }
 
   // Callback from Oraclize
@@ -1134,17 +1134,17 @@ contract nbagame is usingOraclize {
   // Returns the total amounts betted for
   // the sender
   function getUserBets() public constant returns(uint[NUM_TEAMS]) {    
-    return betterInfo[msg.sender].amountsBet;
+    return bettorInfo[msg.sender].amountsBet;
   }
 
-  // Release all the bets back to the betters
+  // Release all the bets back to the bettors
   // if, for any reason, payouts cannot be
   // completed
   function releaseBets() private {
     uint storedBalance = this.balance;
-    for (uint k = 0; k < betters.length; k++) {
-      uint totalBet = betterInfo[betters[k]].amountsBet[0] + betterInfo[betters[k]].amountsBet[1];
-      betters[k].transfer(totalBet * storedBalance / totalBetAmount);
+    for (uint k = 0; k < bettors.length; k++) {
+      uint totalBet = bettorInfo[bettors[k]].amountsBet[0] + bettorInfo[bettors[k]].amountsBet[1];
+      bettors[k].transfer(totalBet * storedBalance / totalBetAmount);
     }
   }
   
@@ -1163,16 +1163,16 @@ contract nbagame is usingOraclize {
 
   function bet(uint teamIdx) public payable {
     require(canBet() == true);
-    require(TeamType(teamIdx) == TeamType.HRockets || TeamType(teamIdx) == TeamType.MTimberwolves);
+    require(TeamType(teamIdx) == TeamType.OKCThunder || TeamType(teamIdx) == TeamType.GSWarriors);
     require(msg.value >= MINIMUM_BET);
 
-    // Add better to better list if they
+    // Add bettor to bettor list if they
     // aren't already in it
-    if (betterInfo[msg.sender].amountsBet[0] == 0 && betterInfo[msg.sender].amountsBet[1] == 0)
-      betters.push(msg.sender);
+    if (bettorInfo[msg.sender].amountsBet[0] == 0 && bettorInfo[msg.sender].amountsBet[1] == 0)
+      bettors.push(msg.sender);
 
     // Perform bet
-    betterInfo[msg.sender].amountsBet[teamIdx] += msg.value;
+    bettorInfo[msg.sender].amountsBet[teamIdx] += msg.value;
     numberOfBets++;
     totalBetAmount += msg.value;
     totalAmountsBet[teamIdx] += msg.value;
@@ -1192,14 +1192,14 @@ contract nbagame is usingOraclize {
     BOOKIES[0].transfer(bookiePayout / BOOKIES.length);
     BOOKIES[1].transfer(bookiePayout / BOOKIES.length);
 
-    // Weighted payout to betters based on
+    // Weighted payout to bettors based on
     // their contribution to the winning pool
-    for (uint k = 0; k < betters.length; k++) {
-      uint betOnWinner = betterInfo[betters[k]].amountsBet[uint(winningTeam)];
+    for (uint k = 0; k < bettors.length; k++) {
+      uint betOnWinner = bettorInfo[bettors[k]].amountsBet[uint(winningTeam)];
       uint payout = betOnWinner + ((betOnWinner * (losingChunk - bookiePayout)) / totalAmountsBet[uint(winningTeam)]);
 
       if (payout > 0)
-        betters[k].transfer(payout);
+        bettors[k].transfer(payout);
     }
 
     payoutCompleted = true;
