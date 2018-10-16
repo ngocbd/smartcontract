@@ -1,498 +1,386 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeroCoin at 0xe477292f1b3268687a29376116b0ed27a9c76170
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeroCoin at 0xe43f82bd5dd75fce3fd35000f5fca11a9c9ab267
 */
+pragma solidity ^0.4.18;
+
+// File: contracts/token/ERC223.sol
+
+contract ERC223 {
+    function transfer(address _to, uint _value, bytes _data) public returns (bool);
+    function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool);
+    
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+}
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/ownership/Contactable.sol
+
+/**
+ * @title Contactable token
+ * @dev Basic version of a contactable contract, allowing the owner to provide a string with their
+ * contact information.
+ */
+contract Contactable is Ownable{
+
+    string public contactInformation;
+
+    /**
+     * @dev Allows the owner to set a string with their contact information.
+     * @param info The contact information to attach to the contract.
+     */
+    function setContactInformation(string info) onlyOwner public {
+         contactInformation = info;
+     }
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+// File: zeppelin-solidity/contracts/token/ERC20.sol
 
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract StandardToken is ERC20, BasicToken {
+// File: contracts/token/MintableToken.sol
 
-  mapping (address => mapping (address => uint256)) allowed;
+contract MintableToken is ERC20, Contactable {
+    using SafeMath for uint;
 
+    mapping (address => uint) balances;
+    mapping (address => uint) public holderGroup;
+    bool public mintingFinished = false;
+    address public minter;
 
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
+    event MinterChanged(address indexed previousMinter, address indexed newMinter);
+    event Mint(address indexed to, uint amount);
+    event MintFinished();
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
 
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
+    modifier onlyMinter() {
+        require(msg.sender == minter);
+        _;
+    }
 
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
+      /**
+     * @dev Function to mint tokens
+     * @param _to The address that will receive the minted tokens.
+     * @param _amount The amount of tokens to mint.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address _to, uint _amount, uint _holderGroup) onlyMinter canMint public returns (bool) {
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        holderGroup[_to] = _holderGroup;
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
+        return true;
+    }
 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    /**
+     * @dev Function to stop minting new tokens.
+     * @return True if the operation was successful.
+     */
+    function finishMinting() onlyMinter canMint public returns (bool) {
+        mintingFinished = true;
+        MintFinished();
+        return true;
+    }
 
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
+    function changeMinter(address _minter) external onlyOwner {
+        require(_minter != 0x0);
+        MinterChanged(minter, _minter);
+        minter = _minter;
+    }
 }
 
-contract HeroCoin is StandardToken {
+// File: contracts/token/TokenReciever.sol
 
-    // data structures
-    enum States {
-    Initial, // deployment time
-    ValuationSet,
-    Ico, // whitelist addresses, accept funds, update balances
-    Underfunded, // ICO time finished and minimal amount not raised
-    Operational, // manage contests
-    Paused         // for contract upgrades
+/*
+ * Contract that is working with ERC223 tokens
+ */
+ 
+ contract TokenReciever {
+    function tokenFallback(address _from, uint _value, bytes _data) public pure {
     }
+}
 
-    //should be constant, but is not, to avoid compiler warning
-    address public  rakeEventPlaceholderAddress = 0x0000000000000000000000000000000000000000;
+// File: contracts/token/HeroCoin.sol
 
-    string public constant name = "Herocoin";
+contract HeroCoin is ERC223, MintableToken {
+    using SafeMath for uint;
 
-    string public constant symbol = "PLAY";
+    string constant public name = "HeroCoin";
+    string constant public symbol = "HRO";
+    uint constant public decimals = 18;
 
-    uint8 public constant decimals = 18;
+    mapping(address => mapping (address => uint)) internal allowed;
 
-    mapping (address => bool) public whitelist;
+    mapping (uint => uint) public activationTime;
 
-    address public initialHolder;
-
-    address public stateControl;
-
-    address public whitelistControl;
-
-    address public withdrawControl;
-
-    States public state;
-
-    uint256 public weiICOMinimum;
-
-    uint256 public weiICOMaximum;
-
-    uint256 public silencePeriod;
-
-    uint256 public startAcceptingFundsBlock;
-
-    uint256 public endBlock;
-
-    uint256 public ETH_HEROCOIN; //number of herocoins per ETH
-
-    mapping (address => uint256) lastRakePoints;
-
-
-    uint256 pointMultiplier = 1e18; //100% = 1*10^18 points
-    uint256 totalRakePoints; //total amount of rakes ever paid out as a points value. increases monotonically, but the number range is 2^256, that's enough.
-    uint256 unclaimedRakes; //amount of coins unclaimed. acts like a special entry to balances
-    uint256 constant percentForSale = 30;
-
-    mapping (address => bool) public contests; // true if this address holds a contest
-
-    //this creates the contract and stores the owner. it also passes in 3 addresses to be used later during the lifetime of the contract.
-    function HeroCoin(address _stateControl, address _whitelistControl, address _withdraw, address _initialHolder) {
-        initialHolder = _initialHolder;
-        stateControl = _stateControl;
-        whitelistControl = _whitelistControl;
-        withdrawControl = _withdraw;
-        moveToState(States.Initial);
-        weiICOMinimum = 0;
-        //to be overridden
-        weiICOMaximum = 0;
-        endBlock = 0;
-        ETH_HEROCOIN = 0;
-        totalSupply = 2000000000 * pointMultiplier;
-        //sets the value in the superclass.
-        balances[initialHolder] = totalSupply;
-        //initially, initialHolder has 100%
-    }
-
-    event ContestAnnouncement(address addr);
-
-    event Whitelisted(address addr);
-
-    event Credited(address addr, uint balance, uint txAmount);
-
-    event StateTransition(States oldState, States newState);
-
-    modifier onlyWhitelist() {
-        require(msg.sender == whitelistControl);
-        _;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == initialHolder);
-        _;
-    }
-
-    modifier onlyStateControl() {
-        require(msg.sender == stateControl);
-        _;
-    }
-
-    modifier onlyWithdraw() {
-        require(msg.sender == withdrawControl);
-        _;
-    }
-
-    modifier requireState(States _requiredState) {
-        require(state == _requiredState);
+    modifier activeForHolder(address holder) {
+        uint group = holderGroup[holder];
+        require(activationTime[group] <= now);
         _;
     }
 
     /**
-    BEGIN ICO functions
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
     */
-
-    //this is the main funding function, it updates the balances of Herocoins during the ICO.
-    //no particular incentive schemes have been implemented here
-    //it is only accessible during the "ICO" phase.
-    function() payable
-    requireState(States.Ico)
-    {
-        require(whitelist[msg.sender] == true);
-        require(this.balance <= weiICOMaximum); //note that msg.value is already included in this.balance
-        require(block.number < endBlock);
-        require(block.number >= startAcceptingFundsBlock);
-        uint256 heroCoinIncrease = msg.value * ETH_HEROCOIN;
-        balances[initialHolder] -= heroCoinIncrease;
-        balances[msg.sender] += heroCoinIncrease;
-        Credited(msg.sender, balances[msg.sender], msg.value);
+    function transfer(address _to, uint _value) public returns (bool) {
+        bytes memory empty;
+        return transfer(_to, _value, empty);
     }
-
-    function moveToState(States _newState)
-    internal
-    {
-        StateTransition(state, _newState);
-        state = _newState;
-    }
-
-    // ICO contract configuration function
-    // newEthICOMinimum is the minimum amount of funds to raise
-    // newEthICOMaximum is the maximum amount of funds to raise
-    // silencePeriod is a number of blocks to wait after starting the ICO. No funds are accepted during the silence period. It can be set to zero.
-    // newEndBlock is the absolute block number at which the ICO must stop. It must be set after now + silence period.
-    function updateEthICOThresholds(uint256 _newWeiICOMinimum, uint256 _newWeiICOMaximum, uint256 _silencePeriod, uint256 _newEndBlock)
-    onlyStateControl
-    {
-        require(state == States.Initial || state == States.ValuationSet);
-        require(_newWeiICOMaximum > _newWeiICOMinimum);
-        require(block.number + silencePeriod < _newEndBlock);
-        require(block.number < _newEndBlock);
-        weiICOMinimum = _newWeiICOMinimum;
-        weiICOMaximum = _newWeiICOMaximum;
-        silencePeriod = _silencePeriod;
-        endBlock = _newEndBlock;
-        // initial conversion rate of ETH_HEROCOIN set now, this is used during the Ico phase.
-        ETH_HEROCOIN = ((totalSupply * percentForSale) / 100) / weiICOMaximum;
-        // check pointMultiplier
-        moveToState(States.ValuationSet);
-    }
-
-    function startICO()
-    onlyStateControl
-    requireState(States.ValuationSet)
-    {
-        require(block.number < endBlock);
-        require(block.number + silencePeriod < endBlock);
-        startAcceptingFundsBlock = block.number + silencePeriod;
-        moveToState(States.Ico);
-    }
-
-
-    function endICO()
-    onlyStateControl
-    requireState(States.Ico)
-    {
-        if (this.balance < weiICOMinimum) {
-            moveToState(States.Underfunded);
-        }
-        else {
-            burnUnsoldCoins();
-            moveToState(States.Operational);
-        }
-    }
-
-    function anyoneEndICO()
-    requireState(States.Ico)
-    {
-        require(block.number > endBlock);
-        if (this.balance < weiICOMinimum) {
-            moveToState(States.Underfunded);
-        }
-        else {
-            burnUnsoldCoins();
-            moveToState(States.Operational);
-        }
-    }
-
-    function burnUnsoldCoins()
-    internal
-    {
-        uint256 soldcoins = this.balance * ETH_HEROCOIN;
-        totalSupply = soldcoins * 100 / percentForSale;
-        balances[initialHolder] = totalSupply - soldcoins;
-        //slashing the initial supply, so that the ico is selling 30% total
-    }
-
-    function addToWhitelist(address _whitelisted)
-    onlyWhitelist
-        //    requireState(States.Ico)
-    {
-        whitelist[_whitelisted] = true;
-        Whitelisted(_whitelisted);
-    }
-
-
-    //emergency pause for the ICO
-    function pause()
-    onlyStateControl
-    requireState(States.Ico)
-    {
-        moveToState(States.Paused);
-    }
-
-    //in case we want to completely abort
-    function abort()
-    onlyStateControl
-    requireState(States.Paused)
-    {
-        moveToState(States.Underfunded);
-    }
-
-    //un-pause
-    function resumeICO()
-    onlyStateControl
-    requireState(States.Paused)
-    {
-        moveToState(States.Ico);
-    }
-
-    //in case of a failed/aborted ICO every investor can get back their money
-    function requestRefund()
-    requireState(States.Underfunded)
-    {
-        require(balances[msg.sender] > 0);
-        //there is no need for updateAccount(msg.sender) since the token never became active.
-        uint256 payout = balances[msg.sender] / ETH_HEROCOIN;
-        //reverse calculate the amount to pay out
-        balances[msg.sender] = 0;
-        msg.sender.transfer(payout);
-    }
-
-    //after the ico has run its course, the withdraw account can drain funds bit-by-bit as needed.
-    function requestPayout(uint _amount)
-    onlyWithdraw //very important!
-    requireState(States.Operational)
-    {
-        msg.sender.transfer(_amount);
-    }
-    /**
-    END ICO functions
-    */
 
     /**
-    BEGIN ERC20 functions
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    * @param _data Optional metadata.
     */
-    function transfer(address _to, uint256 _value)
-    requireState(States.Operational)
-    updateAccount(msg.sender) //update senders rake before transfer, so they can access their full balance
-    updateAccount(_to) //update receivers rake before transfer as well, to avoid over-attributing rake
-    enforceRake(msg.sender, _value)
-    returns (bool success) {
-        return super.transfer(_to, _value);
-    }
+    function transfer(address _to, uint _value, bytes _data) public activeForHolder(msg.sender) returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
 
-    function transferFrom(address _from, address _to, uint256 _value)
-    requireState(States.Operational)
-    updateAccount(_from) //update senders rake before transfer, so they can access their full balance
-    updateAccount(_to) //update receivers rake before transfer as well, to avoid over-attributing rake
-    enforceRake(_from, _value)
-    returns (bool success) {
-        return super.transferFrom(_from, _to, _value);
-    }
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
 
-    function balanceOf(address _account)
-    constant
-    returns (uint256 balance) {
-        return balances[_account] + rakesOwing(_account);
-    }
-
-    function payRake(uint256 _value)
-    requireState(States.Operational)
-    updateAccount(msg.sender)
-    returns (bool success) {
-        return payRakeInternal(msg.sender, _value);
-    }
-
-
-    function
-    payRakeInternal(address _sender, uint256 _value)
-    internal
-    returns (bool success) {
-
-        if (balances[_sender] <= _value) {
-            return false;
+        if (isContract(_to)) {
+            TokenReciever receiver = TokenReciever(_to);
+            receiver.tokenFallback(msg.sender, _value, _data);
         }
-        if (_value != 0) {
-            Transfer(_sender, rakeEventPlaceholderAddress, _value);
-            balances[_sender] -= _value;
-            unclaimedRakes += _value;
-            //   calc amount of points from total:
-            uint256 pointsPaid = _value * pointMultiplier / totalSupply;
-            totalRakePoints += pointsPaid;
-        }
+
+        Transfer(msg.sender, _to, _value);
+        Transfer(msg.sender, _to, _value, _data);
         return true;
-
     }
+
     /**
-    END ERC20 functions
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint representing the amount owned by the passed address.
     */
+    function balanceOf(address _owner) public view returns (uint balance) {
+        return balances[_owner];
+    }
+
     /**
-    BEGIN Rake modifier updateAccount
-    */
-    modifier updateAccount(address _account) {
-        uint256 owing = rakesOwing(_account);
-        if (owing != 0) {
-            unclaimedRakes -= owing;
-            balances[_account] += owing;
-            Transfer(rakeEventPlaceholderAddress, _account, owing);
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint _value) activeForHolder(_from) public returns (bool) {
+        bytes memory empty;
+        return transferFrom(_from, _to, _value, empty);
+    }
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint the amount of tokens to be transferred
+     * @param _data Optional metadata.
+     */
+    function transferFrom(address _from, address _to, uint _value, bytes _data) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+
+        if (isContract(_to)) {
+            TokenReciever receiver = TokenReciever(_to);
+            receiver.tokenFallback(msg.sender, _value, _data);
         }
-        //also if 0 this needs to be called, since lastRakePoints need the right value
-        lastRakePoints[_account] = totalRakePoints;
-        _;
+
+        Transfer(_from, _to, _value);
+        Transfer(_from, _to, _value, _data);
+        return true;
     }
 
-    //todo use safemath.sol
-    function rakesOwing(address _account)
-    internal
-    constant
-    returns (uint256) {//returns always > 0 value
-        //how much is _account owed, denominated in points from total supply
-        uint256 newRakePoints = totalRakePoints - lastRakePoints[_account];
-        //always positive
-        //weigh by my balance (dimension HC*10^18)
-        uint256 basicPoints = balances[_account] * newRakePoints;
-        //still positive
-        //normalize to dimension HC by moving comma left by 18 places
-        return (basicPoints) / pointMultiplier;
-    }
     /**
-    END Rake modifier updateAccount
-    */
-
-    // contest management functions
-
-    modifier enforceRake(address _contest, uint256 _value){
-        //we calculate 1% of the total value, rounded up. division would round down otherwise.
-        //explicit brackets illustrate that the calculation only round down when dividing by 100, to avoid an expression
-        // like value * (99/100)
-        if (contests[_contest]) {
-            uint256 toPay = _value - ((_value * 99) / 100);
-            bool paid = payRakeInternal(_contest, toPay);
-            require(paid);
-        }
-        _;
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    // all functions require HeroCoin operational state
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint) {
+        return allowed[_owner][_spender];
+    }
 
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
 
-    // registerContest declares a contest to HeroCoin.
-    // It must be called from an address that has HeroCoin.
-    // This address is recorded as the contract admin.
-    function registerContest()
-    {
-        contests[msg.sender] = true;
-        ContestAnnouncement(msg.sender);
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function setActivationTime(uint _holderGroup, uint _activationTime) external onlyOwner {
+        activationTime[_holderGroup] = _activationTime;
+    }
+
+    function setHolderGroup(address _holder, uint _holderGroup) external onlyOwner {
+        holderGroup[_holder] = _holderGroup;
+    }
+
+    function isContract(address _addr) private view returns (bool) {
+        uint length;
+        assembly {
+              //retrieve the size of the code on target address, this needs assembly
+              length := extcodesize(_addr)
+        }
+        return (length>0);
     }
 }
