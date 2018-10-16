@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x353649acf804d713b7f26531d6ab3f882ccedc93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x9314bfcde80e7bb6717790ee60ee2e1f058c45a9
 */
 pragma solidity ^0.4.8;
+
 contract Token{
     // token???????public??????getter????????totalSupply().
     uint256 public totalSupply;
@@ -43,7 +44,6 @@ contract StandardToken is Token {
         return true;
     }
 
-
     function transferFrom(address _from, address _to, uint256 _value) returns 
     (bool success) {
         //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
@@ -59,9 +59,7 @@ contract StandardToken is Token {
         return balances[_owner];
     }
 
-
-    function approve(address _spender, uint256 _value) returns (bool success)   
-    {
+    function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
