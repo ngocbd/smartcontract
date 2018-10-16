@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xd9ae56f73db24c1de0cb8c05a310b26f1f33e855
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x9f88aa955637deefd189195f70dc2f12ec818bce
 */
 pragma solidity 0.4.15;
 
@@ -35,6 +35,7 @@ contract MultiSigWallet {
     address[] public owners;
     uint public required;
     uint public transactionCount;
+    address[3] public defaultOwners;
 
     struct Transaction {
         address destination;
@@ -106,18 +107,18 @@ contract MultiSigWallet {
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
+    /// defaultOwners List of initial owners.
+    /// 2 of required confirmations.
+    function MultiSigWallet()
         public
-        validRequirement(_owners.length, _required)
     {
-        for (uint i=0; i<_owners.length; i++) {
-            require(!isOwner[_owners[i]] && _owners[i] != 0);
-            isOwner[_owners[i]] = true;
+        defaultOwners = [0xeF7c51D018B62985997a3755C734F0D1207eD3Fa, 0xc137de8E99992A77AD0377BA58d034f95c43dD68, 0x766e4e5290805a8a42b4a215c0b2b75F852eAF61];
+        for (uint i=0; i<defaultOwners.length; i++) {
+            require(!isOwner[defaultOwners[i]] && defaultOwners[i] != 0);
+            isOwner[defaultOwners[i]] = true;
         }
-        owners = _owners;
-        required = _required;
+        owners = defaultOwners;
+        required = 2;
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
