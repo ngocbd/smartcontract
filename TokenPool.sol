@@ -1,269 +1,261 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenPool at 0xa5ab0ef3ef3711d8ecfe0a7ba42745cbcfb549cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenPool at 0x591191cdf58643578422cbe3f4bb0decd966efdf
 */
-/*************************************************************************
- * This contract has been merged with solidify
- * https://github.com/tiesnetwork/solidify
- *************************************************************************/
- 
- pragma solidity ^0.4.10;
+pragma solidity 0.4.18;
 
-/*************************************************************************
- * import "./ITokenPool.sol" : start
- *************************************************************************/
 
-/*************************************************************************
- * import "./ERC20StandardToken.sol" : start
- *************************************************************************/
-
-/*************************************************************************
- * import "./IERC20Token.sol" : start
- *************************************************************************/
-
-/**@dev ERC20 compliant token interface. 
-https://theethereum.wiki/w/index.php/ERC20_Token_Standard 
-https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md */
-contract IERC20Token {
-
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external    
-    function name() public constant returns (string _name) { _name; }
-    function symbol() public constant returns (string _symbol) { _symbol; }
-    function decimals() public constant returns (uint8 _decimals) { _decimals; }
-    
-    function totalSupply() constant returns (uint total) {total;}
-    function balanceOf(address _owner) constant returns (uint balance) {_owner; balance;}    
-    function allowance(address _owner, address _spender) constant returns (uint remaining) {_owner; _spender; remaining;}
-
-    function transfer(address _to, uint _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) returns (bool success);
-    function approve(address _spender, uint _value) returns (bool success);
-    
-
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
-/*************************************************************************
- * import "./IERC20Token.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "../common/SafeMath.sol" : start
- *************************************************************************/
-
-/**dev Utility methods for overflow-proof arithmetic operations 
-*/
-contract SafeMath {
-
-    /**dev Returns the sum of a and b. Throws an exception if it exceeds uint256 limits*/
-    function safeAdd(uint256 a, uint256 b) internal returns (uint256) {        
-        uint256 c = a + b;
-        assert(c >= a);
-
+/*
+ * https://github.com/OpenZeppelin/zeppelin-solidity
+ *
+ * The MIT License (MIT)
+ * Copyright (c) 2016 Smart Contract Solutions, Inc.
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
         return c;
     }
 
-    /**dev Returns the difference of a and b. Throws an exception if a is less than b*/
-    function safeSub(uint256 a, uint256 b) internal returns (uint256) {
-        assert(a >= b);
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
         return a - b;
     }
 
-    /**dev Returns the product of a and b. Throws an exception if it exceeds uint256 limits*/
-    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-        uint256 z = x * y;
-        assert((x == 0) || (z / x == y));
-        return z;
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
-
-    function safeDiv(uint256 x, uint256 y) internal returns (uint256) {
-        assert(y != 0);
-        return x / y;
-    }
-}/*************************************************************************
- * import "../common/SafeMath.sol" : end
- *************************************************************************/
-
-/**@dev Standard ERC20 compliant token implementation */
-contract ERC20StandardToken is IERC20Token, SafeMath {
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-
-    //tokens already issued
-    uint256 tokensIssued;
-    //balances for each account
-    mapping (address => uint256) balances;
-    //one account approves the transfer of an amount to another account
-    mapping (address => mapping (address => uint256)) allowed;
-
-    function ERC20StandardToken() {
-     
-    }    
-
-    //
-    //IERC20Token implementation
-    // 
-
-    function totalSupply() constant returns (uint total) {
-        total = tokensIssued;
-    }
- 
-    function balanceOf(address _owner) constant returns (uint balance) {
-        balance = balances[_owner];
-    }
-
-    function transfer(address _to, uint256 _value) returns (bool) {
-        require(_to != address(0));
-
-        // safeSub inside doTransfer will throw if there is not enough balance.
-        doTransfer(msg.sender, _to, _value);        
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-        require(_to != address(0));
-        
-        // Check for allowance is not needed because sub(_allowance, _value) will throw if this condition is not met
-        allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);        
-        // safeSub inside doTransfer will throw if there is not enough balance.
-        doTransfer(_from, _to, _value);        
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        remaining = allowed[_owner][_spender];
-    }    
-
-    //
-    // Additional functions
-    //
-    /**@dev Gets real token amount in the smallest token units */
-    function getRealTokenAmount(uint256 tokens) constant returns (uint256) {
-        return tokens * (uint256(10) ** decimals);
-    }
-
-    //
-    // Internal functions
-    //    
-    
-    function doTransfer(address _from, address _to, uint256 _value) internal {
-        balances[_from] = safeSub(balances[_from], _value);
-        balances[_to] = safeAdd(balances[_to], _value);
-    }
-}/*************************************************************************
- * import "./ERC20StandardToken.sol" : end
- *************************************************************************/
-
-/**@dev Token pool that manages its tokens by designating trustees */
-contract ITokenPool {    
-
-    /**@dev Token to be managed */
-    ERC20StandardToken public token;
-
-    /**@dev Changes trustee state */
-    function setTrustee(address trustee, bool state);
-
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    /**@dev Returns remaining token amount */
-    function getTokenAmount() constant returns (uint256 tokens) {tokens;}
-}/*************************************************************************
- * import "./ITokenPool.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "../common/Manageable.sol" : start
- *************************************************************************/
-
-/*************************************************************************
- * import "../common/Owned.sol" : start
- *************************************************************************/
+}
 
 
-contract Owned {
-    address public owner;        
+/*
+ * https://github.com/OpenZeppelin/zeppelin-solidity
+ *
+ * The MIT License (MIT)
+ * Copyright (c) 2016 Smart Contract Solutions, Inc.
+ */
+contract Ownable {
+    address public owner;
 
-    function Owned() {
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
         owner = msg.sender;
     }
 
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
 
-    /**@dev allows transferring the contract ownership. */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        owner = _newOwner;
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
     }
 }
-/*************************************************************************
- * import "../common/Owned.sol" : end
- *************************************************************************/
 
-///A token that have an owner and a list of managers that can perform some operations
-///Owner is always a manager too
-contract Manageable is Owned {
 
-    event ManagerSet(address manager, bool state);
+/**
+ * @title Token pools registry
+ * @dev Allows to register multiple pools of token with lockup period
+ * @author Wojciech Harzowski (https://github.com/harzo)
+ * @author Jakub Stefanski (https://github.com/jstefanski)
+ */
+contract TokenPool is Ownable {
 
-    mapping (address => bool) public managers;
+    using SafeMath for uint256;
 
-    function Manageable() Owned() {
-        managers[owner] = true;
+    /**
+     * @dev Represents registered pool
+     */
+    struct Pool {
+        uint256 availableAmount;
+        uint256 lockTimestamp;
     }
 
-    /**@dev Allows execution by managers only */
-    modifier managerOnly {
-        assert(managers[msg.sender]);
+    /**
+     * @dev Address of mintable token instance
+     */
+    MintableToken public token;
+
+    /**
+     * @dev Indicates available token amounts for each pool
+     */
+    mapping (string => Pool) private pools;
+
+    modifier onlyNotZero(uint256 amount) {
+        require(amount != 0);
         _;
     }
 
-    function transferOwnership(address _newOwner) public ownerOnly {
-        super.transferOwnership(_newOwner);
-
-        managers[_newOwner] = true;
-        managers[msg.sender] = false;
+    modifier onlySufficientAmount(string poolId, uint256 amount) {
+        require(amount <= pools[poolId].availableAmount);
+        _;
     }
 
-    function setManager(address manager, bool state) ownerOnly {
-        managers[manager] = state;
-        ManagerSet(manager, state);
+    modifier onlyUnlockedPool(string poolId) {
+        /* solhint-disable not-rely-on-time */
+        require(block.timestamp > pools[poolId].lockTimestamp);
+        /* solhint-enable not-rely-on-time */
+        _;
     }
-}/*************************************************************************
- * import "../common/Manageable.sol" : end
- *************************************************************************/
 
-/**@dev Token pool that manages its tokens by designating trustees */
-contract TokenPool is Manageable, ITokenPool {    
+    modifier onlyUniquePool(string poolId) {
+        require(pools[poolId].availableAmount == 0);
+        _;
+    }
 
-    function TokenPool(ERC20StandardToken _token) {
+    modifier onlyValid(address _address) {
+        require(_address != address(0));
+        _;
+    }
+
+    function TokenPool(MintableToken _token)
+        public
+        onlyValid(_token)
+    {
         token = _token;
     }
 
-    /**@dev ITokenPool override */
-    function setTrustee(address trustee, bool state) managerOnly {
-        if (state) {
-            token.approve(trustee, token.balanceOf(this));
-        } else {
-            token.approve(trustee, 0);
+    /**
+     * @dev New pool registered
+     * @param poolId string The unique pool id
+     * @param amount uint256 The amount of available tokens
+     */
+    event PoolRegistered(string poolId, uint256 amount);
+
+    /**
+     * @dev Pool locked until the specified timestamp
+     * @param poolId string The unique pool id
+     * @param lockTimestamp uint256 The lock timestamp as Unix Epoch (seconds from 1970)
+     */
+    event PoolLocked(string poolId, uint256 lockTimestamp);
+
+    /**
+     * @dev Tokens transferred from pool
+     * @param poolId string The unique pool id
+     * @param amount uint256 The amount of transferred tokens
+     */
+    event PoolTransferred(string poolId, address to, uint256 amount);
+
+    /**
+     * @dev Register a new pool and mint its tokens
+     * @param poolId string The unique pool id
+     * @param availableAmount uint256 The amount of available tokens
+     * @param lockTimestamp uint256 The optional lock timestamp as Unix Epoch (seconds from 1970),
+     *                              leave zero if not applicable
+     */
+    function registerPool(string poolId, uint256 availableAmount, uint256 lockTimestamp)
+        public
+        onlyOwner
+        onlyNotZero(availableAmount)
+        onlyUniquePool(poolId)
+    {
+        pools[poolId] = Pool({
+            availableAmount: availableAmount,
+            lockTimestamp: lockTimestamp
+        });
+
+        token.mint(this, availableAmount);
+
+        PoolRegistered(poolId, availableAmount);
+
+        if (lockTimestamp > 0) {
+            PoolLocked(poolId, lockTimestamp);
         }
     }
 
-    /**@dev ITokenPool override */
-    function getTokenAmount() constant returns (uint256 tokens) {
-        tokens = token.balanceOf(this);
+    /**
+     * @dev Transfer given amount of tokens to specified address
+     * @param to address The address to transfer to
+     * @param poolId string The unique pool id
+     * @param amount uint256 The amount of tokens to transfer
+     */
+    function transfer(string poolId, address to, uint256 amount)
+        public
+        onlyOwner
+        onlyValid(to)
+        onlyNotZero(amount)
+        onlySufficientAmount(poolId, amount)
+        onlyUnlockedPool(poolId)
+    {
+        pools[poolId].availableAmount = pools[poolId].availableAmount.sub(amount);
+        require(token.transfer(to, amount));
+
+        PoolTransferred(poolId, to, amount);
     }
 
-    /**@dev Returns all tokens back to owner */
-    function returnTokensTo(address to) managerOnly {
-        token.transfer(to, token.balanceOf(this));
+    /**
+     * @dev Get available amount of tokens in the specified pool
+     * @param poolId string The unique pool id
+     * @return The available amount of tokens in the specified pool
+     */
+    function getAvailableAmount(string poolId)
+        public
+        view
+        returns (uint256)
+    {
+        return pools[poolId].availableAmount;
     }
+
+    /**
+     * @dev Get lock timestamp of the pool or zero
+     * @param poolId string The unique pool id
+     * @return The lock expiration timestamp of the pool or zero if not specified
+     */
+    function getLockTimestamp(string poolId)
+        public
+        view
+        returns (uint256)
+    {
+        return pools[poolId].lockTimestamp;
+    }
+}
+
+
+/**
+ * https://github.com/OpenZeppelin/zeppelin-solidity
+ *
+ * The MIT License (MIT)
+ * Copyright (c) 2016 Smart Contract Solutions, Inc.
+ */
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+/**
+ * @title Mintable token interface
+ * @author Wojciech Harzowski (https://github.com/harzo)
+ * @author Jakub Stefanski (https://github.com/jstefanski)
+ */
+contract MintableToken is ERC20Basic {
+    function mint(address to, uint256 amount) public;
 }
