@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EndorToken at 0x99ff8b83b2f06d0f006bed551ee782f7cc4875c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EndorToken at 0xc528c28fec0a90c083328bc45f587ee215760a0f
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -226,12 +226,13 @@ contract StandardToken is ERC20, BasicToken {
 contract EndorToken is StandardToken {
   string public name = "Endor Protocol Token";
   string public symbol = "EDR";
-  uint public decimals = 8;
+  uint8 public decimals = 18;
 
   uint256 public constant INITIAL_SUPPLY = 1500000000 * (10 ** uint256(decimals));
 
-  function EndorToken() public {
+  constructor() public {
 	totalSupply_ = INITIAL_SUPPLY;
 	balances[msg.sender] = INITIAL_SUPPLY;
+        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
   }
 }
