@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PhillionToken at 0xfbba9060549f565e0ee102057b47db4d2284c2ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PhillionToken at 0x9cfbc3abde56cb0db6d799b238b6b7d73566d5bf
 */
 pragma solidity ^0.4.11;
 
@@ -132,6 +132,7 @@ contract PhillionToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     function PhillionToken() Owned() {
+        owner = 0x33021BD0e434862E9a19e0b8d2298fCc05F4043D;
         balances[owner] = totalSupply;
     }
 
