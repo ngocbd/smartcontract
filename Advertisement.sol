@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0x5e9182b4954dbc43a2b080754017a2b0c40f9ee6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0x508ca19a68080438ff03c73528a9114d08fa18ff
 */
 pragma solidity ^0.4.8;
 
@@ -177,9 +177,9 @@ contract Advertisement {
 
 		require(!userAttributions[msg.sender][bidId]);
 		//atribute
-		// userAttributions[msg.sender][bidId] = true;
+		userAttributions[msg.sender][bidId] = true;
 
-		// payFromCampaign(bidId,appstore, oem);
+		payFromCampaign(bidId,appstore, oem);
 
 		PoARegistered(bidId,packageName,timestampList,nonces);
 	}
