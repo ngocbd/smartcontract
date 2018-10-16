@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DungeonRunAlpha at 0x81c54822e12581b23a2aa782f1d84b15670814c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DungeonRunAlpha at 0x6760a96e5c3c84227565aa51727226a057977bf9
 */
 pragma solidity 0.4.19;
 
@@ -354,7 +354,7 @@ contract DungeonRunAlpha is Pausable, Destructible {
         // Dungeon run is ended if either hero is defeated (health exhausted),
         // or hero failed to damage a monster before it flee.
         bool _dungeonRunEnded = monster.level > 0 && (
-            _heroHealth == 0 ||
+            _heroHealth == 0 || 
             now > _monsterCreationTime + monsterFleeTime * 2 ||
             (monster.health == monster.initialHealth && now > monster.creationTime + monsterFleeTime)
         );
@@ -375,20 +375,12 @@ contract DungeonRunAlpha is Pausable, Destructible {
             _gameState = 3;
         } else if (now > _monsterCreationTime + monsterFleeTime) {
             // Previous monster just fled, new monster awaiting.
-            if (monster.level + monsterStrength > _heroHealth) {
-                _heroHealth = 0;
-                _monsterLevel = monster.level;
-                _monsterInitialHealth = monster.initialHealth;
-                _monsterHealth = monster.health;
-                _gameState = 2;
-            } else {
-                _heroHealth -= monster.level + monsterStrength;
-                _monsterCreationTime += monsterFleeTime;
-                _monsterLevel = monster.level + 1;
-                _monsterInitialHealth = _monsterLevel * monsterHealth;
-                _monsterHealth = _monsterInitialHealth;
-                _gameState = 1;
-            }
+            _heroHealth -= monster.level + monsterStrength;
+            _monsterCreationTime += monsterFleeTime;
+            _monsterLevel = monster.level + 1;
+            _monsterInitialHealth = _monsterLevel * monsterHealth;
+            _monsterHealth = _monsterInitialHealth;
+            _gameState = 1;
         } else {
             // Active monster.
             _monsterLevel = monster.level;
@@ -421,7 +413,6 @@ contract DungeonRunAlpha is Pausable, Destructible {
         Monster memory monster = heroIdToMonster[_heroId];
         uint currentLevel = monster.level;
         uint heroCurrentHealth = heroIdToHealth[_heroId];
-        bool dungeonRunEnded;
 
         // To start a run, the player need to pay an entrance fee.
         if (currentLevel == 0) {
@@ -447,7 +438,7 @@ contract DungeonRunAlpha is Pausable, Destructible {
     
             // If a hero failed to damage a monster before it flee, the dungeon run ends,
             // regardless of the remaining hero health.
-            dungeonRunEnded = now > monster.creationTime + monsterFleeTime * 2 ||
+            bool dungeonRunEnded = now > monster.creationTime + monsterFleeTime * 2 ||
                 (monster.health == monster.initialHealth && now > monster.creationTime + monsterFleeTime);
 
             if (dungeonRunEnded) {
@@ -459,15 +450,16 @@ contract DungeonRunAlpha is Pausable, Destructible {
                 // Sanity check.
                 assert(addToJackpot <= entranceFee);
             }
+
+            // Throws if the dungeon run is already ended.
+            require(!dungeonRunEnded);
             
             // Future attack do not require any fee, so refund all ether sent with the transaction.
             msg.sender.transfer(msg.value);
         }
 
-        if (!dungeonRunEnded) {
-            // All pre-conditions passed, call the internal attack function.
-            _attack(_heroId, genes, heroStrength, heroCurrentHealth);
-        }
+        // All pre-conditions passed, call the internal attack function.
+        _attack(_heroId, genes, heroStrength, heroCurrentHealth);
     }
 
 
@@ -583,7 +575,7 @@ contract DungeonRunAlpha is Pausable, Destructible {
     /*==============================
     =           MODIFIERS          =
     ==============================*/
-
+    
     /// @dev Throws if the caller address is a contract.
     modifier onlyHumanAddress() {
         address addr = msg.sender;
