@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorHandler at 0x9e7be5e22511b155576705211447ddc2a740add4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorHandler at 0x8b22f14388f63f2541e640cdc9eb3a41a8525c43
 */
 pragma solidity ^0.4.24;
 
@@ -137,13 +137,13 @@ contract BancorHandler is ExchangeHandler {
             if(orderAddresses[len] == 0) {
                 require(len > 1, "First element in conversion path was 0");
                 destinationToken = orderAddresses[len - 1];
-                len--;
                 break;
             } else if(len == orderAddresses.length - 1) {
                 destinationToken = orderAddresses[len];
-                break;
+                len++;
             }
         }
+        len--;
         // Create an array of that length
         address[] memory conversionPath = new address[](len);
 
