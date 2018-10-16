@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChipCoinContract at 0xba65d8f84af667a93b92780301f2933a3b5c917f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChipCoinContract at 0xbb1e087675c5c69edc1f11d7f0270ef705992a21
 */
 contract Token {
 
@@ -110,11 +110,11 @@ contract ChipCoinContract is StandardToken {
 
     function ChipCoinContract(
         ) {
-        balances[msg.sender] = 15000000000000000000;               // Give the creator all initial tokens
-        totalSupply = 15000000000000000000;                        // Update total supply
+        balances[msg.sender] = 200000000000000000;               // Give the creator all initial tokens
+        totalSupply = 200000000000000000;                        // Update total supply
         name = "BxpChipCoin";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "BxpCC";                               // Set the symbol for display purposes
+        symbol = "BXPcc";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
