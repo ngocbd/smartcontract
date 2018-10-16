@@ -1,220 +1,143 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobileGoToken at 0x40395044ac3c0c57051906da938b54bd6557f212
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobileGoToken at 0xa4cbc38dfc34acf188deadea6eeadbb44ff2e530
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.8;
 
-/*
---------------------------------------------------------------------------------
-The MobileGo [MGO] Token Smart Contract
+// ----------------------------------------------------------------------------------------------
+// The ETVX ETHVINEX Token contract
+//
+// Enjoy. (c) MobileGo, Incent Loyalty Pty Ltd and Bok Consulting Pty Ltd 2017. The MIT Licence.
+// ----------------------------------------------------------------------------------------------
 
-Credit:
-Stefan Crnojevi? scrnojevic@protonmail.ch
-MobileGo Inc, Game Credits Inc
-
-ERC20: https://github.com/ethereum/EIPs/issues/20
-ERC223: https://github.com/ethereum/EIPs/issues/223
-
-MIT Licence
---------------------------------------------------------------------------------
-*/
-
-/*
-* Contract that is working with ERC223 tokens
-*/
-
-contract ContractReceiver {
-  function tokenFallback(address _from, uint _value, bytes _data) {
-    /* Fix for Mist warning */
-    _from;
-    _value;
-    _data;
-  }
+// Contract configuration
+contract TokenConfig {
+    string public constant symbol = "STVX";
+    string public constant name = "STHVINEX TOKEN";
+    uint8 public constant decimals = 18;  // 8 decimal places, the same as tokens on Wave
+    // TODO: Work out the totalSupply when the MobileGo crowdsale ends
+    uint256 _totalSupply = 500000000000000000000000000; // 10,000,000
 }
 
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/issues/20
+contract ERC20Interface {
+    // Get the total token supply
+    function totalSupply() constant returns (uint256 totalSupply);
 
-contract MobileGoToken {
-    /* Contract Constants */
-    string public constant _name = "MobileGo Token";
-    string public constant _symbol = "MGO";
-    uint8 public constant _decimals = 8;
+    // Get the account balance of another account with address _owner
+    function balanceOf(address _owner) constant returns (uint256 balance);
 
-    /* The supply is initially 100,000,000MGO to the precision of 8 decimals */
-    uint256 public constant _initialSupply = 10000000000000000;
+    // Send _value amount of tokens to address _to
+    function transfer(address _to, uint256 _value) returns (bool success);
 
-    /* Contract Variables */
+    // Send _value amount of tokens from address _from to address _to
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    // this function is required for some DEX functionality
+    function approve(address _spender, uint256 _value) returns (bool success);
+
+    // Returns the amount which _spender is still allowed to withdraw from _owner
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+    // Triggered when tokens are transferred.
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    // Triggered whenever approve(address _spender, uint256 _value) is called.
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract MobileGoToken is ERC20Interface, TokenConfig {
+    // Owner of this contract
     address public owner;
-    uint256 public _currentSupply;
-    mapping(address => uint256) public balances;
-    mapping(address => mapping (address => uint256)) public allowed;
 
-    /* Constructor initializes the owner's balance and the supply  */
+    // Balances for each account
+    mapping(address => uint256) balances;
+
+    // Owner of account approves the transfer of an amount to another account
+    mapping(address => mapping (address => uint256)) allowed;
+
+    // Functions with this modifier can only be executed by the owner
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            throw;
+        }
+        _;
+    }
+
+    // Constructor
     function MobileGoToken() {
         owner = msg.sender;
-        _currentSupply = _initialSupply;
-        balances[owner] = _initialSupply;
+        balances[owner] = _totalSupply;
     }
 
-    /* ERC20 Events */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed from, address indexed to, uint256 value);
-
-    /* ERC223 Events */
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
-
-    /* Non-ERC Events */
-    event Burn(address indexed from, uint256 amount, uint256 currentSupply, bytes data);
-
-    /* ERC20 Functions */
-    /* Return current supply in smallest denomination (1MGO = 100000000) */
     function totalSupply() constant returns (uint256 totalSupply) {
-        return _initialSupply;
+        totalSupply = _totalSupply;
     }
 
-    /* Returns the balance of a particular account */
-    function balanceOf(address _address) constant returns (uint256 balance) {
-        return balances[_address];
+    // What is the balance of a particular account?
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
 
-    /* Transfer the balance from the sender's address to the address _to */
-    function transfer(address _to, uint _value) returns (bool success) {
-        if (balances[msg.sender] >= _value
-            && _value > 0
-            && balances[_to] + _value > balances[_to]) {
-            bytes memory empty;
-            if(isContract(_to)) {
-                return transferToContract(_to, _value, empty);
-            } else {
-                return transferToAddress(_to, _value, empty);
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /* Withdraws to address _to form the address _from up to the amount _value */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value
-            && allowed[_from][msg.sender] >= _value
-            && _value > 0
-            && balances[_to] + _value > balances[_to]) {
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(_from, _to, _value);
+    // Transfer the balance from owner's account to another account
+    function transfer(address _to, uint256 _amount) returns (bool success) {
+        if (balances[msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
             return true;
         } else {
             return false;
         }
     }
 
-    /* Allows _spender to withdraw the _allowance amount form sender */
-    function approve(address _spender, uint256 _allowance) returns (bool success) {
-        if (_allowance <= _currentSupply) {
-            allowed[msg.sender][_spender] = _allowance;
-            Approval(msg.sender, _spender, _allowance);
+    // Send _value amount of tokens from address _from to address _to
+    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+    // fees in sub-currencies; the command should fail unless the _from account has
+    // deliberately authorized the sender of the message via some mechanism; we propose
+    // these standardized APIs for approval:
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
             return true;
         } else {
             return false;
         }
     }
 
-    /* Checks how much _spender can withdraw from _owner */
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    function approve(address _spender, uint256 _amount) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
+}
 
-    /* ERC223 Functions */
-    /* Get the contract constant _name */
-    function name() constant returns (string name) {
-        return _name;
-    }
+contract WavesEthereumSwap is MobileGoToken {
+    event WavesTransfer(address indexed _from, string wavesAddress, uint256 amount);
 
-    /* Get the contract constant _symbol */
-    function symbol() constant returns (string symbol) {
-        return _symbol;
-    }
-
-    /* Get the contract constant _decimals */
-    function decimals() constant returns (uint8 decimals) {
-        return _decimals;
-    }
-
-    /* Transfer the balance from the sender's address to the address _to with data _data */
-    function transfer(address _to, uint _value, bytes _data) returns (bool success) {
-        if (balances[msg.sender] >= _value
-            && _value > 0
-            && balances[_to] + _value > balances[_to]) {
-            if(isContract(_to)) {
-                return transferToContract(_to, _value, _data);
-            } else {
-                return transferToAddress(_to, _value, _data);
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /* Transfer function when _to represents a regular address */
-    function transferToAddress(address _to, uint _value, bytes _data) internal returns (bool success) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        Transfer(msg.sender, _to, _value, _data);
-        return true;
-    }
-
-    /* Transfer function when _to represents a contract address, with the caveat
-    that the contract needs to implement the tokenFallback function in order to receive tokens */
-    function transferToContract(address _to, uint _value, bytes _data) internal returns (bool success) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        ContractReceiver receiver = ContractReceiver(_to);
-        receiver.tokenFallback(msg.sender, _value, _data);
-        Transfer(msg.sender, _to, _value);
-        Transfer(msg.sender, _to, _value, _data);
-        return true;
-    }
-
-    /* Infers if whether _address is a contract based on the presence of bytecode */
-    function isContract(address _address) internal returns (bool is_contract) {
-        uint length;
-        if (_address == 0) return false;
-        assembly {
-            length := extcodesize(_address)
-        }
-        if(length > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /* Non-ERC Functions */
-    /* Remove the specified amount of the tokens from the supply permanently */
-    function burn(uint256 _value, bytes _data) returns (bool success) {
-        if (balances[msg.sender] >= _value
-            && _value > 0) {
-            balances[msg.sender] -= _value;
-            _currentSupply -= _value;
-            Burn(msg.sender, _value, _currentSupply, _data);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /* Returns the total amount of tokens in supply */
-    function currentSupply() constant returns (uint256 currentSupply) {
-        return _currentSupply;
-    }
-
-    /* Returns the total amount of tokens ever burned */
-    function amountBurned() constant returns (uint256 amountBurned) {
-        return _initialSupply - _currentSupply;
-    }
-
-    /* Stops any attempt to send Ether to this contract */
-    function () {
-        throw;
+    function moveToWaves(string wavesAddress, uint256 amount) {
+        if (!transfer(owner, amount)) throw;
+        WavesTransfer(msg.sender, wavesAddress, amount);
     }
 }
