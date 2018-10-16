@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RacingClubPresale at 0xd6566062a24716213f0851e455fc52325f42a23d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RacingClubPresale at 0x854f78f656b5c7a0ddc628b98b578c48595f3d65
 */
 pragma solidity ^0.4.18;
 
@@ -86,8 +86,8 @@ contract RacingClubPresale is AccessControl {
   uint256 public constant MAX_UNICORNS_TO_GIFT = 9;
 
   // End date for the presale. No purchases can be made after this date.
-  // Thursday, May 10, 2018 11:59:59 PM
-  uint256 public constant PRESALE_END_TIMESTAMP = 1525996799;
+  // Monday, November 19, 2018 11:59:59 PM
+  uint256 public constant PRESALE_END_TIMESTAMP = 1542671999;
 
   // Price limits to decrease the appreciation rate
   uint256 private constant PRICE_LIMIT_1 = 0.1 ether;
@@ -132,6 +132,14 @@ contract RacingClubPresale is AccessControl {
   // Events
   event CarsPurchased(address indexed _owner, uint256[] _carIds, bool _upgradePackage, uint256 _pricePayed);
   event CarGifted(address indexed _receiver, uint256 _carId, bool _upgradePackage);
+
+  function RacingClubPresale() public {
+    // set previous contract values
+    carsCount = 98;
+    carsGifted = 6;
+    unicornsGifted = 2;
+    currentPrice = 0.05 ether;
+  }
 
   // Buy a car. The cars are unique within the order.
   // If order count is 5 then one car can be preselected.
