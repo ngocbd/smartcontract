@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RinghashRegistry at 0x17064d2A00c19CfE73ABF47eaab4d8533D4f92c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RinghashRegistry at 0xee445e921f481c04a5d254a7f8f013f48a6f0947
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -106,6 +106,10 @@ contract RinghashRegistry {
     ////////////////////////////////////////////////////////////////////////////
     /// Public Functions                                                     ///
     ////////////////////////////////////////////////////////////////////////////
+    /// @dev Disable default function.
+    function () payable public {
+        revert();
+    }
     function submitRinghash(
         address     ringminer,
         bytes32     ringhash
@@ -183,7 +187,7 @@ contract RinghashRegistry {
         returns (bool)
     {
         require(ringminer != 0x0);
-        var submission = submissions[ringhash];
+        Submission memory submission = submissions[ringhash];
         address miner = submission.ringminer;
         return (
             miner == 0x0 || (
@@ -200,7 +204,7 @@ contract RinghashRegistry {
         view
         returns (bool)
     {
-        var submission = submissions[ringhash];
+        Submission memory submission = submissions[ringhash];
         return (
             submission.block + blocksToLive >= block.number && (
             submission.ringminer == ringminer)
