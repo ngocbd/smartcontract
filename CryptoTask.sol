@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTask at 0x7f6eac2ea38284645795996b11f9bf227cf9551d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTask at 0x5a725992aabc2839daece6090188dea2608a33f1
 */
 pragma solidity ^0.4.19;
 
@@ -46,9 +46,9 @@ contract Ownable {
 contract CryptoTask is Ownable {
    
     uint MAX_UINT32 = 4294967295;
-    uint public MIN_TASK_VALUE = 200000000000000000000;
-    uint public CLIENT_TIME_TO_DECIDE = 3 days;
-    uint public VOTING_PERIOD = 5 days;
+    uint MIN_TASK_VALUE = 200000000000000000000;
+    uint CLIENT_TIME_TO_DECIDE = 3 days;
+    uint VOTING_PERIOD = 5 days;
     /*uint public MIN_TASK_VALUE = 2000000000000000000;
     uint public CLIENT_TIME_TO_DECIDE = 15 minutes;
     uint public VOTING_PERIOD = 15 minutes;*/
