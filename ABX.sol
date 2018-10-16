@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABX at 0x33d2da15f86b1aa9a896db4daccf54d8f9992c7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABX at 0x4827e9b0ade81be3873dc9edd94510a9b209acbf
 */
 pragma solidity ^0.4.19;
 
@@ -29,9 +29,9 @@ contract ABX {
      */
     function ABX(
     ) public {
-        totalSupply = 1000000000000000000000000000;                              // Update total supply with the decimal amount
-        balanceOf[msg.sender] = 1000000000000000000000000000;                    // Give the creator all initial tokens
-        name = "ABX Network";                                                           // Set the name for display purposes
+        totalSupply = 100000000000000000000000000;                              // Update total supply with the decimal amount
+        balanceOf[msg.sender] = 100000000000000000000000000;                    // Give the creator all initial tokens
+        name = "ABX";                                                           // Set the name for display purposes
         symbol = "ABX";                                                         // Set the symbol for display purposes
     }
 
