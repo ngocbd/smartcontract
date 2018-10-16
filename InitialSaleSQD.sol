@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InitialSaleSQD at 0x248e0d89d2cb13b5ce115cae4ffea9c69a6675b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InitialSaleSQD at 0xdb98ce86387c23bf9caae85c5606d32b31bd4765
 */
 pragma solidity ^0.4.18;
 
@@ -79,9 +79,6 @@ contract SafeMath {
  */
 contract StandardToken is ERC20, SafeMath {
 
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
-
   /* Actual balances of token holders */
   mapping(address => uint) balances;
 
@@ -124,9 +121,6 @@ contract StandardToken is ERC20, SafeMath {
 
   function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) revert();
 
     balances[_to] = safeAdd(balances[_to], _value);
     balances[_from] = safeSub(balances[_from], _value);
@@ -370,36 +364,17 @@ contract UpgradeableToken is StandardToken {
 }
 
 
-contract SQDExtendedToken is BurnableToken, UpgradeableToken {
+contract SQDFiniteToken is BurnableToken, UpgradeableToken {
 
   string public name;
   string public symbol;
   uint8 public decimals;
   address public owner;
 
-  bool public mintingFinished = false;
-
   mapping(address => uint) public previligedBalances;
-
-  /** List of agents that are allowed to create new tokens */
-  mapping(address => bool) public mintAgents;
-  event MintingAgentChanged(address addr, bool state);
-  event MintFinished();
 
   modifier onlyOwner() {
     if(msg.sender != owner) revert();
-    _;
-  }
-
-  modifier onlyMintAgent() {
-    // Only crowdsale contracts are allowed to mint new tokens
-    if(!mintAgents[msg.sender]) revert();
-    _;
-  }
-
-  /** Make sure we are not done yet. */
-  modifier canMint() {
-    if(mintingFinished) revert();
     _;
   }
 
@@ -409,7 +384,7 @@ contract SQDExtendedToken is BurnableToken, UpgradeableToken {
     }
   }
 
-  function SQDExtendedToken(address _owner, string _name, string _symbol, uint _totalSupply, uint8 _decimals) UpgradeableToken(_owner) public {
+  function SQDFiniteToken(address _owner, string _name, string _symbol, uint _totalSupply, uint8 _decimals) UpgradeableToken(_owner) public {
     uint calculatedSupply = _totalSupply * 10 ** uint(_decimals);
     name = _name;
     symbol = _symbol;
@@ -447,28 +422,6 @@ contract SQDExtendedToken is BurnableToken, UpgradeableToken {
     Transfer(_from, _to, _value);
     return true;
   }
-
-  /**
-   * Create new tokens and allocate them to an address..
-   *
-   * Only callably by a crowdsale contract (mint agent).
-   */
-  function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = safeAdd(totalSupply, amount);
-    balances[receiver] = safeAdd(balances[receiver], amount);
-
-    // This will make the mint transaction apper in EtherScan.io
-    // We can remove this after there is a standardized minting event
-    Transfer(0, receiver, amount);
-  }
-
-  /**
-   * Owner can allow a crowdsale contract to mint new tokens.
-   */
-  function setMintAgent(address addr, bool state) onlyOwner canMint public {
-    mintAgents[addr] = state;
-    MintingAgentChanged(addr, state);
-  }
 }
 
 contract InitialSaleSQD {
@@ -483,7 +436,7 @@ contract InitialSaleSQD {
     uint public amountRaised;
     uint public incomingTokensTransactions;
 
-    SQDExtendedToken public tokenReward;
+    SQDFiniteToken public tokenReward;
 
     event TokenFallback( address indexed from,
                          uint256 value);
@@ -499,7 +452,7 @@ contract InitialSaleSQD {
         uint _ICOEnd,
         uint _preICOPrice,
         uint _ICOPrice,
-        SQDExtendedToken addressOfTokenUsedAsReward
+        SQDFiniteToken addressOfTokenUsedAsReward
     ) public {
         beneficiary = msg.sender;
         preICOSaleStart = _preICOStart;
@@ -507,7 +460,7 @@ contract InitialSaleSQD {
         ICOSaleEnd = _ICOEnd;
         preICOPrice = _preICOPrice;
         ICOPrice = _ICOPrice;
-        tokenReward = SQDExtendedToken(addressOfTokenUsedAsReward);
+        tokenReward = SQDFiniteToken(addressOfTokenUsedAsReward);
     }
 
     function () payable public {
