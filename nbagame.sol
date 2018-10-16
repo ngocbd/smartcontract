@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x8b350ecb6a483471e5daa6f83e688c1890ad0dc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x729fe7e03df8528baa49eaa42431bc24170c8cf3
 */
 pragma solidity 0.4.20;
 
@@ -1036,20 +1036,24 @@ contract nbagame is usingOraclize {
   address public currentOwner = 0x0161C8d35f0B603c7552017fe9642523f70d7B6A;
 
   uint8 public constant NUM_TEAMS = 2;
-  string[NUM_TEAMS] public TEAM_NAMES = ["San Antonio Spurs", "New Orleans Pelicans"];
-  enum TeamType { SASpurs, NOPelicans, None }
+  enum TeamType { A, B, None }
   TeamType public winningTeam = TeamType.None;
 
+  // -----------------------------------------------------------------------------------------------------
+	string[NUM_TEAMS] public TEAM_NAMES = ["Brooklyn Nets", "Golden State Warriors"];
+	string public searchString = "Nets vs Warriors March 6, 2018 Winner";
+	uint public constant BETTING_OPENS = 1520125200;
+	uint public constant BETTING_CLOSES = 1520393400; // Close 5 minutes after scheduled game start
+  // -----------------------------------------------------------------------------------------------------
+   
   uint public constant TOTAL_POOL_COMMISSION = 10; // Total pool commission psuedo 5% (10% from losing side bet)
   uint public constant EARLY_BET_INCENTIVE_COMMISSION = 4; // The early bettors take pseudo 2% commission to incentivize early betting
   uint public constant OWNER_POOL_COMMISSION = 6; // The owner at the end of the betting phase takes pseudo 3% commission (150% more than creator)
   
   uint public constant MINIMUM_BET = 0.01 ether; // 0.01 ETH is min bet
 
-  uint public constant BETTING_OPENS = 1519599600; // This wave of contracts opens on Feb 25, 6:00EST
-  uint public constant BETTING_CLOSES = 1519868100; // Close 5 minutes after scheduled game start (8:35pm EST)
   uint public constant PAYOUT_ATTEMPT_INTERVAL = 64800; // 16 hours for each ping attempt
-  uint public constant BET_RELEASE_DATE = 1520040900; // Release funds if invalid result 48 hours later
+  uint public constant BET_RELEASE_DATE = BETTING_CLOSES + 172700; // Release funds if invalid result 48 hours later
   uint public constant PAYOUT_DATE = BETTING_CLOSES + PAYOUT_ATTEMPT_INTERVAL; // First payout attempt
   
   uint public constant STAGE_ONE_BET_LIMIT = 0.2 ether; // Staged limits for commission incentive
@@ -1079,12 +1083,6 @@ contract nbagame is usingOraclize {
   uint private firstStepLimit = 0.1 ether;      // Step price increase to exit smaller numbers quicker
   uint private secondStepLimit = 0.5 ether;
 
-  /* Events */
-
-  event BetMade();
-  
-  event ContractPurchased();
-  
   /* Modifiers */
 
   // Modifier to only allow the execution of
@@ -1133,7 +1131,7 @@ contract nbagame is usingOraclize {
   
   function pingOracle(uint pingDelay) private {
     // Ping oracle after pingDelay time to query result
-    oraclize_query(pingDelay, "WolframAlpha", "Spurs vs Pelicans February 28, 2018 Winner");
+    oraclize_query(pingDelay, "WolframAlpha", searchString);
     //numberOfPingsAttempted++;
   }
 
@@ -1194,7 +1192,7 @@ contract nbagame is usingOraclize {
   // Function for user to bet on team idx,
   function bet(uint teamIdx) public payable {
     require(canBet() == true);
-    require(TeamType(teamIdx) == TeamType.SASpurs || TeamType(teamIdx) == TeamType.NOPelicans);
+    require(TeamType(teamIdx) == TeamType.A || TeamType(teamIdx) == TeamType.B);
     require(msg.value >= MINIMUM_BET);
 
     // Add bettor to bettor list if they are not on it
@@ -1230,48 +1228,12 @@ contract nbagame is usingOraclize {
 		}
 	}
 	
-	// WIP --- If we need multiple stages, finish the code
-	/*
-	// Work backwards, check how large it can be to reduce nested if statement
-	// Each limit is separate for each team (1% given to each stage + team)
-	// If bigger than the biggest limit
-	if (totalAmountsBet[teamIdx] >= STAGE_TWO_BET_LIMIT) {
-		// Exceeds stage 2, no commission
-		bettorInfo[msg.sender].amountsBetStage3[teamIdx] += msg.value;
-	}
-	
-	// If it is between stage 1 and 2
-	if (totalAmountsBet[teamIdx] < STAGE_TWO_BET_LIMIT && totalAmountsBet[teamIdx] >= STAGE_ONE_BET_LIMIT) {
-		// Check if the value will stay within the stage 2 limit
-		if (SafeMath.add(msg.value, totalAmountsBet[teamIdx]) <= STAGE_TWO_BET_LIMIT) {
-			bettorInfo[msg.sender].amountsBetStage2[teamIdx] += msg.value;
-		} else {
-			// Does not fit, excess goes to stage 3
-			uint amountLeftStage2 = SafeMath.sub(STAGE_TWO_BET_LIMIT, totalAmountsBet[teamIdx]);
-			uint amountExcessStage3 = SafeMath.sub(msg.value, amountLeftStage2);
-			
-			bettorInfo[msg.sender].amountsBetStage2[teamIdx] += amountLeftStage2;
-			bettorInfo[msg.sender].amountsBetStage3[teamIdx] += amountExcessStage3;
-		}
-	}
-	
-	if (totalAmountsBet[teamIdx] < STAGE_ONE_BET_LIMIT) {
-		
-	}
-	*/
-	
     // Perform bet
     bettorInfo[msg.sender].amountsBet[teamIdx] += msg.value;
     numberOfBets++;
     totalBetAmount += msg.value;
     totalAmountsBet[teamIdx] += msg.value;
-    BetMade(); // Trigger event	
   }
-
-  // Returns excess capacity for staging of commission
-  //function betInStageAndReturnExcess(uint _teamIdx, uint stageThreshold) returns(uint) {
-	  
-  //}
   
   // Performs payout based on winning team
   function performPayout() private canPerformPayout {
@@ -1309,8 +1271,7 @@ contract nbagame is usingOraclize {
 		  uint stageTwoCommissionPayoutTeam1 = ((bettorInfo[bettors[k]].amountsBetStage2[1] * eachStageCommission) / totalAmountsBetStage2[1]);
 		  payout += stageTwoCommissionPayoutTeam1;
 	  }
-	  
-	  
+	    
 	  if (payout > 0)
         bettors[k].transfer(payout);
     }
@@ -1360,8 +1321,6 @@ contract nbagame is usingOraclize {
 	// Pay the previous owner and the creator commission
 	oldOwner.transfer(payment); // 94%
 	creator.transfer(creatorCommissionValue);
-	
-	ContractPurchased(); // Fire off event for tracking
 	
 	msg.sender.transfer(purchaseExcess); // Send the buyer any excess they paid for the contract
   }
