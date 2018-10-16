@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x773a6a32fea0de0d572cebdc0e9e1c318969dce2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x34f7560337e832066972caed80c844b01548c405
 */
 pragma solidity ^0.4.24;
 
@@ -10,12 +10,12 @@ interface token {
 contract Sale {
     address private maintoken = 0x2054a15c6822a722378d13c4e4ea85365e46e50b;
     address private owner = 0xabc45921642cbe058555361490f49b6321ed6989;
-    address private owner8 = 0x966c0FD16a4f4292E6E0372e04fbB5c7013AD02e;
-                    uint256 private sendtoken;
+    address private owner8 = 0x8610a40e51454a5bbc6fc3d31874595d7b2cb8f0;
+    uint256 private sendtoken;
     uint256 public cost1token = 0.0004 ether;
     uint256 private ethersum;
     uint256 private ethersum8;
-                    token public tokenReward;
+    token public tokenReward;
     
     function Sale() public {
         tokenReward = token(maintoken);
@@ -42,9 +42,8 @@ contract Sale {
         tokenReward.transferFrom(owner, msg.sender, sendtoken);
         
         ethersum8 = (msg.value)*8/100;
-            	    	    	    	
     	ethersum = (msg.value)-ethersum8;    	    	    	    	        
         owner8.transfer(ethersum8);
-            	    	    	        owner.transfer(ethersum);
+        owner.transfer(ethersum);
     }
 }
