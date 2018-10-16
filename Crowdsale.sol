@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x5072a222c7d2880040fb283650e451a879b10d94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x2d8db9cf8bd7c02ae6dbd993366362bd91610f1c
 */
-/*! iam.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
-
 pragma solidity 0.4.18;
 
 library SafeMath {
@@ -70,23 +68,6 @@ contract Pausable is Ownable {
     }
 }
 
-contract Withdrawable is Ownable {
-    function withdrawEther(address _to, uint _value) onlyOwner public returns(bool) {
-        require(_to != address(0));
-        require(this.balance >= _value);
-
-        _to.transfer(_value);
-
-        return true;
-    }
-
-    function withdrawTokens(ERC20 _token, address _to, uint _value) onlyOwner public returns(bool) {
-        require(_to != address(0));
-
-        return _token.transfer(_to, _value);
-    }
-}
-
 contract ERC20 {
     uint256 public totalSupply;
 
@@ -100,15 +81,7 @@ contract ERC20 {
     function approve(address spender, uint256 value) public returns(bool);
 }
 
-contract ERC223 is ERC20 {
-    function transfer(address to, uint256 value, bytes data) public returns(bool);
-}
-
-contract ERC223Receiving {
-    function tokenFallback(address from, uint256 value, bytes data) external;
-}
-
-contract StandardToken is ERC223 {
+contract StandardToken is ERC20 {
     using SafeMath for uint256;
 
     string public name;
@@ -128,35 +101,16 @@ contract StandardToken is ERC223 {
         return balances[_owner];
     }
 
-    function _transfer(address _to, uint256 _value, bytes _data) private returns(bool) {
+    function transfer(address _to, uint256 _value) public returns(bool) {
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        
-        bool is_contract = false;
-        assembly {
-            is_contract := not(iszero(extcodesize(_to)))
-        }
-
-        if(is_contract) {
-            ERC223Receiving receiver = ERC223Receiving(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
-        }
 
         Transfer(msg.sender, _to, _value);
 
         return true;
-    }
-
-    function transfer(address _to, uint256 _value) public returns(bool) {
-        bytes memory empty;
-        return _transfer(_to, _value, empty);
-    }
-
-    function transfer(address _to, uint256 _value, bytes _data) public returns(bool) {
-        return _transfer(_to, _value, _data);
     }
     
     function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
@@ -225,6 +179,7 @@ contract MintableToken is StandardToken, Ownable {
     bool public mintingFinished = false;
 
     modifier canMint() { require(!mintingFinished); _; }
+    modifier notMint() { require(mintingFinished); _; }
 
     function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
         totalSupply = totalSupply.add(_amount);
@@ -276,89 +231,131 @@ contract BurnableToken is StandardToken {
 }
 
 /*
-    ICO IAM
+
+ICO Gap
+
+    - Crowdsale goes in 4 steps:
+    - 1st step PreSale 0: the administrator can issue tokens; purchase and sale are closed; Max. tokens 5 000 000
+    - 2nd step PreSale 1: the administrator can not issue tokens; the sale is open; purchase is closed; Max. tokens 5 000 000 + 10 000 000
+    - The third step of PreSale 2: the administrator can not issue tokens; the sale is open; purchase is closed; Max. tokens 5 000 000 + 10 000 000 + 15 000 000
+    - 4th step ICO: administrator can not issue tokens; the sale is open; the purchase is open; Max. tokens 5 000 000 + 10 000 000 + 15 000 000 + 30 000 000
+
+    Addition:
+    - Total emissions are limited: 100,000,000 tokens
+    - at each step it is possible to change the price of the token
+    - the steps are not limited in time and the step change is made by the nextStep administrator
+    - funds are accumulated on a contract basis
+    - at any time closeCrowdsale can be called: the funds and management of the token are transferred to the beneficiary; the release of + 65% of tokens to the beneficiary; minting closes
+    - at any time, refundCrowdsale can be called: funds remain on the contract; withdraw becomes unavailable; there is an opportunity to get refund 
+    - transfer of tokens before closeCrowdsale is unavailable
+    - you can buy no more than 500 000 tokens for 1 purse.
 */
-contract Token is CappedToken, BurnableToken, Withdrawable {
-    function Token() CappedToken(70000000 * 1 ether) StandardToken("IAM Aero", "IAM", 18) public {
+
+contract Token is CappedToken, BurnableToken {
+    function Token() CappedToken(100000000 * 1 ether) StandardToken("GAP Token", "GAP", 18) public {
         
     }
+    
+    function transfer(address _to, uint256 _value) notMint public returns(bool) {
+        return super.transfer(_to, _value);
+    }
+    
+    function multiTransfer(address[] _to, uint256[] _value) notMint public returns(bool) {
+        return super.multiTransfer(_to, _value);
+    }
 
-    function tokenFallback(address _from, uint256 _value, bytes _data) external {
-        require(false);
+    function transferFrom(address _from, address _to, uint256 _value) notMint public returns(bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function burnOwner(address _from, uint256 _value) onlyOwner canMint public {
+        require(_value <= balances[_from]);
+
+        balances[_from] = balances[_from].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+
+        Burn(_from, _value);
     }
 }
 
-contract Crowdsale is Pausable, Withdrawable, ERC223Receiving {
+contract Crowdsale is Pausable {
     using SafeMath for uint;
 
     struct Step {
         uint priceTokenWei;
         uint tokensForSale;
-        uint minInvestEth;
         uint tokensSold;
         uint collectedWei;
 
-        bool transferBalance;
+        bool purchase;
+        bool issue;
         bool sale;
     }
 
     Token public token;
-    address public beneficiary = 0x4ae7bdf9530cdB666FC14DF79C169e14504c621A;
+    address public beneficiary = 0x4B97b2938844A775538eF0b75F08648C4BD6fFFA;
 
     Step[] public steps;
     uint8 public currentStep = 0;
 
     bool public crowdsaleClosed = false;
+    bool public crowdsaleRefund = false;
+    uint public refundedWei;
 
     mapping(address => uint256) public canSell;
+    mapping(address => uint256) public purchaseBalances; 
 
     event Purchase(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
     event Sell(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
-    event NewRate(uint256 rate);
+    event Issue(address indexed holder, uint256 tokenAmount);
+    event Refund(address indexed holder, uint256 etherAmount);
     event NextStep(uint8 step);
     event CrowdsaleClose();
+    event CrowdsaleRefund();
 
     function Crowdsale() public {
         token = new Token();
 
-        steps.push(Step(1 ether / 1000, 1000000 * 1 ether, 0.01 ether, 0, 0, true, false));
-        steps.push(Step(1 ether / 1000, 1500000 * 1 ether, 0.01 ether, 0, 0, true, false));
-        steps.push(Step(1 ether / 1000, 3000000 * 1 ether, 0.01 ether, 0, 0, true, false));
-        steps.push(Step(1 ether / 1000, 9000000 * 1 ether, 0.01 ether, 0, 0, true, false));
-        steps.push(Step(1 ether / 1000, 35000000 * 1 ether, 0.01 ether, 0, 0, true, false));
-        steps.push(Step(1 ether / 1000, 20500000 * 1 ether, 0.01 ether, 0, 0, true, true));
+        steps.push(Step(1 ether / 1000, 5000000 * 1 ether, 0, 0, false, true, false));
+        steps.push(Step(1 ether / 1000, 10000000 * 1 ether, 0, 0, true, false, false));
+        steps.push(Step(1 ether / 500, 15000000 * 1 ether, 0, 0, true, false, false));
+        steps.push(Step(1 ether / 100, 30000000 * 1 ether, 0, 0, true, false, true));
     }
 
     function() payable public {
         purchase();
     }
 
-    function tokenFallback(address _from, uint256 _value, bytes _data) external {
-        sell(_value);
-    }
-
-    function setTokenRate(uint _value) onlyOwner public {
+    function setTokenRate(uint _value) onlyOwner whenPaused public {
         require(!crowdsaleClosed);
-
         steps[currentStep].priceTokenWei = 1 ether / _value;
-
-        NewRate(steps[currentStep].priceTokenWei);
     }
     
     function purchase() whenNotPaused payable public {
         require(!crowdsaleClosed);
+        require(msg.value >= 0.001 ether);
 
         Step memory step = steps[currentStep];
 
-        require(msg.value >= step.minInvestEth);
+        require(step.purchase);
         require(step.tokensSold < step.tokensForSale);
+        require(token.balanceOf(msg.sender) < 500000 ether);
 
         uint sum = msg.value;
         uint amount = sum.mul(1 ether).div(step.priceTokenWei);
         uint retSum = 0;
+        uint retAmount;
         
         if(step.tokensSold.add(amount) > step.tokensForSale) {
-            uint retAmount = step.tokensSold.add(amount).sub(step.tokensForSale);
+            retAmount = step.tokensSold.add(amount).sub(step.tokensForSale);
+            retSum = retAmount.mul(step.priceTokenWei).div(1 ether);
+
+            amount = amount.sub(retAmount);
+            sum = sum.sub(retSum);
+        }
+
+        if(token.balanceOf(msg.sender).add(amount) > 500000 ether) {
+            retAmount = token.balanceOf(msg.sender).add(amount).sub(500000 ether);
             retSum = retAmount.mul(step.priceTokenWei).div(1 ether);
 
             amount = amount.sub(retAmount);
@@ -367,17 +364,8 @@ contract Crowdsale is Pausable, Withdrawable, ERC223Receiving {
 
         steps[currentStep].tokensSold = step.tokensSold.add(amount);
         steps[currentStep].collectedWei = step.collectedWei.add(sum);
+        purchaseBalances[msg.sender] = purchaseBalances[msg.sender].add(sum);
 
-        if(currentStep == 0) {
-            canSell[msg.sender] = canSell[msg.sender].add(amount);
-        }
-
-        if(step.transferBalance) {
-            uint p1 = sum.div(200);
-            (0xD8C7f2215f90463c158E91b92D81f0A1E3187C1B).transfer(p1.mul(3));
-            (0x8C8d80effb2c5C1E4D857e286822E0E641cA3836).transfer(p1.mul(3));
-            beneficiary.transfer(sum.sub(p1.mul(6)));
-        }
         token.mint(msg.sender, amount);
 
         if(retSum > 0) {
@@ -385,6 +373,22 @@ contract Crowdsale is Pausable, Withdrawable, ERC223Receiving {
         }
 
         Purchase(msg.sender, amount, sum);
+    }
+
+    function issue(address _to, uint256 _value) onlyOwner whenNotPaused public {
+        require(!crowdsaleClosed);
+
+        Step memory step = steps[currentStep];
+        
+        require(step.issue);
+        require(step.tokensSold.add(_value) <= step.tokensForSale);
+
+        steps[currentStep].tokensSold = step.tokensSold.add(_value);
+        canSell[_to] = canSell[_to].add(_value).div(100).mul(20);
+
+        token.mint(_to, _value);
+
+        Issue(_to, _value);
     }
 
     function sell(uint256 _value) whenNotPaused public {
@@ -398,7 +402,7 @@ contract Crowdsale is Pausable, Withdrawable, ERC223Receiving {
         require(step.sale);
 
         canSell[msg.sender] = canSell[msg.sender].sub(_value);
-        token.call('transfer', beneficiary, _value);
+        token.burnOwner(msg.sender, _value);
 
         uint sum = _value.mul(step.priceTokenWei).div(1 ether);
 
@@ -406,14 +410,26 @@ contract Crowdsale is Pausable, Withdrawable, ERC223Receiving {
 
         Sell(msg.sender, _value, sum);
     }
+    
+    function refund() public {
+        require(crowdsaleRefund);
+        require(purchaseBalances[msg.sender] > 0);
 
-    function nextStep(uint _value) onlyOwner public {
+        uint sum = purchaseBalances[msg.sender];
+
+        purchaseBalances[msg.sender] = 0;
+        refundedWei = refundedWei.add(sum);
+
+        msg.sender.transfer(sum);
+        
+        Refund(msg.sender, sum);
+    }
+
+    function nextStep() onlyOwner public {
         require(!crowdsaleClosed);
         require(steps.length - 1 > currentStep);
         
         currentStep += 1;
-
-        setTokenRate(_value);
 
         NextStep(currentStep);
     }
@@ -422,11 +438,21 @@ contract Crowdsale is Pausable, Withdrawable, ERC223Receiving {
         require(!crowdsaleClosed);
         
         beneficiary.transfer(this.balance);
-        token.mint(beneficiary, token.cap().sub(token.totalSupply()));
+        token.mint(beneficiary, token.totalSupply().div(100).mul(65));
+        token.finishMinting();
         token.transferOwnership(beneficiary);
 
         crowdsaleClosed = true;
 
         CrowdsaleClose();
+    }
+
+    function refundCrowdsale() onlyOwner public {
+        require(!crowdsaleClosed);
+
+        crowdsaleRefund = true;
+        crowdsaleClosed = true;
+
+        CrowdsaleRefund();
     }
 }
