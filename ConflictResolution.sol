@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConflictResolution at 0xb45f36f147efe16b4926e2d181a194f0b83fa4c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConflictResolution at 0xddde2d9a455a038ea1f54ba9553dd093c75cf299
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 interface ConflictResolutionInterface {
-    function minHouseStake(uint activeGames) public pure returns(uint);
+    function minHouseStake(uint activeGames) external pure returns(uint);
 
-    function maxBalance() public pure returns(int);
+    function maxBalance() external pure returns(int);
 
-    function isValidBet(uint8 _gameType, uint _betNum, uint _betValue) public pure returns(bool);
+    function isValidBet(uint8 _gameType, uint _betNum, uint _betValue) external pure returns(bool);
 
     function endGameConflict(
         uint8 _gameType,
@@ -19,7 +19,7 @@ interface ConflictResolutionInterface {
         bytes32 _serverSeed,
         bytes32 _playerSeed
     )
-        public
+        external
         view
         returns(int);
 
@@ -31,7 +31,7 @@ interface ConflictResolutionInterface {
         uint _stake,
         uint _endInitiatedTime
     )
-        public
+        external
         view
         returns(int);
 
@@ -43,7 +43,7 @@ interface ConflictResolutionInterface {
         uint _stake,
         uint _endInitiatedTime
     )
-        public
+        external
         view
         returns(int);
 }
@@ -73,7 +73,7 @@ contract ConflictResolution is ConflictResolutionInterface {
 
     modifier onlyValidBalance(int _balance, uint _gameStake) {
         // safe to cast gameStake as range is fixed
-        require(-int(_gameStake) <= _balance && _balance < MAX_BALANCE);
+        require(-int(_gameStake) <= _balance && _balance <= MAX_BALANCE);
         _;
     }
 
@@ -228,7 +228,7 @@ contract ConflictResolution is ConflictResolutionInterface {
             // player cancelled game without playing
             profit = 0;
         } else {
-            profit = int(calculateProfit(_gameType, _betNum, _betValue)); // safe to cast as ranges are limited
+            profit = calculateProfit(_gameType, _betNum, _betValue); // safe to cast as ranges are limited
         }
 
         // penalize server as it didn't end game
@@ -344,7 +344,7 @@ contract ConflictResolution is ConflictResolutionInterface {
         pure
         returns(bool)
     {
-        bytes32 combinedHash = keccak256(_serverSeed, _playerSeed);
+        bytes32 combinedHash = keccak256(abi.encodePacked(_serverSeed, _playerSeed));
         uint randNum = uint(combinedHash);
 
         if (_gameType == 1) {
