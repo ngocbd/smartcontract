@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x08c8aacB8Cef8D95fFF5467725239891d1f23093
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x7A8059048FD3E4682c8fD48E782992091cF85eFd
 */
 contract Token {
 
