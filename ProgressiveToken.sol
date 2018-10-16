@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProgressiveToken at 0x87C21e1Eb869351d7213254F287Af161aD461D43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProgressiveToken at 0x1e1e933ca258e41d15061c39f70358f009605282
 */
 pragma solidity 0.4.21;
 
@@ -23,7 +23,7 @@ contract owned {
 
 contract token {
 	/* Public variables of the token */
-	string public standard = 'NANO 0.1';
+	string public standard = 'ICO Premier 0.1';
 	string public name;                                 //Name of the coin
 	string public symbol;                               //Symbol of the coin
 	uint8  public decimals;                              // No of decimal places (to use no 128, you have to write 12800)
@@ -66,7 +66,7 @@ contract token {
 }
 
 contract ProgressiveToken is owned, token {
-	uint256 public /*constant*/ totalSupply=500000000000;          // the amount of total coins avilable.
+	uint256 public /*constant*/ totalSupply=1250000000000000000;          // the amount of total coins avilable.
 	uint256 public reward;                                    // reward given to miner.
 	uint256 internal coinBirthTime=now;                       // the time when contract is created.
 	uint256 public currentSupply;                           // the count of coins currently avilable.
