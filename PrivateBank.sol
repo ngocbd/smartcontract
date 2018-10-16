@@ -1,19 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateBank at 0xB93430ce38AC4A6Bb47fB1fc085eA669353fD89E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateBank at 0xB4c05E6e4cdB07c15095300D96a5735046eEF999
 */
 pragma solidity ^0.4.19;
 
 contract PrivateBank
 {
     mapping (address => uint) public balances;
-        
+    
     uint public MinDeposit = 1 ether;
     
     Log TransferLog;
     
-    function PrivateBank(address _lib)
+    function PrivateBank(address _log)
     {
-        TransferLog = Log(_lib);
+        TransferLog = Log(_log);
     }
     
     function Deposit()
