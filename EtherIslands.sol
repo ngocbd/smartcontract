@@ -1,54 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherIslands at 0x9808e39c7293ac907e288c8e0e42465ad62c5bd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherIslands at 0x741733ca54e0f052a092bdc95ba9897c2d56e04b
 */
 pragma solidity ^0.4.19;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
 
 /**
  * @title Ownable
@@ -105,6 +58,52 @@ contract ERC721 {
   function takeOwnership(uint256 _tokenId) public;
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 contract EtherIslands is Ownable, ERC721 {
     using SafeMath for uint256;
 
@@ -114,7 +113,7 @@ contract EtherIslands is Ownable, ERC721 {
     event Transfer(address from, address to, uint256 tokenId);
     event DividendsPaid(address to, uint256 amount, bytes32 divType);
     event ShipsBought(uint256 tokenId, address owner);
-    event IslandAttacked(uint256 attackerId, uint256 targetId);
+    event IslandAttacked(uint256 attackerId, uint256 targetId, uint256 treasuryStolen);
     event TreasuryWithdrawn(uint256 tokenId);
 
     /*** STRUCTS ***/
@@ -151,8 +150,9 @@ contract EtherIslands is Ownable, ERC721 {
     uint256 islands_count;
 
     uint256 shipPrice = 0.01 ether;
-    uint256 withdrawalBlocksCooldown = 100;
-    address m_address = 0xd17e2bFE196470A9fefb567e8f5992214EB42F24;
+    uint256 withdrawalBlocksCooldown = 720;
+    uint256 battle_cooldown = 40;
+    address m_address = 0x9BB3364Baa5dbfcaa61ee0A79a9cA17359Fc7bBf;
 
     mapping(address => uint256) private ownerCount;
     mapping(uint256 => Island) private islands;
@@ -166,18 +166,17 @@ contract EtherIslands is Ownable, ERC721 {
     function implementsERC721() public pure returns (bool) {return true;}
 
     function EtherIslands() public {
-        _create_island("Santorini", msg.sender, 0.001 ether, 0, 0, 0);
-        _create_island("Seychelles", msg.sender, 0.001 ether, 0, 0, 0);
-        _create_island("Palawan", msg.sender, 0.001 ether, 0, 0, 0);
-        _create_island("The Cook Islands", msg.sender, 0.001 ether, 0, 0, 0);
-        _create_island("Bora Bora", msg.sender, 0.001 ether, 0, 0, 0);
-        _create_island("Maldives", msg.sender, 0.001 ether, 0, 0, 0);
     }
 
     /** PUBLIC METHODS **/
     function createIsland(bytes32 _name, uint256 _price, address _owner, uint256 _attack_ships_count, uint256 _defense_ships_count) public onlyOwner {
         require(msg.sender != address(0));
         _create_island(_name, _owner, _price, 0, _attack_ships_count, _defense_ships_count);
+    }
+
+    function importIsland(bytes32 _name, address[3] _owners, uint256[7] _island_data, uint256[8] _island_battle_stats) public onlyOwner {
+        require(msg.sender != address(0));
+        _import_island(_name, _owners, _island_data, _island_battle_stats);
     }
 
     function attackIsland(uint256 _attacker_id, uint256 _target_id) public payable {
@@ -197,7 +196,7 @@ contract EtherIslands is Ownable, ERC721 {
         require(attackerIsland.attack_ships_count > 0); // attacker must have at least 1 attack ship
         require(attackerIsland.attack_ships_count > defenderIsland.defense_ships_count);
 
-        uint256 goods_stolen = SafeMath.mul(SafeMath.div(defenderIsland.treasury, 100), 75);
+        uint256 goods_stolen = SafeMath.mul(SafeMath.div(defenderIsland.treasury, 100), 25);
 
         defenderIsland.treasury = SafeMath.sub(defenderIsland.treasury, goods_stolen);
 
@@ -207,7 +206,7 @@ contract EtherIslands is Ownable, ERC721 {
         defenderIslandBattleStats.defenses_lost++;
         defenderIslandBattleStats.treasury_lost = SafeMath.add(defenderIslandBattleStats.treasury_lost, goods_stolen);
 
-        uint256 cooldown_block = block.number + 20;
+        uint256 cooldown_block = block.number + battle_cooldown;
         attackerIslandBattleStats.attack_cooldown = cooldown_block;
         defenderIslandBattleStats.defense_cooldown = cooldown_block;
 
@@ -233,7 +232,7 @@ contract EtherIslands is Ownable, ERC721 {
         m_address.transfer(SafeMath.mul(SafeMath.div(goods_for_dev, 100), 20));
         owner.transfer(SafeMath.mul(SafeMath.div(goods_for_dev, 100), 80));
 
-        IslandAttacked(_attacker_id, _target_id);
+        IslandAttacked(_attacker_id, _target_id, goods_stolen);
     }
 
     function buyShips(uint256 _island_id, uint256 _ships_to_buy, bool _is_attack_ships) public payable {
@@ -363,6 +362,9 @@ contract EtherIslands is Ownable, ERC721 {
         ownerCount[_old_owner] -= 1;
         ownerCount[island.owner] += 1;
 
+        islandBattleStats[_island_id].attack_cooldown = battle_cooldown; // immunity for 10 mins
+        islandBattleStats[_island_id].defense_cooldown = battle_cooldown; // immunity for 10 mins
+
         Transfer(_old_owner, island.owner, _island_id);
         IslandSold(_island_id, island.previous_price, island.price, _old_owner, island.owner, island.name);
 
@@ -438,6 +440,12 @@ contract EtherIslands is Ownable, ERC721 {
         transactions_count = islands[_island_id].transactions_count;
     }
 
+    function getIslandPreviousOwners(uint256 _island_id) public view returns (
+        address[2] previous_owners
+    ) {
+        previous_owners = islands[_island_id].previous_owners;
+    }
+
     function getIslands() public view returns (uint256[], address[], uint256[], uint256[], uint256[], uint256[], uint256[]) {
         uint256[] memory ids = new uint256[](islands_count);
         address[] memory owners = new address[](islands_count);
@@ -490,6 +498,37 @@ contract EtherIslands is Ownable, ERC721 {
         islands_count++;
     }
 
+    function _import_island(bytes32 _name, address[3] _owners, uint256[7] _island_data, uint256[8] _island_battle_stats) private {
+        islands[islands_count] = Island({
+            name : _name,
+            owner : _owners[0],
+            price : _island_data[0],
+            treasury : _island_data[1],
+            treasury_next_withdrawal_block : _island_data[2],
+            previous_price : _island_data[3],
+            attack_ships_count : _island_data[4],
+            defense_ships_count : _island_data[5],
+            transactions_count : _island_data[6],
+            approve_transfer_to : address(0),
+            previous_owners : [_owners[1], _owners[2]]
+            });
+
+        islandBattleStats[islands_count] = IslandBattleStats({
+            attacks_won : _island_battle_stats[0],
+            attacks_lost : _island_battle_stats[1],
+            defenses_won : _island_battle_stats[2],
+            defenses_lost : _island_battle_stats[3],
+            treasury_stolen : _island_battle_stats[4],
+            treasury_lost : _island_battle_stats[5],
+            attack_cooldown : _island_battle_stats[6],
+            defense_cooldown : _island_battle_stats[7]
+            });
+
+        NewIsland(islands_count, _name, _owners[0]);
+        Transfer(address(this), _owners[0], islands_count);
+        islands_count++;
+    }
+
     function _transfer(address _from, address _to, uint256 _island_id) private {
         islands[_island_id].owner = _to;
         islands[_island_id].approve_transfer_to = address(0);
@@ -533,4 +572,6 @@ contract EtherIslands is Ownable, ERC721 {
     function upgradeContract(address _newContract) public onlyOwner {
         _newContract.transfer(this.balance);
     }
+
+    function AddEth () public payable {}
 }
