@@ -1,37 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x1f1a1c5640d6d959e6dd5c95bf5da65cd345e0e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xc96B052A8a915D98033b0B3Ff9e542a92c5Bf851
 */
 pragma solidity ^0.4.20;
 
 /*
 * Team JUST presents..
-* GasWars
-* -> What?
-* The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
 *
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* 
-* -> Who worked on this project?
-* - PonziBot (math/memes/main site/master)
-* - Mantso (lead solidity dev/lead web3 dev)
-* - swagg (concept design/feedback/management)
-* - Anonymous#1 (main site/web3/test cases)
-* - Anonymous#2 (math formulae/whitepaper)
+* Trevon James Now (TJNW)
+* Don't Talk To Me Unless It's About Intangible Coins.
 *
-* -> Who has audited & approved the projected:
-* - Arc
-* - tocisck
-* - sumpunk
+*https://tjnow.cc
+*YT: https://www.youtube.com/channel/UCWZbtMeOAb_qpEVUl551l7w
+*
 */
 
 contract Hourglass {
@@ -81,7 +61,6 @@ contract Hourglass {
                 
                 // does the customer purchase exceed the max ambassador quota?
                 (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
-            
                 
             );
             
@@ -91,7 +70,6 @@ contract Hourglass {
             // execute
             _;
         } else {
-            require(1527359400 < now);
             // in case the ether count drops low, the ambassador phase won't reinitiate
             onlyAmbassadors = false;
             _;    
@@ -138,21 +116,21 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "GasWars";
-    string public symbol = "GAST";
+    string public name = "TrevonJamesNow";
+    string public symbol = "TJNW";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 10;
+    uint8 constant internal dividendFee_ = 5;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    // proof of stake (defaults at 5 tokens)
-    uint256 public stakingRequirement = 5e18;
+    // proof of stake (defaults at 100 tokens)
+    uint256 public stakingRequirement = 100e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1.1 ether;
-    uint256 constant internal ambassadorQuota_ = 2 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
+    uint256 constant internal ambassadorQuota_ = 20 ether;
     
     
     
@@ -171,7 +149,7 @@ contract Hourglass {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
@@ -184,8 +162,7 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        ambassadors_[0xfe188a117a8759d2b61a4ed2620ba60361b99361] = true;
-        ambassadors_[0x4ffE17a2A72bC7422CB176bC71c04EE6D87cE329] = true;
+        // add administrators here
     }
     
      
@@ -213,7 +190,7 @@ contract Hourglass {
     
     /**
      * Converts all of caller's dividends to tokens.
-     */
+    */
     function reinvest()
         onlyStronghands()
         public
