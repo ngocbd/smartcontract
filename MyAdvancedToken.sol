@@ -1,10 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xcf26e90169f00bdbc7018ea203b55f0ec8ba426c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x5602586601e6b066780c78f1843192138d0d70da
 */
 pragma solidity ^0.4.16;
-
-//BUBBLEUM source code
-//with 100% cryptonano BUBB rubber inside
 
 contract owned {
     address public owner;
@@ -29,7 +26,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 5;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -238,6 +235,13 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function buy() payable public {
         uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+    uint currentChallenge = 1; // Can you figure out the cubic root of this number?
+
+    function rewardMathGeniuses(uint answerToCurrentReward, uint nextChallenge) {
+        require(answerToCurrentReward**3 == currentChallenge); // If answer is wrong do not continue
+        balanceOf[msg.sender] += 1;         // Reward the player
+        currentChallenge = nextChallenge;   // Set the next challenge
     }
 
     /// @notice Sell `amount` tokens to contract
