@@ -1,9 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x66186008C1050627F979d464eABb258860563dbE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xFF603F43946A3A28DF5E6A73172555D8C8b02386
 */
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
+
+contract Owned {
+
+    /// `owner` is the only address that can call a function with this
+    /// modifier
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    address public owner;
+
+    /// @notice The Constructor assigns the message sender to be `owner`
+    function Owned() {
+        owner = msg.sender;
+    }
+
+    address newOwner=0x0;
+
+    event OwnerUpdate(address _prevOwner, address _newOwner);
+
+    ///change the owner
+    function changeOwner(address _newOwner) public onlyOwner {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /// accept the ownership
+    function acceptOwnership() public{
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = 0x0;
+    }
+}
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -50,6 +83,64 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+contract Controlled is Owned{
+
+    function Controlled() {
+       setExclude(msg.sender);
+    }
+
+    // Flag that determines if the token is transferable or not.
+    bool public transferEnabled = false;
+
+    // flag that makes locked address effect
+    bool lockFlag=true;
+    mapping(address => bool) locked;
+    mapping(address => bool) exclude;
+
+    function enableTransfer(bool _enable) 
+    public onlyOwner{
+        transferEnabled=_enable;
+    }
+    function disableLock(bool _enable)
+    onlyOwner
+    returns (bool success){
+        lockFlag=_enable;
+        return true;
+    }
+    function addLock(address _addr) 
+    onlyOwner 
+    returns (bool success){
+        require(_addr!=msg.sender);
+        locked[_addr]=true;
+        return true;
+    }
+
+    function setExclude(address _addr) 
+    onlyOwner 
+    returns (bool success){
+        exclude[_addr]=true;
+        return true;
+    }
+    function removeLock(address _addr)
+    onlyOwner
+    returns (bool success){
+        locked[_addr]=false;
+        return true;
+    }
+
+    modifier transferAllowed {
+        if (!exclude[msg.sender]) {
+            assert(transferEnabled);
+            if(lockFlag){
+                assert(!locked[msg.sender]);
+            }
+        }
+        
+        _;
+    }
+  
+}
+
 /*
 You should inherit from StandardToken or, for a token like you would want to
 deploy in something like Mist, see HumanStandardToken.sol.
@@ -59,9 +150,9 @@ If you deploy this, you won't have anything useful.)
 Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
 
-contract StandardToken is Token {
+contract StandardToken is Token,Controlled {
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
+    function transfer(address _to, uint256 _value) transferAllowed returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
@@ -74,7 +165,7 @@ contract StandardToken is Token {
         } else { return false; }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) transferAllowed returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
@@ -124,17 +215,12 @@ contract HumanStandardToken is StandardToken {
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
-    function HumanStandardToken(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-        ) {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+    function HumanStandardToken() {
+        totalSupply = 400000000 * (10 ** 18); 
+        balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
+        name = "OneRoot Network Token";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "RNT";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
