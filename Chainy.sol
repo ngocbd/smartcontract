@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Chainy at 0xf3763C30DD6986b53402d41a8552b8F7f6A6089b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Chainy at 0x923c6c916B74495eA0aFf9C19384D225473dB11c
 */
 /**
  * Copyright 2016 Everex https://everex.io
@@ -30,18 +30,14 @@ library strUtils {
         uint8 base = 58;
         uint8 len = 0;
         uint256 remainder = 0;
-        bool needBreak = false;
         bytes memory bytesReversed = bytes(new string(_maxLength));
 
         for (uint8 i = 0; i < _maxLength; i++) {
-            if(_value < base){
-                needBreak = true;
-            }
             remainder = _value % base;
             _value = uint256(_value / base);
             bytesReversed[i] = alphabet[remainder];
             len++;
-            if(needBreak){
+            if(_value < base){
                 break;
             }
         }
@@ -115,9 +111,20 @@ contract owned {
     }
 }
 
-contract Chainy is owned {
-    // Chainy viewer url
-    string CHAINY_URL;
+
+// Mortality
+contract mortal is owned {
+    function kill() onlyOwner {
+        if (this.balance > 0) {
+            if (!msg.sender.send(this.balance)) throw;
+        }
+        suicide(msg.sender);
+    }
+}
+
+
+contract Chainy is owned, mortal {
+    string constant CHAINY_URL = "https://txn.me/";
 
     // Configuration
     mapping(string => uint256) private chainyConfig;
@@ -136,19 +143,7 @@ contract Chainy is owned {
     // Constructor
     function Chainy(){
         setConfig("fee", 0);
-        // change the block offset to 1000000 to use contract in testnet
-        setConfig("blockoffset", 2000000);
-        setChainyURL("https://txn.me/");
-    }
-
-    // Sets new Chainy viewer URL
-    function setChainyURL(string _url) onlyOwner {
-        CHAINY_URL = _url;
-    }
-
-    // Returns current Chainy viewer URL
-    function getChainyURL() constant returns(string){
-        return CHAINY_URL;
+        setConfig("blockoffset", 1000000);
     }
 
     // Sets configuration option
@@ -169,11 +164,6 @@ contract Chainy is owned {
     // Set receiver address
     function setReceiverAddress(address _address) onlyOwner {
         receiverAddress = _address;
-    }
-
-    // Send all ether back to owner
-    function releaseFunds() onlyOwner {
-        if(!owner.send(this.balance)) throw;
     }
 
     // Add record
@@ -227,9 +217,8 @@ contract Chainy is owned {
         if (!strUtils.isValidChainyJson(json)) throw;
     }
 
-    // Generates a shortlink code for this transaction
     function generateShortLink() internal returns (string) {
-        var s1 = strUtils.toBase58(block.number - getConfig("blockoffset"), 11);
+        var s1 = strUtils.toBase58(block.number - getConfig("blockoffset"), 10);
         var s2 = strUtils.toBase58(uint256(tx.origin), 2);
 
         var s = strUtils.concat(s1, s2);
