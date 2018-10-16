@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x11357ff554752b18de7e895a3178e9d77518422e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x8557c179e6663360b3dac175003047989a1735fa
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -315,6 +315,9 @@ contract Crowdsale is Haltable {
   /* How many wei of funding we have raised */
   uint public weiRaised = 0;
 
+  /* Calculate incoming funds from presale contracts and addresses */
+  uint public presaleWeiRaised = 0;
+
   /* How many distinct addresses have invested */
   uint public investorCount = 0;
 
@@ -345,6 +348,9 @@ contract Crowdsale is Haltable {
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
 
+  /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
+  mapping (address => bool) public earlyParticipantWhitelist;
+
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
 
@@ -368,6 +374,9 @@ contract Crowdsale is Haltable {
 
   // The rules were changed what kind of investments we accept
   event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, address newSignerAddress);
+
+  // Address early participation whitelist status changed
+  event Whitelisted(address addr, bool status);
 
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
@@ -410,11 +419,7 @@ contract Crowdsale is Haltable {
    * Don't expect to just send in money and get tokens.
    */
   function() payable {
-    invest(msg.sender);
-  }
-
-  function buyWithReferral(uint128 customerId) payable {
-    investWithCustomerId(msg.sender, customerId);
+    throw;
   }
 
   /**
@@ -430,7 +435,12 @@ contract Crowdsale is Haltable {
   function investInternal(address receiver, uint128 customerId) stopInEmergency private {
 
     // Determine if it's a good time to accept investment from this participant
-    if(getState() == State.Funding) {
+    if(getState() == State.PreFunding) {
+      // Are we whitelisted for early deposit
+      if(!earlyParticipantWhitelist[receiver]) {
+        throw;
+      }
+    } else if(getState() == State.Funding) {
       // Retail participants can only come in when the crowdsale is running
       // pass
     } else {
@@ -441,14 +451,14 @@ contract Crowdsale is Haltable {
     uint weiAmount = msg.value;
 
     // Account presale sales separately, so that they do not count against pricing tranches
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
       throw;
     }
 
-    if (investedAmountOf[receiver] == 0) {
+    if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
     }
@@ -460,6 +470,10 @@ contract Crowdsale is Haltable {
     // Update totals
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
+
+    if(pricingStrategy.isPresalePurchase(receiver)) {
+        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
+    }
 
     // Check that we did not bust the cap
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
@@ -521,8 +535,8 @@ contract Crowdsale is Haltable {
    * Track who is the customer making the payment so we can send thank you email.
    */
   function investWithCustomerId(address addr, uint128 customerId) public payable {
-    if (requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    if (customerId == 0) throw;  // UUIDv4 sanity check
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    if(customerId == 0) throw;  // UUIDv4 sanity check
     investInternal(addr, customerId);
   }
 
@@ -613,6 +627,16 @@ contract Crowdsale is Haltable {
     requiredSignedAddress = value;
     signerAddress = _signerAddress;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+  }
+
+  /**
+   * Allow addresses to do early participation.
+   *
+   * TODO: Fix spelling error in the name
+   */
+  function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
+    earlyParticipantWhitelist[addr] = status;
+    Whitelisted(addr, status);
   }
 
   /**
@@ -907,17 +931,6 @@ contract EthTranchePricing is PricingStrategy, Ownable {
     }
   }
 
-  // Returns tranche index
-  function getCurrentTrancheIndex(uint weiRaised) private constant returns (uint index) {
-    uint i;
-
-    for(i=0; i < tranches.length; i++) {
-      if(weiRaised < tranches[i].amount) {
-        return (i-1);
-      }
-    }
-  }
-
   /// @dev Get the current price.
   /// @param weiRaised total amount of weis raised, for calculating the current tranche
   /// @return The current price or 0 if we are outside trache ranges
@@ -936,22 +949,13 @@ contract EthTranchePricing is PricingStrategy, Ownable {
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
 
     uint multiplier = 10 ** decimals;
-    uint trancheIndex = getCurrentTrancheIndex(weiRaised);
 
     // This investor is coming through pre-ico
     if(preicoAddresses[msgSender] > 0) {
       return value.times(multiplier) / preicoAddresses[msgSender];
     }
 
-    //  Modify price if more than 100Eth
     uint price = getCurrentPrice(weiRaised);
-    if (value > 1000000000000000000) {
-      if (trancheIndex == 0) {
-        price = 2898550724637391;
-      } else if (trancheIndex == 1) {
-        price = 3030303030302727;
-      }
-    }
     return value.times(multiplier) / price;
   }
 
