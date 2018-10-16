@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicMathLib at 0x19259eddc53136c1045b557d8e8a8cff64121550
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicMathLib at 0xc8bc467b9a70a5824b7e71be9d65906c72f13ddc
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.19;
 
 /**
  * @title Basic Math Library
  * @author Modular, Inc
  *
- * version 1.2.1
+ * version 1.2.2
  * Copyright (c) 2017 Modular, Inc
  * The MIT License (MIT)
  * https://github.com/Modular-Network/ethereum-libraries/blob/master/LICENSE
