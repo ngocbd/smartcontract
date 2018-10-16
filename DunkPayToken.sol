@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DunkPayToken at 0x946863a91e9a67bb5c11fc42d0998baebfa2727f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DunkPayToken at 0x7b606bc8ce7ba370b14bf5b43d1987cbaadc8d6d
 */
 pragma solidity ^0.4.16;
 
@@ -7,16 +7,20 @@ pragma solidity ^0.4.16;
   * @title SafeMath
   * @dev Math operations with safety checks that throw on error
   */
-  library SafeMath {
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -42,8 +46,8 @@ pragma solidity ^0.4.16;
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -109,6 +113,9 @@ contract Pausable is Ownable {
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract TokenERC20 is Pausable{
+    
+    using SafeMath for uint256;    
+    
     // Public variables of the token
     string public name;
     string public symbol;
@@ -152,16 +159,16 @@ contract TokenERC20 is Pausable{
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balanceOf[_to].add(_value) > balanceOf[_to]);
         // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        uint previousBalances = balanceOf[_from].add(balanceOf[_to]);
         // Subtract from the sender
-        balanceOf[_from] -= _value;
+        balanceOf[_from] = balanceOf[_from].sub(_value);
         // Add the same to the recipient
-        balanceOf[_to] += _value;
+        balanceOf[_to] = balanceOf[_to].add(_value);
         emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        assert(balanceOf[_from].add(balanceOf[_to]) == previousBalances);
     }
 
     /**
@@ -187,7 +194,7 @@ contract TokenERC20 is Pausable{
      */
     function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
         return true;
     }
@@ -234,8 +241,8 @@ contract TokenERC20 is Pausable{
      */
     function burn(uint256 _value) public whenPaused returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);            // Subtract from the sender
+        totalSupply = totalSupply.sub(_value);                      // Updates totalSupply
         totalSupplyForDivision = totalSupply;                              // Update totalSupply
         emit Burn(msg.sender, _value);
         return true;
@@ -251,9 +258,9 @@ contract TokenERC20 is Pausable{
     function burnFrom(address _from, uint256 _value) public whenPaused returns (bool success) {
         require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
         require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
+        balanceOf[_from] = balanceOf[_from].sub(_value);                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);             // Subtract from the sender's allowance
+        totalSupply = totalSupply.sub(_value);                              // Update totalSupply
         totalSupplyForDivision = totalSupply;                              // Update totalSupply
         emit Burn(_from, _value);
         return true;
@@ -270,6 +277,7 @@ contract DunkPayToken is TokenERC20 {
     uint256 public buyPrice;
     uint256 public buySupply;
     uint256 public totalEth;
+    uint256 minimumAmountForPos;
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
@@ -281,15 +289,17 @@ contract DunkPayToken is TokenERC20 {
         buyPrice = 1000;
         sellPrice = 1000;
         
-        name = "DunkPay Token";
+        name = "DunkPay";
         symbol = "DNK";
         totalSupply = buyPrice * 10000 * 10 ** uint256(decimals);
+        minimumAmountForPos = buyPrice * 1 * 10 ** uint256(decimals);
         balanceOf[msg.sender] = buyPrice * 5100 * 10 ** uint256(decimals);              
         balanceOf[this] = totalSupply - balanceOf[msg.sender];
         buySupply = balanceOf[this];
         allowance[this][msg.sender] = buySupply;
         totalSupplyForDivision = totalSupply;// Set the symbol for display purposes
         totalEth = address(this).balance;
+        
     }
 
     function percent(uint256 numerator, uint256 denominator , uint precision) returns(uint256 quotient) {
@@ -298,9 +308,9 @@ contract DunkPayToken is TokenERC20 {
             return 0;
         }
         // caution, check safe-to-multiply here
-        uint256 _numerator  = numerator * 10 ** uint256(precision+1);
+        uint256 _numerator  = numerator.mul(10 ** uint256(precision+1));
         // with rounding of last digit
-        uint256 _quotient =  ((_numerator / denominator) - 5) / 10;
+        uint256 _quotient =  ((_numerator.div(denominator)).sub(5)).div(10);
         return  _quotient;
     }
     
@@ -324,9 +334,6 @@ contract DunkPayToken is TokenERC20 {
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
-        
-        buySupply = balanceOf[this]; //For Additonal Supply.
-        allowance[this][msg.sender] = buySupply;
         emit Transfer(_from, _to, _value);
     }
 
@@ -336,13 +343,16 @@ contract DunkPayToken is TokenERC20 {
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        
-        buySupply = balanceOf[this]; //For Additonal Supply.
-        allowance[this][msg.sender] = buySupply;
         emit Transfer(0, this, mintedAmount);
         emit Transfer(this, target, mintedAmount);
     }
-
+    
+    function AddSupply(uint256 mintedAmount) onlyOwner public {
+        buySupply += mintedAmount; 
+        allowance[this][msg.sender] += mintedAmount;
+        mintToken(address(this), mintedAmount);
+    }
+    
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
     /// @param target Address to be frozen
     /// @param freeze either to freeze it or not
@@ -354,10 +364,9 @@ contract DunkPayToken is TokenERC20 {
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
     /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice, uint256 newBuySupply) onlyOwner public {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
-        buySupply = newBuySupply;
     }
 
     function transfer(address _to, uint256 _value) public whenNotPaused {
@@ -369,52 +378,59 @@ contract DunkPayToken is TokenERC20 {
     }
 
     function () payable public {
-     buy();
+        buy();
     }
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable whenNotPaused public {
         uint256 dnkForBuy = msg.value;
-        uint zeros = getZero(buySupply);
-        uint256 interest = msg.value / 2 * percent(balanceOf[this] , buySupply , zeros);
-        interest = interest / 10 ** uint256(zeros);
-        dnkForBuy = dnkForBuy + interest;
-        _transfer(this, msg.sender, dnkForBuy * buyPrice);              // makes the transfers
-        totalEth += msg.value;
+        uint zeros = getZero(totalSupply);
+        uint256 interest = (dnkForBuy.div(2)).mul(percent(balanceOf[this], totalSupply , zeros));
+        interest = interest.div(10 ** uint256(zeros));
+        dnkForBuy = dnkForBuy.add(interest);
+        require(dnkForBuy > 0);  
+        _transfer(this, msg.sender, dnkForBuy.mul(buyPrice));              // makes the transfers
+        totalEth = totalEth.add(msg.value);
     }
 
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) whenNotPaused public {
         uint256 ethForSell =  amount;
-        uint zeros = getZero(balanceOf[this]);
-        uint256 interest = amount / 2 * percent( buySupply , balanceOf[this] ,zeros);
-        interest = interest / 10 ** uint256(zeros);
-        ethForSell = ethForSell - interest;
-        ethForSell = ethForSell - (ethForSell/100); // minus 1% for refund fee.   
-        ethForSell = ethForSell / sellPrice;
+        uint zeros = getZero(totalSupply);
+        uint256 interest = (ethForSell.div(2)).mul(percent(balanceOf[this], totalSupply , zeros));
+        interest = interest.div(10 ** uint256(zeros));
+        ethForSell = ethForSell.div(2) + interest;
+        ethForSell = ethForSell.sub(ethForSell.div(100)); // minus 1% for refund fee.   
+        ethForSell = ethForSell.div(sellPrice);
+        require(ethForSell > 0);  
         uint256 minimumAmount = address(this).balance; 
         require(minimumAmount >= ethForSell);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
         msg.sender.transfer(ethForSell);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
-        totalEth -= ethForSell;
-    } 
-
+        totalEth = totalEth.sub(ethForSell);
+    }
+    
     /// @notice withDraw `amount` ETH to contract
     /// @param amount amount of ETH to be sent
     function withdraw(uint256 amount) onlyOwner public {
         uint256 minimumAmount = address(this).balance; 
         require(minimumAmount >= amount);      // checks if the contract has enough ether to buy
         msg.sender.transfer(amount);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        totalEth = totalEth.sub(amount);
     }
 
-    function airdrop(address[] _holders, uint256 mintedAmount) onlyOwner whenPaused public {
+    function pos(address[] _holders, uint256 mintedAmount) onlyOwner whenPaused public {
         for (uint i = 0; i < _holders.length; i++) {
             uint zeros = getZero(totalSupplyForDivision);
-            uint256 amount = percent(balanceOf[_holders[i]],totalSupplyForDivision,zeros)  * mintedAmount;
-            amount = amount / 10 ** uint256(zeros);
-            if(amount != 0){
-                mintToken(_holders[i], amount);
+            uint256 holderBalance = balanceOf[_holders[i]];
+            if(holderBalance>minimumAmountForPos)
+            {
+                uint256 amount = percent(holderBalance,totalSupplyForDivision,zeros).mul(mintedAmount);
+                amount = amount.div(10 ** uint256(zeros));
+                if(amount > 0){
+                    mintToken(_holders[i], amount);
+                }
             }
         }
         totalSupplyForDivision = totalSupply;
@@ -422,19 +438,18 @@ contract DunkPayToken is TokenERC20 {
 
     function bankrupt(address[] _holders) onlyOwner whenPaused public {
         uint256 restBalance = balanceOf[this];
-        totalSupplyForDivision = totalSupply - restBalance;                             // Update totalSupply
+        totalSupplyForDivision = totalSupply.sub(restBalance);                             
         totalEth = address(this).balance;
         for (uint i = 0; i < _holders.length; i++) {
           uint zeros = getZero(totalSupplyForDivision);
-          uint256 amount = percent(balanceOf[_holders[i]],totalSupplyForDivision , zeros) * totalEth;
-          amount = amount / 10 ** uint256(zeros);
-        
-          if(amount != 0){
+          uint256 amount = percent(balanceOf[_holders[i]],totalSupplyForDivision , zeros).mul(totalEth);
+          amount = amount.div(10 ** uint256(zeros));
+          if(amount > 0){
             uint256 minimumAmount = address(this).balance; 
             require(minimumAmount >= amount);      // checks if the contract has enough ether to buy
             uint256 holderBalance = balanceOf[_holders[i]];
-            balanceOf[_holders[i]] -= holderBalance;                        // Subtract from the targeted balance
-            totalSupply -= holderBalance;            
+            balanceOf[_holders[i]] = balanceOf[_holders[i]].sub(holderBalance);                        // Subtract from the targeted balance
+            totalSupply = totalSupply.sub(holderBalance);            
             _holders[i].transfer(amount);          // sends ether to the seller. It's important to do this last to 
           } 
         }
