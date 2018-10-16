@@ -1,6 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RGXToken at 0x451baefd4a006f3e0b97287245147869f100cbf2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RGXToken at 0x7f3189c7b7a15d24949b2e7bf8189abea51732d8
 */
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+pragma solidity ^0.4.8;
+
 contract Token {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -53,7 +57,6 @@ If you deploy this, you won't have anything useful.)
 
 Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
-
 
 contract StandardToken is Token {
 
@@ -108,6 +111,7 @@ contract StandardToken is Token {
 
    - The tokens can be bought by sending ether to the contract address (funding procedure).
      The price is hardcoded: 1 token = 1 finney (0.001 eth).
+     A minimum contribution can be set by the owner.
 
    - The funding can only occur if the current date is superior to the startFunding parameter timestamp.
      At anytime, the creator can change this token parameter, effectively closing the funding.
@@ -126,11 +130,12 @@ contract RGXToken is StandardToken {
     string public name;
     string public symbol;
     uint8 public decimals = 0;
-    string public version = 'v0.9';
+    string public version = 'v1';
     
     /* RGX */
     address owner; 
     uint public fundingStart;
+    uint256 public minContrib = 1;
     uint256 public frozenSupply = 0;
     uint8 public discountMultiplier;
     
@@ -149,6 +154,8 @@ contract RGXToken is StandardToken {
         require(msg.sender != owner);
         
         uint256 _value = msg.value / 1 finney;
+
+        require(_value >= minContrib); 
         
         require(balances[owner] >= (_value - frozenSupply) && _value > 0); 
         
@@ -181,6 +188,10 @@ contract RGXToken is StandardToken {
     function freezeSupply(uint256 _value) onlyBy(owner) {
         require(balances[owner] >= _value);
         frozenSupply = _value;
+    }
+    
+    function setMinimum(uint256 _value) onlyBy(owner) {
+        minContrib = _value;
     }
     
     function timeFundingStart(uint _fundingStart) onlyBy(owner) {
