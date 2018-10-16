@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0xf13ca8f96bc09c304da107fd61d8deab4f0a8121
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x3d92bdda7f141807a77ffd32d401b2d08b5577f0
 */
 /**
  * Interface for defining crowdsale pricing.
@@ -694,6 +694,11 @@ contract EthTranchePricing is PricingStrategy, Ownable {
 
     uint highestAmount = 0;
 
+    // We need to start from zero
+    if(tranches[i].amount != 0) {
+      throw;
+    }
+
     for(uint i=0; i<_tranches.length/2; i++) {
       tranches[i].amount = _tranches[i*2];
       tranches[i].price = _tranches[i*2+1];
@@ -704,11 +709,6 @@ contract EthTranchePricing is PricingStrategy, Ownable {
       }
 
       highestAmount = tranches[i].amount;
-    }
-
-    // We need to start from zero, otherwise we blow up our deployment
-    if(tranches[0].amount != 0) {
-      throw;
     }
 
     // Last tranche price must be zero, terminating the crowdale
