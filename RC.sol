@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RC at 0x6ab1453ae2cdfb7524decfc71bc9105bf2a58d5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RC at 0x09e780855f195fcbb0b403a6676a4b34467ae510
 */
 pragma solidity ^0.4.19;
 
@@ -154,7 +154,7 @@ contract KYCBase {
         private returns (bool)
     {
         // check the signature
-        bytes32 hash = sha256("Eidoo icoengine authorization", address(0), buyerAddress, buyerId, maxAmount); //replaced this with address(0);
+        bytes32 hash = sha256("Eidoo icoengine authorization", this, buyerAddress, buyerId, maxAmount); 
         address signer = ecrecover(hash, v, r, s);
         if (!isKycSigner[signer]) {
             revert();
