@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolomexCrowdSale at 0xd7dc42b78b5ca37ff5493598d5b6978dc98c3b38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolomexCrowdSale at 0xa3a07912e74acf57f3362d8b4cda85ce652fc887
 */
 pragma solidity ^ 0.4.8;
-
-
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -1074,8 +1072,7 @@ contract SolomexCrowdSale is ERC20, usingOraclize
 
       
     uint256 one_token_price = 1; // 1 usd price
-    uint256 one_ether_usd_price;
-    uint nextdate;
+     uint256 one_ether_usd_price;
   
  
     uint currentdate;
@@ -1100,7 +1097,7 @@ contract SolomexCrowdSale is ERC20, usingOraclize
         balances[owner] = 6000000 * 10000; // 6 million for core team as owner , includes 4 zeros extra for decimals
         
         balances[address(this)] = 9000000 * 10000; // 9 million to contract address for crowdsale
-        nextdate = now + 3 days;
+
 
     }
 
@@ -1142,14 +1139,14 @@ contract SolomexCrowdSale is ERC20, usingOraclize
             revert();
         }
         
+        Tokens(result,1);
+        
          if (userqueryID[myid] == myid) {
         
            one_ether_usd_price = stringToUint(result);
-        
+           
      
         uint no_of_tokens = ((one_ether_usd_price * uservalue[userAddress[myid]]) )  / (one_token_price * 10**22); 
- 
-        no_of_tokens = add_bonus(no_of_tokens);    
          if (balanceOf(address(this)) > no_of_tokens) {
          transfer_token(userAddress[myid],no_of_tokens);
            }
@@ -1277,8 +1274,6 @@ contract SolomexCrowdSale is ERC20, usingOraclize
         if (balances[_from] >= _amount &&
             _amount > 0 &&
             balances[_to] + _amount > balances[_to]) {
-            _amount = add_bonus(_amount);    
-                
             balances[_from] -= _amount;
             balances[_to] += _amount;
             Transfer(_from, _to, _amount);
@@ -1341,39 +1336,6 @@ contract SolomexCrowdSale is ERC20, usingOraclize
          balances[owner]=balances[msg.sender];
          balances[msg.sender]=0;
 
-    }
-    
-    function add_bonus(uint no_of_tokens) returns (uint bonus_added)
-    {
-     if(now <= nextdate)
-         {
-             
-             no_of_tokens =  no_of_tokens + (no_of_tokens *20)/100;
-         }
-         else if(now > nextdate && now <= (nextdate + 7 days))
-         {
-             
-             no_of_tokens =  no_of_tokens + (no_of_tokens *15)/100;
-         }
-         else if(now > (nextdate + 7 days) && now <= (nextdate + 14 days))
-         {
-             
-             no_of_tokens =  no_of_tokens + (no_of_tokens *10)/100;
-         }
-         else if(now > (nextdate + 14 days) && now <= (nextdate + 21 days))
-         {
-           
-             no_of_tokens =  no_of_tokens + (no_of_tokens *5)/100;
-         }
-         
-         else if(now > (nextdate + 21 days))
-         {
-            
-             no_of_tokens = no_of_tokens + 0;
-         }
-         
-         return no_of_tokens;
-         
     }
 
 
