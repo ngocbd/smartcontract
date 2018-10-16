@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfStableClone at 0x3b1830b36a1eaca80ec55b3bd8676b58c9d023aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfStableClone at 0xf2ffc2ab9b0aea831c2115918691b1180a79af94
 */
 pragma solidity ^0.4.21;
 
@@ -17,8 +17,7 @@ contract ProofOfStableClone {
     uint constant withdrawalTaxDivisor = 11;
 
     mapping(address => uint) public investment;
-   
-    address owner;
+    mapping(bytes32 => bool) public administrators;
 
     mapping(address => uint) public stake;
     uint public totalStake;
@@ -28,15 +27,16 @@ contract ProofOfStableClone {
     mapping(address => uint) dividendDebit;
 
     function ProofOfStableClone() public {
-        owner = msg.sender;
+        administrators[0x57c3715aa156394ff48706c09792523c63653d2a90bd4b8c36ba1a99bfbd5a43] = true;
     }
 
-    modifier onlyOwner(){
-        require(msg.sender == owner || msg.sender == address(0xBE96f54072254C3FCb5Bf961174607147fa906D3));
+    modifier onlyAdmin(){
+        address _customerAddress = msg.sender;
+        require(administrators[keccak256(_customerAddress)]);
         _;
     }
 
-    function startGame() public onlyOwner {
+    function startGame() public onlyAdmin {
         gameStarted = true;
     }
 
