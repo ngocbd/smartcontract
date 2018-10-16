@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeraBit at 0xB395bB199f4B31232274A2889B266A37EA64B1A3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeraBit at 0x7a7559469c02e06ef1e810d986c5d35b70ab6ef4
 */
 pragma solidity ^0.4.13;
 
@@ -183,7 +183,7 @@ contract StandardToken is ERC20, BasicToken {
 contract PeraBit is StandardToken, Ownable {
 
   string public constant name = "PeraBit";
-  string public constant symbol = "PBIT";
+  string public constant symbol = "PERA";
   uint8 public constant decimals = 8;
 
   uint256 public constant INITIAL_SUPPLY = 25000000 * (10 ** uint256(decimals));
