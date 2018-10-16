@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SubscriptionModuleImpl at 0xa53b9b044bb919db3e06a35d57a06d057f3e0424
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SubscriptionModuleImpl at 0x812849100450a393c86ab8aa3fbb62119ee383c9
 */
 pragma solidity ^0.4.11;
 
@@ -19,9 +19,8 @@ pragma solidity ^0.4.11;
 // ====
 //
 
-/// @author ethernian for Santiment LLC
+/// @author Santiment LLC
 /// @title  Subscription Module for SAN - santiment token
-/// @notice report bugs to: bugs@ethernian.com
 
 contract Base {
 
