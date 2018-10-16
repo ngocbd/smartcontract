@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract etherdoodleToken at 0xcf438fb35c4c7131e8846e4ccb5bec3ea60d7591
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract etherdoodleToken at 0x7f53080daefbf41e727fdaff1538ef6052ddb994
 */
 pragma solidity ^0.4.23;
 /**
@@ -148,7 +148,6 @@ contract ERC721Receiver {
     returns(bytes4);
 }
 
-
 contract etherdoodleToken is ERC721 {
 
     using AddressUtils for address;
@@ -173,19 +172,15 @@ contract etherdoodleToken is ERC721 {
     string constant public symbol = "etherdoodle";
 
 //@dev Starting pixel price
-    uint constant public startingPrice = 0.0025 ether;
+    uint constant public startingPrice = 0.001 ether;
 
-//@dev Total number of promo pixels
-    uint private constant PROMO_LIMIT = 1000;
 
 //@dev Switch from 3x to 1.5x per transaction
-    uint private constant stepAt = 0.24862 ether;
+    uint private constant stepAt = 0.09944 ether;
 
 //@dev The addresses of the accounts 
     address public ceoAddress;
 
-//@dev number of promo pixels purchased
-    uint public promoCount;
 
 //DATA STRUCTURES
 //@dev struct representation of a pixel
@@ -261,7 +256,7 @@ contract etherdoodleToken is ERC721 {
     function updateAllPixelDetails(uint _pixelId, uint8 _colourR, uint8 _colourG, uint8 _colourB,uint _price,string _text) 
     external canManageAndTransfer(_pixelId) {
         require(_price <= pixelToPrice[_pixelId]);
-        require(_price >= 0.0025 ether);
+        require(_price >= 0.0001 ether);
         require(bytes(_text).length < 101);
         bool colourChangedBool = false;
         if(pixelToPrice[_pixelId] != _price){
@@ -410,7 +405,7 @@ contract etherdoodleToken is ERC721 {
         if (price != 0) {
             return price;
         } else {
-            return 1000000000000000;
+            return startingPrice;
             }
         
     } 
@@ -441,16 +436,6 @@ contract etherdoodleToken is ERC721 {
         }  
     }
 
-    //@dev purchase promo pixels that cost nothing at start
-    function promoPurchase(uint32 _pixelId,uint8 _colourR,uint8 _colourG,uint8 _colourB,string _text) public {
-        require(ownerOf(_pixelId) == (address(0)));
-        require(promoCount<PROMO_LIMIT);
-        require(bytes(_text).length < 101);
-        _createPixel((_pixelId), _colourR, _colourG, _colourB,_text);
-        _transfer(address(0),msg.sender,_pixelId);      
-        promoCount++;
-    }
-        
     //@dev purchase multiple pixels at the same time
     function multiPurchase(uint32[] _Id, uint8[] _R,uint8[] _G,uint8[] _B,string _text) public payable {
         require(_Id.length == _R.length && _Id.length == _G.length && _Id.length == _B.length);
@@ -471,7 +456,7 @@ contract etherdoodleToken is ERC721 {
             if(i == _Id.length-1) {
                 require(msg.value >= totalPrice);
                 msg.sender.transfer(excessValue);
-                }   
+            }   
         }
         
     } 
