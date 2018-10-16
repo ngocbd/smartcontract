@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MtumToken at 0x4E82fEA639245Ea0Bc3E5aC921e589014976ae1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MtumToken at 0xa98462679f1da80248750d495510ed72e9cda06d
 */
 pragma solidity ^0.4.16;
 
@@ -7,8 +7,8 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract MtumToken {
     
-    string public team     = "FoxOne";
-    string public symbol   = "MTUM";
+    string public name = "MtumToken";
+    string public symbol = "MTUM";
     uint8  public decimals = 18;
     
     uint256 public totalSupply;
@@ -20,7 +20,6 @@ contract MtumToken {
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event ChangeOwner(address indexed _old, address indexed _new, uint256 value);
 
  
     function MtumToken() public {
@@ -37,7 +36,6 @@ contract MtumToken {
         uint256 amount = balanceOf[msg.sender];
         _transfer(msg.sender, _newOwner, amount);
         owner = _newOwner;
-        ChangeOwner(msg.sender, _newOwner, amount);
     }
 
     /**
