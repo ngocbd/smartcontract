@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UPEXCoin at 0x4a6355327b87527664a5cee0a61bdb568585cdd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UPEXCoin at 0xc668df29d5dd06803b27650e24cecdf6b6805eeb
 */
+pragma solidity ^0.4.21;
+
 library SafeMath {
     /**
     * @dev Multiplies two numbers, throws on overflow.
@@ -65,7 +67,7 @@ contract UPEXCoin {
         totalSupply_ = 100 * 100000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balances[msg.sender] = totalSupply_;                // Give the creator all initial tokens
         name = "Upex Coin";                                   // Set the name for display purposes
-        symbol = "UP";                               // Set the symbol for display purposes
+        symbol = "UPEX";                               // Set the symbol for display purposes
     }
 
     /**
