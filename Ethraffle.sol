@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x04ebe325519223119ab6bde2b84e23a6ecd05d65
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x32293366f73b94a9c2c054e2fbeff2658119ad2e
 */
 pragma solidity ^0.4.0;
 
@@ -21,7 +21,6 @@ contract Ethraffle {
     // Variables
     uint public raffleId = 0;
     uint public nextTicket = 0;
-    uint public lastWinningNumber = 0;
     mapping (uint => Contestant) public contestants;
     uint[] public gaps;
 
@@ -70,7 +69,6 @@ contract Ethraffle {
 
     function chooseWinner() private {
         uint winningTicket = getRandom();
-        lastWinningNumber = winningTicket;
         address winningAddress = contestants[winningTicket].addr;
         resetRaffle();
         winningAddress.transfer(prize);
@@ -79,15 +77,7 @@ contract Ethraffle {
 
     // Choose a random int between 1 and totalTickets
     function getRandom() private returns (uint) {
-        return (uint(sha3(
-          block.timestamp +
-          block.number +
-          block.gaslimit +
-          block.difficulty +
-          msg.gas +
-          uint(msg.sender) +
-          uint(block.coinbase)
-        )) % totalTickets) + 1;
+        return (uint(sha3(block.timestamp + block.number + block.gaslimit + block.difficulty + msg.gas + uint(msg.sender) + uint(block.coinbase))) % totalTickets) + 1;
     }
 
     function getRefund() public {
