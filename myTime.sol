@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract myTime at 0xfe489b05dCceEfBbACC7efa27Afe0f22032Aef03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract myTime at 0x439f4b2d7B7DfCdE4d63EfB075eBE250613bEBD6
 */
 pragma solidity ^0.4.11;
 
@@ -19,11 +19,6 @@ contract myTime is mortal
     function myTime() public
     {
         deployTime = block.timestamp;
-    }
-
-    function getBlockNumber() constant returns (uint)
-    {
-        return block.number;
     }
 
     function getDeployTime() constant returns (uint)
