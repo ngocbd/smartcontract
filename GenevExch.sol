@@ -1,28 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenevExch at 0x37374c2a727442b180fc5c2f4b90cd91af682e41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenevExch at 0x02cc0390fA44dA7FE516B527d33d8A629c56F6E6
 */
-pragma solidity ^0.4.9;
+pragma solidity ^0.4.23;
+
 
 contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
+  function safeMul(uint a, uint b) internal pure returns (uint) {
     uint c = a * b;
-    assert(a == 0 || c / a == b);
+    require(a == 0 || c / a == b);
     return c;
   }
-
-  function safeSub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
+  function safeSub(uint a, uint b) internal pure returns (uint) {
+    require(b <= a);
     return a - b;
   }
-
-  function safeAdd(uint a, uint b) internal returns (uint) {
+  function safeAdd(uint a, uint b) internal pure returns (uint) {
     uint c = a + b;
-    assert(c>=a && c>=b);
+    require(c>=a && c>=b);
     return c;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) throw;
   }
 }
 
@@ -60,8 +55,7 @@ contract Token {
 
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-  event Transfer(address indexed _from, address indexed _to, uint256 _value, bytes indexed data);
-  uint public decimals;
+  uint8 public decimals;
   string public name;
 }
 
@@ -75,7 +69,7 @@ contract StandardToken is Token {
     //if (balances[msg.sender] >= _value && _value > 0) {
       balances[msg.sender] -= _value;
       balances[_to] += _value;
-      Transfer(msg.sender, _to, _value);
+      emit Transfer(msg.sender, _to, _value);
       return true;
     } else { return false; }
   }
@@ -87,7 +81,7 @@ contract StandardToken is Token {
       balances[_to] += _value;
       balances[_from] -= _value;
       allowed[_from][msg.sender] -= _value;
-      Transfer(_from, _to, _value);
+      emit Transfer(_from, _to, _value);
       return true;
     } else { return false; }
   }
@@ -98,7 +92,7 @@ contract StandardToken is Token {
 
   function approve(address _spender, uint256 _value) returns (bool success) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -107,25 +101,23 @@ contract StandardToken is Token {
   }
 
   mapping(address => uint256) balances;
-
   mapping (address => mapping (address => uint256)) allowed;
-
   uint256 public totalSupply;
 }
 
 contract ReserveToken is StandardToken, SafeMath {
   address public minter;
-  function ReserveToken() {
+  constructor() {
     minter = msg.sender;
   }
   function create(address account, uint amount) {
-    if (msg.sender != minter) throw;
+    if (msg.sender != minter) revert();
     balances[account] = safeAdd(balances[account], amount);
     totalSupply = safeAdd(totalSupply, amount);
   }
   function destroy(address account, uint amount) {
-    if (msg.sender != minter) throw;
-    if (balances[account] < amount) throw;
+    if (msg.sender != minter) revert();
+    if (balances[account] < amount) revert();
     balances[account] = safeSub(balances[account], amount);
     totalSupply = safeSub(totalSupply, amount);
   }
@@ -152,6 +144,7 @@ contract AccountLevelsTest is AccountLevels {
 }
 
 contract GenevExch is SafeMath {
+
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
   address public accountLevelsAddr; //the address of the AccountLevels contract
@@ -163,15 +156,23 @@ contract GenevExch is SafeMath {
   mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
   mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
 
+  mapping (address => bool) public blackERC20;
+  mapping (address => bool) public blackERC223;
+
   event Order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
   event Cancel(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s);
   event Trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address get, address give);
-  event Grafico(uint amount,uint amountGive,uint amountGet);
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
-  event Message(string message);
   
-  function GenevExch(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+  modifier onlyAdmin() {
+    require(msg.sender==admin);
+    _;
+  }
+
+  // Constructor
+
+  constructor(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
     admin = admin_;
     feeAccount = feeAccount_;
     accountLevelsAddr = accountLevelsAddr_;
@@ -181,104 +182,116 @@ contract GenevExch is SafeMath {
   }
 
   function() {
-    throw;
+    revert();
   }
 
-  function tokenFallback(address _from, uint _value, bytes _data){
-    //tokens[msg.sender][_from] = safeAdd(tokens[msg.sender][_from], _value);
-    //Deposit(msg.sender, _from, _value, tokens[msg.sender][_from]);
-   }
+  // Admin functions
 
-  function changeAdmin(address admin_) {
-    if (msg.sender != admin) throw;
+  function changeAdmin(address admin_) onlyAdmin {
     admin = admin_;
   }
 
-  function changeAccountLevelsAddr(address accountLevelsAddr_) {
-    if (msg.sender != admin) throw;
+  function changeAccountLevelsAddr(address accountLevelsAddr_) onlyAdmin {
     accountLevelsAddr = accountLevelsAddr_;
   }
 
-  function changeFeeAccount(address feeAccount_) {
-    if (msg.sender != admin) throw;
+  function changeFeeAccount(address feeAccount_) onlyAdmin {
     feeAccount = feeAccount_;
   }
 
-  function changeFeeMake(uint feeMake_) {
-    if (msg.sender != admin) throw;
-    if (feeMake_ > feeMake) throw;
+  function changeFeeMake(uint feeMake_) onlyAdmin {
     feeMake = feeMake_;
   }
 
-  function changeFeeTake(uint feeTake_) {
-    if (msg.sender != admin) throw;
-    if (feeTake_ > feeTake || feeTake_ < feeRebate) throw;
+  function changeFeeTake(uint feeTake_) onlyAdmin {
+    if (feeTake_ < feeRebate) revert();
     feeTake = feeTake_;
   }
 
-  function changeFeeRebate(uint feeRebate_) {
-    if (msg.sender != admin) throw;
-    if (feeRebate_ < feeRebate || feeRebate_ > feeTake) throw;
+  function changeFeeRebate(uint feeRebate_) onlyAdmin {
+    if (feeRebate_ > feeTake) revert();
     feeRebate = feeRebate_;
   }
 
-  function deposit() payable {
+  // Blacklist ERC20 or ERC223 tokens
+
+  function blackListERC20(address _token) onlyAdmin {
+    blackERC20[_token] = true;
+  }
+  function whiteListERC20(address _token) onlyAdmin {
+    blackERC20[_token] = false;
+  }
+  function blackListERC223(address _token) onlyAdmin {
+    blackERC223[_token] = true;
+  }
+  function whiteListERC223(address _token) onlyAdmin {
+    blackERC223[_token] = false;
+  }
+
+  // Public functions
+
+  function deposit() payable { // Deposit Ethers
     tokens[0][msg.sender] = safeAdd(tokens[0][msg.sender], msg.value);
-    Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
+    emit Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
   }
 
-  function withdraw(uint amount) {
-    if (tokens[0][msg.sender] < amount) throw;
-    tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
-    if (!msg.sender.call.value(amount)()) throw;
-    Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
-  }
+  function tokenFallback(address _from, uint _value, bytes _data) { // Deposit ERC223 tokens
+    if (_value==0) revert();
+    if (blackERC223[msg.sender]) revert();
+    tokens[msg.sender][_from] = safeAdd(tokens[msg.sender][_from], _value);
+    emit Deposit(msg.sender, _from, _value, tokens[msg.sender][_from]);
+   }
 
-  function depositToken(address token, uint amount) { // Not used
+  function depositToken(address token, uint amount) public { // Deposit ERC20 tokens
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
-    if (token==0) throw;
-    if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
+    if (token==0) revert();
+    if (blackERC20[token]) revert();
+    if (!Token(token).transferFrom(msg.sender, this, amount)) revert();
     tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
-    Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
+    emit Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
-  function withdrawToken(address token, uint amount) {
-    if (token==0) throw;
-    if (tokens[token][msg.sender] < amount) throw;
+  function withdraw(uint amount) public { // Withdraw ethers
+    if (tokens[0][msg.sender] < amount) revert();
+    tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
+    msg.sender.transfer(amount);
+    emit Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
+  }
+
+  function withdrawToken(address token, uint amount) public { // Withdraw tokens
+    if (token==0) revert();
+    if (tokens[token][msg.sender] < amount) revert();
     tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
-    if (!Token(token).transfer(msg.sender, amount)) throw;
-    Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+    require (Token(token).transfer(msg.sender, amount));
+    emit Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
   function balanceOf(address token, address user) constant returns (uint) {
     return tokens[token][user];
   }
 
-  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) {
+  // Exchange specific functions
+
+  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) public {
     hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
     orders[msg.sender][hash] = true;
-    Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
+    emit Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
   }
 
-  function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) {
+  function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) public {
     //amount is in amountGet terms
     hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
     if (!(
       (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
       block.number <= expires &&
       safeAdd(orderFills[user][hash], amount) <= amountGet
-    )) throw;
-    if(tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount)){
-      Message('hizo bien el tradeBalances');
-    }else{
-      Message('NO hizo bien el tradeBalances');
-    }
+    )) revert();
+    tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount);
     orderFills[user][hash] = safeAdd(orderFills[user][hash], amount);
-    Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
-    Grafico(amount,amountGive,amountGet);
+    emit Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
   }
 
-  function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) returns (bool) {
+  function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
     uint feeMakeXfer = safeMul(amount, feeMake) / (1 ether);
     uint feeTakeXfer = safeMul(amount, feeTake) / (1 ether);
     uint feeRebateXfer = 0;
@@ -294,10 +307,8 @@ contract GenevExch is SafeMath {
     tokens[tokenGet][feeAccount] = safeAdd(tokens[tokenGet][feeAccount], safeSub(safeAdd(feeMakeXfer, feeTakeXfer), feeRebateXfer));
     tokens[tokenGive][user] = safeSub(tokens[tokenGive][user], safeMul(amountGive, amount) / amountGet);
     tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
-
-
-    return true;
   }
+
   function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) constant returns(bool) {
     if (!(
       tokens[tokenGet][sender] >= amount &&
@@ -323,10 +334,10 @@ contract GenevExch is SafeMath {
     return orderFills[user][hash];
   }
 
-  function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) {
+  function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) public {
     hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
-    if (!(orders[msg.sender][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == msg.sender)) throw;
+    if (!(orders[msg.sender][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == msg.sender)) revert();
     orderFills[msg.sender][hash] = amountGet;
-    Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, v, r, s);
+    emit Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, v, r, s);
   }
 }
