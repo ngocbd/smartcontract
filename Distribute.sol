@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0x84004ca3b679b94d5c27c59d710e8201068bb93b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0xf3163e55e521bd49521976d43d82d21a9729dc9d
 */
 pragma solidity ^0.4.0;
 contract Distribute {
@@ -10,11 +10,10 @@ contract Distribute {
         owner = msg.sender;
     }
 
-    //????  
     function transferETHS(address[] _tos) payable public returns(bool) {
         require(_tos.length > 0);
         uint val = this.balance / _tos.length;
-        for (uint32 i = 0; i < _tos.length; i++) {
+        for (uint i = 0; i < _tos.length; i++) {
             _tos[i].transfer(val);
         }
         return true;
