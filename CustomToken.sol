@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc6a40355353051a044afa92dda60cb33ad5bdab5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x71c5c4f6752cc5ebac4f49fb7012c1c7cc1dd1a2
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 999999999999000000000000000000;
-        name = 'HuaXiaToken';
-        symbol = 'HXT';
+        totalSupply = 10000000000000000000000000000;
+        name = 'NewTAIWANDollars';
+        symbol = 'NTWD';
         decimals = 18;
-        balanceOf[0xbcade28d8c2f22345165f0e07c94a600f6c4e925] = totalSupply;
-        Transfer(address(0), 0xbcade28d8c2f22345165f0e07c94a600f6c4e925, totalSupply);
+        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
+        Transfer(address(0), 0xa5791f4e7bf0ec01620317cf9f135325a5b47404, totalSupply);
     }
 }
