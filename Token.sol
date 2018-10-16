@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x996a8ae0304680f6a69b8a9d7c6e37d65ab5ab56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x3ab100442484dc2414aa75b2952a0a6f03f8abfd
 */
 pragma solidity ^0.4.18;
 
@@ -191,12 +191,12 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract Token is StandardToken {
-  string public constant name = "Just Token";
-  string public constant symbol = "JST";
-  uint8 public constant decimals = 18;
+  string public constant name = "8 decimal token";
+  string public constant symbol = "DEC8";
+  uint8 public constant decimals = 8;
 
   function Token() public {
-    balances[msg.sender] = 1000 ether;
-    totalSupply = 1000 ether;
+    balances[msg.sender] = 1000 * 100000000;
+    totalSupply = 1000 * 100000000;
   }
 }
