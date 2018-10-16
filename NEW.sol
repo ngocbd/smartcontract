@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NEW at 0x10974dbeab93b7ca144bc31a630ab122a5b3c1f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract New at 0x5590cd2ea0e54db352ef7e96b906bd8059de1474
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -52,7 +52,7 @@ contract Token {
 
 /*
 You should inherit from StandardToken or, for a token like you would want to
-deploy in something like Mist, see NEW.sol.
+deploy in something like Mist, see New.sol.
 (This implements ONLY the standard functions and NOTHING else.
 If you deploy this, you won't have anything useful.)
 
@@ -104,7 +104,7 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
 }
 
-contract NEW is StandardToken {
+contract New is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
@@ -122,9 +122,9 @@ contract NEW is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'NEW1.0';     //NEW 1.0 standard. Just an arbitrary versioning scheme.
+    string public version = 'New1.0';     //New 1.0 standard. Just an arbitrary versioning scheme.
 
-    function NEW(
+    function New(
         uint256 _initialAmount,
         string _tokenName,
         uint8 _decimalUnits,
