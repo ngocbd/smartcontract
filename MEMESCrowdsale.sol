@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MEMESCrowdsale at 0x69ca3b8e6e4573f8db96c1ebb61cb77e7124d1a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MEMESCrowdsale at 0xf2cff4826bf8656173084e86ade7b65bf9aeef5b
 */
 pragma solidity ^0.4.16;
 
@@ -29,7 +29,7 @@ contract MEMESCrowdsale {
         startDate = 1519862400;
         endDate = 1527894000;
         price = 5000;
-        tokenReward = Token(0x1CbD296aD51CAcD77a3F4750027ab15057B7B5e4);
+        tokenReward = Token(0xF3CdCd6f66BebDB6C7D33E3ef1Bf38Ae0Cefe3C6);
     }
 
     function setOwner(address _owner) isCreator public {
