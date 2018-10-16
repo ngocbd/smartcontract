@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GESTokenCrowdSale at 0x632393de9dd19b5fd0cc0c4ff17aa674b2f0a1c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GESTokenCrowdSale at 0xbdd1283eaabdae4ec5ede9a936218f57260587a4
 */
 pragma solidity ^0.4.15;
 
@@ -321,12 +321,6 @@ contract GESToken is MintableToken, PausableToken {
 contract GESTokenCrowdSale is Ownable {
   using SafeMath for uint256;
 
-  struct TimeBonus {
-    uint256 bonusPeriodEndTime;
-    uint percent;
-    uint256 weiCap;
-  }
-
   /* true for finalised crowdsale */
   bool public isFinalised;
 
@@ -340,51 +334,82 @@ contract GESTokenCrowdSale is Ownable {
   /* Address where funds are transferref after collection */
   address public wallet;
 
-  /* Address where final 10% of funds will be collected */
+  /* Address where company funds will be collected */
   address public tokenWallet;
 
   /* How many token units a buyer gets per ether */
-  uint256 public rate = 100;
+  uint256 public rate = 10000;
 
   /* Amount of raised money in wei */
-  uint256 public weiRaised;
+  /* PreSale = 793.030144223688 ETH */
+  /* Whitelist = 487.0798419 ETH */ 
+  /* PreSale + Whitelist =  1,280.1099861237 ETH*/
+  uint256 public weiRaised = 1280109986123700000000 ;
+
+  /* 20,000 - 793.030144223688 - 487.0798419 = 18,719.89  is what will be raised*/
 
   /* Minimum amount of Wei allowed per transaction = 0.1 Ethers */
   uint256 public saleMinimumWei = 100000000000000000; 
+  
+  /* Hard Cap amount of Wei allowed 20,000 ETH */
+  uint256 public hardCap = 20000000000000000000000; 
+  
+  /* Hard Cap amount oftokens to be sold 300000000 */
+  /* Amount raise in preSale removing the extra company 11% as we are allocating here */
+  /* 300000000 - 12235717 - 33000000 - 38358927 = 216405356 */
+  /* Tokens to be sold in the ICO 216405356 */
+  uint256 public tokensToSell = 216405356 * 10 ** 18; 
 
-  TimeBonus[] public timeBonuses;
-
+  /* Always default to 20 can go upto 50 base don amount being sent */
+   struct AmountBonus {
+    uint256 amount;
+    uint percent;
+  }
+  AmountBonus[] public amountBonuses;
   /**
    * event for token purchase logging
    * event for finalizing the crowdsale
    */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-  event FinalisedCrowdsale(uint256 totalSupply, uint256 minterBenefit);
+  event FinalisedCrowdsale(uint256 totalSupply);
 
-  function GESTokenCrowdSale(uint256 _mainSaleStartTime, address _wallet, address _tokenWallet) public {
+  function GESTokenCrowdSale(uint256 _mainSaleStartTime, uint256 _mainSaleEndTime, address _wallet, address _tokenWallet) public {
 
     /* Can't start main sale in the past */
     require(_mainSaleStartTime >= now);
+    /* Can't close main sale earlier than start time */
+    require(_mainSaleEndTime >= _mainSaleStartTime);
 
     /* Confirming wallet addresses as valid */
     require(_wallet != 0x0);
     require(_tokenWallet != 0x0);
 
-    /* The Crowdsale bonus pattern
-     * 1 day = 86400 = 60 * 60 * 24 (Seconds * Minutes * Hours)
-     * 1 day * Number of days to close at, Bonus Percentage, Max Wei for which bonus is given  
-     */
-    timeBonuses.push(TimeBonus(86400 *  7,  30,    2000000000000000000000)); // 0 - 7 Days, 30 %, 2000 ETH
-    timeBonuses.push(TimeBonus(86400 *  14, 20,    5000000000000000000000)); // 8 -14 Days, 20 %, 2000ETH + 3000 ETH = 5000 ETH
-    timeBonuses.push(TimeBonus(86400 *  21, 10,   10000000000000000000000)); // 15-21 Days, 10 %, 5000 ETH + 5000 ETH = 10000 ETH
-    timeBonuses.push(TimeBonus(86400 *  60,  0,   25000000000000000000000)); // 22-60 Days, 0  %, 10000 ETH + 15000 ETH = 25000 ETH
-
+    /* Create GES token */
     token = createTokenContract();
+    
+    amountBonuses.push(AmountBonus(    50000000000000000000, 20));
+    amountBonuses.push(AmountBonus(   100000000000000000000, 25));
+    amountBonuses.push(AmountBonus(   250000000000000000000, 30));
+    amountBonuses.push(AmountBonus(   500000000000000000000, 35));
+    amountBonuses.push(AmountBonus(  1000000000000000000000, 40));
+    amountBonuses.push(AmountBonus(  2500000000000000000000, 45));
+    amountBonuses.push(AmountBonus(200000000000000000000000, 50));
+
+
     mainSaleStartTime = _mainSaleStartTime;
-    mainSaleEndTime = mainSaleStartTime + 60 days;
-    wallet = _wallet;
-    tokenWallet = _tokenWallet;
+    mainSaleEndTime = _mainSaleEndTime;
+
+    wallet = msg.sender ;
+    tokenWallet = msg.sender;
+
     isFinalised = false;
+
+    /* Mint tokens for previous backers [Removed the previous 11% the company raised in presale]*/
+    /* 101964.308375680000000000 * 120 = 12235717 -> rounding to highest integer */
+    /* Fixed tokens for the whitelist money raised = 38358927*/
+    /* Fixed tokens for the management and bounty = 33000000 */
+    /* Total to allot: 38358927 + 12235717 + 33000000 = 83594644 */
+    token.mint(tokenWallet, 83594644 * 10 ** 18);
   }
 
   /* Creates the token to be sold */
@@ -393,7 +418,7 @@ contract GESTokenCrowdSale is Ownable {
   }
 
   /* Fallback function can be used to buy tokens */
-  function () payable {
+  function () public payable {
     buyTokens(msg.sender);
   }
 
@@ -402,41 +427,31 @@ contract GESTokenCrowdSale is Ownable {
     require(!isFinalised);
     require(beneficiary != 0x0);
     require(msg.value != 0);
-    require(now <= mainSaleEndTime && now >= mainSaleStartTime);
-    require(msg.value >= saleMinimumWei);
+    require(now >= mainSaleStartTime && now <= mainSaleEndTime);
+    uint256 newRaise = weiRaised.add(msg.value);
+    require(msg.value >= saleMinimumWei && newRaise <= hardCap);
 
-    /* Add bonus to tokens depends on the period */
+    /* Add bonus to tokens depends on the value */
     uint256 bonusedTokens = applyBonus(msg.value);
+    
+    /* Check if we have available tokens to sell */
+    require(bonusedTokens < tokensToSell);
 
     /* Update state on the blockchain */
-    weiRaised = weiRaised.add(msg.value);
+    weiRaised = newRaise;
+    tokensToSell = tokensToSell.sub(bonusedTokens);
     token.mint(beneficiary, bonusedTokens);
     TokenPurchase(msg.sender, beneficiary, msg.value, bonusedTokens);
-
   }
 
   /* Finish Crowdsale,
-   * Take totalSupply as 89% and mint 11% more to specified owner's wallet
-   * then stop minting forever.
    */
-
   function finaliseCrowdsale() external onlyOwner returns (bool) {
     require(!isFinalised);
-    uint256 totalSupply = token.totalSupply();
-    uint256 minterBenefit = totalSupply.mul(10).div(89);
-    token.mint(tokenWallet, minterBenefit);
     token.finishMinting();
     forwardFunds();
-    FinalisedCrowdsale(totalSupply, minterBenefit);
+    FinalisedCrowdsale(token.totalSupply());
     isFinalised = true;
-    return true;
-  }
-
-  /* Set new dates for main-sale (emergency case) */
-  function setMainSaleDates(uint256 _mainSaleStartTime) public onlyOwner returns (bool) {
-    require(!isFinalised);
-    mainSaleStartTime = _mainSaleStartTime;
-    mainSaleEndTime = mainSaleStartTime + 60 days;
     return true;
   }
 
@@ -466,28 +481,31 @@ contract GESTokenCrowdSale is Ownable {
     wallet.transfer(this.balance);
   }
 
-  /* Function to calculate bonus tokens based on current time(now) and maximum cap per tier */
+  /* Set new dates for main-sale (emergency case) */
+  function setMainSaleDates(uint256 _mainSaleStartTime, uint256 _mainSaleEndTime) public onlyOwner returns (bool) {
+    require(!isFinalised);
+    require(_mainSaleStartTime < _mainSaleEndTime);
+    mainSaleStartTime = _mainSaleStartTime;
+    mainSaleEndTime = _mainSaleEndTime;
+    return true;
+  }
+
+  /* Function to calculate bonus tokens based on the amount sent by the contributor */
   function applyBonus(uint256 weiAmount) internal constant returns (uint256 bonusedTokens) {
     /* Bonus tokens to be added */
     uint256 tokensToAdd = 0;
 
-    /* Calculting the amont of tokens to be allocated based on rate and the money transferred*/
+    /* Calculting the amont of tokens to be allocated based on rate and the money transferred */
     uint256 tokens = weiAmount.mul(rate);
-    uint256 diffInSeconds = now.sub(mainSaleStartTime);
-
-    for (uint i = 0; i < timeBonuses.length; i++) {
-      /* If cap[i] is reached then skip */
-      if(weiRaised.add(weiAmount) <= timeBonuses[i].weiCap){
-        for(uint j = i; j < timeBonuses.length; j++){
-          /* Check which week period time it lies and use that percent */
-          if (diffInSeconds <= timeBonuses[j].bonusPeriodEndTime) {
-            tokensToAdd = tokens.mul(timeBonuses[j].percent).div(100);
-            return tokens.add(tokensToAdd);
-          }
-        }
-      }
-    }
     
+    for(uint8 i = 0; i < amountBonuses.length; i++){
+        if(weiAmount < amountBonuses[i].amount){
+           tokensToAdd = tokens.mul(amountBonuses[i].percent).div(100);
+            return tokens.add(tokensToAdd);
+        }
+    }
+    /* Default callback at 20%, just as a precaution */
+    return tokens.mul(120).div(100);
   }
 
   /*  
