@@ -1,310 +1,440 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldCupToken at 0x08cdcf9ba0a4b5667f5a59b78b60fbefb145e64c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldCupToken at 0x2ee5054ee925a122976281e1dfea22dc873de96f
 */
-pragma solidity ^0.4.18;
-
-library SafeMath {
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-/// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
+pragma solidity ^0.4.21;
 contract ERC721 {
-    // Required methods
-    function approve(address _to, uint256 _tokenId) public;
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function implementsERC721() public pure returns (bool);
-    function ownerOf(uint256 _tokenId) public view returns (address addr);
-    function takeOwnership(uint256 _tokenId) public;
-    function totalSupply() public view returns (uint256 total);
-    function transferFrom(address _from, address _to, uint256 _tokenId) public;
-    function transfer(address _to, uint256 _tokenId) public;
-
-    event Transfer(address indexed from, address indexed to, uint256 tokenId);
-    event Approval(address indexed owner, address indexed approved, uint256 tokenId);
+  // Required methods
+  function approve(address _to, uint256 _tokenId) public;
+  function balanceOf(address _owner) public view returns (uint256 balance);
+  function implementsERC721() public pure returns (bool);
+  function ownerOf(uint256 _tokenId) public view returns (address addr);
+  function takeOwnership(uint256 _tokenId) public;
+  function totalSupply() public view returns (uint256 total);
+  function transferFrom(address _from, address _to, uint256 _tokenId) public;
+  function transfer(address _to, uint256 _tokenId) public;
+  event Transfer(address indexed from, address indexed to, uint256 tokenId);
+  event Approval(address indexed owner, address indexed approved, uint256 tokenId);
+  // Optional
+  // function name() public view returns (string name);
+  // function symbol() public view returns (string symbol);
+  // function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256 tokenId);
+  // function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
 }
-
 contract WorldCupToken is ERC721 {
-
-    /*****------ EVENTS -----*****/
-    // @dev whenever a token is sold.
-    event WorldCupTokenWereSold(address indexed curOwner, uint256 indexed tokenId, uint256 oldPrice, uint256 newPrice, address indexed prevOwner, uint256 traddingTime);//indexed
-    // @dev whenever Share Bonus.
-	event ShareBonus(address indexed toOwner, uint256 indexed tokenId, uint256 indexed traddingTime, uint256 remainingAmount);
-	// @dev Present. 
-    event Present(address indexed fromAddress, address indexed toAddress, uint256 amount, uint256 presentTime);
-    // @dev Transfer event as defined in ERC721. 
-    event Transfer(address from, address to, uint256 tokenId);
-
-    /*****------- CONSTANTS -------******/
-    mapping (uint256 => address) public worldCupIdToOwnerAddress;  //@dev A mapping from world cup team id to the address that owns them. 
-    mapping (address => uint256) private ownerAddressToTokenCount; //@dev A mapping from owner address to count of tokens that address owns.
-    mapping (uint256 => address) public worldCupIdToAddressForApproved; // @dev A mapping from token id to an address that has been approved to call.
-    mapping (uint256 => uint256) private worldCupIdToPrice; // @dev A mapping from token id to the price of the token.
-    //mapping (uint256 => uint256) private worldCupIdToOldPrice; // @dev A mapping from token id to the old price of the token.
-    string[] private worldCupTeamDescribe;
-	uint256 private SHARE_BONUS_TIME = uint256(now);
-    address public ceoAddress;
-    address public cooAddress;
-
-    /*****------- MODIFIERS -------******/
-    modifier onlyCEO() {
-        require(msg.sender == ceoAddress);
-        _;
-    }
-
-    modifier onlyCLevel() {
-        require(
-            msg.sender == ceoAddress ||
-            msg.sender == cooAddress
-        );
-        _;
-    }
-
-    function setCEO(address _newCEO) public onlyCEO {
-        require(_newCEO != address(0));
-        ceoAddress = _newCEO;
-    }
-
-    function setCOO(address _newCOO) public onlyCEO {
-        require(_newCOO != address(0));
-        cooAddress = _newCOO;
-    }
-	
-	function destroy() public onlyCEO {
-		selfdestruct(ceoAddress);
-    }
-	
-	function payAllOut() public onlyCLevel {
-       ceoAddress.transfer(this.balance);
-    }
-
-    /*****------- CONSTRUCTOR -------******/
-    function WorldCupToken() public {
-        ceoAddress = msg.sender;
-        cooAddress = msg.sender;
-	    for (uint256 i = 0; i < 32; i++) {
-		    uint256 newWorldCupTeamId = worldCupTeamDescribe.push("I love world cup!") - 1;
-            worldCupIdToPrice[newWorldCupTeamId] = 0 ether;//SafeMath.sub(uint256(3.2 ether), SafeMath.mul(uint256(0.1 ether), i));
-	        //worldCupIdToOldPrice[newWorldCupTeamId] = 0 ether;
-            _transfer(address(0), msg.sender, newWorldCupTeamId);
-	    }
-    }
-
-    /*****------- PUBLIC FUNCTIONS -------******/
-    function approve(address _to, uint256 _tokenId) public {
-        require(_isOwner(msg.sender, _tokenId));
-        worldCupIdToAddressForApproved[_tokenId] = _to;
-        Approval(msg.sender, _to, _tokenId);
-    }
-
-    /// For querying balance of a particular account
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return ownerAddressToTokenCount[_owner];
-    }
-
-    /// @notice Returns all the world cup team information by token id.
-    function getWorlCupByID(uint256 _tokenId) public view returns (string wctDesc, uint256 sellingPrice, address owner) {
-        wctDesc = worldCupTeamDescribe[_tokenId];
-        sellingPrice = worldCupIdToPrice[_tokenId];
-        owner = worldCupIdToOwnerAddress[_tokenId];
-    }
-
-    function implementsERC721() public pure returns (bool) {
-        return true;
-    }
-
-    /// @dev Required for ERC-721 compliance.
-    function name() public pure returns (string) {
-        return "WorldCupToken";
-    }
+  event Birth(uint256 tokenId, string name, address owner);
+  event TokenSold(uint256 tokenId, uint256 oldPrice, uint256 newPrice, address prevOwner, address winner, string name);
+  event Transfer(address from, address to, uint256 tokenId);
+ 
+  /*** CONSTANTS ***/
+  string public constant NAME = "WorldCupToken";
+  string public constant SYMBOL = "WorldCupToken";
+  uint256 private startingPrice = 0.1 ether;
+  mapping (uint256 => address) private teamIndexToOwner;
+  mapping (address => uint256) private ownershipTokenCount;
+  mapping (uint256 => address) private teamIndexToApproved;
+  mapping (uint256 => uint256) private teamIndexToPrice;
+  mapping (string => uint256) private nameIndexToTeam;   // eg: Egypt => 0
+  mapping (string => string) private teamIndexToName;    // eg: 0 => Egypt
   
-    /// @dev Required for ERC-721 compliance.
-    function symbol() public pure returns (string) {
-        return "WCT";
-    }
-
-    // @dev Required for ERC-721 compliance.
-    function ownerOf(uint256 _tokenId) public view returns (address owner) {
-        owner = worldCupIdToOwnerAddress[_tokenId];
-        require(owner != address(0));
-        return owner;
-    }
   
-    function setWorldCupTeamDesc(uint256 _tokenId, string descOfOwner) public {
-        if(ownerOf(_tokenId) == msg.sender){
-	        worldCupTeamDescribe[_tokenId] = descOfOwner;
-	    }
+  address private ceoAddress;
+  bool private isStop;
+  
+  struct Team {
+    string name;
+  }
+  Team[] private teams;
+  
+  modifier onlyCEO() {
+    require(msg.sender == ceoAddress);
+    _;
+  }
+  modifier onlyStart() {
+    require(isStop == false);
+    _;
+  }
+  
+   function setStop() public onlyCEO {
+    
+    isStop = true;
+  }
+  function setStart() public onlyCEO {
+    
+    isStop = false;
+  }
+  
+  /*** CONSTRUCTOR ***/
+  function WorldCupToken() public {
+    ceoAddress = msg.sender;
+    isStop=false;
+    _createTeam("Egypt", msg.sender, startingPrice);
+    teamIndexToName["0"]="Egypt";
+    
+    _createTeam("Morocco", msg.sender, startingPrice);
+    teamIndexToName["1"]="Morocco";
+    
+    _createTeam("Nigeria", msg.sender, startingPrice);
+    teamIndexToName["2"]="Nigeria";
+    
+    _createTeam("Senegal", msg.sender, startingPrice);
+    teamIndexToName["3"]="Senegal";
+    
+    _createTeam("Tunisia", msg.sender, startingPrice);
+    teamIndexToName["4"]="Tunisia";
+    
+    _createTeam("Australia", msg.sender, startingPrice);
+    teamIndexToName["5"]="Australia";
+    
+    _createTeam("IR Iran", msg.sender, startingPrice);
+    teamIndexToName["6"]="IR Iran";
+    
+    _createTeam("Japan", msg.sender, startingPrice);
+   teamIndexToName["7"]="Japan";
+    
+    _createTeam("Korea Republic", msg.sender, startingPrice);
+   teamIndexToName["8"]="Korea Republic";
+    
+    _createTeam("Saudi Arabia", msg.sender, startingPrice);
+    teamIndexToName["9"]="Saudi Arabia";
+    
+    _createTeam("Belgium", msg.sender, startingPrice);
+    teamIndexToName["10"]="Belgium";
+    
+    _createTeam("Croatia", msg.sender, startingPrice);
+    teamIndexToName["11"]="Croatia";
+    
+    
+    _createTeam("Denmark", msg.sender, startingPrice);
+    teamIndexToName["12"]="Denmark";
+    
+    
+    _createTeam("England", msg.sender, startingPrice);
+    teamIndexToName["13"]="England";
+    
+    
+    _createTeam("France", msg.sender, startingPrice);
+    teamIndexToName["14"]="France";
+    
+    
+    _createTeam("Germany", msg.sender, startingPrice);
+    teamIndexToName["15"]="Germany";
+    
+    
+    _createTeam("Iceland", msg.sender, startingPrice);
+    teamIndexToName["16"]="Iceland";
+    
+    
+    _createTeam("Poland", msg.sender, startingPrice);
+    teamIndexToName["17"]="Poland";
+    
+    
+    _createTeam("Portugal", msg.sender, startingPrice);
+    teamIndexToName["18"]="Portugal";
+    
+    
+    _createTeam("Russia", msg.sender, startingPrice);
+    teamIndexToName["19"]="Russia";
+    
+    
+    _createTeam("Serbia", msg.sender, startingPrice);
+    teamIndexToName["20"]="Serbia";
+    
+    
+    _createTeam("Spain", msg.sender, startingPrice);
+    teamIndexToName["21"]="Spain";
+    
+    
+    _createTeam("Sweden", msg.sender, startingPrice);
+    teamIndexToName["22"]="Sweden";
+    
+    
+    _createTeam("Switzerland", msg.sender, startingPrice);
+    teamIndexToName["23"]="Switzerland";
+    
+    
+    _createTeam("Costa Rica", msg.sender, startingPrice);
+    teamIndexToName["24"]="Costa Rica";
+    
+    
+    _createTeam("Mexico", msg.sender, startingPrice);
+    teamIndexToName["25"]="Mexico";
+    
+    
+    
+    _createTeam("Panama", msg.sender, startingPrice);
+    teamIndexToName["26"]="Panama";
+    
+    
+    _createTeam("Argentina", msg.sender, startingPrice);
+    teamIndexToName["27"]="Argentina";
+    
+    _createTeam("Brazil", msg.sender, startingPrice);
+    teamIndexToName["28"]="Brazil";
+    
+    _createTeam("Colombia", msg.sender, startingPrice);
+    teamIndexToName["29"]="Colombia";
+    
+    _createTeam("Peru", msg.sender, startingPrice);
+    teamIndexToName["30"]="Peru";
+    
+    _createTeam("Uruguay", msg.sender, startingPrice);
+    teamIndexToName["31"]="Uruguay";
+      
+  }
+  
+  function approve(
+    address _to,
+    uint256 _tokenId
+  ) public  onlyStart {
+    require(_owns(msg.sender, _tokenId));
+    teamIndexToApproved[_tokenId] = _to;
+    Approval(msg.sender, _to, _tokenId);
+  }
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return ownershipTokenCount[_owner];
+  }
+  
+   function getTeamId(string _name) public view returns (uint256 id) {
+    return nameIndexToTeam[_name];
+  }
+  
+  function getTeam(uint256 _tokenId) public view returns (
+    string teamName,
+    uint256 sellingPrice,
+    address owner
+  ) {
+    Team storage team = teams[_tokenId];
+    teamName = team.name;
+    sellingPrice = teamIndexToPrice[_tokenId];
+    owner = teamIndexToOwner[_tokenId];
+  }
+  
+  function getTeam4name(string _name) public view returns (
+    string teamName,
+    uint256 sellingPrice,
+    address owner
+  ) {
+    uint256 _tokenId = nameIndexToTeam[_name];
+    Team storage team = teams[_tokenId];
+    require(SafeMath.diffString(_name,team.name)==true);
+    teamName = team.name;
+    sellingPrice = teamIndexToPrice[_tokenId];
+    owner = teamIndexToOwner[_tokenId];
+  }
+  
+  
+  function implementsERC721() public pure returns (bool) {
+    return true;
+  }
+  function name() public pure returns (string) {
+    return NAME;
+  }
+  function ownerOf(uint256 _tokenId)
+    public
+    view
+    returns (address owner)
+  {
+    owner = teamIndexToOwner[_tokenId];
+    require(owner != address(0));
+  }
+  
+  function payout(address _to) public onlyCEO {
+    _payout(_to);
+  }
+  
+   function () public payable onlyStart {
+      
+       string memory data=string(msg.data);
+       require(SafeMath.diffString(data,"")==false);    //data is not empty
+       
+       string memory _name=teamIndexToName[data];
+       require(SafeMath.diffString(_name,"")==false);   //name is not empty
+       
+       if(nameIndexToTeam[_name]==0){
+           require(SafeMath.diffString(_name,teams[0].name)==true);
+       }
+       
+       purchase(nameIndexToTeam[_name]);
+   }
+  
+  
+  function purchase(uint256 _tokenId) public payable onlyStart {
+    address oldOwner = teamIndexToOwner[_tokenId];
+    address newOwner = msg.sender;
+    uint256 sellingPrice = teamIndexToPrice[_tokenId];
+    // Making sure token owner is not sending to self
+    require(oldOwner != newOwner);
+    // Safety check to prevent against an unexpected 0x0 default.
+    require(_addressNotNull(newOwner));
+    // Making sure sent amount is greater than or equal to the sellingPrice
+    require(msg.value >= sellingPrice);
+    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 92), 100));
+    uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
+    teamIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 130),100);
+    
+    _transfer(oldOwner, newOwner, _tokenId);
+    if (oldOwner != address(this)) {
+      oldOwner.send(payment); //oldOwner take 92% of the sellingPrice
     }
-
-	/// Allows someone to send ether and obtain the token
-    ///function PresentToCEO() public payable {
-	///    ceoAddress.transfer(msg.value);
-	///	Present(msg.sender, ceoAddress, msg.value, uint256(now));
-	///}
-	
-    // Allows someone to send ether and obtain the token
-    function buyWorldCupTeamToken(uint256 _tokenId) public payable {
-        address oldOwner = worldCupIdToOwnerAddress[_tokenId];
-        address newOwner = msg.sender;
-        require(oldOwner != newOwner); // Make sure token owner is not sending to self
-        require(_addressNotNull(newOwner)); //Safety check to prevent against an unexpected 0x0 default.
-
-	    uint256 oldSoldPrice = worldCupIdToPrice[_tokenId];//worldCupIdToOldPrice[_tokenId];
-	    uint256 diffPrice = SafeMath.sub(msg.value, oldSoldPrice);
-	    uint256 priceOfOldOwner = SafeMath.add(oldSoldPrice, SafeMath.div(diffPrice, 2));
-	    uint256 priceOfDevelop = SafeMath.div(diffPrice, 4);
-	    worldCupIdToPrice[_tokenId] = msg.value;//SafeMath.add(msg.value, SafeMath.div(msg.value, 10));
-	    //worldCupIdToOldPrice[_tokenId] = msg.value;
-
-        _transfer(oldOwner, newOwner, _tokenId);
-        if (oldOwner != address(this)) {
-	        oldOwner.transfer(priceOfOldOwner);
+    TokenSold(_tokenId, sellingPrice, teamIndexToPrice[_tokenId], oldOwner, newOwner, teams[_tokenId].name);
+    msg.sender.send(purchaseExcess);
+  }
+  
+  function priceOf(uint256 _tokenId) public view returns (uint256 price) {
+    return teamIndexToPrice[_tokenId];
+  }
+  
+  function symbol() public pure returns (string) {
+    return SYMBOL;
+  }
+  
+  function takeOwnership(uint256 _tokenId) public onlyStart{
+    address newOwner = msg.sender;
+    address oldOwner = teamIndexToOwner[_tokenId];
+    // Safety check to prevent against an unexpected 0x0 default.
+    require(_addressNotNull(newOwner));
+    // Making sure transfer is approved
+    require(_approved(newOwner, _tokenId));
+    _transfer(oldOwner, newOwner, _tokenId);
+  }
+  
+  function tokensOfOwner(address _owner) public view returns(uint256[] ownerTokens) {
+    uint256 tokenCount = balanceOf(_owner);
+    if (tokenCount == 0) {
+        // Return an empty array
+      return new uint256[](0);
+    } else {
+      uint256[] memory result = new uint256[](tokenCount);
+      uint256 totalPersons = totalSupply();
+      uint256 resultIndex = 0;
+      uint256 teamId;
+      for (teamId = 0; teamId <= totalPersons; teamId++) {
+        if (teamIndexToOwner[teamId] == _owner) {
+          result[resultIndex] = teamId;
+          resultIndex++;
         }
-	    ceoAddress.transfer(priceOfDevelop);
-	    if(this.balance >= uint256(3.2 ether)){
-            if((uint256(now) - SHARE_BONUS_TIME) >= 86400){
-		        for(uint256 i=0; i<32; i++){
-		            worldCupIdToOwnerAddress[i].transfer(0.1 ether);
-					ShareBonus(worldCupIdToOwnerAddress[i], i, uint256(now), this.balance);
-		        }
-			    SHARE_BONUS_TIME = uint256(now);
-			    //ShareBonus(SHARE_BONUS_TIME, this.balance);
-		    }
-	    }
-	    WorldCupTokenWereSold(newOwner, _tokenId, oldSoldPrice, msg.value, oldOwner, uint256(now));
-	}
-
-    function priceOf(uint256 _tokenId) public view returns (uint256 price) {
-        return worldCupIdToPrice[_tokenId];
+      }
+      return result;
     }
-
-    /// @dev Required for ERC-721 compliance.
-    function takeOwnership(uint256 _tokenId) public {
-        address newOwner = msg.sender;
-        address oldOwner = worldCupIdToOwnerAddress[_tokenId];
-
-        // Safety check to prevent against an unexpected 0x0 default.
-        require(_addressNotNull(newOwner));
-
-        // Making sure transfer is approved
-        require(_approved(newOwner, _tokenId));
-
-        _transfer(oldOwner, newOwner, _tokenId);
+  }
+  
+  
+  function totalSupply() public view returns (uint256 total) {
+    return teams.length;
+  }
+  
+  
+  function transfer(
+    address _to,
+    uint256 _tokenId
+  ) public onlyStart {
+    require(_owns(msg.sender, _tokenId));
+    require(_addressNotNull(_to));
+    _transfer(msg.sender, _to, _tokenId);
+  }
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _tokenId
+  ) public onlyStart{
+    require(_owns(_from, _tokenId));
+    require(_approved(_to, _tokenId));
+    require(_addressNotNull(_to));
+    _transfer(_from, _to, _tokenId);
+  }
+  function _addressNotNull(address _to) private pure returns (bool) {
+    return _to != address(0);
+  }
+  
+  function _approved(address _to, uint256 _tokenId) private view returns (bool) {
+    return teamIndexToApproved[_tokenId] == _to;
+  }
+  
+  
+  function _createTeam(string _name, address _owner, uint256 _price) private {
+    
+    Team memory _team = Team({
+      name: _name
+    });
+    uint256 newTeamId = teams.push(_team) - 1;
+    nameIndexToTeam[_name]=newTeamId;
+    Birth(newTeamId, _name, _owner);
+    teamIndexToPrice[newTeamId] = _price;
+    _transfer(address(0), _owner, newTeamId);
+  }
+  
+  
+  /// Check for token ownership
+  function _owns(address claimant, uint256 _tokenId) private view returns (bool) {
+    return claimant == teamIndexToOwner[_tokenId];
+  }
+  /// For paying out balance on contract
+  function _payout(address _to) private {
+    if (_to == address(0)) {
+      ceoAddress.send(this.balance);
+    } else {
+      _to.send(this.balance);
     }
-
-    function tokensOfOwner(address _owner) public view returns(uint256[] ownerTokens) {
-        uint256 tokenCount = balanceOf(_owner);
-        if (tokenCount == 0) {
-            return new uint256[](0);
-        } else {
-            uint256[] memory result = new uint256[](tokenCount);
-            uint256 totalCars = totalSupply();
-            uint256 resultIndex = 0;
-
-            uint256 carId;
-            for (carId = 0; carId <= totalCars; carId++) {
-                if (worldCupIdToOwnerAddress[carId] == _owner) {
-                    result[resultIndex] = carId;
-                    resultIndex++;
-                }
-            }
-            return result;
+  }
+  function _transfer(address _from, address _to, uint256 _tokenId) private {
+    ownershipTokenCount[_to]++;
+    teamIndexToOwner[_tokenId] = _to;
+    if (_from != address(0)) {
+      ownershipTokenCount[_from]--;
+      delete teamIndexToApproved[_tokenId];
+    }
+    Transfer(_from, _to, _tokenId);
+  }
+}
+library SafeMath {
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  
+function diffString(string a, string b) internal pure returns (bool) {
+    bytes memory ab=bytes(a);
+    bytes memory bb=bytes(b);
+    if(ab.length!=bb.length){
+        return false;
+    }
+    uint len=ab.length;
+    for(uint i=0;i<len;i++){
+        if(ab[i]!=bb[i]){
+            return false;
         }
     }
-  
-    function getCEO() public view returns (address ceoAddr) {
-        return ceoAddress;
-    }
-
-    //Required for ERC-721 compliance.
-    function totalSupply() public view returns (uint256 total) {
-        return worldCupTeamDescribe.length;
-    }
-  
-    //return BonusPool $
-    function getBonusPool() public view returns (uint256) {
-        return this.balance;
-    }
-  
-    function getTimeFromPrize() public view returns (uint256) {
-        return uint256(now) - SHARE_BONUS_TIME;
-    }
-
-    /// @dev Required for ERC-721 compliance.
-    function transfer(address _to, uint256 _tokenId) public {
-        require(_isOwner(msg.sender, _tokenId));
-        require(_addressNotNull(_to));
-
-        _transfer(msg.sender, _to, _tokenId);
-    }
-
-    /// @dev Required for ERC-721 compliance.
-    function transferFrom(address _from, address _to, uint256 _tokenId) public {
-        require(_isOwner(_from, _tokenId));
-        require(_approved(_to, _tokenId));
-        require(_addressNotNull(_to));
-
-        _transfer(_from, _to, _tokenId);
-    }
-
-    /********----------- PRIVATE FUNCTIONS ------------********/
-    function _addressNotNull(address _to) private pure returns (bool) {
-        return _to != address(0);
-    }
-
-    function _approved(address _to, uint256 _tokenId) private view returns (bool) {
-        return worldCupIdToAddressForApproved[_tokenId] == _to;
-    }
-
-    function _isOwner(address checkAddress, uint256 _tokenId) private view returns (bool) {
-        return checkAddress == worldCupIdToOwnerAddress[_tokenId];
-    }
-
-    function _transfer(address _from, address _to, uint256 _tokenId) private {
-        ownerAddressToTokenCount[_to]++;
-        worldCupIdToOwnerAddress[_tokenId] = _to;  //transfer ownership
-
-        if (_from != address(0)) {
-            ownerAddressToTokenCount[_from]--;
-            delete worldCupIdToAddressForApproved[_tokenId];
-        }
-        Transfer(_from, _to, _tokenId);
-    }
+    return true;
+  }
 }
