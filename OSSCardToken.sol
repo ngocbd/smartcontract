@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OSSCardToken at 0x52d208f3ff79985b5a50a55fd35334f924a9f643
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OSSCardToken at 0xb7321c1dae3931abf91f8f5d68e3aaa42f526acb
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -61,6 +61,9 @@ contract OSSCardToken is ERC721 {
 
   // @dev A mapping from CardIDs to the price of the token.
   mapping (uint256 => uint256) private cardIndexToPrice;
+  
+  // To prevent similar slugs
+  mapping (string => bool) private slugs;
 
   // The addresses of the accounts (or contracts) that can execute actions within each roles.
   address public ceoAddress;
@@ -329,6 +332,8 @@ contract OSSCardToken is ERC721 {
 
   /// For creating Card
   function _createCard(string _slug, address _owner, uint256 _price) private {
+    require(!slugs[_slug]);
+      
     Card memory _card = Card({
       slug: _slug
     });
@@ -341,6 +346,8 @@ contract OSSCardToken is ERC721 {
     Birth(newCardId, _slug, _owner);
 
     cardIndexToPrice[newCardId] = _price;
+    
+    slugs[_slug] = true;
 
     // This will assign ownership, and also emit the Transfer event as
     // per ERC721 draft
