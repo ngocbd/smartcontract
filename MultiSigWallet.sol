@@ -1,16 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xa4bfe38260be461f17ef17b29df8c32eb4d33043
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xd08037abf956cc70e2c0987e91cfbcb8f09559ec
 */
-pragma solidity 0.4.15;
+pragma solidity ^0.4.15;
 
+// From https://github.com/ConsenSys/MultiSigWallet/blob/master/contracts/solidity/MultiSigWallet.sol @ e3240481928e9d2b57517bd192394172e31da487
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    /*
-     *  Events
-     */
+    uint constant public MAX_OWNER_COUNT = 10;
+
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -21,14 +21,6 @@ contract MultiSigWallet {
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
-    /*
-     *  Constants
-     */
-    uint constant public MAX_OWNER_COUNT = 50;
-
-    /*
-     *  Storage
-     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -43,9 +35,6 @@ contract MultiSigWallet {
         bool executed;
     }
 
-    /*
-     *  Modifiers
-     */
     modifier onlyWallet() {
         if (msg.sender != address(this))
             throw;
@@ -115,19 +104,19 @@ contract MultiSigWallet {
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
+    function MultiSigWallet()
         public
-        validRequirement(_owners.length, _required)
     {
-        for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-                throw;
-            isOwner[_owners[i]] = true;
-        }
-        owners = _owners;
-        required = _required;
+        address owner1 = address(0x4E63227fcFF602b3Fa9e6F4e86b33194f04236B1);
+        address owner2 = address(0x4F9049886d8087c7549224383075ffbb3dF2b7a0);
+        address owner3 = address(0xac0A13CDab06D9A17ea9cf90e7766610128f487F);
+        owners.push(address(owner1));
+        owners.push(address(owner2));
+        owners.push(address(owner3));
+        isOwner[owner1] = true;
+        isOwner[owner2] = true;
+        isOwner[owner3] = true;
+        required = 2;
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
@@ -165,7 +154,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param newOwner Address of new owner.
+    /// @param owner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -212,7 +201,7 @@ contract MultiSigWallet {
     function confirmTransaction(uint transactionId)
         public
         ownerExists(msg.sender)
-        transactionExists(transactionId)
+        transactionExists(transactionId)    
         notConfirmed(transactionId, msg.sender)
     {
         confirmations[transactionId][msg.sender] = true;
@@ -236,8 +225,6 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
