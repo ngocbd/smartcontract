@@ -1,188 +1,333 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x493f121b6f769fc8dbfb47ab834b13561d835009
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xd5abcc4c80fd01d8822f35f379fbcebf7a8b8679
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.6;
 
-/**
- * Author: Nick Johnson <arachnid at notdot.net>
- * 
- * WARNING: This contract is new and thus-far only lightly tested. I'm fairly
- * confident it operates as described, but you may want to assure yourself of
- * its correctness - or wait for others to do so for you - before you trust your
- * ether to it. No guarantees, express or implied, are provided - use at your
- * own risk.
- * 
- * @dev Ether vault contract. Stores ether with a 'time lock' on withdrawals,
- *      giving a user the chance to reclaim funds if an account is compromised.
- *      A recovery address has the ability to immediately destroy the wallet and
- *      send its funds to a new contract (such as a new vault, if the wallet)
- *      associated with this one is compromised or lost). A cold wallet or
- *      secure brain wallet should typically be used for this purpose.
- * 
- * Setup:
- *   To set up a vault, first create a cold wallet or secure brain wallet to use
- *   as a recovery key, and get its address. Then, deploy this vault contract
- *   with the address of the recovery key, and a time delay (in seconds) to
- *   impose on withdrawals.
- * 
- * Deposits:
- *   Simply deposit funds into this contract by sending them to them. This
- *   contract only uses the minimum gas stipend, so it's safe to use with
- *   sites that "don't support smart contracts".
- * 
- * Withdrawals:
- *   Call unvault() with the amount you wish to withdraw (in wei - one ether is
- *   1e18 wei). After the time delay you specified when you created the wallet,
- *   you can call withdraw() to receive the funds.
- * 
- * Vacations:
- *   If you anticipate not having access to the recovery key for some period,
- *   you can call `lock()` with a period (in seconds) that the funds should be
- *   unavailable for; this will prohibit any withdrawals completing during that
- *   period. If a withdrawal is outstanding, it will be postponed until the
- *   end of this period, too.
- * 
- * Recovery:
- *   If your hotwallet is every compromised, or you detect an unauthorized
- *   `Unvault()` event, use your recovery key to call the `recover()` function
- *   with the address you want funds sent to. The funds will be immediately
- *   sent to this address (with no delay) and the contract will self destruct.
- * 
- *   For safety, you may wish to prepare a new vault (with a new recovery key)
- *   and send your funds directly to that.
+
+/*
+    Copyright 2016, Jordi Baylina
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-contract Vault {
-    /**
-     * @dev Owner of the vault.
-     */
+
+/// @title Vault Contract
+/// @author Jordi Baylina
+/// @notice This contract holds funds for Campaigns and automates payments. For
+///  this iteration the funds will come straight from the Giveth Multisig as a
+///  safety precaution, but once fully tested and optimized this contract will
+///  be a safe place to store funds equipped with optional variable time delays
+///  to allow for an optional escape hatch
+
+/// @dev `Owned` is a base level contract that assigns an `owner` that can be
+///  later changed
+contract Owned {
+    /// @dev `owner` is the only address that can call a function with this
+    /// modifier
+    modifier onlyOwner { if (msg.sender != owner) throw; _; }
+
     address public owner;
-    
-    /**
-     * @dev Recovery address for this vault.
-     */
-    address public recovery;
 
-    /**
-     * @dev Minimum interval between making an unvault call and allowing a
-     *      withdrawal.
-     */
-    uint public withdrawDelay;
+    /// @notice The Constructor assigns the message sender to be `owner`
+    function Owned() { owner = msg.sender;}
 
-    /**
-     * @dev Earliest time at which a withdrawal can be made.
-     *      Valid iff withdrawAmount > 0.
-     */
-    uint public withdrawTime;
-    
-    /**
-     * @dev Amount requested to be withdrawn.
-     */
-    uint public withdrawAmount;
+    /// @notice `owner` can step down and assign some other address to this role
+    /// @param _newOwner The address of the new owner. 0x0 can be used to create
+    ///  an unowned neutral vault, however that cannot be undone
+    function changeOwner(address _newOwner) onlyOwner {
+        owner = _newOwner;
+    }
+}
+/// @dev `Escapable` is a base level contract built off of the `Owned`
+///  contract that creates an escape hatch function to send its ether to
+///  `escapeDestination` when called by the `escapeCaller` in the case that
+///  something unexpected happens
+contract Escapable is Owned {
+    address public escapeCaller;
+    address public escapeDestination;
 
-    
-    modifier only_owner() {
-        if(msg.sender != owner) throw;
+    /// @notice The Constructor assigns the `escapeDestination` and the
+    ///  `escapeCaller`
+    /// @param _escapeDestination The address of a safe location (usu a
+    ///  Multisig) to send the ether held in this contract
+    /// @param _escapeCaller The address of a trusted account or contract to
+    ///  call `escapeHatch()` to send the ether in this contract to the
+    ///  `escapeDestination` it would be ideal that `escapeCaller` cannot move
+    ///  funds out of `escapeDestination`
+    function Escapable(address _escapeCaller, address _escapeDestination) {
+        escapeDestination = _escapeDestination;
+        escapeCaller = _escapeCaller;
+    }
+
+    /// @dev The addresses preassigned the `escapeCaller` role
+    ///  is the only addresses that can call a function with this modifier
+    modifier onlyEscapeCallerOrOwner {
+        if ((msg.sender != escapeCaller)&&(msg.sender != owner))
+            throw;
         _;
     }
-    
-    modifier only_recovery() {
-        if(msg.sender != recovery) throw;
-        _;
-    }
 
-    /**
-     * @dev Withdrawal request made
-     */
-    event Unvault(uint amount, uint when);
-    
-    /**
-     * @dev Recovery key used to send all funds to `address`.
-     */
-    event Recover(address target, uint value);
-    
-    /**
-     * @dev Funds deposited.
-     */
-    event Deposit(address from, uint value);
-    
-    /**
-     * @dev Funds withdrawn.
-     */
-    event Withdraw(address to, uint value);
-
-    /**
-     * @dev Constructor.
-     * @param _recovery The address of the recovery account.
-     * @param _withdrawDelay The time (in seconds) between an unvault request
-     *        and the earliest time a withdrawal can be made.
-     */
-    function Vault(address _recovery, uint _withdrawDelay) {
-        owner = msg.sender;
-        recovery = _recovery;
-        withdrawDelay = _withdrawDelay;
-    }
-    
-    function max(uint a, uint b) internal returns (uint) {
-        if(a > b)
-            return a;
-        return b;
-    }
-    
-    /**
-     * @dev Request withdrawal of funds from the vault. Starts a timer for when
-     *      funds can be withdrawn. Increases to the amount will reset the
-     *      timer, but decreases can be made without changing it.
-     * @param amount The amount requested for withdrawal.
-     */
-    function unvault(uint amount) only_owner {
-        if(amount > this.balance)
+    /// @notice The `escapeHatch()` should only be called as a last resort if a
+    /// security issue is uncovered or something unexpected happened
+    function escapeHatch() onlyEscapeCallerOrOwner {
+        uint total = this.balance;
+        // Send the total balance of this contract to the `escapeDestination`
+        if (!escapeDestination.send(total)) {
             throw;
-            
-        // Update the withdraw time if we're withdrawing more than previously.
-        if(amount > withdrawAmount)
-            withdrawTime = max(withdrawTime, block.timestamp + withdrawDelay);
-        
-        withdrawAmount = amount;
-        Unvault(amount, withdrawTime);
+        }
+        EscapeCalled(total);
     }
-    
-    /**
-     * @dev Withdraw funds. Valid only after `unvault` has been called and the
-     *      required interval has elapsed.
-     */
-    function withdraw() only_owner {
-        if(block.timestamp < withdrawTime || withdrawAmount == 0)
-            throw;
-        
-        uint amount = withdrawAmount;
-        withdrawAmount = 0;
+    /// @notice Changes the address assigned to call `escapeHatch()`
+    /// @param _newEscapeCaller The address of a trusted account or contract to
+    ///  call `escapeHatch()` to send the ether in this contract to the
+    ///  `escapeDestination` it would be ideal that `escapeCaller` cannot
+    ///  move funds out of `escapeDestination`
+    function changeEscapeCaller(address _newEscapeCaller) onlyEscapeCallerOrOwner {
+        escapeCaller = _newEscapeCaller;
+    }
 
-        if(!owner.send(amount))
+    event EscapeCalled(uint amount);
+}
+
+/// @dev `Vault` is a higher level contract built off of the `Escapable`
+///  contract that holds funds for Campaigns and automates payments.
+contract Vault is Escapable {
+
+    /// @dev `Payment` is a public structure that describes the details of
+    ///  each payment making it easy to track the movement of funds
+    ///  transparently
+    struct Payment {
+        string description;     // What is the purpose of this payment
+        address spender;        // Who is sending the funds
+        uint earliestPayTime;   // The earliest a payment can be made (Unix Time)
+        bool canceled;         // If True then the payment has been canceled
+        bool paid;              // If True then the payment has been paid
+        address recipient;      // Who is receiving the funds
+        uint amount;            // The amount of wei sent in the payment
+        uint securityGuardDelay;// The seconds `securityGuard` can delay payment
+    }
+
+    Payment[] public authorizedPayments;
+
+    address public securityGuard;
+    uint public absoluteMinTimeLock;
+    uint public timeLock;
+    uint public maxSecurityGuardDelay;
+
+    /// @dev The white list of approved addresses allowed to set up && receive
+    ///  payments from this vault
+    mapping (address => bool) public allowedSpenders;
+
+    /// @dev The address assigned the role of `securityGuard` is the only
+    ///  addresses that can call a function with this modifier
+    modifier onlySecurityGuard { if (msg.sender != securityGuard) throw; _; }
+
+    // @dev Events to make the payment movements easy to find on the blockchain
+    event PaymentAuthorized(uint idPayment, address recipient, uint amount);
+    event PaymentExecuted(uint idPayment, address recipient, uint amount);
+    event PaymentCanceled(uint idPayment);
+    event EtherReceived(address from, uint amount);
+    event SpenderAuthorization(address spender, bool authorized);
+
+/////////
+// Constuctor
+/////////
+
+    /// @notice The Constructor creates the Vault on the blockchain
+    /// @param _escapeCaller The address of a trusted account or contract to
+    ///  call `escapeHatch()` to send the ether in this contract to the
+    ///  `escapeDestination` it would be ideal if `escapeCaller` cannot move
+    ///  funds out of `escapeDestination`
+    /// @param _escapeDestination The address of a safe location (usu a
+    ///  Multisig) to send the ether held in this contract in an emergency
+    /// @param _absoluteMinTimeLock The minimum number of seconds `timelock` can
+    ///  be set to, if set to 0 the `owner` can remove the `timeLock` completely
+    /// @param _timeLock Initial number of seconds that payments are delayed
+    ///  after they are authorized (a security precaution)
+    /// @param _securityGuard Address that will be able to delay the payments
+    ///  beyond the initial timelock requirements; can be set to 0x0 to remove
+    ///  the `securityGuard` functionality
+    /// @param _maxSecurityGuardDelay The maximum number of seconds in total
+    ///   that `securityGuard` can delay a payment so that the owner can cancel
+    ///   the payment if needed
+    function Vault(
+        address _escapeCaller,
+        address _escapeDestination,
+        uint _absoluteMinTimeLock,
+        uint _timeLock,
+        address _securityGuard,
+        uint _maxSecurityGuardDelay) Escapable(_escapeCaller, _escapeDestination)
+    {
+        securityGuard = _securityGuard;
+        timeLock = _timeLock;
+        absoluteMinTimeLock = _absoluteMinTimeLock;
+        maxSecurityGuardDelay = _maxSecurityGuardDelay;
+    }
+
+
+    /// @notice States the total number of authorized payments in this contract
+    function numberOfAuthorizedPayments() constant returns (uint) {
+        return authorizedPayments.length;
+    }
+
+//////
+// Receive Ether
+//////
+
+    /// @notice Called anytime ether is sent to the contract && creates an event
+    /// to more easily track the incoming transactions
+    function receiveEther() payable {
+        EtherReceived(msg.sender, msg.value);
+    }
+
+    /// @notice The fall back function is called whenever ether is sent to this
+    ///  contract
+    function () payable {
+        receiveEther();
+    }
+
+////////
+// Spender Interface
+////////
+
+    /// @notice only `allowedSpenders[]` Creates a new `Payment`
+    /// @param _description Brief description of the payment that is authorized
+    /// @param _recipient Destination of the payment
+    /// @param _amount Amount to be paid in wei
+    /// @param _paymentDelay Number of seconds the payment is to be delayed, if
+    ///  this value is below `timeLock` then the `timeLock` determines the delay
+    function authorizePayment(
+        string _description,
+        address _recipient,
+        uint _amount,
+        uint _paymentDelay
+    ) returns(uint) {
+
+        // Fail if you arent on the `allowedSpenders` white list
+        if (!allowedSpenders[msg.sender] ) throw;
+        uint idPayment = authorizedPayments.length;       // Unique Payment ID
+        authorizedPayments.length++;
+
+        // The following lines fill out the payment struct
+        Payment p = authorizedPayments[idPayment];
+        p.spender = msg.sender;
+
+        // Determines the earliest the recipient can receive payment (Unix time)
+        p.earliestPayTime = _paymentDelay >= timeLock ?
+                                now + _paymentDelay :
+                                now + timeLock;
+        p.recipient = _recipient;
+        p.amount = _amount;
+        p.description = _description;
+        PaymentAuthorized(idPayment, p.recipient, p.amount);
+        return idPayment;
+    }
+
+    /// @notice only `allowedSpenders[]` The recipient of a payment calls this
+    ///  function to send themselves the ether after the `earliestPayTime` has
+    ///  expired
+    /// @param _idPayment The payment ID to be executed
+    function collectAuthorizedPayment(uint _idPayment) {
+
+        // Check that the `_idPayment` has been added to the payments struct
+        if (_idPayment >= authorizedPayments.length) throw;
+
+        Payment p = authorizedPayments[_idPayment];
+
+        // Checking for reasons not to execute the payment
+        if (msg.sender != p.recipient) throw;
+        if (!allowedSpenders[p.spender]) throw;
+        if (now < p.earliestPayTime) throw;
+        if (p.canceled) throw;
+        if (p.paid) throw;
+        if (this.balance < p.amount) throw;
+
+        p.paid = true; // Set the payment to being paid
+        if (!p.recipient.send(p.amount)) {  // Make the payment
+            throw;
+        }
+        PaymentExecuted(_idPayment, p.recipient, p.amount);
+     }
+
+/////////
+// SecurityGuard Interface
+/////////
+
+    /// @notice `onlySecurityGuard` Delays a payment for a set number of seconds
+    /// @param _idPayment ID of the payment to be delayed
+    /// @param _delay The number of seconds to delay the payment
+    function delayPayment(uint _idPayment, uint _delay) onlySecurityGuard {
+        if (_idPayment >= authorizedPayments.length) throw;
+
+        Payment p = authorizedPayments[_idPayment];
+
+        if ((p.securityGuardDelay + _delay > maxSecurityGuardDelay) ||
+            (p.paid) ||
+            (p.canceled))
             throw;
 
-        Withdraw(owner, amount);
+        p.securityGuardDelay += _delay;
+        p.earliestPayTime += _delay;
     }
-    
-    /**
-     * @dev Use the recovery address to send all funds to the nominated address
-     *      and self-destruct this vault.
-     * @param target The target address to send funds to.
-     */
-    function recover(address target) only_recovery {
-        Recover(target, this.balance);
-        selfdestruct(target);
+
+////////
+// Owner Interface
+///////
+
+    /// @notice `onlyOwner` Cancel a payment all together
+    /// @param _idPayment ID of the payment to be canceled.
+    function cancelPayment(uint _idPayment) onlyOwner {
+        if (_idPayment >= authorizedPayments.length) throw;
+
+        Payment p = authorizedPayments[_idPayment];
+
+
+        if (p.canceled) throw;
+        if (p.paid) throw;
+
+        p.canceled = true;
+        PaymentCanceled(_idPayment);
     }
-    
-    /**
-     * @dev Permits locking funds for longer than the default duration; useful
-     *      if you will not have access to your recovery key for a while.
-     */
-    function lock(uint duration) only_owner {
-        withdrawTime = max(withdrawTime, block.timestamp + duration);
+
+    /// @notice `onlyOwner` Adds a spender to the `allowedSpenders[]` white list
+    /// @param _spender The address of the contract being authorized/unauthorized
+    /// @param _authorize `true` if authorizing and `false` if unauthorizing
+    function authorizeSpender(address _spender, bool _authorize) onlyOwner {
+        allowedSpenders[_spender] = _authorize;
+        SpenderAuthorization(_spender, _authorize);
     }
-    
-    function() payable {
-        if(msg.value > 0)
-            Deposit(msg.sender, msg.value);
+
+    /// @notice `onlyOwner` Sets the address of `securityGuard`
+    /// @param _newSecurityGuard Address of the new security guard
+    function setSecurityGuard(address _newSecurityGuard) onlyOwner {
+        securityGuard = _newSecurityGuard;
+    }
+
+
+    /// @notice `onlyOwner` Changes `timeLock`; the new `timeLock` cannot be
+    ///  lower than `absoluteMinTimeLock`
+    /// @param _newTimeLock Sets the new minimum default `timeLock` in seconds;
+    ///  pending payments maintain their `earliestPayTime`
+    function setTimelock(uint _newTimeLock) onlyOwner {
+        if (_newTimeLock < absoluteMinTimeLock) throw;
+        timeLock = _newTimeLock;
+    }
+
+    /// @notice `onlyOwner` Changes the maximum number of seconds
+    /// `securityGuard` can delay a payment
+    /// @param _maxSecurityGuardDelay The new maximum delay in seconds that
+    ///  `securityGuard` can delay the payment's execution in total
+    function setMaxSecurityGuardDelay(uint _maxSecurityGuardDelay) onlyOwner {
+        maxSecurityGuardDelay = _maxSecurityGuardDelay;
     }
 }
