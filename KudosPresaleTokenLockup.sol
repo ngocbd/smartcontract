@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KudosPresaleTokenLockup at 0x62f1A9b456973157ccB0D4072016B99831Fc5C04
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KudosPresaleTokenLockup at 0xefb06ec3144c82e1525c0a20e507b3b92967b8c8
 */
 pragma solidity ^0.4.15;
 
