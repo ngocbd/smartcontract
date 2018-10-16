@@ -1,207 +1,138 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x0b983fa1bcbdf24bdbfacb660faa76c586a16c64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xf2b7f622bbd7edffca61a74fe9b6efda54f40a76
 */
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.4;
 
-// Presale Smart Contract
-//
-// **** START:  WORK IN PROGRESS DISCLAIMER ****
-// This is a work in progress and not intended for reuse.
-// So don't reuse unless you know exactly what are you doing! 
-// **** END:  WORK IN PROGRESS DISCLAIMER ****
-//
-// **** START:  PARANOIA DISCLAIMER ****
-// A careful reader will find here some unnecessary checks and excessive code consuming some extra valuable gas. It is intentionally. 
-// Even contract will works without these parts, they make the code more secure in production as well for future refactoring.
-// Additionally it shows more clearly what we have took care of.
-// You are welcome to discuss that places.
-// **** END OF: PARANOIA DISCLAIMER *****
-//
-//
-// @author ethernian
-//
+/**
+ * @title Contract for object that have an owner
+ */
+contract Owned {
+    /**
+     * Contract owner address
+     */
+    address public owner;
 
+    /**
+     * @dev Delegate contract to another person
+     * @param _owner New owner address 
+     */
+    function setOwner(address _owner) onlyOwner
+    { owner = _owner; }
 
-contract Presale {
+    /**
+     * @dev Owner check modifier
+     */
+    modifier onlyOwner { if (msg.sender != owner) throw; _; }
+}
 
-    string public constant VERSION = "0.1.3-beta";
+/**
+ * @title Common pattern for destroyable contracts 
+ */
+contract Destroyable {
+    address public hammer;
 
-	/* ====== configuration START ====== */
+    /**
+     * @dev Hammer setter
+     * @param _hammer New hammer address
+     */
+    function setHammer(address _hammer) onlyHammer
+    { hammer = _hammer; }
 
-	uint public constant PRESALE_START  = 3116560; //	approx. 03.02.2017 18:30
-	uint public constant PRESALE_END    = 3116597; //	approx. 03.02.2017 18:45
-	uint public constant WITHDRAWAL_END = 3116657; //	approx. 03.02.2017 19:00
+    /**
+     * @dev Destroy contract and scrub a data
+     * @notice Only hammer can call it 
+     */
+    function destroy() onlyHammer
+    { suicide(msg.sender); }
 
+    /**
+     * @dev Hammer check modifier
+     */
+    modifier onlyHammer { if (msg.sender != hammer) throw; _; }
+}
 
-	address public constant OWNER = 0x45d5426471D12b21C3326dD0cF96f6656F7d14b1;
-	
-    uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
-    uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 5;
-    uint public constant MIN_ACCEPTED_AMOUNT_FINNEY = 1;
+/**
+ * @title Generic owned destroyable contract
+ */
+contract Object is Owned, Destroyable {
+    function Object() {
+        owner  = msg.sender;
+        hammer = msg.sender;
+    }
+}
 
-    /* ====== configuration END ====== */
-	
-    string[5] private stateNames = ["BEFORE_START",  "PRESALE_RUNNING", "WITHDRAWAL_RUNNING", "REFUND_RUNNING", "CLOSED" ];
-    enum State { BEFORE_START,  PRESALE_RUNNING, WITHDRAWAL_RUNNING, REFUND_RUNNING, CLOSED }
+// Standard token interface (ERC 20)
+// https://github.com/ethereum/EIPs/issues/20
+contract ERC20 
+{
+// Functions:
+    /// @return total amount of tokens
+    uint256 public totalSupply;
 
-    uint public total_received_amount;
-	mapping (address => uint) public balances;
-	
-    uint private constant MIN_TOTAL_AMOUNT_TO_RECEIVE = MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH * 1 ether;
-    uint private constant MAX_TOTAL_AMOUNT_TO_RECEIVE = MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH * 1 ether;
-    uint private constant MIN_ACCEPTED_AMOUNT = MIN_ACCEPTED_AMOUNT_FINNEY * 1 finney;
-	
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256);
 
-    //constructor
-    function Presale () validSetupOnly() { }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool);
 
-    //
-    // ======= interface methods =======
-    //
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool);
 
-    //accept payments here
-    function ()
-    payable
-    noReentrancy
-    {
-        State state = currentState();
-        if (state == State.PRESALE_RUNNING) {
-            receiveFunds();
-        } else if (state == State.REFUND_RUNNING) {
-            // any entring call in Refund Phase will cause full refund
-            sendRefund();
-        } else {
-            throw;
-        }
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256);
+
+// Events:
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract Presale is Object {
+    ERC20   public token;
+    uint256 public bounty;
+    uint256 public donation;
+
+    /**
+     * @dev Presale contract constructor
+     * @param _token Bounty token address
+     * @param _bounty Bount value by donation
+     * @param _donation Donation value
+     */
+    function Presale(address _token, uint256 _bounty, uint256 _donation) {
+        token    = ERC20(_token);
+        bounty   = _bounty;
+        donation = _donation;
     }
 
-    function refund() external
-    inState(State.REFUND_RUNNING)
-    noReentrancy
-    {
-        sendRefund();
+    /**
+     * @dev Cancel presale contract by owner, bounty refunded to owner
+     */
+    function cancel() onlyOwner {
+        if (!token.transfer(owner, bounty)) throw;
     }
 
-
-    function withdrawFunds() external
-    inState(State.WITHDRAWAL_RUNNING)
-    onlyOwner
-    noReentrancy
-    {
-        // transfer funds to owner if any
-        if (this.balance > 0) {
-            if (!OWNER.send(this.balance)) throw;
-        }
+    /**
+    * @dev Accept presale contract,
+    *      bounty transfered to sender - donation to owner
+    */
+    function () payable {
+        if (msg.value != donation) throw;
+        if (!token.transfer(msg.sender, bounty)) throw;
+        if (!owner.send(msg.value)) throw;
     }
-
-
-    //displays current contract state in human readable form
-    function state()  external constant
-    returns (string)
-    {
-        return stateNames[ uint(currentState()) ];
-    }
-
-
-    //
-    // ======= implementation methods =======
-    //
-
-    function sendRefund() private tokenHoldersOnly {
-        // load balance to refund plus amount currently sent
-        var amount_to_refund = balances[msg.sender] + msg.value;
-        // reset balance
-        balances[msg.sender] = 0;
-        // send refund back to sender
-        if (!msg.sender.send(amount_to_refund)) throw;
-    }
-
-
-    function receiveFunds() private notTooSmallAmountOnly {
-      // no overflow is possible here: nobody have soo much money to spend.
-      if (total_received_amount + msg.value > MAX_TOTAL_AMOUNT_TO_RECEIVE) {
-          // accept amount only and return change
-          var change_to_return = total_received_amount + msg.value - MAX_TOTAL_AMOUNT_TO_RECEIVE;
-          if (!msg.sender.send(change_to_return)) throw;
-
-          var acceptable_remainder = MAX_TOTAL_AMOUNT_TO_RECEIVE - total_received_amount;
-          balances[msg.sender] += acceptable_remainder;
-          total_received_amount += acceptable_remainder;
-      } else {
-          // accept full amount
-          balances[msg.sender] += msg.value;
-          total_received_amount += msg.value;
-      }
-    }
-
-
-    function currentState() private constant returns (State) {
-        if (block.number < PRESALE_START) {
-            return State.BEFORE_START;
-        } else if (block.number <= PRESALE_END && total_received_amount < MAX_TOTAL_AMOUNT_TO_RECEIVE) {
-            return State.PRESALE_RUNNING;
-        } else if (block.number <= WITHDRAWAL_END && total_received_amount >= MIN_TOTAL_AMOUNT_TO_RECEIVE) {
-            return State.WITHDRAWAL_RUNNING;
-        } else if (this.balance > 0){
-            return State.REFUND_RUNNING;
-        } else {
-            return State.CLOSED;		
-		} 
-    }
-
-    //
-    // ============ modifiers ============
-    //
-
-    //fails if state dosn't match
-    modifier inState(State state) {
-        if (state != currentState()) throw;
-        _;
-    }
-
-
-    //fails if something in setup is looking weird
-    modifier validSetupOnly() {
-        if ( OWNER == 0x0 
-            || PRESALE_START == 0 
-            || PRESALE_END == 0 
-            || WITHDRAWAL_END ==0
-            || PRESALE_START <= block.number
-            || PRESALE_START >= PRESALE_END
-            || PRESALE_END   >= WITHDRAWAL_END
-            || MIN_TOTAL_AMOUNT_TO_RECEIVE > MAX_TOTAL_AMOUNT_TO_RECEIVE )
-				throw;
-        _;
-    }
-
-
-    //accepts calls from owner only
-    modifier onlyOwner(){
-    	if (msg.sender != OWNER)  throw;
-    	_;
-    }
-
-
-    //accepts calls from token holders only
-    modifier tokenHoldersOnly(){
-        if (balances[msg.sender] == 0) throw;
-        _;
-    }
-
-
-    // don`t accept transactions with value less than allowed minimum
-    modifier notTooSmallAmountOnly(){	
-        if (msg.value < MIN_ACCEPTED_AMOUNT) throw;
-        _;
-    }
-
-
-    //prevents reentrancy attacs
-    bool private locked = false;
-    modifier noReentrancy() {
-        if (locked) throw;
-        locked = true;
-        _;
-        locked = false;
-    }
-}//contract
+}
