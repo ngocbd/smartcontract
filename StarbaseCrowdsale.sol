@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0x748b44e8abc840e60a2b86bbd138862a713328ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0xc9a37f947422f03162a6a8f3e9583613513324b3
 */
 pragma solidity ^0.4.13;
 
@@ -631,11 +631,11 @@ contract StarbaseCrowdsale is Ownable {
     address[] public earlyPurchasers;
     mapping (address => uint256) public earlyPurchasedAmountBy; // early purchased amount in CNY per purchasers' address
     bool public earlyPurchasesLoaded = false;  // returns whether all early purchases are loaded into this contract
-    uint256 public totalAmountOfEarlyPurchasesInCny;
+    uint256 public totalAmountOfEarlyPurchasesInCny; // including 20% bonus
 
     // crowdsale
     uint256 public maxCrowdsaleCap;     // = 67M CNY - (total raised amount from EP)
-    uint256 public totalAmountOfPurchasesInCny; // totalPreSale + totalCrowdsale
+    uint256 public totalAmountOfPurchasesInCny; // totalEP + totalPreSale + totalCrowdsale (including bonuses)
     mapping (address => QualifiedPartners) public qualifiedPartners;
     uint256 public purchaseStartBlock;  // crowdsale purchases can be accepted from this block number
     uint256 public startDate;
@@ -748,10 +748,8 @@ contract StarbaseCrowdsale is Ownable {
         starbaseToken = AbstractStarbaseToken(starbaseTokenAddress);
         purchaseStartBlock = _purchaseStartBlock;
 
-        totalAmountOfEarlyPurchasesInCny = totalAmountOfEarlyPurchases();
-
         // set the max cap of this crowdsale
-        maxCrowdsaleCap = MAX_CAP.sub(totalAmountOfEarlyPurchasesInCny);
+        maxCrowdsaleCap = MAX_CAP.sub(totalAmountOfEarlyPurchasesWithoutBonus());
 
         assert(maxCrowdsaleCap > 0);
 
@@ -819,7 +817,7 @@ contract StarbaseCrowdsale is Ownable {
         assert(timestamp > 0 && timestamp <= now);
         assert(block.number > purchaseStartBlock && endedAt == 0);   // cannot end before it starts and overwriting time is not permitted
         endedAt = timestamp;
-        totalAmountOfEarlyPurchasesInCny = totalAmountOfEarlyPurchases();
+        totalAmountOfEarlyPurchasesInCny = totalAmountOfEarlyPurchasesWithBonus();
         totalAmountOfPurchasesInCny = totalRaisedAmountInCny();
         CrowdsaleEnded(endedAt);
     }
@@ -1009,13 +1007,20 @@ contract StarbaseCrowdsale is Ownable {
      * @dev Returns total raised amount in CNY (includes EP) and bonuses
      */
     function totalRaisedAmountInCny() constant public returns (uint256) {
-        return SafeMath.add(totalAmountOfEarlyPurchases(), totalAmountOfCrowdsalePurchases());
+        return SafeMath.add(totalAmountOfEarlyPurchasesWithBonus(), totalAmountOfCrowdsalePurchases());
+    }
+
+    /**
+     * @dev Returns total amount of early purchases in CNY and bonuses
+     */
+    function totalAmountOfEarlyPurchasesWithBonus() constant public returns(uint256) {
+       return starbaseEpAmendment.totalAmountOfEarlyPurchases().mul(120).div(100);
     }
 
     /**
      * @dev Returns total amount of early purchases in CNY
      */
-    function totalAmountOfEarlyPurchases() constant public returns(uint256) {
+    function totalAmountOfEarlyPurchasesWithoutBonus() constant public returns(uint256) {
        return starbaseEpAmendment.totalAmountOfEarlyPurchases();
     }
 
