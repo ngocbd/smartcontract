@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiCrowdSale at 0x8f2ecccc42ed88348ad39a1985188dc57d75bdf0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiCrowdSale at 0x8d80de8a78198396329dfa769ad54d24bf90e7aa
 */
 pragma solidity ^0.4.18;
 /**
@@ -60,9 +60,6 @@ contract NamiCrowdSale {
         escrow = _escrow;
         namiMultiSigWallet = _namiMultiSigWallet;
         namiPresale = _namiPresale;
-        // 
-        balanceOf[_escrow] += 100000000000000000000000000; // 100 million NAC
-        totalSupply += 100000000000000000000000000;
     }
 
 
@@ -70,7 +67,7 @@ contract NamiCrowdSale {
      *  Constants
     /*/
 
-    string public name = "Nami Token";
+    string public name = "Nami ICO";
     string public  symbol = "NAC";
     uint   public decimals = 18;
 
@@ -347,7 +344,7 @@ contract NamiCrowdSale {
         // Available only if presale is running.
         require(currentPhase == Phase.Running);
         // require ICO time or binary option
-        require(now <= 1519862400 || msg.sender == binaryAddress);
+        require(now <= 1522281600 || msg.sender == binaryAddress);
         require(msg.value != 0);
         uint newTokens = msg.value * getPrice();
         require (totalSupply + newTokens < TOKEN_SUPPLY_LIMIT);
@@ -355,7 +352,8 @@ contract NamiCrowdSale {
         balanceOf[_buyer] = balanceOf[_buyer].add(newTokens);
         // add new token to totalSupply
         totalSupply = totalSupply.add(newTokens);
-        LogBuy(_buyer, newTokens);
+        LogBuy(_buyer,newTokens);
+        Transfer(this,_buyer,newTokens);
     }
     
 
@@ -372,6 +370,7 @@ contract NamiCrowdSale {
         balanceOf[_owner] = 0;
         totalSupply -= tokens;
         LogBurn(_owner, tokens);
+        Transfer(_owner, crowdsaleManager, tokens);
 
         // Automatically switch phase when migration is done.
         if (totalSupply == 0) {
@@ -447,6 +446,7 @@ contract NamiCrowdSale {
         // add new token to totalSupply
         totalSupply = totalSupply.add(newToken);
         LogMigrate(_from, _to, newToken);
+        Transfer(this,_to,newToken);
     }
 
     // migate token function for Nami Team
@@ -489,6 +489,7 @@ contract NamiCrowdSale {
         
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender,_to,_value);
         if (codeLength > 0) {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
             receiver.tokenFallbackExchange(msg.sender, _value, _price);
@@ -517,6 +518,7 @@ contract NamiCrowdSale {
         
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender,_to,_value);
         if (codeLength > 0) {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
             receiver.tokenFallbackBuyer(msg.sender, _value, _buyer);
@@ -545,7 +547,7 @@ contract BinaryOption {
     uint public timeInvestInMinute = 30;
     uint public timeOneSession = 180;
     uint public sessionId = 1;
-    uint public rate = 150;
+    uint public rate = 190;
     uint public constant MAX_INVESTOR = 20;
     /**
      * Events for binany option system
