@@ -1,480 +1,430 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokensale at 0x5dff4aaf908d4c800bb61027a0aa1452d446a6d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xc1cf194c1449713bf811a93f4e1a6211c1713e34
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+  
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() internal {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
+
+contract tokenInterface {
+	function balanceOf(address _owner) public constant returns (uint256 balance);
+	function transfer(address _to, uint256 _value) public returns (bool);
+}
+
+contract rateInterface {
+    function readRate(string _currency) public view returns (uint256 oneEtherValue);
+}
+
+contract ICOEngineInterface {
+
+    // false if the ico is not started, true if the ico is started and running, true if the ico is completed
+    function started() public view returns(bool);
+
+    // false if the ico is not started, false if the ico is started and running, true if the ico is completed
+    function ended() public view returns(bool);
+
+    // time stamp of the starting time of the ico, must return 0 if it depends on the block number
+    function startTime() public view returns(uint);
+
+    // time stamp of the ending time of the ico, must retrun 0 if it depends on the block number
+    function endTime() public view returns(uint);
+
+    // Optional function, can be implemented in place of startTime
+    // Returns the starting block number of the ico, must return 0 if it depends on the time stamp
+    // function startBlock() public view returns(uint);
+
+    // Optional function, can be implemented in place of endTime
+    // Returns theending block number of the ico, must retrun 0 if it depends on the time stamp
+    // function endBlock() public view returns(uint);
+
+    // returns the total number of the tokens available for the sale, must not change when the ico is started
+    function totalTokens() public view returns(uint);
+
+    // returns the number of the tokens available for the ico. At the moment that the ico starts it must be equal to totalTokens(),
+    // then it will decrease. It is used to calculate the percentage of sold tokens as remainingTokens() / totalTokens()
+    function remainingTokens() public view returns(uint);
+
+    // return the price as number of tokens released for each ether
+    function price() public view returns(uint);
+}
+
+contract KYCBase {
+    using SafeMath for uint256;
+
+    mapping (address => bool) public isKycSigner;
+    mapping (uint64 => uint256) public alreadyPayed;
+
+    event KycVerified(address indexed signer, address buyerAddress, uint64 buyerId, uint maxAmount);
+
+    function KYCBase(address [] kycSigners) internal {
+        for (uint i = 0; i < kycSigners.length; i++) {
+            isKycSigner[kycSigners[i]] = true;
+        }
     }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
+    // Must be implemented in descending contract to assign tokens to the buyers. Called after the KYC verification is passed
+    function releaseTokensTo(address buyer) internal returns(bool);
+
+    // This method can be overridden to enable some sender to buy token for a different address
+    function senderAllowedFor(address buyer)
+        internal view returns(bool)
+    {
+        return buyer == msg.sender;
     }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
+    function buyTokensFor(address buyerAddress, uint64 buyerId, uint maxAmount, uint8 v, bytes32 r, bytes32 s)
+        public payable returns (bool)
+    {
+        require(senderAllowedFor(buyerAddress));
+        return buyImplementation(buyerAddress, buyerId, maxAmount, v, r, s);
     }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+    function buyTokens(uint64 buyerId, uint maxAmount, uint8 v, bytes32 r, bytes32 s)
+        public payable returns (bool)
+    {
+        return buyImplementation(msg.sender, buyerId, maxAmount, v, r, s);
+    }
+
+    function buyImplementation(address buyerAddress, uint64 buyerId, uint maxAmount, uint8 v, bytes32 r, bytes32 s)
+        private returns (bool)
+    {
+        // check the signature
+        bytes32 hash = sha256("Eidoo icoengine authorization", this, buyerAddress, buyerId, maxAmount);
+        address signer = ecrecover(hash, v, r, s);
+        if (!isKycSigner[signer]) {
+            revert();
+        } else {
+            uint256 totalPayed = alreadyPayed[buyerId].add(msg.value);
+            require(totalPayed <= maxAmount);
+            alreadyPayed[buyerId] = totalPayed;
+            emit KycVerified(signer, buyerAddress, buyerId, maxAmount);
+            return releaseTokensTo(buyerAddress);
+        }
     }
 }
 
-contract SuperOwners {
-
-    address public owner1;
-    address public pendingOwner1;
+contract RC is ICOEngineInterface, KYCBase {
+    using SafeMath for uint256;
+    TokenSale tokenSaleContract;
+    uint256 public startTime;
+    uint256 public endTime;
     
-    address public owner2;
-    address public pendingOwner2;
+    uint256 public soldTokens;
+    uint256 public remainingTokens;
+    
+    uint256 public oneTokenInUsdWei;
+	
+	mapping(address => uint256) public balanceUser; // address => token amount
+	uint256[] public tokenThreshold; // array of token threshold reached in wei of token
+    uint256[] public bonusThreshold; // array of bonus of each tokenThreshold reached - 20% = 20
 
-    function SuperOwners(address _owner1, address _owner2) internal {
-        require(_owner1 != address(0));
-        owner1 = _owner1;
+    function RC(address _tokenSaleContract, uint256 _oneTokenInUsdWei, uint256 _remainingTokens,  uint256 _startTime , uint256 _endTime, address [] kycSigner, uint256[] _tokenThreshold, uint256[] _bonusThreshold ) public KYCBase(kycSigner) {
+        require ( _tokenSaleContract != 0 );
+        require ( _oneTokenInUsdWei != 0 );
+        require( _remainingTokens != 0 );
+        require ( _tokenThreshold.length != 0 );
+        require ( _tokenThreshold.length == _bonusThreshold.length );
+        bonusThreshold = _bonusThreshold;
+        tokenThreshold = _tokenThreshold;
         
-        require(_owner2 != address(0));
-        owner2 = _owner2;
-    }
-
-    modifier onlySuperOwner1() {
-        require(msg.sender == owner1);
-        _;
-    }
-    
-    modifier onlySuperOwner2() {
-        require(msg.sender == owner2);
-        _;
-    }
-    
-    /** Any of the owners can execute this. */
-    modifier onlySuperOwner() {
-        require(isSuperOwner(msg.sender));
-        _;
-    }
-    
-    /** Is msg.sender any of the owners. */
-    function isSuperOwner(address _addr) public view returns (bool) {
-        return _addr == owner1 || _addr == owner2;
-    }
-
-    /** 
-     * Safe transfer of ownership in 2 steps. Once called, a newOwner needs 
-     * to call claimOwnership() to prove ownership.
-     */
-    function transferOwnership1(address _newOwner1) onlySuperOwner1 public {
-        pendingOwner1 = _newOwner1;
-    }
-    
-    function transferOwnership2(address _newOwner2) onlySuperOwner2 public {
-        pendingOwner2 = _newOwner2;
-    }
-
-    function claimOwnership1() public {
-        require(msg.sender == pendingOwner1);
-        owner1 = pendingOwner1;
-        pendingOwner1 = address(0);
-    }
-    
-    function claimOwnership2() public {
-        require(msg.sender == pendingOwner2);
-        owner2 = pendingOwner2;
-        pendingOwner2 = address(0);
-    }
-}
-
-contract MultiOwnable is SuperOwners {
-
-    mapping (address => bool) public ownerMap;
-    address[] public ownerHistory;
-
-    event OwnerAddedEvent(address indexed _newOwner);
-    event OwnerRemovedEvent(address indexed _oldOwner);
-
-    function MultiOwnable(address _owner1, address _owner2) 
-        SuperOwners(_owner1, _owner2) internal {}
-
-    modifier onlyOwner() {
-        require(isOwner(msg.sender));
-        _;
-    }
-
-    function isOwner(address owner) public view returns (bool) {
-        return isSuperOwner(owner) || ownerMap[owner];
-    }
-    
-    function ownerHistoryCount() public view returns (uint) {
-        return ownerHistory.length;
-    }
-
-    // Add extra owner
-    function addOwner(address owner) onlySuperOwner public {
-        require(owner != address(0));
-        require(!ownerMap[owner]);
-        ownerMap[owner] = true;
-        ownerHistory.push(owner);
-        OwnerAddedEvent(owner);
-    }
-
-    // Remove extra owner
-    function removeOwner(address owner) onlySuperOwner public {
-        require(ownerMap[owner]);
-        ownerMap[owner] = false;
-        OwnerRemovedEvent(owner);
-    }
-}
-
-contract Pausable is MultiOwnable {
-
-    bool public paused;
-
-    modifier ifNotPaused {
-        require(!paused);
-        _;
-    }
-
-    modifier ifPaused {
-        require(paused);
-        _;
-    }
-
-    // Called by the owner on emergency, triggers paused state
-    function pause() external onlySuperOwner {
-        paused = true;
-    }
-
-    // Called by the owner on end of emergency, returns to normal state
-    function resume() external onlySuperOwner ifPaused {
-        paused = false;
-    }
-}
-
-contract ERC20 {
-
-    uint256 public totalSupply;
-
-    function balanceOf(address _owner) public view returns (uint256 balance);
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-contract StandardToken is ERC20 {
-    
-    using SafeMath for uint;
-
-    mapping(address => uint256) balances;
-    
-    mapping(address => mapping(address => uint256)) allowed;
-
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value > 0);
-        require(_value <= balances[msg.sender]);
         
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /// @dev Allows allowed third party to transfer tokens from one address to another. Returns success.
-    /// @param _from Address from where tokens are withdrawn.
-    /// @param _to Address to where tokens are sent.
-    /// @param _value Number of tokens to transfer.
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value > 0);
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
+        tokenSaleContract = TokenSale(_tokenSaleContract);
         
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /// @dev Sets approved amount of tokens for spender. Returns success.
-    /// @param _spender Address of allowed account.
-    /// @param _value Number of approved tokens.
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /// @dev Returns number of allowed tokens for given address.
-    /// @param _owner Address of token owner.
-    /// @param _spender Address of token spender.
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-}
-
-contract CommonToken is StandardToken, MultiOwnable {
-
-    string public name;
-    string public symbol;
-    uint256 public totalSupply;
-    uint8 public decimals = 18;
-    string public version = 'v0.1';
-
-    address public seller;     // The main account that holds all tokens at the beginning and during tokensale.
-
-    uint256 public saleLimit;  // (e18) How many tokens can be sold in total through all tiers or tokensales.
-    uint256 public tokensSold; // (e18) Number of tokens sold through all tiers or tokensales.
-    uint256 public totalSales; // Total number of sales (including external sales) made through all tiers or tokensales.
-
-    // Lock the transfer functions during tokensales to prevent price speculations.
-    bool public locked = true;
-    
-    event SellEvent(address indexed _seller, address indexed _buyer, uint256 _value);
-    event ChangeSellerEvent(address indexed _oldSeller, address indexed _newSeller);
-    event Burn(address indexed _burner, uint256 _value);
-    event Unlock();
-
-    function CommonToken(
-        address _owner1,
-        address _owner2,
-        address _seller,
-        string _name,
-        string _symbol,
-        uint256 _totalSupplyNoDecimals,
-        uint256 _saleLimitNoDecimals
-    ) MultiOwnable(_owner1, _owner2) public {
-
-        require(_seller != address(0));
-        require(_totalSupplyNoDecimals > 0);
-        require(_saleLimitNoDecimals > 0);
-
-        seller = _seller;
-        name = _name;
-        symbol = _symbol;
-        totalSupply = _totalSupplyNoDecimals * 1e18;
-        saleLimit = _saleLimitNoDecimals * 1e18;
-        balances[seller] = totalSupply;
-
-        Transfer(0x0, seller, totalSupply);
+        tokenSaleContract.addMeByRC();
+        
+        soldTokens = 0;
+        remainingTokens = _remainingTokens;
+        oneTokenInUsdWei = _oneTokenInUsdWei;
+        
+        setTimeRC( _startTime, _endTime );
     }
     
-    modifier ifUnlocked(address _from, address _to) {
-        require(!locked || isOwner(_from) || isOwner(_to));
+    function setTimeRC(uint256 _startTime, uint256 _endTime ) internal {
+        if( _startTime == 0 ) {
+            startTime = tokenSaleContract.startTime();
+        } else {
+            startTime = _startTime;
+        }
+        if( _endTime == 0 ) {
+            endTime = tokenSaleContract.endTime();
+        } else {
+            endTime = _endTime;
+        }
+    }
+    
+    modifier onlyTokenSaleOwner() {
+        require(msg.sender == tokenSaleContract.owner() );
         _;
     }
     
-    /** Can be called once by super owner. */
-    function unlock() onlySuperOwner public {
-        require(locked);
-        locked = false;
-        Unlock();
+    function setTime(uint256 _newStart, uint256 _newEnd) public onlyTokenSaleOwner {
+        if ( _newStart != 0 ) startTime = _newStart;
+        if ( _newEnd != 0 ) endTime = _newEnd;
     }
-
-    function changeSeller(address newSeller) onlySuperOwner public returns (bool) {
-        require(newSeller != address(0));
-        require(seller != newSeller);
-
-        address oldSeller = seller;
-        uint256 unsoldTokens = balances[oldSeller];
-        balances[oldSeller] = 0;
-        balances[newSeller] = balances[newSeller].add(unsoldTokens);
-        Transfer(oldSeller, newSeller, unsoldTokens);
-
-        seller = newSeller;
-        ChangeSellerEvent(oldSeller, newSeller);
+    
+    event BuyRC(address indexed buyer, bytes trackID, uint256 value, uint256 soldToken, uint256 valueTokenInUsdWei );
+    
+    function releaseTokensTo(address buyer) internal returns(bool) {
+        require( now > startTime );
+        require( now < endTime );
+        //require( msg.value >= 1*10**18); //1 Ether
+        require( remainingTokens > 0 );
         
-        return true;
-    }
-
-    function sellNoDecimals(address _to, uint256 _value) public returns (bool) {
-        return sell(_to, _value * 1e18);
-    }
-
-    function sell(address _to, uint256 _value) onlyOwner public returns (bool) {
-
-        // Check that we are not out of limit and still can sell tokens:
-        require(tokensSold.add(_value) <= saleLimit);
-
-        require(_to != address(0));
-        require(_value > 0);
-        require(_value <= balances[seller]);
-
-        balances[seller] = balances[seller].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(seller, _to, _value);
-
-        totalSales++;
-        tokensSold = tokensSold.add(_value);
-        SellEvent(seller, _to, _value);
-
+        uint256 tokenAmount = tokenSaleContract.buyFromRC.value(msg.value)(buyer, oneTokenInUsdWei, remainingTokens);
+        
+		balanceUser[msg.sender] = balanceUser[msg.sender].add(tokenAmount);		
+        remainingTokens = remainingTokens.sub(tokenAmount);
+        soldTokens = soldTokens.add(tokenAmount);
+        
+        emit BuyRC( msg.sender, msg.data, msg.value, tokenAmount, oneTokenInUsdWei );
         return true;
     }
     
-    /**
-     * Until all tokens are sold, tokens can be transfered to/from owner's accounts.
-     */
-    function transfer(address _to, uint256 _value) ifUnlocked(msg.sender, _to) public returns (bool) {
-        return super.transfer(_to, _value);
+    function started() public view returns(bool) {
+        return now > startTime || remainingTokens == 0;
     }
-
-    /**
-     * Until all tokens are sold, tokens can be transfered to/from owner's accounts.
-     */
-    function transferFrom(address _from, address _to, uint256 _value) ifUnlocked(_from, _to) public returns (bool) {
-        return super.transferFrom(_from, _to, _value);
+    
+    function ended() public view returns(bool) {
+        return now > endTime || remainingTokens == 0;
     }
-
-    function burn(uint256 _value) public returns (bool) {
-        require(_value > 0);
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value) ;
-        totalSupply = totalSupply.sub(_value);
-        Transfer(msg.sender, 0x0, _value);
-        Burn(msg.sender, _value);
-
-        return true;
+    
+    function startTime() public view returns(uint) {
+        return startTime;
     }
+    
+    function endTime() public view returns(uint) {
+        return endTime;
+    }
+    
+    function totalTokens() public view returns(uint) {
+        return remainingTokens.add(soldTokens);
+    }
+    
+    function remainingTokens() public view returns(uint) {
+        return remainingTokens;
+    }
+    
+    function price() public view returns(uint) {
+        uint256 oneEther = 10**18;
+        return oneEther.mul(10**18).div( tokenSaleContract.tokenValueInEther(oneTokenInUsdWei) );
+    }
+	
+	function () public {
+        require( now > endTime );
+        require( balanceUser[msg.sender] > 0 );
+        uint256 bonusApplied = 0;
+        for (uint i = 0; i < tokenThreshold.length; i++) {
+            if ( soldTokens > tokenThreshold[i] ) {
+                bonusApplied = bonusThreshold[i];
+			}
+		}    
+		require( bonusApplied > 0 );
+		
+		uint256 addTokenAmount = balanceUser[msg.sender].mul( bonusApplied ).div(10**2);
+		balanceUser[msg.sender] = 0; 
+		
+		tokenSaleContract.claim(msg.sender, addTokenAmount);
+	}
 }
 
-contract RaceToken is CommonToken {
+contract TokenSale is Ownable {
+    using SafeMath for uint256;
+    tokenInterface public tokenContract;
+    rateInterface public rateContract;
     
-    function RaceToken() CommonToken(
-        0x229B9Ef80D25A7e7648b17e2c598805d042f9e56, // __OWNER1__
-        0xcd7cF1D613D5974876AfBfd612ED6AFd94093ce7, // __OWNER2__
-        0x2821e1486D604566842FF27F626aF133FddD5f89, // __SELLER__
-        'Coin Race',
-        'RACE',
-        100 * 1e6, // 100m tokens in total.
-        70 * 1e6   // 70m tokens for sale.
-    ) public {}
-}
+    address public wallet;
+    address public advisor;
+    uint256 public advisorFee; // 1 = 0,1%
+    
+	uint256 public constant decimals = 18;
+    
+    uint256 public endTime;  // seconds from 1970-01-01T00:00:00Z
+    uint256 public startTime;  // seconds from 1970-01-01T00:00:00Z
 
-contract CommonTokensale is MultiOwnable, Pausable {
-    
-    using SafeMath for uint;
-    
-    uint public balance1;
-    uint public balance2;
-    
-    // Token contract reference.
-    RaceToken public token;
+    mapping(address => bool) public rc;
 
-    uint public minPaymentWei = 0.001 ether;
-    uint public tokensPerWei = 15000;
-    uint public maxCapTokens = 6 * 1e6 ether; // 6m tokens
+
+    function TokenSale(address _tokenAddress, address _rateAddress, uint256 _startTime, uint256 _endTime) public {
+        tokenContract = tokenInterface(_tokenAddress);
+        rateContract = rateInterface(_rateAddress);
+        setTime(_startTime, _endTime); 
+        wallet = msg.sender;
+        advisor = msg.sender;
+        advisorFee = 0 * 10**3;
+    }
     
-    // Stats for current tokensale:
+    function tokenValueInEther(uint256 _oneTokenInUsdWei) public view returns(uint256 tknValue) {
+        uint256 oneEtherInUsd = rateContract.readRate("usd");
+        tknValue = _oneTokenInUsdWei.mul(10 ** uint256(decimals)).div(oneEtherInUsd);
+        return tknValue;
+    } 
     
-    uint public totalTokensSold;  // Total amount of tokens sold during this tokensale.
-    uint public totalWeiReceived; // Total amount of wei received during this tokensale.
+    modifier isBuyable() {
+        require( now > startTime ); // check if started
+        require( now < endTime ); // check if ended
+        require( msg.value > 0 );
+		
+		uint256 remainingTokens = tokenContract.balanceOf(this);
+        require( remainingTokens > 0 ); // Check if there are any remaining tokens 
+        _;
+    }
     
-    // This will allow another contract to check whether ETH address is a buyer in this sale.
-    mapping (address => bool) public isBuyer;
+    event Buy(address buyer, uint256 value, address indexed ambassador);
     
-    event ChangeTokenEvent(address indexed _oldAddress, address indexed _newAddress);
-    event ChangeMaxCapTokensEvent(uint _oldMaxCap, uint _newMaxCap);
-    event ChangeTokenPriceEvent(uint _oldPrice, uint _newPrice);
-    event ReceiveEthEvent(address indexed _buyer, uint256 _amountWei);
+    modifier onlyRC() {
+        require( rc[msg.sender] ); //check if is an authorized rcContract
+        _;
+    }
     
-    function CommonTokensale(
-        address _owner1,
-        address _owner2
-    ) MultiOwnable(_owner1, _owner2) public {}
-    
-    function setToken(address _token) onlySuperOwner public {
-        require(_token != address(0));
-        require(_token != address(token));
+    function buyFromRC(address _buyer, uint256 _rcTokenValue, uint256 _remainingTokens) onlyRC isBuyable public payable returns(uint256) {
+        uint256 oneToken = 10 ** uint256(decimals);
+        uint256 tokenValue = tokenValueInEther(_rcTokenValue);
+        uint256 tokenAmount = msg.value.mul(oneToken).div(tokenValue);
+        address _ambassador = msg.sender;
         
-        ChangeTokenEvent(token, _token);
-        token = RaceToken(_token);
+        
+        uint256 remainingTokens = tokenContract.balanceOf(this);
+        if ( _remainingTokens < remainingTokens ) {
+            remainingTokens = _remainingTokens;
+        }
+        
+        if ( remainingTokens < tokenAmount ) {
+            uint256 refund = (tokenAmount - remainingTokens).mul(tokenValue).div(oneToken);
+            tokenAmount = remainingTokens;
+            forward(msg.value-refund);
+			remainingTokens = 0; // set remaining token to 0
+             _buyer.transfer(refund);
+        } else {
+			remainingTokens = remainingTokens.sub(tokenAmount); // update remaining token without bonus
+            forward(msg.value);
+        }
+        
+        tokenContract.transfer(_buyer, tokenAmount);
+        emit Buy(_buyer, tokenAmount, _ambassador);
+		
+        return tokenAmount; 
     }
     
-    function setMaxCapTokens(uint _maxCap) onlySuperOwner public {
-        require(_maxCap > 0);
-        ChangeMaxCapTokensEvent(maxCapTokens, _maxCap);
-        maxCapTokens = _maxCap;
-    }
-    
-    function setTokenPrice(uint _tokenPrice) onlySuperOwner public {
-        require(_tokenPrice > 0);
-        ChangeTokenPriceEvent(tokensPerWei, _tokenPrice);
-        tokensPerWei = _tokenPrice;
+    function forward(uint256 _amount) internal {
+        uint256 advisorAmount = _amount.mul(advisorFee).div(10**3);
+        uint256 walletAmount = _amount - advisorAmount;
+        advisor.transfer(advisorAmount);
+        wallet.transfer(walletAmount);
     }
 
-    /** The fallback function corresponds to a donation in ETH. */
-    function() public payable {
-        sellTokensForEth(msg.sender, msg.value);
+    event NewRC(address contr);
+    
+    function addMeByRC() public {
+        require(tx.origin == owner);
+        
+        rc[ msg.sender ]  = true;
+        
+        emit NewRC(msg.sender);
     }
     
-    function sellTokensForEth(
-        address _buyer, 
-        uint256 _amountWei
-    ) ifNotPaused public payable {
-        
-        require(_amountWei >= minPaymentWei);
-
-        uint tokensE18 = weiToTokens(_amountWei);
-        require(totalTokensSold.add(tokensE18) <= maxCapTokens);
-        
-        // Transfer tokens to buyer.
-        require(token.sell(_buyer, tokensE18));
-        
-        // Update total stats:
-        totalTokensSold = totalTokensSold.add(tokensE18);
-        totalWeiReceived = totalWeiReceived.add(_amountWei);
-        isBuyer[_buyer] = true;
-        ReceiveEthEvent(_buyer, _amountWei);
-        
-        uint half = _amountWei / 2;
-        balance1 = balance1.add(half);
-        balance2 = balance2.add(_amountWei - half);
-    }
-    
-    /** Calc how much tokens you can buy at current time. */
-    function weiToTokens(uint _amountWei) public view returns (uint) {
-        return _amountWei.mul(tokensPerWei);
+    function setTime(uint256 _newStart, uint256 _newEnd) public onlyOwner {
+        if ( _newStart != 0 ) startTime = _newStart;
+        if ( _newEnd != 0 ) endTime = _newEnd;
     }
 
-    function withdraw1(address _to) onlySuperOwner1 public {
-        if (balance1 > 0) _to.transfer(balance1);
+    function withdraw(address to, uint256 value) public onlyOwner {
+        to.transfer(value);
     }
     
-    function withdraw2(address _to) onlySuperOwner2 public {
-        if (balance2 > 0) _to.transfer(balance2);
+    function withdrawTokens(address to, uint256 value) public onlyOwner returns (bool) {
+        return tokenContract.transfer(to, value);
     }
-}
+    
+    function setTokenContract(address _tokenContract) public onlyOwner {
+        tokenContract = tokenInterface(_tokenContract);
+    }
 
-contract Tokensale is CommonTokensale {
+    function setWalletAddress(address _wallet) public onlyOwner {
+        wallet = _wallet;
+    }
     
-    function Tokensale() CommonTokensale(
-        0x229B9Ef80D25A7e7648b17e2c598805d042f9e56, // __OWNER1__
-        0xcd7cF1D613D5974876AfBfd612ED6AFd94093ce7  // __OWNER2__
-    ) public {}
+    function setAdvisorAddress(address _advisor) public onlyOwner {
+            advisor = _advisor;
+    }
+    
+    function setAdvisorFee(uint256 _advisorFee) public onlyOwner {
+            advisorFee = _advisorFee;
+    }
+    
+    function setRateContract(address _rateAddress) public onlyOwner {
+        rateContract = rateInterface(_rateAddress);
+    }
+	
+	function claim(address _buyer, uint256 _amount) onlyRC public returns(bool) {
+        return tokenContract.transfer(_buyer, _amount);
+    }
+
+    function () public payable {
+        revert();
+    }
 }
