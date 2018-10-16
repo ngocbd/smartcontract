@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Auxilium at 0xefd4dd46469839867580171ee950eb20ad440be7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Auxilium at 0x24bb3e1a8339dd95f216aef0f5deac8b2cbb3233
 */
 pragma solidity ^0.4.4;
 
