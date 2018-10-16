@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SandwichShop at 0x3C2cD1Cd28cCbEFd38ab56cf5aebD5444B5E8c80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SandwichShop at 0x5cAa6488f965F2F520C5a70f15019952C6e3C1fC
 */
 pragma solidity ^0.4.11;
 
@@ -73,15 +73,10 @@ contract SandwichShop is mortal
 
     function getSandwichInfoCaloriesPrice(uint _sandID) constant returns (string, string, uint, uint)
     {
-        if( _sandID < 100 || _sandID > 104 )
-        {
-            return ( "wrong ID", "wrong ID", 0, 0);
-        }
-        else
-        {
-            return (shopSandwich[_sandID].sandwichName, shopSandwich[_sandID].sandwichDesc,
+        if( _sandID < 100 ) throw;
+        if( _sandID > 104 ) throw;
+        return (shopSandwich[_sandID].sandwichName, shopSandwich[_sandID].sandwichDesc,
                 shopSandwich[_sandID].calories, shopSandwich[_sandID].price);
-        }
 
     }
 
