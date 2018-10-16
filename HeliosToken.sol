@@ -1,138 +1,255 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeliosToken at 0x94c6581c6912d7333163df52c82eee8561362df7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeliosToken at 0xf605a76d2fb440deccd84625c686d754d2614eab
 */
-pragma solidity ^0.4.20;
-library SafeMath { //standard library for uint
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0 || b == 0){
-        return 0;
+pragma solidity ^0.4.18;
+
+/**
+ *Owner address = 0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2
+ *Parts of this code have been modified from code by BokkyPooBah:
+ *(c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+ */
+ 
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  function pow(uint256 a, uint256 b) internal pure returns (uint256){ //power function
-    if (b == 0){
-      return 1;
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-    uint256 c = a**b;
-    assert (c >= a);
-    return c;
-  }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
 }
 
-contract HeliosToken { //ERC - 20 token contract
-  using SafeMath for uint;
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+// ----------------------------------------------------------------------------
+contract ERC20 {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-  // Triggered when tokens are transferred.
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
 
 
-  string public constant symbol = "HLC";
-  string public constant name = "Helios";
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
 
-  uint8 public constant decimals = 2;
-  uint256 _totalSupply = uint(5000000).mul(uint(10).pow(decimals));
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-  function HeliosToken () public {
-    balances[address(this)] = _totalSupply;
-  }
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract HeliosToken is ERC20, Owned, SafeMath {
+	/*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+	uint public _yearTwoSupply;
+	uint public _yearThreeSupply;
+	bool public _yearTwoClaimed;
+	bool public _yearThreeClaimed;
+	//March 1, 2018
+	uint256 public startTime = 1519862400;
+	
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function HeliosToken() public {
+        symbol = "HLS";
+        name = "Helios Token";
+        decimals = 18;
+        _totalSupply = 350000000000000000000000000;
+		_yearTwoSupply = 30000000000000000000000000;
+		_yearThreeSupply = 20000000000000000000000000;
+        
+		//send 1st year team tokens, exchange tokens, incubator tokens
+		balances[0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2] = (_totalSupply - _yearTwoSupply - _yearThreeSupply);
+        Transfer(address(0), 0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2, (_totalSupply - _yearTwoSupply - _yearThreeSupply));
+		
+		_yearTwoClaimed = false;
+		_yearThreeClaimed = false;
+    }
+
+	// ------------------------------------------------------------------------
+    // Team can claim their tokens after lock up period
+    // ------------------------------------------------------------------------
+	function teamClaim(uint year) public onlyOwner returns (bool success) {
+		if(year == 2)
+		{
+			require (now > (startTime + 31536000)  && _yearTwoClaimed == false);
+			balances[0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2] = safeAdd(balances[0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2], _yearTwoSupply);
+			Transfer(address(0), 0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2, _yearTwoSupply);
+			_yearTwoClaimed = true;
+			
+		}
+		if(year == 3)
+		{
+			require (now > (startTime + 63072000) && _yearThreeClaimed == false);
+			balances[0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2] = safeAdd(balances[0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2], _yearThreeSupply);
+			Transfer(address(0), 0x6BFAf995ffce7Be6e3073dC8AAf45E445cf234e2, _yearThreeSupply);
+			_yearThreeClaimed = true;
+		}
+		return true;
+	}
+	
+	
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
+    }
+
   
-  mapping(address => uint256) balances;
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
 
-  // Owner of account approves the transfer of an amount to another account
-  mapping(address => mapping (address => uint256)) allowed;
 
-  function totalSupply() public view returns (uint256) { //standart ERC-20 function
-    return _totalSupply;
-  }
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+	// - If the sender is a locked token storage address then do not allow
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
+    }
 
-  function balanceOf(address _address) public view returns (uint256 balance) {//standart ERC-20 function
-    return balances[_address];
-  }
 
-  //standart ERC-20 function
-  function transfer(address _to, uint256 _amount) public returns (bool success) {
-    require(address(this) != _to && _to != address(0));
-    balances[msg.sender] = balances[msg.sender].sub(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Transfer(msg.sender,_to,_amount);
-    return true;
-  }
-  
-  address public crowdsaleContract;
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
+    }
 
-  //connect to crowdsaleContract, can be use once
-  function setCrowdsaleContract (address _address) public{
-    require(crowdsaleContract == address(0));
-    crowdsaleContract = _address;
-  }
 
-  uint public crowdsaleTokens = uint(4126213).mul(uint(10).pow(decimals)); //_totalSupply - distributing
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
 
-  function sendCrowdsaleTokens (address _address, uint _value) public {
-    require (msg.sender == crowdsaleContract);
-    crowdsaleTokens = crowdsaleTokens.sub(_value);
-    balances[address(this)] = balances[address(this)].sub(_value);
-    balances[_address] = balances[_address].add(_value);
-    emit Transfer(address(this),_address,_value); 
-  }
 
-  function transferFrom(address _from, address _to, uint256 _amount) public returns(bool success){
-    require(address(this) != _to && _to != address(0));
-    balances[_from] = balances[_from].sub(_amount);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Transfer(_from,_to,_amount);
-    return true;
-  }
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
 
-  //standart ERC-20 function
-  function approve(address _spender, uint256 _amount)public returns (bool success) { 
-    allowed[msg.sender][_spender] = _amount;
-    emit Approval(msg.sender, _spender, _amount);
-    return true;
-  }
 
-  //standart ERC-20 function
-  function allowance(address _owner, address _spender)public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
 
-  address public teamAddress = 0x1367eC0f6f5DEFda7B0f1b7AD234900E23Ee62CF;
-  uint public teamDistribute = uint(500000).mul(uint(10).pow(decimals));
-  address public reserveAddress = 0xD598350D4D55f72dAb1286Ed0A3a3b7F1A7A54Ce;
-  uint public reserveDistribute = uint(250000).mul(uint(10).pow(decimals));
-  address public bountyAddress = 0xcBfA29FBe59C83A1130b4957bD41847a2837782E;
 
-  function endIco() public {  
-    require (msg.sender == crowdsaleContract);
-    require (balances[address(this)] != 0);
-    
-    uint tokensSold = _totalSupply.sub(crowdsaleTokens);
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
 
-    balances[teamAddress] = balances[teamAddress].add(teamDistribute);
-    balances[reserveAddress] = balances[reserveAddress].add(reserveDistribute);
-    balances[bountyAddress] = balances[bountyAddress].add(tokensSold*3/100);
 
-    emit Transfer(address(this), teamAddress, teamDistribute);
-    emit Transfer(address(this), reserveAddress, reserveDistribute);
-    emit Transfer(address(this), bountyAddress, tokensSold*3/100);
-
-    uint buffer = tokensSold*3/100 + teamDistribute + reserveDistribute;
-
-    emit Transfer(address(this), 0, balances[address(this)].sub(buffer));
-    balances[address(this)] = 0;
-  }
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20(tokenAddress).transfer(owner, tokens);
+    }
 }
