@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JesusCrowdsale at 0x102580c6308a4ec4708c8241bd29d1c02e1f9a2d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JesusCrowdsale at 0x645B5d6CdC4e577619d6a77352c34c7774b185F6
 */
 pragma solidity ^0.4.13;
 
@@ -259,6 +259,7 @@ contract MintableToken is StandardToken, Ownable {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
+    Transfer(this, _to, _amount); // so it shows in etherscan
     return true;
   }
 
