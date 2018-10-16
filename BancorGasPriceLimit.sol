@@ -1,90 +1,30 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorGasPriceLimit at 0xafb06c1309004970a9c5ab3b047527bf38b99590
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorGasPriceLimit at 0x1595470306a3f03d6a72e431e39b98edd15bdc28
 */
-pragma solidity ^0.4.11;
-
-/*
-    Utilities & Common Modifiers
-*/
-contract Utils {
-    /**
-        constructor
-    */
-    function Utils() {
-    }
-
-    // verifies that an amount is greater than zero
-    modifier greaterThanZero(uint256 _amount) {
-        require(_amount > 0);
-        _;
-    }
-
-    // validates an address - currently only checks that it isn't null
-    modifier validAddress(address _address) {
-        require(_address != 0x0);
-        _;
-    }
-
-    // verifies that the address is different than this contract address
-    modifier notThis(address _address) {
-        require(_address != address(this));
-        _;
-    }
-
-    // Overflow protected math functions
-
-    /**
-        @dev returns the sum of _x and _y, asserts if the calculation overflows
-
-        @param _x   value 1
-        @param _y   value 2
-
-        @return sum
-    */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x + _y;
-        assert(z >= _x);
-        return z;
-    }
-
-    /**
-        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
-
-        @param _x   minuend
-        @param _y   subtrahend
-
-        @return difference
-    */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
-        assert(_x >= _y);
-        return _x - _y;
-    }
-
-    /**
-        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
-
-        @param _x   factor 1
-        @param _y   factor 2
-
-        @return product
-    */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x * _y;
-        assert(_x == 0 || z / _x == _y);
-        return z;
-    }
-}
+pragma solidity ^0.4.18;
 
 /*
     Owned contract interface
 */
 contract IOwned {
     // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public constant returns (address) {}
+    function owner() public view returns (address) {}
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
+    function changeOwner(address _newOwner) public;
 }
+
+
+/*
+    Bancor Gas Price Limit interface
+*/
+contract IBancorGasPriceLimit {
+    function gasPrice() public view returns (uint256) {}
+}
+
+
+
 
 /*
     Provides support and utilities for contract ownership
@@ -93,12 +33,12 @@ contract Owned is IOwned {
     address public owner;
     address public newOwner;
 
-    event OwnerUpdate(address _prevOwner, address _newOwner);
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
 
     /**
         @dev constructor
     */
-    function Owned() {
+    function Owned() public {
         owner = msg.sender;
     }
 
@@ -127,16 +67,89 @@ contract Owned is IOwned {
         require(msg.sender == newOwner);
         OwnerUpdate(owner, newOwner);
         owner = newOwner;
-        newOwner = 0x0;
+        newOwner = address(0);
+    }
+
+    function changeOwner(address _newOwner) public ownerOnly {
+      owner = _newOwner;
     }
 }
 
+
+
 /*
-    Bancor Gas Price Limit interface
+    Utilities & Common Modifiers
 */
-contract IBancorGasPriceLimit {
-    function gasPrice() public constant returns (uint256) {}
+contract Utils {
+    /**
+        constructor
+    */
+    function Utils() public {
+    }
+
+    // verifies that an amount is greater than zero
+    modifier greaterThanZero(uint256 _amount) {
+        require(_amount > 0);
+        _;
+    }
+
+    // validates an address - currently only checks that it isn't null
+    modifier validAddress(address _address) {
+        require(_address != address(0));
+        _;
+    }
+
+    // verifies that the address is different than this contract address
+    modifier notThis(address _address) {
+        require(_address != address(this));
+        _;
+    }
+
+    // Overflow protected math functions
+
+    /**
+        @dev returns the sum of _x and _y, asserts if the calculation overflows
+
+        @param _x   value 1
+        @param _y   value 2
+
+        @return sum
+    */
+    function safeAdd(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        uint256 z = _x + _y;
+        assert(z >= _x);
+        return z;
+    }
+
+    /**
+        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
+
+        @param _x   minuend
+        @param _y   subtrahend
+
+        @return difference
+    */
+    function safeSub(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        assert(_x >= _y);
+        return _x - _y;
+    }
+
+    /**
+        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
+
+        @param _x   factor 1
+        @param _y   factor 2
+
+        @return product
+    */
+    function safeMul(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        uint256 z = _x * _y;
+        assert(_x == 0 || z / _x == _y);
+        return z;
+    }
 }
+
+
 
 /*
     The BancorGasPriceLimit contract serves as an extra front-running attack mitigation mechanism.
@@ -154,6 +167,7 @@ contract BancorGasPriceLimit is IBancorGasPriceLimit, Owned, Utils {
         @param _gasPrice    gas price limit
     */
     function BancorGasPriceLimit(uint256 _gasPrice)
+        public
         greaterThanZero(_gasPrice)
     {
         gasPrice = _gasPrice;
