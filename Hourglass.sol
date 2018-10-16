@@ -1,9 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x1166a6624065003e131f97f208a0033d1838e01c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xbc1869a652f68260428b382fd06c96196d92d02d
 */
 pragma solidity ^0.4.20;
 
 /*
+* Team JUST presents..
+*
+* Craig Grant Now (CGNW)
+*
 * -> What?
 * The original autonomous pyramid, improved:
 * [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
@@ -11,12 +15,20 @@ pragma solidity ^0.4.20;
 * [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
 * [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
 * [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 SmartHODL Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
+* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
 * [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
 *
+* -> What about the last projects?
+* Every programming member of the old dev team has been fired and/or killed by 232.
+* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
+* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
 * 
-* -> Credits
-* - powh3d
+* -> Who worked on this project?
+* - PonziBot (math/memes/main site/master)
+* - Mantso (lead solidity dev/lead web3 dev)
+* - swagg (concept design/feedback/management)
+* - Anonymous#1 (main site/web3/test cases)
+* - Anonymous#2 (math formulae/whitepaper)
 *
 * -> Who has audited & approved the projected:
 * - Arc
@@ -126,21 +138,21 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "SmartHODL";
-    string public symbol = "SHL";
+    string public name = "CraigGrantNow";
+    string public symbol = "CGNW";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 15;
+    uint8 constant internal dividendFee_ = 4;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 100e18;
+    // proof of stake (defaults at 333 tokens)
+    uint256 public stakingRequirement = 333e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 20 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 3 ether;
+    uint256 constant internal ambassadorQuota_ = 7 ether;
     
     
     
@@ -172,16 +184,28 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        // add administrators here
-        //administrators[0xdd8bb99b13fe33e1c32254dfb8fff3e71193f6b730a89dd33bfe5dedc6d83002] = true;
-        administrators[0x936f87cf7b10883278c7c8359ed359fed103a30c1e2f6dc9c6633ebdb59da74f] = true;
-
         
         // add the ambassadors here.
-        ambassadors_[0x9512b4465BeA1939ec9D5cb1D5F3D7D4D421fd34] = true;
+        // Craig Grant
+        ambassadors_[0x0e4705d75896B1aEC52E885D93Cdf8832338E322] = true;
         
+        // Luis Miguel Rivera
+        ambassadors_[0x891cfd05b7bab80eccfd6e655e077b6033236b63] = true;
         
-
+        // Coach Rick
+        ambassadors_[0xa36f907be1fbf75e2495cc87f8f4d201c1b634af] = true;
+        
+        // Crypto Gangz
+        ambassadors_[0xbfc699a6f932a440a7745125815427103de1c1f9] = true;
+        
+        // Crypto Clover
+        ambassadors_[0xb1ac3b02260b30b3f02fb32c675e1bd8f1e7d3b9] = true;
+        
+        // Captain Crypto
+        ambassadors_[0x4da6fc68499fb3753e77dd6871f2a0e4dc02febe] = true;
+        
+        // BitcoinCryptoPro
+        ambassadors_[0xf35878127762a588cdfef8bbb6765f1cf8671a62] = true;
     }
     
      
