@@ -1,12 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherFlip at 0xffc08dd84a66775e6236e0a80ee2f340e0042f8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherFlip at 0x3023d5ee05ebee74b61f940433b7783eac1f221e
 */
-/*
-   Oraclize random-datasource example
-
-   This contract uses the random-datasource to securely generate off-chain N random bytes
-*/
-
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -37,7 +31,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-pragma solidity ^0.4.11; //please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
+pragma solidity ^0.4.11;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -78,7 +72,7 @@ contract usingOraclize {
 
     OraclizeI oraclize;
     modifier oraclizeAPI {
-        if((address(OAR)==0)||(getCodeSize(address(OAR))==0)) oraclize_setNetwork(networkID_auto);
+        if((address(OAR)==0)||(getCodeSize(address(OAR))==0)) oraclize_setNetwork();
         oraclize = OraclizeI(OAR.getAddress());
         _;
     }
@@ -88,8 +82,7 @@ contract usingOraclize {
         _;
     }
 
-    function oraclize_setNetwork(uint8 networkID) internal returns(bool) {
-        networkID;
+    function oraclize_setNetwork() internal returns(bool){
         if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
             OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
             oraclize_setNetworkName("eth_mainnet");
@@ -537,11 +530,12 @@ contract usingOraclize {
     }
 
     function getCodeSize(address _addr) constant internal returns(uint _size) {
-        _addr;
-        _size;
         assembly {
             _size := extcodesize(_addr)
         }
+        
+        _addr;
+        _size;
     }
 
     function parseAddr(string _a) internal returns (address){
@@ -873,6 +867,16 @@ contract usingOraclize {
         _;
     }
     
+    function oraclize_randomDS_proofVerify__returnCode(bytes32 _queryId, string _result, bytes _proof) internal returns (uint8){
+        // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
+        if ((_proof[0] != "L")||(_proof[1] != "P")||(_proof[2] != 1)) return 1;
+        
+        bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
+        if (proofVerified == false) return 2;
+        
+        return 0;
+    }
+    
     function matchBytes32Prefix(bytes32 content, bytes prefix) internal returns (bool){
         bool match_ = true;
         
@@ -935,7 +939,6 @@ contract usingOraclize {
     
     // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
     function copyBytes(bytes from, uint fromOffset, uint length, bytes to, uint toOffset) internal returns (bytes) {
-        from;
         uint minLength = length + toOffset;
 
         if (to.length < minLength) {
@@ -956,6 +959,7 @@ contract usingOraclize {
             j += 32;
         }
 
+        from;
         return to;
     }
     
@@ -967,10 +971,7 @@ contract usingOraclize {
         // writes are memory extensions), but don't update the offset so
         // Solidity will reuse it. The memory used here is only needed for
         // this context.
-        hash;
-        v;
-        r;
-        s;
+
         // FIXME: inline assembly can't access return values
         bool ret;
         address addr;
@@ -987,7 +988,11 @@ contract usingOraclize {
             ret := call(3000, 1, 0, size, 128, size, 32)
             addr := mload(size)
         }
-  
+        
+        hash;
+        r;
+        v;
+        s;
         return (ret, addr);
     }
 
@@ -1035,7 +1040,7 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
-// EtherFlip
+// EtherFlip v1.5
 
 contract token { function transfer(address receiver, uint amount){ receiver; amount; } }
 
@@ -1052,112 +1057,191 @@ contract EtherFlip is usingOraclize {
     }
     
     //~ Events
-    event newRandomByte(bytes);
+    event newRandomValue(bytes, address, uint);
+    event proofFailed(bool);
     
-    //~ Public Properties
+    //~ Tokens
     token public flipTokenReward;
     token public millionDollarTokenReward;
-    int public generatedByte;
-    
+    token public jackpotToken;
+    token public sponsoredJackpotToken;
+    token public bonusToken;
+    token public sponsoredBonusToken;
+
     //~ Base setup
     address public owner;
     
     //~ EtherFlip Properties
-    uint public maxBet = (100000000000000000 * 1 wei);
-    uint public minBet = (10000000000000000 * 1 wei);
-    uint public singleTransGasCost = 4000000000000000; //API cost of Oraclize
-    int public baseComparable = 133;
-    uint public flipRewardAmount = 100;
-    uint public mdtRewardAmount = 1;
+    uint public generatedBytes;
+    uint public maxBet;
+    uint public minBet;
+    uint public oraclizeFee;
+    uint public flipRewardAmount;
+    uint public mdtRewardAmount;
+    uint public jackpotAmount;
+    uint public sponsoredJackpotAmount;
+    uint public bonusAmount;
+    uint public sponsoredBonusAmount;
+    uint public callbackGas;
+    uint public incrementFee;
+    uint public incrementDivisor;
+    
+    //~ Comparables
+    uint public baseComparable;
+    uint public jackpotHit;
+    uint public sponsoredJackpotMin;
+    uint public sponsoredJackpotMax;
+    uint public bonusMin;
+    uint public bonusMax;
+    uint public sponsoredBonusMin;
+    uint public sponsoredBonusMax;
+    uint public mdtComparable;
     
     //~ Address & Amount hashes to accurately send transactions/winnings
     mapping (bytes32 => address) playerAddress;
     mapping (bytes32 => uint) playerAmount;
 
-    function EtherFlip(token addressOfFlipToken, token addressOfMillionDollarToken) {
+    function EtherFlip() {
         owner = msg.sender;
-        flipTokenReward = token(addressOfFlipToken);
-        millionDollarTokenReward = token(addressOfMillionDollarToken);
         oraclize_setProof(proofType_Ledger);
+        
+        // Initial setup for contract
+        //maxBet = (1000000000000000000 * 1 wei);
+        //minBet = (100000000000000000 * 1 wei);
+        //oraclizeFee = 6000000000000000; //API cost of Oraclize
+        
+        //callbackGas = 250000;
+        //incrementFee = (194212766000000 * 1 wei);
+        //incrementDivisor = (10000000000000000 * 1 wei);
+        
+        //baseComparable = 32250;
+        //jackpotHit = 35000;
+        //sponsoredJackpotMin = 35005;
+        //sponsoredJackpotMax = 35006;
+
+        //bonusMin = 35006;
+        //bonusMax = 38282;
+        //sponsoredBonusMin = 38282;
+        //sponsoredBonusMax = 41558;
+        //mdtComparable = 65337;
     }
     
     function () payable {
         if (msg.sender != owner) {
-            if (msg.value > maxBet) throw;
-            if (msg.value < minBet) throw; 
+            if (msg.value > maxBet || msg.value < minBet) throw;
+        
+            oraclize_setProof(proofType_Ledger);
+            uint numberOfBytes = 2;
+            uint delay = 0;
+            bytes32 queryId = oraclize_newRandomDSQuery(delay, numberOfBytes, callbackGas); 
+            playerAddress[queryId] = msg.sender;
+            playerAmount[queryId] = msg.value;
         }
-        oraclize_setProof(proofType_Ledger);
-        uint numberOfBytes = 1;
-        uint delay = 0;
-        uint callbackGas = 200000;
-        bytes32 queryId = oraclize_newRandomDSQuery(delay, numberOfBytes, callbackGas); 
-        playerAddress[queryId] = msg.sender;
-        playerAmount[queryId] = msg.value;
     }
     
-    function __callback(bytes32 _queryId, string _result, bytes _proof) oraclize_randomDS_proofVerify(_queryId, _result, _proof) oraclizeAction { 
-        if (msg.sender != oraclize_cbAddress()) throw;
-        
-        //Random byte result
-        newRandomByte(bytes(_result));
-        generatedByte = int(bytes(_result)[0]);
+    function __callback(bytes32 _queryId, string _result, bytes _proof) oraclizeAction { 
         uint amount = playerAmount[_queryId];
+        if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0) {
+            // the proof verification has failed
+            proofFailed(true);
+            playerAddress[_queryId].transfer(amount);
+            delete playerAddress[_queryId];
+            delete playerAmount[_queryId];
+        } else {
+            newRandomValue(bytes(_result), playerAddress[_queryId], amount);
+            generatedBytes = uint(sha3(_result)) % 2**(2 *8);
+            uint feeMultiple = amount / incrementDivisor;
+            uint eFee = (feeMultiple - 3) * incrementFee;
 
-        if (generatedByte > baseComparable) {
-            playerAddress[_queryId].transfer(amount + amount - singleTransGasCost - singleTransGasCost);
-        } 
-        if (generatedByte <= baseComparable) {
-            if (flipRewardAmount > 0) {
-                flipTokenReward.transfer(playerAddress[_queryId], flipRewardAmount);
-            }
-        } 
-        if (generatedByte == baseComparable) {
-            if (mdtRewardAmount > 0) {
+            if (generatedBytes < baseComparable) {
+                playerAddress[_queryId].transfer((amount - oraclizeFee - eFee) * 2);
+            } 
+            
+            if (generatedBytes >= baseComparable && flipRewardAmount > 0) {
+                flipTokenReward.transfer(playerAddress[_queryId], flipRewardAmount * feeMultiple);
+            } 
+            
+            if (generatedBytes >= mdtComparable && mdtRewardAmount > 0) {
                 millionDollarTokenReward.transfer(playerAddress[_queryId], mdtRewardAmount); 
             }
+        
+            if (generatedBytes == jackpotHit && amount == maxBet) {
+                jackpotToken.transfer(playerAddress[_queryId], jackpotAmount);
+            }
+        
+            if (generatedBytes >= sponsoredJackpotMin && generatedBytes <= sponsoredJackpotMax) {
+                sponsoredJackpotToken.transfer(playerAddress[_queryId], sponsoredJackpotAmount);
+            }
+        
+            if (generatedBytes >= bonusMin && generatedBytes <= bonusMax) {
+                bonusToken.transfer(playerAddress[_queryId], bonusAmount);
+            }
+        
+            if (generatedBytes >= sponsoredBonusMin && generatedBytes <= sponsoredBonusMax) {
+                sponsoredBonusToken.transfer(playerAddress[_queryId], sponsoredBonusAmount);
+            }
+        
+            delete playerAddress[_queryId];
+            delete playerAmount[_queryId];
+           
         }
-        delete playerAddress[_queryId];
-        delete playerAmount[_queryId];
     }
     
-    function updateMaxBet(uint updatedMaxBet) public ownerAction {
+    function updateMaxMinComparables(uint updatedMaxBet, uint updatedMinBet, uint updatedBaseComparable, uint updatedMDTComparable) ownerAction {
         maxBet = updatedMaxBet * 1 wei;
+        minBet = updatedMinBet * 1 wei;
+        baseComparable = updatedBaseComparable;
+        mdtComparable = updatedMDTComparable;
     }  
     
-    function updateMinBet(uint updatedMinBet) public ownerAction {
-        minBet = updatedMinBet * 1 wei;
-    }
-    
-    function updateTotalGasCost(uint updatedGasCost) public ownerAction {
-        singleTransGasCost = updatedGasCost;
-    } 
-    
-    function updateBaseComparable(int updatedBaseComparable) public ownerAction {
-        baseComparable = updatedBaseComparable;
-    }
-    
-    function updateOwner(address updatedOwner) public ownerAction {
+    function updateOwner(address updatedOwner) ownerAction {
         owner = updatedOwner;
     }
     
-    function updateFlipTokenRewardAmount(uint updatedRewardAmount) public ownerAction {
-        flipRewardAmount = updatedRewardAmount;
+    function updateFlipAndMDT(address updatedFlipToken, uint updatedFlipRewardAmount, address updatedMDTToken, uint updatedMDTRewardAmount) ownerAction {
+        millionDollarTokenReward = token(updatedMDTToken);
+        mdtRewardAmount = updatedMDTRewardAmount;
+        //Swappable for initial mainnet testing & after ICO to add dummy token to indicate loss
+        flipTokenReward = token(updatedFlipToken);
+        flipRewardAmount = updatedFlipRewardAmount;
     }
     
-    function updateMDTRewardAmount(uint updatedRewardAmount) public ownerAction {
-        mdtRewardAmount = updatedRewardAmount;
-    }
-    
-    function ownerTransferEther(address outboundAddress, uint amount) public ownerAction {        
-        if(!outboundAddress.send(amount)) throw;
-    }
-    
-    function refundTransfer(address outboundAddress, uint amount) public ownerAction {        
+    function refundTransfer(address outboundAddress, uint amount) ownerAction {        
         outboundAddress.transfer(amount);
     }
     
-    function changeBonusTokenAddress(token updatedBonusToken) public ownerAction {
-        millionDollarTokenReward = updatedBonusToken;
+    function walletSend(address tokenAddress, uint amount, address outboundAddress) ownerAction {
+        token chosenToken = token(tokenAddress);
+        chosenToken.transfer(outboundAddress, amount);
     }
     
+    function updateGameSpecifics(uint newGas, uint newOraclizeFee, uint newFee, uint newDivisor) ownerAction {
+        callbackGas = newGas;
+        oraclizeFee = newOraclizeFee;
+        incrementFee = (newFee * 1 wei);
+        incrementDivisor = (newDivisor * 1 wei);
+    }
+    
+    function setJackpotToken(address newJackpotToken, uint newJackpotAmount, uint newJackpotHit, address newSponsoredJackpotToken, uint newSponsoredJackpotAmount, uint newSJackpotMin, uint newSJackpotMax) ownerAction {
+        jackpotToken = token(newJackpotToken);
+        jackpotAmount = newJackpotAmount;
+        jackpotHit = newJackpotHit;
+        
+        sponsoredJackpotToken = token(newSponsoredJackpotToken);
+        sponsoredJackpotAmount = newSponsoredJackpotAmount;
+        sponsoredJackpotMin = newSJackpotMin;
+        sponsoredJackpotMax = newSJackpotMax;
+    }
+    
+    function setBonusToken(address newBonusToken, uint newBonusAmount, uint newBonusMin, uint newBonusMax, address newSponsoredBonusToken, uint newSponsoredBonusAmount, uint newSBonusMin, uint newSBonusMax) ownerAction {
+        bonusToken = token(newBonusToken);
+        bonusAmount = newBonusAmount;
+        bonusMin = newBonusMin;
+        bonusMax = newBonusMax;
+        
+        sponsoredBonusToken = token(newSponsoredBonusToken);
+        sponsoredBonusAmount = newSponsoredBonusAmount;
+        sponsoredBonusMin = newSBonusMin;
+        sponsoredBonusMax = newSBonusMax;
+    }
 }
