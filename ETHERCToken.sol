@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHERCToken at 0x0deecb13f4e801bdbf2721875756d44b207ca580
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHERCToken at 0xdbcdd327788baeb1bb2f9be737b3bbe1c6ba2a0a
 */
 pragma solidity ^0.4.19;
 
@@ -337,7 +337,7 @@ contract ETHERCToken is PausableToken {
     uint8 public constant decimals = 18;
     string public constant name = "ETHERCToken";
     string public constant symbol = "EET";
-    uint256 public constant TOTAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
     string public welcome;
     address public admin;
 
@@ -345,9 +345,9 @@ contract ETHERCToken is PausableToken {
 
     function ETHERCToken() public {
         admin = owner;
-        totalSupply_ = TOTAL_SUPPLY;
-        balances[owner] = TOTAL_SUPPLY;
-        Transfer(address(0), msg.sender, TOTAL_SUPPLY);
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[owner] = INITIAL_SUPPLY;
+        Transfer(address(0), msg.sender, INITIAL_SUPPLY);
     }
 
     function changeAdmin(address _admin) public onlyOwner {
