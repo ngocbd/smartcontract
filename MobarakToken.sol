@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobarakToken at 0x14ec1eb9bf7bd1ca96dbca6991423e57b1b5974e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobarakToken at 0xb2add7f1aa73a6dc4af02cac54793f02dafe270a
 */
 pragma solidity ^0.4.23;
 
@@ -290,7 +290,7 @@ contract StandardToken is ERC20 {
  */
 contract MobarakToken is StandardToken {
 
-  string public constant name = "(Mobarak) ?????";
+  string public constant name = "?????";
   string public constant symbol = "MBK";
   uint8 public constant decimals = 18;
 
