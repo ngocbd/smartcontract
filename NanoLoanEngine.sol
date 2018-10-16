@@ -1,34 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a17713f5b29b94a55f813ae7e2e20066546de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a1760dbf1dc1be22dd48fe54a028203240a64
 */
 pragma solidity ^0.4.19;
 
-contract ERC721 {
-   // ERC20 compatible functions
-   function name() public view returns (string _name);
-   function symbol() public view returns (string _symbol);
-   function totalSupply() public view returns (uint256 _totalSupply);
-   function balanceOf(address _owner) public view returns (uint _balance);
-   // Functions that define ownership
-   function ownerOf(uint256) public view returns (address owner);
-   function approve(address, uint256) public returns (bool);
-   function takeOwnership(uint256) public returns (bool);
-   function transfer(address, uint256) public returns (bool);
-   function getApproved(uint256 _tokenId) public view returns (address);
-   // Token metadata
-   function tokenMetadata(uint256 _tokenId) public view returns (string info);
-   // Events
-   event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-   event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
-}
+contract Engine {
+    uint256 public VERSION;
+    string public VERSION_NAME;
 
-contract Token {
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function increaseApproval (address _spender, uint _addedValue) public returns (bool success);
-    function balanceOf(address _owner) public view returns (uint256 balance);
+    enum Status { initial, lent, paid, destroyed }
+    struct Approbation {
+        bool approved;
+        bytes data;
+        bytes32 checksum;
+    }
+
+    function getTotalLoans() public view returns (uint256);
+    function getOracle(uint index) public view returns (Oracle);
+    function getBorrower(uint index) public view returns (address);
+    function getCosigner(uint index) public view returns (address);
+    function ownerOf(uint256) public view returns (address owner);
+    function getCreator(uint index) public view returns (address);
+    function getAmount(uint index) public view returns (uint256);
+    function getPaid(uint index) public view returns (uint256);
+    function getDueTime(uint index) public view returns (uint256);
+    function getApprobation(uint index, address _address) public view returns (bool);
+    function getStatus(uint index) public view returns (Status);
+    function isApproved(uint index) public view returns (bool);
+    function getPendingAmount(uint index) public returns (uint256);
+    function getCurrency(uint index) public view returns (bytes32);
+    function cosign(uint index, uint256 cost) external returns (bool);
+    function approveLoan(uint index) public returns (bool);
+    function transfer(address to, uint256 index) public returns (bool);
+    function takeOwnership(uint256 index) public returns (bool);
+    function withdrawal(uint index, address to, uint256 amount) public returns (bool);
 }
 
 /**
@@ -77,6 +81,34 @@ contract Cosigner {
     function claim(address engine, uint256 index, bytes oracleData) public returns (bool);
 }
 
+contract ERC721 {
+   // ERC20 compatible functions
+   function name() public view returns (string _name);
+   function symbol() public view returns (string _symbol);
+   function totalSupply() public view returns (uint256 _totalSupply);
+   function balanceOf(address _owner) public view returns (uint _balance);
+   // Functions that define ownership
+   function ownerOf(uint256) public view returns (address owner);
+   function approve(address, uint256) public returns (bool);
+   function takeOwnership(uint256) public returns (bool);
+   function transfer(address, uint256) public returns (bool);
+   function getApproved(uint256 _tokenId) public view returns (address);
+   // Token metadata
+   function tokenMetadata(uint256 _tokenId) public view returns (string info);
+   // Events
+   event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+   event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+}
+
+contract Token {
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function increaseApproval (address _spender, uint _addedValue) public returns (bool success);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+}
+
 contract Ownable {
     address public owner;
 
@@ -108,13 +140,12 @@ contract Ownable {
     it's primarily used by the exchange but could be used by any other agent.
 */
 contract Oracle is Ownable {
-    uint256 public constant VERSION = 2;
+    uint256 public constant VERSION = 3;
 
-    event NewSymbol(bytes32 _currency, string _ticker, uint8 _decimals);
+    event NewSymbol(bytes32 _currency, string _ticker);
     
     struct Symbol {
         string ticker;
-        uint8 decimals;
         bool supported;
     }
 
@@ -131,28 +162,20 @@ contract Oracle is Ownable {
         @param symbol Symbol of the currency
         @param data Generic data field, could be used for off-chain signing
     */
-    function getRate(bytes32 symbol, bytes data) public returns (uint256);
+    function getRate(bytes32 symbol, bytes data) public returns (uint256 rate, uint256 decimals);
 
     /**
         @dev Adds a currency to the oracle, once added it cannot be removed
 
         @param ticker Symbol of the currency
-        @param decimals Decimals of the convertion
 
-        @return the hash of the currency, calculated keccak256(ticker, decimals)
+        @return the hash of the currency, calculated keccak256(ticker)
     */
-    function addCurrency(string ticker, uint8 decimals) public onlyOwner returns (bytes32) {
-        NewSymbol(currency, ticker, decimals);
-        bytes32 currency = keccak256(ticker, decimals);
-        currencies[currency] = Symbol(ticker, decimals, true);
+    function addCurrency(string ticker) public onlyOwner returns (bytes32) {
+        NewSymbol(currency, ticker);
+        bytes32 currency = keccak256(ticker);
+        currencies[currency] = Symbol(ticker, true);
         return currency;
-    }
-
-    /**
-        @return The number of decimals of a given currency hash, only if registered
-    */
-    function decimals(bytes32 symbol) public view returns (uint8) {
-        return currencies[symbol].decimals;
     }
 
     /**
@@ -161,38 +184,6 @@ contract Oracle is Ownable {
     function supported(bytes32 symbol) public view returns (bool) {
         return currencies[symbol].supported;
     }
-}
-
-contract Engine {
-    uint256 public VERSION;
-    string public VERSION_NAME;
-
-    enum Status { initial, lent, paid, destroyed }
-    struct Approbation {
-        bool approved;
-        bytes data;
-        bytes32 checksum;
-    }
-
-    function getTotalLoans() public view returns (uint256);
-    function getOracle(uint index) public view returns (Oracle);
-    function getBorrower(uint index) public view returns (address);
-    function getCosigner(uint index) public view returns (address);
-    function ownerOf(uint256) public view returns (address owner);
-    function getCreator(uint index) public view returns (address);
-    function getAmount(uint index) public view returns (uint256);
-    function getPaid(uint index) public view returns (uint256);
-    function getDueTime(uint index) public view returns (uint256);
-    function getApprobation(uint index, address _address) public view returns (bool);
-    function getStatus(uint index) public view returns (Status);
-    function isApproved(uint index) public view returns (bool);
-    function getPendingAmount(uint index) public returns (uint256);
-    function getCurrency(uint index) public view returns (bytes32);
-    function cosign(uint index, uint256 cost) external returns (bool);
-    function approveLoan(uint index) public returns (bool);
-    function transfer(address to, uint256 index) public returns (bool);
-    function takeOwnership(uint256 index) public returns (bool);
-    function withdrawal(uint index, address to, uint256 amount) public returns (bool);
 }
 
 contract RpSafeMath {
@@ -263,18 +254,21 @@ contract TokenLockable is RpSafeMath, Ownable {
 }
 
 contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
-    uint256 public constant VERSION = 205;
+    uint256 constant internal PRECISION = (10**18);
+    uint256 constant internal MAX_DECIMALS = 18;
+
+    uint256 public constant VERSION = 210;
     string public constant VERSION_NAME = "Basalt";
 
     uint256 private activeLoans = 0;
     mapping(address => uint256) private lendersBalance;
 
     function name() public view returns (string _name) {
-        _name = "RCN - Nano loan engine - Basalt 205";
+        _name = "RCN - Nano loan engine - Basalt 210";
     }
 
     function symbol() public view returns (string _symbol) {
-        _symbol = "RCN-NLE-205";
+        _symbol = "RCN-NLE-210";
     }
 
     /**
@@ -446,7 +440,7 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         @param _oracleContract Address of the Oracle contract, if the loan does not use any oracle, this field should be 0x0.
         @param _borrower Address of the borrower
         @param _currency The currency to use with the oracle, the currency code is generated with the following formula,
-            keccak256(ticker,decimals).
+            keccak256(ticker), is always stored as the minimum divisible amount. (Ej: ETH Wei, USD Cents)
         @param _amount The requested amount; currency and unit are defined by the Oracle, if there is no Oracle present
             the currency is RCN, and the unit is wei.
         @param _interestRate The non-punitory interest rate by second, defined as a denominator of 10 000 000.
@@ -550,7 +544,7 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         @param cosignerData Data required by the cosigner to process the request.
 
         @return true if the lend was done successfully
-    */    
+    */
     function lend(uint index, bytes oracleData, Cosigner cosigner, bytes cosignerData) public returns (bool) {
         Loan storage loan = loans[index];
 
@@ -573,7 +567,8 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
 
         // Transfer the money to the borrower before handling the cosigner
         // so the cosigner could require a specific usage for that money.
-        require(rcn.transferFrom(msg.sender, loan.borrower, safeMult(loan.amount, getRate(loan, oracleData))));
+        uint256 transferValue = convertRate(loan.oracle, loan.currency, oracleData, loan.amount);
+        require(rcn.transferFrom(msg.sender, loan.borrower, transferValue));
         
         if (cosigner != address(0)) {
             // The cosigner it's temporary set to the next address (cosigner + 2), it's expected that the cosigner will
@@ -878,8 +873,9 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
             Transfer(loan.lender, 0x0, index);
         }
 
-        uint256 rate = getRate(loan, oracleData);
-        uint256 transferValue = safeMult(toPay, rate);
+        uint256 transferValue = convertRate(loan.oracle, loan.currency, oracleData, toPay);
+        require(transferValue > 0 || toPay < _amount);
+
         lockTokens(rcn, transferValue);
         require(rcn.transferFrom(msg.sender, this, transferValue));
         loan.lenderBalance = safeAdd(transferValue, loan.lenderBalance);
@@ -888,20 +884,23 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     }
 
     /**
-        @notice Retrieves the rate corresponding of the loan oracle
+        @notice Converts an amount to RCN using the loan oracle.
         
         @dev If the loan has no oracle the currency must be RCN so the rate is 1
 
-        @param loan The loan with the cosigner
-        @param data Data required by the oracle
-
-        @return The rate of the oracle
+        @return The result of the convertion
     */
-    function getRate(Loan loan, bytes data) internal returns (uint256) {
-        if (loan.oracle == address(0)) {
-            return 1;
+    function convertRate(Oracle oracle, bytes32 currency, bytes data, uint256 amount) public returns (uint256) {
+        if (oracle == address(0)) {
+            return amount;
         } else {
-            return loan.oracle.getRate(loan.currency, data);
+            uint256 rate;
+            uint256 decimals;
+            
+            (rate, decimals) = oracle.getRate(currency, data);
+
+            require(decimals <= MAX_DECIMALS);
+            return (safeMult(safeMult(amount, rate), (10**decimals))) / PRECISION;
         }
     }
 
