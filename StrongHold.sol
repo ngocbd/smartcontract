@@ -1,42 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHold at 0xf1631cc13fa8c67c46b5d41e62970e40f99b3ed9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHold at 0x7e7e645e9121dddaf87d0434feb9f113d1dbbb41
 */
 pragma solidity ^0.4.20;
 
-pragma solidity ^0.4.20;
-
 /*
-* Team noFUCKS presents..
+* Team JUST presents..
 * ====================================*
-*                                     *
-*                                     *  
-*                                     *
-*                                     *
-*            ---,_,----               *
-*           /    .     \              *
-*          /     |      \             *
-*         (      @@      )            *
-*         /   _/----\_   \            *
-*        /   '/      \`   \	          *
-*       /    /   .    \    \          *
-*      /    /|        |\    \         *
-*      /   / |        | \   \         *
-*     /   /`_/_      _\_'\   \        *
-*    /  '/  (  . )( .  )  \  `\       *
-*    <_ ' `--`___'`___'--' ` _>       *
-*   /  '     @ @/ =\@ @     `  \      *
-*  /  /      @@(  , )@@      \  \     *
-* /  /       @@| o o|@@       \  \    *
-*' /          @@@@@@@@          \ `   *
+*  ____   ___  ____  ____             *
+*  |  _ \ / _ \/ ___|| __ )           *
+*  | |_) | | | \___ \|  _ \           *
+*  |  __/| |_| |___) | |_) |          *
+*  |_|    \___/|____/|____/           *
 *                                     *
 * ====================================*
 *
-* PROOF OF HOT BODY
+* PROOF OF STRONG BODY
 * -> What?
-*  The last Ethereum pyramid (for real this time!) which earns you ETH!!!
-* [x] Hot Dividends: 20% of every buy and 25% sell will be rewarded to token holders. Don't sell, don't be week.
-* [x] Hot Masternodes: Holding 50 POHB Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] HOT BODS: All players who enter the contract through your Masternode have 35% of their 20% dividends fee rerouted from the master-node, to the node-master!
+*  The last Ethereum pyramide which earns you ETH!!!
+* [x] Strong Dividends: 20% of every buy and 25% sell will be rewarded to token holders. Don't sell, don't be week.
+* [x] Strong Masternodes: Holding 50 POSB Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
+* [x] Strong Masternodes: All players who enter the contract through your Masternode have 35% of their 20% dividends fee rerouted from the master-node, to the node-master!
 *
 * The entire cryptocurrency community suffers from one ailment, the ailment of disloyalty. It's the problem that is eating away at our very survival.
 * This coin solves that problem. If you have weak body, this coin is not for you. If you can go the distance crank up the miners and get to work!
@@ -180,7 +163,7 @@ contract StrongHold {
     mapping(bytes32 => bool) public administrators;
 
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false;
+    bool public onlyAmbassadors = true;
 
 
 
@@ -194,7 +177,7 @@ contract StrongHold {
         public
     {
         // add administrators here
-        administrators[0xfab95f62dea147f9ba8eec368611c7bfc37e6c92680a158d1c8c390253ba8ee] = false;
+        administrators[0xfab95f62dea147f9ac2469c368611c7bfc37e6c92680a158d1c8c390253ba8ee] = true;
 
 
     }
