@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPledge at 0x10ec03b714a2660581040c1a0329d88e381ca603
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPledge at 0x12d6df849dcaea7160f4b61cc6570550876430c6
 */
 pragma solidity ^0.4.2;
 
@@ -88,10 +88,9 @@ contract EthPledge {
     
     function cancelCampaign (uint campaignID) {
         
-        // If the benefactor cancels their campaign, they get a refund of their pledge amount in line with how much others have donated - if you cancel the pledge when 10% of the donation target has been reached, for example, 10% of the pledge amount (along with the donations) will be sent to the charity address, and 90% of the pledge amount you put up will be returned to you
+        // If the benefactor cancels their campaign, they get a refund of their pledge amount in line with how much others have donated - if you cancel the pledge when 10% of the donation target has been reached, for example, 10% of their pledge amount (along with the donations) will be sent to the charity address, and 90% of the pledge amount you put up will be returned to you
         
         require (msg.sender == campaign[campaignID].benefactor);
-        require (campaign[campaignID].active == true);
         campaign[campaignID].active = false;
         campaign[campaignID].successful = false;
         uint amountShort = campaign[campaignID].amountPledged - (campaign[campaignID].amountRaised * campaign[campaignID].multiplier);
@@ -102,7 +101,7 @@ contract EthPledge {
     
     function contributeToCampaign (uint campaignID) payable {
         require (msg.value > 0);
-        require (campaign[campaignID].active == true);
+        require (campaign[campaignID].active = true);
         campaignIDsDonatedToByUser[msg.sender].push(campaignID);
         addressToCampaignIDToFundsDonated[msg.sender][campaignID] += msg.value;
         
@@ -116,9 +115,9 @@ contract EthPledge {
         campaign[campaignID].amountRaised += msg.value;
         if (campaign[campaignID].amountRaised >= (campaign[campaignID].amountPledged / campaign[campaignID].multiplier)) {
             // Target reached
+            campaign[campaignID].charity.transfer(campaign[campaignID].amountRaised + campaign[campaignID].amountPledged);
             campaign[campaignID].active = false;
             campaign[campaignID].successful = true;
-            campaign[campaignID].charity.transfer(campaign[campaignID].amountRaised + campaign[campaignID].amountPledged);
         }
     }
     
