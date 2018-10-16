@@ -1,123 +1,138 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0xe12cad7ef07eb6a6d79aa4c721825cfda2b2a2c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0x117e8065b28af271012dbfef73e16f99935cea71
 */
-/**
- * Copyright 2017 Icofunding S.L. (https://icofunding.com)
- * 
- */
+pragma solidity ^0.4.18;
+
 
 /**
- * Math operations with safety checks
- * Reference: https://github.com/OpenZeppelin/zeppelin-solidity/commit/353285e5d96477b4abb86f7cde9187e84ed251ac
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal constant returns (uint) {
-    uint c = a * b;
-
-    assert(a == 0 || c / a == b);
-
-    return c;
-  }
-
-  function safeDiv(uint a, uint b) internal constant returns (uint) {    
-    uint c = a / b;
-
-    return c;
-  }
-
-  function safeSub(uint a, uint b) internal constant returns (uint) {
-    require(b <= a);
-
-    return a - b;
-  }
-
-  function safeAdd(uint a, uint b) internal constant returns (uint) {
-    uint c = a + b;
-
-    assert(c>=a && c>=b);
-
-    return c;
-  }
-}
-
-contract EtherReceiverInterface {
-  function receiveEther() public payable;
-}
-
-/**
- * Escrow contract to manage the funds collected
- */
-contract Escrow is SafeMath, EtherReceiverInterface {
-  // Sample thresholds.
-  uint[3] threshold = [0 ether, 21008 ether, 1000000 ether];
-  // Different rates for each phase.
-  uint[2] rate = [4, 1];
-
-  // Adresses that will receive funds
-  address public project;
-  address public icofunding;
-
-  // Block from when the funds will be released
-  uint public lockUntil;
-
-  // Wei
-  uint public totalCollected; // total amount of wei collected
-
-  modifier locked() {
-    require(block.number >= lockUntil);
-
-    _;
-  }
-
-  event e_Withdraw(uint block, uint fee, uint amount);
-
-  function Escrow(uint _lockUntil, address _icofunding, address _project) {
-    lockUntil = _lockUntil;
-    icofunding = _icofunding;
-    project = _project;
-  }
-
-  // Sends the funds collected to the addresses "icofunding" and "project"
-  // The ether is distributed following the formula below
-  // Only exeuted after "lockUntil"
-  function withdraw() public locked {
-    // Calculates the amount to send to each address
-    uint fee = getFee(this.balance);
-    uint amount = safeSub(this.balance, fee);
-
-    // Sends the ether
-    icofunding.transfer(fee);
-    project.transfer(amount);
-
-    e_Withdraw(block.number, fee, amount);
-  }
-
-  // Calculates the variable fees depending on the amount, thresholds and rates set.
-  function getFee(uint value) public constant returns (uint) {
-    uint fee;
-    uint slice;
-    uint aux;
-
-    for(uint i = 0; i < 2; i++) {
-      aux = value;
-      if(value > threshold[i+1])
-        aux = threshold[i+1];
-
-      if(threshold[i] < aux) {
-        slice = safeSub(aux, threshold[i]);
-
-        fee = safeAdd(fee, safeDiv(safeMul(slice, rate[i]), 100));
-      }
+contract Ownable {
+    address public owner;
+    
+    
+    /**
+    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+    * account.
+    */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+    
+    
+    /**
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) public onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
     }
 
-    return fee;
-  }
+}
 
-  function receiveEther() public payable {
-    totalCollected += msg.value;
-  }
-
-  function() payable {
-    totalCollected += msg.value;
-  }
+contract Escrow is Ownable {
+    
+    enum DealState { Empty, Created, InProgress, InTrial, Finished }
+    enum Answer { NotDefined, Yes, No }
+    
+    struct Deal {
+        address customer;
+        address beneficiary;
+        address agent;
+        
+        uint256 value;
+        uint256 commission;
+        
+        uint256 endtime;
+        
+        bool customerAns;
+        bool beneficiaryAns;
+        
+        DealState state;
+    }
+    
+    mapping (uint256 => Deal) public deals;
+    uint256 lastDealId;
+    
+    function createNew(address _customer, address _beneficiary, address _agent,
+                        uint256 _value, uint256 _commision, uint256 _endtime) public onlyOwner returns (uint256) {
+        uint256 dealId = lastDealId + 1;
+        deals[dealId] = Deal(_customer, _beneficiary, _agent, _value, _commision, _endtime, false, false, DealState.Created);
+        lastDealId++;
+        return dealId;
+    }
+    
+    function pledge(uint256 _dealId) public payable {
+        require(msg.value == (deals[_dealId].value + deals[_dealId].commission));
+        deals[_dealId].state = DealState.InProgress;
+    }
+    
+    modifier onlyAgent(uint256 _dealId) {
+        require(msg.sender == deals[_dealId].agent);
+        _;
+    }
+    
+    /**
+     * @dev ?onfirm that the customer conditions are met
+     */
+    function confirmCustomer(uint256 _dealId) public {
+        require(msg.sender == deals[_dealId].customer);
+        deals[_dealId].customerAns = true;
+    }
+    
+    /**
+     * @dev ?onfirm that the beneficiary conditions are met
+     */
+    function confirmBeneficiary(uint256 _dealId) public {
+        require(msg.sender == deals[_dealId].beneficiary);
+        deals[_dealId].beneficiaryAns = true;
+    }
+    
+    /**
+     * @dev Check participants answers and change deal state
+     */
+    function finishDeal(uint256 _dealId) public onlyOwner {
+        require(deals[_dealId].state == DealState.InProgress);
+        if (deals[_dealId].customerAns && deals[_dealId].beneficiaryAns) {
+            deals[_dealId].beneficiary.transfer(deals[_dealId].value);
+            deals[_dealId].agent.transfer(deals[_dealId].commission);
+            deals[_dealId].state = DealState.Finished;
+        } else {
+            require(now >= deals[_dealId].endtime);
+            deals[_dealId].state = DealState.InTrial;
+        }
+    }
+    
+    /**
+     * @dev Return money to customer
+     */
+    function dealRevert(uint256 _dealId) public onlyAgent(_dealId) {
+        require(deals[_dealId].state == DealState.InTrial);
+        deals[_dealId].customer.transfer(deals[_dealId].value);
+        deals[_dealId].agent.transfer(deals[_dealId].commission);
+        deals[_dealId].state = DealState.Finished;
+    }
+    
+    /**
+     * @dev Confirm deal completed and transfer money to beneficiary
+     */
+    function dealConfirm(uint256 _dealId) public onlyAgent(_dealId) {
+        require(deals[_dealId].state == DealState.InTrial);
+        deals[_dealId].beneficiary.transfer(deals[_dealId].value);
+        deals[_dealId].agent.transfer(deals[_dealId].commission);
+        deals[_dealId].state = DealState.Finished;
+    }
 }
