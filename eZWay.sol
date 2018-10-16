@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eZWay at 0xf5a467995fceb971b708ef0dee3220ee3b9b6296
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eZWay at 0x1088eec81b9aa8edb5937fdfc9aa5556bcd3ebcb
 */
 pragma solidity ^0.4.16;
 
@@ -221,7 +221,7 @@ contract eZWay is owned, BasicToken {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function eZWay() public {
+    function Prosperity() public {
         tokensPerEther = 10000;//initialRate
     }
 
