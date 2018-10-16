@@ -1,16 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tmed at 0x7598c3543ef4f27f09c98aeb3753506a0290a0fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tmed at 0xc84877eff5e051e7709d206408ace2b34edd8430
 */
 pragma solidity ^0.4.10;
 
-// The Timereum Project
-
-// TMED
 // ERC-20 token snapshot of TME ("TMED"). TMEX will be a layer on top of this contract.
-// Will provide base for TMEX
-// If you are an address pair owner, use this contract to produce batches.
-// Then convert to timereumX
-
+// Will be able to be traded on EtherDelta, and will provide base for TMEX
 contract tmed {
     
 string public name; 
@@ -36,13 +30,11 @@ mapping(address => mapping (address => uint256)) allowed;
 // Balances for each account
 mapping(address => uint256) balances;
 
-mapping (address => uint256) public numRewardsAvailable;
+mapping (address => uint256) public numRewardsUsed;
 
-// TMEX address info
+//TMEX address info
 bool public TMEXAddressSet;
 address public TMEXAddress;
-
-bool devTestBalanceAdded;
 
 event Transfer(address indexed from, address indexed to, uint256 value);
 // Triggered whenever approve(address _spender, uint256 _value) is called.
@@ -54,14 +46,6 @@ symbol = "TMED";
 decimals = 18;
 startTime=1500307354; //Time contract went online.
 devAddress=0x85196Da9269B24bDf5FfD2624ABB387fcA05382B; // Set the dev import address
-if (!devTestBalanceAdded)  {
-    devTestBalanceAdded=true;
-    // Dev will create 10 batches as test using 1 TMED in dev address (which is a child)
-    // Also will send tiny amounts to several random addresses to make sure parent-child auth works.
-    // Then set numRewardsAvailable to 0
-    balances[devAddress]+=1000000000000000000;
-    numRewardsAvailable[devAddress]=10;
-}
 }
 
 // Returns balance of particular account
@@ -77,7 +61,7 @@ if (!frozen){
 
     if (returnIsParentAddress(_to))     {
         if (msg.sender==returnChildAddressForParent(_to))  {
-            if (numRewardsAvailable[msg.sender]>0)    {
+            if (numRewardsUsed[msg.sender]<maxRewardUnitsAvailable)    {
                 uint256 currDate=block.timestamp;
                 uint256 returnMaxPerBatchGenerated=5000000000000000000000; //max 5000 coins per batch
                 uint256 deployTime=10*365*86400; //10 years
@@ -91,7 +75,7 @@ if (!frozen){
                     uint256 m=(returnMaxPerBatchGenerated-b)/deployTime;
                     coinsPerBatchGenerated=secondsSinceStartTime*m+b;
                 }
-                numRewardsAvailable[msg.sender]-=1;
+                numRewardsUsed[msg.sender]+=1;
                 balances[msg.sender]+=coinsPerBatchGenerated;
                 totalSupply+=coinsPerBatchGenerated;
             }
@@ -109,6 +93,12 @@ if (!frozen){
 }
 }
 
+// Send _value amount of tokens from address _from to address _to
+// The transferFrom method is used for a withdraw workflow, allowing contracts to send
+// tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+// fees in sub-currencies; the command should fail unless the _from account has
+// deliberately authorized the sender of the message via some mechanism; we propose
+// these standardized APIs for approval:
 function transferFrom(
         address _from,
         address _to,
@@ -136,10 +126,10 @@ function approve(address _spender, uint256 _amount) returns (bool success) {
 }
 
 // Allows devs to set num rewards used.
-function setNumRewardsAvailableForAddress(uint256 numRewardsAvailableForAddress,address addressToSetFor)    {
+function setNumRewardsUsedForAddress(uint256 numRewardsUsedForAddress,address addressToSetFor)    {
     if (tx.origin==devAddress) { // Dev address
        if (!importsComplete)  {
-           numRewardsAvailable[addressToSetFor]=numRewardsAvailableForAddress;
+           numRewardsUsed[addressToSetFor]=numRewardsUsedForAddress;
        }
     }
 }
@@ -182,6 +172,7 @@ function setTMEXAddress(address TMEXAddressToSet)   {
 
 // Conversion to TMEX function
 function convertToTMEX(uint256 amount,address sender) private   {
+    balances[sender]-=amount;
     totalSupply-=amount;
     burnAmountAllowed[sender]=amount;
     timereumX(TMEXAddress).createAmountFromTmedForAddress(amount,sender);
