@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTRCTOKEN at 0xE973dbF1E8C665fBc711AC5dBfdefefc1f70E2A0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTRCTOKEN at 0xa2388330BcB4b3D5F6395a3f5999Fecb73960Af3
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.19;
 /* @file
  * @title BTRCTOKEN
  * @version 1.2.0
@@ -9,13 +9,13 @@ pragma solidity ^0.4.15;
 contract BTRCTOKEN {
   
   string public constant symbol = "BTRC";
-  string public constant name = "B?TUBER";
+  string public constant name = "BITUBER";
   
   uint8 public constant decimals = 18;
   
   uint256 public constant _maxSupply = 33000000000000000000000000; 
   uint256 public _totalSupply = 0;
-  uint256 private price = 2400;
+  uint256 private price = 2500;
   
   bool public workingState = true;
   bool public transferAllowed = true;
