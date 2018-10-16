@@ -1,147 +1,232 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Trees at 0x89c0afcd1bdbb91675b9fca14519738d5286b61e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Trees at 0xfffce2dc587badbd10b4fe17f0f5f293458f6793
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.18;
 
-contract Token {
+contract Admin {
+  address public owner;
+  mapping(address => bool) public isAdmin;
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+  modifier onlyAdmin() {
+    require(isAdmin[msg.sender]);
+    _;
+  }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+  function Admin() public {
+    owner = msg.sender;
+    addAdmin(owner);
+  }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+  function addAdmin(address _admin) public onlyOwner {
+    isAdmin[_admin] = true;
+  }
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+  function removeAdmin(address _admin) public onlyOwner {
+    isAdmin[_admin] = false;
+  }
 }
 
-contract StandardToken is Token {
+// To add a tree do the following:
+// - Create a new Tree with the ID, owner, treeValue and power to generate fruits
+// - Update the treeBalances and treeOwner mappings
+contract Trees is Admin {
+  event LogWaterTree(uint256 indexed treeId, address indexed owner, uint256 date);
+  event LogRewardPicked(uint256 indexed treeId, address indexed owner, uint256 date, uint256 amount);
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+  // Get the tree information given the id
+  mapping(uint256 => Tree) public treeDetails;
+  // A mapping with all the tree IDs of that owner
+  mapping(address => uint256[]) public ownerTreesIds;
+  // Tree id and the days the tree has been watered
+  // Tree id => day number => isWatered
+  mapping(uint256 => mapping(uint256 => bool)) public treeWater;
+
+  struct Tree {
+    uint256 ID;
+    address owner;
+    uint256 purchaseDate;
+    uint256 treePower; // How much ether that tree is generating from 0 to 100 where 100 is the total power combined of all the trees
+    uint256 salePrice;
+    uint256 timesExchanged;
+    uint256[] waterTreeDates;
+    bool onSale;
+    uint256 lastRewardPickedDate; // When did you take the last reward
+  }
+
+  uint256[] public trees;
+  uint256[] public treesOnSale;
+  uint256 public lastTreeId;
+  address public defaultTreesOwner = msg.sender;
+  uint256 public defaultTreesPower = 1; // 10% of the total power
+  uint256 public defaultSalePrice = 1 ether;
+  uint256 public totalTreePower;
+  uint256 public timeBetweenRewards = 1 days;
+
+  // This will be called automatically by the server
+  // The contract itself will hold the initial trees
+  function generateTrees(uint256 _amountToGenerate) public onlyAdmin {
+    for(uint256 i = 0; i < _amountToGenerate; i++) {
+        uint256 newTreeId = lastTreeId + 1;
+        lastTreeId += 1;
+        uint256[] memory emptyArray;
+        Tree memory newTree = Tree(newTreeId, defaultTreesOwner, now, defaultTreesPower, defaultSalePrice, 0, emptyArray, true, 0);
+
+        // Update the treeBalances and treeOwner mappings
+        // We add the tree to the same array position to find it easier
+        ownerTreesIds[defaultTreesOwner].push(newTreeId);
+        treeDetails[newTreeId] = newTree;
+        treesOnSale.push(newTreeId);
+        totalTreePower += defaultTreesPower;
     }
+  }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+  // This is payable, the user will send the payment here
+  // We delete the tree from the owner first and we add that to the receiver
+  // When you sell you're actually putting the tree on the market, not losing it yet
+  function putTreeOnSale(uint256 _treeNumber, uint256 _salePrice) public {
+    require(msg.sender == treeDetails[_treeNumber].owner);
+    require(!treeDetails[_treeNumber].onSale);
+    require(_salePrice > 0);
+
+    treesOnSale.push(_treeNumber);
+    treeDetails[_treeNumber].salePrice = _salePrice;
+    treeDetails[_treeNumber].onSale = true;
+  }
+
+  // To buy a tree paying ether
+  function buyTree(uint256 _treeNumber, address _originalOwner) public payable {
+    require(msg.sender != treeDetails[_treeNumber].owner);
+    require(treeDetails[_treeNumber].onSale);
+    require(msg.value >= treeDetails[_treeNumber].salePrice);
+    address newOwner = msg.sender;
+    // Move id from old to new owner
+    // Find the tree of that user and delete it
+    for(uint256 i = 0; i < ownerTreesIds[_originalOwner].length; i++) {
+        if(ownerTreesIds[_originalOwner][i] == _treeNumber) delete ownerTreesIds[_originalOwner][i];
     }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-contract Trees is StandardToken { // CHANGE THIS. Update the contract name.
-
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   // Token Name
-    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol;                 // An identifier: eg SBX, XPR etc..
-    string public version = 'H1.0'; 
-    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
-    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
-    address public fundsWallet;           // Where should the raised ETH go?
-
-    // This is a constructor function 
-    // which means the following function name has to match the contract name declared above
-    function Trees() {
-        balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 1000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Trees";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "TREES";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 10;                                      // Set the price of your token for the ICO (CHANGE THIS)
-        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
-    }
-
-    function() payable{
-        totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        if (balances[fundsWallet] < amount) {
-            return;
+    // Remove the tree from the array of trees on sale
+    for(uint256 a = 0; a < treesOnSale.length; a++) {
+        if(treesOnSale[a] == _treeNumber) {
+            delete treesOnSale[a];
+            break;
         }
-
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-
-        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
-
-        //Transfer ether to fundsWallet
-        fundsWallet.transfer(msg.value);                               
     }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+    ownerTreesIds[newOwner].push(_treeNumber);
+    treeDetails[_treeNumber].onSale = false;
+    if(treeDetails[_treeNumber].timesExchanged == 0) {
+        // Reward the owner for the initial trees as a way of monetization. Keep half for the treasury
+        owner.transfer(msg.value / 2);
+    } else {
+        treeDetails[_treeNumber].owner.transfer(msg.value * 90 / 100); // Keep 0.1% in the treasury
     }
+    treeDetails[_treeNumber].owner = newOwner;
+    treeDetails[_treeNumber].timesExchanged += 1;
+  }
+
+  // To take a tree out of the market without selling it
+  function cancelTreeSell(uint256 _treeId) public {
+    require(msg.sender == treeDetails[_treeId].owner);
+    require(treeDetails[_treeId].onSale);
+    // Remove the tree from the array of trees on sale
+    for(uint256 a = 0; a < treesOnSale.length; a++) {
+        if(treesOnSale[a] == _treeId) {
+            delete treesOnSale[a];
+            break;
+        }
+    }
+    treeDetails[_treeId].onSale = false;
+  }
+
+  // Improves the treePower
+  function waterTree(uint256 _treeId) public {
+    require(_treeId > 0);
+    require(msg.sender == treeDetails[_treeId].owner);
+    uint256[] memory waterDates = treeDetails[_treeId].waterTreeDates;
+    uint256 timeSinceLastWater;
+    // We want to store at what day the tree was watered
+    uint256 day;
+    if(waterDates.length > 0) {
+        timeSinceLastWater = now - waterDates[waterDates.length - 1];
+        day = waterDates[waterDates.length - 1] / 1 days;
+    }else {
+        timeSinceLastWater = timeBetweenRewards;
+        day = 1;
+    }
+    require(timeSinceLastWater >= timeBetweenRewards);
+    treeWater[_treeId][day] = true;
+    treeDetails[_treeId].waterTreeDates.push(now);
+    treeDetails[_treeId].treePower += 1;
+    totalTreePower += 1;
+    LogWaterTree(_treeId, msg.sender, now);
+  }
+
+  // To get the ether from the rewards
+  function pickReward(uint256 _treeId) public {
+    require(msg.sender == treeDetails[_treeId].owner);
+    require(now - treeDetails[_treeId].lastRewardPickedDate > timeBetweenRewards);
+
+    uint256[] memory formatedId = new uint256[](1);
+    formatedId[0] = _treeId;
+    uint256[] memory rewards = checkRewards(formatedId);
+    treeDetails[_treeId].lastRewardPickedDate = now;
+    msg.sender.transfer(rewards[0]);
+    LogRewardPicked(_treeId, msg.sender, now, rewards[0]);
+  }
+
+  // To see if a tree is already watered or not
+  function checkTreesWatered(uint256[] _treeIds) public constant returns(bool[]) {
+    bool[] memory results = new bool[](_treeIds.length);
+    uint256 timeSinceLastWater;
+    for(uint256 i = 0; i < _treeIds.length; i++) {
+        uint256[] memory waterDates = treeDetails[_treeIds[i]].waterTreeDates;
+        if(waterDates.length > 0) {
+            timeSinceLastWater = now - waterDates[waterDates.length - 1];
+            results[i] = timeSinceLastWater < timeBetweenRewards;
+        } else {
+            results[i] = false;
+        }
+    }
+    return results;
+  }
+
+  // Returns an array of how much ether all those trees have generated today
+  // All the tree power combiined for instance 10293
+  // The tree power for this tree for instance 298
+  // What percentage do you get: 2%
+  // Total money in the treasury: 102 ETH
+  // A 10% of the total is distributed daily across all the users
+  // For instance 10.2 ETH today
+  // So if you pick your rewards right now, you'll get a 2% of 10.2 ETH which is 0.204 ETH
+  function checkRewards(uint256[] _treeIds) public constant returns(uint256[]) {
+    uint256 amountInTreasuryToDistribute = this.balance / 10;
+    uint256[] memory results = new uint256[](_treeIds.length);
+    for(uint256 i = 0; i < _treeIds.length; i++) {
+        // Important to multiply by 100 to
+        uint256 yourPercentage = treeDetails[_treeIds[i]].treePower * 1 ether / totalTreePower;
+        uint256 amountYouGet = yourPercentage * amountInTreasuryToDistribute / 1 ether;
+        results[i] = amountYouGet;
+    }
+    return results;
+  }
+
+  // To get all the tree IDs of one user
+  function getTreeIds(address _account) public constant returns(uint256[]) {
+    if(_account != address(0)) return ownerTreesIds[_account];
+    else return ownerTreesIds[msg.sender];
+  }
+
+  // To get all the trees on sale
+  function getTreesOnSale() public constant returns(uint256[]) {
+      return treesOnSale;
+  }
+
+  // To extract the ether in an emergency
+  function emergencyExtract() public onlyOwner {
+    owner.transfer(this.balance);
+  }
 }
