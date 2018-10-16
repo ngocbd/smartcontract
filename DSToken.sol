@@ -1,26 +1,125 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0xbc0746c5b34f6a73b7185988053d8a0dfc37489e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0xe35e828b42d46d27fb4279b451db211c2002845a
 */
-// hevm: flattened sources of src/token.sol
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.13;
 
-////// lib/ds-math/src/math.sol
-/// math.sol -- mixin for inline numerical wizardry
 
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+contract DSAuthority {
+    function canCall(
+        address src, address dst, bytes4 sig
+    ) public view returns (bool);
+}
 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+contract DSAuthEvents {
+    event LogSetAuthority (address indexed authority);
+    event LogSetOwner     (address indexed owner);
+}
 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+contract DSAuth is DSAuthEvents {
+    DSAuthority  public  authority;
+    address      public  owner;
 
-/* pragma solidity ^0.4.13; */
+    function DSAuth() public {
+        owner = msg.sender;
+        emit LogSetOwner(msg.sender);
+    }
+
+    function setOwner(address owner_)
+        public
+        auth
+    {
+        owner = owner_;
+        emit LogSetOwner(owner);
+    }
+
+    function setAuthority(DSAuthority authority_)
+        public
+        auth
+    {
+        authority = authority_;
+        emit LogSetAuthority(authority);
+    }
+
+    modifier auth {
+        require(isAuthorized(msg.sender, msg.sig));
+        _;
+    }
+
+    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
+        if (src == address(this)) {
+            return true;
+        } else if (src == owner) {
+            return true;
+        } else if (authority == DSAuthority(0)) {
+            return false;
+        } else {
+            return authority.canCall(src, this, sig);
+        }
+    }
+}
+
+
+contract DSNote {
+    event LogNote(
+        bytes4   indexed  sig,
+        address  indexed  guy,
+        bytes32  indexed  foo,
+        bytes32  indexed  bar,
+        uint              wad,
+        bytes             fax
+    ) anonymous;
+
+    modifier note {
+        bytes32 foo;
+        bytes32 bar;
+
+        assembly {
+            foo := calldataload(4)
+            bar := calldataload(36)
+        }
+
+        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+
+        _;
+    }
+}
+
+
+contract DSStop is DSNote, DSAuth {
+
+    bool public stopped;
+
+    modifier stoppable {
+        require(!stopped);
+        _;
+    }
+    function stop() public auth note {
+        stopped = true;
+    }
+    function start() public auth note {
+        stopped = false;
+    }
+
+}
+
+
+contract ERC20Events {
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
+}
+
+contract ERC20 is ERC20Events {
+    function totalSupply() public view returns (uint);
+    function balanceOf(address guy) public view returns (uint);
+    function allowance(address src, address guy) public view returns (uint);
+
+    function approve(address guy, uint wad) public returns (bool);
+    function transfer(address dst, uint wad) public returns (bool);
+    function transferFrom(
+        address src, address dst, uint wad
+    ) public returns (bool);
+}
+
 
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
@@ -90,216 +189,13 @@ contract DSMath {
     }
 }
 
-////// lib/ds-stop/lib/ds-auth/src/auth.sol
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.23; */
-
-contract DSAuthority {
-    function canCall(
-        address src, address dst, bytes4 sig
-    ) public view returns (bool);
-}
-
-contract DSAuthEvents {
-    event LogSetAuthority (address indexed authority);
-    event LogSetOwner     (address indexed owner);
-}
-
-contract DSAuth is DSAuthEvents {
-    DSAuthority  public  authority;
-    address      public  owner;
-
-    constructor() public {
-        owner = msg.sender;
-        emit LogSetOwner(msg.sender);
-    }
-
-    function setOwner(address owner_)
-        public
-        auth
-    {
-        owner = owner_;
-        emit LogSetOwner(owner);
-    }
-
-    function setAuthority(DSAuthority authority_)
-        public
-        auth
-    {
-        authority = authority_;
-        emit LogSetAuthority(authority);
-    }
-
-    modifier auth {
-        require(isAuthorized(msg.sender, msg.sig));
-        _;
-    }
-
-    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else if (authority == DSAuthority(0)) {
-            return false;
-        } else {
-            return authority.canCall(src, this, sig);
-        }
-    }
-}
-
-////// lib/ds-stop/lib/ds-note/src/note.sol
-/// note.sol -- the `note' modifier, for logging calls as events
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.23; */
-
-contract DSNote {
-    event LogNote(
-        bytes4   indexed  sig,
-        address  indexed  guy,
-        bytes32  indexed  foo,
-        bytes32  indexed  bar,
-        uint              wad,
-        bytes             fax
-    ) anonymous;
-
-    modifier note {
-        bytes32 foo;
-        bytes32 bar;
-
-        assembly {
-            foo := calldataload(4)
-            bar := calldataload(36)
-        }
-
-        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
-
-        _;
-    }
-}
-
-////// lib/ds-stop/src/stop.sol
-/// stop.sol -- mixin for enable/disable functionality
-
-// Copyright (C) 2017  DappHub, LLC
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.23; */
-
-/* import "ds-auth/auth.sol"; */
-/* import "ds-note/note.sol"; */
-
-contract DSStop is DSNote, DSAuth {
-
-    bool public stopped;
-
-    modifier stoppable {
-        require(!stopped);
-        _;
-    }
-    function stop() public auth note {
-        stopped = true;
-    }
-    function start() public auth note {
-        stopped = false;
-    }
-
-}
-
-////// lib/erc20/src/erc20.sol
-/// erc20.sol -- API for the ERC20 token standard
-
-// See <https://github.com/ethereum/EIPs/issues/20>.
-
-// This file likely does not meet the threshold of originality
-// required for copyright to apply.  As a result, this is free and
-// unencumbered software belonging to the public domain.
-
-/* pragma solidity ^0.4.8; */
-
-contract ERC20Events {
-    event Approval(address indexed src, address indexed guy, uint wad);
-    event Transfer(address indexed src, address indexed dst, uint wad);
-}
-
-contract ERC20 is ERC20Events {
-    function totalSupply() public view returns (uint);
-    function balanceOf(address guy) public view returns (uint);
-    function allowance(address src, address guy) public view returns (uint);
-
-    function approve(address guy, uint wad) public returns (bool);
-    function transfer(address dst, uint wad) public returns (bool);
-    function transferFrom(
-        address src, address dst, uint wad
-    ) public returns (bool);
-}
-
-////// src/base.sol
-/// base.sol -- basic ERC20 implementation
-
-// Copyright (C) 2015, 2016, 2017  DappHub, LLC
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.23; */
-
-/* import "erc20/erc20.sol"; */
-/* import "ds-math/math.sol"; */
 
 contract DSTokenBase is ERC20, DSMath {
     uint256                                            _supply;
     mapping (address => uint256)                       _balances;
     mapping (address => mapping (address => uint256))  _approvals;
 
-    constructor(uint supply) public {
+    function DSTokenBase(uint supply) public {
         _balances[msg.sender] = supply;
         _supply = supply;
     }
@@ -343,41 +239,27 @@ contract DSTokenBase is ERC20, DSMath {
     }
 }
 
-////// src/token.sol
-/// token.sol -- ERC20 implementation with minting and burning
-
-// Copyright (C) 2015, 2016, 2017  DappHub, LLC
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.23; */
-
-/* import "ds-stop/stop.sol"; */
-
-/* import "./base.sol"; */
 
 contract DSToken is DSTokenBase(0), DSStop {
 
-    bytes32  public  symbol;
+    string  public  symbol = "";
+    string   public  name = "";
     uint256  public  decimals = 18; // standard token precision. override to customize
 
-    constructor(bytes32 symbol_) public {
+    function DSToken(
+        string symbol_,
+        string name_
+    ) public {
         symbol = symbol_;
+        name = name_;
     }
 
     event Mint(address indexed guy, uint wad);
     event Burn(address indexed guy, uint wad);
+
+    function setName(string name_) public auth {
+        name = name_;
+    }
 
     function approve(address guy) public stoppable returns (bool) {
         return super.approve(guy, uint(-1));
@@ -434,11 +316,210 @@ contract DSToken is DSTokenBase(0), DSStop {
         _supply = sub(_supply, wad);
         emit Burn(guy, wad);
     }
+}
 
-    // Optional token name
-    bytes32   public  name = "";
 
-    function setName(bytes32 name_) public auth {
-        name = name_;
+//==============================
+// ????
+//1.??DSToken??
+//
+//2.??TICDist??????
+//
+//3.?????DSToken????????
+//
+//4.????
+//
+// setDistConfig ???????
+//["0xc94cd681477e6a70a4797a9Cbaa9F1E52366823c","0xCc1696E57E2Cd0dCd61164eE884B4994EA3B916A","0x9bD5DB3059186FA8eeAD8e4275a2DA50F0380528"] //?3????
+//[51,15,34] //??????51%?15%?34%
+// setLockedConfig ??????
+//["0xc94cd681477e6a70a4797a9Cbaa9F1E52366823c"] //??????????
+//[50]	// ????????????50%
+//[10]	// ??????????????10?
+//
+//5.???? startDist
+//==============================
+
+//===============================
+// TIC?? ????
+//===============================
+contract TICDist is DSAuth, DSMath {
+
+    DSToken  public  TIC;                   // TIC????
+    uint256  public  initSupply = 0;        // ????????
+    uint256  public  decimals = 18;         // ???????????18???????
+
+    // ????
+    uint public distDay = 0;                // ?? ????
+    bool public isDistConfig = false;       // ?????????
+    bool public isLockedConfig = false;     // ?????????
+    
+    bool public bTest = true;               // ???????????1%?????
+    
+    struct Detail {  
+        uint distPercent;   // ????????????
+        uint lockedPercent; // ????????????
+        uint lockedDay;     // ????????????
+        uint256 lockedToken;   // ?????????????
+    }
+
+    address[] public founderList;                 // ?????
+    mapping (address => Detail)  public  founders;// ????????????
+    
+    // ????
+    function TICDist(uint256 initial_supply) public {
+        initSupply = initial_supply;
+    }
+
+    // ????????????, ??????????????????????
+    // @param  {DSToken} tic ????
+    function setTIC(DSToken  tic) public auth {
+        // ?????????
+        assert(address(TIC) == address(0));
+        // ???????????
+        assert(tic.owner() == address(this));
+        // ???????0
+        assert(tic.totalSupply() == 0);
+        // ??
+        TIC = tic;
+        // ??????????????????????
+        initSupply = initSupply*10**uint256(decimals);
+        TIC.mint(initSupply);
+    }
+
+    // ??????
+    // @param  {address[]nt} founders_ ?????
+    // @param  {uint[]} percents_ ??????????????100
+    function setDistConfig(address[] founders_, uint[] percents_) public auth {
+        // ???????
+        assert(isDistConfig == false);
+        // ??????
+        assert(founders_.length > 0);
+        assert(founders_.length == percents_.length);
+        uint all_percents = 0;
+        uint i = 0;
+        for (i=0; i<percents_.length; ++i){
+            assert(percents_[i] > 0);
+            assert(founders_[i] != address(0));
+            all_percents += percents_[i];
+        }
+        assert(all_percents <= 100);
+        // ??
+        founderList = founders_;
+        for (i=0; i<founders_.length; ++i){
+            founders[founders_[i]].distPercent = percents_[i];
+        }
+        // ????
+        isDistConfig = true;
+    }
+
+    // ????????
+    // @param  {address[]} founders_ ????????????????????????????
+    // @param  {uint[]} percents_ ???????
+    // @param  {uint[]} days_ ???????????????distDay???????
+    function setLockedConfig(address[] founders_, uint[] percents_, uint[] days_) public auth {
+        // ?????????
+        assert(isDistConfig == true);
+        // ???????
+        assert(isLockedConfig == false);
+        // ??????
+        if (founders_.length > 0){
+            // ??????
+            assert(founders_.length == percents_.length);
+            assert(founders_.length == days_.length);
+            uint i = 0;
+            for (i=0; i<percents_.length; ++i){
+                assert(percents_[i] > 0);
+                assert(percents_[i] <= 100);
+                assert(days_[i] > 0);
+                assert(founders_[i] != address(0));
+            }
+            // ??
+            for (i=0; i<founders_.length; ++i){
+                founders[founders_[i]].lockedPercent = percents_[i];
+                founders[founders_[i]].lockedDay = days_[i];
+            }
+        }
+        // ????
+        isLockedConfig = true;
+    }
+
+    // ????
+    function startDist() public auth {
+        // ???????
+        assert(distDay == 0);
+        // ???????
+        assert(isDistConfig == true);
+        assert(isLockedConfig == true);
+        // ???????????
+        uint i = 0;
+        for(i=0; i<founderList.length; ++i){
+            // ????????
+            uint256 all_token_num = TIC.totalSupply()*founders[founderList[i]].distPercent/100;
+            assert(all_token_num > 0);
+            // ???????
+            uint256 locked_token_num = all_token_num*founders[founderList[i]].lockedPercent/100;
+            // ?????token
+            founders[founderList[i]].lockedToken = locked_token_num;
+            // ??token????
+            TIC.push(founderList[i], all_token_num - locked_token_num);
+        }
+        // ??????
+        distDay = today();
+        // ??????
+        for(i=0; i<founderList.length; ++i){
+            if (founders[founderList[i]].lockedDay != 0){
+                founders[founderList[i]].lockedDay += distDay;
+            }
+        }
+    }
+
+    // ???????????????
+    function checkLockedToken() public {
+        // ?????
+        assert(distDay != 0);
+        // ?????????
+        assert(founders[msg.sender].lockedDay > 0);
+        // ?????
+        assert(founders[msg.sender].lockedToken > 0);
+        if (bTest){
+            // ?????????
+            uint unlock_percent = today() - distDay;
+            if(unlock_percent > founders[msg.sender].lockedPercent){
+                unlock_percent = founders[msg.sender].lockedPercent;
+            }
+            // ??????
+            uint256 all_token_num = TIC.totalSupply()*founders[msg.sender].distPercent/100;
+            // ???????
+            uint256 locked_token_num = all_token_num*founders[msg.sender].lockedPercent/100;
+            // ??????
+            uint256 unlock_token_num = locked_token_num*unlock_percent/founders[msg.sender].lockedPercent;
+            if (unlock_token_num > founders[msg.sender].lockedToken){
+                unlock_token_num = founders[msg.sender].lockedToken;
+            }
+            // ???? token
+            TIC.push(msg.sender, unlock_token_num);
+            // ??token????
+            founders[msg.sender].lockedToken -= unlock_token_num;
+        } else {
+            // ?????????
+            assert(today() > founders[msg.sender].lockedDay);
+            // ???? token
+            TIC.push(msg.sender, founders[msg.sender].lockedToken);
+            // ??token????
+            founders[msg.sender].lockedToken = 0;
+        }
+    }
+
+    // ?????? ???
+    function today() public constant returns (uint) {
+        return time() / 24 hours;
+        // TODO test
+        //return time() / 1 minutes;
+    }
+   
+    // ????????????
+    function time() public constant returns (uint) {
+        return block.timestamp;
     }
 }
