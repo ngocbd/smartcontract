@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x3cc8680ce5002dde7a41fe140af9575dcbc5920c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x42d7588a61da5ab56eeee6a553f09c5c1ea0f840
 */
 pragma solidity ^0.4.4;
-
 contract Token {
 
     /// @return ??token????
