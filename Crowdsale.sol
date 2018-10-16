@@ -1,106 +1,167 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x2842ae38e9f5e52517ddb9936c0a3610caf543a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x7d340742b6efc49df173985036c95306ae8692e8
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.11;
 
-interface token {
-    function transfer(address receiver, uint amount);
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded 
+ to a wallet
+ * as they arrive.
+ */
+contract token { function transfer(address receiver, uint amount){  } }
 contract Crowdsale {
-    address public beneficiary;  // ?????????
-    uint public fundingGoal;   // ????
-    uint public amountRaised;   // ????
-    uint public deadline;      // ?????
+  using SafeMath for uint256;
 
-    uint public price;    //  token ??????? , token????
-    token public tokenReward;   // ???token
+  // uint256 durationInMinutes;
+  // address where funds are collected
+  address public wallet;
+  // token address
+  address public addressOfTokenUsedAsReward;
 
-    mapping(address => uint256) public balanceOf;
+  uint256 public price = 1000;
 
-    bool fundingGoalReached = false;  // ????????
-    bool crowdsaleClosed = false;   //  ??????
+  token tokenReward;
 
-    /**
-    * ??????????
-    **/
-    event GoalReached(address recipient, uint totalAmountRaised);
-    event FundTransfer(address backer, uint amount, bool isContribution);
+  // mapping (address => uint) public contributions;
+  
 
-    /**
-     * ????, ??????
-     */
-    function Crowdsale(
-        address ifSuccessfulSendTo,
-        uint fundingGoalInEthers,
-        uint durationInMinutes,
-        uint finneyCostOfEachToken,
-        address addressOfTokenUsedAsReward) {
-        beneficiary = ifSuccessfulSendTo;
-        fundingGoal = fundingGoalInEthers * 1 ether;
-        deadline = now + durationInMinutes * 1 minutes;
-        price = finneyCostOfEachToken * 1 finney;
-        tokenReward = token(addressOfTokenUsedAsReward);   // ?????? token ??????????
+
+  // start and end timestamps where investments are allowed (both inclusive)
+  // uint256 public startTime;
+  // uint256 public endTime;
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale() {
+    //You will change this to your wallet where you need the ETH 
+    wallet = 0xBEd44eDDa0A4a967E1abde87c08B1c224e876538;
+    // durationInMinutes = _durationInMinutes;
+    //Here will come the checksum address we got
+    addressOfTokenUsedAsReward = 0x64463ba0ed340981836F99F913835D19A42C2e12;
+
+
+    tokenReward = token(addressOfTokenUsedAsReward);
+  }
+
+  bool public started = true;
+
+  function startSale(){
+    if (msg.sender != wallet) throw;
+    started = true;
+  }
+
+  function stopSale(){
+    if(msg.sender != wallet) throw;
+    started = false;
+  }
+
+  function setPrice(uint256 _price){
+    if(msg.sender != wallet) throw;
+    price = _price;
+  }
+  function changeWallet(address _wallet){
+  	if(msg.sender != wallet) throw;
+  	wallet = _wallet;
+  }
+
+  function changeTokenReward(address _token){
+    if(msg.sender!=wallet) throw;
+    tokenReward = token(_token);
+    addressOfTokenUsedAsReward = _token;
+  }
+
+  // fallback function can be used to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // if(weiAmount < 10**16) throw;
+    // if(weiAmount > 50*10**18) throw;
+
+    // calculate token amount to be sent
+    uint256 tokens = (weiAmount) * price;//weiamount * price 
+    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+    
+    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
+    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
+
+    tokenReward.transfer(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    // wallet.transfer(msg.value);
+    if (!wallet.send(msg.value)) {
+      throw;
     }
+  }
 
-    /**
-     * ?????Fallback???
-     * ????????????????
-     */
-    function () payable {
-        require(!crowdsaleClosed);
-        uint amount = msg.value;
-        balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-        tokenReward.transfer(msg.sender, amount / price);
-        FundTransfer(msg.sender, amount, true);
-    }
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = started;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
 
-    /**
-    *  ???????modifier????Python????????
-    * ?????????????????????????????????
-    * _ ???????????
-    **/
-    modifier afterDeadline() { if (now >= deadline) _; }
-
-    /**
-     * ????????????? ???????afterDeadline?????
-     *
-     */
-    function checkGoalReached() afterDeadline {
-        if (amountRaised >= fundingGoal) {
-            fundingGoalReached = true;
-            GoalReached(beneficiary, amountRaised);
-        }
-        crowdsaleClosed = true;
-    }
-
-
-    /**
-     * ?????????????????
-     * ?????????????
-     *
-     */
-    function safeWithdrawal() afterDeadline {
-        if (!fundingGoalReached) {
-            uint amount = balanceOf[msg.sender];
-            balanceOf[msg.sender] = 0;
-            if (amount > 0) {
-                if (msg.sender.send(amount)) {
-                    FundTransfer(msg.sender, amount, false);
-                } else {
-                    balanceOf[msg.sender] = amount;
-                }
-            }
-        }
-
-        if (fundingGoalReached && beneficiary == msg.sender) {
-            if (beneficiary.send(amountRaised)) {
-                FundTransfer(beneficiary, amountRaised, false);
-            } else {
-                //If we fail to send the funds to beneficiary, unlock funders balance
-                fundingGoalReached = false;
-            }
-        }
-    }
+  function withdrawTokens(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward.transfer(wallet,_amount);
+  }
 }
