@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Timelock at 0xbf5ec0ad2f5ea26530c70dd534d6c82a91e56da6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Timelock at 0xa406b495e56b839f2f556d9e9b85b19af82f2cd0
 */
 pragma solidity ^0.4.18;
 
@@ -248,12 +248,21 @@ contract Timelock is Ownable {
   }
 
   /**
+   * @dev modifier created to prevent short address attack problems.
+   * solution based on this blog post https://blog.coinfabrik.com/smart-contract-short-address-attack-mitigation-failure
+   */
+  modifier onlyPayloadSize(uint size) {
+    assert(msg.data.length >= size + 4);
+    _;
+  }
+
+  /**
    * @dev helper method that allows owner to allocate tokens to an address.
    * @param _address beneficiary receiving the tokens.
    * @param _amount number of tokens being received by beneficiary.
    * @return boolean indicating function success.
    */
-  function allocateTokens(address _address, uint256 _amount) onlyOwner external returns (bool) {
+  function allocateTokens(address _address, uint256 _amount) onlyPayloadSize(2 * 32) onlyOwner external returns (bool) {
     require(!allocationFinished);
 
     allocatedTokens[_address] = _amount;
