@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PGM_Coin at 0x3bb831e1ae1b9abacb2e9626994483e0b3759c1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PGM_Coin at 0x9B0E5F3278f3AD8C671795102D1FDEc336682F04
 */
 pragma solidity ^0.4.19;
 contract tokenRecipient { function receiveApproval(address from, uint256 value, address token, bytes extraData) public; }
