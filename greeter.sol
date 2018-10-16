@@ -1,25 +1,30 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract greeter at 0x674fc83f67B9668859A1d7882DFDbc384421C506
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract greeter at 0x89645740985defe15c99047bb20d887817ed33f1
 */
-pragma solidity ^0.4.11;
+contract mortal {
+  /* Define owner */
+  address owner;
 
-contract greeter {
+  /* executed at init and sets the owner */
+  function mortal() { owner = msg.sender; }
 
-    address owner;
-    string message;
+  /* Recover funds */
+  function kill() {
+    if (msg.sender == owner) selfdestruct(owner);
+  }
+}
 
-    function greeter(string _message) public {
-        owner = msg.sender;
-        message = _message;
-    }
+contract greeter is mortal {
+  /* Define greeting */
+  string greeting;
 
-    function say() constant returns (string) {
-        return message;
-    }
+  /* Runs when contract is executed */
+  function greeter(string _greeting) public {
+    greeting = _greeting;
+  }
 
-    function die() {
-        if (msg.sender == owner) {
-            selfdestruct(owner);
-        }
-    }
+  /* Main function */
+  function greet() constant returns (string) {
+    return greeting;
+  }
 }
