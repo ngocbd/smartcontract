@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0x3f9b89dc8190f8fac46def0bdd5eacf826c50408
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0x7f1e2c7d6a69bf34824d72c53b4550e895c0d8c2
 */
 pragma solidity ^ 0.4 .8;
 
 
 contract ERC20 {
 
-    uint public totalSupply;
+    function totalSupply() constant returns(uint total_Supply);
 
     function balanceOf(address who) constant returns(uint256);
 
@@ -33,13 +33,13 @@ contract blockoptions is ERC20
       string public name = "blockoptions";
     
       //To store symbol for token       
-      string public symbol = "BOPT";
+      string public symbol = "BOP";
     
       //To store decimal places for token
-      uint8 public decimals = 8;    
+      uint public decimals = 8;    
     
-      //To store current supply of BOPT
-      uint public totalSupply=20000000 * 100000000;
+      //To store current supply of BOP
+      uint public _totalSupply=20000000 * 10**decimals;
       
        uint pre_ico_start;
        uint pre_ico_end;
@@ -49,15 +49,15 @@ contract blockoptions is ERC20
        mapping(uint => uint) weireceived;
        mapping(uint => uint) optsSent;
       
-        event preico(uint counter,address investor,uint weireceived,uint optsSent);
-        event ico(uint counter,address investor,uint weireceived,uint optsSent);
+        event preico(uint counter,address investors,uint weiReceived,uint bopsent);
+        event ico(uint counter,address investors,uint weiReceived,uint bopsent);
         uint counter=0;
         uint profit_sent=0;
         bool stopped = false;
         
-      function blockoptions(){
+      function blockoptions() payable{
           owner = msg.sender;
-          balances[owner] = totalSupply ; //to handle 8 decimal places
+          balances[owner] = _totalSupply ; //to handle 8 decimal places
           pre_ico_start = now;
           pre_ico_end = pre_ico_start + 7 days;
           
@@ -72,10 +72,13 @@ contract blockoptions is ERC20
       address public owner;
       
       //modifier to check transaction initiator is only owner
-      modifier onlyOwner() {
-        if (msg.sender == owner)
-          _;
-      }
+       modifier onlyOwner() {
+        if (msg.sender != owner) 
+        {
+            revert();
+        }
+        _;
+    }
     
       //ownership can be transferred to provided newOwner. Function can only be initiated by contract owner's account
       function transferOwnership(address newOwner) onlyOwner {
@@ -133,7 +136,7 @@ contract blockoptions is ERC20
           }
         }
     
-    //Implementation for transferring BOPT to provided address 
+    //Implementation for transferring BOP to provided address 
       function transfer(address _to, uint _value) returns (bool){
 
         uint check = balances[owner] - _value;
@@ -145,25 +148,25 @@ contract blockoptions is ERC20
         {
             return false;
         }
-        else if(msg.sender == owner && check < 150000000000000 && now < ico_start + 180 days)
+        else if(msg.sender == owner && check < 130000000000000 && now < ico_start + 180 days)
         {
             return false;
         }
-        else if (msg.sender == owner && check < 100000000000000 && now < ico_start + 360 days)
+        else if (msg.sender == owner && check < 80000000000000 && now < ico_start + 360 days)
         {
             return false;
         }
-        else if (msg.sender == owner && check < 50000000000000 && now < ico_start + 540 days)
+        else if (msg.sender == owner && check < 30000000000000 && now < ico_start + 540 days)
         {
             return false;
         }
-        //Check provided BOPT should not be 0
+        //Check provided BOP should not be 0
        else if (_value > 0) {
-          //deduct OPTS amount from transaction initiator
+          //deduct BOP amount from transaction initiator
           balances[msg.sender] = Sub(balances[msg.sender],_value);
-          //Add OPTS to balace of target account
+          //Add BOP to balace of target account
           balances[_to] = Add(balances[_to],_value);
-          //Emit event for transferring BOPT
+          //Emit event for transferring BOP
           Transfer(msg.sender, _to, _value);
           return true;
         }
@@ -175,11 +178,11 @@ contract blockoptions is ERC20
       //Transfer initiated by spender 
       function transferFrom(address _from, address _to, uint _value) returns (bool) {
     
-        //Check provided BOPT should not be 0
+        //Check provided BOP should not be 0
         if (_value > 0) {
-          //Get amount of BOPT for which spender is authorized
+          //Get amount of BOP for which spender is authorized
           var _allowance = allowed[_from][msg.sender];
-          //Add amount of BOPT in trarget account's balance
+          //Add amount of BOP in target account's balance
           balances[_to] = Add(balances[_to], _value);
           //Deduct BOPT amount from _from account
           balances[_from] = Sub(balances[_from], _value);
@@ -193,12 +196,12 @@ contract blockoptions is ERC20
         }
       }
       
-      //Get BOPT balance for provided address
+      //Get BOP balance for provided address
       function balanceOf(address _owner) constant returns (uint balance) {
         return balances[_owner];
       }
       
-      //Add spender to authorize for spending specified amount of BOPT 
+      //Add spender to authorize for spending specified amount of BOP 
       function approve(address _spender, uint _value) returns (bool) {
         allowed[msg.sender][_spender] = _value;
         //Emit event for approval provided to spender
@@ -206,7 +209,7 @@ contract blockoptions is ERC20
         return true;
       }
       
-      //Get BOPT amount that spender can spend from provided owner's account 
+      //Get BOP amount that spender can spend from provided owner's account 
       function allowance(address _owner, address _spender) constant returns (uint remaining) {
         return allowed[_owner][_spender];
       }
@@ -220,7 +223,7 @@ contract blockoptions is ERC20
 	
     	function() payable 
     	{   
-    	    if(!stopped)
+    	    if(stopped && msg.sender != owner)
     	    revert();
     	     else if(msg.sender == owner)
     	    {
@@ -239,7 +242,7 @@ contract blockoptions is ERC20
             
         }
        
-       function pre_ico(address sender, uint value)payable
+       function pre_ico(address sender, uint value)private
        {
           counter = counter+1;
 	      investor[counter]=sender;
@@ -250,7 +253,7 @@ contract blockoptions is ERC20
           preico(counter,investor[counter],weireceived[counter],optsSent[counter]);
        }
        
-       function  main_ico(address sender, uint value)payable
+       function  main_ico(address sender, uint value)private
        {
            if(now >= ico_start && now <= (ico_start + 7 days)) //20% discount on BOPT
            {
@@ -293,46 +296,19 @@ contract blockoptions is ERC20
            
        }
        
+        function totalSupply() constant returns(uint256 totalSupply) 
+        {
+        totalSupply = _totalSupply;
+        }
       
         function endICO()onlyOwner
        {
           stopped=true;
-          if(balances[owner] > 2000000)
-          balances[owner] = 2000000;
-           
+          if(balances[owner] > 130000000000000)
+          {
+              uint burnedTokens = balances[owner]-130000000000000;
+           _totalSupply = _totalSupply-burnedTokens;
+           balances[owner] = 130000000000000;
+          }
        }
-
-        struct distributionStruct
-        {
-            uint divident;
-            bool dividentStatus;
-        }   
-        mapping(address => distributionStruct) dividentsMap;
-        mapping(uint => address)requestor;
-   
-         event dividentSent(uint requestNumber,address to,uint divi);
-         uint requestCount=0;
-          
-          function distribute()onlyOwner
-          {
-              for(uint i=1; i <= counter;i++)
-              {
-                dividentsMap[investor[i]].divident = (balanceOf(investor[i])*profit_sent)/(totalSupply*100000000);
-                dividentsMap[investor[i]].dividentStatus = true;
-              }
-          }
-           
-          function requestDivident()payable
-          {
-              requestCount = requestCount + 1;
-              requestor[requestCount] = msg.sender;
-                  if(dividentsMap[requestor[requestCount]].dividentStatus == true)
-                  {   
-                      dividentSent(requestCount,requestor[requestCount],dividentsMap[requestor[requestCount]].divident);
-                      requestor[requestCount].send(dividentsMap[requestor[requestCount]].divident);
-                      dividentsMap[requestor[requestCount]].dividentStatus = false;
-                  }
-               
-          }
-
 }
