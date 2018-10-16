@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoLeu at 0x369d0db2c7d56b095d758379b75f64085953528a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoLeu at 0x80754f5833c606d6443cfa315d933ad599fc3d07
 */
 pragma solidity ^0.4.16;
 
@@ -26,7 +26,7 @@ contract TokenERC20 is owned {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 2;
+    uint8 public decimals = 0;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -220,7 +220,7 @@ contract Pausable is owned {
 }
 
 /******************************************/
-/*       CryptoLeu TOKEN STARTS HERE       */
+/*       CryptoLEU TOKEN STARTS HERE       */
 /******************************************/
 
 contract CryptoLeu is owned, TokenERC20, Pausable {
@@ -234,7 +234,7 @@ contract CryptoLeu is owned, TokenERC20, Pausable {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function CryptoLeu() TokenERC20(60000000, "CryptoLeu", "LEU") public {}
+    function CryptoLeu() TokenERC20(600000000, "CryptoLEU", "LEU") public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
