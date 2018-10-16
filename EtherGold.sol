@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGold at 0x5c72b0da98c150f5e6a342508459542fe3b8f0ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGold at 0xfad9da192e088369c3d43517b96e5fabc17666f0
 */
 pragma solidity 0.4.15;
 
@@ -195,8 +195,6 @@ contract EtherGold is StandardToken, Ownable
 {
     string public name = "ETHER GOLD";
     string public symbol = "EG9";
-
-    uint public decimals = 8;
 
     uint private INITIAL_SUPPLY = 18 * 10**16;    //  1 800 000 000 or 1.8 Billions
     
