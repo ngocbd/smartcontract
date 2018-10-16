@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Campaign at 0x22a97c80d7e0a9ae616737e3b8b531248f4ef91d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Campaign at 0x17681500757628c7aa56d7e6546e119f94dd9479
 */
+pragma solidity 0.4.18;
+
 contract ReentrancyGuard {
 
   /**
@@ -531,13 +533,13 @@ contract Campaign is Claimable, HasNoTokens, ReentrancyGuard {
         assert(fundingGoal > 0);
 
         token = new Token(
-            _tokenName,
-            _tokenSymbol,
-            _tokenDecimals,
-            _distributionRecipients,
-            _distributionAmounts,
-            _releaseTimes,
-            uint8(timeMode)
+        _tokenName,
+        _tokenSymbol,
+        _tokenDecimals,
+        _distributionRecipients,
+        _distributionAmounts,
+        _releaseTimes,
+        uint8(timeMode)
         );
 
         minContribution = tokenPrice.div(10 ** uint256(token.decimals()));
@@ -698,7 +700,7 @@ contract Token is MintableToken, NoOwner {
         timeMode = TimeMode(_timeMode);
 
         // Mint pre-distributed tokens
-        for (uint256 i = 0; i < _recipients.length; i++) {
+        for (uint8 i = 0; i < _recipients.length; i++) {
             mint(_recipients[i], _amounts[i]);
             if (_releaseTimes[i] > 0) {
                 releaseTimes[_recipients[i]] = _releaseTimes[i];
@@ -735,7 +737,6 @@ contract Token is MintableToken, NoOwner {
     // Checks if funds of a given address are time-locked
     function timeLocked(address _spender)
     public
-    constant
     returns (bool)
     {
         if (releaseTimes[_spender] == 0) {
