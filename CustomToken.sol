@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe02e0dd34a6b3b48ff2bbc273a8cdf1a2160a3f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x84543b4235f2a9f978cf6837e164432396fff3bd
 */
 pragma solidity ^0.4.19;
 
@@ -95,41 +95,20 @@ contract ICOToken is BaseToken {
     }
 }
 
-contract LockToken is BaseToken {
-    struct LockMeta {
-        uint256 amount;
-        uint256 endtime;
-    }
-    
-    mapping (address => LockMeta) public lockedAddresses;
-
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(balanceOf[_from] >= _value);
-        LockMeta storage meta = lockedAddresses[_from];
-        require(now >= meta.endtime || meta.amount <= balanceOf[_from] - _value);
-        super._transfer(_from, _to, _value);
-    }
-}
-
-contract CustomToken is BaseToken, BurnToken, ICOToken, LockToken {
+contract CustomToken is BaseToken, BurnToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 100000000000000000000000000000;
-        name = 'ArtpolloToken';
-        symbol = 'APT';
-        decimals = 18;
-        balanceOf[0x8665e102b2c4d22da6a391537c3dfbcc6799e90a] = totalSupply;
-        Transfer(address(0), 0x8665e102b2c4d22da6a391537c3dfbcc6799e90a, totalSupply);
+        totalSupply = 1000000000;
+        name = 'BTCATM';
+        symbol = 'BATM';
+        decimals = 0;
+        balanceOf[0xf926279443f2986e29dcf2b639479f9c4b551d6f] = totalSupply;
+        Transfer(address(0), 0xf926279443f2986e29dcf2b639479f9c4b551d6f, totalSupply);
 
-        icoRatio = 200000;
-        icoBegintime = 1523066400;
-        icoEndtime = 1538924400;
-        icoSender = 0xaa0a590d0a151bc9444b52c299ea8e8ede3e9cd3;
-        icoHolder = 0xaa0a590d0a151bc9444b52c299ea8e8ede3e9cd3;
-
-        lockedAddresses[0x3c1441b6e64af12083ca86012d66bc79e5e51de6] = LockMeta({amount: 10000000000000000000000000000, endtime: 1617811200});
-        lockedAddresses[0xe0f1345bf1c581e610b847c135f96bd152102d2f] = LockMeta({amount: 10000000000000000000000000000, endtime: 1617811200});
-        lockedAddresses[0xac06238c9a64b2d455ee101fd0c415662e43ba2c] = LockMeta({amount: 10000000000000000000000000000, endtime: 1617811200});
-        lockedAddresses[0xe6bd6f2de6a830d3fafdc79a2b9932692e9be53e] = LockMeta({amount: 10000000000000000000000000000, endtime: 1617811200});
+        icoRatio = 10000;
+        icoBegintime = 1525104000;
+        icoEndtime = 1541001600;
+        icoSender = 0xf926279443f2986e29dcf2b639479f9c4b551d6f;
+        icoHolder = 0x0c885d8389f375b5a0073a4d9a31da9e5536d3dc;
     }
 
     function() public payable {
