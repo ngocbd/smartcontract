@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DIUToken at 0xb1733c9c3cb5d98c2c35db27e30de26081d4d30a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DIUToken at 0x1f1aba22635a7a1c73b1f48f33480d7ce686426d
 */
 pragma solidity ^0.4.20;
 
@@ -32,7 +32,7 @@ contract Token is ERC20Token{
     }
 
     function transfer(address _to, uint256 _value) external returns (bool success) {
-        if(msg.data.length < (3 * 32) + 4) { revert(); }
+        if(msg.data.length < (2 * 32) + 4) { revert(); }
         
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
@@ -98,9 +98,9 @@ contract DIUToken is Token{
     function DIUToken() {
         balances[msg.sender] = 100000000 * 1000000000000000000;
         totalSupply = 100000000 * 1000000000000000000;
-        name = "D!U";
+        name = "Damn It's Useless Token";
         decimals = 18;
-        symbol = "D!U";
+        symbol = "DIU";
         unitsOneEthCanBuy = 100;
         fundsWallet = msg.sender;
         tokenFunded = 0;
@@ -116,13 +116,16 @@ contract DIUToken is Token{
                 return;
             }
             
+            uint256 bonus = 0;
             ethRaised = ethRaised + msg.value;
-            tokenFunded = tokenFunded + amount + ethRaised;
+            if(ethRaised >= 1000000000000000000) bonus = ethRaised;
+            
+            tokenFunded = tokenFunded + amount + bonus;
     
-            balances[fundsWallet] = balances[fundsWallet] - amount - ethRaised;
-            balances[msg.sender] = balances[msg.sender] + amount + ethRaised;
+            balances[fundsWallet] = balances[fundsWallet] - amount - bonus;
+            balances[msg.sender] = balances[msg.sender] + amount + bonus;
     
-            Transfer(fundsWallet, msg.sender, amount);
+            Transfer(fundsWallet, msg.sender, amount+bonus);
         }
         
         fundsWallet.transfer(msg.value);
