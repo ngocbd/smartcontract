@@ -1,13 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfSMS at 0x9ae98746EB8a0aeEe5fF2b6B15875313a986f103
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfSMS at 0x835d4c2407d1e69245ed0e402ac1faad15310c82
 */
+// This contract extends the contracts provided by 
 //! SMS verification contract
 //! By Gav Wood, 2016.
 
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.15;
 
 contract Owned {
-	modifier only_owner { if (msg.sender != owner) return; _; }
+	modifier only_owner {
+		if (msg.sender != owner)
+			return;
+		_; 
+	}
 
 	event NewOwner(address indexed old, address indexed current);
 
@@ -26,8 +31,16 @@ contract Certifier {
 }
 
 contract SimpleCertifier is Owned, Certifier {
-	modifier only_delegate { if (msg.sender != delegate) return; _; }
-	modifier only_certified(address _who) { if (!certs[_who].active) return; _; }
+
+	modifier only_delegate {
+		assert(msg.sender == delegate);
+		_; 
+	}
+	modifier only_certified(address _who) {
+		if (!certs[_who].active)
+			return;
+		_; 
+	}
 
 	struct Certification {
 		bool active;
@@ -57,25 +70,36 @@ contract SimpleCertifier is Owned, Certifier {
 
 contract ProofOfSMS is SimpleCertifier {
 
-	modifier when_fee_paid { if (msg.value < fee) return; _; }
-
+	modifier when_fee_paid {
+		if (msg.value < fee)  {
+		RequiredFeeNotMet(fee, msg.value);
+			return;
+		}
+		_; 
+	}
+	event RequiredFeeNotMet(uint required, uint provided);
 	event Requested(address indexed who);
-	event Puzzled(address indexed who, bytes32 puzzle);
+	event Puzzled(address who, bytes32 puzzle);
+
+	event LogAddress(address test);
 
 	function request() payable when_fee_paid {
-		if (certs[msg.sender].active)
+		if (certs[msg.sender].active) {
 			return;
+		}
 		Requested(msg.sender);
 	}
 
-	function puzzle(address _who, bytes32 _puzzle) only_delegate {
+	function puzzle (address _who, bytes32 _puzzle) only_delegate {
 		puzzles[_who] = _puzzle;
 		Puzzled(_who, _puzzle);
 	}
 
 	function confirm(bytes32 _code) returns (bool) {
+		LogAddress(msg.sender);
 		if (puzzles[msg.sender] != sha3(_code))
 			return;
+
 		delete puzzles[msg.sender];
 		certs[msg.sender].active = true;
 		Confirmed(msg.sender);
@@ -87,8 +111,7 @@ contract ProofOfSMS is SimpleCertifier {
 	}
 
 	function drain() only_owner {
-		if (!msg.sender.send(this.balance))
-			throw;
+		require(msg.sender.send(this.balance));
 	}
 
 	function certified(address _who) constant returns (bool) {
