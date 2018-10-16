@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract timegame at 0xa864694cacdf27900afb3c32b1b07aea3c465dde
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract timegame at 0x4398a4a10347d8f18029c07853a7a689eebbb925
 */
 contract timegame {
 
