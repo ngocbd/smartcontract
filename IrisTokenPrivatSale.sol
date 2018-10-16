@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IrisTokenPrivatSale at 0x7C13b6da856189BCC9dbbDEa362D7df989243742
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IrisTokenPrivatSale at 0xca54C9668f23D95Defa69C683DAAFdaDA99DAf5C
 */
 pragma solidity ^0.4.17;
 
@@ -260,147 +260,25 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
 
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-    Burn(_who, _value);
-    Transfer(_who, address(0), _value);
-  }
-}
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-contract MintableToken is StandardToken, Ownable {
-
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-  uint256 public oneCoin = 10 ** 18;
-  uint256 public maxTokens = 2000 * (10**6) * oneCoin;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-  * @dev Function to mint tokens
-  * @param _to The address that will recieve the minted tokens.
-    * @param _amount The amount of tokens to mint.
-    * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-
-    require(totalSupply.add(_amount) <= maxTokens); 
-
-
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Transfer(0X0, _to, _amount);
-    return true;
-  }
-
-  /**
-  * @dev Function to stop minting new tokens.
-  * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-}
 
 // ***********************************************************************************
 // *************************** END OF THE BASIC **************************************
 // ***********************************************************************************
 
-contract IrisToken is MintableToken, BurnableToken, Pausable {
-  // Coin Properties
-  string public name = "IRIS";
-  string public symbol = "IRIS";
-  uint256 public decimals = 18;
 
-  // Special propeties
-  bool public tradingStarted = false;
-
-  /**
-  * @dev modifier that throws if trading has not started yet
-   */
-  modifier hasStartedTrading() {
-    require(tradingStarted);
-    _;
-  }
-
-  /**
-  * @dev Allows the owner to enable the trading. This can not be undone
-  */
-  function startTrading() public onlyOwner {
-    tradingStarted = true;
-  }
-
-  /**
-  * @dev Allows anyone to transfer the Change tokens once trading has started
-  * @param _to the recipient address of the tokens.
-  * @param _value number of tokens to be transfered.
-   */
-  function transfer(address _to, uint _value) hasStartedTrading whenNotPaused public returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  /**
-  * @dev Allows anyone to transfer the Change tokens once trading has started
-  * @param _from address The address which you want to send tokens from
-  * @param _to address The address which you want to transfer to
-  * @param _value uint the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint _value) hasStartedTrading whenNotPaused public returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function emergencyERC20Drain( ERC20 oddToken, uint amount ) public {
-    oddToken.transfer(owner, amount);
-  }
-}
 
 contract IrisTokenPrivatSale is Ownable, Pausable{
 
   using SafeMath for uint256;
 
   // The token being sold
-  IrisToken public token;
+  
+  
+  
  
 
-  uint256 public decimals = 18;  
 
-  uint256 public oneCoin = 10**decimals;
 
   address public multiSig; 
 
@@ -408,11 +286,7 @@ contract IrisTokenPrivatSale is Ownable, Pausable{
   // amount of raised money in wei
   uint256 public weiRaised;
 
-  // amount of raised tokens
-  uint256 public tokenRaised;
   
-  // number of participants in presale
-  uint256 public numberOfPurchasers = 0;
 
   event HostEther(address indexed buyer, uint256 value);
   event TokenPlaced(address indexed beneficiary, uint256 amount); 
@@ -433,31 +307,18 @@ contract IrisTokenPrivatSale is Ownable, Pausable{
 
 //**************************************    
 
-    token = new IrisToken();
+    
    
 }
   
 
-  function placeTokens(address beneficiary, uint256 _tokens) onlyOwner public {
-    
-    require(_tokens != 0);
-    require (beneficiary != 0x0);
-   // require(!hasEnded());
-    //require(tokenRaised.add(_tokens) <= maxTokens);
 
-    if (token.balanceOf(beneficiary) == 0) {
-      numberOfPurchasers++;
-    }
-    tokenRaised = tokenRaised.add(_tokens); // so we can go slightly over
-    token.mint(beneficiary, _tokens);
-    TokenPlaced(beneficiary, _tokens); 
-  }
 
   // low level token purchase function
   function buyTokens(address buyer, uint256 amount) whenNotPaused internal {
     
     require (multiSig != 0x0);
-    require (msg.value > 1 finney);
+    require (msg.value >= 2 ether);
     // update state
     weiRaised = weiRaised.add(amount);
    
@@ -467,12 +328,7 @@ contract IrisTokenPrivatSale is Ownable, Pausable{
     SendedEtherToMultiSig(multiSig,amount);
   }
 
-  // transfer ownership of the token to the owner of the presale contract
-  function transferTokenContractOwnership(address _address) public onlyOwner {
-   
-    token.transferOwnership(_address);
-   
-  }
+  
 
   // fallback function can be used to buy tokens
   function () public payable {
