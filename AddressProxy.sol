@@ -1,113 +1,93 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressProxy at 0x83011039a24b1fce5e848cbdded20c0a6e14cbf7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressProxy at 0xe112a13984c2ef19dbee98e3eda79e90db51f0e6
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.19;
+
 
 contract AddressProxy {
 
-    /**
-    * @dev The owner owns the address proxy and has the highest access
-    */
+    struct ContractAddress {
+        bytes32 id;
+        string name;
+        address at;
+        uint createdTime;
+        uint updatedTime;
+    }
+
     address public owner;
-
-    /**
-    * @dev The client is the address that has day to day access
-    */
-    address public client;
-
-    /**
-    * @dev If the proxy is locked, the client can't access the proxy anymore
-    */
-    bool public locked;
-
-    /**
-    * @param _owner the address that "own" the proxy and interact with it most of the time
-    * @param _client this is the "master" address and can swap the client address
-    */
-    constructor(address _owner, address _client) public {
-        owner = _owner;
-        client = _client;
-        locked = false;
-    }
-
-    modifier auth() {
-        require(msg.sender == owner || msg.sender == client);
-        _;
-    }
+    mapping(bytes32 => ContractAddress) private contractsAddress;
+    bytes32[] public availableIds;
 
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    modifier isUnlocked() {
-        require(locked == false);
-        _;
+    event AddressCreated(bytes32 id, string name, address at, uint createdTime, uint updatedTime);
+    event AddressUpdated(bytes32 id, string name, address at, uint createdTime, uint updatedTime);
+
+    function AddressProxy() public {
+        owner = msg.sender;
     }
 
-    event ChangedOwner(address _newOwner);
-    event ChangedClient(address _newClient);
-
-    //make contract payable
-    function() payable public {}
-
-    /**
-    * @param _location is the target contract address
-    * @param _data is "what" you want to execute on the target contract
-    * @param _ether the amount of ether to send with the execution (IN WEI)
-    */
-    function exec(address _location, bytes _data, uint256 _ether) payable external auth() isUnlocked() {
-        require(_location.call.value(_ether)(_data));
+    function getAvailableIds() public view returns (bytes32[]) {
+        return availableIds;
     }
 
-    /**
-    * @param _to the address to where you want to send ether
-    * @param _amount the amount of ether you want to send IN WEI
-    */
-    function sendEther(address _to, uint _amount) external auth() isUnlocked() {
-        _to.transfer(_amount);
+    //  Adds or updates an address
+    //  @params {string} name - the name of the contract Address
+    //  @params {address} newAddress
+    function addAddress(string name, address newAddress) public onlyOwner {
+        bytes32 contAddId = stringToBytes32(name);
+
+        uint nowInMilliseconds = now * 1000;
+
+        if (contractsAddress[contAddId].id == 0x0) {
+            ContractAddress memory newContractAddress;
+            newContractAddress.id = contAddId;
+            newContractAddress.name = name;
+            newContractAddress.at = newAddress;
+            newContractAddress.createdTime = nowInMilliseconds;
+            newContractAddress.updatedTime = nowInMilliseconds;
+            availableIds.push(contAddId);
+            contractsAddress[contAddId] = newContractAddress;
+
+            emit AddressCreated(newContractAddress.id, newContractAddress.name, newContractAddress.at, newContractAddress.createdTime, newContractAddress.updatedTime);
+        } else {
+            ContractAddress storage contAdd = contractsAddress[contAddId];
+            contAdd.at = newAddress;
+            contAdd.updatedTime = nowInMilliseconds;
+
+            emit AddressUpdated(contAdd.id, contAdd.name, contAdd.at, contAdd.createdTime, contAdd.updatedTime);
+        }
     }
 
-    /**
-    * @param _location is the target contract address
-    * @param _data is "what" you want to execute on the target contract
-    * @param _value how much ether should be transferred (in wei)
-    * @param _gas the amount of gas in wei
-    */
-    function execCustom(address _location, bytes _data, uint256 _value, uint256 _gas) payable external auth() isUnlocked() {
-        require(_location.call.value(_value).gas(_gas)(_data));
+    function getContractNameById(bytes32 id) public view returns(string) {
+        return contractsAddress[id].name;
     }
 
-    /**
-    * @dev lock's down the proxy and prevent the call of "exec" by ownerAddress and recoveryAddress
-    */
-    function lock() external auth() {
-        locked = true;
+    function getContractAddressById(bytes32 id) public view returns(address) {
+        return contractsAddress[id].at;
     }
 
-    /**
-    * @dev unlock's the proxy. Can only be done by recovery address
-    */
-    function unlock() external onlyOwner() {
-        locked = false;
+    function getContractCreatedTimeById(bytes32 id) public view returns(uint) {
+        return contractsAddress[id].createdTime;
     }
 
-    /**
-    * @dev set new owner of proxy contract and remove the old one
-    * @param _newOwner the new owner
-    */
-    function changeOwner(address _newOwner) external onlyOwner() {
-        owner = _newOwner;
-        emit ChangedOwner(owner);
+    function getContractUpdatedTimeById(bytes32 id) public view returns(uint) {
+        return contractsAddress[id].updatedTime;
     }
 
-    /**
-    * @dev Change the client address
-    * @param _newClient the new client
-    */
-    function changeClient(address _newClient) external onlyOwner() {
-        client = _newClient;
-        emit ChangedClient(client);
-    }
+    //  @params {string} source
+    //  @return {bytes32}
+    function stringToBytes32(string source) internal pure returns (bytes32 result) {
+        bytes memory tempEmptyStringTest = bytes(source);
+        if (tempEmptyStringTest.length == 0) {
+            return 0x0;
+        }
 
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
 }
