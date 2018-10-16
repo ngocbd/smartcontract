@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIX at 0x1063ce524265d5a3a624f4914acd573dd89ce988
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIX at 0x236e0c24812759dfc0f906de85f492089bc59af3
 */
 pragma solidity ^0.4.15;
 
@@ -607,7 +607,7 @@ contract MiniMeTokenFactory {
 
 
 /**
- * @title Aigang Token
+ * @title Aigang Launch Token
  *
  * @dev Simple ERC20 Token, with sale logic
  * @dev IMPORTANT NOTE: do not use or deploy this contract as-is. It needs some changes to be
