@@ -1,43 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHold at 0x18420e17f0ee1b32d1174f673c7eaa946a180b63
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHold at 0x8036165ccabee251c886d6121b047c16b5e798b5
 */
 pragma solidity ^0.4.20;
 
 /*
-* Team Waifu Fans presents..
+* Team UltimateGods presents..
 * ====================================*
-        (##(*,*###%             %######          
-     #*,,,,,,,,,,,,,/#      #/,,,,,,,,,,,,#.     
-   #,,,,,,,,,,,,,,,,,,,# %#,,,,,,,,,,,,,,,,,(#   
- #*,,,,,,,,,,,,,,,,,,,,,(,,,,,,,,,,,,,,,,,,,,,#  
-#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,( 
-#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#
-*,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,*
-*,,,,,,,,,######,,,,######(,,###,,###,,###,,,,,,,
-#,,,,,,,,,##,,##(,,###,,,##*,,##*,###,*##,,,,,,,#
-%*,,,,,,,,######,,,##,,,,###,,###(###/###,,,,,,,#
- #*,,,,,,,##,,,,,,,###,,,##/,,,####,####,,,,,,,# 
-   #,,,,,,##,,,,,,,,######/,,,,/###,###/,,,,,(/  
-    #,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#    
-     (#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,((     
-       #*,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#       
-         #*,,,,,,,,,,,,,,,,,,,,,,,,,,,,#         
-           #(,,,,,,,,,,,,,,,,,,,,,,,(#           
-             ,#,,,,,,,,,,,,,,,,,,,##             
-                #(,,,,,,,,,,,,,/#                
-                   #,,,,,,,,,#                   
-                     .#,,,#.         
+*   ____   ___   _____          
+*  |  _ \ / _ \ | ____|     
+*  | |_) | | | \| |  _     
+*  |  __/| |_| || |_| |      
+*  |_|    \___/ |_____|          
+*                                     *
 * ====================================*
 *
-* PROOF OF Waifu
+* PROOF OF GODS
 * -> What?
 *  The last Ethereum pyramide which earns you ETH!!!
-* [x] Waifu Dividends: 20% of every buy and 25% sell will be rewarded to token holders. Don't sell, don't be week.
-* [x] Waifu Masternodes: Holding 50 POW Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Waifu Masternodes: All players who enter the contract through your Masternode have 35% of their 20% dividends fee rerouted from the master-node, to the node-master!
+* [x] God Dividends: 20% of every buy and 25% sell will be rewarded to token holders. Don't sell, don't be week.
+* [x] God Masternodes: Holding 50 POG Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
+* [x] God Masternodes: All players who enter the contract through your Masternode have 35% of their 20% dividends fee rerouted from the master-node, to the node-master!
 *
 * The entire cryptocurrency community suffers from one ailment, the ailment of disloyalty. It's the problem that is eating away at our very survival.
-* This coin solves that problem. If you don't have Waifu in yourself, this coin is not for you. If you can belive in divinity crank up the miners and get to work!
+* This coin solves that problem. If you don't have God in yourself, this coin is not for you. If you can belive in divinity crank up the miners and get to work!
 */
 
 contract StrongHold {
@@ -142,12 +127,12 @@ contract StrongHold {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PowerOfWaifus";
-    string public symbol = "POW";
+    string public name = "PowerOfGods";
+    string public symbol = "POG";
     uint8 constant public decimals = 18;
-    uint8 constant internal entryFee_ = 20; // 20% to enter the Waifu contest
+    uint8 constant internal entryFee_ = 20; // 20% to enter the god contest
     uint8 constant internal transferFee_ = 10; // 10% transfer fee
-    uint8 constant internal refferalFee_ = 35; // 35% from enter fee divs or 7% for each invite, great for inviting strong new Waifus
+    uint8 constant internal refferalFee_ = 35; // 35% from enter fee divs or 7% for each invite, great for inviting strong new gods
     uint8 constant internal exitFee_ = 25; // 25% for selling, weak bodies out
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
@@ -594,7 +579,7 @@ contract StrongHold {
             _referredBy != _customerAddress &&
 
             // does the referrer have at least X whole tokens?
-            // i.e is the referrer a Waifuly chad masternode
+            // i.e is the referrer a godly chad masternode
             tokenBalanceLedger_[_referredBy] >= stakingRequirement
         ){
             // wealth redistribution
