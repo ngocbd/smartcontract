@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitcoinpro at 0x12f9cf26a436b67728480df770416f9be5605d77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinPro at 0xd079763792f984aef8bdda31a68b405031dfb367
 */
 pragma solidity ^0.4.13;
 
@@ -14,9 +14,9 @@ contract ERC20 {
      event Approval(address indexed _owner, address indexed _spender, uint256 _value);
  }
   
-  contract Bitcoinpro is ERC20 {
+  contract BitcoinPro is ERC20 {
      string public constant symbol = "BTCPRO";
-     string public constant name = "Bitcoin PRO";
+     string public constant name = "Bitcoin Pro";
      uint8 public constant decimals = 8;
      uint256 _totalSupply = 2000000 * 10**8;
      
@@ -28,9 +28,9 @@ contract ERC20 {
      mapping(address => mapping (address => uint256)) allowed;
      
   
-     function BitcoinPro() {
+     function BitcoinRed() {
          owner = msg.sender;
-         balances[owner] = 2000000 * 10**8;
+         balances[owner] = 21000000 * 10**8;
      }
      
      modifier onlyOwner() {
