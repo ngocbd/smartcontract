@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SignalsSociety at 0xd79f598f7620d959b19a35749926ef7b2629dc5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SignalsSociety at 0xf50f781ab39bb29b75ebe3fe765c71c8a9defa70
 */
 pragma solidity ^0.4.17;
 
 /*
-
+-----------------------------------
 Signals Society Membership Contract
 -----------------------------------
-
 */
 
 /**
- * Ownership functionality
+ * @title Ownable
+ * @dev Ownership functionality
  */
 contract Ownable {
   address public owner;
@@ -45,8 +45,9 @@ contract Ownable {
 	}
 }
 
-/**
- * Manages membership prices
+ /**
+ * @title Memberships
+ * @dev anages membership prices
  */
 contract Memberships is Ownable {
   // enumerates memberships (0, 1, 2)
@@ -64,10 +65,11 @@ contract Memberships is Ownable {
   }
 }
 
-/**
- * SignalsSociety Contract
+ /**
+ * @title MembSignalsSociety Contract
  */
 contract SignalsSociety is Ownable, Memberships {
+
   // lets the bot know a deposit was made
   event Deposited(address account, uint amount, uint balance, uint timestamp);
   // lets the bot know a membership was paid
@@ -92,15 +94,24 @@ contract SignalsSociety is Ownable, Memberships {
   }
   // accepts the membership payment by moving eth from the user's account
   // to the owner's account
-  function acceptMembership(address account, Membership membership, uint discount) public onlyBot {
+  function acceptMembership(address account, Membership membership, uint discount, address reseller, uint comission) public onlyBot {
     // get the price for the membership they selected minus any discounts for special promotions
-    var price = getMembershipPrice(membership) - discount;
+    uint price = getMembershipPrice(membership) - discount;
     // make sure they have enough balance to pay for it
     require(balances[account] >= price);
-    // transfer the price to the contract owner account
+    // remove the payment from the user's account
     balances[account] -= price;
-    balances[owner] += price;
-    // let the bot know the membershipt was paid
+    // if this comes from a reseller
+    if (reseller != 0x0) {
+      // give the reseller his comission
+      balances[reseller] += comission;
+      // and put the rest in the signalsociety account
+      balances[owner] += price - comission;
+    } else {
+      // otherwise put it all in the signalsociety account
+      balances[owner] += price;
+    }    
+    // let the bot know the membership was paid
     MembershipPaid(account, membership, now);
   }
   // default function.  Called when a user sends ETH to the contract.
