@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Nicks at 0x25470ca21a09e56b4275eeafba1858a6f3375b28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Nicks at 0x4a261669208347bf4f47a565edd166c609b84797
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 contract Nicks {
   mapping (address => string) private nickOfOwner;
@@ -10,9 +10,19 @@ contract Nicks {
   event Set (string indexed _nick, address indexed _owner);
   event Unset (string indexed _nick, address indexed _owner);
 
-  function Nicks () public {
+  constructor () public {
+	contractOwner = msg.sender;
   }
+  
+  address public contractOwner; 
+  
 
+modifier onlyOwner() {
+		require(contractOwner == msg.sender);
+		_;
+	}
+
+	
   function nickOf (address _owner) public view returns (string _nick) {
     return nickOfOwner[_owner];
   }
@@ -29,13 +39,13 @@ contract Nicks {
     string storage oldNick = nickOfOwner[owner];
 
     if (bytes(oldNick).length > 0) {
-      Unset(oldNick, owner);
+      emit Unset(oldNick, owner);
       delete ownerOfNick[oldNick];
     }
 
     nickOfOwner[owner] = _nick;
     ownerOfNick[_nick] = owner;
-    Set(_nick, owner);
+    emit Set(_nick, owner);
   }
 
   function unset () public {
@@ -44,9 +54,29 @@ contract Nicks {
     address owner = msg.sender;
     string storage oldNick = nickOfOwner[owner];
 
-    Unset(oldNick, owner);
+    emit Unset(oldNick, owner);
 
     delete ownerOfNick[oldNick];
     delete nickOfOwner[owner];
   }
+
+  
+  
+
+/////////////////////////////////
+/// USEFUL FUNCTIONS ///
+////////////////////////////////
+
+/* Fallback function to accept all ether sent directly to the contract */
+
+    function() payable public
+    {    }
+	
+	
+	function withdrawEther() public onlyOwner {
+		require(address(this).balance > 0);
+		
+        contractOwner.transfer(address(this).balance);
+    }
+	
 }
