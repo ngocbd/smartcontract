@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Prover at 0x4125c610b63dd63bE5c48D5CC3C68784F92D3B43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Prover at 0xbABA9bbb033f9b575ACf7F09A240782c17124731
 */
 pragma solidity ^0.4.13;
 
@@ -46,7 +46,7 @@ contract Prover {
 
     // external functions
     // allow access to our structs via functions with convenient return values
-    function registeredUsers() external constant
+    function registeredUsers() public constant
         returns (uint number_unique_addresses, address[] unique_addresses)
     {
         return (users.length(), users.members);
@@ -127,13 +127,11 @@ contract Prover {
     function status(address target, bytes32 dataHash) internal constant
         returns (bool proved, uint time, uint staked)
     {
-        return (accounts[target].entries.contains(dataHash),
+        return (accounts[msg.sender].entries.contains(dataHash),
                 accounts[target].values[dataHash].time,
                 accounts[target].values[dataHash].staked);
     }
 }
-
-pragma solidity ^0.4.13;
 
 // sets support up to 2^256-2 members
 // memberIndices stores the index of members + 1, not their actual index
