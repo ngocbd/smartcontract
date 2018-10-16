@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FuckToken at 0xab16e0d25c06cb376259cc18c1de4aca57605589
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FuckToken at 0x65be44c747988fbf606207698c944df4442efe19
 */
 pragma solidity ^0.4.16;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -7,7 +7,7 @@ contract tokenRecipient { function receiveApproval(address _from, uint256 _value
 contract FuckToken {
     /* Public variables of the FUCK token */
     string public standard = 'FUCK 1.1';
-    string public name = 'FinallyUsableCryptoKarma';
+    string public name = 'Finally Usable Crypto Karma';
     string public symbol = 'FUCK';
     uint8 public decimals = 4;
     uint256 public totalSupply = 708567744953;
