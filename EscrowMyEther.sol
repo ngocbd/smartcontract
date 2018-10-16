@@ -1,12 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EscrowMyEther at 0x1c02ce498dc6d0d6ef05a253e021258b07eeba91
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EscrowMyEther at 0xa8bc59e1a5ee4f5b7c0cd2b04ef5ef5e56820e07
 */
-pragma solidity ^0.4.16;
-    contract EscrowMyEther  {
-        
-        //Author: Cheung Ka Yin
-        //Date: 27 September 2017
-        //Version: EscrowMyEther v1.0 MainNet
+contract EscrowMyEther  {
+       
+
         
         address public owner;
 
@@ -54,28 +51,28 @@ pragma solidity ^0.4.16;
 
 
         //Run once the moment contract is created. Set contract creator
-        function EscrowMyEther() {
+        function EscrowMyEther () public {
             owner = msg.sender;
         }
 
-        function() payable
+        function() internal payable
         {
             //LogFundsReceived(msg.sender, msg.value);
         }
 
-        function setEscrowFee(uint fee) {
+        function setEscrowFee(uint fee) public {
 
             //Allowed fee range: 0.1% to 10%, in increments of 0.1%
             require (fee >= 1 && fee <= 100);
             escrowFee[msg.sender] = fee;
         }
 
-        function getEscrowFee(address escrowAddress) constant returns (uint) {
+        function getEscrowFee(address escrowAddress) public constant returns (uint) {
             return (escrowFee[escrowAddress]);
         }
 
         
-        function newEscrow(address sellerAddress, address escrowAddress, bytes32 notes) payable returns (bool) {
+        function newEscrow(address sellerAddress, address escrowAddress, bytes32 notes) public payable returns (bool) {
 
             require(msg.value > 0 && msg.sender != escrowAddress);
         
@@ -95,7 +92,7 @@ pragma solidity ^0.4.16;
             Funds[owner] += dev_fee;   
 
             //Amount seller receives = Total amount - 0.25% dev fee - Escrow Fee
-            currentEscrow.amount = msg.value - dev_fee - currentEscrow.escrow_fee;
+            currentEscrow.amount = msg.value;
 
             //These default to false, no need to set them again
             /*currentEscrow.escrow_intervention = false;
@@ -117,7 +114,7 @@ pragma solidity ^0.4.16;
         }
 
         //switcher 0 for Buyer, 1 for Seller, 2 for Escrow
-        function getNumTransactions(address inputAddress, uint switcher) constant returns (uint)
+        function getNumTransactions(address inputAddress, uint switcher) public constant returns (uint)
         {
 
             if (switcher == 0) return (buyerDatabase[inputAddress].length);
@@ -128,7 +125,7 @@ pragma solidity ^0.4.16;
         }
 
         //switcher 0 for Buyer, 1 for Seller, 2 for Escrow
-        function getSpecificTransaction(address inputAddress, uint switcher, uint ID) constant returns (address, address, address, uint, bytes32, uint, bytes32)
+        function getSpecificTransaction(address inputAddress, uint switcher, uint ID) public constant returns (address, address, address, uint, bytes32, uint, bytes32)
 
         {
             bytes32 status;
@@ -158,7 +155,7 @@ pragma solidity ^0.4.16;
         }   
 
 
-        function buyerHistory(address buyerAddress, uint startID, uint numToLoad) constant returns (address[], address[],uint[], bytes32[]){
+        function buyerHistory(address buyerAddress, uint startID, uint numToLoad) public constant returns (address[], address[],uint[], bytes32[]){
 
 
             uint length;
@@ -187,7 +184,7 @@ pragma solidity ^0.4.16;
 
 
                  
-        function SellerHistory(address inputAddress, uint startID , uint numToLoad) constant returns (address[], address[], uint[], bytes32[]){
+        function SellerHistory(address inputAddress, uint startID , uint numToLoad) public constant returns (address[], address[], uint[], bytes32[]){
 
             address[] memory buyers = new address[](numToLoad);
             address[] memory escrows = new address[](numToLoad);
@@ -206,7 +203,7 @@ pragma solidity ^0.4.16;
             return (buyers, escrows, amounts, statuses);
         }
 
-        function escrowHistory(address inputAddress, uint startID, uint numToLoad) constant returns (address[], address[], uint[], bytes32[]){
+        function escrowHistory(address inputAddress, uint startID, uint numToLoad) public constant returns (address[], address[], uint[], bytes32[]){
         
             address[] memory buyers = new address[](numToLoad);
             address[] memory sellers = new address[](numToLoad);
@@ -225,7 +222,7 @@ pragma solidity ^0.4.16;
             return (buyers, sellers, amounts, statuses);
     }
 
-        function checkStatus(address buyerAddress, uint nounce) constant returns (bytes32){
+        function checkStatus(address buyerAddress, uint nounce) public constant returns (bytes32){
 
             bytes32 status = "";
 
@@ -246,7 +243,7 @@ pragma solidity ^0.4.16;
         
         //When transaction is complete, buyer will release funds to seller
         //Even if EscrowEscalation is raised, buyer can still approve fund release at any time
-        function buyerFundRelease(uint ID)
+        function buyerFundRelease(uint ID) public
         {
             require(ID < buyerDatabase[msg.sender].length && 
             buyerDatabase[msg.sender][ID].release_approval == false &&
@@ -269,7 +266,7 @@ pragma solidity ^0.4.16;
         }
 
         //Seller can refund the buyer at any time
-        function sellerRefund(uint ID)
+        function sellerRefund(uint ID) public
         {
             address buyerAddress = sellerDatabase[msg.sender][ID].buyer;
             uint buyerID = sellerDatabase[msg.sender][ID].buyer_nounce;
@@ -296,7 +293,7 @@ pragma solidity ^0.4.16;
         //Once escalation is activated, escrow agent can release funds to seller OR make a full refund to buyer
 
         //Switcher = 0 for Buyer, Switcher = 1 for Seller
-        function EscrowEscalation(uint switcher, uint ID)
+        function EscrowEscalation(uint switcher, uint ID) public
         {
             //To activate EscrowEscalation
             //1) Buyer must not have approved fund release.
@@ -328,7 +325,7 @@ pragma solidity ^0.4.16;
         
         //ID is the transaction ID from Escrow's history. 
         //Decision = 0 is for refunding Buyer. Decision = 1 is for releasing funds to Seller
-        function escrowDecision(uint ID, uint Decision)
+        function escrowDecision(uint ID, uint Decision) public
         {
             //Escrow can only make the decision IF
             //1) Buyer has not yet approved fund release to seller
@@ -362,7 +359,7 @@ pragma solidity ^0.4.16;
             }  
         }
         
-        function WithdrawFunds()
+        function WithdrawFunds() public
         {
             uint amount = Funds[msg.sender];
             Funds[msg.sender] = 0;
@@ -371,8 +368,8 @@ pragma solidity ^0.4.16;
         }
 
 
-        function CheckBalance(address fromAddress) constant returns (uint){
+        function CheckBalance(address fromAddress) public constant returns (uint){
             return (Funds[fromAddress]);
         }
      
-    }
+}
