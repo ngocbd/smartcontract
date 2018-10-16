@@ -1,26 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract META at 0x7dce85240d178ae61e91aa82ecdc2048d1ca052f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract META at 0x1a3ae3278336b1e3ffe449ae5ef5c33d59b31107
 */
 contract META {
 
-    string public name = "Dunaton Metacurrency";
+    string public name = "Dunaton Metacurrency 2.0";
     uint8 public decimals = 18;
     string public symbol = "META";
 
     address public _owner;
     address public dev = 0xC96CfB18C39DC02FBa229B6EA698b1AD5576DF4c;
-    uint256 _tokePerEth = 156;
-    uint256 weIn;
+    uint256 public _tokePerEth = 156;
 
-    uint public _totalSupply = 21000000;  // 21m, 18dp - one token is 1000000000000000000 therefore
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
-
+    uint256 public _totalSupply = 21000000;  // 21m, 18dp - one token is 1000000000000000000 therefore
+    event Transfer(address indexed _from, address indexed _to, uint _value);
     // Storage
-    mapping (address => uint256) balances;
+    mapping (address => uint256) public balances;
 
     function META() {
         _owner = msg.sender;
         balances[_owner] = 5800000;    // premine 5.8m tokens to _owner
+        Transfer(this, _owner, 5800000);
         _totalSupply = sub(_totalSupply,balances[_owner]);
     }
 
@@ -37,8 +36,8 @@ contract META {
 
         balances[msg.sender] = sub(balanceOf(msg.sender), _value);
         balances[_to] = add(balances[_to], _value);
-        
-        Transfer(msg.sender, _to, _value, _data);
+
+        Transfer(msg.sender, _to, _value);
     }
 
     function transfer(address _to, uint _value) public {
@@ -46,7 +45,6 @@ contract META {
         require(balances[msg.sender] >= _value);
 
         uint codeLength;
-        bytes memory empty;
 
         assembly {
         // Retrieve the size of the code on target address, this needs assembly .
@@ -56,26 +54,23 @@ contract META {
         balances[msg.sender] = sub(balanceOf(msg.sender), _value);
         balances[_to] = add(balances[_to], _value);
 
-        Transfer(msg.sender, _to, _value, empty);
+        Transfer(msg.sender, _to, _value);
     }
 
     // fallback to receive ETH into contract and send tokens back based on current exchange rate
     function () payable public {
-        bytes memory empty;
         require(msg.value > 0);
 
-        uint incomingValueAsEth = msg.value / 1 ether;
+        uint incomingValueAsEth = div(msg.value,1 ether);
 
-        weIn = incomingValueAsEth;
-
-        uint256 _calcToken = (incomingValueAsEth * _tokePerEth); // value of payment in tokens
+        uint256 _calcToken = mul(incomingValueAsEth,_tokePerEth); // value of payment in tokens
 
         require(_totalSupply >= _calcToken);
         _totalSupply = sub(_totalSupply, _calcToken);
 
         balances[msg.sender] = add(balances[msg.sender], _calcToken);
 
-        Transfer(this, msg.sender, _calcToken, empty);
+        Transfer(this, msg.sender, _calcToken);
     }
 
     function changePayRate(uint256 _newRate) public {
@@ -85,8 +80,8 @@ contract META {
 
     function safeWithdrawal(address _receiver, uint256 _value) public {
         require((msg.sender == _owner));
-        uint256 valueAsEth = _value * 1 ether;
-        require((valueAsEth * 1 ether) < this.balance);
+        uint256 valueAsEth = mul(_value,1 ether);
+        require(valueAsEth < this.balance);
         _receiver.send(valueAsEth);
     }
 
@@ -99,7 +94,7 @@ contract META {
         _owner = _receiver;
     }
 
-    function tokens() public constant returns (uint) {
+    function totalSupply() public constant returns (uint256) {
         return _totalSupply;
     }
 
@@ -108,49 +103,27 @@ contract META {
         _totalSupply = add(_totalSupply,newBalance);
     }
 
-    function mul(uint a, uint b) internal returns (uint) {
+    function mul(uint a, uint b) internal pure returns (uint) {
         uint c = a * b;
-        assert(a == 0 || c / a == b);
+        require(a == 0 || c / a == b);
         return c;
     }
 
-    function div(uint a, uint b) internal returns (uint) {
+    function div(uint a, uint b) internal pure returns (uint) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
-    function sub(uint a, uint b) internal returns (uint) {
-        assert(b <= a);
+    function sub(uint a, uint b) internal pure returns (uint) {
+        require(b <= a);
         return a - b;
     }
 
-    function add(uint a, uint b) internal returns (uint) {
+    function add(uint a, uint b) internal pure returns (uint) {
         uint c = a + b;
-        assert(c >= a);
+        require(c >= a);
         return c;
-    }
-
-    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-        return a >= b ? a : b;
-    }
-
-    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-        return a < b ? a : b;
-    }
-
-    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-        return a >= b ? a : b;
-    }
-
-    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-        return a < b ? a : b;
-    }
-
-    function assert(bool assertion) internal {
-        if (!assertion) {
-            revert();
-        }
     }
 }
