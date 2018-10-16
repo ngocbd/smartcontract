@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmberToken at 0xe397d8c42bb3d94699859cf33a4b37bd1960f630
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmberToken at 0xc6003ba30368f58681c31a808b01960029a39793
 */
 //! By Parity Technologies, 2017.
 //! Released under the Apache Licence 2.
@@ -509,7 +509,7 @@ contract AmbrosusSale {
   /// The certifier resource. TODO: set address
   Certifier public constant CERTIFIER = Certifier(0x7b1Ab331546F021A40bd4D09fFb802261CaACcc9);
   // Who can halt/unhalt/kill?
-  address public constant ADMINISTRATOR = 0x11bf17b890a80080a8f9c1673d2951296a6f3d91; //0x00C269e9D02188E39C9922386De631c6AED5b4d4;//
+  address public constant ADMINISTRATOR = 0x00C269e9D02188E39C9922386De631c6AED5b4d4;//0x11bf17b890a80080a8f9c1673d2951296a6f3d91;
   // Who can prepurchase?
   address public constant PREPURCHASER = 0x00D426e9F24E0F426706A1aBf96E375014684C78;
   // Who gets the stash? Should not release funds during minting process.
