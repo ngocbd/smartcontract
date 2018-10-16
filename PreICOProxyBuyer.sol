@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x914774d266f39100b56c53c0563c3792f9403e0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x0e412af67f6c41e9209da8b8638d65bb883ddf5a
 */
 /**
  * Math operations with safety checks
@@ -820,9 +820,6 @@ contract StandardToken is ERC20, SafeMath {
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
 
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
-
     balances[_to] = safeAdd(balances[_to], _value);
     balances[_from] = safeSub(balances[_from], _value);
     allowed[_from][msg.sender] = safeSub(_allowance, _value);
@@ -849,39 +846,6 @@ contract StandardToken is ERC20, SafeMath {
 
   function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
-  }
-
-  /**
-   * Atomic increment of approved spending
-   *
-   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   *
-   */
-  function addApproval(address _spender, uint _addedValue)
-  returns (bool success) {
-      uint oldValue = allowed[msg.sender][_spender];
-      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-  }
-
-  /**
-   * Atomic decrement of approved spending.
-   *
-   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   */
-  function subApproval(address _spender, uint _subtractedValue)
-  returns (bool success) {
-
-      uint oldVal = allowed[msg.sender][_spender];
-
-      if (_subtractedValue > oldVal) {
-          allowed[msg.sender][_spender] = 0;
-      } else {
-          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
-      }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
   }
 
 }
@@ -1116,7 +1080,10 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
-    if(!investor.send(amount)) throw;
+    // This was originally "send()" but was replaced with call.value()() to
+    // forward gas, if there happens to be a complicated multisig implementation
+    // which would need more gas than the gas stipend:
+    if(!(investor.call.value(amount)())) throw;
     Refunded(investor, amount);
   }
 
