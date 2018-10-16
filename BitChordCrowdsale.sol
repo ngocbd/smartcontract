@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitChordCrowdsale at 0x60eaecdb31a9f931b4369c463ddac5507000684b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitChordCrowdsale at 0x0c2795fc4e1f57614eb78923dc78521ff0676fb8
 */
 pragma solidity ^0.4.20;
 
@@ -42,8 +42,15 @@ contract Ownable {
 
   address public newOwner;
 
+  address public techSupport;
+
   modifier onlyOwner() {
     require(msg.sender == owner);
+    _;
+  }
+
+  modifier onlyTechSupport() {
+    require(msg.sender == techSupport);
     _;
   }
 
@@ -60,6 +67,11 @@ contract Ownable {
     if (msg.sender == newOwner) {
       owner = newOwner;
     }
+  }
+
+  function transferTechSupport (address _address) public onlyOwner {
+    require (_address != address(0));
+    techSupport = _address;
   }
 }
 
@@ -1102,7 +1114,8 @@ ICO 1 token = $ 0.21 (ICO price: has to be updated)
 //Abstract Token contract
 contract TokenContract{
   function transfer(address,uint256) public;
-  function balanceOf(address) public returns(uint);    
+  function balanceOf(address) public returns(uint);
+  function setCrowdsaleContract(address _address) public;
 }
 
 //Crowdsale contract
@@ -1119,11 +1132,13 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
   uint public startingExchangePrice = 1902877214779731;
 
   // Constructor
-  function BitChordCrowdsale(address _tokenAddress) public payable {
+  function BitChordCrowdsale(address _tokenAddress, address _distribution) public payable {
+    require (msg.value > 0);
+    
     token = TokenContract(_tokenAddress);
-    owner = 0xAA38F23430DFAE7243af13d73C9DdC9C92B46Ec6;
+    owner = msg.sender;
 
-    distributionAddress = 0x6978E2EA6021704Ac814E9EA97FB207BC6237C59;
+    distributionAddress = _distribution;
 
     oraclize_setNetwork(networkID_auto);
     oraclize = OraclizeI(OAR.getAddress());
@@ -1135,25 +1150,28 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
     stage_3_price = startingExchangePrice*21/100;
 
     uint tenAM = 1521799200; // Put the erliest 10AM timestamp
+
+    token.setCrowdsaleContract(address(this));
+
     
     updateFlag = true;
     oraclize_query((findTenAmUtc(tenAM)),"URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
   }
 
   uint public constant STAGE_1_START = 1523404860; //1523404860 
-  uint public constant STAGE_1_FINISH = 1525132740;
+  uint public constant STAGE_1_FINISH = 1525132740;//1525132740;
 
   uint public stage_1_price;
   uint public constant STAGE_1_MAXCAP = 3100000 ether; 
 
-  uint public constant STAGE_2_START = 1525132860; 
-  uint public constant STAGE_2_FINISH = 1526687940; 
+  uint public constant STAGE_2_START = 1525132860;//1525132860; 
+  uint public constant STAGE_2_FINISH = 1526687940;//1526687940; 
 
   uint public stage_2_price;
   uint public stage_2_maxcap = 9000000 ether;
 
 
-  uint public constant STAGE_3_START = 1526688060; 
+  uint public constant STAGE_3_START = 1526688060; //1526688060; 
   uint public constant STAGE_3_FINISH = 1535414340;
 
   uint public stage_3_price;
@@ -1183,28 +1201,14 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
     return 0;
   }
 
-  function getTimeBasedBonus (uint _time) public view returns(uint) {
-    if (_time == 0){
-      _time = now;
-    }
-    if (getPhase(_time) != 3){
-      return 0;
-    }
-    if (STAGE_3_START + 20 days >= _time){
-      return 10;
-    }
-    if (STAGE_3_START + 38 days >= _time){
-      return 5;
-    }
-    return 0;
-  }
-
   function () public payable {
     require (buy(msg.sender, msg.value, now));
     require (msg.value >= MIN_IVESTMENT);
   }
 
   bool phase2Flag = false;
+
+  event OnSuccessfullyBought(address indexed to, uint indexed ethValue, bool indexed manual, uint tokens);
 
   function buy (address _address, uint _value, uint _time) internal returns(bool)  {
     uint8 currentPhase = getPhase(_time);
@@ -1216,6 +1220,8 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
         ethCollected = ethCollected.add(_value);
         token.transfer(_address,tokensToSend);
         distributionAddress.transfer(address(this).balance.sub(oraclizeBalance));
+
+        emit OnSuccessfullyBought(_address,_value,false,tokensToSend);
 
         stage_1_TokensSold = stage_1_TokensSold.add(tokensToSend);
 
@@ -1231,6 +1237,8 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
         msg.sender.transfer(_value.sub(ethRequire));
         distributionAddress.transfer(address(this).balance.sub(oraclizeBalance));
 
+        emit OnSuccessfullyBought(_address,ethRequire,false,availableTokens);
+
         ethCollected = ethCollected.add(ethRequire);
         stage_1_TokensSold = STAGE_1_MAXCAP;
 
@@ -1241,7 +1249,7 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
     if(currentPhase == 2){
       if(!phase2Flag){
         stage_2_maxcap = stage_2_maxcap.add(STAGE_1_MAXCAP.sub(stage_1_TokensSold));
-        phase2Flag = true;    
+        phase2Flag = true;
       }
 
       tokensToSend = _value.mul((uint)(10).pow(decimals))/stage_2_price;
@@ -1249,6 +1257,8 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
         ethCollected = ethCollected.add(_value);
         token.transfer(_address,tokensToSend);
         distributionAddress.transfer(address(this).balance.sub(oraclizeBalance));
+
+        emit OnSuccessfullyBought(_address,_value,false,tokensToSend);
 
         stage_2_TokensSold = stage_2_TokensSold.add(tokensToSend);
 
@@ -1263,6 +1273,8 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
         msg.sender.transfer(_value.sub(ethRequire));
         distributionAddress.transfer(address(this).balance.sub(oraclizeBalance));
 
+        emit OnSuccessfullyBought(_address,ethRequire,false,availableTokens);
+
         ethCollected = ethCollected.add(ethRequire);
         stage_2_TokensSold = stage_2_maxcap;
 
@@ -1271,13 +1283,13 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
     }
     if(currentPhase == 3){
       tokensToSend = _value.mul((uint)(10).pow(decimals))/stage_3_price;
-      uint bonusPercent = getTimeBasedBonus(_time);
-      tokensToSend = tokensToSend.add(tokensToSend.mul(bonusPercent)/100);
 
       if(stage_3_TokensSold.add(tokensToSend) <= STAGE_3_MAXCAP){
         ethCollected = ethCollected.add(_value);
         token.transfer(_address,tokensToSend);
         distributionAddress.transfer(address(this).balance.sub(oraclizeBalance));
+
+        emit OnSuccessfullyBought(_address,_value,false,availableTokens);
 
         stage_3_TokensSold = stage_3_TokensSold.add(tokensToSend);
 
@@ -1293,18 +1305,20 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
         msg.sender.transfer(_value.sub(ethRequire));
         distributionAddress.transfer(address(this).balance.sub(oraclizeBalance));
 
+        emit OnSuccessfullyBought(_address,ethRequire,false,availableTokens);
+
         ethCollected = ethCollected.add(ethRequire);
         stage_3_TokensSold = STAGE_3_MAXCAP;
 
         return true;
       }
-    }    
+    }
 
     return false;
   }
 
   function tokenCalculate (uint _value, uint _time) public view returns(uint)  {
-    uint bonusPercent;
+    // uint bonusPercent;
     uint8 currentPhase = getPhase(_time);
 
     if (currentPhase == 1){
@@ -1315,14 +1329,35 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
     }
     if(currentPhase == 3){
       uint tokensToSend = _value.mul((uint)(10).pow(decimals))/stage_3_price;
-      bonusPercent = getTimeBasedBonus(_time);
-      return tokensToSend.add(tokensToSend.mul(bonusPercent)/100);
+      return tokensToSend;
     }
     return 0;
   }
 
+  function sendTokensManually (address _address, uint _value) public{
+    require (msg.sender == owner || msg.sender == techSupport);
+
+    uint8 currentPhase = getPhase(0);
+
+    if(currentPhase == 1){
+        require(stage_1_TokensSold.add(_value) <= STAGE_1_MAXCAP);
+        stage_1_TokensSold += _value;
+    }
+    if(currentPhase == 2){
+        require(stage_2_TokensSold.add(_value) <= stage_2_maxcap);
+        stage_2_TokensSold += _value;
+    }
+    if(currentPhase == 3){
+        require(stage_3_TokensSold.add(_value) <= STAGE_3_MAXCAP);
+        stage_3_TokensSold += _value;
+    }
+
+    token.transfer(_address, _value);
+    emit OnSuccessfullyBought(_address,0,true,_value);
+  }
+
   function requestRemainingTokens () public onlyOwner {
-    require (now > STAGE_3_FINISH);
+    // require (now > STAGE_3_FINISH);
     token.transfer(owner,token.balanceOf(address(this)));
   }
 
@@ -1352,7 +1387,7 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
   function startOraclize (uint _time) public onlyOwner {
     require (_time != 0);
     require (!updateFlag);
-
+    
     updateFlag = true;
     oraclize_query(_time,"URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
     oraclizeBalance = oraclizeBalance.sub(oraclize_getPrice("URL"));
@@ -1371,11 +1406,11 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
     }
     oraclizeBalance = 0;
   }
-
+  
   function stopOraclize () public onlyOwner {
     updateFlag = false;
   }
-
+    
   function __callback(bytes32, string result, bytes) public {
     require(msg.sender == oraclize_cbAddress());
 
@@ -1393,6 +1428,6 @@ contract BitChordCrowdsale is Ownable, usingOraclize{
       update();
     }
   }
-
+  
   //end ORACLIZE functions
 }
