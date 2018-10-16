@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract timelock at 0x8b80ebc5ce6a1ece85c8d46d2fa2bfcefefbdcd7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract timelock at 0xd975caab131d730d174ac445dfedf8fc3127dabc
 */
 // Timelock
 // lock withdrawal for a set time period
@@ -24,7 +24,7 @@ contract timelock {
 //Global VARS//////////////////////////////////////////////////////////////////////////
 //////////////
 
-    uint public freezeBlocks = 20;       //number of blocks to keep a lockers (20)
+    uint public freezeBlocks = 5;       //number of blocks to keep a lockers (5)
 
 ///////////
 //MAPPING/////////////////////////////////////////////////////////////////////////////
