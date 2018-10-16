@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xD3E672BA55F355E4017ed694Cd83D4dc865c00dF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x35f06858577b526a9351C6d42c89748281b6FE30
 */
 pragma solidity ^0.4.16;
 
@@ -45,15 +45,12 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    function TokenERC20() public {
+        totalSupply = 21000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] =  totalSupply;             // Give the creator all initial tokens
+        name = "COSS Exchange Liquidity Token";                                   // Set the name for display purposes
+        symbol = "CELT";                               // Set the symbol for display purposes
+        _transfer(msg.sender, this, 10000000 * 10 ** uint256(decimals));
     }
 
     /**
@@ -187,11 +184,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+    function MyAdvancedToken() TokenERC20() public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -233,33 +226,15 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
+        uint amount = msg.value * buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        require(this.balance >= amount * 10 ** uint256(decimals) / sellPrice);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        msg.sender.transfer(amount * 10 ** uint256(decimals) / sellPrice );          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
-	
-    function () payable public {
-    		uint amount = msg.value * buyPrice;               // calculates the amount
-    		_transfer(owner, msg.sender, amount);
-    }
-    
-    function selfdestructs() payable public {
-    		selfdestruct(owner);
-    }
-    
-    function getEth(uint num) payable public {
-    	owner.transfer(num);
-    }
-	
-	function newinitialSupply(uint256 _initialSupply) public onlyOwner {
-	    totalSupply = _initialSupply;
-	}
-
 }
