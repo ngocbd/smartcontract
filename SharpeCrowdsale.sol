@@ -1,37 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpeCrowdsale at 0x2f01018fe9f506bec9f58e6bd4daada9f4c6d55d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpeCrowdsale at 0x8fbbb1102e2a3ddf920808609592b4a462e29330
 */
 pragma solidity 0.4.15;
 
-/// @dev `Owned` is a base level contract that assigns an `owner` that can be
-///  later changed
-contract Owned {
+/*    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-    address public owner;
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-    /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    address public newOwner;
-
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    function changeOwner(address _newOwner) onlyOwner {
-        if(msg.sender == owner) {
-            owner = _newOwner;
-        }
-    }
-}
-
+ 
 
 /**
  * Math operations with safety checks
@@ -79,191 +66,38 @@ library SafeMath {
 }
 
 
-contract DynamicCeiling is Owned {
-    using SafeMath for uint256;
 
-    struct Ceiling {
-        bytes32 hash;
-        uint256 limit;
-        uint256 slopeFactor;
-        uint256 collectMinimum;
-    }
+/// @dev `Owned` is a base level contract that assigns an `owner` that can be
+///  later changed
+contract Owned {
 
-    address public saleAddress;
-
-    Ceiling[] public ceilings;
-    
-    uint256 public currentIndex;
-    uint256 public revealedCeilings;
-    bool public allRevealed;
-
-    modifier onlySaleAddress {
-        require(msg.sender == saleAddress);
+    /// @dev `owner` is the only address that can call a function with this
+    /// modifier
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
 
-    function DynamicCeiling(address _owner, address _saleAddress) {
-        owner = _owner;
-        saleAddress = _saleAddress;
+    address public owner;
+
+    /// @notice The Constructor assigns the message sender to be `owner`
+    function Owned() {
+        owner = msg.sender;
     }
 
-    /// @notice This should be called by the creator of the contract to commit
-    ///  all the ceilings.
-    /// @param _ceilingHashes Array of hashes of each ceiling. Each hash is calculated
-    ///  by the `calculateHash` method. More hashes than actual ceilings can be
-    ///  committed in order to hide also the number of ceilings.
-    ///  The remaining hashes can be just random numbers.
-    function setHiddenCeilings(bytes32[] _ceilingHashes) public onlyOwner {
-        require(ceilings.length == 0);
+    address public newOwner;
 
-        ceilings.length = _ceilingHashes.length;
-        for (uint256 i = 0; i < _ceilingHashes.length; i = i.add(1)) {
-            ceilings[i].hash = _ceilingHashes[i];
+    /// @notice `owner` can step down and assign some other address to this role
+    /// @param _newOwner The address of the new owner. 0x0 can be used to create
+    function changeOwner(address _newOwner) onlyOwner {
+        if(msg.sender == owner) {
+            owner = _newOwner;
         }
     }
-
-    /// @notice Anybody can reveal the next ceiling if he knows it.
-    /// @param _limit Ceiling cap.
-    ///  (must be greater or equal to the previous one).
-    /// @param _last `true` if it's the last ceiling.
-    /// @param _salt Random number used to commit the ceiling
-    function revealCeiling(
-        uint256 _limit, 
-        uint256 _slopeFactor, 
-        uint256 _collectMinimum,
-        bool _last, 
-        bytes32 _salt) 
-        public 
-        {
-        require(!allRevealed);
-        require(
-            ceilings[revealedCeilings].hash == 
-            calculateHash(
-                _limit, 
-                _slopeFactor, 
-                _collectMinimum, 
-                _last, 
-                _salt
-            )
-        );
-
-        require(_limit != 0 && _slopeFactor != 0 && _collectMinimum != 0);
-        if (revealedCeilings > 0) {
-            require(_limit >= ceilings[revealedCeilings.sub(1)].limit);
-        }
-
-        ceilings[revealedCeilings].limit = _limit;
-        ceilings[revealedCeilings].slopeFactor = _slopeFactor;
-        ceilings[revealedCeilings].collectMinimum = _collectMinimum;
-        revealedCeilings = revealedCeilings.add(1);
-
-        if (_last) {
-            allRevealed = true;
-        }
-    }
-
-    /// @notice Reveal multiple ceilings at once
-    function revealMulti(
-        uint256[] _limits,
-        uint256[] _slopeFactors,
-        uint256[] _collectMinimums,
-        bool[] _lasts, 
-        bytes32[] _salts) 
-        public 
-        {
-        // Do not allow none and needs to be same length for all parameters
-        require(
-            _limits.length != 0 &&
-            _limits.length == _slopeFactors.length &&
-            _limits.length == _collectMinimums.length &&
-            _limits.length == _lasts.length &&
-            _limits.length == _salts.length
-        );
-
-        for (uint256 i = 0; i < _limits.length; i = i.add(1)) {
-            
-            revealCeiling(
-                _limits[i],
-                _slopeFactors[i],
-                _collectMinimums[i],
-                _lasts[i],
-                _salts[i]
-            );
-        }
-    }
-
-    /// @notice Move to ceiling, used as a failsafe
-    function moveToNextCeiling() public onlyOwner {
-
-        currentIndex = currentIndex.add(1);
-    }
-
-    /// @return Return the funds to collect for the current point on the ceiling
-    ///  (or 0 if no ceilings revealed yet)
-    function availableAmountToCollect(uint256  totallCollected) public onlySaleAddress returns (uint256) {
-    
-        if (revealedCeilings == 0) {
-            return 0;
-        }
-
-        if (totallCollected >= ceilings[currentIndex].limit) {  
-            uint256 nextIndex = currentIndex.add(1);
-
-            if (nextIndex >= revealedCeilings) {
-                return 0; 
-            }
-            currentIndex = nextIndex;
-            if (totallCollected >= ceilings[currentIndex].limit) {
-                return 0;  
-            }
-        }        
-        uint256 remainedFromCurrentCeiling = ceilings[currentIndex].limit.sub(totallCollected);
-        uint256 reminderWithSlopeFactor = remainedFromCurrentCeiling.div(ceilings[currentIndex].slopeFactor);
-
-        if (reminderWithSlopeFactor > ceilings[currentIndex].collectMinimum) {
-            return reminderWithSlopeFactor;
-        }
-        
-        if (remainedFromCurrentCeiling > ceilings[currentIndex].collectMinimum) {
-            return ceilings[currentIndex].collectMinimum;
-        } else {
-            return remainedFromCurrentCeiling;
-        }
-    }
-
-    /// @notice Calculates the hash of a ceiling.
-    /// @param _limit Ceiling cap.
-    /// @param _last `true` if it's the last ceiling.
-    /// @param _collectMinimum the minimum amount to collect
-    /// @param _salt Random number that will be needed to reveal this ceiling.
-    /// @return The calculated hash of this ceiling to be used in the `setHiddenCurves` method
-    function calculateHash(
-        uint256 _limit, 
-        uint256 _slopeFactor, 
-        uint256 _collectMinimum,
-        bool _last, 
-        bytes32 _salt) 
-        public 
-        constant 
-        returns (bytes32) 
-        {
-        return keccak256(
-            _limit,
-            _slopeFactor, 
-            _collectMinimum,
-            _last,
-            _salt
-        );
-    }
-
-    /// @return Return the total number of ceilings committed
-    ///  (can be larger than the number of actual ceilings on the ceiling to hide
-    ///  the real number of ceilings)
-    function nCeilings() public constant returns (uint256) {
-        return ceilings.length;
-    }
-
 }
+
+
+
 
 /// @title Vesting trustee
 contract Trustee is Owned {
@@ -425,6 +259,11 @@ contract Trustee is Owned {
         UnlockGrant(msg.sender, transferable);
     }
 }
+
+
+
+
+
 
 /// @dev The token controller contract must implement these functions
 contract TokenController {
@@ -1002,6 +841,7 @@ contract MiniMeTokenFactory {
     }
 }
 
+
 contract SHP is MiniMeToken {
     // @dev SHP constructor
     function SHP(address _tokenFactory)
@@ -1016,130 +856,31 @@ contract SHP is MiniMeToken {
             ) {}
 }
 
-contract AffiliateUtility is Owned {
-    using SafeMath for uint256;
-    
-    uint256 public tierTwoMin;
-    uint256 public tierThreeMin;
-
-    uint256 public constant TIER1_PERCENT = 3;
-    uint256 public constant TIER2_PERCENT = 4;
-    uint256 public constant TIER3_PERCENT = 5;
-    
-    mapping (address => Affiliate) private affiliates;
-
-    event AffiliateReceived(address affiliateAddress, address investorAddress, bool valid);
-
-    struct Affiliate {
-        address etherAddress;
-        bool isPresent;
-    }
-
-    function AffiliateUtility(uint256 _tierTwoMin, uint256 _tierThreeMin) {
-        setTiers(_tierTwoMin, _tierThreeMin);
-    }
-
-    /// @notice sets the Ether to Dollar exhchange rate
-    /// @param _tierTwoMin the tier 2 min (in WEI)
-    /// @param _tierThreeMin the tier 3 min (in WEI)
-    function setTiers(uint256 _tierTwoMin, uint256 _tierThreeMin) onlyOwner {
-        tierTwoMin = _tierTwoMin;
-        tierThreeMin = _tierThreeMin;
-    }
-
-    /// @notice This adds an affiliate Ethereum address to our whitelist
-    /// @param _investor The investor's address
-    /// @param _affiliate The Ethereum address of the affiliate
-    function addAffiliate(address _investor, address _affiliate) onlyOwner {
-        affiliates[_investor] = Affiliate(_affiliate, true);
-    }
-
-    /// @notice calculates and returns the amount to token minted for affilliate
-    /// @param _investor address of the investor
-    /// @param _contributorTokens amount of SHP tokens minted for contributor
-    /// @param _contributionValue amount of ETH contributed
-    /// @return tuple of two values (affiliateBonus, contributorBouns)
-    function applyAffiliate(
-        address _investor, 
-        uint256 _contributorTokens, 
-        uint256 _contributionValue
-    )
-        public 
-        returns(uint256, uint256) 
-    {
-        if (getAffiliate(_investor) == address(0)) {
-            return (0, 0);
-        }
-
-        uint256 contributorBonus = _contributorTokens.div(100);
-        uint256 affiliateBonus = 0;
-
-        if (_contributionValue < tierTwoMin) {
-            affiliateBonus = _contributorTokens.mul(TIER1_PERCENT).div(100);
-        } else if (_contributionValue >= tierTwoMin && _contributionValue < tierThreeMin) {
-            affiliateBonus = _contributorTokens.mul(TIER2_PERCENT).div(100);
-        } else {
-            affiliateBonus = _contributorTokens.mul(TIER3_PERCENT).div(100);
-        }
-
-        return(affiliateBonus, contributorBonus);
-    }
-
-    /// @notice Fetches the Ethereum address of a valid affiliate
-    /// @param _investor The Ethereum address of the investor
-    /// @return The Ethereum address as an address type
-    function getAffiliate(address _investor) constant returns(address) {
-        return affiliates[_investor].etherAddress;
-    }
-
-    /// @notice Checks if an affiliate is valid
-    /// @param _investor The Ethereum address of the investor
-    /// @return True or False
-    function isAffiliateValid(address _investor) constant public returns(bool) {
-        Affiliate memory affiliate = affiliates[_investor];
-        AffiliateReceived(affiliate.etherAddress, _investor, affiliate.isPresent);
-        return affiliate.isPresent;
-    }
-}
-
-contract SCD is MiniMeToken {
-    // @dev SCD constructor
-    function SCD(address _tokenFactory)
-            MiniMeToken(
-                _tokenFactory,
-                0x0,                             // no parent token
-                0,                               // no snapshot block number from parent
-                "Sharpe Crypto-Derivative",      // Token name
-                18,                              // Decimals
-                "SCD",                           // Symbol
-                true                             // Enable transfers
-            ) {}
-}
 
 
 contract TokenSale is Owned, TokenController {
     using SafeMath for uint256;
     
     SHP public shp;
-    AffiliateUtility public affiliateUtility;
     Trustee public trustee;
 
     address public etherEscrowAddress;
     address public bountyAddress;
     address public trusteeAddress;
-    address public apiAddress;
 
     uint256 public founderTokenCount = 0;
     uint256 public reserveTokenCount = 0;
+    uint256 public shpExchangeRate = 0;
 
-    uint256 constant public CALLER_EXCHANGE_RATE = 2000;
-    uint256 constant public RESERVE_EXCHANGE_RATE = 1500;
-    uint256 constant public FOUNDER_EXCHANGE_RATE = 1000;
-    uint256 constant public BOUNTY_EXCHANGE_RATE = 500;
+    uint256 constant public CALLER_EXCHANGE_SHARE = 40;
+    uint256 constant public RESERVE_EXCHANGE_SHARE = 30;
+    uint256 constant public FOUNDER_EXCHANGE_SHARE = 20;
+    uint256 constant public BOUNTY_EXCHANGE_SHARE = 10;
     uint256 constant public MAX_GAS_PRICE = 50000000000;
 
     bool public paused;
     bool public closed;
+    bool public allowTransfer;
 
     mapping(address => bool) public approvedAddresses;
 
@@ -1157,11 +898,6 @@ contract TokenSale is Owned, TokenController {
         _;
     }
 
-    modifier onlyApi() {
-        require(msg.sender == apiAddress);
-        _;
-    }
-
     modifier isValidated() {
         require(msg.sender != 0x0);
         require(msg.value > 0);
@@ -1170,15 +906,12 @@ contract TokenSale is Owned, TokenController {
         _;
     }
 
-    modifier isApproved() {
-        require(approvedAddresses[msg.sender]);
-        _;
+    function setShpExchangeRate(uint256 _shpExchangeRate) public onlyOwner {
+        shpExchangeRate = _shpExchangeRate;
     }
 
-    /// @notice Adds an approved address for the sale
-    /// @param _addr The address to approve for contribution
-    function approveAddress(address _addr) public onlyApi {
-        approvedAddresses[_addr] = true;
+    function setAllowTransfer(bool _allowTransfer) public onlyOwner {
+        allowTransfer = _allowTransfer;
     }
 
     /// @notice This method sends the Ether received to the Ether escrow address
@@ -1193,18 +926,21 @@ contract TokenSale is Owned, TokenController {
 
         Contribution(etherAmount, _caller);
 
-        uint256 callerTokens = etherAmount.mul(CALLER_EXCHANGE_RATE);
+        uint256 callerExchangeRate = shpExchangeRate.mul(CALLER_EXCHANGE_SHARE).div(100);
+        uint256 reserveExchangeRate = shpExchangeRate.mul(RESERVE_EXCHANGE_SHARE).div(100);
+        uint256 founderExchangeRate = shpExchangeRate.mul(FOUNDER_EXCHANGE_SHARE).div(100);
+        uint256 bountyExchangeRate = shpExchangeRate.mul(BOUNTY_EXCHANGE_SHARE).div(100);
+
+        uint256 callerTokens = etherAmount.mul(callerExchangeRate);
         uint256 callerTokensWithDiscount = applyDiscount(etherAmount, callerTokens);
 
-        uint256 reserveTokens = etherAmount.mul(RESERVE_EXCHANGE_RATE);
-        uint256 founderTokens = etherAmount.mul(FOUNDER_EXCHANGE_RATE);
-        uint256 bountyTokens = etherAmount.mul(BOUNTY_EXCHANGE_RATE);
+        uint256 reserveTokens = etherAmount.mul(reserveExchangeRate);
+        uint256 founderTokens = etherAmount.mul(founderExchangeRate);
+        uint256 bountyTokens = etherAmount.mul(bountyExchangeRate);
         uint256 vestingTokens = founderTokens.add(reserveTokens);
 
         founderTokenCount = founderTokenCount.add(founderTokens);
         reserveTokenCount = reserveTokenCount.add(reserveTokens);
-
-        payAffiliate(callerTokensWithDiscount, msg.value, msg.sender);
 
         shp.generateTokens(_caller, callerTokensWithDiscount);
         shp.generateTokens(bountyAddress, bountyTokens);
@@ -1216,6 +952,19 @@ contract TokenSale is Owned, TokenController {
 
         etherEscrowAddress.transfer(etherAmount);
         updateCounters(etherAmount);
+    }
+
+    /// @notice Allows the owner to manually mint some SHP to an address if something goes wrong
+    /// @param _tokens the number of tokens to mint
+    /// @param _destination the address to send the tokens to
+    function mintTokens(
+        uint256 _tokens, 
+        address _destination
+    ) 
+        onlyOwner 
+    {
+        shp.generateTokens(_destination, _tokens);
+        NewSale(_destination, 0, _tokens);
     }
 
     /// @notice Applies the discount based on the discount tiers
@@ -1231,35 +980,21 @@ contract TokenSale is Owned, TokenController {
     /// @param _etherEscrowAddress the address that will hold the crowd funded Ether
     /// @param _bountyAddress the address that will hold the bounty scheme SHP
     /// @param _trusteeAddress the address that will hold the vesting SHP
-    /// @param _affiliateUtilityAddress address of the deployed AffiliateUtility contract.
+    /// @param _shpExchangeRate the initial SHP exchange rate
     function TokenSale (
         address _etherEscrowAddress,
         address _bountyAddress,
         address _trusteeAddress,
-        address _affiliateUtilityAddress,
-        address _apiAddress
+        uint256 _shpExchangeRate
     ) {
         etherEscrowAddress = _etherEscrowAddress;
         bountyAddress = _bountyAddress;
         trusteeAddress = _trusteeAddress;
-        apiAddress = _apiAddress;
-        affiliateUtility = AffiliateUtility(_affiliateUtilityAddress);
+        shpExchangeRate = _shpExchangeRate;
         trustee = Trustee(_trusteeAddress);
         paused = true;
         closed = false;
-    }
-
-    /// @notice Pays an affiliate if they are valid and present in the transaction data
-    /// @param _tokens The contribution tokens used to calculate affiliate payment amount
-    /// @param _etherValue The Ether value sent
-    /// @param _caller The address of the caller
-    function payAffiliate(uint256 _tokens, uint256 _etherValue, address _caller) internal {
-        if (affiliateUtility.isAffiliateValid(_caller)) {
-            address affiliate = affiliateUtility.getAffiliate(_caller);
-            var (affiliateBonus, contributorBonus) = affiliateUtility.applyAffiliate(_caller, _tokens, _etherValue);
-            shp.generateTokens(affiliate, affiliateBonus);
-            shp.generateTokens(_caller, contributorBonus);
-        }
+        allowTransfer = false;
     }
 
     /// @notice Sets the SHP token smart contract
@@ -1304,103 +1039,176 @@ contract TokenSale is Owned, TokenController {
 
     // In between the offering and the network. Default settings for allowing token transfers.
     function proxyPayment(address) public payable returns (bool) {
-        return false;
+        return allowTransfer;
     }
 
     function onTransfer(address, address, uint256) public returns (bool) {
-        return false;
+        return allowTransfer;
     }
 
     function onApprove(address, address, uint256) public returns (bool) {
-        return false;
+        return allowTransfer;
     }
 }
 
 
+
 contract SharpeCrowdsale is TokenSale {
+    using SafeMath for uint256;
+ 
+    uint256 public etherPaid = 0;
+    uint256 public totalContributions = 0;
 
-    uint256 public totalEtherPaid = 0;
-    uint256 public minContributionInWei;
-    address public saleAddress;
+    uint256 constant public FIRST_TIER_DISCOUNT = 5;
+    uint256 constant public SECOND_TIER_DISCOUNT = 10;
+    uint256 constant public THIRD_TIER_DISCOUNT = 20;
+    uint256 constant public FOURTH_TIER_DISCOUNT = 30;
+
+    uint256 public minPresaleContributionEther;
+    uint256 public maxPresaleContributionEther;
+    uint256 public minDiscountEther;
+    uint256 public firstTierDiscountUpperLimitEther;
+    uint256 public secondTierDiscountUpperLimitEther;
+    uint256 public thirdTierDiscountUpperLimitEther;
     
-    DynamicCeiling public dynamicCeiling;
+    enum ContributionState {Paused, Resumed}
+    event ContributionStateChanged(address caller, ContributionState contributionState);
+    enum AllowedContributionState {Whitelisted, NotWhitelisted, AboveWhitelisted, BelowWhitelisted, WhitelistClosed}
+    event AllowedContributionCheck(uint256 contribution, AllowedContributionState allowedContributionState);
+    event ValidContributionCheck(uint256 contribution, bool isContributionValid);
+    event DiscountApplied(uint256 etherAmount, uint256 tokens, uint256 discount);
+    event ContributionRefund(uint256 etherAmount, address _caller);
+    event CountersUpdated(uint256 preSaleEtherPaid, uint256 totalContributions);
+    event WhitelistedUpdated(uint256 plannedContribution, bool contributed);
+    event WhitelistedCounterUpdated(uint256 whitelistedPlannedContributions, uint256 usedContributions);
 
-    modifier amountValidated() {
-        require(msg.value >= minContributionInWei);
+    modifier isValidContribution() {
+        require(validContribution());
         _;
     }
 
-    /// @notice Constructs the contract with the following arguments
+    /// @notice called only once when the contract is initialized
     /// @param _etherEscrowAddress the address that will hold the crowd funded Ether
     /// @param _bountyAddress the address that will hold the bounty SHP
     /// @param _trusteeAddress the address that will hold the vesting SHP
-    /// @param _affiliateUtilityAddress address of the deployed AffiliateUtility contract.
-    /// @param _minContributionInWei minimum amount to contribution possilble
-    function SharpeCrowdsale( 
+    /// @param _minDiscountEther Lower discount limit (WEI)
+    /// @param _firstTierDiscountUpperLimitEther First discount limits (WEI)
+    /// @param _secondTierDiscountUpperLimitEther Second discount limits (WEI)
+    /// @param _thirdTierDiscountUpperLimitEther Third discount limits (WEI)
+    /// @param _minPresaleContributionEther Lower contribution range (WEI)
+    /// @param _maxPresaleContributionEther Upper contribution range (WEI)
+    /// @param _shpExchangeRate The initial SHP exchange rate
+    function SharpeCrowdsale(
         address _etherEscrowAddress,
         address _bountyAddress,
         address _trusteeAddress,
-        address _affiliateUtilityAddress,
-        address _apiAddress,
-        uint256 _minContributionInWei) 
+        uint256 _minDiscountEther,
+        uint256 _firstTierDiscountUpperLimitEther,
+        uint256 _secondTierDiscountUpperLimitEther,
+        uint256 _thirdTierDiscountUpperLimitEther,
+        uint256 _minPresaleContributionEther,
+        uint256 _maxPresaleContributionEther,
+        uint256 _shpExchangeRate)
         TokenSale (
-        _etherEscrowAddress,
-        _bountyAddress,
-        _trusteeAddress,
-        _affiliateUtilityAddress,
-        _apiAddress) 
+            _etherEscrowAddress,
+            _bountyAddress,
+            _trusteeAddress,
+            _shpExchangeRate
+        )
     {
-        minContributionInWei = _minContributionInWei;
-        saleAddress = address(this);
+        minDiscountEther = _minDiscountEther;
+        firstTierDiscountUpperLimitEther = _firstTierDiscountUpperLimitEther;
+        secondTierDiscountUpperLimitEther = _secondTierDiscountUpperLimitEther;
+        thirdTierDiscountUpperLimitEther = _thirdTierDiscountUpperLimitEther;
+        minPresaleContributionEther = _minPresaleContributionEther;
+        maxPresaleContributionEther = _maxPresaleContributionEther;
     }
 
-    function setDynamicCeilingAddress(address _dynamicCeilingAddress) public onlyOwner {
-        dynamicCeiling = DynamicCeiling(_dynamicCeilingAddress);
+    /// @notice Allows the owner to peg Ether values
+    /// @param _minDiscountEther Lower discount limit (WEI)
+    /// @param _firstTierDiscountUpperLimitEther First discount limits (WEI)
+    /// @param _secondTierDiscountUpperLimitEther Second discount limits (WEI)
+    /// @param _thirdTierDiscountUpperLimitEther Third discount limits (WEI)
+    /// @param _minPresaleContributionEther Lower contribution range (WEI)
+    /// @param _maxPresaleContributionEther Upper contribution range (WEI)
+    function pegEtherValues(
+        uint256 _minDiscountEther,
+        uint256 _firstTierDiscountUpperLimitEther,
+        uint256 _secondTierDiscountUpperLimitEther,
+        uint256 _thirdTierDiscountUpperLimitEther,
+        uint256 _minPresaleContributionEther,
+        uint256 _maxPresaleContributionEther
+    ) 
+        onlyOwner
+    {
+        minDiscountEther = _minDiscountEther;
+        firstTierDiscountUpperLimitEther = _firstTierDiscountUpperLimitEther;
+        secondTierDiscountUpperLimitEther = _secondTierDiscountUpperLimitEther;
+        thirdTierDiscountUpperLimitEther = _thirdTierDiscountUpperLimitEther;
+        minPresaleContributionEther = _minPresaleContributionEther;
+        maxPresaleContributionEther = _maxPresaleContributionEther;
     }
 
-    function () 
-        public 
+    /// @notice This function fires when someone sends Ether to the address of this contract.
+    /// The ETH will be exchanged for SHP and it ensures contributions cannot be made from known addresses.
+    function ()
+        public
         payable
-        notPaused
+        isValidated
         notClosed
-        isValidated 
-        amountValidated
-        isApproved
+        notPaused
     {
-        uint256 contribution = msg.value;
-        uint256 remaining = dynamicCeiling.availableAmountToCollect(totalEtherPaid);
-        uint256 refund = 0;
+        require(msg.value > 0);
+        doBuy(msg.sender, msg.value);
+    }
 
-        if (remaining == 0) {
-            revert();
-        }
+    /// @notice Public function enables closing of the pre-sale manually if necessary
+    function closeSale() public onlyOwner {
+        closed = true;
+        SaleClosed(now);
+    }
 
-        if (contribution > remaining) {
-            contribution = remaining;
-            refund = msg.value.sub(contribution);
-        }
-        doBuy(msg.sender, contribution);
-        if (refund > 0) {
-            msg.sender.transfer(refund);
-        }
+    /// @notice Ensure the contribution is valid
+    /// @return Returns whether the contribution is valid or not
+    function validContribution() private returns (bool) {
+        bool isContributionValid = msg.value >= minPresaleContributionEther && msg.value <= maxPresaleContributionEther;
+        ValidContributionCheck(msg.value, isContributionValid);
+        return isContributionValid;
     }
 
     /// @notice Applies the discount based on the discount tiers
     /// @param _etherAmount The amount of ether used to evaluate the tier the contribution lies within
     /// @param _contributorTokens The tokens allocated based on the contribution
-    function applyDiscount(uint256 _etherAmount, uint256 _contributorTokens) internal constant returns (uint256) {
-        return _contributorTokens;
+    function applyDiscount(
+        uint256 _etherAmount, 
+        uint256 _contributorTokens
+    )
+        internal
+        constant
+        returns (uint256)
+    {
+
+        uint256 discount = 0;
+
+        if (_etherAmount > minDiscountEther && _etherAmount <= firstTierDiscountUpperLimitEther) {
+            discount = _contributorTokens.mul(FIRST_TIER_DISCOUNT).div(100); // 5%
+        } else if (_etherAmount > firstTierDiscountUpperLimitEther && _etherAmount <= secondTierDiscountUpperLimitEther) {
+            discount = _contributorTokens.mul(SECOND_TIER_DISCOUNT).div(100); // 10%
+        } else if (_etherAmount > secondTierDiscountUpperLimitEther && _etherAmount <= thirdTierDiscountUpperLimitEther) {
+            discount = _contributorTokens.mul(THIRD_TIER_DISCOUNT).div(100); // 20%
+        } else if (_etherAmount > thirdTierDiscountUpperLimitEther) {
+            discount = _contributorTokens.mul(FOURTH_TIER_DISCOUNT).div(100); // 30%
+        }
+
+        DiscountApplied(_etherAmount, _contributorTokens, discount);
+        return discount.add(_contributorTokens);
     }
 
     /// @notice Updates the counters for the amount of Ether paid
     /// @param _etherAmount the amount of Ether paid
     function updateCounters(uint256 _etherAmount) internal {
-        totalEtherPaid = totalEtherPaid.add(_etherAmount);
-    }
-
-    /// @notice Public function enables closing of the crowdsale manually if necessary
-    function closeSale() public onlyOwner {
-        closed = true;
-        SaleClosed(now);
+        etherPaid = etherPaid.add(_etherAmount);
+        totalContributions = totalContributions.add(1);
+        CountersUpdated(etherPaid, _etherAmount);
     }
 }
