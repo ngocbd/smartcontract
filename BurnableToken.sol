@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0x0edde4b6f91dbd2efd075ace85ec2e52d0696d44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0x06b9737a7a625478fe5a65bf4bff4390ff6ace96
 */
 pragma solidity ^0.4.15;
 
@@ -19,7 +19,7 @@ pragma solidity ^0.4.15;
  *
  */
 //import './SafeMath.sol';
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
 /*
     Overflow protected math functions
@@ -74,12 +74,12 @@ contract SafeMath {
 }
 
 //import './iBurnableToken.sol';
+
 pragma solidity ^0.4.15;
 
 //Burnable Token interface
 
 //import './iERC20Token.sol';
-
 pragma solidity ^0.4.15;
 
 // Token standard API
@@ -102,7 +102,6 @@ contract iBurnableToken is iERC20Token {
   function burnTokens(uint _burnCount) public;
   function unPaidBurnTokens(uint _burnCount) public;
 }
-
 
 contract BurnableToken is iBurnableToken, SafeMath {
 
