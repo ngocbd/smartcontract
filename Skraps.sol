@@ -1,37 +1,63 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Skraps at 0x6e34d8d84764d40f6d7b39cd569fd017bf53177d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Skraps at 0x324a48ebcbb46e61993931ef9d35f6697cd2901b
 */
 pragma solidity 0.4.19;
 
 contract Owned {
     address public owner;
-    address public candidate;
+    address public pendingOwner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     function Owned() internal {
         owner = msg.sender;
     }
-    
-    // A functions uses the modifier can be invoked only by the owner of the contract
+
     modifier onlyOwner {
-        require(owner == msg.sender);
+        require(msg.sender == owner);
         _;
     }
 
-    // To change the owner of the contract, putting the candidate
-    function changeOwner(address _owner) onlyOwner public {
-        candidate = _owner;
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        pendingOwner = newOwner;
     }
 
-    // The candidate must call this function to accept the proposal for the transfer of the rights of contract ownership
-    function acceptOwner() public {
-        require(candidate != address(0));
-        require(candidate == msg.sender);
-        owner = candidate;
-        delete candidate;
+    function acceptOwnership() public {
+        require(msg.sender == pendingOwner);
+        OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
     }
 }
 
-// Functions for safe operation with input values (subtraction and addition)
+contract Support is Owned {
+    mapping (address => bool) public supportList;
+
+    event SupportAdded(address indexed _who);
+    event SupportRemoved(address indexed _who);
+
+
+    modifier supportOrOwner {
+        require(msg.sender == owner || supportList[msg.sender]);
+        _;
+    }
+
+    function addSupport(address _who) public onlyOwner {
+        require(_who != address(0));
+        require(_who != owner);
+        require(!supportList[_who]);
+        supportList[_who] = true;
+        SupportAdded(_who);
+    }
+
+    function removeSupport(address _who) public onlyOwner {
+        require(supportList[_who]);
+        supportList[_who] = false;
+        SupportRemoved(_who);
+    }
+}
+
 library SafeMath {
     function sub(uint a, uint b) internal pure returns (uint) {
         assert(b <= a);
@@ -43,6 +69,10 @@ library SafeMath {
         assert(c >= a);
         return c;
     }
+}
+
+contract MigrationAgent {
+    function migrateFrom(address _from, uint256 _value) public;
 }
 
 // ERC20 interface https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
@@ -58,7 +88,7 @@ contract ERC20 {
     event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-contract Skraps is ERC20, Owned {
+contract Skraps is ERC20, Support {
     using SafeMath for uint;
 
     string public name = "Skraps";
@@ -66,10 +96,18 @@ contract Skraps is ERC20, Owned {
     uint8 public decimals = 18;
     uint public totalSupply;
 
-    uint private endOfFreeze = 1518912000; // Sun, 18 Feb 2018 00:00:00 GMT
+    uint private endOfFreeze = 1522569600; // Sun, 01 Apr 2018 00:00:00 PST
+    uint private MAX_SUPPLY = 110000000 * 1 ether;
+
+    address public migrationAgent;
 
     mapping (address => uint) private balances;
     mapping (address => mapping (address => uint)) private allowed;
+
+    enum State { Enabled, Migration }
+    State public state = State.Enabled;
+
+    event Burn(address indexed from, uint256 value);
 
     function balanceOf(address _who) public constant returns (uint) {
         return balances[_who];
@@ -80,14 +118,14 @@ contract Skraps is ERC20, Owned {
     }
 
     function Skraps() public {
-        totalSupply = 110000000 * 1 ether;
-        balances[msg.sender] = totalSupply;
-        Transfer(0, msg.sender, totalSupply);
+        totalSupply = MAX_SUPPLY;
+        balances[owner] = totalSupply;
+        Transfer(0, owner, totalSupply);
     }
 
     function transfer(address _to, uint _value) public returns (bool success) {
         require(_to != address(0));
-        require(now >= endOfFreeze || msg.sender == owner);
+        require(now > endOfFreeze || msg.sender == owner || supportList[msg.sender]);
         require(balances[msg.sender] >= _value);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -97,7 +135,6 @@ contract Skraps is ERC20, Owned {
 
     function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
         require(_to != address(0));
-        require(now >= endOfFreeze || msg.sender == owner);
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         balances[_from] = balances[_from].sub(_value);
@@ -108,17 +145,61 @@ contract Skraps is ERC20, Owned {
 
     function approve(address _spender, uint _value) public returns (bool success) {
         require(_spender != address(0));
+        require(now > endOfFreeze || msg.sender == owner || supportList[msg.sender]);
         require((_value == 0) || (allowed[msg.sender][_spender] == 0));
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    // Withdraws tokens from the contract if they accidentally or on purpose was it placed there
+    function setMigrationAgent(address _agent) public onlyOwner {
+        require(state == State.Enabled);
+        migrationAgent = _agent;
+    }
+
+    function startMigration() public onlyOwner {
+        require(migrationAgent != address(0));
+        require(state == State.Enabled);
+        state = State.Migration;
+    }
+
+    function cancelMigration() public onlyOwner {
+        require(state == State.Migration);
+        require(totalSupply == MAX_SUPPLY);
+        migrationAgent = address(0);
+        state = State.Enabled;
+    }
+
+    function migrate() public {
+        require(state == State.Migration);
+        require(balances[msg.sender] > 0);
+        uint value = balances[msg.sender];
+        balances[msg.sender] = balances[msg.sender].sub(value);
+        totalSupply = totalSupply.sub(value);
+        Burn(msg.sender, value);
+        MigrationAgent(migrationAgent).migrateFrom(msg.sender, value);
+    }
+
+    function manualMigrate(address _who) public supportOrOwner {
+        require(state == State.Migration);
+        require(balances[_who] > 0);
+        uint value = balances[_who];
+        balances[_who] = balances[_who].sub(value);
+        totalSupply = totalSupply.sub(value);
+        Burn(_who, value);
+        MigrationAgent(migrationAgent).migrateFrom(_who, value);
+    }
+
     function withdrawTokens(uint _value) public onlyOwner {
-        require(balances[this] > 0 && balances[this] >= _value);
-        balances[this] = balances[this].sub(_value);
+        require(balances[address(this)] > 0 && balances[address(this)] >= _value);
+        balances[address(this)] = balances[address(this)].sub(_value);
         balances[msg.sender] = balances[msg.sender].add(_value);
-        Transfer(this, msg.sender, _value);
+        Transfer(address(this), msg.sender, _value);
+    }
+
+    function () payable public {
+        require(state == State.Migration);
+        require(msg.value == 0);
+        migrate();
     }
 }
