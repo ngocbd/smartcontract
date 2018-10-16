@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITO at 0xe945073fe198ef52f1179bc8ca69b65b270fcfc4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITO at 0xfcedce553f6032462740f4e116a81ffe7f92d2b9
 */
 pragma solidity ^0.4.18;
 
@@ -563,7 +563,7 @@ contract CommonSale is StagedCrowdsale {
 
   uint public totalTokensMinted;
 
-  StasyqToken public token;
+  StasyqToken public token = StasyqToken(0xF300cC72613D575A4567405C2A07d2AaF182aEBf);
 
   modifier onlyDirectMintAgentOrOwner() {
     require(directMintAgent == msg.sender || owner == msg.sender);
@@ -629,7 +629,9 @@ contract CommonSale is StagedCrowdsale {
 
 contract ITO is CommonSale {
 
-  address public foundersTokensWallet;
+  address public foundersTokensWalletMaster;
+  
+  address public foundersTokensWalletSlave;
 
   address public bountyTokensWallet;
 
@@ -653,11 +655,12 @@ contract ITO is CommonSale {
     masterWallet = 0x6715Feb90B78d4d7aD92FbaCA7Fd70481e12f836;
     slaveWallet = 0x8029618Ecb5445B73515d7C51AbB316A91FC7f23;
     slaveWalletPercent = 50;
-    foundersTokensWallet = 0x05E87Dc9c075256cB94951e0b35C581b93961885;
+    foundersTokensWalletMaster = 0x05E87Dc9c075256cB94951e0b35C581b93961885;
+    foundersTokensWalletSlave = 0x8029618Ecb5445B73515d7C51AbB316A91FC7f23;
     bountyTokensWallet = 0x6715Feb90B78d4d7aD92FbaCA7Fd70481e12f836;
-    start = 1525352400;
+    start = 1523019600;
     period = 60;
-    lockPeriod = 90;
+    lockPeriod = 180;
     minPrice = 100000000000000000;
     foundersTokensPercent = 25;
     bountyTokensPercent = 5;
@@ -675,23 +678,36 @@ contract ITO is CommonSale {
     bountyTokensPercent = newBountyTokensPercent;
   }
 
-  function setFoundersTokensWallet(address newFoundersTokensWallet) public onlyOwner {
-    foundersTokensWallet = newFoundersTokensWallet;
+  function setFoundersTokensWalletMaster(address newFoundersTokensWalletMaster) public onlyOwner {
+    foundersTokensWalletMaster = newFoundersTokensWalletMaster;
+  }
+  
+  function setFoundersTokensWalletSlave(address newFoundersTokensWalletSlave) public onlyOwner {
+    foundersTokensWalletSlave = newFoundersTokensWalletSlave;
   }
 
   function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
     bountyTokensWallet = newBountyTokensWallet;
   }
-
+  
   function finishMinting() public whenNotPaused onlyOwner {
     uint summaryTokensPercent = bountyTokensPercent.add(foundersTokensPercent);
     uint mintedTokens = token.totalSupply();
     uint totalSupply = mintedTokens.mul(percentRate).div(percentRate.sub(summaryTokensPercent));
     uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
     uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
-    token.mint(this, foundersTokens);
-    token.lock(foundersTokensWallet, lockPeriod);
-    token.transfer(foundersTokensWallet, foundersTokens);
+    
+    uint foundersTokensMaster = foundersTokens.mul(slaveWalletPercent).div(percentRate);
+    uint foundersTokensSlave = foundersTokens.mul(percentRate.sub(slaveWalletPercent)).div(percentRate);
+    
+    token.mint(this, foundersTokensMaster);
+    token.transfer(foundersTokensWalletMaster, foundersTokensMaster);
+    token.lock(foundersTokensWalletMaster, lockPeriod);
+    
+    token.mint(this, foundersTokensSlave);
+    token.transfer(foundersTokensWalletSlave, foundersTokensSlave);
+    token.lock(foundersTokensWalletSlave, lockPeriod);
+    
     token.mint(this, bountyTokens);
     token.transfer(bountyTokensWallet, bountyTokens);
     totalTokensMinted = totalTokensMinted.add(foundersTokens).add(bountyTokens);
