@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0xfb025f588cd68b9ddd30e4c3919748e87e5c6265
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0x52a06bf1cc88cd2d816d7763dc5fde33457490d6
 */
 pragma solidity ^0.4.22;
 
@@ -20,7 +20,8 @@ contract Aeromart is Owned {
     
     struct Note {
         bytes32 productID;
-        string textOrImage;
+        string text;
+		string image;
     }
     
     uint public notesLength;
@@ -28,32 +29,35 @@ contract Aeromart is Owned {
    
     event noteInfo(
         bytes32 productID,
-        string textOrImage
+        string text,
+		string image
     );
     
-    function addNote(bytes32 _productID, string _textOrImage) onlyOwner public returns (uint) {
+    function addNote(bytes32 _productID, string _text, string _image) onlyOwner public returns (uint) {
         Note storage note = notes[notesLength];
         
         note.productID = _productID;
-        note.textOrImage = _textOrImage;
-		
-        emit noteInfo(_productID, _textOrImage);
+        note.text = _text;
+		note.image = _image;
+        
+        emit noteInfo(_productID, _text, _image);
         
         notesLength++;
         return notesLength;
     }
     
-    function setNote(uint256 _id, bytes32 _productID, string _textOrImage) onlyOwner public {
+    function setNote(uint256 _id, bytes32 _productID, string _text, string _image) onlyOwner public {
         Note storage note = notes[_id];
         
         note.productID = _productID;
-        note.textOrImage = _textOrImage;
+        note.text = _text;
+		note.image = _image;
         
-        emit noteInfo(_productID, _textOrImage);
+        emit noteInfo(_productID, _text, _image);
     }
     
-    function getNote(uint256 _id) view public returns (bytes32, string) {
-        return (notes[_id].productID, notes[_id].textOrImage);
+    function getNote(uint256 _id) view public returns (bytes32, string, string) {
+        return (notes[_id].productID, notes[_id].text, notes[_id].image);
     }
     
     // comments section
