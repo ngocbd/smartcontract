@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETimesChain at 0x7bb0cf2a571da6e78da7e76f7fedf5726f47a9a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eTimesChain at 0x0226f84b243ec25e56844e436eec73711c613fd5
 */
 pragma solidity ^0.4.14;
 
-contract  ETimesChain {
+contract  eTimesChain {
     
     /* Public variables of the token */
-    string public name = " ETimesChain ";
+    string public name = " eTimesChain ";
     uint256 public decimals = 2;
     uint256 public totalSupply;
     string public symbol = "ETN";
@@ -14,7 +14,7 @@ contract  ETimesChain {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function ETimesChain () {
+    function eTimesChain () {
         owner = 0xdD222dA99a11DF13A97e861383Ae1b15e808e70A;
         /* Total supply is 300 million (300,000,000)*/
         balances[0xdD222dA99a11DF13A97e861383Ae1b15e808e70A] = 300000000 * 10**decimals;
