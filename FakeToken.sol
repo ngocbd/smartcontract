@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FakeToken at 0xa0ece74981af3ed84d4659fe1f469e7c47e5ed33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FakeToken at 0x6dcf8319b3c6fffd4ac6079a7cc336d1c5562f80
 */
 pragma solidity ^0.4.10;
 
@@ -103,7 +103,7 @@ contract FakeToken is StandardToken, SafeMath {
     bool public isFinalized;              // switched to true in operational state
     uint256 public fundingStartBlock;
     uint256 public fundingEndBlock;
-    uint256 public constant tokenExchangeRate = 1000; // 6400 tokens per 1 ETH
+    uint256 public constant tokenExchangeRate = 6400; // 6400 tokens per 1 ETH
 
     // constructor
     function FakeToken(
