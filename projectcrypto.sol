@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract projectcrypto at 0x0db9990998784ecee0543e8c8c16efa464c464b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract projectcrypto at 0xf0e59df97fb1a44a9169fd4eaa33cbd5a6e9f4eb
 */
 pragma solidity ^0.4.15;
 
@@ -120,11 +120,11 @@ contract projectcrypto is StandardToken {
 
     function projectcrypto(
         ) {
-        balances[msg.sender] = 1000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 1000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000;                        // Update total supply (100000 for example)
         name = "Palladium";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "XPM";                               // Set the symbol for display purposes
+        symbol = "PLMX";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
