@@ -1,18 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x413c8657b6E6FA2B433dB62271e662A470DE4ba0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x9823e4e4f4552cd84720dabbd6fb2c7b67066c6c
 */
+pragma solidity ^0.4.23;
+
 // CryptoRoulette
 //
 // Guess the number secretly stored in the blockchain and win the whole contract balance!
 // A new number is randomly chosen after each try.
 //
-// To play, call the play() method with the guessed number (1-10).  Bet price: 0.1 ether
+// To play, call the play() method with the guessed number (1-10).  Bet price: 0.2 ether
 
 contract CryptoRoulette {
 
     uint256 private secretNumber;
     uint256 public lastPlayed;
-    uint256 public betPrice = 0.1 ether;
+    uint256 public betPrice = 0.2 ether;
     address public ownerAddr;
 
     struct Game {
@@ -21,7 +23,7 @@ contract CryptoRoulette {
     }
     Game[] public gamesPlayed;
 
-    function CryptoRoulette() public {
+    constructor() public {
         ownerAddr = msg.sender;
         shuffle();
     }
@@ -49,7 +51,7 @@ contract CryptoRoulette {
     }
 
     function kill() public {
-        if (msg.sender == ownerAddr && now > lastPlayed + 1 days) {
+        if (msg.sender == ownerAddr && now > lastPlayed + 6 hours) {
             suicide(msg.sender);
         }
     }
