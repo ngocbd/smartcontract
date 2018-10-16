@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentForwarder at 0x0b0dd5737eb7432c7c7054ef156628c6d7b9d2f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentForwarder at 0x7f9fa692e1b65d2b6d670feebd3e6bcc29606f14
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -129,13 +129,7 @@ contract PaymentForwarder is Haltable {
     owner = _owner;
   }
 
-  /**
-   * Pay on a behalf of an address.
-   *
-   * @param customerId Identifier in the central database, UUID v4
-   *
-   */
-  function pay(uint128 customerId, address benefactor) public stopInEmergency payable {
+  function payWithoutChecksum(uint128 customerId, address benefactor) public stopInEmergency payable {
 
     uint weiAmount = msg.value;
 
@@ -160,13 +154,34 @@ contract PaymentForwarder is Haltable {
   }
 
   /**
+   * Pay on a behalf of an address.
+   *
+   * @param customerId Identifier in the central database, UUID v4
+   *
+   */
+   function pay(uint128 customerId, address benefactor, bytes1 checksum) public stopInEmergency payable {
+    // see customerid.py
+     if (bytes1(sha3(customerId, benefactor)) != checksum) throw;
+     payWithoutChecksum(customerId, benefactor);
+   }
+
+  /**
    * Pay on a behalf of the sender.
    *
    * @param customerId Identifier in the central database, UUID v4
    *
    */
+  function payForMyselfWithChecksum(uint128 customerId, bytes1 checksum) public payable {
+    // see customerid.py
+    if (bytes1(sha3(customerId)) != checksum) throw;
+    payWithoutChecksum(customerId, msg.sender);
+  }
+
+  /**
+   * Legacy API signature.
+   */
   function payForMyself(uint128 customerId) public payable {
-    pay(customerId, msg.sender);
+    payWithoutChecksum(customerId, msg.sender);
   }
 
 }
