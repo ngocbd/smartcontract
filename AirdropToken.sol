@@ -1,130 +1,222 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropToken at 0x28ccdda197d319a241005b9c9f01bac48b90f556
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropToken at 0x8acfc0d6ddddcddaac8d5c88d281a95278e2bec5
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
-contract AirDropToken {
+// ----------------------------------------------------------------------------
+// 'AirDropToken' token contract
+//
+// Deployed to : 0xEAceE895fBb814bf074C5138F5607e01ED0BeCA8
+// Symbol      : ARDP
+// Name        : AirDropToken
+// Total supply: 5000000000
+// Decimals    : 18
+// ----------------------------------------------------------------------------
 
-    event Transfer(address indexed from, address indexed to, uint256 tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
 
-    string _name;
-    string _symbol;
-    uint8 _decimals;
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
+}
 
-    uint256 _totalSupply;
 
-    bytes32 _rootHash;
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    mapping (address => uint256) _balances;
-    mapping (address => mapping(address => uint256)) _allowed;
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-    mapping (uint256 => uint256) _redeemed;
 
-    function MerkleAirDropToken(string name, string symbol, uint8 decimals, bytes32 rootHash, uint256 premine) public {
-        _name = name;
-        _symbol = symbol;
-        _decimals = decimals;
-        _rootHash = rootHash;
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
 
-        if (premine > 0) {
-            _balances[msg.sender] = premine;
-            _totalSupply = premine;
-            Transfer(0, msg.sender, premine);
-        }
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    function Owned() public {
+        owner = msg.sender;
     }
 
-    function name() public constant returns (string name) {
-        return _name;
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 
-    function symbol() public constant returns (string symbol) {
-        return _symbol;
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract AirDropToken is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function AirDropToken() public {
+        symbol = "ARDP";
+        name = "AirDropToken";
+        decimals = 18;
+        _totalSupply = 5000000000000000000000000000;
+        balances[0xEAceE895fBb814bf074C5138F5607e01ED0BeCA8] = _totalSupply;
+        Transfer(address(0), 0xEAceE895fBb814bf074C5138F5607e01ED0BeCA8, _totalSupply);
     }
 
-    function decimals() public constant returns (uint8 decimals) {
-        return _decimals;
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
     }
 
-    function totalSupply() public constant returns (uint256 totalSupply) {
-        return _totalSupply;
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
     }
 
-    function balanceOf(address tokenOwner) public constant returns (uint256 balance) {
-         return _balances[tokenOwner];
-    }
 
-    function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining) {
-        return _allowed[tokenOwner][spender];
-    }
-
-    function transfer(address to, uint256 amount) public returns (bool success) {
-        if (_balances[msg.sender] < amount) { return false; }
-
-        _balances[msg.sender] -= amount;
-        _balances[to] += amount;
-
-        Transfer(msg.sender, to, amount);
-
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 amount) public returns (bool success) {
 
-        if (_allowed[from][msg.sender] < amount || _balances[from] < amount) {
-            return false;
-        }
-
-        _balances[from] -= amount;
-        _allowed[from][msg.sender] -= amount;
-        _balances[to] += amount;
-
-        Transfer(from, to, amount);
-
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
         return true;
     }
 
-    function approve(address spender, uint256 amount) public returns (bool success) {
-        _allowed[msg.sender][spender] = amount;
 
-        Approval(msg.sender, spender, amount);
-
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
         return true;
     }
 
-    function redeemed(uint256 index) public constant returns (bool redeemed) {
-        uint256 redeemedBlock = _redeemed[index / 256];
-        uint256 redeemedMask = (uint256(1) << uint256(index % 256));
-        return ((redeemedBlock & redeemedMask) != 0);
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
     }
 
-    function redeemPackage(uint256 index, address recipient, uint256 amount, bytes32[] merkleProof) public {
 
-        // Make sure this package has not already been claimed (and claim it)
-        uint256 redeemedBlock = _redeemed[index / 256];
-        uint256 redeemedMask = (uint256(1) << uint256(index % 256));
-        require((redeemedBlock & redeemedMask) == 0);
-        _redeemed[index / 256] = redeemedBlock | redeemedMask;
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
 
-        // Compute the merkle root
-        bytes32 node = keccak256(index, recipient, amount);
-        uint256 path = index;
-        for (uint16 i = 0; i < merkleProof.length; i++) {
-            if ((path & 0x01) == 1) {
-                node = keccak256(merkleProof[i], node);
-            } else {
-                node = keccak256(node, merkleProof[i]);
-            }
-            path /= 2;
-        }
 
-        // Check the merkle proof
-        require(node == _rootHash);
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
 
-        // Redeem!
-        _balances[recipient] += amount;
-        _totalSupply += amount;
 
-        Transfer(0, recipient, amount);
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
