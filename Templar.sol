@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Templar at 0xd2e28752827a9431de9ddec552fbddae9f473ae5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TEMPLAR at 0xd056d21719e7e2bc216cb74fb18a3d0f1542af6e
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.19;
 
-contract Templar {
-string public constant symbol = "Templar";
-  string public constant name = "KXT";
-  uint8 public constant decimals = 18;
-  uint256 public totalSupply = 100000000 * (uint256(10)**decimals);
-  address public owner;
-  uint256 public rate =  5000000000000;
+contract TEMPLAR {
+string public constant symbol ="TXK";
+  string public constant name ="TEMPLAR";
+  uint8 public constant decimals = 8;
+  uint256 public totalSupply = 800000000 * 10 ** uint256(decimals);
+  address public owner = msg.sender;
+  uint256 public RATE_ETH_TXK = 80000;
   mapping(address => uint256) balances;
   mapping(address => mapping (address => uint256)) allowed;
   modifier onlyOwner {
@@ -18,7 +18,7 @@ string public constant symbol = "Templar";
     }
 event Transfer(address indexed _from, address indexed _to, uint256 _value);
 event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-function Mint() public{
+function TEMPLAR() public{
   owner = msg.sender;
 }
 function () public payable {
@@ -27,8 +27,8 @@ function () public payable {
 function create(address beneficiary)public payable{
     uint256 amount = msg.value;
     if(amount > 0){
-      balances[beneficiary] += amount/rate;
-      totalSupply += amount/rate;
+      balances[beneficiary] += amount/RATE_ETH_TXK;
+      totalSupply += amount/RATE_ETH_TXK;
     }
   }
 function balanceOf(address _owner) public constant returns (uint256 balance) {
