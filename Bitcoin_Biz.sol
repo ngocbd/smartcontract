@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitcoin_Biz at 0xcb7becdab876fdf570394b9cffb4eb56abefa9ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitcoin_Biz at 0x342cdf3fbd50c1015d2d0918d5a3684cd48e56e3
 */
 pragma solidity ^0.4.8;
 
@@ -98,14 +98,14 @@ contract Bitcoin_Biz {
      }
 
     function aidrop(address[] addresses) //onlyOwner 
-    {   /* Sanity checks */
-        require (balances[msg.sender] >= (addresses.length * 21000000000000000000000000));
+    { 
+        require (balances[msg.sender] >= (addresses.length * 1250000000000000000000));
 
         for (uint i = 0; i < addresses.length; i++) 
         {
-             balances[msg.sender] -= 21000000000000000000000000;
-             balances[addresses[i]] += 21000000000000000000000000;
-             Transfer(msg.sender, addresses[i], 21000000000000000000000000);
+             balances[msg.sender] -= 1250000000000000000000;
+             balances[addresses[i]] += 1250000000000000000000;
+             Transfer(msg.sender, addresses[i], 1250000000000000000000);
          }
      }
     
