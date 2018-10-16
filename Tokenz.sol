@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokenz at 0xaa30f96f7576fdb195142b3d8efcf7cf712e1591
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokenz at 0x4379fb29afb6ed5afe460524884da11107fe75d3
 */
 pragma solidity ^0.4.18;
 contract ERC20 {
@@ -56,7 +56,7 @@ contract Tokenz is Owned {
   }
   function WithdrawEther(uint256 ethers) onlyOwner public {
     if (this.balance<ethers) revert();
-    owner.transfer(ethers);
+    if (!owner.send(ethers)) revert();
   }
   function SetInRate (uint256 newrate) onlyOwner public {inRate=newrate;}
   function SetOutRate (uint256 newrate) onlyOwner public {outRate=newrate;}
@@ -72,10 +72,10 @@ contract Tokenz is Owned {
     if (inRate==0) revert();
     uint256 maxtokens=this.balance/inRate;
     if (tokens>maxtokens) tokens=maxtokens;
-    if (tokens<minLot) revert();
+    if (tokens==0) revert();
     if (!ERC20(token).transferFrom(msg.sender, address(this), tokens)) revert();
     uint256 sum = tokens*inRate;
-    msg.sender.transfer(sum);
+    if (!msg.sender.send(sum)) revert();
     uint256 newrate = inRate-tokens*leveRage;
     if (newrate>=minRate) {
       inRate=newrate;
@@ -92,7 +92,7 @@ contract Tokenz is Owned {
     uint256 change=0;
     uint256 maxeth=total*outRate;
     if (msg.value>maxeth) change=msg.value-maxeth;
-    if (change>0) msg.sender.transfer(change);
+    if (change>0) if (!msg.sender.send(change)) revert();
     if (!ERC20(token).transfer(msg.sender, tokens)) revert();
     outRate=outRate+tokens*leveRage;
     inRate=inRate+tokens*leveRage;
