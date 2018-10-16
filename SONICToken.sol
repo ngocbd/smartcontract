@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SONICToken at 0x7b7080794af5ec137c9101fb729461cacb2d5171
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SONICToken at 0xa0aa0521b4215f6a00be5fe13288c9a8920c6666
 */
 pragma solidity ^0.4.20;
 
 contract SONICToken {
     /* ERC20 Public variables of the token */
-    string public constant version = 'SONIC 0.1';
+    string public constant version = 'SONIC 0.2';
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -58,7 +58,7 @@ contract SONICToken {
     ) {
 
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens (0 in this case)
-        totalSupply = initialSupply * 1000000000000000000;                        // Update total supply (0 in this case)
+        totalSupply = initialSupply;                        // Update total supply (0 in this case)
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
         decimals = decimalUnits;                            // Amount of decimals for display purposes
