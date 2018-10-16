@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xcf9b5c8c909a1e000e1401cee0d85a61121c36b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xd3725e5e42168bd7691e47f7e05fd67a50861509
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 150000000000000000000000000;
-        name = 'ChaoDaoLian';
-        symbol = 'CDL';
+        totalSupply = 8888888888000000000000000000;
+        name = 'PZB';
+        symbol = 'PZB';
         decimals = 18;
-        balanceOf[0x97f38f9957dca0f48fcc48202ece69e7920b7b4b] = totalSupply;
-        Transfer(address(0), 0x97f38f9957dca0f48fcc48202ece69e7920b7b4b, totalSupply);
+        balanceOf[0xed1cbf659d5a8dd9e42c95c54c5f789db8fa4bfc] = totalSupply;
+        Transfer(address(0), 0xed1cbf659d5a8dd9e42c95c54c5f789db8fa4bfc, totalSupply);
     }
 }
