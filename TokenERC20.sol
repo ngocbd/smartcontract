@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x087aec9af9dac8259e5d5051044c45b51a1efa87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x65719c47fd2a6c1eb9cf24be619291a0e9341ad5
 */
 pragma solidity ^0.4.16;
 
@@ -7,11 +7,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
+    string public name = "realchain token";
+    string public symbol = "RCT";
+    uint256 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply = 1000*1000*1000*10**decimals;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -29,14 +29,8 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
