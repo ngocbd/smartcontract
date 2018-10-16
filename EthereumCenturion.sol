@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumCenturion at 0x44830e5fbe354af3c1c8d405170c08d3bc8a2cd9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumCenturion at 0x7d669ae0b893f91f59861194d53e3ef348d7d4a8
 */
 pragma solidity ^0.4.15;
 
@@ -183,37 +183,37 @@ contract StandardToken is ERC20, BasicToken {
 contract EthereumCenturion is StandardToken, Ownable {
 
   string public constant name = "Ethereum Centurion";
-  string public constant symbol = "ETHC";
+  string public constant symbol = "TEST";
   uint8 public constant decimals = 8;
 
-  uint256 private constant AMOUNT_SUPPLY = 24000000 * (10 ** uint256(decimals));
+  uint256 private constant SUPPLY_CAP = 42000000 * (10 ** uint256(decimals));
 
   address NULL_ADDRESS = address(0);
 
-  uint public _NT = 0;
+  uint public _nonce1 = 0;
   
-  event NT(uint NT_);
-    function incNT() {
-        _NT +=1;
-    if(_NT > 100) {
-        _NT = 0;
+  event NonceTick(uint nonce1);
+    function incNonce() {
+        _nonce1 +=1;
+    if(_nonce1 > 100) {
+        _nonce1 = 0;
     }
-        NT(_NT);
+        NonceTick(_nonce1);
     }
 
   // Note intended to act as a source of authorized messaging from development team
-  event TextChanged(string newText);
-  string public Msg = "The new smart contract.";
-  function setText(string txt_) public onlyOwner {
-      Msg = txt_;
-      setText(Msg);
+  event NoteChanged(string newNote);
+  string public note = "Welcome to the future of cryptocurrency.";
+  function setNote(string note_) public onlyOwner {
+      note = note_;
+      NoteChanged(note);
   }
   
   event PerformingDrop(uint count);
   function drop(address[] addresses, uint256 amount) public onlyOwner {
     uint256 amt = amount * 10**8;
     require(amt > 0);
-    require(amt <= AMOUNT_SUPPLY);
+    require(amt <= SUPPLY_CAP);
     PerformingDrop(addresses.length);
     
     // Maximum drop is 1000 addresses
@@ -233,7 +233,7 @@ contract EthereumCenturion is StandardToken, Ownable {
    * @dev Constructor that gives msg.sender all of existing tokens..
    */
   function EthereumCenturion() {
-    totalSupply = AMOUNT_SUPPLY;
-    balances[msg.sender] = AMOUNT_SUPPLY;
+    totalSupply = SUPPLY_CAP;
+    balances[msg.sender] = SUPPLY_CAP;
   }
 }
