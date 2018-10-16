@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShibbolethToken at 0xe19d396c4e7f96eba568e9d62ad80ab902d207c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShibbolethToken at 0xcfb273eaf25bc37db2b2a65540bfed0e35530d28
 */
 pragma solidity ^0.4.8;
 
