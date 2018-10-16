@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayUnderwrite at 0xd503091a879f1a6ee871d162280feebc649a74b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayUnderwrite at 0x3c7feb0dc32be219ef51b7fd38b56d62bb864d41
 */
+// File: vendors/strings.sol
+
 /*
  * @title String & slice utility library for Solidity contracts.
  * @author Nick Johnson <arachnid@notdot.net>
@@ -844,6 +846,10 @@ contract FlightDelayConstants {
     /*
     * General constants
     */
+    // contracts release version
+    uint public constant MAJOR_VERSION = 1;
+    uint public constant MINOR_VERSION = 0;
+    uint public constant PATCH_VERSION = 2;
 
     // minimum observations for valid prediction
     uint constant MIN_OBSERVATIONS = 10;
@@ -877,8 +883,8 @@ contract FlightDelayConstants {
     // WEIGHT_PATTERN[0] is not used, just to be consistent
     uint8[6] WEIGHT_PATTERN = [
         0,
-        10,
-        20,
+        0,
+        0,
         30,
         50,
         50
@@ -920,13 +926,13 @@ contract FlightDelayConstants {
         // ratings api is v1, see https://developer.flightstats.com/api-docs/ratings/v1
         "[URL] json(https://api.flightstats.com/flex/ratings/rest/v1/json/flight/";
     string constant ORACLIZE_RATINGS_QUERY =
-        "?${[decrypt] BAr6Z9QolM2PQimF/pNC6zXldOvZ2qquOSKm/qJkJWnSGgAeRw21wBGnBbXiamr/ISC5SlcJB6wEPKthdc6F+IpqM/iXavKsalRUrGNuBsGfaMXr8fRQw6gLzqk0ecOFNeCa48/yqBvC/kas+jTKHiYxA3wTJrVZCq76Y03lZI2xxLaoniRk}).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode','departureAirportFsCode']";
+        "?${[decrypt] BMyq4zhRqJ8ir2kM6TRnwhoU6p/ugrj3whdKOvz26XvgX7AEesXpzyiY15w0bKltLyGr2ZI17oT5g0EblU1kA/wMPS5V9PiBkAksyAI4LW8+4oW3rsBYwxWj/P5kGtsuMLQj+vfjEWUML/IO6A+GsX4uRr/qcTtbgroOor9Iis9oiKLmsW17}).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode','departureAirportFsCode']";
     string constant ORACLIZE_STATUS_BASE_URL =
         // flight status api is v2, see https://developer.flightstats.com/api-docs/flightstatus/v2/flight
         "[URL] json(https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/";
     string constant ORACLIZE_STATUS_QUERY =
         // pattern:
-        "?${[decrypt] BJxpwRaHujYTT98qI5slQJplj/VbfV7vYkMOp/Mr5D/5+gkgJQKZb0gVSCa6aKx2Wogo/cG7yaWINR6vnuYzccQE5yVJSr7RQilRawxnAtZXt6JB70YpX4xlfvpipit4R+OmQTurJGGwb8Pgnr4LvotydCjup6wv2Bk/z3UdGA7Sl+FU5a+0}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
+        "?${[decrypt] BI/xJBm/c0rYFpApw5ZoBJCRsVkPHwUgnbbtWTW18wMIC5zLHw8M3MJhf0041kLFqx/i2jj4aIQLX2sNSkm91/PDKydmtP1OOs1XQtAD4DB/mTlLiHcMy63XxoRngHr0ZRR4WBJQKkifhepmgiCht7VlXiYNclpZ0RGqmcndFs5pywIyvfAh}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
 // <-- prod-mode
 
 // --> test-mode
@@ -1115,7 +1121,6 @@ pragma solidity ^0.4.11;
 
 
 
-
 contract FlightDelayControlledContract is FlightDelayDatabaseModel {
 
     address public controller;
@@ -1154,7 +1159,6 @@ contract FlightDelayControlledContract is FlightDelayDatabaseModel {
  */
 
 pragma solidity ^0.4.11;
-
 
 
 
@@ -1256,7 +1260,6 @@ pragma solidity ^0.4.11;
 
 
 
-
 contract FlightDelayLedgerInterface is FlightDelayDatabaseModel {
 
     function receiveFunds(Acc _to) public payable;
@@ -1298,7 +1301,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
+pragma solidity ^0.4.0;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -2309,7 +2312,6 @@ pragma solidity ^0.4.11;
 
 
 
-
 contract FlightDelayOraclizeInterface is usingOraclize {
 
     modifier onlyOraclizeOr (address _emergency) {
@@ -2507,7 +2509,6 @@ pragma solidity ^0.4.11;
 
 
 
-
 contract FlightDelayUnderwrite is FlightDelayControlledContract, FlightDelayConstants, FlightDelayOraclizeInterface, ConvertLib {
 
     using strings for *;
@@ -2605,23 +2606,25 @@ contract FlightDelayUnderwrite is FlightDelayControlledContract, FlightDelayCons
                         statistics[i] = parseInt(slResult.split(", ".toSlice()).toString()) * 10000/observations;
                     }
 
-                    var origin = slResult.split(", ".toSlice());
-                    for (uint j = 0; j < FD_DB.countOrigins(); j++) {
-                        if (b32toString(FD_DB.getOriginByIndex(j)).toSlice().equals(origin)) {
-                            underwrite(policyId, statistics, _proof);
-                            return;
-                        }
-                    }
+                    underwrite(policyId, statistics, _proof);
 
-                    var destination = slResult.split(", ".toSlice());
-                    for (uint k = 0; k < FD_DB.countDestinations(); k++) {
-                        if (b32toString(FD_DB.getDestinationByIndex(k)).toSlice().equals(destination)) {
-                           underwrite(policyId, statistics, _proof);
-                           return;
-                        }
-                    }
-
-                    decline(policyId, "Not acceptable airport", _proof);
+//                    var origin = slResult.split(", ".toSlice());
+//                    for (uint j = 0; j < FD_DB.countOrigins(); j++) {
+//                        if (b32toString(FD_DB.getOriginByIndex(j)).toSlice().equals(origin)) {
+//                            underwrite(policyId, statistics, _proof);
+//                            return;
+//                        }
+//                    }
+//
+//                    var destination = slResult.split(", ".toSlice());
+//                    for (uint k = 0; k < FD_DB.countDestinations(); k++) {
+//                        if (b32toString(FD_DB.getDestinationByIndex(k)).toSlice().equals(destination)) {
+//                           underwrite(policyId, statistics, _proof);
+//                           return;
+//                        }
+//                    }
+//
+//                    decline(policyId, "Not acceptable airport", _proof);
                 }
             }
         }
