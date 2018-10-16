@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PallyCoin at 0xcA16D1013f8E9BE2f964905964fcd0512Aa93120
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PallyCoin at 0x562952c749D05DCa4cD004489a153c7EE7E58240
 */
 pragma solidity ^0.4.15;
 
@@ -257,8 +257,8 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 
-/// @title The PallyCoin
-/// @author Merunas Grincalaitis
+// @title The PallyCoin
+/// @author Manoj Patidar
 contract PallyCoin is PausableToken {
    using SafeMath for uint256;
 
@@ -268,7 +268,9 @@ contract PallyCoin is PausableToken {
 
    uint8 public constant decimals = 18;
 
-   uint256 public constant totalSupply = 100e24; // 100M tokens with 18 decimals
+   uint256 public  totalSupply = 100e24; // 100M tokens with 18 decimals
+
+   bool public remainingTokenBurnt = false;
 
    // The tokens already used for the presale buyers
    uint256 public tokensDistributedPresale = 0;
@@ -276,7 +278,17 @@ contract PallyCoin is PausableToken {
    // The tokens already used for the ICO buyers
    uint256 public tokensDistributedCrowdsale = 0;
 
+   // The address of the crowdsale
    address public crowdsale;
+
+   // The initial supply used for platform and development as specified in the whitepaper
+   uint256 public initialSupply = 40e24;
+
+   // The maximum amount of tokens for the presale investors
+   uint256 public limitPresale = 10e24;
+
+   // The maximum amount of tokens sold in the crowdsale
+   uint256 public limitCrowdsale = 50e24;
 
    /// @notice Only allows the execution of the function if it's comming from crowdsale
    modifier onlyCrowdsale() {
@@ -292,7 +304,7 @@ contract PallyCoin is PausableToken {
    /// The owner, msg.sender, is able to do allowance for other contracts. Remember
    /// to use `transferFrom()` if you're allowed
    function PallyCoin() {
-      balances[msg.sender] = 40e24; // 40M tokens wei
+      balances[msg.sender] = initialSupply; // 40M tokens wei
    }
 
    /// @notice Function to set the crowdsale smart contract's address only by the owner of this token
@@ -308,10 +320,11 @@ contract PallyCoin is PausableToken {
    /// @param tokens The amount of tokens corresponding to that buyer
    function distributePresaleTokens(address _buyer, uint tokens) external onlyOwner whenNotPaused {
       require(_buyer != address(0));
-      require(tokens > 0 && tokens <= 10e24);
+      require(tokens > 0 && tokens <= limitPresale);
 
       // Check that the limit of 10M presale tokens hasn't been met yet
-      require(tokensDistributedPresale < 10e24);
+      require(tokensDistributedPresale < limitPresale);
+      require(tokensDistributedPresale.add(tokens) < limitPresale);
 
       tokensDistributedPresale = tokensDistributedPresale.add(tokens);
       balances[_buyer] = balances[_buyer].add(tokens);
@@ -325,7 +338,8 @@ contract PallyCoin is PausableToken {
       require(tokens > 0);
 
       // Check that the limit of 50M ICO tokens hasn't been met yet
-      require(tokensDistributedCrowdsale < 50e24);
+      require(tokensDistributedCrowdsale < limitCrowdsale);
+      require(tokensDistributedCrowdsale.add(tokens) <= limitCrowdsale);
 
       tokensDistributedCrowdsale = tokensDistributedCrowdsale.add(tokens);
       balances[_buyer] = balances[_buyer].add(tokens);
@@ -341,5 +355,16 @@ contract PallyCoin is PausableToken {
 
       balances[_buyer] = balances[_buyer].sub(tokens);
       RefundedTokens(_buyer, tokens);
+   }
+
+   /// @notice Burn the amount of tokens remaining after ICO ends
+   function burnTokens() external onlyCrowdsale whenNotPaused {
+      
+      uint256 remainingICOToken = limitCrowdsale.sub(tokensDistributedCrowdsale);
+      if(remainingICOToken > 0 && !remainingTokenBurnt) {
+      remainingTokenBurnt = true;    
+      limitCrowdsale = limitCrowdsale.sub(remainingICOToken);  
+      totalSupply = totalSupply.sub(remainingICOToken);
+      }
    }
 }
