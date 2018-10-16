@@ -1,307 +1,298 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x819dc78e14d7a3c3830e9f583154278b28893eb9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x7550f3936a356246ea8876582e90b4bb3ab540fc
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
-contract Ownable {
-  address public owner;
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-  function Ownable() public {
-    owner = msg.sender;
-  }
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
+    
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
+  
 }
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances. 
+ */
 contract BasicToken is ERC20Basic {
+    
   using SafeMath for uint256;
+
   mapping(address => uint256) balances;
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
+
 }
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
-  mapping (address => mapping (address => uint256)) internal allowed;
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-    balances[_from] = balances[_from].sub(_value);
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
     balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
-  function approve(address _spender, uint256 _value) public returns (bool) {
+
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+
 }
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    
+  address public owner;
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
 contract BurnableToken is StandardToken {
-  event Burn(address indexed burner, uint256 value);
-  function burn(uint256 _value) public {
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint _value) public {
     require(_value > 0);
-    require(_value <= balances[msg.sender]);
     address burner = msg.sender;
     balances[burner] = balances[burner].sub(_value);
     totalSupply = totalSupply.sub(_value);
     Burn(burner, _value);
   }
+
+  event Burn(address indexed burner, uint indexed value);
+
 }
-contract SpaceTRUMPToken is BurnableToken {
-  string public constant name = "Space TRUMP Token";
-  string public constant symbol = "TRUMP";
-  uint32 public constant decimals = 0;
-  uint256 public constant INITIAL_SUPPLY = 38440000;
-  function SpaceKIMToken() public {
+
+contract CSFM is BurnableToken {
+    
+  string public constant name = "Cryptosafefundmining";
+   
+  string public constant symbol = "CSFM";
+    
+  uint8 public constant decimals = 18;
+
+  uint256 public INITIAL_SUPPLY = 100000000 * 1 ether;
+
+  function CSFM  () {
     totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
+    balances[0xd9fEA37020AD04626d362BB7e2f8ad6F822EBae4] = INITIAL_SUPPLY;
   }
+    
 }
 
 contract Crowdsale is Ownable {
-
+    
   using SafeMath for uint;
-
-  SpaceTRUMPToken public token = new SpaceTRUMPToken();
-
+    
   address multisig;
-  address restricted;
 
-  uint statusPreSale = 0;
+  CSFM public token = new CSFM ();
+
+
+  uint start;
+    
+    function Start() constant returns (uint) {
+        return start;
+    }
+  
+    function setStart(uint newStart) onlyOwner {
+        start = newStart;
+    }
+    
+  uint period;
+  
+   function Period() constant returns (uint) {
+        return period;
+    }
+  
+    function setPeriod(uint newPeriod) onlyOwner {
+        period = newPeriod;
+    }
 
   uint rate;
-  uint minAmount;
+  
+    function Rate() constant returns (uint) {
+        return rate;
+    }
+  
+    function setRate(uint newRate) onlyOwner {
+        rate = newRate * (10**18);
+    }
 
-  uint saleStartDate;
-  uint saleFinishDate;
-
-  uint olympStartDate;
-  uint olympEndDate;
-
-  uint percentsTeamTokens;
-  uint percentsPreSaleTokens;
-  uint percentsBountySecondTokens;
-  uint percentsOlympicTokens;
-
-  uint endCrowdsaleDate;
-
+  function Crowdsale() {
+    multisig = 0x564FA1433d268b2585CD0bAD4f2365D28F306181;
+    rate = 1200000000000000000000;
+    start = 1517222833;
+    period = 2000;
+  }
+  
   modifier saleIsOn() {
-    uint curState = getStatus();
-    require(curState != 0 && curState != 5 && curState != 3);
+    require(now > start && now < start + period * 1 days);
     _;
   }
 
-  modifier isUnderHardCap() {
-    uint _availableTokens = token.balanceOf(this);
-    uint _tokens = calculateTokens(msg.value);
-    uint _minTokens = holdTokensOnStage();
-    require(_availableTokens.sub(_tokens) >= _minTokens);
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // @10000000000000000 - 17 null = 0.5 min payment ETH.
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  modifier limitation() {
+    require(msg.value >= 500000000000000000);
     _;
   }
 
-  modifier checkMinAmount() {
-    require(msg.value >= minAmount);
-    _;
-  }
-  function Crowdsale() public {
-    multisig = 0x19d1858e8E5f959863EF5a04Db54d3CaE1B58730;
-    restricted = 0x19d1858e8E5f959863EF5a04Db54d3CaE1B58730;
-    minAmount = 0.01 * 1 ether;
-    rate = 10000;
-    //Pre-ICO Dates:
-
-    saleStartDate = 1517832000; // 5 February 2018 12:00 UTC START
-    saleFinishDate = 1518696000; // 15 February 2018 12:00 UTC END
-    //ICO Dates:
-    olympStartDate = 1518696060; // 15 February 2018 12:01 UTC START
-    olympEndDate = 1521979200; // 25 march  2018 12:00 UTC END
-    //Bounty second
-    endCrowdsaleDate = 1521979260; // 25 march  2018 12:10 UTC Close Contract
-
-    percentsTeamTokens = 20;
-    percentsBountySecondTokens = 5;
-    percentsPreSaleTokens = 30;
-    percentsOlympicTokens = 15;
-  }
-
-  function calculateTokens(uint value) internal constant returns (uint) {
-    uint tokens = rate.mul(value).div(1 ether);
-    if(getStatus() == 1){
-      tokens += tokens.div(2);
-    }
-    return tokens;
-  }
-
-  // 0 - stop
-  // 1 - preSale
-  // 2 - sale
-  // 3 - Bounty First
-  // 4 - Olympic games
-  // 5 - Bounty Second
-  function getStatus() internal constant returns (uint8) {
-    if(now > endCrowdsaleDate) {
-      return 0;
-    } else if(now > olympEndDate && now < endCrowdsaleDate) {
-      return 5;
-    } else if(now > olympStartDate && now < olympEndDate) {
-      return 4;
-    } else if(now > saleFinishDate && now < olympStartDate) {
-      return 3;
-    } else if(now > saleStartDate && now < saleFinishDate) {
-      return 2;
-    } else if(statusPreSale == 1){
-      return 1;
-    } else {
-      return 0;
-    }
-  }
-
-  function holdTokensOnStage() public view returns (uint) {
-    uint _totalSupply = token.totalSupply();
-    uint _percents = 100;
-    uint curState = getStatus();
-    if(curState == 5) {
-      _percents = percentsTeamTokens;//20
-    } else if(curState == 4) {
-      _percents = percentsTeamTokens.add(percentsBountySecondTokens);//20+5
-    } else if(curState == 3) {
-      _percents = percentsTeamTokens.add(percentsBountySecondTokens).add(percentsOlympicTokens);//20+5+15
-    } else if(curState == 2) {
-      _percents = percentsTeamTokens.add(percentsBountySecondTokens).add(percentsOlympicTokens);//20+5+15
-    } else if(curState == 1) {
-      _percents = _percents.sub(percentsPreSaleTokens);//70
-    }
-    return _totalSupply.mul(_percents).div(100);
-  }
-
-  function onBalance() public view returns (uint) {
-    return token.balanceOf(this);
-  }
-
-  function availableTokensOnCurrentStage() public view returns (uint) {
-    uint _currentHolder = token.balanceOf(this);
-    uint _minTokens = holdTokensOnStage();
-    return _currentHolder.sub(_minTokens);
-  }
-
-  function getStatusInfo() public view returns (string) {
-    uint curState = getStatus();
-    if(now > endCrowdsaleDate) {
-      return "Crowdsale is over";
-    } else if(curState == 5) {
-      return "Now Bounty #2 token distribution is active";
-    } else if(curState == 4) {
-      return "Now Olympic Special (ICO #2) is active";
-    } else if(curState == 3) {
-      return "Now Bounty #1 token distribution is active";
-    } else if(curState == 2) {
-      return "Now ICO #1 is active";
-    } else if(curState == 1) {
-      return "Now Pre-ICO is active";
-    } else {
-      return "The sale of tokens is stopped";
-    }
-  }
-
-  function setStatus(uint8 newStatus) public onlyOwner {
-    require(newStatus == 1 || newStatus == 0);
-    statusPreSale = newStatus;
-  }
-
-  function burnTokens() public onlyOwner {
-    require(now > endCrowdsaleDate);
-    uint _totalSupply = token.totalSupply();
-    uint _teamTokens = _totalSupply.mul(percentsTeamTokens).div(100);
-    token.transfer(restricted, _teamTokens);
-    uint _burnTokens = token.balanceOf(this);
-    token.burn(_burnTokens);
-  }
-
-  function sendTokens(address to, uint tokens) public onlyOwner {
-    uint curState = getStatus();
-    require(curState == 5 || curState == 3);
-    uint _minTokens = holdTokensOnStage();
-    require(token.balanceOf(this).sub(tokens) >=  _minTokens);
-    token.transfer(to, tokens);
-  }
-
-  function createTokens() public saleIsOn isUnderHardCap checkMinAmount payable {
-    uint tokens = calculateTokens(msg.value);
+  function createTokens() limitation saleIsOn payable {
     multisig.transfer(msg.value);
+    uint tokens = rate.mul(msg.value).div(1 ether);
     token.transfer(msg.sender, tokens);
   }
-
+ 
   function() external payable {
     createTokens();
   }
+    
 }
