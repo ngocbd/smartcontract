@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GESToken at 0x072e07394a4a0446b3c8f6cb6675f315c8729501
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GESToken at 0xfb1e5f5e984c28ad7e228cdaa1f8a0919bb6a09b
 */
 pragma solidity ^0.4.15;
 
@@ -341,12 +341,10 @@ contract GESTokenCrowdSale is Ownable {
   uint256 public rate = 10000;
 
   /* Amount of raised money in wei */
-  /* PreSale = 793.030144223688 ETH */
-  /* Whitelist = 487.0798419 ETH */ 
-  /* PreSale + Whitelist =  1,280.1099861237 ETH*/
-  uint256 public weiRaised = 1280109986123700000000 ;
+  /* PreSale + Whitelist =  1273.779099 ETH*/
+  uint256 public weiRaised = 1273779099000000000000 ;
 
-  /* 20,000 - 793.030144223688 - 487.0798419 = 18,719.89  is what will be raised*/
+  /* 20,000 - 1,273.779099 = 18,726 is what will be raised*/
 
   /* Minimum amount of Wei allowed per transaction = 0.1 Ethers */
   uint256 public saleMinimumWei = 100000000000000000; 
@@ -356,9 +354,9 @@ contract GESTokenCrowdSale is Ownable {
   
   /* Hard Cap amount oftokens to be sold 300000000 */
   /* Amount raise in preSale removing the extra company 11% as we are allocating here */
-  /* 300000000 - 12235717 - 33000000 - 38358927 = 216405356 */
-  /* Tokens to be sold in the ICO 216405356 */
-  uint256 public tokensToSell = 216405356 * 10 ** 18; 
+  /* 300000000 - 12235717 - 33000000 - 6178952 = 248585331 */
+  /* Tokens to be sold in the ICO 248585330 */
+  uint256 public tokensToSell = 248585331 * 10 ** 18; 
 
   /* Always default to 20 can go upto 50 base don amount being sent */
    struct AmountBonus {
@@ -406,10 +404,10 @@ contract GESTokenCrowdSale is Ownable {
 
     /* Mint tokens for previous backers [Removed the previous 11% the company raised in presale]*/
     /* 101964.308375680000000000 * 120 = 12235717 -> rounding to highest integer */
-    /* Fixed tokens for the whitelist money raised = 38358927*/
+    /* Fixed tokens for the whitelist money raised = 6178952 */
     /* Fixed tokens for the management and bounty = 33000000 */
-    /* Total to allot: 38358927 + 12235717 + 33000000 = 83594644 */
-    token.mint(tokenWallet, 83594644 * 10 ** 18);
+    /* Total to allot: 6178952 + 12235717 + 33000000 = 51414669 */
+    token.mint(tokenWallet, 51414669 * 10 ** 18);
   }
 
   /* Creates the token to be sold */
