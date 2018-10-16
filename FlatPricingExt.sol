@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x510CE7294b49e5c566bF2Bb2e1B96B0Ee729581e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x08FA1BB2DE456e3655256c27109274694e16C05b
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
+// Pricing Tie 4
 pragma solidity ^0.4.11;
 
 
