@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TunTokenERC20 at 0xaD6cA8f9D78edA5612Aff7111F30Fce6F60c006F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TunTokenERC20 at 0x44a6BaE1dBA4D2B91FF7b0B54506FD0e1f9c44de
 */
 pragma solidity ^0.4.16;
 
 
 contract TunTokenERC20 {
-    string public name="TunK";
+    string public name="Tun Token";
     string public symbol="TUK";
     uint8 public decimals = 18;  
     uint256 public totalSupply=1000000000 * 10 ** uint256(decimals);
@@ -21,15 +21,15 @@ contract TunTokenERC20 {
         balanceOf[msg.sender] = totalSupply;
     }
 
-    function transfer(address _to, uint256 _value) public {
+    function transfer(address _from, address _to, uint _value) public {
         require(_to != 0x0);
-        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_from] >= _value);
         require(balanceOf[_to] + _value > balanceOf[_to]);
-        uint previousBalances = balanceOf[msg.sender] + balanceOf[_to];
-        balanceOf[msg.sender] -= _value;
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        assert(balanceOf[msg.sender] + balanceOf[_to] == previousBalances);
+        Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
