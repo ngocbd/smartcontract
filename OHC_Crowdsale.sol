@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OHC_Crowdsale at 0x22Eb23a7968294E1693BD4a026CFEc5a80f31C95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OHC_Crowdsale at 0x729c2bAC7fFEf4330607e49C67364C28E8515c9d
 */
 pragma solidity ^0.4.19;
 
@@ -416,9 +416,20 @@ contract OHC_CrowdsaleToken is MintableToken {
     return true;
   }
 
+  event Burn(address indexed burner, uint256 value);
+
+  function burn(address _burner, uint256 _value) onlyOwner public {
+    require(_value <= balances[_burner]);
+
+    balances[_burner] = balances[_burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(_burner, _value);
+    Transfer(_burner, address(0), _value);
+  }
+
 }
 
-contract OHC_Crowdsale is Crowdsale {
+contract OHC_Crowdsale is Crowdsale, Ownable {
 
   uint256 constant CAP =  1000000000000000000000000000;
   uint256 constant CAP_PRE_SALE = 200000000000000000000000000;
@@ -476,6 +487,10 @@ contract OHC_Crowdsale is Crowdsale {
       }
     }
 
+    if (getRate() == 0) {
+      return false;
+    }
+
     return super.validPurchase();
   }
 
@@ -498,7 +513,7 @@ contract OHC_Crowdsale is Crowdsale {
       return RATE1;
     }
 
-    if (1523952005 <= now && now <= 1524556800) {
+    if (1523952001 <= now && now <= 1524556800) {
       return RATE2;
     }
 
@@ -506,7 +521,7 @@ contract OHC_Crowdsale is Crowdsale {
       return RATE3;
     }
 
-    if (1525161601 <= now && now <= 1525959860) {
+    if (1525161601 <= now && now <= 1525939200) {
       return RATE4;
     }
 
@@ -514,25 +529,28 @@ contract OHC_Crowdsale is Crowdsale {
       return RATE5;
     }
 
-    if (1539763205 <= now && now <= 1540368000) {
+    if (1539763201 <= now && now <= 1540368000) {
       return RATE6;
     }
 
-    if (1540368005 <= now && now <= 1540976400) {
+    if (1540368001 <= now && now <= 1540976400) {
       return RATE7;
     }
 
-    if (1540976405 <= now && now <= 1541840400) {
+    if (1540976401 <= now && now <= 1541840400) {
       return RATE8;
     }
 
     return 0;
   }
 
-  function mintTokens(address walletToMint, uint256 t) payable public {
-    require(msg.sender == wallet);
+  function mintTokens(address walletToMint, uint256 t) onlyOwner payable public {
     require(token.totalSupply().add(t) < CAP);
 
     token.mint(walletToMint, t);
+  }
+
+  function tokenTransferOwnership(address newOwner) onlyOwner payable public {
+    token.transferOwnership(newOwner);
   }
 }
