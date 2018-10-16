@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x74355BC542A2b6ceBc75F5bC2ad00E7f70b64A2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x385Dd1Fd6ae889337ab3957800f9266B4D93B535
 */
-// MeNet.IO 
+// MeNet.IO
 pragma solidity ^0.4.11;
 
 
