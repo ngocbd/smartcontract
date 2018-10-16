@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testContract at 0xa3483b08c8a0f33eb07aff3a66fbcaf5c9018cdc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestContract at 0xAdfF6C38F194630d05E2f9862c9B2377Fa3D98F2
 */
-contract testContract {    
-   function go() constant returns (string) {        
-      return "Hello Ethereum!";    
-   }
+pragma solidity ^0.4.17;
+
+
+contract TestContract {
+    string public constant VERSION = "0.2.0-test-0.4.17";
 }
