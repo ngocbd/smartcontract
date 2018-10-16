@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TierionNetworkToken at 0x08f5a9235b08173b7569f83645d2c7fb55e8ccd8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TierionNetworkToken at 0x55d25b666c9058a5828e8d0989967dc00dcfcfdf
 */
 pragma solidity ^0.4.13;
 
@@ -255,10 +255,10 @@ contract Pausable is Ownable {
  */
 contract TierionNetworkToken is StandardToken, Pausable {
 
-  string public constant name = 'Tierion Network Token';                       // Set the token name for display
-  string public constant symbol = 'TNT';                                       // Set the token symbol for display
+  string public constant name = 'EthereumBitcoin';                       // Set the token name for display
+  string public constant symbol = 'BTCE';                                       // Set the token symbol for display
   uint8 public constant decimals = 8;                                          // Set the number of decimals for display
-  uint256 public constant INITIAL_SUPPLY = 1000000000 * 10**uint256(decimals); // 1 Billion TNT specified in Grains
+  uint256 public constant INITIAL_SUPPLY = 2100000000000000; // 1 Billion TNT specified in Grains
 
   /**
    * @dev TierionNetworkToken Constructor
