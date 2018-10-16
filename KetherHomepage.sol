@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KetherHomepage at 0xb5fe93ccfec708145d6278b0c71ce60aa75ef925
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KetherHomepage at 0x03ad838d4d962fa6b187dc10e8513e595a32f889
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 contract KetherHomepage {
     /// Buy is emitted when an ad unit is reserved.
@@ -65,7 +65,7 @@ contract KetherHomepage {
     /// ads are stored in an array, the id of an ad is its index in this array.
     Ad[] public ads;
 
-    function KetherHomepage(address _contractOwner, address _withdrawWallet) {
+    function KetherHomepage(address _contractOwner, address _withdrawWallet)public {
         require(_contractOwner != address(0));
         require(_withdrawWallet != address(0));
 
@@ -74,19 +74,47 @@ contract KetherHomepage {
     }
 
     /// getAdsLength tells you how many ads there are
-    function getAdsLength() constant returns (uint) {
+    function getAdsLength() constant public returns (uint) {
         return ads.length;
     }
+    //to get the contract owner address
+    function  getContractOwner() constant public returns (address){
+        return contractOwner;
+    }
 
+    //to get the withdrawal address
+    function getWithdrawalAddress() constant public returns (address){
+        return withdrawWallet;
+    }
     /// Ads must be purchased in 10x10 pixel blocks.
     /// Each coordinate represents 10 pixels. That is,
     ///   _x=5, _y=10, _width=3, _height=3
     /// Represents a 30x30 pixel ad at coordinates (50, 100)
-    function buy(uint _x, uint _y, uint _width, uint _height) payable returns (uint idx) {
+    function buy(uint _x, uint _y, uint _width, uint _height) payable public returns (uint idx) {
         uint cost = _width * _height * pixelsPerCell * weiPixelPrice;
         require(cost > 0);
         require(msg.value >= cost);
 
+       idx = addAd(_x, _y, _width, _height);
+        
+        return idx;
+    }
+
+  /// Ads must be purchased in 10x10 pixel blocks.
+    /// Each coordinate represents 10 pixels. That is,
+    ///   _x=5, _y=10, _width=3, _height=3
+    /// Represents a 30x30 pixel ad at coordinates (50, 100)
+    // add reserved by owner
+    //not payable
+    function reserveAdd(uint _x, uint _y, uint _width, uint _height) public returns (uint idx) {
+        require(contractOwner == msg.sender);
+        
+        idx = addAd(_x, _y, _width, _height);
+        
+        return idx;
+    }
+
+    function addAd(uint _x, uint _y, uint _width, uint _height)private returns(uint idx){
         // Loop over relevant grid entries
         for(uint i=0; i<_width; i++) {
             for(uint j=0; j<_height; j++) {
@@ -104,7 +132,7 @@ contract KetherHomepage {
         Buy(idx, msg.sender, _x, _y, _width, _height);
         return idx;
     }
-
+    
     /// Publish allows for setting the link, image, and NSFW status for the ad
     /// unit that is identified by the idx which was returned during the buy step.
     /// The link and image must be full web3-recognizeable URLs, such as:
@@ -112,7 +140,8 @@ contract KetherHomepage {
     ///  - bzz://mydomain.eth/ad.png
     ///  - https://cdn.mydomain.com/ad.png
     /// Images should be valid PNG.
-    function publish(uint _idx, string _link, string _image, string _title, bool _NSFW) {
+    
+    function publish(uint _idx, string _link, string _image, string _title, bool _NSFW) public{
         Ad storage ad = ads[_idx];
         require(msg.sender == ad.owner);
         ad.link = _link;
@@ -124,7 +153,7 @@ contract KetherHomepage {
     }
 
     /// setAdOwner changes the owner of an ad unit
-    function setAdOwner(uint _idx, address _newOwner) {
+    function setAdOwner(uint _idx, address _newOwner) public{
         Ad storage ad = ads[_idx];
         require(msg.sender == ad.owner);
         ad.owner = _newOwner;
@@ -133,7 +162,7 @@ contract KetherHomepage {
     }
 
     /// forceNSFW allows the owner to override the NSFW status for a specific ad unit.
-    function forceNSFW(uint _idx, bool _NSFW) {
+    function forceNSFW(uint _idx, bool _NSFW) public{
         require(msg.sender == contractOwner);
         Ad storage ad = ads[_idx];
         ad.forceNSFW = _NSFW;
@@ -142,7 +171,7 @@ contract KetherHomepage {
     }
 
     /// withdraw allows the owner to transfer out the balance of the contract.
-    function withdraw() {
+    function withdraw() public{
         require(msg.sender == contractOwner);
         withdrawWallet.transfer(this.balance);
     }
