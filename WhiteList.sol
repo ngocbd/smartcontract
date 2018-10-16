@@ -1,104 +1,105 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0xced4eb91efe1b708782afd33aa529a6a9ace6671
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x16643b4deaafa493a07f5b73a5b68f1b1ae1f327
 */
-pragma solidity ^ 0.4.18;
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
-    address public owner;
-    
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  address public owner;
 
-    /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
-    function Ownable() public {
-        owner = msg.sender;
-    }
 
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner The address to transfer ownership to.
-    */
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 
 }
 
 
-// Whitelist smart contract
-// This smart contract keeps list of addresses to whitelist
-contract WhiteList is Ownable {
 
-    
-    mapping(address => bool) public whiteList;
-    uint public totalWhiteListed; //white listed users number
+contract Curatable is Ownable {
+  address public curator;
 
-    event LogWhiteListed(address indexed user, uint whiteListedNum);
-    event LogWhiteListedMultiple(uint whiteListedNum);
-    event LogRemoveWhiteListed(address indexed user);
 
-    // @notice it will return status of white listing
-    // @return true if user is white listed and false if is not
-    function isWhiteListed(address _user) external view returns (bool) {
+  event CurationRightsTransferred(address indexed previousCurator, address indexed newCurator);
 
-        return whiteList[_user]; 
+
+  /**
+   * @dev The Curatable constructor sets the original `curator` of the contract to the sender
+   * account.
+   */
+  function Curatable() public {
+    owner = msg.sender;
+    curator = owner;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the curator.
+   */
+  modifier onlyCurator() {
+    require(msg.sender == curator);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newCurator The address to transfer ownership to.
+   */
+  function transferCurationRights(address newCurator) public onlyOwner {
+    require(newCurator != address(0));
+    CurationRightsTransferred(curator, newCurator);
+    curator = newCurator;
+  }
+
+}
+
+contract Whitelist is Curatable {
+    mapping (address => bool) public whitelist;
+
+
+    function Whitelist() public {
     }
 
-    // @notice it will remove whitelisted user
-    // @param _contributor {address} of user to unwhitelist
-    function removeFromWhiteList(address _user) external onlyOwner() returns (bool) {
-       
-        require(whiteList[_user] == true);
-        whiteList[_user] = false;
-        totalWhiteListed--;
-        LogRemoveWhiteListed(_user);
-        return true;
+
+    function addInvestor(address investor) external onlyCurator {
+        require(investor != 0x0 && !whitelist[investor]);
+        whitelist[investor] = true;
     }
 
-    // @notice it will white list one member
-    // @param _user {address} of user to whitelist
-    // @return true if successful
-    function addToWhiteList(address _user) external onlyOwner() returns (bool) {
 
-        if (whiteList[_user] != true) {
-            whiteList[_user] = true;
-            totalWhiteListed++;
-            LogWhiteListed(_user, totalWhiteListed);            
-        }
-        return true;
+    function removeInvestor(address investor) external onlyCurator {
+        require(investor != 0x0 && whitelist[investor]);
+        whitelist[investor] = false;
     }
 
-    // @notice it will white list multiple members
-    // @param _user {address[]} of users to whitelist
-    // @return true if successful
-    function addToWhiteListMultiple(address[] _users) external onlyOwner() returns (bool) {
 
-        for (uint i = 0; i < _users.length; ++i) {
-
-            if (whiteList[_users[i]] != true) {
-                whiteList[_users[i]] = true;
-                totalWhiteListed++;                          
-            }           
-        }
-        LogWhiteListedMultiple(totalWhiteListed); 
-        return true;
+    function isWhitelisted(address investor) constant external returns (bool result) {
+        return whitelist[investor];
     }
+
 }
