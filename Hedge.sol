@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hedge at 0x49449da173201887389958186067ae80bb09d234
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hedge at 0xffe8196bc259e8dedc544d935786aa4709ec3e64
 */
 pragma solidity ^0.4.11;
 
@@ -66,7 +66,7 @@ contract Hedge is IERC20Token, owned{
         /* Public variables of the token */
         string public standard = "Hedge v1.0";
         string public name = "Hedge";
-        string public symbol = "HGD";
+        string public symbol = "HDG";
         uint8 public decimals = 18;
         uint256 public initialSupply = 50000000 * 10 ** 18;
         uint256 public tokenFrozenUntilBlock;
