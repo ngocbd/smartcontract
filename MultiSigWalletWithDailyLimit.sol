@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x00674045bb7c17f0aa1cde34780d6c51af548728
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xbc1aB7F58a95cf307Ba5Ee18CF06b7eD0120da7a
 */
-pragma solidity 0.4.14;
-
+pragma solidity ^0.4.4;
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -456,6 +455,8 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
     {
         if (now > lastDay + 24 hours)
             return dailyLimit;
+        if (dailyLimit < spentToday)
+            return 0;
         return dailyLimit - spentToday;
     }
 }
