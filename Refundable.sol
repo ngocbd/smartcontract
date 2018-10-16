@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0xf69a804d0aa81814eca9a47c890da6720e959077
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x6682609d2f1a912a239331f8f2c3387d64e132dd
 */
 pragma solidity ^0.4.23;
 
@@ -300,7 +300,7 @@ contract Crowdsale is Pausable, KYCCrowdsale{
       
         // 20% disount = $0.28 EQUI Price , default category
         // 1 ETH = 2400 EQUI
-        return (weiAmount.mul(1 ether)).div(defaultBonussRate);
+        return (weiAmount.div(defaultBonussRate)).mul(1 ether);
 
       else if(weiAmount >= 1 ether) {
           
@@ -311,21 +311,21 @@ contract Crowdsale is Pausable, KYCCrowdsale{
               
               if (weiAmount > amount){
                   buffer = weiAmount - amount;
-                  tokens =  (amount.mul(1 ether)).div(roundOneRate);
+                  tokens =  (amount.div(roundOneRate)).mul(1 ether);
               }else{
                   // 40% disount = $0.21 EQUI Price , round one bonuss category
                   // 1 ETH = 3333
-                  return (weiAmount.mul(1 ether)).div(roundOneRate);
+                  return (weiAmount.div(roundOneRate)).mul(1 ether);
               }
         
           }
           
           if(buffer > 0){
-              uint256 roundTwo = (buffer.mul(1 ether)).div(roundTwoRate);
+              uint256 roundTwo = (buffer.div(roundTwoRate)).mul(1 ether);
               return tokens + roundTwo;
           }
           
-          return (weiAmount.mul(1 ether)).div(roundTwoRate);
+          return (weiAmount.div(roundTwoRate)).mul(1 ether);
       }
   }
 
