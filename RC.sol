@@ -1,369 +1,135 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RC at 0xf62afd17037be692a00b181e959e3c9931076138
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RC at 0x74a67602b4e28efc2d012e4f29faad18e0f13cfb
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.16;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+contract Token {
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
 }
 
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-  
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() internal {
-    owner = msg.sender;
-  }
+contract StandardToken is Token {
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
 }
 
-contract tokenInterface {
-	function balanceOf(address _owner) public constant returns (uint256 balance);
-	function transfer(address _to, uint256 _value) public returns (bool);
-}
 
-contract rateInterface {
-    function readRate(string _currency) public view returns (uint256 oneEtherValue);
-}
+//name this contract whatever you'd like
+contract RC is StandardToken {
 
-contract RC {
-    using SafeMath for uint256;
-    TokenSale tokenSaleContract;
-    uint256 public startTime;
-    uint256 public endTime;
-    
-    uint256 public soldTokens;
-    uint256 public remainingTokens;
-    
-    uint256 public oneTokenInUsdWei;
-
-    function RC(address _tokenSaleContract, uint256 _oneTokenInUsdWei, uint256 _remainingTokens,  uint256 _startTime , uint256 _endTime ) public {
-        require ( _tokenSaleContract != 0 );
-        require ( _oneTokenInUsdWei != 0 );
-        require( _remainingTokens != 0 );
-        
-        tokenSaleContract = TokenSale(_tokenSaleContract);
-        
-        tokenSaleContract.addMeByRC();
-        
-        soldTokens = 0;
-        remainingTokens = _remainingTokens;
-        oneTokenInUsdWei = _oneTokenInUsdWei;
-        
-        setTimeRC( _startTime, _endTime );
-    }
-    
-    function setTimeRC(uint256 _startTime, uint256 _endTime ) internal {
-        if( _startTime == 0 ) {
-            startTime = tokenSaleContract.startTime();
-        } else {
-            startTime = _startTime;
-        }
-        if( _endTime == 0 ) {
-            endTime = tokenSaleContract.endTime();
-        } else {
-            endTime = _endTime;
-        }
-    }
-    
-    modifier onlyTokenSaleOwner() {
-        require(msg.sender == tokenSaleContract.owner() );
-        _;
-    }
-    
-    function setTime(uint256 _newStart, uint256 _newEnd) public onlyTokenSaleOwner {
-        if ( _newStart != 0 ) startTime = _newStart;
-        if ( _newEnd != 0 ) endTime = _newEnd;
-    }
-    
-    event BuyRC(address indexed buyer, bytes trackID, uint256 value, uint256 soldToken, uint256 valueTokenInUsdWei );
-    
-    function () public payable {
-        require( now > startTime );
-        require( now < endTime );
-        require( msg.value >= 1*10**18); //1 Ether
-        require( remainingTokens > 0 );
-        
-        uint256 tokenAmount = tokenSaleContract.buyFromRC.value(msg.value)(msg.sender, oneTokenInUsdWei, remainingTokens);
-        
-        remainingTokens = remainingTokens.sub(tokenAmount);
-        soldTokens = soldTokens.add(tokenAmount);
-        
-        BuyRC( msg.sender, msg.data, msg.value, tokenAmount, oneTokenInUsdWei );
-    }
-}
-
-contract CardSale {
-    using SafeMath for uint256;
-    TokenSale tokenSaleContract;
-    
-    uint256 public startTime;
-    uint256 public endTime;
-    
-    uint256 public soldTokens;
-    uint256 public remainingTokens;    
-    
-    mapping(address => bool) public rc;
-    
-    function CardSale(address _tokenSaleContract, uint256 _remainingTokens,  uint256 _startTime , uint256 _endTime ) public {
-        require ( _tokenSaleContract != 0 );
-        require( _remainingTokens != 0 );
-        
-        tokenSaleContract = TokenSale(_tokenSaleContract);
-        
-        tokenSaleContract.addMeByRC();
-        
-        soldTokens = 0;
-        remainingTokens = _remainingTokens;
-        
-        setTimeRC( _startTime, _endTime );
-    }
-    
-    function setTimeRC(uint256 _startTime, uint256 _endTime ) internal {
-        if( _startTime == 0 ) {
-            startTime = tokenSaleContract.startTime();
-        } else {
-            startTime = _startTime;
-        }
-        if( _endTime == 0 ) {
-            endTime = tokenSaleContract.endTime();
-        } else {
-            endTime = _endTime;
-        }
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
     }
 
-    function owner() view public returns (address) {
-        return tokenSaleContract.owner();
-    }
-    
-    modifier onlyTokenSaleOwner() {
-        require(msg.sender == owner() );
-        _;
-    }
-    
-    function setTime(uint256 _newStart, uint256 _newEnd) public onlyTokenSaleOwner {
-        if ( _newStart != 0 ) startTime = _newStart;
-        if ( _newEnd != 0 ) endTime = _newEnd;
-    }
-    
-    event NewRC(address contr);
-    
-    function addMeByRC() public {
-        require(tx.origin == owner() );
-        
-        rc[ msg.sender ]  = true;
-        
-        NewRC(msg.sender);
-    }
-    
-    function newCard(uint256 _oneTokenInUsdWei) onlyTokenSaleOwner public {
-        new RC(this, _oneTokenInUsdWei, remainingTokens, 0, 0 );
-    }
-    
-    function () public payable {
-        revert();
-    }
-    
-    modifier onlyRC() {
-        require( rc[msg.sender] ); //check if is an authorized rcContract
-        _;
-    }
-    
-    function buyFromRC(address _buyer, uint256 _rcTokenValue, uint256 ) onlyRC public payable returns(uint256) {
-        uint256 tokenAmount = tokenSaleContract.buyFromRC.value(msg.value)(_buyer, _rcTokenValue, remainingTokens);
-        remainingTokens = remainingTokens.sub(tokenAmount);
-        soldTokens = soldTokens.add(tokenAmount);
-        return tokenAmount;
-    }
-}
+    /* Public variables of the token */
 
-contract TokenSale is Ownable {
-    using SafeMath for uint256;
-    tokenInterface public tokenContract;
-    rateInterface public rateContract;
-    
-    address public wallet;
-    address public advisor;
-    uint256 public advisorFee; // 1 = 0,1%
-    
-	uint256 public constant decimals = 18;
-    
-    uint256 public endTime;  // seconds from 1970-01-01T00:00:00Z
-    uint256 public startTime;  // seconds from 1970-01-01T00:00:00Z
-
-    mapping(address => bool) public rc;
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 
-    function TokenSale(address _tokenAddress, address _rateAddress, uint256 _startTime, uint256 _endTime) public {
-        tokenContract = tokenInterface(_tokenAddress);
-        rateContract = rateInterface(_rateAddress);
-        setTime(_startTime, _endTime); 
-        wallet = msg.sender;
-        advisor = msg.sender;
-        advisorFee = 0 * 10**3;
-    }
-    
-    function tokenValueInEther(uint256 _oneTokenInUsdWei) public view returns(uint256 tknValue) {
-        uint256 oneEtherInUsd = rateContract.readRate("usd");
-        tknValue = _oneTokenInUsdWei.mul(10 ** uint256(decimals)).div(oneEtherInUsd);
-        return tknValue;
-    } 
-    
-    modifier isBuyable() {
-        require( now > startTime ); // check if started
-        require( now < endTime ); // check if ended
-        require( msg.value > 0 );
-		
-		uint256 remainingTokens = tokenContract.balanceOf(this);
-        require( remainingTokens > 0 ); // Check if there are any remaining tokens 
-        _;
-    }
-    
-    event Buy(address buyer, uint256 value, address indexed ambassador);
-    
-    modifier onlyRC() {
-        require( rc[msg.sender] ); //check if is an authorized rcContract
-        _;
-    }
-    
-    function buyFromRC(address _buyer, uint256 _rcTokenValue, uint256 _remainingTokens) onlyRC isBuyable public payable returns(uint256) {
-        uint256 oneToken = 10 ** uint256(decimals);
-        uint256 tokenValue = tokenValueInEther(_rcTokenValue);
-        uint256 tokenAmount = msg.value.mul(oneToken).div(tokenValue);
-        address _ambassador = msg.sender;
-        
-        
-        uint256 remainingTokens = tokenContract.balanceOf(this);
-        if ( _remainingTokens < remainingTokens ) {
-            remainingTokens = _remainingTokens;
-        }
-        
-        if ( remainingTokens < tokenAmount ) {
-            uint256 refund = (tokenAmount - remainingTokens).mul(tokenValue).div(oneToken);
-            tokenAmount = remainingTokens;
-            forward(msg.value-refund);
-			remainingTokens = 0; // set remaining token to 0
-             _buyer.transfer(refund);
-        } else {
-			remainingTokens = remainingTokens.sub(tokenAmount); // update remaining token without bonus
-            forward(msg.value);
-        }
-        
-        tokenContract.transfer(_buyer, tokenAmount);
-        Buy(_buyer, tokenAmount, _ambassador);
-		
-        return tokenAmount; 
-    }
-    
-    function forward(uint256 _amount) internal {
-        uint256 advisorAmount = _amount.mul(advisorFee).div(10**3);
-        uint256 walletAmount = _amount - advisorAmount;
-        advisor.transfer(advisorAmount);
-        wallet.transfer(walletAmount);
+    function RC(
+        ) {
+        balances[msg.sender] = 8500000000000000000000000000 ;
+        totalSupply = 8500000000000000000000000000;
+        name = "Reward Cash";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "RC";                               // Set the symbol for display purposes
     }
 
-    event NewRC(address contr);
-    
-    function addMeByRC() public {
-        require(tx.origin == owner);
-        
-        rc[ msg.sender ]  = true;
-        
-        NewRC(msg.sender);
-    }
-    
-    function setTime(uint256 _newStart, uint256 _newEnd) public onlyOwner {
-        if ( _newStart != 0 ) startTime = _newStart;
-        if ( _newEnd != 0 ) endTime = _newEnd;
-    }
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
 
-    function withdraw(address to, uint256 value) public onlyOwner {
-        to.transfer(value);
-    }
-    
-    function withdrawTokens(address to, uint256 value) public onlyOwner returns (bool) {
-        return tokenContract.transfer(to, value);
-    }
-    
-    function setTokenContract(address _tokenContract) public onlyOwner {
-        tokenContract = tokenInterface(_tokenContract);
-    }
-
-    function setWalletAddress(address _wallet) public onlyOwner {
-        wallet = _wallet;
-    }
-    
-    function setAdvisorAddress(address _advisor) public onlyOwner {
-            advisor = _advisor;
-    }
-    
-    function setAdvisorFee(uint256 _advisorFee) public onlyOwner {
-            advisorFee = _advisorFee;
-    }
-    
-    function setRateContract(address _rateAddress) public onlyOwner {
-        rateContract = rateInterface(_rateAddress);
-    }
-
-    function () public payable {
-        revert();
-    }
-    
-    function newRC(uint256 _oneTokenInUsdWei, uint256 _remainingTokens) onlyOwner public {
-        new RC(this, _oneTokenInUsdWei, _remainingTokens, 0, 0 );
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
     }
 }
