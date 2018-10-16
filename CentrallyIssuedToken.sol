@@ -1,6 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0xb64ef51c888972c908cfacf59b47c1afbc0ab8ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0x9DA53246714bf10010Aee31ffDb9cf8caB8c6813
 */
+pragma solidity ^0.4.11;
+
+contract MyContract {
+    /* Constructor */
+    function MyContract() {
+
+    }
+}
 /*
  * ERC20 interface
  * see https://github.com/ethereum/EIPs/issues/20
