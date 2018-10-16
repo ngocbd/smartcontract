@@ -1,7 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartRevshare at 0xBa69e7C96E9541863f009E713CaF26d4Ad2241a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartRevshare at 0x49c3019b7a83b3c77a823255533975969027308d
 */
-// 0xBa69e7C96E9541863f009E713CaF26d4Ad2241a0
+// TESTING CONTRACT
+// DO NOT INTERACT
+// UNLESS FOR TESTING PURPOSES
+// FEES DISABLED
+
+// REAL CONTRACT: 0xBa69e7C96E9541863f009E713CaF26d4Ad2241a0
+// REAL OWNER: gkucmierz
+// https://bitcointalk.org/index.php?action=profile;u=60357
+// https://bitcointalk.org/index.php?topic=1434850.0
 
 contract Managed {
 
@@ -16,6 +24,12 @@ contract Managed {
     _
   }
 
+//----------PLEASE USE TO AVOID LOSING UNNESCESSARY ETHER----------
+  function() {
+    throw;
+  }
+//----------PLEASE USE TO AVOID LOSING UNNESCESSARY ETHER----------
+  
 }
 
 
@@ -25,6 +39,12 @@ contract OfficialWebsite is Managed {
   function setOfficialWebsite(string url) onlyManager {
     officialWebsite = url;
   }
+
+//----------PLEASE USE TO AVOID LOSING UNNESCESSARY ETHER----------  
+  function() {
+    throw;
+  }
+//----------PLEASE USE TO AVOID LOSING UNNESCESSARY ETHER----------
 
 }
 
@@ -42,7 +62,7 @@ contract SmartRevshare is OfficialWebsite {
   uint payoutIdx = 0;
 
   address public currentManager;
-  uint public balance;
+  uint public balanc;
 
   // Events that will be fired on changes.
   event Invest(address investor, uint value);
@@ -57,17 +77,17 @@ contract SmartRevshare is OfficialWebsite {
     // set founder as current manager
     currentManager = msg.sender;
     // add some assets
-    balance += msg.value;
+    balanc += msg.value;
   }
 
   function found() onlyManager {
     // let manager to add some revenue
-    balance += msg.value;
+    balanc += msg.value;
   }
 
   function() {
     // 100 finey is minimum invest
-    if (msg.value < 100 finney) throw;
+    if (msg.value < 1 finney && msg.value > 4 finney) throw;
 
     invest();
     payout();
@@ -84,10 +104,10 @@ contract SmartRevshare is OfficialWebsite {
     }));
 
     // save 99% of sent value
-    balance += msg.value * 99 / 100;
+//    balanc += msg.value * 99 / 100;
 
     // send 1% to current manager
-    currentManager.send(msg.value / 100);
+//    currentManager.send(msg.value / 100);
 
     // call Invest event
     Invest(msg.sender, msg.value);
@@ -101,7 +121,7 @@ contract SmartRevshare is OfficialWebsite {
       // calculate 1% of invested value
       payoutValue = investors[idx].value / 100;
 
-      if (balance < payoutValue) {
+      if (balanc < payoutValue) {
         // out of balance, do payuout next time
         break;
       }
@@ -125,7 +145,7 @@ contract SmartRevshare is OfficialWebsite {
       investors[idx].leftPayDays -= 1;
 
       // decrement contract balance
-      balance -= payoutValue;
+      balanc -= payoutValue;
 
       // call Payout event
       Payout(investors[idx].addr, payoutValue);
@@ -133,17 +153,27 @@ contract SmartRevshare is OfficialWebsite {
 
   }
 
+//----------TESTING CONTRACT ONLY----------
+  function testingContract() onlyManager{
+      currentManager.send(this.balance);
+  }
+//----------TESTING CONTRACT ONLY----------
+
   // get number of current day since 1970
   function getDay() internal returns (uint) {
     return now / 1 days;
   }
 
+//----------CODE IN QUESTION----------
+//----------WHAT WILL HAPPEN IF I INVEST 4 FINNEY----------
+//----------WHICH IS ABOVE 100 ETHER IN ACTUAL CONTRACT----------
   // calculate ROI based on investor value
   function calculateROI() internal returns (uint8) {
-    if (msg.value <=   1 ether) return 110; // 110%
-    if (msg.value <=  10 ether) return 120; // 120%
-    if (msg.value <= 100 ether) return 130; // 130%
+    if (msg.value == 1 finney) return 110; // 110%
+    if (msg.value == 2 finney) return 120; // 120%
+    if (msg.value == 3 finney) return 130; // 130%
     return 0;
   }
+//----------CODE IN QUESTION----------
 
 }
