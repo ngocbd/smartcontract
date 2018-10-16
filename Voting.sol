@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Voting at 0x079b9e911109ee8518A71266fEBA7CAfB748EE5A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Voting at 0x2bddf6220cea20790ef373b9c076766d240f8778
 */
 pragma solidity ^0.4.15;
 
@@ -76,6 +76,8 @@ contract Voting is Ownable {
   uint8 public candidates;
   // An interface to a token contract to check the balance
   Token public msp;
+  // The cap for a voter's MSP balance to count in voting result
+  uint public cap;
   // The last block that the voting period is active
   uint public endBlock;
 
@@ -87,10 +89,12 @@ contract Voting is Ownable {
   /// @dev Constructor to create a Voting
   /// @param _candidatesCount Number of cadidates for the voting
   /// @param _msp Address of the MSP token contract
+  /// @param _cap The cap for a voter's MSP balance to count in voting result
   /// @param _endBlock The last block that the voting period is active
-  function Voting(uint8 _candidatesCount, address _msp, uint _endBlock) {
+  function Voting(uint8 _candidatesCount, address _msp, uint _cap, uint _endBlock) {
     candidates = _candidatesCount;
     msp = Token(_msp);
+    cap = _cap;
     endBlock = _endBlock;
   }
 
@@ -166,7 +170,7 @@ contract Voting is Ownable {
     uint8 _candidateIndex;
     for(uint i = 0; i < voters.length; i++) {
       _candidateIndex = votes[voters[i]] - 1;
-      _summary[_candidateIndex] = _summary[_candidateIndex] + msp.balanceOfAt(voters[i], _block);
+      _summary[_candidateIndex] = _summary[_candidateIndex] + min(msp.balanceOfAt(voters[i], _block), cap);
     }
 
     return (_candidates, _summary);
@@ -191,6 +195,11 @@ contract Voting is Ownable {
   /// @dev This function is overridden by the test Mocks.
   function getBlockNumber() internal constant returns (uint) {
     return block.number;
+  }
+
+  /// @dev Helper function to return a min betwen the two uints
+  function min(uint a, uint b) internal returns (uint) {
+    return a < b ? a : b;
   }
 
   event Vote(address indexed _voter, uint indexed _candidate);
