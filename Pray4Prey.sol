@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pray4Prey at 0x0851185501ba44e84fd8af13ade44846f00890b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pray4Prey at 0xc5c49c5f57d9f1635dde956c6858146717879600
 */
+pragma solidity ^0.4.8;
+
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -31,7 +33,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-pragma solidity ^0.4.8;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -312,6 +313,22 @@ contract usingOraclize {
 
 }
 // </ORACLIZE_API>
+
+
+
+contract mortal {
+	address owner;
+
+	function mortal() {
+		owner = msg.sender;
+	}
+
+	function kill() internal {
+		suicide(owner);
+	}
+}
+
+
 
 
 library strings {
@@ -989,19 +1006,8 @@ library strings {
     }
 }
 
-
-contract mortal {
-	address owner;
-
-	function mortal() {
-		owner = msg.sender;
-	}
-
-	function kill() internal {
-		suicide(owner);
-	}
-}
-
+      
+      
 
 contract transferable {
 	function receive(address player, uint8 animalType, uint32[] animalIds) payable {}
@@ -1031,8 +1037,8 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 	uint128[] public values;
 	/** the fee to be paid each time an animal is bought in percent*/
 	uint8 fee;
-	/** specifies if animals may be transfered from old contract version */
-	bool transferAllowed;
+	/** the address of the old contract version. animals may be transfered from this address */
+	address lastP4P;
 
 	/** total number of animals in the game (uint32 because of multiplication issues) */
 	uint32 public numAnimals;
@@ -1065,7 +1071,7 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 
 
 	/** initializes the contract parameters	 (would be constructor if it wasn't for the gas limit)*/
-	function init() {
+	function init(address oldContract) {
 		if(msg.sender != owner) throw;
 		costs = [100000000000000000, 200000000000000000, 500000000000000000, 1000000000000000000, 5000000000000000000];
 		fee = 5;
@@ -1075,10 +1081,10 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 		maxAnimals = 300;
 		randomQuery = "10 random numbers between 1 and 1000";
 		queryType = "WolframAlpha";
-		oraclizeGas = 600000;
-		transferAllowed = true; //allow transfer from old contract
-		nextId = 150;
-		oldest = 150;
+		oraclizeGas = 700000;
+		lastP4P = oldContract; //allow transfer from old contract
+		nextId = 500;
+		oldest = 500;
 	}
 
 	/** The fallback function runs whenever someone sends ether
@@ -1127,8 +1133,6 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 			ids[numAnimals] = nId;
 		else
 			ids.push(nId);
-		if(nId<oldest) 
-			oldest = nId;
 		animals[nId] = Animal(animalType, values[animalType], receiver);
 		numAnimals++;
 	}
@@ -1345,6 +1349,7 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 		for (i = 0; i < costs.length; i++){
 			if(numXType[i]>0){
 				newP4P.receive.value(numXType[i]*values[i])(msg.sender, uint8(i), tids[i]);
+				delete tids[i];
 			}
 			
 		}
@@ -1354,19 +1359,20 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 	
 	/**
 	*	receives animals from an old contract version.
-	* todo: evtl reset oldest
 	* */
 	function receive(address receiver, uint8 animalType, uint32[] oldids) payable {
-		if(!transferAllowed) throw; //for now manually allowing and disallowing, in next version instead only allow calls from old contract address
+		if(msg.sender!=lastP4P) throw;
 		if (msg.value < oldids.length * values[animalType]) throw;
 		for (uint8 i = 0; i < oldids.length; i++) {
 			if (animals[oldids[i]].value == 0) {
 				addAnimal(animalType, receiver, oldids[i]);
+				if(oldids[i]<oldest) oldest = oldids[i];
 			} else {
 				addAnimal(animalType, receiver, nextId);
 				nextId++;
 			}
 		}
+		numAnimalsXType[animalType] += uint16(oldids.length);
 	}
 
 	
@@ -1414,10 +1420,6 @@ contract Pray4Prey is mortal, usingOraclize, transferable {
 		maxAnimals = number;
 	}
 	
-	function setTransferAllowance(bool isAllowed){
-		if (!(msg.sender == owner)) throw;
-		transferAllowed = isAllowed;
-	}
 
 	/************* HELPERS ****************/
 
