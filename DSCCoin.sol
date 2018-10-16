@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSCCoin at 0x0e6a7ccdf837955babe2c3c1f794f51b9b7b1995
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSCCoin at 0x7a7194168245d76f1f2830c937626b7c383067c8
 */
-pragma solidity ^0.4.18;
-
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -194,7 +192,7 @@ contract DSCCoin is StandardToken {
     string public name = 'Dream Share Coin';
     string public symbol = 'DSC';
     uint public decimals = 8;
-    uint public INITIAL_SUPPLY = 2700000000000000;
+    uint public INITIAL_SUPPLY = 810000000000000;
 
     function DSCCoin() public {
         totalSupply = INITIAL_SUPPLY;
