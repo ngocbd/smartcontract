@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeenFutureToken at 0xfae8382b74479261c6a75cebf32e39c4dd249ea8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeenFutureToken at 0xe9b77a61841ba3aef2711ab6691e1ded4b3eb22e
 */
-pragma solidity ^ 0.4.11;
+pragma solidity ^ 0.4.19;
 
 interface IERC20 {
     function totalSupply() constant returns(uint256 totalSupply);
@@ -55,7 +55,7 @@ contract KeenFutureToken is IERC20 {
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
 
-    function TastToken() {
+    function KeenFutureToken() {
         balances[msg.sender] = _totalSupply;
     }
 
