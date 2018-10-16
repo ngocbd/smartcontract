@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldmintUnsold at 0x6d5cd6e324ce0813d041ec9d5e39d32cb862af64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldmintUnsold at 0xae754fc7761d6b4b9da6511adb9d45af8c800457
 */
 pragma solidity ^0.4.16;
 
@@ -35,7 +35,7 @@ contract StdToken is SafeMath {
      event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 // Functions:
-     function transfer(address _to, uint256 _value) returns(bool){
+     function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns(bool){
           require(balances[msg.sender] >= _value);
           require(balances[_to] + _value > balances[_to]);
 
@@ -218,6 +218,7 @@ contract GoldmintUnsold is SafeMath {
 }
 
 contract FoundersVesting is SafeMath {
+     address public creator;
      address public teamAccountAddress;
      uint64 public lastWithdrawTime;
 
@@ -231,10 +232,16 @@ contract FoundersVesting is SafeMath {
           lastWithdrawTime = uint64(now);
 
           mntToken = MNTP(_mntTokenAddress);          
+
+          creator = msg.sender;
      }
 
-     // Can be called by anyone
-     function withdrawTokens() public {
+     modifier onlyCreator() { 
+          require(msg.sender==creator); 
+          _; 
+     }
+
+     function withdrawTokens() onlyCreator public {
           // 1 - wait for the next month
           uint64 oneMonth = lastWithdrawTime + 30 days;  
           require(uint(now) >= oneMonth);
@@ -272,29 +279,32 @@ contract Goldmint is SafeMath {
      //
      // TODO: set real params here
      address[] public multisigs = [
-          0x27ce565b1047c6258164062983bb8bc2917f11d2,
-          0xfb3afc815894e91fe1ab6e6ef36f8565fbb904f6,
-          0x7e2a7a10509177db2a7ea41e728743c4eb42f528,
-          0x27ce565b1047c6258164062983bb8bc2917f11d2,
-          0xfb3afc815894e91fe1ab6e6ef36f8565fbb904f6,
-          0x7e2a7a10509177db2a7ea41e728743c4eb42f528,
-          0x27ce565b1047c6258164062983bb8bc2917f11d2,
-          0xfb3afc815894e91fe1ab6e6ef36f8565fbb904f6,
-          0x7e2a7a10509177db2a7ea41e728743c4eb42f528,
-          0xF4Ce80097bf1E584822dBcA84f91D5d7d9df0846
+          0xcec42e247097c276ad3d7cfd270adbd562da5c61,
+          0x373c46c544662b8c5d55c24cf4f9a5020163ec2f,
+          0x672cf829272339a6c8c11b14acc5f9d07bafac7c,
+          0xce0e1981a19a57ae808a7575a6738e4527fb9118,
+          0x93aa76cdb17eea80e4de983108ef575d8fc8f12b,
+          0x20ae3329cd1e35feff7115b46218c9d056d430fd,
+          0xe9fc1a57a5dc1caa3de22a940e9f09e640615f7e,
+          0xd360433950de9f6fa0e93c29425845eed6bfa0d0,
+          0xf0de97eaff5d6c998c80e07746c81a336e1bbd43,
+          0x80b365da1C18f4aa1ecFa0dFA07Ed4417B05Cc69
      ];
 
      // We count ETH invested by person, for refunds (see below)
      mapping(address => uint) ethInvestedBy;
+     uint collectedWei = 0;
+
      // These can be changed before ICO starts ($7USD/MNTP)
      uint constant STD_PRICE_USD_PER_1000_TOKENS = 7000;
-     // USD/ETH is fixed for the whole ICO
-     // WARNING: if USD/ETH rate changes DURING ICO -> we won't change it
-     // coinmarketcap.com 04.09.2017
-     uint constant ETH_PRICE_IN_USD = 300;
+
+     // The USD/ETH exchange rate may be changed every hour and can vary from $100 to $700 depending on the market. The exchange rate is retrieved from coinmarketcap.com site and is rounded to $1 dollar. For example if current marketcap price is $306.123 per ETH, the price is set as $306 to the contract.
+     uint public usdPerEthCoinmarketcapRate = 300;
+     uint64 public lastUsdPerEthChangeDate = 0;
+
      // Price changes from block to block
      //uint constant SINGLE_BLOCK_LEN = 700000;
-
+     // TODO: for test
      uint constant SINGLE_BLOCK_LEN = 100;
 
      // 1 000 000 tokens
@@ -304,15 +314,17 @@ contract Goldmint is SafeMath {
      // 7 000 000 is sold during the ICO
      //uint public constant ICO_TOKEN_SUPPLY_LIMIT = 7000000 * 1 ether;
 
-     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 150 * 1 ether;
+     // TODO: for tests only!
+     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 250 * 1 ether;
 
      // 150 000 tokens soft cap (otherwise - refund)
      uint public constant ICO_TOKEN_SOFT_CAP = 150000 * 1 ether;
 
 // Fields:
-     address public creator = 0x0;
-     address public tokenManager = 0x0;
-     address public otherCurrenciesChecker = 0x0;
+     address public creator = 0x0;                // can not be changed after deploy
+     address public ethRateChanger = 0x0;         // can not be changed after deploy
+     address public tokenManager = 0x0;           // can be changed by token manager only
+     address public otherCurrenciesChecker = 0x0; // can not be changed after deploy
 
      uint64 public icoStartedTime = 0;
 
@@ -372,6 +384,11 @@ contract Goldmint is SafeMath {
           require(msg.sender==otherCurrenciesChecker); 
           _; 
      }
+     modifier onlyEthSetter() { 
+          require(msg.sender==ethRateChanger); 
+          _; 
+     }
+
      modifier onlyInState(State state){ 
           require(state==currentState); 
           _; 
@@ -386,6 +403,7 @@ contract Goldmint is SafeMath {
      /// @dev Constructor
      function Goldmint(
           address _tokenManager,
+          address _ethRateChanger,
           address _otherCurrenciesChecker,
 
           address _mntTokenAddress,
@@ -395,6 +413,9 @@ contract Goldmint is SafeMath {
           creator = msg.sender;
 
           tokenManager = _tokenManager;
+          ethRateChanger = _ethRateChanger;
+          lastUsdPerEthChangeDate = uint64(now);
+
           otherCurrenciesChecker = _otherCurrenciesChecker; 
 
           mntToken = MNTP(_mntTokenAddress);
@@ -512,6 +533,10 @@ contract Goldmint is SafeMath {
           return getMntTokensPerEth(icoTokensSold);
      }
 
+     function getTotalCollectedWei()constant public returns (uint){
+          return collectedWei;
+     }
+
 /////////////////////////////
      function isIcoFinished() constant public returns(bool) {
           return (icoStartedTime > 0)
@@ -532,7 +557,7 @@ contract Goldmint is SafeMath {
 
           // Correct: 300000 / 5833.33333333 = 51.42857142
           // We have to multiply by '1 ether' to avoid float truncations
-          uint mntPerEth = (ETH_PRICE_IN_USD * 1000 * 1 ether * 1 ether) / pricePer1000tokensUsd;
+          uint mntPerEth = (usdPerEthCoinmarketcapRate * 1000 * 1 ether * 1 ether) / pricePer1000tokensUsd;
           return mntPerEth;
      }
 
@@ -550,6 +575,9 @@ contract Goldmint is SafeMath {
 
           // Update this only when buying from ETH
           ethInvestedBy[msg.sender] = safeAdd(ethInvestedBy[msg.sender], msg.value);
+
+          // This is total collected ETH
+          collectedWei = safeAdd(collectedWei, msg.value);
      }
 
      /// @dev This is called by other currency processors to issue new tokens 
@@ -594,6 +622,17 @@ contract Goldmint is SafeMath {
 
           // 2 - burn tokens
           mntToken.burnTokens(sender, mntToken.balanceOf(sender));
+     }
+
+     function setUsdPerEthRate(uint _usdPerEthRate) public onlyEthSetter {
+          // 1 - check
+          require((_usdPerEthRate>=100) && (_usdPerEthRate<=700));
+          uint64 hoursPassed = lastUsdPerEthChangeDate + 1 hours;  
+          require(uint(now) >= hoursPassed);
+
+          // 2 - update
+          usdPerEthCoinmarketcapRate = _usdPerEthRate;
+          lastUsdPerEthChangeDate = uint64(now);
      }
 
      // Default fallback function
