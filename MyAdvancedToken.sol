@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x7b880b6c40553ea3f1aa6f2c85453c441fed1f7d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xad009ddaec78b3371f15403c9c69da113c22f708
 */
 pragma solidity ^0.4.16;
 
@@ -26,7 +26,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 2;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -49,11 +49,11 @@ contract TokenERC20 {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+    ) public {
+        totalSupply = 1000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        name = "iPadian";                                   // Set the name for display purposes
+        symbol = "XIP";                               // Set the symbol for display purposes
     }
 
     /**
@@ -114,7 +114,7 @@ contract TokenERC20 {
      * @param _value the max amount they can spend
      */
     function approve(address _spender, uint256 _value) public
-    returns (bool success) {
+        returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -129,8 +129,8 @@ contract TokenERC20 {
      * @param _extraData some extra information to send to the approved contract
      */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-    public
-    returns (bool success) {
+        public
+        returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
@@ -191,7 +191,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -243,22 +243,5 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
         msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
-    }
-    bytes32 public currentChallenge;                         // The coin starts with a challenge
-    uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
-    uint public difficulty = 10**32;                         // Difficulty starts reasonably low
-
-    function proofOfWork(uint nonce) public{
-        bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
-        require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
-
-        uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
-        require(timeSinceLastProof >=  5 seconds);         // Rewards cannot be given too quickly
-        balanceOf[msg.sender] += timeSinceLastProof / 60 seconds;  // The reward to the winner grows by the minute
-
-        difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
-
-        timeOfLastProof = now;                              // Reset the counter
-        currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
     }
 }
