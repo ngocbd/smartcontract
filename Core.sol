@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0xfb8596ed07c4e2973af7d7847aa14e1bed09c09d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0xc8cc7a2fb2bb2373f1bcae9a2b931f8814f991e2
 */
 pragma solidity 0.4.19;
 
@@ -29,22 +29,20 @@ contract Maths {
 
 }
 
+
 contract Owned is Maths {
 
     address public owner;        
     bool public transfer_status = true;
-    uint256 TotalSupply = 10000000000000000000000000000;
-    address public InitialOwnerAddress;
+    uint256 TotalSupply = 750000000000000000000000000;
     mapping(address => uint256) UserBalances;
     mapping(address => mapping(address => uint256)) public Allowance;
-    uint256 LockInExpiry = Add(block.timestamp, 2629744);
     event OwnershipChanged(address indexed _invoker, address indexed _newOwner);        
     event TransferStatusChanged(bool _newStatus);
     
         
     function Owned() public {
-        InitialOwnerAddress = 0xb51e11ce9c9427e85ed23e2a7b12f71e9a6d261b;
-        owner = 0xb51e11ce9c9427e85ed23e2a7b12f71e9a6d261b;
+        owner = 0xb1A43468e57E5e28838846Cd239aF884c6C2f579;
     }
 
     modifier _onlyOwner() {
@@ -69,55 +67,33 @@ contract Owned is Maths {
         return true;
     
     }
-
-    function Mint(uint256 _amount) public _onlyOwner returns (bool _success) {
-
-        TotalSupply = Add(TotalSupply, _amount);
-        UserBalances[msg.sender] = Add(UserBalances[msg.sender], _amount);
-
-        return true;
-
-    }
-
-    function Burn(uint256 _amount) public _onlyOwner returns (bool _success) {
-
-        require(Sub(UserBalances[msg.sender], _amount) >= 0);
-        TotalSupply = Sub(TotalSupply, _amount);
-        UserBalances[msg.sender] = Sub(UserBalances[msg.sender], _amount);
-
-        return true;
-
-    }
         
 }
+
 
 contract Core is Owned {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    string name = 'Gregc1131';
-    string symbol = '1131';
-    uint256 decimals = 18;
+    string public name = "Self Drive Renta";
+    string public symbol = "SDRT";
+    uint256 public decimals = 18;
 
     function Core() public {
 
-        UserBalances[0xb51e11ce9c9427e85ed23e2a7b12f71e9a6d261b] = TotalSupply;
+        UserBalances[0xb1A43468e57E5e28838846Cd239aF884c6C2f579] = TotalSupply;
 
     }
 
     function _transferCheck(address _sender, address _recipient, uint256 _amount) private view returns (bool success) {
-                     
+                         
         require(transfer_status == true);
         require(_amount > 0);
         require(_recipient != address(0));
-        require(UserBalances[_sender] > _amount);
+        require(UserBalances[_sender] >= _amount);
         require(Sub(UserBalances[_sender], _amount) >= 0);
         require(Add(UserBalances[_recipient], _amount) > UserBalances[_recipient]);
-            
-            if (_sender == InitialOwnerAddress && block.timestamp < LockInExpiry) {
-                require(Sub(UserBalances[_sender], _amount) >= 2500000000);
-            }
         
         return true;
 
@@ -129,6 +105,7 @@ contract Core is Owned {
         UserBalances[msg.sender] = Sub(UserBalances[msg.sender], _amount);
         UserBalances[_receiver] = Add(UserBalances[msg.sender], _amount);
         Transfer(msg.sender, _receiver, _amount);
+        
         return true;
 
     }
@@ -137,6 +114,7 @@ contract Core is Owned {
 
         require(_transferCheck(_owner, _receiver, _amount));
         require(Sub(Allowance[_owner][msg.sender], _amount) >= 0);
+        Allowance[_owner][msg.sender] = Sub(Allowance[_owner][msg.sender], _amount);
         UserBalances[_owner] = Sub(UserBalances[_owner], _amount);
         UserBalances[_receiver] = Add(UserBalances[_receiver], _amount);
         Allowance[_owner][msg.sender] = Sub(Allowance[_owner][msg.sender], _amount);
@@ -161,8 +139,7 @@ contract Core is Owned {
 
     function approve(address _spender, uint256 _amount) public returns (bool approved) {
 
-        require(_amount > 0);
-        require(UserBalances[msg.sender] > 0);
+        require(_amount >= 0);
         Allowance[msg.sender][_spender] = _amount;
         Approval(msg.sender, _spender, _amount);
 
