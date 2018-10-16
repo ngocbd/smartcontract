@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DXF_Tokens at 0xE975F6C744054c6Ee4C3Da475e7f66B683208085
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DXF_Tokens at 0x72a68Fb6d91Ed8Dc47B564e088E518C6D4a6FF44
 */
 pragma solidity 0.4.6;
 
