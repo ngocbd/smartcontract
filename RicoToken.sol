@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RicoToken at 0x69472a2d9644c52766eb130496204aa2d3f782b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RicoToken at 0xabdbbbd3fea294cbce25091f8fd1d7bc875060ff
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,6 @@ pragma solidity ^0.4.18;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-
     function totalSupply() public view returns (uint256);
 
     function balanceOf(address who) public view returns (uint256);
@@ -25,7 +24,6 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-
     function allowance(address owner, address spender) public view returns (uint256);
 
     function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -138,6 +136,7 @@ contract BasicToken is ERC20Basic {
 contract StandardToken is ERC20, BasicToken {
 
     mapping(address => mapping(address => uint256)) internal allowed;
+
 
     /**
      * @dev Transfer tokens from one address to another
@@ -345,7 +344,6 @@ contract DividendPayoutToken is BurnableToken, MintableToken {
 
     //When transfer tokens decrease dividendPayments for sender and increase for receiver
     function transfer(address _to, uint256 _value) public returns (bool) {
-
         // balance before transfer
         uint256 oldBalanceFrom = balances[msg.sender];
 
@@ -360,7 +358,6 @@ contract DividendPayoutToken is BurnableToken, MintableToken {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-
         // balance before transfer
         uint256 oldBalanceFrom = balances[_from];
 
@@ -375,7 +372,6 @@ contract DividendPayoutToken is BurnableToken, MintableToken {
     }
 
     function burn() public {
-
         address burner = msg.sender;
 
         // balance before burning tokens
@@ -394,9 +390,9 @@ contract DividendPayoutToken is BurnableToken, MintableToken {
 
 contract RicoToken is DividendPayoutToken {
 
-    string public constant name = "CFE";
+    string public constant name = "Rico";
 
-    string public constant symbol = "CFE";
+    string public constant symbol = "Rico";
 
     uint8 public constant decimals = 18;
 
@@ -427,7 +423,6 @@ contract ReentrancyGuard {
      * wrapper marked as `nonReentrant`.
      */
     modifier nonReentrant() {
-
         require(!reentrancy_lock);
         reentrancy_lock = true;
         _;
@@ -437,7 +432,6 @@ contract ReentrancyGuard {
 }
 
 contract PreSale is Ownable, ReentrancyGuard {
-
     using SafeMath for uint256;
 
     // The token being sold
@@ -478,30 +472,24 @@ contract PreSale is Ownable, ReentrancyGuard {
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
     function PreSale(
-        uint256 _startTime,
-        uint256 _period,
-        address _wallet,
-        address _token,
-        uint256 _minimumInvest) public
+        address _token) public
     {
-        require(_period != 0);
-        require(_token != address(0));
 
-        startTime = _startTime;
-        endTime = startTime + _period * 1 days;
+        startTime = 1525251600;
+        endTime = startTime + 60 minutes;
 
-        wallet = _wallet;
+        wallet = 0x2c9660f30B65dbBfd6540d252f6Fa07B5854a40f;
         token = RicoToken(_token);
         tokenContractAddress = _token;
 
         // minimumInvest in wei
-        minimumInvest = _minimumInvest;
+        minimumInvest = 1000000000000;
 
-        // 1 token for approximately 0,000666666666667 eth
+        // 1 token for approximately 0.00015 eth
         rate = 1000;
 
-        softCap = 150 * 1 ether;
-        hardCap = 1500 * 1 ether;
+        softCap = 150 * 0.000001 ether;
+        hardCap = 1500 * 0.000001 ether;
         bonusPercent = 50;
     }
 
