@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NEON at 0xffA0c3f81C4312fcf86144d13dbb5D0091F23075
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NEON at 0xafC2CB236D1810307766D44c9CE14E684B6E37CB
 */
 contract NEON {
     /* Public variables of the token */
@@ -18,8 +18,8 @@ contract NEON {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function NEON() {
 
-         initialSupply = 2500000000;
-         name ="NEON";
+         initialSupply = 250000000000;
+         name ="NEONT";
         decimals = 2;
          symbol = "NEON";
         
