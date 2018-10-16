@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0xda6b11e2d9dc140eebe589a9c799680b6dde7422
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0x7ffb890a58fcb9d43d2be4aba92881a84b8566ff
 */
 pragma solidity ^0.4.18;
 
@@ -60,8 +60,8 @@ contract PepFarmer {
     
     bool private reentrancy_lock = false;
     
-    address public shop = 0x02e0d32837313d9a5b0f88db5f3ef8075f4afd1c;
-    address public object = 0x63b173cdde9580f49ad80f4f697c4ed40f349ed6;
+    address public shop = 0x89239D0e694d553E5E10d4e3b51f225362fBc378;
+    address public object = 0x47c4632f78b347597fcf5f8114746733a04e58d8;
     
     mapping(address => uint256) public workDone;
     
@@ -73,11 +73,11 @@ contract PepFarmer {
     }
     
     function pepFarm() nonReentrant external {
-        for (uint8 i = 0; i < 100; i++) {
+        for (uint8 i = 0; i < 2; i++) {
             CornFarm(shop).buyObject(this);
         }
         
-        workDone[msg.sender] = workDone[msg.sender].add(uint256(100 ether));
+        workDone[msg.sender] = workDone[msg.sender].add(uint256(2 ether));
     }
     
     function reapFarm() nonReentrant external {
