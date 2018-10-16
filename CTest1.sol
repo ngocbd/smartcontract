@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTest1 at 0x69bea039c30aa7c47002a41216756f7b6f7d02ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTest1 at 0x4117912440d279aabfa20d10bf517c1ff9fe6c8f
 */
 pragma solidity ^0.4.16;
 
@@ -56,7 +56,7 @@ contract SafeMath {
 
 
 contract ERC20 {
-  uint public totalSupply;
+  uint public totalSupply = 1000000;
   function balanceOf(address who) constant returns (uint);
   function allowance(address owner, address spender) constant returns (uint);
 
@@ -156,7 +156,6 @@ contract CTest1 is StandardToken {
     function symbol() constant returns (string) { return "CTest1"; }
     function decimals() constant returns (uint) { return 18; }
     
-    uint256 totalSupply = 1000000;
     
     
     function () payable {
@@ -206,6 +205,7 @@ contract CTest1 is StandardToken {
 
         
         uint256 tokens = safeMul(msg.value, rate);
+        tokens = tokens/1 ether;
         
         
         //Make sure they send enough to buy atleast 1 token.
