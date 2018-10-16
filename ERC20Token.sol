@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x598697ca1a65772b85dc1cdb34cb6af015d60244
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x3dba5cea55efefd4948a317b6fc03338aae64da2
 */
 pragma solidity ^0.4.4;
 
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "Global Escrow Token";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "GET";                               // Set the symbol for display purposes
+        balances[msg.sender] = 100000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000;                        // Update total supply (100000 for example)
+        name = "Cryptoworldbank";                                   // Set the name for display purposes
+        decimals = 2;                            // Amount of decimals for display purposes
+        symbol = "CRWB";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
