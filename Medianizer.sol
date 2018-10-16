@@ -1,26 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Medianizer at 0x99041f808d598b782d5a3e498681c2452a31da08
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Medianizer at 0xa57f4b94e99db8ffca4206cc819bcdab7381935e
 */
-// Medianizer
-// Copyright (C) 2017 Dapphub
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright 2018 Dapphub
+// medianizer.sol
 
 // hevm: flattened sources of src/medianizer.sol
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-////// lib/ds-value/lib/ds-thing/lib/ds-auth/src/auth.sol
+////// lib/medianizer/lib/ds-value/lib/ds-thing/lib/ds-auth/src/auth.sol
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -90,7 +77,7 @@ contract DSAuth is DSAuthEvents {
     }
 }
 
-////// lib/ds-value/lib/ds-thing/lib/ds-math/src/math.sol
+////// lib/medianizer/lib/ds-value/lib/ds-thing/lib/ds-math/src/math.sol
 /// math.sol -- mixin for inline numerical wizardry
 
 // This program is free software: you can redistribute it and/or modify
@@ -176,7 +163,7 @@ contract DSMath {
     }
 }
 
-////// lib/ds-value/lib/ds-thing/lib/ds-note/src/note.sol
+////// lib/medianizer/lib/ds-value/lib/ds-thing/lib/ds-note/src/note.sol
 /// note.sol -- the `note' modifier, for logging calls as events
 
 // This program is free software: you can redistribute it and/or modify
@@ -219,7 +206,7 @@ contract DSNote {
     }
 }
 
-////// lib/ds-value/lib/ds-thing/src/thing.sol
+////// lib/medianizer/lib/ds-value/lib/ds-thing/src/thing.sol
 // thing.sol - `auth` with handy mixins. your things should be DSThings
 
 // Copyright (C) 2017  DappHub, LLC
@@ -246,7 +233,7 @@ contract DSNote {
 contract DSThing is DSAuth, DSNote, DSMath {
 }
 
-////// lib/ds-value/src/value.sol
+////// lib/medianizer/lib/ds-value/src/value.sol
 /// value.sol - a value is a simple thing, it can be get and set
 
 // Copyright (C) 2017  DappHub, LLC
@@ -288,7 +275,7 @@ contract DSValue is DSThing {
     }
 }
 
-////// src/medianizer.sol
+////// lib/medianizer/src/medianizer.sol
 /* pragma solidity ^0.4.18; */
 
 /* import 'ds-value/value.sol'; */
