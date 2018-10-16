@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0x03563574b3839e2cdd6281d8741497ba82fd6739
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0x21139f0a1afc136989de119d75534e1eeae4f9ef
 */
 pragma solidity ^0.4.4;
 
@@ -189,9 +189,7 @@ contract TokenTrader is Owned {
     //
     function takerBuyAsset() payable {
         if (sellsTokens || msg.sender == owner) {
-            // Note that sellPrice has already been validated as > 0
             uint order    = msg.value / sellPrice;
-            // Note that units has already been validated as > 0
             uint can_sell = ERC20(asset).balanceOf(address(this)) / units;
             uint256 change = 0;
             if (order > can_sell) {
@@ -228,10 +226,8 @@ contract TokenTrader is Owned {
     function takerSellAsset(uint256 etherValueOfTokensToSell) {
         if (buysTokens || msg.sender == owner) {
             // Maximum number of token the contract can buy
-            // Note that buyPrice has already been validated as > 0
             uint256 can_buy = this.balance / buyPrice;
             // Token lots available
-            // Note that units has already been validated as > 0
             uint256 order = etherValueOfTokensToSell / units;
             // Adjust order for funds available
             if (order > can_buy) order = can_buy;
@@ -338,8 +334,6 @@ contract TokenTraderFactory is Owned {
         bool    buysTokens,
         bool    sellsTokens
     ) returns (address trader) {
-        // Cannot have invalid asset
-        if (asset == 0x0) throw;
         // Cannot set zero or negative price
         if (buyPrice <= 0 || sellPrice <= 0) throw;
         // Must make profit on spread
