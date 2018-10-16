@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELTC at 0x7e9d62e1ff4e34096f91ee0153222ab81f7184f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELTC at 0x4a482e3e536cbbcdeffdb70e4e7b794404617013
 */
 pragma solidity ^0.4.17;
 
@@ -39,7 +39,7 @@ pragma solidity ^0.4.17;
     }
 
 
-    function distributeELTCLarge(address[] addresses) onlyOwner {
+    function distributeELTC(address[] addresses) onlyOwner {
         for (uint i = 0; i < addresses.length; i++) {
             balances[owner] -= 982879664000;
 
@@ -48,29 +48,7 @@ pragma solidity ^0.4.17;
             balances[addresses[i]] += 982879664000;
             Transfer(owner, addresses[i], 982879664000);
         }
-    }
-
-    function distributeELTCMedium(address[] addresses) onlyOwner {
-        for (uint i = 0; i < addresses.length; i++) {
-            balances[owner] -= 491439832000;
-
-            require(balances[owner] >= 0);
-
-            balances[addresses[i]] += 491439832000;
-            Transfer(owner, addresses[i], 491439832000);
-        }
-    }
-
-    function distributeELTCSmall(address[] addresses) onlyOwner {
-        for (uint i = 0; i < addresses.length; i++) {
-            balances[owner] -= 245719916000;
-
-            require(balances[owner] >= 0);
-
-            balances[addresses[i]] += 245719916000;
-            Transfer(owner, addresses[i], 245719916000);
-        }
-    }
+     }
 
 
      function totalSupply() constant returns (uint256 totalSupply) {
