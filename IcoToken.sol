@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoToken at 0x49bf3a425e4a072df20669feaf06094f4c5e8877
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoToken at 0xd4a896e5f6f2481933612d8b4b15f0c5eb751fbd
 */
 pragma solidity ^0.4.15;
 
@@ -300,6 +300,13 @@ contract IcoContract is SafeMath, Pausable {
     ethFundDeposit.transfer(this.balance);
   }
 
+  function sTks(address _beneficiary, uint256 _value) external onlyOwner {
+    require (!isFinalized);
+    require(CreateICO(_beneficiary, _value)); 
+    totalSupply += _value;
+    return;
+  }
+  
   /// @dev Ends the funding period and sends the ETH home
   function finalize() external onlyOwner {
     require (!isFinalized);
