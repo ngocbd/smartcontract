@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheXereum at 0x8edd2af16ca1e12836363f4ab913acf15e60a4c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheXereum at 0xe71fc0349833b909c63f4bc5afa3ed161f4b170f
 */
 pragma solidity ^0.4.4;
 
@@ -108,8 +108,8 @@ contract TheXereum is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function TheXereum() {
-        balances[msg.sender] = 100000000000000000000000000000;         // Give the creator all initial tokens.
-        totalSupply = 100000000000000000000000000000;                  // Update total supply.
+        balances[msg.sender] = 10000000000000000000000000000;         // Give the creator all initial tokens.
+        totalSupply = 10000000000000000000000000000;                  // Update total supply.
         name = "TheXereum";                                         // Set the name for display purposes.
         decimals = 18;                                              // Amount of decimals for display purposes.
         symbol = "XREM";                                            // Set the symbol for display purposes.
