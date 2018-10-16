@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x7E2FE61AFC64CA49A8EE24Abf6EddA165962a21e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x9E68d7Fe52aD18F7c68cBD0FcDE6266A68F056f5
 */
 pragma solidity ^0.4.11;
 
