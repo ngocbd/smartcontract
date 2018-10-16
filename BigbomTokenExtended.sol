@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigbomTokenExtended at 0x84f7c44b6fed1080f647e354d552595be2cc602f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigbomTokenExtended at 0x17e65b46ad1ebfb8f9cacde8e274b377831a1253
 */
 /**
  * @title SafeMath
@@ -518,8 +518,13 @@ contract BigbomToken is StandardToken, Ownable {
         token.transfer( owner, amount );
     }
 }
-
 contract BigbomTokenExtended is BigbomToken {
+    
+    string  public  constant name = "Bigbom";
+    string  public  constant symbol = "BBO";
+    uint    public  constant decimals = 18;
+    uint    public   totalSupply = 2000000000 * 1e18; //2,000,000,000
+
     BigbomToken public  bigbomToken;
     function BigbomTokenExtended(uint startTime, uint endTime, address admin, address _bbFounderCoreStaffWallet, address _bbAdvisorWallet,
         address _bbAirdropWallet,
