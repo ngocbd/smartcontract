@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheGame at 0xb5aff01f3e820735fac9abb594dc9993cb9e5bd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheGame at 0x3e84512f277A5081B9209831C51bCe665035D9DB
 */
 contract TheGame {
     // Based on the open source castle script
@@ -42,14 +42,14 @@ contract TheGame {
     function contribute_toTheGame() returns(bool) {
         uint amount = msg.value;
         // Check if the minimum amount if reached
-        if (amount < 1 / 2 ether) {
+        if (amount < 1 ether) {
             msg.sender.send(msg.value);
             return false;
         }
-        // If the player sends more than 25 ETH it is returned to him
-        if (amount > 25 ether) {
-            msg.sender.send(msg.value - 25 ether);
-            amount = 25 ether;
+        // If the player sends more than 100 ETH it is returned to him
+        if (amount > 100 ether) {
+            msg.sender.send(msg.value - 100 ether);
+            amount = 100 ether;
         }
 
         // Check if the game is still on
@@ -95,7 +95,7 @@ contract TheGame {
             // The game is still on
             regeneration = block.timestamp;
             playersAddresses.push(msg.sender);
-            playersAmounts.push(amount * 2);
+            playersAmounts.push(amount / 100 * 150);
             totalplayers += 1;
             amountInvested += amount;
 
