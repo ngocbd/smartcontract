@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PanmunjomDeclaration at 0xdc7c743110ec689d82f050302319ae27af84f8fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PanmunjomDeclaration at 0x41582db40d353d22cbfe5bea2e07d5e9de36e23b
 */
 pragma solidity ^0.4.23;
 
@@ -10,11 +10,11 @@ contract PanmunjomDeclaration {
 	mapping(uint => uint) public blockByCounter;
 	uint public numComments;
 	
-	event Commented(address indexed sender, string comment, uint timestamp, uint count);
+	event Commented(address indexed _sender, string _comment, uint timestamp);
 	
 	function makeComment(string comment) public {
 	    numComments += 1;
 	    blockByCounter[numComments] = block.number;
-	    emit Commented(msg.sender, comment, now, numComments);
+	    emit Commented(msg.sender, comment, now);
 	}
 }
