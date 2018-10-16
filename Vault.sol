@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x1b1c789fccdfc6a7b1fef651a1464043f0a38ada
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xfFc80F7403FF8C1AEe200AD110fE0fa28D213445
 */
 // Copyright (C) 2017  The Halo Platform by Scott Morrison
 //
 // This is free software and you are welcome to redistribute it under certain conditions.
 // ABSOLUTELY NO WARRANTY; for details visit: https://www.gnu.org/licenses/gpl-2.0.html
 //
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.14;
 
 contract Ownable {
     address Owner = msg.sender;
@@ -14,21 +14,10 @@ contract Ownable {
     function transferOwnership(address to) public onlyOwner { Owner = to; }
 }
 
-contract Token {
-    function balanceOf(address who) constant public returns (uint256);
-    function transfer(address to, uint amount) constant public returns (bool);
-}
-
 // tokens are withdrawable
 contract TokenVault is Ownable {
-    event TokenTransfer(address indexed to, address token, uint amount);
-    function withdrawTokenTo(address token, address to) public onlyOwner returns (bool) {
-        uint amount = Token(token).balanceOf(address(this));
-        if (amount > 0) {
-            TokenTransfer(to, token, amount);
-            return Token(token).transfer(to, amount);
-        }
-        return false;
+    function withdrawTokenTo(address token, address to, uint amount) public onlyOwner returns (bool) {
+        return token.call(bytes4(0xa9059cbb), to, amount);
     }
 }
 
