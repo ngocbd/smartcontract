@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BunnyToken at 0x10613396d45f0ef8cf92c90f812822f10d6fb046
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BunnyToken at 0x8a9ec3aa052946071fa87d7a5ead90d17108d905
 */
 pragma solidity ^0.4.16;
 
@@ -7,7 +7,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract BunnyToken {
     // Public variables of the token
-    string public name = "BunnyToken";
+    string public name = "Bunny Token";
     string public symbol = "BUNNY";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
@@ -32,7 +32,7 @@ contract BunnyToken {
     ) public {
         totalSupply = 1000000000 * 10 ** 18;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "BunnyToken";                                   // Set the name for display purposes
+        name = "Bunny Token";                                   // Set the name for display purposes
         symbol = "BUNNY";                               // Set the symbol for display purposes
     }
 
