@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmontFrenzy at 0xb5f8ed7a761200d80a9971268302ef3ff1aafbec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmontFrenzy at 0x635b1194853b58e916f34f4223c81df0e99f4430
 */
 pragma solidity ^0.4.19;
+
+// copyright contact@emontalliance.com
 
 contract BasicAccessControl {
     address public owner;
@@ -91,6 +93,8 @@ contract EmontFrenzy is BasicAccessControl {
     uint public width = 50;
     uint public minJump = 2 * 2;
     uint public maxPos = HIGH * width; // valid pos (0 -> maxPos - 1)
+    uint public minCashout = 20 * 10 ** 8;
+    uint public minEatable = 1 * 10 ** 8;
     
     mapping(uint => Fish) fishMap;
     mapping(uint => uint) ocean; // pos => fish id
@@ -108,6 +112,7 @@ contract EmontFrenzy is BasicAccessControl {
     event EventBonus(uint pos, uint value);
     event EventMove(address indexed player, uint fishId, uint fromPos, uint toPos, uint weight);
     event EventEat(address indexed player, address indexed defender, uint playerFishId, uint defenderFishId, uint fromPos, uint toPos, uint playerWeight);
+    event EventFight(address indexed player, address indexed defender, uint playerFishId, uint defenderFishId, uint fromPos, uint toPos, uint playerWeight);
     event EventSuicide(address indexed player, address indexed defender, uint playerFishId, uint defenderFishId, uint fromPos, uint toPos, uint defenderWeight);
     
     
@@ -132,6 +137,10 @@ contract EmontFrenzy is BasicAccessControl {
         maxPos = HIGH * width;
     }
     
+    function setExtraConfig(uint _minCashout, uint _minEatable) onlyModerators external {
+        minCashout = _minCashout;
+        minEatable = _minEatable;
+    }
     
     // weight in emont, x*x
     function updateMaxJump(uint _weight, uint _squareLength) onlyModerators external {
@@ -301,7 +310,7 @@ contract EmontFrenzy is BasicAccessControl {
             if (_fromPos == BASE_POS) revert();
             
             Fish storage targetFish = fishMap[tempX];
-            if (targetFish.weight <= fish.weight) {
+            if (targetFish.weight + minEatable <= fish.weight) {
                 // eat the target fish
                 fish.weight += targetFish.weight;
                 targetFish.weight = 0;
@@ -310,6 +319,30 @@ contract EmontFrenzy is BasicAccessControl {
                 ocean[_toPos] = fishId;
                 
                 EventEat(msg.sender, targetFish.player, fishId, tempX, _fromPos, _toPos, fish.weight);
+                Transfer(targetFish.player, address(0), tempX);
+            } else if (targetFish.weight <= fish.weight) {
+                // fight and win
+                // bonus to others
+                seed = getRandom(seed);
+                tempY = seed % (maxPos - 1);
+                if (tempY == BASE_POS) tempY += 1;
+                bonus[tempY] = targetFish.weight * 2;
+                
+                EventBonus(tempY, targetFish.weight * 2);
+                
+                // fight 
+                fish.weight -= targetFish.weight;
+                targetFish.weight = 0;
+                
+                // update location
+                if (fish.weight > 0) {
+                    ocean[_toPos] = fishId;
+                } else {
+                    ocean[_toPos] = 0;
+                    Transfer(msg.sender, address(0), fishId);
+                }
+                
+                EventFight(msg.sender, targetFish.player, fishId, tempX, _fromPos, _toPos, fish.weight);
                 Transfer(targetFish.player, address(0), tempX);
             } else {
                 // bonus to others
@@ -330,14 +363,18 @@ contract EmontFrenzy is BasicAccessControl {
         }
     }
     
-    function CashOut(uint _amount) isActive external {
+    function CashOut() isActive external {
         uint fishId = players[msg.sender];
         Fish storage fish = fishMap[fishId];
         
-        if (fish.weight < _amount + addWeight) 
+        if (fish.weight < minCashout)
             revert();
         
-        fish.weight -= _amount;
+        if (fish.weight < addWeight) 
+            revert();
+        
+        uint _amount = fish.weight - addWeight;
+        fish.weight = addWeight;
         
         ERC20Interface token = ERC20Interface(tokenContract);
         if (_amount > token.balanceOf(address(this))) {
