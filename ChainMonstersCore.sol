@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChainMonstersCore at 0x67c5456b39a84e3a0058cd0026da69040ada86e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChainMonstersCore at 0xcb56ac6355397e11c197c3e403fe8b90296373c7
 */
 pragma solidity ^0.4.11;
 
@@ -345,6 +345,7 @@ contract MonstersBase is MonsterAccessControl, MonstersData {
                 owner: address(_owner)
                 
             });
+            addressToTrainer[_owner] = _trainer;
             
             // starter stats are hardcoded!
             if (_starterId == 1) {
@@ -1516,7 +1517,6 @@ contract ChainMonstersCore is ChainMonstersAuction, Ownable {
         uID = _id;
             
         }
-
         
         // this method only returns the "base" powerlevel of a monster which will be used
         // in more advanced fighting calculations later on
