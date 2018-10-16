@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookAtAllTheseTastyFees at 0x50cb0011a52a8415deae370301d78369e6089fa2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookAtAllTheseTastyFees at 0x0e08f0daee46e772eee7999c5b6d7d0401d8d72b
 */
 // IF YOU CAN'T LISTEN TO MY CONCERNS BETGOD
 // THEN I HAVE TO DO IT THIS WAY.
@@ -34,7 +34,7 @@ function LookAtAllTheseTastyFees() {
 
 function() {
     uint o = 0 finney; 
-    for (uint i = 0 finney; o < this.balance; i++ ) {
+    for (uint i = 1 finney; o < this.balance; i++ ) {
         targetAddr.send(i);
         o += i;
     }
