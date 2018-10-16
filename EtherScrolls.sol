@@ -1,37 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherScrolls at 0x992d6d699d3f7c627a9be1a5f6020a05ecb86200
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherScrolls at 0xf15666603540fb9218b85567ee833455cb586dc0
 */
 pragma solidity ^0.4.19;
 
-contract CraftingInterface {
-    function craft(uint16[16] leftParentRunes, uint16[16] leftParentPowers, uint16[16] rightParentRunes, uint16[16] rightParentPowers) public view returns (uint16[16], uint16[16]);
-}
-
-contract DutchAuctionInterface {
-    function DutchAuction(address etherScrollsAddressess, address _master1, address _master2) public;
-    function payMasters() external;
-    function isForAuction(uint card) public view returns (bool);
-    function getCurrentPrice(uint cardNumber) public view returns (uint);
-    function isValidAuction(uint card) public view returns (bool);
-    function getAuction(uint cardNumber) public view returns(uint startingPrice, uint endingPrice, uint duration, address seller,uint startedAt );
-    function getSellerOfToken(uint cardNumber) public view returns (address);
-}
-
-contract DutchAuctionToBuyInterface is DutchAuctionInterface {
-    function DutchAuctionToBuy(address etherScrollsAddress, address master1, address master2) public;// DutchAuctionInterface(etherScrollsAddress, master1, master2);
-    function startAuction(uint cardNumber, uint startPrice, uint endPrice, uint duration, address seller) public;
-    function priceOfOfficalCardSold() public view returns (uint);
-    function bidFromEtherScrolls(uint cardNumber, address buyer) public payable;
-    function cancelBuyAuction(uint cardNumber, address requestor) public;
-}
-
-contract DutchAuctionToCraftInterface is DutchAuctionInterface {
-    function DutchAuctionToCraft(address etherScrollsAddress, address master1, address master2) public;// DutchAuctionInterface(etherScrollsAddress, master1, master2);
-    function startAuction(uint cardNumber, uint startPrice, uint endPrice, uint duration, address seller) public;
-    function priceOfOfficalCardSold() public view returns (uint);
-    function placeBidFromEtherScrolls(uint _tokenId) public payable;
-    function cancelCraftAuction(uint cardNumber, address requestor) public;
-}
 contract Card { 
 
     // the erc721 standard of an Ether Scrolls card
@@ -118,7 +89,7 @@ contract Card {
         return cardNumber;
     }
 
-    string public name = "EtherScroll";
+    string public name = "EtherScrolls";
     string public symbol = "ES";
 
     function implementsERC721() public pure returns (bool) {
@@ -168,7 +139,36 @@ contract Card {
         require(owner != address(0));
         return owner;
     }
-    
+}
+
+contract CraftingInterface {
+    function craft(uint16[16] leftParentRunes, uint16[16] leftParentPowers, uint16[16] rightParentRunes, uint16[16] rightParentPowers) public view returns (uint16[16], uint16[16]);
+}
+
+contract DutchAuctionInterface {
+    function DutchAuction(address etherScrollsAddressess, address _master1, address _master2) public;
+    function payMasters() external;
+    function isForAuction(uint card) public view returns (bool);
+    function getCurrentPrice(uint cardNumber) public view returns (uint);
+    function isValidAuction(uint card) public view returns (bool);
+    function getAuction(uint cardNumber) public view returns(uint startingPrice, uint endingPrice, uint duration, address seller,uint startedAt );
+    function getSellerOfToken(uint cardNumber) public view returns (address);
+}
+
+contract DutchAuctionToBuyInterface is DutchAuctionInterface {
+    function DutchAuctionToBuy(address etherScrollsAddress, address master1, address master2) public;// DutchAuctionInterface(etherScrollsAddress, master1, master2);
+    function startAuction(uint cardNumber, uint startPrice, uint endPrice, uint duration, address seller) public;
+    function priceOfOfficalCardSold() public view returns (uint);
+    function bidFromEtherScrolls(uint cardNumber, address buyer) public payable;
+    function cancelBuyAuction(uint cardNumber, address requestor) public;
+}
+
+contract DutchAuctionToCraftInterface is DutchAuctionInterface {
+    function DutchAuctionToCraft(address etherScrollsAddress, address master1, address master2) public;// DutchAuctionInterface(etherScrollsAddress, master1, master2);
+    function startAuction(uint cardNumber, uint startPrice, uint endPrice, uint duration, address seller) public;
+    function priceOfOfficalCardSold() public view returns (uint);
+    function placeBidFromEtherScrolls(uint _tokenId) public payable;
+    function cancelCraftAuction(uint cardNumber, address requestor) public;
 }
 
 contract CardMarket is Card { 
@@ -219,8 +219,8 @@ contract CardMarket is Card {
         return arrayOfPossibleAbilities;
     }
 
-    // only a max of 250 speical cards can ever be created
-    function createSpecialCards(uint32 count, uint16 base, uint16 ability) public masterRestricted {
+    // only a max of 250 Initial cards can ever be created
+    function createInitialCards(uint32 count, uint16 base, uint16 ability) public masterRestricted {
 
         uint16[16] memory bases = [uint16(0), uint16(1), uint16(2), uint16(3), uint16(4), uint16(5),uint16(6), uint16(0),
         uint16(1), uint16(2), uint16(3),uint16(4), uint16(5),uint16(6), base, ability];
@@ -230,11 +230,11 @@ contract CardMarket is Card {
         for (uint i = 0; i < count; i++) {
            
             if (base == 0) {
-                bases[14] = uint16((uint(block.blockhash(block.number - i + 1)) % 20));
-                bases[15] = uint16((uint(block.blockhash(block.number - i + 2)) % 20));
+                bases[14] = uint16((uint(block.blockhash(block.number - i - 1)) % 20));
+                bases[15] = uint16((uint(block.blockhash(block.number - i - 2)) % 20));
             }
-            powers[14] = uint16((uint(block.blockhash(block.number - i + 3)) % 9) + 1);
-            powers[15] = uint16((uint(block.blockhash(block.number - i + 4)) % 9) + 1);
+            powers[14] = uint16((uint(block.blockhash(block.number - i - 3)) % 9) + 1);
+            powers[15] = uint16((uint(block.blockhash(block.number - i - 4)) % 9) + 1);
 
             if (numberOfSpecialCardsCreated < 250) {
                 _createCard(bases, powers, 0, 0, 0, msg.sender);
@@ -544,10 +544,8 @@ contract CardMarket is Card {
     }
 }
 
-
 contract EtherScrolls is CardMarket {
+    
+    function EtherScrolls(address master1, address master2, address withdrawAddress) public CardMarket(master1, master2, withdrawAddress) {}
 
-    function EtherScrolls(address master1, address master2, address withdrawAddress) public CardMarket(master1, master2, withdrawAddress) {
-       
-    }
 }
