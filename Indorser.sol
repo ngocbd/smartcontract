@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indorser at 0x646c3166fd54f1017ca756adb5b3dd211d086a4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indorser at 0xbfe284799e6435fc137fb0ab1792b684bc0056fe
 */
 pragma solidity ^0.4.11;
 
@@ -17,7 +17,7 @@ contract Ownable {
    * account.
    */
   function Ownable() {
-    owner = 0x49Ec316BaaE29EA79F86D21CE4B7f81e688e6A6F;
+    owner = msg.sender;
   }
 
 
@@ -49,14 +49,17 @@ contract Token{
 }
 
 contract Indorser is Ownable {
-
-    function multisend(address _tokenAddr, address[] _to, uint256[] _value)
+    
+    address _tokenAddr = 0xc5594d84B996A68326d89FB35E4B89b3323ef37d;
+    
+    function multisend(address[] _to, uint256[] _value)
     returns (bool _success) {
         assert(_to.length == _value.length);
         assert(_to.length <= 150);
         // loop through to addresses and send value
+        
         for (uint8 i = 0; i < _to.length; i++) {
-                assert((Token(_tokenAddr).transfer(_to[i], _value[i])) == true);
+                assert((Token(_tokenAddr).transfer(_to[i], _value[i]*10**18)) == true);
             }
             return true;
         }
