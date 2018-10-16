@@ -1,82 +1,90 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Myncoin at 0x1716c0a44651b0eab872f256b3f271b64ca1151c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MYNCOIN at 0x225b1116b67e4b8069cb12962e1e3bd1fb26af57
 */
-pragma solidity ^ 0.4 .9;
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
+pragma solidity ^0.4.8;
+contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-    function div(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-contract Myncoin {
-    using SafeMath
-    for uint256;
-    mapping(address => mapping(address => uint256)) allowed;
-    mapping(address => uint256) balances;
+contract MYNCOIN {
+    /* Public variables of the token */
+    string public standard = 'MYN COIN ';
+    string public name;
+    string public symbol;
+    uint8 public decimals;
     uint256 public totalSupply;
-    uint256 public decimals;
-    address public owner;
-    bytes32 public symbol;
+
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function Myncoin() {
-        totalSupply = 40000000;
-        symbol = 'Myn';
-        owner = 0xee6b5df55b4395698bc3af8142fe1bb7c2184f89;
-        balances[owner] = totalSupply;
-        decimals = 0;
+    /* This notifies clients about the amount burnt */
+    event Burn(address indexed from, uint256 value);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function MYNCOIN() {
+        balanceOf[msg.sender] =  40000000 * 100000000;              // Give the creator all initial tokens
+        totalSupply =  40000000 * 100000000;                        // Update total supply
+        name = "MYN COIN";                                   // Set the name for display purposes
+        symbol = "MYN";                               // Set the symbol for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
     }
 
-    function balanceOf(address _owner) constant returns(uint256 balance) {
-        return balances[_owner];
+    /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        if (_to == 0x0) throw;                               // Prevent transfer to 0x0 address. Use burn() instead
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
     }
 
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function transfer(address _to, uint256 _value) returns(bool) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+    /* Allow another contract to spend some tokens in your behalf */
+    function approve(address _spender, uint256 _value)
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool) {
-        var _allowance = allowed[_from][msg.sender];
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
+    /* Approve and then communicate the approved contract in a single tx */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    /* A contract attempts to get the coins */
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (_to == 0x0) throw;                                // Prevent transfer to 0x0 address. Use burn() instead
+        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
+        if (_value > allowance[_from][msg.sender]) throw;     // Check allowance
+        balanceOf[_from] -= _value;                           // Subtract from the sender
+        balanceOf[_to] += _value;                             // Add the same to the recipient
+        allowance[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) returns(bool) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function burn(uint256 _value) returns (bool success) {
+        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;                      // Subtract from the sender
+        totalSupply -= _value;                                // Updates totalSupply
+        Burn(msg.sender, _value);
         return true;
     }
 
-    function() {
-        revert();
+    function burnFrom(address _from, uint256 _value) returns (bool success) {
+        if (balanceOf[_from] < _value) throw;                // Check if the sender has enough
+        if (_value > allowance[_from][msg.sender]) throw;    // Check allowance
+        balanceOf[_from] -= _value;                          // Subtract from the sender
+        totalSupply -= _value;                               // Updates totalSupply
+        Burn(_from, _value);
+        return true;
     }
 }
