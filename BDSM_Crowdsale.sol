@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BDSM_Crowdsale at 0xe7e0bb725a6c1ed81b89042b1d37756b21db4958
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BDSM_Crowdsale at 0x61683dfbe07e98a4edbddc2f1f1a44a75fa74912
 */
 pragma solidity ^0.4.13;
 
@@ -14,15 +14,18 @@ contract BDSM_Crowdsale {
     address public owner;
     address public safeContract;
 
-	uint public startICO = 1513728000; // start ICO - 20 December 2017
-	uint public stopICO = 1521504000; // end ICO - 20 March 2018
-	uint public price = 0.0035 * 1 ether; // ETH for 1 package of tokens
+	uint public startICO_20_December = 1513728060; // start ICO - 20 December 2017
+	uint public stopICO_20_March = 1521504060; // end ICO - 20 March 2018
+	uint public priceIncrease_20_January = 1516406460; // if time later than - 20 January 2018 - price +50%
+	uint public priceIncrease_20_February = 1519084860; // if time later than - 20 February 2018 - price +100%
+	string public price = "0.0035 Ether for 1 microBDSM";
+	uint realPrice = 0.0035 * 1 ether; // ETH for 1 package of tokens
 	uint coeff = 100000; // capacity of 1 package
 	
 	uint256 public tokenSold = 0; // tokens sold
 	uint256 public tokenFree = 0; // tokens free
 	bool public crowdsaleClosed = false;
-    bool public tokenWithdraw = false;
+    bool public tokensWithdrawn = false;
 	
 	event TokenFree(uint256 value);
 	event CrowdsaleClosed(bool value);
@@ -35,20 +38,26 @@ contract BDSM_Crowdsale {
 
 	function() payable {
 	    
-	    if(now > 1519084800) price = 0.0105 * 1 ether; // if time later than - 20 February 2018 - price x3
-	    else if(now > 1516406400) price = 0.0070 * 1 ether; // if time later than - 20 January 2018 - price x2
+	    if(now > priceIncrease_20_February){
+	        price = "0.007 Ether for 1 microBDSM";
+	        realPrice = 0.007 * 1 ether; 
+	    } 
+	    else if(now > priceIncrease_20_January){
+	        price = "0.00525 Ether for 1 microBDSM";
+	        realPrice = 0.00525 * 1 ether;
+	    } 
 	    
 		tokenFree = sharesTokenAddress.balanceOf(this); // free tokens count
 		
-		if (now < startICO) {
+		if (now < startICO_20_December) {
 		    msg.sender.transfer(msg.value);
 		}
-		else if (now > stopICO) {
+		else if (now > stopICO_20_March) {
 			msg.sender.transfer(msg.value); // if crowdsale closed - cash back
-			if(!tokenWithdraw){ // when crowdsale closed - unsold tokens transfer to stopScamHolder
+			if(!tokensWithdrawn){ // when crowdsale closed - unsold tokens transfer to stopScamHolder
 			    sharesTokenAddress.transfer(safeContract, sharesTokenAddress.balanceOf(this));
 			    tokenFree = sharesTokenAddress.balanceOf(this);
-			    tokenWithdraw = true;
+			    tokensWithdrawn = true;
 			    crowdsaleClosed = true;
 			}
 		} 
@@ -56,10 +65,10 @@ contract BDSM_Crowdsale {
 			msg.sender.transfer(msg.value); // if no more tokens - cash back
 		} 
 		else {
-			uint256 tokenToBuy = msg.value / price * coeff; // tokens to buy
+			uint256 tokenToBuy = msg.value / realPrice * coeff; // tokens to buy
 			if(tokenToBuy <= 0) msg.sender.transfer(msg.value); // mistake protector
 			require(tokenToBuy > 0);
-			uint256 actualETHTransfer = tokenToBuy * price / coeff;
+			uint256 actualETHTransfer = tokenToBuy * realPrice / coeff;
 			if (tokenFree >= tokenToBuy) { // free tokens >= tokens to buy, sell tokens
 				owner.transfer(actualETHTransfer);
 				if (msg.value > actualETHTransfer){ // if more than need - cash back
@@ -70,7 +79,7 @@ contract BDSM_Crowdsale {
 				tokenFree -= tokenToBuy;
 				if(tokenFree==0) crowdsaleClosed = true;
 			} else { // free tokens < tokens to buy 
-				uint256 sendETH = tokenFree * price / coeff; // price for all free tokens
+				uint256 sendETH = tokenFree * realPrice / coeff; // price for all free tokens
 				owner.transfer(sendETH); 
 				sharesTokenAddress.transfer(msg.sender, tokenFree); 
 				msg.sender.transfer(msg.value - sendETH); // more than need - cash back
