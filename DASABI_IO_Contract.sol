@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DASABI_IO_Contract at 0x7b5271c23e0da39d17e04304c5ce651ed6074e8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DASABI_IO_Contract at 0x3fbf67bab8461d59e49b1560a6375968f3c3a9a6
 */
 pragma solidity ^0.4.18;
 
@@ -40,8 +40,8 @@ contract ERC20Token {
 contract DASABI_IO_Contract is ERC20Token, Owned{
 
     /* Public variables of the token */
-    string  public constant name = "dasabi.io SBI";
-    string  public constant symbol = "SBI";
+    string  public constant name = "dasabi.io DSBC";
+    string  public constant symbol = "DSBC";
     uint256 public constant decimals = 18;
     uint256 private constant etherChange = 10**18;
     
@@ -68,12 +68,12 @@ contract DASABI_IO_Contract is ERC20Token, Owned{
               
         
         if (msg.value > 0) {
-        	mintSBIToken(msg.sender, (msg.value * ExchangeRate * 10**decimals) / etherChange);
+        	mintDSBCToken(msg.sender, (msg.value * ExchangeRate * 10**decimals) / etherChange);
         }
         
         if(CandyDropIsOpen){
 	        if(!blacklist[msg.sender]){
-		        mintSBIToken(msg.sender, CandyRate * 10**decimals);
+		        mintDSBCToken(msg.sender, CandyRate * 10**decimals);
 		        blacklist[msg.sender] = true;
 		    }
 	    }
@@ -161,7 +161,7 @@ contract DASABI_IO_Contract is ERC20Token, Owned{
     }  
     
     /* Issue new tokens */     
-    function mintSBIToken(address _to, uint256 _amount) internal { 
+    function mintDSBCToken(address _to, uint256 _amount) internal { 
         require (balances[_to] + _amount > balances[_to]);      // Check for overflows
         require (totalRemainSupply > _amount);
         totalRemainSupply -= _amount;                           // Update total supply
@@ -171,7 +171,7 @@ contract DASABI_IO_Contract is ERC20Token, Owned{
     }  
     
     function mintTokens(address _sendTo, uint256 _sendAmount)public onlyOwner {
-        mintSBIToken(_sendTo, _sendAmount);
+        mintDSBCToken(_sendTo, _sendAmount);
     }
     
     /* Destroy tokens from owners account */
