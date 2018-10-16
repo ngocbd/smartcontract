@@ -1,144 +1,265 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AutoCoin at 0xa6d33a29261875e29644403cbcddc4a6a76f19b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AutoCoin at 0x486915ea524949040e339eacf8fe4aca1d230702
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.15;
 
-contract Token {
-
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
-
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
+contract ERC20 {
+    function totalSupply() external constant returns (uint256 _totalSupply);
+    function balanceOf(address _owner) external constant returns (uint256 balance);
+    function userTransfer(address _to, uint256 _value) external returns (bool success);
+    function userTransferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+    function userApprove(address _spender, uint256 _old, uint256 _new) external returns (bool success);
+    function allowance(address _owner, address _spender) external constant returns (uint256 remaining);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+
+    function ERC20() internal {
+    }
 }
 
+library SafeMath {
+    uint256 constant private    MAX_UINT256     = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+    function safeAdd (uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assert (x <= MAX_UINT256 - y);
+        return x + y;
+    }
+
+    function safeSub (uint256 x, uint256 y) internal pure returns (uint256 z) {
+        assert (x >= y);
+        return x - y;
+    }
+
+    function safeMul (uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x * y;
+        assert(x == 0 || z / x == y);
+    }
+
+    function safeDiv (uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x / y;
+        return z;
+    }
+}
+
+contract AutoCoin is ERC20 {
+
+    using SafeMath for uint256;
+
+    address public              owner;
+    address private             subowner;
+
+    uint256 private             summarySupply;
+    uint256 public              weiPerMinToken;
+
+    string  public              name = "Auto Token";
+    string  public              symbol = "ATK";
+    uint8   public              decimals = 2;
+
+    bool    public              contractEnable = true;
+    bool    public              transferEnable = false;
 
 
-contract StandardToken is Token {
+    mapping(address => uint8)                        private   group;
+    mapping(address => uint256)                      private   accounts;
+    mapping(address => mapping (address => uint256)) private   allowed;
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
+    event EvGroupChanged(address _address, uint8 _oldgroup, uint8 _newgroup);
+    event EvTokenAdd(uint256 _value, uint256 _lastSupply);
+    event EvTokenRm(uint256 _delta, uint256 _value, uint256 _lastSupply);
+    event EvLoginfo(string _functionName, string _text);
+    event EvMigration(address _address, uint256 _balance, uint256 _secret);
+
+    struct groupPolicy {
+        uint8 _default;
+        uint8 _backend;
+        uint8 _migration;
+        uint8 _admin;
+        uint8 _subowner;
+        uint8 _owner;
+    }
+
+    groupPolicy private currentState = groupPolicy(0, 3, 9, 4, 2, 9);
+
+    function AutoCoin(string _name, string _symbol, uint8 _decimals, uint256 _weiPerMinToken, uint256 _startTokens) public {
+        owner = msg.sender;
+        group[msg.sender] = 9;
+
+        if (_weiPerMinToken != 0)
+            weiPerMinToken = _weiPerMinToken;
+
+        accounts[owner]  = _startTokens;
+        summarySupply    = _startTokens;
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
+    }
+
+    modifier minGroup(int _require) {
+        require(group[msg.sender] >= _require);
+        _;
+    }
+
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
+    }
+
+    function serviceGroupChange(address _address, uint8 _group) minGroup(currentState._admin) external returns(uint8) {
+        uint8 old = group[_address];
+        if(old <= currentState._admin) {
+            group[_address] = _group;
+            EvGroupChanged(_address, old, _group);
+        }
+        return group[_address];
+    }
+
+    function serviceGroupGet(address _check) minGroup(currentState._backend) external constant returns(uint8 _group) {
+        return group[_check];
+    }
+
+
+    function settingsSetWeiPerMinToken(uint256 _weiPerMinToken) minGroup(currentState._admin) external {
+        if (_weiPerMinToken > 0) {
+            weiPerMinToken = _weiPerMinToken;
+
+            EvLoginfo("[weiPerMinToken]", "changed");
+        }
+    }
+
+    function serviceIncreaseBalance(address _who, uint256 _value) minGroup(currentState._backend) external returns(bool) {
+        accounts[_who] = accounts[_who].safeAdd(_value);
+        summarySupply = summarySupply.safeAdd(_value);
+
+        EvTokenAdd(_value, summarySupply);
+        return true;
+    }
+
+    function serviceDecreaseBalance(address _who, uint256 _value) minGroup(currentState._backend) external returns(bool) {
+        accounts[_who] = accounts[_who].safeSub(_value);
+        summarySupply = summarySupply.safeSub(_value);
+
+        EvTokenRm(accounts[_who], _value, summarySupply);
+        return true;
+    }
+
+    function serviceTokensBurn(address _address) external minGroup(currentState._backend) returns(uint256 balance) {
+        accounts[_address] = 0;
+        return accounts[_address];
+    }
+
+    function serviceChangeOwner(address _newowner) minGroup(currentState._subowner) external returns(address) {
+        address temp;
+        uint256 value;
+
+        if (msg.sender == owner) {
+            subowner = _newowner;
+            group[msg.sender] = currentState._subowner;
+            group[_newowner] = currentState._subowner;
+
+            EvGroupChanged(_newowner, currentState._owner, currentState._subowner);
+        }
+
+        if (msg.sender == subowner) {
+            temp = owner;
+            value = accounts[owner];
+
+            accounts[owner] = accounts[owner].safeSub(value);
+            accounts[subowner] = accounts[subowner].safeAdd(value);
+
+            owner = subowner;
+
+            delete group[temp];
+            group[subowner] = currentState._owner;
+
+            subowner = 0x00;
+
+            EvGroupChanged(_newowner, currentState._subowner, currentState._owner);
+        }
+
+        return subowner;
+    }
+
+    function userTransfer(address _to, uint256 _value) onlyPayloadSize(64) minGroup(currentState._default) external returns (bool success) {
+        if (accounts[msg.sender] >= _value && (transferEnable || group[msg.sender] >= currentState._backend)) {
+            accounts[msg.sender] = accounts[msg.sender].safeSub(_value);
+            accounts[_to] = accounts[_to].safeAdd(_value);
             Transfer(msg.sender, _to, _value);
             return true;
-        } else { return false; }
+        } else {
+            return false;
+        }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
+    function userTransferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(64) minGroup(currentState._default) external returns (bool success) {
+        if ((accounts[_from] >= _value) && (allowed[_from][msg.sender] >= _value) && (transferEnable || group[msg.sender] >= currentState._backend)) {
+            accounts[_from] = accounts[_from].safeSub(_value);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].safeSub(_value);
+            accounts[_to] = accounts[_to].safeAdd(_value);
             Transfer(_from, _to, _value);
             return true;
-        } else { return false; }
+        } else {
+            return false;
+        }
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    function userApprove(address _spender, uint256 _old, uint256 _new) onlyPayloadSize(64) minGroup(currentState._default) external returns (bool success) {
+        if (_old == allowed[msg.sender][_spender]) {
+            allowed[msg.sender][_spender] = _new;
+            Approval(msg.sender, _spender, _new);
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
+    function allowance(address _owner, address _spender) external constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    function balanceOf(address _owner) external constant returns (uint256 balance) {
+        if (_owner == 0x00)
+            return accounts[msg.sender];
+        return accounts[_owner];
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-
-//name this contract whatever you'd like
-contract AutoCoin is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+    function totalSupply() external constant returns (uint256 _totalSupply) {
+        _totalSupply = summarySupply;
     }
 
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
-
-    // 200,000,000,000 = All tokens
-    // 160,000,000,000 = Intial 
-    // 40,000,000,000 = Others
-
-    function AutoCoin(
-        ) {
-        balances[msg.sender] = 200000000000 ;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 200000000000;                        // Update total supply (100000 for example)
-        name = "AutoCoin";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "AUTO";                               // Set the symbol for display purposes
+    function destroy() minGroup(currentState._owner) external {
+        selfdestruct(owner);
     }
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function settingsSwitchState() external minGroup(currentState._owner) returns (bool state) {
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+        if(contractEnable) {
+            currentState._default = 9;
+            currentState._migration = 0;
+            contractEnable = false;
+        } else {
+            currentState._default = 0;
+            currentState._migration = 9;
+            contractEnable = true;
+        }
+
+        return contractEnable;
+    }
+
+    function settingsSwitchTransferAccess() external minGroup(currentState._backend) returns (bool access) {
+        transferEnable = !transferEnable;
+        return transferEnable;
+    }
+
+    function userMigration(uint256 _secrect) external minGroup(currentState._migration) returns (bool successful) {
+
+        uint256 balance = accounts[msg.sender];
+        if (balance > 0) {
+            accounts[msg.sender] = accounts[msg.sender].safeSub(balance);
+            accounts[owner] = accounts[owner].safeAdd(balance);
+            EvMigration(msg.sender, balance, _secrect);
+            return true;
+        }
+        else
+            return false;
     }
 }
