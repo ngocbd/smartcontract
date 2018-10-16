@@ -1,100 +1,200 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sentinel at 0xc3677e2e0b65d321d0788511a6c34baa0dfb99df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sentinel at 0xa44e5137293e855b1b7bc7e2c6f8cd796ffcb037
 */
-/* Sentinel is a Ethereum Token of Sentinel Corporation.  */
-    
-  /* Sentinel Token will be used as a form of payment for services and goods*/
+pragma solidity ^0.4.19;
 
-    pragma solidity ^0.4.9;
+contract Owned {
+  address public owner;
 
-
-    library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+  function Owned(
+    )
+      public {
+        owner = msg.sender;
     }
 
-    function div(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a / b;
-        return c;
+  modifier onlyOwner {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(
+    address _owner)
+      onlyOwner public {
+        require(_owner != 0x0);
+
+        owner = _owner;
+    }
+}
+
+interface tokenRecipient {
+  function receiveApproval(
+    address _from,
+    uint256 _value,
+    address _token,
+    bytes _extraData)
+      public;
+}
+
+contract ERC20Token {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+  uint256 public totalSupply;
+
+  mapping (address => uint256) public balanceOf;
+  mapping (address => mapping (address => uint256)) public allowance;
+
+  event Transfer(address indexed from, address indexed to, uint256 value);
+
+  event Burn(address indexed from, uint256 value);
+
+  function ERC20Token(
+    string _tokenName,
+    string _tokenSymbol,
+    uint8 _decimals,
+    uint256 _totalSupply)
+      public {
+        name = _tokenName;
+        symbol = _tokenSymbol;
+        decimals = _decimals;
+        totalSupply = _totalSupply * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
     }
 
-    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function _transfer(
+    address _from,
+    address _to,
+    uint256 _value)
+      internal {
+        require(_to != 0x0);
+        require(_from != 0x0);
+        require(_from != _to);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
 
-    function add(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-    }
-    contract Sentinel{
-    
-	
-	string public standard = 'Sent 2.0';
-    using SafeMath for uint256;
-    mapping(address => mapping(address => uint256)) allowed;
-    mapping(address => uint256) balances;
-    uint256 public totalSupply;
-    uint256 public decimals;
-    address public owner;
-    bytes32 public symbol;
-    
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed _owner, address indexed spender, uint256 value);
-   
-    /* Public variables of the Sentinel Token. Total Supply 2 million */
-   
-    function Sentinel() 
-    {
-        totalSupply = 2000000;
-        symbol = 'sent';
-        owner = 0x79FE5E4c313205A6B2385751b0716060C9446A64;
-        balances[owner] = 2000000;
-        decimals = 0;
-    }
-    
-    function balanceOf(address _owner) constant returns(uint256 balance)
-    {
-        return balances[_owner];
-    }
+        uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
 
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining)
-    {
-        return allowed[_owner][_spender];
-    }
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
 
-    function transfer(address _to, uint256 _value) returns(bool)
-    {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool) 
-    {
-        var _allowance = allowed[_from][msg.sender];
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
         Transfer(_from, _to, _value);
+
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+
+  function transfer(
+    address _to,
+    uint256 _value)
+      public {
+        _transfer(msg.sender, _to, _value);
+    }
+
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value)
+      public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);
+        
+        allowance[_from][msg.sender] -= _value;
+        
+        _transfer(_from, _to, _value);
+        
         return true;
     }
 
-    function approve(address _spender, uint256 _value) returns(bool) 
-    {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+  function approve(
+    address _spender,
+    uint256 _value)
+      public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        
         return true;
     }
 
-    function() 
-    {
-        revert();
+  function approveAndCall(
+    address _spender,
+    uint256 _value,
+    bytes _extraData)
+      public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+
+        if (approve(_spender, _value)) {
+          spender.receiveApproval(msg.sender, _value, this, _extraData);
+          
+          return true;
+        }
+    }
+
+  function burn(
+    uint256 _value)
+      public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+
+        Burn(msg.sender, _value);
+
+        return true;
+    }
+
+  function burnFrom(
+    address _from,
+    uint256 _value)
+      public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+
+        Burn(_from, _value);
+
+        return true;
+    }
+}
+
+contract Sentinel is Owned, ERC20Token {
+  mapping (bytes32 => address) public services;
+
+  function Sentinel(
+    string _tokenName,
+    string _tokenSymbol,
+    uint8 _decimals,
+    uint256 _totalSupply)
+      ERC20Token(_tokenName, _tokenSymbol, _decimals, _totalSupply) public {
+    }
+
+  function deployService(
+    bytes32 _serviceName,
+    address _serviceAddress)
+      onlyOwner public {
+        services[_serviceName] = _serviceAddress;
+    }
+
+  function payService(
+    bytes32 _serviceName,
+    address _from,
+    address _to,
+    uint256 _value)
+      public {
+        require(msg.sender != 0x0);
+        require(services[_serviceName] != 0x0);
+        require(msg.sender == services[_serviceName]);
+        require(_from != 0x0);
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+
+        uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
+
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+
+        Transfer(_from, _to, _value);
+
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 }
