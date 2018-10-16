@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCWalletMgrParams at 0x96b709bbc1454716857605db9c942544668af79b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCWalletMgrParams at 0x948135f643c45b625d4864600f4d920cd45ccf48
 */
 pragma solidity ^0.4.23;
 
@@ -117,7 +117,8 @@ contract Claimable is Ownable {
 }
 
 contract DRCWalletMgrParams is Claimable, Autonomy, Destructible {
-    uint256 public singleWithdraw; // Max value of single withdraw
+    uint256 public singleWithdrawMin; // min value of single withdraw
+    uint256 public singleWithdrawMax; // Max value of single withdraw
     uint256 public dayWithdraw; // Max value of one day of withdraw
     uint256 public monthWithdraw; // Max value of one month of withdraw
     uint256 public dayWithdrawCount; // Max number of withdraw counting
@@ -126,10 +127,16 @@ contract DRCWalletMgrParams is Claimable, Autonomy, Destructible {
     address public chargeFeePool; // the address that will get the returned charge fees.
 
 
-    function initialSingleWithdraw(uint256 _value) onlyOwner public {
+    function initialSingleWithdrawMax(uint256 _value) onlyOwner public {
         require(!init);
 
-        singleWithdraw = _value;
+        singleWithdrawMax = _value;
+    }
+
+    function initialSingleWithdrawMin(uint256 _value) onlyOwner public {
+        require(!init);
+
+        singleWithdrawMin = _value;
     }
 
     function initialDayWithdraw(uint256 _value) onlyOwner public {
@@ -153,7 +160,7 @@ contract DRCWalletMgrParams is Claimable, Autonomy, Destructible {
     function initialChargeFee(uint256 _value) onlyOwner public {
         require(!init);
 
-        singleWithdraw = _value;
+        chargeFee = _value;
     }
 
     function initialChargeFeePool(address _pool) onlyOwner public {
@@ -162,8 +169,12 @@ contract DRCWalletMgrParams is Claimable, Autonomy, Destructible {
         chargeFeePool = _pool;
     }    
 
-    function setSingleWithdraw(uint256 _value) onlyCongress public {
-        singleWithdraw = _value;
+    function setSingleWithdrawMax(uint256 _value) onlyCongress public {
+        singleWithdrawMax = _value;
+    }   
+
+    function setSingleWithdrawMin(uint256 _value) onlyCongress public {
+        singleWithdrawMin = _value;
     }
 
     function setDayWithdraw(uint256 _value) onlyCongress public {
@@ -179,10 +190,10 @@ contract DRCWalletMgrParams is Claimable, Autonomy, Destructible {
     }
 
     function setChargeFee(uint256 _value) onlyCongress public {
-        singleWithdraw = _value;
+        chargeFee = _value;
     }
 
-    function setChargeFeePool(address _pool) onlyOwner public {
+    function setChargeFeePool(address _pool) onlyCongress public {
         chargeFeePool = _pool;
     }
 }
