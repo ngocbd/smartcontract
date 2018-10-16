@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0xa4ebb48e4378e6f771b7f857623298bdb50c11b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0xf359d9e7da8794e77322f9bbd3f6e588665109be
 */
 /*
  * DO NOT EDIT! DO NOT EDIT! DO NOT EDIT!
@@ -17,13 +17,7 @@ pragma solidity ^0.4.18;
 
 
 contract HelloWorld{
-    string input = "Hello world.";
-
-    function sayHello() view public returns (string) {
-        return input;
-    }
-
-    function setNewGreeting(string greeting) public {
-        input = greeting;
+    function hello() pure public returns (string) {
+        return "Hello world.";
     }
 }
