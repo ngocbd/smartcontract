@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBank at 0x3a0e9acd953ffc0dd18d63603488846a6b8b2b01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBank at 0x39cfd754c85023648bf003bea2dd498c5612abfa
 */
 pragma solidity ^0.4.18;
 
@@ -95,5 +95,5 @@ contract TokenBank is Token
         }
     }
     
-    function Bal() public constant returns(uint){return this.balance;}
+ 
 }
