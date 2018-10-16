@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseToken at 0x2c4d1853a193573876ccfce414e3d9f1687ec917
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseToken at 0xc301b935d0fd1f5d0b6d68491deca39d44e2da6e
 */
 pragma solidity ^0.4.13;
 
@@ -33,6 +33,7 @@ library SafeMath {
   }
 }
 
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -40,15 +41,16 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 
+
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
+ * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -60,7 +62,10 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -69,15 +74,14 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
+  * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
-
 
 
 /**
@@ -85,9 +89,9 @@ contract BasicToken is ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
@@ -108,34 +112,34 @@ contract StandardToken is ERC20, BasicToken {
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
+   * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    uint256 _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
     // require (_value <= _allowance);
 
-    balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -145,17 +149,40 @@ contract StandardToken is ERC20, BasicToken {
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue)
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue)
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
 }
 
-
 contract AbstractStarbaseCrowdsale {
-    function workshop() constant returns (address) {}
     function startDate() constant returns (uint256) {}
     function endedAt() constant returns (uint256) {}
     function isEnded() constant returns (bool);
@@ -164,9 +191,7 @@ contract AbstractStarbaseCrowdsale {
     function numOfPurchasedTokensOnEpBy(address purchaser) constant returns (uint256);
 }
 
-contract AbstractStarbaseMarketingCampaign {
-    function workshop() constant returns (address) {}
-}
+contract AbstractStarbaseMarketingCampaign {}
 
 /// @title Token contract - ERC20 compatible Starbase token contract.
 /// @author Starbase PTE. LTD. - <info@starbase.co>
@@ -211,7 +236,8 @@ contract StarbaseToken is StandardToken {
     uint8 constant public decimals = 18;
     uint256 constant public initialSupply = 1000000000e18; // 1B STAR tokens
     uint256 constant public initialCompanysTokenAllocation = 750000000e18;  // 750M
-
+    uint256 constant public initialBalanceForCrowdsale = 175000000e18;  // CS(125M)+EP(50M)
+    uint256 constant public initialBalanceForMarketingCampaign = 12500000e18;   // 12.5M
 
     /*
      *  Modifiers
@@ -229,6 +255,16 @@ contract StarbaseToken is StandardToken {
     modifier onlyFundraiser() {
         // Only rightful fundraiser is permitted.
         assert(isFundraiser(msg.sender));
+        _;
+    }
+
+    modifier onlyBeforeCrowdsale() {
+        require(starbaseCrowdsale.startDate() == 0);
+        _;
+    }
+
+    modifier onlyAfterCrowdsale() {
+        require(starbaseCrowdsale.isEnded());
         _;
     }
 
@@ -262,10 +298,10 @@ contract StarbaseToken is StandardToken {
         LogNewFundraiser(msg.sender, true);
 
         // Tokens for crowdsale and early purchasers
-        balances[starbaseCrowdsale.workshop()] = 175000000e18; // CS(125M)+EP(50M)
+        balances[address(starbaseCrowdsale)] = initialBalanceForCrowdsale;
 
         // Tokens for marketing campaign supporters
-        balances[starbaseMarketingCampaign.workshop()] = 12500000e18; // 12.5M
+        balances[address(starbaseMarketingCampaign)] = initialBalanceForMarketingCampaign;
 
         // Tokens for early contributors, should be allocated by function
         balances[0] = 62500000e18; // 62.5M
@@ -274,6 +310,33 @@ contract StarbaseToken is StandardToken {
         balances[starbaseCompanyAddr] = initialCompanysTokenAllocation; // 750M
 
         totalSupply = initialSupply;    // 1B
+    }
+
+    /**
+     * @dev Setup function sets external contracts' addresses
+     * @param starbaseCrowdsaleAddr Crowdsale contract address.
+     * @param starbaseMarketingCampaignAddr Marketing campaign contract address
+     */
+    function setup(address starbaseCrowdsaleAddr, address starbaseMarketingCampaignAddr)
+        external
+        onlyFundraiser
+        onlyBeforeCrowdsale
+        returns (bool)
+    {
+        require(starbaseCrowdsaleAddr != 0 && starbaseMarketingCampaignAddr != 0);
+        assert(balances[address(starbaseCrowdsale)] == initialBalanceForCrowdsale);
+        assert(balances[address(starbaseMarketingCampaign)] == initialBalanceForMarketingCampaign);
+
+        // Move the balances to the new ones
+        balances[address(starbaseCrowdsale)] = 0;
+        balances[address(starbaseMarketingCampaign)] = 0;
+        balances[starbaseCrowdsaleAddr] = initialBalanceForCrowdsale;
+        balances[starbaseMarketingCampaignAddr] = initialBalanceForMarketingCampaign;
+
+        // Update the references
+        starbaseCrowdsale = AbstractStarbaseCrowdsale(starbaseCrowdsaleAddr);
+        starbaseMarketingCampaign = AbstractStarbaseMarketingCampaign(starbaseMarketingCampaignAddr);
+        return true;
     }
 
     /*
@@ -296,9 +359,10 @@ contract StarbaseToken is StandardToken {
      * @param tokenCount Number of tokens to transfer.
      * @param unlockCompanysTokensAt Time of the tokens will be unlocked
      */
-    function declarePulicOfferingPlan(uint256 tokenCount, uint256 unlockCompanysTokensAt)
+    function declarePublicOfferingPlan(uint256 tokenCount, uint256 unlockCompanysTokensAt)
         external
-        onlyFundraiser()
+        onlyFundraiser
+        onlyAfterCrowdsale
         returns (bool)
     {
         assert(tokenCount <= 100000000e18);    // shall not exceed 100M tokens
@@ -314,7 +378,7 @@ contract StarbaseToken is StandardToken {
 
         uint256 totalDeclaredTokenCount = tokenCount;
         for (uint8 i; i < publicOfferingPlans.length; i++) {
-            totalDeclaredTokenCount += publicOfferingPlans[i].tokenCount;
+            totalDeclaredTokenCount = SafeMath.add(totalDeclaredTokenCount, publicOfferingPlans[i].tokenCount);
         }
         assert(totalDeclaredTokenCount <= initialCompanysTokenAllocation);   // shall not exceed the initial token allocation
 
@@ -334,7 +398,7 @@ contract StarbaseToken is StandardToken {
         onlyMarketingCampaignContract
         returns (bool)
     {
-        return allocateFrom(starbaseMarketingCampaign.workshop(), to, value);
+        return allocateFrom(address(starbaseMarketingCampaign), to, value);
     }
 
     /**
@@ -344,7 +408,7 @@ contract StarbaseToken is StandardToken {
      */
     function allocateToEarlyContributor(address to, uint256 value)
         external
-        onlyFundraiser()
+        onlyFundraiser
         returns (bool)
     {
         initialEcTokenAllocation[to] =
@@ -359,14 +423,15 @@ contract StarbaseToken is StandardToken {
      */
     function issueTokens(address _for, uint256 value)
         external
-        onlyFundraiser()
+        onlyFundraiser
+        onlyAfterCrowdsale
         returns (bool)
     {
         // check if the value under the limits
         assert(value <= numOfInflatableTokens());
 
         totalSupply = SafeMath.add(totalSupply, value);
-        balances[_for] += value;
+        balances[_for] = SafeMath.add(balances[_for], value);
         return true;
     }
 
@@ -374,7 +439,12 @@ contract StarbaseToken is StandardToken {
      * @dev Declares Starbase MVP has been launched
      * @param launchedAt When the MVP launched (timestamp)
      */
-    function declareMvpLaunched(uint256 launchedAt) external onlyFundraiser() returns (bool) {
+    function declareMvpLaunched(uint256 launchedAt)
+        external
+        onlyFundraiser
+        onlyAfterCrowdsale
+        returns (bool)
+    {
         require(mvpLaunchedAt == 0); // overwriting the launch date is not permitted
         require(launchedAt <= now);
         require(starbaseCrowdsale.isEnded());
@@ -392,9 +462,10 @@ contract StarbaseToken is StandardToken {
     function allocateToCrowdsalePurchaser(address to, uint256 value)
         external
         onlyCrowdsaleContract
+        onlyAfterCrowdsale
         returns (bool)
     {
-        return allocateFrom(starbaseCrowdsale.workshop(), to, value);
+        return allocateFrom(address(starbaseCrowdsale), to, value);
     }
 
     /*
@@ -524,7 +595,7 @@ contract StarbaseToken is StandardToken {
         for (uint8 i; i < publicOfferingPlans.length; i++) {
             PublicOfferingPlan memory plan = publicOfferingPlans[i];
             if (plan.unlockCompanysTokensAt <= now) {
-                unlockedTokens += plan.tokenCount;
+                unlockedTokens = SafeMath.add(unlockedTokens, plan.tokenCount);
             }
         }
         return SafeMath.sub(
@@ -568,15 +639,15 @@ contract StarbaseToken is StandardToken {
         uint256 passedYears = passedDays * 100 / 36525;    // about 365.25 days in a year
         uint256 inflatedSupply = initialSupply;
         for (uint256 i; i < passedYears; i++) {
-            inflatedSupply += SafeMath.mul(inflatedSupply, 25) / 1000; // 2.5%/y = 0.025/y
+            inflatedSupply = SafeMath.add(inflatedSupply, SafeMath.mul(inflatedSupply, 25) / 1000); // 2.5%/y = 0.025/y
         }
 
         uint256 remainderedDays = passedDays * 100 % 36525 / 100;
         if (remainderedDays > 0) {
             uint256 inflatableTokensOfNextYear =
                 SafeMath.mul(inflatedSupply, 25) / 1000;
-            inflatedSupply += SafeMath.mul(
-                inflatableTokensOfNextYear, remainderedDays * 100) / 36525;
+            inflatedSupply = SafeMath.add(inflatedSupply, SafeMath.mul(
+                inflatableTokensOfNextYear, remainderedDays * 100) / 36525);
         }
 
         return SafeMath.sub(inflatedSupply, totalSupply);
@@ -594,8 +665,8 @@ contract StarbaseToken is StandardToken {
      */
     function allocateFrom(address from, address to, uint256 value) internal returns (bool) {
         assert(value > 0 && balances[from] >= value);
-        balances[from] -= value;
-        balances[to] += value;
+        balances[from] = SafeMath.sub(balances[from], value);
+        balances[to] = SafeMath.add(balances[to], value);
         Transfer(from, to, value);
         return true;
     }
