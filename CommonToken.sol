@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CommonToken at 0xf557ae02978e74aab75009cb354e7e1570afa59e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CommonToken at 0xf320d7bf928a8efda0ff624a02e73e9592a03f2b
 */
 pragma solidity ^0.4.18;
 
@@ -89,7 +89,7 @@ contract Ownable {
 
 contract MultiOwnable {
 
-    mapping(address => bool) public isOwner;
+    mapping (address => bool) public isOwner;
     address[] public ownerHistory;
     uint8 public ownerCount;
 
@@ -236,7 +236,7 @@ contract StandardToken is ERC20 {
 
 contract CommonToken is StandardToken, MultiOwnable {
 
-    string public constant name = 'White Rabbit Token';
+    string public constant name   = 'White Rabbit Token';
     string public constant symbol = 'WRT';
     uint8 public constant decimals = 18;
 
@@ -352,6 +352,7 @@ contract CommonToken is StandardToken, MultiOwnable {
     }
 }
 
+// TODO finish whitelist
 contract CommonWhitelist is MultiOwnable {
 
     mapping(address => bool) public isAllowed;
@@ -496,7 +497,7 @@ contract ICrowdsaleProcessor is Ownable, HasManager {
     function deposit() public payable {}
 
     // Returns address of crowdsale token, must be ERC20 compilant
-    function getToken() public returns (address);
+    function getToken() public returns(address);
 
     // Transfers ETH rewards amount (if ETH rewards is configured) to Forecasting contract
     function mintETHRewards(address _contract, uint256 _amount) public onlyManager();
@@ -548,7 +549,7 @@ contract BasicCrowdsale is ICrowdsaleProcessor {
     // This call is made upon closing successful crowdfunding process
     // iff agreed ETH reward part is not zero
     function mintETHRewards(
-        address _contract, // Forecasting contract
+        address _contract,  // Forecasting contract
         uint256 _amount     // agreed part of totalCollected which is intended for rewards
     )
     public
@@ -558,7 +559,7 @@ contract BasicCrowdsale is ICrowdsaleProcessor {
     }
 
     // cancels crowdsale
-    function stop() public onlyManager() hasntStopped() {
+    function stop() public onlyManager() hasntStopped()  {
         // we can stop only not started and not completed crowdsale
         if (started) {
             require(!isFailed());
@@ -575,9 +576,9 @@ contract BasicCrowdsale is ICrowdsaleProcessor {
         address _fundingAddress
     )
     public
-    onlyManager() // manager is CrowdsaleController instance
-    hasntStarted() // not yet started
-    hasntStopped() // crowdsale wasn't cancelled
+    onlyManager()   // manager is CrowdsaleController instance
+    hasntStarted()  // not yet started
+    hasntStopped()  // crowdsale wasn't cancelled
     {
         require(_fundingAddress != address(0));
 
@@ -605,7 +606,7 @@ contract BasicCrowdsale is ICrowdsaleProcessor {
     function isFailed()
     public
     constant
-    returns (bool)
+    returns(bool)
     {
         return (
         // it was started
@@ -623,7 +624,7 @@ contract BasicCrowdsale is ICrowdsaleProcessor {
     function isActive()
     public
     constant
-    returns (bool)
+    returns(bool)
     {
         return (
         // it was started
@@ -642,7 +643,7 @@ contract BasicCrowdsale is ICrowdsaleProcessor {
     function isSuccessful()
     public
     constant
-    returns (bool)
+    returns(bool)
     {
         return (
         // either the hard cap is collected
@@ -705,7 +706,7 @@ contract Bridge is BasicCrowdsale {
     // returns address of crowdsale token. The token must be ERC20-compliant
     function getToken()
     public
-    returns (address)
+    returns(address)
     {
         return address(token);
     }
@@ -714,7 +715,7 @@ contract Bridge is BasicCrowdsale {
     // tokens sold by successful crowdsale to Forecasting contract.
     // This call is made upon closing successful crowdfunding process.
     function mintTokenRewards(
-        address _contract, // Forecasting contract
+        address _contract,  // Forecasting contract
         uint256 _amount     // agreed part of totalSold which is intended for rewards
     )
     public
@@ -727,8 +728,8 @@ contract Bridge is BasicCrowdsale {
     // transfers crowdsale token from mintable to transferrable state
     function releaseTokens()
     public
-    onlyManager() // manager is CrowdsaleController instance
-    hasntStopped() // crowdsale wasn't cancelled
+    onlyManager()             // manager is CrowdsaleController instance
+    hasntStopped()            // crowdsale wasn't cancelled
     whenCrowdsaleSuccessful() // crowdsale was successful
     {
         // empty for bridge
@@ -737,12 +738,12 @@ contract Bridge is BasicCrowdsale {
     // Here go crowdsale process itself and token manipulations
 
     // default function allows for ETH transfers to the contract
-    function() payable public {
+    function () payable public {
     }
 
     function notifySale(uint256 _ethAmount, uint256 _tokensAmount) public
-    hasBeenStarted() // crowdsale started
-    hasntStopped() // wasn't cancelled by owner
+    hasBeenStarted()     // crowdsale started
+    hasntStopped()       // wasn't cancelled by owner
     whenCrowdsaleAlive() // in active state
     onlyCrowdsale() // can do only crowdsale
     {
@@ -766,7 +767,7 @@ contract Bridge is BasicCrowdsale {
     )
     public
     onlyOwner() // project's owner
-    hasntStopped() // crowdsale wasn't cancelled
+    hasntStopped()  // crowdsale wasn't cancelled
     whenCrowdsaleSuccessful() // crowdsale completed successfully
     {
         // nothing to withdraw
@@ -781,27 +782,29 @@ contract Bridge is BasicCrowdsale {
 
     // called by CrowdsaleController to setup start and end time of crowdfunding process
     // as well as funding address (where to transfer ETH upon successful crowdsale)
-    function start(
-        uint256 _startTimestamp,
-        uint256 _endTimestamp,
-        address _fundingAddress
-    )
-    public
-    onlyManager() // manager is CrowdsaleController instance
-    hasntStarted() // not yet started
-    hasntStopped() // crowdsale wasn't cancelled
-    {
-        // just start crowdsale
-        started = true;
 
-        CROWDSALE_START(_startTimestamp, _endTimestamp, _fundingAddress);
-    }
+    // Removed by RPE because it overrides and is not complete.
+    //  function start(
+    //    uint256 _startTimestamp,
+    //    uint256 _endTimestamp,
+    //    address _fundingAddress
+    //  )
+    //    public
+    //    onlyManager()   // manager is CrowdsaleController instance
+    //    hasntStarted()  // not yet started
+    //    hasntStopped()  // crowdsale wasn't cancelled
+    //  {
+    //    // just start crowdsale
+    //    started = true;
+    //
+    //    CROWDSALE_START(_startTimestamp, _endTimestamp, _fundingAddress);
+    //  }
 
     // must return true if crowdsale is over, but it failed
     function isFailed()
     public
     constant
-    returns (bool)
+    returns(bool)
     {
         return (
         false
@@ -812,7 +815,7 @@ contract Bridge is BasicCrowdsale {
     function isActive()
     public
     constant
-    returns (bool)
+    returns(bool)
     {
         return (
         // we remove timelines
@@ -824,14 +827,14 @@ contract Bridge is BasicCrowdsale {
     function isSuccessful()
     public
     constant
-    returns (bool)
+    returns(bool)
     {
         return (
         completed
         );
     }
 
-    function calculateRewards() public view returns (uint256, uint256) {
+    function calculateRewards() public view returns(uint256,uint256) {
         uint256 tokenRewardPart = IWingsController(manager).tokenRewardPart();
         uint256 ethRewardPart = IWingsController(manager).ethRewardPart();
 
@@ -879,51 +882,33 @@ contract CommonTokensale is Connector, Pausable {
     CommonToken public token;         // Token contract reference.
     CommonWhitelist public whitelist; // Whitelist contract reference.
 
-    address public beneficiary;       // Address that will receive ETH raised during this tokensale.
+    address public beneficiary;       // Address that will receive ETH raised during this presale.
     address public bsWallet = 0x8D5bd2aBa04A07Bfa0cc976C73eD45B23cC6D6a2;
 
     bool public whitelistEnabled = true;
 
-    uint public constant preSaleMinPaymentWei = 5 ether;    // Hint: Set to lower amount (ex. 0.001 ETH) for tests.
-    uint public constant mainSaleMinPaymentWei = 0.05 ether; // Hint: Set to lower amount (ex. 0.001 ETH) for tests.
+    uint public minPaymentWei;
+    uint public defaultTokensPerWei;
 
-    uint public defaultTokensPerWei = 4750; // TODO To be determined based on ETH to USD price at the date of sale.
-    uint public tokensPerWei5;
-    uint public tokensPerWei7;
-    uint public tokensPerWei10;
-    uint public tokensPerWei15;
-    uint public tokensPerWei20;
+    uint public minCapWei;
+    uint public maxCapWei;
 
-    uint public minCapWei = 3200 ether;  // TODO  2m USD. Recalculate based on ETH to USD price at the date of tokensale.
-    uint public maxCapWei = 16000 ether; // TODO 10m USD. Recalculate based on ETH to USD price at the date of tokensale.
-
-    uint public constant startTime = 1525701600; // May 7, 2018 2:00:00 PM
-    uint public constant preSaleEndTime = 1526306400; // May 14, 2018 2:00:00 PM
-    uint public constant mainSaleStartTime = 1526392800; // May 15, 2018 2:00:00 PM
-    uint public constant endTime = 1528639200; // June 10, 2018 2:00:00 PM
-
-    // At main sale bonuses will be available only during the first 48 hours.
-    uint public mainSaleBonusEndTime;
-
-    // In case min (soft) cap is not reached, token buyers will be able to 
-    // refund their contributions during one month after sale is finished.
-    uint public refundDeadlineTime;
+    uint public startTime;
+    uint public endTime;
 
     // Stats for current tokensale:
 
     uint public totalTokensSold;  // Total amount of tokens sold during this tokensale.
     uint public totalWeiReceived; // Total amount of wei received during this tokensale.
-    uint public totalWeiRefunded; // Total amount of wei refunded if min (soft) cap is not reached.
 
     // This mapping stores info on how many ETH (wei) have been sent to this tokensale from specific address.
-    mapping(address => uint256) public buyerToSentWei;
+    mapping (address => uint256) public buyerToSentWei;
 
-    mapping(bytes32 => bool) public calledOnce;
+    mapping (bytes32 => bool) public calledOnce;
 
     event ChangeBeneficiaryEvent(address indexed _oldAddress, address indexed _newAddress);
     event ChangeWhitelistEvent(address indexed _oldAddress, address indexed _newAddress);
     event ReceiveEthEvent(address indexed _buyer, uint256 _amountWei);
-    event RefundEthEvent(address indexed _buyer, uint256 _amountWei);
 
     function CommonTokensale(
         address _token,
@@ -937,11 +922,6 @@ contract CommonTokensale is Connector, Pausable {
         token = CommonToken(_token);
         whitelist = CommonWhitelist(_whitelist);
         beneficiary = _beneficiary;
-
-        mainSaleBonusEndTime = mainSaleStartTime + 48 hours;
-        refundDeadlineTime = endTime + 30 days;
-
-        recalcBonuses();
     }
 
     modifier canBeCalledOnce(bytes32 _flag) {
@@ -950,18 +930,18 @@ contract CommonTokensale is Connector, Pausable {
         _;
     }
 
-    function updateMinCapEthOnce(uint _amountInEth) public onlyOwner canBeCalledOnce("updateMinCapEth") {
-        minCapWei = _amountInEth * 1e18;
-        // Convert ETH to Wei and update a min cap.
+    /** NOTE: _newValue should be in ETH. */
+    function updateMinCapEthOnce(uint _newValue) public onlyOwner canBeCalledOnce("updateMinCapEth") {
+        minCapWei = _newValue * 1e18;
     }
 
-    function updateMaxCapEthOnce(uint _amountInEth) public onlyOwner canBeCalledOnce("updateMaxCapEth") {
-        maxCapWei = _amountInEth * 1e18;
-        // Convert ETH to Wei and update a max cap.
+    /** NOTE: _newValue should be in ETH. */
+    function updateMaxCapEthOnce(uint _newValue) public onlyOwner canBeCalledOnce("updateMaxCapEth") {
+        maxCapWei = _newValue * 1e18;
     }
 
-    function updateTokensPerEthOnce(uint _amountInEth) public onlyOwner canBeCalledOnce("updateTokensPerEth") {
-        defaultTokensPerWei = _amountInEth;
+    function updateTokensPerEthOnce(uint _newValue) public onlyOwner canBeCalledOnce("updateTokensPerEth") {
+        defaultTokensPerWei = _newValue;
         recalcBonuses();
     }
 
@@ -994,7 +974,8 @@ contract CommonTokensale is Connector, Pausable {
         // Check that buyer is in whitelist onlist if whitelist check is enabled.
         if (whitelistEnabled) require(whitelist.isAllowed(_buyer));
 
-        require(canAcceptPayment(_amountWei));
+        require(startTime <= now && now <= endTime);
+        require(_amountWei >= minPaymentWei);
         require(totalWeiReceived < maxCapWei);
 
         uint256 newTotalReceived = totalWeiReceived.add(_amountWei);
@@ -1002,40 +983,31 @@ contract CommonTokensale is Connector, Pausable {
         // Don't sell anything above the hard cap
         if (newTotalReceived > maxCapWei) {
             uint refundWei = newTotalReceived.sub(maxCapWei);
-            _amountWei = _amountWei.sub(refundWei);
-
-            // We need to check payment amount once more such as we updated 
-            // (reduced) it in this if-clause.
-            require(canAcceptPayment(_amountWei));
-
             // Send the ETH part which exceeds the hard cap back to the buyer:
             _buyer.transfer(refundWei);
+            _amountWei = _amountWei.sub(refundWei);
         }
 
         uint tokensE18 = weiToTokens(_amountWei);
         // Transfer tokens to buyer.
         token.sell(_buyer, tokensE18);
 
-        // 0.75% of sold tokens go to BS account:
-        uint bsTokens = tokensE18.mul(75).div(10000);
-        token.sell(bsWallet, bsTokens);
-
         // Update total stats:
-        totalTokensSold = totalTokensSold.add(tokensE18).add(bsTokens);
+        totalTokensSold = totalTokensSold.add(tokensE18);
         totalWeiReceived = totalWeiReceived.add(_amountWei);
         buyerToSentWei[_buyer] = buyerToSentWei[_buyer].add(_amountWei);
         ReceiveEthEvent(_buyer, _amountWei);
 
+        // 0.75% of sold tokens go to BS account.
+        uint bsTokens = totalTokensSold.mul(75).div(10000);
+        token.sell(bsWallet, bsTokens);
+
         // Notify Wings about successful sale of tokens:
-        notifySale(_amountWei, tokensE18.add(bsTokens));
+        notifySale(_amountWei, tokensE18);
     }
 
-    function recalcBonuses() internal {
-        tokensPerWei5 = tokensPerWeiPlusBonus(5);
-        tokensPerWei7 = tokensPerWeiPlusBonus(7);
-        tokensPerWei10 = tokensPerWeiPlusBonus(10);
-        tokensPerWei15 = tokensPerWeiPlusBonus(15);
-        tokensPerWei20 = tokensPerWeiPlusBonus(20);
+    function amountPercentage(uint _amount, uint _per) public pure returns (uint) {
+        return _amount.mul(_per).div(100);
     }
 
     function tokensPerWeiPlusBonus(uint _per) public view returns (uint) {
@@ -1044,63 +1016,23 @@ contract CommonTokensale is Connector, Pausable {
         );
     }
 
-    function amountPercentage(uint _amount, uint _per) public pure returns (uint) {
-        return _amount.mul(_per).div(100);
-    }
-
     /** Calc how much tokens you can buy at current time. */
     function weiToTokens(uint _amountWei) public view returns (uint) {
         return _amountWei.mul(tokensPerWei(_amountWei));
     }
 
-    function tokensPerWei(uint _amountWei) public view returns (uint256) {
-        // Presale bonuses:
-        if (isPreSaleTime()) {
-            if (5 ether <= _amountWei && _amountWei < 10 ether) return tokensPerWei10;
-            if (_amountWei < 20 ether) return tokensPerWei15;
-            if (20 ether <= _amountWei) return tokensPerWei20;
-        }
-        // Main sale bonues:
-        if (isMainSaleBonusTime()) {
-            if (0.05 ether <= _amountWei && _amountWei < 10 ether) return tokensPerWei5;
-            if (_amountWei < 20 ether) return tokensPerWei7;
-            if (20 ether <= _amountWei) return tokensPerWei10;
-        }
-        return defaultTokensPerWei;
-    }
+    function recalcBonuses() internal;
 
-    function canAcceptPayment(uint _amountWei) public view returns (bool) {
-        if (isPreSaleTime()) return _amountWei >= preSaleMinPaymentWei;
-        if (isMainSaleTime()) return _amountWei >= mainSaleMinPaymentWei;
-        return false;
-    }
-
-    function isPreSaleTime() public view returns (bool) {
-        return startTime <= now && now <= preSaleEndTime;
-    }
-
-    function isMainSaleBonusTime() public view returns (bool) {
-        return mainSaleStartTime <= now && now <= mainSaleBonusEndTime;
-    }
-
-    function isMainSaleTime() public view returns (bool) {
-        return mainSaleStartTime <= now && now <= endTime;
-    }
+    function tokensPerWei(uint _amountWei) public view returns (uint256);
 
     function isFinishedSuccessfully() public view returns (bool) {
-        return totalWeiReceived >= minCapWei && now > endTime;
+        return now >= endTime && totalWeiReceived >= minCapWei;
     }
 
-    /** 
-     * During tokensale it will be possible to withdraw only in two cases:
-     * min cap reached OR refund period expired.
-     */
-    function canWithdraw() public view returns (bool) {
-        return totalWeiReceived >= minCapWei || now > refundDeadlineTime;
-    }
+    function canWithdraw() public view returns (bool);
 
-    /** 
-     * This method allows to withdraw to any arbitrary ETH address. 
+    /**
+     * This method allows to withdraw to any arbitrary ETH address.
      * This approach gives more flexibility.
      */
     function withdraw(address _to, uint256 _amount) public {
@@ -1115,38 +1047,14 @@ contract CommonTokensale is Connector, Pausable {
         withdraw(_to, this.balance);
     }
 
-    /** 
-     * It will be possible to refund only if min (soft) cap is not reached and 
-     * refund requested during 30 days after tokensale finished.
-     */
-    function canRefund() public view returns (bool) {
-        return totalWeiReceived < minCapWei && endTime < now && now <= refundDeadlineTime;
-    }
-
-    function refund() public {
-        require(canRefund());
-
-        address buyer = msg.sender;
-        uint amount = buyerToSentWei[buyer];
-        require(amount > 0);
-
-        RefundEthEvent(buyer, amount);
-        buyerToSentWei[buyer] = 0;
-        totalWeiRefunded = totalWeiRefunded.add(amount);
-        buyer.transfer(amount);
-    }
-
-    /**
-     * If there is ETH rewards and all ETH already withdrawn but contract 
-     * needs to pay for transfering transactions. 
-     */
+    /** If there is ETH rewards and all ETH already withdrawn. */
     function deposit() public payable {
         require(isFinishedSuccessfully());
     }
 
-    /** 
-     * This function should be called only once only after 
-     * successfully finished tokensale. Once - because Wings bridge 
+    /**
+     * This function should be called only once only after
+     * successfully finished tokensale. Once - because Wings bridge
      * will be closed at the end of this function call.
      */
     function sendWingsRewardsOnce() public onlyOwner canBeCalledOnce("sendWingsRewards") {
@@ -1170,28 +1078,158 @@ contract CommonTokensale is Connector, Pausable {
     }
 }
 
+contract Presale is CommonTokensale {
+
+    uint public tokensPerWei10;
+    uint public tokensPerWei15;
+    uint public tokensPerWei20;
+
+    function Presale(
+        address _token,
+        address _whitelist,
+        address _beneficiary
+    ) CommonTokensale(
+        _token,
+        _whitelist,
+        _beneficiary
+    ) public {
+        minCapWei = 0 ether;       // No min cap at presale.
+        maxCapWei = 8000 ether;   // TODO 5m USD. To be determined based on ETH to USD price at the date of presale.
+
+        // https://www.epochconverter.com/
+        startTime = 1525701600;    // May 7, 2018 4:00:00 PM GMT+02:00
+        endTime   = 1526306400;    // May 14, 2018 4:00:00 PM GMT+02:00
+
+        minPaymentWei = 5 ether;   // Hint: Set to lower amount (ex. 0.001 ETH) for tests.
+        defaultTokensPerWei = 4808; // TODO To be determined based on ETH to USD price at the date of sale.
+        recalcBonuses();
+    }
+
+    function recalcBonuses() internal {
+        tokensPerWei10 = tokensPerWeiPlusBonus(10);
+        tokensPerWei15 = tokensPerWeiPlusBonus(15);
+        tokensPerWei20 = tokensPerWeiPlusBonus(20);
+    }
+
+    function tokensPerWei(uint _amountWei) public view returns (uint256) {
+        if (5 ether <= _amountWei && _amountWei < 10 ether) return tokensPerWei10;
+        if (_amountWei < 20 ether) return tokensPerWei15;
+        if (20 ether <= _amountWei) return tokensPerWei20;
+        return defaultTokensPerWei;
+    }
+
+    /**
+     * During presale it is possible to withdraw at any time.
+     */
+    function canWithdraw() public view returns (bool) {
+        return true;
+    }
+}
+
+// Main sale contract.
+contract PublicSale is CommonTokensale {
+
+    uint public tokensPerWei5;
+    uint public tokensPerWei7;
+    uint public tokensPerWei10;
+
+    // In case min (soft) cap is not reached, token buyers will be able to
+    // refund their contributions during one month after sale is finished.
+    uint public refundDeadlineTime;
+
+    // Total amount of wei refunded if min (soft) cap is not reached.
+    uint public totalWeiRefunded;
+
+    event RefundEthEvent(address indexed _buyer, uint256 _amountWei);
+
+    function PublicSale(
+        address _token,
+        address _whitelist,
+        address _beneficiary
+    ) CommonTokensale(
+        _token,
+        _whitelist,
+        _beneficiary
+    ) public {
+        minCapWei =  3200 ether;    // TODO  2m USD. Recalculate based on ETH to USD price at the date of presale.
+        maxCapWei = 16000 ether;    // TODO 10m USD. Recalculate based on ETH to USD price at the date of presale.
+
+        startTime = 1526392800;     // 2018-05-15T14:00:00Z
+        endTime   = 1528639200;     // 2018-06-10T14:00:00Z
+        refundDeadlineTime = endTime + 30 days;
+
+        minPaymentWei = 0.05 ether; // Hint: Set to lower amount (ex. 0.001 ETH) for tests.
+        defaultTokensPerWei = 4808;  // TODO To be determined based on ETH to USD price at the date of sale.
+        recalcBonuses();
+    }
+
+    function recalcBonuses() internal {
+        tokensPerWei5  = tokensPerWeiPlusBonus(5);
+        tokensPerWei7  = tokensPerWeiPlusBonus(7);
+        tokensPerWei10 = tokensPerWeiPlusBonus(10);
+    }
+
+    function tokensPerWei(uint _amountWei) public view returns (uint256) {
+        if (0.05 ether <= _amountWei && _amountWei < 10 ether) return tokensPerWei5;
+        if (_amountWei < 20 ether) return tokensPerWei7;
+        if (20 ether <= _amountWei) return tokensPerWei10;
+        return defaultTokensPerWei;
+    }
+
+    /** 
+     * During presale it will be possible to withdraw only in two cases:
+     * min cap reached OR refund period expired.
+     */
+    function canWithdraw() public view returns (bool) {
+        return totalWeiReceived >= minCapWei || now > refundDeadlineTime;
+    }
+
+    /** 
+     * It will be possible to refund only if min (soft) cap is not reached and 
+     * refund requested during 3 months after presale finished.
+     */
+    function canRefund() public view returns (bool) {
+        return totalWeiReceived < minCapWei && endTime < now && now <= refundDeadlineTime;
+    }
+
+    // TODO
+    function refund() public {
+        require(canRefund());
+
+        address buyer = msg.sender;
+        uint amount = buyerToSentWei[buyer];
+        require(amount > 0);
+
+        RefundEthEvent(buyer, amount);
+        buyerToSentWei[buyer] = 0;
+        totalWeiRefunded = totalWeiRefunded.add(amount);
+        buyer.transfer(amount);
+    }
+}
+
 
 // >> Start:
-// >> EXAMPLE: How to deploy Token, Whitelist and Tokensale.
+// >> EXAMPLE: How to deploy Token, Whitelist and Presale.
 
 // token = new CommonToken(
 //     0x123 // TODO Set seller address
 // );
 // whitelist = new CommonWhitelist();
-// tokensale = new Tokensale(
+// presale = new Presale(
 //     token,
 //     whitelist,
 //     0x123 // TODO Set beneficiary address
 // );
-// token.addOwner(tokensale);
+// token.addOwner(presale);
 
-// << EXAMPLE: How to deploy Token, Whitelist and Tokensale.
+// << EXAMPLE: How to deploy Token, Whitelist and Presale.
 // << End
 
 
-// TODO After Tokensale deployed, call token.addOwner(address_of_deployed_tokensale)
-contract ProdTokensale is CommonTokensale {
-    function ProdTokensale() CommonTokensale(
+// Should be deployed after Presale capmaign successfully ended.
+// TODO After PublicSale deployed, call token.addOwner(address_of_deployed_public_sale)
+contract ProdPublicSale is PublicSale {
+    function ProdPublicSale() PublicSale(
         0x123, // TODO Set token address
         0x123, // TODO Set whitelist address
         0x123  // TODO Set beneficiary address
