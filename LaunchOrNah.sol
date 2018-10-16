@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LaunchOrNah at 0xBB5aA911CA13E2378A75C8e8a7E6C7e3A4120A6F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LaunchOrNah at 0x820cbd71d2129783034e0bba0bc36ce15565faf0
 */
 pragma solidity ^0.4.11;
 
@@ -1035,7 +1035,7 @@ contract LaunchOrNah is usingOraclize {
   address[2] public BOOKIES = [0xC3eD2d481B9d75835EC04174b019A7eAF2Faf78A, 0x393F3668a1B66EBB107FBF01F6C361D507Be8Ee7];
   uint public launchOutcome = 2;
 
-  uint public constant BOOKIE_POOL_COMMISSION = 7; // The bookies take 10%
+  uint public constant BOOKIE_POOL_COMMISSION = 10; // The bookies take 10%
   uint public constant MINIMUM_BET = 0.025 ether; // 0.025 ETH is min bet
 
   uint public constant BETTING_OPENS = 1517863580; // Currently before deployment
@@ -1091,7 +1091,7 @@ contract LaunchOrNah is usingOraclize {
   // Constructor
   function LaunchOrNah() public {
     owner = msg.sender;
-    setLaunchDate(1517941800); // Initial launch date is Feb 6 1.30pm PST, but could be delayed
+    setLaunchDate(1517952600); // Initial launch date is Feb 6 1.30pm PST, but could be delayed
   }
 
   function setLaunchDate(uint _LAUNCH_DATE) public onlyBookieLevel {
@@ -1169,8 +1169,8 @@ contract LaunchOrNah is usingOraclize {
     // Calculate total pool of ETH
     // betted for the two outcomes
     
-    uint losingChunk = this.balance - totalAmountsBet[launchOutcome];
-    uint bookiePayout = losingChunk / BOOKIE_POOL_COMMISSION; // Payout to the bookies; commission of losing pot
+    uint bookiePayout = this.balance / BOOKIE_POOL_COMMISSION; // Payout to the bookies; commission of total pot
+    uint totalPayout = this.balance - bookiePayout;
 
     // Equal weight payout to the bookies
     BOOKIES[0].transfer(bookiePayout / 2);
@@ -1180,7 +1180,7 @@ contract LaunchOrNah is usingOraclize {
     // their contribution to the winning pool
     for (uint k = 0; k < betters.length; k++) {
       uint betOnWinner = betterInfo[betters[k]].amountsBet[launchOutcome];
-      uint payout = betOnWinner + ((betOnWinner * (losingChunk - bookiePayout)) / totalAmountsBet[launchOutcome]);
+      uint payout = (betOnWinner * totalPayout) / totalAmountsBet[launchOutcome];
 
       if (payout > 0)
         betters[k].transfer(payout);
