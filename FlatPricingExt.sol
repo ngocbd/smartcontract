@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x3735dFF4Ac21Ee1A2CDD17F9adc3f519Fade202d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xFB45976900acB13084Cdc230169bB061b2C501bf
 */
 // Created using ICO Wizard https://github.com/poanetwork/ico-wizard by POA Network 
 pragma solidity ^0.4.11;
