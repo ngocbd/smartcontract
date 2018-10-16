@@ -1,7 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DogToken at 0xf89ed809c336e79ab6c5da5bff6f17074a70e51d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DogToken at 0xbaba4a597827129ee165932ff6b6ab4a98248aa2
 */
 pragma solidity ^0.4.4;
+
+// ---------------------------------------------------------
+// 'DOG' token contract
+//
+// Symbol:        DOG
+// Name:          DOG: The Anti-Scam Reward Token
+// Total Supply:  75000000000000000000000000
+// Decimals:      18
+//
+// More info at http://token.icowatchdog.com
+//
+// (c) by DOG Token Foundation 2018. The MIT License.
+// ---------------------------------------------------------
 
 contract Token {
 
@@ -121,9 +134,9 @@ contract DogToken is StandardToken {
         ) {
         balances[msg.sender] = 75000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 75000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "DogToken";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "DOG";                               // Set the symbol for display purposes
+        name = "DOG: The Anti-Scam Reward Token";                        // Set the name for display purposes
+        decimals = 18;                                                  // Amount of decimals for display purposes
+        symbol = "DOG";                                                 // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
