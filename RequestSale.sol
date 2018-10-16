@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RequestSale at 0x81b0853bec4b8ced6d2df03f363c06ec4ce0883f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RequestSale at 0x0b444993e305016f213a030c9af4013a8c537b63
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
 
 // Original author: Cintix
 // Modified by: Moonlambos, yakois
-
 
 // ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
 contract ERC20 {
@@ -21,40 +20,29 @@ contract RequestSale {
   // Record ETH value of tokens currently held by contract.
   uint256 public contract_eth_value;
   // Maximum amount of user ETH contract will accept.
-  uint256 public eth_cap = 300 ether;
+  uint256 public eth_cap = 500 ether;
   // The minimum amount of ETH that must be deposited before the buy-in can be performed.
   uint256 constant public min_required_amount = 60 ether;
-  // The developer address.
+  // The owner's address.
   address public owner;
-  // The crowdsale address. Settable by the owner.
-  address public sale;
-  // The token address. Settable by the owner.
-  ERC20 public token;
+  // The crowdsale address. Can be verified at: https://request.network/#/presale.
+  address public sale = 0xa579E31b930796e3Df50A56829cF82Db98b6F4B3;
   
   //Constructor. Sets the sender as the owner of the contract.
   function RequestSale() {
     owner = msg.sender;
   }
-
-  // Allows the owner to set the crowdsale and token addresses.
-  function set_addresses(address _sale, address _token) {
-    // Only allow the owner to set the sale and token addresses.
-    require(msg.sender == owner);
-    // Only allow setting the addresses once.
-    require(sale == 0x0);
-    // Set the crowdsale and token addresses.
-    sale = _sale;
-    token = ERC20(_token);
-  }
   
   // Allows any user to withdraw his tokens.
-  function perform_withdraw() {
+  // Token's ERC20 address as argument as it is unknow at the time of deployement.
+  function perform_withdrawal(address tokenAddress) {
     // Tokens must be bought
     require(bought_tokens);
     // Retrieve current token balance of contract
+    ERC20 token = ERC20(tokenAddress);
     uint256 contract_token_balance = token.balanceOf(address(this));
     // Disallow token withdrawals if there are no tokens to withdraw.
-    require(contract_token_balance == 0);
+    require(contract_token_balance != 0);
     // Store the user's token balance in a temporary variable.
     uint256 tokens_to_withdraw = (balances[msg.sender] * contract_token_balance) / contract_eth_value;
     // Update the value of tokens currently held by the contract.
@@ -77,6 +65,8 @@ contract RequestSale {
   
   // Buy the tokens. Sends ETH to the presale wallet and records the ETH amount held in the contract.
   function buy_the_tokens() {
+    // Only allow the owner to perform the buy in.
+    require(msg.sender == owner);
     // Short circuit to save gas if the contract has already bought tokens.
     require(!bought_tokens);
     // The pre-sale address has to be set.
@@ -88,15 +78,15 @@ contract RequestSale {
     // Record the amount of ETH sent as the contract's current value.
     contract_eth_value = this.balance;
     // Transfer all the funds to the crowdsale address.
-    sale.transfer(contract_eth_value);
+    require(sale.call.value(contract_eth_value)());
   }
 
   function upgrade_cap() {
     // Only the owner can raise the cap.
-    if (msg.sender == owner) {
-          // Raise the cap.
-          eth_cap = 800 ether;
-    }
+    require(msg.sender == owner);
+    // Raise the cap.
+    eth_cap = 1000 ether;
+    
   }
   
   // Default function.  Called when a user sends ETH to the contract.
@@ -104,7 +94,7 @@ contract RequestSale {
     // Only allow deposits if the contract hasn't already purchased the tokens.
     require(!bought_tokens);
     // Only allow deposits that won't exceed the contract's ETH cap.
-    require(this.balance < eth_cap);
+    require(this.balance + msg.value < eth_cap);
     // Update records of deposited ETH to include the received amount.
     balances[msg.sender] += msg.value;
   }
