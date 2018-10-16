@@ -1,13 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClipperCoin at 0xc5d88472c4b2383281f007a6512895f5ceb7a3b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClipperCoin at 0x378903a03fb2c3ac76bb52773e3ce11340377a32
 */
 //////////////////////////////////////////////////////////////////////////////////////////
 //																						//
 //	Title: 						Clipper Coin Creation Contract							//
-//	Author: 					Marko Valentin Micic									//
-//                              rev by David Dai, Will Wang                             //
-//	Version: 					v0.2													//
-//	Date of current version:	2018/01/17												//
+//	Author: 					David                                                   //
+//	Version: 					v1.0													//
+//	Date of current version:	2018/04/26												//
 //                                                                                      //
 //////////////////////////////////////////////////////////////////////////////////////////
 pragma solidity ^0.4.18;
@@ -52,9 +51,9 @@ library SafeMath {
    }
 
   function div(uint a, uint b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    assert(b > 0); // Solidity automatically throws when dividing by 0
     uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 }
