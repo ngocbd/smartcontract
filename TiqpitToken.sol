@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TiqpitToken at 0x73d5eb4c38f9c486c4faaf6d8982991588816316
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TiqpitToken at 0xe764023084e2771412557d352f3ca2e03996b4d5
 */
 pragma solidity ^0.4.18;
 
