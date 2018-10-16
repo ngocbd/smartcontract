@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDOCrowdsale at 0x85302fcc8e5ed7e6182f65e9801dcdfed89bc52f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDOCrowdsale at 0x64d63840cfbcb5a7320c4e104b116f6aa31ce08b
 */
 pragma solidity ^0.4.18;
 
@@ -201,7 +201,7 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract RDOToken is StandardToken {
-    string public name = "RDO roken";
+    string public name = "RDO";
     string public symbol = "RDO";
     uint256 public decimals = 8;
     address owner;
