@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x8142679f2d4f0e9a6ab63959173a776e7eae7bab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xfd26e8e81c46bce1f0d0f86a3848bcd5c95fd9ac
 */
 pragma solidity ^0.4.20;
-//Address: 0x8142679F2D4F0E9A6aB63959173a776E7Eae7BAb
+//Address: 0xfd26e8E81C46BCE1f0d0f86a3848bcD5C95fd9aC
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -1054,7 +1054,7 @@ contract usingOraclize {
 // </ORACLIZE_API>
 
 // Contract that:
-//      Lets anyone bet with 0.208 ethers
+//      Lets anyone bet with 0.106 ethers
 //      When it reaches 2 bets, it chooses a player at random based on oraclize and sends z% of the ethers received. other v% goes to GiveDirectly
 
 contract Lottery is usingOraclize{
@@ -1094,7 +1094,7 @@ contract Lottery is usingOraclize{
     function Lottery() public{
         owner = msg.sender;
         player_count = 0;
-        ante = 0.208 ether;
+        ante = 0.106 ether;
         required_number_players = 2;
         winner_percentage = 98;
         oraclize_setProof(proofType_Ledger); 
