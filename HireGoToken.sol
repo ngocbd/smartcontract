@@ -1,22 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HireGoToken at 0xddaf2e4c78fe861d441c4a8868e56d709905516c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HireGoToken at 0x60f011964f95e1819e63be1e7721d4e1b1c02153
 */
-pragma solidity ^0.4.18;
-
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
@@ -46,6 +30,21 @@ library SafeMath {
   }
 }
 
+
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
@@ -78,7 +77,6 @@ contract BasicToken is ERC20Basic {
     }
 
 }
-
 
 
 contract Ownable {
@@ -117,8 +115,6 @@ contract Ownable {
     }
 
 }
-
-
 
 contract StandardToken is ERC20, BasicToken {
 
@@ -194,7 +190,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
 contract BurnableToken is StandardToken {
 
     event Burn(address indexed burner, uint256 value);
@@ -215,7 +210,6 @@ contract BurnableToken is StandardToken {
         Burn(burner, _value);
     }
 }
-
 
 contract MintableToken is StandardToken, Ownable {
     event Mint(address indexed to, uint256 amount);
@@ -255,9 +249,6 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 
-
-
-
 contract HireGoToken is MintableToken, BurnableToken {
 
     string public constant name = "HireGo";
@@ -265,7 +256,7 @@ contract HireGoToken is MintableToken, BurnableToken {
     uint32 public constant decimals = 18;
 
     function HireGoToken() public {
-        totalSupply = 100000000E18;
+        totalSupply = 100000000E18;  //100m
         balances[owner] = totalSupply; // Add all tokens to issuer balance (crowdsale in this case)
     }
 
