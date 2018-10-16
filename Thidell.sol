@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Thidell at 0xa7223e308a4e0542a307614549e32917b944880b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Thidell at 0x39d457fc66b2631126f70b5d4fe3ca8dcb400654
 */
 pragma solidity ^0.4.4;
 
@@ -117,10 +117,10 @@ contract Thidell is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function Thidell(
+    function ERC20Token(
         ) {
-        balances[msg.sender] = 200000000000000000000000;  // Give the creator all initial tokens (100000 for example)
-        totalSupply = 2000000000000000000000000;          // Update total supply (100000 for example)
+        balances[msg.sender] = 1000000000000000000000000; // Give the creator all initial tokens (100000 for example)
+        totalSupply = 20000000000000000000000000;         // Update total supply (100000 for example)
         name = "Thidell";                                 // Set the name for display purposes
         decimals = 18;                                    // Amount of decimals for display purposes
         symbol = "TDEL";                                  // Set the symbol for display purposes
