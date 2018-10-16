@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenexiToken at 0x4e329bB4CAd4D168Eebc0f64e5b320D1c6DD6E17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenexiToken at 0xbcfdaeb22ab6e10dfb99546e6240155edc1084f7
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 /// @title SafeMath
 /// @dev Math operations with safety checks that throw on error
@@ -61,7 +61,7 @@ contract ERC20Token is IERC20Token {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
 
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
@@ -83,7 +83,7 @@ contract ERC20Token is IERC20Token {
 
         allowed[msg.sender][_spender] = _value;
 
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
 
         return true;
     }
@@ -133,7 +133,7 @@ contract GenexiToken is ERC20Token, Owned {
     uint32 public constant decimals = 18;
 
     // SET current initial token supply
-    uint256 public initialSupply = 888888888;
+    uint256 public initialSupply = 12000000000;
     // 
     bool public fundingEnabled = true;
     // The maximum tokens available for sale
@@ -167,19 +167,19 @@ contract GenexiToken is ERC20Token, Owned {
         initialSupply = initialSupply * 10 ** uint256(decimals);
 
         totalSupply = initialSupply;
-        // Initializing 55% of tokens for sale
-        // maxSaleToken = initialSupply * 55 / 100 (55% this is maxSaleToken & 100% this is initialSupply)
+        // Initializing 70% of tokens for sale
+        // maxSaleToken = initialSupply * 70 / 100 (70% this is maxSaleToken & 100% this is initialSupply)
         // totalProjectToken will be calculated in function finalize()
         // 
         // |---------maxSaleToken---------totalProjectToken|
-        // |=============55%==========|=========45%========|
+        // |===============70%============|======30%=======|
         // |------------------totalSupply------------------|
-        maxSaleToken = totalSupply.mul(55).div(100);
+        maxSaleToken = totalSupply.mul(70).div(100);
         // Give all the tokens to a COLD wallet
         balances[msg.sender] = maxSaleToken;
         // SET HOT wallets to allow transactions tokens
         wallets = [
-                0x34f75A5215bb06fE7F65014252233ed2A876Eb8a, // HOT #1
+                0x559E3e6DD71E7a1942e921596e85A61178b5c4db, // HOT #1
                 0x84E1d9DB4Aa98672286FA619b6b102DCfC9EF629, // HOT #2
                 0x459B06b6b526193fFbEf93700B8fe6AF45b374D5, // HOT #3
                 0xfb430a30F739Edb98E5FBCcD12DB1088e6fc44a2 // HOT #4
@@ -224,13 +224,13 @@ contract GenexiToken is ERC20Token, Owned {
 
     function _lockProjectToken() private {
 
-        endOfLockProjectToken = now + 6 * 30 days;
+        endOfLockProjectToken = now + 365 days;
 
         // SET distribution of tokens for Genexi
-        // 20% of totalSupply transfer to Company
-        lock[0xa04768C11576F84712e27a76B4700992d6645180] = totalSupply.mul(20).div(100);
-        // 20% of totalSupply transfer to Team
-        lock[0x7D082cE8F5FA1e7D6D39336ECFCd8Ae419ea9777] = totalSupply.mul(20).div(100);
+        // 10% of totalSupply transfer to Company
+        lock[0xa04768C11576F84712e27a76B4700992d6645180] = totalSupply.mul(10).div(100);
+        // 15% of totalSupply transfer to Team
+        lock[0x7D082cE8F5FA1e7D6D39336ECFCd8Ae419ea9777] = totalSupply.mul(15).div(100);
         // 5% of totalSupply transfer to Advisors
         lock[0x353DeCDd78a923c4BA2eB455B644a44110BbA65e] = totalSupply.mul(5).div(100);
     }
@@ -243,7 +243,7 @@ contract GenexiToken is ERC20Token, Owned {
 
         lock[msg.sender] = 0;
 
-        Transfer(0, msg.sender, lock[msg.sender]);
+        emit Transfer(0, msg.sender, lock[msg.sender]);
     }
 
     function finalize() external onlyOwner {
@@ -254,10 +254,10 @@ contract GenexiToken is ERC20Token, Owned {
         for (uint index = 1; index < nWallets.length; index++) {
             if (balances[address(nWallets[index])] > 0) {
                 // Get total sold tokens on the funding wallets
-                // totalSoldTokens is 55% of the total number of tokens
+                // totalSoldTokens is 70% of the total number of tokens
                 soldTokens = soldTokens.sub(balances[address(nWallets[index])]);
 
-                Burn(address(nWallets[index]), balances[address(nWallets[index])]);
+                emit Burn(address(nWallets[index]), balances[address(nWallets[index])]);
                 // Burning tokens on funding wallet
                 balances[address(nWallets[index])] = 0;
             }
@@ -265,12 +265,12 @@ contract GenexiToken is ERC20Token, Owned {
 
         totalSoldTokens = soldTokens;
 
-        // totalProjectToken = totalSoldTokens * 45 / 55 (45% this is Genexi Project & 55% this is totalSoldTokens)
+        // totalProjectToken = totalSoldTokens * 30 / 70 (30% this is Genexi Project & 70% this is totalSoldTokens)
         //
         // |-------totalSoldTokens--------totalProjectToken|
-        // |=============55%==========|=========45%========|
+        // |===============70%============|======30%=======|
         // |totalSupply=(totalSoldTokens+totalProjectToken)|
-        totalProjectToken = totalSoldTokens.mul(45).div(55);
+        totalProjectToken = totalSoldTokens.mul(30).div(70);
 
         totalSupply = totalSoldTokens.add(totalProjectToken);
         
@@ -278,7 +278,7 @@ contract GenexiToken is ERC20Token, Owned {
 
         fundingEnabled = false;
 
-        Finalize();
+        emit Finalize();
     }
 
     function disableTransfers() external onlyOwner {
@@ -286,6 +286,6 @@ contract GenexiToken is ERC20Token, Owned {
 
         transfersEnabled = false;
 
-        DisableTransfers();
+        emit DisableTransfers();
     }
 }
