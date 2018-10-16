@@ -1,117 +1,77 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividend at 0x0389a06b028526b05966c287370bebefa0082176
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividend at 0x0436d3110dee47f177bb5d9b7ea5ce5d712522e8
 */
-// TESTING CONTRACT
+pragma solidity ^0.4.18;
 
 contract Dividend {
+    struct Record {
+        uint balance;
+        uint shares;
+        uint index;
+    }
 
-struct Contributor{
-    address addr;
-    uint contribution;
-    uint profit;
-}
-Contributor[] public contributors;
+    mapping (address => Record) public records;
+    address[] public investors;
+    address public funder;
+    uint public startTime;
+    uint public totalShares;
+    uint public lastInvestmentTime;
 
-uint public unprocessedProfits = 0;
-uint public totalContributors = 0;
-uint public totalContributions = 0;
-uint public totalProfit = 0;
-uint public totalSUM = 0;
-address public deployer;
-address public profitAddr;
+    event Invested(uint indexed timestamp, address indexed from, uint amount, uint shares);
+    event Withdrawn(uint indexed timestamp, address indexed from, uint amount);
 
+    function Dividend() public payable {
+        records[msg.sender] = Record(msg.value,
+            totalShares = allocateShares(msg.value, 0),
+            investors.push(funder = msg.sender));
+        Invested(startTime = lastInvestmentTime = now, msg.sender, msg.value, totalShares);
+    }
 
-modifier execute {
-    if (msg.sender == deployer)
-        _ 
-}
+    function () public payable {
+        invest();
+    }
 
+    function investorCount() public view returns (uint) {
+      return investors.length;
+    }
 
-function Dividend() {
-    deployer = msg.sender;
-    profitAddr = deployer;
-}
-
-
-function() {
-    Enter();
-}
-
-
-function Enter() {
-
-if (msg.sender == profitAddr) {
-
-unprocessedProfits = msg.value;
-
-}
-else {
-
-if (unprocessedProfits != 0) {
-
-    uint profit;
-    uint profitAmount = unprocessedProfits;
-    uint contriTotal;
-    totalProfit += profitAmount;
-    
-    if (contributors.length != 0 && profitAmount != 0) {
-        for (uint proi = 0; proi < contributors.length; proi++) {
-                contriTotal = contributors[proi].contribution + contributors[proi].profit;
-                profit = profitAmount * contriTotal / totalSUM;
-                contributors[proi].profit += profit;
+    function invest() public payable returns (uint) {
+        uint value = msg.value;
+        uint shares = allocateShares(value, (now - startTime) / 1 hours);
+        if (shares > 0) {
+            for (uint i = investors.length; i > 0; i--) {
+                Record storage rec = records[investors[i - 1]];
+                rec.balance += value * rec.shares / totalShares;
+            }
+            address investor = msg.sender;
+            rec = records[investor];
+            if (rec.index > 0) {
+                rec.shares += shares;
+            } else {
+                rec.shares = shares;
+                rec.index = investors.push(investor);
+            }
+            totalShares += shares;
+            Invested(lastInvestmentTime = now, investor, value, shares);
         }
+        return shares;
     }
-    totalSUM += profitAmount;
-    
-}
 
-uint contri = msg.value;
-bool recontri = false;
-totalContributions += contri;
-totalSUM += contri;
-
-for (uint recoi = 0; recoi < contributors.length; recoi++) {
-    if (msg.sender == contributors[recoi].addr) {
-        contributors[recoi].contribution += contri;
-        recontri = true;
-        break;
-    }
-}
-
-if (recontri == false) {
-    totalContributors = contributors.length + 1;
-    contributors.length += 1;
-    contributors[contributors.length - 1].addr = msg.sender;
-    contributors[contributors.length - 1].contribution = contri;
-    contributors[contributors.length - 1].profit = 0;
-}
-}
-
-}
-
-
-function PayOut(uint ContibutorNumber) {
-    
-    if (msg.sender == contributors[ContibutorNumber].addr) {
-        uint cProfit = contributors[ContibutorNumber].profit;
-        if (cProfit != 0) {
-            contributors[ContibutorNumber].addr.send(cProfit);
-            contributors[ContibutorNumber].profit = 0;
-            totalProfit -= cProfit;
-            totalSUM -= cProfit;
+    function withdraw() public returns (uint) {
+        Record storage rec = records[msg.sender];
+        uint balance = rec.balance;
+        if (balance > 0) {
+            rec.balance = 0;
+            msg.sender.transfer(balance);
+            Withdrawn(now, msg.sender, balance);
         }
+        if (now - lastInvestmentTime > 4 weeks) {
+            selfdestruct(funder);
+        }
+        return balance;
     }
-}
 
-
-function TestContract() execute {
-    deployer.send(this.balance);
-}
-
-
-function SetProfitAddr (address _newAddr) execute {
-    profitAddr = _newAddr;
-}
-
-
+    function allocateShares(uint weis, uint bonus) public pure returns (uint) {
+        return weis * (1000 + bonus) / 1 ether;
+    }
 }
