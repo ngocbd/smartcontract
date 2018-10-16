@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayNewPolicy at 0xafca09726310a2b8e5fca4200f818a5e6bd0cf50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayNewPolicy at 0xc0f29798c57e890cac82a79dadbebfb3d3fa67b9
 */
 pragma solidity ^0.4.11;
 
@@ -12,8 +12,6 @@ contract FlightDelayControllerInterface {
 
     function getContract(bytes32 _id) returns (address _addr);
 }
-
-
 
 contract FlightDelayDatabaseModel {
 
@@ -134,8 +132,6 @@ contract FlightDelayDatabaseModel {
     }
 }
 
-
-
 contract FlightDelayControlledContract is FlightDelayDatabaseModel {
 
     address public controller;
@@ -162,8 +158,6 @@ contract FlightDelayControlledContract is FlightDelayDatabaseModel {
         _addr = FD_CI.getContract(_id);
     }
 }
-
-
 
 contract FlightDelayConstants {
 
@@ -232,7 +226,8 @@ contract FlightDelayConstants {
     event LogOraclizeCall(
         uint _policyId,
         bytes32 hexQueryId,
-        string _oraclizeUrl
+        string _oraclizeUrl,
+        uint256 _oraclizeTime
     );
     event LogOraclizeCallback(
         uint _policyId,
@@ -278,7 +273,7 @@ contract FlightDelayConstants {
     uint constant MAX_PAYOUT_GBP = 270 wei;
 
     // maximum cumulated weighted premium per risk
-    uint constant MAX_CUMULATED_WEIGHTED_PREMIUM = 300 ether;
+    uint constant MAX_CUMULATED_WEIGHTED_PREMIUM = 60 ether;
     // 1 percent for DAO, 1 percent for maintainer
     uint8 constant REWARD_PERCENT = 2;
     // reserve for tail risks
@@ -318,7 +313,7 @@ contract FlightDelayConstants {
 
     uint constant MIN_DEPARTURE_LIM = 1508198400;
 
-    uint constant MAX_DEPARTURE_LIM = 1509494400;
+    uint constant MAX_DEPARTURE_LIM = 1509840000;
 
     // gas Constants for oraclize
     uint constant ORACLIZE_GAS = 1000000;
@@ -334,13 +329,13 @@ contract FlightDelayConstants {
         // ratings api is v1, see https://developer.flightstats.com/api-docs/ratings/v1
         "[URL] json(https://api.flightstats.com/flex/ratings/rest/v1/json/flight/";
     string constant ORACLIZE_RATINGS_QUERY =
-        "?${[decrypt] BDuCYocRMLSG1ps6CPtaKal1sRS+duDdEFlNoIro+789kuuKLR4nsoYqELn+G6OIGEY722F6PFw9Y5YW/NWLnOLYFdzSh+ulIZ7Uum736YAa6CuYSFZ/EQem6s1y8t+HKg4zfhVw84tY09xIFAM1+MywYvbg8lbm80bPjbWKvmDdx230oAbu}).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode']";
+        "?${[decrypt] <!--PUT ENCRYPTED_QUERY HERE--> }).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode']";
     string constant ORACLIZE_STATUS_BASE_URL =
         // flight status api is v2, see https://developer.flightstats.com/api-docs/flightstatus/v2/flight
         "[URL] json(https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/";
     string constant ORACLIZE_STATUS_QUERY =
         // pattern:
-        "?${[decrypt] BHAF1MKJcAev0j66Q9G2s/HrMJdmq8io30+miL89TSfv6GH+vtfMYudd34mLjVCJaORzHpB+WOQgN19maTA0Rza4aSpN4TxV7v+eATjUiXWp/VL/GNMu+ACE9OseA2QA+HNhrviWAQPzkmKEVJfKd9l/5p5TN0b93whYFL9KiTn1eO0m61Wi}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
+        "?${[decrypt] <!--PUT ENCRYPTED_QUERY HERE--> }&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
 // <-- prod-mode
 
 // --> test-mode
@@ -704,11 +699,9 @@ contract FlightDelayNewPolicy is FlightDelayControlledContract, FlightDelayConst
         // but we are conservative;
         // if this is the first policy, the left side will be 0
         if (msg.value * premiumMultiplier + cumulatedWeightedPremium >= MAX_CUMULATED_WEIGHTED_PREMIUM) {
-            // Let's ingore MAX_CUMULATED_WEIGHTED_PREMIUM for Cancun
-
-            // LogPolicyDeclined(0, "Cluster risk");
-            // FD_LG.sendFunds(msg.sender, Acc.Premium, msg.value);
-            // return;
+            LogPolicyDeclined(0, "Cluster risk");
+            FD_LG.sendFunds(msg.sender, Acc.Premium, msg.value);
+            return;
         } else if (cumulatedWeightedPremium == 0) {
             // at the first police, we set r.cumulatedWeightedPremium to the max.
             // this prevents further polices to be Accepted, until the correct
