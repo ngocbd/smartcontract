@@ -1,176 +1,156 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creditcoin at 0xd7b45e0cdae4c65ef2c7e19152eeb3074e20f98f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreditCoin at 0x4bf4e4de6cf287b676af567ac6f03960379bbdb6
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
-interface TokenRecipient {
-	function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
-}
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract Erc20 { // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-	function totalSupply() public constant returns (uint256 amount);
-	function balanceOf(address owner) public constant returns (uint256 balance);
-	function transfer(address to, uint256 value) public returns (bool success);
-	function transferFrom(address from, address to, uint256 value) public returns (bool success);
-	function approve(address spender, uint256 value) public returns (bool success);
-	function allowance(address owner, address spender) public constant returns (uint256 remaining);
+contract CreditCoin {
+    // Public variables of the token
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
+    uint256 public totalSupply;
 
-	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+    // This creates an array with all balances
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-contract Erc20Plus is Erc20 {
-	function approveAndCall(address spender, uint256 value, bytes extraData) public returns (bool success);
-	function burn(uint256 value) public returns (bool success);
-	function burnFrom(address from, uint256 value) public returns (bool success);
-}
+    // This generates a public event on the blockchain that will notify clients
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-contract Owned {
-	address internal _owner;
+    // This notifies clients about the amount burnt
+    event Burn(address indexed from, uint256 value);
 
-	function Owned() public {
-		_owner = msg.sender;
-	}
+    /**
+     * Constrctor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
+     */
+    function CreditCoin(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    }
 
-	function kill() public onlyOwner {
-		selfdestruct(_owner);
-	}
+    /**
+     * Internal transfer, only can be called by this contract
+     */
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balanceOf[_from] >= _value);
+        // Check for overflows
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        // Save this for an assertion in the future
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        // Subtract from the sender
+        balanceOf[_from] -= _value;
+        // Add the same to the recipient
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
 
-	modifier onlyOwner {
-		require(msg.sender == _owner);
-		_;
-	}
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
 
-	function harvest() onlyOwner public {
-		_owner.transfer(this.balance);
-	}
+    /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` in behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
 
-	function () public payable {
-		require(false); // throw
-	}
-}
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
 
-contract CreditcoinBase is Owned {
-//----------- ERC20 members
-	uint8 public constant decimals = 18;
-//=========== ERC20 members
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
 
-	uint256 internal constant FRAC_IN1UNIT = 10 ** uint256(decimals);
-	uint256 public constant creditcoinLimitInFrac = 2000000000 * FRAC_IN1UNIT;
-	uint256 public constant initialSupplyInFrac = creditcoinLimitInFrac * 30 / 100; // 10% for sale + 15% for Gluwa + 5% for Creditcoin Foundation
-}
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
 
-/// @title Creditcoin ERC20 token
-contract Creditcoin is CreditcoinBase, Erc20Plus {
-//----------- ERC20 members
-	string public constant name = "Creditcoin";
-	string public constant symbol = "CRE";
-//=========== ERC20 members
-
-	mapping (address => uint256) internal _balanceOf;
-	uint256 internal _totalSupply;
-	mapping (address => mapping (address => uint256)) internal _allowance;
-
-	event Burnt(address indexed from, uint256 value);
-	event Minted(uint256 value);
-
-	address public pool;
-	address internal minter;
-
-	function Creditcoin(address icoSalesAccount) public {
-		_totalSupply = initialSupplyInFrac;
-		pool = icoSalesAccount;
-		_balanceOf[pool] = _totalSupply;
-	}
-
-	function _transfer(address from, address to, uint256 value) internal {
-		require(to != 0x0);
-		require(_balanceOf[from] >= value);
-		require(_balanceOf[to] + value > _balanceOf[to]);
-
-		uint256 previousBalances = _balanceOf[from] + _balanceOf[to];
-
-		_balanceOf[from] -= value;
-		_balanceOf[to] += value;
-
-		Transfer(from, to, value);
-		assert(_balanceOf[from] + _balanceOf[to] == previousBalances);
-	}
-
-//----------- ERC20 members
-	function totalSupply() public constant returns (uint256 amount) {
-		amount = _totalSupply;
-	}
-	
-	function balanceOf(address owner) public constant returns (uint256 balance) {
-		balance = _balanceOf[owner];
-	}
-	
-	function allowance(address owner, address spender) public constant returns (uint256 remaining) {
-		remaining = _allowance[owner][spender];
-	}
-	
-	function transfer(address to, uint256 value) public returns (bool success) {
-		_transfer(msg.sender, to, value);
-		success = true;
-	}
-
-	function transferFrom(address from, address to, uint256 value) public returns (bool success) {
-		require(value <= _allowance[from][msg.sender]);
-		_allowance[from][msg.sender] -= value;
-		_transfer(from, to, value);
-		success = true;
-	}
-
-	function approve(address spender, uint256 value) public returns (bool success) {
-		_allowance[msg.sender][spender] = value;
-		success = true;
-	}
-//=========== ERC20 members
-
-	function approveAndCall(address spender, uint256 value, bytes extraData) public returns (bool success) {
-		TokenRecipient recepient = TokenRecipient(spender);
-		if (approve(spender, value)) {
-			recepient.receiveApproval(msg.sender, value, this, extraData);
-			success = true;
-		}
-	}
-
-	function burn(uint256 value) public returns (bool success) {
-		require(_balanceOf[msg.sender] >= value);
-		_balanceOf[msg.sender] -= value;
-		_totalSupply -= value;
-
-		Burnt(msg.sender, value);
-		success = true;
-	}
-
-	function burnFrom(address from, uint256 value) public returns (bool success) {
-		require(_balanceOf[from] >= value);
-		require(value <= _allowance[from][msg.sender]);
-		_balanceOf[from] -= value;
-		_allowance[from][msg.sender] -= value;
-		_totalSupply -= value;
-
-		Burnt(from, value);
-		success = true;
-	}
-
-	/// this function allows to mint coins up to totalSupply, so if coins were burnt it adds room for minting
-	/// since natural loss of coins is expected the overall amount in use will be less than totalSupply
-	function mint(uint256 amount) public returns (bool success) {
-		require(msg.sender == minter);
-		require(creditcoinLimitInFrac > amount && creditcoinLimitInFrac - amount >= _totalSupply);
-		require(_balanceOf[msg.sender] + amount > _balanceOf[msg.sender]);
-		_balanceOf[msg.sender] += amount;
-		_totalSupply += amount;
-
-		Minted(amount);
-		success = true;
-	}
-
-	function setMinter(address newMinter) onlyOwner public returns (bool success) {
-		minter = newMinter;
-		success = true;
-	}
+    /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
 }
