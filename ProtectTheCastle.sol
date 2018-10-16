@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProtectTheCastle at 0x7D56485e026D5D3881F778E99969D2b1F90c50aF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProtectTheCastle at 0x8d734806913E445EE1Be523Aa0e84e4664FfF481
 */
 contract ProtectTheCastle {
     // King's Jester
