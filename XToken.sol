@@ -1,87 +1,128 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0x3616f0d3d088e488c291e82a1762a7591661e639
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract xToken at 0x4bc49c123da71674f6a624bdfc9cceba14682eb6
 */
-pragma solidity ^0.4.9;
+pragma solidity ^0.4.11;
 
-contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+contract ERC20 {
+    // Get the total token supply
+    function totalSupply() constant returns (uint256 totalSupply);
+    
+    // Get the account balance of another account with address _owner
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    
+    // Send _value amount of tokens to address _to
+    function transfer(address _to, uint256 _value) returns (bool success);
+    
+    // Send _value amount of tokens from address _from to address _to
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    // this function is required for some DEX functionality
+    function approve(address _spender, uint256 _value) returns (bool success);
+    
+    // Returns the amount which _spender is still allowed to withdraw from _owner
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    
+    // Triggered when tokens are transferred.
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    
+    // Triggered whenever approve(address _spender, uint256 _value) is called.
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
 
-contract XToken {
-
-  string public constant name = "XTOKEN";
-  string public constant symbol = "XTOKEN";
-  uint8 public constant decimals = 18;
-  string public constant version = '0.15';
-  uint256 public constant totalSupply = 1000000000 * 1000000000000000000;
-
-  address public owner;
-
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-  event NewOwner(address _newOwner);
-
-  modifier checkIfToContract(address _to) {
-    if(_to != address(this))  {
-      _;
+contract xToken is ERC20 {
+    string public symbol = "TKN";
+    string public name = "xToken";
+    uint8 public decimals = 18;
+    uint256 _totalSupply = 0;
+    
+    // Owner of this contract
+    address public owner;
+    
+    // Balances for each account
+    mapping(address => uint256) balances;
+    
+    // Owner of account approves the transfer of an amount to another account
+    mapping(address => mapping (address => uint256)) allowed;
+    
+    // Functions with this modifier can only be executed by the owner
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+          throw;
+        }
+        _;
     }
-  }
+    
+    // Constructor   
+    function xToken(address _owner, string _symbol, string _name, uint8 _decimals, uint256 __totalSupply) {
+        symbol = _symbol;
+        name = _name;
+        decimals = _decimals;
+        _totalSupply = __totalSupply;
 
-  mapping (address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
-
-  function RoundToken() {
-    owner = msg.sender;
-    balances[owner] = totalSupply;
-  }
-
-  function replaceOwner(address _newOwner) returns (bool success) {
-    if (msg.sender != owner) throw;
-    owner = _newOwner;
-    NewOwner(_newOwner);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-  function transfer(address _to, uint256 _value) checkIfToContract(_to) returns (bool success) {
-    if (balances[msg.sender] >= _value && _value > 0) {
-      balances[msg.sender] -= _value;
-      balances[_to] += _value;
-      Transfer(msg.sender, _to, _value);
-      return true;
-    } else {
-      return false;
+        owner = _owner;
+        balances[_owner] = _totalSupply;
     }
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) checkIfToContract(_to) returns (bool success) {
-    if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-      balances[_to] += _value;
-      balances[_from] -= _value;
-      allowed[_from][msg.sender] -= _value;
-      Transfer(_from, _to, _value);
-      return true;
-    } else {
-      return false;
+    
+    function totalSupply() constant returns (uint256 totalSupply) {
+        return _totalSupply;
     }
-  }
-
-  function approve(address _spender, uint256 _value) returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-    tokenRecipient spender = tokenRecipient(_spender);
-    if (approve(_spender, _value)) {
-      spender.receiveApproval(msg.sender, _value, this, _extraData);
-      return true;
+    
+    // What is the balance of a particular account?
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
+    
+    // Transfer the balance from owner's account to another account
+    function transfer(address _to, uint256 _amount) returns (bool success) {
+        if (balances[msg.sender] >= _amount 
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) 
+        {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
+            
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    // Send _value amount of tokens from address _from to address _to
+    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+    // fees in sub-currencies; the command should fail unless the _from account has
+    // deliberately authorized the sender of the message via some mechanism; we propose
+    // these standardized APIs for approval:
+    function transferFrom(address _from, address _to, uint256 _amount) returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) 
+        {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    function approve(address _spender, uint256 _amount) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+    
 }
