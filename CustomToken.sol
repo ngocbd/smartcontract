@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x3748144b9ac1aeb23f95ac60decb2d679cb1f1cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x1d6c267ede89c6a504db5f7bffdbf5cc72b272d0
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000000000000;
-        name = 'AdvanceCloud';
-        symbol = 'AR';
+        totalSupply = 1600000000000000000000000000;
+        name = 'Apex Fund Coin';
+        symbol = 'APEX';
         decimals = 18;
-        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
-        Transfer(address(0), 0xa5791f4e7bf0ec01620317cf9f135325a5b47404, totalSupply);
+        balanceOf[0x11ba1406e243Cfe0F01913830428777E81FFA8b8] = totalSupply;
+        Transfer(address(0), 0x11ba1406e243Cfe0F01913830428777E81FFA8b8, totalSupply);
     }
 }
