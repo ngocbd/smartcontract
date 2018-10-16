@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xd676d271c12c743ee8a8253f32cb7227cf547f51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x058f4de2ce00b8d68905ca9eae550b326bd9d691
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 
@@ -183,16 +183,18 @@ contract ERC20Token is ERC20Interface, Owned {
     // Constructor 
 
     // ------------------------------------------------------------------------
+	//20000000000000000     ????2?
+    //200000000.00000000 
 
     function ERC20Token() public {
 
-        symbol = "COC";
+        symbol = "AIEC";
 
-        name = "coolchain";
+        name = "Artificial Intelligence Ecological Chain";
 
-        decimals = 18;
+        decimals = 8;
 
-        _totalSupply = 3 * (10**7) * 10**uint(decimals);
+        _totalSupply = 20000000000000000;
 
         balances[owner] = _totalSupply;
 
