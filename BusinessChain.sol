@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BusinessChain at 0x8c67606edda2b0e0c3334f7f7a2adbf4688e42ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BusinessChain at 0xd0556c909e816779fb3c98b6a25c56f1b84957ce
 */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -27,7 +27,7 @@ contract BusinessChain {
         balanceOf[msg.sender] =  2100000000 * 1000000000000000000;              // Give the creator all initial tokens
         totalSupply =  2100000000 * 1000000000000000000;                        // Update total supply
         name = "BusinessChain";                                   // Set the name for display purposes
-        symbol = "BNC";                               // Set the symbol for display purposes
+        symbol = "BSNC";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
