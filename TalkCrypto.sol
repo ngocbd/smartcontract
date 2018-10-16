@@ -1,8 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TalkCrypto at 0x1a39a1b0efd2dbba31256c4fc5a98b22bffe0494
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TalkCrypto at 0x2315fc2e9be70d69c5d1cfb4766a56890980efce
 */
 pragma solidity ^0.4.4;
 
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+ function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 contract owned {
     address public owner;
@@ -60,15 +85,15 @@ contract TokenERC20 {
 }
 
 contract StandardToken is TokenERC20 {
-
+    using SafeMath for uint256;
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
         //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
+            balances[msg.sender] =balances[msg.sender].sub(_value);
+            balances[_to] = balances[_to].add(_value);
             Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
@@ -78,9 +103,9 @@ contract StandardToken is TokenERC20 {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
+            balances[_to] =balances[_to].add(_value);
+            balances[_from]=balances[_from].sub(_value) ;
+            allowed[_from][msg.sender] =allowed[_from][msg.sender].sub(_value);
             Transfer(_from, _to, _value);
             return true;
         } else { return false; }
@@ -106,7 +131,7 @@ contract StandardToken is TokenERC20 {
 }
 
 contract TalkCrypto is owned,StandardToken { // CHANGE THIS. Update the contract name.
-
+    
     /* Public variables of the token */
 
     /*
@@ -126,24 +151,24 @@ contract TalkCrypto is owned,StandardToken { // CHANGE THIS. Update the contract
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function TalkCrypto() {
-        balances[msg.sender] = 25000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 25000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 600000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 600000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "TalkCrypto";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "TC";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 500000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "TCO";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 10000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
     function() payable{
-        totalEthInWei = totalEthInWei + msg.value;
+        totalEthInWei = totalEthInWei.add(msg.value);
         uint256 amount = msg.value * unitsOneEthCanBuy;
         if (balances[fundsWallet] < amount) {
             return;
         }
 
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
+        balances[fundsWallet] = balances[fundsWallet].sub(amount);
+        balances[msg.sender] = balances[msg.sender].add(amount);
 
         Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
 
