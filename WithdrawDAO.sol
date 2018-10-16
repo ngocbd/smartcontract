@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithdrawDAO at 0xbf4ed7b27f1d666546e30d74d50d173d20bca754
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithdrawDAO at 0x408b8fBc19bB5FFfF7d5E5c430F765524FAE77c5
 */
 contract DAO {
     function balanceOf(address addr) returns (uint);
@@ -9,7 +9,7 @@ contract DAO {
 
 contract WithdrawDAO {
     DAO constant public mainDAO = DAO(0xbb9bc244d798123fde783fcc1c72d3bb8c189413);
-    address public trustee = 0xda4a4626d3e16e094de3225a751aab7128e96526;
+    address public trustee = 0xcdf7D2D0BdF3511FFf511C62f3C218CF98A136eB; // to be replaced by a multisig
 
     function withdraw(){
         uint balance = mainDAO.balanceOf(msg.sender);
