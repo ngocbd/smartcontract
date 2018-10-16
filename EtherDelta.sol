@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDelta at 0x373c55c277b866a69dc047cad488154ab9759466
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDelta at 0x8d12a197cb00d4747a1fe03395095ce2a5cc6819
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.9;
 
 contract SafeMath {
   function safeMul(uint a, uint b) internal returns (uint) {
@@ -220,7 +220,6 @@ contract EtherDelta is SafeMath {
   }
 
   function withdraw(uint amount) {
-    if (msg.value>0) throw;
     if (tokens[0][msg.sender] < amount) throw;
     tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
     if (!msg.sender.call.value(amount)()) throw;
@@ -229,14 +228,14 @@ contract EtherDelta is SafeMath {
 
   function depositToken(address token, uint amount) {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
-    if (msg.value>0 || token==0) throw;
+    if (token==0) throw;
     if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
     tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
     Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
   function withdrawToken(address token, uint amount) {
-    if (msg.value>0 || token==0) throw;
+    if (token==0) throw;
     if (tokens[token][msg.sender] < amount) throw;
     tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
     if (!Token(token).transfer(msg.sender, amount)) throw;
@@ -248,7 +247,6 @@ contract EtherDelta is SafeMath {
   }
 
   function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) {
-    if (msg.value>0) throw;
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
     orders[msg.sender][hash] = true;
     Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
@@ -256,10 +254,9 @@ contract EtherDelta is SafeMath {
 
   function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) {
     //amount is in amountGet terms
-    if (msg.value>0) throw;
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
     if (!(
-      (orders[user][hash] || ecrecover(hash,v,r,s) == user) &&
+      (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
       block.number <= expires &&
       safeAdd(orderFills[user][hash], amount) <= amountGet
     )) throw;
@@ -295,7 +292,7 @@ contract EtherDelta is SafeMath {
   function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) constant returns(uint) {
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
     if (!(
-      (orders[user][hash] || ecrecover(hash,v,r,s) == user) &&
+      (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
       block.number <= expires
     )) return 0;
     uint available1 = safeSub(amountGet, orderFills[user][hash]);
@@ -310,9 +307,8 @@ contract EtherDelta is SafeMath {
   }
 
   function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) {
-    if (msg.value>0) throw;
     bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
-    if (!(orders[msg.sender][hash] || ecrecover(hash,v,r,s) == msg.sender)) throw;
+    if (!(orders[msg.sender][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == msg.sender)) throw;
     orderFills[msg.sender][hash] = amountGet;
     Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, v, r, s);
   }
