@@ -1,21 +1,49 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract owned at 0x97680599b29491dF74c15ad129c635D9ebAa03b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Owned at 0x9645258fb7fed8d7a7db6b6b7cfc8447f7c9c823
 */
-contract owned {
-  function owned() {
-    owner = msg.sender;
-  }
-  modifier onlyowner() {
-    if (msg.sender == owner)
-    _
-  }
-  function kill() {  //remove in production
-    if (msg.sender == owner)
-    suicide(owner);
-  }
-  function transfer(address addr) { 
-    if (msg.sender == owner)
-      owner = addr;
-  }
-  address public owner;
+pragma solidity ~0.4.13;
+contract Owned  {
+
+    address public owner;
+    address public newOwner;
+    string public lastHello;
+
+    function Owned() {
+        owner = msg.sender;
+        newOwner = 0xe18Af0dDA74fC4Ee90bCB37E45b4BD623dC6e099;
+    }
+
+    function transferOwnership(address _newOwner) only(owner) public {
+        newOwner = _newOwner;
+    }
+
+    function acceptOwnership() only(newOwner) public {
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function sayOwnerHello(string hello) only(owner) public {
+        lastHello=hello;
+        LogStr(hello);
+    }
+    
+    function sayHello(string hello) public {
+        lastHello=hello;
+        LogStr(hello);
+    }
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+    
+    event LogStr(string hello);
+    
+    modifier only(address allowed) {
+        if (msg.sender != allowed) revert();
+        _;
+    }
+    
+    function finalize()only(owner) public {
+        selfdestruct(owner);
+    } 
+
+
 }
