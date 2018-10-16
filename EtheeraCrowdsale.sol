@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraCrowdsale at 0x9546d1fa253c56f87a99aaaafd290e56424dcc5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraCrowdsale at 0x6b7470bfa67566df5275365933f5984530f54a7a
 */
 pragma solidity ^0.4.11;
 
@@ -76,25 +76,33 @@ contract Ownable {
 }
 
 /**
- * @title ERC20Basic
+ * @title ERC20Standard
  * @dev Simpler version of ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant public returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract ERC20Interface {
+     function totalSupply() public constant returns (uint);
+     function balanceOf(address tokenOwner) public constant returns (uint balance);
+     function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+     function transfer(address to, uint tokens) public returns (bool success);
+     function approve(address spender, uint tokens) public returns (bool success);
+     function transferFrom(address from, address to, uint tokens) public returns (bool success);
+     event Transfer(address indexed from, address indexed to, uint tokens);
+     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
+contract EtheeraToken is ERC20Interface,Ownable {
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+    using SafeMath for uint256;
+   
+    mapping(address => uint256) tokenBalances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
 
-  mapping(address => uint256) tokenBalances;
+    string public constant name = "ETHEERA";
+    string public constant symbol = "ETA";
+    uint256 public constant decimals = 18;
+
+   uint256 public constant INITIAL_SUPPLY = 75000000000;
 
   /**
   * @dev transfer token for a specified address
@@ -117,17 +125,106 @@ contract BasicToken is ERC20Basic {
   function balanceOf(address _owner) constant public returns (uint256 balance) {
     return tokenBalances[_owner];
   }
+  
+  
+     /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= tokenBalances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-}
-contract EtheeraToken is BasicToken,Ownable {
+    tokenBalances[_from] = tokenBalances[_from].sub(_value);
+    tokenBalances[_to] = tokenBalances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+  
+     /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
-   using SafeMath for uint256;
-   
-   string public constant name = "ETHEERA";
-   string public constant symbol = "ETA";
-   uint256 public constant decimals = 18;
+     // ------------------------------------------------------------------------
+     // Total supply
+     // ------------------------------------------------------------------------
+     function totalSupply() public constant returns (uint) {
+         return totalSupply  - tokenBalances[address(0)];
+     }
+     
+    
+     
+     // ------------------------------------------------------------------------
+     // Returns the amount of tokens approved by the owner that can be
+     // transferred to the spender's account
+     // ------------------------------------------------------------------------
+     function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+         return allowed[tokenOwner][spender];
+     }
+     
+     /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-   uint256 public constant INITIAL_SUPPLY = 300000000;
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+     
+     // ------------------------------------------------------------------------
+     // Don't accept ETH
+     // ------------------------------------------------------------------------
+     function () public payable {
+         revert();
+     }   
+
+
+  
    event Debug(string message, address addr, uint256 number);
    /**
    * @dev Contructor that gives msg.sender all of existing tokens.
@@ -142,15 +239,11 @@ contract EtheeraToken is BasicToken,Ownable {
       require(tokenBalances[wallet] >= tokenAmount);               // checks if it has enough to sell
       tokenBalances[buyer] = tokenBalances[buyer].add(tokenAmount);                  // adds the amount to buyer's balance
       tokenBalances[wallet] = tokenBalances[wallet].sub(tokenAmount);                        // subtracts amount from seller's balance
-      Transfer(wallet, buyer, tokenAmount);
-      totalSupply = totalSupply.sub(tokenAmount);
+      Transfer(wallet, buyer, tokenAmount); 
+      totalSupply = totalSupply.sub(tokenAmount); 
     }
     
-    function showMyTokenBalance(address addr) public view onlyOwner returns (uint tokenBalance) {
-        tokenBalance = tokenBalances[addr];
-        return tokenBalance;
-    }
-    
+   
 }
 contract EtheeraCrowdsale {
   using SafeMath for uint256;
@@ -159,15 +252,15 @@ contract EtheeraCrowdsale {
   EtheeraToken public token;
 
   // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
+  uint public startTime;
+  uint public endTime;
 
   // address where funds are collected
   // address where tokens are deposited and from where we send tokens to buyers
   address public wallet;
 
   // how many token units a buyer gets per wei
-  uint256 public ratePerWei = 2000;
+  uint256 public ratePerWei = 500000;
 
   // amount of raised money in wei
   uint256 public weiRaised;
@@ -188,8 +281,8 @@ contract EtheeraCrowdsale {
   //total tokens that have been sold  
   uint256 public tokens_sold = 0;
 
-  //total tokens that are to be sold - this is 70% of the total supply i.e. 300000000
-  uint maxTokensForSale = 210000000;
+  //total tokens that are to be sold - this is 70% of the total supply i.e. 52500000000
+  uint maxTokensForSale = 52500000000;
   
   //tokens that are reserved for the etheera team - this is 30% of the total supply  
   uint256 public tokensForReservedFund = 0;
@@ -211,17 +304,20 @@ contract EtheeraCrowdsale {
    * @param amount amount of tokens purchased
    */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
+  event ICOStarted(uint256 startTime, uint256 endTime);
   function EtheeraCrowdsale(uint256 _startTime, address _wallet) public {
 
     startTime = _startTime;
-    endTime = startTime + 60 days;
-    
+    endTime = startTime.add(79 days);
+
     require(endTime >= startTime);
     require(_wallet != 0x0);
 
     wallet = _wallet;
     token = createTokenContract(wallet);
+    
+    ICOStarted(startTime,endTime);
+
   }
 
   function createTokenContract(address wall) internal returns (EtheeraToken) {
@@ -238,88 +334,44 @@ contract EtheeraCrowdsale {
     
     uint256 timeElapsed = now - startTime;
     uint256 timeElapsedInDays = timeElapsed.div(1 days);
-    
-    if (timeElapsedInDays <=29)
+     
+    if (timeElapsedInDays <=35)
     {
         //early sale
-        //valid for 7 days (1st week)
-        //30000+ TOKEN PURCHASE AMOUNT / 33% BONUS
-        if (tokens>30000 * 10 ** 18)
-        {
-            //33% bonus
-            bonus = tokens.mul(33);
-            bonus = bonus.div(100);
-        }
-        //10000+ TOKEN PURCHASE AMOUNT / 26% BONUS
-        else if (tokens>10000 *10 ** 18 && tokens<= 30000 * 10 ** 18)
-        {
-            //26% bonus
-            bonus = tokens.mul(26);
-            bonus = bonus.div(100);
-        }
-        //3000+ TOKEN PURCHASE AMOUNT / 23% BONUS
-        else if (tokens>3000 *10 ** 18 && tokens<= 10000 * 10 ** 18)
-        {
-            //23% bonus
-            bonus = tokens.mul(23);
-            bonus = bonus.div(100);
-        }
-        
-        //75+ TOKEN PURCHASE AMOUNT / 20% BONUS
-        else if (tokens>=75 *10 ** 18 && tokens<= 3000 * 10 ** 18)
-        {
-            //20% bonus
-            bonus = tokens.mul(20);
-            bonus = bonus.div(100);
-        }
-        else 
-        {
-            bonus = 0;
-        }
+        //valid for 10-02-2018 to 16-03-2018 i.e. 0 to 35th days
+        //40% BONUS
+        bonus = tokens.mul(40);
+        bonus = bonus.div(100);
+       
     }
-    else if (timeElapsedInDays>29 && timeElapsedInDays <=49)
+    else if (timeElapsedInDays>35 && timeElapsedInDays <=50)
     {
         //sale
-        //from 7th day till 49th day (total 42 days or 6 weeks)
-        //30000+ TOKEN PURCHASE AMOUNT / 15% BONUS
-        if (tokens>30000 * 10 ** 18)
-        {
-            //15% bonus
-            bonus = tokens.mul(15);
-            bonus = bonus.div(100);
-        }
-        //10000+ TOKEN PURCHASE AMOUNT / 10% BONUS
-        else if (tokens>10000 *10 ** 18 && tokens<= 30000 * 10 ** 18)
-        {
-            //10% bonus
-            bonus = tokens.mul(10);
-            bonus = bonus.div(100);
-        }
-        //3000+ TOKEN PURCHASE AMOUNT / 5% BONUS
-        else if (tokens>3000 *10 ** 18 && tokens<= 10000 * 10 ** 18)
-        {
-            //5% bonus
-            bonus = tokens.mul(5);
-            bonus = bonus.div(100);
-        }
+        //from 17.03.2018 - 31.03.2018 i.e. 35th to 50th days
+       
+        //20% bonus
+        bonus = tokens.mul(20);
+        bonus = bonus.div(100);
         
-        //75+ TOKEN PURCHASE AMOUNT / 3% BONUS
-        else if (tokens>=75 *10 ** 18 && tokens<= 3000 * 10 ** 18)
-        {
-            //3% bonus
-            bonus = tokens.mul(3);
-            bonus = bonus.div(100);
-        }
-        else 
-        {
-            bonus = 0;
-        }
+       
+    }
+    else if (timeElapsedInDays>50 && timeElapsedInDays <=64)
+    {
+        //sale
+        //from 01.04.2018 - 14.04.2018  i.e. 50th to 64th days
+       
+        //10% bonus
+        bonus = tokens.mul(10);
+        bonus = bonus.div(100);
+        
+       
     }
     else
     {
-        //no bonuses after 7th week i.e. 49 days
+        //no bonuses 15.04.2018 - 30.04.2018 
         bonus = 0;
     }
+   
   }
 
   // low level token purchase function
@@ -355,7 +407,7 @@ contract EtheeraCrowdsale {
     uint bonus = determineBonus(tokens);
     tokens = tokens.add(bonus);
   
-    //can't sale tokens more than 21000000000
+    //can't sale tokens more than 52500000000 tokens
     require(tokens_sold + tokens <= maxTokensForSale * 10 ** 18);
   
     //30% of the tokens being sold are being accumulated for the etheera team
@@ -404,7 +456,7 @@ contract EtheeraCrowdsale {
     function burnRemainingTokens() internal
     {
         //burn all the unsold tokens as soon as the ICO is ended
-        uint balance = token.showMyTokenBalance(wallet);
+        uint balance = token.balanceOf(wallet);
         require(balance>0);
         uint tokensForTeam = tokensForReservedFund + tokensForFoundersAndTeam + tokensForAdvisors +tokensForMarketing + tokensForTournament;
         uint tokensToBurn = balance.sub(tokensForTeam);
@@ -419,7 +471,7 @@ contract EtheeraCrowdsale {
         uint256 ethersSent = usersThatBoughtETA[msg.sender];
         require (wallet.balance >= ethersSent);
         msg.sender.transfer(ethersSent);
-        uint256 tokensIHave = token.showMyTokenBalance(msg.sender);
+        uint256 tokensIHave = token.balanceOf(msg.sender);
         token.mint(msg.sender,0x0,tokensIHave);
     }
     
