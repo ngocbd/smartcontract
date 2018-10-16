@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CandySale at 0x34d1857175eb5693bbee49c214e2cd44b2f3058c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CandySale at 0xa493aee1b5b082b8ab58555701c21378745c8596
 */
 pragma solidity ^0.4.11;
 
@@ -181,14 +181,11 @@ contract CandySale is owned {
     
     address public teamWallet = address(0x7Bd19c5Fa45c5631Aa7EFE2Bf8Aa6c220272694F);
 
-    uint public fundingGoal;
     uint public amountRaised;
     // sale periods
     uint public beginTime = now;
-    uint public stage2BeginTime = 1517529600;   // 2.02.2018 
-    uint public stage3BeginTime = 1518393600;   // 12.02.2018
-    uint public stage4BeginTime = 1519257600;   // 22.02.2018 
-    uint public endTime = 1519776000;           // 28.02.2018
+    uint public endTime = 1520640000;           // 10.03.2018
+    uint public tokenPrice = 1750 szabo;
 
     CandyCoin public tokenReward;
 
@@ -211,19 +208,12 @@ contract CandySale is owned {
         FundTransfer(msg.sender, tokenReward.balanceOf(this), false);
     }
 
-    function currentPrice() constant returns (uint) {
-        if ( now <= stage2BeginTime ) return 100 szabo;
-        if ( now > stage2BeginTime && now <= stage3BeginTime) return 500 szabo;
-        if ( now > stage3BeginTime && now <= stage4BeginTime) return 1000 szabo;
-        if ( now > stage4BeginTime ) return 1500 szabo;
-    }
-    
     // low level token purchase function
     function buyTokens(address beneficiary) payable {
         require(msg.value > 0);
         uint amount = msg.value;
         amountRaised += amount;
-        tokenReward.transfer(beneficiary, amount*1000000000000000000/currentPrice());
+        tokenReward.transfer(beneficiary, amount*1000000000000000000/tokenPrice);
         FundTransfer(beneficiary, amount, true);
         teamWallet.transfer(msg.value);
 
