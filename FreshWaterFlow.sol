@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FreshWaterFlow at 0xd38665ac9cc87af827c6569a042d69a3c0b57d01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FreshWaterFlow at 0x09b6bd9d0b66f6d7608c29802cf2bfe7d7e6e918
 */
 pragma solidity ^0.4.18;
 
@@ -9,8 +9,8 @@ pragma solidity ^0.4.18;
 // Deployed to : 0xd821C73d82E6221655637361949AE2f88aCE3Ba7
 // Symbol      : FWF
 // Name        : Fresh Water Flow
-// Total supply: 1500000000000000000
-// Decimals    : 6
+// Total supply: 1500000000000
+// Decimals    : 18
 //
 // Enjoy.
 //
@@ -118,8 +118,8 @@ contract FreshWaterFlow is ERC20Interface, Owned, SafeMath {
     function FreshWaterFlow() public {
         symbol = "FWF";
         name = "Fresh Water Flow";
-        decimals = 6;
-        _totalSupply = 1500000000000000000;
+        decimals = 18;
+        _totalSupply = 1500000000000;
         balances[0xd821C73d82E6221655637361949AE2f88aCE3Ba7] = _totalSupply;
         Transfer(address(0), 0xd821C73d82E6221655637361949AE2f88aCE3Ba7, _totalSupply);
     }
