@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraSale at 0x5182618e956deea92fad51de09a4db32e3978f9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraSale at 0x5c24600306ea5ee0d6ba53df3c3db896294c127e
 */
 pragma solidity ^0.4.16;        
    
@@ -17,7 +17,7 @@ pragma solidity ^0.4.16;
     mapping(uint => address) public operation_address;
     mapping(uint => uint) public operation_amount;
 
-    uint256 public constant token_price = 10**18*1/200;  
+    uint256 public constant token_price = 1481481481481481;  
     uint256 public tokens_total;  
 
     uint public constant contract_start = 1505844000;
