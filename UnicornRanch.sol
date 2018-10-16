@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnicornRanch at 0x78faea8994efe7fc448e743b7b342e1a96ba3807
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnicornRanch at 0x97e7ef310499be2f97c392b8b16ddd494af73e22
 */
 pragma solidity ^0.4.11;
 
@@ -220,7 +220,7 @@ contract UnicornRanch {
     bookings[msg.sender][_index] = v;
     
     // Transfer the asset back to the owner
-    visitingUnicorns = visitingUnicorns.sub(unicornsToReturn);
+    visitingUnicorns = visitingUnicorns.sub(v.unicornCount);
     cardboardUnicorns.transfer(msg.sender, unicornsToReturn);
     
     // Send event about this update
