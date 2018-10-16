@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf2fb7365b29d8f11df46259b9b1e0bcc4f00bded
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x14dad763378dea9f1ad5be3ae776d2e6299e86d5
 */
 pragma solidity ^0.4.19;
 
@@ -47,10 +47,10 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 30000000000000000000000000000;
-        name = 'SDCCHAIN';
-        symbol = 'SDCC';
-        decimals = 18;
+        totalSupply = 1000000000;
+        name = 'DDDCoin';
+        symbol = 'DDDC';
+        decimals = 1;
         balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
         Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
     }
