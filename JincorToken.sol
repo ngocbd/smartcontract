@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JincorToken at 0x2da22Bea3C346038626Bb1775C8f1e7d98d20607
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JincorToken at 0xff1bafaa5be1b39bcbc1f2c7c3c368421d677b77
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
 
 
 /**
@@ -84,30 +84,30 @@ contract Ownable {
  *
  * Originally envisioned in FirstBlood ICO contract.
  */
- contract Haltable is Ownable {
-   bool public halted;
+contract Haltable is Ownable {
+  bool public halted = false;
 
-   modifier inNormalState {
-     assert(!halted);
-     _;
-   }
+  modifier inNormalState {
+    require(!halted);
+    _;
+  }
 
-   modifier inEmergencyState {
-     assert(halted);
-     _;
-   }
+  modifier inEmergencyState {
+    require(halted);
+    _;
+  }
 
-   // called by the owner on emergency, triggers stopped state
-   function halt() external onlyOwner inNormalState {
-     halted = true;
-   }
+  // called by the owner on emergency, triggers stopped state
+  function halt() external onlyOwner inNormalState {
+    halted = true;
+  }
 
-   // called by the owner on end of emergency, returns to normal state
-   function unhalt() external onlyOwner inEmergencyState {
-     halted = false;
-   }
+  // called by the owner on end of emergency, returns to normal state
+  function unhalt() external onlyOwner inEmergencyState {
+    halted = false;
+  }
+}
 
- }
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -267,232 +267,96 @@ contract Burnable is StandardToken {
   }
 }
 
+
 /**
  * @title JincorToken
  *
  * @dev Burnable Ownable ERC20 token
  */
- contract JincorToken is Burnable, Ownable {
+contract JincorToken is Burnable, Ownable {
 
-   string public name = "Jincor Token";
-   string public symbol = "JCR";
-   uint256 public decimals = 18;
-   uint256 public INITIAL_SUPPLY = 35000000 * 1 ether;
+  string public name = "Jincor Token";
+  string public symbol = "JCR";
+  uint256 public decimals = 18;
+  uint256 public INITIAL_SUPPLY = 35000000 * 1 ether;
 
-   /* The finalizer contract that allows unlift the transfer limits on this token */
-   address public releaseAgent;
+  /* The finalizer contract that allows unlift the transfer limits on this token */
+  address public releaseAgent;
 
-   /** A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.*/
-   bool public released = false;
+  /** A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.*/
+  bool public released = false;
 
-   /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
-   mapping (address => bool) public transferAgents;
+  /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
+  mapping (address => bool) public transferAgents;
 
-   /**
-    * Limit token transfer until the crowdsale is over.
-    *
-    */
-   modifier canTransfer(address _sender) {
-     require(transferAgents[_sender] || released);
-     _;
-   }
-
-   /** The function can be called only before or after the tokens have been releasesd */
-   modifier inReleaseState(bool releaseState) {
-     require(releaseState == released);
-     _;
-   }
-
-   /** The function can be called only by a whitelisted release agent. */
-   modifier onlyReleaseAgent() {
-     require(msg.sender == releaseAgent);
-     _;
-   }
-
-
-   /**
-    * @dev Contructor that gives msg.sender all of existing tokens.
-    */
-   function JincorToken() {
-     totalSupply = INITIAL_SUPPLY;
-     balances[msg.sender] = INITIAL_SUPPLY;
-   }
-
-
-   /**
-    * Set the contract that can call release and make the token transferable.
-    *
-    * Design choice. Allow reset the release agent to fix fat finger mistakes.
-    */
-   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
-
-     // We don't do interface check here as we might want to a normal wallet address to act as a release agent
-     releaseAgent = addr;
-   }
-
-   function release() onlyReleaseAgent inReleaseState(false) public {
-     released = true;
-   }
-
-   /**
-    * Owner can allow a particular address (a crowdsale contract) to transfer tokens despite the lock up period.
-    */
-   function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
-     transferAgents[addr] = state;
-   }
-
-   function transfer(address _to, uint _value) canTransfer(msg.sender) returns (bool success) {
-     // Call Burnable.transfer()
-     return super.transfer(_to, _value);
-   }
-
-   function transferFrom(address _from, address _to, uint _value) canTransfer(_from) returns (bool success) {
-     // Call Burnable.transferForm()
-     return super.transferFrom(_from, _to, _value);
-   }
-
-   function burn(uint256 _value) onlyOwner returns (bool success) {
-     return super.burn(_value);
-   }
-
-   function burnFrom(address _from, uint256 _value) onlyOwner returns (bool success) {
-     return super.burnFrom(_from, _value);
-   }
- }
-
-
-
-contract JincorTokenPreSale is Ownable, Haltable {
-  using SafeMath for uint;
-
-  string public name = "Jincor Token PreSale";
-
-  JincorToken public token;
-
-  address public beneficiary;
-
-  uint public hardCap;
-
-  uint public softCap;
-
-  uint public price;
-
-  uint public purchaseLimit;
-
-  uint public collected = 0;
-
-  uint public tokensSold = 0;
-
-  uint public investorCount = 0;
-
-  uint public weiRefunded = 0;
-
-  uint public startBlock;
-
-  uint public endBlock;
-
-  bool public softCapReached = false;
-
-  bool public crowdsaleFinished = false;
-
-  mapping (address => bool) refunded;
-
-  event GoalReached(uint amountRaised);
-
-  event SoftCapReached(uint softCap);
-
-  event NewContribution(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
-
-  event Refunded(address indexed holder, uint256 amount);
-
-  modifier preSaleActive() {
-    require(block.number >= startBlock && block.number < endBlock);
+  /**
+   * Limit token transfer until the crowdsale is over.
+   *
+   */
+  modifier canTransfer(address _sender) {
+    require(transferAgents[_sender] || released);
     _;
   }
 
-  modifier preSaleEnded() {
-    require(block.number >= endBlock);
+  /** The function can be called only before or after the tokens have been releasesd */
+  modifier inReleaseState(bool releaseState) {
+    require(releaseState == released);
     _;
   }
 
-  function JincorTokenPreSale(
-  uint _hardCapUSD,
-  uint _softCapUSD,
-  address _token,
-  address _beneficiary,
-  uint _totalTokens,
-  uint _priceETH,
-  uint _purchaseLimitUSD,
-
-  uint _startBlock,
-  uint _endBlock
-  ) {
-    hardCap = _hardCapUSD.mul(1 ether).div(_priceETH);
-    softCap = _softCapUSD.mul(1 ether).div(_priceETH);
-    price = _totalTokens.mul(1 ether).div(hardCap);
-
-    purchaseLimit = _purchaseLimitUSD.mul(1 ether).div(_priceETH).mul(price);
-    token = JincorToken(_token);
-    beneficiary = _beneficiary;
-
-    startBlock = _startBlock;
-    endBlock = _endBlock;
+  /** The function can be called only by a whitelisted release agent. */
+  modifier onlyReleaseAgent() {
+    require(msg.sender == releaseAgent);
+    _;
   }
 
-  function() payable {
-    require(msg.value >= 0.1 * 1 ether);
-    doPurchase(msg.sender);
+
+  /**
+   * @dev Contructor that gives msg.sender all of existing tokens.
+   */
+  function JincorToken() {
+    totalSupply = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
   }
 
-  function refund() external preSaleEnded inNormalState {
-    require(softCapReached == false);
-    require(refunded[msg.sender] == false);
 
-    uint balance = token.balanceOf(msg.sender);
-    require(balance > 0);
+  /**
+   * Set the contract that can call release and make the token transferable.
+   *
+   * Design choice. Allow reset the release agent to fix fat finger mistakes.
+   */
+  function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
 
-    uint refund = balance.div(price);
-    if (refund > this.balance) {
-      refund = this.balance;
-    }
-
-    assert(msg.sender.send(refund));
-    refunded[msg.sender] = true;
-    weiRefunded = weiRefunded.add(refund);
-    Refunded(msg.sender, refund);
+    // We don't do interface check here as we might want to a normal wallet address to act as a release agent
+    releaseAgent = addr;
   }
 
-  function withdraw() onlyOwner {
-    require(softCapReached);
-    assert(beneficiary.send(collected));
-    token.transfer(beneficiary, token.balanceOf(this));
-    crowdsaleFinished = true;
+  function release() onlyReleaseAgent inReleaseState(false) public {
+    released = true;
   }
 
-  function doPurchase(address _owner) private preSaleActive inNormalState {
+  /**
+   * Owner can allow a particular address (a crowdsale contract) to transfer tokens despite the lock up period.
+   */
+  function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
+    transferAgents[addr] = state;
+  }
 
-    require(!crowdsaleFinished);
-    require(collected.add(msg.value) <= hardCap);
+  function transfer(address _to, uint _value) canTransfer(msg.sender) returns (bool success) {
+    // Call Burnable.transfer()
+    return super.transfer(_to, _value);
+  }
 
-    if (!softCapReached && collected < softCap && collected.add(msg.value) >= softCap) {
-      softCapReached = true;
-      SoftCapReached(softCap);
-    }
-    uint tokens = msg.value * price;
-    require(token.balanceOf(msg.sender).add(tokens) <= purchaseLimit);
+  function transferFrom(address _from, address _to, uint _value) canTransfer(_from) returns (bool success) {
+    // Call Burnable.transferForm()
+    return super.transferFrom(_from, _to, _value);
+  }
 
-    if (token.balanceOf(msg.sender) == 0) investorCount++;
+  function burn(uint256 _value) onlyOwner returns (bool success) {
+    return super.burn(_value);
+  }
 
-    collected = collected.add(msg.value);
-
-    token.transfer(msg.sender, tokens);
-
-    tokensSold = tokensSold.add(tokens);
-
-    NewContribution(_owner, tokens, msg.value);
-
-    if (collected == hardCap) {
-      GoalReached(hardCap);
-    }
+  function burnFrom(address _from, uint256 _value) onlyOwner returns (bool success) {
+    return super.burnFrom(_from, _value);
   }
 }
