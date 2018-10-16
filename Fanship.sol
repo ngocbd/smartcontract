@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fanship at 0x2ef37c2b6679de8b6944e22dc9bbf01083007ce9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fanship at 0x16af5bfb4ae7e475b9adc3bf5cb2f1e6a50d7940
 */
 pragma solidity ^0.4.23;
 
@@ -120,12 +120,13 @@ contract StandardToken is ERC20, BasicToken {
 contract Fanship is StandardToken
 {
   string public name = "Fanship"; 
-  string public symbol = "FANS";
+  string public symbol = "XFS";
   uint public decimals = 8;
   uint public INITIAL_SUPPLY = 10000000000 * (10 ** decimals);
 
   constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
+    balances[0xf6928f41c0d15631C0F2998747548a3eb126F0b6] = INITIAL_SUPPLY;
+    emit Transfer(0, 0xf6928f41c0d15631C0F2998747548a3eb126F0b6, INITIAL_SUPPLY);
   }
 }
