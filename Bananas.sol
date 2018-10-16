@@ -1,33 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bananas at 0x2405cc17ba128bfa7117815e04a4da228013f5bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bananas at 0xd7f4e36cce6b45e969969d642ee190a3a2f92101
 */
 pragma solidity ^0.4.8;
-contract ERC20Interface {
-    function totalSupply() constant returns (uint256 totalSupply);
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-contract Bananas is ERC20Interface {
-    string public name;
-    string public symbol;
-    uint8 public decimals;
+contract owned {
     address public owner;
-    mapping(address => uint256) balances;
-    mapping(address => mapping (address => uint256)) allowed;
-    uint256 _totalSupply;
-    modifier onlyOwner() { if (msg.sender != owner) { throw; } _; }
-    function Bananas() { owner = msg.sender; name = "Bananas"; symbol = "BNN"; decimals = 8; _totalSupply = 200160000000000; balances[owner] = _totalSupply; }
-	function totalSupply() constant returns (uint256 totalSupply) { totalSupply = _totalSupply; }
-    function balanceOf(address _owner) constant returns (uint256 balance) { return balances[_owner]; }
-    function transfer(address _to, uint256 _amount) returns (bool success) { if (balances[msg.sender] >= _amount && _amount > 0) { balances[msg.sender] -= _amount; balances[_to] += _amount; Transfer(msg.sender, _to, _amount); return true; } else { return false; } }
-	function transferFrom(address _from, address _to, uint256 _amount) returns (bool success) { if (balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount > 0) { balances[_to] += _amount; balances[_from] -= _amount; allowed[_from][msg.sender] -= _amount; Transfer(_from, _to, _amount); return true; } else { return false; } }
-    function approve(address _spender, uint256 _amount) returns (bool success) { allowed[msg.sender][_spender] = _amount; Approval(msg.sender, _spender, _amount); return true; }
-	function allowance(address _owner, address _spender) constant returns (uint256 remaining) { return allowed[_owner][_spender]; }
-    function () { throw; }
+    function owned() public { owner = msg.sender; }
+    modifier onlyOwner { require(msg.sender == owner); _; }
+    function transferOwnership(address newOwner) onlyOwner public { owner = newOwner; }
+}
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+contract Bananas {
+    string public name = 'Bananas';
+    string public symbol = 'BNN';
+    uint8 public decimals = 8;
+    uint256 public totalSupply = 200160000000000;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Burn(address indexed from, uint256 value);
+    function _transfer(address _from, address _to, uint _value) internal { require(_to != 0x0); require(balanceOf[_from] >= _value); require(balanceOf[_to] + _value > balanceOf[_to]); uint previousBalances = balanceOf[_from] + balanceOf[_to]; balanceOf[_from] -= _value; balanceOf[_to] += _value; Transfer(_from, _to, _value); assert(balanceOf[_from] + balanceOf[_to] == previousBalances); }
+	function transfer(address _to, uint256 _value) public { _transfer(msg.sender, _to, _value); }
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) { require(_value <= allowance[_from][msg.sender]); allowance[_from][msg.sender] -= _value; _transfer(_from, _to, _value); return true; }
+    function approve(address _spender, uint256 _value) public returns (bool success) { allowance[msg.sender][_spender] = _value; return true; }
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) { tokenRecipient spender = tokenRecipient(_spender); if (approve(_spender, _value)) { spender.receiveApproval(msg.sender, _value, this, _extraData); return true; } }
+    function burn(uint256 _value) public returns (bool success) { require(balanceOf[msg.sender] >= _value); balanceOf[msg.sender] -= _value; totalSupply -= _value; Burn(msg.sender, _value); return true; }
+    function burnFrom(address _from, uint256 _value) public returns (bool success) { require(balanceOf[_from] >= _value); require(_value <= allowance[_from][msg.sender]); balanceOf[_from] -= _value; allowance[_from][msg.sender] -= _value; totalSupply -= _value; Burn(_from, _value); return true; }
 }
