@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CanYaCoin at 0x22A7d3C296692Ba0F91C631b41BDfBC702885619
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CanYaCoin at 0x1d462414fe14cf489c7A21CaC78509f4bF8CD7c0
 */
 /**
- *  CanYa Coin contract
+ *  CanYaCoin (CAN) contract (FINAL)
  */
 
 pragma solidity 0.4.15;
