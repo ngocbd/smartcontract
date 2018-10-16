@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x86b19623a986df24a594014c49bfc68b134042d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xcde042543307966bc16eff3cdca4d32b23408c4c
 */
 pragma solidity 0.4.15;
 
@@ -35,7 +35,6 @@ contract MultiSigWallet {
     address[] public owners;
     uint public required;
     uint public transactionCount;
-    address[3] public defaultOwners;
 
     struct Transaction {
         address destination;
@@ -107,18 +106,18 @@ contract MultiSigWallet {
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// defaultOwners List of initial owners.
-    /// 2 of required confirmations.
-    function MultiSigWallet()
+    /// @param _owners List of initial owners.
+    /// @param _required Number of required confirmations.
+    function MultiSigWallet(address[] _owners, uint _required)
         public
+        validRequirement(_owners.length, _required)
     {
-        defaultOwners = [0x4c1e2c589877Cd07dACFd940C74b84ff68d67576, 0x43Ba8d73F0832Da50f467AC777a821ACfa63025E, 0x5c176e54B4979baf3CB2B0Da7A743752270E90CE];
-        for (uint i=0; i<defaultOwners.length; i++) {
-            require(!isOwner[defaultOwners[i]] && defaultOwners[i] != 0);
-            isOwner[defaultOwners[i]] = true;
+        for (uint i=0; i<_owners.length; i++) {
+            require(!isOwner[_owners[i]] && _owners[i] != 0);
+            isOwner[_owners[i]] = true;
         }
-        owners = defaultOwners;
-        required = 2;
+        owners = _owners;
+        required = _required;
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
@@ -190,9 +189,7 @@ contract MultiSigWallet {
     /// @param value Transaction ether value.
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, bytes data)
-        public
-        returns (uint transactionId)
+    function submitTransaction(address destination, uint value, bytes data) public returns (uint transactionId)
     {
         transactionId = addTransaction(destination, value, data);
         confirmTransaction(transactionId);
