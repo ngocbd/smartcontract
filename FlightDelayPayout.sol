@@ -1,184 +1,757 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayPayout at 0xec2374b274a8c04c0ec52dab10bc78078589ab62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayPayout at 0xd74d51b0f781a5fa9b1825d5b1ba9b7532d18a7a
 */
+/*
+ * @title String & slice utility library for Solidity contracts.
+ * @author Nick Johnson <arachnid@notdot.net>
+ *
+ * @dev Functionality in this library is largely implemented using an
+ *      abstraction called a 'slice'. A slice represents a part of a string -
+ *      anything from the entire string to a single character, or even no
+ *      characters at all (a 0-length slice). Since a slice only has to specify
+ *      an offset and a length, copying and manipulating slices is a lot less
+ *      expensive than copying and manipulating the strings they reference.
+ *
+ *      To further reduce gas costs, most functions on slice that need to return
+ *      a slice modify the original one instead of allocating a new one; for
+ *      instance, `s.split(".")` will return the text up to the first '.',
+ *      modifying s to only contain the remainder of the string after the '.'.
+ *      In situations where you do not want to modify the original slice, you
+ *      can make a copy first with `.copy()`, for example:
+ *      `s.copy().split(".")`. Try and avoid using this idiom in loops; since
+ *      Solidity has no memory management, it will result in allocating many
+ *      short-lived slices that are later discarded.
+ *
+ *      Functions that return two slices come in two versions: a non-allocating
+ *      version that takes the second slice as an argument, modifying it in
+ *      place, and an allocating version that allocates and returns the second
+ *      slice; see `nextRune` for example.
+ *
+ *      Functions that have to copy string data will return strings rather than
+ *      slices; these can be cast back to slices for further processing if
+ *      required.
+ *
+ *      For convenience, some functions are provided with non-modifying
+ *      variants that create a new slice and return both; for instance,
+ *      `s.splitNew('.')` leaves s unmodified, and returns two values
+ *      corresponding to the left and right parts of the string.
+ */
+
+pragma solidity ^0.4.7;
+
+library strings {
+    struct slice {
+        uint _len;
+        uint _ptr;
+    }
+
+    function memcpy(uint dest, uint src, uint len) private {
+        // Copy word-length chunks while possible
+        for(; len >= 32; len -= 32) {
+            assembly {
+                mstore(dest, mload(src))
+            }
+            dest += 32;
+            src += 32;
+        }
+
+        // Copy remaining bytes
+        uint mask = 256 ** (32 - len) - 1;
+        assembly {
+            let srcpart := and(mload(src), not(mask))
+            let destpart := and(mload(dest), mask)
+            mstore(dest, or(destpart, srcpart))
+        }
+    }
+
+    /*
+     * @dev Returns a slice containing the entire string.
+     * @param self The string to make a slice from.
+     * @return A newly allocated slice containing the entire string.
+     */
+    function toSlice(string self) internal returns (slice) {
+        uint ptr;
+        assembly {
+            ptr := add(self, 0x20)
+        }
+        return slice(bytes(self).length, ptr);
+    }
+
+    /*
+     * @dev Returns the length of a null-terminated bytes32 string.
+     * @param self The value to find the length of.
+     * @return The length of the string, from 0 to 32.
+     */
+    function len(bytes32 self) internal returns (uint) {
+        uint ret;
+        if (self == 0)
+            return 0;
+        if (self & 0xffffffffffffffffffffffffffffffff == 0) {
+            ret += 16;
+            self = bytes32(uint(self) / 0x100000000000000000000000000000000);
+        }
+        if (self & 0xffffffffffffffff == 0) {
+            ret += 8;
+            self = bytes32(uint(self) / 0x10000000000000000);
+        }
+        if (self & 0xffffffff == 0) {
+            ret += 4;
+            self = bytes32(uint(self) / 0x100000000);
+        }
+        if (self & 0xffff == 0) {
+            ret += 2;
+            self = bytes32(uint(self) / 0x10000);
+        }
+        if (self & 0xff == 0) {
+            ret += 1;
+        }
+        return 32 - ret;
+    }
+
+    /*
+     * @dev Returns a slice containing the entire bytes32, interpreted as a
+     *      null-termintaed utf-8 string.
+     * @param self The bytes32 value to convert to a slice.
+     * @return A new slice containing the value of the input argument up to the
+     *         first null.
+     */
+    function toSliceB32(bytes32 self) internal returns (slice ret) {
+        // Allocate space for `self` in memory, copy it there, and point ret at it
+        assembly {
+            let ptr := mload(0x40)
+            mstore(0x40, add(ptr, 0x20))
+            mstore(ptr, self)
+            mstore(add(ret, 0x20), ptr)
+        }
+        ret._len = len(self);
+    }
+
+    /*
+     * @dev Returns a new slice containing the same data as the current slice.
+     * @param self The slice to copy.
+     * @return A new slice containing the same data as `self`.
+     */
+    function copy(slice self) internal returns (slice) {
+        return slice(self._len, self._ptr);
+    }
+
+    /*
+     * @dev Copies a slice to a new string.
+     * @param self The slice to copy.
+     * @return A newly allocated string containing the slice's text.
+     */
+    function toString(slice self) internal returns (string) {
+        var ret = new string(self._len);
+        uint retptr;
+        assembly { retptr := add(ret, 32) }
+
+        memcpy(retptr, self._ptr, self._len);
+        return ret;
+    }
+
+    /*
+     * @dev Returns the length in runes of the slice. Note that this operation
+     *      takes time proportional to the length of the slice; avoid using it
+     *      in loops, and call `slice.empty()` if you only need to know whether
+     *      the slice is empty or not.
+     * @param self The slice to operate on.
+     * @return The length of the slice in runes.
+     */
+    function len(slice self) internal returns (uint) {
+        // Starting at ptr-31 means the LSB will be the byte we care about
+        var ptr = self._ptr - 31;
+        var end = ptr + self._len;
+        for (uint len = 0; ptr < end; len++) {
+            uint8 b;
+            assembly { b := and(mload(ptr), 0xFF) }
+            if (b < 0x80) {
+                ptr += 1;
+            } else if(b < 0xE0) {
+                ptr += 2;
+            } else if(b < 0xF0) {
+                ptr += 3;
+            } else if(b < 0xF8) {
+                ptr += 4;
+            } else if(b < 0xFC) {
+                ptr += 5;
+            } else {
+                ptr += 6;
+            }
+        }
+        return len;
+    }
+
+    /*
+     * @dev Returns true if the slice is empty (has a length of 0).
+     * @param self The slice to operate on.
+     * @return True if the slice is empty, False otherwise.
+     */
+    function empty(slice self) internal returns (bool) {
+        return self._len == 0;
+    }
+
+    /*
+     * @dev Returns a positive number if `other` comes lexicographically after
+     *      `self`, a negative number if it comes before, or zero if the
+     *      contents of the two slices are equal. Comparison is done per-rune,
+     *      on unicode codepoints.
+     * @param self The first slice to compare.
+     * @param other The second slice to compare.
+     * @return The result of the comparison.
+     */
+    function compare(slice self, slice other) internal returns (int) {
+        uint shortest = self._len;
+        if (other._len < self._len)
+            shortest = other._len;
+
+        var selfptr = self._ptr;
+        var otherptr = other._ptr;
+        for (uint idx = 0; idx < shortest; idx += 32) {
+            uint a;
+            uint b;
+            assembly {
+                a := mload(selfptr)
+                b := mload(otherptr)
+            }
+            if (a != b) {
+                // Mask out irrelevant bytes and check again
+                uint mask = ~(2 ** (8 * (32 - shortest + idx)) - 1);
+                var diff = (a & mask) - (b & mask);
+                if (diff != 0)
+                    return int(diff);
+            }
+            selfptr += 32;
+            otherptr += 32;
+        }
+        return int(self._len) - int(other._len);
+    }
+
+    /*
+     * @dev Returns true if the two slices contain the same text.
+     * @param self The first slice to compare.
+     * @param self The second slice to compare.
+     * @return True if the slices are equal, false otherwise.
+     */
+    function equals(slice self, slice other) internal returns (bool) {
+        return compare(self, other) == 0;
+    }
+
+    /*
+     * @dev Extracts the first rune in the slice into `rune`, advancing the
+     *      slice to point to the next rune and returning `self`.
+     * @param self The slice to operate on.
+     * @param rune The slice that will contain the first rune.
+     * @return `rune`.
+     */
+    function nextRune(slice self, slice rune) internal returns (slice) {
+        rune._ptr = self._ptr;
+
+        if (self._len == 0) {
+            rune._len = 0;
+            return rune;
+        }
+
+        uint len;
+        uint b;
+        // Load the first byte of the rune into the LSBs of b
+        assembly { b := and(mload(sub(mload(add(self, 32)), 31)), 0xFF) }
+        if (b < 0x80) {
+            len = 1;
+        } else if(b < 0xE0) {
+            len = 2;
+        } else if(b < 0xF0) {
+            len = 3;
+        } else {
+            len = 4;
+        }
+
+        // Check for truncated codepoints
+        if (len > self._len) {
+            rune._len = self._len;
+            self._ptr += self._len;
+            self._len = 0;
+            return rune;
+        }
+
+        self._ptr += len;
+        self._len -= len;
+        rune._len = len;
+        return rune;
+    }
+
+    /*
+     * @dev Returns the first rune in the slice, advancing the slice to point
+     *      to the next rune.
+     * @param self The slice to operate on.
+     * @return A slice containing only the first rune from `self`.
+     */
+    function nextRune(slice self) internal returns (slice ret) {
+        nextRune(self, ret);
+    }
+
+    /*
+     * @dev Returns the number of the first codepoint in the slice.
+     * @param self The slice to operate on.
+     * @return The number of the first codepoint in the slice.
+     */
+    function ord(slice self) internal returns (uint ret) {
+        if (self._len == 0) {
+            return 0;
+        }
+
+        uint word;
+        uint len;
+        uint div = 2 ** 248;
+
+        // Load the rune into the MSBs of b
+        assembly { word:= mload(mload(add(self, 32))) }
+        var b = word / div;
+        if (b < 0x80) {
+            ret = b;
+            len = 1;
+        } else if(b < 0xE0) {
+            ret = b & 0x1F;
+            len = 2;
+        } else if(b < 0xF0) {
+            ret = b & 0x0F;
+            len = 3;
+        } else {
+            ret = b & 0x07;
+            len = 4;
+        }
+
+        // Check for truncated codepoints
+        if (len > self._len) {
+            return 0;
+        }
+
+        for (uint i = 1; i < len; i++) {
+            div = div / 256;
+            b = (word / div) & 0xFF;
+            if (b & 0xC0 != 0x80) {
+                // Invalid UTF-8 sequence
+                return 0;
+            }
+            ret = (ret * 64) | (b & 0x3F);
+        }
+
+        return ret;
+    }
+
+    /*
+     * @dev Returns the keccak-256 hash of the slice.
+     * @param self The slice to hash.
+     * @return The hash of the slice.
+     */
+    function keccak(slice self) internal returns (bytes32 ret) {
+        assembly {
+            ret := sha3(mload(add(self, 32)), mload(self))
+        }
+    }
+
+    /*
+     * @dev Returns true if `self` starts with `needle`.
+     * @param self The slice to operate on.
+     * @param needle The slice to search for.
+     * @return True if the slice starts with the provided text, false otherwise.
+     */
+    function startsWith(slice self, slice needle) internal returns (bool) {
+        if (self._len < needle._len) {
+            return false;
+        }
+
+        if (self._ptr == needle._ptr) {
+            return true;
+        }
+
+        bool equal;
+        assembly {
+            let len := mload(needle)
+            let selfptr := mload(add(self, 0x20))
+            let needleptr := mload(add(needle, 0x20))
+            equal := eq(sha3(selfptr, len), sha3(needleptr, len))
+        }
+        return equal;
+    }
+
+    /*
+     * @dev If `self` starts with `needle`, `needle` is removed from the
+     *      beginning of `self`. Otherwise, `self` is unmodified.
+     * @param self The slice to operate on.
+     * @param needle The slice to search for.
+     * @return `self`
+     */
+    function beyond(slice self, slice needle) internal returns (slice) {
+        if (self._len < needle._len) {
+            return self;
+        }
+
+        bool equal = true;
+        if (self._ptr != needle._ptr) {
+            assembly {
+                let len := mload(needle)
+                let selfptr := mload(add(self, 0x20))
+                let needleptr := mload(add(needle, 0x20))
+                equal := eq(sha3(selfptr, len), sha3(needleptr, len))
+            }
+        }
+
+        if (equal) {
+            self._len -= needle._len;
+            self._ptr += needle._len;
+        }
+
+        return self;
+    }
+
+    /*
+     * @dev Returns true if the slice ends with `needle`.
+     * @param self The slice to operate on.
+     * @param needle The slice to search for.
+     * @return True if the slice starts with the provided text, false otherwise.
+     */
+    function endsWith(slice self, slice needle) internal returns (bool) {
+        if (self._len < needle._len) {
+            return false;
+        }
+
+        var selfptr = self._ptr + self._len - needle._len;
+
+        if (selfptr == needle._ptr) {
+            return true;
+        }
+
+        bool equal;
+        assembly {
+            let len := mload(needle)
+            let needleptr := mload(add(needle, 0x20))
+            equal := eq(sha3(selfptr, len), sha3(needleptr, len))
+        }
+
+        return equal;
+    }
+
+    /*
+     * @dev If `self` ends with `needle`, `needle` is removed from the
+     *      end of `self`. Otherwise, `self` is unmodified.
+     * @param self The slice to operate on.
+     * @param needle The slice to search for.
+     * @return `self`
+     */
+    function until(slice self, slice needle) internal returns (slice) {
+        if (self._len < needle._len) {
+            return self;
+        }
+
+        var selfptr = self._ptr + self._len - needle._len;
+        bool equal = true;
+        if (selfptr != needle._ptr) {
+            assembly {
+                let len := mload(needle)
+                let needleptr := mload(add(needle, 0x20))
+                equal := eq(sha3(selfptr, len), sha3(needleptr, len))
+            }
+        }
+
+        if (equal) {
+            self._len -= needle._len;
+        }
+
+        return self;
+    }
+
+    // Returns the memory address of the first byte of the first occurrence of
+    // `needle` in `self`, or the first byte after `self` if not found.
+    function findPtr(uint selflen, uint selfptr, uint needlelen, uint needleptr) private returns (uint) {
+        uint ptr;
+        uint idx;
+
+        if (needlelen <= selflen) {
+            if (needlelen <= 32) {
+                // Optimized assembly for 68 gas per byte on short strings
+                assembly {
+                    let mask := not(sub(exp(2, mul(8, sub(32, needlelen))), 1))
+                    let needledata := and(mload(needleptr), mask)
+                    let end := add(selfptr, sub(selflen, needlelen))
+                    ptr := selfptr
+                    loop:
+                    jumpi(exit, eq(and(mload(ptr), mask), needledata))
+                    ptr := add(ptr, 1)
+                    jumpi(loop, lt(sub(ptr, 1), end))
+                    ptr := add(selfptr, selflen)
+                    exit:
+                }
+                return ptr;
+            } else {
+                // For long needles, use hashing
+                bytes32 hash;
+                assembly { hash := sha3(needleptr, needlelen) }
+                ptr = selfptr;
+                for (idx = 0; idx <= selflen - needlelen; idx++) {
+                    bytes32 testHash;
+                    assembly { testHash := sha3(ptr, needlelen) }
+                    if (hash == testHash)
+                        return ptr;
+                    ptr += 1;
+                }
+            }
+        }
+        return selfptr + selflen;
+    }
+
+    // Returns the memory address of the first byte after the last occurrence of
+    // `needle` in `self`, or the address of `self` if not found.
+    function rfindPtr(uint selflen, uint selfptr, uint needlelen, uint needleptr) private returns (uint) {
+        uint ptr;
+
+        if (needlelen <= selflen) {
+            if (needlelen <= 32) {
+                // Optimized assembly for 69 gas per byte on short strings
+                assembly {
+                    let mask := not(sub(exp(2, mul(8, sub(32, needlelen))), 1))
+                    let needledata := and(mload(needleptr), mask)
+                    ptr := add(selfptr, sub(selflen, needlelen))
+                    loop:
+                    jumpi(ret, eq(and(mload(ptr), mask), needledata))
+                    ptr := sub(ptr, 1)
+                    jumpi(loop, gt(add(ptr, 1), selfptr))
+                    ptr := selfptr
+                    jump(exit)
+                    ret:
+                    ptr := add(ptr, needlelen)
+                    exit:
+                }
+                return ptr;
+            } else {
+                // For long needles, use hashing
+                bytes32 hash;
+                assembly { hash := sha3(needleptr, needlelen) }
+                ptr = selfptr + (selflen - needlelen);
+                while (ptr >= selfptr) {
+                    bytes32 testHash;
+                    assembly { testHash := sha3(ptr, needlelen) }
+                    if (hash == testHash)
+                        return ptr + needlelen;
+                    ptr -= 1;
+                }
+            }
+        }
+        return selfptr;
+    }
+
+    /*
+     * @dev Modifies `self` to contain everything from the first occurrence of
+     *      `needle` to the end of the slice. `self` is set to the empty slice
+     *      if `needle` is not found.
+     * @param self The slice to search and modify.
+     * @param needle The text to search for.
+     * @return `self`.
+     */
+    function find(slice self, slice needle) internal returns (slice) {
+        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr);
+        self._len -= ptr - self._ptr;
+        self._ptr = ptr;
+        return self;
+    }
+
+    /*
+     * @dev Modifies `self` to contain the part of the string from the start of
+     *      `self` to the end of the first occurrence of `needle`. If `needle`
+     *      is not found, `self` is set to the empty slice.
+     * @param self The slice to search and modify.
+     * @param needle The text to search for.
+     * @return `self`.
+     */
+    function rfind(slice self, slice needle) internal returns (slice) {
+        uint ptr = rfindPtr(self._len, self._ptr, needle._len, needle._ptr);
+        self._len = ptr - self._ptr;
+        return self;
+    }
+
+    /*
+     * @dev Splits the slice, setting `self` to everything after the first
+     *      occurrence of `needle`, and `token` to everything before it. If
+     *      `needle` does not occur in `self`, `self` is set to the empty slice,
+     *      and `token` is set to the entirety of `self`.
+     * @param self The slice to split.
+     * @param needle The text to search for in `self`.
+     * @param token An output parameter to which the first token is written.
+     * @return `token`.
+     */
+    function split(slice self, slice needle, slice token) internal returns (slice) {
+        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr);
+        token._ptr = self._ptr;
+        token._len = ptr - self._ptr;
+        if (ptr == self._ptr + self._len) {
+            // Not found
+            self._len = 0;
+        } else {
+            self._len -= token._len + needle._len;
+            self._ptr = ptr + needle._len;
+        }
+        return token;
+    }
+
+    /*
+     * @dev Splits the slice, setting `self` to everything after the first
+     *      occurrence of `needle`, and returning everything before it. If
+     *      `needle` does not occur in `self`, `self` is set to the empty slice,
+     *      and the entirety of `self` is returned.
+     * @param self The slice to split.
+     * @param needle The text to search for in `self`.
+     * @return The part of `self` up to the first occurrence of `delim`.
+     */
+    function split(slice self, slice needle) internal returns (slice token) {
+        split(self, needle, token);
+    }
+
+    /*
+     * @dev Splits the slice, setting `self` to everything before the last
+     *      occurrence of `needle`, and `token` to everything after it. If
+     *      `needle` does not occur in `self`, `self` is set to the empty slice,
+     *      and `token` is set to the entirety of `self`.
+     * @param self The slice to split.
+     * @param needle The text to search for in `self`.
+     * @param token An output parameter to which the first token is written.
+     * @return `token`.
+     */
+    function rsplit(slice self, slice needle, slice token) internal returns (slice) {
+        uint ptr = rfindPtr(self._len, self._ptr, needle._len, needle._ptr);
+        token._ptr = ptr;
+        token._len = self._len - (ptr - self._ptr);
+        if (ptr == self._ptr) {
+            // Not found
+            self._len = 0;
+        } else {
+            self._len -= token._len + needle._len;
+        }
+        return token;
+    }
+
+    /*
+     * @dev Splits the slice, setting `self` to everything before the last
+     *      occurrence of `needle`, and returning everything after it. If
+     *      `needle` does not occur in `self`, `self` is set to the empty slice,
+     *      and the entirety of `self` is returned.
+     * @param self The slice to split.
+     * @param needle The text to search for in `self`.
+     * @return The part of `self` after the last occurrence of `delim`.
+     */
+    function rsplit(slice self, slice needle) internal returns (slice token) {
+        rsplit(self, needle, token);
+    }
+
+    /*
+     * @dev Counts the number of nonoverlapping occurrences of `needle` in `self`.
+     * @param self The slice to search.
+     * @param needle The text to search for in `self`.
+     * @return The number of occurrences of `needle` found in `self`.
+     */
+    function count(slice self, slice needle) internal returns (uint count) {
+        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr) + needle._len;
+        while (ptr <= self._ptr + self._len) {
+            count++;
+            ptr = findPtr(self._len - (ptr - self._ptr), ptr, needle._len, needle._ptr) + needle._len;
+        }
+    }
+
+    /*
+     * @dev Returns True if `self` contains `needle`.
+     * @param self The slice to search.
+     * @param needle The text to search for in `self`.
+     * @return True if `needle` is found in `self`, false otherwise.
+     */
+    function contains(slice self, slice needle) internal returns (bool) {
+        return rfindPtr(self._len, self._ptr, needle._len, needle._ptr) != self._ptr;
+    }
+
+    /*
+     * @dev Returns a newly allocated string containing the concatenation of
+     *      `self` and `other`.
+     * @param self The first slice to concatenate.
+     * @param other The second slice to concatenate.
+     * @return The concatenation of the two strings.
+     */
+    function concat(slice self, slice other) internal returns (string) {
+        var ret = new string(self._len + other._len);
+        uint retptr;
+        assembly { retptr := add(ret, 32) }
+        memcpy(retptr, self._ptr, self._len);
+        memcpy(retptr + self._len, other._ptr, other._len);
+        return ret;
+    }
+
+    /*
+     * @dev Joins an array of slices, using `self` as a delimiter, returning a
+     *      newly allocated string.
+     * @param self The delimiter to use.
+     * @param parts A list of slices to join.
+     * @return A newly allocated string containing all the slices in `parts`,
+     *         joined with `self`.
+     */
+    function join(slice self, slice[] parts) internal returns (string) {
+        if (parts.length == 0)
+            return "";
+
+        uint len = self._len * (parts.length - 1);
+        for(uint i = 0; i < parts.length; i++)
+            len += parts[i]._len;
+
+        var ret = new string(len);
+        uint retptr;
+        assembly { retptr := add(ret, 32) }
+
+        for(i = 0; i < parts.length; i++) {
+            memcpy(retptr, parts[i]._ptr, parts[i]._len);
+            retptr += parts[i]._len;
+            if (i < parts.length - 1) {
+                memcpy(retptr, self._ptr, self._len);
+                retptr += self._len;
+            }
+        }
+
+        return ret;
+    }
+}
+
+// File: contracts/FlightDelayAccessControllerInterface.sol
+
 /**
  * FlightDelay with Oraclized Underwriting and Payout
  *
- * @description Controlled contract Interface
+ * @description	AccessControllerInterface
  * @copyright (c) 2017 etherisc GmbH
  * @author Christoph Mussenbrock
  */
 
 pragma solidity ^0.4.11;
 
+
 contract FlightDelayAccessControllerInterface {
 
-    function setPermissionById(uint8 _perm, bytes32 _id);
+    function setPermissionById(uint8 _perm, bytes32 _id) public;
 
-    function setPermissionById(uint8 _perm, bytes32 _id, bool _access);
+    function setPermissionById(uint8 _perm, bytes32 _id, bool _access) public;
 
-    function setPermissionByAddress(uint8 _perm, address _addr);
+    function setPermissionByAddress(uint8 _perm, address _addr) public;
 
-    function setPermissionByAddress(uint8 _perm, address _addr, bool _access);
+    function setPermissionByAddress(uint8 _perm, address _addr, bool _access) public;
 
-    function checkPermission(uint8 _perm, address _addr) returns (bool _success);
+    function checkPermission(uint8 _perm, address _addr) public returns (bool _success);
 }
 
-contract FlightDelayDatabaseModel {
+// File: contracts/FlightDelayConstants.sol
 
-    // Ledger accounts.
-    enum Acc {
-        Premium,      // 0
-        RiskFund,     // 1
-        Payout,       // 2
-        Balance,      // 3
-        Reward,       // 4
-        OraclizeCosts // 5
-    }
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Events and Constants
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock
+ */
 
-    // policy Status Codes and meaning:
-    //
-    // 00 = Applied:      the customer has payed a premium, but the oracle has
-    //                          not yet checked and confirmed.
-    //                          The customer can still revoke the policy.
-    // 01 = Accepted:     the oracle has checked and confirmed.
-    //                          The customer can still revoke the policy.
-    // 02 = Revoked:      The customer has revoked the policy.
-    //                          The premium minus cancellation fee is payed back to the
-    //                          customer by the oracle.
-    // 03 = PaidOut:      The flight has ended with delay.
-    //                          The oracle has checked and payed out.
-    // 04 = Expired:      The flight has endet with <15min. delay.
-    //                          No payout.
-    // 05 = Declined:     The application was invalid.
-    //                          The premium minus cancellation fee is payed back to the
-    //                          customer by the oracle.
-    // 06 = SendFailed: During Revoke, Decline or Payout, sending ether failed
-    //                          for unknown reasons.
-    //                          The funds remain in the contracts RiskFund.
+pragma solidity ^0.4.11;
 
-
-    //                   00       01        02       03        04      05           06
-    enum policyState { Applied, Accepted, Revoked, PaidOut, Expired, Declined, SendFailed }
-
-    // oraclize callback types:
-    enum oraclizeState { ForUnderwriting, ForPayout }
-
-    //               00   01   02   03
-    enum Currency { ETH, EUR, USD, GBP }
-
-    // the policy structure: this structure keeps track of the individual parameters of a policy.
-    // typically customer address, premium and some status information.
-    struct Policy {
-        // 0 - the customer
-        address customer;
-
-        // 1 - premium
-        uint premium;
-        // risk specific parameters:
-        // 2 - pointer to the risk in the risks mapping
-        bytes32 riskId;
-        // custom payout pattern
-        // in future versions, customer will be able to tamper with this array.
-        // to keep things simple, we have decided to hard-code the array for all policies.
-        // uint8[5] pattern;
-        // 3 - probability weight. this is the central parameter
-        uint weight;
-        // 4 - calculated Payout
-        uint calculatedPayout;
-        // 5 - actual Payout
-        uint actualPayout;
-
-        // status fields:
-        // 6 - the state of the policy
-        policyState state;
-        // 7 - time of last state change
-        uint stateTime;
-        // 8 - state change message/reason
-        bytes32 stateMessage;
-        // 9 - TLSNotary Proof
-        bytes proof;
-        // 10 - Currency
-        Currency currency;
-        // 10 - External customer id
-        bytes32 customerExternalId;
-    }
-
-    // the risk structure; this structure keeps track of the risk-
-    // specific parameters.
-    // several policies can share the same risk structure (typically
-    // some people flying with the same plane)
-    struct Risk {
-        // 0 - Airline Code + FlightNumber
-        bytes32 carrierFlightNumber;
-        // 1 - scheduled departure and arrival time in the format /dep/YYYY/MM/DD
-        bytes32 departureYearMonthDay;
-        // 2 - the inital arrival time
-        uint arrivalTime;
-        // 3 - the final delay in minutes
-        uint delayInMinutes;
-        // 4 - the determined delay category (0-5)
-        uint8 delay;
-        // 5 - we limit the cumulated weighted premium to avoid cluster risks
-        uint cumulatedWeightedPremium;
-        // 6 - max cumulated Payout for this risk
-        uint premiumMultiplier;
-    }
-
-    // the oraclize callback structure: we use several oraclize calls.
-    // all oraclize calls will result in a common callback to __callback(...).
-    // to keep track of the different querys we have to introduce this struct.
-    struct OraclizeCallback {
-        // for which policy have we called?
-        uint policyId;
-        // for which purpose did we call? {ForUnderwrite | ForPayout}
-        oraclizeState oState;
-        // time
-        uint oraclizeTime;
-    }
-
-    struct Customer {
-        bytes32 customerExternalId;
-        bool identityConfirmed;
-    }
-}
-
-
-contract FlightDelayControllerInterface {
-
-    function isOwner(address _addr) returns (bool _isOwner);
-
-    function selfRegister(bytes32 _id) returns (bool result);
-
-    function getContract(bytes32 _id) returns (address _addr);
-}
-
-contract FlightDelayControlledContract is FlightDelayDatabaseModel {
-
-    address public controller;
-    FlightDelayControllerInterface FD_CI;
-
-    modifier onlyController() {
-        require(msg.sender == controller);
-        _;
-    }
-
-    function setController(address _controller) internal returns (bool _result) {
-        controller = _controller;
-        FD_CI = FlightDelayControllerInterface(_controller);
-        _result = true;
-    }
-
-    function destruct() onlyController {
-        selfdestruct(controller);
-    }
-
-    function setContracts() onlyController {}
-
-    function getContract(bytes32 _id) internal returns (address _addr) {
-        _addr = FD_CI.getContract(_id);
-    }
-}
 
 contract FlightDelayConstants {
 
@@ -314,7 +887,7 @@ contract FlightDelayConstants {
 // --> prod-mode
     // DEFINITIONS FOR ROPSTEN AND MAINNET
     // minimum time before departure for applying
-    uint constant MIN_TIME_BEFORE_DEPARTURE = 24 hours; // for production
+    uint constant MIN_TIME_BEFORE_DEPARTURE	= 24 hours; // for production
     // check for delay after .. minutes after scheduled arrival
     uint constant CHECK_PAYOUT_OFFSET = 15 minutes; // for production
 // <-- prod-mode
@@ -332,12 +905,9 @@ contract FlightDelayConstants {
     // Deadline for acceptance of policies: 31.12.2030 (Testnet)
     uint constant CONTRACT_DEAD_LINE = 1922396399;
 
-    uint constant MIN_DEPARTURE_LIM = 1508198400;
-
-    uint constant MAX_DEPARTURE_LIM = 1509840000;
-
     // gas Constants for oraclize
-    uint constant ORACLIZE_GAS = 1000000;
+    uint constant ORACLIZE_GAS = 700000;
+    uint constant ORACLIZE_GASPRICE = 4000000000;
 
 
     /*
@@ -350,13 +920,13 @@ contract FlightDelayConstants {
         // ratings api is v1, see https://developer.flightstats.com/api-docs/ratings/v1
         "[URL] json(https://api.flightstats.com/flex/ratings/rest/v1/json/flight/";
     string constant ORACLIZE_RATINGS_QUERY =
-        "?${[decrypt] <!--PUT ENCRYPTED_QUERY HERE--> }).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode']";
+        "?${[decrypt] BAr6Z9QolM2PQimF/pNC6zXldOvZ2qquOSKm/qJkJWnSGgAeRw21wBGnBbXiamr/ISC5SlcJB6wEPKthdc6F+IpqM/iXavKsalRUrGNuBsGfaMXr8fRQw6gLzqk0ecOFNeCa48/yqBvC/kas+jTKHiYxA3wTJrVZCq76Y03lZI2xxLaoniRk}).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode','departureAirportFsCode']";
     string constant ORACLIZE_STATUS_BASE_URL =
         // flight status api is v2, see https://developer.flightstats.com/api-docs/flightstatus/v2/flight
         "[URL] json(https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/";
     string constant ORACLIZE_STATUS_QUERY =
         // pattern:
-        "?${[decrypt] <!--PUT ENCRYPTED_QUERY HERE--> }&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
+        "?${[decrypt] BJxpwRaHujYTT98qI5slQJplj/VbfV7vYkMOp/Mr5D/5+gkgJQKZb0gVSCa6aKx2Wogo/cG7yaWINR6vnuYzccQE5yVJSr7RQilRawxnAtZXt6JB70YpX4xlfvpipit4R+OmQTurJGGwb8Pgnr4LvotydCjup6wv2Bk/z3UdGA7Sl+FU5a+0}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
 // <-- prod-mode
 
 // --> test-mode
@@ -366,7 +936,7 @@ contract FlightDelayConstants {
 //            "[URL] json(https://api-test.etherisc.com/flex/ratings/rest/v1/json/flight/";
 //        string constant ORACLIZE_RATINGS_QUERY =
 //            // for testrpc:
-//            ").ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode']";
+//            ").ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode','departureAirportFsCode']";
 //        string constant ORACLIZE_STATUS_BASE_URL =
 //            // flight status api is v2, see https://developer.flightstats.com/api-docs/flightstatus/v2/flight
 //            "[URL] json(https://api-test.etherisc.com/flex/flightstatus/rest/v2/json/flight/status/";
@@ -376,87 +946,359 @@ contract FlightDelayConstants {
 // <-- test-mode
 }
 
+// File: contracts/FlightDelayControllerInterface.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description Contract interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+contract FlightDelayControllerInterface {
+
+    function isOwner(address _addr) public returns (bool _isOwner);
+
+    function selfRegister(bytes32 _id) public returns (bool result);
+
+    function getContract(bytes32 _id) public returns (address _addr);
+}
+
+// File: contracts/FlightDelayDatabaseModel.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description Database model
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+contract FlightDelayDatabaseModel {
+
+    // Ledger accounts.
+    enum Acc {
+        Premium,      // 0
+        RiskFund,     // 1
+        Payout,       // 2
+        Balance,      // 3
+        Reward,       // 4
+        OraclizeCosts // 5
+    }
+
+    // policy Status Codes and meaning:
+    //
+    // 00 = Applied:	  the customer has payed a premium, but the oracle has
+    //					        not yet checked and confirmed.
+    //					        The customer can still revoke the policy.
+    // 01 = Accepted:	  the oracle has checked and confirmed.
+    //					        The customer can still revoke the policy.
+    // 02 = Revoked:	  The customer has revoked the policy.
+    //					        The premium minus cancellation fee is payed back to the
+    //					        customer by the oracle.
+    // 03 = PaidOut:	  The flight has ended with delay.
+    //					        The oracle has checked and payed out.
+    // 04 = Expired:	  The flight has endet with <15min. delay.
+    //					        No payout.
+    // 05 = Declined:	  The application was invalid.
+    //					        The premium minus cancellation fee is payed back to the
+    //					        customer by the oracle.
+    // 06 = SendFailed:	During Revoke, Decline or Payout, sending ether failed
+    //					        for unknown reasons.
+    //					        The funds remain in the contracts RiskFund.
+
+
+    //                   00       01        02       03        04      05           06
+    enum policyState { Applied, Accepted, Revoked, PaidOut, Expired, Declined, SendFailed }
+
+    // oraclize callback types:
+    enum oraclizeState { ForUnderwriting, ForPayout }
+
+    //               00   01   02   03
+    enum Currency { ETH, EUR, USD, GBP }
+
+    // the policy structure: this structure keeps track of the individual parameters of a policy.
+    // typically customer address, premium and some status information.
+    struct Policy {
+        // 0 - the customer
+        address customer;
+
+        // 1 - premium
+        uint premium;
+        // risk specific parameters:
+        // 2 - pointer to the risk in the risks mapping
+        bytes32 riskId;
+        // custom payout pattern
+        // in future versions, customer will be able to tamper with this array.
+        // to keep things simple, we have decided to hard-code the array for all policies.
+        // uint8[5] pattern;
+        // 3 - probability weight. this is the central parameter
+        uint weight;
+        // 4 - calculated Payout
+        uint calculatedPayout;
+        // 5 - actual Payout
+        uint actualPayout;
+
+        // status fields:
+        // 6 - the state of the policy
+        policyState state;
+        // 7 - time of last state change
+        uint stateTime;
+        // 8 - state change message/reason
+        bytes32 stateMessage;
+        // 9 - TLSNotary Proof
+        bytes proof;
+        // 10 - Currency
+        Currency currency;
+        // 10 - External customer id
+        bytes32 customerExternalId;
+    }
+
+    // the risk structure; this structure keeps track of the risk-
+    // specific parameters.
+    // several policies can share the same risk structure (typically
+    // some people flying with the same plane)
+    struct Risk {
+        // 0 - Airline Code + FlightNumber
+        bytes32 carrierFlightNumber;
+        // 1 - scheduled departure and arrival time in the format /dep/YYYY/MM/DD
+        bytes32 departureYearMonthDay;
+        // 2 - the inital arrival time
+        uint arrivalTime;
+        // 3 - the final delay in minutes
+        uint delayInMinutes;
+        // 4 - the determined delay category (0-5)
+        uint8 delay;
+        // 5 - we limit the cumulated weighted premium to avoid cluster risks
+        uint cumulatedWeightedPremium;
+        // 6 - max cumulated Payout for this risk
+        uint premiumMultiplier;
+    }
+
+    // the oraclize callback structure: we use several oraclize calls.
+    // all oraclize calls will result in a common callback to __callback(...).
+    // to keep track of the different querys we have to introduce this struct.
+    struct OraclizeCallback {
+        // for which policy have we called?
+        uint policyId;
+        // for which purpose did we call? {ForUnderwrite | ForPayout}
+        oraclizeState oState;
+        // time
+        uint oraclizeTime;
+    }
+
+    struct Customer {
+        bytes32 customerExternalId;
+        bool identityConfirmed;
+    }
+}
+
+// File: contracts/FlightDelayControlledContract.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description Controlled contract Interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock
+ */
+
+pragma solidity ^0.4.11;
+
+
+
+
+
+contract FlightDelayControlledContract is FlightDelayDatabaseModel {
+
+    address public controller;
+    FlightDelayControllerInterface FD_CI;
+
+    modifier onlyController() {
+        require(msg.sender == controller);
+        _;
+    }
+
+    function setController(address _controller) internal returns (bool _result) {
+        controller = _controller;
+        FD_CI = FlightDelayControllerInterface(_controller);
+        _result = true;
+    }
+
+    function destruct() public onlyController {
+        selfdestruct(controller);
+    }
+
+    function setContracts() public onlyController {}
+
+    function getContract(bytes32 _id) internal returns (address _addr) {
+        _addr = FD_CI.getContract(_id);
+    }
+}
+
+// File: contracts/FlightDelayDatabaseInterface.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description Database contract interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+
+
 contract FlightDelayDatabaseInterface is FlightDelayDatabaseModel {
 
-    function setAccessControl(address _contract, address _caller, uint8 _perm);
+    uint public MIN_DEPARTURE_LIM;
+
+    uint public MAX_DEPARTURE_LIM;
+
+    bytes32[] public validOrigins;
+
+    bytes32[] public validDestinations;
+
+    function countOrigins() public constant returns (uint256 _length);
+
+    function getOriginByIndex(uint256 _i) public constant returns (bytes32 _origin);
+
+    function countDestinations() public constant returns (uint256 _length);
+
+    function getDestinationByIndex(uint256 _i) public constant returns (bytes32 _destination);
+
+    function setAccessControl(address _contract, address _caller, uint8 _perm) public;
 
     function setAccessControl(
         address _contract,
         address _caller,
         uint8 _perm,
         bool _access
-    );
+    ) public;
 
-    function getAccessControl(address _contract, address _caller, uint8 _perm) returns (bool _allowed);
+    function getAccessControl(address _contract, address _caller, uint8 _perm) public returns (bool _allowed) ;
 
-    function setLedger(uint8 _index, int _value);
+    function setLedger(uint8 _index, int _value) public;
 
-    function getLedger(uint8 _index) returns (int _value);
+    function getLedger(uint8 _index) public returns (int _value) ;
 
-    function getCustomerPremium(uint _policyId) returns (address _customer, uint _premium);
+    function getCustomerPremium(uint _policyId) public returns (address _customer, uint _premium) ;
 
-    function getPolicyData(uint _policyId) returns (address _customer, uint _premium, uint _weight);
+    function getPolicyData(uint _policyId) public returns (address _customer, uint _premium, uint _weight) ;
 
-    function getPolicyState(uint _policyId) returns (policyState _state);
+    function getPolicyState(uint _policyId) public returns (policyState _state) ;
 
-    function getRiskId(uint _policyId) returns (bytes32 _riskId);
+    function getRiskId(uint _policyId) public returns (bytes32 _riskId);
 
-    function createPolicy(address _customer, uint _premium, Currency _currency, bytes32 _customerExternalId, bytes32 _riskId) returns (uint _policyId);
+    function createPolicy(address _customer, uint _premium, Currency _currency, bytes32 _customerExternalId, bytes32 _riskId) public returns (uint _policyId) ;
 
     function setState(
         uint _policyId,
         policyState _state,
         uint _stateTime,
         bytes32 _stateMessage
-    );
+    ) public;
 
-    function setWeight(uint _policyId, uint _weight, bytes _proof);
+    function setWeight(uint _policyId, uint _weight, bytes _proof) public;
 
-    function setPayouts(uint _policyId, uint _calculatedPayout, uint _actualPayout);
+    function setPayouts(uint _policyId, uint _calculatedPayout, uint _actualPayout) public;
 
-    function setDelay(uint _policyId, uint8 _delay, uint _delayInMinutes);
+    function setDelay(uint _policyId, uint8 _delay, uint _delayInMinutes) public;
 
     function getRiskParameters(bytes32 _riskId)
-        returns (bytes32 _carrierFlightNumber, bytes32 _departureYearMonthDay, uint _arrivalTime);
+        public returns (bytes32 _carrierFlightNumber, bytes32 _departureYearMonthDay, uint _arrivalTime) ;
 
     function getPremiumFactors(bytes32 _riskId)
-        returns (uint _cumulatedWeightedPremium, uint _premiumMultiplier);
+        public returns (uint _cumulatedWeightedPremium, uint _premiumMultiplier);
 
     function createUpdateRisk(bytes32 _carrierFlightNumber, bytes32 _departureYearMonthDay, uint _arrivalTime)
-        returns (bytes32 _riskId);
+        public returns (bytes32 _riskId);
 
-    function setPremiumFactors(bytes32 _riskId, uint _cumulatedWeightedPremium, uint _premiumMultiplier);
+    function setPremiumFactors(bytes32 _riskId, uint _cumulatedWeightedPremium, uint _premiumMultiplier) public;
 
     function getOraclizeCallback(bytes32 _queryId)
-        returns (uint _policyId, uint _arrivalTime);
+        public returns (uint _policyId, uint _oraclizeTime) ;
 
     function getOraclizePolicyId(bytes32 _queryId)
-    returns (uint _policyId);
+        public returns (uint _policyId) ;
 
     function createOraclizeCallback(
         bytes32 _queryId,
         uint _policyId,
         oraclizeState _oraclizeState,
         uint _oraclizeTime
-    );
+    ) public;
 
     function checkTime(bytes32 _queryId, bytes32 _riskId, uint _offset)
-        returns (bool _result);
+        public returns (bool _result) ;
 }
+
+// File: contracts/FlightDelayLedgerInterface.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Ledger contract interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+
 
 contract FlightDelayLedgerInterface is FlightDelayDatabaseModel {
 
-    function receiveFunds(Acc _to) payable;
+    function receiveFunds(Acc _to) public payable;
 
-    function sendFunds(address _recipient, Acc _from, uint _amount) returns (bool _success);
+    function sendFunds(address _recipient, Acc _from, uint _amount) public returns (bool _success);
 
-    function bookkeeping(Acc _from, Acc _to, uint amount);
+    function bookkeeping(Acc _from, Acc _to, uint amount) public;
 }
 
-contract FlightDelayPayoutInterface {
+// File: vendors/usingOraclize.sol
 
-    function schedulePayoutOraclizeCall(uint _policyId, bytes32 _riskId, uint _offset);
-}
+// <ORACLIZE_API>
+/*
+Copyright (c) 2015-2016 Oraclize SRL
+Copyright (c) 2016 Oraclize LTD
+
+
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+
 
 contract OraclizeI {
     address public cbAddress;
@@ -1453,6 +2295,21 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
+// File: contracts/FlightDelayOraclizeInterface.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Ocaclize API interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+
+
 contract FlightDelayOraclizeInterface is usingOraclize {
 
     modifier onlyOraclizeOr (address _emergency) {
@@ -1462,6 +2319,37 @@ contract FlightDelayOraclizeInterface is usingOraclize {
         _;
     }
 }
+
+// File: contracts/FlightDelayPayoutInterface.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Payout contract interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+contract FlightDelayPayoutInterface {
+
+    function schedulePayoutOraclizeCall(uint _policyId, bytes32 _riskId, uint _offset) public;
+}
+
+// File: contracts/convertLib.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Conversions
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock
+ */
+
+pragma solidity ^0.4.11;
+
 
 contract ConvertLib {
 
@@ -1578,680 +2466,28 @@ contract ConvertLib {
     }
 }
 
-library strings {
-    struct slice {
-        uint _len;
-        uint _ptr;
-    }
+// File: contracts/FlightDelayPayout.sol
 
-    function memcpy(uint dest, uint src, uint len) private {
-        // Copy word-length chunks while possible
-        for(; len >= 32; len -= 32) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += 32;
-            src += 32;
-        }
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Payout contract
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock
+ */
 
-        // Copy remaining bytes
-        uint mask = 256 ** (32 - len) - 1;
-        assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
-        }
-    }
+pragma solidity ^0.4.11;
 
-    /*
-     * @dev Returns a slice containing the entire string.
-     * @param self The string to make a slice from.
-     * @return A newly allocated slice containing the entire string.
-     */
-    function toSlice(string self) internal returns (slice) {
-        uint ptr;
-        assembly {
-            ptr := add(self, 0x20)
-        }
-        return slice(bytes(self).length, ptr);
-    }
 
-    /*
-     * @dev Returns the length of a null-terminated bytes32 string.
-     * @param self The value to find the length of.
-     * @return The length of the string, from 0 to 32.
-     */
-    function len(bytes32 self) internal returns (uint) {
-        uint ret;
-        if (self == 0)
-            return 0;
-        if (self & 0xffffffffffffffffffffffffffffffff == 0) {
-            ret += 16;
-            self = bytes32(uint(self) / 0x100000000000000000000000000000000);
-        }
-        if (self & 0xffffffffffffffff == 0) {
-            ret += 8;
-            self = bytes32(uint(self) / 0x10000000000000000);
-        }
-        if (self & 0xffffffff == 0) {
-            ret += 4;
-            self = bytes32(uint(self) / 0x100000000);
-        }
-        if (self & 0xffff == 0) {
-            ret += 2;
-            self = bytes32(uint(self) / 0x10000);
-        }
-        if (self & 0xff == 0) {
-            ret += 1;
-        }
-        return 32 - ret;
-    }
 
-    /*
-     * @dev Returns a slice containing the entire bytes32, interpreted as a
-     *      null-termintaed utf-8 string.
-     * @param self The bytes32 value to convert to a slice.
-     * @return A new slice containing the value of the input argument up to the
-     *         first null.
-     */
-    function toSliceB32(bytes32 self) internal returns (slice ret) {
-        // Allocate space for `self` in memory, copy it there, and point ret at it
-        assembly {
-            let ptr := mload(0x40)
-            mstore(0x40, add(ptr, 0x20))
-            mstore(ptr, self)
-            mstore(add(ret, 0x20), ptr)
-        }
-        ret._len = len(self);
-    }
 
-    /*
-     * @dev Returns a new slice containing the same data as the current slice.
-     * @param self The slice to copy.
-     * @return A new slice containing the same data as `self`.
-     */
-    function copy(slice self) internal returns (slice) {
-        return slice(self._len, self._ptr);
-    }
 
-    /*
-     * @dev Copies a slice to a new string.
-     * @param self The slice to copy.
-     * @return A newly allocated string containing the slice's text.
-     */
-    function toString(slice self) internal returns (string) {
-        var ret = new string(self._len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
 
-        memcpy(retptr, self._ptr, self._len);
-        return ret;
-    }
 
-    /*
-     * @dev Returns the length in runes of the slice. Note that this operation
-     *      takes time proportional to the length of the slice; avoid using it
-     *      in loops, and call `slice.empty()` if you only need to know whether
-     *      the slice is empty or not.
-     * @param self The slice to operate on.
-     * @return The length of the slice in runes.
-     */
-    function len(slice self) internal returns (uint) {
-        // Starting at ptr-31 means the LSB will be the byte we care about
-        var ptr = self._ptr - 31;
-        var end = ptr + self._len;
-        for (uint len = 0; ptr < end; len++) {
-            uint8 b;
-            assembly { b := and(mload(ptr), 0xFF) }
-            if (b < 0x80) {
-                ptr += 1;
-            } else if(b < 0xE0) {
-                ptr += 2;
-            } else if(b < 0xF0) {
-                ptr += 3;
-            } else if(b < 0xF8) {
-                ptr += 4;
-            } else if(b < 0xFC) {
-                ptr += 5;
-            } else {
-                ptr += 6;
-            }
-        }
-        return len;
-    }
 
-    /*
-     * @dev Returns true if the slice is empty (has a length of 0).
-     * @param self The slice to operate on.
-     * @return True if the slice is empty, False otherwise.
-     */
-    function empty(slice self) internal returns (bool) {
-        return self._len == 0;
-    }
 
-    /*
-     * @dev Returns a positive number if `other` comes lexicographically after
-     *      `self`, a negative number if it comes before, or zero if the
-     *      contents of the two slices are equal. Comparison is done per-rune,
-     *      on unicode codepoints.
-     * @param self The first slice to compare.
-     * @param other The second slice to compare.
-     * @return The result of the comparison.
-     */
-    function compare(slice self, slice other) internal returns (int) {
-        uint shortest = self._len;
-        if (other._len < self._len)
-            shortest = other._len;
 
-        var selfptr = self._ptr;
-        var otherptr = other._ptr;
-        for (uint idx = 0; idx < shortest; idx += 32) {
-            uint a;
-            uint b;
-            assembly {
-                a := mload(selfptr)
-                b := mload(otherptr)
-            }
-            if (a != b) {
-                // Mask out irrelevant bytes and check again
-                uint mask = ~(2 ** (8 * (32 - shortest + idx)) - 1);
-                var diff = (a & mask) - (b & mask);
-                if (diff != 0)
-                    return int(diff);
-            }
-            selfptr += 32;
-            otherptr += 32;
-        }
-        return int(self._len) - int(other._len);
-    }
 
-    /*
-     * @dev Returns true if the two slices contain the same text.
-     * @param self The first slice to compare.
-     * @param self The second slice to compare.
-     * @return True if the slices are equal, false otherwise.
-     */
-    function equals(slice self, slice other) internal returns (bool) {
-        return compare(self, other) == 0;
-    }
-
-    /*
-     * @dev Extracts the first rune in the slice into `rune`, advancing the
-     *      slice to point to the next rune and returning `self`.
-     * @param self The slice to operate on.
-     * @param rune The slice that will contain the first rune.
-     * @return `rune`.
-     */
-    function nextRune(slice self, slice rune) internal returns (slice) {
-        rune._ptr = self._ptr;
-
-        if (self._len == 0) {
-            rune._len = 0;
-            return rune;
-        }
-
-        uint len;
-        uint b;
-        // Load the first byte of the rune into the LSBs of b
-        assembly { b := and(mload(sub(mload(add(self, 32)), 31)), 0xFF) }
-        if (b < 0x80) {
-            len = 1;
-        } else if(b < 0xE0) {
-            len = 2;
-        } else if(b < 0xF0) {
-            len = 3;
-        } else {
-            len = 4;
-        }
-
-        // Check for truncated codepoints
-        if (len > self._len) {
-            rune._len = self._len;
-            self._ptr += self._len;
-            self._len = 0;
-            return rune;
-        }
-
-        self._ptr += len;
-        self._len -= len;
-        rune._len = len;
-        return rune;
-    }
-
-    /*
-     * @dev Returns the first rune in the slice, advancing the slice to point
-     *      to the next rune.
-     * @param self The slice to operate on.
-     * @return A slice containing only the first rune from `self`.
-     */
-    function nextRune(slice self) internal returns (slice ret) {
-        nextRune(self, ret);
-    }
-
-    /*
-     * @dev Returns the number of the first codepoint in the slice.
-     * @param self The slice to operate on.
-     * @return The number of the first codepoint in the slice.
-     */
-    function ord(slice self) internal returns (uint ret) {
-        if (self._len == 0) {
-            return 0;
-        }
-
-        uint word;
-        uint len;
-        uint div = 2 ** 248;
-
-        // Load the rune into the MSBs of b
-        assembly { word:= mload(mload(add(self, 32))) }
-        var b = word / div;
-        if (b < 0x80) {
-            ret = b;
-            len = 1;
-        } else if(b < 0xE0) {
-            ret = b & 0x1F;
-            len = 2;
-        } else if(b < 0xF0) {
-            ret = b & 0x0F;
-            len = 3;
-        } else {
-            ret = b & 0x07;
-            len = 4;
-        }
-
-        // Check for truncated codepoints
-        if (len > self._len) {
-            return 0;
-        }
-
-        for (uint i = 1; i < len; i++) {
-            div = div / 256;
-            b = (word / div) & 0xFF;
-            if (b & 0xC0 != 0x80) {
-                // Invalid UTF-8 sequence
-                return 0;
-            }
-            ret = (ret * 64) | (b & 0x3F);
-        }
-
-        return ret;
-    }
-
-    /*
-     * @dev Returns the keccak-256 hash of the slice.
-     * @param self The slice to hash.
-     * @return The hash of the slice.
-     */
-    function keccak(slice self) internal returns (bytes32 ret) {
-        assembly {
-            ret := sha3(mload(add(self, 32)), mload(self))
-        }
-    }
-
-    /*
-     * @dev Returns true if `self` starts with `needle`.
-     * @param self The slice to operate on.
-     * @param needle The slice to search for.
-     * @return True if the slice starts with the provided text, false otherwise.
-     */
-    function startsWith(slice self, slice needle) internal returns (bool) {
-        if (self._len < needle._len) {
-            return false;
-        }
-
-        if (self._ptr == needle._ptr) {
-            return true;
-        }
-
-        bool equal;
-        assembly {
-            let len := mload(needle)
-            let selfptr := mload(add(self, 0x20))
-            let needleptr := mload(add(needle, 0x20))
-            equal := eq(sha3(selfptr, len), sha3(needleptr, len))
-        }
-        return equal;
-    }
-
-    /*
-     * @dev If `self` starts with `needle`, `needle` is removed from the
-     *      beginning of `self`. Otherwise, `self` is unmodified.
-     * @param self The slice to operate on.
-     * @param needle The slice to search for.
-     * @return `self`
-     */
-    function beyond(slice self, slice needle) internal returns (slice) {
-        if (self._len < needle._len) {
-            return self;
-        }
-
-        bool equal = true;
-        if (self._ptr != needle._ptr) {
-            assembly {
-                let len := mload(needle)
-                let selfptr := mload(add(self, 0x20))
-                let needleptr := mload(add(needle, 0x20))
-                equal := eq(sha3(selfptr, len), sha3(needleptr, len))
-            }
-        }
-
-        if (equal) {
-            self._len -= needle._len;
-            self._ptr += needle._len;
-        }
-
-        return self;
-    }
-
-    /*
-     * @dev Returns true if the slice ends with `needle`.
-     * @param self The slice to operate on.
-     * @param needle The slice to search for.
-     * @return True if the slice starts with the provided text, false otherwise.
-     */
-    function endsWith(slice self, slice needle) internal returns (bool) {
-        if (self._len < needle._len) {
-            return false;
-        }
-
-        var selfptr = self._ptr + self._len - needle._len;
-
-        if (selfptr == needle._ptr) {
-            return true;
-        }
-
-        bool equal;
-        assembly {
-            let len := mload(needle)
-            let needleptr := mload(add(needle, 0x20))
-            equal := eq(sha3(selfptr, len), sha3(needleptr, len))
-        }
-
-        return equal;
-    }
-
-    /*
-     * @dev If `self` ends with `needle`, `needle` is removed from the
-     *      end of `self`. Otherwise, `self` is unmodified.
-     * @param self The slice to operate on.
-     * @param needle The slice to search for.
-     * @return `self`
-     */
-    function until(slice self, slice needle) internal returns (slice) {
-        if (self._len < needle._len) {
-            return self;
-        }
-
-        var selfptr = self._ptr + self._len - needle._len;
-        bool equal = true;
-        if (selfptr != needle._ptr) {
-            assembly {
-                let len := mload(needle)
-                let needleptr := mload(add(needle, 0x20))
-                equal := eq(sha3(selfptr, len), sha3(needleptr, len))
-            }
-        }
-
-        if (equal) {
-            self._len -= needle._len;
-        }
-
-        return self;
-    }
-
-    // Returns the memory address of the first byte of the first occurrence of
-    // `needle` in `self`, or the first byte after `self` if not found.
-    function findPtr(uint selflen, uint selfptr, uint needlelen, uint needleptr) private returns (uint) {
-        uint ptr;
-        uint idx;
-
-        if (needlelen <= selflen) {
-            if (needlelen <= 32) {
-                // Optimized assembly for 68 gas per byte on short strings
-                assembly {
-                    let mask := not(sub(exp(2, mul(8, sub(32, needlelen))), 1))
-                    let needledata := and(mload(needleptr), mask)
-                    let end := add(selfptr, sub(selflen, needlelen))
-                    ptr := selfptr
-                    loop:
-                    jumpi(exit, eq(and(mload(ptr), mask), needledata))
-                    ptr := add(ptr, 1)
-                    jumpi(loop, lt(sub(ptr, 1), end))
-                    ptr := add(selfptr, selflen)
-                    exit:
-                }
-                return ptr;
-            } else {
-                // For long needles, use hashing
-                bytes32 hash;
-                assembly { hash := sha3(needleptr, needlelen) }
-                ptr = selfptr;
-                for (idx = 0; idx <= selflen - needlelen; idx++) {
-                    bytes32 testHash;
-                    assembly { testHash := sha3(ptr, needlelen) }
-                    if (hash == testHash)
-                        return ptr;
-                    ptr += 1;
-                }
-            }
-        }
-        return selfptr + selflen;
-    }
-
-    // Returns the memory address of the first byte after the last occurrence of
-    // `needle` in `self`, or the address of `self` if not found.
-    function rfindPtr(uint selflen, uint selfptr, uint needlelen, uint needleptr) private returns (uint) {
-        uint ptr;
-
-        if (needlelen <= selflen) {
-            if (needlelen <= 32) {
-                // Optimized assembly for 69 gas per byte on short strings
-                assembly {
-                    let mask := not(sub(exp(2, mul(8, sub(32, needlelen))), 1))
-                    let needledata := and(mload(needleptr), mask)
-                    ptr := add(selfptr, sub(selflen, needlelen))
-                    loop:
-                    jumpi(ret, eq(and(mload(ptr), mask), needledata))
-                    ptr := sub(ptr, 1)
-                    jumpi(loop, gt(add(ptr, 1), selfptr))
-                    ptr := selfptr
-                    jump(exit)
-                    ret:
-                    ptr := add(ptr, needlelen)
-                    exit:
-                }
-                return ptr;
-            } else {
-                // For long needles, use hashing
-                bytes32 hash;
-                assembly { hash := sha3(needleptr, needlelen) }
-                ptr = selfptr + (selflen - needlelen);
-                while (ptr >= selfptr) {
-                    bytes32 testHash;
-                    assembly { testHash := sha3(ptr, needlelen) }
-                    if (hash == testHash)
-                        return ptr + needlelen;
-                    ptr -= 1;
-                }
-            }
-        }
-        return selfptr;
-    }
-
-    /*
-     * @dev Modifies `self` to contain everything from the first occurrence of
-     *      `needle` to the end of the slice. `self` is set to the empty slice
-     *      if `needle` is not found.
-     * @param self The slice to search and modify.
-     * @param needle The text to search for.
-     * @return `self`.
-     */
-    function find(slice self, slice needle) internal returns (slice) {
-        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr);
-        self._len -= ptr - self._ptr;
-        self._ptr = ptr;
-        return self;
-    }
-
-    /*
-     * @dev Modifies `self` to contain the part of the string from the start of
-     *      `self` to the end of the first occurrence of `needle`. If `needle`
-     *      is not found, `self` is set to the empty slice.
-     * @param self The slice to search and modify.
-     * @param needle The text to search for.
-     * @return `self`.
-     */
-    function rfind(slice self, slice needle) internal returns (slice) {
-        uint ptr = rfindPtr(self._len, self._ptr, needle._len, needle._ptr);
-        self._len = ptr - self._ptr;
-        return self;
-    }
-
-    /*
-     * @dev Splits the slice, setting `self` to everything after the first
-     *      occurrence of `needle`, and `token` to everything before it. If
-     *      `needle` does not occur in `self`, `self` is set to the empty slice,
-     *      and `token` is set to the entirety of `self`.
-     * @param self The slice to split.
-     * @param needle The text to search for in `self`.
-     * @param token An output parameter to which the first token is written.
-     * @return `token`.
-     */
-    function split(slice self, slice needle, slice token) internal returns (slice) {
-        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr);
-        token._ptr = self._ptr;
-        token._len = ptr - self._ptr;
-        if (ptr == self._ptr + self._len) {
-            // Not found
-            self._len = 0;
-        } else {
-            self._len -= token._len + needle._len;
-            self._ptr = ptr + needle._len;
-        }
-        return token;
-    }
-
-    /*
-     * @dev Splits the slice, setting `self` to everything after the first
-     *      occurrence of `needle`, and returning everything before it. If
-     *      `needle` does not occur in `self`, `self` is set to the empty slice,
-     *      and the entirety of `self` is returned.
-     * @param self The slice to split.
-     * @param needle The text to search for in `self`.
-     * @return The part of `self` up to the first occurrence of `delim`.
-     */
-    function split(slice self, slice needle) internal returns (slice token) {
-        split(self, needle, token);
-    }
-
-    /*
-     * @dev Splits the slice, setting `self` to everything before the last
-     *      occurrence of `needle`, and `token` to everything after it. If
-     *      `needle` does not occur in `self`, `self` is set to the empty slice,
-     *      and `token` is set to the entirety of `self`.
-     * @param self The slice to split.
-     * @param needle The text to search for in `self`.
-     * @param token An output parameter to which the first token is written.
-     * @return `token`.
-     */
-    function rsplit(slice self, slice needle, slice token) internal returns (slice) {
-        uint ptr = rfindPtr(self._len, self._ptr, needle._len, needle._ptr);
-        token._ptr = ptr;
-        token._len = self._len - (ptr - self._ptr);
-        if (ptr == self._ptr) {
-            // Not found
-            self._len = 0;
-        } else {
-            self._len -= token._len + needle._len;
-        }
-        return token;
-    }
-
-    /*
-     * @dev Splits the slice, setting `self` to everything before the last
-     *      occurrence of `needle`, and returning everything after it. If
-     *      `needle` does not occur in `self`, `self` is set to the empty slice,
-     *      and the entirety of `self` is returned.
-     * @param self The slice to split.
-     * @param needle The text to search for in `self`.
-     * @return The part of `self` after the last occurrence of `delim`.
-     */
-    function rsplit(slice self, slice needle) internal returns (slice token) {
-        rsplit(self, needle, token);
-    }
-
-    /*
-     * @dev Counts the number of nonoverlapping occurrences of `needle` in `self`.
-     * @param self The slice to search.
-     * @param needle The text to search for in `self`.
-     * @return The number of occurrences of `needle` found in `self`.
-     */
-    function count(slice self, slice needle) internal returns (uint count) {
-        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr) + needle._len;
-        while (ptr <= self._ptr + self._len) {
-            count++;
-            ptr = findPtr(self._len - (ptr - self._ptr), ptr, needle._len, needle._ptr) + needle._len;
-        }
-    }
-
-    /*
-     * @dev Returns True if `self` contains `needle`.
-     * @param self The slice to search.
-     * @param needle The text to search for in `self`.
-     * @return True if `needle` is found in `self`, false otherwise.
-     */
-    function contains(slice self, slice needle) internal returns (bool) {
-        return rfindPtr(self._len, self._ptr, needle._len, needle._ptr) != self._ptr;
-    }
-
-    /*
-     * @dev Returns a newly allocated string containing the concatenation of
-     *      `self` and `other`.
-     * @param self The first slice to concatenate.
-     * @param other The second slice to concatenate.
-     * @return The concatenation of the two strings.
-     */
-    function concat(slice self, slice other) internal returns (string) {
-        var ret = new string(self._len + other._len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
-        memcpy(retptr, self._ptr, self._len);
-        memcpy(retptr + self._len, other._ptr, other._len);
-        return ret;
-    }
-
-    /*
-     * @dev Joins an array of slices, using `self` as a delimiter, returning a
-     *      newly allocated string.
-     * @param self The delimiter to use.
-     * @param parts A list of slices to join.
-     * @return A newly allocated string containing all the slices in `parts`,
-     *         joined with `self`.
-     */
-    function join(slice self, slice[] parts) internal returns (string) {
-        if (parts.length == 0)
-            return "";
-
-        uint len = self._len * (parts.length - 1);
-        for(uint i = 0; i < parts.length; i++)
-            len += parts[i]._len;
-
-        var ret = new string(len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
-
-        for(i = 0; i < parts.length; i++) {
-            memcpy(retptr, parts[i]._ptr, parts[i]._len);
-            retptr += parts[i]._len;
-            if (i < parts.length - 1) {
-                memcpy(retptr, self._ptr, self._len);
-                retptr += self._len;
-            }
-        }
-
-        return ret;
-    }
-}
 
 contract FlightDelayPayout is FlightDelayControlledContract, FlightDelayConstants, FlightDelayOraclizeInterface, ConvertLib {
 
@@ -2265,8 +2501,9 @@ contract FlightDelayPayout is FlightDelayControlledContract, FlightDelayConstant
      * @dev Contract constructor sets its controller
      * @param _controller FD.Controller
      */
-    function FlightDelayPayout(address _controller) {
+    function FlightDelayPayout(address _controller) public {
         setController(_controller);
+        oraclize_setCustomGasPrice(ORACLIZE_GASPRICE);
     }
 
     /*
@@ -2282,14 +2519,14 @@ contract FlightDelayPayout is FlightDelayControlledContract, FlightDelayConstant
         FD_LG = FlightDelayLedgerInterface(getContract("FD.Ledger"));
 
         FD_AC.setPermissionById(101, "FD.Underwrite");
-        FD_AC.setPermissionById(101, "FD.Payout");
+        FD_AC.setPermissionByAddress(101, oraclize_cbAddress());
         FD_AC.setPermissionById(102, "FD.Funder");
     }
 
     /*
      * @dev Fund contract
      */
-    function fund() payable {
+    function () public payable {
         require(FD_AC.checkPermission(102, msg.sender));
 
         // todo: bookkeeping
