@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthVault at 0xe78a4Ed7A2d50C7206fEa45dd7418B71a6dE943B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthVault at 0xc710772a16fd040ed9c63de0679a57410981e3fc
 */
 // Copyright (C) 2017  The Halo Platform by Scott Morrison
 // https://www.haloplatform.tech/
@@ -45,7 +45,7 @@ contract TokenVault is Ownable {
 // store ether & tokens for a period of time
 contract EthVault is TokenVault {
     
-    string public constant version = "v1.2";
+    string public constant version = "v1.1";
     
     event Deposit(address indexed depositor, uint amount);
     event Withdrawal(address indexed to, uint amount);
@@ -58,7 +58,7 @@ contract EthVault is TokenVault {
 
     function init() payable open {
         Owner = msg.sender;
-        minDeposit = 0.5 ether;
+        minDeposit = 0.25 ether;
         Locked = false;
         deposit();
     }
