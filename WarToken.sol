@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WarToken at 0x0f4586b20fd52323fd18c4e6e376f724e0e7cad3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WarToken at 0xda9c03dfd4d137f926c3cf6953cb951832eb08b2
 */
 /* ==================================================================== */
 /* Copyright (c) 2018 The ether.online Project.  All rights reserved.
@@ -34,20 +34,6 @@ contract ERC721 is ERC165 {
 /// @title ERC-721 Non-Fungible Token Standard
 interface ERC721TokenReceiver {
 	function onERC721Received(address _from, uint256 _tokenId, bytes data) external returns(bytes4);
-}
-
-/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
-interface ERC721Metadata /* is ERC721 */ {
-    function name() external pure returns (string _name);
-    function symbol() external pure returns (string _symbol);
-    function tokenURI(uint256 _tokenId) external view returns (string);
-}
-
-/// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
-interface ERC721Enumerable /* is ERC721 */ {
-    function totalSupply() external view returns (uint256);
-    function tokenByIndex(uint256 _index) external view returns (uint256);
-    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256);
 }
 
 contract AccessAdmin {
@@ -91,38 +77,6 @@ contract AccessAdmin {
     }
 }
 
-/// This Random is inspired by https://github.com/axiomzen/eth-random
-contract Random {
-    uint256 _seed;
-
-    /// @dev ???????????????????
-    /// @return ???????
-    function _rand() internal returns (uint256) {
-        _seed = uint256(keccak256(_seed, block.blockhash(block.number - 1), block.coinbase, block.difficulty));
-        return _seed;
-    }
-
-    /// @dev ??????????????
-    /// @param _outSeed ???????
-    /// @return ???????
-    function _randBySeed(uint256 _outSeed) internal view returns (uint256) {
-        return uint256(keccak256(_outSeed, block.blockhash(block.number - 1), block.coinbase, block.difficulty));
-    }
-
-    /*
-    function _randByRange(uint256 _min, uint256 _max) internal returns (uint256) {
-        if (_min >= _max) {
-            return _min;
-        }
-        return (_rand() % (_max - _min)) + _min;
-    }
-
-    function _rankByNumber(uint256 _max) internal returns (uint256) {
-        return _rand() % _max;
-    }
-    */
-}
-
 contract WarToken is ERC721, AccessAdmin {
     /// @dev The equipment info
     struct Fashion {
@@ -134,10 +88,10 @@ contract WarToken is ERC721, AccessAdmin {
         uint16 atkMax;      // 5  Max attack
         uint16 defence;     // 6  Defennse
         uint16 crit;        // 7  Critical rate
-        uint16 attrExt1;    // 8  future stat 1
-        uint16 attrExt2;    // 9  future stat 2
-        uint16 attrExt3;    // 10 future stat 3
-        uint16 attrExt4;    // 11 future stat 4
+        uint16 isPercent;   // 8  Attr value type
+        uint16 attrExt1;    // 9  future stat 1
+        uint16 attrExt2;    // 10 future stat 2
+        uint16 attrExt3;    // 11 future stat 3
     }
 
     /// @dev All equipments tokenArray (not exceeding 2^32-1)
@@ -388,7 +342,7 @@ contract WarToken is ERC721, AccessAdmin {
     /// @param _owner Owner of the equipment created
     /// @param _attrs Attributes of the equipment created
     /// @return Token ID of the equipment created
-    function createFashion(address _owner, uint16[9] _attrs) 
+    function createFashion(address _owner, uint16[9] _attrs, uint16 _createType) 
         external 
         whenNotPaused
         returns(uint256)
@@ -420,9 +374,13 @@ contract WarToken is ERC721, AccessAdmin {
         if (_attrs[7] != 0) {
             fs.crit = _attrs[7];
         }
+
+        if (_attrs[8] != 0) {
+            fs.isPercent = _attrs[8];
+        }
         
         _transfer(0, _owner, newFashionId);
-        CreateFashion(_owner, newFashionId, _attrs[0], _attrs[1], _attrs[2], _attrs[8]);
+        CreateFashion(_owner, newFashionId, _attrs[0], _attrs[1], _attrs[2], _createType);
         return newFashionId;
     }
 
@@ -438,14 +396,12 @@ contract WarToken is ERC721, AccessAdmin {
             _fs.defence = _val;
         } else if(_index == 7) {
             _fs.crit = _val;
-        } else if(_index == 8) {
-            _fs.attrExt1 = _val;
         } else if(_index == 9) {
-            _fs.attrExt2 = _val;
+            _fs.attrExt1 = _val;
         } else if(_index == 10) {
+            _fs.attrExt2 = _val;
+        } else if(_index == 11) {
             _fs.attrExt3 = _val;
-        } else {
-            _fs.attrExt4 = _val;
         }
     }
 
@@ -541,10 +497,10 @@ contract WarToken is ERC721, AccessAdmin {
         datas[5] = fs.atkMax;
         datas[6] = fs.defence;
         datas[7] = fs.crit;
-        datas[8] = fs.attrExt1;
-        datas[9] = fs.attrExt2;
-        datas[10] = fs.attrExt3;
-        datas[11] = fs.attrExt4;
+        datas[8] = fs.isPercent;
+        datas[9] = fs.attrExt1;
+        datas[10] = fs.attrExt2;
+        datas[11] = fs.attrExt3;
     }
 
     /// @dev Get tokenIds and flags by owner
@@ -578,10 +534,10 @@ contract WarToken is ERC721, AccessAdmin {
                 attrs[index + 2] = fs.atkMax;
                 attrs[index + 3] = fs.defence;
                 attrs[index + 4] = fs.crit;
-                attrs[index + 5] = fs.attrExt1;
-                attrs[index + 6] = fs.attrExt2;
-                attrs[index + 7] = fs.attrExt3;
-                attrs[index + 8] = fs.attrExt4;
+                attrs[index + 5] = fs.isPercent;
+                attrs[index + 6] = fs.attrExt1;
+                attrs[index + 7] = fs.attrExt2;
+                attrs[index + 8] = fs.attrExt3;
             }   
         }
     }
