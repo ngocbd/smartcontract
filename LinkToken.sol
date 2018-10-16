@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LinkToken at 0x514910771af9ca656af840dff83e8264ecf986ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LinkToken at 0x7fddac3f0807b135488795b42cd2dcd3ef8c3a0b
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.20;
 
 
 /**
@@ -223,9 +223,9 @@ contract ERC677Token is ERC677 {
 contract LinkToken is StandardToken, ERC677Token {
 
   uint public constant totalSupply = 10**27;
-  string public constant name = 'ChainLink Token';
+  string public constant name = 'ChadLink Token';
   uint8 public constant decimals = 18;
-  string public constant symbol = 'LINK';
+  string public constant symbol = 'CHAD';
 
   function LinkToken()
     public
