@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FranklinFarmer at 0x3d9c195ae5feb66b1a7641e789338b50683ff747
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FranklinFarmer at 0xee6d409e9d08af082c2493ea955a0d3ea418dc0f
 */
 pragma solidity ^0.4.20;
 
@@ -61,7 +61,7 @@ contract FranklinFarmer is Ownable {
     uint256 public marketKnowledge;
 
     constructor() public {
-        contractCall = _Contract(0x05215FCE25902366480696F38C3093e31DBCE69A);
+        contractCall = _Contract(0x08225EDDCCE6AbaDF3E789723f6760Aac5Aa5917);
     }
 
     // If you send money directly to the contract it gets treated like a donation
