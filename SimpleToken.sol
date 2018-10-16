@@ -1,417 +1,197 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x2C4e8f2D746113d0696cE89B35F0d8bF88E0AEcA
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x149b34edead60b2443401cb5accbd5658b856f8f
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.11;
 
-// ----------------------------------------------------------------------------
-// Simple Token Contract
-//
-// Copyright (c) 2017 OpenST Ltd.
-// https://simpletoken.org/
-//
-// The MIT Licence.
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// SafeMath Library Implementation
-//
-// Copyright (c) 2017 OpenST Ltd.
-// https://simpletoken.org/
-//
-// The MIT Licence.
-//
-// Based on the SafeMath library by the OpenZeppelin team.
-// Copyright (c) 2016 Smart Contract Solutions, Inc.
-// https://github.com/OpenZeppelin/zeppelin-solidity
-// The MIT License.
-// ----------------------------------------------------------------------------
-
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-
-        assert(a == 0 || c / a == b);
-
-        return c;
-    }
-
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-
-        return a - b;
-    }
-
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-
-        assert(c >= a);
-
-        return c;
-    }
-}
-
-//
-// Implements basic ownership with 2-step transfers.
-//
-contract Owned {
-
-    address public owner;
-    address public proposedOwner;
-
-    event OwnershipTransferInitiated(address indexed _proposedOwner);
-    event OwnershipTransferCompleted(address indexed _newOwner);
-
-
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-
-    modifier onlyOwner() {
-        require(isOwner(msg.sender));
-        _;
-    }
-
-
-    function isOwner(address _address) internal view returns (bool) {
-        return (_address == owner);
-    }
-
-
-    function initiateOwnershipTransfer(address _proposedOwner) public onlyOwner returns (bool) {
-        proposedOwner = _proposedOwner;
-
-        OwnershipTransferInitiated(_proposedOwner);
-
-        return true;
-    }
-
-
-    function completeOwnershipTransfer() public returns (bool) {
-        require(msg.sender == proposedOwner);
-
-        owner = proposedOwner;
-        proposedOwner = address(0);
-
-        OwnershipTransferCompleted(owner);
-
-        return true;
-    }
-}
-
-contract SimpleTokenConfig {
-
-    string  public constant TOKEN_SYMBOL   = "ST";
-    string  public constant TOKEN_NAME     = "Simple Token";
-    uint8   public constant TOKEN_DECIMALS = 18;
-
-    uint256 public constant DECIMALSFACTOR = 10**uint256(TOKEN_DECIMALS);
-    uint256 public constant TOKENS_MAX     = 800000000 * DECIMALSFACTOR;
-}
-
-contract ERC20Interface {
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    function name() public view returns (string);
-    function symbol() public view returns (string);
-    function decimals() public view returns (uint8);
-    function totalSupply() public view returns (uint256);
-
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-}
-
-//
-// Standard ERC20 implementation, with ownership.
-//
-contract ERC20Token is ERC20Interface, Owned {
-
-    using SafeMath for uint256;
-
-    string  private tokenName;
-    string  private tokenSymbol;
-    uint8   private tokenDecimals;
-    uint256 internal tokenTotalSupply;
-
-    mapping(address => uint256) balances;
-    mapping(address => mapping (address => uint256)) allowed;
-
-
-    function ERC20Token(string _symbol, string _name, uint8 _decimals, uint256 _totalSupply) public
-        Owned()
-    {
-        tokenSymbol      = _symbol;
-        tokenName        = _name;
-        tokenDecimals    = _decimals;
-        tokenTotalSupply = _totalSupply;
-        balances[owner]  = _totalSupply;
-
-        // According to the ERC20 standard, a token contract which creates new tokens should trigger
-        // a Transfer event and transfers of 0 values must also fire the event.
-        Transfer(0x0, owner, _totalSupply);
-    }
-
-
-    function name() public view returns (string) {
-        return tokenName;
-    }
-
-
-    function symbol() public view returns (string) {
-        return tokenSymbol;
-    }
-
-
-    function decimals() public view returns (uint8) {
-        return tokenDecimals;
-    }
-
-
-    function totalSupply() public view returns (uint256) {
-        return tokenTotalSupply;
-    }
-
-
-    function balanceOf(address _owner) public view returns (uint256) {
-        return balances[_owner];
-    }
-
-
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        // According to the EIP20 spec, "transfers of 0 values MUST be treated as normal
-        // transfers and fire the Transfer event".
-        // Also, should throw if not enough balance. This is taken care of by SafeMath.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-
-        Transfer(msg.sender, _to, _value);
-
-        return true;
-    }
-
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-
-        Transfer(_from, _to, _value);
-
-        return true;
-    }
-
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-
-        allowed[msg.sender][_spender] = _value;
-
-        Approval(msg.sender, _spender, _value);
-
-        return true;
-    }
-
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 
-
-//
-// Implements a more advanced ownership and permission model based on owner,
-// admin and ops per Simple Token key management specification.
-//
-contract OpsManaged is Owned {
-
-    address public opsAddress;
-    address public adminAddress;
-
-    event AdminAddressChanged(address indexed _newAddress);
-    event OpsAddressChanged(address indexed _newAddress);
-
-
-    function OpsManaged() public
-        Owned()
-    {
-    }
-
-
-    modifier onlyAdmin() {
-        require(isAdmin(msg.sender));
-        _;
-    }
-
-
-    modifier onlyAdminOrOps() {
-        require(isAdmin(msg.sender) || isOps(msg.sender));
-        _;
-    }
-
-
-    modifier onlyOwnerOrAdmin() {
-        require(isOwner(msg.sender) || isAdmin(msg.sender));
-        _;
-    }
-
-
-    modifier onlyOps() {
-        require(isOps(msg.sender));
-        _;
-    }
-
-
-    function isAdmin(address _address) internal view returns (bool) {
-        return (adminAddress != address(0) && _address == adminAddress);
-    }
-
-
-    function isOps(address _address) internal view returns (bool) {
-        return (opsAddress != address(0) && _address == opsAddress);
-    }
-
-
-    function isOwnerOrOps(address _address) internal view returns (bool) {
-        return (isOwner(_address) || isOps(_address));
-    }
-
-
-    // Owner and Admin can change the admin address. Address can also be set to 0 to 'disable' it.
-    function setAdminAddress(address _adminAddress) external onlyOwnerOrAdmin returns (bool) {
-        require(_adminAddress != owner);
-        require(_adminAddress != address(this));
-        require(!isOps(_adminAddress));
-
-        adminAddress = _adminAddress;
-
-        AdminAddressChanged(_adminAddress);
-
-        return true;
-    }
-
-
-    // Owner and Admin can change the operations address. Address can also be set to 0 to 'disable' it.
-    function setOpsAddress(address _opsAddress) external onlyOwnerOrAdmin returns (bool) {
-        require(_opsAddress != owner);
-        require(_opsAddress != address(this));
-        require(!isAdmin(_opsAddress));
-
-        opsAddress = _opsAddress;
-
-        OpsAddressChanged(_opsAddress);
-
-        return true;
-    }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-//
-// SimpleToken is a standard ERC20 token with some additional functionality:
-// - It has a concept of finalize
-// - Before finalize, nobody can transfer tokens except:
-//     - Owner and operations can transfer tokens
-//     - Anybody can send back tokens to owner
-// - After finalize, no restrictions on token transfers
-//
+  mapping(address => uint256) balances;
 
-//
-// Permissions, according to the ST key management specification.
-//
-//                                    Owner    Admin   Ops
-// transfer (before finalize)           x               x
-// transferForm (before finalize)       x               x
-// finalize                                      x
-//
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-contract SimpleToken is ERC20Token, OpsManaged, SimpleTokenConfig {
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-    bool public finalized;
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
-    // Events
-    event Burnt(address indexed _from, uint256 _amount);
-    event Finalized();
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
 
-    function SimpleToken() public
-        ERC20Token(TOKEN_SYMBOL, TOKEN_NAME, TOKEN_DECIMALS, TOKENS_MAX)
-        OpsManaged()
-    {
-        finalized = false;
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
+}
 
-    // Implementation of the standard transfer method that takes into account the finalize flag.
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        checkTransferAllowed(msg.sender, _to);
+/**
+ * @title SimpleToken
+ * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
+ * Note they can later distribute these tokens as they wish using `transfer` and other
+ * `StandardToken` functions.
+ */
+contract SimpleToken is StandardToken {
 
-        return super.transfer(_to, _value);
-    }
+  string public constant name = "SharesToken";
+  string public constant symbol = "SHRE";
+  uint8 public constant decimals = 2;
+  uint256 public constant TotalSupply = 100000 * (10 ** uint256(decimals));
 
+  /**
+   * @dev Constructor that gives msg.sender all of existing tokens.
+   */
+  function SimpleToken() {
+    balances[msg.sender] = TotalSupply;
+  }
 
-    // Implementation of the standard transferFrom method that takes into account the finalize flag.
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        checkTransferAllowed(msg.sender, _to);
-
-        return super.transferFrom(_from, _to, _value);
-    }
-
-
-    function checkTransferAllowed(address _sender, address _to) private view {
-        if (finalized) {
-            // Everybody should be ok to transfer once the token is finalized.
-            return;
-        }
-
-        // Owner and Ops are allowed to transfer tokens before the sale is finalized.
-        // This allows the tokens to move from the TokenSale contract to a beneficiary.
-        // We also allow someone to send tokens back to the owner. This is useful among other
-        // cases, for the Trustee to transfer unlocked tokens back to the owner (reclaimTokens).
-        require(isOwnerOrOps(_sender) || _to == owner);
-    }
-
-    // Implement a burn function to permit msg.sender to reduce its balance
-    // which also reduces tokenTotalSupply
-    function burn(uint256 _value) public returns (bool success) {
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        tokenTotalSupply = tokenTotalSupply.sub(_value);
-
-        Burnt(msg.sender, _value);
-
-        return true;
-    }
-
-
-    // Finalize method marks the point where token transfers are finally allowed for everybody.
-    function finalize() external onlyAdmin returns (bool success) {
-        require(!finalized);
-
-        finalized = true;
-
-        Finalized();
-
-        return true;
-    }
 }
