@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIZE at 0x86eb746eb179487abb11dbc5180d544af981035a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIZE at 0xa010cfd6e52336eb25adacafb005c516645193dd
 */
 pragma solidity ^0.4.13;
 
@@ -277,73 +277,16 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-}
-
-contract WIZE is MintableToken, Destructible, HasNoEther, HasNoTokens  {
+contract WIZE is StandardToken, Destructible, HasNoEther, HasNoTokens  {
 
 	string public name = "WIZE";
 	string public symbol = "WIZE";
 	uint256 public decimals = 8;
 
-	mapping(address => bool) minters;
-
-	event MinterAdded(address _minter);
-	event MinterRemoved(address _minter);
-
-	function addMinter(address _minter) external onlyOwner {
-		minters[_minter] = true;
-		MinterAdded(_minter);
-	}
-
-	function removeMinter(address _minter) external onlyOwner {
-		minters[_minter] = false;
-		MinterRemoved(_minter);
-	}
-
-	function mint(address _to, uint256 _amount) onlyMinter canMint public returns (bool) {
-		totalSupply = totalSupply.add(_amount);
-		balances[_to] = balances[_to].add(_amount);
-		Mint(_to, _amount);
-		return true;
-	}
-
-	modifier onlyMinter() {
-		require(minters[msg.sender]);
-		_;
+	function WIZE() public
+	{
+		address master = 0x14010814F3d6fBDe4970E4f7B36CdfFB23B5FA4A;
+		balances[master] = 210e6 * 10**8;
+		Transfer(0x0, master, balances[master]);
 	}
 }
