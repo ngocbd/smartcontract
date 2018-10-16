@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wolker at 0x7e8f32453fba5c9c4926d26b34e985f36e0dce1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wolker at 0x84f5fb60fccd73f06867d800445b3fd8b01a2dd4
 */
 pragma solidity 0.4.11;
 
@@ -117,13 +117,13 @@ contract Wolker {
 
 
   //**** ERC20 TOK fields:
-  string  public constant name = 'Wolk Coin';
+  string  public constant name = 'Wolk';
   string  public constant symbol = "WOLK";
-  string  public constant version = "0.2.2";
+  string  public constant version = "0.2";
   uint256 public constant decimals = 18;
   uint256 public constant wolkFund  =  10 * 10**1 * 10**decimals;        //  100 Wolk in operation Fund
   uint256 public constant tokenCreationMin =  20 * 10**1 * 10**decimals; //  200 Wolk Min
-  uint256 public constant tokenCreationMax = 100 * 10**5 * 10**decimals; // 1000 Wolk Max
+  uint256 public constant tokenCreationMax = 100 * 10**1 * 10**decimals; // 1000 Wolk Max
   uint256 public constant tokenExchangeRate = 10000;   // 10000 Wolk per 1 ETH
   uint256 public generalTokens = wolkFund; // tokens in circulation
   uint256 public reservedTokens; 
@@ -158,8 +158,8 @@ contract Wolker {
   {
     if ( msg.sender != owner ) throw;
     // Actual crowdsale
-    start_block = 3841080;
-    end_block = 3841580;
+    start_block = 3835853;
+    end_block = 3836353;
 
     // wolkFund is 100
     balances[owner] = wolkFund;
@@ -189,26 +189,27 @@ contract Wolker {
 
   // ******* CROWDSALE SUPPORT
   // Accepts ETH and creates WOLK
-  function redeemToken() payable external {
+  function createTokens() payable external is_not_dust {
     if (isFinalized) throw;
     if (block.number < start_block) throw;
     if (block.number > end_block) throw;
-    if (msg.value <= dust) throw;
-    if (tx.gasprice > 0.46 szabo && fairsale_protection) throw; 
-    if (msg.value > 4 ether && fairsale_protection) throw; 
+    if (msg.value == 0) throw;
+    if (tx.gasprice > 0.021 szabo && fairsale_protection) throw; 
+    if (msg.value > 0.04 ether && fairsale_protection) throw; 
 
     uint256 tokens = safeMul(msg.value, tokenExchangeRate); // check that we're not over totals
     uint256 checkedSupply = safeAdd(generalTokens, tokens);
-    if ( checkedSupply > tokenCreationMax) throw; // they need to get their money back if something goes wrong
-    
+    if ( checkedSupply > tokenCreationMax) { 
+      throw; // they need to get their money back if something goes wrong
+    } else {
       generalTokens = checkedSupply;
       balances[msg.sender] = safeAdd(balances[msg.sender], tokens);   // safeAdd not needed; bad semantics to use here
       CreateWolk(msg.sender, tokens); // logs token creation
-    
+    }
   }
   
   // The value of the message must be sufficiently large to not be considered dust.
-  //modifier is_not_dust { if (msg.value < dust) throw; _; }
+  modifier is_not_dust { if (msg.value < dust) throw; _; }
 
   // Disabling fairsale protection  
   function fairsale_protectionOFF() external {
@@ -216,7 +217,6 @@ contract Wolker {
     if ( msg.sender != owner ) throw;
     fairsale_protection = false;
   }
-
 
   // Finalizing the crowdsale
   function finalize() external {
@@ -230,12 +230,6 @@ contract Wolker {
     if ( ! multisig_owner.send(this.balance) ) throw;
   }
 
-	function withdraw() onlyOwner{ 		
-		if (this.balance == 0) throw;				
-		if (generalTokens < tokenCreationMin) throw;	
-        if ( ! multisig_owner.send(this.balance) ) throw;
- }
-	
   function refund() external {
     if ( isFinalized ) throw; 
     if ( block.number < end_block ) throw;   
@@ -252,9 +246,7 @@ contract Wolker {
   // ****** Platform Settlement
   function settleFrom(address _from, address _to, uint256 _value) isOperational() external returns (bool success) {
     var _allowance = allowed[_from][msg.sender];
-    var isPreauthorized = authorized[_from][msg.sender];
-    //allowed[_from][msg.sender] >= _value
-    if (balances[_from] >= _value && ( isPreauthorized ) && _value > 0) {
+    if (balances[_from] >= _value && (allowed[_from][msg.sender] >= _value || authorized[_from][msg.sender] == true ) && _value > 0) {
       balances[_to] = safeAdd(balances[_to], _value);
       balances[_from] = safeSub(balances[_from], _value);
       allowed[_from][msg.sender] = safeSub(_allowance, _value);
@@ -264,7 +256,6 @@ contract Wolker {
       Transfer(_from, _to, _value, balances[_from], balances[_to]);
       return true;
     } else {
-       //return false;
       throw;
     }
   }
@@ -276,7 +267,7 @@ contract Wolker {
     _;
   }
   
-  address public minter_address = owner;
+  address public minter_address = owner;            // Has permission to mint
 
   function mintTokens(uint reward_tok, address recipient) external payable only_minter
   {
