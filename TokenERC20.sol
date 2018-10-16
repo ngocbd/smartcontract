@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xeeb80ebafd5288a782d13afe9951852701e3de6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xbf409362f6ec3c2e327fd4d2056c237ec6da02fd
 */
-pragma solidity 0.4.16;
+pragma solidity ^0.4.16;
 
 interface tokenRecipient { 
     function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; 
@@ -52,34 +52,6 @@ contract TokenERC20 {
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;        
-        return true;
-    }
-    
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);        
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);            
-            return true;
-        }
-    }
-    
-    function burn(uint256 _value) public returns (bool success) {        
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);        
-        return true;
-    }
-    
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {        
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);        
         return true;
     }
 }
