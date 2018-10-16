@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xfe3125e04391fd6a017b59e0f308e805a8aa6705
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xb72e0e59a04c6978a9b199886e6dd8cfe3f5794a
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT876506' token contract
+    // 'ACT124072' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT876506
-    // Name        : ADZbuzz Torrentfreak.com Community Token
+    // Symbol      : ACT124072
+    // Name        : ADZbuzz Thehackernews.com Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT876506";
-            name = "ADZbuzz Torrentfreak.com Community Token";
+            symbol = "ACT124072";
+            name = "ADZbuzz Thehackernews.com Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
