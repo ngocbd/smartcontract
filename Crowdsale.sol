@@ -1,215 +1,207 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb5bcd3268dd094ac273f3590a35f52da8677fc55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xbe398944aa0eae437a62f2d66b8eab3ea91f80eb
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-contract ERC20Basic 
-{
-	uint256 public totalSupply;
-	function balanceOf(address who) constant public returns (uint256);
-	function transfer(address to, uint256 value) public returns (bool);
-	event Transfer(address indexed from, address indexed to, uint256 value);
+
+library SafeMath {
+
+
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract ERC20 is ERC20Basic
-{
-	function allowance(address owner, address spender) constant  public returns (uint256);
-	function transferFrom(address from, address to, uint256 value)  public returns (bool);
-	function approve(address spender, uint256 value)  public returns (bool);
-	event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-library SafeMath 
-{
+contract RTCoin {
+    using SafeMath for uint256;
     
-	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-		uint256 c = a * b;
-		assert(a == 0 || c / a == b);
-		return c;
-	}
-
-	function div(uint256 a, uint256 b) internal pure returns (uint256) {
-		// assert(b > 0); // Solidity automatically throws when dividing by 0
-		uint256 c = a / b;
-		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
-		return c;
-	}
-
-	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-		assert(b <= a);
-		return a - b;
-	}
-
-	function add(uint256 a, uint256 b) internal pure returns (uint256) {
-		uint256 c = a + b;
-		assert(c >= a);
-		return c;
-	}
-  
-}
-
-contract BasicToken is ERC20Basic 
-{
+	address public owner;
+    address public saleAgent;
+    uint256 public totalSupply;
+	string public name;
+	uint8 public decimals;
+	string public symbol;
+	bool private allowEmission = true;
+	mapping (address => uint256) balances;
     
-	using SafeMath for uint256;
-
-	mapping(address => uint256) balances;
-
-	function transfer(address _to, uint256 _value) public returns (bool) {
-		require(msg.data.length >= (2*32) + 4);     // ???. ???????? ?? ????? ? ???????? ???????
-		balances[msg.sender] = balances[msg.sender].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		Transfer(msg.sender, _to, _value);
-		return true;
-	}
-
-	function balanceOf(address _owner) constant public returns (uint256 balance) {
-		return balances[_owner];
-	}
-}
-
-contract StandardToken is ERC20, BasicToken 
-{
-
-	mapping (address => mapping (address => uint256)) allowed;
-
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
-	{
-		require(msg.data.length >= (3*32) + 4);     // Fix for the ERC20 short address attack
-		var _allowance = allowed[_from][msg.sender];
-		
-		balances[_to] = balances[_to].add(_value);
-		balances[_from] = balances[_from].sub(_value);
-		allowed[_from][msg.sender] = _allowance.sub(_value);
-		Transfer(_from, _to, _value);
-    return true;
-	}
-
-    function approve(address _spender, uint256 _value) public returns (bool)
-	{
-		require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-		return true;
-	}
-
-	function allowance(address _owner, address _spender) constant public returns (uint256 remaining) 
-	{
-		return allowed[_owner][_spender];
-	}
-
-}
-
-contract Ownable 
-{
-    address public owner;
-
-	function Ownable()  public
-	{
+    
+    function RTCoin(string _name, string _symbol, uint8 _decimals) public {
+		decimals = _decimals;
+		name = _name;
+		symbol = _symbol;
 		owner = msg.sender;
 	}
-
-	modifier onlyOwner() 
-	{
-		require(msg.sender == owner);
-		_;
-	}
-
-	function transferOwnership(address newOwner)  public onlyOwner
-	{
-		require(newOwner != address(0));      
-		owner = newOwner;
-	}
-}
-
-contract BurnableToken is StandardToken, Ownable 
-{
-    uint256 endIco = 1527854400; // 1 ????
-
-    modifier BurnAll() 
-    { 
-		require(now > endIco && balances[owner] > 0);  
-		_;
+	
+	
+    function changeSaleAgent(address newSaleAgent) public onlyOwner {
+        require (newSaleAgent!=address(0));
+        uint256 tokenAmount = balances[saleAgent];
+        if (tokenAmount>0) {
+            balances[newSaleAgent] = balances[newSaleAgent].add(tokenAmount);
+            balances[saleAgent] = balances[saleAgent].sub(tokenAmount);
+            Transfer(saleAgent, newSaleAgent, tokenAmount);
+        }
+        saleAgent = newSaleAgent;
+    }
+	
+	
+	function emission(uint256 amount) public onlyOwner {
+	    require(allowEmission);
+	    require(saleAgent!=address(0));
+	    totalSupply = amount * (uint256(10) ** decimals);
+		balances[saleAgent] = totalSupply;
+		Transfer(0x0, saleAgent, totalSupply);
+		allowEmission = false;
 	}
     
-	function burn()  public BurnAll 
-	{
-		uint256 surplus = balances[owner];
-		totalSupply = totalSupply.sub(1000);
-		balances[owner] = 0;
-		Burn(owner, surplus);
-	}
-	event Burn(address indexed burner, uint indexed value);
-}
-
-contract OSCoinToken is BurnableToken 
-{
-	string public constant name = "OSCoin";   
-	string public constant symbol = "OSC";    
-	uint32 public constant decimals = 18;
-
-	uint256 public INITIAL_SUPPLY = 2000000 * 1 ether;
-
-	function OSCoinToken()  public
-	{
-		totalSupply = INITIAL_SUPPLY;
-		balances[msg.sender] = INITIAL_SUPPLY;
-		
-		allowed[owner][0x740F7A070C283edc1cAd9351A67aD3b513f3136a] = (totalSupply).div(100).mul(11);     // ?????? ? ???????? ????? ??????? 11% from to ???? ?????????? ?????? ????? ??? ????????? OSCoin
-		Approval(owner,0x740F7A070C283edc1cAd9351A67aD3b513f3136a, (totalSupply).div(100).mul(11));     // ???????? ????? ??????? 11% from to          ???? ?????????? ?????? ????? ??? ????????? OSCoin
-	}
-}
-
-contract Crowdsale is Ownable
-{   
-    // ??????? ????? http://i-leon.ru/tools/time   
-        
-    uint256 startPreIco = 1522065600; // 26 ?????
-    uint256 startIco = 1525089600; // 30 ??????
-    uint256 endIco = 1527854400; // 1 ????
     
-	using SafeMath for uint;    
-	address multisig;
-	uint restrictedPercent;
-	address restricted;
-	OSCoinToken public token = new OSCoinToken();
+    function burn(uint256 _value) public {
+        require(_value > 0);
+        address burner;
+        if (msg.sender==owner)
+            burner = saleAgent;
+        else
+            burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
+     
+    event Burn(address indexed burner, uint indexed value);
 	
-	uint period;
-	uint rate;
 	
-	function Crowdsale() public {
-		multisig = 0x83dd3A421C98ea8fd59798bC57B4e2C75Caf9935;      // ????? ???? ????? ????????????? ?????????? Ethereum
-		restricted = 0x83dd3A421C98ea8fd59798bC57B4e2C75Caf9935;    // ????? ???? ????? ????????????? 23% ? ?????? ???? ?????????? ?????? ????? ??? ????????? OSCoin
-		restrictedPercent = 23;
-		rate = 1000000000000000000000;
-	}
+	function transfer(address _to, uint256 _value) public returns (bool) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+    
+    
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+	
+	
+	function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        owner = newOwner; 
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-	modifier saleIsOn() 
-	{
-		require(now < endIco);
-		_;
-	}
 
-	function createTokens() saleIsOn  public payable {
-		multisig.transfer(msg.value);
-		uint tokens = rate.mul(msg.value).div(1 ether);
-		uint bonusTokens = 0;
-		
-		if((now < startPreIco)) 
-		{ 
-			bonusTokens = tokens.div(2);
-		} else if(now >= startPreIco && now < startIco) {
-			bonusTokens = tokens.div(4);
-		}
-		
-		uint tokensWithBonus = tokens.add(bonusTokens);
-		token.transfer(msg.sender, tokensWithBonus);
-		uint restrictedTokens = tokens.mul(restrictedPercent).div(100 - restrictedPercent);
-		token.transfer(restricted, restrictedTokens);
-	}
+	
+	event Transfer(
+		address indexed _from,
+		address indexed _to,
+		uint _value
+	);
+}
 
-	function() external payable 
-	{
-		createTokens();
+contract Crowdsale {
+    
+    using SafeMath for uint256;
+    address fundsWallet;
+    RTCoin public token;
+    address public owner;
+	bool public open = false;
+    uint256 public tokenLimit;
+    
+    uint256 public rate = 20000; //???????? ??? pre ICO, 0.00005 ETH = 1 RTC 
+    
+    
+    function Crowdsale(address _fundsWallet, address tokenAddress, 
+                       uint256 _rate, uint256 _tokenLimit) public {
+        fundsWallet = _fundsWallet;
+        token = RTCoin(tokenAddress);
+        rate = _rate;
+        owner = msg.sender;
+        tokenLimit = _tokenLimit * (uint256(10) ** token.decimals());
+    }
+    
+    
+    function() external isOpen payable {
+        require(tokenLimit>0);
+        fundsWallet.transfer(msg.value);
+        uint256 tokens = calculateTokenAmount(msg.value);
+        token.transfer(msg.sender, tokens);
+        tokenLimit = tokenLimit.sub(tokens);
+    }
+  
+    
+    function changeFundAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        fundsWallet = newAddress;
 	}
+	
+	
+    function changeRate(uint256 newRate) public onlyOwner {
+        require(newRate>0);
+        rate = newRate;
+    }
+    
+    
+    function calculateTokenAmount(uint256 weiAmount) public constant returns(uint256) {
+        if (token.decimals()!=18){
+            uint256 tokenAmount = weiAmount.mul(rate).div(uint256(10) ** (18-token.decimals())); 
+            return tokenAmount;
+        }
+        else return weiAmount.mul(rate);
+    }
+    
+    function transferTo(address _to, uint256 _value) public onlyOwner returns (bool) {
+        require(tokenLimit>0);
+        token.transfer(_to, _value);
+        tokenLimit = tokenLimit.sub(_value);
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    
+    function allowSale() public onlyOwner {
+        open = true;
+    }
+    
+    
+    function disallowSale() public onlyOwner {
+        open = false;
+    }
+    
+    modifier isOpen() {
+        require(open == true);
+        _;
+    }
 }
