@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0x3508dea4d3e2279ebb54f24ab0d63ccde0439035
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0xf827eefd2933c387d3a0cd22abde1c6b8aa68d87
 */
 pragma solidity 0.4.18;
 
@@ -1412,7 +1412,7 @@ contract SanityRates is SanityRatesInterface, Withdrawable, Utils {
 
 contract ExpectedRate is Withdrawable, ExpectedRateInterface {
 
-    KyberNetwork internal kyberNetwork;
+    KyberNetwork public kyberNetwork;
     uint public quantityFactor = 2;
     uint public minSlippageFactorInBps = 50;
 
