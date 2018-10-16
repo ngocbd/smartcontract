@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x283a97af867165169aece0b2e963b9f0fc7e5b8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0xE335936435D176E78D8b4D675BAfbc575Fb560ED
 */
 pragma solidity ^0.4.11;
 
@@ -38,7 +38,7 @@ contract TokenStorage {
 
 contract PresalerVoting {
 
-    string public constant VERSION = "0.0.9";
+    string public constant VERSION = "0.0.8";
 
     /* ====== configuration START ====== */
 
@@ -106,9 +106,7 @@ contract PresalerVoting {
     /// Restricted for owner only.
     /// @param startBlockNr block number to start voting; starts immediatly if less than current block number.
     /// @param durationHrs voting duration (from now!); at least 1 hour.
-    function startVoting(uint startBlockNr, uint durationHrs)
-    onlyOwner
-    onlyState(State.BEFORE_START) {
+    function startVoting(uint startBlockNr, uint durationHrs) onlyOwner {
         VOTING_START_BLOCKNR = max(block.number, startBlockNr);
         VOTING_END_TIME = now + max(durationHrs,1) * 1 hours;
     }
