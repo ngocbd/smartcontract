@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x85b9f2297a8fc0e22d25e38a193fd33eeb51b5da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x31c807df8eb5c79b4854b0004b09d1469f087770
 */
 pragma solidity ^0.4.19;
 
@@ -45,49 +45,12 @@ contract BaseToken {
     }
 }
 
-contract ICOToken is BaseToken {
-    // 1 ether = icoRatio token
-    uint256 public icoRatio;
-    uint256 public icoEndtime;
-    address public icoSender;
-    address public icoHolder;
-
-    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
-    event Withdraw(address indexed from, address indexed holder, uint256 value);
-
-    modifier onlyBefore() {
-        if (now > icoEndtime) {
-            revert();
-        }
-        _;
-    }
-
-    function() public payable onlyBefore {
-        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
-        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
-            revert();
-        }
-        _transfer(icoSender, msg.sender, tokenValue);
-        ICO(msg.sender, msg.value, tokenValue);
-    }
-
-    function withdraw() {
-        uint256 balance = this.balance;
-        icoHolder.transfer(balance);
-        Withdraw(msg.sender, icoHolder, balance);
-    }
-}
-
-contract CustomToken is BaseToken, ICOToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 200000000000000000000000000;
-        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
-        name = 'Supercomputing';
-        symbol = 'scp';
-        decimals = 18;
-        icoRatio = 15000;
-        icoEndtime = 1546268400;
-        icoSender = 0x1923c58bac8062ba78d198c50f8c5ec63b52f44c;
-        icoHolder = 0xa5791f4e7bf0ec01620317cf9f135325a5b47404;
+        totalSupply = 210000000000000000;
+        balanceOf[0x397014a28E851Ad53469D225093bbA1882d912b7] = totalSupply;
+        name = 'imToken';
+        symbol = 'IT';
+        decimals = 8;
     }
 }
