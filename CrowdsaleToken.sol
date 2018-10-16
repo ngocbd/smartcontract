@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x71d6a613af53a0c057f2d6833dc9ade678243267
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0xa645264c5603e96c3b0b078cdab68733794b0a71
 */
 /*
  * ERC20 interface
@@ -73,18 +73,36 @@ contract SafeMath {
 
 
 /**
- * Standard ERC20 token
+ * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
  *
- * https://github.com/ethereum/EIPs/issues/20
  * Based on code by FirstBlood:
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, SafeMath {
 
+  /* Token supply got increased and a new owner received these tokens */
+  event Minted(address receiver, uint amount);
+
+  /* Actual balances of token holders */
   mapping(address => uint) balances;
+
+  /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
-  function transfer(address _to, uint _value) returns (bool success) {
+  /**
+   *
+   * Fix for the ERC20 short address attack
+   *
+   * http://vessenes.com/the-erc20-short-address-attack-explained/
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length != size + 4) {
+       throw;
+     }
+     _;
+  }
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
@@ -92,7 +110,7 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
+    uint _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
     // if (_value > _allowance) throw;
@@ -109,6 +127,13 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function approve(address _spender, uint _value) returns (bool success) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -116,6 +141,41 @@ contract StandardToken is ERC20, SafeMath {
 
   function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
+  }
+
+  /**
+   * Atomic increment of approved spending
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   *
+   */
+  function addApproval(address _spender, uint _addedValue)
+  onlyPayloadSize(2 * 32)
+  returns (bool success) {
+      uint oldValue = allowed[msg.sender][_spender];
+      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+      return true;
+  }
+
+  /**
+   * Atomic decrement of approved spending.
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   */
+  function subApproval(address _spender, uint _subtractedValue)
+  onlyPayloadSize(2 * 32)
+  returns (bool success) {
+
+      uint oldVal = allowed[msg.sender][_spender];
+
+      if (_subtractedValue > oldVal) {
+          allowed[msg.sender][_spender] = 0;
+      } else {
+          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
+      }
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+      return true;
   }
 
 }
@@ -449,9 +509,14 @@ contract MintableToken is StandardToken, Ownable {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
+
+    if(amount == 0) {
+      throw;
+    }
+
     totalSupply = totalSupply.plus(amount);
     balances[receiver] = balances[receiver].plus(amount);
-    Transfer(0, receiver, amount);
+    Minted(receiver, amount);
   }
 
   /**
@@ -491,6 +556,8 @@ contract MintableToken is StandardToken, Ownable {
  *
  */
 contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
+
+  event UpdatedTokenInformation(string newName, string newSymbol);
 
   string public name;
 
@@ -535,6 +602,16 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    */
   function canUpgrade() public constant returns(bool) {
     return released;
+  }
+
+  /**
+   * Owner can update token information here
+   */
+  function setTokenInformation(string _name, string _symbol) onlyOwner {
+    name = _name;
+    symbol = _symbol;
+
+    UpdatedTokenInformation(name, symbol);
   }
 
 }
