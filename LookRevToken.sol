@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookRevToken at 0x8fa1EaD5d8d774b27d288711abE4d4258224ae26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookRevToken at 0x82871e14Abf646925166a7D3A88E99c225A158B3
 */
 pragma solidity ^0.4.11;
 
@@ -172,7 +172,6 @@ contract LookRevToken is StandardToken {
     uint public constant TOKENS_SOFT_CAP =   10000000 * DECIMALSFACTOR;
     uint public constant TOKENS_HARD_CAP = 2000000000 * DECIMALSFACTOR;
     uint public constant TOKENS_TOTAL =    4000000000 * DECIMALSFACTOR;
-    uint public initialSupply = 10000000 * DECIMALSFACTOR;
 
     // 1 KETHER = 2,400,000 tokens
     // 1 ETH = 2,400 tokens
@@ -183,10 +182,10 @@ contract LookRevToken is StandardToken {
     uint public CONTRIBUTIONS_MAX = 0 ether;
     uint public constant KYC_THRESHOLD = 10000 * DECIMALSFACTOR;
 
-    function LookRevToken() {
+    function LookRevToken(address _wallet, uint _initialSupply) {
+      wallet = _wallet;
       owner = msg.sender;
-      wallet = owner;
-      totalSupply = initialSupply;
+      totalSupply = _initialSupply;
       balances[owner] = totalSupply;
     }
 
