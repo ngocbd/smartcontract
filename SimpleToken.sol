@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x149b34edead60b2443401cb5accbd5658b856f8f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x14555b3983d4e94ad406ab725aaa08aa091596e2
 */
 pragma solidity ^0.4.11;
+
 
 /**
  * @title SafeMath
@@ -9,8 +10,11 @@ pragma solidity ^0.4.11;
  */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
@@ -33,7 +37,6 @@ library SafeMath {
   }
 }
 
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -44,6 +47,17 @@ contract ERC20Basic {
   function balanceOf(address who) public constant returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -80,17 +94,6 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -182,16 +185,18 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract SimpleToken is StandardToken {
 
-  string public constant name = "SharesToken";
-  string public constant symbol = "SHRE";
-  uint8 public constant decimals = 2;
-  uint256 public constant TotalSupply = 100000 * (10 ** uint256(decimals));
+  string public constant name = "Trial and Demo";
+  string public constant symbol = "TAD";
+  uint8 public constant decimals = 18;
+
+  uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
   function SimpleToken() {
-    balances[msg.sender] = TotalSupply;
+    totalSupply = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
   }
 
 }
