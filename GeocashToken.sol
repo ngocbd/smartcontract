@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeocashToken at 0xd9e6c755c7eb0d4df3377b56c9c808e4df2bb4a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeocashToken at 0x42fbfb1d1994a99de3bc52c2172d8370cd3d6671
 */
 pragma solidity ^0.4.18;
 
@@ -394,6 +394,19 @@ contract GeocashToken is StandardToken, Destructible {
   /* @dev send ETH to the company wallet, the token address should keep a reasonable amount of ETH to be able to payout on token sells */
   function forwardFundToCompanyWallet(uint _amount) public onlyOwner {
     companyWallet.transfer(_amount);
+  }
+
+  function distribute(address _to, uint256 _value) public onlyOwner returns (bool) {
+    require(_to != address(0));
+    balances[this] = balances[this].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(this, _to, _value);
+    return true;
+  }
+
+  // fallback function can be used to buy tokens
+  function () external payable {
+    buy();
   }
 
 }
