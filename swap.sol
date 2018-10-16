@@ -1,133 +1,260 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract swap at 0xDAC8da3e58c11B4e0E8DFaeFe191107e143AC29B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0x306e5d0c7b3934af9bdb57c3ef0eb886982c2aee
 */
-// Version 0.1
-// This swap contract was created by Attores and released under a GPL license
-// Visit attores.com for more contracts and Smart contract as a Service 
+pragma solidity ^0.4.15;
 
-// This is the standard token interface
-contract TokenInterface {
+    /****************************************************************
+     *
+     * Name of the project: Genevieve VC Token Swapper
+     * Contract name: Swap
+     * Author: Juan Livingston @ Ethernity.live
+     * Developed for: Genevieve Co.
+     * GXVC is an ERC223 Token Swapper
+     *
+     * This swapper has 2 main functions: 
+     * - makeSwapInternal will send new tokens when ether are received
+     * - makeSwap will send new tokens when old tokens are received
+     *  
+     * makeSwap is called by a javascript through an authorized address
+     *
+     ****************************************************************/
 
-  struct User {
-    bool locked;
-    uint256 balance;
-    uint256 badges;
-    mapping (address => uint256) allowed;
-  }
-
-  mapping (address => User) users;
-  mapping (address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
-  mapping (address => bool) seller;
-
-  address config;
-  address owner;
-  address dao;
-  bool locked;
-
-  /// @return total amount of tokens
+contract ERC20Basic {
   uint256 public totalSupply;
-  uint256 public totalBadges;
-
-  /// @param _owner The address from which the balance will be retrieved
-  /// @return The balance
-  function balanceOf(address _owner) constant returns (uint256 balance);
-
-  /// @param _owner The address from which the badge count will be retrieved
-  /// @return The badges count
-  function badgesOf(address _owner) constant returns (uint256 badge);
-
-  /// @notice send `_value` tokens to `_to` from `msg.sender`
-  /// @param _to The address of the recipient
-  /// @param _value The amount of tokens to be transfered
-  /// @return Whether the transfer was successful or not
-  function transfer(address _to, uint256 _value) returns (bool success);
-
-  /// @notice send `_value` badges to `_to` from `msg.sender`
-  /// @param _to The address of the recipient
-  /// @param _value The amount of tokens to be transfered
-  /// @return Whether the transfer was successful or not
-  function sendBadge(address _to, uint256 _value) returns (bool success);
-
-  /// @notice send `_value` tokens to `_to` from `_from` on the condition it is approved by `_from`
-  /// @param _from The address of the sender
-  /// @param _to The address of the recipient
-  /// @param _value The amount of tokens to be transfered
-  /// @return Whether the transfer was successful or not
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
-  /// @notice `msg.sender` approves `_spender` to spend `_value` tokens on its behalf
-  /// @param _spender The address of the account able to transfer the tokens
-  /// @param _value The amount of tokens to be approved for transfer
-  /// @return Whether the approval was successful or not
-  function approve(address _spender, uint256 _value) returns (bool success);
-
-  /// @param _owner The address of the account owning tokens
-  /// @param _spender The address of the account able to transfer the tokens
-  /// @return Amount of remaining tokens of _owner that _spender is allowed to spend
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-  /// @notice mint `_amount` of tokens to `_owner`
-  /// @param _owner The address of the account receiving the tokens
-  /// @param _amount The amount of tokens to mint
-  /// @return Whether or not minting was successful
-  function mint(address _owner, uint256 _amount) returns (bool success);
-
-  /// @notice mintBadge Mint `_amount` badges to `_owner`
-  /// @param _owner The address of the account receiving the tokens
-  /// @param _amount The amount of tokens to mint
-  /// @return Whether or not minting was successful
-  function mintBadge(address _owner, uint256 _amount) returns (bool success);
-
-  function registerDao(address _dao) returns (bool success);
-
-  function registerSeller(address _tokensales) returns (bool success);
-
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event SendBadge(address indexed _from, address indexed _to, uint256 _amount);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// Actual swap contract written by Attores
-contract swap{
-    address public beneficiary;
-    TokenInterface public tokenObj;
-    uint public price_token;
-    uint256 public WEI_PER_FINNEY = 1000000000000000;
-    uint public BILLION = 1000000000;
-    uint public expiryDate;
-    
-    // Constructor function for this contract. Called during contract creation
-    function swap(address sendEtherTo, address adddressOfToken, uint tokenPriceInFinney_1000FinneyIs_1Ether, uint durationInDays){
-        beneficiary = sendEtherTo;
-        tokenObj = TokenInterface(adddressOfToken);
-        price_token = tokenPriceInFinney_1000FinneyIs_1Ether * WEI_PER_FINNEY;
-        expiryDate = now + durationInDays * 1 days;
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  function burn(address spender, uint256 value) returns (bool); // Optional 
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract ERC223 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  
+  function name() constant returns (string _name);
+  function symbol() constant returns (string _symbol);
+  function decimals() constant returns (uint8 _decimals);
+  function totalSupply() constant returns (uint256 _supply);
+
+  function transfer(address to, uint value) returns (bool ok);
+  function transfer(address to, uint value, bytes data) returns (bool ok);
+  function transfer(address to, uint value, bytes data, string custom_fallback) returns (bool ok);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+}
+
+
+contract Swap {
+
+    address authorizedCaller;
+    address collectorAddress;
+    address collectorTokens;
+
+    address oldTokenAdd;
+    address newTokenAdd; 
+    address tokenSpender;
+
+    uint Etherrate;
+    uint Tokenrate;
+
+    bool pausedSwap;
+
+    uint public lastBlock;
+
+    // Constructor function with main constants and variables 
+ 
+ 	function Swap() {
+	    authorizedCaller = msg.sender;
+
+        collectorAddress = 0x6835706E8e58544deb6c4EC59d9815fF6C20417f;
+        collectorTokens = 0x08A735E8DA11d3ecf9ED684B8013ab53E9D226c2;
+	    oldTokenAdd = 0x58ca3065C0F24C7c96Aee8d6056b5B5deCf9c2f8;
+	    newTokenAdd = 0x22f0af8d78851b72ee799e05f54a77001586b18a;
+        tokenSpender = 0x6835706E8e58544deb6c4EC59d9815fF6C20417f;
+
+	    Etherrate = 3000;
+	    Tokenrate = 10;
+
+	    authorized[authorizedCaller] = 1;
+
+	    lastBlock = 0;
+	}
+
+
+	// Mapping to store swaps made and authorized callers
+
+    mapping(bytes32 => uint) internal payments;
+    mapping(address => uint8) internal authorized;
+
+    // Event definitions
+
+    event EtherReceived(uint _n , address _address , uint _value);
+    event GXVCSentByEther(uint _n , address _address , uint _value);
+
+    event GXVCReplay(uint _n , address _address);
+    event GXVCNoToken(uint _n , address _address);
+
+    event TokensReceived(uint _n , address _address , uint _value);
+    event GXVCSentByToken(uint _n , address _address , uint _value );
+
+    event SwapPaused(uint _n);
+    event SwapResumed(uint _n);
+
+    event EtherrateUpd(uint _n , uint _rate);
+    event TokenrateUpd(uint _n , uint _rate);
+
+    // Modifier for authorized calls
+
+    modifier isAuthorized() {
+        if ( authorized[msg.sender] != 1 ) revert();
+        _;
     }
-    
-    // This function is called every time some one sends ether to this contract
-    function(){
-        if (now >= expiryDate) throw;
-        // Dividing by Billion here to cater for the decimal places
-        var tokens_to_send = (msg.value * BILLION) / price_token;
-        uint balance = tokenObj.balanceOf(this);
-        address payee = msg.sender;
-        if (balance >= tokens_to_send){
-            tokenObj.transfer(msg.sender, tokens_to_send);
-            beneficiary.send(msg.value);    
-        } else {
-            tokenObj.transfer(msg.sender, balance);
-            uint amountReturned = ((tokens_to_send - balance) * price_token) / BILLION;
-            payee.send(amountReturned);
-            beneficiary.send(msg.value - amountReturned);
+
+    modifier isNotPaused() {
+    	if (pausedSwap) revert();
+    	_;
+    }
+
+    // Function borrowed from ds-math.
+
+    function mul(uint x, uint y) internal returns (uint z) {
+        require(y == 0 || (z = x * y) / y == x);
+    }
+
+    // Falback function, invoked each time ethers are received
+
+    function () payable { 
+        makeSwapInternal ();
+    }
+
+
+    // Ether swap, activated by the fallback function after receiving ethers
+
+   function makeSwapInternal () private isNotPaused { // Main function, called internally when ethers are received
+
+     ERC223 newTok = ERC223 ( newTokenAdd );
+
+     address _address = msg.sender;
+     uint _value = msg.value;
+
+     // Calculate the amount to send based on the rates supplied
+
+     uint etherstosend = mul( _value , Etherrate ) / 100000000; // Division to equipare 18 decimals to 10
+
+     // ---------------------------------------- Ether exchange --------------------------------------------
+
+    if ( etherstosend > 0 ) {   
+
+        // Log Ether received
+        EtherReceived ( 1, _address , _value);
+
+        //Send new tokens
+        require( newTok.transferFrom( tokenSpender , _address , etherstosend ) );
+		// Log tokens sent for ethers;
+        GXVCSentByEther ( 2, _address , etherstosend) ;
+        // Send ethers to collector
+        require( collectorAddress.send( _value ) );
         }
+
     }
-    
-    modifier afterExpiry() { if (now >= expiryDate) _ }
-    
-    //This function checks if the expiry date has passed and if it has, then returns the tokens to the beneficiary
-    function checkExpiry() afterExpiry{
-        uint balance = tokenObj.balanceOf(this);
-        tokenObj.transfer(beneficiary, balance);
+
+    // This function is called from a javascript through an authorized address to inform of a transfer 
+    // of old token.
+    // Parameters are trusted, but they may be accidentally replayed (specially if a rescan is made) 
+    // so we store them in a mapping to avoid reprocessing
+    // We store the tx_hash, to allow many different swappings per address
+
+    function makeSwap (address _address , uint _value , bytes32 _hash) public isAuthorized isNotPaused {
+
+    ERC223 newTok = ERC223 ( newTokenAdd );
+
+	// Calculate the amount to send based on the rates supplied
+
+    uint gpxtosend = mul( _value , Tokenrate ); 
+
+     // ----------------------------------- No tokens or already used -------------------------------------
+
+    if ( payments[_hash] > 0 ) { // Check for accidental replay
+        GXVCReplay( 3, _address ); // Log "Done before";
+        return;
+     }
+
+     if ( gpxtosend == 0 ) {
+        GXVCNoToken( 4, _address ); // Log "No GXC tokens found";
+        return;
+     }
+      // ---------------------------------------- GPX exchange --------------------------------------------
+              
+     TokensReceived( 5, _address , _value ); // Log balance detected
+
+     payments[_hash] = gpxtosend; // To avoid future accidental replays
+
+      // Transfer new tokens to caller
+     require( newTok.transferFrom( tokenSpender , _address , gpxtosend ) );
+
+     GXVCSentByToken( 6, _address , gpxtosend ); // Log "New token sent";
+
+     lastBlock = block.number + 1;
+
     }
+
+function pauseSwap () public isAuthorized {
+	pausedSwap = true;
+	SwapPaused(7);
+}
+
+function resumeSwap () public isAuthorized {
+	pausedSwap = false;
+	SwapResumed(8);
+}
+
+function updateOldToken (address _address) public isAuthorized {
+    oldTokenAdd = _address;
+}
+
+function updateNewToken (address _address , address _spender) public isAuthorized {
+    newTokenAdd = _address;
+    tokenSpender = _spender;   
+}
+
+
+function updateEthRate (uint _rate) public isAuthorized {
+    Etherrate = _rate;
+    EtherrateUpd(9,_rate);
+}
+
+
+function updateTokenRate (uint _rate) public isAuthorized {
+    Tokenrate = _rate;
+    TokenrateUpd(10,_rate);
+}
+
+
+function flushEthers () public isAuthorized { // Send ether to collector
+    require( collectorAddress.send( this.balance ) );
+}
+
+function flushTokens () public isAuthorized {
+	ERC20 oldTok = ERC20 ( oldTokenAdd );
+	require( oldTok.transfer(collectorTokens , oldTok.balanceOf(this) ) );
+}
+
+function addAuthorized(address _address) public isAuthorized {
+	authorized[_address] = 1;
+
+}
+
+function removeAuthorized(address _address) public isAuthorized {
+	authorized[_address] = 0;
+
+}
+
+
 }
