@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FacepayToken at 0x72665aa1dbfdd90fcaa2afed64830450c1585817
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FacepayToken at 0xaf6fee43153755a729a7d5ae20f9118e10e49233
 */
 pragma solidity ^0.4.4;
 
@@ -122,7 +122,7 @@ contract FacepayToken is StandardToken {
         balances[msg.sender] = 1000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 1000000000000000000000000;                        // Update total supply (100000 for example)
         name = "Facepay";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
         symbol = "FACEPAY";                               // Set the symbol for display purposes
     }
 
