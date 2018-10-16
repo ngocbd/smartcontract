@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetLibrary at 0x2383d5916e033a3889b33bfeb11e0fab5a3557d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetLibrary at 0x2dac83ed6941a80404ccaa74d2c1b2f3427dda41
 */
 /*
  * Written by Jesse Busman (info@jesbus.com) on 2017-11-30.
@@ -59,11 +59,11 @@ library SetLibrary
         // Now we remove the last element from the array, because we just duplicated it.
         // We don't free the storage allocation of the removed last element,
         // because it will most likely be used again by a call to add().
-        // De-allocating and re-allocating storage space costs more gas than
-        // just keeping it allocated and unused.
-        
-        // Uncomment this line to save gas if your use case does not call add() after remove():
-        // delete self.values[self.values.length-1];
+		// De-allocating and re-allocating storage space costs more gas than
+		// just keeping it allocated and unused.
+		
+		// Uncomment this line to save gas if your use case does not call add() after remove():
+		// delete self.values[self.values.length-1];
         self.values.length--;
         
         // We do free the storage allocation in the mapping, because it is
