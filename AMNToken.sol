@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AMNToken at 0x737f98ac8ca59f2c68ad658e3c3d8c8963e40a4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AMNToken at 0x0a45005dc516d5243c4ac89345e1f95959b4ebaa
 */
 pragma solidity ^0.4.19;
 
@@ -229,7 +229,7 @@ contract AMNToken is StandardToken {
   string  public constant name = "Amon";
   string  public constant symbol = "AMN";
   uint8   public constant decimals = 18;
-  uint256 public constant INITIAL_SUPPLY = (1666666667) * (uint256(10) ** decimals);
+  uint256 public constant INITIAL_SUPPLY = (1.6 * 10 ** 9) * (uint256(10) ** decimals);
 
   /**
     *@dev Constructor that set the token initial parameters
