@@ -1,115 +1,106 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb07acacf1e5eeb9aa8f47beb0568da1c753c9b32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x2842ae38e9f5e52517ddb9936c0a3610caf543a9
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.16;
 
-interface token
-{
-    function transfer(address receiver, uint256 amount) returns (bool success);
-    function transferFrom(address from, address to, uint256 amount) returns (bool success);
-    function balanceOf(address owner) constant returns (uint256 balance);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+interface token {
+    function transfer(address receiver, uint amount);
 }
 
-contract Crowdsale
-{
-    address public owner;
-    address public seller;
-    address public ContractAddress;
-    uint public amountRaised;
-    uint public price;
-    uint public ethereumPrice;
-    token public tokenReward;
-    address public walletOut1;
-    address public walletOut2;
+contract Crowdsale {
+    address public beneficiary;  // ?????????
+    uint public fundingGoal;   // ????
+    uint public amountRaised;   // ????
+    uint public deadline;      // ?????
 
+    uint public price;    //  token ??????? , token????
+    token public tokenReward;   // ???token
+
+    mapping(address => uint256) public balanceOf;
+
+    bool fundingGoalReached = false;  // ????????
+    bool crowdsaleClosed = false;   //  ??????
+
+    /**
+    * ??????????
+    **/
+    event GoalReached(address recipient, uint totalAmountRaised);
     event FundTransfer(address backer, uint amount, bool isContribution);
 
-    function Crowdsale()
-    {
-        // Avatar
-        walletOut1 = 0x594ae2a6aeab6f5e74bba0958cec21ec4dcd7f1e;
-        // A
-        walletOut2 = 0x7776eab79aeff7a1c09d8c49a7f3caf252c26451;
-
-        // ????? ????????
-        seller = 0x7776eab79aeff7a1c09d8c49a7f3caf252c26451;
-
-        owner = msg.sender;
-
-        price = 15;
-        tokenReward = token(0xcd389f4873e8fbce7925b1d57804842043a3bf36);
-        ethereumPrice = 447;
+    /**
+     * ????, ??????
+     */
+    function Crowdsale(
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint durationInMinutes,
+        uint finneyCostOfEachToken,
+        address addressOfTokenUsedAsReward) {
+        beneficiary = ifSuccessfulSendTo;
+        fundingGoal = fundingGoalInEthers * 1 ether;
+        deadline = now + durationInMinutes * 1 minutes;
+        price = finneyCostOfEachToken * 1 finney;
+        tokenReward = token(addressOfTokenUsedAsReward);   // ?????? token ??????????
     }
 
-    function changeOwner(address newOwner) onlyowner
-    {
-        owner = newOwner;
-    }
-
-    modifier onlyowner()
-    {
-        if (msg.sender == owner) _;
-    }
-
-    /* ??????????? ??????????? "???????? ???????? ??? ???????? ???????? ??????????" */
-    modifier isSetPrice()
-    {
-        if (msg.sender == seller || msg.sender == owner) _;
-    }
-
-    function () payable
-    {
-        uint256 amount = msg.value;
+    /**
+     * ?????Fallback???
+     * ????????????????
+     */
+    function () payable {
+        require(!crowdsaleClosed);
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
         amountRaised += amount;
-        uint256 amountOut1 = amount / 2;
-        uint256 amountOut2 = amount - amountOut1;
-
-        uint256 amountWei = amount;
-        uint priceUsdCentEth = ethereumPrice * 100;
-        uint priceUsdCentAvr = price;
-        uint256 amountAvrAtom = ((amountWei * priceUsdCentEth) / priceUsdCentAvr) / 10000000000;
-
-        if (tokenReward.balanceOf(ContractAddress) < amountAvrAtom) {
-            throw;
-        }
-        tokenReward.transfer(msg.sender, amountAvrAtom);
-
-        walletOut1.transfer(amountOut1);
-        walletOut2.transfer(amountOut2);
-
+        tokenReward.transfer(msg.sender, amount / price);
         FundTransfer(msg.sender, amount, true);
     }
 
-    function setWalletOut1(address wallet) onlyowner
-    {
-        walletOut1 = wallet;
+    /**
+    *  ???????modifier????Python????????
+    * ?????????????????????????????????
+    * _ ???????????
+    **/
+    modifier afterDeadline() { if (now >= deadline) _; }
+
+    /**
+     * ????????????? ???????afterDeadline?????
+     *
+     */
+    function checkGoalReached() afterDeadline {
+        if (amountRaised >= fundingGoal) {
+            fundingGoalReached = true;
+            GoalReached(beneficiary, amountRaised);
+        }
+        crowdsaleClosed = true;
     }
 
-    function setWalletOut2(address wallet) onlyowner
-    {
-        walletOut2 = wallet;
-    }
 
-    function sendAVR(address wallet, uint256 amountAvrAtom) onlyowner
-    {
-        tokenReward.transfer(wallet, amountAvrAtom);
-    }
+    /**
+     * ?????????????????
+     * ?????????????
+     *
+     */
+    function safeWithdrawal() afterDeadline {
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                if (msg.sender.send(amount)) {
+                    FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
 
-    function setContractAddress(address wallet) onlyowner
-    {
-        ContractAddress = wallet;
-    }
-
-    // uint usdCentCostOfEachToken - ???? ? ??????
-    function setPrice(uint usdCentCostOfEachToken) onlyowner
-    {
-        price = usdCentCostOfEachToken;
-    }
-
-    // uint usd - ???? ? ????????
-    function setEthPrice(uint usd) isSetPrice
-    {
-        ethereumPrice = usd;
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
     }
 }
