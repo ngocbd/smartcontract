@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBC at 0xf3066d8ce545ddf5dc758d261470f9575365999a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBC at 0x1c66bb904ceaa80aa224193728d459b109115ec2
 */
 pragma solidity ^0.4.19;
 
@@ -39,7 +39,7 @@ contract TBC {
         symbol = tokenSymbol;                               // Set the symbol for display purposes
     }*/
     constructor() {
-        totalSupply = 500000; //500 MIL TOKENS
+        totalSupply = 5000000; //5 MILLION TOKENS
         balanceOf[msg.sender] = totalSupply;
         name = "TBC"; 
         symbol = "TBC"; 
