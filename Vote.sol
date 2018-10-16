@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vote at 0x0b8e87d9da26db6679dfe27011b70e274ba12493
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vote at 0xbdae4cb65e1c68cd9cd41b73c93ae3d331acad5c
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.21;
 
-/**
-* @title Ownable
-* @dev The Ownable contract has an owner address, and provides basic authorization control
-* functions, this simplifies the implementation of "user permissions".
-*/
 contract Ownable {
     address public owner;
 
@@ -19,7 +14,7 @@ contract Ownable {
     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
     * account.
     */
-    constructor() public {
+    function Ownable() public {
         owner = msg.sender;
     }
 
@@ -67,7 +62,7 @@ contract Vote is Ownable {
     uint public nextCandidateId = 1;
     mapping (uint => Candidate) public candidateDirectory;
 
-    constructor(uint _salt, string _voteName, bytes32[] approvedHashes) public {
+    function Vote(uint _salt, string _voteName, bytes32[] approvedHashes) public {
         salt = _salt;
         voteName = _voteName;
         totalVotes = approvedHashes.length;
@@ -92,7 +87,7 @@ contract Vote is Ownable {
     // Users can only vote by providing a secret uint s.t. candidateDirectory[keccak256(uint, salt)] == true
     function castVote(uint secret, uint candidateId) public {
         bytes32 claimedApprovedHash = keccak256(secret, salt); // keccak256(secret) vulnerable to a rainbow table attack
-        require(canVote[claimedApprovedHash], "Provided secret was not correct.");
+        require(canVote[claimedApprovedHash]);
         canVote[claimedApprovedHash] = false;
         voteCount[candidateId] += 1;
 
