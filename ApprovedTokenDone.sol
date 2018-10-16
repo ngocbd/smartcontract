@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x6de2fdbc65dc1210b44b2932a858464905a95c80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x90fe7a0beeca90da1ae0545d18af4f1dd812e0d6
 */
 pragma solidity ^0.4.13;
 
@@ -153,10 +153,10 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'DISNEY';
-	string public symbol = 'DISNEY';
+	string public name = 'THREE';
+	string public symbol = 'THREE';
 	uint public decimals = 3;
-	uint public initialSupply = 99999999999;
+	uint public initialSupply = 3000;
 	string public publishier = 'TokenDone.io';
 	uint public creationTime;
 	
