@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedEthCappedCrowdsale at 0xb145d37bb120501ce2083b9e077982ba6123d849
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedEthCappedCrowdsale at 0x8365ffcdd7211738cf4c783f31d31f0ef02bd048
 */
 /**
  * Safe unsigned safe math.
@@ -755,7 +755,7 @@ contract StandardToken is ERC20, SafeMath {
    * http://vessenes.com/the-erc20-short-address-attack-explained/
    */
   modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
+     if(msg.data.length < size + 4) {
        throw;
      }
      _;
@@ -809,7 +809,7 @@ contract StandardToken is ERC20, SafeMath {
    *
    */
   function addApproval(address _spender, uint _addedValue)
-  onlyPayloadSize(2 * 32)
+  onlyPayloadSize(2)
   returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
       allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
@@ -822,7 +822,7 @@ contract StandardToken is ERC20, SafeMath {
    * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    */
   function subApproval(address _spender, uint _subtractedValue)
-  onlyPayloadSize(2 * 32)
+  onlyPayloadSize(2)
   returns (bool success) {
 
       uint oldVal = allowed[msg.sender][_spender];
