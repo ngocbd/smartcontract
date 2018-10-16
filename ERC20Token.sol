@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xdccc2d19bd5adbc23739ebf647de9abd9645a692
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x67e789589ad6a0b4494c773520fa975acb1ceb5c
 */
+pragma solidity ^0.4.4;
+
 contract Token {
 
     /// @return total amount of tokens
@@ -117,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 177700000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 177700000000000000;                        // Update total supply (100000 for example)
-        name = "C2C";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "C2C";                               // Set the symbol for display purposes
+        balances[msg.sender] = 115792089237316195423570985008687907853269984665640564039457584007913129639935;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 115792089237316195423570985008687907853269984665640564039457584007913129639935;                        // Update total supply (100000 for example)
+        name = "Spamalot";                                   // Set the name for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "SPAM";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
