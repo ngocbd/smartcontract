@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0x39e00ac8fccfac4b043a55bb3b7ad8327d51f1df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0xcE5cdCf3c4b44EA985AeDd0c9C661857e145382c
 */
 pragma solidity 0.4.11;
 
@@ -9,7 +9,7 @@ contract Fundraiser {
 
   address signer1;
   address signer2;
-  bool accept; // are contributions accepted
+  bool public accept; // are contributions accepted
 
   enum Action {
     None,
@@ -30,7 +30,6 @@ contract Fundraiser {
   /* Constructor, choose signers. Those cannot be changed */
   function Fundraiser(address init_signer1,
                       address init_signer2) {
-    if (init_signer1 == init_signer2) { throw; }
     accept = false; // must call Open first
     signer1 = init_signer1;
     signer2 = init_signer2;
