@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroHooStandardToken at 0xc2c7d9787a0a5eabc2268de7028ee354bdfc5808
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroHooStandardToken at 0x4fa9340d2947047efdcdfe972134d05b0860ae4d
 */
 pragma solidity ^ 0.4.21;
 
@@ -55,6 +55,8 @@ contract Token{
 contract StandardToken is Token, SafeMath {
     function transfer(address _to, uint256 _value) public returns(bool success) {
         //??totalSupply ??????? (2^256 - 1).
+        //??????????????token??????????????????
+        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         require(balances[msg.sender] >= _value);
         balances[msg.sender] = safeSub(balances[msg.sender], _value);//???????????token??_value
         balances[_to] = safeAdd(balances[_to], _value);//???????token??_value
@@ -65,7 +67,8 @@ contract StandardToken is Token, SafeMath {
 
     function transferFrom(address _from, address _to, uint256 _value) public returns
         (bool success) {
-       
+        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
+        // _value && balances[_to] + _value > balances[_to]);
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
         balances[_to] = safeAdd(balances[_to], _value);//??????token??_value
         balances[_from] = safeSub(balances[_from], _value); //????_from??token??_value
@@ -96,9 +99,9 @@ contract StandardToken is Token, SafeMath {
 contract ZeroHooStandardToken is StandardToken { 
 
     /* Public variables of the token */
-    string public name;                   //??
-    uint8 public decimals;               //???????
-    string public symbol;               //token??:FAC
+    string public name;                   //??: eg Simon Bucks
+    uint8 public decimals;               //????????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;               //token??: eg SBX
     string public version = 'zero 1.0.0';    //??
 
     function ZeroHooStandardToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public {
@@ -114,6 +117,9 @@ contract ZeroHooStandardToken is StandardToken {
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns(bool success) {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         require(_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
         return true;
     }
