@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0xf6f6afe1907ffe9467b04947c7e3af9ad14e2333
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0xc85d3c8382760dfcaac7442a6c53bf0c6d886f75
 */
 pragma solidity ^0.4.18;
 
@@ -229,9 +229,9 @@ contract MintableToken is StandardToken, Ownable {
 
   address public saleAgent;
 
-  string public name = "How many symbols can i put in this message?12345678912345671234567891234567";
+  string public name = "Marketing";
    
-  string public symbol = "How many symbols can i put in this message?12345678912345671234567891234567";
+  string public symbol = "MRKT";
   
   uint32 public constant decimals = 18;
 
