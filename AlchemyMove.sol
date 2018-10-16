@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlchemyMove at 0xeac5ba02526503ef84b5f04a4fec6783c09aa629
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlchemyMove at 0x9b91f3418f066d7a123918484666e8a3df98ffb4
 */
 pragma solidity ^0.4.18;
 
@@ -659,15 +659,15 @@ contract AlchemySynthesize is AlchemyPatent {
 contract AlchemyMinting is AlchemySynthesize {
 
     // Limit the nubmer of zero order assets the owner can create every day
-    uint256 public zoDailyLimit = 1000; // we can create 4 * 1000 = 4000 0-order asset each day
+    uint256 public zoDailyLimit = 2500; // we can create 4 * 2500 = 10000 0-order asset each day
     uint256[4] public zoCreated;
-
+    
     // Limit the number each account can buy every day
     mapping(address => bytes32) public accountsBoughtZoAsset;
     mapping(address => uint256) public accountsZoLastRefreshTime;
 
     // Price of zero order assets
-    uint256 public zoPrice = 2500 szabo;
+    uint256 public zoPrice = 1 finney;
 
     // Last daily limit refresh time
     uint256 public zoLastRefreshTime = now;
@@ -694,7 +694,7 @@ contract AlchemyMinting is AlchemySynthesize {
                 accountsZoLastRefreshTime[msg.sender] = zoLastRefreshTime;
             }
         }
-
+ 
         uint256 currentCount = 0;
         uint256 count = 0;
 
@@ -713,7 +713,7 @@ contract AlchemyMinting is AlchemySynthesize {
             count += currentCount;
 
             // Check whether this account has bought too many assets
-            maskedResult = uint256(history & mask);
+            maskedResult = uint256(history & mask); 
             maskedResult += maskedValue;
             require(maskedResult < (2 ** (8 * (i + 1))));
 
@@ -746,7 +746,7 @@ contract AlchemyMinting is AlchemySynthesize {
 
         // Write updated history
         accountsBoughtZoAsset[msg.sender] = history;
-
+        
         // Emit BuyZeroOrderAsset event
         emit BuyZeroOrderAsset(msg.sender, values);
 
@@ -763,6 +763,7 @@ contract AlchemyMinting is AlchemySynthesize {
         }
     }
 }
+
 
 contract AlchemyMarket is AlchemyMinting {
 
