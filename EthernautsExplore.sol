@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsExplore at 0x85b2949cea65add49c69dac77fb052596bc5ddd4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsExplore at 0x10a5f6dbd1f9e56fe09df25b1163cd299d5d2413
 */
 pragma solidity ^0.4.19;
 
@@ -1068,13 +1068,13 @@ contract EthernautsExplore is EthernautsLogic {
     uint256[] explorers;
 
     /// @dev A mapping from Ship token to the exploration index.
-    mapping (uint256 => uint256) internal tokenIndexToExplore;
+    mapping (uint256 => uint256) public tokenIndexToExplore;
 
     /// @dev A mapping from Asset UniqueIDs to the sector token id.
-    mapping (uint256 => uint256) internal tokenIndexToSector;
+    mapping (uint256 => uint256) public tokenIndexToSector;
 
     /// @dev A mapping from exploration index to the crew token id.
-    mapping (uint256 => uint256) internal exploreIndexToCrew;
+    mapping (uint256 => uint256) public exploreIndexToCrew;
 
     /// @dev A mission counter for crew.
     mapping (uint256 => uint16) public missions;
@@ -1087,11 +1087,11 @@ contract EthernautsExplore is EthernautsLogic {
     function getExplorerList() public view returns(
         uint256[3][]
     ) {
-        uint256[3][] memory tokens = new uint256[3][](explorers.length < 50 ? explorers.length : 50);
+        uint256[3][] memory tokens = new uint256[3][](50);
         uint256 index = 0;
 
         for(uint256 i = 0; i < explorers.length && index < 50; i++) {
-            if (explorers[i] != 0) {
+            if (explorers[i] > 0) {
                 tokens[index][0] = explorers[i];
                 tokens[index][1] = tokenIndexToSector[explorers[i]];
                 tokens[index][2] = exploreIndexToCrew[i];
@@ -1105,6 +1105,17 @@ contract EthernautsExplore is EthernautsLogic {
         } else {
             return tokens;
         }
+    }
+
+    /// @dev Get a list of ship exploring our universe
+    /// @param _shipTokenId The Token ID that represents a ship
+    function getIndexByShip(uint256 _shipTokenId) public view returns( uint256 ) {
+        for(uint256 i = 0; i < explorers.length; i++) {
+            if (explorers[i] == _shipTokenId) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     function setOwnerCut(uint256 _sectorId, uint256 _ownerCut) external onlyCLevel {
@@ -1151,6 +1162,7 @@ contract EthernautsExplore is EthernautsLogic {
         require(ethernautsStorage.isState(_shipTokenId, uint8(AssetState.Available)));
 
         // ship could not be in exploration
+        require(tokenIndexToExplore[_shipTokenId] == 0);
         require(!isExploring(_shipTokenId));
 
         // check if explorer is ship owner
@@ -1158,7 +1170,6 @@ contract EthernautsExplore is EthernautsLogic {
 
         // check if owner sector is not empty
         address sectorOwner = ethernautsStorage.ownerOf(_sectorTokenId);
-        require(sectorOwner != address(0));
 
         // check if there is a crew and validating crew member
         if (_crewTokenId > 0) {
@@ -1276,11 +1287,80 @@ contract EthernautsExplore is EthernautsLogic {
         require(i > 0);
 
         /// remove from explore list
-        delete explorers[tokenIndexToExplore[_shipTokenId]];
+        explorers[tokenIndexToExplore[_shipTokenId]] = 0;
+        delete tokenIndexToExplore[_shipTokenId];
         delete tokenIndexToSector[_shipTokenId];
 
         /// emit signal to anyone listening in the universe
         Result(_shipTokenId, _sectorTokenId);
+    }
+
+    /// @notice Cancel ship exploration in case it get stuck
+    /// @param _shipTokenId The Token ID that represents a ship and can explore
+    function cancelExplorationByShip(
+        uint256 _shipTokenId
+    )
+    external onlyCLevel
+    {
+        uint256 index = tokenIndexToExplore[_shipTokenId];
+
+        if (index > 0) {
+            /// remove from explore list
+            explorers[index] = 0;
+
+            if (exploreIndexToCrew[index] > 0) {
+                delete exploreIndexToCrew[index];
+            }
+        }
+
+        delete tokenIndexToExplore[_shipTokenId];
+        delete tokenIndexToSector[_shipTokenId];
+    }
+
+    /// @notice Cancel exploration in case it get stuck
+    /// @param _index The exploration position that represents a exploring ship
+    function cancelExplorationByIndex(
+        uint256 _index
+    )
+    external onlyCLevel
+    {
+        uint256 shipId = explorers[_index];
+
+        /// remove from exploration list
+        explorers[_index] = 0;
+
+        if (shipId > 0) {
+            delete tokenIndexToExplore[shipId];
+            delete tokenIndexToSector[shipId];
+        }
+
+        if (exploreIndexToCrew[_index] > 0) {
+            delete exploreIndexToCrew[_index];
+        }
+    }
+
+    /// @notice Add exploration in case contract needs to be add trxs from previous contract
+    /// @param _shipTokenId The Token ID that represents a ship
+    /// @param _sectorTokenId The Token ID that represents a sector
+    /// @param _crewTokenId The Token ID that represents a crew
+    function addExplorationByShip(
+        uint256 _shipTokenId, uint256 _sectorTokenId, uint256 _crewTokenId
+    )
+    external onlyCLevel whenPaused
+    {
+        uint256 index = explorers.push(_shipTokenId) - 1;
+        /// store exploration data
+        tokenIndexToExplore[_shipTokenId] = index;
+        tokenIndexToSector[_shipTokenId] = _sectorTokenId;
+
+        // check if there is a crew and store data and change ship stats
+        if (_crewTokenId > 0) {
+            /// store crew exploration data
+            exploreIndexToCrew[index] = _crewTokenId;
+            missions[_crewTokenId]++;
+        }
+
+        ethernautsStorage.setAssetCooldown(_shipTokenId, now, uint64(block.number));
     }
 
     /// @dev Creates a new Asset with the given fields. ONly available for C Levels
