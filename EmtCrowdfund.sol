@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmtCrowdfund at 0xe4b3dc6896b1a8240c67d713fc138cb0bda37951
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmtCrowdfund at 0x7183a469dd9dcb4a336cdc2e306174d0ffea3602
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.20;
 
 contract owned {
     address public owner;
@@ -16,12 +16,17 @@ contract EmtCrowdfund is owned {
     uint8 public decimals = 8;
     uint256 public totalSupply;
     uint256 public tokenPrice;
+    uint public minBuyAmount = 700000000000000000;       // 0.7 eth
+    uint public maxBuyAmount = 13000000000000000000;     // 13 eth
+    uint public bonusPercent = 20;
 
     mapping (address => uint256) public balanceOf;
     mapping (address => bool) public frozenAccount;
+    mapping (address => uint[]) public paymentHistory;
+    mapping (address => mapping (uint => uint)) public paymentDetail;
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Burn(address indexed from, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Burn(address indexed from, uint value);
     event FrozenFunds(address target, bool frozen);
 
     function EmtCrowdfund(
@@ -60,7 +65,7 @@ contract EmtCrowdfund is owned {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) public {
+    function transfer(address _to, uint _value) public {
         _transfer(msg.sender, _to, _value);
     }
 
@@ -69,7 +74,7 @@ contract EmtCrowdfund is owned {
      * @param _from the address of the owner
      * @param _value the amount of money to burn
      */
-    function burnFrom(address _from, uint256 _value) public onlyOwner returns (bool success) {
+    function burnFrom(address _from, uint _value) public onlyOwner returns (bool success) {
         require(balanceOf[_from] >= _value);
         balanceOf[_from] -= _value;
         totalSupply -= _value;
@@ -84,17 +89,60 @@ contract EmtCrowdfund is owned {
         tokenPrice = _tokenPrice;
     }
 
+    function setBuyLimits(uint _min, uint _max) onlyOwner public {
+        minBuyAmount = _min;
+        maxBuyAmount = _max;
+    }
+
+    function setBonus(uint _percent) onlyOwner public {
+        bonusPercent = _percent;
+    }
+
     function() payable public{
         buy();
     }
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
+
+        uint now_ = now;
+
+        if(minBuyAmount > 0){
+            require(msg.value >= minBuyAmount);
+        }
+
+        if(maxBuyAmount > 0){
+            require(msg.value <= maxBuyAmount);
+
+            if(paymentHistory[msg.sender].length > 0){
+                uint lastTotal = 0;
+                uint thisDay = now_ - 86400;
+
+                for (uint i = 0; i < paymentHistory[msg.sender].length; i++) {
+                    if(paymentHistory[msg.sender][i] >= thisDay){
+                        lastTotal += paymentDetail[msg.sender][paymentHistory[msg.sender][i]];
+                    }
+                }
+
+                require(lastTotal <= maxBuyAmount);
+            }
+        }
+
         uint amount = msg.value / tokenPrice;
+
+        if(bonusPercent > 0){
+            uint bonusAmount = amount / 100 * bonusPercent;
+            amount += bonusAmount;
+        }
+
         require (totalSupply >= amount);
         require(!frozenAccount[msg.sender]);
         totalSupply -= amount;
         balanceOf[msg.sender] += amount;
+
+        paymentHistory[msg.sender].push(now_);
+        paymentDetail[msg.sender][now_] = amount;
+
         emit Transfer(address(0), msg.sender, amount);
     }
 
@@ -103,7 +151,7 @@ contract EmtCrowdfund is owned {
     * @param _to the address of the receiver
     * @param _value the amount of tokens
     */
-    function manualTransfer(address _to, uint256 _value) public onlyOwner returns (bool success) {
+    function manualTransfer(address _to, uint _value) public onlyOwner returns (bool success) {
         require (totalSupply >= _value);
         require(!frozenAccount[_to]);
         totalSupply -= _value;
