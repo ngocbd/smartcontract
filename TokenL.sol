@@ -1,22 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenL at 0x707f0612cbbfa02284e02b0010b4f859bb7308ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenL at 0x7e0055ebf95efcb00cad8554a51a8000af4a200e
 */
 pragma solidity ^0.4.18;
 
-// Project: Imigize
-// v2, 2018-01-14
-// This code is the property of CryptoB2B.io
+// Project: Crypt2Pos
+// v5, 2018-02-15
 // Copying in whole or in part is prohibited.
-// Authors: Ivan Fedorov and Dmitry Borodin
-// Do you want the same TokenSale platform? www.cryptob2b.io
 
 // (A1)
 // The main contract for the sale and management of rounds.
 contract CrowdsaleL{
 
 	// For Round0, firstMint is:
-	// 0000000000000000000000000000000000000000000069e10de76676d0800000
-	// (extra 500K tokens for marketing)
+	// 0000000000000000000000000000000000000000000000000000000000000000
     
     using SafeMath for uint256;
 
@@ -35,7 +31,48 @@ contract CrowdsaleL{
     bool public isInitialized;
     bool public isPausedCrowdsale;
 
-    mapping (uint8 => address) public wallets;
+
+    // Initially, all next 7 roles/wallets are given to the Manager. The Manager is an employee of the company
+    // with knowledge of IT, who publishes the contract and sets it up. However, money and tokens require
+    // a Beneficiary and other roles (Accountant, Team, etc.). The Manager will not have the right
+    // to receive them. To enable this, the Manager must either enter specific wallets here, or perform
+    // this via method changeWallet. In the finalization methods it is written which wallet and
+    // what percentage of tokens are received.
+    address[7] public wallets = [
+        
+        // beneficiary
+        // Receives all the money (when finalizing Round1 & Round2)
+        0x9a1Fc7173086412A10dE27A9d1d543af3AB68262,
+        
+        // accountant
+        // Receives all the tokens for non-ETH investors (when finalizing Round1 & Round2)
+        0x9a1Fc7173086412A10dE27A9d1d543af3AB68262,
+        
+        // manager
+        // All rights except the rights to receive tokens or money. Has the right to change any other
+        // wallets (Beneficiary, Accountant, ...), but only if the round has not started. Once the
+        // round is initialized, the Manager has lost all rights to change the wallets.
+        // If the TokenSale is conducted by one person, then nothing needs to be changed. Permit all 7 roles
+        // point to a single wallet.
+        msg.sender,
+        
+        // observer
+        // Has only the right to call paymentsInOtherCurrency (please read the document)
+        0x8a91aC199440Da0B45B2E278f3fE616b1bCcC494,
+
+        // bounty
+        0x9a1Fc7173086412A10dE27A9d1d543af3AB68262,
+
+        // team
+        // When the round is finalized, all team tokens are transferred to a special freezing
+        // contract. As soon as defrosting is over, only the Team wallet will be able to
+        // collect all the tokens. It does not store the address of the freezing contract,
+        // but the final wallet of the project team.
+        0x9a1Fc7173086412A10dE27A9d1d543af3AB68262,
+        
+        // company
+        0x9a1Fc7173086412A10dE27A9d1d543af3AB68262
+        ];
 
     struct Profit{
 	    uint256 min;    // percent from 0 to 50
@@ -51,16 +88,16 @@ contract CrowdsaleL{
 
     Bonus[] public bonuses;
 
-    Profit public profit = Profit(0, 20, 5, 100);
+    Profit public profit = Profit(0, 20, 4, 50);
     
-    uint256 public startTime= 1515974400;
-    uint256 public endDiscountTime = 1520294400;
-    uint256 public endTime = 1520294400;
+    uint256 public startTime= 1518912000; // 18 Feb
+    uint256 public endDiscountTime = 1521936000; // 25 Mar
+    uint256 public endTime = 1522800000; // 4 Apr
 
     // How many tokens (excluding the bonus) are transferred to the investor in exchange for 1 ETH
     // **THOUSANDS** 10^3 for human, *10**3 for Solidity, 1e3 for MyEtherWallet (MEW).
     // Example: if 1ETH = 40.5 Token ==> use 40500
-    uint256 public rate = 5668000;
+    uint256 public rate = 18000000;
 
     // If the round does not attain this value before the closing date, the round is recognized as a
     // failure and investors take the money back (the founders will not interfere in any way).
@@ -69,7 +106,7 @@ contract CrowdsaleL{
 
     // The maximum possible amount of income
     // **QUINTILLIONS** 10^18 / *10**18 / 1e18. Example: hardcap=123.45ETH ==> use 123450*10**15 (Solidity) or 12345e15 (MEW)
-    uint256 public hardCap = 802 ether;
+    uint256 public hardCap = 19444 ether;
 
     // If the last payment is slightly higher than the hardcap, then the usual contracts do
     // not accept it, because it goes beyond the hardcap. However it is more reasonable to accept the
@@ -82,19 +119,19 @@ contract CrowdsaleL{
 
     // The minimum possible payment from an investor in ETH. Payments below this value will be rejected.
     // **QUINTILLIONS** 10^18 / *10**18 / 1e18. Example: minPay=0.1ETH ==> use 100*10**15 (Solidity) or 100e15 (MEW)
-    uint256 public minPay = 70 finney;
+    uint256 public minPay = 10 finney;
 
-    uint256 ethWeiRaised;
-    uint256 nonEthWeiRaised;
-    uint256 weiRound1;
+    uint256 public ethWeiRaised;
+    uint256 public nonEthWeiRaised;
+    uint256 public weiRound1;
     uint256 public tokenReserved;
 
     RefundVault public vault;
-    SVTAllocation public lockedAllocation;
+    //SVTAllocation public lockedAllocation;
 
-    TokenSaleType TokenSale = TokenSaleType.round1;
+    TokenSaleType TokenSale = TokenSaleType.round2;
 
-    uint256 allToken;
+    uint256 public allToken;
 
     bool public bounty;
     bool public team;
@@ -108,38 +145,6 @@ contract CrowdsaleL{
 
     function CrowdsaleL(TokenL _token, uint256 firstMint) public
     {
-        // Initially, all next 7 roles/wallets are given to the Manager. The Manager is an employee of the company
-        // with knowledge of IT, who publishes the contract and sets it up. However, money and tokens require
-        // a Beneficiary and other roles (Accountant, Team, etc.). The Manager will not have the right
-        // to receive them. To enable this, the Manager must either enter specific wallets here, or perform
-        // this via method changeWallet. In the finalization methods it is written which wallet and
-        // what percentage of tokens are received.
-
-        // Receives all the money (when finalizing Round1 & Round2)
-        wallets[uint8(Roles.beneficiary)] = 0x07544edde0542857277188598606B32F2C28062F; //msg.sender;
-
-        // Receives all the tokens for non-ETH investors (when finalizing Round1 & Round2)
-        wallets[uint8(Roles.accountant)] = 0x31e78568a5E53C568711dd139Ec99d775E9fB80b; //msg.sender;
-
-        // All rights except the rights to receive tokens or money. Has the right to change any other
-        // wallets (Beneficiary, Accountant, ...), but only if the round has not started. Once the
-        // round is initialized, the Manager has lost all rights to change the wallets.
-        // If the TokenSale is conducted by one person, then nothing needs to be changed. Permit all 7 roles
-        // point to a single wallet.
-        wallets[uint8(Roles.manager)] = msg.sender;
-
-        // Has only the right to call paymentsInOtherCurrency (please read the document)
-        wallets[uint8(Roles.observer)] = 0x7FF83C688CaC62f5944C694CF04bF3f30ec19608; //msg.sender;
-
-        wallets[uint8(Roles.bounty)] = 0x17194d2cA481d2533A147776BeB471DC40dc4580; //msg.sender;
-
-        // When the round is finalized, all team tokens are transferred to a special freezing
-        // contract. As soon as defrosting is over, only the Team wallet will be able to
-        // collect all the tokens. It does not store the address of the freezing contract,
-        // but the final wallet of the project team.
-        wallets[uint8(Roles.team)] = 0x443f4Be0f50f973e3970343c6A50bcf1Ac66c6C3; //msg.sender;
-
-        wallets[uint8(Roles.company)] = 0xb4D429B3240616FA67D1509c0C0E48D11900dd18; //msg.sender;
 
         token = _token;
         token.setOwner();
@@ -148,8 +153,14 @@ contract CrowdsaleL{
 
         token.addUnpausedWallet(wallets[uint8(Roles.accountant)]);
         token.addUnpausedWallet(msg.sender);
-        token.addUnpausedWallet(wallets[uint8(Roles.bounty)]);
-        token.addUnpausedWallet(wallets[uint8(Roles.company)]);
+        //token.addUnpausedWallet(wallets[uint8(Roles.bounty)]);
+        //token.addUnpausedWallet(wallets[uint8(Roles.company)]);
+        
+        token.setFreezingManager(wallets[uint8(Roles.accountant)]);
+        
+        bonuses.push(Bonus(11111 finney,30,60 days));
+        bonuses.push(Bonus(55556 finney,40,90 days));
+        bonuses.push(Bonus(111111 finney,50,180 days));
 
         if (firstMint > 0) {
             token.mint(msg.sender, firstMint);
@@ -272,26 +283,31 @@ contract CrowdsaleL{
         }
     }
 
-    // The Manager freezes the tokens for the Team.
+    // The Manager (no-freezes) the tokens for the Team.
     // You must call a function to finalize Round 2 (only after the Round2)
     function finalize1() public {
         require(wallets[uint8(Roles.manager)] == msg.sender || wallets[uint8(Roles.beneficiary)] == msg.sender);
         require(team);
         team = false;
-        lockedAllocation = new SVTAllocation(token, wallets[uint8(Roles.team)]);
-        token.addUnpausedWallet(lockedAllocation);
-        // 12% - tokens to Team wallet after freeze (77% for investors)
+        // 14% - tokens to Team wallet after freeze (80% for investors)
         // *** CHECK THESE NUMBERS ***
-        token.mint(lockedAllocation,allToken.mul(12).div(77));
+//        lockedAllocation = new SVTAllocation(token, wallets[uint8(Roles.team)]);
+//        token.addUnpausedWallet(lockedAllocation);
+//        token.mint(lockedAllocation,allToken.mul(14).div(80));
+
+		// no freeze
+        token.mint(wallets[uint8(Roles.team)],allToken.mul(14).div(80));
     }
 
+    // For bounty
+    // You must call a function to finalize Round 2 (only after the Round2)
     function finalize2() public {
         require(wallets[uint8(Roles.manager)] == msg.sender || wallets[uint8(Roles.beneficiary)] == msg.sender);
         require(bounty);
         bounty = false;
-        // 2% - tokens to bounty wallet after freeze (77% for investors)
+        // 3% - tokens to bounty wallet after freeze (80% for investors)
         // *** CHECK THESE NUMBERS ***
-        token.mint(wallets[uint8(Roles.bounty)],allToken.mul(2).div(77));
+        token.mint(wallets[uint8(Roles.bounty)],allToken.mul(3).div(80));
     }
 
     // For marketing, referral, reserve 
@@ -300,9 +316,9 @@ contract CrowdsaleL{
         require(wallets[uint8(Roles.manager)] == msg.sender || wallets[uint8(Roles.beneficiary)] == msg.sender);
         require(company);
         company = false;
-        // 9% - tokens to company wallet after freeze (77% for investors)
+        // 3% - tokens to company wallet after freeze (80% for investors)
         // *** CHECK THESE NUMBERS ***
-        token.mint(wallets[uint8(Roles.company)],allToken.mul(9).div(77));
+        token.mint(wallets[uint8(Roles.company)],allToken.mul(3).div(80));
     }
 
 
@@ -522,7 +538,7 @@ contract CrowdsaleL{
     // He can only cancel the pause before the appointed time.
     function tokenUnpause() public {
         require(wallets[uint8(Roles.manager)] == msg.sender
-            || (now > endTime + 60 days && TokenSale == TokenSaleType.round2 && isFinalized && goalReached()));
+            || (now > endTime + 30 days && TokenSale == TokenSaleType.round2 && isFinalized && goalReached()));
         token.unpause();
     }
 
@@ -592,11 +608,30 @@ contract CrowdsaleL{
         );
         address oldWallet = wallets[uint8(_role)];
         wallets[uint8(_role)] = _wallet;
-        if(!unpausedWallet(oldWallet))
-        token.delUnpausedWallet(oldWallet);
+        if(token.unpausedWallet(oldWallet))
+            token.delUnpausedWallet(oldWallet);
         if(unpausedWallet(_wallet))
-        token.addUnpausedWallet(_wallet);
+            token.addUnpausedWallet(_wallet);
+        
+        if(_role == Roles.accountant)
+            token.setFreezingManager(wallets[uint8(Roles.accountant)]);
     }
+    
+    
+    // The beneficiary at any time can take rights in all roles and prescribe his wallet in all the 
+    // rollers. Thus, he will become the recipient of tokens for the role of Accountant, 
+    // Team, etc. Works at any time.
+    function resetAllWallets() public{
+        address _beneficiary = wallets[uint8(Roles.beneficiary)];
+        require(msg.sender == _beneficiary);
+        for(uint8 i = 0; i < wallets.length; i++){
+            if(token.unpausedWallet(wallets[i]))
+                token.delUnpausedWallet(wallets[i]);
+            wallets[i] = _beneficiary;
+        }
+        token.addUnpausedWallet(_beneficiary);
+    }
+    
 
     // If a little more than a year has elapsed (Round2 start date + 400 days), a smart contract
     // will allow you to send all the money to the Beneficiary, if any money is present. This is
@@ -617,9 +652,12 @@ contract CrowdsaleL{
     // Within 400 days of the start of the Round, if it fails only investors can take money. After
     // the deadline this can also include the company as well as investors, depending on who is the first to use the method.
     function distructVault() public {
-        require(wallets[uint8(Roles.beneficiary)] == msg.sender);
-        require(now > startTime + 400 days);
-        vault.del(wallets[uint8(Roles.beneficiary)]);
+ 		if (wallets[uint8(Roles.beneficiary)] == msg.sender && (now > startTime + 400 days)) {
+ 			vault.del(wallets[uint8(Roles.beneficiary)]);
+ 		}
+ 		if (wallets[uint8(Roles.manager)] == msg.sender && (now > startTime + 600 days)) {
+ 			vault.del(wallets[uint8(Roles.manager)]);
+ 		}    
     }
 
 
@@ -660,11 +698,12 @@ contract CrowdsaleL{
 
     // This scenario ensures that for the sum of all fees in all currencies this value does not exceed hardcap.
 
-    // BTC - 1HQahivPX2cU5Nq921wSuULpuZyi9AcXCY
+    // BTC - 1Mzf6X9daai49B5UHvCWxUvSMpUPibATKm
+    // LTC - LKsbawSDfYuV9sfv7vFVDKMnQSP5CmNgdY
 
     // ** QUINTILLIONS ** 10^18 / 1**18 / 1e18
     function paymentsInOtherCurrency(uint256 _token, uint256 _value) public {
-        require(wallets[uint8(Roles.observer)] == msg.sender);
+        require(wallets[uint8(Roles.observer)] == msg.sender || wallets[uint8(Roles.manager)] == msg.sender);
         bool withinPeriod = (now >= startTime && now <= endTime);
 
         bool withinCap = _value.add(ethWeiRaised) <= hardCap.add(overLimit);
@@ -707,13 +746,13 @@ contract CrowdsaleL{
         var (bonus, dateUnfreeze) = getBonuses(weiAmount);
         
         // Scenario 1 - select max from all bonuses + check profit.maxAllProfit
-        //uint256 totalProfit = ProfitProcent;
-        //totalProfit = (totalProfit < bonus) ? bonus : totalProfit;
-        //totalProfit = (totalProfit > profit.maxAllProfit) ? profit.maxAllProfit : totalProfit;
+        uint256 totalProfit = ProfitProcent;
+        totalProfit = (totalProfit < bonus) ? bonus : totalProfit;
+        totalProfit = (totalProfit > profit.maxAllProfit) ? profit.maxAllProfit : totalProfit;
         
         // Scenario 2 - sum both bonuses + check profit.maxAllProfit
-        uint256 totalProfit = bonus.add(ProfitProcent);
-        totalProfit = (totalProfit > profit.maxAllProfit)? profit.maxAllProfit: totalProfit;
+        //uint256 totalProfit = bonus.add(ProfitProcent);
+        //totalProfit = (totalProfit > profit.maxAllProfit)? profit.maxAllProfit: totalProfit;
         
         // calculate token amount to be created
         uint256 tokens = weiAmount.mul(rate).mul(totalProfit + 100).div(100000);
@@ -890,13 +929,13 @@ contract BlockedToken is Ownable {
 contract TokenL is Pausable, BlockedToken {
     using SafeMath for uint256;
 
-    string public constant name = "Imigize";
-    string public constant symbol = "IMGZ";
+    string public constant name = "Crypt2Pos";
+    string public constant symbol = "CRPOS";
     uint8 public constant decimals = 18;
 
     uint256 public totalSupply;
 
-    mapping(address => uint256) balances;
+    mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 
     mapping (address => bool) public unpausedWallet;
@@ -905,6 +944,9 @@ contract TokenL is Pausable, BlockedToken {
 
     uint256 public totalMigrated;
     address public migrationAgent;
+    
+    address public freezingManager;
+    mapping (address => bool) public freezingAgent;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -927,6 +969,28 @@ contract TokenL is Pausable, BlockedToken {
         require(owner == 0x0);
         owner = msg.sender;
     }
+    
+    function setFreezingManager(address _newAddress) external {
+        require(msg.sender == owner || msg.sender == freezingManager);
+        freezingAgent[freezingManager] = false;
+        freezingManager = _newAddress;
+        freezingAgent[freezingManager] = true;
+    }
+    
+    function changeFreezingAgent(address _agent, bool _right) external {
+        require(msg.sender == freezingManager);
+        freezingAgent[_agent] = _right;
+    }
+    
+    function transferAndFreeze(address _to, uint256 _value, uint256 _when) external {
+        require(freezingAgent[msg.sender]);
+        if(_when > 0){
+            locked storage _locked = locks[_to];
+            _locked.value = valueBlocked(_to).add(_value);
+            _locked.date = (_locked.date > _when)? _locked.date: _when;
+        }
+        transfer(_to,_value);
+    }
 
     // Balance of the specified address
     function balanceOf(address _owner) public constant returns (uint256 balance) {
@@ -935,7 +999,8 @@ contract TokenL is Pausable, BlockedToken {
 
 
     // Transfer of tokens from one account to another
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(!paused()||unpausedWallet[msg.sender]||unpausedWallet[_to]);
         uint256 available = balances[msg.sender].sub(valueBlocked(msg.sender));
         require(_value <= available);
         require (_value > 0);
@@ -965,8 +1030,8 @@ contract TokenL is Pausable, BlockedToken {
     }
 
     // Transfer of tokens from the trusted address _from to the address _to in the number _value
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(!paused()||unpausedWallet[msg.sender]||unpausedWallet[_to]);
         uint256 available = balances[_from].sub(valueBlocked(_from));
         require(_value <= available);
 
@@ -1003,7 +1068,7 @@ contract TokenL is Pausable, BlockedToken {
     // Redefinition of the method of the returning status of the "Exchange pause".
     // Never for the owner of an unpaused wallet.
     function paused() public constant returns(bool) {
-        return super.paused() && !unpausedWallet[msg.sender];
+        return super.paused();
     }
 
     // Add a wallet ignoring the "Exchange pause". Available to the owner of the contract.
@@ -1168,35 +1233,35 @@ contract DistributorRefundVault is RefundVault{
 
 // (B)
 // The contract for freezing tokens for the team..
-contract SVTAllocation {
-    using SafeMath for uint256;
-
-    TokenL public token;
-
-    address public owner;
-
-    uint256 public unlockedAt;
-
-    // The contract takes the ERC20 coin address from which this contract will work and from the
-    // owner (Team wallet) who owns the funds.
-    function SVTAllocation(TokenL _token, address _owner) public{
-
-        // How many days to freeze from the moment of finalizing Round2
-        unlockedAt = now + 1 years;
-
-        token = _token;
-        owner = _owner;
-    }
-
-    function changeToken(TokenL _token) external{
-        require(msg.sender == owner);
-        token = _token;
-    }
-
-
-    // If the time of freezing expired will return the funds to the owner.
-    function unlock() external{
-        require(now >= unlockedAt);
-        require(token.transfer(owner,token.balanceOf(this)));
-    }
-}
+//contract SVTAllocation {
+//    using SafeMath for uint256;
+//
+//    TokenL public token;
+//
+//    address public owner;
+//
+//    uint256 public unlockedAt;
+//
+//    // The contract takes the ERC20 coin address from which this contract will work and from the
+//    // owner (Team wallet) who owns the funds.
+//    function SVTAllocation(TokenL _token, address _owner) public{
+//
+//        // How many days to freeze from the moment of finalizing Round2
+//        unlockedAt = now + 1 years;
+//
+//        token = _token;
+//        owner = _owner;
+//    }
+//
+//    function changeToken(TokenL _token) external{
+//        require(msg.sender == owner);
+//        token = _token;
+//    }
+//
+//
+//    // If the time of freezing expired will return the funds to the owner.
+//    function unlock() external{
+//        require(now >= unlockedAt);
+//        require(token.transfer(owner,token.balanceOf(this)));
+//    }
+//}
