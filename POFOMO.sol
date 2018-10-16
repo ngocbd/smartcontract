@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POFOMO at 0x560431a917c5bf4f5831935a199d6516472bcff1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POFOMO at 0x8bc12b2dd6ef435d0826fa05ff14a269186091f8
 */
 pragma solidity ^0.4.20;
 
@@ -25,6 +25,7 @@ pragma solidity ^0.4.20;
     
     Autonomous pyramid with 20% dividends and a SLOWER TOKEN PRICE INCREASE to give fairer FOMO for all.
     Longer pyramid lifespan = more divs for everyone :)
+    50% masternode bonus for maximum incentive!
 */
 
 
@@ -134,7 +135,7 @@ contract POFOMO {
     string public symbol = "POFOMO";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 5; 
-    uint256 constant internal tokenPriceInitial_ = 0.0000000001 ether;
+    uint256 constant internal tokenPriceInitial_ = 0.000000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.000000007 ether; //slower price increase, longer FOMO!
     uint256 constant internal magnitude = 2**64;
     
