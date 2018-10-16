@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xa2f45eb983e4192e600ba5cedb3dcf4c27aff558
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xb9c9771743a60902cf57c53eb75e749f7569b3ca
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'TWIX';
-	string public symbol = 'TWIX';
+	string public name = 'HUAWEI';
+	string public symbol = 'HUAWEI';
 	uint public decimals = 3;
 	uint public initialSupply = 99999999999;
 	string public publisher = 'TokenDone.io';
