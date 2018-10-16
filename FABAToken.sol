@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FABAToken at 0x7d3f10083ec5c0b20f37b0752f1eac70cc70c2ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FABAToken at 0x0a1d2ff7156a48131553cf381f220bbedb4efa37
 */
 pragma solidity 0.4.18;
 
@@ -626,62 +626,31 @@ contract StagedCrowdsale is Ownable {
 contract Mainsale is StagedCrowdsale, FABACommonSale {
 
   address public FABAcompanyTokensWallet;
-  
-  address public SoftwareTokensWallet;
-  
-  address public ReservesForExchangeTokensWallet;
- 
-  address public MentorsTokensWallet;
 
-  address public bountyTokensWallet;
+  address public TymTokensWallet;
 
   uint public FABAcompanyTokensPercent;
   
-  uint public SoftwareTokensPercent;
-  
-  uint public ReservesForExchangeTokensPercent;
-  
-  uint public bountyTokensPercent;
-  
-  uint public MentorsTokensPercent;
+  uint public TymTokensPercent;
   
   
-   function setSoftwareTokensPercent(uint newSoftwareTokensPercent) public onlyOwner {
-   SoftwareTokensPercent = newSoftwareTokensPercent;
-  }
-   function setReservesForExchangeTokensPercent(uint newReservesForExchangeTokensPercent) public onlyOwner {
-   ReservesForExchangeTokensPercent = newReservesForExchangeTokensPercent;
-  }
+  
    
   
   function setFABAcompanyTokensPercent(uint newFABAcompanyTokensPercent) public onlyOwner {
     FABAcompanyTokensPercent = newFABAcompanyTokensPercent;
   }
-  function setMentorsTokensPercent(uint newMentorsTokensPercent) public onlyOwner {
-    MentorsTokensPercent = newMentorsTokensPercent;
-  }
-
- function setSoftwareTokensWallet(address newSoftwareTokensWallet) public onlyOwner {
-    SoftwareTokensWallet = newSoftwareTokensWallet;
-  }
-  function setBountyTokensPercent(uint newBountyTokensPercent) public onlyOwner {
-    bountyTokensPercent = newBountyTokensPercent;
+  
+  function setTymTokensPercent(uint newTymTokensPercent) public onlyOwner {
+    TymTokensPercent = newTymTokensPercent;
   }
  
   function setFABAcompanyTokensWallet(address newFABAcompanyTokensWallet) public onlyOwner {
     FABAcompanyTokensWallet = newFABAcompanyTokensWallet;
   }
 
- function setReservesForExchangeTokensWallet(address newReservesForExchangeTokensWallet) public onlyOwner {
-   ReservesForExchangeTokensWallet = newReservesForExchangeTokensWallet;
-  }
-  
-
-  function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
-    bountyTokensWallet = newBountyTokensWallet;
-  }
-  function setMentorsTokensWallet(address newMentorsTokensWallet) public onlyOwner {
-    MentorsTokensWallet = newMentorsTokensWallet;
+  function setTymTokensWallet(address newTymTokensWallet) public onlyOwner {
+    TymTokensWallet = newTymTokensWallet;
   }
 
   function calculateTokens(uint _invested) internal returns(uint) {
@@ -696,19 +665,13 @@ contract Mainsale is StagedCrowdsale, FABACommonSale {
   }
 
   function finish() public onlyOwner {
-    uint summaryTokensPercent = bountyTokensPercent.add(FABAcompanyTokensPercent).add(MentorsTokensPercent).add(ReservesForExchangeTokensPercent).add(SoftwareTokensPercent);
+    uint summaryTokensPercent = TymTokensPercent.add(FABAcompanyTokensPercent);
     uint mintedTokens = token.totalSupply();
     uint allTokens = mintedTokens.mul(percentRate).div(percentRate.sub(summaryTokensPercent));
-    uint SoftwareTokens = allTokens.mul(SoftwareTokensPercent).div(percentRate);
     uint FABAcompanyTokens = allTokens.mul(FABAcompanyTokensPercent).div(percentRate);
-    uint ReservesForExchangeTokens = allTokens.mul(ReservesForExchangeTokensPercent).div(percentRate);
-    uint MentorsTokens = allTokens.mul(MentorsTokensPercent).div(percentRate);
-    uint bountyTokens = allTokens.mul(bountyTokensPercent).div(percentRate);
-    mintTokens(ReservesForExchangeTokensWallet, ReservesForExchangeTokens);
+    uint TymTokens = allTokens.mul(TymTokensPercent).div(percentRate);
     mintTokens(FABAcompanyTokensWallet, FABAcompanyTokens);
-    mintTokens(SoftwareTokensWallet, SoftwareTokens);
-    mintTokens(bountyTokensWallet, bountyTokens);
-    mintTokens(MentorsTokensWallet, MentorsTokens);
+    mintTokens(TymTokensWallet,TymTokens);
     token.finishMinting();
   }
 
@@ -761,42 +724,40 @@ contract Configurator is Ownable {
 
   function deploy() public onlyOwner {
     //owner = 0x83Af3226ca6d215F31dC0Baa0D969C06A1E5db3b;
+   // Existing investors in PRE ICO-period from 1st March 2018 until 5th June 2018 will receive 
+   //a fair bonus from the company,which will equalize everyone to the value of 40% of FABA tokens.
 
     token = new FABAToken();
 
     presale = new Presale();
 
-    presale.setWallet(0x83Af3226ca6d215F31dC0Baa0D969C06A1E5db3b);
-    presale.setStart(1524009600);
-    presale.setPeriod(14);
-    presale.setPrice(730000000000000000000);
-    presale.setHardcap(600000000000000000000);
+    presale.setWallet(0x66CeD6f10d77ae5F8dd7811824EF71ebC0c8aEFf);
+    presale.setStart(1519862400);
+    presale.setPeriod(300);
+    presale.setPrice(600000000000000000000);
+    presale.setHardcap(500000000000000000000);
     token.setSaleAgent(presale);
     commonConfigure(presale, token);
 
     mainsale = new Mainsale();
 
-    mainsale.addMilestone(14,20);
-    mainsale.addMilestone(14,10);
-    mainsale.addMilestone(14,0);
+    mainsale.addMilestone(30,20);
+    mainsale.addMilestone(30,15);
+    mainsale.addMilestone(30,10);
 	
   
       
-    mainsale.setPrice(520000000000000000000);
-    mainsale.setWallet(0x83Af3226ca6d215F31dC0Baa0D969C06A1E5db3b);
-    mainsale.setReservesForExchangeTokensWallet(0x83Af3226ca6d215F31dC0Baa0D969C06A1E5db3b);
+    mainsale.setPrice(450000000000000000000);
+    mainsale.setWallet(0x66CeD6f10d77ae5F8dd7811824EF71ebC0c8aEFf);
     mainsale.setFABAcompanyTokensWallet(0x96E187bdD7d817275aD45688BF85CD966A80A428);
-    mainsale.setBountyTokensWallet(0x83Af3226ca6d215F31dC0Baa0D969C06A1E5db3b);
-    mainsale.setMentorsTokensWallet(0x66CeD6f10d77ae5F8dd7811824EF71ebC0c8aEFf);
-    mainsale.setSoftwareTokensWallet(0x83Af3226ca6d215F31dC0Baa0D969C06A1E5db3b);
-    mainsale.setStart(1525219200);
-    mainsale.setHardcap(173000000000000000000000);
+    mainsale.setTymTokensWallet(0x781b6EeCa4119f7B9633a03001616161c698b2c5);
+    mainsale.setStart(1551398400);
+    mainsale.setHardcap(112500000000000000000000);
    
-    mainsale.setReservesForExchangeTokensPercent(2);
-    mainsale.setFABAcompanyTokensPercent(20);
-    mainsale.setMentorsTokensPercent(10);
-    mainsale.setBountyTokensPercent(5);
-    mainsale.setSoftwareTokensPercent(1);
+    
+    mainsale.setFABAcompanyTokensPercent(40);
+    mainsale.setTymTokensPercent(8);
+   //Token for Mentors (2)
     commonConfigure(mainsale, token);
 	
     presale.setMainsale(mainsale);
@@ -811,10 +772,11 @@ contract Configurator is Ownable {
      sale.addValueBonus(1000000000000000000,0);
      sale.setReferalsMinInvestLimit(500000000000000000);
      sale.setRefererPercent(15);
-     sale.setMinInvestedLimit(500000000000000000);
+     sale.setMinInvestedLimit(300000000000000000);
      sale.setToken(_token);
   }
 
 }
+//The price for token in the second round will be 1.3$ and the minimal order wil be 1300$
 //Token owners will be paid a share of profits from the sale of stakes in the invested companies. Profits will be paid in ETH.
 //Tokens will be distributed within 8 weeks after ICO
