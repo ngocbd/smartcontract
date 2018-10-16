@@ -1,12 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CicadaToken at 0x700d594cfc1744e10957367cfd8e4d35445e8bd9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CicadaToken at 0xe43b76436b7146e8b8c4a167831bbe0421335aed
 */
-pragma solidity ^0.4.14;
-
 contract CicadaToken {
     /* Public variables of the Cicada token. Not made by the "official" Cicada 3301... or is it? 
-        No, probably not, you're paranoid. Or am I? What if we're all Cicada? 
-        No, you're delusional.
+        No, probably not, you're paranoid. Or am I? What if we're all Cicada? No, you're delusional.
         This is insanity, or maybe it's genius?
         
         We barely could wait this moment...
@@ -41,7 +38,8 @@ contract CicadaToken {
         Now I do not know whether I was then a man dreaming I was a butterfly, 
         or whether I am now a butterfly, dreaming I am a man. 
         Between a man and a butterfly there is necessarily a distinction. 
-        The transition is called the transformation of material things.*/
+        The transition is called the transformation of material things.
+    */
     string public standard = 'Cicada 33.01';
     string public name;
     string public symbol;
@@ -67,8 +65,7 @@ contract CicadaToken {
         A natural organism. 
         My hypothesis: Within the crypto market, there is a pattern as well... 
         Right in front of me... hiding behind the numbers. Always has been.*/
-        
-    function CicadaToken() {
+    function Token() {
 
          initialSupply = 3301000000000;
          name ="CICADA";
@@ -86,7 +83,6 @@ contract CicadaToken {
     in fact, the possibilities of gameplay are endless. 
     They say that no two Go games have ever been alike. Just like snowflakes. 
     So, the Go board actually represents an extremely complex and chaotic universe.*/
-    
     function transfer(address _to, uint256 _value) {
         if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
         if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
