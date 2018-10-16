@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x10cff41a52918a11c955d696d45adff5a834128a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x70097e3f65da294216cc210234c04e0e914001a1
 */
 pragma solidity ^0.4.4;
 
@@ -90,7 +90,7 @@ contract StandardToken is Token {
 }
 
 
-//name this contract whatever you'd like
+
 contract ERC20Token is StandardToken {
 
     function () {
@@ -106,10 +106,10 @@ contract ERC20Token is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public name;     
+    uint8 public decimals;                
+    string public symbol;                 
+    string public version = 'H1.0';       
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100000000;                        // Update total supply (100000 for example)
-        name = "Blockchain As A Service";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "BCaaS";                               // Set the symbol for display purposes
+        balances[msg.sender] = 1000000000000000000000000000;               
+        totalSupply = 1000000000000000000000000000;                    
+        name = "DABORGE COIN";                                   
+        decimals = 18;                           
+        symbol = "DABORGE";                              
     }
 
     /* Approves and then calls the receiving contract */
