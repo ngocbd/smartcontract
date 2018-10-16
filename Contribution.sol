@@ -1,272 +1,303 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0x48eE772b8C8927D8D32afc8961FBc177FB723637
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0xd3e74ac8ecb37649488e6c918452e04e51eccf19
 */
-pragma solidity ^0.4.11;
-contract SafeMath {
-    
-    /*
-    standard uint256 functions
-     */
+pragma solidity ^0.4.8;
 
-    function add(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x + y) >= x);
+// folio.ninja ERC20 Token & Crowdsale Contract
+// Contact: info@folio.ninja
+// Cap of 12,632,000 Tokens
+// 632,000 Tokens to Foundation
+// 25,000 ETH Cap that goes to Developers
+// Allows subsequent contribution / minting if cap not reached.
+
+contract Assertive {
+  function assert(bool assertion) internal {
+      if (!assertion) throw;
+  }
+}
+
+contract SafeMath is Assertive{
+    function safeMul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
-    function sub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x - y) <= x);
+    function safeSub(uint a, uint b) internal returns (uint) {
+        assert(b <= a);
+        return a - b;
     }
 
-    function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x * y) >= x);
+    function safeAdd(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        assert(c>=a && c>=b);
+        return c;
     }
+}
 
-    function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        z = x / y;
-    }
+contract ERC20Protocol {
+    function totalSupply() constant returns (uint256 totalSupply) {}
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
-    function min(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x <= y ? x : y;
-    }
-    function max(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x >= y ? x : y;
-    }
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
 
-    /*
-    uint128 functions (h is for half)
-     */
-
-
-    function hadd(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x + y) >= x);
-    }
-
-    function hsub(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x - y) <= x);
-    }
-
-    function hmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x * y) >= x);
-    }
-
-    function hdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = x / y;
-    }
-
-    function hmin(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        return x <= y ? x : y;
-    }
-    function hmax(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        return x >= y ? x : y;
-    }
-
-
-    /*
-    int256 functions
-     */
-
-    function imin(int256 x, int256 y) constant internal returns (int256 z) {
-        return x <= y ? x : y;
-    }
-    function imax(int256 x, int256 y) constant internal returns (int256 z) {
-        return x >= y ? x : y;
-    }
-
-    /*
-    WAD math
-     */
-
-    uint128 constant WAD = 10 ** 18;
-
-    function wadd(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hadd(x, y);
-    }
-
-    function wsub(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hsub(x, y);
-    }
-
-    function wmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y + WAD / 2) / WAD);
-    }
-
-    function wdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * WAD + y / 2) / y);
-    }
-
-    function wmin(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmin(x, y);
-    }
-    function wmax(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmax(x, y);
-    }
-
-    /*
-    RAY math
-     */
-
-    uint128 constant RAY = 10 ** 27;
-
-    function radd(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hadd(x, y);
-    }
-
-    function rsub(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hsub(x, y);
-    }
-
-    function rmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y + RAY / 2) / RAY);
-    }
-
-    function rdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * RAY + y / 2) / y);
-    }
-
-    function rpow(uint128 x, uint64 n) constant internal returns (uint128 z) {
-        // This famous algorithm is called "exponentiation by squaring"
-        // and calculates x^n with x as fixed-point and n as regular unsigned.
-        //
-        // It's O(log n), instead of O(n) for naive repeated multiplication.
-        //
-        // These facts are why it works:
-        //
-        //  If n is even, then x^n = (x^2)^(n/2).
-        //  If n is odd,  then x^n = x * x^(n-1),
-        //   and applying the equation for even x gives
-        //    x^n = x * (x^2)^((n-1) / 2).
-        //
-        //  Also, EVM division is flooring and
-        //    floor[(n-1) / 2] = floor[n / 2].
-
-        z = n % 2 != 0 ? x : RAY;
-
-        for (n /= 2; n != 0; n /= 2) {
-            x = rmul(x, x);
-
-            if (n % 2 != 0) {
-                z = rmul(z, x);
-            }
+contract ERC20 is ERC20Protocol {
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { 
+            return false;
         }
     }
 
-    function rmin(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmin(x, y);
-    }
-    function rmax(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmax(x, y);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { 
+            return false;
+        }
     }
 
-    function cast(uint256 x) constant internal returns (uint128 z) {
-        assert((z = uint128(x)) == x);
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
 
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+
+    mapping (address => mapping (address => uint256)) allowed;
+
+    uint256 public totalSupply;
 }
 
-/// @dev `Owned` is a base level contract that assigns an `owner` that can be
-///  later changed
-contract Owned {
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner) ;
+// Folio Ninja Token Contract
+contract FolioNinjaToken is ERC20, SafeMath {
+    // Consant token specific fields
+    string public constant name = "folio.ninja";
+    string public constant symbol = "FLN";
+    uint public constant decimals = 18;
+    uint public constant MAX_TOTAL_TOKEN_AMOUNT = 12632000 * 10 ** decimals;
+
+    // Fields that are only changed in constructor
+    address public minter; // Contribution contract
+    address public FOUNDATION_WALLET; // Can change to other minting contribution contracts but only until total amount of token minted
+    uint public startTime; // Contribution start time in seconds
+    uint public endTime; // Contribution end time in seconds
+
+    // MODIFIERS
+    modifier only_minter {
+        assert(msg.sender == minter);
         _;
     }
 
-    address public owner;
-
-    /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() {
-        owner = msg.sender;
+    modifier only_foundation {
+        assert(msg.sender == FOUNDATION_WALLET);
+        _;
     }
 
-    address public newOwner;
-
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    ///  an unowned neutral vault, however that cannot be undone
-    function changeOwner(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
+    modifier is_later_than(uint x) {
+        assert(now > x);
+        _;
     }
 
-    function acceptOwnership() {
-        if (msg.sender == newOwner) {
-            owner = newOwner;
-        }
+    modifier max_total_token_amount_not_reached(uint amount) {
+        assert(safeAdd(totalSupply, amount) <= MAX_TOTAL_TOKEN_AMOUNT);
+        _;
     }
+
+    // METHODS
+    function FolioNinjaToken(address setMinter, address setFoundation, uint setStartTime, uint setEndTime) {
+        minter = setMinter;
+        FOUNDATION_WALLET = setFoundation;
+        startTime = setStartTime;
+        endTime = setEndTime;
+    }
+
+    /// Pre: Address of contribution contract (minter) is set
+    /// Post: Mints token
+    function mintToken(address recipient, uint amount)
+        external
+        only_minter
+        max_total_token_amount_not_reached(amount)
+    {
+        balances[recipient] = safeAdd(balances[recipient], amount);
+        totalSupply = safeAdd(totalSupply, amount);
+    }
+
+    /// Pre: Prevent transfers until contribution period is over.
+    /// Post: Transfer FLN from msg.sender
+    /// Note: ERC20 interface
+    function transfer(address recipient, uint amount)
+        is_later_than(endTime)
+        returns (bool success)
+    {
+        return super.transfer(recipient, amount);
+    }
+
+    /// Pre: Prevent transfers until contribution period is over.
+    /// Post: Transfer FLN from arbitrary address
+    /// Note: ERC20 interface
+    function transferFrom(address sender, address recipient, uint amount)
+        is_later_than(endTime)
+        returns (bool success)
+    {
+        return super.transferFrom(sender, recipient, amount);
+    }
+
+    /// Pre: minting address is set. Restricted to foundation.
+    /// Post: New minter can now create tokens up to MAX_TOTAL_TOKEN_AMOUNT.
+    /// Note: This allows additional contribution periods at a later stage, while still using the same ERC20 compliant contract.
+    function changeMintingAddress(address newMintingAddress) only_foundation { minter = newMintingAddress; }
+
+    /// Pre: foundation address is set. Restricted to foundation.
+    /// Post: New address set. This address controls the setting of the minter address
+    function changeFoundationAddress(address newFoundationAddress) only_foundation { FOUNDATION_WALLET = newFoundationAddress; }
 }
 
-contract Contribution is SafeMath, Owned {
-    uint256 public constant MIN_FUND = (0.01 ether);
-    uint256 public constant CRAWDSALE_START_DAY = 1;
-    uint256 public constant CRAWDSALE_END_DAY = 7;
+/// @title Contribution Contract
+contract Contribution is SafeMath {
+    // FIELDS
 
-    uint256 public dayCycle = 24 hours;
-    uint256 public fundingStartTime = 0;
-    address public ethFundDeposit = 0;
-    address public investorDeposit = 0;
-    bool public isFinalize = false;
-    bool public isPause = false;
-    mapping (uint => uint) public dailyTotals; //total eth per day
-    mapping (uint => mapping (address => uint)) public userBuys; // otal eth per day per user
-    uint256 public totalContributedETH = 0; //total eth of 7 days
+    // Constant fields
+    uint public constant ETHER_CAP = 25000 ether; // Max amount raised during first contribution; targeted amount AUD 7M
+    uint public constant MAX_CONTRIBUTION_DURATION = 8 weeks; // Max amount in seconds of contribution period
 
-    // events
-    event LogBuy (uint window, address user, uint amount);
-    event LogCreate (address ethFundDeposit, address investorDeposit, uint fundingStartTime, uint dayCycle);
-    event LogFinalize (uint finalizeTime);
-    event LogPause (uint finalizeTime, bool pause);
+    // Price Rates
+    uint public constant PRICE_RATE_FIRST = 480;
+    uint public constant PRICE_RATE_SECOND = 460;
+    uint public constant PRICE_RATE_THIRD = 440;
+    uint public constant PRICE_RATE_FOURTH = 400;
 
-    function Contribution (address _ethFundDeposit, address _investorDeposit, uint256 _fundingStartTime, uint256 _dayCycle)  {
-        require( now < _fundingStartTime );
-        require( _ethFundDeposit != address(0) );
+    // Foundation Holdings
+    uint public constant FOUNDATION_TOKENS = 632000 ether;
 
-        fundingStartTime = _fundingStartTime;
-        dayCycle = _dayCycle;
-        ethFundDeposit = _ethFundDeposit;
-        investorDeposit = _investorDeposit;
-        LogCreate(_ethFundDeposit, _investorDeposit, _fundingStartTime,_dayCycle);
+    // Fields that are only changed in constructor
+    address public FOUNDATION_WALLET; // folio.ninja foundation wallet
+    address public DEV_WALLET; // folio.ninja multisig wallet
+
+    uint public startTime; // Contribution start time in seconds
+    uint public endTime; // Contribution end time in seconds
+
+    FolioNinjaToken public folioToken; // Contract of the ERC20 compliant folio.ninja token
+
+    // Fields that can be changed by functions
+    uint public etherRaised; // This will keep track of the Ether raised during the contribution
+    bool public halted; // The foundation address can set this to true to halt the contribution due to an emergency
+
+    // EVENTS
+    event TokensBought(address indexed sender, uint eth, uint amount);
+
+    // MODIFIERS
+    modifier only_foundation {
+        assert(msg.sender == FOUNDATION_WALLET);
+        _;
     }
 
-    //crawdsale entry
-    function () payable {  
-        require(!isPause);
-        require(!isFinalize);
-        require( msg.value >= MIN_FUND ); //eth >= 0.01 at least
-
-        ethFundDeposit.transfer(msg.value);
-        buy(today(), msg.sender, msg.value);
+    modifier is_not_halted {
+        assert(!halted);
+        _;
     }
 
-    function importExchangeSale(uint256 day, address _exchangeAddr, uint _amount) onlyOwner {
-        buy(day, _exchangeAddr, _amount);
+    modifier ether_cap_not_reached {
+        assert(safeAdd(etherRaised, msg.value) <= ETHER_CAP);
+        _;
     }
 
-    function buy(uint256 day, address _addr, uint256 _amount) internal {
-        require( day >= CRAWDSALE_START_DAY && day <= CRAWDSALE_END_DAY ); 
-
-        //record user's buy amount
-        userBuys[day][_addr] += _amount;
-        dailyTotals[day] += _amount;
-        totalContributedETH += _amount;
-
-        LogBuy(day, _addr, _amount);
+    modifier is_not_earlier_than(uint x) {
+        assert(now >= x);
+        _;
     }
 
-    function kill() onlyOwner {
-        selfdestruct(owner);
+    modifier is_earlier_than(uint x) {
+        assert(now < x);
+        _;
     }
 
-    function pause(bool _isPause) onlyOwner {
-        isPause = _isPause;
-        LogPause(now,_isPause);
+    // CONSTANT METHODS
+
+    /// Pre: startTime, endTime specified in constructor,
+    /// Post: Price rate at given blockTime; One ether equals priceRate() of FLN tokens
+    function priceRate() constant returns (uint) {
+        // Four price tiers
+        if (startTime <= now && now < startTime + 1 weeks)
+            return PRICE_RATE_FIRST;
+        if (startTime + 1 weeks <= now && now < startTime + 2 weeks)
+            return PRICE_RATE_SECOND;
+        if (startTime + 2 weeks <= now && now < startTime + 3 weeks)
+            return PRICE_RATE_THIRD;
+        if (startTime + 3 weeks <= now && now < endTime)
+            return PRICE_RATE_FOURTH;
+        // Should not be called before or after contribution period
+        assert(false);
     }
 
-    function finalize() onlyOwner {
-        isFinalize = true;
-        LogFinalize(now);
+    // NON-CONSTANT METHODS
+    function Contribution(address setDevWallet, address setFoundationWallet, uint setStartTime) {
+        DEV_WALLET = setDevWallet;
+        FOUNDATION_WALLET = setFoundationWallet;
+        startTime = setStartTime;
+        endTime = startTime + MAX_CONTRIBUTION_DURATION;
+        folioToken = new FolioNinjaToken(this, FOUNDATION_WALLET, startTime, endTime); // Create Folio Ninja Token Contract
+
+        // Mint folio.ninja foundation tokens
+        folioToken.mintToken(FOUNDATION_WALLET, FOUNDATION_TOKENS);
     }
 
-    function today() constant returns (uint) {
-        return sub(now, fundingStartTime) / dayCycle + 1;
+    /// Pre: N/a
+    /// Post: Bought folio.ninja tokens according to priceRate() and msg.value
+    function () payable { buyRecipient(msg.sender); }
+
+    /// Pre: N/a
+    /// Post: Bought folio ninja tokens according to priceRate() and msg.value on behalf of recipient
+    function buyRecipient(address recipient)
+        payable
+        is_not_earlier_than(startTime)
+        is_earlier_than(endTime)
+        is_not_halted
+        ether_cap_not_reached
+    {
+        uint amount = safeMul(msg.value, priceRate());
+        folioToken.mintToken(recipient, amount);
+        etherRaised = safeAdd(etherRaised, msg.value);
+        assert(DEV_WALLET.send(msg.value));
+        TokensBought(recipient, msg.value, amount);
     }
+
+    /// Pre: Emergency situation that requires contribution period to stop.
+    /// Post: Contributing not possible anymore.
+    function halt() only_foundation { halted = true; }
+
+    /// Pre: Emergency situation resolved.
+    /// Post: Contributing becomes possible again.
+    function unhalt() only_foundation { halted = false; }
+
+    /// Pre: Restricted to foundation.
+    /// Post: New address set. To halt contribution and/or change minter in FolioNinjaToken contract.
+    function changeFoundationAddress(address newFoundationAddress) only_foundation { FOUNDATION_WALLET = newFoundationAddress; }
+
+    /// Pre: Restricted to foundation.
+    /// Post: New address set. To change beneficiary of contributions
+    function changeDevAddress(address newDevAddress) only_foundation { DEV_WALLET = newDevAddress; }
 }
