@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TonalQuantum at 0xe4189103a60d167ae17991abca58396f0eaf6f44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TonalQuantum at 0x948d5d26616146efdd82aca43f649de84669e5a7
 */
 pragma solidity ^0.4.19;
 
@@ -230,7 +230,7 @@ contract TonalQuantum is StandardToken, Ownable {
     }
 
     function buy() payable public returns (bool) {
-        require(msg.value >= 0.00005 ether);
+        require(msg.value >= 0.00005 ether * (18**uint256(decimals)));
 
         uint _value = msg.value / 0.00005 ether * (18**uint256(decimals));
 
