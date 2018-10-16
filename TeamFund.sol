@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamFund at 0xa94ade3d44a6bb69bb115751b4a999c7b6761d71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamFund at 0x86d10bc02bd0c154f133ee529ec6185393ade77c
 */
 pragma solidity ^0.4.21;
 
@@ -87,7 +87,7 @@ contract TeamFund is Ownable {
      */
     constructor(ERC20Basic _token) public {
         vnetToken = _token;
-        description = "Balance is locked by the VNETToken contract until 2021-6-30 23:59:59 UTC +0";
+        description = "Balance is locked by the VNETToken contract until 2019-6-30 23:59:59 UTC +0";
     }
 
     /**
