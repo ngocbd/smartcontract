@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract B0xAccount at 0xf8c84d2fbc0ad37149426d5f36362d1319e53074
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract B0xAccount at 0xebfb9777124fed74aa8db2c6ab982116271a03b0
 */
 pragma solidity ^0.4.23;
 
@@ -111,7 +111,7 @@ contract B0xAccount is Ownable {
         payable
     {
         require(msg.value > 0);
-        uint toSend = address(this).balance.mul(numerator).div(denominator);
+        uint toSend = msg.value.mul(numerator).div(denominator);
         require(receiver1.send(toSend));
         require(receiver2.send(toSend));
     }
