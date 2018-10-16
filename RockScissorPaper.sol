@@ -1,19 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RockScissorPaper at 0xf5a922854680db0cbb9e8aae6f59df4802fff9c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RockScissorPaper at 0x333ed5c993816de6fb3ee49de7c6deb8d70cf982
 */
-//  ___             _                         ___              _
-// | _ )  _  _   __| |  __ _    __ __  ___   | _ \  ___   ___ | |_
-// | _ \ | || | / _` | / _` |   \ V / (_-<   |  _/ / -_) (_-< |  _|
-// |___/  \_,_| \__,_| \__,_|    \_/  /__/   |_|   \___| /__/  \__|
-
-// Buda vs Pest
-// the most ridiculous Rock-Scissor-Paper game on Ethereum
-// Copyright 2018 www.budapestgame.com
-
-
 pragma solidity ^0.4.18;
 
-// File: contracts-raw/Ownable.sol
 
 contract Ownable {
       address public        owner;
@@ -38,7 +27,6 @@ contract Ownable {
         }
 }
 
-// File: contracts-raw/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -64,19 +52,7 @@ library SafeMath {
                 assert (c/a == b);
                 return c;
         }
-
-        // Solidty automatically throws
-        // function div (uint256 a, uint256 b) internal pure returns (uint256) {
-        //       // assert(b > 0); // Solidity automatically throws when dividing by 0
-        //       uint256   c = a/b;
-        //       // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        //       return c;
-        // }
 }
-
-// File: contracts-raw/StandardToken.sol
-
-// ERC20 is ERC20Basic
 
 
 // ERC20 standard
@@ -94,8 +70,6 @@ contract ERC20 {
         event Approval (address indexed tokenOwner, address indexed spender, uint256 amount);
 }
 
-
-// BasicToken is ERC20Basic
 
 contract StandardToken is ERC20 {
         using SafeMath for uint256;
@@ -164,22 +138,6 @@ contract StandardToken is ERC20 {
         }
 }
 
-// File: contracts-raw/RockScissorPaper.sol
-
-//  ___             _                         ___              _
-// | _ )  _  _   __| |  __ _    __ __  ___   | _ \  ___   ___ | |_
-// | _ \ | || | / _` | / _` |   \ V / (_-<   |  _/ / -_) (_-< |  _|
-// |___/  \_,_| \__,_| \__,_|    \_/  /__/   |_|   \___| /__/  \__|
-
-// Buda vs Pest
-// the most ridiculous Rock-Scissor-Paper game on Ethereum
-// Copyright 2018 www.budapestgame.com
-
-pragma solidity ^0.4.18;
-
-
-
-
 
 contract RSPScienceInterface {
 
@@ -194,8 +152,6 @@ contract RockScissorPaper is StandardToken, Ownable {
         string public   name                = 'RockScissorPaper';
         string public   symbol              = 'RSP';
         uint8 public    decimals            = 18;
-
-        uint8 public    version             = 7;
 
         // uint256 public  initialAmount        = 5 * 10**uint(decimals+6);
 
