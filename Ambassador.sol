@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ambassador at 0xfea61dbc3b9882efcd139a5e28b32234b9c76aea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ambassador at 0x5ad9e100bc58e57a20cf1cae204f046006d27a27
 */
 pragma solidity ^0.4.18;
 
@@ -139,12 +139,15 @@ contract Ambassador {
         if ( _newEnd != 0 ) endRC = _newEnd;
     }
 
+	event Track(address indexed buyer, bytes trackID, uint256 value, uint256 soldTokensWithoutBonus );
+	
     function () public payable {
         require( now > startRC );
         if( now < endRC ) {
             uint256 tokenAmount = icoContract.buy.value(msg.value)(msg.sender);
             balanceUser[msg.sender] = balanceUser[msg.sender].add(tokenAmount);
             soldTokensWithoutBonus = soldTokensWithoutBonus.add(tokenAmount);
+			Track( msg.sender, msg.data, msg.value, tokenAmount );
         } else { //claim premium bonus logic
             require( balanceUser[msg.sender] > 0 );
             uint256 bonusApplied = 0;
