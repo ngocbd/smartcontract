@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATCToken at 0x379cA5D5F053F92a60388F4Ca748060c6F6664B2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATCToken at 0x7ce88ceed1015ecebaed624459dd97435e77157b
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
 
 contract ERC20Interface {    
     function totalSupply() constant returns (uint256 totalSupply);
@@ -19,7 +19,7 @@ contract ATCToken is ERC20Interface{
     string public constant name="ATC";
     string public constant symbol="ATC";
     uint8 public constant decimals=10;
-    uint256 public constant _totalSupply=3000000000000000000;
+    uint256 constant _totalSupply=3000000000000000000;
     mapping(address => mapping (address => uint256)) allowed;
     mapping(address => uint256) balances;
     address public owner;
@@ -30,7 +30,7 @@ contract ATCToken is ERC20Interface{
     }
     
     function totalSupply() constant returns (uint256 totalSupply) {
-          totalSupply = _totalSupply;
+          return _totalSupply;
     }
     
     function balanceOf(address _owner) constant returns (uint256 balance){
@@ -53,15 +53,16 @@ contract ATCToken is ERC20Interface{
     function transferFrom(address _from, address _to, uint256 _amount) returns (bool success){
         if (balances[_from] >= _amount
              && _amount > 0
-             && balances[_to] + _amount > balances[_to]  && _amount <= allowed[_from][msg.sender]) {
+             && balances[_to] + _amount > balances[_to]  && _amount <= allowed[_from][msg.sender]) 
+        {
              balances[_from] -= _amount;
              balances[_to] += _amount;
              allowed[_from][msg.sender] -= _amount;
              Transfer(_from, _to, _amount);
              return true;
-         } else {
+        } else {
              return false;
-         }
+        }
     }
 
     function approve(address _spender, uint256 _value) returns (bool success){
