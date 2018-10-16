@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorQuickConverter at 0x5ed2f6230364ff1ef2b83b3f66037fb1d349e842
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorQuickConverter at 0xf87a7ec94884f44d9de33d36b73f42c7c0dd38b1
 */
 pragma solidity ^0.4.11;
 
@@ -75,8 +75,6 @@ contract Utils {
     }
 }
 
-
-
 /*
     Owned contract interface
 */
@@ -87,7 +85,6 @@ contract IOwned {
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
 }
-
 
 /*
     Provides support and utilities for contract ownership
@@ -134,8 +131,6 @@ contract Owned is IOwned {
     }
 }
 
-
-
 /*
     ERC20 Standard Token interface
 */
@@ -153,6 +148,14 @@ contract IERC20Token {
     function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
+/*
+    Smart Token interface
+*/
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
+}
 
 /*
     Token Holder interface
@@ -160,7 +163,6 @@ contract IERC20Token {
 contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
-
 
 /*
     We consider every contract to be a 'token holder' since it's currently not possible
@@ -195,148 +197,14 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     }
 }
 
-
-
-
-
 /*
-    Smart Token interface
+    Ether Token interface
 */
-contract ISmartToken is IOwned, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
+contract IEtherToken is ITokenHolder, IERC20Token {
+    function deposit() public payable;
+    function withdraw(uint256 _amount) public;
+    function withdrawTo(address _to, uint256 _amount);
 }
-
-
-/*
-    The smart token controller is an upgradable part of the smart token that allows
-    more functionality as well as fixes for bugs/exploits.
-    Once it accepts ownership of the token, it becomes the token's sole controller
-    that can execute any of its functions.
-
-    To upgrade the controller, ownership must be transferred to a new controller, along with
-    any relevant data.
-
-    The smart token must be set on construction and cannot be changed afterwards.
-    Wrappers are provided (as opposed to a single 'execute' function) for each of the token's functions, for easier access.
-
-    Note that the controller can transfer token ownership to a new controller that
-    doesn't allow executing any function on the token, for a trustless solution.
-    Doing that will also remove the owner's ability to upgrade the controller.
-*/
-contract SmartTokenController is TokenHolder {
-    ISmartToken public token;   // smart token
-
-    /**
-        @dev constructor
-    */
-    function SmartTokenController(ISmartToken _token)
-        validAddress(_token)
-    {
-        token = _token;
-    }
-
-    // ensures that the controller is the token's owner
-    modifier active() {
-        assert(token.owner() == address(this));
-        _;
-    }
-
-    // ensures that the controller is not the token's owner
-    modifier inactive() {
-        assert(token.owner() != address(this));
-        _;
-    }
-
-    /**
-        @dev allows transferring the token ownership
-        the new owner still need to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new token owner
-    */
-    function transferTokenOwnership(address _newOwner) public ownerOnly {
-        token.transferOwnership(_newOwner);
-    }
-
-    /**
-        @dev used by a new owner to accept a token ownership transfer
-        can only be called by the contract owner
-    */
-    function acceptTokenOwnership() public ownerOnly {
-        token.acceptOwnership();
-    }
-
-    /**
-        @dev disables/enables token transfers
-        can only be called by the contract owner
-
-        @param _disable    true to disable transfers, false to enable them
-    */
-    function disableTokenTransfers(bool _disable) public ownerOnly {
-        token.disableTransfers(_disable);
-    }
-
-    /**
-        @dev withdraws tokens held by the token and sends them to an account
-        can only be called by the owner
-
-        @param _token   ERC20 token contract address
-        @param _to      account to receive the new amount
-        @param _amount  amount to withdraw
-    */
-    function withdrawFromToken(IERC20Token _token, address _to, uint256 _amount) public ownerOnly {
-        ITokenHolder(token).withdrawTokens(_token, _to, _amount);
-    }
-}
-
-
-/*
-    Provides support and utilities for contract management
-*/
-contract Managed {
-    address public manager;
-    address public newManager;
-
-    event ManagerUpdate(address _prevManager, address _newManager);
-
-    /**
-        @dev constructor
-    */
-    function Managed() {
-        manager = msg.sender;
-    }
-
-    // allows execution by the manager only
-    modifier managerOnly {
-        assert(msg.sender == manager);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract management
-        the new manager still needs to accept the transfer
-        can only be called by the contract manager
-
-        @param _newManager    new contract manager
-    */
-    function transferManagement(address _newManager) public managerOnly {
-        require(_newManager != manager);
-        newManager = _newManager;
-    }
-
-    /**
-        @dev used by a new manager to accept a management transfer
-    */
-    function acceptManagement() public {
-        require(msg.sender == newManager);
-        ManagerUpdate(manager, newManager);
-        manager = newManager;
-        newManager = 0x0;
-    }
-}
-
 
 /*
     EIP228 Token Converter interface
@@ -350,60 +218,6 @@ contract ITokenConverter {
     function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
 }
 
-
-/*
-    Bancor Formula interface
-*/
-contract IBancorFormula {
-    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public constant returns (uint256);
-    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public constant returns (uint256);
-}
-
-
-/*
-    Bancor Gas Price Limit interface
-*/
-contract IBancorGasPriceLimit {
-    function gasPrice() public constant returns (uint256) {}
-}
-
-
-/*
-    The BancorGasPriceLimit contract serves as an extra front-running attack mitigation mechanism.
-    It sets a maximum gas price on all bancor conversions, which prevents users from "cutting in line"
-    in order to front-run other transactions.
-    The gas price limit is universal to all converters and it can be updated by the owner to be in line
-    with the network's current gas price.
-*/
-contract BancorGasPriceLimit is IBancorGasPriceLimit, Owned, Utils {
-    uint256 public gasPrice = 0 wei;    // maximum gas price for bancor transactions
-
-    /**
-        @dev constructor
-
-        @param _gasPrice    gas price limit
-    */
-    function BancorGasPriceLimit(uint256 _gasPrice)
-        greaterThanZero(_gasPrice)
-    {
-        gasPrice = _gasPrice;
-    }
-
-    /*
-        @dev allows the owner to update the gas price limit
-
-        @param _gasPrice    new gas price limit
-    */
-    function setGasPrice(uint256 _gasPrice)
-        public
-        ownerOnly
-        greaterThanZero(_gasPrice)
-    {
-        gasPrice = _gasPrice;
-    }
-}
-
-
 /*
     Bancor Quick Converter interface
 */
@@ -411,28 +225,6 @@ contract IBancorQuickConverter {
     function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
     function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
 }
-
-
-/*
-    Bancor Converter Extensions interface
-*/
-contract IBancorConverterExtensions {
-    function formula() public constant returns (IBancorFormula) {}
-    function gasPriceLimit() public constant returns (IBancorGasPriceLimit) {}
-    function quickConverter() public constant returns (IBancorQuickConverter) {}
-}
-
-
-
-/*
-    Ether Token interface
-*/
-contract IEtherToken is ITokenHolder, IERC20Token {
-    function deposit() public payable;
-    function withdraw(uint256 _amount) public;
-    function withdrawTo(address _to, uint256 _amount);
-}
-
 
 /*
     The BancorQuickConverter contract provides allows converting between any token in the 
