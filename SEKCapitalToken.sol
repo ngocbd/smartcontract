@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SEKCapitalToken at 0x5fd9b734f0b75eecfea960985174837182782914
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SEKCapitalToken at 0x67d7aeb2c2154239d3ea0ce86e4dafcf74c31d11
 */
 pragma solidity ^0.4.17;
 /**
@@ -195,11 +195,11 @@ contract SafeStandardToken is ERC20, SafeBasicToken {
 
 contract SEKCapitalToken is SafeStandardToken{
   string public constant name = "SEK Capital Token";
-  string public constant symbol = "SEKC";
+  string public constant symbol = "SEKCC";
   uint256 public constant decimals = 18;
   uint256 public constant INITIAL_SUPPLY = 300000000 * (10 ** uint256(decimals));
 
-  function BitfuryToken() public {
+  function SEKCapitalToken() public {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
