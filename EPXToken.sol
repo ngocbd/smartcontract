@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPXToken at 0x0c686cd98f816bf63c037f39e73c1b7a35b51d4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPXToken at 0x35baa72038f127f9f8c8f9b491049f64f377914d
 */
 pragma solidity ^0.4.18;
 // -------------------------------------------------
@@ -17,6 +17,7 @@ pragma solidity ^0.4.18;
 // - added transferAnyERC20Token function to capture airdropped tokens
 // - added revert() rejection of any Eth sent to the token address itself
 // - additional gas optimisation performed (round 3)
+// - totalSupply() bugfix
 // -------------------------------------------------
 // Security reviews passed - cycle 20r
 // Functional reviews passed - cycle 20r
@@ -83,8 +84,8 @@ contract EPXToken is ERC20Interface {
   string  public constant name                  = "EthPoker.io EPX";
   string  public constant standard              = "EPX";
   string  public constant symbol                = "EPX";
-  uint8   public constant decimals              = 4;                               // 4 decimals for practicality
-  uint256 private constant totalSupply          = 2800000000000;                   // 280 000 000 (total supply of EPX tokens is 280,000,000) + 4 decimal points (2800000000000)
+  uint8   public constant decimals              = 4;                              // 4 decimals for practicality
+  uint256 public constant totalSupply          = 2800000000000;                   // 280 000 000 (total supply of EPX tokens is 280,000,000) + 4 decimal points (2800000000000)
 
   // token mappings
   mapping (address => uint256) balances;
