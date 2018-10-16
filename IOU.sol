@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOU at 0xafc36ac17c5d84504064f944b27292e795d03398
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOU at 0xb78af44145dc140749eeefe960ae9f71210621d3
 */
 pragma solidity ^0.4.11;
 
@@ -20,18 +20,45 @@ pragma solidity ^0.4.11;
   The buyer's ETH will ONLY be released to the seller AFTER the adequate
   amount of tokens have been deposited for ALL purchases.
 
-  Estimated Time of Distribution: 3-5 weeks from ICO according to TenX
-  Cut-off Time: ~ August 9, 2017
+  Withdrawal/distribution ETA: 2-3 weeks from ICO close
+  Cut-off Time: ~ August 15, 2017
 
-  Greetz: blast
-  foobarbizarre@gmail.com (Please report any findings or suggestions for a 1 ETH bounty!)
+  Greetz: Dr. Crypto, blast, meritt, stealth, agent 2o99
+
+  Greetz++: Cintix, for inspiration, withdrawal method, and positive
+            contributions to the crypto community.
+
+  foobarbizarre@gmail.com (Please report any findings or suggestions for a bounty!)
+
+
+      _____                    _____                    _____                    _____
+     /\    \                  /\    \                  /\    \                  /\    \
+    /::\    \                /::\    \                /::\    \                /::\____\
+    \:::\    \              /::::\    \              /::::\    \              /:::/    /
+     \:::\    \            /::::::\    \            /::::::\    \            /:::/    /
+      \:::\    \          /:::/\:::\    \          /:::/\:::\    \          /:::/    /
+       \:::\    \        /:::/__\:::\    \        /:::/__\:::\    \        /:::/    /
+       /::::\    \      /::::\   \:::\    \      /::::\   \:::\    \      /:::/    /
+      /::::::\    \    /::::::\   \:::\    \    /::::::\   \:::\    \    /:::/    /
+     /:::/\:::\    \  /:::/\:::\   \:::\    \  /:::/\:::\   \:::\    \  /:::/    /
+    /:::/  \:::\____\/:::/__\:::\   \:::\____\/:::/__\:::\   \:::\____\/:::/____/
+   /:::/    \::/    /\:::\   \:::\   \::/    /\:::\   \:::\   \::/    /\:::\    \
+  /:::/    / \/____/  \:::\   \:::\   \/____/  \:::\   \:::\   \/____/  \:::\    \
+ /:::/    /            \:::\   \:::\    \       \:::\   \:::\    \       \:::\    \
+/:::/    /              \:::\   \:::\____\       \:::\   \:::\____\       \:::\    \
+\::/    /                \:::\   \::/    /        \:::\   \::/    /        \:::\    \
+ \/____/                  \:::\   \/____/          \:::\   \/____/          \:::\    \
+                           \:::\    \               \:::\    \               \:::\    \
+                            \:::\____\               \:::\____\               \:::\____\
+                             \::/    /                \::/    /                \::/    /
+                              \/____/                  \/____/                  \/____/
 
   Thank you
 */
 
-contract ERC20 {
-  function transfer(address _to, uint _value);
-  function balanceOf(address _owner) constant returns (uint balance);
+contract NEToken {
+  function balanceOf(address _owner) constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) returns (bool success);
 }
 
 contract IOU {
@@ -42,7 +69,7 @@ contract IOU {
   mapping (address => uint256) public eth_sent;
 
   // Total IOUs available to sell
-  uint256 public total_iou_available = 40000000000000000000000;
+  uint256 public total_iou_available = 4725000000000000000000;
 
   // Total IOUs purchased by all buyers
   uint256 public total_iou_purchased;
@@ -51,13 +78,13 @@ contract IOU {
   uint256 public total_iou_withdrawn;
 
   // IOU per ETH (price)
-  uint256 public price_per_eth = 100;
+  uint256 public price_per_eth = 60;
 
-  //  PAY token contract address (IOU offering)
-  ERC20 public token = ERC20(0xB97048628DB6B661D4C2aA833e95Dbe1A905B280);
+  //  NET token contract address (IOU offering)
+  NEToken public token = NEToken(0xcfb98637bcae43C13323EAa1731cED2B716962fD);
 
   // The seller's address (to receive ETH upon distribution, and for authing safeties)
-  address seller = 0x496529c12e229e9787D37E5EFA2E48B651e755B0;
+  address seller = 0xB00Ae1e677B27Eee9955d632FF07a8590210B366;
 
   // Halt further purchase ability just in case
   bool public halt_purchases;
@@ -113,7 +140,7 @@ contract IOU {
     // not enough tokens in balance to release ETH, protect buyer and abort
     if(token.balanceOf(address(this)) < (total_iou_purchased - total_iou_withdrawn)) throw;
 
-    // Halt further purchases to prevent accidental over-selling
+    // Halt further purchases
     halt_purchases = true;
 
     // Release buyer's ETH to the seller
@@ -139,7 +166,7 @@ contract IOU {
       to withdraw any sooner (after the block has been mined, but tokens not arrived)
       will result in a refund of buyer's ETH.
     */
-    if(block.number > 4199999 && iou_purchased[msg.sender] > token.balanceOf(address(this))) {
+    if(block.number > 4230000 && iou_purchased[msg.sender] > token.balanceOf(address(this))) {
       // We didn't fulfill our promise to have adequate tokens withdrawable at xx time
       // Refund the buyer's ETH automatically instead
       uint256 eth_to_refund = eth_sent[msg.sender];
