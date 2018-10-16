@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WBSToken at 0x3850ec5540f3aae1bbd89d5f33d4a40ce8426567
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WBSToken at 0x5c93583bd77beaab16b0b334ec87e37069152092
 */
 pragma solidity ^0.4.19;
 
@@ -70,9 +70,8 @@ contract WBSToken is StandardToken{
     // total
     uint256 public constant tokenCreationCap = 10 * (10**8) * 10**decimals;
 
-    function WBSToken ()  public {
+    function BOXSToken ()  public {
         balances[msg.sender] = tokenCreationCap;
         totalSupply = tokenCreationCap;
     }
-	
 }
