@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ether2x at 0x41f9a3392cc695b8a12c6b5ede0e04a1bef12d05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ether2x at 0xad6a6e78f3bb441fb3127e8056686aa327dc3480
 */
 pragma solidity ^0.4.13;
 
@@ -223,38 +223,49 @@ contract Ether2x is StandardToken, owned, allowMonthly {
     note = note_;
     NoteChanged(note);
   }
+
   
-  event PerformingDrop(uint count);
+  event PerformingMonthlyMinting(uint amount);
   /// @notice Buy tokens from contract by sending ether
-  function distributeRewards(address[] addresses) public onlyOwner {
-    assert(addresses.length > 499);                  // Rewards start after 500 addresses have signed up
+  function monthlyMinting() public onlyOwner {
     uint256 totalAmt;
     if (initialDrop) {
         totalAmt = totalSupply / 4;
         initialDrop = false;
     } else {
-        totalAmt = totalSupply / 100;
+        // generate 1% Base amount + 0.5% Holding Bonus
+        totalAmt = (totalSupply / 100) + (totalSupply / 500);
     }
-    uint256 baseAmt = totalAmt / addresses.length;
-    assert(baseAmt > 0);
-    PerformingDrop(addresses.length);
-    uint256 holdingBonus = 0;
-    uint256 reward = 0;
+    PerformingMonthlyMinting(totalAmt);
+    assert(totalAmt > 0);
+
+    balances[owner] += totalAmt;
+    totalSupply += totalAmt;
+    Transfer(0, owner, totalAmt);
     
-    for (uint i = 0; i < addresses.length; i++) {
-      address recipient = addresses[i];
-      if(recipient != NULL_ADDRESS) {
-        holdingBonus = balanceOf(recipient) / 500;
-        reward = baseAmt + holdingBonus;
-        balances[recipient] += reward;
-        totalSupply += reward;
-        Transfer(0, owner, reward);
-        Transfer(owner, recipient, reward);
-      }
-    }
-    
-    useMonthlyAccess(); // restrict use of reward function for 4 weeks
+    useMonthlyAccess(); // restrict use of minting function for 4 weeks
   }  
+  
+  
+  // Send recipient their monthly monthly reward
+  event rewardSent(uint amount);
+  function distributeReward(address recipient, uint baseAmt) public onlyOwner {
+    
+    uint256 holdingBonus = balances[recipient] / 500;
+    uint256 reward = baseAmt + holdingBonus;
+    
+    rewardSent(reward);
+    
+    assert(reward > 0);
+    assert(balances[owner] >= reward);
+    
+    require(recipient != NULL_ADDRESS);
+
+    balances[owner] -= reward;
+    balances[recipient] += reward;
+    Transfer(owner, recipient, reward);
+    
+  }
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens..
