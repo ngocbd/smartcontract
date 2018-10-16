@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a172874698491f0e83a447c55735eccd854e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a17713f5b29b94a55f813ae7e2e20066546de
 */
 pragma solidity ^0.4.19;
 
@@ -263,18 +263,18 @@ contract TokenLockable is RpSafeMath, Ownable {
 }
 
 contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
-    uint256 public constant VERSION = 203;
+    uint256 public constant VERSION = 205;
     string public constant VERSION_NAME = "Basalt";
 
     uint256 private activeLoans = 0;
     mapping(address => uint256) private lendersBalance;
 
     function name() public view returns (string _name) {
-        _name = "RCN - Nano loan engine - Basalt 203";
+        _name = "RCN - Nano loan engine - Basalt 205";
     }
 
     function symbol() public view returns (string _symbol) {
-        _symbol = "RCN-NLE-203";
+        _symbol = "RCN-NLE-205";
     }
 
     /**
@@ -550,7 +550,7 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         @param cosignerData Data required by the cosigner to process the request.
 
         @return true if the lend was done successfully
-    */
+    */    
     function lend(uint index, bytes oracleData, Cosigner cosigner, bytes cosignerData) public returns (bool) {
         Loan storage loan = loans[index];
 
@@ -562,12 +562,19 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         loan.dueTime = safeAdd(block.timestamp, loan.duesIn);
         loan.interestTimestamp = block.timestamp;
         loan.status = Status.lent;
+
+        // ERC721, create new loan and transfer it to the lender
+        Transfer(0x0, loan.lender, index);
+        activeLoans += 1;
+        lendersBalance[loan.lender] += 1;
         
         if (loan.cancelableAt > 0)
             internalAddInterest(loan, safeAdd(block.timestamp, loan.cancelableAt));
 
-        uint256 rate = getRate(loan, oracleData);
-
+        // Transfer the money to the borrower before handling the cosigner
+        // so the cosigner could require a specific usage for that money.
+        require(rcn.transferFrom(msg.sender, loan.borrower, safeMult(loan.amount, getRate(loan, oracleData))));
+        
         if (cosigner != address(0)) {
             // The cosigner it's temporary set to the next address (cosigner + 2), it's expected that the cosigner will
             // call the method "cosign" to accept the conditions; that method also sets the cosigner to the right
@@ -576,13 +583,7 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
             require(cosigner.requestCosign(this, index, cosignerData, oracleData));
             require(loan.cosigner == address(cosigner));
         }
-        
-        require(rcn.transferFrom(msg.sender, loan.borrower, safeMult(loan.amount, rate)));
-        
-        // ERC721, create new loan and transfer it to the lender
-        Transfer(0x0, loan.lender, index);
-        activeLoans += 1;
-        lendersBalance[loan.lender] += 1;
+                
         Lent(index, loan.lender, cosigner);
 
         return true;
