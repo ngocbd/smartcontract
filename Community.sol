@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Community at 0x901c93f1bf70cb9a08a9716f4635c279f33ae8c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Community at 0x357a21cf65e11d20277fc3665ceb3739c9bbaa0b
 */
 // compiler: 0.4.20+commit.3155dd80.Emscripten.clang
 pragma solidity ^0.4.20;
