@@ -1,10 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x5b14871408d70cba0d9e35c72b0b8ccc8b0f8f02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x7965c9644e6e69b9135644c5de33bed2c6f8c281
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.11;
+
+
 /**
-* Math operations with safety checks
-*/
+ * Math operations with safety checks
+ */
 library SafeMath {
   function mul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
@@ -13,9 +15,9 @@ library SafeMath {
   }
 
   function div(uint a, uint b) internal returns (uint) {
-     assert(b > 0); // Solidity automatically throws when dividing by 0
+    assert(b > 0);
     uint c = a / b;
-    assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    assert(a == b * c + a % b);
     return c;
   }
 
@@ -44,11 +46,5 @@ library SafeMath {
 
   function min256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
   }
 }
