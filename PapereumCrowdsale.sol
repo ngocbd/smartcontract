@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PapereumCrowdsale at 0x3b0801c61892386948436a1e889194cc4a2a476b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PapereumCrowdsale at 0xda470527b29ac678634def8811a154a6528ca9d0
 */
 pragma solidity 0.4.20;
 
@@ -265,7 +265,6 @@ contract PapereumCrowdsale {
 
     function appendContribution(address _beneficiary, uint256 _tokens) internal returns (uint256 excess) {
         excess = 0;
-        require(_tokens >= 10);
         if (_tokens > icoBalance) {
             excess = icoBalance - _tokens;
             _tokens = icoBalance;
