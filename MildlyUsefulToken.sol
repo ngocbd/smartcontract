@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MildlyUsefulToken at 0x2590F938DcB913A665AEcc59316efe449021FDFD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MildlyUsefulToken at 0xb5949a2cb27db339ae9d50c26bd6f365ce8a3c1e
 */
 pragma solidity ^0.4.17;
 
@@ -256,8 +256,8 @@ contract MildlyUsefulToken is StandardToken, Ownable {
 	string public name = 'MildlyUsefulToken';
 	string public symbol = 'MUT';
 	uint8 public decimals = 18;
-	uint public INITIAL_SUPPLY = 9000000 * 10 ** uint256(decimals);
-	uint public RESERVE_SUPPLY = 1000000 * 10 ** uint256(decimals);
+	uint public INITIAL_SUPPLY = 9000000;
+	uint public RESERVE_SUPPLY = 1000000;
 	
 	function MildlyUsefulToken() public {
 	  totalSupply_ = INITIAL_SUPPLY;
