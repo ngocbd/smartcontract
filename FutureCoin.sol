@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FutureCoin at 0x3f9093d041e8c9e4ea58e4379a9220b10329dddf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FutureCoin at 0xf073764c48823c091b6bad5b201543d7f9be288b
 */
 pragma solidity ^0.4.4;
 
@@ -118,8 +118,8 @@ contract FutureCoin is StandardToken {
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function FutureCoin() {
-        balances[msg.sender] = 50000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 50000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 95000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 95000000000;                        // Update total supply (100000 for example)
         name = "FutureCoin";                                   // Set the name for display purposes
         decimals = 3;                            // Amount of decimals for display purposes
         symbol = "FTC";                               // Set the symbol for display purposes
