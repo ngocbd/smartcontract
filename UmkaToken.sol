@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UmkaToken at 0x105d97ef2e723f1cfb24519bc6ff15a6d091a3f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UmkaToken at 0x8e5afc69f6227a3ad75ed346c8723bc62ce97123
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 library SafeMath {
 
@@ -40,10 +40,9 @@ contract ERC20 {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function ERC20() internal {
+    constructor () internal {
     }
 }
-
 
 library RingList {
 
@@ -237,14 +236,12 @@ contract UmkaToken is ERC20 {
 
     groupPolicy public currentState = groupPolicy(0, 3, 4, 9, 2, 9);
 
-    event EvTokenAdd(uint256 _value, uint256 _lastSupply);
-    event EvTokenRm(uint256 _delta, uint256 _value, uint256 _lastSupply);
     event EvGroupChanged(address _address, uint8 _oldgroup, uint8 _newgroup);
     event EvMigration(address _address, uint256 _balance, uint256 _secret);
     event Pause();
     event Unpause();
 
-    function UmkaToken(string _name, string _symbol, uint8 _decimals, uint256 _startTokens) public {
+    constructor (string _name, string _symbol, uint8 _decimals, uint256 _startTokens) public {
         owner = msg.sender;
 
         group[owner] = currentState._owner;
@@ -256,6 +253,7 @@ contract UmkaToken is ERC20 {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
+        emit Transfer(address(0x0), msg.sender, _startTokens);
     }
 
     modifier onlyPayloadSize(uint size) {
@@ -285,12 +283,12 @@ contract UmkaToken is ERC20 {
 
     function servicePause() minGroup(currentState._admin) whenNotPaused public {
         paused = true;
-        Pause();
+        emit Pause();
     }
 
     function serviceUnpause() minGroup(currentState._admin) whenPaused public {
         paused = false;
-        Unpause();
+        emit Unpause();
     }
 
     function serviceGroupChange(address _address, uint8 _group) minGroup(currentState._admin) external returns(uint8) {
@@ -299,7 +297,7 @@ contract UmkaToken is ERC20 {
         uint8 old = group[_address];
         if(old <= currentState._admin) {
             group[_address] = _group;
-            EvGroupChanged(_address, old, _group);
+            emit EvGroupChanged(_address, old, _group);
         }
         return group[_address];
     }
@@ -309,7 +307,7 @@ contract UmkaToken is ERC20 {
 
         group[newOwner] = currentState._subowner;
         group[msg.sender] = currentState._subowner;
-        EvGroupChanged(newOwner, currentState._owner, currentState._subowner);
+        emit EvGroupChanged(newOwner, currentState._owner, currentState._subowner);
     }
 
     function serviceClaimOwnership() onlyGroup(currentState._subowner) external {
@@ -326,7 +324,8 @@ contract UmkaToken is ERC20 {
         delete group[temp];
         group[msg.sender] = currentState._owner;
 
-        EvGroupChanged(msg.sender, currentState._subowner, currentState._owner);
+        emit EvGroupChanged(msg.sender, currentState._subowner, currentState._owner);
+        emit Transfer(temp, owner, value);
     }
 
     function serviceIncreaseBalance(address _who, uint256 _value) minGroup(currentState._admin) external returns(bool) {
@@ -336,7 +335,7 @@ contract UmkaToken is ERC20 {
         accounts[_who] = accounts[_who].add(_value);
         summarySupply = summarySupply.add(_value);
         holders.push(_who, true);
-        EvTokenAdd(_value, summarySupply);
+        emit Transfer(address(0), _who, _value);
         return true;
     }
 
@@ -350,7 +349,7 @@ contract UmkaToken is ERC20 {
         if(accounts[_who] == 0){
             holders.remove(_who);
         }
-        EvTokenRm(accounts[_who], _value, summarySupply);
+        emit Transfer(_who, address(0), _value);
         return true;
     }
 
@@ -367,7 +366,7 @@ contract UmkaToken is ERC20 {
         }
         accounts[_to] = accounts[_to].add(_value);
         holders.push(_to, true);
-
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -379,6 +378,7 @@ contract UmkaToken is ERC20 {
         accounts[_address] = 0;
         summarySupply = summarySupply.sub(sum);
         holders.remove(_address);
+        emit Transfer(_address, address(0), sum);
         return accounts[_address];
     }
 
@@ -388,6 +388,7 @@ contract UmkaToken is ERC20 {
 
         distribution[_to] = distribution[_to].add(_value);
         accounts[owner] = accounts[owner].sub(_value);
+        emit Transfer(owner, address(0), _value);
     }
 
     function serviceTrasferFromDist(bytes32 _from, address _to, uint256 _value) external minGroup(currentState._backend) {
@@ -398,6 +399,7 @@ contract UmkaToken is ERC20 {
         accounts[_to] = accounts[_to].add(_value);
         holders.push(_to, true);
         distribution[_from] = distribution[_from].sub(_value);
+        emit Transfer(address(0), _to, _value);
     }
 
     function getGroup(address _check) external constant returns(uint8 _group) {
@@ -434,7 +436,7 @@ contract UmkaToken is ERC20 {
         }
         accounts[_to] = accounts[_to].add(_value);
         holders.push(_to, true);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
 
         return true;
     }
@@ -452,7 +454,7 @@ contract UmkaToken is ERC20 {
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         accounts[_to] = accounts[_to].add(_value);
         holders.push(_to, true);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -461,7 +463,7 @@ contract UmkaToken is ERC20 {
         require(_spender != address(0));
 
         allowed[msg.sender][_spender] = _new;
-        Approval(msg.sender, _spender, _new);
+        emit Approval(msg.sender, _spender, _new);
         return true;
     }
 
@@ -507,7 +509,8 @@ contract UmkaToken is ERC20 {
         holders.remove(msg.sender);
         accounts[owner] = accounts[owner].add(balance);
         holders.push(owner, true);
-        EvMigration(msg.sender, balance, _secrect);
+        emit EvMigration(msg.sender, balance, _secrect);
+        emit Transfer(msg.sender, owner, balance);
         return true;
     }
 }
