@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OwnedToken at 0x5cedfb528651d758819ce12061cb8f8ecae91fab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OwnedToken at 0xd078bd921a21b3a5e82b5cdc5b0d01d44f477173
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -101,7 +101,7 @@ contract StandardToken is Token {
 contract owned {
     address public owner;
 
-    function owned() {
+    function owned() public {
         owner = msg.sender;
     }
 
@@ -110,21 +110,27 @@ contract owned {
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner {
+    function transferOwnership(address newOwner) onlyOwner public {
         owner = newOwner;
+    }
+    function isOwner(address _addr) public view returns (bool) {
+        return owner == _addr;
     }
 }
 
 contract OwnedToken is owned, StandardToken {
-    string public name = "Test1 Token";
+    string public name = "Test4 Token";
     uint8 public decimals = 0;
-    string public symbol = '_T1';
-    uint256 public totalSupply = 50000000;
+    string public symbol = '_T4';
+    uint256 public totalSupply = 5000000;
     
     function OwnedToken(address newOwner) public {
-        balances[msg.sender] = totalSupply * 3 / 400;                         
+        balances[msg.sender] = totalSupply * 3 / 400;  
+        Transfer(address(this), msg.sender, totalSupply * 3 / 400);
+        
         owner = newOwner;
         balances[newOwner] = totalSupply * 397 / 400;
+        Transfer(address(this), newOwner, totalSupply * 397 / 400);
     }
     
     
