@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HibayexCoin at 0x70804ac772ef901a7590eb27fe236616a233ed62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HibayexCoin at 0xd91ce27eaeb590ce5e41d7fe1afc84eb9858f293
 */
 pragma solidity 0.4.18;
 /**
@@ -41,10 +41,10 @@ contract HibayexCoin {
 
     string public constant name = "HibayexCoin";
     string public constant symbol = "HBC";
-    uint8 public constant decimals = 18;
+    uint8 public constant decimals = 8;
 
     /// The ERC20 total fixed supply of tokens.
-    uint256 public constant totalSupply = 200000000;
+    uint256 public constant totalSupply = 20000000000000000;
 
     /// Account balances.
     mapping(address => uint256) balances;
