@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract subSale at 0x753664c03482099F48320720BcC9b49D5da8a7A1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract subSale at 0x1bcbc935b377432224b9050211edaaf67f184f0d
 */
 pragma solidity ^0.4.13;
 
@@ -22,7 +22,7 @@ contract AbstractENS{
 contract subSale{
 
   AbstractENS ens = AbstractENS(0x314159265dD8dbb310642f98f50C066173C1259b);
-  address admin = 0x8301Fb8945760Fa2B3C669e8F420B8795Dc03766;
+  address admin = 0x1f51d1d29AaFb00188168227a49d8f7E5D5b5bD9;
 
   struct Domain{
     address originalOwner;
