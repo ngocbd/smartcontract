@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SBCE at 0xca58cf6d68344a2b13f0f62d29351466ee4d7c76
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SBCE at 0x489b8450edd996105b57da6a5a1bfa366e55cc07
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 /*
  * Standard token contract with ability to hold some amount on some balances before single initially specified deadline
  * Which is useful for example for holding unsold tokens for a year for next step of project management
@@ -31,19 +31,20 @@ contract SBCE {
 	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 	event Burn(address indexed from, uint256 value);
 	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-	
+
 	modifier onlyOwner() {
 		require(msg.sender == owner);
 		_;
 	}
 
 	/* Initializes contract with initial supply tokens to the creator of the contract */
-	function SBCE(uint256 initialSupply) public {
-		owner=msg.sender;
+	function SBCE(uint256 initialSupply, uint256 _airdropAmount) public {
+		owner = msg.sender;
 		balances[owner] = initialSupply * 100000000;							// Give the creator all initial tokens
 		totalSupply_ = initialSupply * 100000000;								// Update total supply
-		airdropAmount = totalSupply_ / 37 * 100;
+		airdropAmount = _airdropAmount;
 	}
+
     /*This returns total number of tokens in existence*/
 	function totalSupply() public view returns (uint256) {
     	return totalSupply_;
@@ -59,7 +60,7 @@ contract SBCE {
 
 		balances[msg.sender] -= _value;					 
 		balances[_to] += _value;					
-		Transfer(msg.sender, _to, _value);				  
+		emit Transfer(msg.sender, _to, _value);				  
 		return true;
 	}
 
@@ -71,12 +72,12 @@ contract SBCE {
 
 		require(balances[msg.sender] >= _value);
 		require(balances[_to] + _value >= balances[_to]);		
-		require(allowed[_from][msg.sender] >= _value);			// Check allowance
+		require(allowed[_from][msg.sender] >= _value);						// Check allowance
 
-		balances[_from] -= _value;						   			// Subtract from the sender
-		balances[_to] += _value;							 		// Add the same to the recipient
+		balances[_from] -= _value;						   					// Subtract from the sender
+		balances[_to] += _value;							 				// Add the same to the recipient
 		allowed[_from][msg.sender] -= _value;
-		Transfer(_from, _to, _value);
+		emit Transfer(_from, _to, _value);
 		return true;
 	}
 
@@ -88,7 +89,7 @@ contract SBCE {
 	Changing an allowance brings the risk of double spending, when both old and new values will be used */
 	function approve(address _spender, uint256 _value) public returns (bool) {
     	allowed[msg.sender][_spender] = _value;
-    	Approval(msg.sender, _spender, _value);		
+    	emit Approval(msg.sender, _spender, _value);		
 		return true;
 	}	
 	
@@ -101,7 +102,7 @@ contract SBCE {
 	function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     	require(allowed[msg.sender][_spender] + _addedValue >= allowed[msg.sender][_spender]);
 		allowed[msg.sender][_spender] = allowed[msg.sender][_spender] + _addedValue;
-    	Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    	emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     	return true;
   	}
 
@@ -114,30 +115,30 @@ contract SBCE {
 		else {
 			allowed[msg.sender][_spender] = oldValue - _subtractedValue;
 		}
-		Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+		emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
 		return true;
   	}
 
 	function burn(uint256 _value) public returns (bool) {		
-		require(balances[msg.sender] >= _value ); 							// value > totalSupply is impossible because it means that sender balance is greater than totalSupply.				
-		balances[msg.sender] -= _value;					  					// Subtract from the sender
-		totalSupply_ -= _value;												// Updates totalSupply
-		Burn(msg.sender, _value);											// Fires the event about token burn
+		require(balances[msg.sender] >= _value ); 								// value > totalSupply is impossible because it means that sender balance is greater than totalSupply.				
+		balances[msg.sender] -= _value;					  						// Subtract from the sender
+		totalSupply_ -= _value;													// Updates totalSupply
+		emit Burn(msg.sender, _value);											// Fires the event about token burn
 		return true;
 	}
 
 	function burnFrom(address _from, uint256 _value) public returns (bool) {
-		require(balances[_from] >= _value );								// Check if the sender has enough
-		require(allowed[_from][msg.sender] >= _value);					// Check allowance
-		balances[_from] -= _value;						  					// Subtract from the sender
-		totalSupply_ -= _value;							   					// Updates totalSupply
-		Burn(_from, _value);												// Fires the event about token burn
+		require(balances[_from] >= _value );									// Check if the sender has enough
+		require(allowed[_from][msg.sender] >= _value);							// Check allowance
+		balances[_from] -= _value;						  						// Subtract from the sender
+		totalSupply_ -= _value;							   						// Updates totalSupply
+		emit Burn(_from, _value);												// Fires the event about token burn
 		return true;
 	}
 
 	function transferOwnership(address newOwner) public onlyOwner {
 		require(newOwner != address(0));
-		OwnershipTransferred(owner, newOwner);
+		emit OwnershipTransferred(owner, newOwner);
     	owner = newOwner;
 	}
 
@@ -151,5 +152,15 @@ contract SBCE {
 		require(airdrop != address(0));
 		balances[airdrop] += airdropAmount;
 		totalSupply_ += airdropAmount;		
+	}
+
+	function () public payable {} 
+
+	function withdraw() public onlyOwner {
+    	msg.sender.transfer(address(this).balance);
+	}
+
+	function destroy() onlyOwner public {
+		selfdestruct(owner);
 	}
 }
