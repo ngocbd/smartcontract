@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indorser at 0x80b463a4de8893739e78303498d53f4d59c48f28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indorser at 0x09e33737e4b56ffd7fa092fae2109662141ab87f
 */
 pragma solidity ^0.4.11;
 
@@ -12,29 +12,27 @@ contract Ownable {
   address public owner;
 
 
-  /** 
+  /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
   function Ownable() {
-    owner = "0x1428452bff9f56D194F63d910cb16E745b9ee048";
+    owner = msg.sender;
   }
 
 
   /**
-   * @dev Throws if called by any account other than the owner. 
+   * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
-    }
+    require(msg.sender == owner);
     _;
   }
 
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to. 
+   * @param newOwner The address to transfer ownership to.
    */
   function transferOwnership(address newOwner) onlyOwner {
     if (newOwner != address(0)) {
@@ -45,17 +43,18 @@ contract Ownable {
 }
 
 contract Token{
-  function transfer(address to, uint value);
+  function transfer(address to, uint value) returns (bool);
 }
 
 contract Indorser is Ownable {
-
     function multisend(address _tokenAddr, address[] _to, uint256[] _value)
-    returns (uint256) {
+    returns (bool _success) {
+        assert(_to.length == _value.length);
+        assert(_to.length <= 150);
         // loop through to addresses and send value
-		for (uint8 i = 0; i < _to.length; i++) {
-            Token(_tokenAddr).transfer(_to[i], _value[i]);
+        for (uint8 i = 0; i < _to.length; i++) {
+                assert((Token(_tokenAddr).transfer(_to[i], _value[i])) == true);
+            }
+            return true;
         }
-        return(i);
-    }
 }
