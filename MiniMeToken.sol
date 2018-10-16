@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeToken at 0xadaac4cb430f4f4aa0d60741bc263f3dfec0790a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeToken at 0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d
 */
 pragma solidity ^0.4.18;
 
 /*
-    Based on the work of Jordi Baylina with a slight modification about the approve function by Clément Lesaege.
+    Copyright 2016, Jordi Baylina.
+    Slight modification by Clément Lesaege.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,6 +21,18 @@ pragma solidity ^0.4.18;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/// @title MiniMeToken Contract
+/// @author Jordi Baylina
+/// @dev This token contract's goal is to make it easy for anyone to clone this
+///  token using the token distribution at a given block, this will allow DAO's
+///  and DApps to upgrade their features in a decentralized manner without
+///  affecting the original token
+/// @dev It is ERC20 compliant, but still needs to under go further testing.
+
+
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
+}
 
 /// @dev The token controller contract must implement these functions
 contract TokenController {
@@ -46,7 +59,6 @@ contract TokenController {
         returns(bool);
 }
 
-
 contract Controlled {
     /// @notice The address of the controller is the only address that can call
     ///  a function with this modifier
@@ -61,11 +73,6 @@ contract Controlled {
     function changeController(address _newController) public onlyController {
         controller = _newController;
     }
-}
-
-
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
 }
 
 /// @dev The actual token contract, the default controller is the msg.sender
@@ -245,18 +252,22 @@ contract MiniMeToken is Controlled {
         return balanceOfAt(_owner, block.number);
     }
 
-    /** @notice `msg.sender` approves `_spender` to spend `_amount` tokens on its behalf.
-      * This is a ERC20 compliant version.
-      * @param _spender The address of the account able to transfer the tokens
-      * @param _amount The amount of tokens to be approved for transfer
-      * @return True if the approval was successful
-      */
+    /// @notice `msg.sender` approves `_spender` to spend `_amount` tokens on
+    ///  its behalf. This is the standard version to allow backward compatibility.
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _amount The amount of tokens to be approved for transfer
+    /// @return True if the approval was successful
     function approve(address _spender, uint256 _amount) public returns (bool success) {
         require(transfersEnabled);
+
         // Alerts the token controller of the approve function call
         if (isContract(controller)) {
             require(TokenController(controller).onApprove(msg.sender, _spender, _amount));
         }
+
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
     }
 
     /// @dev This function makes it easy to read the `allowed[]` map
