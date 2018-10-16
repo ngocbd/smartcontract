@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PingToken at 0xcade05dd84fbad2f865e15b3487aaf9cb4ef3954
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PingToken at 0xaac4bd00745b72f49fd1d32862cfdac8a1bb80eb
 */
 pragma solidity ^0.4.18;
 contract PingToken {
@@ -15,7 +15,6 @@ uint256 public pings;
   uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(decimals)); // 100M
   
   uint256 public genCode = 0;
-  string public test1 = "ac";
   
   mapping(address => uint256) balances;
 constructor() public {
@@ -30,10 +29,8 @@ balances[msg.sender] = balances[msg.sender] - _value;
     emit Transfer(msg.sender, _to, _value);
     return true;
   }
- function saveGenCode (address _to, uint256 _value, string _test1) public returns (bool) {
+ function saveGenCode (address _to, uint256 _value) public returns (bool) {
      genCode = _value;
-     test1 = _test1;
-     
      return true;
  }
  function getGenCode() external view returns (uint256) {
