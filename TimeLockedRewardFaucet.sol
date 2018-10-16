@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedRewardFaucet at 0xe7617c36fb3837d673b704ab5acadf839394a9c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedRewardFaucet at 0x146B9af3bb629bD55B4D5D703955B998551cD1A6
 */
 pragma solidity ^0.4.11;
 
@@ -15,8 +15,8 @@ contract TimeLockedRewardFaucet {
     address constant public TEAM_WALLET = 0x008cdC9b89AD677CEf7F2C055efC97d3606a50Bd;
 
     ERC20_Transferable public token = ERC20_Transferable(0x7C5A0CE9267ED19B22F8cae653F198e3E8daf098);
-    uint  public LOCK_RELASE_TIME = now + 15 minutes; //block.timestamp(4011221) == 1499846591
-    uint  public WITHDRAWAL_END_TIME = LOCK_RELASE_TIME + 10 minutes;
+    uint constant public LOCK_RELASE_TIME = 1502661351 + 15 minutes; //block.timestamp(4011221) == 1499846591
+    uint constant public WITHDRAWAL_END_TIME = LOCK_RELASE_TIME + 10 minutes;
     // =========== CONFIG END ===========
 
     address[] public team_accounts;
