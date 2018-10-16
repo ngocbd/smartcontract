@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fishbank at 0xa98ad92a642570b83b369c4eb70efefe638bc895
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fishbank at 0xe8bbf054b788c98d9993be5513254d6b64a1ba97
 */
 pragma solidity ^0.4.18;
 
@@ -964,13 +964,14 @@ contract Fishbank is ChestsStore {
         utils = FishbankUtils(_utils);
     }
 
-    /// batch fishing from 1 to 10 times
     function batchFishAquarium(uint256[] _seeds, address _affiliate) payable public {
-        require(_seeds.length > 0 && _seeds.length <= 10);
-        require(msg.value >= aquariumCost * _seeds.length);
+        require(_seeds.length > 0);
+        require(msg.value >= aquariumCost);
         //must send enough ether to cover costs
         require(randomHashes.length > hashesUsed + _seeds.length);
         //there needs to be a hash left
+
+
 
         if (msg.value > aquariumCost * _seeds.length) {
             msg.sender.transfer(msg.value - aquariumCost * _seeds.length);
