@@ -1,40 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropContract at 0x1cbd39b61919b41e22b1eb8bc564e67cae7376b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0x227086ab72678903091d315b04a8dacade39647a
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.20;
 
-interface FrescoToken {
-    
-    function transfer(address to, uint256 value) external returns (bool);
+/// @title kryptono exchange AirDropContract for KNOW token
+/// @author Trong Cau Ta <trongcauhcmus@gmail.com>
+/// For more information, please visit kryptono.exchange
+
+/// @title ERC20
+contract ERC20 {
+    uint public totalSupply;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function balanceOf(address who) view public returns (uint256);
+    function allowance(address owner, address spender) view public returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
 }
 
+contract AirDropContract {
 
-contract AirdropContract {
-    
-    address public owner;
-    
-    FrescoToken token;
-   
-    
-    modifier onlyOwner() {
-    	require(msg.sender == owner);
-    	_;
-  	}
-    
-    constructor() public {
-      owner = msg.sender;
-      token = FrescoToken(0x351d5eA36941861D0c03fdFB24A8C2cB106E068b);
-    }
-    
-    function send(address[] dests, uint256[] values) public onlyOwner returns(uint256) {
-        uint256 i = 0;
-        while (i < dests.length) {
-            token.transfer(dests[i], values[i]);
-            i += 1;
+    event AirDropped(address addr, uint amount);
+    address public owner = 0x00a107483c8a16a58871182a48d4ba1fbbb6a64c71;
+
+    function drop(
+        address tokenAddress,
+        address[] recipients,
+        uint256[] amounts) public {
+        require(msg.sender == owner);
+        require(tokenAddress != 0x0);
+        require(amounts.length == recipients.length);
+
+        ERC20 token = ERC20(tokenAddress);
+
+        uint balance = token.balanceOf(msg.sender);
+        uint allowance = token.allowance(msg.sender, address(this));
+        uint available = balance > allowance ? allowance : balance;
+
+        for (uint i = 0; i < recipients.length; i++) {
+            require(available >= amounts[i]);
+            if (isQualitifiedAddress(
+                recipients[i]
+            )) {
+                available -= amounts[i];
+                require(token.transferFrom(msg.sender, recipients[i], amounts[i]));
+
+                AirDropped(recipients[i], amounts[i]);
+            }
         }
-        return i;
-        
+    }
+
+    function isQualitifiedAddress(address addr)
+        public
+        view
+        returns (bool result)
+    {
+        result = addr != 0x0 && addr != msg.sender && !isContract(addr);
+    }
+
+    function isContract(address addr) internal view returns (bool) {
+        uint size;
+        assembly { size := extcodesize(addr) }
+        return size > 0;
+    }
+
+    function () payable public {
+        revert();
     }
     
-    
+    // withdraw any ERC20 token in this contract to owner
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public returns (bool success) {
+        return ERC20(tokenAddress).transfer(owner, tokens);
+    }
 }
