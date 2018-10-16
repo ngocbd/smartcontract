@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x25587c25f1c7f245b5d419dbdf14f497ac5dce1b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x25B917c6a9F7aEFD057d03efc563A4693F38507b
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -154,7 +154,7 @@ contract TokenERC20 {
     }
 
     /**
-     * Destroy tokens from other ccount
+     * Destroy tokens from other account
      *
      * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
      *
