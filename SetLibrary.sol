@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetLibrary at 0x55f44e8b16651a7c5ea1ffcc54749336ffc17e3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetLibrary at 0x0920eab34b13eabdef261a68e2883713ed620946
 */
+pragma solidity ^0.4.17;
+
 library SetLibrary
 {
     struct ArrayIndexAndExistsFlag
