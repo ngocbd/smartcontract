@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RxEALPresaleContract at 0xf85ec88e37908cbf31be4d53d0834e2c5be4ed17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RxEALPresaleContract at 0x279e152f96bdd4a0b3cb10b5fba0cfeea4a7429b
 */
 pragma solidity ^0.4.18;
 
@@ -307,8 +307,8 @@ contract RxEALPresaleContract {
   // The token being sold
   RxEALTokenContract public token;
   // Start and end timestamps where sales are allowed (both inclusive)
-  uint256 public startTime = 1512388800;
-  uint256 public endTime = 1514721600;
+  uint256 public startTime = 1516017600;
+  uint256 public endTime = 1517832000;
   // Address where funds are collected
   address public wallet1 = 0x56E4e5d451dF045827e214FE10bBF99D730d9683;
   address public wallet2 = 0x8C0988711E60CfF153359Ab6CFC8d45565C6ce79;
@@ -316,9 +316,9 @@ contract RxEALPresaleContract {
   address public wallet4 = 0xcBdC5eE000f77f3bCc0eFeF0dc47d38911CBD45B;
   // How many token units a buyer gets per wei
   // Rate per ether equals rate * (10 ** token.decimals())
-  uint256 public rate = 800;
+  uint256 public rate = 2400;
   // Cap in ethers
-  uint256 public cap = 7200 * 1 ether;
+  uint256 public cap = 2400 * 1 ether;
   // Amount of raised money in wei
   uint256 public weiRaised;
 
