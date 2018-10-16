@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLXToken at 0xfb356a334926065e53fb3ff810b6c834899b23f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLXToken at 0x457dbd130f6161b1195d210bc248fc0e0b9e4cff
 */
 pragma solidity ^0.4.23;
 // ----------------------------------------------------------------------------
 // 'GLX' token contract
 //
 // Deployed to : 0x1d5B6586dD08fF8E15E45431E3dfe51493c83B5C
-// Symbol      : GLXT
-// Name        : GLX Token
+// Symbol      : GLX
+// Name        : GolixToken
 // Total supply: 1274240097
 // Decimals    : 18
 //
@@ -104,8 +104,8 @@ contract Owned {
 // token transfers
 // ----------------------------------------------------------------------------
 contract GLXToken is ERC20Interface, Owned, SafeMath {
-    string public symbol = "GLXT";
-    string public name = "GLX Token";
+    string public symbol = "GLX";
+    string public name = "GolixToken";
     uint8 public decimals = 18;
     uint public _totalSupply;
     bool internal deployed = false;
