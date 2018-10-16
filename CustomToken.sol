@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xa7d9b88ce2652e690eff77fafe8e0d07654e08d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x7c94d093df52d86056390f27d344c3019a865d32
 */
 pragma solidity ^0.4.19;
 
@@ -48,9 +48,10 @@ contract BaseToken {
 contract CustomToken is BaseToken {
     function CustomToken() public {
         totalSupply = 1000000000000000000000000000;
-        balanceOf[0xF588D792fA8a634162760482a7B61DD1AB99b1F1] = totalSupply;
-        name = 'ContentNeutralityNet';
-        symbol = 'CNN';
+        name = 'EnergyShellfish';
+        symbol = 'ES';
         decimals = 18;
+        balanceOf[0xe1f77b81a2383162cbbdd0dd93630f31a6672477] = totalSupply;
+        Transfer(address(0), 0xe1f77b81a2383162cbbdd0dd93630f31a6672477, totalSupply);
     }
 }
