@@ -1,143 +1,71 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherich at 0x3e01d88fd2c2feedf3ff761225628c92182345bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHERICH at 0x8348f36d1ba5d64975f1be8827a82f8910247bb5
 */
 pragma solidity ^0.4.20;
 
-///ETHERICH Contract
+contract ETHERICH {
 
-/*
-Copyright 2018 etherich.co
+    event Bought(string name, string quote, uint amount);
+    event Overwrite(string name, string quote);
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+    address private owner;
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+    uint256 private _increase = 1000000000000000;
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+    uint256 private _highestBid = 1000000000000000;
+    string private _highestNickName = "ETHERICH";
+    string private _highestQuote = "Your quote here!";
 
-contract Etherich {
-    address public owner;
-    
-    uint constant public PARTICIPATION_FEE = 0.1 ether;
-    uint[] public REFERRAL_RATE = [40, 25, 15, 10, 5];
-
-    mapping (address => address) members;
-    mapping (string => address) referralCodes;
-    uint public memberCount;
-
-    event HasNewMember(uint memberCount);
-    
-    function Etherich() public {
+    constructor() public {
         owner = msg.sender;
-        members[owner] = 1;
-
-        string memory alphabetHash = hash(owner);
-        referralCodes[alphabetHash] = owner;
-
-        memberCount = 1;
-    }
-    
-    function participate(string referral) public payable {
-        require(referralCodes[referral] != 0);
-        require(members[msg.sender] == 0);
-        require(msg.value == PARTICIPATION_FEE);
-        
-        address referrer = referralCodes[referral];
-        members[msg.sender] = referrer;
-        string memory alphabetHash = hash(msg.sender);
-        referralCodes[alphabetHash] = msg.sender;
-        
-        for (uint16 i = 0; i<5; i++) {
-            if (referrer == 1) {
-                break;
-            }
-            
-            uint256 amount = SafeMath.div(SafeMath.mul(msg.value, REFERRAL_RATE[i]), 100);
-            referrer.transfer(amount);
-            referrer = members[referrer];
-        }
-
-        memberCount++;
-        HasNewMember(memberCount);
-    }
-    
-    function isMember(address a) public view returns(bool) {
-        return !(members[a] == 0);
-    }
-    
-    function doesReferralCodeValid(string code) public view returns(bool) {
-        return !(referralCodes[code] == 0);
-    }
-    
-    function referralCodeFromAddress(address a) public view returns (string) {
-        if (this.isMember(a)) {
-            return hash(a);
-        } else {
-            return "";
-        }
     }
 
-    function getReferralRates() public view returns (uint[]) {
-        return REFERRAL_RATE;
-    }
-    
-    function payout(address receiver, uint amount) public restricted {
-        if (amount > this.balance) {
-            receiver.transfer(this.balance);
-        } else {
-            receiver.transfer(amount);
-        }
+    function buy(string _nickname, string _quote) public payable {
+        require(msg.value > 0);
+        require(msg.value >= (_highestBid + _increase));
+
+        uint nickname_len = bytes(_nickname).length;
+        uint quote_len = bytes(_quote).length ;
+
+        require(nickname_len > 0 && nickname_len <= 28);
+        require(quote_len > 0 && quote_len <= 60);
+
+        _highestNickName = _nickname;
+        _highestQuote = _quote;
+        _highestBid = msg.value;
+
+        emit Bought(_highestNickName,_highestQuote,_highestBid);
     }
 
-    function changeOwner(address newOwner) public restricted {
-        owner = newOwner;
-    }
-    
-    function hash(address a) private pure returns (string) {
-        bytes32 sha3Hash = keccak256(bytes20(a));
-        return bytes32ToAlphabetString(sha3Hash);
-    }
-    
-    function bytes32ToAlphabetString(bytes32 x) private pure returns (string) {
-        bytes memory bytesString = new bytes(32);
-        uint8 charCount = 0;
 
-        for (uint j = 0; j < 32; j++) {
-            uint8 value = uint8(x[j]) % 24;
-            byte char = byte(65 + value);
-            bytesString[charCount] = char;
-            charCount++;
-        }
+    function getRichest() public view returns(string,string, uint) {
+        return (_highestNickName,_highestQuote, _highestBid);
+    }
 
-        return string(bytesString);
-    } 
-    
-    modifier restricted() {
+    function getIncrease() public view returns(uint) {
+        return _increase;
+    }
+
+    function overwrite(string _nickname, string _quote) public{
         require(msg.sender == owner);
-        _;
-    }
-}
+        uint nickname_len = bytes(_nickname).length;
+        uint quote_len = bytes(_quote).length ;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+        require(nickname_len > 0 && nickname_len <= 28);
+        require(quote_len > 0 && quote_len <= 60);
+
+        _highestNickName = _nickname;
+        _highestQuote = _quote;
+        emit Overwrite(_highestNickName,_highestQuote);
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+
+    function updateIncrease(uint256 increase) public {
+        require(msg.sender == owner);
+        _increase = increase;
+    }
+
+    function withDraw() public{
+        require(msg.sender == owner);
+        owner.transfer(address(this).balance);
+    }
 }
