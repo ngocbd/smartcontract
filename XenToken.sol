@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XenToken at 0x52cf79593217e2ad49cf4e8c9ffe191e5fbc1694
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XenToken at 0x64c36b4cec69ee9041b48b950dfd0fc59a849f68
 */
 pragma solidity ^0.4.11;
 
@@ -118,14 +118,14 @@ contract XenToken is ERC20,XenTokenStandard,Ownable {
     using SafeMath for uint256;
 
     string public name = "XenToken";
-    string public symbol = "Xen";
+    string public symbol = "XEN";
     uint public decimals = 18;
 
     uint public chainStartTime; //chain start time
     uint public chainStartBlockNumber; //chain start block number
     uint public stakeStartTime; //stake start time
-    uint public stakeMinAge = 1 days; // minimum age for coin age: 3D
-    uint public stakeMaxAge = 365 days; // stake age of full weight: 90D
+    uint public stakeMinAge = 1 days; // minimum age for coin age: 1D
+    uint public stakeMaxAge = 365 days; // stake age of full weight: 365D
     uint public maxMintProofOfStake = 10**17; // default 10% annual interest
 
     uint public totalSupply;
@@ -241,10 +241,10 @@ contract XenToken is ERC20,XenTokenStandard,Ownable {
     function annualInterest() constant returns(uint interest) {
         uint _now = now;
         interest = maxMintProofOfStake;
-        if((_now.sub(stakeStartTime)).div(1 years) == 0) {
-            interest = (770 * maxMintProofOfStake).div(100);
-        } else if((_now.sub(stakeStartTime)).div(1 years) == 1){
-            interest = (435 * maxMintProofOfStake).div(100);
+        if((_now.sub(stakeStartTime)).div(99 years) == 0) {
+            interest = (550 * maxMintProofOfStake).div(100);
+        } else if((_now.sub(stakeStartTime)).div(99 years) == 1){
+            interest = (540 * maxMintProofOfStake).div(100);
         }
     }
 
@@ -256,16 +256,14 @@ contract XenToken is ERC20,XenTokenStandard,Ownable {
         if(_coinAge <= 0) return 0;
 
         uint interest = maxMintProofOfStake;
-        // Due to the high interest rate for the first two years, compounding should be taken into account.
-        // Effective annual interest rate = (1 + (nominal rate / number of compounding periods)) ^ (number of compounding periods) - 1
-        if((_now.sub(stakeStartTime)).div(1 years) == 0) {
-            // 1st year effective annual interest rate is 100% when we select the stakeMaxAge (90 days) as the compounding period.
-            interest = (770 * maxMintProofOfStake).div(100);
-        } else if((_now.sub(stakeStartTime)).div(1 years) == 1){
-            // 2nd year effective annual interest rate is 50%
-            interest = (435 * maxMintProofOfStake).div(100);
+        if((_now.sub(stakeStartTime)).div(99 years) == 0) {
+            // first 99 years 55% POS interest
+            interest = (550 * maxMintProofOfStake).div(100);
+        } else if((_now.sub(stakeStartTime)).div(99 years) == 1){
+            // 2nd 99 Years 54% POS INTEREST
+            interest = (540 * maxMintProofOfStake).div(100);
         }
-
+			//after 198 years 10% POS INTEREST
         return (_coinAge * interest).div(365 * (10**decimals));
     }
 
