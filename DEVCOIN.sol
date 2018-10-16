@@ -1,199 +1,182 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DevCoin at 0x52035f001502d5f4b0555d699d448da4a20f67cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DEVCoin at 0x3128c3f5e3a6c6834f5cc4daccdf72d79da4d2bc
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
 }
 
-/**
-* Abstract contract(interface) for the full ERC 20 Token standard
-* see https://github.com/ethereum/EIPs/issues/20
-* This is a simple fixed supply token contract.
-*/
-contract ERC20 {
+contract ERC20Basic {
+    uint256 public totalSupply;
 
-    /**
-    * Get the total token supply
-    */
-    function totalSupply() public view returns (uint256 supply);
+    function balanceOf(address who) constant public returns (uint256);
 
-    /**
-    * Get the account balance of an account with address _owner
-    */
-    function balanceOf(address _owner) public view returns (uint256 balance);
+    function transfer(address to, uint256 value) public returns (bool);
 
-    /**
-    * Send _value amount of tokens to address _to
-    * Only the owner can call this function
-    */
-    function transfer(address _to, uint256 _value) public returns (bool success);
-
-    /**
-    * Send _value amount of tokens from address _from to address _to
-    */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-    /** Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    * If this function is called again it overwrites the current allowance with _value.
-    * this function is required for some DEX functionality
-    */
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
-    /**
-    * Returns the amount which _spender is still allowed to withdraw from _owner
-    */
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-
-    /**
-    * Triggered when tokens are transferred from one address to another
-    */
     event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    /**
-    * Triggered whenever approve(address spender, uint256 value) is called.
-    */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) constant public returns (uint256);
+
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+
+    function approve(address spender, uint256 value) public returns (bool);
+
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+contract Owned {
 
-/**
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+    address public owner;
 
-This is a contract for a fixed supply coin.
-*/
-contract DevCoin is ERC20 {
-  using SafeMath for uint256;
+    address public newOwner;
 
-  // meta data
-  string public constant symbol = "DEV";
+    function Owned() public payable {
+        owner = msg.sender;
+    }
 
-  string public constant version = '1.0';
+    modifier onlyOwner {
+        require(owner == msg.sender);
+        _;
+    }
 
-  string public constant name = "DevCoin";
+    function changeOwner(address _owner) onlyOwner public {
+        require(_owner != 0);
+        newOwner = _owner;
+    }
 
-  uint256 public constant decimals = 18;
+    function confirmOwner() public {
+        require(newOwner == msg.sender);
+        owner = newOwner;
+        delete newOwner;
+    }
+}
 
-  uint256 constant TOTAL_SUPPLY = 100 * (10 ** 6) * 10 ** decimals; // 100 millions
+contract Blocked {
 
-  // Owner of this contract
-  address public owner;
+    uint public blockedUntil;
 
-  // Balances for each account
-  mapping(address => uint256) internal balances;
+    modifier unblocked {
+        require(now > blockedUntil);
+        _;
+    }
+}
 
-  // Owner of account approves the transfer of an amount to another account owner -> (recipient -> amount)
-  // This is used by exchanges. The owner effectively gives an exchange POA to transfer coins using
-  // the function transferFrom()
-  mapping(address => mapping(address => uint256)) internal allowed;
+contract BasicToken is ERC20Basic, Blocked {
 
-  /**
-  * Constructor
-  * the creator gets all the tokens initially
-  */
-  function DevCoin() public {
-    owner = msg.sender;
-    balances[owner] = TOTAL_SUPPLY;
-  }
+    using SafeMath for uint256;
 
-  /**
-    * Get the total token supply
-    */
-  function totalSupply() public view returns (uint256 supply) {
-    supply = TOTAL_SUPPLY;
-  }
+    mapping (address => uint256) balances;
 
-  /**
-    * Get the account balance of an account with address _owner
-    */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
+    // Fix for the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        require(msg.data.length >= size + 4);
+        _;
+    }
 
-  /**
-    * Send _value amount of tokens to address _to
-    * Only the owner can call this function
-    * No need to protect balances because only sender balance is accessed here
-    */
-  function transfer(address _to, uint256 _amount) public returns (bool success) {
-    require(_to != address(0));
-    require(_amount <= balances[msg.sender]);
+    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) unblocked public returns (bool) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
 
-    // SafeMath.sub will throw if there is not enough balance of if there is an overflow
-    balances[msg.sender] = balances[msg.sender].sub(_amount);
-    balances[_to] = balances[_to].add(_amount);
+    function balanceOf(address _owner) constant public returns (uint256 balance) {
+        return balances[_owner];
+    }
 
-    // notify
-    Transfer(msg.sender, _to, _amount);
-    return true;
-  }
+}
 
-  /**
-    * Send _value amount of tokens from address _from to address _to
-    */
-  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success) {
-    // protection against integer overflow
-    require(_to != address(0));
-    require(_amount <= balances[_from]);
-    require(_amount <= allowed[_from][msg.sender]);
+contract StandardToken is ERC20, BasicToken {
 
-    balances[_from] = balances[_from].sub(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+    mapping (address => mapping (address => uint256)) allowed;
 
-    // notify
-    Transfer(_from, _to, _amount);
-    return true;
-  }
+    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) unblocked public returns (bool) {
+        uint256 _allowance = allowed[_from][msg.sender];
 
-  /** Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    * If this function is called again it overwrites the current allowance with _value.
-    * this function is required for some DEX functionality
-    */
-  function approve(address _spender, uint256 _value) public returns (bool success) {
-    // no need to check sender identity as he can only modify his own allowance
-    allowed[msg.sender][_spender] = _value;
-    // notify
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
 
-  /**
-    * Returns the amount which _spender is still allowed to withdraw from _owner
-    */
-  function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
+    function approve(address _spender, uint256 _value) onlyPayloadSize(2 * 32) unblocked public returns (bool) {
 
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) onlyPayloadSize(2 * 32) unblocked constant public returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+}
+
+contract BurnableToken is StandardToken {
+
+    event Burn(address indexed burner, uint256 value);
+
+    function burn(uint256 _value) unblocked public {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
+}
+
+contract DEVCoin is BurnableToken, Owned {
+
+    string public constant name = "Dev Coin";
+
+    string public constant symbol = "DEVC";
+
+    uint32 public constant decimals = 18;
+
+    function DEVCoin(uint256 initialSupply, uint unblockTime) public {
+        totalSupply = initialSupply;
+        balances[owner] = initialSupply;
+        blockedUntil = unblockTime;
+    }
+
+    function manualTransfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) onlyOwner public returns (bool) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
 }
