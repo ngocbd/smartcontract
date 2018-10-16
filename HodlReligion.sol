@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HodlReligion at 0xc6f06604C8968F62d4D954f4a056027Da0Ed6a68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HodlReligion at 0xe752483412490481d193194d293db5cd0ed054a8
 */
 pragma solidity ^0.4.17;
 
@@ -111,7 +111,6 @@ contract HodlReligion is StandardToken {
     string public constant name = "HODL Religion Token";
     string public constant symbol = "HODL"; // changed due to conflicts
     uint public constant decimals = 18;
-    uint public minted = 0;
 
     modifier onlyOwner() {
         assert(msg.sender == owner);
@@ -122,6 +121,7 @@ contract HodlReligion is StandardToken {
     function HodlReligion() public {
         owner = msg.sender;
         totalSupply = 200000000 * 10**18; // 100M
+        balances[this] = totalSupply;
     }
 
     /**
@@ -130,15 +130,14 @@ contract HodlReligion is StandardToken {
      * @dev or send 0 to collect prize
      */
     function () payable external {
-        require(minted <= totalSupply);
         if(msg.value > 0){
-            balances[msg.sender] += 10 ** 18; // 1 Token
-            minted += 10 ** 18;
+            transfer(msg.sender, 10 ** 18); // 1 Token
         }
     }
 
-    function getFund() external onlyOwner {
-        owner.transfer(this.balance);
+    function faucet() payable external {
+        if(msg.value > 0){
+            transfer(msg.sender, 10 ** 18); // 1 Token
+        }
     }
-
 }
