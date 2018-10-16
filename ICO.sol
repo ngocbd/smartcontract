@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x74afacc09ad3426d75ec6ab610834cb2aed1d026
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x6a04f1b8cd341232b59c8bc70a102c45f6b29b38
 */
 pragma solidity ^0.4.16;
 
@@ -159,9 +159,9 @@ contract ICO is SafeMath, Pausable{
         BTCproxy = 0x50651260Ba2B8A3264F1AE074E7a6E7Da101567a;
         GBPproxy = 0x1ABb9E204Eb8E546eFA06Cbb8c039A91227cb211;
         fundingGoal = 100 ether;
-        deadline = now + 42 days;
-        preIcoEnds = now + 14 days;
-        tokenReward = token(0xF27d2B20048a58f558368BbdC45d3f8ec342159C);
+        deadline = now + 35 days;
+        preIcoEnds = now + 7 days;
+        tokenReward = token(0x2749b5bfd51f9d9dd12927f53c112ebb5e94c247);
     }
 
     /**
@@ -212,9 +212,9 @@ contract ICO is SafeMath, Pausable{
     
     function MinimumInvestment() internal returns(uint){
         if (now <= preIcoEnds){
-            return 1 ether;
-        }else{
             return 0.1 ether;
+        }else{
+            return 0.01 ether;
         }
     }
     
