@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEA at 0x54880fc1b39ccb3c9b6e0592d92c647c2e449613
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEA at 0xd8e64769bb02136564737a4ecc712083b473db86
 */
 pragma solidity ^0.4.18;
 
