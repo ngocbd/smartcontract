@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MediCrowdsale at 0x652c7e43e82e6b45fc6265c02174cf1a91339b5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MediCrowdsale at 0xffa7ebe6a6026bfcd541c65fedbe355d3b203541
 */
 pragma solidity ^0.4.13;
 
@@ -13,7 +13,7 @@ library SafeMath {
     assert(a == 0 || c / a == b);
     return c;
   }
-  
+
   function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -202,7 +202,7 @@ contract MediCrowdsale is Ownable {
   address public wallet;
 
   // how many token units a buyer gets per wei
-  uint256 public rate = 4000;
+  uint256 public rate = 40000;
 
 
   // amount of raised money in wei
