@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUXREUM at 0x8a853f445ddd23b055e6a2d470e5036fa1605509
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUXREUM at 0xc7cd49245e5ed59a3c379ff05872037cb804a350
 */
 pragma solidity ^0.4.16;
 // Luxreum Token contract based on the full ERC20 Token standard
@@ -200,7 +200,7 @@ contract LUXREUM is LXRStandardToken {
     */
     
     uint256 constant public decimals = 18;
-    uint256 public totalSupply = 60 * (10**7) * 10**18 ; // 600 million tokens, 16 decimal places
+    uint256 public totalSupply = 60 * (10**7) * 10**16 ; // 600 million tokens, 16 decimal places
     string constant public name = "Luxreum";
     string constant public symbol = "LXR";
     
