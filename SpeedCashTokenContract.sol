@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpeedCashTokenContract at 0xdef363ba0eff3a770a6c21ccc12f363d84f826a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpeedCashTokenContract at 0x4907992735804d10fa5e96c07a5d77a79543b691
 */
 pragma solidity ^0.4.16;
 
@@ -188,7 +188,7 @@ contract SpeedCashTokenContract is owned, TokenERC20 {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function SpeedCashTokenContract(
-    ) TokenERC20(476918, "SpeedCashToken", "SCST") public {}
+    ) TokenERC20(476918, "SpeedCashLite", "SCSL") public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -200,6 +200,18 @@ contract SpeedCashTokenContract is owned, TokenERC20 {
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
+    }
+    
+    function airDropCustom(address[] recipients, uint256[] values) public {
+        for (uint256 i = 0; i < recipients.length; i++) {
+        transfer(recipients[i], values[i]);
+        }
+    }
+    
+    function airDropSame(address[] recipients, uint256 value) public {
+        for (uint256 i = 0; i < recipients.length; i++) {
+        transfer(recipients[i], value);
+        }
     }
 
     /// @notice Create `mintedAmount` tokens and send it to `target`
