@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bionic at 0x8d78530eb52016c36629fbbea78e02267e658b16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bionic at 0xbe8219caf10546ddc6699feccf2cafbc14a7ff21
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -38,11 +38,11 @@ contract Bionic {
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
     function Bionic() {
-        totalSupply = 100000000000000000;
-        symbol = 'BNC';
-        owner = 0xb721e50595a968b6C151d18D80d02f4aCE88f3e6;
+        totalSupply = 1000000000000000000000000000;
+        symbol = 'BIOC';
+        owner = 0xE6B4AA55c58Ef2b89485cb25f4745702FbCDA2B2;
         balances[owner] = totalSupply;
-        decimals = 8;
+        decimals = 18;
     }
 
     function balanceOf(address _owner) constant returns(uint256 balance) {
