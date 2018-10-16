@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DMToken at 0x2ccbff3a042c68716ed2a2cb0c544a9f1d1935e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DMToken at 0xaa72c1ec95d1e0e9c803e25e0d8a2cddcf5b0302
 */
 pragma solidity 0.4.18;
 
@@ -305,8 +305,8 @@ contract Vesting is MintableToken {
 
 contract DMToken is Vesting {
 
-    string public name = "DMarket Token";
-    string public symbol = "DMT";
+    string public name = "ISToken";
+    string public symbol = "IST";
     uint256 public decimals = 8;
 
     function DMToken() public {
