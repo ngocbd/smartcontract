@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xbbfd45f1fb42d65d3846a2f1d24df82b17463a68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb83b51b60e60a8728691d61a53862a1f8df7bcca
 */
 pragma solidity ^0.4.16;
 
@@ -209,19 +209,19 @@ contract BurnableToken is StandardToken {
 
 }
 
-contract CapitalToken  is BurnableToken {
+contract GlobalEcoToken  is BurnableToken {
     
-  string public constant name = "Capital Token";
+  string public constant name = "Global Eco Token";
    
-  string public constant symbol = "CAPT";
+  string public constant symbol = "GECO";
     
   uint32 public constant decimals = 18;
 
   uint256 public INITIAL_SUPPLY = 700000000 * 1 ether;
 
-  function CapitalToken  () {
+  function GlobalEcoToken  () {
     totalSupply = INITIAL_SUPPLY;
-    balances[0xf1387D12581E60F946b71aC5b905B3e7B472122D] = INITIAL_SUPPLY;
+    balances[0x81DB2080dC1Da5f41618Ae5a340d78D1617A7CB6] = INITIAL_SUPPLY;
   }
     
 }
@@ -232,7 +232,7 @@ contract Crowdsale is Ownable {
     
   address multisig;
 
-  CapitalToken public token = new CapitalToken ();
+  GlobalEcoToken public token = new GlobalEcoToken ();
 
   uint start;
     
@@ -272,7 +272,7 @@ contract Crowdsale is Ownable {
     }
 
   function Crowdsale() {
-    multisig = 0xf1387D12581E60F946b71aC5b905B3e7B472122D;
+    multisig = 0x06C314448c183DEdfbF56366D5317118927ea402;
     rate = rate;
     start = 1511727488;
     period = 365;
