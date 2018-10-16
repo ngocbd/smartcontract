@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x783a1cbc37a8ef2f368908490b72bfe801da1877
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x5d315fb1c83e2cc81b76aadd6fcf3a06966d3376
 */
 pragma solidity ^0.4.19;
+
+// Wolf Crypto pooling contract for Refereum
+// written by @iamdefinitelyahuman
 
 /**
  * @title SafeMath
@@ -72,14 +75,15 @@ contract PresalePool {
   uint public feePct;
   // the address that the pool will be paid out to
   address public receiverAddress;
-  
+  // the maximum gas price allowed for deposits in stage 1
   uint constant public maxGasPrice = 50000000000;
+  // the whitelisting contract
   WhiteList public whitelistContract;
   
   // These variables are all initially set to 0 and will be set at some point during the contract
   // the amount of eth (in wei) present in the contract when it was submitted
   uint public finalBalance;
-  // the % of contributed eth to be refunded to whitelisted addresses (set in stage 3)
+  // an array containing eth amounts to be refunded in stage 3
   uint[] public ethRefundAmount;
   // the default token contract to be used for withdrawing tokens in stage 3
   address public activeToken;
@@ -120,6 +124,8 @@ contract PresalePool {
     locked = false;
   }
   
+  // Events triggered throughout contract execution
+  // These can be watched via geth filters to keep up-to-date with the contract
   event ContributorBalanceChanged (address contributor, uint totalBalance);
   event TokensWithdrawn (address receiver, uint amount);
   event EthRefunded (address receiver, uint amount);
@@ -168,6 +174,7 @@ contract PresalePool {
     } else revert();
   }
   
+  // Internal function for handling eth deposits during contract stage one.
   function _ethDeposit () internal {
     assert (contractStage == 1);
     require (tx.gasprice <= maxGasPrice);
@@ -180,7 +187,7 @@ contract PresalePool {
     ContributorBalanceChanged(msg.sender, newBalance);
   }
   
-  
+  // Internal function for handling eth refunds during stage three.
   function _ethRefund () internal {
     assert (contractStage == 3);
     require (msg.sender == owner || msg.sender == receiverAddress);
@@ -189,7 +196,6 @@ contract PresalePool {
     EthRefundReceived(msg.sender, msg.value);
   }
   
-    
   // This function is called to withdraw eth or tokens from the contract.
   // It can only be called by addresses that are whitelisted and show a balance greater than 0.
   // If called during contract stages one or two, the full eth balance deposited into the contract will be returned and the contributor's balance will be reset to 0.
@@ -209,8 +215,6 @@ contract PresalePool {
   }
   
   // This function allows the contract owner to force a withdrawal to any contributor.
-  // It is useful if a new round of tokens can be distributed but some contributors have
-  // not yet withdrawn their previous allocation.
   function withdrawFor (address contributor, address tokenAddr) public onlyOwner {
     require (contractStage == 3);
     require (whitelist[contributor].balance > 0);
@@ -281,6 +285,7 @@ contract PresalePool {
   
   // This function is called by the owner to remove an address from the whitelist.
   // It may only be executed during stages 1 and 2.  Any eth sent by the address is refunded and their personal cap is set to 0.
+  // It will throw if the address is still authorised in the whitelist contract.
   function revoke (address addr) public onlyOwner {
     require (contractStage < 3);
     require (whitelist[addr].authorized);
@@ -321,6 +326,16 @@ contract PresalePool {
     contributionCaps[level] = cap;
   }
   
+  // This function changes every level cap at once.
+  function modifyLevelCaps (uint[] cap) public onlyOwner {
+    require (contractStage < 3);
+    require (cap.length == contributionCaps.length-1);
+    for (uint8 i = 1; i<contributionCaps.length; i++) {
+      modifyLevelCap(i,cap[i-1]);
+    }
+  }
+  
+  
   // This function can be called during stages one or two to modify the maximum balance of the contract.
   // It can only be called by the owner. The amount cannot be set to lower than the current balance of the contract.
   function modifyMaxContractBalance (uint amount) public onlyOwner {
@@ -334,7 +349,6 @@ contract PresalePool {
   }
   
   // This internal function returns the cap amount of a whitelisted address.
-  // If the address is not whitelisted it will throw.
   function _checkCap (address addr) internal returns (uint) {
     _checkWhitelistContract(addr);
     var c = whitelist[addr];
@@ -343,6 +357,7 @@ contract PresalePool {
     return c.cap; 
   }
   
+  // This internal function checks if an address is whitelisted in the whitelist contract.
   function _checkWhitelistContract (address addr) internal {
     var c = whitelist[addr];
     if (!c.authorized) {
@@ -412,7 +427,7 @@ contract PresalePool {
   
 
   // This function sends the pooled eth to the receiving address, calculates the % of unused eth to be returned,
-  // and advances the contract to stage three. It can only be called by the contract owner during stage two.
+  // and advances the contract to stage three. It can only be called by the contract owner during stages one or two.
   // The amount to send (given in wei) must be specified during the call. As this function can only be executed once,
   // it is VERY IMPORTANT not to get the amount wrong.
   function submitPool (uint amountInWei) public onlyOwner noReentrancy {
