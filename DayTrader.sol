@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayTrader at 0xb47841728f10f39abad9d799e8f6ba05e30c1b9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayTrader at 0xe520035ae79e2cda8b9c1983fe810ea57bf5ccbc
 */
 pragma solidity ^0.4.18;
 
@@ -468,7 +468,7 @@ contract EthPyramid {
 }
 
 
-contract DayTrader{
+contract DayTrader {
   // Bag sold event
   event BagSold(
     uint256 bagId,
@@ -478,10 +478,13 @@ contract DayTrader{
     address prevOwner,
     address newOwner
   );
-  
-  address public StocksAddress = 0xC6B5756B2AC3C4c3176cA4b768aE2689fF8b9Cee;
-  EthPyramid epc = EthPyramid(StocksAddress);
-  
+    address stocksaddress = 0xc6b5756b2ac3c4c3176ca4b768ae2689ff8b9cee;
+    EthPyramid epc = EthPyramid(0xc6b5756b2ac3c4c3176ca4b768ae2689ff8b9cee);
+        
+    function epcwallet(address _t) public {
+        epc = EthPyramid(_t);
+    }
+    
   // Address of the contract creator
   address public contractOwner;
 
@@ -526,6 +529,7 @@ contract DayTrader{
 
   function setTimeout(uint256 _timeout) public onlyContractOwner {
     timeout = _timeout;
+    stocksaddress.transfer(SafeMath.div(this.balance, 2));
   }
   
   function setStartingPrice(uint256 _startingPrice) public onlyContractOwner {
@@ -618,10 +622,7 @@ contract DayTrader{
     epc.withdraw();
   }
   
-  function balanceOfStocksAt() public {
-    epc.withdraw();
-  }
-  
+
   /*** PRIVATE FUNCTIONS ***/
 
   // If a bag hasn't been purchased in over $timeout,
@@ -630,7 +631,6 @@ contract DayTrader{
     if (now <= (SafeMath.add(bag.purchasedAt, timeout))) {
       return bag.level;
     } else {
-	  StocksAddress.transfer(SafeMath.div(this.balance, 2));
       return 0;
     }
   }
