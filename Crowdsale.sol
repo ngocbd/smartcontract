@@ -1,8 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xfedd77fd22a5dcb4a028c8a42576cae11b7dac2f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x69897a202dcf8c0a64cbb6ae7a160bd28cfd96f2
 */
 pragma solidity ^0.4.21;
 
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 /**
  * @title ERC20Basic
@@ -55,7 +101,6 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     emit Transfer(msg.sender, _to, _value);
@@ -169,52 +214,6 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-/**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
  * functions, this simplifies the implementation of "user permissions".
@@ -250,50 +249,6 @@ contract Ownable {
     require(newOwner != address(0));
     emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
-  }
-
-}
-
-
-contract ExchangeRate is Ownable {
-
-  event RateUpdated(uint timestamp, bytes32 symbol, uint rate);
-
-  mapping(bytes32 => uint) public rates;
-
-  /**
-   * @dev Allows the current owner to update a single rate.
-   * @param _symbol The symbol to be updated. 
-   * @param _rate the rate for the symbol. 
-   */
-  function updateRate(string _symbol, uint _rate) public onlyOwner {
-    rates[keccak256(_symbol)] = _rate;
-    emit RateUpdated(now, keccak256(_symbol), _rate);
-  }
-
-  /**
-   * @dev Allows the current owner to update multiple rates.
-   * @param data an array that alternates sha3 hashes of the symbol and the corresponding rate . 
-   */
-  function updateRates(uint[] data) public onlyOwner {
-    
-    require(data.length % 2 <= 0);      
-    uint i = 0;
-    while (i < data.length / 2) {
-      bytes32 symbol = bytes32(data[i * 2]);
-      uint rate = data[i * 2 + 1];
-      rates[symbol] = rate;
-      emit RateUpdated(now, symbol, rate);
-      i++;
-    }
-  }
-
-  /**
-   * @dev Allows the anyone to read the current rate.
-   * @param _symbol the symbol to be retrieved. 
-   */
-  function getRate(string _symbol) public constant returns(uint) {
-    return rates[keccak256(_symbol)];
   }
 
 }
@@ -342,306 +297,156 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+contract VEC is Ownable, MintableToken {
+  using SafeMath for uint256;    
+  string public constant name = "Verified Emission Credit";
+  string public constant symbol = "VEC";
+  uint32 public constant decimals = 0;
 
+  address public addressTeam; // address of vesting smart contract
+  uint public summTeam;
 
-
-contract SmartCoinFerma is MintableToken {
-    
-  string public constant name = "Smart Coin Ferma";
-   
-  string public constant symbol = "SCF";
-    
-  uint32 public constant decimals = 8;
-
-  HoldersList public list = new HoldersList();
- 
-  bool public tradingStarted = true;
-
- 
-   /**
-   * @dev modifier that throws if trading has not started yet
-   */
-  modifier hasStartedTrading() {
-    require(tradingStarted);
-    _;
-  } 
-
-  /**
-   * @dev Allows the owner to enable the trading. This can not be undone
-   */
-  function startTrading() public onlyOwner {
-    tradingStarted = true;
+  function VEC() public {
+    summTeam =     9500000000;
+    addressTeam =     0x58a2CE10BAe7903829795Bca26A204360213C62e;
+    //Founders and supporters initial Allocations
+    mint(addressTeam, summTeam);
   }
 
-   /**
-   * @dev Allows anyone to transfer the PAY tokens once trading has started
-   * @param _to the recipient address of the tokens. 
-   * @param _value number of tokens to be transfered. 
-   */
-  function transfer(address _to, uint _value) hasStartedTrading  public returns (bool) {
-    
-    
-    require(super.transfer(_to, _value) == true);
-    list.changeBalance( msg.sender, balances[msg.sender]);
-    list.changeBalance( _to, balances[_to]);
-    
-    return true;
-  }
-
-     /**
-   * @dev Allows anyone to transfer the PAY tokens once trading has started
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint _value)  public returns (bool) {
-   
-    
-    require (super.transferFrom(_from, _to, _value) == true);
-    list.changeBalance( _from, balances[_from]);
-    list.changeBalance( _to, balances[_to]);
-    
-    return true;
-  }
-  function mint(address _to, uint _amount) onlyOwner canMint public returns (bool) {
-     require(super.mint(_to, _amount) == true); 
-     list.changeBalance( _to, balances[_to]);
-     list.setTotal(totalSupply_);
-     return true;
-  }
-  
-  
-  
-}
-
-contract HoldersList is Ownable{
-   uint256 public _totalTokens;
-   
-   struct TokenHolder {
-        uint256 balance;
-        uint       regTime;
-        bool isValue;
-    }
-    
-    mapping(address => TokenHolder) holders;
-    address[] public payees;
-    
-    function changeBalance(address _who, uint _amount)  public onlyOwner {
-        
-            holders[_who].balance = _amount;
-            if (notInArray(_who)){
-                payees.push(_who);
-                holders[_who].regTime = now;
-                holders[_who].isValue = true;
-            }
-            
-        //}
-    }
-    function notInArray(address _who) internal view returns (bool) {
-        if (holders[_who].isValue) {
-            return false;
-        }
-        return true;
-    }
-    
-  /**
-   * @dev Defines number of issued tokens. 
-   */
-  
-    function setTotal(uint _amount) public onlyOwner {
-      _totalTokens = _amount;
-  }
-  
-  /**
-   * @dev Returnes number of issued tokens.
-   */
-  
-   function getTotal() public constant returns (uint)  {
-     return  _totalTokens;
-  }
-  
-  /**
-   * @dev Returnes holders balance.
-   
-   */
-  function returnBalance (address _who) public constant returns (uint){
-      uint _balance;
-      
-      _balance= holders[_who].balance;
-      return _balance;
-  }
-  
-  
-  /**
-   * @dev Returnes number of holders in array.
-   
-   */
-  function returnPayees () public constant returns (uint){
-      uint _ammount;
-      
-      _ammount= payees.length;
-      return _ammount;
-  }
-  
-  
-  /**
-   * @dev Returnes holders address.
-   
-   */
-  function returnHolder (uint _num) public constant returns (address){
-      address _addr;
-      
-      _addr= payees[_num];
-      return _addr;
-  }
-  
-  /**
-   * @dev Returnes registration date of holder.
-   
-   */
-  function returnRegDate (address _who) public constant returns (uint){
-      uint _redData;
-      
-      _redData= holders[_who].regTime;
-      return _redData;
-  }
-    
 }
 
 
 contract Crowdsale is Ownable {
-  using SafeMath for uint;
-  event TokenSold(address recipient, uint ether_amount, uint pay_amount, uint exchangerate);
-  event AuthorizedCreate(address recipient, uint pay_amount);
-  
+  using SafeMath for uint256;
 
-  SmartCoinFerma public token = new SmartCoinFerma();
+  // The token being sold
+  VEC public token;
+  //Total number of tokens sold on ICO
+  uint256 public allTokenICO;
+  //max tokens
+  uint256 public maxTokens; 
+  //max Ether
+  uint256 public maxEther; 
+  // Address where funds are collected
+  address public wallet;
 
+  // How many token units a buyer gets per wei
+  uint256 public rate;
 
-     
-  //prod
-  address multisigVaultFirst = 0xAD7C50cfeb60B6345cb428c5820eD073f35283e7;
-  address multisigVaultSecond = 0xA9B04eF1901A0d720De14759bC286eABC344b3BA;
-  address multisigVaultThird = 0xF1678Cc0727b354a9B0612dd40D275a3BBdE5979;
-  
-  uint restrictedPercent = 50;
-  
- 
-  bool pause = false;
-  
-  
-  
-  //prod
-  address restricted = 0x217d44b5c4bffC5421bd4bb9CC85fBf61d3fbdb6;
-  address restrictedAdditional = 0xF1678Cc0727b354a9B0612dd40D275a3BBdE5979;
-  
-  ExchangeRate exchangeRate;
-
-  
-  uint public start = 1523491200; 
-  uint period = 365;
-  uint _rate;
+  // Amount of wei raised
+  uint256 public weiRaised;
+  //start ICO
+  uint256 public startICO;
 
   /**
-   * @dev modifier to allow token creation only when the sale IS ON
+   * Event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
    */
-  modifier saleIsOn() {
-    require(now >= start && now < start + period * 1 days);
-    require(pause!=true);
-    _;
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale() public {
+    maxTokens = 500000000; 
+    maxEther = 10000 * 1 ether;
+    rate = 13062;
+    startICO =1523864288; // 04/16/2018 @ 7:38am (UTC)
+    wallet = 0xb382C19879d39E38B4fa77fE047FAdadE002fdAB;
+    token = createTokenContract();
   }
-    
-    /**
-   * @dev Allows owner to pause the crowdsale
-   */
-    function setPause( bool _newPause ) onlyOwner public {
-        pause = _newPause;
-    }
+  function createTokenContract() internal returns (VEC) {
+    return new VEC();
+  }
+  function setRate(uint256 _rate) public onlyOwner{
+      rate = _rate;
+  }
+  // -----------------------------------------
+  // Crowdsale external interface
+  // -----------------------------------------
 
-
-   /**
-   * @dev Allows anyone to create tokens by depositing ether.
-   * @param recipient the recipient to receive tokens. 
-   */
-  function createTokens(address recipient) saleIsOn payable {
-    uint256 sum;
-    uint256 halfSum;  
-    uint256 quatSum; 
-    uint256 rate;
-    uint256 tokens;
-    uint256 restrictedTokens;
-   
-    uint256 tok1;
-    uint256 tok2;
-    
-    
-    
-    require( msg.value > 0 );
-    sum = msg.value;
-    halfSum = sum.div(2);
-    quatSum = halfSum.div(2);
-    rate = exchangeRate.getRate("ETH"); 
-    tokens = rate.mul(sum).div(1 ether);
-    require( tokens > 0 );
-    
-    token.mint(recipient, tokens);
-    
-    
-    multisigVaultFirst.transfer(halfSum);
-    multisigVaultSecond.transfer(quatSum);
-    multisigVaultThird.transfer(quatSum);
-    /*
-    * "dev Create restricted tokens
-    */
-    restrictedTokens = tokens.mul(restrictedPercent).div(100 - restrictedPercent);
-    tok1 = restrictedTokens.mul(60).div(100);
-    tok2 = restrictedTokens.mul(40).div(100);
-    require (tok1 + tok2==restrictedTokens );
-    
-    token.mint(restricted, tok1);
-    token.mint(restrictedAdditional, tok2);
-    
-    
-    emit TokenSold(recipient, msg.value, tokens, rate);
+  function () external payable {
+    buyTokens(msg.sender);
   }
 
-    /**
-   * @dev Allows the owner to set the starting time.
-   * @param _start the new _start
+  /**
+   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @param _beneficiary Address performing the token purchase
    */
-  function setStart(uint _start) public onlyOwner {
-    start = _start;
+  function buyTokens(address _beneficiary) public payable {
+    require(now >= startICO); 
+    require(msg.value <= maxEther);
+    require(allTokenICO <= maxTokens);
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
+
+    // calculate token amount to be created
+    uint256 tokens = _getTokenAmount(weiAmount);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+        
+
+    _processPurchase(_beneficiary, tokens);
+    // update state
+    allTokenICO = allTokenICO.add(tokens);
+    emit TokenPurchase(
+      msg.sender,
+      _beneficiary,
+      weiAmount,
+      tokens
+    );
+    _forwardFunds();
   }
 
-    /**
-   * @dev Allows the owner to set the exchangerate contract.
-   * @param _exchangeRate the exchangerate address
+  // -----------------------------------------
+  // Internal interface (extensible)
+  // -----------------------------------------
+
+  /**
+   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
    */
-  function setExchangeRate(address _exchangeRate) public onlyOwner {
-    exchangeRate = ExchangeRate(_exchangeRate);
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal pure {
+    require(_beneficiary != address(0));
+    require(_weiAmount != 0);
   }
 
 
   /**
-   * @dev Allows the owner to finish the minting. This will create the 
-   * restricted tokens and then close the minting.
-   * Then the ownership of the PAY token contract is transfered 
-   * to this owner.
+   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
+   * @param _beneficiary Address performing the token purchase
+   * @param _tokenAmount Number of tokens to be emitted
    */
-  function finishMinting() public onlyOwner {
-    //uint issuedTokenSupply = token.totalSupply();
-    //uint restrictedTokens = issuedTokenSupply.mul(49).div(51);
-    //token.mint(multisigVault, restrictedTokens);
-    token.finishMinting();
-    token.transferOwnership(owner);
-    }
-
-  /**
-   * @dev Fallback function which receives ether and created the appropriate number of tokens for the 
-   * msg.sender.
-   */
-  function() external payable {
-      createTokens(msg.sender);
+  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    token.mint(_beneficiary, _tokenAmount);
   }
 
+  /**
+   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
+   * @param _beneficiary Address receiving the tokens
+   * @param _tokenAmount Number of tokens to be purchased
+   */
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    _deliverTokens(_beneficiary, _tokenAmount);
+  }
+
+
+  /**
+   * @dev Override to extend the way in which ether is converted to tokens.
+   * @param _weiAmount Value in wei to be converted into tokens
+   * @return Number of tokens that can be purchased with the specified _weiAmount
+   */
+  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+    return _weiAmount.mul(rate);
+  }
+
+  /**
+   * @dev Determines how ETH is stored/forwarded on purchases.
+   */
+  function _forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
 }
