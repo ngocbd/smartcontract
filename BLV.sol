@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLV at 0x6b963f7b38980f5fbbd129fe98059eb2144076a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLV at 0xdd557562463b8c7ff1d5752df7f7b6950c634c5a
 */
 pragma solidity ^0.4.19;
 
@@ -29,8 +29,8 @@ contract BLV {
      */
     function BLV(
     ) public {
-        totalSupply = 1000000000;                                 // Update total supply with the decimal amount
-        balanceOf[msg.sender] = 1000000000;                       // Give the creator all initial tokens
+        totalSupply = 100000000;                                 // Update total supply with the decimal amount
+        balanceOf[msg.sender] = 100000000;                       // Give the creator all initial tokens
         name = "BlockVest";                                      // Set the name for display purposes
         symbol = "BLV";                                          // Set the symbol for display purposes
     }
