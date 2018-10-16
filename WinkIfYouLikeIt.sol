@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinkIfYouLikeIt at 0x9486120332526054fb2ac591d54513ff72b618d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinkIfYouLikeIt at 0xb565892f839ED2B0aA48eFa7c952B213EaEd3166
 */
 pragma solidity ^0.4.18;
 
@@ -104,8 +104,8 @@ contract WinkIfYouLikeIt {
   uint256 public tierNum = 0;
   
   //Funding Tiers  
-  uint256[5] fundingRate = [75000, 75000, 75000, 75000, 75000]; //WINK per Eth
-  uint256[5] fundingLimit = [600000000, 600000000, 600000000, 600000000, 600000000]; //Max WINKs Available per tier
+  uint256[5] fundingRate = [24000, 24000, 24000, 24000, 24000]; //WINK per Eth
+  uint256[5] fundingLimit = [180000000, 180000000, 180000000, 180000000, 180000000]; //Max WINKs Available per tier
 
   /**
    * event for token purchase logging
