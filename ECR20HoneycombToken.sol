@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECR20HoneycombToken at 0xa86914a1402f3cdcb27084e08a47445e8ab1bbab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECR20HoneycombToken at 0xe4732499b9c18d2828ced5470e75d70a3b2b2792
 */
 pragma solidity ^0.4.21;
 
@@ -9,7 +9,7 @@ contract owned {
     address public owner;
     bool public ownershipTransferAllowed = false;
 
-    function constructor() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -62,7 +62,7 @@ contract ECR20HoneycombToken is owned {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function ECR20HoneycombToken() public {
+    constructor() public {
         totalSupply = 1048576 * tokenFactor;                                    // token total created
         balanceOf[msg.sender] = totalSupply;                                    // Give the creator all initial tokens
         owner = msg.sender;			                                            // assign ownership of contract to initial coin holder
