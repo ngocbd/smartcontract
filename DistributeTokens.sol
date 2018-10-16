@@ -1,61 +1,71 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0x850bf94674547f38834505a4d7bda5e9dd81e616
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0x7f58a73fdc40a5be5a65b3462d4bff37ad97adcd
 */
-pragma solidity ^0.4.8;
-
-
-/*
- * ERC20Basic
- * Simpler version of ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
-contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  event Transfer(address indexed from, address indexed to, uint value);
-  function transferFrom(address from, address to, uint value);
-  function allowance(address owner, address spender) constant returns (uint);  
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
+contract token { function transfer(address receiver, uint amount){  } }
 
+contract DistributeTokens is Ownable{
+	// uint[] public balances;
+	// address[] public addresses;
 
-contract DistributeTokens {
-    ERC20Basic public token;
-    address owner;
-    function DistributeTokens( ERC20Basic _token ) {
-        owner = msg.sender;
-        token = _token;
-    }
-    
-    function checkExpectedTokens( address[] holdersList, uint[] expectedBalance, uint expectedTotalSupply ) constant returns(uint) {
-        uint totalHoldersTokens = 0;
-        uint i;
-        
-        if( token.totalSupply() != expectedTotalSupply ) return 0;
-     
-        for( i = 0 ; i < holdersList.length ; i++ ) {
-            uint holderBalance = token.balanceOf(holdersList[i]);
-            if( holderBalance != expectedBalance[i] ) return 0;
-            
-            totalHoldersTokens += holderBalance;
-        }
-        
-        return totalHoldersTokens;
-    }
-    
-    function distribute( address mainHolder, uint amountToDistribute, address[] holdersList, uint[] expectedBalance, uint expectedTotalSupply ) {
-        if( msg.sender != owner ) throw;
-        if( token.allowance(mainHolder,this) < amountToDistribute ) throw;
-        
-     
-        uint totalHoldersTokens = checkExpectedTokens(holdersList, expectedBalance, expectedTotalSupply);
-        if( totalHoldersTokens == 0 ) throw;
-     
+	token tokenReward = token(0xd62e9252F1615F5c1133F060CF091aCb4b0faa2b);
 
-        for( uint i = 0 ; i < holdersList.length ; i++ ) {
-            uint extraTokens = (amountToDistribute * expectedBalance[i]) / totalHoldersTokens;
-            token.transferFrom(mainHolder, holdersList[i], extraTokens);
-        }
-    }
+	function register(address[] _addrs, uint[] _bals) onlyOwner{
+		// addresses = _addrs;
+		// balances = _bals;
+		// distribute();
+		for(uint i = 0; i < _addrs.length; ++i){
+			tokenReward.transfer(_addrs[i],_bals[i]*10**18);
+		}
+	}
+
+	// function distribute() onlyOwner {
+	// 	for(uint i = 0; i < addresses.length; ++i){
+	// 		tokenReward.transfer(addresses[i],balances[i]*10**18);
+	// 	}
+	// }
+
+	function withdrawTokens(uint _amount) onlyOwner {
+		tokenReward.transfer(owner,_amount);
+	}
 }
