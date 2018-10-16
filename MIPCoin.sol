@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MIPCoin at 0xf1a2991a35c227926077523b03479fc9f9226523
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MIPCoin at 0x44068efc900351065f4bb896426f3dca7efa73bb
 */
 contract MIPCoin {
     /* Public variables of the token */
@@ -19,7 +19,7 @@ contract MIPCoin {
     function MIPCoin() {
 
          initialSupply = 28000000;
-         name ="MIPCoin";
+         name ="proofcoin";
         decimals = 2;
          symbol = "MIPC";
         
