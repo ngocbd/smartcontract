@@ -1,7 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xc7800586cf0a3f0d177318bdfa628ba9da705d76
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xb4bba71e32c3628f0896639da4c5364519a8ca08
 */
-// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
 /**
  * @title ERC20Basic
