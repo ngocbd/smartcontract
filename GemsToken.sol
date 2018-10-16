@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GemsToken at 0xa06147d185e1b51987be62d7b622262d406a177f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GemsToken at 0x04e9734be606eae570432a7fad573be124245b33
 */
 /**
  * @title Ownable
@@ -106,7 +106,7 @@ contract GemsToken is Ownable{
   
   string public name = "Gems Of Power";
   string public symbol = "GOP";
-  uint8 public decimals = 0;
+  uint8 public decimals = 18;
   uint256 public totalSupply = 200000000 * 10 ** uint(decimals);
   address crowdsaleContract = address(0x0);
   bool flag = false;
