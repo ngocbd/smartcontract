@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GroveLib at 0x7c1eb207c07e7ab13cf245585bd03d0fa478d034
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GroveLib at 0x42fa46fb906e57d95644f0e77596e53c6792b0bc
 */
-// Grove v0.2
+pragma solidity ^0.4.15;
+// Grove v0.3
 
 
 /// @title GroveLib - Library for queriable indexed ordered data.
@@ -166,7 +167,7 @@ library GroveLib {
                     parent = index.nodes[parent.parent];
                 }
 
-                // Now we need to trace all the way up checking to see if any parent is the 
+                // Now we need to trace all the way up checking to see if any parent is the
             }
 
             // This is the final node.
@@ -188,9 +189,6 @@ library GroveLib {
                     }
                     remove(index, id);
                 }
-
-                uint leftHeight;
-                uint rightHeight;
 
                 bytes32 previousNodeId = 0x0;
 
@@ -243,9 +241,6 @@ library GroveLib {
         /// @param index The index that should be removed
         /// @param id The unique identifier of the data element to remove.
         function remove(Index storage index, bytes32 id) public {
-            Node storage replacementNode;
-            Node storage parent;
-            Node storage child;
             bytes32 rebalanceOrigin;
 
             Node storage nodeToDelete = index.nodes[id];
@@ -260,14 +255,14 @@ library GroveLib {
                 // it's tree by either the previous or next node.
                 if (nodeToDelete.left != 0x0) {
                     // This node is guaranteed to not have a right child.
-                    replacementNode = index.nodes[getPreviousNode(index, nodeToDelete.id)];
+                    Node storage replacementNode = index.nodes[getPreviousNode(index, nodeToDelete.id)];
                 }
                 else {
                     // This node is guaranteed to not have a left child.
                     replacementNode = index.nodes[getNextNode(index, nodeToDelete.id)];
                 }
                 // The replacementNode is guaranteed to have a parent.
-                parent = index.nodes[replacementNode.parent];
+                Node storage parent = index.nodes[replacementNode.parent];
 
                 // Keep note of the location that our tree rebalancing should
                 // start at.
@@ -280,7 +275,7 @@ library GroveLib {
                 if (parent.left == replacementNode.id) {
                     parent.left = replacementNode.right;
                     if (replacementNode.right != 0x0) {
-                        child = index.nodes[replacementNode.right];
+                        Node storage child = index.nodes[replacementNode.right];
                         child.parent = parent.id;
                     }
                 }
@@ -365,6 +360,11 @@ library GroveLib {
         bytes2 constant EQ = "==";
 
         function _compare(int left, bytes2 operator, int right) internal returns (bool) {
+            require(
+                operator == GT || operator == LT || operator == GTE ||
+                operator == LTE || operator == EQ
+            );
+
             if (operator == GT) {
                 return (left > right);
             }
@@ -380,9 +380,6 @@ library GroveLib {
             if (operator == EQ) {
                 return (left == right);
             }
-
-            // Invalid operator.
-            throw;
         }
 
         function _getMaximum(Index storage index, bytes32 id) internal returns (int) {
@@ -419,7 +416,7 @@ library GroveLib {
          */
         function query(Index storage index, bytes2 operator, int value) public returns (bytes32) {
                 bytes32 rootNodeId = index.root;
-                
+
                 if (rootNodeId == 0x0) {
                     // Empty tree.
                     return 0x0;
@@ -559,11 +556,9 @@ library GroveLib {
         function _rotateLeft(Index storage index, bytes32 id) internal {
             Node storage originalRoot = index.nodes[id];
 
-            if (originalRoot.right == 0x0) {
-                // Cannot rotate left if there is no right originalRoot to rotate into
-                // place.
-                throw;
-            }
+            // Cannot rotate left if there is no right originalRoot to rotate into
+            // place.
+            assert(originalRoot.right != 0x0);
 
             // The right child is the new root, so it gets the original
             // `originalRoot.parent` as it's parent.
@@ -613,11 +608,9 @@ library GroveLib {
         function _rotateRight(Index storage index, bytes32 id) internal {
             Node storage originalRoot = index.nodes[id];
 
-            if (originalRoot.left == 0x0) {
-                // Cannot rotate right if there is no left node to rotate into
-                // place.
-                throw;
-            }
+            // Cannot rotate right if there is no left node to rotate into
+            // place.
+            assert(originalRoot.left != 0x0);
 
             // The left child is taking the place of node, so we update it's
             // parent to be the original parent of the node.
