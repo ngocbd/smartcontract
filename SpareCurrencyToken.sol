@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpareCurrencyToken at 0x12bfe10a68950b728f1847e7e776becbe175670c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpareCurrencyToken at 0x68ebd9807fb6cd75151bf9f8c1eed71a61e2dcbf
 */
 pragma solidity ^0.4.13;
 
@@ -16,8 +16,8 @@ contract SpareCurrencyToken {
   event Approval(address indexed owner, address indexed spender, uint256 value);
   
   function SpareCurrencyToken() {
-    balances[msg.sender] = 51000000000000000000000000;
-    totalSupply = 51000000000000000000000000;
+    balances[msg.sender] = 5100000000000000000000;
+    totalSupply = 5100000000000000000000;
   }
 
   function transfer(address _to, uint256 _amount) returns (bool success) {
