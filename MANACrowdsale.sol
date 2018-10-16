@@ -1,21 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MANACrowdsale at 0x04830e45762f09853b398d1d03003fda7c978597
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MANACrowdsale at 0x5019066b46ae4b8673085b609be366400f53871b
 */
 pragma solidity ^0.4.11;
-
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
 contract Ownable {
   address public owner;
@@ -49,6 +35,62 @@ contract Ownable {
     }
   }
 
+}
+
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused returns (bool) {
+    paused = true;
+    Pause();
+    return true;
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused returns (bool) {
+    paused = false;
+    Unpause();
+    return true;
+  }
+}
+
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 library SafeMath {
@@ -102,7 +144,7 @@ contract Crowdsale {
    * @param beneficiary who got the tokens
    * @param value weis paid for purchase
    * @param amount amount of tokens purchased
-   */ 
+   */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
 
@@ -119,7 +161,7 @@ contract Crowdsale {
     wallet = _wallet;
   }
 
-  // creates the token to be sold. 
+  // creates the token to be sold.
   // override this method to have crowdsale of a specific mintable token.
   function createTokenContract() internal returns (MintableToken) {
     return new MintableToken();
@@ -172,6 +214,31 @@ contract Crowdsale {
 
 }
 
+contract WhitelistedCrowdsale is Crowdsale, Ownable {
+    using SafeMath for uint256;
+
+    // list of addresses that can purchase before crowdsale opens
+    mapping (address => bool) public whitelist;
+
+    function addToWhitelist(address buyer) public onlyOwner {
+        require(buyer != 0x0);
+        whitelist[buyer] = true;
+    }
+
+    // @return true if buyer is whitelisted
+    function isWhitelisted(address buyer) public constant returns (bool) {
+        return whitelist[buyer];
+    }
+
+    // overriding Crowdsale#validPurchase to add whitelist logic
+    // @return true if buyers can buy at the moment
+    function validPurchase() internal constant returns (bool) {
+        // [TODO] issue with overriding and associativity of logical operators
+        return super.validPurchase() || (!hasEnded() && isWhitelisted(msg.sender));
+    }
+
+}
+
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -191,37 +258,12 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
+  * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
-
-}
-
-contract WhitelistedCrowdsale is Crowdsale, Ownable {
-    using SafeMath for uint256;
-
-    // list of addresses that can purchase before crowdsale opens
-    mapping (address => bool) public whitelist;
-
-    function addToWhitelist(address buyer) public onlyOwner {
-        require(buyer != 0x0);
-        whitelist[buyer] = true; 
-    }
-
-    // @return true if buyer is whitelisted
-    function isWhitelisted(address buyer) public constant returns (bool) {
-        return whitelist[buyer];
-    }
-
-    // overriding Crowdsale#validPurchase to add whitelist logic
-    // @return true if buyers can buy at the moment
-    function validPurchase() internal constant returns (bool) {
-        // [TODO] issue with overriding and associativity of logical operators
-        return super.validPurchase() || (!hasEnded() && isWhitelisted(msg.sender)); 
-    }
 
 }
 
@@ -320,30 +362,88 @@ contract ContinuousSale {
     }
 }
 
-contract CappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
+contract StandardToken is ERC20, BasicToken {
 
-  uint256 public cap;
+  mapping (address => mapping (address => uint256)) allowed;
 
-  function CappedCrowdsale(uint256 _cap) {
-    require(_cap > 0);
-    cap = _cap;
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
   }
 
-  // overriding Crowdsale#validPurchase to add extra cap logic
-  // @return true if investors can buy at the moment
-  function validPurchase() internal constant returns (bool) {
-    bool withinCap = weiRaised.add(msg.value) <= cap;
-    return super.validPurchase() && withinCap;
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
   }
 
-  // overriding Crowdsale#hasEnded to add cap logic
-  // @return true if crowdsale event has ended
-  function hasEnded() public constant returns (bool) {
-    bool capReached = weiRaised >= cap;
-    return super.hasEnded() || capReached;
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
   }
 
+}
+
+contract BurnableToken is StandardToken {
+
+    event Burn(address indexed burner, uint256 value);
+
+    /**
+     * @dev Burns a specified amount of tokens.
+     * @param _value The amount of tokens to burn.
+     */
+    function burn(uint256 _value) public {
+        require(_value > 0);
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(msg.sender, _value);
+    }
+
+}
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint _value) whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint _value) whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
 }
 
 contract MANAContinuousSale is ContinuousSale, Ownable {
@@ -418,7 +518,7 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
 
     finalization();
     Finalized();
-    
+
     isFinalized = true;
   }
 
@@ -430,132 +530,6 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
 
 
 
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-}
-
-contract BurnableToken is StandardToken {
-
-    event Burn(address indexed burner, uint256 value);
-
-    /**
-     * @dev Burns a specified amount of tokens.
-     * @param _value The amount of tokens to burn. 
-     */
-    function burn(uint256 _value) public {
-        require(_value > 0);
-
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(msg.sender, _value);
-    }
-
-}
-
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-  modifier whenPaused {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused returns (bool) {
-    paused = true;
-    Pause();
-    return true;
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused returns (bool) {
-    paused = false;
-    Unpause();
-    return true;
-  }
-}
-
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint _value) whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint _value) whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
 }
 
 contract MintableToken is StandardToken, Ownable {
@@ -607,6 +581,32 @@ contract MANAToken is BurnableToken, PausableToken, MintableToken {
     }
 }
 
+contract CappedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
+
+  uint256 public cap;
+
+  function CappedCrowdsale(uint256 _cap) {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  // overriding Crowdsale#validPurchase to add extra cap logic
+  // @return true if investors can buy at the moment
+  function validPurchase() internal constant returns (bool) {
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return super.validPurchase() && withinCap;
+  }
+
+  // overriding Crowdsale#hasEnded to add cap logic
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    bool capReached = weiRaised >= cap;
+    return super.hasEnded() || capReached;
+  }
+
+}
+
 contract MANACrowdsale is WhitelistedCrowdsale, CappedCrowdsale, FinalizableCrowdsale {
 
     uint256 public constant TOTAL_SHARE = 100;
@@ -636,26 +636,15 @@ contract MANACrowdsale is WhitelistedCrowdsale, CappedCrowdsale, FinalizableCrow
 
     event EndRateChange(uint256 rate);
 
-    function MANACrowdsale(
-        uint256 _startBlock,
-        uint256 _endBlock,
-        uint256 _initialRate,
-        uint256 _endRate,
-        uint256 _preferentialRate,
-        address _wallet
-    )
-        CappedCrowdsale(82888 ether)
+    function MANACrowdsale()
+        CappedCrowdsale(86206 ether)
         WhitelistedCrowdsale()
         FinalizableCrowdsale()
-        Crowdsale(_startBlock, _endBlock, _initialRate, _wallet)
+        Crowdsale(4170650, 4170680, 12083, 0x000fb8369677b3065de5821a86bc9551d5e5eab9)
     {
-        require(_initialRate > 0);
-        require(_endRate > 0);
-        require(_preferentialRate > 0);
-
-        initialRate = _initialRate;
-        endRate = _endRate;
-        preferentialRate = _preferentialRate;
+        initialRate = 12083;
+        endRate = 7250;
+        preferentialRate = 12083;
 
         continuousSale = createContinuousSaleContract();
 
