@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDFDM at 0xfbde2d49c82f7ddf5dcdfbf221e159d7ce471928
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDFDM at 0x7a23687666b46cb674c2034e1bac94dcb5423dbd
 */
 pragma solidity ^0.4.15;
 
@@ -42,7 +42,7 @@ pragma solidity ^0.4.15;
  *    - deducts the dollar amount, $XX.XX from charity's fiatBalanceOut
  *    - add $XX.XX to charity's totalDelivered
  *
- * one basic operation, unrelayed to round-up
+ * one basic operation, unrelated to round-up
  *
  * A) ethDonation:        Direct ETH Donation to Charity
  *    inputs:             charity (C), ETH amount (Z), document reference (ABC)
@@ -89,6 +89,7 @@ contract RDFDM {
   //events relating to adding and deleting charities
   //
   event CharityAddedEvent(uint indexed charity, string name, uint8 currency);
+  event CharityModifiedEvent(uint indexed charity, string name, uint8 currency);
 
   //currencies
   //
@@ -99,26 +100,26 @@ contract RDFDM {
 
 
   struct Charity {
-    uint fiatBalanceIn;          // funds in external acct, collected fbo charity
-    uint fiatBalanceOut;         // funds in external acct, pending delivery to charity
-    uint fiatCollected;          // total collected since dawn of creation
-    uint fiatDelivered;          // total delivered since dawn of creation
-    uint ethDonated;             // total eth donated since dawn of creation
-    uint ethCredited;            // total eth credited to this charity since dawn of creation
-    uint ethBalance;             // current eth balance of this charity
-    uint fiatToEthPriceAccEth;   // keep track of fiat to eth conversion price: total eth
-    uint fiatToEthPriceAccFiat;  // keep track of fiat to eth conversion price: total fiat
-    uint ethToFiatPriceAccEth;   // kkep track of eth to fiat conversion price: total eth
-    uint ethToFiatPriceAccFiat;  // kkep track of eth to fiat conversion price: total fiat
-    uint8 currency;              // fiat amounts are in smallest denomination of currency
-    string name;                 // eg. "Salvation Army"
+    uint fiatBalanceIn;           // funds in external acct, collected fbo charity
+    uint fiatBalanceOut;          // funds in external acct, pending delivery to charity
+    uint fiatCollected;           // total collected since dawn of creation
+    uint fiatDelivered;           // total delivered since dawn of creation
+    uint ethDonated;              // total eth donated since dawn of creation
+    uint ethCredited;             // total eth credited to this charity since dawn of creation
+    uint ethBalance;              // current eth balance of this charity
+    uint fiatToEthPriceAccEth;    // keep track of fiat to eth conversion price: total eth
+    uint fiatToEthPriceAccFiat;   // keep track of fiat to eth conversion price: total fiat
+    uint ethToFiatPriceAccEth;    // kkep track of eth to fiat conversion price: total eth
+    uint ethToFiatPriceAccFiat;   // kkep track of eth to fiat conversion price: total fiat
+    uint8 currency;               // fiat amounts are in smallest denomination of currency
+    string name;                  // eg. "Salvation Army"
   }
 
   uint public charityCount;
   address public owner;
   address public manager;
-  address public operator;       //operations fees sent to this address
-  address public token;          //token-holder fees sent to this address
+  address public token;           //token-holder fees sent to this address
+  address public operatorFeeAcct; //operations fees sent to this address
   mapping (uint => Charity) public charities;
   bool public isLocked;
 
@@ -144,11 +145,12 @@ contract RDFDM {
   function RDFDM() {
     owner = msg.sender;
     manager = msg.sender;
+    token = msg.sender;
+    operatorFeeAcct = msg.sender;
   }
-  function lock() public ownerOnly {
-    isLocked = true;
-  }
-  function setOperator(address _operator) public ownerOnly { operator = _operator; }
+  function lock() public ownerOnly { isLocked = true; }
+  function setToken(address _token) public ownerOnly unlockedOnly { token = _token; }
+  function setOperatorFeeAcct(address _operatorFeeAcct) public ownerOnly { operatorFeeAcct = _operatorFeeAcct; }
   function setManager(address _manager) public managerOnly { manager = _manager; }
   function deleteManager() public managerOnly { manager = owner; }
 
@@ -158,6 +160,13 @@ contract RDFDM {
     charities[charityCount].currency = _currency;
     CharityAddedEvent(charityCount, _name, _currency);
     ++charityCount;
+  }
+
+  function modifyCharity(uint _charity, string _name, uint8 _currency) public managerOnly {
+    require(_charity < charityCount);
+    charities[charityCount].name = _name;
+    charities[charityCount].currency = _currency;
+    CharityModifiedEvent(_charity, _name, _currency);
   }
 
 
@@ -172,6 +181,7 @@ contract RDFDM {
   }
 
   function fiatToEth(uint _charity, uint _fiat) public managerOnly payable {
+    require(token != 0);
     require(_charity < charityCount);
     //keep track of fiat to eth conversion price
     charities[charityCount].fiatToEthPriceAccFiat += _fiat;
@@ -180,7 +190,7 @@ contract RDFDM {
     uint _tokenCut = (msg.value * 4) / 100;
     uint _operatorCut = (msg.value * 16) / 100;
     uint _charityCredit = (msg.value - _operatorCut) - _tokenCut;
-    operator.transfer(_operatorCut);
+    operatorFeeAcct.transfer(_operatorCut);
     token.transfer(_tokenCut);
     charities[charityCount].ethBalance += _charityCredit;
     charities[charityCount].ethCredited += _charityCredit;
@@ -210,11 +220,12 @@ contract RDFDM {
 
   //======== unrelated to round-up
   function ethDonation(uint _charity) public payable {
+    require(token != 0);
     require(_charity < charityCount);
     uint _tokenCut = (msg.value * 1) / 200;
     uint _operatorCut = (msg.value * 3) / 200;
     uint _charityCredit = (msg.value - _operatorCut) - _tokenCut;
-    operator.transfer(_operatorCut);
+    operatorFeeAcct.transfer(_operatorCut);
     token.transfer(_tokenCut);
     charities[charityCount].ethDonated += _charityCredit;
     charities[charityCount].ethBalance += _charityCredit;
@@ -235,7 +246,7 @@ contract RDFDM {
     uint _tokenCut = (msg.value * 4) / 100;
     uint _operatorCut = (msg.value * 16) / 100;
     uint _charityCredit = (msg.value - _operatorCut) - _tokenCut;
-    operator.transfer(_operatorCut);
+    operatorFeeAcct.transfer(_operatorCut);
     token.transfer(_tokenCut);
     charities[charityCount].ethBalance += _charityCredit;
     charities[charityCount].ethCredited += _charityCredit;
