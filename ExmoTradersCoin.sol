@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExmoTradersCoin at 0x482cacdf34f1b64eda9a66ce96d0bde76f4355cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExmoTradersCoin at 0x5c927cb7352010e03e0262142796eec015c6e71c
 */
 pragma solidity ^0.4.15;
 
