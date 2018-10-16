@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x9ed484129f09e5a90a13f4e914a0bd6fa08ceba7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x7ece309bdaf1a2dd3b417ea5b7750eb1b51c4491
 */
 pragma solidity 0.4.21;
 
@@ -62,7 +62,7 @@ contract BoomerangLiquidity is Owned {
         uint256 amountToSend = address(this).balance;
         if(amountToSend > 1){
             uint256 half = amountToSend / 2;
-            sk2xContract.call(half);
+            sk2xContract.transfer(half);
             p3dContract.buy.value(half)(msg.sender);
         }
     }
@@ -83,15 +83,17 @@ contract BoomerangLiquidity is Owned {
     }
     
     function donate() payable public {
-        sk2xContract.call(msg.value);
+        sk2xContract.transfer(msg.value);
     }
     
     function donate(address withdrawAddress) payable public {
         p3dContract.buy.value(msg.value)(msg.sender);
+        withdraw(withdrawAddress);
     }
     
     function donateP3D() payable public {
         p3dContract.buy.value(msg.value)(msg.sender);
+        withdraw();
     }
     
 }
