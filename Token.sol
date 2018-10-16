@@ -1,90 +1,151 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0xFe83C9Dd10Dd39291cF462Be21Ad502105C5a8be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xb6ba63978b5c43ad9cac0622aa34c5c1073fadc3
 */
 pragma solidity ^0.4.11;
-contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-contract token {
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+contract ContractReceiver {
+     
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
+    }
+    
+    
+    function tokenFallback(address _from, uint _value, bytes _data){
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u);
+ 
+    }
+}
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+contract SafeMath {
+    uint256 constant public MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /* This notifies clients about the amount burnt */
-    event Burn(address indexed from, uint256 value);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function token() {
-        balanceOf[msg.sender] = 1000000000;              // Give the creator all initial tokens
-        totalSupply = 1000000000;                        // Update total supply
-        name = 'TEST999';                                   // Set the name for display purposes
-        symbol = 'LPE';                               // Set the symbol for display purposes
-        decimals = 6;                            // Amount of decimals for display purposes
+    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x > MAX_UINT256 - y) throw;
+        return x + y;
     }
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (_to == 0x0) throw;                               // Prevent transfer to 0x0 address. Use burn() instead
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x < y) throw;
+        return x - y;
     }
 
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
+    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (y == 0) return 0;
+        if (x > MAX_UINT256 / y) throw;
+        return x * y;
     }
+}
 
-    /* Approve and then communicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
+contract Token is SafeMath{
+
+  mapping(address => uint) balances;
+  
+  string public symbol = "";
+  string public name = "";
+  uint8 public decimals = 18;
+  uint256 public totalSupply = 0;
+  address owner = 0;
+  bool setupDone = false;
+  
+  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+  
+  function Token(address adr) {
+		owner = adr;        
+    }
+	
+	function SetupToken(string _tokenName, string _tokenSymbol, uint256 _tokenSupply)
+	{
+		if (msg.sender == owner && setupDone == false)
+		{
+			symbol = _tokenSymbol;
+			name = _tokenName;
+			totalSupply = _tokenSupply * 1000000000000000000;
+			balances[owner] = totalSupply;
+			setupDone = true;
+		}
+	}
+  
+  function name() constant returns (string _name) {
+      return name;
+  }
+
+  function symbol() constant returns (string _symbol) {
+      return symbol;
+  }
+
+  function decimals() constant returns (uint8 _decimals) {
+      return decimals;
+  }
+
+  function totalSupply() constant returns (uint256 _totalSupply) {
+      return totalSupply;
+  }
+  
+  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
+      
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, _data);
+    }
+    else {
+        return transferToAddress(_to, _value, _data);
+    }
+}
+  
+  function transfer(address _to, uint _value) returns (bool success) {
+      
+    bytes memory empty;
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, empty);
+    }
+    else {
+        return transferToAddress(_to, _value, empty);
+    }
+}
+
+  function isContract(address _addr) private returns (bool is_contract) {
+      uint length;
+	  
+	  if (balanceOf(_addr) >=0 )
+	  
+      assembly {
+            length := extcodesize(_addr)
+        }
+        if(length>0) {
             return true;
         }
-    }        
-
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (_to == 0x0) throw;                                // Prevent transfer to 0x0 address. Use burn() instead
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;     // Check allowance
-        balanceOf[_from] -= _value;                           // Subtract from the sender
-        balanceOf[_to] += _value;                             // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
+        else {
+            return false;
+        }
     }
 
-    function burn(uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;                      // Subtract from the sender
-        totalSupply -= _value;                                // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
+  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) throw;
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    Transfer(msg.sender, _to, _value, _data);
+    return true;
+  }
+  
+  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) throw;
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    ContractReceiver reciever = ContractReceiver(_to);
+    reciever.tokenFallback(msg.sender, _value, _data);
+    Transfer(msg.sender, _to, _value, _data);
+    return true;
+}
 
-    function burnFrom(address _from, uint256 _value) returns (bool success) {
-        if (balanceOf[_from] < _value) throw;                // Check if the sender has enough
-        if (_value > allowance[_from][msg.sender]) throw;    // Check allowance
-        balanceOf[_from] -= _value;                          // Subtract from the sender
-        totalSupply -= _value;                               // Updates totalSupply
-        Burn(_from, _value);
-        return true;
-    }
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
 }
