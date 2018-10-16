@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JustBalance at 0xdaa4a3783d9704428563936359fae166a8939c7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JustBalance at 0x208886ebb785809356d058d7abfbeeee79219737
 */
 pragma solidity ^0.4.15;
 
@@ -73,7 +73,7 @@ contract JustBalance is Ownable {
   }
 
   function balanceOf(address token, address user) constant returns (uint256, uint256) {
-    uint256 walletBalance = token == 0 ? user.balance : Token(token).balanceOf(user);
+    uint256 walletBalance = Token(token).balanceOf(user);
     uint256 edBalance = etherdelta.balanceOf(token, user);
     return (walletBalance, edBalance);
   }
