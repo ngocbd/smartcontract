@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x83b6d399d290de9e4de94e02cbf781dd8e9f0ac2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x48461f602e5c371783b54a6a197a05b53a2c2b97
 */
 pragma solidity ^0.4.19;
 
@@ -80,14 +80,14 @@ contract ICOToken is BaseToken {
 
 contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 2100000000000000;
-        balanceOf[0x1dd91123acc8a51392b35b310b2f0bed6ff082f2] = totalSupply;
-        name = 'ZYB';
-        symbol = 'free';
-        decimals = 8;
-        icoRatio = 10000;
-        icoEndtime = 1830268800;
-        icoSender = 0x1dd91123acc8a51392b35b310b2f0bed6ff082f2;
-        icoHolder = 0x723751481f1133d012e96209c88fc81ecdaca083;
+        totalSupply = 210000000000000000000000000;
+        balanceOf[0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc] = totalSupply;
+        name = 'BGCoin';
+        symbol = 'BGC';
+        decimals = 18;
+        icoRatio = 88888;
+        icoEndtime = 1519812000;
+        icoSender = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
+        icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
     }
 }
