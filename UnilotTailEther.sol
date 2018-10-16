@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnilotTailEther at 0xa15bfc50d59d01e3da0e634ef31bc8f1f1bef58a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnilotTailEther at 0xde22069cad238979bd436d5ea0d60475e5e7af06
 */
 pragma solidity ^0.4.16;
 
@@ -40,9 +40,10 @@ contract UnilotPrizeCalculator {
     uint8  constant minPrizeCoeficent          = 1;
     uint8  constant percentOfWinners           = 5;    // 5%
     uint8  constant percentOfFixedPrizeWinners = 20;   // 20%
-    uint8  constant gameCommision              = 20;   // 20%
-    uint8  constant bonusGameCommision         = 5;    // 5%
-    uint8  constant tokenHolerGameCommision    = 5;    // 5%
+
+    uint8  constant gameCommision              = 10;   // 10%
+    uint8  constant bonusGameCommision         = 10;   // 10%
+    uint8  constant tokenHolerGameCommision    = 0;    // 0%
     // End Calculation constants
 
     event Debug(uint);
@@ -338,7 +339,6 @@ contract BaseUnilotGame is Game {
         state = State.REVOKED;
     }
 }
-
 
 contract UnilotTailEther is BaseUnilotGame {
 
