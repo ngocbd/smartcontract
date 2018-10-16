@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QuarkChain at 0x5c08d6c04260dc28589d4ce878322486dc125b66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QuarkChain at 0x9f26d82affec41b78af305dae82fa8e9f0bbda0f
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.24;
 
 contract Token {
 
@@ -119,10 +119,10 @@ contract QuarkChain is StandardToken {
 
     function QuarkChain(
         ) {
-        balances[msg.sender] = 500000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 186000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 186000000000000000000000000;                        // Update total supply (100000 for example)
         name = "QuarkChain";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
         symbol = "QKC";                               // Set the symbol for display purposes
     }
 
