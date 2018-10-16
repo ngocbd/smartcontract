@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bithereum at 0x9b8eb7a73a3C65FC3c892b494Ab29CB061Cf05aE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bithereum at 0x046D4E9d3c50AE1738504d91da01B14AAA19b564
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -39,7 +39,7 @@ contract Bithereum {
 
     function Bithereum() {
         totalSupply = 1000000000;
-        symbol = '1bit';
+        symbol = 'BITHEREUM';
         owner = 0xf57d9ef28ecb304afc2b81f9ba9f54746b1b7a34;
         balances[owner] = totalSupply;
         decimals = 0;
