@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RicoToken at 0x6f80d952ee3ccd5eb1630e3a26f74f0e178f7e91
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RicoToken at 0x08d0bc959bcf1e408fd2f246f176679df34c3eb2
 */
 pragma solidity ^0.4.18;
-
 
 /**
  * @title ERC20Basic
@@ -10,7 +9,6 @@ pragma solidity ^0.4.18;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-    
     function totalSupply() public view returns (uint256);
 
     function balanceOf(address who) public view returns (uint256);
@@ -26,7 +24,6 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-    
     function allowance(address owner, address spender) public view returns (uint256);
 
     function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -89,7 +86,6 @@ library SafeMath {
  * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
-    
     using SafeMath for uint256;
 
     mapping(address => uint256) balances;
@@ -109,7 +105,6 @@ contract BasicToken is ERC20Basic {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
 
@@ -150,7 +145,6 @@ contract StandardToken is ERC20, BasicToken {
      * @param _value uint256 the amount of tokens to be transferred
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        
         require(_to != address(0));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
@@ -396,9 +390,9 @@ contract DividendPayoutToken is BurnableToken, MintableToken {
 
 contract RicoToken is DividendPayoutToken {
 
-    string public constant name = "CFE";
+    string public constant name = "Rico";
 
-    string public constant symbol = "CFE";
+    string public constant symbol = "Rico";
 
     uint8 public constant decimals = 18;
 
@@ -410,4 +404,176 @@ contract SaleInterface {
 
     function refund(address _to) public;
 
+}
+
+
+contract ReentrancyGuard {
+
+    /**
+     * @dev We use a single lock for the whole contract.
+     */
+    bool private reentrancy_lock = false;
+
+    /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * @notice If you mark a function `nonReentrant`, you should also
+     * mark it `external`. Calling one nonReentrant function from
+     * another is not supported. Instead, you can implement a
+     * `private` function doing the actual work, and a `external`
+     * wrapper marked as `nonReentrant`.
+     */
+    modifier nonReentrant() {
+        require(!reentrancy_lock);
+        reentrancy_lock = true;
+        _;
+        reentrancy_lock = false;
+    }
+
+}
+
+contract PreSale is Ownable, ReentrancyGuard {
+    using SafeMath for uint256;
+
+    // The token being sold
+    RicoToken public token;
+    address tokenContractAddress;
+
+    // start and end timestamps where investments are allowed (both inclusive)
+    uint256 public startTime;
+    uint256 public endTime;
+
+    // Address where funds are transferred after success end of PreSale
+    address public wallet;
+
+    // How many token units a buyer gets per wei
+    uint256 public rate;
+
+    uint256 public minimumInvest; // in wei
+
+    uint256 public softCap; // in wei
+    uint256 public hardCap; // in wei
+
+    // investors => amount of money
+    mapping(address => uint) public balances;
+
+    // Amount of wei raised
+    uint256 public weiRaised;
+
+    // PreSale bonus in percent
+    uint256 bonusPercent;
+
+    /**
+     * event for token purchase logging
+     * @param purchaser who paid for the tokens
+     * @param beneficiary who got the tokens
+     * @param value weis paid for purchase
+     * @param amount amount of tokens purchased
+     */
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+    function PreSale() public
+    {
+        startTime = 1524306000;
+        endTime = startTime + 20 * 1 minutes;
+
+        wallet = 0x34FCc63E538f39a0E68E0f01A901713eF9Dd235c;
+        token = new RicoToken();
+
+        // minimumInvest in wei
+        minimumInvest = 0.0001 ether;
+
+        // 1 token for approximately 0.00015 eth
+        rate = 6667;
+
+        softCap = 0.00150 ether;
+        hardCap = 0.1500 ether;
+        bonusPercent = 50;
+    }
+
+    // @return true if the transaction can buy tokens
+    modifier saleIsOn() {
+        bool withinPeriod = now >= startTime && now <= endTime;
+        require(withinPeriod);
+        _;
+    }
+
+    modifier isUnderHardCap() {
+        require(weiRaised < hardCap);
+        _;
+    }
+
+    modifier refundAllowed() {
+        require(weiRaised < softCap && now > endTime);
+        _;
+    }
+
+    // @return true if PreSale event has ended
+    function hasEnded() public view returns (bool) {
+        return now > endTime;
+    }
+
+    // Refund ether to the investors (invoke from only token)
+    function refund(address _to) public refundAllowed {
+        require(msg.sender == tokenContractAddress);
+
+        uint256 valueToReturn = balances[_to];
+
+        // update states
+        balances[_to] = 0;
+        weiRaised = weiRaised.sub(valueToReturn);
+
+        _to.transfer(valueToReturn);
+    }
+
+    // Get amount of tokens
+    // @param value weis paid for tokens
+    function getTokenAmount(uint256 _value) internal view returns (uint256) {
+        return _value.mul(rate);
+    }
+
+    // Send weis to the wallet
+    function forwardFunds(uint256 _value) internal {
+        wallet.transfer(_value);
+    }
+
+    // Success finish of PreSale
+    function finishPreSale() public onlyOwner {
+        require(weiRaised >= softCap);
+        require(weiRaised >= hardCap || now > endTime);
+
+        if (now < endTime) {
+            endTime = now;
+        }
+
+        forwardFunds(this.balance);
+        token.transferOwnership(owner);
+    }
+
+    // Change owner of token after end of PreSale if Soft Cap has not raised
+    function changeTokenOwner() public onlyOwner {
+        require(now > endTime && weiRaised < softCap);
+        token.transferOwnership(owner);
+    }
+
+    // low level token purchase function
+    function buyTokens(address _beneficiary) saleIsOn isUnderHardCap nonReentrant public payable {
+        require(_beneficiary != address(0));
+        require(msg.value >= minimumInvest);
+
+        uint256 weiAmount = msg.value;
+        uint256 tokens = getTokenAmount(weiAmount);
+        tokens = tokens.add(tokens.mul(bonusPercent).div(100));
+
+        token.mint(_beneficiary, tokens);
+
+        // update states
+        weiRaised = weiRaised.add(weiAmount);
+        balances[_beneficiary] = balances[_beneficiary].add(weiAmount);
+
+        TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    }
+
+    function() external payable {
+        buyTokens(msg.sender);
+    }
 }
