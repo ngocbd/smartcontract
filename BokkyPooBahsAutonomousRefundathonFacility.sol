@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BokkyPooBahsAutonomousRefundathonFacility at 0xcaffa1d66eae19887319ab9aeca5bd9aeb9d2dde
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BokkyPooBahsAutonomousRefundathonFacility at 0x60e112d4e585bba817dc513bf9a03cd9b5a46fc9
 */
 pragma solidity ^0.4.8;
 
@@ -120,7 +120,7 @@ contract BokkyPooBahsAutonomousRefundathonFacility is ERC20Token {
 
     uint256 public deployedAt;
 
-    function BokkyPooBahsAutonomousRefundathonFacility() {
+    function BokkyPooBahsAutonomousRefundathonFund() {
         deployedAt = now;
     }
 
