@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Meristem at 0xe9e74BAe31892B6B1c000E009c93438DbD14d723
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Meristem at 0x1b3bde49d13aec2d3629be78c341f61fd21a7cc4
 */
 pragma solidity ^0.4.11;
 
@@ -90,7 +90,7 @@ contract ERC20 is ERC20Basic {
 }
 
 
-contract PoSTokenStandard {
+contract PoSStandard {
     uint256 public stakeStartTime;
     uint256 public stakeMinAge;
     uint256 public stakeMaxAge;
@@ -101,11 +101,11 @@ contract PoSTokenStandard {
 }
 
 
-contract Meristem is ERC20,PoSTokenStandard,Ownable {
+contract Meristem is ERC20,PoSStandard,Ownable {
     using SafeMath for uint256;
 
     string public name = "Meristem";
-    string public symbol = "MSTEM";
+    string public symbol = "MERI";
     uint public decimals = 18;
 
     uint public chainStartTime; //chain start time
