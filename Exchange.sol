@@ -1,187 +1,255 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x475a8101fdde7f7246e31be77dd7dcb80f25d735
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.19;
 
 contract Token {
-    bytes32 public standard;
-    bytes32 public name;
-    bytes32 public symbol;
-    uint256 public totalSupply;
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+    
     uint8 public decimals;
-    bool public allowTransactions;
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
 }
 
 contract Exchange {
-  function assert(bool assertion) {
-    if (!assertion) throw;
-  }
-  function safeMul(uint a, uint b) returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function safeSub(uint a, uint b) returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function safeAdd(uint a, uint b) returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-  address public owner;
-  mapping (address => uint256) public invalidOrder;
-  event SetOwner(address indexed previousOwner, address indexed newOwner);
-  modifier onlyOwner {
-    assert(msg.sender == owner);
-    _;
-  }
-  function setOwner(address newOwner) onlyOwner {
-    SetOwner(owner, newOwner);
-    owner = newOwner;
-  }
-  function getOwner() returns (address out) {
-    return owner;
-  }
-  function invalidateOrdersBefore(address user, uint256 nonce) onlyAdmin {
-    if (nonce < invalidOrder[user]) throw;
-    invalidOrder[user] = nonce;
-  }
-
-  mapping (address => mapping (address => uint256)) public tokens; //mapping of token addresses to mapping of account balances
-
-  mapping (address => bool) public admins;
-  mapping (address => uint256) public lastActiveTransaction;
-  mapping (bytes32 => uint256) public orderFills;
-  address public feeAccount;
-  uint256 public inactivityReleasePeriod;
-  mapping (bytes32 => bool) public traded;
-  mapping (bytes32 => bool) public withdrawn;
-  event Order(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s);
-  event Cancel(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s);
-  event Trade(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address get, address give);
-  event Deposit(address token, address user, uint256 amount, uint256 balance);
-  event Withdraw(address token, address user, uint256 amount, uint256 balance);
-
-  function setInactivityReleasePeriod(uint256 expiry) onlyAdmin returns (bool success) {
-    if (expiry > 1000000) throw;
-    inactivityReleasePeriod = expiry;
-    return true;
-  }
-
-  function Exchange(address feeAccount_) {
-    owner = msg.sender;
-    feeAccount = feeAccount_;
-    inactivityReleasePeriod = 100000;
-  }
-
-  function setAdmin(address admin, bool isAdmin) onlyOwner {
-    admins[admin] = isAdmin;
-  }
-
-  modifier onlyAdmin {
-    if (msg.sender != owner && !admins[msg.sender]) throw;
-    _;
-  }
-
-  function() external {
-    throw;
-  }
-
-  function depositToken(address token, uint256 amount) {
-    tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
-    lastActiveTransaction[msg.sender] = block.number;
-    if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
-    Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
-  }
-
-  function deposit() payable {
-    tokens[address(0)][msg.sender] = safeAdd(tokens[address(0)][msg.sender], msg.value);
-    lastActiveTransaction[msg.sender] = block.number;
-    Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
-  }
-
-  function withdraw(address token, uint256 amount) returns (bool success) {
-    if (safeSub(block.number, lastActiveTransaction[msg.sender]) < inactivityReleasePeriod) throw;
-    if (tokens[token][msg.sender] < amount) throw;
-    tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
-    if (token == address(0)) {
-      if (!msg.sender.send(amount)) throw;
-    } else {
-      if (!Token(token).transfer(msg.sender, amount)) throw;
+    struct Order {
+        address creator;
+        address token;
+        bool buy;
+        uint price;
+        uint amount;
     }
-    Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
-  }
+    
+    address public owner;
+    uint public feeDeposit = 500;
+    
+    mapping (uint => Order) orders;
+    uint currentOrderId = 0;
+    
+    /* Token address (0x0 - Ether) => User address => balance */
+    mapping (address => mapping (address => uint)) public balanceOf;
+    
+    event FundTransfer(address backer, uint amount, bool isContribution);
+    
+    event PlaceSell(address indexed token, address indexed user, uint price, uint amount, uint id);
+    event PlaceBuy(address indexed token, address indexed user, uint price, uint amount, uint id);
+    event FillOrder(uint id, uint amount);
+    event CancelOrder(uint id);
+    event Deposit(address indexed token, address indexed user, uint amount);
+    event Withdraw(address indexed token, address indexed user, uint amount);
+    event BalanceChanged(address indexed token, address indexed user, uint value);
 
-  function adminWithdraw(address token, uint256 amount, address user, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeWithdrawal) onlyAdmin returns (bool success) {
-    bytes32 hash = keccak256(this, token, amount, user, nonce);
-    if (withdrawn[hash]) throw;
-    withdrawn[hash] = true;
-    if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) != user) throw;
-    if (feeWithdrawal > 50 finney) feeWithdrawal = 50 finney;
-    if (tokens[token][user] < amount) throw;
-    tokens[token][user] = safeSub(tokens[token][user], amount);
-    tokens[token][feeAccount] = safeAdd(tokens[token][feeAccount], safeMul(feeWithdrawal, amount) / 1 ether);
-    amount = safeMul((1 ether - feeWithdrawal), amount) / 1 ether;
-    if (token == address(0)) {
-      if (!user.send(amount)) throw;
-    } else {
-      if (!Token(token).transfer(user, amount)) throw;
+    modifier onlyOwner {
+        if (msg.sender != owner) revert();
+        _;
     }
-    lastActiveTransaction[user] = block.number;
-    Withdraw(token, user, amount, tokens[token][user]);
-  }
-
-  function balanceOf(address token, address user) constant returns (uint256) {
-    return tokens[token][user];
-  }
-
-  function trade(uint256[8] tradeValues, address[4] tradeAddresses, uint8[2] v, bytes32[4] rs) onlyAdmin returns (bool success) {
-    /* amount is in amountBuy terms */
-    /* tradeValues
-       [0] amountBuy
-       [1] amountSell
-       [2] expires
-       [3] nonce
-       [4] amount
-       [5] tradeNonce
-       [6] feeMake
-       [7] feeTake
-     tradeAddressses
-       [0] tokenBuy
-       [1] tokenSell
-       [2] maker
-       [3] taker
-     */
-    if (invalidOrder[tradeAddresses[2]] > tradeValues[3]) throw;
-    bytes32 orderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeValues[3], tradeAddresses[2]);
-    if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) != tradeAddresses[2]) throw;
-    bytes32 tradeHash = keccak256(orderHash, tradeValues[4], tradeAddresses[3], tradeValues[5]); 
-    if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", tradeHash), v[1], rs[2], rs[3]) != tradeAddresses[3]) throw;
-    if (traded[tradeHash]) throw;
-    traded[tradeHash] = true;
-    if (tradeValues[6] > 100 finney) tradeValues[6] = 100 finney;
-    if (tradeValues[7] > 100 finney) tradeValues[7] = 100 finney;
-    if (safeAdd(orderFills[orderHash], tradeValues[4]) > tradeValues[0]) throw;
-    if (tokens[tradeAddresses[0]][tradeAddresses[3]] < tradeValues[4]) throw;
-    if (tokens[tradeAddresses[1]][tradeAddresses[2]] < (safeMul(tradeValues[1], tradeValues[4]) / tradeValues[0])) throw;
-    tokens[tradeAddresses[0]][tradeAddresses[3]] = safeSub(tokens[tradeAddresses[0]][tradeAddresses[3]], tradeValues[4]);
-    tokens[tradeAddresses[0]][tradeAddresses[2]] = safeAdd(tokens[tradeAddresses[0]][tradeAddresses[2]], safeMul(tradeValues[4], ((1 ether) - tradeValues[6])) / (1 ether));
-    tokens[tradeAddresses[0]][feeAccount] = safeAdd(tokens[tradeAddresses[0]][feeAccount], safeMul(tradeValues[4], tradeValues[6]) / (1 ether));
-    tokens[tradeAddresses[1]][tradeAddresses[2]] = safeSub(tokens[tradeAddresses[1]][tradeAddresses[2]], safeMul(tradeValues[1], tradeValues[4]) / tradeValues[0]);
-    tokens[tradeAddresses[1]][tradeAddresses[3]] = safeAdd(tokens[tradeAddresses[1]][tradeAddresses[3]], safeMul(safeMul(((1 ether) - tradeValues[7]), tradeValues[1]), tradeValues[4]) / tradeValues[0] / (1 ether));
-    tokens[tradeAddresses[1]][feeAccount] = safeAdd(tokens[tradeAddresses[1]][feeAccount], safeMul(safeMul(tradeValues[7], tradeValues[1]), tradeValues[4]) / tradeValues[0] / (1 ether));
-    orderFills[orderHash] = safeAdd(orderFills[orderHash], tradeValues[4]);
-    lastActiveTransaction[tradeAddresses[2]] = block.number;
-    lastActiveTransaction[tradeAddresses[3]] = block.number;
-  }
+    
+    function transferOwnership(address newOwner) external onlyOwner {
+        owner = newOwner;
+    }
+    
+    function Exchange() public {
+        owner = msg.sender;
+    }
+    
+    function safeAdd(uint a, uint b) private pure returns (uint) {
+        uint c = a + b;
+        assert(c >= a);
+        return c;
+    }
+    
+    function safeSub(uint a, uint b) private pure returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
+    
+    function safeMul(uint a, uint b) private pure returns (uint) {
+        if (a == 0) {
+          return 0;
+        }
+        
+        uint c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+    
+    function decFeeDeposit(uint delta) external onlyOwner {
+        feeDeposit = safeSub(feeDeposit, delta);
+    }
+    
+    function calcAmountEther(address tokenAddr, uint price, uint amount) private view returns (uint) {
+        uint k = 10;
+        k = k ** Token(tokenAddr).decimals();
+        return safeMul(amount, price) / k;
+    }
+    
+    function balanceAdd(address tokenAddr, address user, uint amount) private {
+        balanceOf[tokenAddr][user] =
+            safeAdd(balanceOf[tokenAddr][user], amount);
+    }
+    
+    function balanceSub(address tokenAddr, address user, uint amount) private {
+        require(balanceOf[tokenAddr][user] >= amount);
+        balanceOf[tokenAddr][user] =
+            safeSub(balanceOf[tokenAddr][user], amount);
+    }
+    
+    function placeBuy(address tokenAddr, uint price, uint amount) external {
+        require(price > 0 && amount > 0);
+        uint amountEther = calcAmountEther(tokenAddr, price, amount);
+        require(amountEther > 0);
+        balanceSub(0x0, msg.sender, amountEther);
+        BalanceChanged(0x0, msg.sender, balanceOf[0x0][msg.sender]);
+        orders[currentOrderId] = Order({
+            creator: msg.sender,
+            token: tokenAddr,
+            buy: true,
+            price: price,
+            amount: amount
+        });
+        PlaceBuy(tokenAddr, msg.sender, price, amount, currentOrderId);
+        currentOrderId++;
+    }
+    
+    function placeSell(address tokenAddr, uint price, uint amount) external {
+        require(price > 0 && amount > 0);
+        uint amountEther = calcAmountEther(tokenAddr, price, amount);
+        require(amountEther > 0);
+        balanceSub(tokenAddr, msg.sender, amount);
+        BalanceChanged(tokenAddr, msg.sender, balanceOf[tokenAddr][msg.sender]);
+        orders[currentOrderId] = Order({
+            creator: msg.sender,
+            token: tokenAddr,
+            buy: false,
+            price: price,
+            amount: amount
+        });
+        PlaceSell(tokenAddr, msg.sender, price, amount, currentOrderId);
+        currentOrderId++;
+    }
+    
+    function fillOrder(uint id, uint amount) external {
+        require(id < currentOrderId);
+        require(orders[id].creator != msg.sender);
+        require(orders[id].amount >= amount);
+        uint amountEther = calcAmountEther(orders[id].token, orders[id].price, amount);
+        if (orders[id].buy) {
+            /* send tokens from sender to creator */
+            // sub from sender
+            balanceSub(orders[id].token, msg.sender, amount);
+            BalanceChanged(
+                orders[id].token,
+                msg.sender,
+                balanceOf[orders[id].token][msg.sender]
+            );
+            
+            // add to creator
+            balanceAdd(orders[id].token, orders[id].creator, amount);
+            BalanceChanged(
+                orders[id].token,
+                orders[id].creator,
+                balanceOf[orders[id].token][orders[id].creator]
+            );
+            
+            /* send Ether to sender */
+            balanceAdd(0x0, msg.sender, amountEther);
+            BalanceChanged(
+                0x0,
+                msg.sender,
+                balanceOf[0x0][msg.sender]
+            );
+        } else {
+            /* send Ether from sender to creator */
+            // sub from sender
+            balanceSub(0x0, msg.sender, amountEther);
+            BalanceChanged(
+                0x0,
+                msg.sender,
+                balanceOf[0x0][msg.sender]
+            );
+            
+            // add to creator
+            balanceAdd(0x0, orders[id].creator, amountEther);
+            BalanceChanged(
+                0x0,
+                orders[id].creator,
+                balanceOf[0x0][orders[id].creator]
+            );
+            
+            /* send tokens to sender */
+            balanceAdd(orders[id].token, msg.sender, amount);
+            BalanceChanged(
+                orders[id].token,
+                msg.sender,
+                balanceOf[orders[id].token][msg.sender]
+            );
+        }
+        orders[id].amount -= amount;
+        FillOrder(id, orders[id].amount);
+    }
+    
+    function cancelOrder(uint id) external {
+        require(id < currentOrderId);
+        require(orders[id].creator == msg.sender);
+        require(orders[id].amount > 0);
+        if (orders[id].buy) {
+            uint amountEther = calcAmountEther(orders[id].token, orders[id].price, orders[id].amount);
+            balanceAdd(0x0, msg.sender, amountEther);
+            BalanceChanged(0x0, msg.sender, balanceOf[0x0][msg.sender]);
+        } else {
+            balanceAdd(orders[id].token, msg.sender, orders[id].amount);
+            BalanceChanged(orders[id].token, msg.sender, balanceOf[orders[id].token][msg.sender]);
+        }
+        orders[id].amount = 0;
+        CancelOrder(id);
+    }
+    
+    function () external payable {
+        require(msg.value > 0);
+        uint fee = msg.value * feeDeposit / 10000;
+        require(msg.value > fee);
+        balanceAdd(0x0, owner, fee);
+        
+        uint toAdd = msg.value - fee;
+        balanceAdd(0x0, msg.sender, toAdd);
+        
+        Deposit(0x0, msg.sender, toAdd);
+        BalanceChanged(0x0, msg.sender, balanceOf[0x0][msg.sender]);
+        
+        FundTransfer(msg.sender, toAdd, true);
+    }
+    
+    function depositToken(address tokenAddr, uint amount) external {
+        require(tokenAddr != 0x0);
+        require(amount > 0);
+        Token(tokenAddr).transferFrom(msg.sender, this, amount);
+        balanceAdd(tokenAddr, msg.sender, amount);
+        
+        Deposit(tokenAddr, msg.sender, amount);
+        BalanceChanged(tokenAddr, msg.sender, balanceOf[tokenAddr][msg.sender]);
+    }
+    
+    function withdrawEther(uint amount) external {
+        require(amount > 0);
+        balanceSub(0x0, msg.sender, amount);
+        msg.sender.transfer(amount);
+        
+        Withdraw(0x0, msg.sender, amount);
+        BalanceChanged(0x0, msg.sender, balanceOf[0x0][msg.sender]);
+        
+        FundTransfer(msg.sender, amount, false);
+    }
+    
+    function withdrawToken(address tokenAddr, uint amount) external {
+        require(tokenAddr != 0x0);
+        require(amount > 0);
+        balanceSub(tokenAddr, msg.sender, amount);
+        Token(tokenAddr).transfer(msg.sender, amount);
+        
+        Withdraw(tokenAddr, msg.sender, amount);
+        BalanceChanged(tokenAddr, msg.sender, balanceOf[tokenAddr][msg.sender]);
+    }
 }
