@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JudgmentCoin at 0xf8ee021f63fd559c4027d16c1f6021e1b9d12b80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JudgmentCoin at 0x15ed8f17a85b4c5650757373feea9058d089a874
 */
 pragma solidity ^0.4.18;
 
