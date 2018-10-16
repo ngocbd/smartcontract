@@ -1,102 +1,176 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EBTC at 0x2fd41f516fac94ed08e156f489f56ca3a80b04d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EBTC at 0xeb7c20027172e5d143fb030d50f91cece2d1485d
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.17;
 
-    contract ERC20 {
-     function totalSupply() constant returns (uint256 totalSupply);
-     function balanceOf(address _owner) constant returns (uint256 balance);
-     function transfer(address _to, uint256 _value) returns (bool success);
-     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-     function approve(address _spender, uint256 _value) returns (bool success);
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- }
-  
-  contract EBTC is ERC20 {
-     string public constant symbol = "EBTC";
-     string public constant name = "eBTC";
-     uint8 public constant decimals = 8;
-     uint256 _totalSupply = 21000000 * 10**8;
-     
+library SafeMathMod {// Partial SafeMath Library
 
-     address public owner;
-  
-     mapping(address => uint256) balances;
-  
-     mapping(address => mapping (address => uint256)) allowed;
-     
-  
-     function EBTC() {
-         owner = msg.sender;
-         balances[owner] = 21000000 * 10**8;
-     }
-     
-     modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((c = a - b) < a);
     }
-     
-     
-     function distributeEBTC(address[] addresses) onlyOwner {
-         for (uint i = 0; i < addresses.length; i++) {
-             balances[owner] -= 245719916000;
-             balances[addresses[i]] += 245719916000;
-             Transfer(owner, addresses[i], 245719916000);
-         }
-     }
-     
-  
-     function totalSupply() constant returns (uint256 totalSupply) {
-         totalSupply = _totalSupply;
-     }
-  
 
-     function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-     }
- 
-     function transfer(address _to, uint256 _amount) returns (bool success) {
-         if (balances[msg.sender] >= _amount 
-            && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(msg.sender, _to, _amount);
-            return true;
-         } else {
-             return false;
-         }
-     }
-     
-     
-     function transferFrom(
-         address _from,
-         address _to,
-         uint256 _amount
-     ) returns (bool success) {
-         if (balances[_from] >= _amount
-             && allowed[_from][msg.sender] >= _amount
-             && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[_from] -= _amount;
-             allowed[_from][msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(_from, _to, _amount);
-             return true;
-         } else {
-            return false;
-         }
-     }
- 
-     function approve(address _spender, uint256 _amount) returns (bool success) {
-         allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-         return true;
-     }
-  
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-         return allowed[_owner][_spender];
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((c = a + b) > a);
     }
+}
+
+contract EBTC {//is inherently ERC20
+    using SafeMathMod for uint256;
+
+    /**
+    * @constant name The name of the token
+    * @constant symbol  The symbol used to display the currency
+    * @constant decimals  The number of decimals used to dispay a balance
+    * @constant totalSupply The total number of tokens times 10^ of the number of decimals
+    * @constant MAX_UINT256 Magic number for unlimited allowance
+    * @storage balanceOf Holds the balances of all token holders
+    * @storage allowed Holds the allowable balance to be transferable by another address.
+    */
+
+    string constant public name = "eBTC";
+
+    string constant public symbol = "EBTC";
+
+    uint8 constant public decimals = 8;
+
+    uint256 constant public totalSupply = 21000000e8;
+
+    uint256 constant private MAX_UINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+    mapping (address => uint256) public balanceOf;
+
+    mapping (address => mapping (address => uint256)) public allowed;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    event TransferFrom(address indexed _spender, address indexed _from, address indexed _to, uint256 _value);
+
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    function EBTC() public {balanceOf[msg.sender] = totalSupply;}
+
+    /**
+    * @notice send `_value` token to `_to` from `msg.sender`
+    *
+    * @param _to The address of the recipient
+    * @param _value The amount of token to be transferred
+    * @return Whether the transfer was successful or not
+    */
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        /* Ensures that tokens are not sent to address "0x0" */
+        require(_to != address(0));
+        /* Prevents sending tokens directly to contracts. */
+        require(isNotContract(_to));
+
+        /* SafeMathMOd.sub will throw if there is not enough balance and if the transfer value is 0. */
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    /**
+    * @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    *
+    * @param _from The address of the sender
+    * @param _to The address of the recipient
+    * @param _value The amount of token to be transferred
+    * @return Whether the transfer was successful or not
+    */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        /* Ensures that tokens are not sent to address "0x0" */
+        require(_to != address(0));
+        /* Ensures tokens are not sent to this contract */
+        require(_to != address(this));
+        
+        uint256 allowance = allowed[_from][msg.sender];
+        /* Ensures sender has enough available allowance OR sender is balance holder allowing single transsaction send to contracts*/
+        require(_value <= allowance || _from == msg.sender);
+
+        /* Use SafeMathMod to add and subtract from the _to and _from addresses respectively. Prevents under/overflow and 0 transfers */
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+
+        /* Only reduce allowance if not MAX_UINT256 in order to save gas on unlimited allowance */
+        /* Balance holder does not need allowance to send from self. */
+        if (allowed[_from][msg.sender] != MAX_UINT256 && _from != msg.sender) {
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        }
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+    * @dev Transfer the specified amounts of tokens to the specified addresses.
+    * @dev Be aware that there is no check for duplicate recipients.
+    *
+    * @param _toAddresses Receiver addresses.
+    * @param _amounts Amounts of tokens that will be transferred.
+    */
+    function multiPartyTransfer(address[] _toAddresses, uint256[] _amounts) public {
+        /* Ensures _toAddresses array is less than or equal to 255 */
+        require(_toAddresses.length <= 255);
+        /* Ensures _toAddress and _amounts have the same number of entries. */
+        require(_toAddresses.length == _amounts.length);
+
+        for (uint8 i = 0; i < _toAddresses.length; i++) {
+            transfer(_toAddresses[i], _amounts[i]);
+        }
+    }
+
+    /**
+    * @dev Transfer the specified amounts of tokens to the specified addresses from authorized balance of sender.
+    * @dev Be aware that there is no check for duplicate recipients.
+    *
+    * @param _from The address of the sender
+    * @param _toAddresses The addresses of the recipients (MAX 255)
+    * @param _amounts The amounts of tokens to be transferred
+    */
+    function multiPartyTransferFrom(address _from, address[] _toAddresses, uint256[] _amounts) public {
+        /* Ensures _toAddresses array is less than or equal to 255 */
+        require(_toAddresses.length <= 255);
+        /* Ensures _toAddress and _amounts have the same number of entries. */
+        require(_toAddresses.length == _amounts.length);
+
+        for (uint8 i = 0; i < _toAddresses.length; i++) {
+            transferFrom(_from, _toAddresses[i], _amounts[i]);
+        }
+    }
+
+    /**
+    * @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    *
+    * @param _spender The address of the account able to transfer the tokens
+    * @param _value The amount of tokens to be approved for transfer
+    * @return Whether the approval was successful or not
+    */
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        /* Ensures address "0x0" is not assigned allowance. */
+        require(_spender != address(0));
+
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+    * @param _owner The address of the account owning tokens
+    * @param _spender The address of the account able to transfer the tokens
+    * @return Amount of remaining tokens allowed to spent
+    */
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        remaining = allowed[_owner][_spender];
+    }
+
+    function isNotContract(address _addr) private view returns (bool) {
+        uint length;
+        assembly {
+        /* retrieve the size of the code on target address, this needs assembly */
+        length := extcodesize(_addr)
+        }
+        return (length == 0);
+    }
+
+    // revert on eth transfers to this contract
+    function() public payable {revert();}
 }
