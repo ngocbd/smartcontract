@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x1544f3bcbe71a79c660936b843402eeb44d3a06a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xd0ed0c2ce0e004610b391edd708bb544acd4935a
 */
 pragma solidity ^0.4.19;
 
@@ -45,84 +45,13 @@ contract BaseToken {
     }
 }
 
-contract AirdropToken is BaseToken {
-    uint256 public airAmount;
-    uint256 public airBegintime;
-    uint256 public airEndtime;
-    address public airSender;
-    uint32 public airLimitCount;
-
-    mapping (address => uint32) public airCountOf;
-
-    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
-
-    function airdrop() public payable {
-        require(now >= airBegintime && now <= airEndtime);
-        require(msg.value == 0);
-        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
-            revert();
-        }
-        _transfer(airSender, msg.sender, airAmount);
-        airCountOf[msg.sender] += 1;
-        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
-    }
-}
-
-contract ICOToken is BaseToken {
-    // 1 ether = icoRatio token
-    uint256 public icoRatio;
-    uint256 public icoBegintime;
-    uint256 public icoEndtime;
-    address public icoSender;
-    address public icoHolder;
-
-    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
-    event Withdraw(address indexed from, address indexed holder, uint256 value);
-
-    function ico() public payable {
-        require(now >= icoBegintime && now <= icoEndtime);
-        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
-        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
-            revert();
-        }
-        _transfer(icoSender, msg.sender, tokenValue);
-        ICO(msg.sender, msg.value, tokenValue);
-    }
-
-    function withdraw() public {
-        uint256 balance = this.balance;
-        icoHolder.transfer(balance);
-        Withdraw(msg.sender, icoHolder, balance);
-    }
-}
-
-contract CustomToken is BaseToken, AirdropToken, ICOToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 21000000000000000000000000000;
-        name = 'FundofFunds';
-        symbol = 'FOF';
+        totalSupply = 100000000000000000000000000;
+        name = 'AFD';
+        symbol = 'AFD';
         decimals = 18;
-        balanceOf[0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f] = totalSupply;
-        Transfer(address(0), 0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f, totalSupply);
-
-        airAmount = 20000000000000000000;
-        airBegintime = 1522029600;
-        airEndtime = 1585188000;
-        airSender = 0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f;
-        airLimitCount = 0;
-
-        icoRatio = 3000;
-        icoBegintime = 1522036800;
-        icoEndtime = 1837656000;
-        icoSender = 0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f;
-        icoHolder = 0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f;
-    }
-
-    function() public payable {
-        if (msg.value == 0) {
-            airdrop();
-        } else {
-            ico();
-        }
+        balanceOf[0x5eeae4727711db2bed8099866a6a2301a9f4937b] = totalSupply;
+        Transfer(address(0), 0x5eeae4727711db2bed8099866a6a2301a9f4937b, totalSupply);
     }
 }
