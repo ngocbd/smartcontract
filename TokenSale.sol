@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x4488062671eea4e97b0f31dc4e46b80decc67a07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x54484fe83a51c3151f4075a04ff65d029475a471
 */
 pragma solidity ^0.4.18;
 
@@ -123,7 +123,6 @@ contract LicerioToken is AbstractToken {
      
      uint256 constant MAX_TOKEN_COUNT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
      
-	uint public constant _decimals = (10**18);
      
     modifier onlyOwner() {
 	    require(owner == msg.sender);
@@ -140,7 +139,7 @@ contract LicerioToken is AbstractToken {
      }
      
     function name () constant returns (string result) {
-		return "LicerioToken";
+		return "LICERIO";
 	}
 	
 	function symbol () constant returns (string result) {
@@ -148,7 +147,7 @@ contract LicerioToken is AbstractToken {
 	}
 	
 	function decimals () constant returns (uint result) {
-        return 18;
+        return (10**18);
     }
     
     function transfer (address _to, uint256 _value) returns (bool success) {
@@ -397,7 +396,7 @@ contract TokenSale is LicerioToken  {
 	function get_tokens_count(uint _amount) private returns (uint) {
 	    
 	     uint currentPrice = tokenPrice;
-	     uint tokens = safeDiv( safeMul(_amount, _decimals), currentPrice ) ;
+	     uint tokens = safeDiv( safeMul(_amount, decimals()), currentPrice ) ;
     	 return tokens;
 	    
 	}
