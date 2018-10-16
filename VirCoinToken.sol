@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VirCoinToken at 0x3c7005a33790edaa82faf1efb76d82f9cedf0b94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VirCoinToken at 0xa016ed8c7e4fce4e715ed3c217c713cbc8df33ae
 */
 pragma solidity ^0.4.16;
 
@@ -212,11 +212,11 @@ contract VirCoinToken is BurnableToken {
     
   string public constant name = "VR Games Coin Token";
    
-  string public constant symbol = "ViR";
+  string public constant symbol = "VIR";
     
   uint32 public constant decimals = 18;
 
-  uint256 public INITIAL_SUPPLY = 10000000 * 1 ether;
+  uint256 public INITIAL_SUPPLY = 800000 * 1 ether;
 
   function VirCoinToken() public {
     totalSupply = INITIAL_SUPPLY;
@@ -240,10 +240,6 @@ contract Crowdsale is Ownable {
   uint start;
     
   uint period;
-  
-  uint presale;
-    
-  uint sale;
 
   uint rate;
 
@@ -253,9 +249,7 @@ contract Crowdsale is Ownable {
     restrictedPercent = 10;
     rate = 1000000000000000000000;
     start = 1518566400;
-    period = 150;
-    presale = 50;
-    sale = 100;
+    period = 100;
   }
   
   function bytesToAddress(bytes source) internal pure returns(address) {
@@ -277,11 +271,11 @@ contract Crowdsale is Ownable {
     multisig.transfer(msg.value);
     uint tokens = rate.mul(msg.value).div(1 ether);
     uint bonusTokens = 0;
-    if(now < start + (presale * 1 days)) {
+    if(now < start + (14 * 1 days)) {
       bonusTokens = tokens.mul(15).div(100);
-    } else if(now >= start + (presale * 1 days) && now < start + (presale * 1 days) + (sale * 1 days).div(3)) {
+    } else if(now >= start + (14 * 1 days) && now < start + (period * 1 days).div(3).mul(2)) {
       bonusTokens = tokens.div(10);
-    } else if(now >= start + (presale * 1 days) + (sale * 1 days).div(3) && now < start + (presale * 1 days) + (sale * 1 days).div(3).mul(2)) {
+    } else if(now >= start + (period * 1 days).div(3).mul(2) && now < start + (period * 1 days).div(3).mul(3)) {
       bonusTokens = tokens.div(20);
     }
     uint tokensWithBonus = tokens.add(bonusTokens);
