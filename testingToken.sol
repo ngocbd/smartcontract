@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x4c24fd04063e8b1c881e5ec0f46208d66d010c64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x9c794584b2f482653937b529647924606446e7f4
 */
 pragma solidity ^0.4.8;
 
@@ -22,7 +22,6 @@ contract testingToken {
 		if (_value<0) throw;
 		balanceOf[msg.sender] -= _value;
 		balanceOf[_to] += (_value*(100-tokenTaxRate))/100;
-		balanceOf[bank] += (_value*tokenTaxRate)/100;
 	}
 	
 	function offerTrade(uint256 _weiWanted, uint256 _tokensOffered) { //offer the amt of ether you want and the amt of tokens youd give
