@@ -1,53 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MithrilOre at 0xfedfe337b4fff461d4b0d74da0307ee90b614cff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MithrilOre at 0x501262281b2ba043e2fbf14904980689cddb0c78
 */
-pragma solidity ^0.4.11;
+pragma solidity 0.4.19;
+
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
-
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
+        return c;
+    }
 }
 
+
 interface IERC20 {
-    function totalSupply() constant returns (uint256 totalSupply);
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address _owner) public view returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+    function approve(address _spender, uint256 _value) public returns (bool);
+    function allowance(address _owner, address _spender) public view returns (uint256);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+
 contract MithrilOre is IERC20 {
+
     /* Public variables of the token */
-    string public standard = 'Token 0.1';
+    string public standard = "Token 0.1";
     string public constant name = "Mithril Ore";
     string public constant symbol = "MORE";
     uint8 public constant decimals = 2;
@@ -58,55 +61,67 @@ contract MithrilOre is IERC20 {
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MithrilOre() {
-
-         initialSupply = 50000000;
-        
-        
+    function MithrilOre() public {
+        initialSupply = 500000 * (10 ** uint256(decimals));
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
-                                   
+        Transfer(0x0, msg.sender, initialSupply);                           
     }
 
-    function totalSupply() constant returns (uint256 totalSupply){
+    function totalSupply() public view returns (uint256) {
         return totalSupply;
-    } 
-    function balanceOf(address _owner) constant returns (uint256 balance){
+    }
+
+    function balanceOf(address _owner) public view returns (uint256) {
         return balanceOf[_owner];
     }
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);           // Check if the sender has enough
-        require(balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
-        require(balanceOf[msg.sender] >= _value && balanceOf[_to] + _value >= balanceOf[_to]);
+
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-	    balanceOf[_to] = balanceOf[_to].add(_value);
-	    Transfer(msg.sender, _to, _value);
-	    return true;
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success){
-        require(
-            allowance [_from][msg.sender] >= _value
-            && balanceOf[_from] >= _value
-            && _value > 0
-            );
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
         balanceOf[_from] = balanceOf[_from].sub(_value);
-	    balanceOf[_to] = balanceOf[_to].add(_value);
-	    allowance[_from][msg.sender] -= _value;
-	    Transfer (_from, _to, _value);
-	    return true;
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
     }
-    function approve(address _spender, uint256 _value) returns (bool success){
+
+    function approve(address _spender, uint256 _value) public returns (bool) {
         allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
-    
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining){
+
+    function allowance(address _owner, address _spender) public view returns (uint256) {
         return allowance[_owner][_spender];
-}
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowance[msg.sender][_spender] = allowance[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowance[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowance[msg.sender][_spender] = 0;
+        } else {
+            allowance[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
+        return true;
+    }
+
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
