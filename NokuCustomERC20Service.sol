@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuCustomERC20Service at 0xfce132f4577a62542fb4dbdc6bae131bbc07e178
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuCustomERC20Service at 0x8b4f27b50d622b74716944475bfce0a6b79de573
 */
 pragma solidity 0.4.19;
 
@@ -651,7 +651,7 @@ contract NokuCustomERC20 is Ownable, DetailedERC20, MintableToken, BurnableToken
 
         super.burn(_amount);
 
-        assert(NokuPricingPlan(pricingPlan).payFee(CUSTOM_ERC20_BURN_SERVICE_NAME, _amount, msg.sender));
+        require(NokuPricingPlan(pricingPlan).payFee(CUSTOM_ERC20_BURN_SERVICE_NAME, _amount, msg.sender));
     }
 
     /**
@@ -666,7 +666,7 @@ contract NokuCustomERC20 is Ownable, DetailedERC20, MintableToken, BurnableToken
 
         super.mint(_to, _amount);
 
-        assert(NokuPricingPlan(pricingPlan).payFee(CUSTOM_ERC20_MINT_SERVICE_NAME, _amount, msg.sender));
+        require(NokuPricingPlan(pricingPlan).payFee(CUSTOM_ERC20_MINT_SERVICE_NAME, _amount, msg.sender));
 
         return true;
     }
@@ -680,6 +680,10 @@ contract NokuCustomERC20 is Ownable, DetailedERC20, MintableToken, BurnableToken
 contract NokuCustomERC20Service is Pausable {
     event LogNokuCustomERC20ServiceCreated(address caller, address indexed pricingPlan);
     event LogPricingPlanChanged(address indexed caller, address indexed pricingPlan);
+
+    uint256 public constant CREATE_AMOUNT = 1 * 10**18;
+
+    uint8 public constant DECIMALS = 18;
 
     // The pricing plan determining the fee to be paid in NOKU tokens by customers for using Noku services
     address public pricingPlan;
@@ -703,15 +707,13 @@ contract NokuCustomERC20Service is Pausable {
         LogPricingPlanChanged(msg.sender, _pricingPlan);
     }
 
-    function createCustomToken(string _name, string _symbol, uint8 _decimals)
-    public returns(address customTokenAddress)
-    {
-        NokuCustomERC20 customToken = new NokuCustomERC20(_name, _symbol, _decimals, pricingPlan, owner);
+    function createCustomToken(string _name, string _symbol, uint8 _decimals) public returns(address customTokenAddress) {
+        NokuCustomERC20 customToken = new NokuCustomERC20(_name, _symbol, DECIMALS, pricingPlan, owner);
 
         // Transfer NokuCustomERC20 ownership to the client
         customToken.transferOwnership(msg.sender);
 
-        NokuPricingPlan(pricingPlan).payFee(CUSTOM_ERC20_CREATE_SERVICE_NAME, 1, msg.sender);
+        require(NokuPricingPlan(pricingPlan).payFee(CUSTOM_ERC20_CREATE_SERVICE_NAME, CREATE_AMOUNT, msg.sender));
 
         return address(customToken);
     }
