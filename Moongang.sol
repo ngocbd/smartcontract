@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x43bf208fc4a395f5b0aac4d5c0a7528567b33e3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0xb16f44c0f4f5dd3e886e9ea6f8afe7274f4dfffc
 */
 // Author : shift
 
@@ -12,7 +12,7 @@ pragma solidity ^0.4.18;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
     }
@@ -21,17 +21,17 @@ library SafeMath {
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a / b;
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -41,8 +41,8 @@ library SafeMath {
 
 // ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
 contract ERC20 {
-  function transfer(address _to, uint256 _value) returns (bool success);
-  function balanceOf(address _owner) constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) public returns (bool success);
+  function balanceOf(address _owner) public constant returns (uint256 balance);
 }
 
 /*
@@ -59,14 +59,12 @@ contract Moongang {
 
   modifier minAmountReached {
     //In reality, the correct amount is the amount + 1%
-    uint256 correct_amount = SafeMath.div(SafeMath.mul(min_amount, 100), 99);
-    require(this.balance >= correct_amount);
+    require(this.balance >= SafeMath.div(SafeMath.mul(min_amount, 100), 99));
     _;
   }
 
   modifier underMaxAmount {
-    uint256 correct_amount = SafeMath.div(SafeMath.mul(max_amount, 100), 99);
-    require(max_amount == 0 || this.balance <= correct_amount);
+    require(max_amount == 0 || this.balance <= max_amount);
     _;
   }
 
@@ -75,7 +73,7 @@ contract Moongang {
   uint256 constant FEE_DEV = SafeMath.div(20, 3); //15% on the 1% fee
   address public owner;
   address constant public developer = 0xEE06BdDafFA56a303718DE53A5bc347EfbE4C68f;
-  uint256 individual_cap;
+  uint256 public individual_cap;
 
   //Variables subject to changes
   uint256 public max_amount;  //0 means there is no limit
@@ -85,12 +83,12 @@ contract Moongang {
   mapping (address => uint256) public balances;
   mapping (address => uint256) public balances_bonus;
   // Track whether the contract has bought the tokens yet.
-  bool public bought_tokens = false;
+  bool public bought_tokens;
   // Record ETH value of tokens currently held by contract.
   uint256 public contract_eth_value;
   uint256 public contract_eth_value_bonus;
   //Set by the owner in order to allow the withdrawal of bonus tokens.
-  bool bonus_received;
+  bool public bonus_received;
   //The address of the contact.
   address public sale;
   //Token address
@@ -100,15 +98,15 @@ contract Moongang {
   //Set by the owner. Allows people to refund totally or partially.
   bool public allow_refunds;
   //The reduction of the allocation in % | example : 40 -> 40% reduction
-  uint256 percent_reduction;
-  
+  uint256 public percent_reduction;
+
   //Internal functions
   function Moongang(uint256 max, uint256 min, uint256 cap) {
     /*
     Constructor
     */
     owner = msg.sender;
-    max_amount = max;
+    max_amount = SafeMath.div(SafeMath.mul(max, 100), 99);
     min_amount = min;
     individual_cap = cap;
   }
@@ -117,9 +115,8 @@ contract Moongang {
 
   // Buy the tokens. Sends ETH to the presale wallet and records the ETH amount held in the contract.
   function buy_the_tokens() onlyOwner minAmountReached underMaxAmount {
-    require(!bought_tokens);
     //Avoids burning the funds
-    require(sale != 0x0);
+    require(!bought_tokens && sale != 0x0);
     //Record that the contract has bought the tokens.
     bought_tokens = true;
     //Sends the fee before so the contract_eth_value contains the correct balance
@@ -134,6 +131,7 @@ contract Moongang {
   }
 
   function force_refund(address _to_refund) onlyOwner {
+    require(!bought_tokens);
     uint256 eth_to_withdraw = SafeMath.div(SafeMath.mul(balances[_to_refund], 100), 99);
     balances[_to_refund] = 0;
     balances_bonus[_to_refund] = 0;
@@ -195,7 +193,7 @@ contract Moongang {
   function change_max_amount(uint256 _amount) onlyOwner {
       //ATTENTION! The new amount should be in wei
       //Use https://etherconverter.online/
-      max_amount = _amount;
+      max_amount = SafeMath.div(SafeMath.mul(_amount, 100), 99);
   }
 
   function change_min_amount(uint256 _amount) onlyOwner {
@@ -235,10 +233,10 @@ contract Moongang {
     balances_bonus[msg.sender] = 0;
     require(token.transfer(msg.sender, tokens_to_withdraw));
   }
-  
+
   // Allows any user to get his eth refunded before the purchase is made.
   function refund() {
-    require(allow_refunds && percent_reduction == 0);
+    require(!bought_tokens && allow_refunds && percent_reduction == 0);
     //balance of contributor = contribution * 0.99
     //so contribution = balance/0.99
     uint256 eth_to_withdraw = SafeMath.div(SafeMath.mul(balances[msg.sender], 100), 99);
