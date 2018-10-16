@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NooToken at 0x02c06fb43f418e142666e4a80526d23cd2eae367
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NooToken at 0x06df8621e05cfbfcde583fa15f103962d51b21ed
 */
 pragma solidity ^0.4.18;
+
 
 /**
  * @title SafeMath
@@ -297,7 +298,7 @@ contract MintableToken is StandardToken, Ownable {
 
 contract NooToken is MintableToken {
 
-    string public constant name = "Grow&Mine Token";
+    string public constant name = "GMine Token";
 
     string public constant symbol = "GNM";
 
@@ -330,15 +331,15 @@ contract NooCrowdsale is Ownable {
     uint public restricted;
 
     function NooCrowdsale() public {
-        start = 1521471600; // 19.03.2018T15:00:00.000Z
+        start = 1523199600; // 08.04.2018T15:00:00.000Z
         period = 42;
         periodLimit = 75;
 
-        softcap = 666 ether; // ~ $300000
-        hardcap = 4444 ether; // ~ $2000000
-        rate = 5555555555555556; // ~ $2.5
-        minAmount = 111111111111111120; // ~ $50
-        restricted = 13; // 3% bounty + 10% zp
+        softcap = 500 ether;
+        hardcap = 1500 ether;
+        rate = 6250000000000000;
+        minAmount = 125000000000000000;
+        restricted = 13;
     }
 
     function() external payable {
@@ -352,13 +353,6 @@ contract NooCrowdsale is Ownable {
         mintAndTransfer(msg.sender, tokens + bonusTokens);
         balances[msg.sender] = balances[msg.sender].add(msg.value);
         balanceTotal = balanceTotal.add(msg.value);
-
-        if (msg.data.length == 20) {
-            address referer = bytesToAddress(bytes(msg.data));
-            require(referer != msg.sender && referer != address(0));
-            uint refererTokens = tokens.div(20);
-            mintAndTransfer(msg.sender, refererTokens);
-        }
     }
 
     function finishMinting() public onlyOwner saleFinished overSoftcap {
@@ -396,9 +390,11 @@ contract NooCrowdsale is Ownable {
     function calcBonusTokens(uint tokens) public view returns (uint) {
         uint delta = now - start;
         if (delta <= 7 days) {
-            return tokens.div(10);
+            return tokens.mul(3).div(10);
         } else if (delta <= 21 days) {
-            return tokens.div(20);
+            return tokens.mul(2).div(10);
+        } else if (delta <= 42 days) {
+            return tokens.div(10);
         }
         return 0;
     }
@@ -411,13 +407,6 @@ contract NooCrowdsale is Ownable {
     function mintAndTransfer(address receiver, uint amount) private {
         token.mint(this, amount);
         token.transfer(receiver, amount);
-    }
-
-    function bytesToAddress(bytes source) internal pure returns (address parsedReferer) {
-        assembly {
-            parsedReferer := mload(add(source, 0x14))
-        }
-        return parsedReferer;
     }
 
     modifier overSoftcap() {
