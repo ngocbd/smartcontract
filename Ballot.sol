@@ -1,65 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0x9C169d81420aAD7D8a0D6d9F295C3ba2C33575De
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0x2374ded147009a5cace104534ab86e5539e71271
 */
+pragma solidity ^0.4.0;
 contract Ballot {
-    struct Voter {
-        uint weight;
-        bool voted;
-        uint8 vote;
-        address delegate;
-    }
-    struct Proposal {
-        uint voteCount;
-    }
-    address chairperson;
-    mapping(address => Voter) voters;
-    Proposal[] proposals;
 
-    /// Create a new ballot with $(_numProposals) different proposals.
-    function Ballot(uint8 _numProposals) {
-        chairperson = msg.sender;
-        voters[chairperson].weight = 1;
-        proposals.length = _numProposals;
-    }
+/*
+fd
 
-    /// Give $(voter) the right to vote on this ballot.
-    /// May only be called by $(chairperson).
-    function giveRightToVote(address voter) {
-        if (msg.sender != chairperson || voters[voter].voted) return;
-        voters[voter].weight = 1;
-    }
+dfgfdgfd
 
-    /// Delegate your vote to the voter $(to).
-    function delegate(address to) {
-        Voter sender = voters[msg.sender]; // assigns reference
-        if (sender.voted) return;
-        while (voters[to].delegate != address(0) && voters[to].delegate != msg.sender)
-            to = voters[to].delegate;
-        if (to == msg.sender) return;
-        sender.voted = true;
-        sender.delegate = to;
-        Voter delegate = voters[to];
-        if (delegate.voted)
-            proposals[delegate.vote].voteCount += sender.weight;
-        else
-            delegate.weight += sender.weight;
-    }
-
-    /// Give a single vote to proposal $(proposal).
-    function vote(uint8 proposal) {
-        Voter sender = voters[msg.sender];
-        if (sender.voted || proposal >= proposals.length) return;
-        sender.voted = true;
-        sender.vote = proposal;
-        proposals[proposal].voteCount += sender.weight;
-    }
-
-    function winningProposal() constant returns (uint8 winningProposal) {
-        uint256 winningVoteCount = 0;
-        for (uint8 proposal = 0; proposal < proposals.length; proposal++)
-            if (proposals[proposal].voteCount > winningVoteCount) {
-                winningVoteCount = proposals[proposal].voteCount;
-                winningProposal = proposal;
-            }
-    }
+fdgthrhyrhry*/
+    
 }
