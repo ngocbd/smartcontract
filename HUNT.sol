@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUNT at 0xbc8645Af8Aed2dD77c04639d2F338f4E09B6ADCa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUNT at 0xa7D625031FA8f6B975CF6281eEaB974B2E8E2029
 */
 pragma solidity ^0.4.11;
 
@@ -297,7 +297,7 @@ contract HUNT is StandardToken, Owned {
 		Transfer(owner, 0x0 , _amount);
     }
     
-	function setCurs(uint8 _curs) onlyOwner {
+	function setCurs(uint _curs) onlyOwner {
         require(_curs > 0);
         curs = _curs;
     }
