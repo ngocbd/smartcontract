@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mythereum at 0xbd57cc26c0fd1b339c6725866399126366328352
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mythereum at 0x54d3ad23846643b93098915001ab274ea19e5622
 */
 pragma solidity ^0.4.21;
 
@@ -264,7 +264,7 @@ contract MythereumCardToken {
 
   function isEditionAvailable(uint8 _editionNumber) public view returns (bool);
   function cloneCard(address _owner, uint256 _tokenId) public returns (bool);
-  function mintRandomCards(
+  function mintEditionCards(
     address _owner,
     uint8 _editionNumber,
     uint8 _numCards
@@ -615,7 +615,7 @@ contract Mythereum is Manageable {
     edition.packPrice = edition.packPrice.plus(edition.packPriceIncrease);
 
     MythereumCardToken cardToken = MythereumCardToken(cardTokenAddress);
-    cardToken.mintRandomCards(recipient, editionNumber, edition.packSize);
+    cardToken.mintEditionCards(recipient, editionNumber, edition.packSize);
 
     CardsPurchased(editionNumber, edition.packSize, recipient);
   }
