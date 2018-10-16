@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x8a7f60fcfdbdf46de9d802381565670ec0e91ff1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xAE6E3C7160af3C1f524572E5b29C81E6Ff061D90
 */
 pragma solidity ^0.4.4;
 
@@ -43,7 +43,7 @@ contract Token {
 
 
 
-contract StandardToken is Token {
+contract UquidCoin is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -91,7 +91,7 @@ contract StandardToken is Token {
 
 
 //name this contract whatever you'd like
-contract ERC20Token is StandardToken {
+contract ERC20Token is UquidCoin {
 
     function () {
         //if ether is sent to this address, send it back.
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 1500000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1500000000000;                        // Update total supply (100000 for example)
-        name = "Zillionaire";                                   // Set the name for display purposes
-        decimals = 2;                            // Amount of decimals for display purposes
-        symbol = "ZLN";                               // Set the symbol for display purposes
+        balances[msg.sender] = 40000000000000000000000000;               
+        totalSupply = 40000000000000000000000000;                        
+        name = "Uquid Coin";                                  
+        decimals = 18;                            
+        symbol = "UQC";
     }
 
     /* Approves and then calls the receiving contract */
