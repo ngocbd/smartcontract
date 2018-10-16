@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PayBits at 0x379e391e3d2277b50ae2550fce2841f2f57ca008
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PayBits at 0xcdd0cdb09eea84a693e892cf02ee9fd246137585
 */
 pragma solidity ^0.4.16;
 
