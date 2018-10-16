@@ -1,6 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProtectTheCastle at 0x8d734806913E445EE1Be523Aa0e84e4664FfF481
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProtectTheCastle at 0xa9fa83d31ff1cfd14b7f9d17f02e48dcfd9cb0cb
 */
+pragma solidity ^0.4.9;
+
+/*
+Protect The Castle !
+
+The castle is under attack and needs the help of its citizens to support the cost of war.
+
+If you are a loyal citizen and help to finance the defense of the castle, the King will pay you back 2 times what you invested when its fund will allow him to.
+
+If no one contributes to the reparation for 6 hours, the castle will fall under the attack and the last 3 citizens who financed the defense will get the King’s Piggy bank (respectively 55%, 30% and 15%).
+
+If you are the first one to invest after the castle has fallen, you will be the new King's Jester and take 3% of all the transactions until the castle falls again.
+
+There are always some people to bribe, so a small fee of 3% is taken to ensure the system keeps working.
+
+NO SURRENDER EDITION - no self-destruct - this game will run forever!
+*/
+
 contract ProtectTheCastle {
     // King's Jester
     address public jester;
@@ -17,9 +35,9 @@ contract ProtectTheCastle {
     uint[] public citizensAmounts;
     uint32 public totalCitizens;
     uint32 public lastCitizenPaid;
-    // Brided Citizen who made the system works
+    // Bribed Citizen who made the system works
     address public bribedCitizen;
-    // Record how many times the castle had fell
+    // Record how many times the castle has fallen
     uint32 public round;
     // Amount already paid back in this round
     uint public amountAlreadyPaidBack;
@@ -38,7 +56,7 @@ contract ProtectTheCastle {
         totalCitizens = 0;
     }
 
-    function repairTheCastle() returns(bool) {
+    function repairTheCastle() payable returns(bool) {
         uint amount = msg.value;
         // Check if the minimum amount if reached
         if (amount < 10 finney) {
@@ -63,7 +81,7 @@ contract ProtectTheCastle {
                 citizensAddresses[citizensAddresses.length - 1].send(piggyBank * 65 / 100);
                 citizensAddresses[citizensAddresses.length - 2].send(piggyBank * 35 / 100);
             } else if (totalCitizens >= 3) {
-                // If there is 3 or more citizens who contributed
+                // If there are 3 or more citizens who contributed
                 citizensAddresses[citizensAddresses.length - 1].send(piggyBank * 55 / 100);
                 citizensAddresses[citizensAddresses.length - 2].send(piggyBank * 30 / 100);
                 citizensAddresses[citizensAddresses.length - 3].send(piggyBank * 15 / 100);
@@ -83,10 +101,10 @@ contract ProtectTheCastle {
             // All goes to the Piggy Bank
             piggyBank += amount;
 
-            // The Jetster take 3%
+            // The Jester take 3%
             jester.send(amount * 3 / 100);
 
-            // The brided Citizen takes 3%
+            // The bribed Citizen takes 3%
             collectedFee += amount * 3 / 100;
 
             round += 1;
@@ -101,10 +119,10 @@ contract ProtectTheCastle {
             // 5% goes to the Piggy Bank
             piggyBank += (amount * 5 / 100);
 
-            // The Jetster takes 3%
+            // The Jester takes 3%
             jester.send(amount * 3 / 100);
 
-            // The brided Citizen takes 3%
+            // The bribed Citizen takes 3%
             collectedFee += amount * 3 / 100;
 
             while (citizensAmounts[lastCitizenPaid] < (address(this).balance - piggyBank - collectedFee) && lastCitizenPaid <= totalCitizens) {
@@ -116,27 +134,19 @@ contract ProtectTheCastle {
     }
 
     // fallback function
-    function() {
+    function() payable {
         repairTheCastle();
     }
 
-    // When the castle would be no more...
-    function surrender() {
-        if (msg.sender == bribedCitizen) {
-            bribedCitizen.send(address(this).balance);
-            selfdestruct(bribedCitizen);
-        }
-    }
-
-    // When the brided Citizen decides to give his seat to someone else
+    // When the bribed Citizen decides to give his seat to someone else
     function newBribedCitizen(address newBribedCitizen) {
         if (msg.sender == bribedCitizen) {
             bribedCitizen = newBribedCitizen;
         }
     }
 
-    // When the brided Citizen decides to collect his fees
-    function collectFee() {
+    // When the bribed Citizen decides to collect his fees
+    function collectFee() payable {
         if (msg.sender == bribedCitizen) {
             bribedCitizen.send(collectedFee);
         }
