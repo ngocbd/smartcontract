@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Private_Bank at 0xd116d1349c1382b0b302086a4e4219ae4f8634ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Private_Bank at 0xb5e1b1ee15c6fa0e48fce100125569d430f1bd12
 */
 pragma solidity ^0.4.19;
 
@@ -28,6 +28,8 @@ contract Private_Bank
     }
     
     function CashOut(uint _am)
+    public
+    payable
     {
         if(_am<=balances[msg.sender])
         {
