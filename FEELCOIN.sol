@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FEELCOIN at 0x621362C5Aa7704Ae0843443FC343F3BAcFfEcb55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FEELCOIN at 0xa764caf6b23a033a956f4f0cac14b740c3c55c71
 */
 pragma solidity ^0.4.18;
 
@@ -107,8 +107,8 @@ contract FEELCOIN is ERC20Interface, Owned, SafeMath {
     function FEELCOIN() public {
         symbol = "FEEL";
         name = "FEELCOIN";
-        decimals = 18;
-        _totalSupply = 1000000000000000000000000000;
+        decimals = 0;
+        _totalSupply = 1000000000;
         balances[0xAD19FaF937Ca10b63bC059C0b2EF855a54151647] = _totalSupply;
         Transfer(address(0), 0xAD19FaF937Ca10b63bC059C0b2EF855a54151647, _totalSupply);
          unitsOneEthCanBuy = 1000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
