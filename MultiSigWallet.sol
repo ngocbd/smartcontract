@@ -1,46 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x05d86af519cf2017d82103c2c2dcc7db5becd641
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xfc5c6c8015962e7035f3bdc5fe7ec94bedc77833
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.10;
 
-contract ZipperMultisigFactory
-{
-    address zipper;
-    
-    function ZipperMultisigFactory(address _zipper) public
-    {
-        zipper = _zipper;
-    }
-
-    function createMultisig() public returns (address _multisig)
-    {
-        address[] memory addys = new address[](2);
-        addys[0] = zipper;
-        addys[1] = msg.sender;
-        
-        MultiSigWallet a = new MultiSigWallet(addys, 2);
-        
-        MultisigCreated(a, msg.sender, zipper);
-    }
-    
-    function changeZipper(address _newZipper) public
-    {
-        require(msg.sender == zipper);
-        zipper = _newZipper;
-    }
-
-    event MultisigCreated(address _multisig, address indexed _sender, address indexed _zipper);
-}
-
-// b7f01af8bd882501f6801eb1eea8b22aa2a4979e from https://github.com/gnosis/MultiSigWallet/blob/master/contracts/MultiSigWallet.sol
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
+    uint constant public MAX_OWNER_COUNT = 50;
 
-    /*
-     *  Events
-     */
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -51,14 +19,6 @@ contract MultiSigWallet {
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
-    /*
-     *  Constants
-     */
-    uint constant public MAX_OWNER_COUNT = 50;
-
-    /*
-     *  Storage
-     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -73,9 +33,6 @@ contract MultiSigWallet {
         bool executed;
     }
 
-    /*
-     *  Modifiers
-     */
     modifier onlyWallet() {
         if (msg.sender != address(this))
             throw;
@@ -195,7 +152,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param newOwner Address of new owner.
+    /// @param owner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -266,8 +223,6 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
