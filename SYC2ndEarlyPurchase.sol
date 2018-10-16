@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYC2ndEarlyPurchase at 0x3b575cf90f684f1441f32fb32a01b3613973958c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYC2ndEarlyPurchase at 0x1939f518ff3b24aa728e023ba4991e282f80b466
 */
 pragma solidity ^0.4.7;
 
@@ -17,7 +17,7 @@ contract SYC2ndEarlyPurchase {
     string public constant PURCHASE_AMOUNT_UNIT = 'ETH';    // Ether
     uint public constant WEI_MINIMUM_PURCHASE = 10 * 10 ** 18;
     uint public constant WEI_MAXIMUM_EARLYPURCHASE = 7000 * 10 ** 18;
-    uint public constant STARTING_TIME = 1504008000;
+    uint public constant STARTING_TIME = 1504526400;
     uint public constant ENDING_TIME = 1504785599;
     address public owner;
     EarlyPurchase[] public earlyPurchases;
@@ -46,7 +46,7 @@ contract SYC2ndEarlyPurchase {
     }
 
     modifier onlyEarlyPurchaseTerm() {
-        if (earlyPurchaseClosedAt > 0 && now >= STARTING_TIME && now <= ENDING_TIME) {
+        if (earlyPurchaseClosedAt > 0 || now < STARTING_TIME || now > ENDING_TIME) {
             throw;
         }
         _;
