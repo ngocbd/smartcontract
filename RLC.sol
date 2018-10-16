@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RLC at 0x7ebb6079e6d6c7cf8f58cdbd233ac3edaf1d9a60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RLC at 0x690287d8bf6b6dac5ed0e76a496fac18ba24200b
 */
-pragma solidity ^0.4.8;
-
 contract ERC20 {
   uint public totalSupply;
   function balanceOf(address who) constant returns (uint);
