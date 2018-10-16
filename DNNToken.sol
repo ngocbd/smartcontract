@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DNNToken at 0x34915679d8e7f6b5ec26c02ab18565af38e19fc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DNNToken at 0x9d9832d1beb29cc949d75d61415fd00279f84dc2
 */
 pragma solidity ^0.4.15;
 
@@ -153,6 +153,8 @@ contract StandardToken is ERC20, BasicToken {
   }
 }
 
+/// @title Token contract - Implements Standard Token Interface with DNN features.
+/// @author Dondrey Taylor - <dondrey@dnn.media>
 contract DNNToken is StandardToken {
 
     using SafeMath for uint256;
@@ -302,30 +304,12 @@ contract DNNToken is StandardToken {
         _;
     }
 
-    /////////////////////////////////////////////////////////////////////
-    // Checks to see if we are allowed to change the allocator address //
-    /////////////////////////////////////////////////////////////////////
-    modifier CanSetAllocator()
-    {
-       require (allocatorAddress == address(0x0) || tokensLocked == false);
-       _;
-    }
-
-    //////////////////////////////////////////////////////////////////////
-    // Checks to see if we are allowed to change the crowdfund contract //
-    //////////////////////////////////////////////////////////////////////
-    modifier CanSetCrowdfundContract()
-    {
-       require (crowdfundContract == address(0x0));
-       _;
-    }
-
     //////////////////////////////////////////////////
     // Checks if Allocator is performing the action //
     //////////////////////////////////////////////////
     modifier onlyAllocator()
     {
-        require (msg.sender == allocatorAddress && tokensLocked == false);
+        require (msg.sender == allocatorAddress);
         _;
     }
 
@@ -363,7 +347,6 @@ contract DNNToken is StandardToken {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     function changeCrowdfundContract(address newAddress)
         onlyCofounders
-        CanSetCrowdfundContract
     {
         crowdfundContract = newAddress;
     }
@@ -374,7 +357,6 @@ contract DNNToken is StandardToken {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     function changeAllocator(address newAddress)
         onlyCofounders
-        CanSetAllocator
     {
         allocatorAddress = newAddress;
     }
@@ -467,9 +449,9 @@ contract DNNToken is StandardToken {
     {
         // We'll use the following to determine whether the allocator, platform,
         // or the crowdfunding contract can allocate specified supply
-        bool canAllocatorPerform = msg.sender == allocatorAddress && tokensLocked == false;
+        bool canAllocatorPerform = msg.sender == allocatorAddress;
         bool canCrowdfundContractPerform = msg.sender == crowdfundContract;
-        bool canPlatformPerform = msg.sender == platform && tokensLocked == false;
+        bool canPlatformPerform = msg.sender == platform;
 
         // Early Backers
         if (canAllocatorPerform && allocationType == DNNSupplyAllocations.EarlyBackerSupplyAllocation && tokenCount <= earlyBackerSupplyRemaining) {
@@ -532,6 +514,9 @@ contract DNNToken is StandardToken {
             return false;
         }
 
+        // Transfer tokens
+        Transfer(address(this), beneficiary, tokenCount);
+
         // Credit tokens to the address specified
         balances[beneficiary] = balances[beneficiary].add(tokenCount);
 
@@ -590,14 +575,17 @@ contract DNNToken is StandardToken {
     ///////////////////////////////////////////////////////////////////////
     //  @des Contract constructor function sets initial token balances.  //
     ///////////////////////////////////////////////////////////////////////
-    function DNNToken(address founderA, address founderB, address platformAddress, uint256 vestingStartDate)
+    function DNNToken()
     {
+          // Start date
+          uint256 vestingStartDate = 1526072145;
+
           // Set cofounder addresses
-          cofounderA = founderA;
-          cofounderB = founderB;
+          cofounderA = 0x3Cf26a9FE33C219dB87c2e50572e50803eFb2981;
+          cofounderB = 0x9FFE2aD5D76954C7C25be0cEE30795279c4Cab9f;
 
           // Sets platform address
-          platform = platformAddress;
+          platform = address(this);
 
           // Set total supply - 1 Billion DNN Tokens = (1,000,000,000 * 10^18) atto-DNN
           // 1 DNN = 10^18 atto-DNN
