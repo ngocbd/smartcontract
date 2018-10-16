@@ -1,215 +1,87 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bank at 0xd9ec750a0aac025f0075413c68502ecf8a9ab64e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bank at 0x36770ff967bd05248b1c4c899ffb70caa3391b84
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.18;
 
-contract Owned
-{
-    address creator = msg.sender;
-    address owner01 = msg.sender;
-    address owner02;
-    address owner03;
-    
-    function
-    isCreator()
-    internal
-    returns (bool)
-    {
-       return(msg.sender == creator);
-    }
-    
-    function
-    isOwner()
-    internal
-    returns (bool)
-    {
-        return(msg.sender == owner01 || msg.sender == owner02 || msg.sender == owner03);
-    }
+// zeppelin-solidity: 1.5.0
 
-    event NewOwner(address indexed old, address indexed current);
-    
-    function
-    setOwner(uint owner, address _addr)
-    internal
-    {
-        if (address(0x0) != _addr)
-        {
-            if (isOwner() || isCreator())
-            {
-                if (0 == owner)
-                {
-                    NewOwner(owner01, _addr);
-                    owner01 = _addr;
-                }
-                else if (1 == owner)
-                {
-                    NewOwner(owner02, _addr);
-                    owner02 = _addr;
-                }
-                else {
-                    NewOwner(owner03, _addr);
-                    owner03 = _addr;
-                }
-            }
-        }
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
-    
-    function
-    setOwnerOne(address _new)
-    public
-    {
-        setOwner(0, _new);
-    }
-    
-    function
-    setOwnerTwo(address _new)
-    public
-    {
-        setOwner(1, _new);
-    }
-    
-    function
-    setOwnerThree(address _new)
-    public
-    {
-        setOwner(2, _new);
-    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Bank is Owned
-{
-    struct Depositor {
-        uint amount;
-        uint time;
-    }
+contract Bank {
+  using SafeMath for *;
 
-    event Deposit(address indexed depositor, uint amount);
-    
-    event Donation(address indexed donator, uint amount);
-    
-    event Withdrawal(address indexed to, uint amount);
-    
-    event DepositReturn(address indexed depositor, uint amount);
-    
-    address owner0l;
-    uint numDeposits;
-    uint releaseDate;
-    mapping (address => Depositor) public Deposits;
-    address[] public Depositors;
-    
-    function
-    initBank(uint daysUntilRelease)
-    public
-    {
-        numDeposits = 0;
-        owner0l = msg.sender;
-        releaseDate = now;
-        if (daysUntilRelease > 0 && daysUntilRelease < (1 years * 5))
-        {
-            releaseDate += daysUntilRelease * 1 days;
-        }
-        else
-        {
-            // default 1 day
-            releaseDate += 1 days;
-        }
-    }
+  uint public totalShares = 0;
+  uint public totalReleased = 0;
 
-    // Accept donations and deposits
-    function
-    ()
-    public
-    payable
-    {
-        if (msg.value > 0)
-        {
-            if (msg.value < 1 ether)
-                Donation(msg.sender, msg.value);
-            else
-                deposit();
-        }
-    }
-    
-    // Accept deposit and create Depositor record
-    function
-    deposit()
-    public
-    payable
-    returns (uint)
-    {
-        if (msg.value > 0)
-            addDeposit();
-        return getNumberOfDeposits();
-    }
-    
-    // Track deposits
-    function
-    addDeposit()
-    private
-    {
-        Depositors.push(msg.sender);
-        Deposits[msg.sender].amount = msg.value;
-        Deposits[msg.sender].time = now;
-        numDeposits++;
-        Deposit(msg.sender, msg.value);
-    }
-    
-    function
-    returnDeposit()
-    public
-    {
-        if (now > releaseDate)
-        {
-            if (Deposits[msg.sender].amount > 1) {
-                uint _wei = Deposits[msg.sender].amount;
-                Deposits[msg.sender].amount = 0;
-                msg.sender.send(_wei);
-                DepositReturn(msg.sender, _wei);
-            }
-        }
-    }
+  mapping(address => uint) public shares;
+  mapping(address => uint) public released;
+  address[] public payees;
 
-    // Depositor funds to be withdrawn after release period
-    function
-    withdrawDepositorFunds(address _to, uint _wei)
-    public
-    returns (bool)
-    {
-        if (_wei > 0)
-        {
-            if (isOwner() && Deposits[_to].amount > 0)
-            {
-                Withdrawal(_to, _wei);
-                return _to.send(_wei);
-            }
-        }
-    }
+  function Bank(address[] _payees, uint[] _shares) public payable {
+    require(_payees.length == _shares.length);
 
-    function
-    withdraw()
-    public
-    {
-        if (isCreator() && now >= releaseDate)
-        {
-            Withdrawal(creator, this.balance);
-            creator.send(this.balance);
-        }
+    for (uint i = 0; i < _payees.length; i++) {
+      addPayee(_payees[i], _shares[i]);
     }
+  }
 
-    function
-    getNumberOfDeposits()
-    public
-    constant
-    returns (uint)
-    {
-        return numDeposits;
-    }
+  function addPayee(address _payee, uint _shares) internal {
+    require(_payee != address(0));
+    require(_shares > 0);
+    require(shares[_payee] == 0);
 
-    function
-    kill()
-    public
-    {
-        if (isOwner() || isCreator())
-            selfdestruct(creator);
-    }
+    payees.push(_payee);
+    shares[_payee] = _shares;
+    totalShares = totalShares.add(_shares);
+  }
+
+  function claim() public {
+    address payee = msg.sender;
+
+    require(shares[payee] > 0);
+
+    uint totalReceived = this.balance.add(totalReleased);
+    uint payment = totalReceived.mul(shares[payee]).div(totalShares).sub(released[payee]);
+
+    require(payment != 0);
+    require(this.balance >= payment);
+
+    released[payee] = released[payee].add(payment);
+    totalReleased = totalReleased.add(payment);
+
+    payee.transfer(payment);
+  }
+
+  function () public payable {}
 }
