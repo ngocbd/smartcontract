@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0xb404cf613827b4d2bb2125e78492de825fad1eae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x6fbcf353cbdb10cafd500b26a979f2c999d4fefb
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -945,7 +945,7 @@ contract EthTranchePricing is PricingStrategy, Ownable {
 
     //  Modify price if more than 100Eth
     uint price = getCurrentPrice(weiRaised);
-    if (value > 100000000000000000000) {
+    if (value > 1000000000000000000) {
       if (trancheIndex == 0) {
         price = 2898550724637391;
       } else if (trancheIndex == 1) {
