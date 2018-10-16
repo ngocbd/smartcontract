@@ -1,10 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeusETH at 0xe46b5f1f3551bd3c6b29c38babc662b03d985c48
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeusETH at 0x2c7411ecd2110b7760627880f1860646a265c5df
 */
 pragma solidity 0.4.19;
 
+
 contract DeusETH {
     using SafeMath for uint256;
+
+    enum Stages {
+        Create,
+        InitForMigrate,
+        InitForAll,
+        Start,
+        Finish
+    }
+
+    // This is the current stage.
+    Stages public stage;
 
     struct Citizen {
         uint8 state; // 1 - living tokens, 0 - dead tokens
@@ -20,7 +32,7 @@ contract DeusETH {
     uint256 public timeWithoutUpdate = 2592000;
 
     //token price
-    uint256 public rate = 0.3 ether;
+    uint256 public rate = 0;
 
     // amount of raised money in wei for FundsKeeper
     uint256 public weiRaised;
@@ -30,11 +42,13 @@ contract DeusETH {
 
     //address of Episode Manager
     address public episodeManager;
-    bool public managerSet = false;
 
     //address of StockExchange
-    address stock;
+    address public stock;
     bool public stockSet = false;
+
+    address public migrate;
+    bool public migrateSet = false;
 
     address public owner;
 
@@ -69,6 +83,7 @@ contract DeusETH {
         owner = msg.sender;
         fundsKeeper = _fundsKeeper;
         timestamp = now;
+        stage = Stages.Create;
     }
 
     // fallback function not use to buy token
@@ -76,16 +91,49 @@ contract DeusETH {
         revert();
     }
 
-    function setEpisodeManager(address _episodeManager) public onlyOwner {
-        require(!managerSet);
+    function setEpisodeManager(address _episodeManager) public onlyOwner returns (bool) {
         episodeManager = _episodeManager;
-        managerSet = true;
+        return true;
     }
 
-    function setStock(address _stock) public onlyOwner {
+    function setStock(address _stock) public onlyOwner returns (bool) {
         require(!stockSet);
+        require(_stock != address(0));
         stock = _stock;
         stockSet = true;
+        return true;
+    }
+
+    //For test only
+    function changeStock(address _stock) public onlyOwner {
+        stock = _stock;
+    }
+
+    function setMigrate(address _migrate) public onlyOwner {
+        require(!migrateSet);
+        require(_migrate != address(0));
+        migrate = _migrate;
+        migrateSet = true;
+    }
+
+    //For test only
+    function changeMigrate(address _migrate) public onlyOwner {
+        migrate = _migrate;
+    }
+
+    //For test only
+    function changeFundsKeeper(address _fundsKeeper) public onlyOwner {
+        fundsKeeper = _fundsKeeper;
+    }
+
+    //For test only
+    function changeTimeWithoutUpdate(uint256 _timeWithoutUpdate) public onlyOwner {
+        timeWithoutUpdate = _timeWithoutUpdate;
+    }
+
+    //For test only
+    function changeRate(uint256 _rate) public onlyOwner {
+        rate = _rate;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -97,7 +145,15 @@ contract DeusETH {
     }
 
     // low level token purchase function
-    function buyTokens(uint256 _id) public payable {
+    function buyTokens(uint256 _id) public payable returns (bool) {
+        if (stage == Stages.Create) {
+            revert();
+        }
+
+        if (stage == Stages.InitForMigrate) {
+            require(msg.sender == migrate);
+        }
+
         require(!started);
         require(!gameOver);
         require(!gameOverByUser);
@@ -119,6 +175,8 @@ contract DeusETH {
         TokenState(_id, 1);
         TokenBranch(_id, 1);
         forwardFunds();
+
+        return true;
     }
 
     function changeState(uint256 _id, uint8 _state) public onlyEpisodeManager returns (bool) {
@@ -142,8 +200,6 @@ contract DeusETH {
     }
 
     function changeHolder(uint256 _id, address _newholder) public returns (bool) {
-        require(!gameOver);
-        require(!gameOverByUser);
         require(_id > 0 && _id <= cap);
         require((citizens[_id].holder == msg.sender) || (stock == msg.sender));
         require(_newholder != address(0));
@@ -174,7 +230,7 @@ contract DeusETH {
     }
 
     function userFinalize() public {
-        require(now > (timestamp + timeWithoutUpdate));
+        require(now >= (timestamp + timeWithoutUpdate));
         require(!gameOver);
         gameOverByUser = true;
     }
@@ -203,6 +259,15 @@ contract DeusETH {
         return citizens[_id].holder;
     }
 
+    function getBranch(uint256 _id) public view returns (uint256) {
+        require(_id > 0 && _id <= cap);
+        return citizens[_id].branch;
+    }
+
+    function getStage() public view returns (uint256) {
+        return uint(stage);
+    }
+
     function getNowTokenPrice() public view returns (uint256) {
         return rate;
     }
@@ -219,6 +284,20 @@ contract DeusETH {
         }
 
         return (a, b, c);
+    }
+
+    //for test only
+    function deleteCitizen(uint256 _id) public onlyOwner returns (uint256) {
+        require(_id > 0 && _id <= cap);
+        require(citizens[_id].isExist == true);
+        delete citizens[_id];
+        return _id;
+    }
+
+    function nextStage() public onlyOwner returns (bool) {
+        require(stage < Stages.Finish);
+        stage = Stages(uint(stage) + 1);
+        return true;
     }
 
     // send ether to the fund collection wallet
