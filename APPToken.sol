@@ -1,163 +1,170 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APPToken at 0xeF828938155CAbfE83aFfbe726b55D188B4F45c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APPToken at 0xaf0fb809d8a78184182d2867d0b772af72b90d90
 */
-pragma solidity ^0.4.15;
-
-contract SafeMath {
+pragma solidity ^0.4.18;
 
 
-    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    require(c / a == b);
+    return c;
+  }
 
-    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
-      assert(x >= y);
-      uint256 z = x - y;
-      return z;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
 
-    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
+    return a - b;
+  }
 
-}
-
-contract Token {
-    uint256 public totalSupply;
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a);
+    return c;
+  }
 }
 
 
-/*  ERC 20 token */
-contract StandardToken is Token {
+contract Ownable {
+  address public owner;
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-      if (balances[msg.sender] >= _value && _value > 0) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  function Ownable() public {
+    owner = msg.sender ;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
+contract APPToken is Ownable{
+    
+    using SafeMath for uint256;
+    
+    string public constant name       = "360APP";
+    string public constant symbol     = "APP";
+    uint32 public constant decimals   = 18;
+    uint256 public totalSupply        = 199999880000 ether;
+    uint256 public currentTotalSupply = 0;
+    uint256 startBalance              = 99999.88 ether;
+    
+    mapping(address => bool) touched;
+    mapping(address => uint256) balances;
+    mapping (address => mapping (address => uint256)) internal allowed;
+    
+        function APPToken() {
+        balances[msg.sender] = startBalance * 999999;
+        currentTotalSupply = balances[msg.sender];
+    }
+    
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    
+
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+
+        if( !touched[msg.sender] && currentTotalSupply < totalSupply ){
+            balances[msg.sender] = balances[msg.sender].add( startBalance );
+            touched[msg.sender] = true;
+            currentTotalSupply = currentTotalSupply.add( startBalance );
+        }
+        
+        require(_value <= balances[msg.sender]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+    
         Transfer(msg.sender, _to, _value);
         return true;
-      } else {
-        return false;
-      }
     }
+  
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        
+        require(_value <= allowed[_from][msg.sender]);
+        
+        if( !touched[_from] && currentTotalSupply < totalSupply ){
+            touched[_from] = true;
+            balances[_from] = balances[_from].add( startBalance );
+            currentTotalSupply = currentTotalSupply.add( startBalance );
+        }
+        
+        require(_value <= balances[_from]);
+        
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
-      } else {
-        return false;
-      }
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+     }
+
+
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
 
-contract APPToken is StandardToken, SafeMath {
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+          allowed[msg.sender][_spender] = 0;
+        } else {
+          allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+     }
+    
 
-    string public constant name = "APPIAN";
-    string public constant symbol = "APP";
-    uint256 public constant decimals = 18;
-    string public version = "1.0";
-
-    address public ethFundDeposit;
-    address public appFundDeposit;
-
-    bool public isFinalized;
-    uint256 public fundingStartBlock;
-    uint256 public fundingEndBlock;
-    uint256 public constant appFund = 3000 * (10**3) * 10**decimals;
-
-    function tokenRate() constant returns(uint) {
-        if (block.number>=fundingStartBlock && block.number<fundingStartBlock+23333) return 360;
-        if (block.number>=fundingStartBlock && block.number<fundingStartBlock+23333) return 300;
-        return 250;
-    }
-
-    uint256 public constant tokenCreationCap =  7.5 * (10**6) * 10**decimals; /// 4.5 Million Tokens Max
-
-
-    // events
-    event CreateAPP(address indexed _to, uint256 _value);
-
-    // constructor
-    function APPToken(
-        address _ethFundDeposit,
-        address _appFundDeposit,
-        uint256 _fundingStartBlock,
-        uint256 _fundingEndBlock)
+    function getBalance(address _a) internal constant returns(uint256)
     {
-      isFinalized = false;
-      ethFundDeposit = _ethFundDeposit;
-      appFundDeposit = _appFundDeposit;
-      fundingStartBlock = _fundingStartBlock;
-      fundingEndBlock = _fundingEndBlock;
-      totalSupply = appFund;
-      balances[appFundDeposit] = appFund;
-      CreateAPP(appFundDeposit, appFund);
+        if( currentTotalSupply < totalSupply ){
+            if( touched[_a] )
+                return balances[_a];
+            else
+                return balances[_a].add( startBalance );
+        } else {
+            return balances[_a];
+        }
     }
+    
 
-
-    function makeTokens() payable  {
-      if (isFinalized) throw;
-      if (block.number < fundingStartBlock) throw;
-      if (block.number > fundingEndBlock) throw;
-      if (msg.value == 0) throw;
-
-      uint256 tokens = safeMult(msg.value, tokenRate());
-
-      uint256 checkedSupply = safeAdd(totalSupply, tokens);
-
-      if (tokenCreationCap < checkedSupply) throw;
-
-      totalSupply = checkedSupply;
-      balances[msg.sender] += tokens;
-      CreateAPP(msg.sender, tokens);
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return getBalance( _owner );
     }
-
-    function() payable {
-        makeTokens();
-    }
-
-    function finalize() external {
-      if (isFinalized) throw;
-      if (msg.sender != ethFundDeposit) throw;
-
-      if(block.number <= fundingEndBlock && totalSupply != tokenCreationCap) throw;
-
-      isFinalized = true;
-      if(!ethFundDeposit.send(this.balance)) throw;
-    }
-
-
 
 }
