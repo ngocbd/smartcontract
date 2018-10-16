@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NelsonChenTestCoin at 0x5111e36fa84f923bbbc218061de525bd811b0044
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NelsonChenTestCoin at 0x1ce0916e9bbec3958836ffcecf822495bc08596d
 */
 pragma solidity ^0.4.4;
 
@@ -117,10 +117,10 @@ contract ERC20Token is NelsonChenTestCoin {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function NelsonChenTestToken(
+    function ERC20Token(
         ) {
-        balances[msg.sender] = 10000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000;                        // Update total supply (100000 for example)
         name = "Nelson Chen TestCoin";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
         symbol = "NCTC";                               // Set the symbol for display purposes
