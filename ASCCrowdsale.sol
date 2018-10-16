@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ASCCrowdsale at 0x92b7b3a88ea73f2339141034cbf971bcbcc54ee4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ASCCrowdsale at 0x3a5de2ba9b13f07d7624b9d24d7f42cd8fa97c06
 */
 pragma solidity ^0.4.16;
 
@@ -62,8 +62,9 @@ contract ASCCrowdsale {
         require(msg.value > 0);
         require(now > startDate);
         require(now < endDate);
-        uint amount = msg.value * price;
-        uint amount10 = amount / 10;
+        uint amount = msg.value / 1 finney;
+	    amount *= price / 10;
+	    uint amount10 = amount / 10;
 
         // period 1 : 60%
         if(now > startDate && now < 1516230000) {
