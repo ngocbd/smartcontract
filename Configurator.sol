@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xd9d9f4fbc2cc3c86494e5254ab43a5de03e8500b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x275194ed61cff8e6ab6f4a5a6ebe63f6de882276
 */
 pragma solidity 0.4.18;
 
@@ -299,7 +299,7 @@ contract MintableToken is StandardToken, Ownable {
 
 contract WBBToken is MintableToken {
 
-  string public constant name = "WIBCOIN";
+  string public constant name = "WBB";
 
   string public constant symbol = "WBB";
 
@@ -749,10 +749,10 @@ contract Configurator is Ownable {
 
     mainsale = new Mainsale();
 
-    mainsale.addMilestone(7, 21);
-    mainsale.addMilestone(7, 14);
-    mainsale.addMilestone(7, 8);
-    mainsale.addMilestone(7, 3);
+    mainsale.addMilestone(7, 20);
+    mainsale.addMilestone(7, 15);
+    mainsale.addMilestone(7, 10);
+    mainsale.addMilestone(7, 0);
     mainsale.setPrice(125000000000000000000);
     mainsale.setWallet(0xa00d43EeaFa8BD5f18Ee9b167b9B41a61B817e14);
     mainsale.setFoundersTokensWallet(0xa00d43EeaFa8BD5f18Ee9b167b9B41a61B817e14);
@@ -780,7 +780,7 @@ contract Configurator is Ownable {
      sale.addValueBonus(40000000000000000000, 25);
      sale.setReferalsMinInvestLimit(1000000000000000000);
      sale.setRefererPercent(5);
-     sale.setMinInvestedLimit(10000000000000000);
+     sale.setMinInvestedLimit(100000000000000000);
      sale.setToken(_token);
   }
 
