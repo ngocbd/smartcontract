@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0x203dad4c2af33c0ff1b60b4579cf956a60a6cb23
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0xab342fd5c681a6553cce46a7d2021493d4fa14ce
 */
 pragma solidity ^0.4.18;
 
@@ -157,15 +157,17 @@ contract ListingsERC20 is Ownable {
         uint256 sale = price.mul(amount);
         uint256 allowance = listing.allowance;
         require(now <= listing.dateEnds);
-        require(allowance - sold[listingId] > amount);
-        require(allowance - amount > 0);
-        require(getBalance(contractAddress, seller) >= allowance);
-        require(getAllowance(contractAddress, seller, this) <= allowance);
+        //make sure there are still enough to sell from this listing
+        require(allowance - sold[listingId] >= amount);
+        //make sure that the seller still has that amount to sell
+        require(getBalance(contractAddress, seller) >= amount);
+        //make sure that the seller still will allow that amount to be sold
+        require(getAllowance(contractAddress, seller, this) >= amount);
         require(msg.value == sale);
         ERC20 tokenContract = ERC20(contractAddress);
         require(tokenContract.transferFrom(seller, msg.sender, amount));
         seller.transfer(sale - (sale.mul(ownerPercentage).div(10000)));
-        sold[listingId] = allowance.sub(amount);
+        sold[listingId] = sold[listingId].add(amount);
         ListingBought(listingId, contractAddress, price, amount, now, msg.sender);
     }
 
