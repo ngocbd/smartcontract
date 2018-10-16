@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockchainCutiesPresale at 0xd37f29d1cd9f379b3f9363453725ed971190aeca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockchainCutiesPresale at 0x2b2a506ebfa319cbf5b25b688c70304170b5bff0
 */
 pragma solidity ^0.4.20;
 
@@ -94,49 +94,35 @@ contract Pausable is Ownable {
 /// @title BlockchainCuties Presale
 contract BlockchainCutiesPresale is Pausable
 {
-	struct Purchase
+	mapping (uint256 => address) public ownerOf;
+	mapping (uint256 => uint256) public prices;
+
+	event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+
+	function addCutie(uint40 id, uint256 price) public onlyOwner
 	{
-		address owner;
-		uint32 cutieKind;
-	}
-	Purchase[] public purchases;
-
-	mapping (uint32 => uint256) public prices;
-	mapping (uint32 => uint256) public leftCount;
-
-	event Bid(address indexed owner, uint32 indexed cutieKind);
-
-	function addCutie(uint32 id, uint256 price, uint256 count) public onlyOwner
-	{
+		require(ownerOf[id] == address(0));
 		prices[id] = price;
-		leftCount[id] = count;
 	}
 
-	function isAvailable(uint32 cutieKind) public view returns (bool)
+	function isAvailable(uint40 id) public view returns (bool)
 	{
-		return leftCount[cutieKind] > 0;
+		return ownerOf[id] == address(0) && prices[id] > 0;
 	}
 
-	function getPrice(uint32 cutieKind) public view returns (uint256 price, uint256 left)
+	function getPrice(uint40 id) public view returns (uint256 price, bool available)
 	{
-		price = prices[cutieKind];
-		left = leftCount[cutieKind];
+		price = prices[id];
+		available = isAvailable(id);
 	}
 
-	function bid(uint32 cutieKind) public payable whenNotPaused
+	function bid(uint40 id) public payable
 	{
-		require(isAvailable(cutieKind));
-		require(prices[cutieKind] <= msg.value);
+		require(isAvailable(id));
+		require(prices[id] <= msg.value);
 
-		purchases.push(Purchase(msg.sender, cutieKind));
-		leftCount[cutieKind]--;
-
-		emit Bid(msg.sender, cutieKind);
-	}
-
-	function purchasesCount() public view returns (uint256)
-	{
-		return purchases.length;
+		ownerOf[id] = msg.sender;
+		emit Transfer(0, msg.sender, id);
 	}
 
     function destroyContract() public onlyOwner {
