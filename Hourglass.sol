@@ -1,22 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x34ba9c7402e1df11709c7983008b5a49d59e963f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x7b6c511a94d35b9cf9979b727335c9798edb5c64
 */
 pragma solidity ^0.4.20;
 
 /*
-* Team JUST presents..
-* ====================================*
-*  _____   ______          ___        *
-* |  __ \ / __ \ \        / / |       *
-* | |__) | |  | \ \  /\  / /| |       *
-* |  ___/| |  | |\ \/  \/ / | |       *
-* | |    | |__| | \  /\  /  | |____   *
-* |_|     \____/   \/  \/   |______|  *
-* ====================================*
+* Welcome to Power of HODL (POHD) pohd.io ..
+* ==========================*
+*  ____   ___  _   _ ____   *
+* |  _ \ / _ \| | | |  _ \  *
+* | |_) | | | | |_| | | | | *
+* |  __/| |_| |  _  | |_| | *
+* |_|    \___/|_| |_|____/  *
+*                           *
+* ==========================*
 * -> What?
-* This source code is copy of Proof of Weak Hands (POWH3D)
-* Only difference is that, you will receive 20% dividends.
-* Call us copycats coz we love cats :)
+* This source code is copy of Proof of Weak Legs (POWL) which is copy of POWH3D
+* Only difference is that, you will receive 25% dividends.
 */
 
 contract Hourglass {
@@ -121,21 +120,21 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "POWL";
-    string public symbol = "POWL";
+    string public name = "POHD";
+    string public symbol = "POHD";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 20;
+    uint8 constant internal dividendFee_ = 2;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 100e18;
+    uint256 public stakingRequirement = 5e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 20 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 10 ether;
+    uint256 constant internal ambassadorQuota_ = 10 ether;
     
     
     
@@ -154,7 +153,7 @@ contract Hourglass {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
@@ -168,50 +167,24 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0x909b33773fe2c245e253e4d2403e3edd353517c30bc1a85b98d78b392e5fd2c1] = true;
+        administrators[0x235910f4682cfe7250004430a4ffb5ac78f5217e1f6a4bf99c937edf757c3330] = true;
         
         // add the ambassadors here.
-        // rackoo - lead solidity dev & lead web dev. 
-        ambassadors_[0xbe3569068562218c792cf25b98dbf1418aff2455] = true;
+        // One lonely developer 
+        ambassadors_[0x71f35825a3B1528859dFa1A64b24242BC0d12990] = true;
         
-        // noncy - Aunt responsible for feeding us.
-        ambassadors_[0x17b88dc23dacf6a905356a342a0d88f055a52f07] = true;
+        // Backup Eth address
+       
+        ambassadors_[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = true;
+         
+        ambassadors_[0x448D9Ae89DF160392Dd0DD5dda66952999390D50] = true;
         
-        //tipso - ctrl+c and ctrl+v expert
-        ambassadors_[0xda335f08bec7d84018628c4c9e18c7ef076d8c30] = true;
-        
-        //powl chat - chat expert
-        ambassadors_[0x99d63938007553c3ec9ce032cd94c3655360c197] = true;
-        
-        //pipper - shiller
-        ambassadors_[0x3595072a72390aa733f9389d61e384b89122fff6] = true;
-        
-        //vai - Solidity newbie
-        ambassadors_[0x575850eb0bad2ef3d153d60b6e768c7648c4daeb] = true;
-        
-        //sudpe - Developer
-        ambassadors_[0x80622cb543e2ec10bf210756b0f5fa819a945409] = true; //ho
+    
+         
+         
         
         
-        //private dudes
-        ambassadors_[0x8cba9adeb6db06980d9efa38ccf8c50ec1a44335] = true; //ml
-        ambassadors_[0x8c77aab3bf3b55786cb168223b66fbcac1add480] = true; //of
-        ambassadors_[0x54c7cd8969b8e64be047a9808e417e43e7336f00] = true; //kd
-        ambassadors_[0xe9d3a8cd1a7738c52ea1dc5705b4a3cc7132a227] = true; //rr
-        ambassadors_[0x6ca6ef7be51b9504fdcd98ef11908a41d9555dc9] = true; //ms
-        ambassadors_[0x1af7a66440af07e8c31526f5b921e480792f3c5f] = true; //ol
-        ambassadors_[0x798ce730e70f26624924011e1fac8a821d0ff0e7] = true; //we
-        ambassadors_[0x059d0f67c2d4c18b09c2b91ff13a4648a19d68a2] = true; //nb
-        ambassadors_[0x575850eb0bad2ef3d153d60b6e768c7648c4daeb] = true; //ho
-        ambassadors_[0xe3de1731a6d018e2dcd0ad233c870c4aac8e0d54] = true; //pm
-        ambassadors_[0x49b2bf937ca3f7029e2b1b1aa8445c8497da6464] = true; //tp
-        ambassadors_[0xc99868aaa529ebc4c2d7f6e97efc0d883ddbbeec] = true; //sr
-        ambassadors_[0x558d94edc943e0b4dd75001bc91750711e5c8239] = true; //lj
-        ambassadors_[0xd87dd0cd32e1076c52d87175da74a98ece6794a0] = true; //mh
-        ambassadors_[0xde24622f20c56cbf1a3ab75d078ebe42da7ed7b9] = true; //kb
-        ambassadors_[0x65d24fffaeb0b49a5bfbaf0ad7c180d61d012312] = true; //ta
-        
-        
+     
 
     }
     
