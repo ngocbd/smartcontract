@@ -1,88 +1,74 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reseller at 0x6238f8b237d81e0a37d32c5765008b51338a5d3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reseller at 0xc377b44fa203c7aa62c510f022f253b2e3b5258c
 */
 pragma solidity ^0.4.11;
 
 /*
 
-TenX Reseller
+Status Reseller
 ========================
 
-Resells TenX tokens from the crowdsale before transfers are enabled.
-Author: /u/Cintix
+Resells Status tokens from the crowdsale before transfers are enabled.
+Original Author: /u/Cintix
 
 */
 
 // ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
-// Well, almost.  PAY tokens throw on transfer failure instead of returning false.
 contract ERC20 {
-  function transfer(address _to, uint _value);
-  function balanceOf(address _owner) constant returns (uint balance);
-}
-
-// Interface to TenX ICO Contract
-contract MainSale {
-  function createTokens(address recipient) payable;
+  function transfer(address _to, uint256 _value) returns (bool success);
+  function balanceOf(address _owner) constant returns (uint256 balance);
 }
 
 contract Reseller {
-  // Store the amount of PAY claimed by each account.
-  mapping (address => uint256) public pay_claimed;
-  // Total claimed PAY of all accounts.
-  uint256 public total_pay_claimed;
+  // Store the amount of SNT claimed by each account.
+  mapping (address => uint256) public snt_claimed;
+  // Total claimed SNT of all accounts.
+  uint256 public total_snt_claimed;
   
-  // The TenX Token Sale address.
-  MainSale public sale = MainSale(0xd43D09Ec1bC5e57C8F3D0c64020d403b04c7f783);
-  // TenX Token (PAY) Contract address.
-  ERC20 public token = ERC20(0xB97048628DB6B661D4C2aA833e95Dbe1A905B280);
+  // Status Network Token (SNT) Contract address.
+  ERC20 public token = ERC20(0x744d70FDBE2Ba4CF95131626614a1763DF805B9E);
   // The developer address.
-  address developer = 0x4e6A1c57CdBfd97e8efe831f8f4418b1F2A09e6e;
-
-  // Buys PAY for the contract with user funds.
-  function buy() payable {
-    // Transfer received funds to the TenX crowdsale contract to buy tokens.
-    sale.createTokens.value(msg.value)(address(this));
-  }
+  address developer = 0xace4F30A99c28511BBe000c68571e0d175c1718f;
   
-  // Withdraws PAY claimed by the user.
+  // Withdraws SNT claimed by the user.
   function withdraw() {
-    // Store the user's amount of claimed PAY as the amount of PAY to withdraw.
-    uint256 pay_to_withdraw = pay_claimed[msg.sender];
-    // Update the user's amount of claimed PAY first to prevent recursive call.
-    pay_claimed[msg.sender] = 0;
-    // Update the total amount of claimed PAY.
-    total_pay_claimed -= pay_to_withdraw;
-    // Send the user their PAY.  Throws on failure to prevent loss of funds.
-    token.transfer(msg.sender, pay_to_withdraw);
+    // Store the user's amount of claimed SNT as the amount of SNT to withdraw.
+    uint256 snt_to_withdraw = snt_claimed[msg.sender];
+    // Update the user's amount of claimed SNT first to prevent recursive call.
+    snt_claimed[msg.sender] = 0;
+    // Update the total amount of claimed SNT.
+    total_snt_claimed -= snt_to_withdraw;
+    // Send the user their SNT.  Throws on failure to prevent loss of funds.
+    if(!token.transfer(msg.sender, snt_to_withdraw)) throw;
   }
   
-  // Claims PAY at a price determined by the block number.
+  // Claims SNT at a price determined by the block number.
   function claim() payable {
     // Verify ICO is over.
-    if(block.number < 3930000) throw;
-    // Calculate current sale price (PAY per ETH) based on block number.
-    uint256 pay_per_eth = (block.number - 3930000) / 10;
-    // Calculate amount of PAY user can purchase.
-    uint256 pay_to_claim = pay_per_eth * msg.value;
-    // Retrieve current PAY balance of contract.
-    uint256 contract_pay_balance = token.balanceOf(address(this));
-    // Verify the contract has enough remaining unclaimed PAY.
-    if((contract_pay_balance - total_pay_claimed) < pay_to_claim) throw;
-    // Update the amount of PAY claimed by the user.
-    pay_claimed[msg.sender] += pay_to_claim;
-    // Update the total amount of PAY claimed by all users.
-    total_pay_claimed += pay_to_claim;
+    if(block.number < 3921016) throw;
+    // Calculate current sale price (SNT per ETH) based on block number.
+    uint256 snt_per_eth = (block.number - 3921016) * 2;
+    // Calculate amount of SNT user can purchase.
+    uint256 snt_to_claim = snt_per_eth * msg.value;
+    // Retrieve current SNT balance of contract.
+    uint256 contract_snt_balance = token.balanceOf(address(this));
+    // Verify the contract has enough remaining unclaimed SNT.
+    if((contract_snt_balance - total_snt_claimed) < snt_to_claim) throw;
+    // Update the amount of SNT claimed by the user.
+    snt_claimed[msg.sender] += snt_to_claim;
+    // Update the total amount of SNT claimed by all users.
+    total_snt_claimed += snt_to_claim;
     // Send the funds to the developer instead of leaving them in the contract.
     developer.transfer(msg.value);
   }
   
   // Default function.  Called when a user sends ETH to the contract.
   function () payable {
-    // If the user sent a 0 ETH transaction, withdraw their PAY.
+    // If the user sent a 0 ETH transaction, withdraw their SNT.
     if(msg.value == 0) {
       withdraw();
     }
-    // If the user sent ETH, claim PAY with it.
+    // If the user sent ETH, claim SNT with it.
     else {
       claim();
     }
