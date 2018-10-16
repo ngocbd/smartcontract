@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cthulooo at 0xad43e9372590b2b1c2414f250c0b6d55382ba272
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cthulooo at 0x19516e7e6478f8ff67de5d15960e0fae60d8ad10
 */
 pragma solidity ^0.4.19;
 
@@ -15,7 +15,7 @@ contract Cthulooo {
     uint public constant MIN_BID = 0.0001 ether; 
     
     // Countdown duration
-    uint public constant DURATION = 2 hours;
+    uint public constant DURATION = 6 hours;
     
     //////////////////
     
