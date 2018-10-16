@@ -1,241 +1,468 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdfunding at 0x20d42F2e99A421147AcF198D775395cAc2E8b03d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdfunding at 0x399a40838258af0836cad506cc58bf7a40061ee0
 */
-//pragma solidity ^0.3.6;
-contract Token {
-	function balanceOf(address user) constant returns (uint256 balance);
-	function transfer(address receiver, uint amount) returns(bool);
+pragma solidity ^0.4.4;
+
+/**
+ * @title Contract for object that have an owner
+ */
+contract Owned {
+    /**
+     * Contract owner address
+     */
+    address public owner;
+
+    /**
+     * @dev Delegate contract to another person
+     * @param _owner New owner address 
+     */
+    function setOwner(address _owner) onlyOwner
+    { owner = _owner; }
+
+    /**
+     * @dev Owner check modifier
+     */
+    modifier onlyOwner { if (msg.sender != owner) throw; _; }
 }
 
-// A Sub crowdfunding contract. Its only purpose is to redirect ether it receives to the 
-// main crowdfunding contract. This mecanism is usefull to know the sponsor to
-// reward for an indirect donation. You can't give for someone else when you give through
-// these contracts
-contract AltCrowdfunding {
-	
-	Crowdfunding mainCf ;                                       // Referenre to the main crowdfunding contract
-	
-	function AltCrowdfunding(address cf){						// Construct the altContract with a reference to the main one
-		mainCf = Crowdfunding(cf);
-	}
-	
-	function(){
-		mainCf.giveFor.value(msg.value)(msg.sender);			// Relay Ether sent to the main crowndfunding contract
-	}
-	
+/**
+ * @title Common pattern for destroyable contracts 
+ */
+contract Destroyable {
+    address public hammer;
+
+    /**
+     * @dev Hammer setter
+     * @param _hammer New hammer address
+     */
+    function setHammer(address _hammer) onlyHammer
+    { hammer = _hammer; }
+
+    /**
+     * @dev Destroy contract and scrub a data
+     * @notice Only hammer can call it 
+     */
+    function destroy() onlyHammer
+    { suicide(msg.sender); }
+
+    /**
+     * @dev Hammer check modifier
+     */
+    modifier onlyHammer { if (msg.sender != hammer) throw; _; }
 }
 
-contract Crowdfunding {
-
-	struct Backer {
-		uint weiGiven;										// Amount of Ether given
-		uint ungivenNxc ;                                 	// (pending) If the first goal of the crowdfunding is not reached yet the NxC are stored here
-	}
-	
-	struct Sponsor {
-	    uint nxcDirected;                                   // How much milli Nxc this sponsor sold for us
-	    uint earnedNexium;                                  // How much milli Nxc this sponsor earned by solding Nexiums for us
-	    address sponsorAddress;                             // Where Nexiums earned by a sponsor are sent
-	    uint sponsorBonus;
-	    uint backerBonus;
-	}
-	
-    //Every public variable can be read by everyone from the blockchain
-	
-	Token 	public nexium;                                  // Nexium contract reference
-	address public owner;					               	// Contract admin (beyond the void)
-	address public beyond;					            	// Address that will receive ether when the first step is be reached
-	address public bitCrystalEscrow;   						// Our escrow for Bitcrystals (ie EverdreamSoft)
-	uint 	public startingEtherValue;						// How much milli Nxc are sent by ether
-	uint 	public stepEtherValue;					        // For every stage of the crowdfunding, the number of Nexium sent by ether is decreased by this number
-	uint    public collectedEth;                            // Collected ether in wei
-	uint 	public nxcSold;                                 // How much milli Nxc were sold 
-	uint 	public perStageNxc;                             // How much milli Nxc we much sell for each stage
-	uint 	public nxcPerBcy;                         		// How much milli Nxc we give for each Bitcrystal
-    uint 	public collectedBcy;                            // Collected Bitcrystals
-	uint 	public minInvest;				            	// Minimum to invest (in wei)
-	uint 	public startDate;    							// crowndfunding startdate                               
-	uint 	public endDate;									// crowndfunding enddate 
-	bool 	public isLimitReached;                          // Tell if the first stage of the CrowdFunding is reached, false when not set
-	
-	address[] public backerList;							// Addresses of all backers
-	address[] public altList;					     		// List of alternative contracts for sponsoring (useless for this contract)
-	mapping(address => Sponsor) public sponsorList;	        // The sponsor linked to an alternative contract
-	mapping(address => Backer) public backers;            	// The Backer for a given address
-
-	modifier onlyBy(address a){
-		if (msg.sender != a) throw;                         // Auth modifier, if the msg.sender isn't the expected address, throw.
-		_
-	}
-	
-	event Gave(address);									// 
-	
-//--------------------------------------\\
-	
-	function Crowdfunding() {
-		
-		// Constructor of the contract. set the different variables
-		
-		nexium = Token(0x45e42d659d9f9466cd5df622506033145a9b89bc); 	// Nexium contract address
-		beyond = 0x89E7a245d5267ECd5Bf4cA4C1d9D4D5A14bbd130 ;
-		owner = msg.sender;
-		minInvest = 10 finney;
-		startingEtherValue = 700*1000;
-		stepEtherValue = 25*1000;
-		nxcPerBcy = 14;
-		perStageNxc = 5000000 * 1000;
-		startDate = 1478012400 ;
-		endDate = 1480604400 ;
-		bitCrystalEscrow = 0x72037bf2a3fc312cde40c7f7cd7d2cef3ad8c193;
-	} 
-
-//--------------------------------------\\
-	
-	// Use this function to buy Nexiums for someone (can be you of course)
-	function giveFor(address beneficiary){
-		if (msg.value < minInvest) throw;                                      // Throw when the minimum to invest isn't reached
-		if (endDate < now || (now < startDate && now > startDate - 3 hours )) throw;        // Check if the crowdfunding is started and not already over
-		
-		// Computing the current amount of Nxc we send per ether. 
-		uint currentEtherValue = getCurrEthValue();
-		
-		//it's possible to invest before the begining of the crowdfunding but the price is x10.
-		//Allow backers to test the contract before the begining.
-		if(now < startDate) currentEtherValue /= 10;
-		
-		// Computing the number of milli Nxc we will send to the beneficiary
-		uint givenNxc = (msg.value * currentEtherValue)/(1 ether);
-		nxcSold += givenNxc;                                                   //Updating the sold Nxc amount
-		if (nxcSold >= perStageNxc) isLimitReached = true ; 
-		
-		Sponsor sp = sponsorList[msg.sender];
-		
-		//Check if the user gives through a sponsor contract
-		if (sp.sponsorAddress != 0x0000000000000000000000000000000000000000) {
-		    sp.nxcDirected += givenNxc;                                        // Update the number of milli Nxc this sponsor sold for us
-		    
-		    // This part compute the bonus rate NxC the sponsor will have depending on the total of Nxc he sold.
-		    uint bonusRate = sp.nxcDirected / 80000000;
-		    if (bonusRate > sp.sponsorBonus) bonusRate = sp.sponsorBonus;
-		    
-		    // Giving to the sponsor the amount of Nxc he earned by this last donation
-		    uint sponsorNxc = (sp.nxcDirected * bonusRate)/100 - sp.earnedNexium;
-			if (!giveNxc(sp.sponsorAddress, sponsorNxc))throw;
-			
-			
-			sp.earnedNexium += sponsorNxc;                                     // Update the number of milli Nxc this sponsor earned
-			givenNxc = (givenNxc*(100 + sp.backerBonus))/100;                  // Increase by x% the number of Nxc we will give to the backer
-		}
-		
-		if (!giveNxc(beneficiary, givenNxc))throw;                             // Give to the Backer the Nxc he just earned
-		
-		// Add the new Backer to the list, if he gave for the first time
-		Backer backer = backers[beneficiary];
-		if (backer.weiGiven == 0){
-			backerList[backerList.length++] = beneficiary;
-		}
-		backer.weiGiven += msg.value;                                          // Update the gave wei of this Backer
-		collectedEth += msg.value;                                             // Update the total wei collcted during the crowdfunding     
-		Gave(beneficiary);                                                     // Trigger an event 
-	}
-	
-	
-	// If you gave ether before the first stage is reached you might have some ungiven
-	// Nxc for your address. This function, if called, will give you the nexiums you didn't
-	// received. /!\ Nexium bonuses for your partner rank will not be given during the crowdfunding
-	function claimNxc(){
-	    if (!isLimitReached) throw;
-	    address to = msg.sender;
-	    nexium.transfer(to, backers[to].ungivenNxc);
-	    backers[to].ungivenNxc = 0;
-	}
-	
-	// This function can be called after the crowdfunding if the first goal is not reached
-	// It gives back the ethers of the specified address
-	function getBackEther(){
-	    getBackEtherFor(msg.sender);
-	}
-	
-	function getBackEtherFor(address account){
-	    if (now > endDate && !isLimitReached){
-	        uint sentBack = backers[account].weiGiven;
-	        backers[account].weiGiven = 0;                                     // No DAO style re entrance ;)
-	        if(!account.send(sentBack))throw;
-	    } else throw ;
-	}
-	
-	// The anonymous function automatically make a donation for the person who gave ethers
-	function(){
-		giveFor(msg.sender);
-	}
-	
-//--------------------------------------\\
-
-    //Create a new sponsoring contract 
-	function addAlt(address sponsor, uint _sponsorBonus, uint _backerBonus)
-	onlyBy(owner){
-	    if (_sponsorBonus > 10 || _backerBonus > 10 || _sponsorBonus + _backerBonus > 15) throw;
-		altList[altList.length++] = address(new AltCrowdfunding(this));
-		sponsorList[altList[altList.length -1]] = Sponsor(0, 0, sponsor, _sponsorBonus, _backerBonus);
-	}
-	
-	// Set the value of BCY gave by the SOG network. Only our BCY escrow can modify it.
-    function setBCY(uint newValue)
-    onlyBy(bitCrystalEscrow){
-        if (now < startDate || now > endDate) throw;
-        if (newValue != 0 && newValue < 714285714) collectedBcy = newValue; // 714285714 * 14 ~= 10 000 000 000 mili Nxc maximum to avoid wrong value
-        else throw;
+/**
+ * @title Generic owned destroyable contract
+ */
+contract Object is Owned, Destroyable {
+    function Object() {
+        owner  = msg.sender;
+        hammer = msg.sender;
     }
+}
+
+// Standard token interface (ERC 20)
+// https://github.com/ethereum/EIPs/issues/20
+contract ERC20 
+{
+// Functions:
+    /// @return total amount of tokens
+    uint256 public totalSupply;
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256);
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool);
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256);
+
+// Events:
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+/**
+ * @title Token contract represents any asset in digital economy
+ */
+contract Token is Object, ERC20 {
+    /* Short description of token */
+    string public name;
+    string public symbol;
+
+    /* Total count of tokens exist */
+    uint public totalSupply;
+
+    /* Fixed point position */
+    uint8 public decimals;
     
-    // If the minimum goal is reached, beyond the void can have the ethers stored on the contract
-    function withdrawEther(address to, uint amount)
-    onlyBy(owner){
-        if (!isLimitReached) throw;
-        var r = to.send(amount);
+    /* Token approvement system */
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowances;
+ 
+    /**
+     * @dev Get balance of plain address
+     * @param _owner is a target address
+     * @return amount of tokens on balance
+     */
+    function balanceOf(address _owner) constant returns (uint256)
+    { return balances[_owner]; }
+ 
+    /**
+     * @dev Take allowed tokens
+     * @param _owner The address of the account owning tokens
+     * @param _spender The address of the account able to transfer the tokens
+     * @return Amount of remaining tokens allowed to spent
+     */
+    function allowance(address _owner, address _spender) constant returns (uint256)
+    { return allowances[_owner][_spender]; }
+
+    /* Token constructor */
+    function Token(string _name, string _symbol, uint8 _decimals, uint _count) {
+        name        = _name;
+        symbol      = _symbol;
+        decimals    = _decimals;
+        totalSupply = _count;
+        balances[msg.sender] = _count;
     }
+ 
+    /**
+     * @dev Transfer self tokens to given address
+     * @param _to destination address
+     * @param _value amount of token values to send
+     * @notice `_value` tokens will be sended to `_to`
+     * @return `true` when transfer done
+     */
+    function transfer(address _to, uint _value) returns (bool) {
+        if (balances[msg.sender] >= _value) {
+            balances[msg.sender] -= _value;
+            balances[_to]        += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @dev Transfer with approvement mechainsm
+     * @param _from source address, `_value` tokens shold be approved for `sender`
+     * @param _to destination address
+     * @param _value amount of token values to send 
+     * @notice from `_from` will be sended `_value` tokens to `_to`
+     * @return `true` when transfer is done
+     */
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+        var avail = allowances[_from][msg.sender]
+                  > balances[_from] ? balances[_from]
+                                    : allowances[_from][msg.sender];
+        if (avail >= _value) {
+            allowances[_from][msg.sender] -= _value;
+            balances[_from] -= _value;
+            balances[_to]   += _value;
+            Transfer(_from, _to, _value);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @dev Give to target address ability for self token manipulation without sending
+     * @param _spender target address (future requester)
+     * @param _value amount of token values for approving
+     */
+    function approve(address _spender, uint256 _value) returns (bool) {
+        allowances[msg.sender][_spender] += _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Reset count of tokens approved for given address
+     * @param _spender target address (future requester)
+     */
+    function unapprove(address _spender)
+    { allowances[msg.sender][_spender] = 0; }
+}
+
+contract TokenEmission is Token {
+    function TokenEmission(string _name, string _symbol, uint8 _decimals,
+                           uint _start_count)
+             Token(_name, _symbol, _decimals, _start_count)
+    {}
+
+    /**
+     * @dev Token emission
+     * @param _value amount of token values to emit
+     * @notice owner balance will be increased by `_value`
+     */
+    function emission(uint _value) onlyOwner {
+        // Overflow check
+        if (_value + totalSupply < totalSupply) throw;
+
+        totalSupply     += _value;
+        balances[owner] += _value;
+    }
+ 
+    /**
+     * @dev Burn the token values from sender balance and from total
+     * @param _value amount of token values for burn 
+     * @notice sender balance will be decreased by `_value`
+     */
+    function burn(uint _value) {
+        if (balances[msg.sender] >= _value) {
+            balances[msg.sender] -= _value;
+            totalSupply      -= _value;
+        }
+    }
+}
+
+/**
+ * @title Asset recipient interface
+ */
+contract Recipient {
+    /**
+     * @dev On received ethers
+     * @param sender Ether sender
+     * @param amount Ether value
+     */
+    event ReceivedEther(address indexed sender,
+                        uint256 indexed amount);
+
+    /**
+     * @dev On received custom ERC20 tokens
+     * @param from Token sender
+     * @param value Token value
+     * @param token Token contract address
+     * @param extraData Custom additional data
+     */
+    event ReceivedTokens(address indexed from,
+                         uint256 indexed value,
+                         address indexed token,
+                         bytes extraData);
+
+    /**
+     * @dev Receive approved ERC20 tokens
+     * @param _from Spender address
+     * @param _value Transaction value
+     * @param _token ERC20 token contract address
+     * @param _extraData Custom additional data
+     */
+    function receiveApproval(address _from, uint256 _value,
+                             ERC20 _token, bytes _extraData) {
+        if (!_token.transferFrom(_from, this, _value)) throw;
+        ReceivedTokens(_from, _value, _token, _extraData);
+    }
+
+    /**
+     * @dev Catch sended to contract ethers
+     */
+    function () payable
+    { ReceivedEther(msg.sender, msg.value); }
+}
+
+/**
+ * @title Crowdfunding contract
+ */
+contract Crowdfunding is Object, Recipient {
+    /**
+     * @dev Target fund account address
+     */
+    address public fund;
+
+    /**
+     * @dev Bounty token address
+     */
+    TokenEmission public bounty;
     
-    function withdrawNxc(address to, uint amount)
-    onlyBy(owner){
-        nexium.transfer(to, amount);
+    /**
+     * @dev Distribution of donations
+     */
+    mapping(address => uint256) public donations;
+
+    /**
+     * @dev Total funded value
+     */
+    uint256 public totalFunded;
+
+    /**
+     * @dev Documentation reference
+     */
+    string public reference;
+
+    /**
+     * @dev Crowdfunding configuration
+     */
+    Params public config;
+
+    struct Params {
+        /* start/stop block stamps */
+        uint256 startBlock;
+        uint256 stopBlock;
+
+        /* Minimal/maximal funded value */
+        uint256 minValue;
+        uint256 maxValue;
+        
+        /**
+         * Bounty ratio equation:
+         *   bountyValue = value * ratio / scale
+         * where
+         *   ratio = R - (block - B) / S * V
+         *  R - start bounty ratio
+         *  B - start block number
+         *  S - bounty reduction step in blocks 
+         *  V - bounty reduction value
+         */
+        uint256 bountyScale;
+        uint256 startRatio;
+        uint256 reductionStep;
+        uint256 reductionValue;
     }
-    
-    //If there are still Nexiums or Ethers on the contract after 100 days after the end of the crowdfunding
-    //This function send all of it to the multi sig of the beyond the void team (emergency case)
-    function blackBox(){
-        if (now < endDate + 100 days)throw;
-        nexium.transfer(beyond, nexium.balanceOf(this));
-        var r = beyond.send(this.balance);
+
+    /**
+     * @dev Calculate bounty value by reduction equation
+     * @param _value Input donation value
+     * @param _block Input block number
+     * @return Bounty value
+     */
+    function bountyValue(uint256 _value, uint256 _block) constant returns (uint256) {
+        if (_block < config.startBlock || _block > config.stopBlock)
+            return 0;
+
+        var R = config.startRatio;
+        var B = config.startBlock;
+        var S = config.reductionStep;
+        var V = config.reductionValue;
+        uint256 ratio = R - (_block - B) / S * V; 
+        return _value * ratio / config.bountyScale; 
     }
-	
-	// Each time this contract send Nxc this function is called. It check if
-	// the minimum goal is reached before sending any nexiums out.
-	function giveNxc(address to, uint amount) internal returns (bool){
-	    bool res;
-	    if (isLimitReached){
-	        if (nexium.transfer(to, amount)){
-	            // If there is some ungiven Nxc remaining for this address, send it.
-	            if (backers[to].ungivenNxc != 0){
-	                 res = nexium.transfer(to, backers[to].ungivenNxc); 
-	                 backers[to].ungivenNxc = 0;
-	            } else {
-	                res = true;
-	            }
-	        } else {
-	            res = false;
-	        }
-		// If the limit is not reached yet, the nexiums are not sent but stored in the contract waiting this goal being reached.
-		// They are released when the same backer gives ether while the limit is reached, or by claiming them after the minimal goal is reached .
-	    } else {
-	        backers[to].ungivenNxc += amount;
-	        res = true;
-	    }
-	    return res;
-	}
-	
-	//--------------------------------------\\
-	
-	function getCurrEthValue() returns(uint){
-	    return  startingEtherValue - stepEtherValue * ((nxcSold + collectedBcy * nxcPerBcy)/perStageNxc);
-	}
-	
+
+    /**
+     * @dev Crowdfunding running checks
+     */
+    modifier onlyRunning {
+        bool isRunning = totalFunded + msg.value  < config.maxValue
+                      && block.number > config.startBlock
+                      && block.number < config.stopBlock;
+        if (!isRunning) throw;
+        _;
+    }
+
+    /**
+     * @dev Crowdfundung failure checks
+     */
+    modifier onlyFailure {
+        bool isFailure = totalFunded  < config.minValue
+                      && block.number > config.stopBlock;
+        if (!isFailure) throw;
+        _;
+    }
+
+    /**
+     * @dev Crowdfunding success checks
+     */
+    modifier onlySuccess {
+        bool isSuccess = totalFunded >= config.minValue
+                      && block.number > config.stopBlock;
+        if (!isSuccess) throw;
+        _;
+    }
+
+    /**
+     * @dev Crowdfunding contract initial 
+     * @param _fund Destination account address
+     * @param _bounty Bounty token address
+     * @param _reference Reference documentation link
+     * @param _startBlock Funding start block number
+     * @param _stopBlock Funding stop block nubmer
+     * @param _minValue Minimal funded value in wei 
+     * @param _maxValue Maximal funded value in wei
+     * @param _scale Bounty scaling factor by funded value
+     * @param _startRatio Initial bounty ratio
+     * @param _reductionStep Bounty reduction step in blocks 
+     * @param _reductionValue Bounty reduction value
+     * @notice this contract should be owner of bounty token
+     */
+    function Crowdfunding(
+        address _fund,
+        address _bounty,
+        string  _reference,
+        uint256 _startBlock,
+        uint256 _stopBlock,
+        uint256 _minValue,
+        uint256 _maxValue,
+        uint256 _scale,
+        uint256 _startRatio,
+        uint256 _reductionStep,
+        uint256 _reductionValue
+    ) {
+        fund      = _fund;
+        bounty    = TokenEmission(_bounty);
+        reference = _reference;
+
+        config.startBlock     = _startBlock;
+        config.stopBlock      = _stopBlock;
+        config.minValue       = _minValue;
+        config.maxValue       = _maxValue;
+        config.bountyScale    = _scale;
+        config.startRatio     = _startRatio;
+        config.reductionStep  = _reductionStep;
+        config.reductionValue = _reductionValue;
+    }
+
+    /**
+     * @dev Receive Ether token and send bounty
+     */
+    function () payable onlyRunning {
+        ReceivedEther(msg.sender, msg.value);
+
+        totalFunded           += msg.value;
+        donations[msg.sender] += msg.value;
+
+        var bountyVal = bountyValue(msg.value, block.number);
+        bounty.emission(bountyVal);
+        bounty.transfer(msg.sender, bountyVal);
+    }
+
+    /**
+     * @dev Withdrawal balance on successfull finish
+     */
+    function withdraw() onlySuccess
+    { if (!fund.send(this.balance)) throw; }
+
+    /**
+     * @dev Refund donations when no minimal value achieved
+     */
+    function refund() onlyFailure {
+        var donation = donations[msg.sender];
+        donations[msg.sender] = 0;
+        if (!msg.sender.send(donation)) throw;
+    }
+
+    /**
+     * @dev Disable receive another tokens
+     */
+    function receiveApproval(address _from, uint256 _value,
+                             ERC20 _token, bytes _extraData)
+    { throw; }
 }
