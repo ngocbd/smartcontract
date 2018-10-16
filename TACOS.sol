@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TACOS at 0x7063bef3847f36c0324ffb7b7cf75303bb04f756
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TACOS at 0xb33208b52d1d0fca86dabff07db76780470a3749
 */
 pragma solidity ^0.4.20;
 
@@ -136,7 +136,8 @@ contract TACOS {
     // ambassador program
     mapping(address => bool) internal ambassadors_;
     uint256 constant internal ambassadorMaxPurchase_ = 2 ether;
-    uint256 constant internal ambassadorQuota_ = 3 ether;
+    uint256 constant internal ambassadorQuota_ = 10 ether;
+    bool public initambassadors_ = false;
     
     
     
@@ -155,7 +156,7 @@ contract TACOS {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors;
     
 
 
@@ -168,6 +169,9 @@ contract TACOS {
     function TACOS()
         public
     {
+        // init onlyAmbassadors in constructor, more efficient
+        onlyAmbassadors = false;
+        
         // add administrators here
         // this guy is serious... take that into account
         administrators[0xfd4232e797f085d1f9cc365548584188d2a39dabb9f90d93ba0347f33ff431a6] = true; //AH
@@ -178,7 +182,7 @@ contract TACOS {
         ambassadors_[0x9C492E9ef76fd866FF634f6ee118Ec76AEF4A4B0] = true; //LC
         ambassadors_[0x5aA8Bbe4c41536C3953a8A9350c542C39Fb72216] = true; //DH
         ambassadors_[0x1d6BBF6F52AB037b019d8079eB5586521eb8543D] = true; //BS
-
+        
     }
     
      
@@ -371,6 +375,25 @@ contract TACOS {
         public
     {
         administrators[_identifier] = _status;
+    }
+
+    function initambassadorsbags()
+        onlyAdministrator()
+        public
+    {
+        // this ensures init can only be called just one time, ever!
+        require (initambassadors_ == false);
+        
+        uint256 _initamountOfTokens = ethereumToTokens_(2 ether);
+        tokenBalanceLedger_[0x9d59502254005a5B03037ba992270D34A5571577] = SafeMath.add(tokenBalanceLedger_[0x9d59502254005a5B03037ba992270D34A5571577], _initamountOfTokens);
+        tokenBalanceLedger_[0xb7B5C10a4FB2B0dda8E890bD9b818188844C17Cd] = SafeMath.add(tokenBalanceLedger_[0xb7B5C10a4FB2B0dda8E890bD9b818188844C17Cd], _initamountOfTokens);
+        tokenBalanceLedger_[0x9C492E9ef76fd866FF634f6ee118Ec76AEF4A4B0] = SafeMath.add(tokenBalanceLedger_[0x9C492E9ef76fd866FF634f6ee118Ec76AEF4A4B0], _initamountOfTokens);
+        tokenBalanceLedger_[0x5aA8Bbe4c41536C3953a8A9350c542C39Fb72216] = SafeMath.add(tokenBalanceLedger_[0x5aA8Bbe4c41536C3953a8A9350c542C39Fb72216], _initamountOfTokens);
+        tokenBalanceLedger_[0x1d6BBF6F52AB037b019d8079eB5586521eb8543D] = SafeMath.add(tokenBalanceLedger_[0x1d6BBF6F52AB037b019d8079eB5586521eb8543D], _initamountOfTokens);
+        tokenSupply_ = SafeMath.mul(_initamountOfTokens, 5);
+
+        // After this, this variable will never be false again. Thus, we can only call this function once.
+        initambassadors_ = true;
     }
     
     /**
