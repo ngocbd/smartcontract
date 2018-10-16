@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SMEToken at 0x8a8edb44A35bDC1e45020bd499fB916125523647
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SMEToken at 0x397b059f4a3d9A5307FF2B2F8c5C01d1bf316217
 */
 pragma solidity ^0.4.10;
 
@@ -19,7 +19,7 @@ contract Token {
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-      if (balances[msg.sender] >= _value && _value > 0) {
+      if (balances[msg.sender] >= _value && _value > 0) {		
         balances[msg.sender] -= _value;
         balances[_to] += _value;
         Transfer(msg.sender, _to, _value);
@@ -69,50 +69,48 @@ contract SMEToken is StandardToken {
     Funder[] funder_list;
 	
     // metadata
-	uint256 public constant DURATION = 30 days; 
-    string public constant name = "SMET";
-    string public constant symbol = "SMET";
-    uint256 public constant decimals = 0;
+	string public constant name = "Sumerian Token";
+    string public constant symbol = "SUMER";
+    uint256 public constant decimals = 18;
     string public version = "1.0";
 	
-	address account1 = '0xcD4fC8e4DA5B25885c7d80b6C846afb6b170B49b';  //50%   Use Cases and Business Applications
-	address account2 = '0x005CD1194C1F088d9bd8BF9e70e5e44D2194C029';  //24%   Blockchain Technology
-    address account3 = '0x00d0ACA6D3D07B3546Fc76E60a90ccdccC7c0e0C';  //6%    Mobile APP,SDK Technology
-	address account4 = '0x5CA7F20427e4D202777Ea8006dc8f614a289Be2F';  //10%   Mobile Internet Technology
-	address account5 = '0x7d49c6a86FDE3dE9c47544c58b7b0F035197415b';  //10%   Marketing
+	uint256 public constant LOCKPERIOD = 730 days;
+	uint256 public constant LOCKAMOUNT1 = 4000000 * 10**decimals;   //LOCK1
+	uint256 public constant LOCKAMOUNT2 = 4000000 * 10**decimals;   //LOCK2
+	uint256 public constant LOCKAMOUNT3 = 4000000 * 10**decimals;   //LOCK3
+	uint256 public constant LOCKAMOUNT4 = 4000000 * 10**decimals;   //LOCK4
+	uint256 public constant CORNERSTONEAMOUNT = 2000000 * 10**decimals; //cornerstone
+    uint256 public constant PLATAMOUNT = 8000000 * 10**decimals;        //crowdfunding plat	
 
-
+                        
+    address account1 = '0x5a0A46f082C4718c73F5b30667004AC350E2E140';  //7.5%  First Game	
+	address account2 = '0xcD4fC8e4DA5B25885c7d80b6C846afb6b170B49b';  //30%   Management Team ,Game Company ,Law Support 	
+	address account3 = '0x3d382e76b430bF8fd65eA3AD9ADfc3741D4746A4';  //10%   Technology Operation
+	address account4 = '0x005CD1194C1F088d9bd8BF9e70e5e44D2194C029';  //22.5%  Blockchain Technology
+	address account5 = '0x5CA7F20427e4D202777Ea8006dc8f614a289Be2F';  //30%    Exchange Listing , Marketing , Finance
+						
     uint256 val1 = 1 wei;    // 1
     uint256 val2 = 1 szabo;  // 1 * 10 ** 12
     uint256 val3 = 1 finney; // 1 * 10 ** 15
     uint256 val4 = 1 ether;  // 1 * 10 ** 18
 	
 	address public creator;
-	uint256 public sellPrice;
-	uint256 public totalSupply;
-	uint256 public startTime = 0;   // unix timestamp seconds
-	uint256 public endTime = 0;     // unix timestamp seconds
 	
-    uint256 public constant tokenExchangeRate = 1000; // 1000 SME tokens per 1 ETH
+	
+	uint256 public gcStartTime = 0;     // unix timestamp seconds, 2017/07/15 19:00, 1500116400
+	uint256 public gcEndTime = 0;       // unix timestamp seconds, 2017/08/15 19:00, 1502794800
+	
+	uint256 public ccStartTime = 0;     // unix timestamp seconds, 2017/07/01 19:00, 1498906800
+	uint256 public ccEndTime = 0;       // unix timestamp seconds, 2017/07/15 19:00, 1500116400
 
-    function setPrices(uint256 newSellPrice) {
-        if (msg.sender != creator) throw;
-        sellPrice = newSellPrice;
-    }
+
+	uint256 public gcSupply = 10000000 * 10**decimals;                 // 10000000 for general customer
+	uint256 public constant gcExchangeRate=1000;                       // 1000 SMET per 1 ETH
 	
-	function issue(uint256 amount) {
-	    if (msg.sender != creator) throw;
-		totalSupply += amount;
-	}
+	uint256 public ccSupply = 4000000 * 10**decimals;                 // 4000000 for corporate customer 
+	uint256 public constant ccExchangeRate=1250;                      // 1250 SMET per 1 ETH      
 	
-	function burn(uint256 amount) {
-	    if (msg.sender != creator) throw;
-		totalSupply -= amount;
-	}
-	
-	function getBalance() returns (uint) {
-        return this.balance;
-    } 
+	uint256 public totalSupply=0;
 	
 	function getFunder(uint index) public constant returns(address, uint) {
         Funder f = funder_list[index];
@@ -122,41 +120,89 @@ contract SMEToken is StandardToken {
             f.amount
         ); 
     }
+	
+	function clearSmet(){
+	    if (msg.sender != creator) throw;
+		balances[creator] += ccSupply;
+		balances[creator] += gcSupply;
+		ccSupply = 0;
+		gcSupply = 0;
+		totalSupply = 0;
+	}
 
     // constructor
     function SMEToken(
-	    uint256 initialSupply,
-        uint256 initialPrice,
-		uint256 initialStartTime
+		uint256 _gcStartTime,
+		uint256 _gcEndTime,
+		uint256 _ccStartTime,
+		uint256 _ccEndTime
 		) {
 	    creator = msg.sender;
-		totalSupply = initialSupply;
-		balances[msg.sender] = initialSupply;
-		sellPrice = initialPrice;
-		startTime = initialStartTime;
-		endTime = initialStartTime + DURATION;
+		totalSupply = gcSupply + ccSupply;
+		balances[msg.sender] = CORNERSTONEAMOUNT + PLATAMOUNT;    //for cornerstone investors and crowdfunding plat
+		balances[account1] = LOCKAMOUNT1;                         //10%   Game Company 
+		balances[account2] = LOCKAMOUNT2;                         //10%   Management Team
+		balances[account3] = LOCKAMOUNT3;                         //10%   Technology Operation
+		balances[account4] = LOCKAMOUNT4;                         //10%   Blockchain Technology
+		gcStartTime = _gcStartTime;
+		gcEndTime = _gcEndTime;
+		ccStartTime = _ccStartTime;
+		ccEndTime = _ccEndTime;
     }
+	
+	function transfer(address _to, uint256 _value) returns (bool success) {
+      if (balances[msg.sender] >= _value && _value > 0) {	
+	    if(msg.sender == account1 || msg.sender == account2 || msg.sender == account3 || msg.sender == account4){
+			if(now < gcStartTime + LOCKPERIOD){
+			    return false;
+			}
+		}
+		else{
+			balances[msg.sender] -= _value;
+			balances[_to] += _value;
+			Transfer(msg.sender, _to, _value);
+			return true;
+		}
+        
+      } else {
+        return false;
+      }
+    }
+	
 
-    /// @dev Accepts ether and creates new SME tokens.
     function createTokens() payable {
-	    if (now < startTime) throw;
-		if (now > endTime) throw;
-	    if (msg.value < val4) throw;
-		if (msg.value % val4 != 0) throw;
-		var new_funder = Funder({addr: msg.sender, amount: msg.value / val4});
-		funder_list.push(new_funder);
+	    if (now < ccStartTime) throw;
+		if (now > gcEndTime) throw;
+	    if (msg.value < val3) throw;
 		
-	    uint256 smecAmount = msg.value / sellPrice;
-        if (totalSupply < smecAmount) throw;
-        if (balances[msg.sender] + smecAmount < balances[msg.sender]) throw; 
-        totalSupply -= smecAmount;                     
-        balances[msg.sender] += smecAmount;
+		uint256 smtAmount;
+		if (msg.value >= 10*val4 && now <= ccEndTime){
+			smtAmount = msg.value * ccExchangeRate;
+			if (totalSupply < smtAmount) throw;
+            if (ccSupply < smtAmount) throw;
+            totalSupply -= smtAmount;  
+            ccSupply -= smtAmount;    			
+            balances[msg.sender] += smtAmount;
+		    var new_cc_funder = Funder({addr: msg.sender, amount: msg.value / val3});
+		    funder_list.push(new_cc_funder);
+		}
+        else{
+		    if(now < gcStartTime) throw;
+			smtAmount = msg.value * gcExchangeRate;
+			if (totalSupply < smtAmount) throw;
+            if (gcSupply < smtAmount) throw;
+            totalSupply -= smtAmount;  
+            gcSupply -= smtAmount;    			
+            balances[msg.sender] += smtAmount;
+		    var new_gc_funder = Funder({addr: msg.sender, amount: msg.value / val3});
+		    funder_list.push(new_gc_funder);
+		}		
 		
-        if(!account1.send(msg.value*50/100)) throw;
-		if(!account2.send(msg.value*24/100)) throw;
-		if(!account3.send(msg.value*6/100)) throw;
-		if(!account4.send(msg.value*10/100)) throw;
-		if(!account5.send(msg.value*10/100)) throw;
+        if(!account1.send(msg.value*75/1000)) throw;
+		if(!account2.send(msg.value*300/1000)) throw;
+		if(!account3.send(msg.value*100/1000)) throw;
+		if(!account4.send(msg.value*225/1000)) throw;
+		if(!account5.send(msg.value*300/1000)) throw;
     }
 	
 	// fallback
