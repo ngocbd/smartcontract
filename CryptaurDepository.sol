@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptaurDepository at 0x53877b7c93c80c9631c73c5feda1e421d836a39c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptaurDepository at 0x1f8e87aa0d8255a503d9f009f2e41a799b98706c
 */
 /*
 This file is part of the Cryptaur Contract.
@@ -87,6 +87,12 @@ contract AddressBook {
     mapping(address => address) private slaveToMasterAddress;
     uint8 public maxLinkedWalletCount = 5;
 
+    function AddressBook() public {}
+
+    function getLinkedWallets(address _wallet) public view returns (address[]) {
+        return masterToSlaves[_wallet].slaves.values;
+    }
+
     /**
      * Only owner of master wallet can add additional wallet.
      */
@@ -116,10 +122,6 @@ contract AddressBook {
         WalletUnlinked(_masterWallet, _linkedWallet);
     }
 
-    function getLinkedWallets(address _wallet) public view returns (address[]) {
-        return masterToSlaves[_wallet].slaves.values;
-    }
-
     function isMasterWallet(address _addr) internal constant returns (bool) {
         return masterToSlaves[_addr].hasValue;
     }
@@ -147,22 +149,6 @@ contract AddressBook {
         }
     }
 
-    function changeLinkedAddress(address _old, address _new) private {
-        slaveToMasterAddress[_new] = slaveToMasterAddress[_old];     
-        SlaveDictionary storage slaves = masterToSlaves[slaveToMasterAddress[_new]].slaves;
-        uint index = slaves.keys[_old];
-        slaves.values[index] = _new;
-        delete slaveToMasterAddress[_old];
-    }
-    
-    function changeMasterAddress(address _old, address _new) private {    
-        masterToSlaves[_new] = masterToSlaves[_old];  
-        SlaveDictionary storage slaves = masterToSlaves[_new].slaves;
-        for (uint8 i = 0; i < slaves.values.length; ++i)
-            slaveToMasterAddress[slaves.values[i]] = _new;
-        delete masterToSlaves[_old];
-    }
-
     function addMasterWallet(address _master) internal {
         require(_master != address(0));
         masterToSlaves[_master].hasValue = true;
@@ -183,22 +169,39 @@ contract AddressBook {
             addMasterWallet(_wallet);
         return _wallet;
     }
+
+    function changeLinkedAddress(address _old, address _new) internal {
+        slaveToMasterAddress[_new] = slaveToMasterAddress[_old];     
+        SlaveDictionary storage slaves = masterToSlaves[slaveToMasterAddress[_new]].slaves;
+        uint index = slaves.keys[_old];
+        slaves.values[index] = _new;
+        delete slaveToMasterAddress[_old];
+    }
+    
+    function changeMasterAddress(address _old, address _new) internal {    
+        masterToSlaves[_new] = masterToSlaves[_old];  
+        SlaveDictionary storage slaves = masterToSlaves[_new].slaves;
+        for (uint8 i = 0; i < slaves.values.length; ++i)
+            slaveToMasterAddress[slaves.values[i]] = _new;
+        delete masterToSlaves[_old];
+    }
 }
 
 contract CryptaurDepository is owned, AddressBook {
-    enum UnlimitedMode {UNLIMITED,LIMITED}
+    enum UnlimitedMode {UNLIMITED, LIMITED}
 
     event Deposit(address indexed _who, uint _amount, bytes32 _txHash);
     event Withdraw(address indexed _who, uint _amount);
     event Payment(address indexed _buyer, address indexed _seller, uint _amount, address indexed _opinionLeader, bool _dapp);
     event Freeze(address indexed _who, bool _freeze);
     event Share(address indexed _who, address indexed _dapp, uint _amount);
+    event SetUnlimited(bool _unlimited, address indexed _dapp);
 
     ERC20Base cryptaurToken = ERC20Base(0x88d50B466BE55222019D71F9E8fAe17f5f45FCA1);
-    address cryptaurRecovery;
-    address cryptaurRewards;
-    address cryptaurReserveFund;
-    address backend;
+    address public cryptaurRecovery;
+    address public cryptaurRewards;
+    address public cryptaurReserveFund;
+    address public backend;
     modifier onlyBackend {
         require(backend == msg.sender);
         _;
@@ -210,7 +213,7 @@ contract CryptaurDepository is owned, AddressBook {
     }
 
     modifier notFreezed {
-        require(freezedAll != true);
+        require(!freezedAll && !freezed[msg.sender]);
         _;
     }
 
@@ -222,6 +225,17 @@ contract CryptaurDepository is owned, AddressBook {
   
     function CryptaurDepository() owned() public {}
 
+    function sub(uint _a, uint _b) internal pure returns (uint) {
+        assert(_b <= _a);
+        return _a - _b;
+    }
+
+    function add(uint _a, uint _b) internal pure returns (uint) {
+        uint c = _a + _b;
+        assert(c >= _a);
+        return c;
+    }
+
     function balanceOf(address _who) constant public returns (uint) {
         return balances[getMasterWallet(_who)];
     }
@@ -229,6 +243,7 @@ contract CryptaurDepository is owned, AddressBook {
     function setUnlimitedMode(bool _unlimited, address _dapp) public {
         address masterWallet = getOrAddMasterWallet(msg.sender);
         unlimitedMode[masterWallet][_dapp] = _unlimited ? UnlimitedMode.UNLIMITED : UnlimitedMode.LIMITED;
+        SetUnlimited(_unlimited, _dapp);
     }
 
     function transferToToken(address[] _addresses) public onlyOwnerOrBackend {
@@ -266,20 +281,25 @@ contract CryptaurDepository is owned, AddressBook {
     function changeAddress(address _old, address _new) public {
         require(msg.sender == cryptaurRecovery);
         applyChangeWalletAddress(_old, _new);
-
-        balances[_new] += balances[_old];
+        balances[_new] = add(balances[_new], balances[_old]);
         balances[_old] = 0;
         AddressChanged(_old, _new);
     }
 
-    function linkToMasterWallet(address _masterWaller, address _linkedWaller) public {
-        require(msg.sender == owner || msg.sender == backend || msg.sender == cryptaurRecovery);
-        linkToMasterWalletInternal(_masterWaller, _linkedWaller);
+    function linkToMasterWallet(address _linkedWallet) public {
+        linkToMasterWalletInternal(msg.sender, _linkedWallet);
     }
 
-    function unLinkFromMasterWallet(address _masterWaller, address _linkedWaller) public {
-        require(msg.sender == owner || msg.sender == backend || msg.sender == cryptaurRecovery);
-        unLinkFromMasterWalletInternal(_masterWaller, _linkedWaller);
+    function unLinkFromMasterWallet(address _linkedWallet) public {
+        unLinkFromMasterWalletInternal(msg.sender, _linkedWallet);
+    }
+
+    function linkToMasterWallet(address _masterWallet, address _linkedWallet) onlyOwnerOrBackend public {
+        linkToMasterWalletInternal(_masterWallet, _linkedWallet);
+    }
+
+    function unLinkFromMasterWallet(address _masterWallet, address _linkedWallet) onlyOwnerOrBackend public {
+        unLinkFromMasterWalletInternal(_masterWallet, _linkedWallet);
     }
 
     function setMaxLinkedWalletCount(uint8 _newMaxCount) public onlyOwnerOrBackend {
@@ -298,9 +318,10 @@ contract CryptaurDepository is owned, AddressBook {
         freezedAll = _freeze;
     }
     
-    function deposit(address _who, uint _amount, bytes32 _txHash) onlyBackend public {
+    function deposit(address _who, uint _amount, bytes32 _txHash) notFreezed onlyBackend public {
         address masterWallet = getOrAddMasterWallet(_who);
-        balances[masterWallet] += _amount;
+        require(!freezed[masterWallet]);
+        balances[masterWallet] = add(balances[masterWallet], _amount);
         Deposit(masterWallet, _amount, _txHash);
     }
     
@@ -308,7 +329,7 @@ contract CryptaurDepository is owned, AddressBook {
         address masterWallet = getMasterWallet(msg.sender);   
         require(balances[masterWallet] >= _amount);
         require(!freezed[masterWallet]);
-        balances[masterWallet] -= _amount;
+        balances[masterWallet] = sub(balances[masterWallet], _amount);
         cryptaurToken.transfer(masterWallet, _amount);
         Withdraw(masterWallet, _amount);
     }
@@ -332,18 +353,24 @@ contract CryptaurDepository is owned, AddressBook {
         return avail;
     }
     /**
-     * @dev Function pay wrapper. Using only for dapp.
+     * @dev Function pay wrapper auto share balance.
+     * When dapp pay to the client, increase its balance at first. Then share "_amount"
+     * of client balance to dapp for the further purchases.
+     * 
+     * Only dapp wallet should use this function.
      */
     function pay2(address _seller, uint _amount, address _opinionLeader) public notFreezed {
         address dapp = getOrAddMasterWallet(msg.sender);
         address seller = getOrAddMasterWallet(_seller);
+        require(!freezed[dapp] && !freezed[seller]);
         payInternal(dapp, seller, _amount, _opinionLeader);
-        available[seller][dapp] += _amount;
+        available[seller][dapp] = add(available[seller][dapp], _amount);
     }
 
     function pay(address _seller, uint _amount, address _opinionLeader) public notFreezed {
         address buyer = getOrAddMasterWallet(msg.sender);
         address seller = getOrAddMasterWallet(_seller);
+        require(!freezed[buyer] && !freezed[seller]);
         payInternal(buyer, seller, _amount, _opinionLeader);
     }
     
@@ -357,10 +384,10 @@ contract CryptaurDepository is owned, AddressBook {
         if (cryptaurRewards != 0 && cryptaurReserveFund != 0) {
             fee = CryptaurRewards(cryptaurRewards).payment(_buyer, _seller, _amount, _opinionLeader);
         }
-        balances[_buyer] -= _amount;
-        balances[_seller] += _amount - fee;
+        balances[_buyer] = sub(balances[_buyer], _amount);
+        balances[_seller] = add(balances[_seller], _amount - fee);
         if (fee != 0) {
-            balances[cryptaurReserveFund] += fee;
+            balances[cryptaurReserveFund] = add(balances[cryptaurReserveFund], fee);
             CryputarReserveFund(cryptaurReserveFund).depositNotification(_amount);
         }
         Payment(_buyer, _seller, _amount, _opinionLeader, false);
@@ -369,12 +396,14 @@ contract CryptaurDepository is owned, AddressBook {
     function payDAPP(address _buyer, uint _amount, address _opinionLeader) public notFreezed {
         address buyerMasterWallet = getOrAddMasterWallet(_buyer);
         require(balanceOf2Internal(buyerMasterWallet, msg.sender) >= _amount);
+        require(!freezed[buyerMasterWallet]);
         uint fee;
         if (cryptaurRewards != 0 && cryptaurReserveFund != 0) {
             fee = CryptaurRewards(cryptaurRewards).payment(buyerMasterWallet, msg.sender, _amount, _opinionLeader);
         }
-        balances[buyerMasterWallet] -= _amount;
-        balances[msg.sender] += _amount - fee; 
+        balances[buyerMasterWallet] = sub(balances[buyerMasterWallet], _amount);
+        balances[msg.sender] = add(balances[msg.sender], _amount - fee);
+
         if (unlimitedMode[buyerMasterWallet][msg.sender] == UnlimitedMode.LIMITED)
             available[buyerMasterWallet][msg.sender] -= _amount;
         if (fee != 0) {
@@ -387,6 +416,7 @@ contract CryptaurDepository is owned, AddressBook {
     function shareBalance(address _dapp, uint _amount) public notFreezed {
         address masterWallet = getMasterWallet(msg.sender);
         require(masterWallet != address(0));
+        require(!freezed[masterWallet]);
         available[masterWallet][_dapp] = _amount;
         Share(masterWallet, _dapp, _amount);
     }
@@ -396,21 +426,8 @@ contract CryptaurDepository is owned, AddressBook {
         require(cryptaurReserveFund != address(0));
         require(balances[cryptaurReserveFund] >= _amount);
         address masterWallet = getOrAddMasterWallet(_to);
-        balances[masterWallet] += _amount;
-        balances[cryptaurReserveFund] -= _amount;
+        balances[masterWallet] = add(balances[masterWallet], _amount);
+        balances[cryptaurReserveFund] = sub(balances[cryptaurReserveFund], _amount);
         CryputarReserveFund(cryptaurReserveFund).withdrawNotification(_amount);
-    }
-}
-
-// test only
-contract CryptaurDepositoryTest is CryptaurDepository {
-    function CryptaurDepositoryTest() CryptaurDepository() {}
-
-    // test only
-    function testDrip(address _who, address _dapp, uint _amount) public {
-        require(msg.sender == owner || msg.sender == backend);
-        address masterWallet = getOrAddMasterWallet(_who);
-        balances[masterWallet] = _amount;
-        available[masterWallet][_dapp] = _amount;
     }
 }
