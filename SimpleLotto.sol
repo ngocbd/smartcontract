@@ -1,15 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleLotto at 0x466f39a5fd8d1bd54ea7e82975177c0f00c68492
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleLotto at 0xb57acd47240599d0c68f14892dd05441af67e2d3
 */
 contract SimpleLotto {
     int public playCount = 0;
+    int public playCount1;
     address public owner = msg.sender;
     mapping (address => uint) public players;
-    Aggregate public aggregate;
+    My public aloha;
 
-  struct Aggregate {
-    uint msgValue;
-    uint gas;
+  struct My {
+    string a;
+    int b;
   }
 
     modifier onlyBy(address _account) {
@@ -19,18 +20,19 @@ contract SimpleLotto {
     }
     
     function SimpleLotto() {
-        playCount = 42;
+        playCount1 = 42;
     }
     
     event Sent(address from, address to, int amount);
     
     function play(address receiver, uint amount) returns (uint){
         playCount++;
+        playCount1++;
         Sent(owner, receiver, playCount);
         players[receiver] += amount;
         
-        aggregate.msgValue = msg.value;
-        aggregate.gas = msg.gas;
+        aloha.a = "hi";
+        aloha.b = playCount1;
         
         return msg.value;
     } 
