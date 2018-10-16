@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0xd22769058252671fe7a12509c25c324f1bc1a590
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0xf5cd104d4c139af948be527a88369591a79b90b5
 */
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
@@ -44,7 +44,7 @@ contract COE {
     // rate is X target tokens per Y incoming so newTokens = Tokens/Rate
     mapping (address => uint256) public exchangeRates;
 
-    function COE() {
+    function MNY() {
         _owner = msg.sender;
         preMine();
     }
