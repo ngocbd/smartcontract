@@ -1,8 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xfd7e33bc01a7493b189ddfdcc047500463be573a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x8434fab6b134ce8384bb22bec1c99e34b62a313c
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
+// ----------------------------------------------------------------------------
+// Block Chain Algorithmic Asset Funds
+//
+// Symbol      : BAAF
+// Name        : Block Chain Algorithmic Asset Funds
+// Total supply: 5000000000
+// Decimals    : 0
+//
+// (c) Block Chain Algorithmic Asset Funds
+// ----------------------------------------------------------------------------
 
 library SafeMath {
     function add(uint a, uint b) internal pure returns (uint c) {
@@ -23,7 +33,6 @@ library SafeMath {
     }
 }
 
-
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
     function balanceOf(address tokenOwner) public constant returns (uint balance);
@@ -36,12 +45,9 @@ contract ERC20Interface {
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-
 contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
-
-
 
 contract Owned {
     address public owner;
@@ -80,27 +86,22 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
 
-
     function FixedSupplyToken() public {
-        symbol = "SPH";
-        name = "Sapphire Coin";
-        decimals = 18;
-        _totalSupply = 1000000000 * 10**uint(decimals);
+        symbol = "BAAF";
+        name = "Block Chain Algorithmic Asset Funds";
+        decimals = 0;
+        _totalSupply = 5000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
     }
-
 
     function totalSupply() public constant returns (uint) {
         return _totalSupply  - balances[address(0)];
     }
 
-
-
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
     }
-
 
     function transfer(address to, uint tokens) public returns (bool success) {
         balances[msg.sender] = balances[msg.sender].sub(tokens);
@@ -108,7 +109,6 @@ contract FixedSupplyToken is ERC20Interface, Owned {
         Transfer(msg.sender, to, tokens);
         return true;
     }
-
 
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -126,12 +126,13 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     }
 
 
+   
     function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
         return allowed[tokenOwner][spender];
     }
 
 
-
+   
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
         Approval(msg.sender, spender, tokens);
@@ -140,6 +141,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     }
 
 
+   
     function () public payable {
         revert();
     }
