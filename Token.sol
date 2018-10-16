@@ -1,106 +1,91 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x269830579e06761b831c3a67e6124baed85e62d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9070e2fdb61887c234d841c95d1709288ebbb9a0
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.16;
 
-contract Owned {
-    address public owner;
-    address public newOwner;
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal  pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal  pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure  returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract Base {
+    modifier only(address allowed) {
+        require(msg.sender == allowed);
         _;
     }
+}
+
+contract Owned is Base {
+
+    address public owner;
+    address newOwner;
 
     function Owned() public {
         owner = msg.sender;
     }
 
-    function transferOwnership(address _newOwner) onlyOwner public {
+    function transferOwnership(address _newOwner) only(owner) public {
         newOwner = _newOwner;
     }
 
-    function acceptOwnership() onlyOwner public {
+    function acceptOwnership() only(newOwner) public {
         OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 
     event OwnershipTransferred(address indexed _from, address indexed _to);
+
 }
 
+contract ERC20 is Owned {
+    using SafeMath for uint;
 
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-contract ERC20 {
-    uint256 public totalSupply;
-  
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-  
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract StandartToken is ERC20 {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    
     bool public isStarted = false;
-    
+
     modifier isStartedOnly() {
         require(isStarted);
         _;
     }
 
-    function transfer(address _to, uint256 _value) isStartedOnly public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
+    modifier isNotStartedOnly() {
+        require(!isStarted);
+        _;
+    }
 
-        // SafeMath.sub will throw if there is not enough balance.
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+
+    function transfer(address _to, uint _value) isStartedOnly public returns (bool success) {
+        require(_to != address(0));
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-  
-    function transferFrom(address _from, address _to, uint256 _value) isStartedOnly public returns (bool) {
+    function transferFrom(address _from, address _to, uint _value) isStartedOnly public returns (bool success) {
         require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
@@ -108,86 +93,68 @@ contract StandartToken is ERC20 {
         return true;
     }
 
-    function approve(address _spender, uint256 _value) isStartedOnly public returns (bool) {
+    function balanceOf(address _owner) constant public returns (uint balance) {
+        return balances[_owner];
+    }
+
+    function approve_fixed(address _spender, uint _currentValue, uint _value) isStartedOnly public returns (bool success) {
+        if(allowed[msg.sender][_spender] == _currentValue){
+            allowed[msg.sender][_spender] = _value;
+            Approval(msg.sender, _spender, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function approve(address _spender, uint _value) isStartedOnly public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) constant public returns (uint remaining) {
         return allowed[_owner][_spender];
     }
 
-    function increaseApproval (address _spender, uint _addedValue) isStartedOnly public returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
 
-    function decreaseApproval (address _spender, uint _subtractedValue) isStartedOnly public returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
+    uint public totalSupply;
 }
 
+contract Token is ERC20 {
+    using SafeMath for uint;
+
+    string public name;
+    string public symbol;
+    uint8 public decimals;
 
 
-contract Token is Owned, StandartToken {
-    string public name = "Neurogress";
-    string public symbol = "NRG";
-    uint public decimals = 18;
-
-    address public crowdsaleMinter;
-
-    event Mint(address indexed to, uint256 amount);
-
-    modifier canMint() {
-        require(!isStarted);
-        _;
+    function Token(string _name, string _symbol, uint8 _decimals) public {
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
     }
 
-    modifier onlyCrowdsaleMinter(){
-        require(msg.sender == crowdsaleMinter);
-        _;
+    function start() public only(owner) isNotStartedOnly {
+        isStarted = true;
     }
 
-    function () public {
-        revert();
-    }
-
-    function setCrowdsaleMinter(address _crowdsaleMinter)
-        public
-        onlyOwner
-        canMint
-    {
-        crowdsaleMinter = _crowdsaleMinter;
-    }
-
-    function mint(address _to, uint256 _amount)
-        onlyCrowdsaleMinter
-        canMint
-        public
-        returns (bool)
-    {
+    //================= Crowdsale Only =================
+    function mint(address _to, uint _amount) public only(owner) isNotStartedOnly returns(bool) {
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
+        Transfer(msg.sender, _to, _amount);
         return true;
     }
 
-    function start()
-        onlyCrowdsaleMinter
-        canMint
-        public
-        returns (bool)
-    {
-        isStarted = true;
-        return true;
+    function multimint(address[] dests, uint[] values) public only(owner) isNotStartedOnly returns (uint) {
+        uint i = 0;
+        while (i < dests.length) {
+           mint(dests[i], values[i]);
+           i += 1;
+        }
+        return(i);
     }
 }
