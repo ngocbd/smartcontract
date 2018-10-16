@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dgame at 0xca16790e9bb125392960e78befff1d4df4cb5b58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dgame at 0x0a630de26e5b41eaef08741e74da4018a6c2e14c
 */
-pragma solidity ^0.4.5;
+pragma solidity ^0.4.10;
 
 /*
  * This is an example gambling contract that works without any ABI interface.
@@ -17,34 +17,50 @@ pragma solidity ^0.4.5;
  */
 
 contract dgame {
-  uint registerDuration;
-  uint endRegisterTime;
-  address[] players;
-  string debug;
-
-  // constructor sets default registration duration to 180s
-  function dgame() {
-    registerDuration = 180;
-  }
-
-  // fallback function is used to register players and pay winner
-  function () payable {
-    if (players.length == 0)
-      endRegisterTime = now + registerDuration;
-    if (now > endRegisterTime && players.length > 0) {
-      // find index of winner (take blockhash as source of entropy -> exploitable!)
-      uint winner = uint(block.blockhash(block.number - 1)) % players.length;
-      
-      // pay winner all Ether that we have
-      // ignore if winner rejects prize
-      // in that case Ether will be added to prize of the next game
-      players[winner].send(this.balance);
-      
-      // delete all players to allow for a next game
-      delete players;
+    uint public registerDuration;
+    uint public endRegisterTime;
+    uint public gameNumber;
+    uint public numPlayers;
+    mapping(uint => mapping(uint => address)) public players;
+    mapping(uint => mapping(address => bool)) public registered;
+    event StartedGame(address initiator, uint regTimeEnd, uint amountSent, uint gameNumber);
+    event RegisteredPlayer(address player, uint gameNumber);
+    event FoundWinner(address player, uint gameNumber);
+    
+    // constructor sets default registration duration to 5min
+    function dgame() {
+        registerDuration = 600;
     }
-    else
-      players.push(msg.sender);
-  }
-  
+    
+    // fallback function is used for entire game logic
+    function() payable {
+        // status idle: start new game and transition to status ongoing
+        if (endRegisterTime == 0) {
+            endRegisterTime = now + registerDuration;
+            if (msg.value == 0)
+                throw;  // prevent a new game to be started with empty pot
+            StartedGame(msg.sender, endRegisterTime, msg.value, gameNumber);
+        } else if (now > endRegisterTime && numPlayers > 0) {
+            // status completed: find winner and transition to status idle
+            uint winner = uint(block.blockhash(block.number - 1)) % numPlayers; // find index of winner (take blockhash as source of entropy -> exploitable!)
+            uint currentGamenumber = gameNumber;
+            FoundWinner(players[currentGamenumber][winner], currentGamenumber);
+            endRegisterTime = 0;
+            numPlayers = 0;
+            gameNumber++;
+
+            // pay winner all Ether that we have
+            // ignore if winner rejects prize
+            // in that case Ether will be added to prize of the next game
+            players[currentGamenumber][winner].send(this.balance);
+        } else {
+            // status ongoing: register player
+            if (registered[gameNumber][msg.sender])
+                throw;  // prevent same player to register twice with same address
+            registered[gameNumber][msg.sender] = true;
+            players[gameNumber][numPlayers] = (msg.sender);
+            numPlayers++;
+            RegisteredPlayer(msg.sender, gameNumber);
+        }
+    }
 }
