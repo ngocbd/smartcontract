@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Titaneum at 0xd505b114a8fb648b2d4a92ced33879fd512ae8cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Titaneum at 0x61E24B1E180707dCf883bEb23B09a0845Be09DB4
 */
 pragma solidity ^0.4.2;
 
 contract Titaneum {
     /* Public variables of the token */
     string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+    string public name = "Titaneum";
+    string public symbol = "TTNM";
+    uint8 public decimals = 0;
+    uint256 public totalSupply = 99000000;
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
