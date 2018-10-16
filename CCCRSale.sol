@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCRSale at 0x0c66205ab56f61164a0b8077f06927703eec584f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCRSale at 0x7d97dd891966d32caba7dbefd2e1595df8d89724
 */
 pragma solidity ^0.4.16;
 
@@ -60,10 +60,7 @@ library SafeMath {
  */
 contract Ownable {
   address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
+  address public manager;
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -71,6 +68,7 @@ contract Ownable {
    */
   function Ownable() public {
     owner = msg.sender;
+    manager = msg.sender;
   }
 
   /**
@@ -81,14 +79,19 @@ contract Ownable {
     _;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
+  }
+  
+  modifier onlyManager() {
+    require(msg.sender == manager || msg.sender == owner);
+    _;
+  }
+
+  function transferManagment(address newManager) public onlyOwner {
+    require(newManager != address(0));
+    manager = newManager;
   }
 
 }
@@ -98,42 +101,36 @@ contract Ownable {
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
 contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
 
   bool public paused = false;
+  bool public finished = false;
+  
+  modifier whenSaleNotFinish() {
+    require(!finished);
+    _;
+  }
 
+  modifier whenSaleFinish() {
+    require(finished);
+    _;
+  }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
   modifier whenNotPaused() {
     require(!paused);
     _;
   }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
   modifier whenPaused() {
     require(paused);
     _;
   }
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    Pause();
   }
 
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    Unpause();
   }
 }
 
@@ -142,18 +139,49 @@ contract CCCRSale is Pausable {
 
     address public investWallet = 0xbb2efFab932a4c2f77Fc1617C1a563738D71B0a7;
     CCCRCoin public tokenReward; 
-    uint256 public tokenPrice = 856; // 1ETH (856$) / 1$
+    uint256 public tokenPrice = 723; // 1ETH / 1$
     uint256 zeroAmount = 10000000000; // 10 zero
     uint256 startline = 1510736400; // 15.11.17 12:00
     uint256 public minCap = 300000000000000;
-    uint256 public totalRaised = 207008997355300;
+    uint256 public totalRaised = 207038943697300;
+    uint256 public etherOne = 1000000000000000000;
+    uint256 public minimumTokens = 10;
 
     function CCCRSale(address _tokenReward) {
         tokenReward = CCCRCoin(_tokenReward);
     }
 
-    function () whenNotPaused payable {
-        buy(msg.sender, msg.value); 
+    function bytesToAddress(bytes source) internal pure returns(address) {
+        uint result;
+        uint mul = 1;
+        for(uint i = 20; i > 0; i--) {
+            result += uint8(source[i-1])*mul;
+            mul = mul*256;
+        }
+        return address(result);
+    }
+
+    function () whenNotPaused whenSaleNotFinish payable {
+
+      require(msg.value >= etherOne.div(tokenPrice).mul(minimumTokens));
+        
+      uint256 amountWei = msg.value;        
+      uint256 amount = amountWei.div(zeroAmount);
+      uint256 tokens = amount.mul(getRate());
+      
+      if(msg.data.length == 20) {
+          address referer = bytesToAddress(bytes(msg.data));
+          require(referer != msg.sender);
+          referer.transfer(amountWei.div(100).mul(20));
+      }
+      
+      tokenReward.transfer(msg.sender, tokens);
+      investWallet.transfer(this.balance);
+      totalRaised = totalRaised.add(tokens);
+
+      if (totalRaised >= minCap) {
+          finished = true;
+      }
     }
 
     function getRate() constant internal returns (uint256) {
@@ -164,31 +192,24 @@ contract CCCRSale is Pausable {
         return tokenPrice;
     }
 
-    function buy(address buyer, uint256 _amount) whenNotPaused payable {
-        require(buyer != address(0));
-        require(msg.value != 0);
-
-        uint256 amount = _amount.div(zeroAmount);
-        uint256 tokens = amount.mul(getRate());
-        tokenReward.transfer(buyer, tokens);
-
-        investWallet.transfer(this.balance);
-        totalRaised = totalRaised.add(tokens);
-
-        if (totalRaised >= minCap) {
-          paused = true;
-        }
-    }
-
-    function updatePrice(uint256 _tokenPrice) external onlyOwner {
+    function updatePrice(uint256 _tokenPrice) external onlyManager {
         tokenPrice = _tokenPrice;
     }
 
-    function transferTokens(uint256 _tokens) external onlyOwner {
-        tokenReward.transfer(owner, _tokens); 
+    function transferTokens(uint256 _tokens) external onlyManager {
+        tokenReward.transfer(msg.sender, _tokens); 
     }
 
-    function airdrop(address[] _array1, uint256[] _array2) external onlyOwner {
+    function newMinimumTokens(uint256 _minimumTokens) external onlyManager {
+        minimumTokens = _minimumTokens; 
+    }
+
+    function getWei(uint256 _etherAmount) external onlyManager {
+        uint256 etherAmount = _etherAmount.mul(etherOne);
+        investWallet.transfer(etherAmount); 
+    }
+
+    function airdrop(address[] _array1, uint256[] _array2) external whenSaleNotFinish onlyManager {
        address[] memory arrayAddress = _array1;
        uint256[] memory arrayAmount = _array2;
        uint256 arrayLength = arrayAddress.length.sub(1);
