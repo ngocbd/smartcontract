@@ -1,13 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarterLootBox at 0x69d123842a90a56ebd4eda6e3628f5fd18dfef4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarterLootBox at 0x68E401326A50b6BbD0fB57C39c4D42BFF6cDaCbD
 */
-pragma solidity ^0.4.18;
-
 contract LootboxInterface {
-  event LootboxPurchased(address indexed owner, uint16 displayValue);
+  event LootboxPurchased(address indexed owner, address indexed storeAddress, uint16 displayValue);
   
   function buy(address _buyer) external;
 }
+
 contract ExternalInterface {
   function giveItem(address _recipient, uint256 _traits) external;
 
@@ -24,6 +23,7 @@ contract ExternalInterface {
   function updateItemTraits(uint256 _tokenId, uint256 _traits) external;
 }
 
+
 contract StarterLootBox is LootboxInterface {
   uint16 constant _displayValue = 2;
 
@@ -33,12 +33,18 @@ contract StarterLootBox is LootboxInterface {
     require(previousPurchasers[_buyer] == 0);
     previousPurchasers[_buyer] = 1;
 
-    LootboxPurchased(_buyer, _displayValue);
+    emit LootboxPurchased(_buyer, msg.sender, _displayValue);
     ExternalInterface store = ExternalInterface(msg.sender);
     
     // 25 25 25 25 stat t1 starter car
     store.giveItem(_buyer, 1238317834368705331822870561); 
+    // 1 20 25 25 25 1 2 1
+    //1 0000000000010100 0000000000010100 0000000000010100 0000000000010100 000000000001 0000000010 0001
+    //1000000000001010000000000000101000000000000010100000000000001010000000000000100000000100001
     // 25 25 25 25 stat t1 starter wheels
     store.giveItem(_buyer, 1238317834368705331822870577); 
+    // 1 20 25 25 25 1 3 1
+    //1 0000000000010100 0000000000010100 0000000000010100 0000000000010100 000000000001 0000000011 0001
+    //1000000000001010000000000000101000000000000010100000000000001010000000000000100000000110001
   }
 }
