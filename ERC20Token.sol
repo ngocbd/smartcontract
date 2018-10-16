@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xeb303e364be9e54f7ed9b934595b4ab850ee0e74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xdc2c91fb0bd79ca8e8e5233882355f23a0cbe2c4
 */
+pragma solidity ^0.4.4;
+
 contract Token {
 
     /// @return total amount of tokens
@@ -88,43 +90,30 @@ contract StandardToken is Token {
 }
 
 
-//name this contract whatever you'd like
+
 contract ERC20Token is StandardToken {
 
     function () {
-        //if ether is sent to this address, send it back.
+        
         throw;
     }
 
-    /* Public variables of the token */
+    string public name;                   
+    uint8 public decimals;                
+    string public symbol;               
+    string public version = 'H1.0';       
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 10000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000;                        // Update total supply (100000 for example)
-        name = "AgioCoin";                                   // Set the name for display purposes
-        decimals = 2;                            // Amount of decimals for display purposes
-        symbol = "AGO";                               // Set the symbol for display purposes
+        balances[msg.sender] = 2500000000000000;               
+        totalSupply = 2500000000000000;                     
+        name = "NEGOSAYO COIN";                                   
+        decimals = 8;                            
+        symbol = "NGS";                               
     }
 
-    /* Approves and then calls the receiving contract */
+  
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
