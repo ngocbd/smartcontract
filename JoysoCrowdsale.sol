@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JoysoCrowdsale at 0x2184a4b834d343ef0fb0a8a5039ce8b697004ac4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JoysoCrowdsale at 0x0d4db376a02060c2d27ccfebaac47b50326d51e0
 */
 pragma solidity ^0.4.18;
 
@@ -62,17 +62,17 @@ contract JoysoCrowdsale {
   using SafeMath for uint256;
 
   // The token being sold
-  address constant public JOY = 0x18D0a71E1135dCb693d3F305BA9dcA720d911E86;
+  address constant public JOY = 0xDDe12a12A6f67156e0DA672be05c374e1B0a3e57;
 
   // start and end timestamps where investments are allowed (both inclusive)
   uint256 public startTime;
   uint256 public endTime;
 
   // address where funds are collected
-  address public joysoWallet = 0x1CaC2d7ee5Fd2E6C349d1783B0BFC80ee4d55daD;
+  address public joysoWallet = 0xC640B901a529C58FB6f6C53665768E2d5c835421;
 
   // how many token units a buyer gets per wei
-  uint256 public rate = 100000000;
+  uint256 public rate = 10000;
 
   // amount of raised money in wei
   uint256 public weiRaised;
@@ -143,7 +143,7 @@ contract JoysoCrowdsale {
   function start() public returns (bool) {
     require (msg.sender == joysoWallet);
     startTime = now;
-    endTime = now + 24 hours;
+    endTime = now + 21 days;
   }
 
   function changeJoysoWallet(address _joysoWallet) public returns (bool) {
