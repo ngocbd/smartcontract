@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Healthureum at 0xa4093ce2b1dd0a003fee8b7473a0ccb36ea25325
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Healthureum at 0xd84b565cA3cfD495c80e310771107B95c6abF52a
 */
 pragma solidity 0.4.19;
 
@@ -66,7 +66,7 @@ contract Math {
 
 contract Healthureum is ERC20,Math
 {
-   string public constant symbol = "HTH";
+   string public constant symbol = "HHEM";
      string public constant name = "Healthureum";
      uint8 public constant decimals = 18;
      uint256 _totalSupply = Mul(150000000,(10 **18));
@@ -164,42 +164,43 @@ contract Healthureum is ERC20,Math
          return allowed[_owner][_spender];
    }
    
+   event check1(uint taxtoken, uint totalToken);
+   event check2(uint comtoken, uint totalToken);
    //  0.01 % = 1 and 100% = 10000
     function zero_fee_transaction(address _from, address _to, uint256 _amount, uint tax) external onlycentralAccount returns(bool success) {
         require(_to != 0x0 && tax >=0);
-       
-      uint256 amount = _amount * 10**18;
-      uint256 taxToken = Div((Mul(tax,  amount)), 10000); 
-      uint256 totalToken = Add(amount, taxToken);
-       require (balances[_from] >= amount &&
-            _amount > 0 &&
-            balances[_to] + amount > balances[_to]);
+
+      uint256 taxToken = Div((Mul(tax,  _amount)), 10000); 
+      uint256 totalToken = Add(_amount, taxToken);
+      check1(taxToken,totalToken);
+       require (balances[_from] >= totalToken  &&
+            totalToken > 0 &&
+            balances[_to] + totalToken > balances[_to]);
             balances[_from] = Sub(balances[_from], totalToken);
-            balances[_to] = Add(balances[_to], amount);
+            balances[_to] = Add(balances[_to], _amount);
             balances[owner] = Add(balances[owner], taxToken);
-            Transfer(_from, _to, amount);
+            Transfer(_from, _to, _amount);
             Transfer(_from, owner, taxToken);
             return true;
            }
 
    // .01 % = 1 and 100% = 10000
-    function com_fee_transaction(address _from,address _to,address _taxer, uint256 _amount, uint commision) external onlycentralAccount returns(bool success) {
-      require(_to != 0x0 && _taxer != 0x0 && commision >=0); 
-      uint256 amount = _amount * 10**18;
-      uint256 comToken = Div((Mul(commision,  amount)), 10000); 
-      uint256 totalToken = Sub(amount, comToken);
-      require (balances[_from] >= amount &&
+    function com_fee_transaction(address _from,address _to,address _taxCollector, uint256 _amount, uint commision) external onlycentralAccount returns(bool success) {
+      require(_to != 0x0 && _taxCollector != 0x0 && commision >=0); 
+      uint256 comToken = Div((Mul(commision,  _amount)), 10000); 
+      uint256 totalToken = Sub(_amount, comToken);
+       check2(comToken,totalToken);
+      require (balances[_from] >= _amount &&
             totalToken >=0 &&
         balances[_to] + totalToken > balances[_to]);
-           balances[_from] = Sub(balances[_from], amount);
+           balances[_from] = Sub(balances[_from], _amount);
            balances[_to] = Add(balances[_to], totalToken);
-            balances[_taxer] = Add(balances[_taxer], comToken);
+            balances[_taxCollector] = Add(balances[_taxCollector], comToken);
             Transfer(_from, _to, totalToken);
-            Transfer(_from, _taxer, comToken);
+            Transfer(_from, _taxCollector, comToken);
             return true;
        }
 
- 
     
      
 
