@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MON at 0x4eec479f6ca38cf69e04b875a28fbbb65754e0dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MON at 0x1cbd8da707f5ea04ca7cb8bd9ee922ddbce2a8a5
 */
 library SafeMath {
   function mul(uint256 a, uint256 b) constant public returns (uint256) {
@@ -26,7 +26,6 @@ library SafeMath {
     return c;
   }
 }
-
 
 contract Ownable {
   address public owner;
@@ -74,6 +73,7 @@ contract ERC20 is ERC20Basic {
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
+  using SafeMath for uint128;
 
   mapping(address => uint256) balances;
 
@@ -202,8 +202,14 @@ contract MON is MintableToken{
     
     event BuyStatus(uint256 status);
     struct Buy{
-        uint256 amountOfEth;
-        uint256 stage;
+        uint128 amountOfEth;
+        uint128 stage;
+    }
+    
+    struct StageData{
+        uint128 stageTime;
+        uint64 stageSum;
+        uint64 stagePrice;
     }
     
 	string public constant name = "MillionCoin";
@@ -212,16 +218,13 @@ contract MON is MintableToken{
 	uint256 public constant decimals = 8;
 	address public beneficiary ;
     uint256 private alreadyRunned 	= 0;
-    uint256 private _now =0;
+    uint256 internal _now =0;
     uint256 public stageIndex = 0;
-    uint256[] public stageSum;
-    uint256[] public stageCurrentSum;
-    uint256[] public stagePrice;
-    uint256[] public stageEnd;
+    StageData[] public stageDataStore;
     uint256 public period = 3600*24; //1 day
     uint256 public start = 0;
     uint256 public sumMultiplayer = 100000;
-    mapping(address => Buy) stageBuys;
+    mapping(address => Buy) public stageBuys;
  
  modifier runOnce(uint256 bit){
      if((alreadyRunned & bit)==0){
@@ -236,44 +239,35 @@ contract MON is MintableToken{
  
  function MON(address _benef,uint256 _start,uint256 _sumMul,uint256 _period) public{
      beneficiary = _benef;
-     start = _start;
+     if(_start==0){
+         start = GetNow();
+     }
+     else{
+         start = _start;
+     }
      if(_period!=0){
          period = _period;
      }
      if(_sumMul!=0){
          sumMultiplayer = _sumMul;
      }
-     stageSum.push(50*sumMultiplayer);
-     stageSum.push(60*sumMultiplayer);
-     stageSum.push(50*sumMultiplayer);
-     stageSum.push(60*sumMultiplayer);
-     stageSum.push(65*sumMultiplayer);
-     stageSum.push(55*sumMultiplayer);
-     stagePrice.push(5000);
-     stagePrice.push(3000);
-     stagePrice.push(1666);
-     stagePrice.push(1500);
-     stagePrice.push(1444);
-     stagePrice.push(1000);
-     stageEnd.push(_start+period*151);
-     stageEnd.push(_start+period*243);
-     stageEnd.push(_start+period*334);
-     stageEnd.push(_start+period*455);
-     stageEnd.push(_start+period*548);
-     stageEnd.push(_start+period*641);
-     stageCurrentSum.push(0);
-     stageCurrentSum.push(0);
-     stageCurrentSum.push(0);
-     stageCurrentSum.push(0);
-     stageCurrentSum.push(0);
-     stageCurrentSum.push(0);
+     stageDataStore.push(StageData(uint128(start+period*151),uint64(50*sumMultiplayer),uint64(5000)));
+     stageDataStore.push(StageData(uint128(start+period*243),uint64(60*sumMultiplayer),uint64(3000)));
+     stageDataStore.push(StageData(uint128(start+period*334),uint64(50*sumMultiplayer),uint64(1666)));
+     stageDataStore.push(StageData(uint128(start+period*455),uint64(60*sumMultiplayer),uint64(1500)));
+     stageDataStore.push(StageData(uint128(start+period*548),uint64(65*sumMultiplayer),uint64(1444)));
+     stageDataStore.push(StageData(uint128(start+period*641),uint64(55*sumMultiplayer),uint64(1000)));
      
  }
  
  
  function GetMaxStageEthAmount() public constant returns(uint256){
-     
-     return (stageSum[stageIndex].mul(10**18)).div(stagePrice[stageIndex]);
+     StageData memory currS = stageDataStore[stageIndex];
+     uint256 retVal = currS.stageSum;
+     retVal = retVal*(10**18);
+     retVal = retVal/currS.stagePrice;
+     retVal = retVal.sub(this.balance);
+     return retVal;
  }
  
  
@@ -283,7 +277,9 @@ contract MON is MintableToken{
      bool transferToBenef = false;
      uint256  amountOfEthBeforeBuy = 0;
      uint256  stageMaxEthAmount = 0;
-     if(GetNow()<start){
+     uint128 _n = uint128(GetNow());
+     StageData memory currS = stageDataStore[stageIndex] ;
+     if(_n<start){
          revert();
      }
      if(this.balance <msg.value){
@@ -292,57 +288,63 @@ contract MON is MintableToken{
      else{
         amountOfEthBeforeBuy = this.balance - msg.value;
      }
-     stageMaxEthAmount = (stageSum[stageIndex].mul(10**18)).div(stagePrice[stageIndex]);
+     stageMaxEthAmount = uint256(currS.stageSum)*(10**18)/currS.stagePrice;
          uint256 amountToReturn =0;
          uint256 amountToMint =0;
-         Buy b = stageBuys[msg.sender];
-     if(stageEnd[stageIndex]<GetNow() && amountOfEthBeforeBuy<stageMaxEthAmount){
+         Buy memory b = stageBuys[msg.sender];
+     if(currS.stageTime<_n && amountOfEthBeforeBuy<stageMaxEthAmount){
          status = 1;
          //current stage is unsuccessful money send in transaction should be returned plus 
          // all money spent in current round 
          amountToReturn = msg.value;
          if(b.stage==stageIndex){
              amountToReturn = amountToReturn.add(b.amountOfEth);
-             burn(msg.sender,b.amountOfEth.mul(stagePrice[stageIndex]));
+             if(b.amountOfEth>0){
+                burn(msg.sender,b.amountOfEth.mul(currS.stagePrice));
+             }
          }
-         stageBuys[msg.sender].amountOfEth=0;
+         b.amountOfEth=0;
+         mintingFinished = true;
          msg.sender.transfer(amountToReturn);
      }
      else{
          status = 2;
          
          if(b.stage!=stageIndex){
-             b.stage = stageIndex;
+             b.stage = uint128(stageIndex);
              b.amountOfEth = 0;
              status = status*10+3;
          }
          
-         if(stageEnd[stageIndex]>now &&  this.balance < stageMaxEthAmount){
+         if(currS.stageTime>_n &&  this.balance < stageMaxEthAmount){
             //nothing special normal buy 
-             b.amountOfEth = b.amountOfEth.add(msg.value);
-            amountToMint = msg.value.mul(stagePrice[stageIndex]);
+             b.amountOfEth = uint128(b.amountOfEth.add(uint128(msg.value)));
+            amountToMint = msg.value*currS.stagePrice;
             status = status*10+4;
             mintCoins(msg.sender,amountToMint);
          }else{
              if( this.balance >=stageMaxEthAmount){
-                 //we exceeded stage limit
+                 //we exceed stage limit
                 status = status*10+5;
                  transferToBenef = true;
-                amountToMint = ((stageMaxEthAmount - amountOfEthBeforeBuy).mul(stagePrice[stageIndex]));
+                amountToMint = (stageMaxEthAmount - amountOfEthBeforeBuy)*(currS.stagePrice);
                 mintCoins(msg.sender,amountToMint);
                 stageIndex = stageIndex+1;
-                if(stageIndex<5){
+                beneficiary.transfer(stageMaxEthAmount);
+                stageMaxEthAmount =  GetMaxStageEthAmount();
+                if(stageIndex<5 && stageMaxEthAmount>this.balance){
                  //   status = status*10+7;
                     //buys for rest of eth tokens in new prices
-                    amountToMint = ((this.balance.sub(stageMaxEthAmount)).mul(stagePrice[stageIndex]));
-                    b.stage = stageIndex;
-                    b.amountOfEth =(this.balance.sub(stageMaxEthAmount));
+                    currS = stageDataStore[stageIndex] ;
+                    amountToMint = this.balance*(currS.stagePrice);
+                    b.stage = uint128(stageIndex);
+                    b.amountOfEth =uint128(this.balance);
                     mintCoins(msg.sender,amountToMint);
                 }
                 else{
                     status = status*10+8;
                     //returns rest of money if during buy hardcap is reached
-                    amountToReturn = (this.balance.sub(stageMaxEthAmount));
+                    amountToReturn = this.balance;
                     msg.sender.transfer(amountToReturn);
                 }
              }else{
@@ -352,15 +354,10 @@ contract MON is MintableToken{
          }
          
      }
-     if(transferToBenef){
-        beneficiary.transfer(stageMaxEthAmount);
-     }
+     stageBuys[msg.sender] = b;
      BuyStatus(status);
  }
  
- function GetNow() public constant returns(uint256){
-    return now; 
- }
  
  function GetBalance() public constant returns(uint256){
      return this.balance;
@@ -378,16 +375,23 @@ contract MON is MintableToken{
   function GetStats()public constant returns (uint256,uint256,uint256,uint256){
       uint256 timeToEnd = 0;
       uint256 round =0;
-      if(GetNow()>start){
+      StageData memory _s = stageDataStore[stageIndex];
+      if(GetNow()>=start){
         round = stageIndex+1;
-        timeToEnd = stageEnd[stageIndex]-GetNow();
+        if(_s.stageTime>GetNow())
+        {
+            timeToEnd = _s.stageTime-GetNow();
+        }
+        else{
+            return(0,0,0,0);
+        }
       }
       else{
         timeToEnd = start-GetNow();
       }
       return(timeToEnd,
        round,
-       stageSum[stageIndex].div(stagePrice[stageIndex]).mul(1000),
+       _s.stageSum*1000/_s.stagePrice,
        GetMaxStageEthAmount().div(10**15));
   }
   
@@ -406,6 +410,11 @@ contract MON is MintableToken{
   	
   	return true;
   }
+  
+  
+ function GetNow() public constant returns(uint256){
+    return now; 
+ }
   
   
 }
