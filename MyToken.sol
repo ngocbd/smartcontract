@@ -1,11 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xB3C2373CDF4D6f15a907902bEbB0396dB9a10285
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xD1F0740eA97aab8430d69D12D00443A5a84F5d87
 */
 pragma solidity ^0.4.13;
 
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-contract MyToken {
+contract owned {
+    address public owner;
+
+    function owned() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner {
+        owner = newOwner;
+    }
+}
+
+contract MyToken is owned {
     /* Public variables of the token */
     string public name;
     string public symbol;
@@ -15,12 +32,16 @@ contract MyToken {
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
+    mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     /* This notifies clients about the amount burnt */
     event Burn(address indexed from, uint256 value);
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function MyToken(
@@ -45,6 +66,22 @@ contract MyToken {
         balanceOf[_to] += _value;                            // Add the same to the recipient
         Transfer(_from, _to, _value);
     }
+
+
+    function mintToken(address target, uint256 mintedAmount) onlyOwner {
+        balanceOf[target] += mintedAmount;
+        totalSupply += mintedAmount;
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
+  }
+
+  /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+  /// @param target Address to be frozen
+  /// @param freeze either to freeze it or not
+  function freezeAccount(address target, bool freeze) onlyOwner {
+      frozenAccount[target] = freeze;
+      FrozenFunds(target, freeze);
+  }
 
     /// @notice Send `_value` tokens to `_to` from your account
     /// @param _to The address of the recipient
