@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedController at 0x9978d2d229a69b3aef93420d132ab22b44e3578f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedController at 0x9bcf577ef4fad5a7bef7f636cd80373cac91fbb8
 */
 pragma solidity ^0.4.18;
 
@@ -195,15 +195,6 @@ contract AddressList is Claimable {
     }
 }
 
-contract NamableAddressList is AddressList {
-    function NamableAddressList(string _name, bool nullValue)
-        AddressList(_name, nullValue) public {}
-
-    function changeName(string _name) onlyOwner public {
-        name = _name;
-    }
-}
-
 contract HasNoContracts is Ownable {
 
   /**
@@ -274,43 +265,221 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         uint deferBlock;
     }
 
+    struct TransferChildOperation {
+        Ownable child;
+        address newOwner;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct ReclaimOperation {
+        Ownable other;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct ChangeBurnBoundsOperation {
+        uint newMin;
+        uint newMax;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct ChangeStakingFeesOperation {
+        uint80 _transferFeeNumerator;
+        uint80 _transferFeeDenominator;
+        uint80 _mintFeeNumerator;
+        uint80 _mintFeeDenominator;
+        uint256 _mintFeeFlat;
+        uint80 _burnFeeNumerator;
+        uint80 _burnFeeDenominator;
+        uint256 _burnFeeFlat;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct ChangeStakerOperation {
+        address newStaker;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct DelegateOperation {
+        DelegateERC20 delegate;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct SetDelegatedFromOperation {
+        address source;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct ChangeTrueUSDOperation {
+        TrueUSD newContract;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct ChangeNameOperation {
+        string name;
+        string symbol;
+        address admin;
+        uint deferBlock;
+    }
+
     address public admin;
     TrueUSD public trueUSD;
     MintOperation[] public mintOperations;
+    TransferChildOperation[] public transferChildOperations;
+    ReclaimOperation[] public reclaimOperations;
+    ChangeBurnBoundsOperation public changeBurnBoundsOperation;
+    ChangeStakingFeesOperation public changeStakingFeesOperation;
+    ChangeStakerOperation public changeStakerOperation;
+    DelegateOperation public delegateOperation;
+    SetDelegatedFromOperation public setDelegatedFromOperation;
+    ChangeTrueUSDOperation public changeTrueUSDOperation;
+    ChangeNameOperation public changeNameOperation;
 
     modifier onlyAdminOrOwner() {
         require(msg.sender == admin || msg.sender == owner);
         _;
     }
 
+    function computeDeferBlock() private view returns (uint) {
+        if (msg.sender == owner) {
+            return block.number;
+        } else {
+            return block.number.add(blocksDelay);
+        }
+    }
+
+    // starts with no admin
+    function TimeLockedController(address _trueUSD) public {
+        trueUSD = TrueUSD(_trueUSD);
+    }
+
     event MintOperationEvent(address indexed _to, uint256 amount, uint deferBlock, uint opIndex);
-    event TransferChildEvent(address indexed _child, address indexed _newOwner);
-    event ReclaimEvent(address indexed other);
-    event ChangeBurnBoundsEvent(uint newMin, uint newMax);
-    event ChangeStakingFeesEvent(uint80 _transferFeeNumerator,
+    event TransferChildOperationEvent(address indexed _child, address indexed _newOwner, uint deferBlock, uint opIndex);
+    event ReclaimOperationEvent(address indexed other, uint deferBlock, uint opIndex);
+    event ChangeBurnBoundsOperationEvent(uint newMin, uint newMax, uint deferBlock);
+    event ChangeStakingFeesOperationEvent(uint80 _transferFeeNumerator,
                                             uint80 _transferFeeDenominator,
                                             uint80 _mintFeeNumerator,
                                             uint80 _mintFeeDenominator,
                                             uint256 _mintFeeFlat,
                                             uint80 _burnFeeNumerator,
                                             uint80 _burnFeeDenominator,
-                                            uint256 _burnFeeFlat);
-    event ChangeStakerEvent(address newStaker);
-    event DelegateEvent(DelegateERC20 delegate);
-    event SetDelegatedFromEvent(address source);
-    event ChangeTrueUSDEvent(TrueUSD newContract);
-    event ChangeNameEvent(string name, string symbol);
+                                            uint256 _burnFeeFlat,
+                                            uint deferBlock);
+    event ChangeStakerOperationEvent(address newStaker, uint deferBlock);
+    event DelegateOperationEvent(DelegateERC20 delegate, uint deferBlock);
+    event SetDelegatedFromOperationEvent(address source, uint deferBlock);
+    event ChangeTrueUSDOperationEvent(TrueUSD newContract, uint deferBlock);
+    event ChangeNameOperationEvent(string name, string symbol, uint deferBlock);
     event AdminshipTransferred(address indexed previousAdmin, address indexed newAdmin);
 
     // admin initiates a request to mint _amount TrueUSD for account _to
     function requestMint(address _to, uint256 _amount) public onlyAdminOrOwner {
-        uint deferBlock = block.number;
-        if (msg.sender != owner) {
-            deferBlock = deferBlock.add(blocksDelay);
-        }
+        uint deferBlock = computeDeferBlock();
         MintOperation memory op = MintOperation(_to, _amount, admin, deferBlock);
         MintOperationEvent(_to, _amount, deferBlock, mintOperations.length);
         mintOperations.push(op);
+    }
+
+    // admin initiates a request to transfer _child to _newOwner
+    // Can be used e.g. to upgrade this TimeLockedController contract.
+    function requestTransferChild(Ownable _child, address _newOwner) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        TransferChildOperation memory op = TransferChildOperation(_child, _newOwner, admin, deferBlock);
+        TransferChildOperationEvent(_child, _newOwner, deferBlock, transferChildOperations.length);
+        transferChildOperations.push(op);
+    }
+
+    // admin initiates a request to transfer ownership of a contract from trueUSD
+    // to this TimeLockedController. Can be used e.g. to reclaim balance sheet
+    // in order to transfer it to an upgraded TrueUSD contract.
+    function requestReclaim(Ownable other) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        ReclaimOperation memory op = ReclaimOperation(other, admin, deferBlock);
+        ReclaimOperationEvent(other, deferBlock, reclaimOperations.length);
+        reclaimOperations.push(op);
+    }
+
+    // admin initiates a request that the minimum and maximum amounts that any TrueUSD user can
+    // burn become newMin and newMax
+    function requestChangeBurnBounds(uint newMin, uint newMax) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        changeBurnBoundsOperation = ChangeBurnBoundsOperation(newMin, newMax, admin, deferBlock);
+        ChangeBurnBoundsOperationEvent(newMin, newMax, deferBlock);
+    }
+
+    // admin initiates a request that the staking fee be changed
+    function requestChangeStakingFees(uint80 _transferFeeNumerator,
+                                        uint80 _transferFeeDenominator,
+                                        uint80 _mintFeeNumerator,
+                                        uint80 _mintFeeDenominator,
+                                        uint256 _mintFeeFlat,
+                                        uint80 _burnFeeNumerator,
+                                        uint80 _burnFeeDenominator,
+                                        uint256 _burnFeeFlat) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        changeStakingFeesOperation = ChangeStakingFeesOperation(_transferFeeNumerator,
+                                                                    _transferFeeDenominator,
+                                                                    _mintFeeNumerator,
+                                                                    _mintFeeDenominator,
+                                                                    _mintFeeFlat,
+                                                                    _burnFeeNumerator,
+                                                                    _burnFeeDenominator,
+                                                                    _burnFeeFlat,
+                                                                    admin,
+                                                                    deferBlock);
+        ChangeStakingFeesOperationEvent(_transferFeeNumerator,
+                                          _transferFeeDenominator,
+                                          _mintFeeNumerator,
+                                          _mintFeeDenominator,
+                                          _mintFeeFlat,
+                                          _burnFeeNumerator,
+                                          _burnFeeDenominator,
+                                          _burnFeeFlat,
+                                          deferBlock);
+    }
+
+    // admin initiates a request that the recipient of the staking fee be changed to newStaker
+    function requestChangeStaker(address newStaker) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        changeStakerOperation = ChangeStakerOperation(newStaker, admin, deferBlock);
+        ChangeStakerOperationEvent(newStaker, deferBlock);
+    }
+
+    // admin initiates a request that future ERC20 calls to trueUSD be delegated to _delegate
+    function requestDelegation(DelegateERC20 _delegate) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        delegateOperation = DelegateOperation(_delegate, admin, deferBlock);
+        DelegateOperationEvent(_delegate, deferBlock);
+    }
+
+    // admin initiates a request that incoming delegate* calls from _source be
+    // accepted by trueUSD
+    function requestDelegatedFrom(address _source) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        setDelegatedFromOperation = SetDelegatedFromOperation(_source, admin, deferBlock);
+        SetDelegatedFromOperationEvent(_source, deferBlock);
+    }
+
+    // admin initiates a request that this contract's trueUSD pointer be updated to newContract
+    function requestReplaceTrueUSD(TrueUSD newContract) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        changeTrueUSDOperation = ChangeTrueUSDOperation(newContract, admin, deferBlock);
+        ChangeTrueUSDOperationEvent(newContract, deferBlock);
+    }
+
+    // admin initiates a request that trueUSD's name and symbol be changed
+    function requestNameChange(string name, string symbol) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        changeNameOperation = ChangeNameOperation(name, symbol, admin, deferBlock);
+        ChangeNameOperationEvent(name, symbol, deferBlock);
     }
 
     // after a day, admin finalizes mint request by providing the
@@ -325,45 +494,50 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         trueUSD.mint(to, amount);
     }
 
-    // Transfer ownership of _child to _newOwner
-    // Can be used e.g. to upgrade this TimeLockedController contract.
-    function transferChild(Ownable _child, address _newOwner) public onlyOwner {
-        TransferChildEvent(_child, _newOwner);
+    // after a day, admin finalizes the transfer of a child contract by providing the
+    // index of the request (visible in the TransferChildOperationEvent accompanying the original request)
+    function finalizeTransferChild(uint index) public onlyAdminOrOwner {
+        TransferChildOperation memory op = transferChildOperations[index];
+        require(op.admin == admin);
+        require(op.deferBlock <= block.number);
+        Ownable _child = op.child;
+        address _newOwner = op.newOwner;
+        delete transferChildOperations[index];
         _child.transferOwnership(_newOwner);
     }
 
-    // Transfer ownership of a contract from trueUSD
-    // to this TimeLockedController. Can be used e.g. to reclaim balance sheet
-    // in order to transfer it to an upgraded TrueUSD contract.
-    function requestReclaim(Ownable other) public onlyOwner {
-        ReclaimEvent(other);
+    function finalizeReclaim(uint index) public onlyAdminOrOwner {
+        ReclaimOperation memory op = reclaimOperations[index];
+        require(op.admin == admin);
+        require(op.deferBlock <= block.number);
+        Ownable other = op.other;
+        delete reclaimOperations[index];
         trueUSD.reclaimContract(other);
     }
 
-    // Change the minimum and maximum amounts that TrueUSD users can
-    // burn to newMin and newMax
-    function changeBurnBounds(uint newMin, uint newMax) public onlyOwner {
-        ChangeBurnBoundsEvent(newMin, newMax);
+    // after a day, admin finalizes the burn bounds change
+    function finalizeChangeBurnBounds() public onlyAdminOrOwner {
+        require(changeBurnBoundsOperation.admin == admin);
+        require(changeBurnBoundsOperation.deferBlock <= block.number);
+        uint newMin = changeBurnBoundsOperation.newMin;
+        uint newMax = changeBurnBoundsOperation.newMax;
+        delete changeBurnBoundsOperation;
         trueUSD.changeBurnBounds(newMin, newMax);
     }
 
-    // Change the transaction fees charged on transfer/mint/burn
-    function changeStakingFees(uint80 _transferFeeNumerator,
-                               uint80 _transferFeeDenominator,
-                               uint80 _mintFeeNumerator,
-                               uint80 _mintFeeDenominator,
-                               uint256 _mintFeeFlat,
-                               uint80 _burnFeeNumerator,
-                               uint80 _burnFeeDenominator,
-                               uint256 _burnFeeFlat) public onlyOwner {
-        ChangeStakingFeesEvent(_transferFeeNumerator,
-                                          _transferFeeDenominator,
-                                          _mintFeeNumerator,
-                                          _mintFeeDenominator,
-                                          _mintFeeFlat,
-                                          _burnFeeNumerator,
-                                          _burnFeeDenominator,
-                                          _burnFeeFlat);
+    // after a day, admin finalizes the staking fee change
+    function finalizeChangeStakingFees() public onlyAdminOrOwner {
+        require(changeStakingFeesOperation.admin == admin);
+        require(changeStakingFeesOperation.deferBlock <= block.number);
+        uint80 _transferFeeNumerator = changeStakingFeesOperation._transferFeeNumerator;
+        uint80 _transferFeeDenominator = changeStakingFeesOperation._transferFeeDenominator;
+        uint80 _mintFeeNumerator = changeStakingFeesOperation._mintFeeNumerator;
+        uint80 _mintFeeDenominator = changeStakingFeesOperation._mintFeeDenominator;
+        uint256 _mintFeeFlat = changeStakingFeesOperation._mintFeeFlat;
+        uint80 _burnFeeNumerator = changeStakingFeesOperation._burnFeeNumerator;
+        uint80 _burnFeeDenominator = changeStakingFeesOperation._burnFeeDenominator;
+        uint256 _burnFeeFlat = changeStakingFeesOperation._burnFeeFlat;
+        delete changeStakingFeesOperation;
         trueUSD.changeStakingFees(_transferFeeNumerator,
                                   _transferFeeDenominator,
                                   _mintFeeNumerator,
@@ -374,59 +548,60 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
                                   _burnFeeFlat);
     }
 
-    // Change the recipient of staking fees to newStaker
-    function changeStaker(address newStaker) public onlyOwner {
-        ChangeStakerEvent(newStaker);
+    // after a day, admin finalizes the staking fees recipient change
+    function finalizeChangeStaker() public onlyAdminOrOwner {
+        require(changeStakerOperation.admin == admin);
+        require(changeStakerOperation.deferBlock <= block.number);
+        address newStaker = changeStakerOperation.newStaker;
+        delete changeStakerOperation;
         trueUSD.changeStaker(newStaker);
     }
 
-    // Future ERC20 calls to trueUSD be delegated to _delegate
-    function delegateToNewContract(DelegateERC20 delegate) public onlyOwner {
-        DelegateEvent(delegate);
+    // after a day, admin finalizes the delegation
+    function finalizeDelegation() public onlyAdminOrOwner {
+        require(delegateOperation.admin == admin);
+        require(delegateOperation.deferBlock <= block.number);
+        DelegateERC20 delegate = delegateOperation.delegate;
+        delete delegateOperation;
         trueUSD.delegateToNewContract(delegate);
     }
 
-    // Incoming delegate* calls from _source will be accepted by trueUSD
-    function setDelegatedFrom(address _source) public onlyOwner {
-        SetDelegatedFromEvent(_source);
-        trueUSD.setDelegatedFrom(_source);
+    function finalizeSetDelegatedFrom() public onlyAdminOrOwner {
+        require(setDelegatedFromOperation.admin == admin);
+        require(setDelegatedFromOperation.deferBlock <= block.number);
+        address source = setDelegatedFromOperation.source;
+        delete setDelegatedFromOperation;
+        trueUSD.setDelegatedFrom(source);
     }
 
-    // Update this contract's trueUSD pointer to newContract (e.g. if the
-    // contract is upgraded)
-    function setTrueUSD(TrueUSD newContract) public onlyOwner {
-        ChangeTrueUSDEvent(newContract);
+    function finalizeReplaceTrueUSD() public onlyAdminOrOwner {
+        require(changeTrueUSDOperation.admin == admin);
+        require(changeTrueUSDOperation.deferBlock <= block.number);
+        TrueUSD newContract = changeTrueUSDOperation.newContract;
+        delete changeTrueUSDOperation;
         trueUSD = newContract;
     }
 
-    // change trueUSD's name and symbol
-    function changeName(string name, string symbol) public onlyOwner {
-        ChangeNameEvent(name, symbol);
+    function finalizeChangeName() public onlyAdminOrOwner {
+        require(changeNameOperation.admin == admin);
+        require(changeNameOperation.deferBlock <= block.number);
+        string memory name = changeNameOperation.name;
+        string memory symbol = changeNameOperation.symbol;
+        delete changeNameOperation;
         trueUSD.changeName(name, symbol);
     }
 
-    // Replace the current admin with newAdmin
+    // Owner of this contract (immediately) replaces the current admin with newAdmin
     function transferAdminship(address newAdmin) public onlyOwner {
         AdminshipTransferred(admin, newAdmin);
         admin = newAdmin;
     }
 
-    // Swap out TrueUSD's address lists
-    function setLists(AddressList _canReceiveMintWhiteList, AddressList _canBurnWhiteList, AddressList _blackList, AddressList _noFeesList) onlyOwner public {
-        trueUSD.setLists(_canReceiveMintWhiteList, _canBurnWhiteList, _blackList, _noFeesList);
-    }
-
-    // Update a whitelist/blacklist
+    // admin (immediately) updates a whitelist/blacklist
     function updateList(address list, address entry, bool flag) public onlyAdminOrOwner {
         AddressList(list).changeList(entry, flag);
     }
 
-    // Rename a whitelist/blacklist
-    function renameList(address list, string name) public onlyAdminOrOwner {
-        NamableAddressList(list).changeName(name);
-    }
-
-    // Claim ownership of an arbitrary Claimable contract
     function issueClaimOwnership(address _other) public onlyAdminOrOwner {
         Claimable other = Claimable(_other);
         other.claimOwnership();
