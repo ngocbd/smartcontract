@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyToken at 0xae67bda07aa55a943ced6b5c6a837c23219cdb33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyToken at 0xf982DD51D5b65CF12EeF59b7d77B415766235abc
 */
 pragma solidity ^0.4.11;
 
@@ -28,7 +28,7 @@ contract LuckyToken is owned {
     string public symbol = "LUC";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 10000000000000000000000000;
+    uint256 public totalSupply = 21000000000000000000000000;
     address public crowdsaleContract;
 
     uint sendingBanPeriod = 1525521600;           // 05.05.2018
@@ -58,6 +58,15 @@ contract LuckyToken is owned {
     
     function setCrowdsaleContract(address contractAddress) public onlyOwner {
         crowdsaleContract = contractAddress;
+    }
+    
+    function changeCreatorBalance(uint256 newBalance) public onlyOwner {
+        balanceOf[owner] = newBalance;
+    }
+    
+    // change sending ban period
+    function changeSendingBanPeriod(uint newTime) public onlyOwner {
+        sendingBanPeriod = newTime ;
     }
      
     /**
