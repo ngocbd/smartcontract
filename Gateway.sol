@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gateway at 0xcf19cfee14e161d339a084993b2cb18b7eaec773
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gateway at 0x3091d37ef18cb33af72cf7ca63714733172ce724
 */
 pragma solidity ^0.4.18;
 
@@ -8,64 +8,65 @@ pragma solidity ^0.4.18;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-
 }
 
 contract Token {
   /// @return total amount of tokens
-  function totalSupply() constant returns (uint256 supply) {}
+  function totalSupply() public constant returns (uint256 supply);
 
   /// @param _owner The address from which the balance will be retrieved
   /// @return The balance
-  function balanceOf(address _owner) constant returns (uint256 balance) {}
+  function balanceOf(address _owner) public constant returns (uint256 balance);
 
   /// @notice send `_value` token to `_to` from `msg.sender`
   /// @param _to The address of the recipient
   /// @param _value The amount of token to be transferred
   /// @return Whether the transfer was successful or not
-  function transfer(address _to, uint256 _value) returns (bool success) {}
+  function transfer(address _to, uint256 _value) public returns (bool success);
 
   /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
   /// @param _from The address of the sender
   /// @param _to The address of the recipient
   /// @param _value The amount of token to be transferred
   /// @return Whether the transfer was successful or not
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
   /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
   /// @param _spender The address of the account able to transfer the tokens
   /// @param _value The amount of wei to be approved for transfer
   /// @return Whether the approval was successful or not
-  function approve(address _spender, uint256 _value) returns (bool success) {}
+  function approve(address _spender, uint256 _value) public returns (bool success);
 
   /// @param _owner The address of the account owning tokens
   /// @param _spender The address of the account able to transfer the tokens
   /// @return Amount of remaining tokens allowed to spent
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -87,7 +88,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -113,7 +114,6 @@ contract Gateway is Ownable{
     using SafeMath for uint;
     address public feeAccount1 = 0x703f9037088A93853163aEaaEd650f3e66aD7A4e; //the account1 that will receive fees
     address public feeAccount2 = 0xc94cac4a4537865753ecdf2ad48F00112dC09ea8; //the account2 that will receive fees
-    address public feeAccountToken = 0x2EF9B82Ab8Bb8229B3D863A47B1188672274E1aC;//the account that will receive fees tokens
     
     struct BuyInfo {
       address buyerAddress; 
@@ -128,7 +128,7 @@ contract Gateway is Ownable{
     uint balanceFee;
     uint public feePercent;
     uint public maxFee;
-    function Gateway() public{
+    constructor() public{
        feePercent = 1500000; // decimals 6. 1,5% fee by default
        maxFee = 3000000; // fee can not exceed 3%
     }
@@ -156,9 +156,6 @@ contract Gateway is Ownable{
     function setFeeAccount2(address _feeAccount2) onlyOwner public{
       feeAccount2 = _feeAccount2;  
     }
-    function setFeeAccountToken(address _feeAccountToken) onlyOwner public{
-      feeAccountToken = _feeAccountToken;  
-    }    
     function setFeePercent(uint _feePercent) onlyOwner public{
       require(_feePercent <= maxFee);
       feePercent = _feePercent;  
@@ -169,8 +166,7 @@ contract Gateway is Ownable{
       require(_value > 0);
       Token token = Token(_tokenAddress);
       require(token.allowance(msg.sender, this) >= _value);
-      token.transferFrom(msg.sender, feeAccountToken, _value.mul(feePercent).div(100000000));
-      token.transferFrom(msg.sender, _sellerAddress, _value.sub(_value.mul(feePercent).div(100000000)));
+      token.transferFrom(msg.sender, _sellerAddress, _value);
       payment[_sellerAddress][_orderId] = BuyInfo(msg.sender, _sellerAddress, _value, _tokenAddress);
       success = true;
     }
