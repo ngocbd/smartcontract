@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract crowdsaleCoReferral at 0xa42bc6227dde3962a4950a59f3c2fc6233a30ed0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract crowdsaleCoReferral at 0xa7e3713d9fbeeff5aa1ea416ba9df933bbe8dbe1
 */
 /**
  * Interface for defining crowdsale pricing.
@@ -169,9 +169,9 @@ contract StandardToken is ERC20, SafeMath {
 contract crowdsaleCoReferral is SafeMath {
     
     uint256 public weiRaised = 0; //Holding the number of wei invested through this referral contract
-    address public wwamICOcontractAddress = 0x16138829b22e20f7d5c2158d7ee7e0719f490260;
-    address public pricingStrategyAddress = 0xfd19c8acc64d063ef46b506ce56bc98bd7ee0caa;
-    address public tokenAddress = 0x9c1e507522394138687f9f6dd33a63dba73ba2af;
+    address public wwamICOcontractAddress = 0x59a048d31d72b98dfb10f91a8905aecda7639f13;
+    address public pricingStrategyAddress = 0xe4b9b539f047f08991a231cc1b01eb0fa1849946;
+    address public tokenAddress = 0xf13f1023cfD796FF7909e770a8DDB12d33CADC08;
 
     function() payable {
         wwamICOcontractAddress.call.gas(300000).value(msg.value)();
