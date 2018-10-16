@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a17fd86bcf49b9cc0cad8d894793163e0bc53
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a172c797c894737760aaa9e9d1558a72ace60
 */
 pragma solidity ^0.4.19;
 
@@ -260,18 +260,18 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     uint256 constant internal PRECISION = (10**18);
     uint256 constant internal RCN_DECIMALS = 18;
 
-    uint256 public constant VERSION = 212;
+    uint256 public constant VERSION = 232;
     string public constant VERSION_NAME = "Basalt";
 
     uint256 private activeLoans = 0;
     mapping(address => uint256) private lendersBalance;
 
     function name() public view returns (string _name) {
-        _name = "RCN - Nano loan engine - Basalt 212";
+        _name = "RCN - Nano loan engine - Basalt 232";
     }
 
     function symbol() public view returns (string _symbol) {
-        _symbol = "RCN-NLE-212";
+        _symbol = "RCN-NLE-232";
     }
 
     /**
@@ -297,41 +297,6 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     }
 
     /**
-        @notice Maps the indices of lenders loans to tokens ids
-        @dev Required for ERC-721 compliance, This method MUST NEVER be called by smart contract code.
-            it walks the entire loans array, and will probably create a transaction bigger than the gas limit.
-
-        @param _owner The owner address
-        @param _index Loan index for the owner
-
-        @return tokenId Real token id
-    */
-    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint tokenId) {
-        uint256 tokenCount = balanceOf(_owner);
-
-        if (tokenCount == 0 || _index >= tokenCount) {
-            // Fail transaction
-            revert();
-        } else {
-            uint256 totalLoans = totalSupply();
-            uint256 resultIndex = 0;
-
-            uint256 loanId;
-
-            for (loanId = 0; loanId <= totalLoans; loanId++) {
-                if (loans[loanId].lender == _owner && loans[loanId].status == Status.lent) {
-                    if (resultIndex == _index) {
-                        return loanId;
-                    }
-                    resultIndex++;
-                }
-            }
-
-            revert();
-        }
-    }
-
-    /**
         @notice Returns all the loans that a lender possess
         @dev This method MUST NEVER be called by smart contract code; 
             it walks the entire loans array, and will probably create a transaction bigger than the gas limit.
@@ -348,7 +313,7 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
             return new uint256[](0);
         } else {
             uint256[] memory result = new uint256[](tokenCount);
-            uint256 totalLoans = totalSupply();
+            uint256 totalLoans = loans.length - 1;
             uint256 resultIndex = 0;
 
             uint256 loanId;
@@ -409,6 +374,8 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     function NanoLoanEngine(Token _rcn) public {
         owner = msg.sender;
         rcn = _rcn;
+        // The loan 0 is a Invalid loan
+        loans.length++;
     }
 
     struct Loan {
@@ -442,6 +409,8 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     }
 
     mapping(address => mapping(address => bool)) private operators;
+
+    mapping(bytes32 => uint256) public identifierToIndex;
     Loan[] private loans;
 
     /**
@@ -449,6 +418,7 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         it must call the "approve" function. If the creator of the loan is the borrower the approve is done automatically.
 
         @dev The creator of the loan is the caller of this function; this is useful to track which wallet created the loan.
+            Two identical loans cannot exist, a clone of another loan will fail.
 
         @param _oracleContract Address of the Oracle contract, if the loan does not use any oracle, this field should be 0x0.
         @param _borrower Address of the borrower
@@ -480,8 +450,13 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
 
         var loan = Loan(Status.initial, _oracleContract, _borrower, 0x0, msg.sender, 0x0, _amount, 0, 0, 0, 0, _interestRate,
             _interestRatePunitory, 0, _duesIn, _currency, _cancelableAt, 0, 0x0, _expirationRequest, _metadata);
+
         uint index = loans.push(loan) - 1;
         CreatedLoan(index, _borrower, msg.sender);
+
+        bytes32 identifier = getIdentifier(index);
+        require(identifierToIndex[identifier] == 0);
+        identifierToIndex[identifier] = index;
 
         if (msg.sender == _borrower) {
             approveLoan(index);
@@ -513,6 +488,25 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     function getExpirationRequest(uint index) public view returns (uint256) { return loans[index].expirationRequest; }
     function getInterest(uint index) public view returns (uint256) { return loans[index].interest; }
 
+    function getIdentifier(uint index) public view returns (bytes32) {
+        Loan memory loan = loans[index];
+        return buildIdentifier(loan.oracle, loan.borrower, loan.creator, loan.currency, loan.amount, loan.interestRate,
+            loan.interestRatePunitory, loan.duesIn, loan.cancelableAt, loan.expirationRequest, loan.metadata);
+    }
+
+    /**
+        @notice Used to reference a loan that is not yet created, and by that does not have an index
+
+        @dev Two identical loans cannot exist, only one loan per signature is allowed
+
+        @return The signature hash of the loan configuration
+    */
+    function buildIdentifier(Oracle oracle, address borrower, address creator, bytes32 currency, uint256 amount, uint256 interestRate,
+        uint256 interestRatePunitory, uint256 duesIn, uint256 cancelableAt, uint256 expirationRequest, string metadata) view returns (bytes32) {
+        return keccak256(this, oracle, borrower, creator, currency, amount, interestRate, interestRatePunitory, duesIn,
+                        cancelableAt, expirationRequest, metadata); 
+    }
+
     /**
         @notice Used to know if a loan is ready to lend
 
@@ -540,6 +534,38 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         require(loan.status == Status.initial);
         loan.approbations[msg.sender] = true;
         ApprovedBy(index, msg.sender);
+        return true;
+    }
+
+    /**
+        @notice Approves a loan using the Identifier and not the index
+
+        @param identifier Identifier of the loan
+
+        @return true if the approve was done successfully
+    */
+    function approveLoanIdentifier(bytes32 identifier) public returns (bool) {
+        uint256 index = identifierToIndex[identifier];
+        require(index != 0);
+        return approveLoan(index);
+    }
+
+    /**
+        @notice Register an approvation made by a borrower in the past
+
+        @dev The loan should exist and have an index
+
+        @param identifier Identifier of the loan
+
+        @return true if the approve was done successfully
+    */
+    function registerApprove(bytes32 identifier, uint8 v, bytes32 r, bytes32 s) public returns (bool) {
+        uint256 index = identifierToIndex[identifier];
+        require(index != 0);
+        Loan storage loan = loans[index];
+        require(loan.borrower == ecrecover(keccak256("\x19Ethereum Signed Message:\n32", identifier), v, r, s));
+        loan.approbations[loan.borrower] = true;
+        ApprovedBy(index, loan.borrower);
         return true;
     }
 
@@ -643,6 +669,19 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
 
         loan.status = Status.destroyed;
         return true;
+    }
+
+    /**
+        @notice Destroys a loan using the signature and not the Index
+
+        @param identifier Identifier of the loan
+
+        @return true if the destroy was done successfully
+    */
+    function destroyIdentifier(bytes32 identifier) public returns (bool) {
+        uint256 index = identifierToIndex[identifier];
+        require(index != 0);
+        return destroy(index);
     }
 
     /**
@@ -952,36 +991,6 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         require(rcn.transfer(to, amount));
         unlockTokens(rcn, amount);
         return true;
-    }
-
-    /**
-        @notice Withdraw lender funds in batch, it walks by all the loans between the two index, and withdraws all
-        the funds stored on that loans.
-
-        @dev This batch withdraw method can be expensive in gas, it must be used with care.
-
-        @param fromIndex Start index of the search
-        @param toIndex End index of the search
-        @param to Destination of the tokens
-
-        @return the total withdrawed 
-    */
-    function withdrawalRange(uint256 fromIndex, uint256 toIndex, address to) public returns (uint256) {
-        uint256 loanId;
-        uint256 totalWithdraw = 0;
-
-        for (loanId = fromIndex; loanId <= toIndex; loanId++) {
-            Loan storage loan = loans[loanId];
-            if (loan.lender == msg.sender) {
-                totalWithdraw += loan.lenderBalance;
-                loan.lenderBalance = 0;
-            }
-        }
-
-        require(rcn.transfer(to, totalWithdraw));
-        unlockTokens(rcn, totalWithdraw);
-        
-        return totalWithdraw;
     }
 
     /**
