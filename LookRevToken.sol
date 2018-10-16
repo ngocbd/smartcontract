@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookRevToken at 0x2d4b1cc9a2d7417a9689bbcfefb224876cda7923
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookRevToken at 0x253c7dd074f4bacb305387f922225a4f737c08bd
 */
 pragma solidity ^0.4.11;
 
 /*
-* LOK 'LookRev Token' crowdfunding contract
+* LOK 'LookRev Token' crowdfunding contract Version 2.0
 *
 * Refer to https://lookrev.com/ for further information.
 * 
@@ -52,8 +52,8 @@ contract SafeMath {
 }
 
 contract Ownable {
-  address public owner;
-  address public newOwner;
+  address owner;
+  address newOwner;
 
   function Ownable() {
     owner = msg.sender;
@@ -95,6 +95,7 @@ contract StandardToken is ERC20, Ownable, SafeMath {
     function transfer(address _to, uint _amount) returns (bool success) {
         // avoid wasting gas on 0 token transfers
         if(_amount == 0) return true;
+        if (msg.sender == _to) return false;
 
         if (balances[msg.sender] >= _amount
             && _amount > 0
@@ -111,6 +112,7 @@ contract StandardToken is ERC20, Ownable, SafeMath {
     function transferFrom(address _from, address _to, uint _amount) returns (bool success) {
         // avoid wasting gas on 0 token transfers
         if(_amount == 0) return true;
+        if(_from == _to) return false;
 
         if (balances[_from] >= _amount
             && allowed[_from][msg.sender] >= _amount
@@ -160,28 +162,21 @@ contract LookRevToken is StandardToken {
     *  Token meta data
     */
     string public constant name = "LookRev";
-    string public constant symbol = "LOK";
+    string public constant symbol = "LOOK";
     uint8 public constant decimals = 18;
-    string public VERSION = 'LOK1.2';
+    string public VERSION = 'LOK2.0';
     bool public finalised = false;
     
-    address public wallet = 0x0;
+    address wallet = 0x0;
 
     mapping(address => bool) public kycRequired;
 
-    // Start - Friday, September 8, 2017 3:00:00 PM UTC (8:00:00 AM PDT GMT-07:00 DST)
-    uint public constant START_DATE = 1504882800;
-    // 3000 LOK Per ETH for the 1st 24 Hours - Till Saturday, September 9, 2017 3:00:00 PM UTC (8:00:00 AM PDT GMT-07:00 DST)
-    uint public constant BONUSONE_DATE = 1504969200;
-    // 2700 LOK Per ETH for the Next 48 Hours - Till Monday, September 11, 2017 3:00:00 PM UTC (8:00:00 AM PDT GMT-07:00 DST)
-    uint public constant BONUSTWO_DATE = 1505142000;
-    // Regular Rate - 2400 LOK Per ETH for the Remaining Part of the Crowdsale
-    // End - Sunday, October 8, 2017 3:00:00 PM UTC (8:00:00 AM PDT GMT-07:00 DST)
-    uint public constant END_DATE = 1507474800;
+    // Start - Sunday, October 8, 2017 3:00:01 PM (8:00:01 AM GMT-07:00 DST)
+    uint public constant START_DATE = 1507474801;
 
     uint public constant DECIMALSFACTOR = 10**uint(decimals);
     uint public constant TOKENS_SOFT_CAP =   10000000 * DECIMALSFACTOR;
-    uint public constant TOKENS_HARD_CAP = 2000000000 * DECIMALSFACTOR;
+    uint public constant TOKENS_HARD_CAP = 4500000000 * DECIMALSFACTOR;
     uint public constant TOKENS_TOTAL =    5000000000 * DECIMALSFACTOR;
     uint public constant INITIAL_SUPPLY = 10000000 * DECIMALSFACTOR;
 
@@ -215,23 +210,10 @@ contract LookRevToken is StandardToken {
     // msg.value (in units of wei)
     function proxyPayment(address participant) payable {
 
-        require(!finalised);
+         require(!finalised);
 
-        require(now <= END_DATE);
-
-        require(msg.value > CONTRIBUTIONS_MIN);
-        require(CONTRIBUTIONS_MAX == 0 || msg.value < CONTRIBUTIONS_MAX);
-
-         // Add in bonus during the first 24 and 48 hours of the token sale
-         if (now < START_DATE) {
-            tokensPerKEther = 2400000;
-         } else if (now < BONUSONE_DATE) {
-            tokensPerKEther = 3000000;
-         } else if (now < BONUSTWO_DATE) {
-            tokensPerKEther = 2700000;
-         } else {
-            tokensPerKEther = 2400000;
-         }
+         require(msg.value > CONTRIBUTIONS_MIN);
+         require(CONTRIBUTIONS_MAX == 0 || msg.value < CONTRIBUTIONS_MAX);
 
          // Calculate number of tokens for contributed ETH
          // `18` is the ETH decimals
@@ -268,19 +250,19 @@ contract LookRevToken is StandardToken {
 
     event TokensBought(address indexed buyer, uint ethers, 
         uint participantTokenBalance, uint tokens, uint newTotalSupply, 
-        uint _tokensPerKEther);
+        uint tokensPerKEther);
 
     function finalise() onlyOwner {
-        // Can only finalise if raised > soft cap or after the end date
-        require(totalSupply >= TOKENS_SOFT_CAP || now > END_DATE);
+        // Can only finalise if raised > soft cap
+        require(totalSupply >= TOKENS_SOFT_CAP);
 
         require(!finalised);
 
         finalised = true;
     }
 
-   function addPrecommitment(address participant, uint balance) onlyOwner {
-        require(now < START_DATE);
+    // Tokens purchased using other types of cryptocurrency
+    function addPrecommitment(address participant, uint balance) onlyOwner {
         require(balance > 0);
         balances[participant] = safeAdd(balances[participant],balance);
         totalSupply = safeAdd(totalSupply,balance);
@@ -290,18 +272,14 @@ contract LookRevToken is StandardToken {
     event PrecommitmentAdded(address indexed participant, uint balance);
 
     function transfer(address _to, uint _amount) returns (bool success) {
-        // Cannot transfer before crowdsale ends
-        // Allow awarding team members before, during and after crowdsale
-        require(finalised || msg.sender == owner);
-        require(!kycRequired[msg.sender]);
+        // Allow token transfer
+        require(!kycRequired[msg.sender] || msg.sender == owner);
         return super.transfer(_to, _amount);
     }
 
    function transferFrom(address _from, address _to, uint _amount) returns (bool success)
     {
-        // Cannot transfer before crowdsale ends
-        require(finalised);
-        require(!kycRequired[_from]);
+        require(!kycRequired[_from] || msg.sender == owner);
         return super.transferFrom(_from, _to, _amount);
     }
 
