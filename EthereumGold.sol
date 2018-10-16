@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumGold at 0xaa3918d28c0e75dab344889694bce21a69598f6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumGold at 0x28c8d01ff633ea9cd8fc6a451d7457889e698de6
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
