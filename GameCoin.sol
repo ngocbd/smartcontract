@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameCoin at 0xeefa343555feb7935a06f2fea24734d4f2ee57f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameCoin at 0x40837afab0dc8459e1eb71b9c1a0f7baaa93375f
 */
 pragma solidity ^0.4.23;
 
@@ -54,10 +54,10 @@ contract GameCoin is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 	
-    uint256 public totalSupply = 100000000;
+    uint256 public totalSupply = 1000000000000;
 	string public constant name = "GameCoin";
-    string public constant symbol = "GAE";
-    uint public constant decimals = 8;
+    string public constant symbol = "GAME";
+    uint public constant decimals = 0;
 	
 	function GameCoin(){
 		balances[msg.sender] = totalSupply;
