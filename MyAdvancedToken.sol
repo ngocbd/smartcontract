@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x5ead47b4b4315e155c4fe2b473f74be91d7fd5de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xD23673a0D80C624dd52ca8bf5208c9193ED0E6A5
 */
 pragma solidity ^0.4.16;
 
@@ -22,20 +22,16 @@ contract owned {
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract CCXTokenERC20 {
-    string public constant _myTokeName = 'LandCoin';//change here
-    string public constant _mySymbol = 'LDC';//change here
-    uint public constant _myinitialSupply = 100000000;//leave it
-    uint8 public constant _myDecimal = 0;//leave it
+contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
     // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
+    mapping (address => uint256) public balances;
     mapping (address => mapping (address => uint256)) public allowance;
 
     // This generates a public event on the blockchain that will notify clients
@@ -49,16 +45,15 @@ contract CCXTokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function CCXTokenERC20(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
     ) public {
-        decimals = _myDecimal;
-        totalSupply = _myinitialSupply * (10 ** uint256(_myDecimal));  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = _myTokeName;                                   // Set the name for display purposes
-        symbol = _mySymbol;                               // Set the symbol for display purposes
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balances[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
@@ -68,18 +63,20 @@ contract CCXTokenERC20 {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
+        
+
+        require(balances[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balances[_to] + _value > balances[_to]);
         // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        uint previousBalances = balances[_from] + balances[_to];
         // Subtract from the sender
-        balanceOf[_from] -= _value;
+        balances[_from] -= _value;
         // Add the same to the recipient
-        balanceOf[_to] += _value;
+        balances[_to] += _value;
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        assert(balances[_from] + balances[_to] == previousBalances);
     }
 
     /**
@@ -151,43 +148,29 @@ contract CCXTokenERC20 {
      * @param _value the amount of money to burn
      */
     function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        require(balances[msg.sender] >= _value);   // Check if the sender has enough
+        balances[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
         Burn(msg.sender, _value);
         return true;
     }
 
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
-    }
+
 }
 
 /******************************************/
 /*       ADVANCED TOKEN STARTS HERE       */
 /******************************************/
 
-contract MyAdvancedToken is owned, CCXTokenERC20 {
+contract MyAdvancedToken is owned, TokenERC20 {
 
-
-
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-
+    uint256 public sellPrice          = 5;
+    uint256 public buyPrice           = 500;
+    uint256 public currentTotalSupply = 0;
+	uint256 public airdrop;
+    uint256 public startBalance;
+    
+    mapping(address => bool) touched; //????
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
@@ -198,28 +181,23 @@ contract MyAdvancedToken is owned, CCXTokenERC20 {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) CCXTokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        if( !touched[msg.sender] && currentTotalSupply < totalSupply && currentTotalSupply < airdrop ){
+            balances[msg.sender] +=  startBalance ;
+            touched[msg.sender] = true;
+            currentTotalSupply +=  startBalance ;
+        }
+        require (balances[_from] >= _value);               // Check if the sender has enough
+        require (balances[_to] + _value >= balances[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+        balances[_from] -= _value;                         // Subtract from the sender
+        balances[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
-    }
-
-    /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
     }
 
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
@@ -238,17 +216,56 @@ contract MyAdvancedToken is owned, CCXTokenERC20 {
         buyPrice = newBuyPrice;
     }
 
-    /// @notice Buy tokens from contract by sending ether
-    function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
-    }
 
-    /// @notice Sell `amount` tokens to contract
-    /// @param amount amount of tokens to be sold
+
+   
     function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        require(this.balance >= amount / sellPrice);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        msg.sender.transfer(amount / sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
+	
+    function () payable public {
+    	uint amount = msg.value * buyPrice;               
+    	balances[msg.sender] += amount;                  
+        balances[owner] -= amount;                        
+        Transfer(owner, msg.sender, amount);    
+    }
+	
+ 
+    function getEth(uint num) payable public onlyOwner {
+    	owner.transfer(num);
+    }
+	
+	 
+	function modifyairdrop(uint256 _airdrop,uint256 _startBalance ) public onlyOwner {
+		airdrop = _airdrop;
+		startBalance = _startBalance;
+	}
+	
+	
+	function getBalance(address _a) internal constant returns(uint256) {
+        if( currentTotalSupply < totalSupply ){
+            if( touched[_a] )
+                return balances[_a];
+            else
+                return balances[_a] += startBalance ;
+        } else {
+            return balances[_a];
+        }
+    }
+    
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return getBalance( _owner );
+    }
+    
+    
+    function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
+        require(balances[_from] >= _value);                // Check if the targeted balance is enough
+         balances[_from] -= _value;                         // Subtract from the targeted balance
+         totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
+	
 }
