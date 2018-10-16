@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KangGuo at 0xda730ee58df4901fd36539115e6462f8cb042f02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KangGuo at 0x14a9771e559579c1821c692584e71ea4c2dd31b6
 */
 // Abstract contract for the full ERC 20 Token standard
-//@ create by m-chain jerry
+//@ create by KangChain(hangzhou)
 pragma solidity ^0.4.8;
 
 contract Token {
@@ -42,10 +42,8 @@ contract StandardToken is Token {
         
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
-            balances[_to] += _value - (_value/10000*5);
-            balances[0xc4B6Cc60d45e68D4ac853c7f9c9C23168a85324D] += _value/10000*5;
-            Transfer(msg.sender, 0xc4B6Cc60d45e68D4ac853c7f9c9C23168a85324D, (_value/10000*5));
-            Transfer(msg.sender, _to, _value - (_value/10000*5));
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
     }
@@ -53,13 +51,11 @@ contract StandardToken is Token {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value - (_value/10000*5);
-            balances[0xc4B6Cc60d45e68D4ac853c7f9c9C23168a85324D] += _value/10000*5;
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value  && _value > 0) {
+            balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
-            Transfer(_from, 0xc4B6Cc60d45e68D4ac853c7f9c9C23168a85324D, (_value/10000*5));
-            Transfer(_from, _to, _value - (_value/10000*5));
+            Transfer(_from, _to, _value);
             return true;
         } else { return false; }
     }
@@ -97,11 +93,11 @@ contract KangGuo is StandardToken {
     string public version = "P0.1";       //human 0.1 standard. Just an arbitrary versioning scheme.
     function KangGuo() {
         
-        balances[msg.sender] = 399000000000000;               // Give the creator all initial tokens
-        totalSupply = 399000000000000;                        // Update total supply
+        balances[msg.sender] = 380000000000000;               // Give the creator all initial tokens
+        totalSupply = 380000000000000;                        // Update total supply
         name = "Kang Guo";                                   // Set the name for display purposes
         decimals = 6;                            // Amount of decimals for display purposes
-        symbol = "KANG";                               // Set the symbol for display purposes
+        symbol = "KGUO";                               // Set the symbol for display purposes
     }
     
 
