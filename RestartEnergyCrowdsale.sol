@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RestartEnergyCrowdsale at 0x7fC0382722c8dDcA9B6CE920C4e95fa9ca229799
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RestartEnergyCrowdsale at 0xE90f27fC4EeDb1826dd9965A3A7920DE6e3Cd953
 */
 pragma solidity ^0.4.18;
 
@@ -400,7 +400,7 @@ contract PausableToken is StandardToken, Pausable {
 //begin RestartEnergyToken.sol
 
 contract RestartEnergyToken is MintableToken, PausableToken {
-    string public name = "RED MegaWatt Token";
+    string public name = "RED MWAT";
     string public symbol = "MWAT";
     uint256 public decimals = 18;
 }
@@ -552,7 +552,7 @@ contract TimedCrowdsale is Crowdsale, Ownable {
         require(time < presaleEndTime);
 
         presaleStartTime = time;
-        PresaleStartTimeChanged(presaleEndTime);
+        PresaleStartTimeChanged(presaleStartTime);
     }
 
     function setPresaleEndTime(uint time) public onlyOwner {
@@ -562,7 +562,6 @@ contract TimedCrowdsale is Crowdsale, Ownable {
         presaleEndTime = time;
         PresaleEndTimeChanged(presaleEndTime);
     }
-
 
 }
 
@@ -650,13 +649,13 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
     uint256 public presaleLimit = 10 * 1 ether;
 
     // how many token units a buyer gets per ether with basic presale discount
-    uint16 public basicPresaleRate = 120;
+    uint16 public presaleRate = 120;
 
     uint256 public soldTokens = 0;
 
-    uint16 public etherRate = 100;
+    uint16 public etherRate = 130;
 
-    // address where funds are collected
+    // address where tokens for team, advisors and bounty ar minted
     address public tokensWallet;
 
     // How much ETH each address has invested to this crowdsale
@@ -671,6 +670,10 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
         presaleStartTime = _presaleStartTime;
         presaleEndTime = _presaleEndTime;
         tokensWallet = _tokensWallet;
+
+        require(now <= presaleStartTime);
+        require(presaleEndTime > presaleStartTime);
+        require(presaleEndTime < startTime);
     }
 
     /**
@@ -696,7 +699,7 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
 
     function buyTokens(address beneficiary) public whenNotPaused payable {
         require(!isFinalized);
-        require(beneficiary != address(0));
+        require(beneficiary != 0x0);
         require(validPresalePurchase() || validPurchase());
 
         uint256 weiAmount = msg.value;
@@ -704,7 +707,6 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
         // calculate token amount to be created
         uint256 tokens = weiAmount.mul(getRate());
 
-        require(validPurchase());
         require(notExceedingSaleLimit(tokens));
 
         // update state
@@ -733,6 +735,7 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
         require(!isFinalized);
         require(notExceedingSaleLimit(amount));
         tokenAmountOf[to] = tokenAmountOf[to].add(amount);
+        soldTokens = soldTokens.add(amount);
         token.mint(to, amount);
     }
 
@@ -755,12 +758,12 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
 
         uint256 tokensToMint = totalTokens.mul(3).div(100);
         if (!firstPartOfTeamTokensClaimed) {
-            token.mint(wallet, tokensToMint);
+            token.mint(tokensWallet, tokensToMint);
             firstPartOfTeamTokensClaimed = true;
         }
         else {
             require(now > endTime + 365 days);
-            token.mint(wallet, tokensToMint);
+            token.mint(tokensWallet, tokensToMint);
             secondPartOfTeamTokensClaimed = true;
             token.finishMinting();
         }
@@ -774,7 +777,7 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
         uint256 calcRate = rate;
         //check if this sale is in presale period
         if (validPresalePurchase()) {
-            calcRate = basicPresaleRate;
+            calcRate = presaleRate;
         }
         else {
             //if not validPresalePurchase() and not validPurchase() this function is not called
@@ -791,6 +794,9 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
 
     function setEtherRate(uint16 _etherRate) public onlyOwner {
         etherRate = _etherRate;
+
+        // the presaleLimit must be $10000 in eth at the defined 'etherRate'
+        presaleLimit = uint256(1 ether).mul(10000).div(etherRate).div(10);
     }
 
     // @return true if the transaction can buy tokens in presale
@@ -804,15 +810,8 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
     function finalization() internal {
         super.finalization();
 
-        uint256 toMintNow;
-
-        // mint not sold tokens into team wallet
-        toMintNow = hardCap.sub(token.totalSupply());
-        token.mint(tokensWallet, toMintNow);
-
-
         // mint 14% of total Tokens (3% for bounty, 5% for advisors, 6% for team) into team wallet
-        toMintNow = totalTokens.mul(14).div(100);
+        uint256 toMintNow = totalTokens.mul(14).div(100);
         token.mint(tokensWallet, toMintNow);
     }
 }
