@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeeklyLotteryB at 0x352661478f9599a6497beb724174836cb5e62e3f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeeklyLotteryB at 0x3e368966c54C606ef545cCafD43af8bE1deF734F
 */
 /*
 	WeeklyLotteryB
 	Coded by: iFA
 	http://wlb.ethereumlottery.net
-	ver: 1.3
+	ver: 1.2
 */
 contract WLBDrawsDB {
 	address private owner;
@@ -91,7 +91,6 @@ contract WeeklyLotteryB {
 	uint private constant drawMaxNumber = 50;
 	uint private constant drawBlockDelay = 5;
 	uint private constant prizeDismissDelay = 5;
-	uint private constant drawBlockLimit = 128;
 	uint private constant contractDismissDelay = 5 weeks;
 	uint private constant investUnit = 1 ether;
 	uint private constant investMinimum = 10 ether;
@@ -183,11 +182,33 @@ contract WeeklyLotteryB {
 	/* callback function */
 	function () {
 		var Numbers = getNumbersFromHash(sha3(block.coinbase, now, ticketCounter));
-		CreateTicket(msg.sender, Numbers[0], Numbers[1], Numbers[2]);
+		BuyTicket(Numbers[0],Numbers[1],Numbers[2]);
 	}
 	/* external functions for players */
-	function BuyTicket(uint8 Number1, uint8 Number2, uint8 Number3) external {
-	    CreateTicket(msg.sender, Number1, Number2, Number3);
+	function BuyTicket(uint8 Number1, uint8 Number2, uint8 Number3) noContract OnlyEnabled {
+		var Numbers = [Number1 , Number2 , Number3];
+		if ( ! checkNumbers( Numbers )) { throw; }
+		Numbers = sortNumbers(Numbers);
+		if (msg.value < ticketPrice) { throw; }
+		if (msg.value-ticketPrice > 0) { if ( ! msg.sender.send( msg.value-ticketPrice )) { throw; } }
+		if (currentJackpot == 0) { throw; }
+		if (games[currentGame].endTimestamp < now) { throw; }
+		ticketCounter++;
+		games[currentGame].ticketsCount++;
+		bytes32 hash0 = sha3( Numbers[0], Numbers[1], Numbers[2] );
+		bytes32 hash1 = sha3( Numbers[0], Numbers[1]);
+		bytes32 hash2 = sha3( Numbers[0], Numbers[2]);
+		bytes32 hash3 = sha3( Numbers[1], Numbers[2]);
+		games[currentGame].hit3Hash[hash0]++;
+		games[currentGame].hit2Hash[hash1]++;
+		games[currentGame].hit2Hash[hash2]++;
+		games[currentGame].hit2Hash[hash3]++;
+		players[msg.sender].games[currentGame].numbersBytes.push ( getBytesFromNumbers(Numbers) );
+		players[msg.sender].games[currentGame].hit3Hash[hash0]++;
+		players[msg.sender].games[currentGame].hit2Hash[hash1]++;
+		players[msg.sender].games[currentGame].hit2Hash[hash2]++;
+		players[msg.sender].games[currentGame].hit2Hash[hash3]++;
+		NewTicketEvent( msg.sender, Numbers[0], Numbers[1], Numbers[2] );
 	}
 	function CheckTickets() external noEther noContract {
 		uint _value;
@@ -223,10 +244,6 @@ contract WeeklyLotteryB {
 		}
 		if ( ! changed) { throw; }
 		if (_value > 0) { if ( ! msg.sender.send(_value)) { throw; } }
-	}
-	function BuyTicketForOther(address Address, uint8 Number1, uint8 Number2, uint8 Number3) external {
-	    if (Address == 0x0) { throw; }
-	    CreateTicket(Address, Number1, Number2, Number3);
 	}
 	/* external functions for investors */
 	function InvestAdd() external OnlyEnabled noContract {
@@ -288,12 +305,12 @@ contract WeeklyLotteryB {
 	}
 	/* draw functions for everyone*/
 	function DrawPrepare() noContract OnlyEnabled noEther {
-		if (games[currentGame].endTimestamp > now || (games[currentGame].prepareBlock != 0 && games[currentGame].prepareBlock+(drawBlockLimit-drawBlockDelay) > block.number)) { throw; }
+		if (games[currentGame].endTimestamp > now || games[currentGame].prepareBlock != 0) { throw; }
 		games[currentGame].prepareBlock = block.number+drawBlockDelay;
 		DrawPrepareEvent(games[currentGame].prepareBlock);
 	}
 	function Draw() noContract OnlyEnabled noEther {
-		if (games[currentGame].prepareBlock == 0 || games[currentGame].prepareBlock > block.number || games[currentGame].prepareBlock+(drawBlockLimit-drawBlockDelay) <= block.number) { throw; }
+		if (games[currentGame].prepareBlock == 0 || games[currentGame].prepareBlock > block.number) { throw; }
 		bytes32 _hash;
 		uint hit3Value;
 		uint hit3Count;
@@ -333,6 +350,7 @@ contract WeeklyLotteryB {
 			investmentsValue = 0;
 		}
 		extraJackpot += totalPot;
+		setJackpot();
 		DrawEvent(currentGame+oldContractLastGame, numbers[0], numbers[1], numbers[2], hit3Count, hit3Value, hit2Count, hit2Value);
 		WLBDrawsDB( WLBdrawsDBAddr ).newDraw( now, numbers, hit3Count, hit3Value, hit2Count, hit2Value);
 		games[currentGame].hit3Count = hit3Count;
@@ -341,7 +359,6 @@ contract WeeklyLotteryB {
 		games[currentGame].hit2Value = hit2Value;
 		games[currentGame].drawDone = true;
 		newGame();
-		setJackpot();
 	}
 	/* owner functions */
 	function OwnerGetFee() external OnlyOwner {
@@ -364,31 +381,6 @@ contract WeeklyLotteryB {
 		}
 	}
 	/* private functions */
-    function CreateTicket(address Addr, uint8 Number1, uint8 Number2, uint8 Number3) private noContract OnlyEnabled {
-		var Numbers = [Number1 , Number2 , Number3];
-		if ( ! checkNumbers( Numbers )) { throw; }
-		Numbers = sortNumbers(Numbers);
-		if (msg.value < ticketPrice) { throw; }
-		if (msg.value-ticketPrice > 0) { if ( ! Addr.send( msg.value-ticketPrice )) { throw; } }
-		if (currentJackpot == 0) { throw; }
-		if (games[currentGame].endTimestamp < now) { throw; }
-		ticketCounter++;
-		games[currentGame].ticketsCount++;
-		bytes32 hash0 = sha3( Numbers[0], Numbers[1], Numbers[2] );
-		bytes32 hash1 = sha3( Numbers[0], Numbers[1]);
-		bytes32 hash2 = sha3( Numbers[0], Numbers[2]);
-		bytes32 hash3 = sha3( Numbers[1], Numbers[2]);
-		games[currentGame].hit3Hash[hash0]++;
-		games[currentGame].hit2Hash[hash1]++;
-		games[currentGame].hit2Hash[hash2]++;
-		games[currentGame].hit2Hash[hash3]++;
-		players[Addr].games[currentGame].numbersBytes.push ( getBytesFromNumbers(Numbers) );
-		players[Addr].games[currentGame].hit3Hash[hash0]++;
-		players[Addr].games[currentGame].hit2Hash[hash1]++;
-		players[Addr].games[currentGame].hit2Hash[hash2]++;
-		players[Addr].games[currentGame].hit2Hash[hash3]++;
-		NewTicketEvent( Addr, Numbers[0], Numbers[1], Numbers[2] );
-	}
 	function addInvestorsValue(uint value) private {
 		bool done;
 		uint a;
@@ -410,7 +402,7 @@ contract WeeklyLotteryB {
 		games[gamesID].startTimestamp = now;
 		games[gamesID].endTimestamp = nextDraw;
 		if (games.length > prizeDismissDelay) {
-            extraJackpot += games[currentGame-prizeDismissDelay].prizePot;
+			ownerBalance += games[currentGame-prizeDismissDelay].prizePot;
 			delete games[currentGame-prizeDismissDelay];
 		}
 	}
