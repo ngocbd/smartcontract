@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaterTechToken at 0x9E6750Ec7CeE0EC136549d1bddac00d1Eab0cf0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaterTechToken at 0xcace4f1dff4d66abc71651e6c0b457714c3c14e2
 */
 pragma solidity ^0.4.4;
 
@@ -85,7 +85,7 @@ contract WaterTechToken is StandardToken {
 
     function WaterTechToken(
         ) {
-        balances[msg.sender] = 10000000000000;              
+        balances[msg.sender] = 40000000000000;              
         totalSupply = 40000000000000;                       
         name = "WaterTech";                                   
         decimals = 6;                           
