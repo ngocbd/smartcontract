@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RESToken at 0x14f109d126c58b5bf55cdc51b9bd90b21e6a6de5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RESToken at 0x212dbc29bD9B67a6F6231a8DcA2640BD9636639A
 */
 pragma solidity ^0.4.16;
 
@@ -186,8 +186,8 @@ contract RESToken is owned, TokenERC20 {
 
     /// @notice update the price based on the remaining count of resources
     function updatePrice() public {
-        sellPrice = initialSellPrice * initialSupply / totalSupply;
-        buyPrice = initialBuyPrice * initialSupply / totalSupply;
+        sellPrice = initialSellPrice * initialSupply * (10 ** uint256(decimals)) / totalSupply;
+        buyPrice = initialBuyPrice * initialSupply * (10 ** uint256(decimals)) / totalSupply;
     }
 
     /// @notice Buy tokens from contract by sending ether
@@ -203,5 +203,4 @@ contract RESToken is owned, TokenERC20 {
         _transfer(msg.sender, this, amount);                // makes the transfers
         msg.sender.transfer(amount * sellPrice / 1000);     // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
-    
 }
