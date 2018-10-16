@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GCRTokenERC20 at 0x7041b9271fdb6ec61e8634a646f25a23f4273149
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GCRTokenERC20 at 0xd86f790b2bfca7b224165662ae5bb21663a999a1
 */
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //*************************************************************************************************************//
@@ -49,7 +49,7 @@ contract GCRTokenERC20 {
 
      function GCRTokenERC20() {
         totalSupply = 100000000 * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = 210000000000;
+        balanceOf[msg.sender] = 100000000;
         name = "GlobalChemicalResearch Token";                                 
         symbol = "GCR";                            
 }
