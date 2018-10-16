@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCTToken at 0x41ab75435668919bb507f871dd01e9762c2d173a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCTToken at 0x353bb24916a3c65fbb44a178e7c0d0776798fc34
 */
 pragma solidity ^0.4.19;
 
@@ -30,8 +30,8 @@ contract Token {
 
     function approve(address _spender, uint256 _value) public returns (bool success);
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event LogTransfer(address indexed _from, address indexed _to, uint256 _value);
+    event LogApproval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 /* ERC 20 token */
@@ -49,7 +49,7 @@ contract StandardToken is Token, SafeMath {
         require(_to != 0x0);
         balances[msg.sender] = safeSub(balances[msg.sender], _value);
         balances[_to] = safeAdd(balances[_to], _value);
-        Transfer(msg.sender, _to, _value);
+        LogTransfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -57,13 +57,13 @@ contract StandardToken is Token, SafeMath {
         balances[_from] = safeSub(balances[_from], _value);
         allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);
         balances[_to] = safeAdd(balances[_to], _value);
-        Transfer(_from, _to, _value);
+        LogTransfer(_from, _to, _value);
         return true;
     }
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        LogApproval(msg.sender, _spender, _value);
         return true;
     }
 
