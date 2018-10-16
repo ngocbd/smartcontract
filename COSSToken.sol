@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0xd471f5bf9cd70e1b75a550fb3cf72367eb60f57f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0xb37e8a251cbf86ed168820364f5edde151675a30
 */
 pragma solidity ^0.4.16;
 
@@ -98,14 +98,14 @@ contract COSSToken is IERC20Token, SafeMath {
     address public icoWalletAddress = 0xbf7aa06109ce182203ee3805614736fe18dead43;
     address public teamWalletAddress = 0x552b3f0c1747cfefc726bc669bd4fde2d20f9cf2;
     address public affiliateProgramWalletAddress = 0xd30e8e92ee0cc95a7fefb5eafdd0deb678ab41d7;
-    address public shareholdersWalletAddress = 0x56a8330345e75bafbb17443889e19302ba528e7c;
+    address public shareholdersWalletAddress = 0x56a8330345e75bafbb17443889e19302ba528e7c;    
 
     /**
         @dev constructor
     */
     function COSSToken() {
         revenueShareOwnerAddress = msg.sender;
-        balanceOf[icoWalletAddress] = safeMul(icoSold,decimalMultiplier);
+        balanceOf[revenueShareOwnerAddress] = safeMul(icoSold,decimalMultiplier);
         balanceOf[teamWalletAddress] = safeMul(30000000,decimalMultiplier);
         balanceOf[affiliateProgramWalletAddress] = safeMul(10000000,decimalMultiplier);
         balanceOf[shareholdersWalletAddress] = safeMul(5000000,decimalMultiplier);
