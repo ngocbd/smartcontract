@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UserContract at 0xa9b6e2381dee5dd4ea5d6e31e11b3c6f10d35afc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UserContract at 0x233265020cc69214aea3edd4192b96d5232bf5ca
 */
 pragma solidity ^0.4.17;
 
@@ -177,8 +177,8 @@ contract UserContract{
     address token_b_address;
     (token_a_address,token_b_address) = factory.getBase();
     token = Wrapped_Ether(token_a_address);
-    token.CreateToken.value(msg.value)();
-    bool success = token.transfer(_swapadd,msg.value);
+    token.CreateToken.value(_amounta)();
+    bool success = token.transfer(_swapadd,_amounta);
     return success;
   }
 
@@ -190,8 +190,8 @@ contract UserContract{
     address token_b_address;
     (token_a_address,token_b_address) = factory.getBase();
     token = Wrapped_Ether(token_b_address);
-    token.CreateToken.value(msg.value)();
-    bool success = token.transfer(_swapadd,msg.value);
+    token.CreateToken.value(_amountb)();
+    bool success = token.transfer(_swapadd,_amountb);
     swap.createTokens();
     return success;
 
