@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorChanger at 0x259b0e2e5101fb5dedf3928d4d6ccee05ab77a2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorChanger at 0xd3e4ca9b4f0568ddb896dba2861e88c6c26e5375
 */
 pragma solidity ^0.4.11;
 
@@ -918,12 +918,17 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
     function quickBuy(uint256 _minReturn) public payable returns (uint256 amount) {
         // ensure that the quick buy path was set
         assert(quickBuyPath.length > 0);
-        // get the ether token
-        IEtherToken etherToken = getQuickBuyEtherToken();
+        // we assume that the initial source in the quick buy path is always an ether token
+        IEtherToken etherToken = IEtherToken(quickBuyPath[0]);
         // deposit ETH in the ether token
         etherToken.deposit.value(msg.value)();
+        // get the initial changer in the path
+        ISmartToken smartToken = ISmartToken(quickBuyPath[1]);
+        BancorChanger changer = BancorChanger(smartToken.owner());
+        // approve allowance for the changer in the ether token
+        ensureAllowance(etherToken, changer, msg.value);
         // execute the change
-        uint256 returnAmount = this.quickChange(quickBuyPath, msg.value, _minReturn);
+        uint256 returnAmount = changer.quickChange(quickBuyPath, msg.value, _minReturn);
         // get the target token
         IERC20Token toToken = quickBuyPath[quickBuyPath.length - 1];
         // transfer the tokens to the caller
