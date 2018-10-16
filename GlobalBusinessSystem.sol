@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalBusinessSystem at 0x5087d28378b84a20261e24a85f6a73c1ed9a5b50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalBusinessSystem at 0x1568b42d7108dc447e8f78885913b15b8c5f62ed
 */
 pragma solidity ^0.4.13;
 
@@ -202,6 +202,8 @@ contract MintableToken is StandardToken, Ownable {
   event MintFinished();
 
   bool public mintingFinished = false;
+  
+  uint256 totalBonus = 0;
 
   modifier canMint() {
     require(!mintingFinished);
@@ -262,7 +264,7 @@ contract GlobalBusinessSystem is Ownable {
 
     function GlobalBusinessSystem() {
         multisig = 0x1a74Fa96a1BaC3C2AF3F31058F02b0471BFe71f4;
-	    hardcap = 1000 ether;
+	    hardcap = 1000;
 	    rate = 10000000000000000000000;
 	    start = 1503658800;
 	    period = 30;
