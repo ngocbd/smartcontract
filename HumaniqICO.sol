@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumaniqICO at 0xDf2b47C4A9B735502E41eC6fE386A6B9eaD7d38B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumaniqICO at 0xd61bc5b57c41a405c001e202bfd4445c2fba9031
 */
 pragma solidity ^0.4.2;
 
@@ -17,8 +17,8 @@ contract AbstractToken {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
-    event Issuance(address indexed to, uint256 value);
 }
+
 
 contract StandardToken is AbstractToken {
 
@@ -93,7 +93,7 @@ contract StandardToken is AbstractToken {
 
 
 /// @title Token contract - Implements Standard Token Interface with HumaniQ features.
-/// @author EtherionLab team, https://etherionlab.com
+/// @author Evgeny Yurtaev - <evgeny@etherionlab.com>
 contract HumaniqToken is StandardToken {
 
     /*
@@ -106,7 +106,7 @@ contract HumaniqToken is StandardToken {
      */
     string constant public name = "HumaniQ";
     string constant public symbol = "HMQ";
-    uint8 constant public decimals = 8;
+    uint8 constant public decimals = 0;
 
     address public founder = 0x0;
     bool locked = true;
@@ -155,7 +155,6 @@ contract HumaniqToken is StandardToken {
         }
         balances[_for] += tokenCount;
         totalSupply += tokenCount;
-        Issuance(_for, tokenCount);
         return true;
     }
 
@@ -274,7 +273,7 @@ contract HumaniqICO {
         returns (uint)
     {
 
-        if (startDate == 0) {
+        if (timestamp < startDate) {
             return 1499; // 49.9%
         }
 
@@ -396,20 +395,6 @@ contract HumaniqICO {
     {
         baseTokenPrice = valueInWei;
         return true;
-    }
-
-    function changeTokenAddress(address token_address) 
-        public
-        onlyFounder
-    {
-         humaniqToken = HumaniqToken(token_address);
-    }
-
-    function changeFounder(address _founder) 
-        public
-        onlyFounder
-    {
-        founder = _founder;
     }
 
     /// @dev Function that activates ICO.
