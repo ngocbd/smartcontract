@@ -1,7 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xcce9fd6aea9fc618b98198b13599d2a0419534bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x25e997bc2d26bf1587e6c14a4bbbb5ebf1e8cd84
 */
-pragma solidity ^0.4.11;
 contract SafeMath {
   function mul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
@@ -158,8 +157,8 @@ contract ERC20 is ERC20Basic {
 
 
 contract Presale is Ownable, SafeMath, Arithmetic  {
-    uint public minInvest = 1 ether;
-    uint public maxcap = 425 ether;   // 100k euro 
+    uint public minInvest = 10 ether;
+    uint public maxcap = 490 ether;   // 100k euro based on kraken rates on 27/06/2017 at 13h20
     address public ledgerWallet = "0xa4dbbF474a6f026Cf0a2d3e45aB192Fbd98D3a5f";
     uint public count = 0;
     uint public totalFunding;
