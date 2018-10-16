@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HmcDistributor at 0xbeb415855b47133aa458f079cd37d48be9894baf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HmcDistributor at 0xd79b26f2c0af8bce00a83d3b24106837e3f19746
 */
 pragma solidity ^0.4.16;
 
@@ -13,7 +13,7 @@ contract HmcDistributor {
     //add limit to 1 year
     uint64  public constant lockDuration   = 1 years;
     //Bonus amount
-    uint256 public constant bonus          = 500;
+    uint256 public constant bonus          = 500*10**18;
     //add limit to 7000000 block height
     uint    public constant minBlockNumber = 7000000;
 
