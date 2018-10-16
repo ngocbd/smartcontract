@@ -1,9 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x8f7571fdbfc3ce3ab4d697afb4f9950e9574f676
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x1d72e76e38c815b9f91661c340949e8673e897b3
 */
 pragma solidity ^0.4.16;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { 
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; 
+}
 
 contract TokenERC20 {
     // Public variables of the token
@@ -24,19 +26,15 @@ contract TokenERC20 {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constructor function
+     * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    function TokenERC20() public {
+        totalSupply = 20000000000 * 10 ** uint256(18);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;           // Give the creator all initial tokens
+        name = 'Global Gold Token';                      // Set the name for display purposes
+        symbol = 'GGT';                                // Set the symbol for display purposes
     }
 
     /**
@@ -58,6 +56,17 @@ contract TokenERC20 {
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+    
+    /**
+     * tokens balance
+     *
+     * Get `_owner` tokens
+     *
+     * @param _owner The address 
+     */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balanceOf[_owner];
     }
 
     /**
