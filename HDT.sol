@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HDT at 0x6Dc8080072E834A1d8E22CEDe668A3b373E505eC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HDT at 0x13E03AC5e36c4CfAbdcC70DDe55456635b109EB1
 */
 pragma solidity ^0.4.18;
 library SafeMath {
@@ -127,13 +127,13 @@ contract StandardToken is BasicToken, ERC20 {
 }
 contract HDT is StandardToken, Ownable {
 
-    string public constant name = "Hereditary Chain";
+    string public constant name = "Hard Token";
     string public constant symbol = "HDT";
     uint256 public constant decimals = 8;
 
     function HDT() public {
         owner = msg.sender;
-        totalSupply=10800000000000000;
+        totalSupply=100000000000000;
         balances[owner]=totalSupply;
     }
 
