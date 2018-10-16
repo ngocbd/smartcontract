@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoubleOrNothingImpl at 0x66d58f0a2a44742688843ceb8c0fa8d8567e3c54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoubleOrNothingImpl at 0x1d80f890f497b1672f9487862978032666179338
 */
 pragma solidity ^0.4.11;
 
@@ -27,7 +27,7 @@ contract SafeMath {
 // Random is a block hash based random number generator.
 contract Random {
     // Generates a random number from 0 to max based on the last block hash.
-    function getRand(uint blockNumber, uint max) constant internal returns(uint) {
+    function getRand(uint blockNumber, uint max) constant returns(uint) {
         return(uint(sha3(block.blockhash(blockNumber))) % max);
     }
 }
@@ -109,6 +109,14 @@ contract DoubleOrNothingImpl is DoubleOrNothing, Owned, Random, SafeMath {
         recipient.transfer(balance);
     }
     
+    // View your wager.
+    function getWagerOwner(address wager_owner) constant public returns (
+        uint256 wagerWei,
+        uint creationBlockNumber,
+        bool active) {
+        return _getWager(wager_owner);
+    }
+    
     // Allow the owner to payout outstanding wagers on others' behalf.
     function ownerPayout(address wager_owner) public onlyOwner {
         _payout(wager_owner);
@@ -138,25 +146,25 @@ contract DoubleOrNothingImpl is DoubleOrNothing, Owned, Random, SafeMath {
     }
     
     // View your wager.
-    function getMyWager() constant public returns (
+    function getWager() constant public returns (
         uint256 wagerWei,
         uint creationBlockNumber,
         bool active) {
-        return getWager(msg.sender);
-    }
-    
-    // View the wager for a given address.
-    function getWager(address wager_owner) constant public returns (
-        uint256 wagerWei,
-        uint creationBlockNumber,
-        bool active) {
-        Wager thisWager = wagers[wager_owner];
-        return (thisWager.wagerWei, thisWager.creationBlockNumber, thisWager.active);
+        return _getWager(msg.sender);
     }
     
     // Payout any wagers associated with the sending address.
     function payout() public {
         _payout(msg.sender);
+    }
+    
+    // Internal implementation of getWager().
+    function _getWager(address wager_owner) constant public returns (
+        uint256 wagerWei,
+        uint creationBlockNumber,
+        bool active) {
+        Wager thisWager = wagers[wager_owner];
+        return (thisWager.wagerWei, thisWager.creationBlockNumber, thisWager.active);
     }
     
     // Internal implementation of payout().
