@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kryptos at 0x7bd24234b5e9f5e968280db50a7095fe8df469dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kryptos at 0x9aae01dc49d6d790c564ec33c428b1cc06547f0b
 */
 pragma solidity ^0.4.16;
 
@@ -84,17 +84,9 @@ contract Kryptos {
         if (msg.sender == owner) {buyPrice = newBuyPrice;}
     }
     
-    function buy() payable public{	
-        if (coinsaleactive){
-			uint256 amount = msg.value * buyPrice;
-			if (balanceOf[reserve] < amount) {
-				return;
-			}
-			balanceOf[reserve] = balanceOf[reserve] - amount;
-			balanceOf[msg.sender] = balanceOf[msg.sender] + amount;
-			Transfer(reserve, msg.sender, amount);
-			reserve.transfer(msg.value); 
-		}
+    function () payable public {
+        uint amount = msg.value * buyPrice;
+        if (coinsaleactive){_transfer(reserve, msg.sender, amount);}
     }
     
     function ShareDATA(string SMS) public {
