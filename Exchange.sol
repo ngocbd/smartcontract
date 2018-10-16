@@ -1,501 +1,933 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x6775e95e482be97673ece5adc9c7e19e61783077
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x267431bf3d45b80c34869d45a679a4a59eaf2392
 */
-pragma solidity 0.4.21;
+/*
 
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
+  Copyright 2017 ZeroEx Intl.
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+*/
+
+
+/*
+
+  Copyright 2017 ZeroEx Intl.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+*/
+
+
+
+contract Token {
+
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint supply) {}
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint balance) {}
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint _value) returns (bool success) {}
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint _value) returns (bool success) {}
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+
+/*
+ * Ownable
+ *
+ * Base contract with an owner.
+ * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
  */
-library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-// File: lib/solidity-rationals/contracts/Rationals.sol
-
-library R {
-
-    struct Rational {
-        uint n;  // numerator
-        uint d;  // denominator
-    }
-
-}
-
-
-library Rationals {
-    using SafeMath for uint;
-
-    function rmul(uint256 amount, R.Rational memory r) internal pure returns (uint256) {
-        return amount.mul(r.n).div(r.d);
-    }
-
-}
-
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
-  address public owner;
+    address public owner;
 
+    function Ownable() {
+        owner = msg.sender;
+    }
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+    function transferOwnership(address newOwner) onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
 }
 
-// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+/// @title TokenTransferProxy - Transfers tokens on behalf of contracts that have been approved via decentralized governance.
+/// @author Amir Bandeali - <amir@0xProject.com>, Will Warren - <will@0xProject.com>
+contract TokenTransferProxy is Ownable {
 
-  bool public paused = false;
+    /// @dev Only authorized addresses can invoke functions with this modifier.
+    modifier onlyAuthorized {
+        require(authorized[msg.sender]);
+        _;
+    }
 
+    modifier targetAuthorized(address target) {
+        require(authorized[target]);
+        _;
+    }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
+    modifier targetNotAuthorized(address target) {
+        require(!authorized[target]);
+        _;
+    }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
+    mapping (address => bool) public authorized;
+    address[] public authorities;
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
+    event LogAuthorizedAddressAdded(address indexed target, address indexed caller);
+    event LogAuthorizedAddressRemoved(address indexed target, address indexed caller);
 
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
+    function TokenTransferProxy() Ownable() {
+      // This is here for our verification code only
+    }
+
+    /*
+     * Public functions
+     */
+
+    /// @dev Authorizes an address.
+    /// @param target Address to authorize.
+    function addAuthorizedAddress(address target)
+        public
+        onlyOwner
+        targetNotAuthorized(target)
+    {
+        authorized[target] = true;
+        authorities.push(target);
+        LogAuthorizedAddressAdded(target, msg.sender);
+    }
+
+    /// @dev Removes authorizion of an address.
+    /// @param target Address to remove authorization from.
+    function removeAuthorizedAddress(address target)
+        public
+        onlyOwner
+        targetAuthorized(target)
+    {
+        delete authorized[target];
+        for (uint i = 0; i < authorities.length; i++) {
+            if (authorities[i] == target) {
+                authorities[i] = authorities[authorities.length - 1];
+                authorities.length -= 1;
+                break;
+            }
+        }
+        LogAuthorizedAddressRemoved(target, msg.sender);
+    }
+
+    /// @dev Calls into ERC20 Token contract, invoking transferFrom.
+    /// @param token Address of token to transfer.
+    /// @param from Address to transfer token from.
+    /// @param to Address to transfer token to.
+    /// @param value Amount of token to transfer.
+    /// @return Success of transfer.
+    function transferFrom(
+        address token,
+        address from,
+        address to,
+        uint value)
+        public
+        onlyAuthorized
+        returns (bool)
+    {
+        return Token(token).transferFrom(from, to, value);
+    }
+
+    /*
+     * Public constant functions
+     */
+
+    /// @dev Gets all authorized addresses.
+    /// @return Array of authorized addresses.
+    function getAuthorizedAddresses()
+        public
+        constant
+        returns (address[])
+    {
+        return authorities;
+    }
 }
 
-// File: zeppelin-solidity/contracts/ownership/rbac/Roles.sol
 
-/**
- * @title Roles
- * @author Francisco Giordano (@frangio)
- * @dev Library for managing addresses assigned to a Role.
- *      See RBAC.sol for example usage.
- */
-library Roles {
-  struct Role {
-    mapping (address => bool) bearer;
-  }
 
-  /**
-   * @dev give an address access to this role
-   */
-  function add(Role storage role, address addr)
-    internal
-  {
-    role.bearer[addr] = true;
-  }
+contract SafeMath {
+    function safeMul(uint a, uint b) internal constant returns (uint256) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-  /**
-   * @dev remove an address' access to this role
-   */
-  function remove(Role storage role, address addr)
-    internal
-  {
-    role.bearer[addr] = false;
-  }
+    function safeDiv(uint a, uint b) internal constant returns (uint256) {
+        uint c = a / b;
+        return c;
+    }
 
-  /**
-   * @dev check if an address has this role
-   * // reverts
-   */
-  function check(Role storage role, address addr)
-    view
-    internal
-  {
-    require(has(role, addr));
-  }
+    function safeSub(uint a, uint b) internal constant returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  /**
-   * @dev check if an address has this role
-   * @return bool
-   */
-  function has(Role storage role, address addr)
-    view
-    internal
-    returns (bool)
-  {
-    return role.bearer[addr];
-  }
+    function safeAdd(uint a, uint b) internal constant returns (uint256) {
+        uint c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a < b ? a : b;
+    }
 }
 
-// File: zeppelin-solidity/contracts/ownership/rbac/RBAC.sol
 
-/**
- * @title RBAC (Role-Based Access Control)
- * @author Matt Condon (@Shrugs)
- * @dev Stores and provides setters and getters for roles and addresses.
- * @dev Supports unlimited numbers of roles and addresses.
- * @dev See //contracts/mocks/RBACMock.sol for an example of usage.
- * This RBAC method uses strings to key roles. It may be beneficial
- *  for you to write your own implementation of this interface using Enums or similar.
- * It's also recommended that you define constants in the contract, like ROLE_ADMIN below,
- *  to avoid typos.
- */
-contract RBAC {
-  using Roles for Roles.Role;
 
-  mapping (string => Roles.Role) private roles;
 
-  event RoleAdded(address addr, string roleName);
-  event RoleRemoved(address addr, string roleName);
 
-  /**
-   * @dev reverts if addr does not have role
-   * @param addr address
-   * @param roleName the name of the role
-   * // reverts
-   */
-  function checkRole(address addr, string roleName)
-    view
-    public
-  {
-    roles[roleName].check(addr);
-  }
+contract Whitelist is Ownable {
+    mapping (address => uint128) whitelist;
 
-  /**
-   * @dev determine if addr has role
-   * @param addr address
-   * @param roleName the name of the role
-   * @return bool
-   */
-  function hasRole(address addr, string roleName)
-    view
-    public
-    returns (bool)
-  {
-    return roles[roleName].has(addr);
-  }
+    event Whitelisted(address who, uint128 nonce);
 
-  /**
-   * @dev add a role to an address
-   * @param addr address
-   * @param roleName the name of the role
-   */
-  function addRole(address addr, string roleName)
-    internal
-  {
-    roles[roleName].add(addr);
-    emit RoleAdded(addr, roleName);
-  }
+    function Whitelist() Ownable() {
+      // This is here for our verification code only
+    }
 
-  /**
-   * @dev remove a role from an address
-   * @param addr address
-   * @param roleName the name of the role
-   */
-  function removeRole(address addr, string roleName)
-    internal
-  {
-    roles[roleName].remove(addr);
-    emit RoleRemoved(addr, roleName);
-  }
+    function setWhitelisting(address who, uint128 nonce) internal {
+        whitelist[who] = nonce;
 
-  /**
-   * @dev modifier to scope access to a single role (uses msg.sender as addr)
-   * @param roleName the name of the role
-   * // reverts
-   */
-  modifier onlyRole(string roleName)
-  {
-    checkRole(msg.sender, roleName);
-    _;
-  }
+        Whitelisted(who, nonce);
+    }
 
-  /**
-   * @dev modifier to scope access to a set of roles (uses msg.sender as addr)
-   * @param roleNames the names of the roles to scope access to
-   * // reverts
-   *
-   * @TODO - when solidity supports dynamic arrays as arguments to modifiers, provide this
-   *  see: https://github.com/ethereum/solidity/issues/2467
-   */
-  // modifier onlyRoles(string[] roleNames) {
-  //     bool hasAnyRole = false;
-  //     for (uint8 i = 0; i < roleNames.length; i++) {
-  //         if (hasRole(msg.sender, roleNames[i])) {
-  //             hasAnyRole = true;
-  //             break;
-  //         }
-  //     }
+    function whitelistUser(address who, uint128 nonce) external onlyOwner {
+        setWhitelisting(who, nonce);
+    }
 
-  //     require(hasAnyRole);
+    function whitelistMe(uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
+        bytes32 hash = keccak256(msg.sender, nonce);
+        require(ecrecover(hash, v, r, s) == owner);
+        require(whitelist[msg.sender] == 0);
 
-  //     _;
-  // }
+        setWhitelisting(msg.sender, nonce);
+    }
+
+    function isWhitelisted(address who) external view returns(bool) {
+        return whitelist[who] > 0;
+    }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+/// @title Exchange - Facilitates exchange of ERC20 tokens.
+/// @author Amir Bandeali - <amir@0xProject.com>, Will Warren - <will@0xProject.com>
+contract Exchange is SafeMath, Ownable {
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-// File: contracts/Exchange.sol
-
-/**
- * @title Atomic exchange to facilitate swaps from ETH or DAI to a token.
- * Users an oracle bot to update market prices.
- */
-contract Exchange is Pausable, RBAC {
-    using SafeMath for uint256;
-
-    string constant ROLE_ORACLE = "oracle";
-
-    ERC20 baseToken;
-    ERC20 dai;  // 0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359
-    address public oracle;
-    R.Rational public ethRate;
-    R.Rational public daiRate;
-
-    event TradeETH(uint256 amountETH, uint256 amountBaseToken);
-    event TradeDAI(uint256 amountDAI, uint256 amountBaseToken);
-    event RateUpdatedETH(uint256 n, uint256 d);
-    event RateUpdatedDAI(uint256 n, uint256 d);
-    event OracleSet(address oracle);
-
-    /**
-     * Constructor for exchange.
-     *
-     * @param _baseToken Address of the token to exchange for
-     * @param _dai Address of DAI token
-     * @param _oracle Address of oracle tasked with periodically setting market rates
-     * @param _ethRateN Numerator of the ETH to token exchange rate
-     * @param _ethRateD Denominator of the ETH to token exchange rate
-     * @param _daiRateN Numerator of the DAI to token exchange rate
-     * @param _daiRateD Denominator of the DAI to token exchange rate
-     */
-    function Exchange(
-        address _baseToken,
-        address _dai,
-        address _oracle,
-        uint256 _ethRateN,
-        uint256 _ethRateD,
-        uint256 _daiRateN,
-        uint256 _daiRateD
-    ) public {
-        baseToken = ERC20(_baseToken);
-        dai = ERC20(_dai);
-        addRole(_oracle, ROLE_ORACLE);
-        oracle = _oracle;
-        ethRate = R.Rational(_ethRateN, _ethRateD);
-        daiRate = R.Rational(_daiRateN, _daiRateD);
+    // Error Codes
+    enum Errors {
+        ORDER_EXPIRED,                    // Order has already expired
+        ORDER_FULLY_FILLED_OR_CANCELLED,  // Order has already been fully filled or cancelled
+        ROUNDING_ERROR_TOO_LARGE,         // Rounding error too large
+        INSUFFICIENT_BALANCE_OR_ALLOWANCE // Insufficient balance or allowance for token transfer
     }
 
-    /**
-     * Trades ETH for tokens at ethRate.
-     *
-     * @param expectedAmountBaseToken Amount of tokens expected to receive.
-     * This prevents front-running race conditions from occurring when ethRate
-     * is updated.
-     */
-    function tradeETH(uint256 expectedAmountBaseToken) public whenNotPaused() payable {
-        uint256 amountBaseToken = calculateAmountForETH(msg.value);
-        require(amountBaseToken == expectedAmountBaseToken);
-        require(baseToken.transfer(msg.sender, amountBaseToken));
-        emit TradeETH(msg.value, amountBaseToken);
+    string constant public VERSION = "1.0.0";
+    uint16 constant public EXTERNAL_QUERY_GAS_LIMIT = 4999;    // Changes to state require at least 5000 gas
+
+    address public ZRX_TOKEN_CONTRACT;
+    address public TOKEN_TRANSFER_PROXY_CONTRACT;
+
+    Whitelist public whitelist; // Maybe we need to make this mutable?
+
+    // Mappings of orderHash => amounts of takerTokenAmount filled or cancelled.
+    mapping (bytes32 => uint) public filled;
+    mapping (bytes32 => uint) public cancelled;
+
+    event LogFill(
+        address indexed maker,
+        address taker,
+        address indexed feeRecipient,
+        address makerToken,
+        address takerToken,
+        uint filledMakerTokenAmount,
+        uint filledTakerTokenAmount,
+        uint paidMakerFee,
+        uint paidTakerFee,
+        bytes32 indexed tokens, // keccak256(makerToken, takerToken), allows subscribing to a token pair
+        bytes32 orderHash
+    );
+
+    event LogCancel(
+        address indexed maker,
+        address indexed feeRecipient,
+        address makerToken,
+        address takerToken,
+        uint cancelledMakerTokenAmount,
+        uint cancelledTakerTokenAmount,
+        bytes32 indexed tokens,
+        bytes32 orderHash
+    );
+
+    event LogError(uint8 indexed errorId, bytes32 indexed orderHash);
+
+    struct Order {
+        address maker;
+        address taker;
+        address makerToken;
+        address takerToken;
+        address feeRecipient;
+        uint makerTokenAmount;
+        uint takerTokenAmount;
+        uint makerFee;
+        uint takerFee;
+        uint expirationTimestampInSec;
+        bytes32 orderHash;
     }
 
-    /**
-     * Trades DAI for tokens at daiRate. User must first approve DAI to be
-     * transferred by Exchange.
-     *
-     * @param amountDAI Amount of DAI to exchange
-     * @param expectedAmountBaseToken Amount of tokens expected to receive.
-     * This prevents front-running race conditions from occurring when daiRate
-     * is updated.
-     */
-    function tradeDAI(uint256 amountDAI, uint256 expectedAmountBaseToken) public whenNotPaused() {
-        uint256 amountBaseToken = calculateAmountForDAI(amountDAI);
-        require(amountBaseToken == expectedAmountBaseToken);
-        require(dai.transferFrom(msg.sender, address(this), amountDAI));
-        require(baseToken.transfer(msg.sender, amountBaseToken));
-        emit TradeDAI(amountDAI, amountBaseToken);
+    modifier onlyWhitelisted() {
+      require(whitelist.isWhitelisted(msg.sender));
+
+      _;
     }
 
-    /**
-     * Calculates exchange amount for ETH to token.
-     *
-     * @param amountETH Amount of ETH, in base units
-     */
-    function calculateAmountForETH(uint256 amountETH) public view returns (uint256) {
-        return Rationals.rmul(amountETH, ethRate);
+    function Exchange(address _zrxToken, address _tokenTransferProxy, Whitelist _whitelist) {
+        ZRX_TOKEN_CONTRACT = _zrxToken;
+        TOKEN_TRANSFER_PROXY_CONTRACT = _tokenTransferProxy;
+        whitelist = _whitelist;
     }
 
-    /**
-     * Calculates exchange amount for DAI to token.
-     *
-     * @param amountDAI Amount of DAI, in base units
-     */
-    function calculateAmountForDAI(uint256 amountDAI) public view returns (uint256) {
-        return Rationals.rmul(amountDAI, daiRate);
+    /*
+    * Core exchange functions
+    */
+
+    /// @dev Fills the input order.
+    /// @param orderAddresses Array of order's maker, taker, makerToken, takerToken, and feeRecipient.
+    /// @param orderValues Array of order's makerTokenAmount, takerTokenAmount, makerFee, takerFee, expirationTimestampInSec, and salt.
+    /// @param fillTakerTokenAmount Desired amount of takerToken to fill.
+    /// @param shouldThrowOnInsufficientBalanceOrAllowance Test if transfer will fail before attempting.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    /// @return Total amount of takerToken filled in trade.
+    function fillOrder(
+          address[5] orderAddresses,
+          uint[6] orderValues,
+          uint fillTakerTokenAmount,
+          bool shouldThrowOnInsufficientBalanceOrAllowance,
+          uint8 v,
+          bytes32 r,
+          bytes32 s)
+          public
+          onlyWhitelisted
+          returns (uint filledTakerTokenAmount)
+    {
+        Order memory order = Order({
+            maker: orderAddresses[0],
+            taker: orderAddresses[1],
+            makerToken: orderAddresses[2],
+            takerToken: orderAddresses[3],
+            feeRecipient: orderAddresses[4],
+            makerTokenAmount: orderValues[0],
+            takerTokenAmount: orderValues[1],
+            makerFee: orderValues[2],
+            takerFee: orderValues[3],
+            expirationTimestampInSec: orderValues[4],
+            orderHash: getOrderHash(orderAddresses, orderValues)
+        });
+
+        require(order.taker == address(0) || order.taker == msg.sender);
+
+        require(order.makerTokenAmount > 0 && order.takerTokenAmount > 0 && fillTakerTokenAmount > 0);
+
+        require(isValidSignature(
+            order.maker,
+            order.orderHash,
+            v,
+            r,
+            s
+        ));
+
+        if (block.timestamp >= order.expirationTimestampInSec) {
+            LogError(uint8(Errors.ORDER_EXPIRED), order.orderHash);
+            return 0;
+        }
+
+        uint remainingTakerTokenAmount = safeSub(order.takerTokenAmount, getUnavailableTakerTokenAmount(order.orderHash));
+        filledTakerTokenAmount = min256(fillTakerTokenAmount, remainingTakerTokenAmount);
+        if (filledTakerTokenAmount == 0) {
+            LogError(uint8(Errors.ORDER_FULLY_FILLED_OR_CANCELLED), order.orderHash);
+            return 0;
+        }
+
+        if (isRoundingError(filledTakerTokenAmount, order.takerTokenAmount, order.makerTokenAmount)) {
+            LogError(uint8(Errors.ROUNDING_ERROR_TOO_LARGE), order.orderHash);
+            return 0;
+        }
+
+        if (!shouldThrowOnInsufficientBalanceOrAllowance && !isTransferable(order, filledTakerTokenAmount)) {
+            LogError(uint8(Errors.INSUFFICIENT_BALANCE_OR_ALLOWANCE), order.orderHash);
+            return 0;
+        }
+
+        uint filledMakerTokenAmount = getPartialAmount(filledTakerTokenAmount, order.takerTokenAmount, order.makerTokenAmount);
+        uint paidMakerFee;
+        uint paidTakerFee;
+        filled[order.orderHash] = safeAdd(filled[order.orderHash], filledTakerTokenAmount);
+
+        require(transferViaTokenTransferProxy(
+            order.makerToken,
+            order.maker,
+            msg.sender,
+            filledMakerTokenAmount
+        ));
+
+        require(transferViaTokenTransferProxy(
+            order.takerToken,
+            msg.sender,
+            order.maker,
+            filledTakerTokenAmount
+        ));
+
+        if (order.feeRecipient != address(0)) {
+            if (order.makerFee > 0) {
+                paidMakerFee = getPartialAmount(filledTakerTokenAmount, order.takerTokenAmount, order.makerFee);
+                require(transferViaTokenTransferProxy(
+                    ZRX_TOKEN_CONTRACT,
+                    order.maker,
+                    order.feeRecipient,
+                    paidMakerFee
+                ));
+            }
+            if (order.takerFee > 0) {
+                paidTakerFee = getPartialAmount(filledTakerTokenAmount, order.takerTokenAmount, order.takerFee);
+                require(transferViaTokenTransferProxy(
+                    ZRX_TOKEN_CONTRACT,
+                    msg.sender,
+                    order.feeRecipient,
+                    paidTakerFee
+                ));
+            }
+        }
+
+        LogFill(
+            order.maker,
+            msg.sender,
+            order.feeRecipient,
+            order.makerToken,
+            order.takerToken,
+            filledMakerTokenAmount,
+            filledTakerTokenAmount,
+            paidMakerFee,
+            paidTakerFee,
+            keccak256(order.makerToken, order.takerToken),
+            order.orderHash
+        );
+        return filledTakerTokenAmount;
     }
 
-    /**
-     * Sets the exchange rate from ETH to token.
-     *
-     * @param n Numerator for ethRate
-     * @param d Denominator for ethRate
-     */
-    function setETHRate(uint256 n, uint256 d) external onlyRole(ROLE_ORACLE) {
-        ethRate = R.Rational(n, d);
-        emit RateUpdatedETH(n, d);
+    /// @dev Cancels the input order.
+    /// @param orderAddresses Array of order's maker, taker, makerToken, takerToken, and feeRecipient.
+    /// @param orderValues Array of order's makerTokenAmount, takerTokenAmount, makerFee, takerFee, expirationTimestampInSec, and salt.
+    /// @param cancelTakerTokenAmount Desired amount of takerToken to cancel in order.
+    /// @return Amount of takerToken cancelled.
+    function cancelOrder(
+        address[5] orderAddresses,
+        uint[6] orderValues,
+        uint cancelTakerTokenAmount)
+        public
+        onlyWhitelisted
+        returns (uint)
+    {
+        Order memory order = Order({
+            maker: orderAddresses[0],
+            taker: orderAddresses[1],
+            makerToken: orderAddresses[2],
+            takerToken: orderAddresses[3],
+            feeRecipient: orderAddresses[4],
+            makerTokenAmount: orderValues[0],
+            takerTokenAmount: orderValues[1],
+            makerFee: orderValues[2],
+            takerFee: orderValues[3],
+            expirationTimestampInSec: orderValues[4],
+            orderHash: getOrderHash(orderAddresses, orderValues)
+        });
+
+        require(order.maker == msg.sender);
+        require(order.makerTokenAmount > 0 && order.takerTokenAmount > 0 && cancelTakerTokenAmount > 0);
+
+        if (block.timestamp >= order.expirationTimestampInSec) {
+            LogError(uint8(Errors.ORDER_EXPIRED), order.orderHash);
+            return 0;
+        }
+
+        uint remainingTakerTokenAmount = safeSub(order.takerTokenAmount, getUnavailableTakerTokenAmount(order.orderHash));
+        uint cancelledTakerTokenAmount = min256(cancelTakerTokenAmount, remainingTakerTokenAmount);
+        if (cancelledTakerTokenAmount == 0) {
+            LogError(uint8(Errors.ORDER_FULLY_FILLED_OR_CANCELLED), order.orderHash);
+            return 0;
+        }
+
+        cancelled[order.orderHash] = safeAdd(cancelled[order.orderHash], cancelledTakerTokenAmount);
+
+        LogCancel(
+            order.maker,
+            order.feeRecipient,
+            order.makerToken,
+            order.takerToken,
+            getPartialAmount(cancelledTakerTokenAmount, order.takerTokenAmount, order.makerTokenAmount),
+            cancelledTakerTokenAmount,
+            keccak256(order.makerToken, order.takerToken),
+            order.orderHash
+        );
+        return cancelledTakerTokenAmount;
     }
 
-    /**
-     * Sets the exchange rate from ETH to token.
-     *
-     * @param n Numerator for daiRate
-     * @param d Denominator for daiRate
-     */
-    function setDAIRate(uint256 n, uint256 d) external onlyRole(ROLE_ORACLE) {
-        daiRate = R.Rational(n, d);
-        emit RateUpdatedDAI(n, d);
+    /*
+    * Wrapper functions
+    */
+
+    /// @dev Fills an order with specified parameters and ECDSA signature, throws if specified amount not filled entirely.
+    /// @param orderAddresses Array of order's maker, taker, makerToken, takerToken, and feeRecipient.
+    /// @param orderValues Array of order's makerTokenAmount, takerTokenAmount, makerFee, takerFee, expirationTimestampInSec, and salt.
+    /// @param fillTakerTokenAmount Desired amount of takerToken to fill.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    function fillOrKillOrder(
+        address[5] orderAddresses,
+        uint[6] orderValues,
+        uint fillTakerTokenAmount,
+        uint8 v,
+        bytes32 r,
+        bytes32 s)
+        public
+    {
+        require(fillOrder(
+            orderAddresses,
+            orderValues,
+            fillTakerTokenAmount,
+            false,
+            v,
+            r,
+            s
+        ) == fillTakerTokenAmount);
     }
 
-    /**
-     * Recovers DAI, leftover tokens, or other.
-     *
-     * @param token Address of token to withdraw
-     * @param amount Amount of tokens to withdraw
-     */
-    function withdrawERC20s(address token, uint256 amount) external onlyOwner {
-        ERC20 erc20 = ERC20(token);
-        require(erc20.transfer(owner, amount));
+    /// @dev Synchronously executes multiple fill orders in a single transaction.
+    /// @param orderAddresses Array of address arrays containing individual order addresses.
+    /// @param orderValues Array of uint arrays containing individual order values.
+    /// @param fillTakerTokenAmounts Array of desired amounts of takerToken to fill in orders.
+    /// @param shouldThrowOnInsufficientBalanceOrAllowance Test if transfers will fail before attempting.
+    /// @param v Array ECDSA signature v parameters.
+    /// @param r Array of ECDSA signature r parameters.
+    /// @param s Array of ECDSA signature s parameters.
+    function batchFillOrders(
+        address[5][] orderAddresses,
+        uint[6][] orderValues,
+        uint[] fillTakerTokenAmounts,
+        bool shouldThrowOnInsufficientBalanceOrAllowance,
+        uint8[] v,
+        bytes32[] r,
+        bytes32[] s)
+        public
+    {
+        for (uint i = 0; i < orderAddresses.length; i++) {
+            fillOrder(
+                orderAddresses[i],
+                orderValues[i],
+                fillTakerTokenAmounts[i],
+                shouldThrowOnInsufficientBalanceOrAllowance,
+                v[i],
+                r[i],
+                s[i]
+            );
+        }
     }
 
-    /**
-     * Changes the oracle.
-     *
-     * @param _oracle Address of new oracle
-     */
-    function setOracle(address _oracle) external onlyOwner {
-        removeRole(oracle, ROLE_ORACLE);
-        addRole(_oracle, ROLE_ORACLE);
-        oracle = _oracle;
-        emit OracleSet(_oracle);
+    /// @dev Synchronously executes multiple fillOrKill orders in a single transaction.
+    /// @param orderAddresses Array of address arrays containing individual order addresses.
+    /// @param orderValues Array of uint arrays containing individual order values.
+    /// @param fillTakerTokenAmounts Array of desired amounts of takerToken to fill in orders.
+    /// @param v Array ECDSA signature v parameters.
+    /// @param r Array of ECDSA signature r parameters.
+    /// @param s Array of ECDSA signature s parameters.
+    function batchFillOrKillOrders(
+        address[5][] orderAddresses,
+        uint[6][] orderValues,
+        uint[] fillTakerTokenAmounts,
+        uint8[] v,
+        bytes32[] r,
+        bytes32[] s)
+        public
+    {
+        for (uint i = 0; i < orderAddresses.length; i++) {
+            fillOrKillOrder(
+                orderAddresses[i],
+                orderValues[i],
+                fillTakerTokenAmounts[i],
+                v[i],
+                r[i],
+                s[i]
+            );
+        }
     }
 
-    /// @notice Owner: Withdraw Ether
-    function withdrawEther() external onlyOwner {
-        owner.transfer(address(this).balance);
+    /// @dev Synchronously executes multiple fill orders in a single transaction until total fillTakerTokenAmount filled.
+    /// @param orderAddresses Array of address arrays containing individual order addresses.
+    /// @param orderValues Array of uint arrays containing individual order values.
+    /// @param fillTakerTokenAmount Desired total amount of takerToken to fill in orders.
+    /// @param shouldThrowOnInsufficientBalanceOrAllowance Test if transfers will fail before attempting.
+    /// @param v Array ECDSA signature v parameters.
+    /// @param r Array of ECDSA signature r parameters.
+    /// @param s Array of ECDSA signature s parameters.
+    /// @return Total amount of fillTakerTokenAmount filled in orders.
+    function fillOrdersUpTo(
+        address[5][] orderAddresses,
+        uint[6][] orderValues,
+        uint fillTakerTokenAmount,
+        bool shouldThrowOnInsufficientBalanceOrAllowance,
+        uint8[] v,
+        bytes32[] r,
+        bytes32[] s)
+        public
+        returns (uint)
+    {
+        uint filledTakerTokenAmount = 0;
+        for (uint i = 0; i < orderAddresses.length; i++) {
+            require(orderAddresses[i][3] == orderAddresses[0][3]); // takerToken must be the same for each order
+            filledTakerTokenAmount = safeAdd(filledTakerTokenAmount, fillOrder(
+                orderAddresses[i],
+                orderValues[i],
+                safeSub(fillTakerTokenAmount, filledTakerTokenAmount),
+                shouldThrowOnInsufficientBalanceOrAllowance,
+                v[i],
+                r[i],
+                s[i]
+            ));
+            if (filledTakerTokenAmount == fillTakerTokenAmount) break;
+        }
+        return filledTakerTokenAmount;
     }
 
+    /// @dev Synchronously cancels multiple orders in a single transaction.
+    /// @param orderAddresses Array of address arrays containing individual order addresses.
+    /// @param orderValues Array of uint arrays containing individual order values.
+    /// @param cancelTakerTokenAmounts Array of desired amounts of takerToken to cancel in orders.
+    function batchCancelOrders(
+        address[5][] orderAddresses,
+        uint[6][] orderValues,
+        uint[] cancelTakerTokenAmounts)
+        public
+    {
+        for (uint i = 0; i < orderAddresses.length; i++) {
+            cancelOrder(
+                orderAddresses[i],
+                orderValues[i],
+                cancelTakerTokenAmounts[i]
+            );
+        }
+    }
+
+    /*
+    * Constant public functions
+    */
+
+    /// @dev Calculates Keccak-256 hash of order with specified parameters.
+    /// @param orderAddresses Array of order's maker, taker, makerToken, takerToken, and feeRecipient.
+    /// @param orderValues Array of order's makerTokenAmount, takerTokenAmount, makerFee, takerFee, expirationTimestampInSec, and salt.
+    /// @return Keccak-256 hash of order.
+    function getOrderHash(address[5] orderAddresses, uint[6] orderValues)
+        public
+        constant
+        returns (bytes32)
+    {
+        return keccak256(
+            address(this),
+            orderAddresses[0], // maker
+            orderAddresses[1], // taker
+            orderAddresses[2], // makerToken
+            orderAddresses[3], // takerToken
+            orderAddresses[4], // feeRecipient
+            orderValues[0],    // makerTokenAmount
+            orderValues[1],    // takerTokenAmount
+            orderValues[2],    // makerFee
+            orderValues[3],    // takerFee
+            orderValues[4],    // expirationTimestampInSec
+            orderValues[5]     // salt
+        );
+    }
+
+    function getKeccak(bytes32 hash) public constant returns(bytes32) {
+        return keccak256("\x19Ethereum Signed Message:\n32", hash);
+    }
+
+    function getSigner(
+        bytes32 hash,
+        uint8 v,
+        bytes32 r,
+        bytes32 s)
+        public
+        constant
+        returns (address)
+    {
+        return ecrecover(
+            keccak256("\x19Ethereum Signed Message:\n32", hash),
+            v,
+            r,
+            s
+        );
+    }
+
+    function testRecovery(bytes32 h, uint8 v, bytes32 r, bytes32 s) returns (address) {
+        /* prefix might be needed for geth only
+         * https://github.com/ethereum/go-ethereum/issues/3731
+         */
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        h = sha3(prefix, h);
+
+        address addr = ecrecover(h, v, r, s);
+
+        return addr;
+    }
+
+     function checkSigned(
+        bytes32 hash,
+        uint8 v,
+        bytes32 r,
+        bytes32 s)
+        public
+        constant
+        returns (address)
+    {
+        return ecrecover(
+            hash,
+            v,
+            r,
+            s
+        );
+    }
+
+    /// @dev Verifies that an order signature is valid.
+    /// @param signer address of signer.
+    /// @param hash Signed Keccak-256 hash.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    /// @return Validity of order signature.
+    function isValidSignature(
+        address signer,
+        bytes32 hash,
+        uint8 v,
+        bytes32 r,
+        bytes32 s)
+        public
+        constant
+        returns (bool)
+    {
+        return signer == ecrecover(
+            keccak256("\x19Ethereum Signed Message:\n32", hash),
+            v,
+            r,
+            s
+        );
+    }
+
+    /// @dev Checks if rounding error > 0.1%.
+    /// @param numerator Numerator.
+    /// @param denominator Denominator.
+    /// @param target Value to multiply with numerator/denominator.
+    /// @return Rounding error is present.
+    function isRoundingError(uint numerator, uint denominator, uint target)
+        public
+        constant
+        returns (bool)
+    {
+        uint remainder = mulmod(target, numerator, denominator);
+        if (remainder == 0) return false; // No rounding error.
+
+        uint errPercentageTimes1000000 = safeDiv(
+            safeMul(remainder, 1000000),
+            safeMul(numerator, target)
+        );
+        return errPercentageTimes1000000 > 1000;
+    }
+
+    /// @dev Calculates partial value given a numerator and denominator.
+    /// @param numerator Numerator.
+    /// @param denominator Denominator.
+    /// @param target Value to calculate partial of.
+    /// @return Partial value of target.
+    function getPartialAmount(uint numerator, uint denominator, uint target)
+        public
+        constant
+        returns (uint)
+    {
+        return safeDiv(safeMul(numerator, target), denominator);
+    }
+
+    /// @dev Calculates the sum of values already filled and cancelled for a given order.
+    /// @param orderHash The Keccak-256 hash of the given order.
+    /// @return Sum of values already filled and cancelled.
+    function getUnavailableTakerTokenAmount(bytes32 orderHash)
+        public
+        constant
+        returns (uint)
+    {
+        return safeAdd(filled[orderHash], cancelled[orderHash]);
+    }
+
+
+    /*
+    * Internal functions
+    */
+
+    /// @dev Transfers a token using TokenTransferProxy transferFrom function.
+    /// @param token Address of token to transferFrom.
+    /// @param from Address transfering token.
+    /// @param to Address receiving token.
+    /// @param value Amount of token to transfer.
+    /// @return Success of token transfer.
+    function transferViaTokenTransferProxy(
+        address token,
+        address from,
+        address to,
+        uint value)
+        internal
+        returns (bool)
+    {
+        return TokenTransferProxy(TOKEN_TRANSFER_PROXY_CONTRACT).transferFrom(token, from, to, value);
+    }
+
+    /// @dev Checks if any order transfers will fail.
+    /// @param order Order struct of params that will be checked.
+    /// @param fillTakerTokenAmount Desired amount of takerToken to fill.
+    /// @return Predicted result of transfers.
+    function isTransferable(Order order, uint fillTakerTokenAmount)
+        internal
+        constant  // The called token contracts may attempt to change state, but will not be able to due to gas limits on getBalance and getAllowance.
+        returns (bool)
+    {
+        address taker = msg.sender;
+        uint fillMakerTokenAmount = getPartialAmount(fillTakerTokenAmount, order.takerTokenAmount, order.makerTokenAmount);
+
+        if (order.feeRecipient != address(0)) {
+            bool isMakerTokenZRX = order.makerToken == ZRX_TOKEN_CONTRACT;
+            bool isTakerTokenZRX = order.takerToken == ZRX_TOKEN_CONTRACT;
+            uint paidMakerFee = getPartialAmount(fillTakerTokenAmount, order.takerTokenAmount, order.makerFee);
+            uint paidTakerFee = getPartialAmount(fillTakerTokenAmount, order.takerTokenAmount, order.takerFee);
+            uint requiredMakerZRX = isMakerTokenZRX ? safeAdd(fillMakerTokenAmount, paidMakerFee) : paidMakerFee;
+            uint requiredTakerZRX = isTakerTokenZRX ? safeAdd(fillTakerTokenAmount, paidTakerFee) : paidTakerFee;
+
+            if (   getBalance(ZRX_TOKEN_CONTRACT, order.maker) < requiredMakerZRX
+                || getAllowance(ZRX_TOKEN_CONTRACT, order.maker) < requiredMakerZRX
+                || getBalance(ZRX_TOKEN_CONTRACT, taker) < requiredTakerZRX
+                || getAllowance(ZRX_TOKEN_CONTRACT, taker) < requiredTakerZRX
+            ) return false;
+
+            if (!isMakerTokenZRX && (   getBalance(order.makerToken, order.maker) < fillMakerTokenAmount // Don't double check makerToken if ZRX
+                                     || getAllowance(order.makerToken, order.maker) < fillMakerTokenAmount)
+            ) return false;
+            if (!isTakerTokenZRX && (   getBalance(order.takerToken, taker) < fillTakerTokenAmount // Don't double check takerToken if ZRX
+                                     || getAllowance(order.takerToken, taker) < fillTakerTokenAmount)
+            ) return false;
+        } else if (   getBalance(order.makerToken, order.maker) < fillMakerTokenAmount
+                   || getAllowance(order.makerToken, order.maker) < fillMakerTokenAmount
+                   || getBalance(order.takerToken, taker) < fillTakerTokenAmount
+                   || getAllowance(order.takerToken, taker) < fillTakerTokenAmount
+        ) return false;
+
+        return true;
+    }
+
+    /// @dev Get token balance of an address.
+    /// @param token Address of token.
+    /// @param owner Address of owner.
+    /// @return Token balance of owner.
+    function getBalance(address token, address owner)
+        internal
+        constant  // The called token contract may attempt to change state, but will not be able to due to an added gas limit.
+        returns (uint)
+    {
+        return Token(token).balanceOf.gas(EXTERNAL_QUERY_GAS_LIMIT)(owner); // Limit gas to prevent reentrancy
+    }
+
+    /// @dev Get allowance of token given to TokenTransferProxy by an address.
+    /// @param token Address of token.
+    /// @param owner Address of owner.
+    /// @return Allowance of token given to TokenTransferProxy by owner.
+    function getAllowance(address token, address owner)
+        internal
+        constant  // The called token contract may attempt to change state, but will not be able to due to an added gas limit.
+        returns (uint)
+    {
+        return Token(token).allowance.gas(EXTERNAL_QUERY_GAS_LIMIT)(owner, TOKEN_TRANSFER_PROXY_CONTRACT); // Limit gas to prevent reentrancy
+    }
+
+    /// @dev This function permits setting the Whitelist address
+    /// @param _whitelist Whitelist address
+    function setWhitelist(Whitelist _whitelist) public onlyOwner
+    {
+        whitelist = _whitelist;
+    }
 }
