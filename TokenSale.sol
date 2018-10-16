@@ -1,59 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xe59015e2d097b545f0b1701c64310f98e3600495
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokensale at 0x311d745582a97be5d7abbce48855ecec72737c5d
 */
-pragma solidity ^0.4.18;
-
- 
- /*
- * NYX Token sale
- *
- * Supports ERC20, ERC223 stadards
- *
- * The NYX token is mintable during Token Sale. On Token Sale finalization it
- * will be minted up to the cap and minting will be finished forever
- */
-
-
-pragma solidity ^0.4.18;
-
-
-/*************************************************************************
- * import "./include/MintableToken.sol" : start
- *************************************************************************/
-
-/*************************************************************************
- * import "zeppelin/contracts/token/StandardToken.sol" : start
- *************************************************************************/
-
-
-/*************************************************************************
- * import "./BasicToken.sol" : start
- *************************************************************************/
-
-
-/*************************************************************************
- * import "./ERC20Basic.sol" : start
- *************************************************************************/
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-/*************************************************************************
- * import "./ERC20Basic.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "../math/SafeMath.sol" : start
- *************************************************************************/
-
+pragma solidity ^0.4.11;
 
 /**
  * @title SafeMath
@@ -84,510 +32,1014 @@ library SafeMath {
     return c;
   }
 }
-/*************************************************************************
- * import "../math/SafeMath.sol" : end
- *************************************************************************/
 
+/* The authentication manager details user accounts that have access to certain priviledges and keeps a permanent ledger of who has and has had these rights. */
+contract AuthenticationManager {
+   
+    /* Map addresses to admins */
+    mapping (address => bool) adminAddresses;
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+    /* Map addresses to account readers */
+    mapping (address => bool) accountReaderAddresses;
 
-  mapping(address => uint256) balances;
+    /* Map addresses to account minters */
+    mapping (address => bool) accountMinterAddresses;
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
+    /* Details of all admins that have ever existed */
+    address[] adminAudit;
 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
+    /* Details of all account readers that have ever existed */
+    address[] accountReaderAudit;
 
-}
-/*************************************************************************
- * import "./BasicToken.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "./ERC20.sol" : start
- *************************************************************************/
+    /* Details of all account minters that have ever existed */
+    address[] accountMinterAudit;
 
+    /* Fired whenever an admin is added to the contract. */
+    event AdminAdded(address addedBy, address admin);
 
+    /* Fired whenever an admin is removed from the contract. */
+    event AdminRemoved(address removedBy, address admin);
 
+    /* Fired whenever an account-reader contract is added. */
+    event AccountReaderAdded(address addedBy, address account);
 
+    /* Fired whenever an account-reader contract is removed. */
+    event AccountReaderRemoved(address removedBy, address account);
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-/*************************************************************************
- * import "./ERC20.sol" : end
- *************************************************************************/
+    /* Fired whenever an account-minter contract is added. */
+    event AccountMinterAdded(address addedBy, address account);
 
+    /* Fired whenever an account-minter contract is removed. */
+    event AccountMinterRemoved(address removedBy, address account);
 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-}
-/*************************************************************************
- * import "zeppelin/contracts/token/StandardToken.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "zeppelin/contracts/ownership/Ownable.sol" : start
- *************************************************************************/
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-/*************************************************************************
- * import "zeppelin/contracts/ownership/Ownable.sol" : end
- *************************************************************************/
-
-/**
- * Mintable token
- */
-
-contract MintableToken is StandardToken, Ownable {
-    uint public totalSupply = 0;
-    address minter;
-
-    modifier onlyMinter(){
-        require(minter == msg.sender);
-        _;
+    /* When this contract is first setup we use the creator as the first admin */    
+    function AuthenticationManager() {
+        /* Set the first admin to be the person creating the contract */
+        adminAddresses[msg.sender] = true;
+        AdminAdded(0, msg.sender);
+        adminAudit.length++;
+        adminAudit[adminAudit.length - 1] = msg.sender;
     }
 
-    function setMinter(address _minter) onlyOwner {
-        minter = _minter;
+    /* Gets whether or not the specified address is currently an admin */
+    function isCurrentAdmin(address _address) constant returns (bool) {
+        return adminAddresses[_address];
     }
 
-    function mint(address _to, uint _amount) onlyMinter {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(address(0x0), _to, _amount);
-    }
-}
-/*************************************************************************
- * import "./include/MintableToken.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "./include/ERC23PayableToken.sol" : start
- *************************************************************************/
-
-
-
-/*************************************************************************
- * import "./ERC23.sol" : start
- *************************************************************************/
-
-
-
-
-/*
- * ERC23
- * ERC23 interface
- * see https://github.com/ethereum/EIPs/issues/223
- */
-contract ERC23 is ERC20Basic {
-    function transfer(address to, uint value, bytes data);
-
-    event TransferData(address indexed from, address indexed to, uint value, bytes data);
-}
-/*************************************************************************
- * import "./ERC23.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "./ERC23PayableReceiver.sol" : start
- *************************************************************************/
-
-/*
-* Contract that is working with ERC223 tokens
-*/
-
-contract ERC23PayableReceiver {
-    function tokenFallback(address _from, uint _value, bytes _data) payable;
-}
-
-/*************************************************************************
- * import "./ERC23PayableReceiver.sol" : end
- *************************************************************************/
-
-/**  https://github.com/Dexaran/ERC23-tokens/blob/master/token/ERC223/ERC223BasicToken.sol
- *
- */
-contract ERC23PayableToken is BasicToken, ERC23{
-    // Function that is called when a user or another contract wants to transfer funds .
-    function transfer(address to, uint value, bytes data){
-        transferAndPay(to, value, data);
+    /* Gets whether or not the specified address has ever been an admin */
+    function isCurrentOrPastAdmin(address _address) constant returns (bool) {
+        for (uint256 i = 0; i < adminAudit.length; i++)
+            if (adminAudit[i] == _address)
+                return true;
+        return false;
     }
 
-    // Standard function transfer similar to ERC20 transfer with no _data .
-    // Added due to backwards compatibility reasons .
-    function transfer(address to, uint value) returns (bool){
-        bytes memory empty;
-        transfer(to, value, empty);
-        return true;
+    /* Gets whether or not the specified address is currently an account reader */
+    function isCurrentAccountReader(address _address) constant returns (bool) {
+        return accountReaderAddresses[_address];
     }
 
-    function transferAndPay(address to, uint value, bytes data) payable {
-
-        uint codeLength;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(value);
-        balances[to] = balances[to].add(value);
-
-        if(codeLength>0) {
-            ERC23PayableReceiver receiver = ERC23PayableReceiver(to);
-            receiver.tokenFallback.value(msg.value)(msg.sender, value, data);
-        }else if(msg.value > 0){
-            to.transfer(msg.value);
-        }
-
-        Transfer(msg.sender, to, value);
-        if(data.length > 0)
-            TransferData(msg.sender, to, value, data);
-    }
-}
-/*************************************************************************
- * import "./include/ERC23PayableToken.sol" : end
- *************************************************************************/
-
-
-contract NYXToken is MintableToken, ERC23PayableToken {
-    string public constant name = "NYX Token";
-    string public constant symbol = "NYX";
-
-    bool public transferEnabled = true;
-
-    //The cap is 15 mln NYX
-    uint private constant CAP = 15*(10**6);
-
-    function mint(address _to, uint _amount){
-        require(totalSupply.add(_amount) <= CAP);
-        super.mint(_to, _amount);
+    /* Gets whether or not the specified address has ever been an admin */
+    function isCurrentOrPastAccountReader(address _address) constant returns (bool) {
+        for (uint256 i = 0; i < accountReaderAudit.length; i++)
+            if (accountReaderAudit[i] == _address)
+                return true;
+        return false;
     }
 
-    function NYXToken(address team) {
-        //Transfer ownership on the token to team on creation
-        transferOwnership(team);
-        // minter is the TokenSale contract
-        minter = msg.sender; 
-        /// Preserve 3 000 000 tokens for the team
-        mint(team, 3000000);
+    /* Gets whether or not the specified address is currently an account minter */
+    function isCurrentAccountMinter(address _address) constant returns (bool) {
+        return accountMinterAddresses[_address];
     }
 
-    /**
-    * Overriding all transfers to check if transfers are enabled
-    */
-    function transferAndPay(address to, uint value, bytes data) payable{
-        require(transferEnabled);
-        super.transferAndPay(to, value, data);
+    /* Gets whether or not the specified address has ever been an admin */
+    function isCurrentOrPastAccountMinter(address _address) constant returns (bool) {
+        for (uint256 i = 0; i < accountMinterAudit.length; i++)
+            if (accountMinterAudit[i] == _address)
+                return true;
+        return false;
     }
 
-    function enableTransfer(bool enabled) onlyOwner{
-        transferEnabled = enabled;
-    }
+    /* Adds a user to our list of admins */
+    function addAdmin(address _address) {
+        /* Ensure we're an admin */
+        if (!isCurrentAdmin(msg.sender))
+            throw;
 
-}
-
-contract TokenSale is Ownable {
-    using SafeMath for uint;
-
-    // Constants
-    // =========
-    uint private constant millions = 1e6;
-
-    uint private constant CAP = 15*millions;
-    uint private constant SALE_CAP = 12*millions;
-    uint private constant SOFT_CAP = 1400000;
-    
-    // Allocated for the team upon contract creation
-    // =========
-    uint private constant TEAM_CAP = 3000000;
-
-    uint public price = 0.001 ether;
-    
-    // Hold investor's ether amounts to refund
-    address[] contributors;
-    mapping(address => uint) contributions;
-
-    // Events
-    // ======
-
-    event AltBuy(address holder, uint tokens, string txHash);
-    event Buy(address holder, uint tokens);
-    event RunSale();
-    event PauseSale();
-    event FinishSale();
-    event PriceSet(uint weiPerNYX);
-
-    // State variables
-    // ===============
-    bool public presale = true;
-    NYXToken public token;
-    address authority; //An account to control the contract on behalf of the owner
-    address robot; //An account to purchase tokens for altcoins
-    bool public isOpen = true;
-
-    // Constructor
-    // ===========
-
-    function TokenSale(){
-        token = new NYXToken(msg.sender);
-
-        authority = msg.sender;
-        robot = msg.sender;
-        transferOwnership(msg.sender);
-    }
-
-    // Public functions
-    // ================
-    function togglePresale(bool activate) onlyAuthority {
-        presale = activate;
-    }
-
-
-    function getCurrentPrice() constant returns(uint) {
-        if(presale) {
-            return price - (price*20/100);
-        }
-        return price;
-    }
-    /**
-    * Computes number of tokens with bonus for the specified ether. Correctly
-    * adds bonuses if the sum is large enough to belong to several bonus intervals
-    */
-    function getTokensAmount(uint etherVal) constant returns (uint) {
-        uint tokens = 0;
-        tokens += etherVal/getCurrentPrice();
-        return tokens;
-    }
-
-    function buy(address to) onlyOpen payable{
-        uint amount = msg.value;
-        uint tokens = getTokensAmountUnderCap(amount);
+        // Fail if this account is already admin
+        if (adminAddresses[_address])
+            throw;
         
-        // owner.transfer(amount);
+        // Add the user
+        adminAddresses[_address] = true;
+        AdminAdded(msg.sender, _address);
+        adminAudit.length++;
+        adminAudit[adminAudit.length - 1] = _address;
 
-		token.mint(to, tokens);
-		
-		uint alreadyContributed = contributions[to];
-		if(alreadyContributed == 0) // new contributor
-		    contributors.push(to);
-		    
-		contributions[to] = contributions[to].add(msg.value);
-
-        Buy(to, tokens);
     }
 
-    function () payable{
-        buy(msg.sender);
+    /* Removes a user from our list of admins but keeps them in the history audit */
+    function removeAdmin(address _address) {
+        /* Ensure we're an admin */
+        if (!isCurrentAdmin(msg.sender))
+            throw;
+
+        /* Don't allow removal of self */
+        if (_address == msg.sender)
+            throw;
+
+        // Fail if this account is already non-admin
+        if (!adminAddresses[_address])
+            throw;
+
+        /* Remove this admin user */
+        adminAddresses[_address] = false;
+        AdminRemoved(msg.sender, _address);
     }
 
-    // Modifiers
-    // =================
+    /* Adds a user/contract to our list of account readers */
+    function addAccountReader(address _address) {
+        /* Ensure we're an admin */
+        if (!isCurrentAdmin(msg.sender))
+            throw;
 
-    modifier onlyAuthority() {
-        require(msg.sender == authority || msg.sender == owner);
-        _;
+        // Fail if this account is already in the list
+        if (accountReaderAddresses[_address])
+            throw;
+        
+        // Add the account reader
+        accountReaderAddresses[_address] = true;
+        AccountReaderAdded(msg.sender, _address);
+        accountReaderAudit.length++;
+        accountReaderAudit[accountReaderAudit.length - 1] = _address;
     }
 
-    modifier onlyRobot() {
-        require(msg.sender == robot);
-        _;
+    /* Removes a user/contracts from our list of account readers but keeps them in the history audit */
+    function removeAccountReader(address _address) {
+        /* Ensure we're an admin */
+        if (!isCurrentAdmin(msg.sender))
+            throw;
+
+        // Fail if this account is already not in the list
+        if (!accountReaderAddresses[_address])
+            throw;
+
+        /* Remove this account reader */
+        accountReaderAddresses[_address] = false;
+        AccountReaderRemoved(msg.sender, _address);
     }
 
-    modifier onlyOpen() {
-        require(isOpen);
-        _;
+    /* Add a contract to our list of account minters */
+    function addAccountMinter(address _address) {
+        /* Ensure we're an admin */
+        if (!isCurrentAdmin(msg.sender))
+            throw;
+
+        // Fail if this account is already in the list
+        if (accountMinterAddresses[_address])
+            throw;
+        
+        // Add the minter
+        accountMinterAddresses[_address] = true;
+        AccountMinterAdded(msg.sender, _address);
+        accountMinterAudit.length++;
+        accountMinterAudit[accountMinterAudit.length - 1] = _address;
     }
 
-    // Priveleged functions
-    // ====================
+    /* Removes a user/contracts from our list of account readers but keeps them in the history audit */
+    function removeAccountMinter(address _address) {
+        /* Ensure we're an admin */
+        if (!isCurrentAdmin(msg.sender))
+            throw;
 
-    /**
-    * Used to buy tokens for altcoins.
-    * Robot may call it before TokenSale officially starts to migrate early investors
-    */
-    function buyAlt(address to, uint etherAmount, string _txHash) onlyRobot {
-        uint tokens = getTokensAmountUnderCap(etherAmount);
-        token.mint(to, tokens);
-        AltBuy(to, tokens, _txHash);
+        // Fail if this account is already not in the list
+        if (!accountMinterAddresses[_address])
+            throw;
+
+        /* Remove this minter account */
+        accountMinterAddresses[_address] = false;
+        AccountMinterRemoved(msg.sender, _address);
     }
+}
 
-    function setAuthority(address _authority) onlyOwner {
-        authority = _authority;
+// parse a raw bitcoin transaction byte array
+library BTC {
+    // Convert a variable integer into something useful and return it and
+    // the index to after it.
+    function parseVarInt(bytes txBytes, uint pos) returns (uint, uint) {
+        // the first byte tells us how big the integer is
+        var ibit = uint8(txBytes[pos]);
+        pos += 1;  // skip ibit
+
+        if (ibit < 0xfd) {
+            return (ibit, pos);
+        } else if (ibit == 0xfd) {
+            return (getBytesLE(txBytes, pos, 16), pos + 2);
+        } else if (ibit == 0xfe) {
+            return (getBytesLE(txBytes, pos, 32), pos + 4);
+        } else if (ibit == 0xff) {
+            return (getBytesLE(txBytes, pos, 64), pos + 8);
+        }
     }
-
-    function setRobot(address _robot) onlyAuthority {
-        robot = _robot;
+    // convert little endian bytes to uint
+    function getBytesLE(bytes data, uint pos, uint bits) returns (uint) {
+        if (bits == 8) {
+            return uint8(data[pos]);
+        } else if (bits == 16) {
+            return uint16(data[pos])
+                 + uint16(data[pos + 1]) * 2 ** 8;
+        } else if (bits == 32) {
+            return uint32(data[pos])
+                 + uint32(data[pos + 1]) * 2 ** 8
+                 + uint32(data[pos + 2]) * 2 ** 16
+                 + uint32(data[pos + 3]) * 2 ** 24;
+        } else if (bits == 64) {
+            return uint64(data[pos])
+                 + uint64(data[pos + 1]) * 2 ** 8
+                 + uint64(data[pos + 2]) * 2 ** 16
+                 + uint64(data[pos + 3]) * 2 ** 24
+                 + uint64(data[pos + 4]) * 2 ** 32
+                 + uint64(data[pos + 5]) * 2 ** 40
+                 + uint64(data[pos + 6]) * 2 ** 48
+                 + uint64(data[pos + 7]) * 2 ** 56;
+        }
     }
+    // scan the full transaction bytes and return the first two output
+    // values (in satoshis) and addresses (in binary)
+    function getFirstTwoOutputs(bytes txBytes)
+             returns (uint, bytes20, uint, bytes20)
+    {
+        uint pos;
+        uint[] memory input_script_lens = new uint[](2);
+        uint[] memory output_script_lens = new uint[](2);
+        uint[] memory script_starts = new uint[](2);
+        uint[] memory output_values = new uint[](2);
+        bytes20[] memory output_addresses = new bytes20[](2);
 
-    function setPrice(uint etherPerNYX) onlyAuthority {
-        price = etherPerNYX;
-        PriceSet(price);
+        pos = 4;  // skip version
+
+        (input_script_lens, pos) = scanInputs(txBytes, pos, 0);
+
+        (output_values, script_starts, output_script_lens, pos) = scanOutputs(txBytes, pos, 2);
+
+        for (uint i = 0; i < 2; i++) {
+            var pkhash = parseOutputScript(txBytes, script_starts[i], output_script_lens[i]);
+            output_addresses[i] = pkhash;
+        }
+
+        return (output_values[0], output_addresses[0],
+                output_values[1], output_addresses[1]);
     }
+    // Check whether `btcAddress` is in the transaction outputs *and*
+    // whether *at least* `value` has been sent to it.
+    function checkValueSent(bytes txBytes, bytes20 btcAddress, uint value)
+             returns (bool)
+    {
+        uint pos = 4;  // skip version
+        (, pos) = scanInputs(txBytes, pos, 0);  // find end of inputs
 
-    // SALE state management: start / pause / finalize
-    // --------------------------------------------
-    function open(bool opn) onlyAuthority {
-        isOpen = opn;
-        opn ? RunSale() : PauseSale();
+        // scan *all* the outputs and find where they are
+        var (output_values, script_starts, output_script_lens,) = scanOutputs(txBytes, pos, 0);
+
+        // look at each output and check whether it at least value to btcAddress
+        for (uint i = 0; i < output_values.length; i++) {
+            var pkhash = parseOutputScript(txBytes, script_starts[i], output_script_lens[i]);
+            if (pkhash == btcAddress && output_values[i] >= value) {
+                return true;
+            }
+        }
+    }
+    // scan the inputs and find the script lengths.
+    // return an array of script lengths and the end position
+    // of the inputs.
+    // takes a 'stop' argument which sets the maximum number of
+    // outputs to scan through. stop=0 => scan all.
+    function scanInputs(bytes txBytes, uint pos, uint stop)
+             returns (uint[], uint)
+    {
+        uint n_inputs;
+        uint halt;
+        uint script_len;
+
+        (n_inputs, pos) = parseVarInt(txBytes, pos);
+
+        if (stop == 0 || stop > n_inputs) {
+            halt = n_inputs;
+        } else {
+            halt = stop;
+        }
+
+        uint[] memory script_lens = new uint[](halt);
+
+        for (var i = 0; i < halt; i++) {
+            pos += 36;  // skip outpoint
+            (script_len, pos) = parseVarInt(txBytes, pos);
+            script_lens[i] = script_len;
+            pos += script_len + 4;  // skip sig_script, seq
+        }
+
+        return (script_lens, pos);
+    }
+    // scan the outputs and find the values and script lengths.
+    // return array of values, array of script lengths and the
+    // end position of the outputs.
+    // takes a 'stop' argument which sets the maximum number of
+    // outputs to scan through. stop=0 => scan all.
+    function scanOutputs(bytes txBytes, uint pos, uint stop)
+             returns (uint[], uint[], uint[], uint)
+    {
+        uint n_outputs;
+        uint halt;
+        uint script_len;
+
+        (n_outputs, pos) = parseVarInt(txBytes, pos);
+
+        if (stop == 0 || stop > n_outputs) {
+            halt = n_outputs;
+        } else {
+            halt = stop;
+        }
+
+        uint[] memory script_starts = new uint[](halt);
+        uint[] memory script_lens = new uint[](halt);
+        uint[] memory output_values = new uint[](halt);
+
+        for (var i = 0; i < halt; i++) {
+            output_values[i] = getBytesLE(txBytes, pos, 64);
+            pos += 8;
+
+            (script_len, pos) = parseVarInt(txBytes, pos);
+            script_starts[i] = pos;
+            script_lens[i] = script_len;
+            pos += script_len;
+        }
+
+        return (output_values, script_starts, script_lens, pos);
+    }
+    // Slice 20 contiguous bytes from bytes `data`, starting at `start`
+    function sliceBytes20(bytes data, uint start) returns (bytes20) {
+        uint160 slice = 0;
+        for (uint160 i = 0; i < 20; i++) {
+            slice += uint160(data[i + start]) << (8 * (19 - i));
+        }
+        return bytes20(slice);
+    }
+    // returns true if the bytes located in txBytes by pos and
+    // script_len represent a P2PKH script
+    function isP2PKH(bytes txBytes, uint pos, uint script_len) returns (bool) {
+        return (script_len == 25)           // 20 byte pubkeyhash + 5 bytes of script
+            && (txBytes[pos] == 0x76)       // OP_DUP
+            && (txBytes[pos + 1] == 0xa9)   // OP_HASH160
+            && (txBytes[pos + 2] == 0x14)   // bytes to push
+            && (txBytes[pos + 23] == 0x88)  // OP_EQUALVERIFY
+            && (txBytes[pos + 24] == 0xac); // OP_CHECKSIG
+    }
+    // returns true if the bytes located in txBytes by pos and
+    // script_len represent a P2SH script
+    function isP2SH(bytes txBytes, uint pos, uint script_len) returns (bool) {
+        return (script_len == 23)           // 20 byte scripthash + 3 bytes of script
+            && (txBytes[pos + 0] == 0xa9)   // OP_HASH160
+            && (txBytes[pos + 1] == 0x14)   // bytes to push
+            && (txBytes[pos + 22] == 0x87); // OP_EQUAL
+    }
+    // Get the pubkeyhash / scripthash from an output script. Assumes
+    // pay-to-pubkey-hash (P2PKH) or pay-to-script-hash (P2SH) outputs.
+    // Returns the pubkeyhash/ scripthash, or zero if unknown output.
+    function parseOutputScript(bytes txBytes, uint pos, uint script_len)
+             returns (bytes20)
+    {
+        if (isP2PKH(txBytes, pos, script_len)) {
+            return sliceBytes20(txBytes, pos + 3);
+        } else if (isP2SH(txBytes, pos, script_len)) {
+            return sliceBytes20(txBytes, pos + 2);
+        } else {
+            return;
+        }
+    }
+}
+
+contract LockinManager {
+    using SafeMath for uint256;
+
+    /*Defines the structure for a lock*/
+    struct Lock {
+        uint256 amount;
+        uint256 unlockDate;
+        uint256 lockedFor;
     }
     
-    function finalizePresale() onlyAuthority {
-        // Check for SOFT_CAP
-        require(token.totalSupply() > SOFT_CAP + TEAM_CAP);
-        // Transfer collected softcap to the team
-        owner.transfer(this.balance);
+    /*Object of Lock*/    
+    Lock lock;
+
+    /*Value of default lock days*/
+    uint256 defaultAllowedLock = 7;
+
+    /* mapping of list of locked address with array of locks for a particular address */
+    mapping (address => Lock[]) public lockedAddresses;
+
+    /* mapping of valid contracts with their lockin timestamp */
+    mapping (address => uint256) public allowedContracts;
+
+    /* list of locked days mapped with their locked timestamp*/
+    mapping (uint => uint256) public allowedLocks;
+
+    /* Defines our interface to the token contract */
+    Token token;
+
+    /* Defines the admin contract we interface with for credentails. */
+    AuthenticationManager authenticationManager;
+
+     /* Fired whenever lock day is added by the admin. */
+    event LockedDayAdded(address _admin, uint256 _daysLocked, uint256 timestamp);
+
+     /* Fired whenever lock day is removed by the admin. */
+    event LockedDayRemoved(address _admin, uint256 _daysLocked, uint256 timestamp);
+
+     /* Fired whenever valid contract is added by the admin. */
+    event ValidContractAdded(address _admin, address _validAddress, uint256 timestamp);
+
+     /* Fired whenever valid contract is removed by the admin. */
+    event ValidContractRemoved(address _admin, address _validAddress, uint256 timestamp);
+
+    /* Create a new instance of this fund with links to other contracts that are required. */
+    function LockinManager(address _token, address _authenticationManager) {
+      
+        /* Setup access to our other contracts and validate their versions */
+        token  = Token(_token);
+        authenticationManager = AuthenticationManager(_authenticationManager);
+    }
+   
+    /* This modifier allows a method to only be called by current admins */
+    modifier adminOnly {
+        if (!authenticationManager.isCurrentAdmin(msg.sender)) throw;
+        _;
     }
 
-    function finalize() onlyAuthority {
-        // Check for SOFT_CAP
-        if(token.totalSupply() < SOFT_CAP + TEAM_CAP) { // Soft cap is not reached, return all contributions to investors
-            uint x = 0;
-            while(x < contributors.length) {
-                uint amountToReturn = contributions[contributors[x]];
-                contributors[x].transfer(amountToReturn);
-                x++;
+    /* This modifier allows a method to only be called by token contract */
+    modifier validContractOnly {
+        require(allowedContracts[msg.sender] != 0);
+
+        _;
+    }
+
+    /* Gets the length of locked values for an account */
+    function getLocks(address _owner) validContractOnly constant returns (uint256) {
+        return lockedAddresses[_owner].length;
+    }
+
+    function getLock(address _owner, uint256 count) validContractOnly returns(uint256 amount, uint256 unlockDate, uint256 lockedFor) {
+        amount     = lockedAddresses[_owner][count].amount;
+        unlockDate = lockedAddresses[_owner][count].unlockDate;
+        lockedFor   = lockedAddresses[_owner][count].lockedFor;
+    }
+    
+    /* Gets amount for which an address is locked with locked index */
+    function getLocksAmount(address _owner, uint256 count) validContractOnly returns(uint256 amount) {        
+        amount = lockedAddresses[_owner][count].amount;
+    }
+
+    /* Gets unlocked timestamp for which an address is locked with locked index */
+    function getLocksUnlockDate(address _owner, uint256 count) validContractOnly returns(uint256 unlockDate) {
+        unlockDate = lockedAddresses[_owner][count].unlockDate;
+    }
+
+    /* Gets days for which an address is locked with locked index */
+    function getLocksLockedFor(address _owner, uint256 count) validContractOnly returns(uint256 lockedFor) {
+        lockedFor = lockedAddresses[_owner][count].lockedFor;
+    }
+
+    /* Locks tokens for an address for the default number of days */
+    function defaultLockin(address _address, uint256 _value) validContractOnly
+    {
+        lockIt(_address, _value, defaultAllowedLock);
+    }
+
+    /* locks tokens for sender for n days*/
+    function lockForDays(uint256 _value, uint256 _days) 
+    {
+        require( ! ifInAllowedLocks(_days));        
+
+        require(token.availableBalance(msg.sender) >= _value);
+        
+        lockIt(msg.sender, _value, _days);     
+    }
+
+    function lockIt(address _address, uint256 _value, uint256 _days) internal {
+
+        // expiry will be calculated as 24 * 60 * 60
+        uint256 _expiry = now + _days.mul(86400);
+        lockedAddresses[_address].push(Lock(_value, _expiry, _days));        
+    }
+
+    /* check if input day is present in locked days */
+    function ifInAllowedLocks(uint256 _days) constant returns(bool) {
+        return allowedLocks[_days] == 0;
+    }
+
+    /* Adds a day to our list of allowedLocks */
+    function addAllowedLock(uint _day) adminOnly {
+
+        // Fail if day is already present in locked days
+        if (allowedLocks[_day] != 0)
+            throw;
+        
+        // Add day in locked days 
+        allowedLocks[_day] = now;
+        LockedDayAdded(msg.sender, _day, now);
+    }
+
+    /* Remove allowed Lock */
+    function removeAllowedLock(uint _day) adminOnly {
+
+        // Fail if day doesnot exist in allowedLocks
+        if ( allowedLocks[_day] ==  0)
+            throw;
+
+        /* Remove locked day  */
+        allowedLocks[_day] = 0;
+        LockedDayRemoved(msg.sender, _day, now);
+    }
+
+    /* Adds a address to our list of allowedContracts */
+    function addValidContract(address _address) adminOnly {
+
+        // Fail if address is already present in valid contracts
+        if (allowedContracts[_address] != 0)
+            throw;
+        
+        // add an address in allowedContracts
+        allowedContracts[_address] = now;
+
+        ValidContractAdded(msg.sender, _address, now);
+    }
+
+    /* Removes allowed contract from the list of allowedContracts */
+    function removeValidContract(address _address) adminOnly {
+
+        // Fail if address doesnot exist in allowedContracts
+        if ( allowedContracts[_address] ==  0)
+            throw;
+
+        /* Remove allowed contract from allowedContracts  */
+        allowedContracts[_address] = 0;
+
+        ValidContractRemoved(msg.sender, _address, now);
+    }
+
+    /* Set default allowed lock */
+    function setDefaultAllowedLock(uint _days) adminOnly {
+        defaultAllowedLock = _days;
+    }
+}
+
+/* The Token itself is a simple extension of the ERC20 that allows for granting other Token contracts special rights to act on behalf of all transfers. */
+contract Token {
+    using SafeMath for uint256;
+
+    /* Map all our our balances for issued tokens */
+    mapping (address => uint256) public balances;
+
+    /* Map between users and their approval addresses and amounts */
+    mapping(address => mapping (address => uint256)) allowed;
+
+    /* List of all token holders */
+    address[] allTokenHolders;
+
+    /* The name of the contract */
+    string public name;
+
+    /* The symbol for the contract */
+    string public symbol;
+
+    /* How many DPs are in use in this contract */
+    uint8 public decimals;
+
+    /* Defines the current supply of the token in its own units */
+    uint256 totalSupplyAmount = 0;
+    
+    /* Defines the address of the Refund Manager contract which is the only contract to destroy tokens. */
+    address public refundManagerContractAddress;
+
+    /* Defines the admin contract we interface with for credentails. */
+    AuthenticationManager authenticationManager;
+
+    /* Instance of lockin contract */
+    LockinManager lockinManager;
+
+    /** @dev Returns the balance that a given address has available for transfer.
+      * @param _owner The address of the token owner.
+      */
+    function availableBalance(address _owner) constant returns(uint256) {
+        
+        uint256 length =  lockinManager.getLocks(_owner);
+    
+        uint256 lockedValue = 0;
+        
+        for(uint256 i = 0; i < length; i++) {
+
+            if(lockinManager.getLocksUnlockDate(_owner, i) > now) {
+                uint256 _value = lockinManager.getLocksAmount(_owner, i);    
+                lockedValue = lockedValue.add(_value);                
             }
         }
         
-        uint diff = CAP.sub(token.totalSupply());
-        if(diff > 0) //The unsold capacity moves to team
-            token.mint(owner, diff);
-        selfdestruct(owner);
-        FinishSale();
+        return balances[_owner].sub(lockedValue);
     }
 
-    // Private functions
-    // =========================
+    /* Fired when the fund is eventually closed. */
+    event FundClosed();
+    
+    /* Our transfer event to fire whenever we shift SMRT around */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    
+    /* Our approval event when one user approves another to control */
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    /**
-    * Gets tokens for specified ether provided that they are still under the cap
-    */
-    function getTokensAmountUnderCap(uint etherAmount) private constant returns (uint){
-        uint tokens = getTokensAmount(etherAmount);
-        require(tokens > 0);
-        require(tokens.add(token.totalSupply()) <= SALE_CAP);
-        return tokens;
+    /* Create a new instance of this fund with links to other contracts that are required. */
+    function Token(address _authenticationManagerAddress) {
+        // Setup defaults
+        name = "PIE (Authorito Capital)";
+        symbol = "PIE";
+        decimals = 18;
+
+        /* Setup access to our other contracts */
+        authenticationManager = AuthenticationManager(_authenticationManagerAddress);        
     }
 
+    modifier onlyPayloadSize(uint numwords) {
+        assert(msg.data.length == numwords * 32 + 4);
+        _;
+    }
+
+    /* This modifier allows a method to only be called by account readers */
+    modifier accountReaderOnly {
+        if (!authenticationManager.isCurrentAccountReader(msg.sender)) throw;
+        _;
+    }
+
+    /* This modifier allows a method to only be called by current admins */
+    modifier adminOnly {
+        if (!authenticationManager.isCurrentAdmin(msg.sender)) throw;
+        _;
+    }   
+    
+    function setLockinManagerAddress(address _lockinManager) adminOnly {
+        lockinManager = LockinManager(_lockinManager);
+    }
+
+    function setRefundManagerContract(address _refundManagerContractAddress) adminOnly {
+        refundManagerContractAddress = _refundManagerContractAddress;
+    }
+
+    /* Transfer funds between two addresses that are not the current msg.sender - this requires approval to have been set separately and follows standard ERC20 guidelines */
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3) returns (bool) {
+        
+        if (availableBalance(_from) >= _amount && allowed[_from][msg.sender] >= _amount && _amount > 0 && balances[_to].add(_amount) > balances[_to]) {
+            bool isNew = balances[_to] == 0;
+            balances[_from] = balances[_from].sub(_amount);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+            balances[_to] = balances[_to].add(_amount);
+            if (isNew)
+                tokenOwnerAdd(_to);
+            if (balances[_from] == 0)
+                tokenOwnerRemove(_from);
+            Transfer(_from, _to, _amount);
+            return true;
+        }
+        return false;
+    }
+
+    /* Returns the total number of holders of this currency. */
+    function tokenHolderCount() accountReaderOnly constant returns (uint256) {
+        return allTokenHolders.length;
+    }
+
+    /* Gets the token holder at the specified index. */
+    function tokenHolder(uint256 _index) accountReaderOnly constant returns (address) {
+        return allTokenHolders[_index];
+    }
+ 
+    /* Adds an approval for the specified account to spend money of the message sender up to the defined limit */
+    function approve(address _spender, uint256 _amount) onlyPayloadSize(2) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+
+    /* Gets the current allowance that has been approved for the specified spender of the owner address */
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    /* Gets the total supply available of this token */
+    function totalSupply() constant returns (uint256) {
+        return totalSupplyAmount;
+    }
+
+    /* Gets the balance of a specified account */
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    /* Transfer the balance from owner's account to another account */
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2) returns (bool) {
+                
+        /* Check if sender has balance and for overflows */
+        if (availableBalance(msg.sender) < _amount || balances[_to].add(_amount) < balances[_to])
+            return false;
+
+        /* Do a check to see if they are new, if so we'll want to add it to our array */
+        bool isRecipientNew = balances[_to] == 0;
+
+        /* Add and subtract new balances */
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        
+        /* Consolidate arrays if they are new or if sender now has empty balance */
+        if (isRecipientNew)
+            tokenOwnerAdd(_to);
+        if (balances[msg.sender] <= 0)
+            tokenOwnerRemove(msg.sender);
+
+        /* Fire notification event */
+        Transfer(msg.sender, _to, _amount);
+        return true; 
+    }
+
+    /* If the specified address is not in our owner list, add them - this can be called by descendents to ensure the database is kept up to date. */
+    function tokenOwnerAdd(address _addr) internal {
+        /* First check if they already exist */
+        uint256 tokenHolderCount = allTokenHolders.length;
+        for (uint256 i = 0; i < tokenHolderCount; i++)
+            if (allTokenHolders[i] == _addr)
+                /* Already found so we can abort now */
+                return;
+        
+        /* They don't seem to exist, so let's add them */
+        allTokenHolders.length++;
+        allTokenHolders[allTokenHolders.length - 1] = _addr;
+    }
+
+    /* If the specified address is in our owner list, remove them - this can be called by descendents to ensure the database is kept up to date. */
+    function tokenOwnerRemove(address _addr) internal {
+        /* Find out where in our array they are */
+        uint256 tokenHolderCount = allTokenHolders.length;
+        uint256 foundIndex = 0;
+        bool found = false;
+        uint256 i;
+        for (i = 0; i < tokenHolderCount; i++)
+            if (allTokenHolders[i] == _addr) {
+                foundIndex = i;
+                found = true;
+                break;
+            }
+        
+        /* If we didn't find them just return */
+        if (!found)
+            return;
+        
+        /* We now need to shuffle down the array */
+        for (i = foundIndex; i < tokenHolderCount - 1; i++)
+            allTokenHolders[i] = allTokenHolders[i + 1];
+        allTokenHolders.length--;
+    }
+
+    /* Mint new tokens - this can only be done by special callers (i.e. the ICO management) during the ICO phase. */
+    function mintTokens(address _address, uint256 _amount) onlyPayloadSize(2) {
+
+        /* if it is comming from account minter */
+        if ( ! authenticationManager.isCurrentAccountMinter(msg.sender))
+            throw;
+
+        /* Mint the tokens for the new address*/
+        bool isNew = balances[_address] == 0;
+        totalSupplyAmount = totalSupplyAmount.add(_amount);
+        balances[_address] = balances[_address].add(_amount);
+
+        lockinManager.defaultLockin(_address, _amount);        
+
+        if (isNew)
+            tokenOwnerAdd(_address);
+        Transfer(0, _address, _amount);
+    }
+
+    /** This will destroy the tokens of the investor and called by sale contract only at the time of refund. */
+    function destroyTokens(address _investor, uint256 tokenCount) returns (bool) {
+        
+        /* Can only be called by refund manager, also refund manager address must not be empty */
+        if ( refundManagerContractAddress  == 0x0 || msg.sender != refundManagerContractAddress)
+            throw;
+
+        uint256 balance = availableBalance(_investor);
+
+        if (balance < tokenCount) {
+            return false;
+        }
+
+        balances[_investor] -= tokenCount;
+        totalSupplyAmount -= tokenCount;
+
+        if(balances[_investor] <= 0)
+            tokenOwnerRemove(_investor);
+
+        return true;
+    }
+}
+
+contract Tokensale {
+    using SafeMath for uint256;
+    
+    /* Defines whether or not the  Token Contract address has yet been set.  */
+    bool public tokenContractDefined = false;
+    
+    /* Defines whether or not we are in the Sale phase */
+    bool public salePhase = true;
+
+    /* Defines the sale price of ethereum during Sale */
+    uint256 public ethereumSaleRate = 700; // The number of tokens to be minted for every ETH
+
+    /* Defines the sale price of bitcoin during Sale */
+    uint256 public bitcoinSaleRate = 14000; // The number of tokens to be minted for every BTC
+
+    /* Defines our interface to the  Token contract. */
+    Token token;
+
+    /* Defines the admin contract we interface with for credentails. */
+    AuthenticationManager authenticationManager;
+
+    /* Claimed Transactions from btc relay. */
+    mapping(uint256 => bool) public transactionsClaimed;
+
+    /* Defines the minimum ethereum to invest during Sale */
+    uint256 public minimunEthereumToInvest = 0;
+
+    /* Defines the minimum btc to invest during Sale */
+    uint256 public minimunBTCToInvest = 0;
+
+    /* Defines our event fired when the Sale is closed */
+    event SaleClosed();
+
+    /* Defines our event fired when the Sale is reopened */
+    event SaleStarted();
+
+    /* Ethereum Rate updated by the admin. */
+    event EthereumRateUpdated(uint256 rate, uint256 timestamp);
+
+    /* Bitcoin Rate updated by the admin. */
+    event BitcoinRateUpdated(uint256 rate, uint256 timestamp);
+
+    /* Minimun Ethereum Investment updated by the admin. */
+    event MinimumEthereumInvestmentUpdated(uint256 _value, uint256 timestamp);
+
+    /* Minimun Bitcoin Investment updated by the admin. */
+    event MinimumBitcoinInvestmentUpdated(uint256 _value, uint256 timestamp);
+
+    /* Ensures that once the Sale is over this contract cannot be used until the point it is destructed. */
+    modifier onlyDuringSale {
+
+        if (!tokenContractDefined || (!salePhase)) throw;
+        _;
+    }
+
+    /* This modifier allows a method to only be called by current admins */
+    modifier adminOnly {
+        if (!authenticationManager.isCurrentAdmin(msg.sender)) throw;
+        _;
+    }
+
+    /* Create the  token sale and define the address of the main authentication Manager address. */
+    function Tokensale(address _authenticationManagerAddress) {        
+                
+        /* Setup access to our other contracts */
+        authenticationManager = AuthenticationManager(_authenticationManagerAddress);
+    }
+
+    /* Set the Token contract address as a one-time operation.  This happens after all the contracts are created and no
+       other functionality can be used until this is set. */
+    function setTokenContractAddress(address _tokenContractAddress) adminOnly {
+        /* This can only happen once in the lifetime of this contract */
+        if (tokenContractDefined)
+            throw;
+
+        /* Setup access to our other contracts */
+        token = Token(_tokenContractAddress);
+
+        tokenContractDefined = true;
+    }
+
+    /* Run this function when transaction has been verified by the btc relay */
+    function processBTCTransaction(bytes txn, uint256 _txHash, address ethereumAddress, bytes20 bitcoinAddress) adminOnly returns (uint256)
+    {
+        /* Transaction is already claimed */
+        if(transactionsClaimed[_txHash] != false) 
+            throw;
+
+        var (outputValue1, outputAddress1, outputValue2, outputAddress2) = BTC.getFirstTwoOutputs(txn);
+
+        if(BTC.checkValueSent(txn, bitcoinAddress, 1))
+        {
+            require(outputValue1 >= minimunBTCToInvest);
+
+             //multiply by exchange rate
+            uint256 tokensPurchased = outputValue1 * bitcoinSaleRate * (10**10);  
+
+            token.mintTokens(ethereumAddress, tokensPurchased);
+
+            transactionsClaimed[_txHash] = true;
+        }
+        else
+        {
+            // value was not sent to this btc address
+            throw;
+        }
+    }
+
+    function btcTransactionClaimed(uint256 _txHash) returns(bool) {
+        return transactionsClaimed[_txHash];
+    }   
+    
+    // fallback function can be used to buy tokens
+    function () payable {
+    
+        buyTokens(msg.sender);
+    
+    }
+
+    /* Handle receiving ether in Sale phase - we work out how much the user has bought, allocate a suitable balance and send their change */
+    function buyTokens(address beneficiary) onlyDuringSale payable {
+
+        require(beneficiary != 0x0);
+        require(validPurchase());
+        
+        uint256 weiAmount = msg.value;
+
+        uint256 tokensPurchased = weiAmount.mul(ethereumSaleRate);
+        
+        /* Increase their new balance if they actually purchased any */
+        if (tokensPurchased > 0)
+        {
+            token.mintTokens(beneficiary, tokensPurchased);
+        }
+    }
+
+    // @return true if the transaction can buy tokens
+    function validPurchase() internal constant returns (bool) {
+
+        bool nonZeroPurchase = ( msg.value != 0 && msg.value >= minimunEthereumToInvest);
+        return nonZeroPurchase;
+    }
+
+    /* Rate on which */
+    function setEthereumRate(uint256 _rate) adminOnly {
+
+        ethereumSaleRate = _rate;
+
+        /* Audit this */
+        EthereumRateUpdated(ethereumSaleRate, now);
+    }
+
+      /* Rate on which */
+    function setBitcoinRate(uint256 _rate) adminOnly {
+
+        bitcoinSaleRate = _rate;
+
+        /* Audit this */
+        BitcoinRateUpdated(bitcoinSaleRate, now);
+    }    
+
+        /* update min Ethereum to invest */
+    function setMinimumEthereumToInvest(uint256 _value) adminOnly {
+
+        minimunEthereumToInvest = _value;
+
+        /* Audit this */
+        MinimumEthereumInvestmentUpdated(_value, now);
+    }    
+
+          /* update minimum Bitcoin to invest */
+    function setMinimumBitcoinToInvest(uint256 _value) adminOnly {
+
+        minimunBTCToInvest = _value;
+
+        /* Audit this */
+        MinimumBitcoinInvestmentUpdated(_value, now);
+    }
+
+      /* Close the Sale phase and transition to execution phase */
+    function close() adminOnly onlyDuringSale {
+
+        // Close the Sale
+        salePhase = false;
+        SaleClosed();
+
+        // Withdraw funds to the caller
+        if (!msg.sender.send(this.balance))
+            throw;
+    }
+
+    /* Open the sale phase*/
+    function openSale() adminOnly {        
+        salePhase = true;
+        SaleStarted();
+    }
 }
