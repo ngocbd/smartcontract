@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GetRichQuick at 0xca6b9ac4f5394b14d2571d33c663ac9af6b361a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GetRichQuick at 0x36222afde10b3098644e36a680d38e5492741cd5
 */
 pragma solidity ^0.4.18;
 
@@ -12,6 +12,7 @@ pragma solidity ^0.4.18;
 // Total supply: 21000000
 // Decimals    : 18
 //
+// https://medium.com/bitfwd/how-to-issue-your-own-token-on-ethereum-in-less-than-20-minutes-ac1f8f022793
 // (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // (c) Jared 
 // ----------------------------------------------------------------------------
@@ -118,7 +119,7 @@ contract GetRichQuick is ERC20Interface, Owned, SafeMath {
         symbol = "GRQ";
         name = "Get Rich Quick";
         decimals = 18;
-        _totalSupply = 21000000000000000000000000;
+        _totalSupply = 21000000;
         balances[0x3eB8198e98E717f569Eeb06F98DAD8C9d1069374] = _totalSupply;
         Transfer(address(0), 0x3eB8198e98E717f569Eeb06F98DAD8C9d1069374, _totalSupply);
     }
