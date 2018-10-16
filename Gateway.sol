@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gateway at 0x3091d37ef18cb33af72cf7ca63714733172ce724
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gateway at 0x3e0371bcb61283c036a48274abde0ab3da107a50
 */
 pragma solidity ^0.4.18;
 
@@ -114,6 +114,7 @@ contract Gateway is Ownable{
     using SafeMath for uint;
     address public feeAccount1 = 0x703f9037088A93853163aEaaEd650f3e66aD7A4e; //the account1 that will receive fees
     address public feeAccount2 = 0xc94cac4a4537865753ecdf2ad48F00112dC09ea8; //the account2 that will receive fees
+    address public feeAccountToken = 0x2EF9B82Ab8Bb8229B3D863A47B1188672274E1aC;//the account that will receive fees tokens
     
     struct BuyInfo {
       address buyerAddress; 
@@ -124,7 +125,6 @@ contract Gateway is Ownable{
     
     mapping(address => mapping(uint => BuyInfo)) public payment;
    
-    mapping(address => uint) public balances;
     uint balanceFee;
     uint public feePercent;
     uint public maxFee;
@@ -156,6 +156,9 @@ contract Gateway is Ownable{
     function setFeeAccount2(address _feeAccount2) onlyOwner public{
       feeAccount2 = _feeAccount2;  
     }
+    function setFeeAccountToken(address _feeAccountToken) onlyOwner public{
+      feeAccountToken = _feeAccountToken;  
+    }    
     function setFeePercent(uint _feePercent) onlyOwner public{
       require(_feePercent <= maxFee);
       feePercent = _feePercent;  
@@ -166,16 +169,15 @@ contract Gateway is Ownable{
       require(_value > 0);
       Token token = Token(_tokenAddress);
       require(token.allowance(msg.sender, this) >= _value);
-      token.transferFrom(msg.sender, _sellerAddress, _value);
+      token.transferFrom(msg.sender, feeAccountToken, _value.mul(feePercent).div(100000000));
+      token.transferFrom(msg.sender, _sellerAddress, _value.sub(_value.mul(feePercent).div(100000000)));
       payment[_sellerAddress][_orderId] = BuyInfo(msg.sender, _sellerAddress, _value, _tokenAddress);
       success = true;
     }
-    function payEth(address _sellerAddress, uint _orderId, uint _value) public returns  (bool success){
+    function payEth(address _sellerAddress, uint _orderId, uint _value) internal returns  (bool success){
       require(_sellerAddress != address(0)); 
       require(_value > 0);
-      require(balances[msg.sender] >= _value);
       uint fee = _value.mul(feePercent).div(100000000);
-      balances[msg.sender] = balances[msg.sender].sub(_value);
       _sellerAddress.transfer(_value.sub(fee));
       balanceFee = balanceFee.add(fee);
       payment[_sellerAddress][_orderId] = BuyInfo(msg.sender, _sellerAddress, _value, 0x0000000000000000000000000000000000000001);    
@@ -195,16 +197,22 @@ contract Gateway is Ownable{
     function balanceOfEthFee() public constant returns (uint) {
       return balanceFee;
     }
-    function refund() public{
-      require(balances[msg.sender] > 0);
-      uint value = balances[msg.sender];
-      balances[msg.sender] = 0;
-      msg.sender.transfer(value);
-    }
-    function getBalanceEth() public constant returns(uint){
-      return balances[msg.sender];    
+    function bytesToAddress(bytes source) internal pure returns(address) {
+      uint result;
+      uint mul = 1;
+      for(uint i = 20; i > 0; i--) {
+        result += uint8(source[i-1])*mul;
+        mul = mul*256;
+      }
+      return address(result);
     }
     function() external payable {
-      balances[msg.sender] = balances[msg.sender].add(msg.value);    
+      require(msg.data.length == 20); 
+      require(msg.value > 99999999999);
+      address sellerAddress = bytesToAddress(bytes(msg.data));
+      uint value = msg.value.div(10000000000).mul(10000000000);
+      uint orderId = msg.value.sub(value);
+      balanceFee = balanceFee.add(orderId);
+      payEth(sellerAddress, orderId, value);
   }
 }
