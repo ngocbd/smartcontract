@@ -1,18 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeBurner at 0x05ab34199286612d4d605156f1e099f95e68016b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeBurner at 0xa0b3890c3032e4e744e325e779749a696f9a1de6
 */
 pragma solidity 0.4.18;
-
-interface ERC20 {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf(address _owner) public view returns (uint balance);
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint remaining);
-    function decimals() public view returns(uint digits);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
 
 contract PermissionGroups {
 
@@ -121,11 +110,6 @@ contract PermissionGroups {
     }
 }
 
-interface BurnableToken {
-    function transferFrom(address _from, address _to, uint _value) public returns (bool);
-    function burnFrom(address _from, uint256 _value) public returns (bool);
-}
-
 contract Withdrawable is PermissionGroups {
 
     event TokenWithdraw(ERC20 token, uint amount, address sendTo);
@@ -148,6 +132,17 @@ contract Withdrawable is PermissionGroups {
         sendTo.transfer(amount);
         EtherWithdraw(amount, sendTo);
     }
+}
+
+interface ERC20 {
+    function totalSupply() public view returns (uint supply);
+    function balanceOf(address _owner) public view returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    function decimals() public view returns(uint digits);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
 interface FeeBurnerInterface {
@@ -243,4 +238,9 @@ contract FeeBurner is Withdrawable, FeeBurnerInterface {
 
         SendWalletFees(wallet, reserve, msg.sender);
     }
+}
+
+interface BurnableToken {
+    function transferFrom(address _from, address _to, uint _value) public returns (bool);
+    function burnFrom(address _from, uint256 _value) public returns (bool);
 }
