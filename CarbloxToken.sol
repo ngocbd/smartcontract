@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbloxToken at 0x6221Bb984591D60A15132b0Ce2c71b0599Fa0F08
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbloxToken at 0xd15f47fb5aa0d4fd0d49497de87cefe49c1f6f82
 */
 pragma solidity ^0.4.18;
 
