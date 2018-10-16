@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slot at 0x20d7d4b07a2dcefe1bd99ac11eae2f5a8218e454
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slot at 0x6a8d7d37870CFC7aBf7a316412bab5ed9C3ABA34
 */
 pragma solidity ^0.4.16;
 
@@ -261,17 +261,17 @@ function destroy() onlyOwner {
 
 }
 
-contract Slot is Ownable, Pausable { // TODO: for production disable tokenDestructible
+contract Slot is Ownable, Pausable {
     using SafeMath for uint256;
 
-    // this token is just a gimmick to receive when buying a ticket, it wont affect the prize
+    // this token is like a receipt for the ticket, it wont affect the prize distribution
     SlotTicket public token;
 
     // every participant has an account index, the winners are picked from here
     // all winners are picked in order from the single random int 
     // needs to be cleared after every game
-    mapping (uint => address) participants;
-    uint256[] prizes = [4 ether, 
+    mapping (uint => mapping (uint => address)) participants; // game number => counter => address
+    uint256[8] prizes = [4 ether, 
                         2 ether,
                         1 ether, 
                         500 finney, 
@@ -279,123 +279,154 @@ contract Slot is Ownable, Pausable { // TODO: for production disable tokenDestru
                         500 finney, 
                         500 finney, 
                         500 finney];
-    uint8 counter = 0;
-
+    
     uint8   constant SIZE = 100; // size of the lottery
     uint32  constant JACKPOT_SIZE = 1000000; // one in a million
-    uint256 constant PRICE = 100 finney;
+    uint32  constant INACTIVITY = 160000; // block after which refunds can be claimed
+    uint256 constant public PRICE = 100 finney;
     
-    uint256 jackpot = 0;
-    uint256 gameNumber = 0;
+    uint256 public jackpotAmount;
+    uint256 public gameNumber;
+    uint256 public gameStarted;
+    bool    public undestroyable;
     address wallet;
+    uint256 counter;
 
-    event PrizeAwarded(uint256 game, address winner, uint256 amount);
-    event JackpotAwarded(uint256 game, address winner, uint256 amount);
+    event ParticipantAdded(address indexed _participant, uint256 indexed _game, uint256 indexed _number);
+    event PrizeAwarded(uint256 indexed _game , address indexed _winner, uint256 indexed _amount);
+    event JackpotAwarded(uint256 indexed _game, address indexed _winner, uint256 indexed _amount);
+    event GameRefunded(uint256 _game);
 
-    function Slot(address _wallet) {
+    function Slot(address _wallet) payable {
         token = new SlotTicket();
         wallet = _wallet;
+
+        jackpotAmount = msg.value;
+        gameNumber = 0;
+        counter = 0;
+        gameStarted = block.number;
+        undestroyable = false;
     }
 
     function() payable {
-        // fallback function to buy tickets from
+        // fallback function to buy tickets
         buyTicketsFor(msg.sender);
     }
 
     function buyTicketsFor(address beneficiary) whenNotPaused() payable {
         require(beneficiary != 0x0);
         require(msg.value >= PRICE);
-        require(msg.value/PRICE <= 255); // maximum of 255 tickets, to avoid overflow on uint8
-        // I can't see somebody sending more than the size of the lottery, other than to try to win the jackpot
-        
-        // calculate number of tickets, issue tokens and add participants
-        // every 100 finney buys a ticket, the rest is returned
-        uint8 numberOfTickets = uint8(msg.value/PRICE); 
+
+        // calculate number of tickets, issue tokens and add participant
+        // every (PRICE) buys a ticket, the rest is returned
+        uint256 change = msg.value%PRICE;
+        uint256 numberOfTickets = msg.value.sub(change).div(PRICE);
         token.mint(beneficiary, numberOfTickets);
         addParticipant(beneficiary, numberOfTickets);
 
         // Return change to msg.sender
-        // TODO: check if change amount correct
-        msg.sender.transfer(msg.value%PRICE);
-
+        msg.sender.transfer(change);
     }
 
-    function addParticipant(address _participant, uint8 _numberOfTickets) private {
-        // TODO: check access of this function, it shouldn't be tampered with
-        // add participants and increment count
-        // should gracefully handle multiple tickets accross games
+    // private functions
 
-        for (uint8 i = 0; i < _numberOfTickets; i++) {
-            participants[counter] = _participant;
+    function addParticipant(address _participant, uint256 _numberOfTickets) private {
+        // if number of tickets exceeds the size of the game, tickets are added to next game
+
+        for (uint256 i = 0; i < _numberOfTickets; i++) {
+            // using gameNumber instead of counter/SIZE since games can be cancelled
+            participants[gameNumber][counter%SIZE] = _participant; 
+            ParticipantAdded(_participant, gameNumber, counter%SIZE);
 
             // msg.sender triggers the drawing of lots
-            if (counter % (SIZE-1) == 0) { 
-                // takes the participant's address as the seed
-                awardPrizes(uint256(_participant)); 
-            } 
-            
-            counter++;
-
+            if (++counter%SIZE == 0) {
+                awardPrizes();
+                // Split the rest, increase game number
+                distributeRemaining();
+                increaseGame();
+            }
             // loop continues if there are more tickets
         }
-        
     }
     
-    function rand(uint32 _size, uint256 _seed) constant private returns (uint32 randomNumber) {
+    function rand(uint32 _size) constant private returns (uint256 randomNumber) {
       // Providing random numbers within a deterministic system is, naturally, an impossible task.
       // However, we can approximate with pseudo-random numbers by utilising data which is generally unknowable
       // at the time of transacting. Such data might include the block’s hash.
+      // The last blockhash used should be random enough. Adding the rest of these deterministic factors doesn't change much.
 
-        return uint32(sha3(block.blockhash(block.number-1), _seed))%_size;
+        return uint256(keccak256(block.blockhash(block.number-1), block.blockhash(block.number-100)))%_size;
     }
 
-    function awardPrizes(uint256 _seed) private {
-        uint32 winningNumber = rand(SIZE-1, _seed); // -1 since index starts at 0
-        bool jackpotWon = winningNumber == rand(JACKPOT_SIZE-1, _seed); // -1 since index starts at 0
+    function awardPrizes() private {
+        uint256 winnerIndex = rand(SIZE);
+        // hash result of two digit number (index) with 4 leading zeroes will win
+        bool jackpotWon = winnerIndex == rand(JACKPOT_SIZE); 
 
-        // scope of participants
-        uint256 start = gameNumber.mul(SIZE);
-        uint256 end = start + SIZE;
-
-        uint256 winnerIndex = start.add(winningNumber);
-
+        // loop throught the prizes 
         for (uint8 i = 0; i < prizes.length; i++) {
-            
-            if (jackpotWon && i==0) { distributeJackpot(winnerIndex); }
-
-            if (winnerIndex+i > end) {
-              // to keep within the bounds of participants, wrap around
-                winnerIndex -= SIZE;
+            if (jackpotWon && i==0) {
+                distributeJackpot(winnerIndex);
             }
-
-            participants[winnerIndex+i].transfer(prizes[i]); // msg.sender pays the gas, he's refunded later
             
-            PrizeAwarded(gameNumber,  participants[winnerIndex+i], prizes[i]);
-        }
-        
-        // Split the rest
-        jackpot = jackpot.add(245 finney);  // add to jackpot
-        wallet.transfer(245 finney);        // *cash register sound*
-        msg.sender.transfer(10 finney);     // repay gas to msg.sender TODO: check if price is right
+            participants[gameNumber][winnerIndex%SIZE].transfer(prizes[i]); // msg.sender pays the gas, he's refunded later, % to wrap around
+            PrizeAwarded(gameNumber, participants[gameNumber][winnerIndex%SIZE], prizes[i]);
 
-        gameNumber++;
+            // increment index to the next winner to receive the next prize
+            winnerIndex++;
+        }
     }
 
-    function distributeJackpot(uint256 _winnerIndex) {
-        participants[_winnerIndex].transfer(jackpot);
-        JackpotAwarded(gameNumber,  participants[_winnerIndex], jackpot);
-        jackpot = 0; // later on in the code money will be added
+    function distributeJackpot(uint256 _winnerIndex) private {
+        participants[gameNumber][_winnerIndex].transfer(jackpotAmount);
+        JackpotAwarded(gameNumber,  participants[gameNumber][_winnerIndex], jackpotAmount);
+        jackpotAmount = 0; // later on in the code sequence funds will be added
+    }
+
+    function distributeRemaining() private {
+        jackpotAmount = jackpotAmount.add(250 finney);   // add to jackpot
+        wallet.transfer(249 finney);                     // *cash register sound*
+        msg.sender.transfer(1 finney);                   // repay gas to msg.sender
+    }
+
+    function increaseGame() private {
+        gameNumber++;
+        gameStarted = block.number;
+    }
+
+    // public functions
+
+    function refundGameAfterLongInactivity() {
+        require(block.number.sub(gameStarted) >= INACTIVITY);
+        require(counter%SIZE != 0); // nothing to refund
+        // refunds for everybody can be requested after the game has gone (INACTIVITY) blocks without a conclusion
+
+        for (uint8 i = 0; i < counter%SIZE; i++) { // not counter.size, but modulus of SIZE
+            participants[gameNumber][i].transfer(PRICE);
+        }
+
+        // reduce the counter
+        counter -= counter%SIZE;
+        GameRefunded(gameNumber);
+        increaseGame();
     }
 
     function destroy() onlyOwner {
+        require(!undestroyable);
         // Transfer Eth to owner and terminate contract
+        // unfair, since we could abscond with the jackpot, so it is disabled in production
         token.destroy();
         selfdestruct(owner);
-  }
+    }
 
     function changeWallet(address _newWallet) onlyOwner {
         require(_newWallet != 0x0);
         wallet = _newWallet;
-  }
+    }
+
+    function makeUndestroyable() onlyOwner {
+        undestroyable = true;
+        // can't be reversed, jackpot only claimable by actual win
+    }
 
 }
