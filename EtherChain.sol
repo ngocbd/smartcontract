@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherChain at 0x0bb9beae27b1f89af85eb6388015604649dc5435
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherChain at 0xaa72930ffb678422fd8c8b6f8369dc71aa2df9c2
 */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -27,7 +27,7 @@ contract EtherChain{
         balanceOf[msg.sender] =  340000000 * 1000000000000000000;              // Give the creator all initial tokens
         totalSupply =  340000000 * 1000000000000000000;                        // Update total supply
         name = "EtherChain";                                   // Set the name for display purposes
-        symbol = "ETA";                               // Set the symbol for display purposes
+        symbol = "ETBL";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
