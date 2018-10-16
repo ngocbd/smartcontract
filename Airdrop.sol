@@ -1,137 +1,95 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x94aab06a04cac23d7b0f775b1f2e376a72344a1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xff7a73983fa6b6b2adcc3981fdcdf36970f07175
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.16;
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
+
   address public owner;
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
+  function Ownable() {
     owner = msg.sender;
   }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 }
 
-
-interface IERC20 {
-    function transfer(address to, uint value) external returns (bool ok);
-    function balanceOf(address _owner) external view returns (uint256 balance);
+interface Token {
+  function transfer(address _to, uint256 _value) returns (bool);
+  function balanceOf(address _owner) constant returns (uint256 balance);
 }
 
+contract AirDrop is Ownable {
 
-contract Airdrop is Ownable {
-    using SafeMath for uint256;
+  Token token;
 
-    IERC20 public token;
-    uint256 public cap;
-    uint256 public individualCap;
-    uint256 public totalAlloctedToken;
-    mapping (address => uint256) airdropContribution;
+  event TransferredToken(address indexed to, uint256 value);
+  event FailedTransfer(address indexed to, uint256 value);
 
-    function Airdrop(
-        IERC20 _tokenAddr,
-        uint256 _cap,
-        uint256 _individualCap
-    )
-        public
-    {
-        token = _tokenAddr;
-        cap = _cap;
-        individualCap = _individualCap;
+  modifier whenDropIsActive() {
+    assert(isActive());
+
+    _;
+  }
+
+  function AirDrop () {
+      address _tokenAddr = 0x378903a03FB2C3AC76BB52773e3CE11340377A32; //here pass address of your token
+      token = Token(_tokenAddr);
+  }
+
+  function isActive() constant returns (bool) {
+    return (
+        tokensAvailable() > 0 // Tokens must be available to send
+    );
+  }
+  //below function can be used when you want to send every recipeint with different number of tokens
+  function sendTokens(address[] dests, uint256[] values) whenDropIsActive onlyOwner external {
+    uint256 i = 0;
+    while (i < dests.length) {
+        uint256 toSend = values[i] * 10**18;
+        sendInternally(dests[i] , toSend, values[i]);
+        i++;
     }
+  }
 
-    function drop(address[] _recipients, uint256[] _amount) 
-        external 
-        onlyOwner returns (bool) 
-    {
-        require(_recipients.length == _amount.length);
-        
-        for (uint i = 0; i < _recipients.length; i++) {
-            require(_recipients[i] != address(0));
-            require(individualCap >= airdropContribution[_recipients[i]].add(_amount[i]));
-            require(cap >= totalAlloctedToken.add(_amount[i]));
-            airdropContribution[_recipients[i]] = airdropContribution[_recipients[i]].add(_amount[i]);
-            totalAlloctedToken = totalAlloctedToken.add(_amount[i]);
-            token.transfer(_recipients[i], _amount[i]);
-        }
-        return true;
+  // this function can be used when you want to send same number of tokens to all the recipients
+  function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
+    uint256 i = 0;
+    uint256 toSend = value * 10**18;
+    while (i < dests.length) {
+        sendInternally(dests[i] , toSend, value);
+        i++;
     }
+  }  
+
+  function sendInternally(address recipient, uint256 tokensToSend, uint256 valueToPresent) internal {
+    if(recipient == address(0)) return;
+
+    if(tokensAvailable() >= tokensToSend) {
+      token.transfer(recipient, tokensToSend);
+      TransferredToken(recipient, valueToPresent);
+    } else {
+      FailedTransfer(recipient, valueToPresent); 
+    }
+  }   
+
+
+  function tokensAvailable() constant returns (uint256) {
+    return token.balanceOf(this);
+  }
+
+  function destroy() onlyOwner {
+    uint256 balance = tokensAvailable();
+    require (balance > 0);
+    token.transfer(owner, balance);
+    selfdestruct(owner);
+  }
 }
