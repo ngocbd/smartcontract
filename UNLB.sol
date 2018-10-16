@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UNLB at 0x0a61c13945cf8dc008097464534e3b0aeee557d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UNLB at 0x4b319ce02bdc8977fb39fa70c49258a1a7c27d9b
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
@@ -257,9 +257,10 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 
+
 contract UNLB is PausableToken {
 
-  string public constant name = "Unolabo";
+  string public constant name = "UnolaboToken";
   string public constant symbol = "UNLB";
   uint256 public constant decimals = 18;
 
@@ -274,10 +275,12 @@ contract UNLB is PausableToken {
   }
 }
 
+
+
 contract ICO is Pausable {
 
-  uint public constant ICO_START_DATE = /*2017-09-04 12:00:00+8*/ 1504497600;
-  uint public constant ICO_END_DATE   = /*2017-11-21 00:00:00+8*/ 1511193600;
+  uint public constant ICO_START_DATE = /*2017-11-27 17:00:00+8*/ 1511773200;
+  uint public constant ICO_END_DATE   = /*2018-04-30 00:17:00+8*/ 1525018620;
 
   address public constant admin      = 0xFeC0714C2eE71a486B679d4A3539FA875715e7d8;
   address public constant teamWallet = 0xf16d5733A31D54e828460AFbf7D60aA803a61C51;
@@ -285,6 +288,8 @@ contract ICO is Pausable {
   UNLB public unlb;
   bool public isFinished = false;
 
+  event ForeignBuy(address investor, uint unlbValue, string txHash);
+  
   function ICO() {
     owner = admin;
     unlb = new UNLB();
@@ -292,9 +297,11 @@ contract ICO is Pausable {
   }
 
   function pricePerWei() public constant returns(uint) {
-    if     (now < /*2017-10-19 00:00:00+8*/ 1508342400) return 650.0 * 1 ether;
-    else if(now < /*2017-10-27 00:00:00+8*/ 1509033600) return 575.0 * 1 ether;
-    else if(now < /*2017-11-05 00:00:00+8*/ 1509811200) return 537.5 * 1 ether;
+    if     (now < /*2017-11-28 00:17:00+8*/ 1511799420) return 800.0 * 1 ether;
+    else if(now < /*2017-11-29 00:17:00+8*/ 1511885820) return 750.0 * 1 ether;
+    else if(now < /*2017-12-14 00:17:00+8*/ 1513181820) return 675.0 * 1 ether;
+    else if(now < /*2018-01-10 00:17:00+8*/ 1515514620) return 575.0 * 1 ether;
+    else if(now < /*2018-01-18 00:17:00+8*/ 1516205820) return 537.5 * 1 ether;
     else                                                return 500.0 * 1 ether;
   }
 
@@ -305,24 +312,27 @@ contract ICO is Pausable {
     unlb.mint(msg.sender, _tokenVal);
   }
 
-
-  function finish(address _team, address _fund, address _bounty) external onlyOwner {
+  function foreignBuy(address _investor, uint _unlbValue, string _txHash) external onlyOwner {
+    require(!paused && now >= ICO_START_DATE && now < ICO_END_DATE);
+    require(_unlbValue > 0);
+    unlb.mint(_investor, _unlbValue);
+    ForeignBuy(_investor, _unlbValue, _txHash);
+  }
+  
+  function finish(address _team, address _fund, address _bounty, address _backers) external onlyOwner {
     require(now >= ICO_END_DATE && !isFinished);
     unlb.unpause();
     isFinished = true;
 
-    uint _total = unlb.totalSupply() * 100 / (100 - 12 - 10 - 2);
+    uint _total = unlb.totalSupply() * 100 / (100 - 12 - 15 - 5 - 3);
     unlb.mint(_team,   (_total * 12) / 100);
-    unlb.mint(_fund,   (_total * 10) / 100);
-    unlb.mint(_bounty, (_total *  2) / 100);
+    unlb.mint(_fund,   (_total * 15) / 100);
+    unlb.mint(_bounty, (_total *  5) / 100);
+    unlb.mint(_backers, (_total *  3) / 100);
   }
 
 
   function withdraw() external onlyOwner {
     teamWallet.transfer(this.balance);
-  }
-
-  function transferTokenOwnership(address _a) external onlyOwner {
-    unlb.transferOwnership(_a);
   }
 }
