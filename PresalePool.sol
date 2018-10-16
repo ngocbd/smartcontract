@@ -1,367 +1,308 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x34f762de7be95e4dbd6d9188554979444637c636
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xbe1b06a4268f7b523b0e7b986d91f2d4a2572b52
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.19;
 
-// ERC20 Interface
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
 contract ERC20 {
-    function transfer(address _to, uint _value) returns (bool success);
-    function balanceOf(address _owner) constant returns (uint balance);
+  function balanceOf(address _owner) constant returns (uint256 balance) {}
+  function transfer(address _to, uint256 _value) returns (bool success) {}
 }
 
 contract PresalePool {
-    enum State { Open, Failed, Closed, Paid }
-    State public state;
 
-    address[] public admins;
-
-    uint public minContribution;
-    uint public maxContribution;
-    uint public maxPoolTotal;
-
-    address[] public participants;
-
-    bool public whitelistAll;
-
-    struct ParticipantState {
-        uint contribution;
-        uint remaining;
-        bool whitelisted;
-        bool exists;
+  // SafeMath is a library to ensure that math operations do not have overflow errors
+  // https://zeppelin-solidity.readthedocs.io/en/latest/safemath.html
+  using SafeMath for uint;
+  
+  // The contract has 3 stages:
+  // 1 - The initial state. Any addresses can deposit or withdraw eth to the contract.
+  // 2 - The owner has closed the contract for further deposits. Contributors can still withdraw their eth from the contract.
+  // 3 - The eth is sent from the contract to the receiver. Unused eth can be claimed by contributors immediately. Once tokens are sent to the contract,
+  //     the owner enables withdrawals and contributors can withdraw their tokens.
+  uint8 public contractStage = 1;
+  
+  // These variables are set at the time of contract creation
+  // the address that creates the contract
+  address public owner;
+  // the minimum eth amount (in wei) that can be sent by a contributing address
+  uint public contributionMin;
+  // the maximum eth amount (in wei) that to be held by the contract
+  uint public contractMax;
+  // the % of tokens kept by the contract owner
+  uint public feePct;
+  // the address that the pool will be paid out to
+  address public receiverAddress;
+  
+  // These variables are all initially set to 0 and will be set at some point during the contract
+  // the amount of eth (in wei) sent to the receiving address (set in stage 3)
+  uint public submittedAmount;
+  // the % of contributed eth to be refunded to contributing addresses (set in stage 3)
+  uint public refundPct;
+  // the number of contributors to the pool
+  uint public contributorCount;
+  // the default token contract to be used for withdrawing tokens in stage 3
+  address public activeToken;
+  
+  // a data structure for holding the contribution amount, cap, eth refund status, and token withdrawal status for each contributing address
+  struct Contributor {
+    bool refundedEth;
+    uint balance;
+    mapping (address => uint) tokensClaimed;
+  }
+  // a mapping that holds the contributor struct for each contributing address
+  mapping (address => Contributor) contributors;
+  
+  // a data structure for holding information related to token withdrawals.
+  struct TokenAllocation {
+    ERC20 token;
+    uint pct;
+    uint claimRound;
+    uint claimCount;
+  }
+  // a mapping that holds the token allocation struct for each token address
+  mapping (address => TokenAllocation) distribution;
+  
+  
+  // this modifier is used for functions that can only be accessed by the contract creator
+  modifier onlyOwner () {
+    require (msg.sender == owner);
+    _;
+  }
+  
+  // this modifier is used to prevent re-entrancy exploits during contract > contract interaction
+  bool locked;
+  modifier noReentrancy() {
+    require(!locked);
+    locked = true;
+    _;
+    locked = false;
+  }
+  
+  event ContributorBalanceChanged (address contributor, uint totalBalance);
+  event TokensWithdrawn (address receiver, uint amount);
+  event EthRefunded (address receiver, uint amount);
+  event ReceiverAddressChanged ( address _addr);
+  event WithdrawalsOpen (address tokenAddr);
+  event ERC223Received (address token, uint value);
+   
+  // These are internal functions used for calculating fees, eth and token allocations as %
+  // returns a value as a % accurate to 20 decimal points
+  function _toPct (uint numerator, uint denominator ) internal pure returns (uint) {
+    return numerator.mul(10 ** 20) / denominator;
+  }
+  
+  // returns % of any number, where % given was generated with toPct
+  function _applyPct (uint numerator, uint pct) internal pure returns (uint) {
+    return numerator.mul(pct) / (10 ** 20);
+  }
+  
+  // This function is called at the time of contract creation and sets the initial variables.
+  function PresalePool(address receiver, uint individualMin, uint poolMax, uint fee) public {
+    require (fee < 100);
+    require (100000000000000000 <= individualMin);
+    require (individualMin <= poolMax);
+    require (receiver != 0x00);
+    owner = msg.sender;
+    receiverAddress = receiver;
+    contributionMin = individualMin;
+    contractMax = poolMax;
+    feePct = _toPct(fee,100);
+  }
+  
+  // This function is called whenever eth is sent into the contract.
+  // The amount sent is added to the balance in the Contributor struct associated with the sending address.
+  function () payable public {
+    require (contractStage == 1);
+    require (this.balance <= contractMax);
+    var c = contributors[msg.sender];
+    uint newBalance = c.balance.add(msg.value);
+    require (newBalance >= contributionMin);
+    if (contributors[msg.sender].balance == 0) {
+      contributorCount = contributorCount.add(1);
     }
-    mapping (address => ParticipantState) public balances;
-    uint public poolTotal;
-
-    address presaleAddress;
-    bool refundable;
-    uint gasFundTotal;
-
-    ERC20 public token;
-
-    event Deposit(
-        address indexed _from,
-        uint _value
-    );
-    event Payout(
-        address indexed _to,
-        uint _value
-    );
-    event Withdrawl(
-        address indexed _to,
-        uint _value
-    );
-
-    modifier onlyAdmins() {
-        require(isAdmin(msg.sender));
-        _;
+    contributors[msg.sender].balance = newBalance;
+    ContributorBalanceChanged(msg.sender, newBalance);
+  }
+    
+  // This function is called to withdraw eth or tokens from the contract.
+  // It can only be called by addresses that have a balance greater than 0.
+  // If called during contract stages one or two, the full eth balance deposited into the contract will be returned and the contributor's balance will be reset to 0.
+  // If called during stage three, the contributor's unused eth will be returned, as well as any available tokens.
+  // The token address may be provided optionally to withdraw tokens that are not currently the default token (airdrops).
+  function withdraw (address tokenAddr) public {
+    var c = contributors[msg.sender];
+    require (c.balance > 0);
+    if (contractStage < 3) {
+      uint amountToTransfer = c.balance;
+      c.balance = 0;
+      msg.sender.transfer(amountToTransfer);
+      contributorCount = contributorCount.sub(1);
+      ContributorBalanceChanged(msg.sender, 0);
+    } else {
+      _withdraw(msg.sender,tokenAddr);
+    }  
+  }
+  
+  // This function allows the contract owner to force a withdrawal to any contributor.
+  // It is useful if a new round of tokens can be distributed but some contributors have
+  // not yet withdrawn their previous allocation.
+  function withdrawFor (address contributor, address tokenAddr) public onlyOwner {
+    require (contractStage == 3);
+    require (contributors[contributor].balance > 0);
+    _withdraw(contributor,tokenAddr);
+  }
+  
+  // This internal function handles withdrawals during stage three.
+  // The associated events will fire to notify when a refund or token allocation is claimed.
+  function _withdraw (address receiver, address tokenAddr) internal {
+    assert (contractStage == 3);
+    var c = contributors[receiver];
+    if (tokenAddr == 0x00) {
+      tokenAddr = activeToken;
     }
-
-    modifier onState(State s) {
-        require(state == s);
-        _;
+    var d = distribution[tokenAddr];
+    require ( (refundPct > 0 && !c.refundedEth) || d.claimRound > c.tokensClaimed[tokenAddr] );
+    if (refundPct > 0 && !c.refundedEth) {
+      uint ethAmount = _applyPct(c.balance,refundPct);
+      c.refundedEth = true;
+      if (ethAmount == 0) return;
+      if (ethAmount+10 > c.balance) {
+        ethAmount = c.balance-10;
+      }
+      c.balance = c.balance.sub(ethAmount+10);
+      receiver.transfer(ethAmount);
+      EthRefunded(receiver,ethAmount);
     }
-
-    modifier stateAllowsConfiguration() {
-        require(state == State.Open || state == State.Closed);
-        _;
+    if (d.claimRound > c.tokensClaimed[tokenAddr]) {
+      uint amount = _applyPct(c.balance,d.pct);
+      c.tokensClaimed[tokenAddr] = d.claimRound;
+      d.claimCount = d.claimCount.add(1);
+      if (amount > 0) {
+        require (d.token.transfer(receiver,amount));
+      }
+      TokensWithdrawn(receiver,amount);
     }
-
-    bool locked;
-    modifier noReentrancy() {
-        require(!locked);
-        locked = true;
-        _;
-        locked = false;
+  }
+  
+  // This function can be called during stages one or two to modify the maximum balance of the contract.
+  // It can only be called by the owner. The amount cannot be set to lower than the current balance of the contract.
+  function modifyMaxContractBalance (uint amount) public onlyOwner {
+    require (contractStage < 3);
+    require (amount >= contributionMin);
+    require (amount >= this.balance);
+    contractMax = amount;
+  }
+  
+  // This callable function returns the total pool cap, current balance and remaining balance to be filled.
+  function checkPoolBalance () view public returns (uint poolCap, uint balance, uint remaining) {
+    return (contractMax,this.balance,contractMax.sub(this.balance));
+  }
+  
+  // This callable function returns the balance, contribution cap, and remaining available balance of any contributor.
+  function checkContributorBalance (address addr) view public returns (uint balance) {
+    return contributors[addr].balance;
+  }
+  
+  // This callable function returns the token balance that a contributor can currently claim.
+  function checkAvailableTokens (address addr, address tokenAddr) view public returns (uint amount) {
+    var c = contributors[addr];
+    var d = distribution[tokenAddr];
+    if (d.claimRound == c.tokensClaimed[tokenAddr]) return 0;
+    return _applyPct(c.balance,d.pct);
+  }
+  
+  // This function closes further contributions to the contract, advancing it to stage two.
+  // It can only be called by the owner.  After this call has been made, contributing addresses
+  // can still remove their eth from the contract but cannot deposit any more.
+  function closeContributions () public onlyOwner {
+    require (contractStage == 1);
+    contractStage = 2;
+  }
+  
+  // This function reopens the contract to further deposits, returning it to stage one.
+  // It can only be called by the owner during stage two.
+  function reopenContributions () public onlyOwner {
+    require (contractStage == 2);
+    contractStage = 1;
+  }
+  
+  // This function sends the pooled eth to the receiving address, calculates the % of unused eth to be returned,
+  // and advances the contract to stage three. It can only be called by the contract owner during stages one or two.
+  // The amount to send (given in wei) must be specified during the call. As this function can only be executed once,
+  // it is VERY IMPORTANT not to get the amount wrong.
+  function submitPool (uint amountInWei) public onlyOwner noReentrancy {
+    require (contractStage < 3);
+    require (contributionMin <= amountInWei && amountInWei <= this.balance);
+    uint b = this.balance;
+    require (receiverAddress.call.value(amountInWei).gas(msg.gas.sub(5000))());
+    submittedAmount = b.sub(this.balance);
+    refundPct = _toPct(this.balance,b);
+    contractStage = 3;
+  }
+  
+  // This function opens the contract up for token withdrawals.
+  // It can only be called by the owner during stage 3.  The owner specifies the address of an ERC20 token
+  // contract that this contract has a balance in, and optionally a bool to prevent this token from being
+  // the default withdrawal (in the event of an airdrop, for example).
+  // The function can only be called if there is not currently a token distribution 
+  function enableTokenWithdrawals (address tokenAddr, bool notDefault) public onlyOwner noReentrancy {
+    require (contractStage == 3);
+    if (notDefault) {
+      require (activeToken != 0x00);
+    } else {
+      activeToken = tokenAddr;
     }
-
-    function PresalePool(uint _minContribution, uint _maxContribution, uint _maxPoolTotal, address[] _admins) payable {
-        state = State.Open;
-        admins.push(msg.sender);
-
-        setContributionSettings(_minContribution, _maxContribution, _maxPoolTotal);
-
-        whitelistAll = true;
-
-        for (uint i = 0; i < _admins.length; i++) {
-            var admin = _admins[i];
-            if (!isAdmin(admin)) {
-                admins.push(admin);
-            }
-        }
-
-        deposit();
+    var d = distribution[tokenAddr];
+    require (d.claimRound == 0 || d.claimCount == contributorCount);
+    d.token = ERC20(tokenAddr);
+    uint amount = d.token.balanceOf(this);
+    require (amount > 0);
+    if (feePct > 0) {
+      require (d.token.transfer(owner,_applyPct(amount,feePct)));
     }
-
-    function () payable {
-        deposit();
-    }
-
-    function close() public onlyAdmins onState(State.Open) {
-        state = State.Closed;
-    }
-
-    function open() public onlyAdmins onState(State.Closed) {
-        state = State.Open;
-    }
-
-    function fail() public onlyAdmins stateAllowsConfiguration {
-        state = State.Failed;
-    }
-
-    function payToPresale(address _presaleAddress) public onlyAdmins onState(State.Closed) {
-        state = State.Paid;
-        presaleAddress = _presaleAddress;
-        refundable = true;
-        presaleAddress.transfer(poolTotal);
-    }
-
-    function refundPresale() payable public onState(State.Paid) {
-        require(refundable && msg.value >= poolTotal);
-        require(msg.sender == presaleAddress || isAdmin(msg.sender));
-        gasFundTotal = msg.value - poolTotal;
-        state = State.Failed;
-    }
-
-    function setToken(address tokenAddress) public onlyAdmins {
-        token = ERC20(tokenAddress);
-    }
-
-    function withdrawAll() public {
-        uint total = balances[msg.sender].remaining;
-        balances[msg.sender].remaining = 0;
-
-        if (state == State.Open || state == State.Failed) {
-            total += balances[msg.sender].contribution;
-            if (gasFundTotal > 0) {
-                uint gasRefund = (balances[msg.sender].contribution * gasFundTotal) / (poolTotal);
-                gasFundTotal -= gasRefund;
-                total += gasRefund;
-            }
-            poolTotal -= balances[msg.sender].contribution;
-            balances[msg.sender].contribution = 0;
-        } else {
-            require(state == State.Paid);
-        }
-
-        msg.sender.transfer(total);
-        Withdrawl(msg.sender, total);
-    }
-
-    function withdraw(uint amount) public onState(State.Open) {
-        uint total = balances[msg.sender].remaining + balances[msg.sender].contribution;
-        require(total >= amount);
-        uint debit = min(balances[msg.sender].remaining, amount);
-        balances[msg.sender].remaining -= debit;
-        debit = amount - debit;
-        balances[msg.sender].contribution -= debit;
-        poolTotal -= debit;
-
-        (balances[msg.sender].contribution, balances[msg.sender].remaining) = getContribution(msg.sender, 0);
-        // must respect the minContribution limit
-        require(balances[msg.sender].remaining == 0 || balances[msg.sender].contribution > 0);
-        msg.sender.transfer(amount);
-        Withdrawl(msg.sender, amount);
-    }
-
-    function transferMyTokens() public onState(State.Paid) noReentrancy {
-        uint tokenBalance = token.balanceOf(address(this));
-        require(tokenBalance > 0);
-
-        uint participantContribution = balances[msg.sender].contribution;
-        uint participantShare = participantContribution * tokenBalance / poolTotal;
-
-        poolTotal -= participantContribution;
-        balances[msg.sender].contribution = 0;
-        refundable = false;
-        require(token.transfer(msg.sender, participantShare));
-
-        Payout(msg.sender, participantShare);
-    }
-
-    address[] public failures;
-    function transferAllTokens() public onlyAdmins onState(State.Paid) noReentrancy returns (address[]) {
-        uint tokenBalance = token.balanceOf(address(this));
-        require(tokenBalance > 0);
-        delete failures;
-
-        for (uint i = 0; i < participants.length; i++) {
-            address participant = participants[i];
-            uint participantContribution = balances[participant].contribution;
-
-            if (participantContribution > 0) {
-                uint participantShare = participantContribution * tokenBalance / poolTotal;
-
-                poolTotal -= participantContribution;
-                balances[participant].contribution = 0;
-
-                if (token.transfer(participant, participantShare)) {
-                    refundable = false;
-                    Payout(participant, participantShare);
-                    tokenBalance -= participantShare;
-                    if (tokenBalance == 0) {
-                        break;
-                    }
-                } else {
-                    balances[participant].contribution = participantContribution;
-                    poolTotal += participantContribution;
-                    failures.push(participant);
-                }
-            }
-        }
-
-        return failures;
-    }
-
-    function modifyWhitelist(address[] toInclude, address[] toExclude) public onlyAdmins stateAllowsConfiguration {
-        bool previous = whitelistAll;
-        uint i;
-        if (previous) {
-            require(toExclude.length == 0);
-            for (i = 0; i < participants.length; i++) {
-                balances[participants[i]].whitelisted = false;
-            }
-            whitelistAll = false;
-        }
-
-        for (i = 0; i < toInclude.length; i++) {
-            balances[toInclude[i]].whitelisted = true;
-        }
-
-        address excludedParticipant;
-        uint contribution;
-        if (previous) {
-            for (i = 0; i < participants.length; i++) {
-                excludedParticipant = participants[i];
-                if (!balances[excludedParticipant].whitelisted) {
-                    contribution = balances[excludedParticipant].contribution;
-                    balances[excludedParticipant].contribution = 0;
-                    balances[excludedParticipant].remaining += contribution;
-                    poolTotal -= contribution;
-                }
-            }
-        } else {
-            for (i = 0; i < toExclude.length; i++) {
-                excludedParticipant = toExclude[i];
-                balances[excludedParticipant].whitelisted = false;
-                contribution = balances[excludedParticipant].contribution;
-                balances[excludedParticipant].contribution = 0;
-                balances[excludedParticipant].remaining += contribution;
-                poolTotal -= contribution;
-            }
-        }
-    }
-
-    function removeWhitelist() public onlyAdmins stateAllowsConfiguration {
-        if (!whitelistAll) {
-            whitelistAll = true;
-            for (uint i = 0; i < participants.length; i++) {
-                balances[participants[i]].whitelisted = true;
-            }
-        }
-    }
-
-    function setContributionSettings(uint _minContribution, uint _maxContribution, uint _maxPoolTotal) public onlyAdmins stateAllowsConfiguration {
-        // we raised the minContribution threshold
-        bool recompute = (minContribution < _minContribution);
-        // we lowered the maxContribution threshold
-        recompute = recompute || (maxContribution > _maxContribution);
-        // we did not have a maxContribution threshold and now we do
-        recompute = recompute || (maxContribution == 0 && _maxContribution > 0);
-        // we want to make maxPoolTotal lower than the current pool total
-        recompute = recompute || (poolTotal > _maxPoolTotal);
-
-        minContribution = _minContribution;
-        maxContribution = _maxContribution;
-        maxPoolTotal = _maxPoolTotal;
-
-        if (maxContribution > 0) {
-            require(maxContribution >= minContribution);
-        }
-        if (maxPoolTotal > 0) {
-            require(maxPoolTotal >= minContribution);
-            require(maxPoolTotal >= maxContribution);
-        }
-
-        if (recompute) {
-            poolTotal = 0;
-            for (uint i = 0; i < participants.length; i++) {
-                address participant = participants[i];
-                var balance = balances[participant];
-                (balance.contribution, balance.remaining) = getContribution(participant, 0);
-                poolTotal += balance.contribution;
-            }
-        }
-    }
-
-    function getParticipantBalances() public returns(address[], uint[], uint[], bool[], bool[]) {
-        uint[] memory contribution = new uint[](participants.length);
-        uint[] memory remaining = new uint[](participants.length);
-        bool[] memory whitelisted = new bool[](participants.length);
-        bool[] memory exists = new bool[](participants.length);
-
-        for (uint i = 0; i < participants.length; i++) {
-            var balance = balances[participants[i]];
-            contribution[i] = balance.contribution;
-            remaining[i] = balance.remaining;
-            whitelisted[i] = balance.whitelisted;
-            exists[i] = balance.exists;
-        }
-
-        return (participants, contribution, remaining, whitelisted, exists);
-    }
-
-    function deposit() internal onState(State.Open) {
-        if (msg.value > 0) {
-            require(included(msg.sender));
-            (balances[msg.sender].contribution, balances[msg.sender].remaining) = getContribution(msg.sender, msg.value);
-            // must respect the maxContribution and maxPoolTotal limits
-            require(balances[msg.sender].remaining == 0);
-            balances[msg.sender].whitelisted = true;
-            poolTotal += msg.value;
-            if (!balances[msg.sender].exists) {
-                balances[msg.sender].exists = true;
-                participants.push(msg.sender);
-            }
-            Deposit(msg.sender, msg.value);
-        }
-    }
-
-    function isAdmin(address addr) internal constant returns (bool) {
-        for (uint i = 0; i < admins.length; i++) {
-            if (admins[i] == addr) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function included(address participant) internal constant returns (bool) {
-        return whitelistAll || balances[participant].whitelisted || isAdmin(participant);
-    }
-
-    function getContribution(address participant, uint amount) internal constant returns (uint, uint) {
-        var balance = balances[participant];
-        uint total = balance.remaining + balance.contribution + amount;
-        uint contribution = total;
-        if (!included(participant)) {
-            return (0, total);
-        }
-        if (maxContribution > 0) {
-            contribution = min(maxContribution, contribution);
-        }
-        if (maxPoolTotal > 0) {
-            contribution = min(maxPoolTotal - poolTotal, contribution);
-        }
-        if (contribution < minContribution) {
-            return (0, total);
-        }
-        return (contribution, total - contribution);
-    }
-
-    function min(uint a, uint b) internal pure returns (uint _min) {
-        if (a < b) {
-            return a;
-        }
-        return b;
-    }
+    d.pct = _toPct(d.token.balanceOf(this),submittedAmount);
+    d.claimCount = 0;
+    d.claimRound = d.claimRound.add(1);
+  }
+  
+  // This is a standard function required for ERC223 compatibility.
+  function tokenFallback (address from, uint value, bytes data) public {
+    ERC223Received (from, value);
+  }
+  
 }
