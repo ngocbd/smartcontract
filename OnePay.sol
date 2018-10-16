@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OnePay at 0x7f0c38d5e951c47d96d3ec96e3127c73ed4b278e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OnePay at 0x93d550983a908e87abfa7f98ae034bfc2d340bbc
 */
-pragma solidity ^0.4.17;
-
 // ERC Token Standard #20 Interface
 interface ERC20 {
     // Get the total token supply
@@ -25,9 +23,36 @@ interface ERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
 
 contract OnePay is ERC20 {
+
+    // Ability to call SafeMath functions on uints.
+    using SafeMath for uint256;
 
     // Token basic information
     string public constant name = "OnePay";
@@ -107,27 +132,25 @@ contract OnePay is ERC20 {
       */
     function() public payable
     {
-                // Make sure the sale is active
+        // Make sure the sale is active
         require(!saleClosed);
 
         // Minimum amount is 0.02 eth
         require(msg.value >= 0.02 ether);
 
-        // If 1500 eth is received switch the sale price
+        // If 1400 eth is received switch the sale price
         if (totalReceived >= 1500 ether) {
             currentSalePhase = SALE;
         }
 
-        uint256 c = mul(msg.value, currentSalePhase);
-
         // Calculate tokens to mint based on the "current sale phase"
-        uint256 amount = c;
+        uint256 amount = msg.value.mul(currentSalePhase);
 
         // Make sure that mintedCoins don't exceed the hardcap sale
         require(mintedCoins + amount <= hardCapSale);
 
         // Check for totalSupply max amount
-        balances[msg.sender] += amount;
+        balances[msg.sender] = balances[msg.sender].add(amount);
 
         // Increase the number of minted coins
         mintedCoins += amount;
@@ -139,30 +162,6 @@ contract OnePay is ERC20 {
         totalReceived += msg.value;
 
         Transfer(this, msg.sender, amount);
-    }
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        require(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
     }
 
     /**
@@ -220,7 +219,7 @@ contract OnePay is ERC20 {
     /**
       * Withdraw funds from the contract
       */
-    function withdrawFunds() public
+    function withdrawFunds() public onlyDirector
     {
         director.transfer(this.balance);
     }
@@ -249,15 +248,17 @@ contract OnePay is ERC20 {
         return balances[_owner];
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-
+    /**
+      * Transfer balance from sender's account to receiver's account
+      */
+    function transfer(address _to, uint256 _value) public returns (bool success)
+    {
         // Make sure the sender has enough value in their account
-        require(balances[msg.sender] >= _value && _value > 0);
+        assert(balances[msg.sender] >= _value && _value > 0);
         // Subtract value from sender's account
-        balances[msg.sender] = balances[msg.sender] - _value;
-
+        balances[msg.sender] = balances[msg.sender].sub(_value);
         // Add value to receiver's account
-        balances[_to] = add(balances[_to], _value);
+        balances[_to] = balances[_to].add(_value);
 
         // Log
         Transfer(msg.sender, _to, _value);
@@ -281,11 +282,10 @@ contract OnePay is ERC20 {
       */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)
     {
-        require(allowed[_from][msg.sender] >= _value && balances[_from] >= _value && _value > 0);
-        balances[_from] = balances[_from] - _value;
-        balances[_to] = add(balances[_to], _value);
-        allowed[_from][msg.sender] = sub(allowed[_from][msg.sender], _value);
-
+        assert(allowed[_from][msg.sender] >= _value && balances[_from] >= _value && _value > 0);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
     }
