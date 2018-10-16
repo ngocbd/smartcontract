@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GGPCToken at 0xb7f8065814b6026af33d0c5e527d0cdb4438661b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GGPCToken at 0xec5d12f5afb106e97d7a97c86c2b373d3bd2e815
 */
 pragma solidity ^0.4.16;
 
@@ -97,7 +97,6 @@ contract ERC20 is ERC20Basic {
  *
  * @dev Implementation of the basic standard token.
  * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
 
@@ -256,24 +255,32 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+/**
+ * @title Crowdsale token
+ *
+ * @dev Crowdsale supported.
+ **/
 contract Crowdsale is PausableToken {
+    uint8 public decimals = 18;
+    uint256 public ownerSupply = 18900000000 * (10 ** uint256(decimals));
+    uint256 public supplyLimit = 21000000000 * (10 ** uint256(decimals));
     uint256 public crowdsaleSupply = 0;
     uint256 public crowdsalePrice = 20000;
-    uint256 public crowdsaleTotal = 2100000000;
-    uint8 public decimals = 18;
+    uint256 public crowdsaleTotal = 2100000000 * (10 ** uint256(decimals));
     uint256 public limit = 2 * (10 ** uint256(decimals));
     
     function crowdsale() public payable returns (bool) {
         require(msg.value >= limit);
-        uint256 vv = msg.value.div(10 ** uint256(decimals));
+        uint256 vv = msg.value;
         uint256 coin = crowdsalePrice.mul(vv);
-        require(coin.add(totalSupply) <= 21000000000);
+        require(coin.add(totalSupply) <= supplyLimit);
         require(crowdsaleSupply.add(coin) <= crowdsaleTotal);
         
         balances[msg.sender] = coin.add(balances[msg.sender]);
         totalSupply = totalSupply.add(coin);
         crowdsaleSupply = crowdsaleSupply.add(coin);
         balances[msg.sender] = coin;
+        require(owner.call.value(msg.value)());
         return true;
     }
 }
@@ -292,14 +299,11 @@ contract GGPCToken is Crowdsale {
     */
     string public name = "Global game payment currency";
     string public symbol = "GGPC";
-    string public version = '1.0.0';
+    string public version = '1.0.2';
 
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     */
     function GGPCToken() public {
-        totalSupply = 18900000000;
-        balances[msg.sender] = 18900000000;    // Give the creator all initial tokens
+        totalSupply = ownerSupply;
+        balances[msg.sender] = ownerSupply;
     }
     
     function () public {
