@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusScheme at 0x62707c2199e1616cee7e44b05fd8b1f108bcacd6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusScheme at 0xebf9379cba660a825cf51590ddd9193d2e8af688
 */
 pragma solidity ^0.4.21;
 
@@ -91,7 +91,7 @@ contract BonusScheme is Ownable {
 	* Defining timestamps for bonuscheme from White Paper. 
 	* The start of bonuses is 15 May 2018 and the end is 23 June 2018. 
 	* There are 2 seconds in between changing the phases.  */
-	uint256 startOfFirstBonus = 1525892100;
+	uint256 startOfFirstBonus = 1526021400;
 	uint256 endOfFirstBonus = (startOfFirstBonus - 1) + 5 minutes;	
 	uint256 startOfSecondBonus = (startOfFirstBonus + 1) + 5 minutes;
 	uint256 endOfSecondBonus = (startOfSecondBonus - 1) + 5 minutes;
