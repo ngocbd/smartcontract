@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYCEarlyPurchase at 0xebbcdc146b536557782acb9f7869627ad92fb5aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYCEarlyPurchase at 0x7c8b63c4cf7a6009e06dc78d9a8352cd0541556f
 */
 pragma solidity ^0.4.7;
 
@@ -98,20 +98,18 @@ contract SYCEarlyPurchase {
             throw;
         }
 
+        earlyPurchases.push(EarlyPurchase(purchaser, amount, purchasedAt));
         if (purchasedAt == 0 || purchasedAt > now) {
             throw;
         }
 
         if(totalEarlyPurchaseRaised + amount >= WEI_MAXIMUM_EARLYPURCHASE){
            purchaser.send(totalEarlyPurchaseRaised + amount - WEI_MAXIMUM_EARLYPURCHASE);
-           earlyPurchases.push(EarlyPurchase(purchaser, WEI_MAXIMUM_EARLYPURCHASE - totalEarlyPurchaseRaised, purchasedAt));
            totalEarlyPurchaseRaised += WEI_MAXIMUM_EARLYPURCHASE - totalEarlyPurchaseRaised;
         }
         else{
-           earlyPurchases.push(EarlyPurchase(purchaser, amount, purchasedAt));
            totalEarlyPurchaseRaised += amount;
         }
-
         if(totalEarlyPurchaseRaised >= WEI_MAXIMUM_EARLYPURCHASE){
             closeEarlyPurchase();
         }
