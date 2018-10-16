@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Conversion at 0x26fe5848cf08a00936bfbdaec890da57c6e59ed6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Conversion at 0xd1a8cbba4243e4dfbf1d935dfe12415d1419cc14
 */
 pragma solidity ^0.4.18;
 
 contract useContractWeb {
 
-  ContractWeb internal web = ContractWeb(0x5F9489D7FfC63ce0bDCD282D14E595A865B259d7);
+  ContractWeb internal web = ContractWeb(0xA2a7F4bf61b5bf07611739941F62Dec30541840A);
 
 }
 
@@ -205,7 +205,7 @@ contract Balances is CanTransferTokens, SafeMath, useContractWeb {
     return _balances[_account];
   }
 
-  function tokenContract() view internal returns (address) {
+  function tokenContract() view public returns (address) {
     return web.getContractAddress("Token");
   }
 
@@ -250,7 +250,7 @@ contract Token is CanTransferTokens, SafeMath, CheckIfContract, useContractWeb {
     return _allowance[_from][_to];
   }
 
-  function balancesContract() view internal returns (address) {
+  function balancesContract() view public returns (address) {
     return web.getContractAddress("Balances");
   }
 
@@ -327,9 +327,9 @@ contract Token is CanTransferTokens, SafeMath, CheckIfContract, useContractWeb {
     return true;
   }
 
-  function approve(address _spender, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool) {
-    _allowance[msg.sender][_spender] = add(_allowance[msg.sender][_spender], _value);
-    Approval(msg.sender, _spender, _value);
+  function approve(address _to, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool) {
+    _allowance[msg.sender][_to] = add(_allowance[msg.sender][_to], _value);
+    Approval(msg.sender, _to, _value);
     return true;
   }
 
@@ -337,11 +337,11 @@ contract Token is CanTransferTokens, SafeMath, CheckIfContract, useContractWeb {
 
 contract Conversion is CanTransferTokens, useContractWeb {
 
-  function token1stContract() view internal returns (address) {
+  function token1stContract() view public returns (address) {
     return web.getContractAddress("Token1st");
   }
 
-  function tokenContract() view internal returns (address) {
+  function tokenContract() view public returns (address) {
     return web.getContractAddress("Token");
   }
 
@@ -391,7 +391,7 @@ contract Distribution is CanTransferTokens, SafeMath, useContractWeb {
     return _1 / 1000000000000000000;
   }
 
-  function tokenContract() view internal returns (address) {
+  function tokenContract() view public returns (address) {
     return web.getContractAddress("Token");
   }
 
