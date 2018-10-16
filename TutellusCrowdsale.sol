@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TutellusCrowdsale at 0x3f61b512856056d663fd763b880da4a8ed4ceeee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TutellusCrowdsale at 0x0f3d5562ca6084f7d59ce10dc5ab672257573de6
 */
-pragma solidity ^0.4.15;
+pragma solidity 0.4.15;
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -47,108 +47,29 @@ contract Ownable {
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
+// File: contracts/Authorizable.sol
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+contract Authorizable is Ownable {
+    event LogAccess(address authAddress);
+    event Grant(address authAddress, bool grant);
 
-// File: zeppelin-solidity/contracts/token/ERC20.sol
+    mapping(address => bool) public auth;
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+    modifier authorized() {
+        LogAccess(msg.sender);
+        require(auth[msg.sender]);
+        _;
+    }
 
-// File: zeppelin-solidity/contracts/token/SafeERC20.sol
+    function authorize(address _address) onlyOwner public {
+        Grant(_address, true);
+        auth[_address] = true;
+    }
 
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
-// File: contracts/TokenTimelock.sol
-
-// This code was based on: https://github.com/OpenZeppelin/zeppelin-solidity.
-// Change the releaseTime type from uint64 to uint265 and add the valid KYC flag
-pragma solidity ^0.4.15;
-
-
-
-
-
-/**
- * @title TokenTimelock
- * @dev TokenTimelock is a token holder contract that will allow a
- * beneficiary to extract the tokens after a given release time and KYC valid.
- */
-contract TokenTimelock is Ownable {
-  using SafeERC20 for ERC20Basic;
-
-  // ERC20 basic token contract being held
-  ERC20Basic public token;
-
-  // beneficiary of tokens after they are released
-  address public beneficiary;
-
-  // timestamp when token release is enabled
-  uint256 public releaseTime;
-
-  // KYC valid
-  bool public kycValid = false;
-
-  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint256 _releaseTime) public {
-    require(_releaseTime > now);
-    token = _token;
-    beneficiary = _beneficiary;
-    releaseTime = _releaseTime;
-  }
-
-  /**
-    * @notice Transfers tokens held by timelock to beneficiary.
-    */
-  function release() public {
-    require(now >= releaseTime);
-    require(kycValid);
-
-    uint256 amount = token.balanceOf(this);
-    require(amount > 0);
-
-    token.safeTransfer(beneficiary, amount);
-  }
-
-  function setValidKYC(bool _valid) public onlyOwner {
-    kycValid = _valid;
-  }
+    function unauthorize(address _address) onlyOwner public {
+        Grant(_address, false);
+        auth[_address] = false;
+    }
 }
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
@@ -181,6 +102,20 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 // File: zeppelin-solidity/contracts/token/BasicToken.sol
@@ -218,6 +153,19 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 // File: zeppelin-solidity/contracts/token/StandardToken.sol
@@ -366,6 +314,83 @@ contract TutellusToken is MintableToken {
    string public name = "Tutellus";
    string public symbol = "TUT";
    uint8 public decimals = 18;
+}
+
+// File: contracts/TutellusLockerVault.sol
+
+contract TutellusLockerVault is Authorizable {
+    event Deposit(address indexed _address, uint256 _amount);
+    event Verify(address indexed _address);
+    event Release(address indexed _address);
+
+    uint256 releaseTime;
+    TutellusToken token;
+
+    mapping(address => uint256) public amounts;
+    mapping(address => bool) public verified;
+
+    function TutellusLockerVault(
+        uint256 _releaseTime, 
+        address _token
+    ) public 
+    {
+        require(_releaseTime > now);
+        require(_token != address(0));
+        
+        releaseTime = _releaseTime;
+        token = TutellusToken(_token);
+    }
+
+    function verify(address _address) authorized public {
+        require(_address != address(0));
+        
+        verified[_address] = true;
+        Verify(_address);
+    }
+
+    function deposit(address _address, uint256 _amount) authorized public {
+        require(_address != address(0));
+        require(_amount > 0);
+
+        amounts[_address] += _amount;
+        Deposit(_address, _amount);
+    }
+
+    function release() public returns(bool) {
+        require(now >= releaseTime);
+        require(verified[msg.sender]);
+
+        uint256 amount = amounts[msg.sender];
+        if (amount > 0) {
+            amounts[msg.sender] = 0;
+            if (!token.transfer(msg.sender, amount)) {
+                amounts[msg.sender] = amount;
+                return false;
+            }
+            Release(msg.sender);
+        }
+        return true;
+    }
+}
+
+// File: contracts/TutellusVault.sol
+
+contract TutellusVault is Authorizable {
+    event VaultMint(address indexed authAddress);
+
+    TutellusToken public token;
+
+    function TutellusVault() public {
+        token = new TutellusToken();
+    }
+
+    function mint(address _to, uint256 _amount) authorized public returns (bool) {
+        require(_to != address(0));
+        require(_amount >= 0);
+
+        VaultMint(msg.sender);
+        return token.mint(_to, _amount);
+    }
 }
 
 // File: zeppelin-solidity/contracts/crowdsale/Crowdsale.sol
@@ -603,19 +628,22 @@ contract TutellusCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Pausable {
     
     mapping(address => uint256) public conditions;
 
-    mapping(address => address) public timelocksContracts;
-
     uint256 salePercent = 60;   // Percent of TUTs for sale
     uint256 poolPercent = 30;   // Percent of TUTs for pool
     uint256 teamPercent = 10;   // Percent of TUTs for team
 
-    uint256 vestingLimit = 700 ether;
-    uint256 specialLimit = 300 ether;
+    uint256 vestingLimit; // 400 ether;
+    uint256 specialLimit; // 200 ether;
 
-    uint256 minPreICO = 10 ether;
-    uint256 minICO = 0.5 ether;
+    uint256 minPreICO; // 5 ether;
+    uint256 minICO; // 0.05 ether;
 
-    address teamTimelock;   //Team TokenTimelock.
+    uint256 unitTimeSecs; //86400 secs;
+
+    address teamTimelock; //Team TokenTimelock.
+
+    TutellusVault vault;
+    TutellusLockerVault locker;
 
     function TutellusCrowdsale(
         uint256 _startTime,
@@ -623,17 +651,34 @@ contract TutellusCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Pausable {
         uint256 _cap,
         address _wallet,
         address _teamTimelock,
-        address _tokenAddress
+        address _tutellusVault,
+        address _lockerVault,
+        uint256 _vestingLimit,
+        uint256 _specialLimit,
+        uint256 _minPreICO,
+        uint256 _minICO,
+        uint256 _unitTimeSecs
     )
         CappedCrowdsale(_cap)
         Crowdsale(_startTime, _endTime, 1000, _wallet)
     {
         require(_teamTimelock != address(0));
-        teamTimelock = _teamTimelock;
+        require(_tutellusVault != address(0));
+        require(_vestingLimit > _specialLimit);
+        require(_minPreICO > _minICO);
+        require(_unitTimeSecs > 0);
 
-        if (_tokenAddress != address(0)) {
-            token = TutellusToken(_tokenAddress);
-        }
+        teamTimelock = _teamTimelock;
+        vault = TutellusVault(_tutellusVault);
+        token = MintableToken(vault.token());
+
+        locker = TutellusLockerVault(_lockerVault);
+
+        vestingLimit = _vestingLimit;
+        specialLimit = _specialLimit;
+        minPreICO = _minPreICO;
+        minICO = _minICO;
+        unitTimeSecs = _unitTimeSecs;
     }
 
     function addSpecialRateConditions(address _address, uint256 _rate) public onlyOwner {
@@ -647,37 +692,23 @@ contract TutellusCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Pausable {
     // Returns TUTs rate per 1 ETH depending on current time
     function getRateByTime() public constant returns (uint256) {
         uint256 timeNow = now;
-        if (timeNow > (startTime + 11 weeks)) {
-            return 1000;
-        } else if (timeNow > (startTime + 10 weeks)) {
-            return 1050; // + 5%
-        } else if (timeNow > (startTime + 9 weeks)) {
-            return 1100; // + 10%
-        } else if (timeNow > (startTime + 8 weeks)) {
-            return 1200; // + 20%
-        } else if (timeNow > (startTime + 6 weeks)) {
-            return 1350; // + 35%
-        } else if (timeNow > (startTime + 4 weeks)) {
-            return 1400; // + 40%
-        } else if (timeNow > (startTime + 2 weeks)) {
-            return 1450; // + 45%
+        if (timeNow > (startTime + 94 * unitTimeSecs)) {
+            return 1500;
+        } else if (timeNow > (startTime + 87 * unitTimeSecs)) {
+            return 1575; // + 5%
+        } else if (timeNow > (startTime + 80 * unitTimeSecs)) {
+            return 1650; // + 10%
+        } else if (timeNow > (startTime + 73 * unitTimeSecs)) {
+            return 1800; // + 20%
+        } else if (timeNow > (startTime + 56 * unitTimeSecs)) {
+            return 2025; // + 35%
+        } else if (timeNow > (startTime + 42 * unitTimeSecs)) {
+            return 2100; // + 40%
+        } else if (timeNow > (startTime + 28 * unitTimeSecs)) {
+            return 2175; // + 45%
         } else {
-            return 1500; // + 50%
+            return 2250; // + 50%
         }
-    }
-
-    function getTimelock(address _address) public constant returns(address) {
-        return timelocksContracts[_address];
-    }
-
-    function getValidTimelock(address _address) internal returns(address) {
-        address timelockAddress = getTimelock(_address);
-        // check, if not have already one
-        if (timelockAddress == address(0)) {
-            timelockAddress = new TokenTimelock(token, _address, endTime);
-            timelocksContracts[_address] = timelockAddress;
-        }
-        return timelockAddress;
     }
 
     function buyTokens(address beneficiary) whenNotPaused public payable {
@@ -685,34 +716,26 @@ contract TutellusCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Pausable {
         require(msg.value >= minICO && msg.value <= vestingLimit);
         require(validPurchase());
 
-        uint256 rate;
-        address contractAddress;
+        uint256 senderRate;
 
         if (conditions[beneficiary] != 0) {
             require(msg.value >= specialLimit);
-            rate = conditions[beneficiary];
+            senderRate = conditions[beneficiary];
         } else {
-            rate = getRateByTime();
-            if (rate > 1200) {
+            senderRate = getRateByTime();
+            if (senderRate > 1800) {
                 require(msg.value >= minPreICO);
             }
         }
 
-        contractAddress = getValidTimelock(beneficiary);
-
-        mintTokens(rate, contractAddress, beneficiary);
-    }
-
-    function mintTokens(uint _rate, address _address, address beneficiary) internal {
         uint256 weiAmount = msg.value;
-
         // calculate token amount to be created
-        uint256 tokens = weiAmount.mul(_rate);
-
+        uint256 tokens = weiAmount.mul(senderRate);
         // update state
         weiRaised = weiRaised.add(weiAmount);
 
-        token.mint(_address, tokens);
+        locker.deposit(beneficiary, tokens);
+        vault.mint(locker, tokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
         forwardFunds();
@@ -728,11 +751,9 @@ contract TutellusCrowdsale is CappedCrowdsale, FinalizableCrowdsale, Pausable {
         uint256 tokensPool = poolTokensByPercent(poolPercent);
         uint256 tokensTeam = poolTokensByPercent(teamPercent);
 
-        token.mint(wallet, tokensPool);
-        token.mint(teamTimelock, tokensTeam);
+        vault.mint(wallet, tokensPool);
+        vault.mint(teamTimelock, tokensTeam);
     }
 
-    function createTokenContract() internal returns (MintableToken) {
-        return new TutellusToken();
-    }
+    function createTokenContract() internal returns (MintableToken) {}
 }
