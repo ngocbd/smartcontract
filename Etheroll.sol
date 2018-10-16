@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x9DC69490EC0d558f8F62b6d0aD64611B621A026E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x2700B4469Ddb14f435e57ecA538E95f43d9E6c38
 */
 //just updated the encrypted api key
-//updated contractBalance -= 57245901639344;
-//removed safesub from all contractBalance and replaced with operators
 
 pragma solidity ^0.4.2;
 
@@ -1504,7 +1502,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         if(playerDieResult[myid] < playerNumber[myid]){ 
 
             /* safely reduce contract balance by player profit */
-            contractBalance -= playerTempReward[myid]; 
+            contractBalance = safeSub(contractBalance, playerTempReward[myid]); 
 
             /* update total wei won */
             totalWeiWon = safeAdd(totalWeiWon, playerTempReward[myid]);              
@@ -1546,7 +1544,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
             *  setMaxProfit
             *  send 1 wei to losing bet
             */
-            contractBalance += playerTempBetValue[myid]-1;                                                                         
+            contractBalance = safeAdd(contractBalance, (playerTempBetValue[myid]-1));                                                                         
 
             /* update maximum profit */
             setMaxProfit(); 
@@ -1607,7 +1605,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         onlyTreasury
     {
         /* safely update contract balance */
-        contractBalance += msg.value;        
+        contractBalance = safeAdd(contractBalance, msg.value);        
         /* update the maximum profit */
         setMaxProfit();
     } 
@@ -1655,7 +1653,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 		onlyOwner
     {        
         /* safely update contract balance when sending out funds*/
-        contractBalance -= amount;		
+        contractBalance = safeSub(contractBalance, amount);		
         /* update max profit */
         setMaxProfit();
         if(!sendTo.send(amount)) throw;
