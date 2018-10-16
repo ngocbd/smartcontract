@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xdf83249f0f5c9926f1ee4310caa4e01c2f8abb89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0x37c50fd444edfaab330436d686d7c64618bf2f4d
 */
 pragma solidity ^0.4.13;
 
@@ -92,7 +92,7 @@ contract ZiberToken is SafeMath, ERC20, Ownable {
  string public name = "Ziber Token";
  string public symbol = "ZBR";
  uint public decimals = 8;
- uint public constant FROZEN_TOKENS = 10000000;
+ uint public constant FROZEN_TOKENS = 1e7;
  uint public constant FREEZE_PERIOD = 1 years;
  uint public crowdSaleOverTimestamp;
 
