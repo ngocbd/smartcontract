@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x535ab96be208f115302facee73ae976e9174ac0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x9cb8921aa376219950ba134c15d8f5ee2769c599
 */
-pragma solidity ^0.4.17;
+pragma solidity 0.4.15;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
@@ -16,7 +16,7 @@ contract MultiSigWallet {
     event Submission(uint indexed transactionId);
     event Execution(uint indexed transactionId);
     event ExecutionFailure(uint indexed transactionId);
-    event Deposit(address indexed sender, uint value);
+    event Donated(address indexed sender, uint value);
     event OwnerAddition(address indexed owner);
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
@@ -94,12 +94,12 @@ contract MultiSigWallet {
         _;
     }
 
-    /// @dev Fallback function allows to deposit ether.
+    /// @dev Fallback function allows to donate ether.
     function()
         payable
     {
         if (msg.value > 0)
-            Deposit(msg.sender, msg.value);
+            Donated(msg.sender, msg.value);
     }
 
     /*
