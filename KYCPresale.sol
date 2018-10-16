@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYCPresale at 0xa4e49d539c13e92bad2f853559a31b549ad49a5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYCPresale at 0x16a19f43832292dc41ce7fb500909723b1c3be69
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -400,17 +400,18 @@ contract CrowdsaleBase is Haltable {
   }
 
   /**
-   * Make an investment.
+   * @dev Make an investment.
    *
    * Crowdsale must be running for one to invest.
    * We must have not pressed the emergency brake.
    *
    * @param receiver The Ethereum address who receives the tokens
    * @param customerId (optional) UUID v4 to track the successful payments on the server side'
+   * @param tokenAmount Amount of tokens which be credited to receiver
    *
-   * @return tokenAmount How mony tokens were bought
+   * @return tokensBought How mony tokens were bought
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
+  function buyTokens(address receiver, uint128 customerId, uint256 tokenAmount) stopInEmergency internal returns(uint tokensBought) {
 
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
@@ -427,9 +428,6 @@ contract CrowdsaleBase is Haltable {
     }
 
     uint weiAmount = msg.value;
-
-    // Account presale sales separately, so that they do not count against pricing tranches
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
     // Dust transaction
     require(tokenAmount != 0);
@@ -463,6 +461,33 @@ contract CrowdsaleBase is Haltable {
     Invested(receiver, weiAmount, tokenAmount, customerId);
 
     return tokenAmount;
+  }
+
+  /**
+   * @dev Make an investment based on pricing strategy
+   *
+   * This is a wrapper for buyTokens(), but the amount of tokens receiver will
+   * have depends on the pricing strategy used.
+   *
+   * @param receiver The Ethereum address who receives the tokens
+   * @param customerId (optional) UUID v4 to track the successful payments on the server side'
+   *
+   * @return tokensBought How mony tokens were bought
+   */
+  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
+    return buyTokens(receiver, customerId, pricingStrategy.calculatePrice(msg.value, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals()));
+  }
+
+  /**
+   * @dev Calculate tokens user will have for theirr purchase
+   *
+   * @param weisTotal How much ethers (in wei) the user putssssss in
+   * @param pricePerToken What is the price for one token
+   *
+   * @return tokensTotal which is weisTotal divided by pricePerToken
+   */
+  function calculateTokens(uint256 weisTotal, uint256 pricePerToken) public constant returns(uint tokensTotal) {
+    return weisTotal/pricePerToken;
   }
 
   /**
@@ -803,23 +828,13 @@ contract KYCPayloadDeserializer {
     uint256 pricingInfo;
   }
 
-  /**
-   * Same as above, does not seem to cause any issue.
-   */
-  function getKYCPayload(bytes dataframe) public constant returns(address whitelistedAddress, uint128 customerId, uint32 minEth, uint32 maxEth) {
-    address _whitelistedAddress = dataframe.sliceAddress(0);
-    uint128 _customerId = uint128(dataframe.slice16(20));
-    uint32 _minETH = uint32(dataframe.slice4(36));
-    uint32 _maxETH = uint32(dataframe.slice4(40));
-    return (_whitelistedAddress, _customerId, _minETH, _maxETH);
-  }
 
   /**
    * Same as above, but with pricing information included in the payload as the last integer.
    *
    * @notice In a long run, deprecate the legacy methods above and only use this payload.
    */
-  function getKYCPresalePayload(bytes dataframe) public constant returns(address whitelistedAddress, uint128 customerId, uint32 minEth, uint32 maxEth, uint256 pricingInfo) {
+  function getKYCPayload(bytes dataframe) public constant returns(address whitelistedAddress, uint128 customerId, uint32 minEth, uint32 maxEth, uint256 pricingInfo) {
     address _whitelistedAddress = dataframe.sliceAddress(0);
     uint128 _customerId = uint128(dataframe.slice16(20));
     uint32 _minETH = uint32(dataframe.slice4(36));
@@ -878,7 +893,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
     require(!halted);
 
     bytes32 hash = sha256(dataframe);
-    var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPresalePayload(dataframe);
+    var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPayload(dataframe);
     uint multiplier = 10 ** 18;
     address receiver = msg.sender;
     uint weiAmount = msg.value;
