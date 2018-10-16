@@ -1,22 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x700fc72abc067e90111a391d0fae8ce8c799b38f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0xce5093dd7cf90699bba881af8f2c8ad0a7066dc5
 */
 pragma solidity ^0.4.18;
-
-contract ERC20 {
-    function transfer(address _recipient, uint256 amount) public;
-    
-} 
-
-
+      
 contract MultiTransfer {
-    
-    address[] public Airdrop2;
-        
-        
-    function multiTransfer(ERC20 token, address[] Airdrop2, uint256 amount) public {
-        for (uint256 i = 0; i < Airdrop2.length; i++) {
-            token.transfer( Airdrop2[i], amount * 10 ** 18);
+    function multiTransfer(address token, address[] _addresses, uint256 amount) public {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            token.transfer(amount);
         }
     }
 }
