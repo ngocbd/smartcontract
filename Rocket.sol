@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rocket at 0x137099bdc97fa0c487612466333d2b28bf0c2aa4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rocket at 0x8370b2d10956b9fa1db7faf14bac188a367fe7df
 */
 pragma solidity ^0.4.23;
 
@@ -35,44 +35,9 @@ contract Rocket {
         require(administrators[_customerAddress]);
         _;
     }
-
-
-    // ensures that the first tokens in the contract will be equally distributed
-    // meaning, no divine dump will be ever possible
-    // result: healthy longevity.
-    modifier antiEarlyWhale(uint256 _amountOfEthereum){
-        address _customerAddress = msg.sender;
-        
-        // are we still in the vulnerable phase?
-        // if so, enact anti early whale protocol 
-        if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
-            require(
-                // is the customer in the ambassador list?
-                ambassadors_[_customerAddress] == true &&
-                
-                // does the customer purchase exceed the max ambassador quota?
-                (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
-                
-            );
-            
-            // updated the accumulated quota    
-            ambassadorAccumulatedQuota_[_customerAddress] = SafeMath.add(ambassadorAccumulatedQuota_[_customerAddress], _amountOfEthereum);
-        
-            // execute
-            _;
-        } else {
-            // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyAmbassadors = false;
-            _;    
-        }
-        
-    }
     
-    bool onlyAmbassadors = true;
-    mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 0.5 ether;
-    uint256 constant internal ambassadorQuota_ = 20 ether;
-        
+    
+
     
     
     /*==============================
@@ -158,7 +123,8 @@ contract Rocket {
     // administrator list (see above on what they can do)
     mapping(address => bool) public administrators;
     
- 
+    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
+    bool public onlyAmbassadors = false;
     
 
 
@@ -175,19 +141,10 @@ contract Rocket {
         // add administrators here
 
         administrators[msg.sender] = true;
-        ambassadors_[msg.sender]=true;
-        ambassadors_[0x8CA47715Be8AC08aF165a628Ab8111bB3FeF38f1]=true;
-        ambassadors_[0xbAB0308B1CBf9d66f0171581556807b08B3f5860]=true;
-        ambassadors_[0x69FE700236B3F5A32A878c1c1243169C6851d25B]=true;
-        ambassadors_[0x703b16787180a94c2f9f2510F08eDB59Aa899568]=true;
-        ambassadors_[0x05f2c11996d73288AbE8a31d8b593a693FF2E5D8]=true;
-        ambassadors_[0xe2C28fe6279F882B432d79436fc85131bbD8e369]=true;
+
+
         
         buy(0x0);
-    }
-    
-    function donateJackpot() public payable{
-        JackpotAmount = JackpotAmount + msg.value;
     }
     
      
@@ -340,6 +297,10 @@ contract Rocket {
         
         // withdraw all outstanding dividends first
         if(myDividends(true) > 0) withdraw();
+        
+
+        // burn the fee tokens
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _amountOfTokens);
 
         // exchange tokens
         tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
@@ -365,7 +326,7 @@ contract Rocket {
         onlyAdministrator()
         public
     {
-        onlyAmbassadors = false;
+      
     }
     
     
@@ -582,7 +543,6 @@ contract Rocket {
     ==========================================*/
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
         internal
-        antiEarlyWhale(_incomingEthereum)
         returns(uint256)
     {
       
@@ -596,14 +556,11 @@ contract Rocket {
             Timer = block.timestamp + JackpotTimer;
         }
         // data setup
-
+        address _customerAddress = msg.sender;
         uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
-
+        bool ref = (_referredBy != 0x0000000000000000000000000000000000000000 && _referredBy != _customerAddress && tokenBalanceLedger_[_referredBy] >= stakingRequirement);
         uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
-        if ((_referredBy != 0x0000000000000000000000000000000000000000 && _referredBy != msg.sender && tokenBalanceLedger_[_referredBy] >= stakingRequirement)){
-            
-        }
-        else{
+        if (!ref){
             _referralBonus = 0;
         }
         uint256 _jackpotAmount = SafeMath.div(SafeMath.sub(_undividedDividends, _referralBonus), JackpotCut);
@@ -621,12 +578,11 @@ contract Rocket {
         
         // is the user referred by a masternode?
         if(
-             (_referredBy != 0x0000000000000000000000000000000000000000 && _referredBy != msg.sender && tokenBalanceLedger_[_referredBy] >= stakingRequirement)
+            ref
         ){
             // wealth redistribution
             referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
         }
-
         
         // we can't give people infinite ethereum
         if(tokenSupply_ > 0){
@@ -646,15 +602,15 @@ contract Rocket {
         }
         
         // update circulating supply & the ledger address for the customer
-        tokenBalanceLedger_[msg.sender] = SafeMath.add(tokenBalanceLedger_[msg.sender], _amountOfTokens);
+        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
         
         // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
         //really i know you think you do but you don't
         int256 _updatedPayouts = (int256) ((profitPerShare_ * _amountOfTokens) - _fee);
-        payoutsTo_[msg.sender] += _updatedPayouts;
+        payoutsTo_[_customerAddress] += _updatedPayouts;
         
         // fire event
-        onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
+        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
         
         return _amountOfTokens;
     }
