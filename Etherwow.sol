@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherwow at 0x2d05359a51ca13c4ac5f4437585afaf5bf2050f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherwow at 0xa6aef41be341fb364a432fb04a5d2bdd57546c76
 */
 pragma solidity ^0.4.18;
 
@@ -1951,16 +1951,18 @@ contract Etherwow is usingOraclize, SafeMath {
         
 
     }
-
+  
     /*
      * @dev validate roll dice request, and log the bet info
      * @param number player choosen, from [2,99]
+     * @param user address
      */
-    function userRollDice(uint rollUnder) public 
+    function userRollDice(uint rollUnder, address userAddr) public 
         payable
         gameIsActive
         betIsValid(msg.value, rollUnder)
     {       
+        require((msg.value == 100000000000000000 && rollUnder == 76) || (msg.value == 200000000000000000 && rollUnder == 51) || (msg.value == 1000000000000000000 && rollUnder == 31) || (msg.value == 500000000000000000 && rollUnder == 16));
 
         bytes32 rngId = generateRandomNum(); 
        
@@ -1971,9 +1973,20 @@ contract Etherwow is usingOraclize, SafeMath {
         /* map value of wager to this oraclize query */
         userBetValue[rngId] = msg.value;
         /* map user address to this oraclize query */
-        userAddress[rngId] = msg.sender;
+        userAddress[rngId] = userAddr;
         /* safely map user profit to this oraclize query */                     
-        userProfit[rngId] = ((((msg.value * (100-(safeSub(rollUnder,1)))) / (safeSub(rollUnder,1))+msg.value))*houseEdge/houseEdgeDivisor)-msg.value;        
+        if (msg.value == 100000000000000000 && rollUnder == 76){
+            userProfit[rngId] = 20000000000000000;
+        }
+        if (msg.value == 200000000000000000 && rollUnder == 51){
+            userProfit[rngId] = 160000000000000000;
+        }
+        if (msg.value == 1000000000000000000 && rollUnder == 31){
+            userProfit[rngId] = 2000000000000000000;
+        }
+        if (msg.value == 500000000000000000 &&  rollUnder == 16){
+            userProfit[rngId] = 2500000000000000000;
+        }      
         /* safely increase maxPendingPayouts liability - calc all pending payouts under assumption they win */
         maxPendingPayouts = safeAdd(maxPendingPayouts, userProfit[rngId]);
         /* check contract can payout on win */
@@ -1983,8 +1996,7 @@ contract Etherwow is usingOraclize, SafeMath {
         /* provides accurate numbers for web3 and allows for manual refunds in case of no oraclize __callback */
         emit LogBet(userBetId[rngId], userAddress[rngId], safeAdd(userBetValue[rngId], userProfit[rngId]), userProfit[rngId], userBetValue[rngId], userNumber[rngId], randomQueryID);          
 
-    }   
-             
+    }               
 
     /*
      * @dev oraclize callback, only oraclize can call, payout should in active status
@@ -2031,7 +2043,7 @@ contract Etherwow is usingOraclize, SafeMath {
         /* map the userBetValue for this query id */
         userTempBetValue[myid] = userBetValue[myid];
         /* set  userBetValue for this query id to 0 */
-        userBetValue[myid] = 0; 
+        userBetValue[myid] = 0;
 
         /* total number of bets */
         totalBets += 1;
@@ -2044,7 +2056,7 @@ contract Etherwow is usingOraclize, SafeMath {
         * if result is 0 result is empty or no proof refund original bet value
         * if refund fails save refund value to userPendingWithdrawals
         */
-        if(userDieResult[myid] == 0 || bytes(result).length == 0 || bytes(proof).length == 0){ 
+        if(userDieResult[myid] == 0 || bytes(result).length == 0 || bytes(proof).length == 0){
              /* Status: 0=lose, 1=win, 2=win + failed send, 3=refund, 4=refund + failed send*/ 
              /* 3 = refund */
              betStatus[myid] = 3;
