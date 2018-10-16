@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reservation at 0x7BB2a779401c4420B181c4058E5Dd52aeb313131
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reservation at 0x0014966c7439d8c10aaf0204036198236d9b0912
 */
 //File: node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol
 pragma solidity ^0.4.18;
