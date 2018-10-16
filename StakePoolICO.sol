@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StakePoolICO at 0x779B7b713C86e3E6774f5040D9cCC2D43ad375F8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StakePoolICO at 0x6cBc1A135d3C9a835d523aaE9E4723B9b776fC49
 */
 pragma solidity ^0.4.11;
 
@@ -132,9 +132,10 @@ contract StakePool is ERC20, Owned {
     }
 
 	//Allows for a certain amount of tokens to be spent on behalf of the account owner
-    function approve(address _spender, uint256 _value) returns (bool success) { 
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        uint256 amount = _value.mul(multiplier); 
+        allowed[msg.sender][_spender] = amount;
+        Approval(msg.sender, _spender, amount);
         return true;
     }
 
@@ -145,20 +146,24 @@ contract StakePool is ERC20, Owned {
 
     //Allows contract owner to mint new tokens, prevents numerical overflow
 	function mintToken(address target, uint256 mintedAmount) onlyOwner returns (bool success) {
-		require(mintedAmount > 0); 
-        uint256 addTokens = mintedAmount; 
-		balance[target] += addTokens;
-		totalSupply += addTokens;
-		Transfer(0, target, addTokens);
-		return true; 
+        uint256 addTokens = mintedAmount.mul(multiplier); 
+		if ((totalSupply + addTokens) < totalSupply) {
+			revert(); 
+		} else {
+			balance[target] += addTokens;
+			totalSupply += addTokens;
+			Transfer(0, target, addTokens);
+			return true; 
+		}
 	}
 
 	//Sends tokens from sender's account
     function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool success) {
-        if ((balance[msg.sender] >= _value) && (balance[_to] + _value > balance[_to])) {
-            balance[msg.sender] -= _value;
-            balance[_to] += _value;
-            Transfer(msg.sender, _to, _value);
+        uint256 amount = _value.mul(multiplier); 
+        if (balance[msg.sender] >= amount && balance[_to] + amount > balance[_to]) {
+            balance[msg.sender] -= amount;
+            balance[_to] += amount;
+            Transfer(msg.sender, _to, amount);
             return true;
         } else { 
 			return false; 
@@ -167,11 +172,12 @@ contract StakePool is ERC20, Owned {
 	
 	//Transfers tokens from an approved account 
     function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) returns (bool success) {
-        if ((balance[_from] >= _value) && (allowed[_from][msg.sender] >= _value) && (balance[_to] + _value > balance[_to])) {
-            balance[_to] += _value;
-            balance[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
+        uint256 amount = _value.mul(multiplier); 
+        if (balance[_from] >= amount && allowed[_from][msg.sender] >= amount && balance[_to] + amount > balance[_to]) {
+            balance[_to] += amount;
+            balance[_from] -= amount;
+            allowed[_from][msg.sender] -= amount;
+            Transfer(_from, _to, amount);
             return true;
         } else { 
 			return false; 
@@ -205,7 +211,7 @@ contract StakePoolICO is Owned, StakePool {
     string tokenName = "StakePool"; 
     string tokenSymbol = "POOL"; 
     uint256 initialTokens = 20000000000000000; 
-    uint256 multiplier = 100000000; 
+    uint256 multiplier = 10000000000; 
     uint8 decimalUnits = 8;  
 
    	//Initializes the token
@@ -214,8 +220,8 @@ contract StakePoolICO is Owned, StakePool {
             balance[msg.sender] = initialTokens;     
             Transfer(0, msg.sender, initialTokens);    
             multiSigWallet = msg.sender;        
-            hardcap = 30000000000000000;    
-            setPrice(3000); 
+            hardcap = 20100000000000000;    
+            setPrice(20); 
             dividendPayment = 50000000000000; 
             recordTokenHolders.length = 2; 
             tokenHolders.length = 2; 
