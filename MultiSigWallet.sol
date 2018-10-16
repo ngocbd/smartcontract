@@ -1,34 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xcde042543307966bc16eff3cdca4d32b23408c4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x5957b11e1c49ba92890a155f8fee9028462e17f0
 */
-pragma solidity 0.4.15;
+pragma solidity ^0.4.11;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    /*
-     *  Events
-     */
-    event Confirmation(address indexed sender, uint indexed transactionId);
-    event Revocation(address indexed sender, uint indexed transactionId);
-    event Submission(uint indexed transactionId);
-    event Execution(uint indexed transactionId);
-    event ExecutionFailure(uint indexed transactionId);
-    event Deposit(address indexed sender, uint value);
-    event OwnerAddition(address indexed owner);
-    event OwnerRemoval(address indexed owner);
-    event RequirementChange(uint required);
-
-    /*
-     *  Constants
-     */
     uint constant public MAX_OWNER_COUNT = 50;
 
-    /*
-     *  Storage
-     */
+    event Confirmation(address indexed _sender, uint indexed _transactionId);
+    event Revocation(address indexed _sender, uint indexed _transactionId);
+    event Submission(uint indexed _transactionId);
+    event Execution(uint indexed _transactionId);
+    event ExecutionFailure(uint indexed _transactionId);
+    event Deposit(address indexed _sender, uint _value);
+    event OwnerAddition(address indexed _owner);
+    event OwnerRemoval(address indexed _owner);
+    event RequirementChange(uint _required);
+
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -43,54 +34,60 @@ contract MultiSigWallet {
         bool executed;
     }
 
-    /*
-     *  Modifiers
-     */
     modifier onlyWallet() {
-        require(msg.sender == address(this));
+        if (msg.sender != address(this))
+            throw;
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
-        require(!isOwner[owner]);
+        if (isOwner[owner])
+            throw;
         _;
     }
 
     modifier ownerExists(address owner) {
-        require(isOwner[owner]);
+        if (!isOwner[owner])
+            throw;
         _;
     }
 
     modifier transactionExists(uint transactionId) {
-        require(transactions[transactionId].destination != 0);
+        if (transactions[transactionId].destination == 0)
+            throw;
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
-        require(confirmations[transactionId][owner]);
+        if (!confirmations[transactionId][owner])
+            throw;
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
-        require(!confirmations[transactionId][owner]);
+        if (confirmations[transactionId][owner])
+            throw;
         _;
     }
 
     modifier notExecuted(uint transactionId) {
-        require(!transactions[transactionId].executed);
+        if (transactions[transactionId].executed)
+            throw;
         _;
     }
 
     modifier notNull(address _address) {
-        require(_address != 0);
+        if (_address == 0)
+            throw;
         _;
     }
 
     modifier validRequirement(uint ownerCount, uint _required) {
-        require(ownerCount <= MAX_OWNER_COUNT
-            && _required <= ownerCount
-            && _required != 0
-            && ownerCount != 0);
+        if (   ownerCount > MAX_OWNER_COUNT
+            || _required > ownerCount
+            || _required == 0
+            || ownerCount == 0)
+            throw;
         _;
     }
 
@@ -113,7 +110,8 @@ contract MultiSigWallet {
         validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
-            require(!isOwner[_owners[i]] && _owners[i] != 0);
+            if (isOwner[_owners[i]] || _owners[i] == 0)
+                throw;
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
@@ -155,7 +153,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param newOwner Address of new owner.
+    /// @param owner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -189,7 +187,9 @@ contract MultiSigWallet {
     /// @param value Transaction ether value.
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, bytes data) public returns (uint transactionId)
+    function submitTransaction(address destination, uint value, bytes data)
+        public
+        returns (uint transactionId)
     {
         transactionId = addTransaction(destination, value, data);
         confirmTransaction(transactionId);
@@ -224,18 +224,16 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction storage txn = transactions[transactionId];
-            txn.executed = true;
-            if (txn.destination.call.value(txn.value)(txn.data))
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
-                txn.executed = false;
+                tx.executed = false;
             }
         }
     }
@@ -297,7 +295,7 @@ contract MultiSigWallet {
                 count += 1;
     }
 
-    /// @dev Returns total number of transactions after filers are applied.
+    /// @dev Returns total number of transactions after filters are applied.
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return Total number of transactions after filters are applied.
