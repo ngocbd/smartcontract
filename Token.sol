@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x16e91cfe9df364fcd270d264665737b11f44de20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x00DEa398a2D404a19f665E90C64B44C6409bc7d1
 */
 pragma solidity ^0.4.13;
 contract Token {
@@ -17,10 +17,10 @@ contract Token {
 	event Transfer(address indexed from, address indexed to, uint256 value);
 
 	function Token() {
-	    totalSupply = 3*(10**8)*(10**18);
-		balanceOf[msg.sender] = 3*(10**8)*(10**18);              // Give the creator all initial tokens
-		name = "WiseMoveChainCar";                                   // Set the name for display purposes
-		symbol = "WMCC";                               // Set the symbol for display purposes
+	    totalSupply = 8400*(10**4)*(10**18);
+		balanceOf[msg.sender] = 8400*(10**4)*(10**18);              // Give the creator all initial tokens
+		name = "EthereumCryptoKitties";                                   // Set the name for display purposes
+		symbol = "ETHCK";                               // Set the symbol for display purposes
 		decimals = 18;                            // Amount of decimals for display purposes
 	}
 
