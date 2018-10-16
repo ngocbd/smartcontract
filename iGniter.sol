@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iGniter at 0x5f504ce1b22643e7f193a703b38befc09a0bdf94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iGniter at 0x58054e51c19fa796443043418be91032b99992a3
 */
 pragma solidity ^0.4.18;
 
@@ -62,6 +62,8 @@ contract iGniter is SafeMath {
     uint256 private initialSupplyPerAddress;
     uint256 private totalMaxAvailableAmount;
     uint256 private availableAmount;
+    uint256 private burnt;
+    uint256 public inrSessions;
     uint256 private availableBalance;
     uint256 private balanceOfAddress;
     uint256 private initialSupply;
@@ -82,6 +84,7 @@ contract iGniter is SafeMath {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Burn(address indexed from, uint256 value);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
+    event LogBurn(address indexed owner, uint indexed value);
 
     modifier isOwner() {
 
@@ -92,7 +95,7 @@ contract iGniter is SafeMath {
     function iGniter() {
 
         initialSupplyPerAddress = 10000000000; //10000
-        initialBlockCount = 4912150;
+        initialBlockCount = 4948670;
         rewardPerBlockPerAddress = 7;
         totalInitialAddresses = 5000;
         initialSupply = initialSupplyPerAddress * totalInitialAddresses;
@@ -112,7 +115,7 @@ contract iGniter is SafeMath {
 
     function assignInitialAddresses(address[] _address) isOwner public returns (bool success)
     {
-        if (block.number <= 6969050)
+        if (block.number <= 7000000)
         {
           for (uint i = 0; i < _address.length; i++)
           {
@@ -129,7 +132,7 @@ contract iGniter is SafeMath {
     {
       startBounty = 2500000000;
 
-        if (block.number <= 6969050)
+        if (block.number <= 7000000)
         {
           for (uint i = 0; i < _address.length; i++)
           {
@@ -146,7 +149,7 @@ contract iGniter is SafeMath {
     {
       finishBounty = 7500000000;
 
-        if (block.number <= 6969050)
+        if (block.number <= 7000000)
         {
           for (uint i = 0; i < _address.length; i++)
           {
@@ -198,7 +201,7 @@ contract iGniter is SafeMath {
         minedBlocks = block.number - initialBlockCount;
         availableAmount = rewardPerBlockPerAddress * minedBlocks;
         iGniting = availableAmount * totalInitialAddresses;
-        return iGniting + initialSupply;
+        return iGniting + initialSupply - burnt;
     }
 
     function minedTotalSupply() constant returns (uint256 minedBlocks)
@@ -213,7 +216,6 @@ contract iGniter is SafeMath {
         return initialSupplyPerAddress * totalInitialAddresses;
     }
 
-
     //burn tokens
     function burn(uint256 _value) public returns(bool success) {
 
@@ -226,7 +228,7 @@ contract iGniter is SafeMath {
         //burn time
         require(balanceOf[msg.sender] >= _value);
         balanceOf[msg.sender] -= _value;
-        _totalSupply -= _value;
+        burnt += _value;
         Burn(msg.sender, _value);
         return true;
     }
@@ -283,46 +285,6 @@ contract iGniter is SafeMath {
         return _allowances[_owner][_spender];
     }
 
-    function servicePayment(address _to, uint _value) public returns (bool, uint256, uint256) {
-
-      require(_value >= currentCost);
-
-      if (_value > 0 && _value <= balanceOf[msg.sender] && !isContract(_to)) {
-            balanceOf[msg.sender] -= _value;
-            balanceOf[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-
-            //either option available
-            ignPayments[msg.sender].unlockedTime = block.timestamp;
-            ignPayments[msg.sender].unlockedBlockNumber = block.number;
-
-            return (true, ignPayments[msg.sender].unlockedTime, ignPayments[msg.sender].unlockedBlockNumber);
-        }
-        return (false, ignPayments[msg.sender].unlockedTime, ignPayments[msg.sender].unlockedBlockNumber);
-    }
-
-    function serviceBurn(uint _value) public returns (bool, uint256, uint256) {
-
-      require(_value >= currentCost);
-      require(balanceOf[msg.sender] >= _value);
-
-      //get sum
-      minedBlocks = block.number - initialBlockCount;
-      availableAmount = rewardPerBlockPerAddress * minedBlocks;
-      iGniting = availableAmount * totalInitialAddresses;
-      _totalSupply = iGniting + initialSupply;
-
-      //either option available
-      ignPayments[msg.sender].unlockedTime = block.timestamp;
-      ignPayments[msg.sender].unlockedBlockNumber = block.number;
-
-      //burn
-      balanceOf[msg.sender] -= _value;
-      _totalSupply -= _value;
-      Burn(msg.sender, _value);
-      return (true, ignPayments[msg.sender].unlockedTime, ignPayments[msg.sender].unlockedBlockNumber);
-      }
-
     function PaymentStatusBlockNum(address _address) constant returns (uint256 bn) {
 
       return ignPayments[_address].unlockedBlockNumber;
@@ -338,5 +300,24 @@ contract iGniter is SafeMath {
       currentCost = _currCost;
 
       return currentCost;
+    }
+
+    function servicePayment(uint _value) public returns (bool, uint256, uint256) {
+
+      require(_value >= currentCost);
+      require(balanceOf[msg.sender] >= currentCost);
+
+      //either option available
+      ignPayments[msg.sender].unlockedTime = block.timestamp;
+      ignPayments[msg.sender].unlockedBlockNumber = block.number;
+
+      inrSessions++;
+
+      //burn
+      balanceOf[msg.sender] -= _value;
+      burnt += _value;
+      Burn(msg.sender, _value);
+
+      return (true, ignPayments[msg.sender].unlockedTime, ignPayments[msg.sender].unlockedBlockNumber);
     }
 }
