@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xa5284754c7568adafec8da31dab5b1cf4a97c4a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xdae07507fc894dae242e29ffc5cd288744b4e04f
 */
 pragma solidity ^0.4.18;
 
@@ -120,7 +120,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
         symbol = "GP";
         name = "GLOBALPLATFORM™";
         decimals = 6;
-        _totalSupply = 500000000000000 * 10**uint(decimals);
+        _totalSupply = 500000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
     }
