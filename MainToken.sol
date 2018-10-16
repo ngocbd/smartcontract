@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0xb91afd1fa3e9c3055b18214b0041563484c71aa0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x60ff4f781c7fabeca2ffae6c103c61ae79ccddc2
 */
 pragma solidity ^0.4.18;
 
@@ -571,15 +571,15 @@ contract FreezableMintableToken is FreezableToken, MintableToken {
 }
 
 contract usingConsts {
-    uint constant TOKEN_DECIMALS = 18;
-    uint8 constant TOKEN_DECIMALS_UINT8 = 18;
+    uint constant TOKEN_DECIMALS = 8;
+    uint8 constant TOKEN_DECIMALS_UINT8 = 8;
     uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string constant TOKEN_NAME = "GlobalSpy";
-    string constant TOKEN_SYMBOL = "SPY";
+    string constant TOKEN_NAME = "Bionic";
+    string constant TOKEN_SYMBOL = "BNC";
     bool constant PAUSED = true;
-    address constant TARGET_USER = 0xC46E5282CA98B982B9cd5d7B029a77573b2f8307;
-    uint constant START_TIME = 1521507420;
+    address constant TARGET_USER = 0xaf85B35ee044C049e2FCfb61dE7fe434a8050B3e;
+    uint constant START_TIME = 1521676848;
     bool constant CONTINUE_MINTING = true;
 }
 
