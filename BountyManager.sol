@@ -1,430 +1,528 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyManager at 0x6e5f94d66846e05eb8a5f83c9c9691ee72fd5e9e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyManager at 0x766d1f049ba649f9a89ae417ba555599a6546b5a
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.17;
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+/*
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+ * source       https://github.com/blockbitsio/
 
-contract Ownable {
-  address public owner;
+ * @name        Application Entity Generic Contract
+ * @package     BlockBitsIO
+ * @author      Micky Socaci <micky@nowlive.ro>
+
+    Used for the ABI interface when assets need to call Application Entity.
+
+    This is required, otherwise we end up loading the assets themselves when we load the ApplicationEntity contract
+    and end up in a loop
+*/
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
+contract ApplicationEntityABI {
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
+    address public ProposalsEntity;
+    address public FundingEntity;
+    address public MilestonesEntity;
+    address public MeetingsEntity;
+    address public BountyManagerEntity;
+    address public TokenManagerEntity;
+    address public ListingContractEntity;
+    address public FundingManagerEntity;
+    address public NewsContractEntity;
 
+    bool public _initialized = false;
+    bool public _locked = false;
+    uint8 public CurrentEntityState;
+    uint8 public AssetCollectionNum;
+    address public GatewayInterfaceAddress;
+    address public deployerAddress;
+    address testAddressAllowUpgradeFrom;
+    mapping (bytes32 => uint8) public EntityStates;
+    mapping (bytes32 => address) public AssetCollection;
+    mapping (uint8 => bytes32) public AssetCollectionIdToName;
+    mapping (bytes32 => uint256) public BylawsUint256;
+    mapping (bytes32 => bytes32) public BylawsBytes32;
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
+    function ApplicationEntity() public;
+    function getEntityState(bytes32 name) public view returns (uint8);
+    function linkToGateway( address _GatewayInterfaceAddress, bytes32 _sourceCodeUrl ) external;
+    function setUpgradeState(uint8 state) public ;
+    function addAssetProposals(address _assetAddresses) external;
+    function addAssetFunding(address _assetAddresses) external;
+    function addAssetMilestones(address _assetAddresses) external;
+    function addAssetMeetings(address _assetAddresses) external;
+    function addAssetBountyManager(address _assetAddresses) external;
+    function addAssetTokenManager(address _assetAddresses) external;
+    function addAssetFundingManager(address _assetAddresses) external;
+    function addAssetListingContract(address _assetAddresses) external;
+    function addAssetNewsContract(address _assetAddresses) external;
+    function getAssetAddressByName(bytes32 _name) public view returns (address);
+    function setBylawUint256(bytes32 name, uint256 value) public;
+    function getBylawUint256(bytes32 name) public view returns (uint256);
+    function setBylawBytes32(bytes32 name, bytes32 value) public;
+    function getBylawBytes32(bytes32 name) public view returns (bytes32);
+    function initialize() external returns (bool);
+    function getParentAddress() external view returns(address);
+    function createCodeUpgradeProposal( address _newAddress, bytes32 _sourceCodeUrl ) external returns (uint256);
+    function acceptCodeUpgradeProposal(address _newAddress) external;
+    function initializeAssetsToThisApplication() external returns (bool);
+    function transferAssetsToNewApplication(address _newAddress) external returns (bool);
+    function lock() external returns (bool);
+    function canInitiateCodeUpgrade(address _sender) public view returns(bool);
+    function doStateChanges() public;
+    function hasRequiredStateChanges() public view returns (bool);
+    function anyAssetHasChanges() public view returns (bool);
+    function extendedAnyAssetHasChanges() internal view returns (bool);
+    function getRequiredStateChanges() public view returns (uint8, uint8);
+    function getTimestamp() view public returns (uint256);
 
 }
 
-contract BountyManager is Ownable  {
-	using SafeMath for uint256;
+/*
 
-	
+ * source       https://github.com/blockbitsio/
 
-	
-	/*Variables about the token contract */	
-	Peculium public pecul; // The Peculium token
-	bool public initPecul; // boolean to know if the Peculium token address has been init
-	
-	event InitializedToken(address contractToken);
-	
-	/*Variables about the bounty manager */
-	address public bountymanager ; // address of the bounty manager 
-	uint256 public bountymanagerShare; // nb token for the bountymanager
-	bool public First_pay_bountymanager; // boolean to test if the first pay has been send to the bountymanager
-	uint256 public first_pay; // pourcent of the first pay rate
-	uint256 public montly_pay; // pourcent of the montly pay rate
-	bool public bountyInit; // boolean to know if the bounty address has been init
-	uint256 public payday; // Day when the bounty manager is paid
-	uint256 public nbMonthsPay; // The montly pay is sent for 6 months
+ * @name        Application Asset Contract
+ * @package     BlockBitsIO
+ * @author      Micky Socaci <micky@nowlive.ro>
 
-	event InitializedManager(address ManagerAdd);
-	event FirstPaySend(uint256 first,address receiver);
-	event MonthlyPaySend(uint256 monthPay,address receiverMonthly);
-	
-	
-	//Constructor
-	function BountyManager() {
-		
-		bountymanagerShare = SafeMath.mul(72000000,(10**8)); // we allocate 72 million token to the bounty manager (maybe to change)
-		
-		first_pay = SafeMath.div(SafeMath.mul(40,bountymanagerShare),100); // first pay is 40%
-		montly_pay = SafeMath.div(SafeMath.mul(10,bountymanagerShare),100); // other pay are 10%
-		nbMonthsPay = 0;
-		
-		First_pay_bountymanager=true;
-		initPecul = false;
-		bountyInit==false;
-		
+ Any contract inheriting this will be usable as an Asset in the Application Entity
 
-	}
-	
-	
-	/***  Functions of the contract ***/
-	
-	function InitPeculiumAdress(address peculAdress) onlyOwner 
-	{ // We init the address of the token
-	
-		pecul = Peculium(peculAdress);
-		payday = pecul.dateDefrost();
-		initPecul = true;
-		InitializedToken(peculAdress);
-	
-	}
-	
-	function change_bounty_manager (address public_key) onlyOwner 
-	{ // to change the bounty manager address
-	
-		bountymanager = public_key;
-		bountyInit=true;
-		InitializedManager(public_key);
-	
-	}
-	
-	function transferManager() onlyOwner Initialize BountyManagerInit 
-	{ // Transfer pecul for the Bounty manager
-		
-		require(now > payday);
-	
-		if(First_pay_bountymanager==false && nbMonthsPay < 6)
-		{
-
-			pecul.transfer(bountymanager,montly_pay);
-			payday = payday.add( 31 days);
-			nbMonthsPay=nbMonthsPay.add(1);
-			MonthlyPaySend(montly_pay,bountymanager);
-		
-		}
-		
-		if(First_pay_bountymanager==true)
-		{
-
-			pecul.transfer(bountymanager,first_pay);
-			payday = payday.add( 35 days);
-			First_pay_bountymanager=false;
-			FirstPaySend(first_pay,bountymanager);
-		
-		}
+*/
 
 
-		
-	}
-		/***  Modifiers of the contract ***/
-	
-	modifier Initialize { // We need to initialize first the token contract
-		require (initPecul==true);
-		_;
-    	}
-    	modifier BountyManagerInit { // We need to initialize first the address of the bountyManager
-		require (bountyInit==true);
-		_;
-    	} 
-
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
 
 
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool)  {
-    require(_to != address(0));
+contract ApplicationAsset {
 
-    uint256 _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-
-contract BurnableToken is StandardToken {
-
-    event Burn(address indexed burner, uint256 value);
-
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value > 0);
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
-}
-
-contract Peculium is BurnableToken,Ownable { // Our token is a standard ERC20 Token with burnable and ownable aptitude
-
-	using SafeMath for uint256; // We use safemath to do basic math operation (+,-,*,/)
-	using SafeERC20 for ERC20Basic; 
-
-    	/* Public variables of the token for ERC20 compliance */
-	string public name = "Peculium"; //token name 
-    	string public symbol = "PCL"; // token symbol
-    	uint256 public decimals = 8; // token number of decimal
-    	
-    	/* Public variables specific for Peculium */
-        uint256 public constant MAX_SUPPLY_NBTOKEN   = 20000000000*10**8; // The max cap is 20 Billion Peculium
-
-	uint256 public dateStartContract; // The date of the deployment of the token
-	mapping(address => bool) public balancesCanSell; // The boolean variable, to frost the tokens
-	uint256 public dateDefrost; // The date when the owners of token can defrost their tokens
+    event EventAppAssetOwnerSet(bytes32 indexed _name, address indexed _owner);
+    event EventRunBeforeInit(bytes32 indexed _name);
+    event EventRunBeforeApplyingSettings(bytes32 indexed _name);
 
 
-    	/* Event for the freeze of account */
- 	event FrozenFunds(address target, bool frozen);     	 
-     	event Defroze(address msgAdd, bool freeze);
-	
+    mapping (bytes32 => uint8) public EntityStates;
+    mapping (bytes32 => uint8) public RecordStates;
+    uint8 public CurrentEntityState;
 
+    event EventEntityProcessor(bytes32 indexed _assetName, uint8 indexed _current, uint8 indexed _required);
+    event DebugEntityRequiredChanges( bytes32 _assetName, uint8 indexed _current, uint8 indexed _required );
 
-   
-	//Constructor
-	function Peculium() {
-		totalSupply = MAX_SUPPLY_NBTOKEN;
-		balances[owner] = totalSupply; // At the beginning, the owner has all the tokens. 
-		balancesCanSell[owner] = true; // The owner need to sell token for the private sale and for the preICO, ICO.
-		
-		dateStartContract=now;
-		dateDefrost = dateStartContract + 85 days; // everybody can defrost his own token after the 25 january 2018 (85 days after 1 November)
+    bytes32 public assetName;
 
-	}
+    /* Asset records */
+    uint8 public RecordNum = 0;
 
-	/*** Public Functions of the contract ***/	
-	
-	function defrostToken() public 
-	{ // Function to defrost your own token, after the date of the defrost
-	
-		require(now>dateDefrost);
-		balancesCanSell[msg.sender]=true;
-		Defroze(msg.sender,true);
-	}
-				
-	function transfer(address _to, uint256 _value) public returns (bool) 
-	{ // We overright the transfer function to allow freeze possibility
-	
-		require(balancesCanSell[msg.sender]);
-		return BasicToken.transfer(_to,_value);
-	
-	}
-	
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
-	{ // We overright the transferFrom function to allow freeze possibility (need to allow before)
-	
-		require(balancesCanSell[msg.sender]);	
-		return StandardToken.transferFrom(_from,_to,_value);
-	
-	}
+    /* Asset initialised or not */
+    bool public _initialized = false;
 
-	/***  Owner Functions of the contract ***/	
+    /* Asset settings present or not */
+    bool public _settingsApplied = false;
 
-   	function freezeAccount(address target, bool canSell) onlyOwner 
-   	{
-        
-        	balancesCanSell[target] = canSell;
-        	FrozenFunds(target, canSell);
-    	
-    	}
+    /* Asset owner ( ApplicationEntity address ) */
+    address public owner = address(0x0) ;
+    address public deployerAddress;
 
-
-	/*** Others Functions of the contract ***/	
-	
-	/* Approves and then calls the receiving contract */
-	function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-
-		require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
-        	return true;
+    function ApplicationAsset() public {
+        deployerAddress = msg.sender;
     }
 
-  	function getBlockTimestamp() constant returns (uint256)
-  	{
-        
-        	return now;
-  	
-  	}
+    function setInitialApplicationAddress(address _ownerAddress) public onlyDeployer requireNotInitialised {
+        owner = _ownerAddress;
+    }
 
-  	function getOwnerInfos() constant returns (address ownerAddr, uint256 ownerBalance)  
-  	{ // Return info about the public address and balance of the account of the owner of the contract
-    	
-    		ownerAddr = owner;
-		ownerBalance = balanceOf(ownerAddr);
-  	
-  	}
+    function setInitialOwnerAndName(bytes32 _name) external
+        requireNotInitialised
+        onlyOwner
+        returns (bool)
+    {
+        // init states
+        setAssetStates();
+        assetName = _name;
+        // set initial state
+        CurrentEntityState = getEntityState("NEW");
+        runBeforeInitialization();
+        _initialized = true;
+        EventAppAssetOwnerSet(_name, owner);
+        return true;
+    }
 
+    function setAssetStates() internal {
+        // Asset States
+        EntityStates["__IGNORED__"]     = 0;
+        EntityStates["NEW"]             = 1;
+        // Funding Stage States
+        RecordStates["__IGNORED__"]     = 0;
+    }
+
+    function getRecordState(bytes32 name) public view returns (uint8) {
+        return RecordStates[name];
+    }
+
+    function getEntityState(bytes32 name) public view returns (uint8) {
+        return EntityStates[name];
+    }
+
+    function runBeforeInitialization() internal requireNotInitialised  {
+        EventRunBeforeInit(assetName);
+    }
+
+    function applyAndLockSettings()
+        public
+        onlyDeployer
+        requireInitialised
+        requireSettingsNotApplied
+        returns(bool)
+    {
+        runBeforeApplyingSettings();
+        _settingsApplied = true;
+        return true;
+    }
+
+    function runBeforeApplyingSettings() internal requireInitialised requireSettingsNotApplied  {
+        EventRunBeforeApplyingSettings(assetName);
+    }
+
+    function transferToNewOwner(address _newOwner) public requireInitialised onlyOwner returns (bool) {
+        require(owner != address(0x0) && _newOwner != address(0x0));
+        owner = _newOwner;
+        EventAppAssetOwnerSet(assetName, owner);
+        return true;
+    }
+
+    function getApplicationAssetAddressByName(bytes32 _name)
+        public
+        view
+        returns(address)
+    {
+        address asset = ApplicationEntityABI(owner).getAssetAddressByName(_name);
+        if( asset != address(0x0) ) {
+            return asset;
+        } else {
+            revert();
+        }
+    }
+
+    function getApplicationState() public view returns (uint8) {
+        return ApplicationEntityABI(owner).CurrentEntityState();
+    }
+
+    function getApplicationEntityState(bytes32 name) public view returns (uint8) {
+        return ApplicationEntityABI(owner).getEntityState(name);
+    }
+
+    function getAppBylawUint256(bytes32 name) public view requireInitialised returns (uint256) {
+        ApplicationEntityABI CurrentApp = ApplicationEntityABI(owner);
+        return CurrentApp.getBylawUint256(name);
+    }
+
+    function getAppBylawBytes32(bytes32 name) public view requireInitialised returns (bytes32) {
+        ApplicationEntityABI CurrentApp = ApplicationEntityABI(owner);
+        return CurrentApp.getBylawBytes32(name);
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier onlyApplicationEntity() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier requireInitialised() {
+        require(_initialized == true);
+        _;
+    }
+
+    modifier requireNotInitialised() {
+        require(_initialized == false);
+        _;
+    }
+
+    modifier requireSettingsApplied() {
+        require(_settingsApplied == true);
+        _;
+    }
+
+    modifier requireSettingsNotApplied() {
+        require(_settingsApplied == false);
+        _;
+    }
+
+    modifier onlyDeployer() {
+        require(msg.sender == deployerAddress);
+        _;
+    }
+
+    modifier onlyAsset(bytes32 _name) {
+        address AssetAddress = getApplicationAssetAddressByName(_name);
+        require( msg.sender == AssetAddress);
+        _;
+    }
+
+    function getTimestamp() view public returns (uint256) {
+        return now;
+    }
+
+
+}
+
+/*
+
+ * source       https://github.com/blockbitsio/
+
+ * @name        Application Asset Contract ABI
+ * @package     BlockBitsIO
+ * @author      Micky Socaci <micky@nowlive.ro>
+
+ Any contract inheriting this will be usable as an Asset in the Application Entity
+
+*/
+
+
+
+contract ABIApplicationAsset {
+
+    bytes32 public assetName;
+    uint8 public CurrentEntityState;
+    uint8 public RecordNum;
+    bool public _initialized;
+    bool public _settingsApplied;
+    address public owner;
+    address public deployerAddress;
+    mapping (bytes32 => uint8) public EntityStates;
+    mapping (bytes32 => uint8) public RecordStates;
+
+    function setInitialApplicationAddress(address _ownerAddress) public;
+    function setInitialOwnerAndName(bytes32 _name) external returns (bool);
+    function getRecordState(bytes32 name) public view returns (uint8);
+    function getEntityState(bytes32 name) public view returns (uint8);
+    function applyAndLockSettings() public returns(bool);
+    function transferToNewOwner(address _newOwner) public returns (bool);
+    function getApplicationAssetAddressByName(bytes32 _name) public returns(address);
+    function getApplicationState() public view returns (uint8);
+    function getApplicationEntityState(bytes32 name) public view returns (uint8);
+    function getAppBylawUint256(bytes32 name) public view returns (uint256);
+    function getAppBylawBytes32(bytes32 name) public view returns (bytes32);
+    function getTimestamp() view public returns (uint256);
+
+
+}
+
+/*
+
+ * source       https://github.com/blockbitsio/
+
+ * @name        Funding Contract ABI
+ * @package     BlockBitsIO
+ * @author      Micky Socaci <micky@nowlive.ro>
+
+ Contains the Funding Contract code deployed and linked to the Application Entity
+
+
+    !!! Links directly to Milestones
+
+*/
+
+
+
+
+
+contract ABIFunding is ABIApplicationAsset {
+
+    address public multiSigOutputAddress;
+    address public DirectInput;
+    address public MilestoneInput;
+    address public TokenManagerEntity;
+    address public FundingManagerEntity;
+
+    struct FundingStage {
+        bytes32 name;
+        uint8   state;
+        uint256 time_start;
+        uint256 time_end;
+        uint256 amount_cap_soft;            // 0 = not enforced
+        uint256 amount_cap_hard;            // 0 = not enforced
+        uint256 amount_raised;              // 0 = not enforced
+        // funding method settings
+        uint256 minimum_entry;
+        uint8   methods;                    // FundingMethodIds
+        // token settings
+        uint256 fixed_tokens;
+        uint8   price_addition_percentage;  //
+        uint8   token_share_percentage;
+        uint8   index;
+    }
+
+    mapping (uint8 => FundingStage) public Collection;
+    uint8 public FundingStageNum;
+    uint8 public currentFundingStage;
+    uint256 public AmountRaised;
+    uint256 public MilestoneAmountRaised;
+    uint256 public GlobalAmountCapSoft;
+    uint256 public GlobalAmountCapHard;
+    uint8 public TokenSellPercentage;
+    uint256 public Funding_Setting_funding_time_start;
+    uint256 public Funding_Setting_funding_time_end;
+    uint256 public Funding_Setting_cashback_time_start;
+    uint256 public Funding_Setting_cashback_time_end;
+    uint256 public Funding_Setting_cashback_before_start_wait_duration;
+    uint256 public Funding_Setting_cashback_duration;
+
+
+    function addFundingStage(
+        bytes32 _name,
+        uint256 _time_start,
+        uint256 _time_end,
+        uint256 _amount_cap_soft,
+        uint256 _amount_cap_hard,   // required > 0
+        uint8   _methods,
+        uint256 _minimum_entry,
+        uint256 _fixed_tokens,
+        uint8   _price_addition_percentage,
+        uint8   _token_share_percentage
+    )
+    public;
+
+    function addSettings(address _outputAddress, uint256 soft_cap, uint256 hard_cap, uint8 sale_percentage, address _direct, address _milestone ) public;
+    function getStageAmount(uint8 StageId) public view returns ( uint256 );
+    function allowedPaymentMethod(uint8 _payment_method) public pure returns (bool);
+    function receivePayment(address _sender, uint8 _payment_method) payable public returns(bool);
+    function canAcceptPayment(uint256 _amount) public view returns (bool);
+    function getValueOverCurrentCap(uint256 _amount) public view returns (uint256);
+    function isFundingStageUpdateAllowed(uint8 _new_state ) public view returns (bool);
+    function getRecordStateRequiredChanges() public view returns (uint8);
+    function doStateChanges() public;
+    function hasRequiredStateChanges() public view returns (bool);
+    function getRequiredStateChanges() public view returns (uint8, uint8, uint8);
+
+}
+
+/*
+
+ * source       https://github.com/blockbitsio/
+
+ * @name        Token Contract
+ * @package     BlockBitsIO
+ * @author      Micky Socaci <micky@nowlive.ro>
+
+ Zeppelin ERC20 Standard Token
+
+*/
+
+
+
+contract ABIToken {
+
+    string public  symbol;
+    string public  name;
+    uint8 public   decimals;
+    uint256 public totalSupply;
+    string public  version;
+    mapping (address => uint256) public balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    address public manager;
+    address public deployer;
+    bool public mintingFinished = false;
+    bool public initialized = false;
+
+    function transfer(address _to, uint256 _value) public returns (bool);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+    function approve(address _spender, uint256 _value) public returns (bool);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool success);
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success);
+    function mint(address _to, uint256 _amount) public returns (bool);
+    function finishMinting() public returns (bool);
+
+    event Transfer(address indexed from, address indexed to, uint256 indexed value);
+    event Approval(address indexed owner, address indexed spender, uint256 indexed value);
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+}
+
+/*
+
+ * source       https://github.com/blockbitsio/
+
+ * @name        Token Manager Contract
+ * @package     BlockBitsIO
+ * @author      Micky Socaci <micky@nowlive.ro>
+
+*/
+
+
+
+
+
+contract ABITokenManager is ABIApplicationAsset {
+
+    address public TokenSCADAEntity;
+    address public TokenEntity;
+    address public MarketingMethodAddress;
+    bool OwnerTokenBalancesReleased = false;
+
+    function addSettings(address _scadaAddress, address _tokenAddress, address _marketing ) public;
+    function getTokenSCADARequiresHardCap() public view returns (bool);
+    function mint(address _to, uint256 _amount) public returns (bool);
+    function finishMinting() public returns (bool);
+    function mintForMarketingPool(address _to, uint256 _amount) external returns (bool);
+    function ReleaseOwnersLockedTokens(address _multiSigOutputAddress) public returns (bool);
+
+}
+
+/*
+
+ * source       https://github.com/blockbitsio/
+
+ * @name        Bounty Program Contract
+ * @package     BlockBitsIO
+ * @author      Micky Socaci <micky@nowlive.ro>
+
+    Bounty program contract that holds and distributes tokens upon successful funding.
+*/
+
+
+
+
+
+
+
+
+
+contract BountyManager is ApplicationAsset {
+
+    ABIFunding FundingEntity;
+    ABIToken TokenEntity;
+
+    function runBeforeApplyingSettings()
+        internal
+        requireInitialised
+        requireSettingsNotApplied
+    {
+        address FundingAddress = getApplicationAssetAddressByName('Funding');
+        FundingEntity = ABIFunding(FundingAddress);
+
+        address TokenManagerAddress = getApplicationAssetAddressByName('TokenManager');
+        ABITokenManager TokenManagerEntity = ABITokenManager(TokenManagerAddress);
+        TokenEntity = ABIToken(TokenManagerEntity.TokenEntity());
+
+        EventRunBeforeApplyingSettings(assetName);
+    }
+
+    function sendBounty( address _receiver, uint256 _amount )
+        public
+        requireInitialised
+        requireSettingsApplied
+        onlyDeployer
+    {
+        if( FundingEntity.CurrentEntityState() == FundingEntity.getEntityState("SUCCESSFUL_FINAL") ) {
+            TokenEntity.transfer( _receiver, _amount );
+        } else {
+            revert();
+        }
+    }
 }
