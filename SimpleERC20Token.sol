@@ -1,24 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleERC20Token at 0x4acedbb500bebf6119770e4ad03ffc2bae75cc1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleERC20Token at 0x54794cfdbac9b9e58eb737643d9f0269ab5c8248
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
 contract SimpleERC20Token {
     // Track how many tokens are owned by each address.
     mapping (address => uint256) public balanceOf;
 
-    string public name = "Organicco";
-    string public symbol = "ARG";
+    string public name = "Tranxel";
+    string public symbol = "TXL";
     uint8 public decimals = 18;
 
-    uint256 public totalSupply = 120000000 * (uint256(10) ** decimals);
+    uint256 public totalSupply = 10000000000 * (uint256(10) ** decimals);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     function SimpleERC20Token() public {
         // Initially assign all tokens to the contract's creator.
         balanceOf[msg.sender] = totalSupply;
-        Transfer(address(0), msg.sender, totalSupply);
+        emit Transfer(address(0), msg.sender, totalSupply);
     }
 
     function transfer(address to, uint256 value) public returns (bool success) {
@@ -26,7 +26,7 @@ contract SimpleERC20Token {
 
         balanceOf[msg.sender] -= value;  // deduct from sender's balance
         balanceOf[to] += value;          // add to recipient's balance
-        Transfer(msg.sender, to, value);
+        emit Transfer(msg.sender, to, value);
         return true;
     }
 
@@ -39,7 +39,7 @@ contract SimpleERC20Token {
         returns (bool success)
     {
         allowance[msg.sender][spender] = value;
-        Approval(msg.sender, spender, value);
+        emit Approval(msg.sender, spender, value);
         return true;
     }
 
@@ -53,7 +53,7 @@ contract SimpleERC20Token {
         balanceOf[from] -= value;
         balanceOf[to] += value;
         allowance[from][msg.sender] -= value;
-        Transfer(from, to, value);
+        emit Transfer(from, to, value);
         return true;
     }
 }
