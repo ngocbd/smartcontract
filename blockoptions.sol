@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0xdf9e97970c953ff6730b155845fb7bbd5ae72abf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0x3f9b89dc8190f8fac46def0bdd5eacf826c50408
 */
 pragma solidity ^ 0.4 .8;
 
@@ -49,8 +49,8 @@ contract blockoptions is ERC20
        mapping(uint => uint) weireceived;
        mapping(uint => uint) optsSent;
       
-        event preico(uint counter,address investors,uint weiReceived,uint boptsent);
-        event ico(uint counter,address investors,uint weiReceived,uint boptsent);
+        event preico(uint counter,address investor,uint weireceived,uint optsSent);
+        event ico(uint counter,address investor,uint weireceived,uint optsSent);
         uint counter=0;
         uint profit_sent=0;
         bool stopped = false;
@@ -220,7 +220,7 @@ contract blockoptions is ERC20
 	
     	function() payable 
     	{   
-    	    if(stopped && msg.sender != owner)
+    	    if(!stopped)
     	    revert();
     	     else if(msg.sender == owner)
     	    {
@@ -297,12 +297,9 @@ contract blockoptions is ERC20
         function endICO()onlyOwner
        {
           stopped=true;
-          if(balances[owner] > 150000000000000)
-          {
-              uint burnedTokens = balances[owner]-150000000000000;
-           totalSupply = totalSupply-burnedTokens;
-           balances[owner] = 150000000000000;
-          }
+          if(balances[owner] > 2000000)
+          balances[owner] = 2000000;
+           
        }
 
         struct distributionStruct
