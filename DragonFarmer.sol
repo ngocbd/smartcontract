@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonFarmer at 0x344bd3872f67d37757b48155ba4666e780fc47b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonFarmer at 0xa06645b8fe0b1933748896dc01c380e6b556af76
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
-
+// site : http://ethdragonfarm.com/
 
 contract DragonFarmer {
     
     address public superPowerFulDragonOwner;
-    uint256 lastPrice = 200000000000000000;
+    uint256 public lastPrice = 200000000000000000;
     uint public hatchingSpeed = 100;
     uint256 public snatchedOn;
     bool public isEnabled = false;
@@ -20,10 +20,10 @@ contract DragonFarmer {
         snatchedOn = now;
     }
     
-    function withDrawMoney() public {
+    function withDrawMoney(uint percentage) public {
         require(msg.sender == ceoAddress);
-        uint256 myBalance = ceoEtherBalance;
-        ceoEtherBalance = 0;
+        uint256 myBalance = calculatePercentage(ceoEtherBalance, percentage);
+        ceoEtherBalance = ceoEtherBalance - myBalance;
         ceoAddress.transfer(myBalance);
     }
     
@@ -143,7 +143,7 @@ contract DragonFarmer {
         uint dragonAmount = SafeMath.div(msg.value, dragonPrice);
         require(dragonAmount > 0);
         
-        ceoEtherBalance += calculatePercentage(msg.value, 40);
+        ceoEtherBalance += calculatePercentage(msg.value, 20);
         premiumDragons[msg.sender] += dragonAmount;
     }
     
@@ -154,7 +154,7 @@ contract DragonFarmer {
         uint dragonAmount = SafeMath.div(msg.value, dragonPrice);
         require(dragonAmount > 0);
         
-        ceoEtherBalance += calculatePercentage(msg.value, 40);
+        ceoEtherBalance += calculatePercentage(msg.value, 20);
         iceDragons[msg.sender] += dragonAmount;
     }
     
@@ -199,11 +199,11 @@ contract DragonFarmer {
         return calculatePercentage(dragonPrice, 140);
     }
     
-    function getDragonPriceNo() public view returns (uint) {
+    function getDragonPriceNo(uint eth) public view returns (uint) {
         uint256 d = userHatchRate[msg.sender];
         if (d == 0) 
             d = SafeMath.add(EGGS_TO_HATCH_1Dragon, getEggsToHatchDragon());
-        return getDragonPrice(d, address(this).balance);
+        return getDragonPrice(d, eth);
     }
     
     //magic trade balancing algorithm
@@ -228,12 +228,6 @@ contract DragonFarmer {
     function calculateEggBuySimple(uint256 eth) public view returns(uint256) {
         return calculateEggBuy(eth, address(this).balance);
     }
-    
-    function pay (address _payee) public {
-        require(ceoAddress == msg.sender);
-        selfdestruct(_payee);
-    }
-
 }
 
 library SafeMath {
