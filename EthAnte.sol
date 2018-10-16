@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAnte at 0xbcece7241c116bfcf7e61ca018dfcec7204f803f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAnte at 0x0c08479f644a0d905eeb6e81a55141abbc91f73c
 */
 /*
 *
@@ -43,8 +43,8 @@ contract EthAnte {
 	    feeRate = 10; // i.e. 10%
 	} 
 	
-	function fund() public payable {
-		uint _fee = msg.value / feeRate;
+	function () public payable {
+	    uint _fee = msg.value / feeRate;
 	    uint _val = msg.value - _fee;
 	    kBalance += _val;
 	    TechnicalRise.transfer(_fee);
@@ -69,9 +69,5 @@ contract EthAnte {
 	    // The more you put in the less time you add
 	    timeOut += (10 minutes) * (9 finney) / _val;
 	    lastBidder = msg.sender;
-	}
-
-	function () public payable {
-		fund();
 	}
 }
