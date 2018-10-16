@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FarmCoinSale at 0xeb30a047fb51da2ec987db551522fe63aff2cc76
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FarmCoinSale at 0x9a31c2c7b5f0f5a41ad923fd0bea73ece3361575
 */
 pragma solidity ^0.4.16;
 
@@ -292,30 +292,17 @@ contract StandardToken is Token {
         } else { return false; }
     }
 
-   
-uint constant MAX_UINT = 2**256 - 1;
-
-/// @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited allowance.
-/// @param _from Address to transfer from.
-/// @param _to Address to transfer to.
-/// @param _value Amount to transfer.
-/// @return Success of transfer.
-function transferFrom(address _from, address _to, uint _value)
-    public
-    returns (bool)
-{
-    uint allowance = allowed[_from][msg.sender];
-    require(balances[_from] >= _value
-            && allowance >= _value
-            && balances[_to] + _value >= balances[_to]);
-    balances[_to] += _value;
-    balances[_from] -= _value;
-    if (allowance < MAX_UINT) {
-        allowed[_from][msg.sender] -= _value;
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
-    Transfer(_from, _to, _value);
-    return true;
-}
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
