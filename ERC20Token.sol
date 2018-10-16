@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xd28b15da1d1840d46df9debcc64aa3a191641b38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xD4759F1862D2F7b37ffc9b31FF2586124801B5FE
 */
 pragma solidity ^0.4.4;
 
@@ -107,9 +107,9 @@ contract ERC20Token is StandardToken {
     Some wallets/interfaces might not even bother to look at this information.
     */
     string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SVC = 980 base units. It's like comparing 1 wei to 1 ether.
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'SVC1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 7000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 7000000000;                        // Update total supply (100000 for example)
-        name = "SvvissCoin";                                   // Set the name for display purposes
-        decimals = 3;                            // Amount of decimals for display purposes
-        symbol = "SVC";                               // Set the symbol for display purposes
+        balances[msg.sender] = 10000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "JYF";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "JYF";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
