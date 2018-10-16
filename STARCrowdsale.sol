@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STARCrowdsale at 0xA49186e5c6Ad0474CC5226eD7A2ee38578B0d901
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STARCrowdsale at 0x25d71f9e44d7411ad0d8d90000e6bbe53b11848f
 */
 pragma solidity ^0.4.16;
 contract Token { 
@@ -15,10 +15,10 @@ contract STARCrowdsale {
     uint256 public maxSupply = 104400000 * 10**8; 
     uint256 public minAcceptedAmount = 1 ether; // 1 ether
 
-    uint256 public rateAngel = 1136;
-    uint256 public rateA = 558;
-    uint256 public rateB = 277;
-    uint256 public rateC = 136;
+    uint256 public rateAngel = 189;
+    uint256 public rateA = 93;
+    uint256 public rateB = 46;
+    uint256 public rateC = 22;
     
     
     bool public close = false;
@@ -69,7 +69,7 @@ contract STARCrowdsale {
     function STARCrowdsale() {
         
         
-        starToken = Token(0x7b6054262d9ac537110a434ae75c880192faac25);
+        starToken = Token(0x2bbf4f7b8ab300db01d45662769821da6e400ef4);
         
         creator = 0x6ADAfB7632859EF19d28276037581af00064d68F;
         
