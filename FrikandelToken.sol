@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FrikandelToken at 0x70c4949d483166abefb2b4b2be78e338cd8b2c40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FrikandelToken at 0xf60efc8e10692b111f7e73af821ccfdbcd78eb45
 */
 pragma solidity ^0.4.19;
 
@@ -56,7 +56,6 @@ contract FrikandelToken {
         if((_recipients.length + airdropSpent) > airdropLimit) { revert(); } //Hey, you're sending too much!!
         for (uint256 i = 0; i < _recipients.length; i++) {
             balances[_recipients[i]] += 1; //One frikandelletje 4 u
-			Transfer(address(this), _recipients[i], 1);
         }
         airdropSpent += _recipients.length; //Store the amount of tokens that have been given away. Doing this once instead of in the loop saves a neat amount of gas! (If the code gets intreupted it gets reverted anyways)
     }
