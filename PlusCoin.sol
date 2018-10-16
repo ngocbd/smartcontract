@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlusCoin at 0x1cf594f4c97e8a32abd7b456af0419f484747455
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlusCoin at 0xcfc2437916a6df165235272dbfb116687bb1a00b
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
 
 /**
 * @title PlusCoin Contract
@@ -17,7 +17,7 @@ contract PlusCoin {
 
     string public standard = 'PlusCoin 2.0';
     string public constant name = "PlusCoin";
-    string public constant symbol = "PLC";
+    string public constant symbol = "PLCN";
     uint   public constant decimals = 18;
     uint public totalSupply;
 
@@ -52,7 +52,7 @@ contract PlusCoin {
     // 
 
     // Constructor
-    function PlusCoin() {
+    constructor() public {
         owner = msg.sender;
         totalSupply = 28272323624 * 1000000000000000000;
         balances[owner] = totalSupply;
@@ -62,24 +62,24 @@ contract PlusCoin {
     * @dev Allows the current owner to transfer control of the contract to a newOwner.
     * @param newOwner The address to transfer ownership to.
     */
-    function transferOwnership(address newOwner) onlyOwner {
+    function transferOwnership(address newOwner) public onlyOwner {
       if (newOwner != address(0)) {
         owner = newOwner;
       }
     }
 
-    function safeMul(uint a, uint b) internal returns (uint) {
+    function safeMul(uint a, uint b) internal pure returns (uint) {
         uint c = a * b;
         require(a == 0 || c / a == b);
         return c;
     }
 
-    function safeSub(uint a, uint b) internal returns (uint) {
+    function safeSub(uint a, uint b) internal pure returns (uint) {
         require(b <= a);
         return a - b;
     }
 
-    function safeAdd(uint a, uint b) internal returns (uint) {
+    function safeAdd(uint a, uint b) internal pure returns (uint) {
         uint c = a + b;
         require(c>=a && c>=b);
         return c;
@@ -99,7 +99,7 @@ contract PlusCoin {
     function withdrawEther(address _to) public 
         onlyOwner
     {
-        _to.transfer(this.balance);
+        _to.transfer(address(this).balance);
     }
 
 
@@ -116,7 +116,7 @@ contract PlusCoin {
         if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
+            emit Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
     }
@@ -128,7 +128,7 @@ contract PlusCoin {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
+            emit Transfer(_from, _to, _value);
             return true;
         } else { return false; }
     }
@@ -141,7 +141,7 @@ contract PlusCoin {
         returns (bool success)
     {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
