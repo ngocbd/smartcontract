@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x67524c85884bc2a12bb4d41af8ca70a8567654e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xb53c66c759d8197ca04c933554ef035e4412eb0e
 */
 pragma solidity ^0.4.16;
 contract owned {
@@ -50,8 +50,8 @@ contract x32323 is owned{
 	initialSupply = maxSupply - totalairdrop;
     balanceOf[msg.sender] = initialSupply;
     totalSupply = initialSupply;
-        name = "Taiwan?!";
-        symbol = "Tw?!";         
+        name = "Taiwan?";
+        symbol = "Tw?";         
     }
 
     function initialize(address _address) internal returns (bool success) {
