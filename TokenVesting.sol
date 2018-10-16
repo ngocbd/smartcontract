@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x98aaec5c821160bcf0d6d5806d9b3336bf8c5fb1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x6a8fa6f138adb3251ca3e1671b73ae036dd5ca6d
 */
 /* solium-disable security/no-block-members */
 
@@ -13,7 +13,7 @@ pragma solidity ^0.4.23;
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public;
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -222,7 +222,7 @@ contract TokenVesting is Ownable {
 
     released[token] = released[token].add(unreleased);
 
-    token.transfer(beneficiary, unreleased);
+    token.safeTransfer(beneficiary, unreleased);
 
     emit Released(unreleased);
   }
