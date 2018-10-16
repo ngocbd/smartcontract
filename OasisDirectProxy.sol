@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OasisDirectProxy at 0x279594b6843014376a422ebb26a6eab7a30e36f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OasisDirectProxy at 0x8bb69cb26480d452d4d2254f59ccd0b9953ee9b4
 */
-pragma solidity ^0.4.16;
+/*   
+ *    Exodus adaptation of OasisDirectProxy by MakerDAO.
+ *    Edited by Konnor Klashinsky (kklash).
+ *    Work in progress, first Mainnet iteration.
+ */
+pragma solidity ^0.4.24;
+
 
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
@@ -13,7 +19,6 @@ contract DSMath {
     function mul(uint x, uint y) internal pure returns (uint z) {
         require(y == 0 || (z = x * y) / y == x);
     }
-
     function min(uint x, uint y) internal pure returns (uint z) {
         return x <= y ? x : y;
     }
@@ -43,21 +48,6 @@ contract DSMath {
         z = add(mul(x, RAY), y / 2) / y;
     }
 
-    // This famous algorithm is called "exponentiation by squaring"
-    // and calculates x^n with x as fixed-point and n as regular unsigned.
-    //
-    // It's O(log n), instead of O(n) for naive repeated multiplication.
-    //
-    // These facts are why it works:
-    //
-    //  If n is even, then x^n = (x^2)^(n/2).
-    //  If n is odd,  then x^n = x * x^(n-1),
-    //   and applying the equation for even x gives
-    //    x^n = x * (x^2)^((n-1) / 2).
-    //
-    //  Also, EVM division is flooring and
-    //    floor[(n-1) / 2] = floor[n / 2].
-    //
     function rpow(uint x, uint n) internal pure returns (uint z) {
         z = n % 2 != 0 ? x : RAY;
 
@@ -87,51 +77,129 @@ contract TokenInterface {
     function withdraw(uint) public;
 }
 
-contract OasisDirectProxy is DSMath {
+contract Control {
+/* TODO: convert to DSAuth if needed */
+    address owner;
+    
+    modifier auth {
+         require(msg.sender == owner);
+         _; /* func body goes here */
+    }
+
+    function withdrawTo(address _to, uint amt) public auth {
+        _to.transfer(amt);
+    }
+    
+    function withdrawTokenTo(TokenInterface token, address _to, uint amt) public auth {
+        require(token.transfer(_to, amt));
+    }
+
+    function kill() public auth {
+        selfdestruct(owner);
+    }
+}
+
+contract OasisDirectProxy is Control, DSMath {
+    uint feePercentageWad;
+    
+    constructor() public {
+        owner = msg.sender;
+        feePercentageWad = 0.01 ether; /* set initial fee to 1% */
+    }
+
+    function newFee(uint newFeePercentageWad) public auth {
+        require(newFeePercentageWad <= 1 ether);
+        feePercentageWad = newFeePercentageWad;
+    }
+
+    function takeFee(uint amt) public view returns (uint fee, uint remaining) {
+       /* shave the fee off of an amount */
+        fee = wmul(amt*WAD, feePercentageWad) / WAD;
+        remaining = sub(amt, fee);
+    }
+    
     function withdrawAndSend(TokenInterface wethToken, uint wethAmt) internal {
         wethToken.withdraw(wethAmt);
         require(msg.sender.call.value(wethAmt)());
     }
-
-    function sellAllAmount(OtcInterface otc, TokenInterface payToken, uint payAmt, TokenInterface buyToken, uint minBuyAmt) public returns (uint buyAmt) {
+    
+    function sellAllAmount(
+        OtcInterface otc,
+        TokenInterface payToken, 
+        uint payAmt, 
+        TokenInterface buyToken, 
+        uint minBuyAmt
+    ) public returns (uint) {
         require(payToken.transferFrom(msg.sender, this, payAmt));
         if (payToken.allowance(this, otc) < payAmt) {
             payToken.approve(otc, uint(-1));
         }
-        buyAmt = otc.sellAllAmount(payToken, payAmt, buyToken, minBuyAmt);
-        require(buyToken.transfer(msg.sender, buyAmt));
+        uint buyAmt = otc.sellAllAmount(payToken, payAmt, buyToken, minBuyAmt);
+        (uint feeAmt, uint buyAmtRemainder) = takeFee(buyAmt);
+        require(buyToken.transfer(owner, feeAmt)); /* fee is taken */
+        require(buyToken.transfer(msg.sender, buyAmtRemainder));
+        return buyAmtRemainder;
     }
 
-    function sellAllAmountPayEth(OtcInterface otc, TokenInterface wethToken, TokenInterface buyToken, uint minBuyAmt) public payable returns (uint buyAmt) {
+    function sellAllAmountPayEth(
+        OtcInterface otc,
+        TokenInterface wethToken,
+        TokenInterface buyToken,
+        uint minBuyAmt
+    ) public payable returns (uint) {
         wethToken.deposit.value(msg.value)();
         if (wethToken.allowance(this, otc) < msg.value) {
             wethToken.approve(otc, uint(-1));
         }
-        buyAmt = otc.sellAllAmount(wethToken, msg.value, buyToken, minBuyAmt);
-        require(buyToken.transfer(msg.sender, buyAmt));
+        uint buyAmt = otc.sellAllAmount(wethToken, msg.value, buyToken, minBuyAmt);
+        (uint feeAmt, uint buyAmtRemainder) = takeFee(buyAmt);
+        require(buyToken.transfer(owner, feeAmt)); /* fee is taken */
+        require(buyToken.transfer(msg.sender, buyAmtRemainder));
+        return buyAmtRemainder;
     }
 
-    function sellAllAmountBuyEth(OtcInterface otc, TokenInterface payToken, uint payAmt, TokenInterface wethToken, uint minBuyAmt) public returns (uint wethAmt) {
+    function sellAllAmountBuyEth(
+        OtcInterface otc,
+        TokenInterface payToken, 
+        uint payAmt, 
+        TokenInterface wethToken, 
+        uint minBuyAmt
+    ) public returns (uint) {
         require(payToken.transferFrom(msg.sender, this, payAmt));
         if (payToken.allowance(this, otc) < payAmt) {
             payToken.approve(otc, uint(-1));
         }
-        wethAmt = otc.sellAllAmount(payToken, payAmt, wethToken, minBuyAmt);
-        withdrawAndSend(wethToken, wethAmt);
+        uint wethAmt = otc.sellAllAmount(payToken, payAmt, wethToken, minBuyAmt);
+        (uint feeAmt, uint wethAmtRemainder) = takeFee(wethAmt);
+        require(wethToken.transfer(owner, feeAmt)); /* fee is taken in WETH */ 
+        withdrawAndSend(wethToken, wethAmtRemainder);
+        return wethAmtRemainder;
     }
 
-    function buyAllAmount(OtcInterface otc, TokenInterface buyToken, uint buyAmt, TokenInterface payToken, uint maxPayAmt) public returns (uint payAmt) {
+    function buyAllAmount(
+        OtcInterface otc, 
+        TokenInterface buyToken, 
+        uint buyAmt, 
+        TokenInterface payToken, 
+        uint maxPayAmt
+    ) public returns (uint payAmt) {
         uint payAmtNow = otc.getPayAmount(payToken, buyToken, buyAmt);
         require(payAmtNow <= maxPayAmt);
         require(payToken.transferFrom(msg.sender, this, payAmtNow));
         if (payToken.allowance(this, otc) < payAmtNow) {
             payToken.approve(otc, uint(-1));
-        }
+        } 
         payAmt = otc.buyAllAmount(buyToken, buyAmt, payToken, payAmtNow);
         require(buyToken.transfer(msg.sender, min(buyAmt, buyToken.balanceOf(this)))); // To avoid rounding issues we check the minimum value
+                                /* TODO: Find out what this is for, before touching it */
     }
 
-    function buyAllAmountPayEth(OtcInterface otc, TokenInterface buyToken, uint buyAmt, TokenInterface wethToken) public payable returns (uint wethAmt) {
+    function buyAllAmountPayEth(
+        OtcInterface otc, 
+        TokenInterface buyToken, 
+        uint buyAmt, 
+        TokenInterface wethToken
+    ) public payable returns (uint wethAmt) {
         // In this case user needs to send more ETH than a estimated value, then contract will send back the rest
         wethToken.deposit.value(msg.value)();
         if (wethToken.allowance(this, otc) < msg.value) {
@@ -139,10 +207,17 @@ contract OasisDirectProxy is DSMath {
         }
         wethAmt = otc.buyAllAmount(buyToken, buyAmt, wethToken, msg.value);
         require(buyToken.transfer(msg.sender, min(buyAmt, buyToken.balanceOf(this)))); // To avoid rounding issues we check the minimum value
+                                                       /* TODO: Find out what this is for, before touching it */
         withdrawAndSend(wethToken, sub(msg.value, wethAmt));
     }
 
-    function buyAllAmountBuyEth(OtcInterface otc, TokenInterface wethToken, uint wethAmt, TokenInterface payToken, uint maxPayAmt) public returns (uint payAmt) {
+    function buyAllAmountBuyEth(
+        OtcInterface otc, 
+        TokenInterface wethToken, 
+        uint wethAmt, 
+        TokenInterface payToken, 
+        uint maxPayAmt
+    ) public returns (uint payAmt) {
         uint payAmtNow = otc.getPayAmount(payToken, wethToken, wethAmt);
         require(payAmtNow <= maxPayAmt);
         require(payToken.transferFrom(msg.sender, this, payAmtNow));
@@ -150,7 +225,9 @@ contract OasisDirectProxy is DSMath {
             payToken.approve(otc, uint(-1));
         }
         payAmt = otc.buyAllAmount(wethToken, wethAmt, payToken, payAmtNow);
-        withdrawAndSend(wethToken, wethAmt);
+        (uint feeAmt, uint wethAmtRemainder) = takeFee(wethAmt);
+        require(wethToken.transfer(owner, feeAmt));
+        withdrawAndSend(wethToken, wethAmtRemainder);
     }
 
     function() public payable {}
