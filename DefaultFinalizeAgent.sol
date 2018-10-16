@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DefaultFinalizeAgent at 0x722d3d0ccb7644aafcebd55ded97315e2dbba640
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DefaultFinalizeAgent at 0x3f17e2b62a19bbd9f5b128bf1136c17ceb4f2a2a
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -99,6 +99,8 @@ contract PricingStrategy {
    * @return Amount of tokens the investor receives
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
+
+  function getCurrentTrancheVolume(uint tokensSold) public constant returns (uint);
 }
 
 /**
@@ -346,6 +348,18 @@ contract CrowdsaleBase is Haltable {
   /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
   mapping (address => bool) public earlyParticipantWhitelist;
 
+  /** Addresses that are allowed to participate at any stage */
+  mapping (address => bool) public isKycWhitelist;
+
+  /** Addresses that are allowed to call automated management functions */
+  mapping (address => bool) public isManagement;
+
+  /** Minimum number of transactions in a tranche (protects against large purchases breaking tranche barriers by too much */
+  uint public trancheMinTx = 0;
+
+  /** Maximum that any single address can purchase (1 / max * totalSupply) */
+  uint public maximumPurchaseFraction = 0;
+
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
 
@@ -372,11 +386,22 @@ contract CrowdsaleBase is Haltable {
 
   // Address early participation whitelist status changed
   event Whitelisted(address addr, bool status);
+  event KycWhitelisted(address addr, bool status);
+  event ManagementWhitelisted(address addr, bool status);
 
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
 
   State public testState;
+
+  modifier onlyWhitelist() {
+    require(isKycWhitelist[msg.sender]);
+    _;
+  }
+  modifier onlyManagement() {
+    require(isManagement[msg.sender]);
+    _;
+  }
 
   function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
@@ -420,6 +445,35 @@ contract CrowdsaleBase is Haltable {
   }
 
   /**
+   * Whitelist manegement
+   */
+  function setKycWhitelist(address _address, bool _state) public onlyManagement {
+    isKycWhitelist[_address] = _state;
+    KycWhitelisted(_address, _state);
+  }
+  /**
+   * Management list manegement
+   */
+  function setManagement(address _address, bool _state) public onlyOwner {
+    isManagement[_address] = _state;
+    ManagementWhitelisted(_address, _state);
+  }
+
+  /**
+   * Tranche TX minimums
+   */
+  function setTrancheMinTx(uint _minimum) public onlyOwner {
+    trancheMinTx = _minimum;
+  }
+
+  /**
+   * Total allowable purchase of tokens per address
+   */
+  function setMaximumPurchaseFraction(uint _maximum) public onlyOwner {
+    maximumPurchaseFraction = _maximum;
+  }
+
+  /**
    * Make an investment.
    *
    * Crowdsale must be running for one to invest.
@@ -430,7 +484,7 @@ contract CrowdsaleBase is Haltable {
    *
    * @return tokenAmount How mony tokens were bought
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
+  function investInternal(address receiver, uint128 customerId) stopInEmergency onlyWhitelist internal returns(uint tokensBought) {
 
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
@@ -453,6 +507,19 @@ contract CrowdsaleBase is Haltable {
 
     // Dust transaction
     require(tokenAmount != 0);
+
+    // Check that the tx is a reasonable volume for the tranche
+    if (trancheMinTx > 0) {
+      uint trancheVolume = pricingStrategy.getCurrentTrancheVolume(tokensSold);
+      uint maxVolume = trancheVolume / trancheMinTx;
+      require(tokenAmount <= maxVolume);
+    }
+
+    if(maximumPurchaseFraction > 0) {
+      uint256 maximumPurchase = token.totalSupply() / maximumPurchaseFraction;
+      uint256 willHaveTokens = tokenAmountOf[receiver] + tokenAmount;
+      require(willHaveTokens <= maximumPurchase);
+    }
 
     if(investedAmountOf[receiver] == 0) {
        // A new investor
@@ -809,6 +876,15 @@ contract Crowdsale is CrowdsaleBase {
    * Invest to tokens, recognize the payer.
    *
    */
+  function buyWithCustomerIdWithChecksum(uint128 customerId, bytes1 checksum) public payable {
+    // see customerid.py
+    if (bytes1(sha3(customerId)) != checksum) throw;
+    investWithCustomerId(msg.sender, customerId);
+  }
+
+  /**
+   * Legacy API signature.
+   */
   function buyWithCustomerId(uint128 customerId) public payable {
     investWithCustomerId(msg.sender, customerId);
   }
@@ -821,12 +897,8 @@ contract Crowdsale is CrowdsaleBase {
   function buy() public payable {
     invest(msg.sender);
   }
-
-  /**
-   * Buy tokens as generic fallback
-   */
   function() payable {
-    invest(msg.sender);
+    buy();
   }
 
   /**
