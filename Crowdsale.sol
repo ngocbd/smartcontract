@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xe84ab07e88df4e56aca476b7e5dc341c6104d979
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x81cce1111f2c785753728437219d37ffea5240fd
 */
 pragma solidity ^0.4.11;
 
@@ -51,7 +51,8 @@ contract Crowdsale {
   // token address
   address public addressOfTokenUsedAsReward;
 
-  uint256 public price = 300;
+  // uint256 public price = 300;
+  uint256 public weiPerToken = 4321000000000000000000;
 
   token tokenReward;
 
@@ -77,16 +78,16 @@ contract Crowdsale {
 
   function Crowdsale() {
     //You will change this to your wallet where you need the ETH 
-    wallet = 0xe9883907F9a574d4BFB15a5523442bfF275243F4;
+    wallet = 0x6a3a52fF68f684A6D8402F450d52275F41246253;
     // durationInMinutes = _durationInMinutes;
     //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0xD50E18Ab6B939ec83b3249e1768D1E0D92c1987E;
+    addressOfTokenUsedAsReward = 0x657C449c76500BCaA9AdEd6C0E087fA28663E3ff;
 
 
     tokenReward = token(addressOfTokenUsedAsReward);
   }
 
-  bool public started = false;
+  bool public started = true;
 
   function startSale(){
     if (msg.sender != wallet) throw;
@@ -98,13 +99,19 @@ contract Crowdsale {
     started = false;
   }
 
-  function setPrice(uint256 _price){
-    if(msg.sender != wallet) throw;
-    price = _price;
+  // function setPrice(uint256 _price){
+  //   if(msg.sender != wallet) throw;
+  //   price = _price;
+  // }
+
+  function setWeiPerToken(uint256 _weiPerToken){
+    if(msg.sender!=wallet) throw;
+    weiPerToken = _weiPerToken;
   }
+
   function changeWallet(address _wallet){
-  	if(msg.sender != wallet) throw;
-  	wallet = _wallet;
+    if(msg.sender != wallet) throw;
+    wallet = _wallet;
   }
 
   function changeTokenReward(address _token){
@@ -125,7 +132,7 @@ contract Crowdsale {
     uint256 weiAmount = msg.value;
 
     // calculate token amount to be sent
-    uint256 tokens = (weiAmount/10**12) * price;//weiamount * price 
+    uint256 tokens = ((weiAmount * (10**18)) / weiPerToken);//weiamount * price 
     // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
 
     // update state
