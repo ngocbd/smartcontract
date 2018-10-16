@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DashConnect at 0xe316f6496ff0cc09ba69415560795e1f1a8a60d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DashConnect at 0xaacb7f3d04434fcf058354ecb9874e77f197b3b2
 */
 pragma solidity ^0.4.18;
 
