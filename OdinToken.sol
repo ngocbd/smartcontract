@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0xf0cf016ce7504ffa257262cc686f4f7647a65563
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0x12fa6cc43227ad0f1256804dbc24480404799080
 */
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
@@ -16,6 +16,7 @@ library SafeMath {
     assert(c / a == b);
     return c;
   }
+
 
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
@@ -36,12 +37,8 @@ library SafeMath {
   }
 }
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// ----------------------------------------------------------------------------
 contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
+//    function totalSupply() public constant returns (uint);
     function balanceOf(address tokenOwner) public constant returns (uint balance);
     function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
     function transfer(address to, uint tokens) public returns (bool success);
@@ -51,27 +48,21 @@ contract ERC20Interface {
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
     event Burn(uint tokens);
+
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
+    }
+    
 }
 
-
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
 contract Owned {
     address public owner;
-    address private newOwner;
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
 
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
-    }
-
-    function transferOwnership(address _newOwner) onlyOwner public onlyOwner {
-        owner = _newOwner;
-        emit OwnershipTransferred(msg.sender, _newOwner);
     }
 
 }
@@ -87,7 +78,7 @@ contract OdinToken is ERC20Interface, Owned {
     string public symbol;
     string public name;
     uint8 public decimals;
-    uint private _totalSupply;
+//    uint private totalSupply;
     bool private _whitelistAll;
 
     struct balanceData {  
@@ -112,26 +103,28 @@ contract OdinToken is ERC20Interface, Owned {
         name = "ODIN Token";
         decimals = 18;
         _whitelistAll=false;
-        _totalSupply = 100000000000000000000000;
-        balances[owner].balance = _totalSupply;
+        totalSupply = 100000000000000000000000;
+        balances[owner].balance = totalSupply;
 
-        emit Transfer(address(0), msg.sender, _totalSupply);
+        emit Transfer(address(0), msg.sender, totalSupply);
     }
 
-    function totalSupply() constant public returns (uint256 totalSupply) {
-        return _totalSupply;
-    }
+    // function totalSupply() constant public returns (uint256 totalSupply) {
+    //     return totalSupply;
+    // }
+    uint256 public totalSupply;
+
 
     // ------------------------------------------------------------------------
     // whitelist an address
     // ------------------------------------------------------------------------
-    function whitelistAddress(address to) onlyOwner public  returns (bool)    {
-		balances[to].airDropQty = 0;
+    function whitelistAddress(address tokenOwner) onlyOwner public returns (bool)    {
+		balances[tokenOwner].airDropQty = 0;
 		return true;
     }
 
 
-  /**
+    /**
   * @dev Whitelist all addresses early
   * @return An bool showing if the function succeeded.
   */
@@ -141,7 +134,7 @@ contract OdinToken is ERC20Interface, Owned {
     }
 
 
-  /**
+    /**
   * @dev Gets the balance of the specified address.
   * @param tokenOwner The address to query the the balance of.
   * @return An uint representing the amount owned by the passed address.
@@ -150,102 +143,111 @@ contract OdinToken is ERC20Interface, Owned {
         return balances[tokenOwner].balance;
     }
 
-  /**
-  * @dev transfer token for a specified address
-  * @param to The address to transfer to.
-  * @param tokens The amount to be transferred.
-  */
-    function transfer(address to, uint tokens) public returns (bool success) {
+    function airdrop(address[] recipients, uint[] values) onlyOwner public {
 
-        require (msg.sender != to);                             // cannot send to yourself
-        require(to != address(0));                              // cannot send to address(0)
-        require(tokens <= balances[msg.sender].balance);        // do you have enough to send?
-        
-        if (!_whitelistAll) {
+    require(recipients.length <= 255);
+    require (msg.sender==owner);
+    require(recipients.length == values.length);
+    for (uint i = 0; i < recipients.length; i++) {
+        if (balances[recipients[i]].balance==0) {
+          OdinToken.transfer(recipients[i], values[i]);
+    }
+    }
+  }
+  
+    function canSpend(address tokenOwner, uint _value) public constant returns (bool success) {
 
-            // do not allow transfering air dropped tokens prior to Sep 1 2018
-             if (msg.sender != owner && block.timestamp < 1535760000 && balances[msg.sender].airDropQty>0) {
-                 require(tokens < 0);
-            }
+        if (_value > balances[tokenOwner].balance) {return false;}     // do they have enough to spend?
+        if (tokenOwner==address(0)) {return false;}                               // cannot send to address[0]
 
-            // after Sep 1 2018 and before Dec 31, 2018, do not allow transfering more than 10% of air dropped tokens
-            if (msg.sender != owner && block.timestamp < 1546214400 && balances[msg.sender].airDropQty>0) {
-                require((balances[msg.sender].balance - tokens) >= (balances[msg.sender].airDropQty / 10 * 9));
-            }
+        if (tokenOwner==owner) {return true;}                                       // owner can always spend
+        if (_whitelistAll) {return true;}                                   // we pulled the rip cord
+        if (balances[tokenOwner].airDropQty==0) {return true;}                      // these are not airdrop tokens
+        if (block.timestamp>1569974400) {return true;}                      // no restrictions after june 30, 2019
 
-            // after Dec 31 2018 and before March 31, 2019, do not allow transfering more than 25% of air dropped tokens
-            if (msg.sender != owner && block.timestamp < 1553990400 && balances[msg.sender].airDropQty>0) {
-                require((balances[msg.sender].balance - tokens) >= balances[msg.sender].airDropQty / 4 * 3);
-            }
+        // do not allow transfering air dropped tokens prior to Sep 1 2018
+         if (block.timestamp < 1535760000) {return false;}
 
-            // after March 31, 2019 and before Jun 30, 2019, do not allow transfering more than 50% of air dropped tokens
-            if (msg.sender != owner && block.timestamp < 1561852800 && balances[msg.sender].airDropQty>0) {
-                require((balances[msg.sender].balance - tokens) >= balances[msg.sender].airDropQty / 2);
-            }
+        // after Sep 1 2018 and before Dec 31, 2018, do not allow transfering more than 10% of air dropped tokens
+        if (block.timestamp < 1546214400 && (balances[tokenOwner].balance - _value) < (balances[tokenOwner].airDropQty / 10 * 9)) {
+            return false;
+        }
 
-            // after Jun 30, 2019 and before Oct 2, 2019, do not allow transfering more than 75% of air dropped tokens
-            if (msg.sender != owner && block.timestamp < 1569974400 && balances[msg.sender].airDropQty>0) {
-                require((balances[msg.sender].balance - tokens) >= balances[msg.sender].airDropQty / 4);
-            }
-            
-            // otherwise, no transfer restrictions
+        // after Dec 31 2018 and before March 31, 2019, do not allow transfering more than 25% of air dropped tokens
+        if (block.timestamp < 1553990400 && (balances[tokenOwner].balance - _value) < balances[tokenOwner].airDropQty / 4 * 3) {
+            return false;
+        }
 
+        // after March 31, 2019 and before Jun 30, 2019, do not allow transfering more than 50% of air dropped tokens
+        if (block.timestamp < 1561852800 && (balances[tokenOwner].balance - _value) < balances[tokenOwner].airDropQty / 2) {
+            return false;
+        }
+
+        // after Jun 30, 2019 and before Oct 2, 2019, do not allow transfering more than 75% of air dropped tokens
+        if (block.timestamp < 1569974400 && (balances[tokenOwner].balance - _value) < balances[tokenOwner].airDropQty / 4) {
+            return false;
         }
         
-        balances[msg.sender].balance = balances[msg.sender].balance.sub(tokens);
-        balances[to].balance = balances[to].balance.add(tokens);
+        return true;
+
+    }
+
+    function transfer(address to, uint _value) onlyPayloadSize(2 * 32) public returns (bool success) {
+
+        require (canSpend(msg.sender, _value));
+        balances[msg.sender].balance = balances[msg.sender].balance.sub( _value);
+        balances[to].balance = balances[to].balance.add( _value);
         if (msg.sender == owner) {
-            balances[to].airDropQty = balances[to].airDropQty.add(tokens);
+            balances[to].airDropQty = balances[to].airDropQty.add( _value);
         }
-        emit Transfer(msg.sender, to, tokens);
+        emit Transfer(msg.sender, to,  _value);
         return true;
     }
 
-    // ------------------------------------------------------------------------
-    // not implemented
-    // ------------------------------------------------------------------------
-    function approve(address spender, uint tokens) public returns (bool success) {
-        return false;
+    function approve(address spender, uint  _value) public returns (bool success) {
+
+        require (canSpend(msg.sender, _value));
+
+        // // mitigates the ERC20 spend/approval race condition
+        // if ( _value != 0 && allowed[msg.sender][spender] != 0) { return false; }
+
+        allowed[msg.sender][spender] =  _value;
+        emit Approval(msg.sender, spender,  _value);
+        return true;
     }
 
+    function transferFrom(address from, address to, uint  _value) onlyPayloadSize(3 * 32) public returns (bool success) {
 
-    // ------------------------------------------------------------------------
-    // not implemented
-    // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        return false;
-    }
+        if (balances[from].balance >=  _value && allowed[from][msg.sender] >=  _value &&  _value > 0) {
 
+            allowed[from][msg.sender].sub( _value);
+            balances[from].balance = balances[from].balance.sub( _value);
+            balances[to].balance = balances[to].balance.add( _value);
+            emit Transfer(from, to,  _value);
+          return true;
+        } else {
+          require(false);
+        }
+      }
+    
 
     // ------------------------------------------------------------------------
     // not implemented
     // ------------------------------------------------------------------------
     function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return 0;
+        return allowed[tokenOwner][spender];
     }
 
-
-    // ------------------------------------------------------------------------
-    // not implemented
-    // ------------------------------------------------------------------------
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        return false;
-    }
     
     // ------------------------------------------------------------------------
     // Used to burn unspent tokens in the contract
     // ------------------------------------------------------------------------
-    function burn(uint256 tokens) onlyOwner public returns (bool) {
-        require((balances[owner].balance - tokens) >= 0);
-        balances[owner].balance = balances[owner].balance.sub(tokens);
-        _totalSupply = _totalSupply.sub(tokens);
-        emit Burn(tokens);
+    function burn(uint  _value) onlyOwner public returns (bool) {
+        require((balances[owner].balance -  _value) >= 0);
+        balances[owner].balance = balances[owner].balance.sub( _value);
+        totalSupply = totalSupply.sub( _value);
+        emit Burn( _value);
         return true;
     }
 
-
-    function ()  {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
 }
