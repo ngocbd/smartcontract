@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FART at 0x8c82392952e095c262cac8caa122b842119f15ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FART at 0x6bc7a6fd890c605f75d07bb4d228a1a4eedf3af1
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.20;
 
 /*
 * ====================================*
@@ -115,7 +115,7 @@ contract FART {
     string public name = "FART";
     string public symbol = "FART";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 7; // roughly 15% = (5% to charity + 10% divs)
+    uint8 constant internal dividendFee_ = 15; //15% = (5% to charity + 10% divs)
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -211,7 +211,7 @@ contract FART {
         uint256 _tokens = purchaseTokens(_dividends, 0x0, 0x0);
         
         // fire event
-        emit onReinvestment(_customerAddress, _dividends, _tokens);
+        onReinvestment(_customerAddress, _dividends, _tokens);
     }
     
     /**
@@ -251,7 +251,7 @@ contract FART {
         _customerAddress.transfer(_dividends);
         
         // fire event
-        emit onWithdraw(_customerAddress, _dividends);
+        onWithdraw(_customerAddress, _dividends);
     }
     
     /**
@@ -275,7 +275,7 @@ contract FART {
         _customerAddress.transfer(_dividends);
         
         // fire event
-        emit onWithdraw(_customerAddress, _dividends);
+        onWithdraw(_customerAddress, _dividends);
     }
     
     /**
@@ -319,7 +319,7 @@ contract FART {
         }
         
         // fire event
-        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum, _charity);
+        onTokenSell(_customerAddress, _tokens, _taxedEthereum, _charity);
     }
     
     
@@ -349,7 +349,7 @@ contract FART {
         tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _amountOfTokens);
         
         // fire event
-        emit Transfer(_customerAddress, _toAddress, _amountOfTokens);
+        Transfer(_customerAddress, _toAddress, _amountOfTokens);
         
         // ERC20
         return true;
@@ -589,7 +589,7 @@ contract FART {
         
         
         // fire event
-        emit onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
+        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
         
         return _amountOfTokens;
     }
