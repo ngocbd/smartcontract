@@ -1,140 +1,200 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Garlicoin at 0x3da3ae4af4196dbfd4f8d824da11839fba9b2303
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Garlicoin at 0xa2dd9cec9eab6c2bb5aef2f758cff78bffd8e958
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-contract Token {
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
+}
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+contract Owned {
+    address public owner;
+    address public newOwner;
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
+    function Owned() public {
+        owner = msg.sender;
+    }
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+contract Garlicoin is ERC20Interface, Owned {
+    using SafeMath for uint;
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+    uint etherCost1;
+    uint etherCost2;
+    uint etherCost3;
+    uint deadline1;
+    uint deadline2;
+    uint deadline3;
+    uint etherCostOfEachToken;
+    bool burnt = false;
+
+    function Garlicoin() public {
+        symbol = "GLC";
+        name = "Garlicoin";
+        decimals = 18;
+        etherCost1 = 0.1 finney;
+        etherCost2 = 0.15 finney;
+        etherCost3 = 0.25 finney;
+        _totalSupply = 1000000 * 10**uint(decimals);
+        balances[owner] = _totalSupply;
+        Transfer(address(0), owner, _totalSupply);
+        deadline1 = now + 1 * 1 days;
+        deadline2 = now + 4 * 1 days;
+        deadline3 = now + 14 * 1 days;
+        
+    }
+
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
+    }
+
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = balances[from].sub(tokens);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
+
+    function withdraw() public {
+        if (msg.sender != owner) {
+            return;
+        }
+        owner.transfer(this.balance);
+    }
+
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // If you've made it this far in the code, I probably don't have to tell you
+    // how dogshit this crypto is. You might tell yourself that it's obviously 
+    // a bad investment because of this. But what if it wasn't? What if its
+    // useless, pathetic nature makes it not only special, but legendary? What
+    // if years, even decades from now, when economists discuss the network of 
+    // manic crazed millenials fueling the great cryptocurrency bubble, they 
+    // all use the same example, the epitome of hype, the hobo's puddle of urine
+    // that was Garlicoin? They'd give lectures on how within days it had 
+    // reached fifteen times its original value, and in a year it was the world
+    // cryptocurrency standard to replace Bitcoin.
     
-}
-
-
-
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    // I'm not going to tell you that any of this is going to happen, but what 
+    // I will tell you is this is a chance for you to be part of history, 
+    // forever engraved into the immutable, pseudo-eternal Ethereum blockchain.
+    
+    // Now please buy my shitcoin so I can afford dinner tonight.
+    // ------------------------------------------------------------------------
+    function () public payable {
+        require(now <= deadline3);
+        if (now > deadline3) {
+            revert();
+        } else if (now <= deadline1) {
+            etherCostOfEachToken = etherCost1;
+        } else if (now <= deadline2) {
+            etherCostOfEachToken = etherCost2;
+        } else if (now <= deadline3) {
+            etherCostOfEachToken = etherCost3;
+        }
+        uint weiAmount = msg.value;
+        uint glcAmount = weiAmount / etherCostOfEachToken * 1000000000000000000;
+        balances[owner] = balances[owner].sub(glcAmount);
+        balances[msg.sender] = balances[msg.sender].add(glcAmount);
+        Transfer(owner, msg.sender, glcAmount);
+    }
+    
+    function burn () public {
+        if (burnt == true) {
+            return;
+        } else {
+            if (now <= deadline3) {
+                return;
+            }
+            burnt = true;
+            balances[owner] = 0;
+        }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-
-//Garlicoin
-contract Garlicoin is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
-
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
-
-    function Garlicoin(
-        ) {
-        balances[msg.sender] = 623000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 623000;                        // Update total supply (100000 for example)
-        name = "Garlicoin";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "GRLC";                               // Set the symbol for display purposes
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
