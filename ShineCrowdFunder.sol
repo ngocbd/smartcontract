@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShineCrowdFunder at 0xE86C98C75450075d096580f843FCd67a858fFd5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShineCrowdFunder at 0x7376596c7B5b9870342326561d2ac490D0D40a6e
 */
 pragma solidity ^0.4.6;
 
@@ -596,7 +596,6 @@ contract ShineCoinTokenFactory {
     }
 }
 
-
 contract ShineCrowdFunder is Controlled, SafeMath {
     address public creator;
 
@@ -606,9 +605,15 @@ contract ShineCrowdFunder is Controlled, SafeMath {
 
     address public reserveBountyRecipient;
 
+    address public developersRecipient;
+
+    address public marketingRecipient;
+
     bool public isReserveGenerated;
 
-    State public state = State.Fundraising;
+    State public state = State.Wait;
+
+    uint investorCount;
 
     uint public minFundingGoal;
 
@@ -636,9 +641,14 @@ contract ShineCrowdFunder is Controlled, SafeMath {
 
     mapping (address => uint256) private balanceOf;
 
+    mapping (address => uint) public fiatInvestorShare;
+
+    address[] fiatInvestors;
+
     mapping (address => bool) private frozenAccount;
 
     enum State {
+        Wait,
         Fundraising,
         ExpiredRefund,
         Successful,
@@ -669,12 +679,13 @@ contract ShineCrowdFunder is Controlled, SafeMath {
         _;
     }
 
-
     function ShineCrowdFunder(
-        address _fundRecipient,
-        address _reserveTeamRecipient,
-        address _reserveBountyRecipient,
-        ShineCoinToken _addressOfExchangeToken
+    address _fundRecipient,
+    address _reserveTeamRecipient,
+    address _reserveBountyRecipient,
+    address _developersRecipient,
+    address _marketingRecipient,
+    ShineCoinToken _addressOfExchangeToken
     ) {
         creator = msg.sender;
 
@@ -682,22 +693,28 @@ contract ShineCrowdFunder is Controlled, SafeMath {
         reserveTeamRecipient = _reserveTeamRecipient;
         reserveBountyRecipient = _reserveBountyRecipient;
 
+        developersRecipient = _developersRecipient;
+        marketingRecipient = _marketingRecipient;
+
         isReserveGenerated = false;
 
-        minFundingGoal = 1250 * 1 ether;
+        minFundingGoal = 10 * 1 ether;
         capTokenAmount = 10000000 * 10 ** 9;
 
-        state = State.Fundraising;
+        state = State.Wait;
 
         currentBalance = 0;
         tokensIssued = 0;
 
-        startBlockNumber = block.number;
-        endBlockNumber = startBlockNumber + ((31 * 24 * 3600) / 18); // 31 days
-
-        tokenExchangeRate = 400 * 10 ** 9;
+        tokenExchangeRate = 1000 * 10 ** 9;
 
         exchangeToken = ShineCoinToken(_addressOfExchangeToken);
+    }
+
+    function startFundraising() inState(State.Wait) onlyController {
+        startBlockNumber = block.number;
+        endBlockNumber = startBlockNumber + ((31 * 24 * 3600) / 18); // 31 days
+        state = State.Fundraising;
     }
 
     function changeReserveTeamRecipient(address _reserveTeamRecipient) onlyController {
@@ -708,9 +725,46 @@ contract ShineCrowdFunder is Controlled, SafeMath {
         reserveBountyRecipient = _reserveBountyRecipient;
     }
 
+    function changeDevelopersRecipient(address _developersRecipient) onlyController {
+        developersRecipient = _developersRecipient;
+    }
+
+    function changeMarketingRecipient(address _marketingRecipient) onlyController {
+        marketingRecipient = _marketingRecipient;
+    }
+
+    function addInvestor(address target, uint share) onlyController {
+        if (fiatInvestorShare[target] == uint(0x0)) { // new address
+            fiatInvestorShare[target] = share;
+            fiatInvestors.push(target);
+        } else { // address already exists
+            if (share > 0) {
+                uint prevShare = fiatInvestorShare[target];
+                uint newShare = prevShare + share;
+
+                fiatInvestorShare[target] = newShare;
+            }
+        }
+    }
+
     function freezeAccount(address target, bool freeze) onlyController {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
+    }
+
+    function updateExchangeRate () {
+        if (tokensIssued >= (1000000 * 10 ** 9) && tokensIssued < (2000000 * 10 ** 9)) {
+            tokenExchangeRate = 600 * 10 ** 9;
+        }
+        if (tokensIssued >= (2000000 * 10 ** 9) && tokensIssued < (3500000 * 10 ** 9)) {
+            tokenExchangeRate = 500 * 10 ** 9;
+        }
+        if (tokensIssued >= (3500000 * 10 ** 9) && tokensIssued < (6000000 * 10 ** 9)) {
+            tokenExchangeRate = 400 * 10 ** 9;
+        }
+        if (tokensIssued >= (6000000 * 10 ** 9)) {
+            tokenExchangeRate = 300 * 10 ** 9;
+        }
     }
 
     function getExchangeRate(uint amount) public constant returns (uint) {
@@ -724,9 +778,11 @@ contract ShineCrowdFunder is Controlled, SafeMath {
         balanceOf[msg.sender] += amount;
         currentBalance += amount;
 
+        updateExchangeRate();
         uint tokenAmount = getExchangeRate(amount);
         exchangeToken.generateTokens(msg.sender, tokenAmount);
         tokensIssued += tokenAmount;
+        updateExchangeRate();
 
         FundTransfer(msg.sender, amount, true);
         LogFundingReceived(msg.sender, tokenAmount, tokensIssued);
@@ -745,15 +801,36 @@ contract ShineCrowdFunder is Controlled, SafeMath {
                 GoalReached(fundRecipient, currentBalance);
             }
             else {
-                state = State.ExpiredRefund; // backers can now collect refunds by calling getRefund()
+                state = State.ExpiredRefund;
+                // backers can now collect refunds by calling getRefund()
             }
         }
     }
 
     function payOut() public inState(State.Successful) onlyController() {
         var amount = currentBalance;
+        var balance = currentBalance;
+
         currentBalance = 0;
         state = State.Closed;
+
+        for (uint i = 0; i < fiatInvestors.length; i++) {
+            address investorAddress = fiatInvestors[i];
+            uint investorShare = fiatInvestorShare[investorAddress];
+            uint investorAmount = div(mul(balance, investorShare), 1000000);
+            investorAddress.transfer(investorAmount);
+            amount -= investorAmount;
+        }
+
+        uint percentDevelopers = 5;
+        uint percentMarketing = 5;
+        uint amountDevelopers = div(mul(balance, percentDevelopers), 100);
+        uint amountMarketing = div(mul(balance, percentMarketing), 100);
+
+        developersRecipient.transfer(amountDevelopers);
+        marketingRecipient.transfer(amountMarketing);
+
+        amount -= (amountDevelopers + amountMarketing);
 
         fundRecipient.transfer(amount);
 
