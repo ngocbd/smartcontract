@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TKCToken at 0x978740501f8daf50dafb630a2b020c51db639dbf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TKCToken at 0x698d32b991eeff6f08d0af10e65c0219fd2f225e
 */
 pragma solidity ^0.4.4;
 
@@ -41,7 +41,53 @@ contract Token {
     
 }
 
-contract StandardToken is Token {
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function safeDiv(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+}
+
+contract StandardToken is Token, SafeMath {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         if (balances[msg.sender] >= _value && _value > 0) {
@@ -82,16 +128,22 @@ contract StandardToken is Token {
 }
 
 contract TKCToken is StandardToken {
+	/**
+     * Boolean contract states
+     */
+	bool public preIco = false; //Pre-ico state
+	
+	address public owner = 0x0;
 
     function () {
         //if ether is sent to this address, send it back.
         throw;
     }
 
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public name;
+    uint8 public decimals;
+    string public symbol;
+    string public version = 'H1.0';
 
     function TKCToken() {
         balances[msg.sender] = 280000000000000;
@@ -99,8 +151,57 @@ contract TKCToken is StandardToken {
         name = "TKC";
         decimals = 6;
         symbol = "TKC";
+		
+		owner = msg.sender;
+    }
+	
+	function price() returns (uint){
+        return 1853;
+    }
+	
+	function buy() public payable returns(bool) {
+        processBuy(msg.sender, msg.value);
+
+        return true;
     }
 
+    function processBuy(address _to, uint256 _value) internal returns(bool) {
+        require(_value>0);
+
+        // Count expected tokens price
+        uint tokens = _value * price();
+
+        // Total tokens should be more than user want's to buy
+        require(balances[owner]>tokens);
+
+        // Add tokens to user balance and remove from totalSupply
+        balances[_to] = safeAdd(balances[_to], tokens);
+        // Remove sold tokens from total supply count
+        balances[owner] = safeSub(balances[owner], tokens);
+
+        // /* Emit log events */
+        Transfer(owner, _to, tokens);
+
+        return true;
+    }
+	
+	function bounty(uint256 price) internal returns (uint256) {
+		if (preIco) {
+			return price + (price * 40/100);
+        } else {
+			return price + (price * 25/100);
+        }
+    }
+	
+	/**
+     * Transfer bounty to target address from bounty pool
+     */
+	function sendBounty(address _to, uint256 _value) onlyOwner() {
+        balances[_to] = safeAdd(balances[_to], _value);
+        // /* Emit log events */
+        Transfer(owner, _to, _value);
+    }
+	
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
@@ -108,4 +209,21 @@ contract TKCToken is StandardToken {
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
+	
+	/**
+     * Pre-ico state.
+     */
+    function setPreIco() onlyOwner() {
+        preIco = true;
+    }
+
+    function unPreIco() onlyOwner() {
+        preIco = false;
+    }
+
+	modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
 }
