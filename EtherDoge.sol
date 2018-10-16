@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDoge at 0xbd36Ad3e10d3C057a2a7379124823f9E73D36A33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDoge at 0x8a7b7b9b2f7d0c63f66171721339705a6188a7d5
 */
 pragma solidity ^0.4.13;
 
@@ -203,9 +203,19 @@ contract EtherDoge is MintableToken {
 
   mapping (address => bool) private _lockByPass;
   
+  function EtherDoge(uint unlockTs){
+    setUnlockTimeStamp(unlockTs);
+  }
 
   function setUnlockTimeStamp(uint _unlockTimeStamp) onlyOwner {
     unlockTimeStamp = _unlockTimeStamp;
+  }
+
+  function airdrop(address[] addresses, uint amount) onlyOwner{
+    require(amount > 0);
+    for (uint i = 0; i < addresses.length; i++) {
+       super.transfer(addresses[i], amount);
+    }
   }
 
   function transfer(address _to, uint _value) returns (bool success) {
@@ -218,7 +228,9 @@ contract EtherDoge is MintableToken {
     return super.transferFrom(_from, _to, _value);
   }
 
-  function setLockByPass(address holder, bool locked) onlyOwner{
-    _lockByPass[holder] = locked;
+  function setLockByPass(address[] addresses, bool locked) onlyOwner{
+    for (uint i = 0; i < addresses.length; i++) {
+       _lockByPass[addresses[i]] = locked;
+    }
   }
 }
