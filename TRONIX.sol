@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tronix at 0xbe45a74da942949f30b59feb86ed83ea02cb1976
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tronix at 0x604fc9393c9ea42a9abbd4dba16db25725960047
 */
 pragma solidity ^0.4.4;
 
@@ -110,7 +110,7 @@ contract Tronix is StandardToken { // CHANGE THIS. Update the contract name.
     function Tronix() {
         balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 1000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "HashnodeTestCoin";                                   // Set the name for display purposes (CHANGE THIS)
+        name = "Tronix";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "TRX";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 50000;                                      // Set the price of your token for the ICO (CHANGE THIS)
