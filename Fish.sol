@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fish at 0x5d41106d9088f968f6fdc376bec83451420c356f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fish at 0x80c1a36dcbdca742f59f09fda16c43e6ad877c2b
 */
 pragma solidity ^ 0.4 .15;
 
@@ -126,9 +126,9 @@ contract owned {
     }
 }
 
-contract Fish  is owned, StandardToken {
+contract Fish is owned, StandardToken {
 
-  string public constant TermsOfUSe = "https://github.com/_______________________";
+  string public constant TermsOfUse = "https://github.com/triangles-things/fish.project/blob/master/terms-of-use.md";
 
   /*
    * State variables
@@ -243,6 +243,7 @@ contract Fish  is owned, StandardToken {
    *   Add some bounty for new users who set referral before first buy
    *   Send tokens that belong to contract or if there is non issue more and send them to user
    *
+   * Read -> https://github.com/triangles-things/fish.project/blob/master/terms-of-use.md
    */
   function buy() adjustPrice payable external {
     require(msg.value >= buyPrice_wie);
