@@ -1,275 +1,184 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x531ac3341edfc39a04ed4c8b44ec396a46bc8690
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0xcb46b40def144e355064d729d0e72dfea80383a9
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
-/**
- * IOwnership
- *
- * Perminent ownership
- *
- * #created 01/10/2017
- * #author Frank Bonnet
- */
-interface IOwnership {
+contract PermissionGroups {
 
-    /**
-     * Returns true if `_account` is the current owner
-     *
-     * @param _account The address to test against
-     */
-    function isOwner(address _account) public view returns (bool);
+    address public admin;
+    address public pendingAdmin;
+    mapping(address=>bool) internal operators;
+    mapping(address=>bool) internal alerters;
+    address[] internal operatorsGroup;
+    address[] internal alertersGroup;
 
+    function PermissionGroups() public {
+        admin = msg.sender;
+    }
 
-    /**
-     * Gets the current owner
-     *
-     * @return address The current owner
-     */
-    function getOwner() public view returns (address);
-}
-
-
-/**
- * Ownership
- *
- * Perminent ownership
- *
- * #created 01/10/2017
- * #author Frank Bonnet
- */
-contract Ownership is IOwnership {
-
-    // Owner
-    address internal owner;
-
-
-    /**
-     * Access is restricted to the current owner
-     */
-    modifier only_owner() {
-        require(msg.sender == owner);
+    modifier onlyAdmin() {
+        require(msg.sender == admin);
         _;
     }
 
-
-    /**
-     * The publisher is the inital owner
-     */
-    function Ownership() public {
-        owner = msg.sender;
+    modifier onlyOperator() {
+        require(operators[msg.sender]);
+        _;
     }
 
-
-    /**
-     * Returns true if `_account` is the current owner
-     *
-     * @param _account The address to test against
-     */
-    function isOwner(address _account) public view returns (bool) {
-        return _account == owner;
+    modifier onlyAlerter() {
+        require(alerters[msg.sender]);
+        _;
     }
 
-
-    /**
-     * Gets the current owner
-     *
-     * @return address The current owner
-     */
-    function getOwner() public view returns (address) {
-        return owner;
-    }
-}
-
-
-/**
- * ITransferableOwnership
- *
- * Enhances ownership by allowing the current owner to 
- * transfer ownership to a new owner
- *
- * #created 01/10/2017
- * #author Frank Bonnet
- */
-interface ITransferableOwnership {
-    
-
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner 
-     */
-    function transferOwnership(address _newOwner) public;
-}
-
-
-
-/**
- * TransferableOwnership
- *
- * Enhances ownership by allowing the current owner to 
- * transfer ownership to a new owner
- *
- * #created 01/10/2017
- * #author Frank Bonnet
- */
-contract TransferableOwnership is ITransferableOwnership, Ownership {
-
-
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner 
-     */
-    function transferOwnership(address _newOwner) public only_owner {
-        owner = _newOwner;
-    }
-}
-
-
-/**
- * IAuthenticator 
- *
- * Authenticator interface
- *
- * #created 15/10/2017
- * #author Frank Bonnet
- */
-interface IAuthenticator {
-    
-
-    /**
-     * Authenticate 
-     *
-     * Returns whether `_account` is authenticated or not
-     *
-     * @param _account The account to authenticate
-     * @return whether `_account` is successfully authenticated
-     */
-    function authenticate(address _account) public view returns (bool);
-}
-
-
-/**
- * IWhitelist 
- *
- * Whitelist authentication interface
- *
- * #created 04/10/2017
- * #author Frank Bonnet
- */
-interface IWhitelist {
-    
-
-    /**
-     * Returns whether an entry exists for `_account`
-     *
-     * @param _account The account to check
-     * @return whether `_account` is has an entry in the whitelist
-     */
-    function hasEntry(address _account) public view returns (bool);
-
-
-    /**
-     * Add `_account` to the whitelist
-     *
-     * If an account is currently disabled, the account is reenabled, otherwise 
-     * a new entry is created
-     *
-     * @param _account The account to add
-     */
-    function add(address _account) public;
-
-
-    /**
-     * Remove `_account` from the whitelist
-     *
-     * Will not actually remove the entry but disable it by updating
-     * the accepted record
-     *
-     * @param _account The account to remove
-     */
-    function remove(address _account) public;
-}
-
-
-/**
- * Whitelist authentication list
- *
- * #created 04/10/2017
- * #author Frank Bonnet
- */
-contract Whitelist is IWhitelist, IAuthenticator, TransferableOwnership {
-
-    struct Entry {
-        uint datetime;
-        bool accepted;
-        uint index;
+    function getOperators () external view returns(address[]) {
+        return operatorsGroup;
     }
 
-    mapping(address => Entry) internal list;
-    address[] internal listIndex;
-
-
-    /**
-     * Returns whether an entry exists for `_account`
-     *
-     * @param _account The account to check
-     * @return whether `_account` is has an entry in the whitelist
-     */
-    function hasEntry(address _account) public view returns (bool) {
-        return listIndex.length > 0 && _account == listIndex[list[_account].index];
+    function getAlerters () external view returns(address[]) {
+        return alertersGroup;
     }
 
+    event TransferAdminPending(address pendingAdmin);
 
     /**
-     * Add `_account` to the whitelist
-     *
-     * If an account is currently disabled, the account is reenabled, otherwise 
-     * a new entry is created
-     *
-     * @param _account The account to add
+     * @dev Allows the current admin to set the pendingAdmin address.
+     * @param newAdmin The address to transfer ownership to.
      */
-    function add(address _account) public only_owner {
-        if (!hasEntry(_account)) {
-            list[_account] = Entry(
-                now, true, listIndex.push(_account) - 1);
-        } else {
-            Entry storage entry = list[_account];
-            if (!entry.accepted) {
-                entry.accepted = true;
-                entry.datetime = now;
+    function transferAdmin(address newAdmin) public onlyAdmin {
+        require(newAdmin != address(0));
+        TransferAdminPending(pendingAdmin);
+        pendingAdmin = newAdmin;
+    }
+
+    event AdminClaimed( address newAdmin, address previousAdmin);
+
+    /**
+     * @dev Allows the pendingAdmin address to finalize the change admin process.
+     */
+    function claimAdmin() public {
+        require(pendingAdmin == msg.sender);
+        AdminClaimed(pendingAdmin, admin);
+        admin = pendingAdmin;
+        pendingAdmin = address(0);
+    }
+
+    event AlerterAdded (address newAlerter, bool isAdd);
+
+    function addAlerter(address newAlerter) public onlyAdmin {
+        require(!alerters[newAlerter]); // prevent duplicates.
+        AlerterAdded(newAlerter, true);
+        alerters[newAlerter] = true;
+        alertersGroup.push(newAlerter);
+    }
+
+    function removeAlerter (address alerter) public onlyAdmin {
+        require(alerters[alerter]);
+        alerters[alerter] = false;
+
+        for (uint i = 0; i < alertersGroup.length; ++i) {
+            if (alertersGroup[i] == alerter) {
+                alertersGroup[i] = alertersGroup[alertersGroup.length - 1];
+                alertersGroup.length--;
+                AlerterAdded(alerter, false);
+                break;
             }
         }
     }
 
+    event OperatorAdded(address newOperator, bool isAdd);
 
-    /**
-     * Remove `_account` from the whitelist
-     *
-     * Will not acctually remove the entry but disable it by updating
-     * the accepted record
-     *
-     * @param _account The account to remove
-     */
-    function remove(address _account) public only_owner {
-        if (hasEntry(_account)) {
-            Entry storage entry = list[_account];
-            entry.accepted = false;
-            entry.datetime = now;
-        }
+    function addOperator(address newOperator) public onlyAdmin {
+        require(!operators[newOperator]); // prevent duplicates.
+        OperatorAdded(newOperator, true);
+        operators[newOperator] = true;
+        operatorsGroup.push(newOperator);
     }
 
+    function removeOperator (address operator) public onlyAdmin {
+        require(operators[operator]);
+        operators[operator] = false;
+
+        for (uint i = 0; i < operatorsGroup.length; ++i) {
+            if (operatorsGroup[i] == operator) {
+                operatorsGroup[i] = operatorsGroup[operatorsGroup.length - 1];
+                operatorsGroup.length -= 1;
+                OperatorAdded(operator, false);
+                break;
+            }
+        }
+    }
+}
+
+interface ERC20 {
+    function totalSupply() public view returns (uint supply);
+    function balanceOf(address _owner) public view returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    function decimals() public view returns(uint digits);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+contract Withdrawable is PermissionGroups {
+
+    event TokenWithdraw(ERC20 token, uint amount, address sendTo);
 
     /**
-     * Authenticate 
-     *
-     * Returns whether `_account` is on the whitelist
-     *
-     * @param _account The account to authenticate
-     * @return whether `_account` is successfully authenticated
+     * @dev Withdraw all ERC20 compatible tokens
+     * @param token ERC20 The address of the token contract
      */
-    function authenticate(address _account) public view returns (bool) {
-        return list[_account].accepted;
+    function withdrawToken(ERC20 token, uint amount, address sendTo) external onlyAdmin {
+        require(token.transfer(sendTo, amount));
+        TokenWithdraw(token, amount, sendTo);
+    }
+
+    event EtherWithdraw(uint amount, address sendTo);
+
+    /**
+     * @dev Withdraw Ethers
+     */
+    function withdrawEther(uint amount, address sendTo) external onlyAdmin {
+        sendTo.transfer(amount);
+        EtherWithdraw(amount, sendTo);
+    }
+}
+
+contract WhiteList is Withdrawable {
+
+    uint public weiPerSgd; // amount of weis in 1 singapore dollar
+    mapping (address=>uint) public userCategory; // each user has a category defining cap on trade. 0 for standard.
+    mapping (uint=>uint)    public categoryCap;  // will define cap on trade amount per category in singapore Dollar.
+
+    function WhiteList(address _admin) public {
+        require(_admin != address(0));
+        admin = _admin;
+    }
+
+    function getUserCapInWei(address user) external view returns (uint userCapWei) {
+        uint category = userCategory[user];
+        return (categoryCap[category] * weiPerSgd);
+    }
+
+    event UserCategorySet(address user, uint category);
+
+    function setUserCategory(address user, uint category) public onlyOperator {
+        userCategory[user] = category;
+        UserCategorySet(user, category);
+    }
+
+    event CategoryCapSet (uint category, uint sgdCap);
+
+    function setCategoryCap(uint category, uint sgdCap) public onlyOperator {
+        categoryCap[category] = sgdCap;
+        CategoryCapSet(category, sgdCap);
+    }
+
+    event SgdToWeiRateSet (uint rate);
+
+    function setSgdToEthRate(uint _sgdToWeiRate) public onlyOperator {
+        weiPerSgd = _sgdToWeiRate;
+        SgdToWeiRateSet(_sgdToWeiRate);
     }
 }
