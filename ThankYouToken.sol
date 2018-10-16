@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThankYouToken at 0x648dfd99da4a32468c47f2aecd813c82c0884b85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThankYouToken at 0x05a0b0eadd54d13ef3fe015f2ede197a822bc8fc
 */
 pragma solidity ^0.4.10;
 
@@ -179,6 +179,7 @@ contract ThankYouToken is ERC20 {
 
     event BonusTokens(address _from, address _to, uint256 _bonusToken);
     event FreeTokensIssued(address _from, address _to, uint256 _value);
+    event FreeTokenAdded(address _from, uint256 _value);
 
     function openCrowdsale() onlyOwner {
         crowdsaleClosed = false;
@@ -205,9 +206,8 @@ contract ThankYouToken is ERC20 {
 
             totalTokensIssued = totalTokensIssued.add(freeTokensPerAddress);
 
-            Transfer(owner, msg.sender, freeTokensPerAddress);
             FreeTokensIssued(owner, msg.sender, freeTokensPerAddress);
-            
+
         } else {
             assert(!crowdsaleClosed);
 
@@ -232,9 +232,8 @@ contract ThankYouToken is ERC20 {
             balances[owner] = balances[owner].sub(tokensSent);
             totalTokensIssued = totalTokensIssued.add(tokensSent);
             balances[msg.sender] = balances[msg.sender].add(tokensSent);
-            Transfer(owner, msg.sender, tokensSent);
+            Transfer(address(this), msg.sender, tokensSent);
         }
-        
 
     }
 
