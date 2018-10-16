@@ -1,49 +1,60 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0xeead881ecaf0c853f4fb80498b5ce99a6df6ecdd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x4ed2c5e63c65741973f9593f1980673e03e11bbd
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.13;
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+contract ERC20 {
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply);
 
-contract Airdrop {
-    ERC20 public token;
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+
+
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
-    event LogAccountAmount(address indexed user, uint256 indexed amount);
+}
 
-    function Airdrop(address _token) public {
-        token = ERC20(_token);
+
+contract AirDrop{
+    address owner;
+    mapping(address => uint256) tokenBalance;
+    
+    function AirDrop(){
+        owner=msg.sender;
     }
-
-    function setToken(address _token) public {
-        token = ERC20(_token);
-    }
-
-    // Uses transferFrom so you'll need to approve some tokens before this one to
-    // this contract address
-    function startAirdrop(address[] users, uint256[] amounts) public {
-        for(uint256 i = 0; i < users.length; i++) {
-            address account = users[i];
-            uint256 amount = amounts[i];
-            
-            LogAccountAmount(account, amount);
-            
-            token.transfer(account, amount);
+    
+    function doAirdrop(address _token,address[] _to,uint256 _amount) public{
+        ERC20 token=ERC20(_token);
+        for(uint256 i=0;i<_to.length;++i){
+            token.transferFrom(msg.sender,_to[i],_amount);
         }
-    }
-    
-    function recoverTokens(address _user, uint256 _amount) public {
-        token.transfer(_user, _amount);
     }
 }
