@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOT at 0x263c618480dbe35c300d8d5ecda19bbb986acaed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOT at 0x612fc8ede4000c51d31f1dcdac85b1407724275d
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.15;
 
 contract Token {
     uint256 public totalSupply;
@@ -65,7 +65,6 @@ contract StandardToken is Token {
         revert();
     }
 }
-
 contract SafeMath {
 
     /* function assert(bool assertion) internal { */
@@ -134,6 +133,7 @@ contract Owner {
 	}
 
 }
+
 contract MOT is Owner, StandardToken, SafeMath {
 	string public constant name = "MOT";
 	string public constant symbol = "MOT";
@@ -141,7 +141,7 @@ contract MOT is Owner, StandardToken, SafeMath {
 	string public version = "1.0";
 
 
-	uint256 public constant total = 1 * (10**8) * 10**decimals;   // 1*10^8 MOT total
+	uint256 public constant total = 1 * (10**8) * 10**decimals;   // 1*10^8 OPT total
 
 	function MOT() {
 
