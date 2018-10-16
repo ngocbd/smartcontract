@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CityToken at 0x53e3a7ec57132173ce615debb9a303fd2cd86789
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CityToken at 0x747616c4a19bd9bf1e2b6c8a77d206ea1f9c6018
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -31,11 +31,11 @@ contract CityToken is ERC721 {
 
   /*** EVENTS ***/
 
-  /// @dev The CityCreated event is fired whenever a new city comes into existence.
-  event CityCreated(uint256 tokenId, string name, string country, address owner);
+  /// @dev The TokenCreated event is fired whenever a new token comes into existence.
+  event TokenCreated(uint256 tokenId, string name, uint256 parentId, address owner);
 
   /// @dev The TokenSold event is fired whenever a token is sold.
-  event TokenSold(uint256 tokenId, uint256 oldPrice, uint256 newPrice, address prevOwner, address winner, string name, string country);
+  event TokenSold(uint256 tokenId, uint256 oldPrice, uint256 newPrice, address prevOwner, address winner, string name, uint256 parentId);
 
   /// @dev Transfer event as defined in current draft of ERC721. 
   ///  ownership is assigned, including create event.
@@ -49,39 +49,40 @@ contract CityToken is ERC721 {
 
   uint256 private startingPrice = 0.05 ether;
 
-  uint256 private constant PROMO_CREATION_LIMIT = 5000;
-
   /*** STORAGE ***/
 
-  /// @dev A mapping from city IDs to the address that owns them. All cities have
+  /// @dev A mapping from token IDs to the address that owns them. All tokens have
   ///  some valid owner address.
-  mapping (uint256 => address) public cityIndexToOwner;
+  mapping (uint256 => address) public tokenIndexToOwner;
 
   // @dev A mapping from owner address to count of tokens that address owns.
   //  Used internally inside balanceOf() to resolve ownership count.
   mapping (address => uint256) private ownershipTokenCount;
 
-  /// @dev A mapping from CityIDs to an address that has been approved to call
-  ///  transferFrom(). Each City can only have one approved address for transfer
+  /// @dev A mapping from TokenIDs to an address that has been approved to call
+  ///  transferFrom(). Each Token can only have one approved address for transfer
   ///  at any time. A zero value means no approval is outstanding.
-  mapping (uint256 => address) public cityIndexToApproved;
+  mapping (uint256 => address) public tokenIndexToApproved;
 
-  // @dev A mapping from CityIDs to the price of the token.
-  mapping (uint256 => uint256) private cityIndexToPrice;
+  // @dev A mapping from TokenIDs to the price of the token.
+  mapping (uint256 => uint256) private tokenIndexToPrice;
 
   // The addresses of the accounts (or contracts) that can execute actions within each roles.
   address public ceoAddress;
   address public cooAddress;
 
-  uint256 public promoCreatedCount;
+  uint256 private tokenCreatedCount;
 
   /*** DATATYPES ***/
-  struct City {
+
+  struct Token {
     string name;
-    string country;
+    uint256 parentId;
   }
 
-  City[] private cities;
+  Token[] private tokens;
+
+  mapping(uint256 => Token) private tokenIndexToToken;
 
   /*** ACCESS MODIFIERS ***/
   /// @dev Access modifier for CEO-only functionality
@@ -124,7 +125,7 @@ contract CityToken is ERC721 {
     // Caller must own token.
     require(_owns(msg.sender, _tokenId));
 
-    cityIndexToApproved[_tokenId] = _to;
+    tokenIndexToApproved[_tokenId] = _to;
 
     Approval(msg.sender, _to, _tokenId);
   }
@@ -136,41 +137,37 @@ contract CityToken is ERC721 {
     return ownershipTokenCount[_owner];
   }
 
-  /// @dev Creates a new promo City with the given name, country and price and assignes it to an address.
-  function createPromoCity(address _owner, string _name, string _country, uint256 _price) public onlyCOO {
-    require(promoCreatedCount < PROMO_CREATION_LIMIT);
+  /// @dev Creates a new Token with the given name, parentId and price and assigns it to an address.
+  function createToken(uint256 _tokenId, address _owner, string _name, uint256 _parentId, uint256 _price) public onlyCOO {
 
-    address cityOwner = _owner;
-    if (cityOwner == address(0)) {
-      cityOwner = cooAddress;
+    address tokenOwner = _owner;
+    if (tokenOwner == address(0)) {
+      tokenOwner = cooAddress;
     }
     
     if (_price <= 0) {
       _price = startingPrice;
     }
 
-    promoCreatedCount++;
-    _createCity(_name, _country, cityOwner, _price);
+    tokenCreatedCount++;
+    _createToken(_tokenId, _name, _parentId, tokenOwner, _price);
   }
 
-  /// @dev Creates a new City with the given name and country.
-  function createContractCity(string _name, string _country) public onlyCOO {
-    _createCity(_name, _country, address(this), startingPrice);
-  }
 
-  /// @notice Returns all the relevant information about a specific city.
-  /// @param _tokenId The tokenId of the city of interest.
-  function getCity(uint256 _tokenId) public view returns (
-    string cityName,
-    string country,
+  /// @notice Returns all the relevant information about a specific token.
+  /// @param _tokenId The tokenId of the token of interest.
+  function getToken(uint256 _tokenId) public view returns (
+    string tokenName,
+    uint256 parentId,
     uint256 sellingPrice,
     address owner
   ) {
-    City storage city = cities[_tokenId];
-    cityName = city.name;
-    country = city.country;
-    sellingPrice = cityIndexToPrice[_tokenId];
-    owner = cityIndexToOwner[_tokenId];
+    Token storage token = tokenIndexToToken[_tokenId];
+
+    tokenName = token.name;
+    parentId = token.parentId;
+    sellingPrice = tokenIndexToPrice[_tokenId];
+    owner = tokenIndexToOwner[_tokenId];
   }
 
   function implementsERC721() public pure returns (bool) {
@@ -190,7 +187,7 @@ contract CityToken is ERC721 {
     view
     returns (address owner)
   {
-    owner = cityIndexToOwner[_tokenId];
+    owner = tokenIndexToOwner[_tokenId];
     require(owner != address(0));
   }
 
@@ -198,42 +195,25 @@ contract CityToken is ERC721 {
     _payout(_to);
   }
 
+  // Alternate function to withdraw less than total balance
+  function withdrawFunds(address _to, uint256 amount) public onlyCLevel {
+    _withdrawFunds(_to, amount);
+  }
+  
   // Allows someone to send ether and obtain the token
   function purchase(uint256 _tokenId) public payable {
-    address oldOwner = cityIndexToOwner[_tokenId];
-    address newOwner = msg.sender;
-
-    uint256 sellingPrice = cityIndexToPrice[_tokenId];
-
-    // Making sure token owner is not sending to self
-    require(oldOwner != newOwner);
-
-    // Safety check to prevent against an unexpected 0x0 default.
-    require(_addressNotNull(newOwner));
-
-    // Making sure sent amount is greater than or equal to the sellingPrice
-    require(msg.value >= sellingPrice);
-
-    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 94), 100));
-    uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
-
-    // Update price (20% increase)
-    cityIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 94);
     
-    _transfer(oldOwner, newOwner, _tokenId);
-
-    // Pay previous tokenOwner if owner is not contract
-    if (oldOwner != address(this)) {
-      oldOwner.transfer(payment); //(1-0.10)
+    // Token IDs above 999 are for countries
+    if (_tokenId > 999) {
+      _purchaseCountry(_tokenId);
+    }else {
+      _purchaseCity(_tokenId);
     }
 
-    TokenSold(_tokenId, sellingPrice, cityIndexToPrice[_tokenId], oldOwner, newOwner, cities[_tokenId].name, cities[_tokenId].country);
-
-    msg.sender.transfer(purchaseExcess);
   }
 
   function priceOf(uint256 _tokenId) public view returns (uint256 price) {
-    return cityIndexToPrice[_tokenId];
+    return tokenIndexToPrice[_tokenId];
   }
 
   /// @dev Assigns a new address to act as the CEO. Only available to the current CEO.
@@ -262,7 +242,7 @@ contract CityToken is ERC721 {
   /// @dev Required for ERC-721 compliance.
   function takeOwnership(uint256 _tokenId) public {
     address newOwner = msg.sender;
-    address oldOwner = cityIndexToOwner[_tokenId];
+    address oldOwner = tokenIndexToOwner[_tokenId];
 
     // Safety check to prevent against an unexpected 0x0 default.
     require(_addressNotNull(newOwner));
@@ -285,13 +265,13 @@ contract CityToken is ERC721 {
       return new uint256[](0);
     } else {
       uint256[] memory result = new uint256[](tokenCount);
-      uint256 totalCities = totalSupply();
+      uint256 totalTokens = totalSupply();
       uint256 resultIndex = 0;
 
-      uint256 cityId;
-      for (cityId = 0; cityId <= totalCities; cityId++) {
-        if (cityIndexToOwner[cityId] == _owner) {
-          result[resultIndex] = cityId;
+      uint256 tokenId;
+      for (tokenId = 0; tokenId <= totalTokens; tokenId++) {
+        if (tokenIndexToOwner[tokenId] == _owner) {
+          result[resultIndex] = tokenId;
           resultIndex++;
         }
       }
@@ -302,7 +282,10 @@ contract CityToken is ERC721 {
   /// For querying totalSupply of token
   /// @dev Required for ERC-721 compliance.
   function totalSupply() public view returns (uint256 total) {
-    return cities.length;
+    //return tokens.length;
+    // NOTE: Looks like we can't get the length of mapping data structure
+    //return tokenIndexToToken.length;
+    return tokenCreatedCount;
   }
 
   /// Owner initates the transfer of the token to another account
@@ -337,6 +320,118 @@ contract CityToken is ERC721 {
   }
 
   /*** PRIVATE FUNCTIONS ***/
+
+  function _purchaseCity(uint256 _tokenId) private {
+
+     address oldOwner = tokenIndexToOwner[_tokenId];
+
+    // Using msg.sender instead of creating a new var because we have too many vars
+    //address newOwner = msg.sender;
+
+    uint256 sellingPrice = tokenIndexToPrice[_tokenId];
+
+    // Making sure token owner is not sending to self
+    require(oldOwner != msg.sender);
+
+    // Safety check to prevent against an unexpected 0x0 default.
+    require(_addressNotNull(msg.sender));
+
+    // Making sure sent amount is greater than or equal to the sellingPrice
+    require(msg.value >= sellingPrice);
+
+    // Payment to previous owner should be 92% of sellingPrice
+    // The other 8% is the 6% dev fee (stays in contract) and 2% Country dividend (goes to Country owner)
+    // If Country does not exist yet then we add that 2% to what the previous owner gets
+    // Formula: sellingPrice * 92 / 100
+    // Same as: sellingPrice * .92 / 1
+    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 92), 100));
+
+    // Get parentId of token
+    uint256 parentId = tokenIndexToToken[_tokenId].parentId;
+
+    // Get owner address of parent
+    address ownerOfParent = tokenIndexToOwner[parentId];
+
+    // Calculate 2% of selling price
+    uint256 paymentToOwnerOfParent = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 2), 100));
+
+    // If we have an address for parentId
+    // If not that means parent hasn't been created yet
+    // For example the city may exist but we haven't created its country yet
+    // Parent ID must also be bigger than the 0-999 range of city ids ...
+    // ... since a city can't be a parent of another city
+    if (_addressNotNull(ownerOfParent)) {
+
+      // Send 2% dividends to owner of parent
+      ownerOfParent.transfer(paymentToOwnerOfParent);
+      
+    } else {
+
+      // If no parent owner then update payment to previous owner to include paymentToOwnerOfParent
+      payment = SafeMath.add(payment, paymentToOwnerOfParent);
+     
+    }
+
+    // Get amount over purchase price they paid so that we can send it back to them
+    uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
+
+    // Update price so that when 8% is taken out (dev fee + Country dividend) ...
+    // ... the owner gets 20% over their investment
+    tokenIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 92);
+    
+    _transfer(oldOwner, msg.sender, _tokenId);
+
+    // Pay previous tokenOwner if owner is not contract
+    if (oldOwner != address(this)) {
+      oldOwner.transfer(payment);
+    }
+    
+    TokenSold(_tokenId, sellingPrice, tokenIndexToPrice[_tokenId], oldOwner, msg.sender, tokenIndexToToken[_tokenId].name, parentId);
+
+    msg.sender.transfer(purchaseExcess);
+  }
+
+  function _purchaseCountry(uint256 _tokenId) private {
+
+    address oldOwner = tokenIndexToOwner[_tokenId];
+
+    uint256 sellingPrice = tokenIndexToPrice[_tokenId];
+
+    // Making sure token owner is not sending to self
+    require(oldOwner != msg.sender);
+
+    // Safety check to prevent against an unexpected 0x0 default.
+    require(_addressNotNull(msg.sender));
+
+    // Making sure sent amount is greater than or equal to the sellingPrice
+    require(msg.value >= sellingPrice);
+
+    // Payment to previous owner should be 96% of sellingPrice
+    // The other 4% is the dev fee (stays in contract) 
+    // Formula: sellingPrice * 96 / 10
+    // Same as: sellingPrice * .96 / 1
+    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 96), 100));
+
+    // Get amount over purchase price they paid so that we can send it back to them
+    uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
+
+    // Update price so that when 4% is taken out (dev fee) ...
+    // ... the owner gets 15% over their investment
+    tokenIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 96);
+    
+    _transfer(oldOwner, msg.sender, _tokenId);
+
+    // Pay previous tokenOwner if owner is not contract
+    if (oldOwner != address(this)) {
+      oldOwner.transfer(payment);
+    }
+    
+    TokenSold(_tokenId, sellingPrice, tokenIndexToPrice[_tokenId], oldOwner, msg.sender, tokenIndexToToken[_tokenId].name, 0);
+
+    msg.sender.transfer(purchaseExcess);
+  }
+
+
   /// Safety check on _to address to prevent against an unexpected 0x0 default.
   function _addressNotNull(address _to) private pure returns (bool) {
     return _to != address(0);
@@ -344,33 +439,44 @@ contract CityToken is ERC721 {
 
   /// For checking approval of transfer for address _to
   function _approved(address _to, uint256 _tokenId) private view returns (bool) {
-    return cityIndexToApproved[_tokenId] == _to;
+    return tokenIndexToApproved[_tokenId] == _to;
   }
 
-  /// For creating City
-  function _createCity(string _name, string _country, address _owner, uint256 _price) private {
-    City memory _city = City({
-      name: _name,
-      country: _country
-    });
-    uint256 newCityId = cities.push(_city) - 1;
 
+  /// For creating City
+  function _createToken(uint256 _tokenId, string _name, uint256 _parentId, address _owner, uint256 _price) private {
+    
+    Token memory _token = Token({
+      name: _name,
+      parentId: _parentId
+    });
+
+    // Rather than increment we need to be able to pass in any tokenId
+    // Necessary if we are going to decide on parentIds ahead of time when creating cities ...
+    // ... and then creating the parent tokens (countries) later
+    //uint256 newTokenId = tokens.push(_token) - 1;
+    uint256 newTokenId = _tokenId;
+    tokenIndexToToken[newTokenId] = _token;
+
+    // NOTE: Now that we don't autoincrement tokenId should we ...
+    // ... check to make sure passed _tokenId arg doesn't already exist?
+    
     // It's probably never going to happen, 4 billion tokens are A LOT, but
     // let's just be 100% sure we never let this happen.
-    require(newCityId == uint256(uint32(newCityId)));
+    require(newTokenId == uint256(uint32(newTokenId)));
 
-    CityCreated(newCityId, _name, _country, _owner);
+    TokenCreated(newTokenId, _name, _parentId, _owner);
 
-    cityIndexToPrice[newCityId] = _price;
+    tokenIndexToPrice[newTokenId] = _price;
 
     // This will assign ownership, and also emit the Transfer event as
     // per ERC721 draft
-    _transfer(address(0), _owner, newCityId);
+    _transfer(address(0), _owner, newTokenId);
   }
 
   /// Check for token ownership
   function _owns(address claimant, uint256 _tokenId) private view returns (bool) {
-    return claimant == cityIndexToOwner[_tokenId];
+    return claimant == tokenIndexToOwner[_tokenId];
   }
 
   /// For paying out balance on contract
@@ -382,18 +488,28 @@ contract CityToken is ERC721 {
     }
   }
 
+  // Alternate function to withdraw less than total balance
+  function _withdrawFunds(address _to, uint256 amount) private {
+    require(this.balance >= amount);
+    if (_to == address(0)) {
+      ceoAddress.transfer(amount);
+    } else {
+      _to.transfer(amount);
+    }
+  }
+
   /// @dev Assigns ownership of a specific City to an address.
   function _transfer(address _from, address _to, uint256 _tokenId) private {
     // Since the number of cities is capped to 2^32 we can't overflow this
     ownershipTokenCount[_to]++;
     //transfer ownership
-    cityIndexToOwner[_tokenId] = _to;
+    tokenIndexToOwner[_tokenId] = _to;
 
     // When creating new cities _from is 0x0, but we can't account that address.
     if (_from != address(0)) {
       ownershipTokenCount[_from]--;
       // clear any previously approved ownership exchange
-      delete cityIndexToApproved[_tokenId];
+      delete tokenIndexToApproved[_tokenId];
     }
 
     // Emit the transfer event.
