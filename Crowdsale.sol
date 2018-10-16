@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xec33fB8D7c781F6FeaF2Dd46D521D4F292320200
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x8bada5bc5cbc107f01c9a11e93cf0641b2851b95
 */
 pragma solidity ^0.4.8;
 
@@ -307,7 +307,7 @@ contract Crowdsale is SafeMath, PullPayment, Pausable {
 	function Crowdsale() {
 		owner = msg.sender;
 		BTCproxy = 0x75c6cceb1a33f177369053f8a0e840de96b4ed0e;
-		rlc = RLC(0x607F4C5BB672230e8672085532f7e901544a7375);
+		rlc = RLC(0x7EbB6079E6d6C7CF8f58CDBd233aC3EdaF1d9A60);
 		multisigETH = 0xAe307e3871E5A321c0559FBf0233A38c937B826A;
 		team = 0xd65380D773208a6Aa49472Bf55186b855B393298;
 		reserve = 0x24F6b37770C6067D05ACc2aD2C42d1Bafde95d48;
