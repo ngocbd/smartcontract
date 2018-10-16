@@ -1,91 +1,186 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x0a34dfb1f68b68518ac53ec9ba4115ccd8922816
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x8271460bff16e250789db8f58b05ad7cb13bf6d5
 */
-// Copyright New Alchemy Limited, 2017. All rights reserved.
+pragma solidity ^0.4.23;
 
-pragma solidity >=0.4.10;
+/*
 
-contract Token {
-	function balanceOf(address addr) returns(uint);
-	function transfer(address to, uint amount) returns(bool);
+  BASIC ERC20 Sale Contract
+
+  Create this Sale contract first!
+
+     Sale(address ethwallet)   // this will send the received ETH funds to this address
+
+
+  @author Hunter Long
+  @repo https://github.com/hunterlong/ethereum-ico-contract
+
+*/
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
+
+contract ERC20 {
+  function sale(address to, uint256 value);
+}
+
+
 contract Sale {
-	address public owner;    // contract owner
-	address public newOwner; // new contract owner for two-way ownership handshake
-	string public notice;    // arbitrary public notice text
-	uint public start;       // start time of sale
-	uint public end;         // end time of sale
-	uint public cap;         // Ether hard cap
-	bool public live;        // sale is live right now
+    uint public preSaleEnd = 1527120000; //05/24/2018 @ 12:00am (UTC)
+    uint public saleEnd1 = 1528588800; //06/10/2018 @ 12:00am (UTC)
+    uint public saleEnd2 = 1529971200; //06/26/2018 @ 12:00am (UTC)
+    uint public saleEnd3 = 1531267200; //07/11/2018 @ 12:00am (UTC)
+    uint public saleEnd4 = 1532476800; //07/25/2018 @ 12:00am (UTC)
 
-	event StartSale();
-	event EndSale();
-	event EtherIn(address from, uint amount);
+    uint256 public saleExchangeRate1 = 17500;
+    uint256 public saleExchangeRate2 = 10000;
+    uint256 public saleExchangeRate3 = 8750;
+    uint256 public saleExchangeRate4 = 7778;
+    uint256 public saleExchangeRate5 = 7368;
+    
+    uint256 public volumeType1 = 1429 * 10 ** 16; //14.29 eth
+    uint256 public volumeType2 = 7143 * 10 ** 16;
+    uint256 public volumeType3 = 14286 * 10 ** 16;
+    uint256 public volumeType4 = 42857 * 10 ** 16;
+    uint256 public volumeType5 = 71429 * 10 ** 16;
+    uint256 public volumeType6 = 142857 * 10 ** 16;
+    uint256 public volumeType7 = 428571 * 10 ** 16;
+    
+    uint256 public minEthValue = 10 ** 15; // 0.001 eth
+    
+    using SafeMath for uint256;
+    uint256 public maxSale;
+    uint256 public totalSaled;
+    ERC20 public Token;
+    address public ETHWallet;
 
-	function Sale() {
-		owner = msg.sender;
-	}
+    address public creator;
 
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
+    mapping (address => uint256) public heldTokens;
+    mapping (address => uint) public heldTimeline;
 
-	function () payable {
-		require(block.timestamp >= start);
-		if (block.timestamp > end || this.balance > cap) {
-			require(live);
-			live = false;
-			EndSale();
-		} else if (!live) {
-			live = true;
-			StartSale();
-		}
-		EtherIn(msg.sender, msg.value);
-	}
+    event Contribution(address from, uint256 amount);
 
-	function init(uint _start, uint _end, uint _cap) onlyOwner {
-		start = _start;
-		end = _end;
-		cap = _cap;
-	}
+    function Sale(address _wallet, address _token_address) {
+        maxSale = 316906850 * 10 ** 8; 
+        ETHWallet = _wallet;
+        creator = msg.sender;
+        Token = ERC20(_token_address);
+    }
 
-	function softCap(uint _newend) onlyOwner {
-		require(_newend >= block.timestamp && _newend >= start && _newend <= end);
-		end = _newend;
-	}
+    
 
-	function changeOwner(address next) onlyOwner {
-		newOwner = next;
-	}
+    function () payable {
+        buy();
+    }
 
-	function acceptOwnership() {
-		require(msg.sender == newOwner);
-		owner = msg.sender;
-		newOwner = 0;
-	}
+    // CONTRIBUTE FUNCTION
+    // converts ETH to TOKEN and sends new TOKEN to the sender
+    function contribute() external payable {
+        buy();
+    }
+    
+    
+    function buy() internal {
+        require(msg.value>=minEthValue);
+        require(now < saleEnd4);
+        
+        uint256 amount;
+        uint256 exchangeRate;
+        if(now < preSaleEnd) {
+            exchangeRate = saleExchangeRate1;
+        } else if(now < saleEnd1) {
+            exchangeRate = saleExchangeRate2;
+        } else if(now < saleEnd2) {
+            exchangeRate = saleExchangeRate3;
+        } else if(now < saleEnd3) {
+            exchangeRate = saleExchangeRate4;
+        } else if(now < saleEnd4) {
+            exchangeRate = saleExchangeRate5;
+        }
+        
+        amount = msg.value.mul(exchangeRate).div(10 ** 10);
+        
+        if(msg.value >= volumeType7) {
+            amount = amount * 180 / 100;
+        } else if(msg.value >= volumeType6) {
+            amount = amount * 160 / 100;
+        } else if(msg.value >= volumeType5) {
+            amount = amount * 140 / 100;
+        } else if(msg.value >= volumeType4) {
+            amount = amount * 130 / 100;
+        } else if(msg.value >= volumeType3) {
+            amount = amount * 120 / 100;
+        } else if(msg.value >= volumeType2) {
+            amount = amount * 110 / 100;
+        } else if(msg.value >= volumeType1) {
+            amount = amount * 105 / 100;
+        }
+        
+        uint256 total = totalSaled + amount;
+        
+        require(total<=maxSale);
+        
+        totalSaled = total;
+        
+        ETHWallet.transfer(msg.value);
+        Token.sale(msg.sender, amount);
+        Contribution(msg.sender, amount);
+    }
+    
+    
+    
 
-	function setNotice(string note) onlyOwner {
-		notice = note;
-	}
 
-	function withdraw() onlyOwner {
-		msg.sender.transfer(this.balance);
-	}
+    // change creator address
+    function changeCreator(address _creator) external {
+        require(msg.sender==creator);
+        creator = _creator;
+    }
 
-	function withdrawSome(uint value) onlyOwner {
-		require(value <= this.balance);
-		msg.sender.transfer(value);
-	}
 
-	function withdrawToken(address token) onlyOwner {
-		Token t = Token(token);
-		require(t.transfer(msg.sender, t.balanceOf(this)));
-	}
 
-	function refundToken(address token, address sender, uint amount) onlyOwner {
-		Token t = Token(token);
-		require(t.transfer(sender, amount));
-	}
 }
