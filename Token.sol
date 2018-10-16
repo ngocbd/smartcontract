@@ -1,477 +1,126 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xec662b61c129fcf9fc6dd6f1a672021a539ce45d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x613af1bf5ffa2310e097d75546620fb323bc967b
 */
-/*! iam.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+pragma solidity ^0.4.18;
 
-pragma solidity 0.4.18;
+contract Owned {
+	address public owner;
 
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns(uint256) {
-        if(a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+	function Owned() public {
+		owner = msg.sender;
+	}
 
-    function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
 
-    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+	function setOwner(address _owner) onlyOwner public {
+		owner = _owner;
+	}
 }
 
-contract Ownable {
-    address public owner;
+contract SafeMath {
+	function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+		uint256 c = _a + _b;
+		assert(c >= _a);
+		return c;
+	}
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+	function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+		assert(_a >= _b);
+		return _a - _b;
+	}
 
-    modifier onlyOwner() { require(msg.sender == owner); _; }
-
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        owner = newOwner;
-        OwnershipTransferred(owner, newOwner);
-    }
+	function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+		uint256 c = _a * _b;
+		assert(_a == 0 || c / _a == _b);
+		return c;
+	}
 }
 
-contract Pausable is Ownable {
-    bool public paused = false;
+contract IToken {
+	function name() public pure returns (string _name) { _name; }
+	function symbol() public pure returns (string _symbol) { _symbol; }
+	function decimals() public pure returns (uint8 _decimals) { _decimals; }
+	function totalSupply() public pure returns (uint256 _totalSupply) { _totalSupply; }
 
-    event Pause();
-    event Unpause();
+	function balanceOf(address _owner) public pure returns (uint256 balance) { _owner; balance; }
 
-    modifier whenNotPaused() { require(!paused); _; }
-    modifier whenPaused() { require(paused); _; }
+	function allowance(address _owner, address _spender) public pure returns (uint256 remaining) { _owner; _spender; remaining; }
 
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        Pause();
-    }
-
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        Unpause();
-    }
+	function transfer(address _to, uint256 _value) public returns (bool success);
+	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+	function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
-contract Withdrawable is Ownable {
-    function withdrawEther(address _to, uint _value) onlyOwner public returns(bool) {
-        require(_to != address(0));
-        require(this.balance >= _value);
+contract Token is IToken, SafeMath, Owned {
+	string public constant standard = '0.1';
+	string public name = '';
+	string public symbol = '';
+	uint8 public decimals = 0;
+	uint256 public totalSupply = 0;
+	mapping (address => uint256) public balanceOf;
+	mapping (address => mapping (address => uint256)) public allowance;
 
-        _to.transfer(_value);
+	event Transfer(address indexed _from, address indexed _to, uint256 _value);
+	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-        return true;
-    }
+	function Token(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public {
+		require(bytes(_name).length > 0 && bytes(_symbol).length > 0);
 
-    function withdrawTokens(ERC20 _token, address _to, uint _value) onlyOwner public returns(bool) {
-        require(_to != address(0));
+		name = _name;
+		symbol = _symbol;
+		decimals = _decimals;
+		totalSupply = _totalSupply;
 
-        return _token.transfer(_to, _value);
-    }
-}
+		balanceOf[msg.sender] = _totalSupply;
+	}
 
-contract ERC20 {
-    uint256 public totalSupply;
+	modifier validAddress(address _address) {
+		require(_address != 0x0);
+		_;
+	}
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+	function transfer(address _to, uint256 _value) public validAddress(_to) returns (bool success) {
+		if (balanceOf[msg.sender] >= _value && _value > 0) {
+			balanceOf[msg.sender] = sub(balanceOf[msg.sender], _value);
+			balanceOf[_to] = add(balanceOf[_to], _value);
+			Transfer(msg.sender, _to, _value);
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
 
-    function balanceOf(address who) public view returns(uint256);
-    function transfer(address to, uint256 value) public returns(bool);
-    function transferFrom(address from, address to, uint256 value) public returns(bool);
-    function allowance(address owner, address spender) public view returns(uint256);
-    function approve(address spender, uint256 value) public returns(bool);
-}
+	function transferFrom(address _from, address _to, uint256 _value) public validAddress(_from) validAddress(_to) returns (bool success) {
+		if (balanceOf[_from] >= _value && _value > 0) {
+			allowance[_from][msg.sender] = sub(allowance[_from][msg.sender], _value);
+			balanceOf[_from] = sub(balanceOf[_from], _value);
+			balanceOf[_to] = add(balanceOf[_to], _value);
+			Transfer(_from, _to, _value);
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
 
-contract ERC223 is ERC20 {
-    function transfer(address to, uint256 value, bytes data) public returns(bool);
-}
-
-contract ERC223Receiving {
-    function tokenFallback(address from, uint256 value, bytes data) external;
-}
-
-contract StandardToken is ERC223 {
-    using SafeMath for uint256;
-
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-
-    mapping(address => uint256) balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-    function StandardToken(string _name, string _symbol, uint8 _decimals) public {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-    }
-
-    function balanceOf(address _owner) public view returns(uint256 balance) {
-        return balances[_owner];
-    }
-
-    function _transfer(address _to, uint256 _value, bytes _data) private returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        
-        bool is_contract = false;
-        assembly {
-            is_contract := not(iszero(extcodesize(_to)))
+	function multisend(address[] dests, uint256[] values) public onlyOwner returns (uint256) {
+        uint256 i = 0;
+        while (i < dests.length) {
+           transfer(dests[i], values[i]);
+           i += 1;
         }
-
-        if(is_contract) {
-            ERC223Receiving receiver = ERC223Receiving(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
-        }
-
-        Transfer(msg.sender, _to, _value);
-
-        return true;
+        return(i);
     }
 
-    function transfer(address _to, uint256 _value) public returns(bool) {
-        bytes memory empty;
-        return _transfer(_to, _value, empty);
-    }
-
-    function transfer(address _to, uint256 _value, bytes _data) public returns(bool) {
-        return _transfer(_to, _value, _data);
-    }
-    
-    function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
-        require(_to.length == _value.length);
-
-        for(uint i = 0; i < _to.length; i++) {
-            transfer(_to[i], _value[i]);
-        }
-
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-
-        Transfer(_from, _to, _value);
-
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) public view returns(uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    function approve(address _spender, uint256 _value) public returns(bool) {
-        allowed[msg.sender][_spender] = _value;
-
-        Approval(msg.sender, _spender, _value);
-
-        return true;
-    }
-
-    function increaseApproval(address _spender, uint _addedValue) public returns(bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns(bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-
-        if(_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-
-        return true;
-    }
-}
-
-contract MintableToken is StandardToken, Ownable {
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-
-    bool public mintingFinished = false;
-
-    modifier canMint() { require(!mintingFinished); _; }
-
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-
-        return true;
-    }
-
-    function finishMinting() onlyOwner canMint public returns(bool) {
-        mintingFinished = true;
-
-        MintFinished();
-
-        return true;
-    }
-}
-
-contract CappedToken is MintableToken {
-    uint256 public cap;
-
-    function CappedToken(uint256 _cap) public {
-        require(_cap > 0);
-        cap = _cap;
-    }
-
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
-        require(totalSupply.add(_amount) <= cap);
-
-        return super.mint(_to, _amount);
-    }
-}
-
-contract BurnableToken is StandardToken {
-    event Burn(address indexed burner, uint256 value);
-
-    function burn(uint256 _value) public {
-        require(_value <= balances[msg.sender]);
-
-        address burner = msg.sender;
-
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-
-        Burn(burner, _value);
-    }
-}
-
-/*
-    ICO IAM
-*/
-contract Token is CappedToken, BurnableToken, Withdrawable {
-    function Token() CappedToken(70000000 * 1 ether) StandardToken("IAM Aero", "IAM", 18) public {
-        
-    }
-
-    function tokenFallback(address _from, uint256 _value, bytes _data) external {
-        require(false);
-    }
-
-    function transferOwner(address _from, address _to, uint256 _value) onlyOwner canMint public returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        
-        bool is_contract = false;
-        assembly {
-            is_contract := not(iszero(extcodesize(_to)))
-        }
-
-        if(is_contract) {
-            bytes memory empty;
-            ERC223Receiving receiver = ERC223Receiving(_to);
-            receiver.tokenFallback(_from, _value, empty);
-        }
-
-        Transfer(_from, _to, _value);
-
-        return true;
-    }
-}
-
-contract Crowdsale is Pausable, Withdrawable, ERC223Receiving {
-    using SafeMath for uint;
-
-    struct Step {
-        uint priceTokenWei;
-        uint tokensForSale;
-        uint minInvestEth;
-        uint tokensSold;
-        uint collectedWei;
-
-        bool transferBalance;
-        bool sale;
-        bool issue;
-    }
-
-    Token public token;
-    address public beneficiary = 0x4ae7bdf9530cdB666FC14DF79C169e14504c621A;
-
-    Step[] public steps;
-    uint8 public currentStep = 0;
-
-    bool public crowdsaleClosed = false;
-
-    mapping(address => uint256) public canSell;
-
-    event Purchase(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
-    event Issue(address indexed holder, uint256 tokenAmount);
-    event Sell(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
-    event NewRate(uint256 rate);
-    event NextStep(uint8 step);
-    event CrowdsaleClose();
-
-    function Crowdsale() public {
-        token = new Token();
-
-        steps.push(Step(1 ether / 1000, 1000000 * 1 ether, 0.01 ether, 0, 0, true, false, true));
-        steps.push(Step(1 ether / 1000, 1500000 * 1 ether, 0.01 ether, 0, 0, true, false, true));
-        steps.push(Step(1 ether / 1000, 3000000 * 1 ether, 0.01 ether, 0, 0, true, false, true));
-        steps.push(Step(1 ether / 1000, 9000000 * 1 ether, 0.01 ether, 0, 0, true, false, true));
-        steps.push(Step(1 ether / 1000, 35000000 * 1 ether, 0.01 ether, 0, 0, true, false, true));
-        steps.push(Step(1 ether / 1000, 20500000 * 1 ether, 0.01 ether, 0, 0, true, true, true));
-    }
-
-    function() payable public {
-        purchase();
-    }
-
-    function tokenFallback(address _from, uint256 _value, bytes _data) external {
-        sell(_value);
-    }
-
-    function setTokenRate(uint _value) onlyOwner public {
-        require(!crowdsaleClosed);
-
-        steps[currentStep].priceTokenWei = 1 ether / _value;
-
-        NewRate(steps[currentStep].priceTokenWei);
-    }
-    
-    function purchase() whenNotPaused payable public {
-        require(!crowdsaleClosed);
-
-        Step memory step = steps[currentStep];
-
-        require(msg.value >= step.minInvestEth);
-        require(step.tokensSold < step.tokensForSale);
-
-        uint sum = msg.value;
-        uint amount = sum.mul(1 ether).div(step.priceTokenWei);
-        uint retSum = 0;
-        
-        if(step.tokensSold.add(amount) > step.tokensForSale) {
-            uint retAmount = step.tokensSold.add(amount).sub(step.tokensForSale);
-            retSum = retAmount.mul(step.priceTokenWei).div(1 ether);
-
-            amount = amount.sub(retAmount);
-            sum = sum.sub(retSum);
-        }
-
-        steps[currentStep].tokensSold = step.tokensSold.add(amount);
-        steps[currentStep].collectedWei = step.collectedWei.add(sum);
-
-        if(currentStep == 0) {
-            canSell[msg.sender] = canSell[msg.sender].add(amount);
-        }
-
-        if(step.transferBalance) {
-            uint p1 = sum.div(200);
-            (0xD8C7f2215f90463c158E91b92D81f0A1E3187C1B).transfer(p1.mul(3));
-            (0x8C8d80effb2c5C1E4D857e286822E0E641cA3836).transfer(p1.mul(3));
-            beneficiary.transfer(sum.sub(p1.mul(6)));
-        }
-        token.mint(msg.sender, amount);
-
-        if(retSum > 0) {
-            msg.sender.transfer(retSum);
-        }
-
-        Purchase(msg.sender, amount, sum);
-    }
-    
-    function issue(address _to, uint256 _value) onlyOwner whenNotPaused public {
-        require(!crowdsaleClosed);
-
-        Step memory step = steps[currentStep];
-        
-        require(step.issue);
-        require(step.tokensSold.add(_value) <= step.tokensForSale);
-
-        steps[currentStep].tokensSold = step.tokensSold.add(_value);
-
-        if(currentStep == 0) {
-            canSell[_to] = canSell[_to].add(_value);
-        }
-
-        token.mint(_to, _value);
-
-        Issue(_to, _value);
-    }
-
-    function sell(uint256 _value) whenNotPaused public {
-        require(!crowdsaleClosed);
-
-        require(canSell[msg.sender] >= _value);
-        require(token.balanceOf(msg.sender) >= _value);
-
-        Step memory step = steps[currentStep];
-        
-        require(step.sale);
-
-        canSell[msg.sender] = canSell[msg.sender].sub(_value);
-        token.transferOwner(msg.sender, beneficiary, _value);
-
-        uint sum = _value.mul(step.priceTokenWei).div(1 ether);
-
-        msg.sender.transfer(sum);
-
-        Sell(msg.sender, _value, sum);
-    }
-
-    function nextStep(uint _value) onlyOwner public {
-        require(!crowdsaleClosed);
-        require(steps.length - 1 > currentStep);
-        
-        currentStep += 1;
-
-        setTokenRate(_value);
-
-        NextStep(currentStep);
-    }
-
-    function closeCrowdsale() onlyOwner public {
-        require(!crowdsaleClosed);
-        
-        beneficiary.transfer(this.balance);
-        token.mint(beneficiary, token.cap().sub(token.totalSupply()));
-        token.finishMinting();
-        token.transferOwnership(beneficiary);
-
-        crowdsaleClosed = true;
-
-        CrowdsaleClose();
-    }
+	function approve(address _spender, uint256 _value) public validAddress(_spender) returns (bool success) {
+		require(_value == 0 || allowance[msg.sender][_spender] == 0);
+
+		allowance[msg.sender][_spender] = _value;
+		Approval(msg.sender, _spender, _value);
+		return true;
+	}
 }
