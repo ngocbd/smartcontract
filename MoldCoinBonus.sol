@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoldCoinBonus at 0x3d34cc988d583dd2757acaa18a1e90cfab8b7b1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoldCoinBonus at 0xbb816b2800edd60465c8fd5147f1f551168e05ac
 */
 pragma solidity ^0.4.11;
 
@@ -347,30 +347,13 @@ contract MoldCoinBonus is SafeMath {
 
         fundAddress.buyRecipient.value(msg.value)(msg.sender); //send Ether to pre-sale contract address
 
-        totalSupply = safeAdd(totalSupply, bonus*2);
+        totalSupply = safeAdd(totalSupply, bonus);
 
         bonusBalances[inviter] = safeAdd(bonusBalances[inviter], bonus);
-        bonusBalances[msg.sender] = safeAdd(bonusBalances[msg.sender], bonus);
         BuyWithBonus(msg.sender, inviter, msg.value, tokens, bonus);
 
     }
 
-    function buyForFriend(address friend) validSale payable {
-
-        require( msg.sender != friend );
-
-        uint tokens = safeMul(msg.value, fundAddress.price(block.timestamp));
-        uint bonus = safeDiv(safeMul(tokens, rate), 100);
-
-        fundAddress.buyRecipient.value(msg.value)(friend); //send Ether to crowdsale contract address
-
-        totalSupply = safeAdd(totalSupply, bonus*2);
-
-        bonusBalances[friend] = safeAdd(bonusBalances[friend], bonus);
-        bonusBalances[msg.sender] = safeAdd(bonusBalances[msg.sender], bonus);
-        BuyForFriend(msg.sender, friend, msg.value, tokens, bonus);
-
-    }
 
     /**
      * Emergency Stop.
