@@ -1,118 +1,71 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x292317a267AdFb97d1b4E3Ffd04f9Da399cf973b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x6b31d68c23c27f04d813aa1cb8ac436dc0432971
 */
-pragma solidity ^ 0.4.16;
+pragma solidity ^0.4.18;
 
 
-contract Ownable {
-    address public owner;
+contract ERC20 {
 
-    function Ownable() public {
+    address owner;
+
+    string public name;
+
+    string public symbol;
+
+    uint public decimals;
+
+    uint public totalSupply;
+
+    mapping(address => uint) balances;
+
+    mapping(address => mapping(address => uint)) allowed;
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+
+    function ERC20() public {
         owner = msg.sender;
     }
 
-    modifier onlyOwner {
+    function balanceOf(address _owner) public constant returns (uint balance)  {
+        return balances[_owner];
+    }
+
+    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    function setup(string _name, string _symbol, uint _totalSupply, uint _decimals) public {
         require(msg.sender == owner);
-        _;
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
+        totalSupply = _totalSupply * 10 ** _decimals;
+        balances[msg.sender] = totalSupply;
+        Transfer(address(this), msg.sender, totalSupply);
     }
 
-   
-}
-contract tokenRecipient {
-    function  receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
-}
-
-contract ERC20 is Ownable{
-    /* Public variables of the token */
-    string public standard = 'CREDITS';
-    string public name = 'CREDITS';
-    string public symbol = 'CS';
-    uint8 public decimals = 6;
-    uint256 public totalSupply = 1000000000000000;
-    bool public IsFrozen=false;
-    address public ICOAddress;
-
-    /* This creates an array with all balances */
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
-
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
- modifier IsNotFrozen{
-      require(!IsFrozen||msg.sender==owner
-      ||msg.sender==0x0a6d9df476577C0D4A24EB50220fad007e444db8
-      ||msg.sender==ICOAddress);
-      _;
-  }
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function ERC20() public {
-        balanceOf[msg.sender] = totalSupply;
-    }
-    function setICOAddress(address _address) public onlyOwner{
-        ICOAddress=_address;
-    }
-    
-   function setIsFrozen(bool _IsFrozen)public onlyOwner{
-      IsFrozen=_IsFrozen;
-    }
-    /* Send coins */
-    function transfer(address _to, uint256 _value) public IsNotFrozen {
-        require(balanceOf[msg.sender] >= _value); // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
-        balanceOf[msg.sender] -= _value; // Subtract from the sender
-        balanceOf[_to] += _value; // Add the same to the recipient
-        Transfer(msg.sender, _to, _value); // Notify anyone listening that this transfer took place
-    }
-  
- 
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)public
-    returns(bool success) {
-        allowance[msg.sender][_spender] = _value;
-        tokenRecipient spender = tokenRecipient(_spender);
+    function transfer(address _to, uint _amount) public returns (bool success)  {
+        require(balances[msg.sender] >= _amount && _amount > 0 && balances[_to] + _amount > balances[_to]);
+        balances[msg.sender] -= _amount;
+        balances[_to] += _amount;
+        Transfer(msg.sender, _to, _amount);
         return true;
     }
 
-    /* Approve and then comunicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public
-    returns(bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value)public IsNotFrozen returns(bool success)  {
-        require (balanceOf[_from] >= _value) ; // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]) ; // Check for overflows
-        require (_value <= allowance[_from][msg.sender]) ; // Check allowance
-      
-        balanceOf[_from] -= _value; // Subtract from the sender
-        balanceOf[_to] += _value; // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
+    function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
+        require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount > 0 && balances[_to] + _amount > balances[_to]);
+        balances[_to] += _amount;
+        balances[_from] -= _amount;
+        allowed[_from][msg.sender] -= _amount;
+        Transfer(_from, _to, _amount);
         return true;
     }
- /* @param _value the amount of money to burn*/
-    event Burn(address indexed from, uint256 value);
-    function burn(uint256 _value) public onlyOwner  returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-     // Optional token name
 
-    
-    
-    function setName(string name_) public onlyOwner {
-        name = name_;
-    }
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () public {
-     require(1==2) ; // Prevents accidental sending of ether
+    function approve(address _spender, uint _amount) public returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
     }
 }
