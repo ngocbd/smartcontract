@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AvPresale at 0x681f453510adab676724074d212c986ecb53726e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AvPresale at 0xdbbb7c56a5c8f60a9e5a38501a168f673cd61754
 */
 pragma solidity ^0.4.17;
 
@@ -9,12 +9,12 @@ pragma solidity ^0.4.17;
 
 contract AvPresale {
 
-    string public constant RELEASE = "0.2.3_AviaTest";
+    string public constant RELEASE = "0.2.2_AviaTest";
 
     //config// 
-    uint public constant PRESALE_START  = 5307620; /* 23.03.2018 17:19:00 +3GMT */ //NB!
-    uint public constant PRESALE_END    = 5314027; /* 24.03.2018 20:00:00 +3GMT */ //NB!
-    uint public constant WITHDRAWAL_END = 5314987; /* 25.03.2018 00:00:00 +3GMT */ //NB!
+    uint public constant PRESALE_START  = 5307500; /* 23.03.2018 16:49:00 +3GMT */ //NB!
+    uint public constant PRESALE_END    = 5309227; /* 24.03.2018 00:01:00 +3GMT */ //NB!
+    uint public constant WITHDRAWAL_END = 5314027; /* 24.03.2018 20:00:00 +3GMT */ //NB!
 
     address public constant OWNER = 0x32Bac79f4B6395DEa37f0c2B68b6e26ce24a59EA; //NB!
 
