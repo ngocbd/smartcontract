@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sicoinco2 at 0xa4729f1d8c8e3fe2f22612329c532be5c6fed5e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract sicoinco2 at 0xaa86134434dba834abbdb313432fd27d99b65ea8
 */
 pragma solidity ^0.4.20;
 
@@ -7,13 +7,13 @@ pragma solidity ^0.4.20;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract Sicoinco2 {
+contract sicoinco2 {
     // Public variables of the token
-    string public name = "Sicoinco2";
-    string public symbol = "Co2";
+    string public name;
+    string public symbol;
     uint8 public decimals = 6;
     // 6 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 100000000;
+    uint256 public totalSupply;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -35,7 +35,7 @@ contract Sicoinco2 {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = initialSupply = 100000000; uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = initialSupply * 100000000 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply = 100000000;                // Give the creator all initial tokens
         name = tokenName = "SicoinCo2";                      // Set the name for display purposes
         symbol = tokenSymbol = "CO2";                               // Set the symbol for display purposes
