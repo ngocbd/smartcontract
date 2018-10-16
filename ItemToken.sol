@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0xbADF157A0ACfbeEbBee23EBC887DF0e9BEA0EB6D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0x3521b99f2020fe66213aa27aff326118cdea86a2
 */
 pragma solidity ^0.4.13;
 
@@ -48,28 +48,26 @@ library SafeMath {
 contract ItemToken {
   using SafeMath for uint256;
 
+  event Bought (uint256 indexed _itemId, address indexed _owner, uint256 _price);
+  event Sold (uint256 indexed _itemId, address indexed _owner, uint256 _price);
   event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
   event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
 
   address private owner;
   mapping (address => bool) private admins;
+  IItemRegistry private itemRegistry;
   bool private erc721Enabled = false;
 
-  uint256 private L = 500;
-  uint256 private itemIdCounter = 0;
-  uint256 private pointsDecayFactor = 1209600000; // half-time: week
+  uint256 private increaseLimit1 = 0.02 ether;
+  uint256 private increaseLimit2 = 0.5 ether;
+  uint256 private increaseLimit3 = 2.0 ether;
+  uint256 private increaseLimit4 = 5.0 ether;
 
   uint256[] private listedItems;
   mapping (uint256 => address) private ownerOfItem;
-  mapping (uint256 => string) private nameOfItem;
-  mapping (uint256 => string) private descOfItem;
-  mapping (uint256 => string) private URLOfItem;
-  mapping (uint256 => uint256) private pointOfItem;
-  mapping (uint256 => uint256) private timeOfItem;
+  mapping (uint256 => uint256) private startingPriceOfItem;
+  mapping (uint256 => uint256) private priceOfItem;
   mapping (uint256 => address) private approvedOfItem;
-
-  mapping (uint256 => uint256[]) private pointArrayOfArray;
-  mapping (uint256 => uint256[]) private timeArrayOfArray;
 
   function ItemToken () public {
     owner = msg.sender;
@@ -97,20 +95,16 @@ contract ItemToken {
     owner = _owner;
   }
 
+  function setItemRegistry (address _itemRegistry) onlyOwner() public {
+    itemRegistry = IItemRegistry(_itemRegistry);
+  }
+
   function addAdmin (address _admin) onlyOwner() public {
     admins[_admin] = true;
   }
 
   function removeAdmin (address _admin) onlyOwner() public {
     delete admins[_admin];
-  }
-  
-  function adjustL (uint256 _L) onlyOwner() public {
-    L = _L;
-  }
-  
-  function adjustPointsDecayFactor (uint256 _pointsDecayFactor) onlyOwner() public {
-    pointsDecayFactor = _pointsDecayFactor;
   }
 
   // Unlocks ERC721 behaviour, allowing for trading on third party platforms.
@@ -119,6 +113,11 @@ contract ItemToken {
   }
 
   /* Withdraw */
+  /*
+    NOTICE: These functions withdraw the developer's cut which is left
+    in the contract by `buy`. User funds are immediately sent to the old
+    owner in `buy`, no user funds are left in the contract.
+  */
   function withdrawAll () onlyOwner() public {
     owner.transfer(this.balance);
   }
@@ -128,45 +127,107 @@ contract ItemToken {
   }
 
   /* Listing */
-  function Time_call() returns (uint256 _now){
-    return now;
+  function populateFromItemRegistry (uint256[] _itemIds) onlyOwner() public {
+    for (uint256 i = 0; i < _itemIds.length; i++) {
+      if (priceOfItem[_itemIds[i]] > 0 || itemRegistry.priceOf(_itemIds[i]) == 0) {
+        continue;
+      }
+
+      listItemFromRegistry(_itemIds[i]);
+    }
   }
 
-  function listDapp (string _itemName, string _itemDesc, string _itemURL) public {
-    require(bytes(_itemName).length > 2);
-    require(bytes(_itemDesc).length > 2);
-    require(bytes(_itemURL).length > 2);
-    
-    uint256 _itemId = itemIdCounter;
-    itemIdCounter = itemIdCounter + 1;
+  function listItemFromRegistry (uint256 _itemId) onlyOwner() public {
+    require(itemRegistry != address(0));
+    require(itemRegistry.ownerOf(_itemId) != address(0));
+    require(itemRegistry.priceOf(_itemId) > 0);
 
-    ownerOfItem[_itemId] = msg.sender;
-    nameOfItem[_itemId] = _itemName;
-    descOfItem[_itemId] = _itemDesc;
-    URLOfItem[_itemId] = _itemURL;
-    pointOfItem[_itemId] = 10; //This is 10 free token for whom sign-up
-    timeOfItem[_itemId] = Time_call();
+    uint256 price = itemRegistry.priceOf(_itemId);
+    address itemOwner = itemRegistry.ownerOf(_itemId);
+    listItem(_itemId, price, itemOwner);
+  }
+
+  function listMultipleItems (uint256[] _itemIds, uint256 _price, address _owner) onlyAdmins() external {
+    for (uint256 i = 0; i < _itemIds.length; i++) {
+      listItem(_itemIds[i], _price, _owner);
+    }
+  }
+
+  function listItem (uint256 _itemId, uint256 _price, address _owner) onlyAdmins() public {
+    require(_price > 0);
+    require(priceOfItem[_itemId] == 0);
+    require(ownerOfItem[_itemId] == address(0));
+
+    ownerOfItem[_itemId] = _owner;
+    priceOfItem[_itemId] = _price;
+    startingPriceOfItem[_itemId] = _price;
     listedItems.push(_itemId);
-    
-    pointArrayOfArray[_itemId].push(10);
-    timeArrayOfArray[_itemId].push(Time_call());
   }
 
   /* Buying */
-  function buyPoints (uint256 _itemId) payable public {
-    require(msg.value > 0);
-    require(ownerOf(_itemId) == msg.sender);
+  function calculateNextPrice (uint256 _price) public view returns (uint256 _nextPrice) {
+    if (_price < increaseLimit1) {
+      return _price.mul(200).div(95);
+    } else if (_price < increaseLimit2) {
+      return _price.mul(135).div(96);
+    } else if (_price < increaseLimit3) {
+      return _price.mul(125).div(97);
+    } else if (_price < increaseLimit4) {
+      return _price.mul(117).div(97);
+    } else {
+      return _price.mul(115).div(98);
+    }
+  }
+
+  function calculateDevCut (uint256 _price) public view returns (uint256 _devCut) {
+    if (_price < increaseLimit1) {
+      return _price.mul(5).div(100); // 5%
+    } else if (_price < increaseLimit2) {
+      return _price.mul(4).div(100); // 4%
+    } else if (_price < increaseLimit3) {
+      return _price.mul(3).div(100); // 3%
+    } else if (_price < increaseLimit4) {
+      return _price.mul(3).div(100); // 3%
+    } else {
+      return _price.mul(2).div(100); // 2%
+    }
+  }
+
+  /*
+     Buy a team directly from the contract for the calculated price
+     which ensures that the owner gets a profit.  All teams that
+     have been listed can be bought by this method. User funds are sent
+     directly to the previous owner and are never stored in the contract.
+  */
+  function buy (uint256 _itemId) payable public {
+    require(priceOf(_itemId) > 0);
+    require(ownerOf(_itemId) != address(0));
+    require(msg.value >= priceOf(_itemId));
+    require(ownerOf(_itemId) != msg.sender);
     require(!isContract(msg.sender));
-    
-    uint256 point = msg.value.mul(L).div(1000000000000000000);
-    
-    pointOfItem[_itemId] = point;
-    timeOfItem[_itemId] = Time_call();
-    
-    owner.transfer(msg.value);
-    
-    pointArrayOfArray[_itemId].push(point);
-    timeArrayOfArray[_itemId].push(Time_call());
+    require(msg.sender != address(0));
+
+    address oldOwner = ownerOf(_itemId);
+    address newOwner = msg.sender;
+    uint256 price = priceOf(_itemId);
+    uint256 excess = msg.value.sub(price);
+
+    _transfer(oldOwner, newOwner, _itemId);
+    priceOfItem[_itemId] = nextPriceOf(_itemId);
+
+    Bought(_itemId, newOwner, price);
+    Sold(_itemId, oldOwner, price);
+
+    // Devevloper's cut which is left in contract and accesed by
+    // `withdrawAll` and `withdrawAmountTo` methods.
+    uint256 devCut = calculateDevCut(price);
+
+    // Transfer payment to old owner minus the developer's cut.
+    oldOwner.transfer(price.sub(devCut));
+
+    if (excess > 0) {
+      newOwner.transfer(excess);
+    }
   }
 
   /* ERC721 */
@@ -175,11 +236,11 @@ contract ItemToken {
   }
 
   function name() public pure returns (string _name) {
-    return "DappTalk.org";
+    return "Totalgame.io Teams";
   }
 
   function symbol() public pure returns (string _symbol) {
-    return "DTC";
+    return "TGT";
   }
 
   function totalSupply() public view returns (uint256 _totalSupply) {
@@ -217,7 +278,7 @@ contract ItemToken {
   }
 
   function tokenExists (uint256 _itemId) public view returns (bool _exists) {
-    return bytes(nameOf(_itemId)).length > 2;
+    return priceOf(_itemId) > 0;
   }
 
   function approvedFor(uint256 _itemId) public view returns (address _approved) {
@@ -240,6 +301,7 @@ contract ItemToken {
     }
   }
 
+  /* Transferring a team to another owner will entitle the new owner the profits from `buy` */
   function transfer(address _to, uint256 _itemId) onlyERC721() public {
     require(msg.sender == ownerOf(_itemId));
     _transfer(msg.sender, _to, _itemId);
@@ -267,79 +329,30 @@ contract ItemToken {
     return admins[_admin];
   }
 
-  function nameOf (uint256 _itemId) public view returns (string _itemName) {
-    return nameOfItem[_itemId];
-  }
-  
-  function descOf (uint256 _itemId) public view returns (string _itemDesc) {
-    return descOfItem[_itemId];
-  }
-  
-  function URLOf (uint256 _itemId) public view returns (string _itemURL) {
-    return URLOfItem[_itemId];
-  }
-  
-  function pointOf (uint256 _itemId) public view returns (uint256 _itemPoint) {
-    return pointOfItem[_itemId];
-  }
-  
-  function pointArrayOf (uint256 _itemId) public view returns (uint256[] _pointArray) {
-    return pointArrayOfArray[_itemId];
-  }
-  
-  function timeArrayOf (uint256 _itemId) public view returns (uint256[] _timeArray) {
-    return timeArrayOfArray[_itemId];
+  function startingPriceOf (uint256 _itemId) public view returns (uint256 _startingPrice) {
+    return startingPriceOfItem[_itemId];
   }
 
-  function initTimeOf (uint256 _itemId) public view returns (uint256 _initTime) {
-    return timeArrayOfArray[_itemId][0];
+  function priceOf (uint256 _itemId) public view returns (uint256 _price) {
+    return priceOfItem[_itemId];
   }
 
-  function timeOf (uint256 _itemId) public view returns (uint256 _itemTime) {
-    return timeOfItem[_itemId];
+  function nextPriceOf (uint256 _itemId) public view returns (uint256 _nextPrice) {
+    return calculateNextPrice(priceOf(_itemId));
   }
 
-  function getPointOf (uint256 _itemId) public view returns (uint256 _getPoint) {
-    uint256 t = Time_call();
-    _getPoint = 0;
-    uint256 temp = 0;
+  function allOf (uint256 _itemId) external view returns (uint256 id, address _owner, uint256 _startingPrice, uint256 _price, uint256 _nextPrice) {
+    return (_itemId, ownerOf(_itemId), startingPriceOf(_itemId), priceOf(_itemId), nextPriceOf(_itemId));
+  }
 
-    for (uint256 i = 0; i < pointArrayOfArray[_itemId].length; i++) {
-        if (timeArrayOfArray[_itemId][i] + pointsDecayFactor > t) {
-            temp = timeArrayOfArray[_itemId][i];
-            temp = temp - t;
-            temp = temp + pointsDecayFactor;
-            temp = temp.mul(pointArrayOfArray[_itemId][i]);
-            temp = temp.div(pointsDecayFactor);
-            _getPoint = temp.add(_getPoint);
-        }
+  function itemsForSaleLimit (uint256 _from, uint256 _take) public view returns (uint256[] _items) {
+    uint256[] memory items = new uint256[](_take);
+
+    for (uint256 i = 0; i < _take; i++) {
+      items[i] = listedItems[_from + i];
     }
-    
-    return _getPoint;
-  }
 
-  function allOf (uint256 _itemId) public view returns (address _owner, string _itemName, string _itemDesc, string _itemURL, uint256[] _pointArray, uint256[] _timeArray, uint256 _curPoint) {
-    return (ownerOf(_itemId), nameOf(_itemId), descOf(_itemId), URLOf(_itemId), pointArrayOf(_itemId), timeArrayOf(_itemId), getPointOf(_itemId));
-  }
-  
-  function getAllDapps () public view returns (address[] _owners, bytes32[] _itemNames, bytes32[] _itemDescs, bytes32[] _itemURL, uint256[] _points, uint256[] _initTime, uint256[] _lastTime) {
-      _owners = new address[](itemIdCounter);
-      _itemNames = new bytes32[](itemIdCounter);
-      _itemDescs = new bytes32[](itemIdCounter);
-      _itemURL = new bytes32[](itemIdCounter);
-      _points = new uint256[](itemIdCounter);
-      _initTime = new uint256[](itemIdCounter);
-      _lastTime = new uint256[](itemIdCounter);
-      for (uint256 i = 0; i < itemIdCounter; i++) {
-          _owners[i] = ownerOf(i);
-          _itemNames[i] = stringToBytes32(nameOf(i));
-          _itemDescs[i] = stringToBytes32(descOf(i));
-          _itemURL[i] = stringToBytes32(URLOf(i));
-          _points[i] = getPointOf(i);
-          _initTime[i] = initTimeOf(i);
-          _lastTime[i] = timeOf(i);
-      }
-      return (_owners, _itemNames, _itemDescs, _itemURL, _points, _initTime, _lastTime);
+    return items;
   }
 
   /* Util */
@@ -348,15 +361,10 @@ contract ItemToken {
     assembly { size := extcodesize(addr) } // solium-disable-line
     return size > 0;
   }
-  
-  function stringToBytes32(string memory source) returns (bytes32 result) {
-        bytes memory tempEmptyStringTest = bytes(source);
-        if (tempEmptyStringTest.length == 0) {
-            return 0x0;
-        }
-    
-        assembly {
-            result := mload(add(source, 32))
-        }
-    }
+}
+
+interface IItemRegistry {
+  function itemsForSaleLimit (uint256 _from, uint256 _take) public view returns (uint256[] _items);
+  function ownerOf (uint256 _itemId) public view returns (address _owner);
+  function priceOf (uint256 _itemId) public view returns (uint256 _price);
 }
