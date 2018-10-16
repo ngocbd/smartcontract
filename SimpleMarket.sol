@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleMarket at 0xf97ee81b6fa1f9de273e8cd37abc361cf4a4d74e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleMarket at 0x291a1b4ba9e936741d5cb185ad74fa9a32d048d8
 */
 pragma solidity ^0.4.19;
 
@@ -11,10 +11,30 @@ contract owned {
 }
 
 contract WithdrawalContract is owned {
-
+    address public richest;
+    uint public mostSent;
+    mapping (address => uint) pendingWithdrawals;
+    function WithdrawalContract() public payable {
+        richest = msg.sender;
+        mostSent = msg.value;
+    }
+    function becomeRichest() public payable returns (bool) {
+        if (msg.value > mostSent) {
+            pendingWithdrawals[richest] += msg.value;
+            richest = msg.sender;
+            mostSent = msg.value;
+            return true;
+        } else {
+            return false;
+        }
+    }
     function withdraw() public onlyOwner {
-        uint amount = address(this).balance;
+        uint amount = pendingWithdrawals[msg.sender];
+        pendingWithdrawals[msg.sender] = 0;
         msg.sender.transfer(amount);
+    }
+    function setMostSent(uint _newMostSent) public onlyOwner {
+        mostSent = _newMostSent;
     }
 }
 
@@ -118,7 +138,7 @@ contract SimpleMarket is owned, WithdrawalContract {
 		userStructs[userId].userEmail       = _userEmail;
 		userStructs[userId].userName        = _userName;
 
-		emit LogNewUser(msg.sender, userId);
+		LogNewUser(msg.sender, userId);
 	}
 
 	function createProduct(bytes32 _size, string delivery, bytes32 _userName, bytes32 _userEmail) public payable returns(bool success) {
@@ -154,11 +174,11 @@ contract SimpleMarket is owned, WithdrawalContract {
 		
 		userStructs[userId].productKeyPointers[productId] = userStructs[userId].productKeys.push(productId) - 1;
 		
-		emit LogNewProduct(msg.sender, productId, userId);
+		LogNewProduct(msg.sender, productId, userId);
 		
 		uint oddMoney = msg.value - startPrice;
 
-        address(this).transfer(startPrice);
+        this.transfer(startPrice);
         uint countProduct = getProductCount();
         startPrice        = ((countProduct * fixPrice) + fixPrice) * 10 ** decimals;
 
@@ -182,7 +202,7 @@ contract SimpleMarket is owned, WithdrawalContract {
 
 		userList.length--;
 
-		emit LogUserDeleted(msg.sender, userId);
+		LogUserDeleted(msg.sender, userId);
 
 		return true;
 	}
@@ -208,7 +228,7 @@ contract SimpleMarket is owned, WithdrawalContract {
 		
 		userStructs[userId].productKeys.length--;
 		
-		emit LogProductDeleted(msg.sender, _productId);
+		LogProductDeleted(msg.sender, _productId);
 		uint countProduct = getProductCount();
 		productId = bytes32(countProduct - 1);
 		
@@ -264,7 +284,7 @@ contract SimpleMarket is owned, WithdrawalContract {
 		delete userStructs[_oldOwner].productKeys[userStructs[_oldOwner].productKeys.length-1];
         userStructs[_oldOwner].productKeys.length--;
 		
-		address(this).transfer(msg.value);
+		this.transfer(msg.value);
 		oldOwner.transfer(msg.value);
 
 	    return true;
