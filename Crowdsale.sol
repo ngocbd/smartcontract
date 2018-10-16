@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x84c91efa4bfe61907edf6a7fc9e5515e55b1c703
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x95c4963e7017b2583282aa98d6af4a391ff6d96a
 */
 pragma solidity ^0.4.13;
 
