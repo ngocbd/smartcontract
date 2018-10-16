@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOJC at 0x31ff7cd977516062cda99c56616f03073a678545
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOJC at 0xda36819cfa6167ab5d7932aa8a7852b377a15ab9
 */
 pragma solidity ^0.4.21;
 
@@ -29,10 +29,10 @@ contract DOJC {
      */
     function DOJC(
     ) public {
-        totalSupply = 500000000000000000000000000000000;                             // Update total supply with the decimal amount
-        balanceOf[msg.sender] = 500000000000000000000000000000000;                   // Give the creator all initial tokens
-        name = "Dojomentar";                                                     // Set the name for display purposes
-        symbol = "DOJC";                                                        // Set the symbol for display purposes
+        totalSupply = 500000000000000000000000000000000;                                        // Total supply with the decimal amount
+        balanceOf[msg.sender] = 500000000000000000000000000000000;                              // Give the creator all initial tokens
+        name = "Dojomentar";                                                                  // Name for display purposes
+        symbol = "DOJC";                                                                        // Symbol for display purposes
     }
 
     /**
