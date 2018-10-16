@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xa199f67444e0af1150aecc025242d385ebc37247
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xd53dc13a51aaa46c1e7230a4adf06a89fd5a9eac
 */
 pragma solidity ^0.4.11;
+
 
 /**
  * @title SafeMath
@@ -33,6 +34,7 @@ library SafeMath {
   }
 }
 
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -44,7 +46,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -59,7 +60,7 @@ contract ERC20 is ERC20Basic {
 
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
+ * @dev Basic version of StandardToken, with no allowances. 
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -83,7 +84,7 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
+  * @param _owner The address to query the the balance of. 
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -91,7 +92,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
 /**
  * @title Standard ERC20 token
  *
@@ -152,7 +152,7 @@ contract StandardToken is ERC20, BasicToken {
   function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
-
+  
   /**
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until 
@@ -188,11 +188,11 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract SimpleToken is StandardToken {
 
-  string public constant name = "DCOIN";
-  string public constant symbol = "DCJ";
-  uint8 public constant decimals = 18;
+  string public constant name = "DAZ";
+  string public constant symbol = "DAZ$";
+  uint8 public constant decimals = 6;
 
-  uint256 public constant INITIAL_SUPPLY = 2000000000 * 1000000000000000000;
+  uint256 public constant INITIAL_SUPPLY = 90600000000;
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
