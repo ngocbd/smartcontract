@@ -1,55 +1,83 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleTokenCoin at 0x21d6c16db26c955229e749be34b4445529782632
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleTokenCoin at 0x54529a070b8950c82279bb8df0b416a824ed3858
 */
 pragma solidity ^0.4.18;
 
+contract Ownable {
+    
+    address public owner;
+    
+    function Ownable() public {
+        owner = msg.sender;
+    }
 
-contract SimpleTokenCoin {
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        owner = newOwner;
+    }
     
-    string public constant name = "ADVERTISING TOKEN";
+}
+
+contract SimpleTokenCoin is Ownable {
     
-    string public constant symbol = "ADT";
+    string public constant name = "Vozik coin";
+    
+    string public constant symbol = "VZC";
     
     uint32 public constant decimals = 18;
     
-    uint public totalSupply = 0;
+    uint public totalSupply = 1000000;
     
     mapping (address => uint) balances;
+    
+    mapping (address => mapping(address => uint)) allowed;
+    
+    function mint(address _to, uint _value) public onlyOwner {
+        assert(totalSupply + _value >= totalSupply && balances[_to] + _value >= balances[_to]);
+        balances[_to] += _value;
+        totalSupply += _value;
+    }
     
     function balanceOf(address _owner) public constant returns (uint balance) {
         return balances[_owner];
     }
 
     function transfer(address _to, uint _value) public returns (bool success) {
-        return true;
-    }
-    
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-        return true; 
-    }
-    
-    function approve(address _spender, uint _value) public returns (bool success) {
+        if(balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
+            balances[msg.sender] -= _value; 
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } 
         return false;
     }
     
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
+        if( allowed[_from][msg.sender] >= _value &&
+            balances[_from] >= _value 
+            && balances[_to] + _value >= balances[_to]) {
+            allowed[_from][msg.sender] -= _value;
+            balances[_from] -= _value; 
+            balances[_to] += _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } 
+        return false;
+    }
+    
+    function approve(address _spender, uint _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
     function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-        return 0;
+        return allowed[_owner][_spender];
     }
-    
-    function mint() public returns (bool success) {
-        balances[msg.sender] += 1;
-        return true;    
-    }
-    
-    function airdrop(address[] _recepients) public returns (bool success) {
-        var length = _recepients.length;
-        for(uint i = 0; i < length; i++){
-            balances[_recepients[i]] = 777777777777777777;
-            Transfer(msg.sender, _recepients[i],777777777777777777);
-        }
-        return true;    
-    }
- 
     
     event Transfer(address indexed _from, address indexed _to, uint _value);
     
