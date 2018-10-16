@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterExtensions at 0x4a0077968c8d2339b2f871d3d005eed0c3fec601
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterExtensions at 0x34081844396b80130190ce40a303a44da64dee92
 */
 pragma solidity ^0.4.18;
 
@@ -30,8 +30,8 @@ contract IOwned {
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
-    function changeOwner(address _newOwner) public;
 }
+
 
 
 
@@ -41,6 +41,7 @@ contract IOwned {
 contract IBancorQuickConverter {
     function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
     function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
+    function convertForPrioritized(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for, uint256 _block, uint256 _nonce, uint8 _v, bytes32 _r, bytes32 _s) public payable returns (uint256);
 }
 
 
@@ -49,6 +50,7 @@ contract IBancorQuickConverter {
 */
 contract IBancorGasPriceLimit {
     function gasPrice() public view returns (uint256) {}
+    function validateGasPrice(uint256) public view;
 }
 
 
@@ -58,6 +60,7 @@ contract IBancorGasPriceLimit {
 contract IBancorFormula {
     function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
     function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
+    function calculateCrossConnectorReturn(uint256 _connector1Balance, uint32 _connector1Weight, uint256 _connector2Balance, uint32 _connector2Weight, uint256 _amount) public view returns (uint256);
 }
 
 
@@ -89,7 +92,7 @@ contract Owned is IOwned {
     /**
         @dev constructor
     */
-    function Owned() public {
+    constructor () public {
         owner = msg.sender;
     }
 
@@ -116,13 +119,9 @@ contract Owned is IOwned {
     */
     function acceptOwnership() public {
         require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
+        emit OwnerUpdate(owner, newOwner);
         owner = newOwner;
         newOwner = address(0);
-    }
-
-    function changeOwner(address _newOwner) public ownerOnly {
-      owner = _newOwner;
     }
 }
 
@@ -132,11 +131,6 @@ contract Owned is IOwned {
     Utilities & Common Modifiers
 */
 contract Utils {
-    /**
-        constructor
-    */
-    function Utils() public {
-    }
 
     // verifies that an amount is greater than zero
     modifier greaterThanZero(uint256 _amount) {
@@ -221,11 +215,6 @@ contract ITokenHolder is IOwned {
     the owner to send tokens that were sent to the contract by mistake back to their sender.
 */
 contract TokenHolder is ITokenHolder, Owned, Utils {
-    /**
-        @dev constructor
-    */
-    function TokenHolder() public {
-    }
 
     /**
         @dev withdraws tokens held by the contract and sends them to an account
