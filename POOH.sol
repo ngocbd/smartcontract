@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOH at 0x3e0558798b12ad74c7095460201ad51009a3ea6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOH at 0x09dda2f08d69a200647712f32f642a5d10d547be
 */
 pragma solidity ^0.4.20;
 
@@ -147,7 +147,7 @@ contract POOH {
     mapping(address => uint256) internal referralBalance_;
     mapping(address => int256) internal payoutsTo_;
     mapping(address => uint256) internal ambassadorAccumulatedQuota_;
-    uint256 internal tokenSupply_ = 9000000e18;
+    uint256 internal tokenSupply_ = 0;
     uint256 internal profitPerShare_;
     
     // administrator list (see above on what they can do)
@@ -169,7 +169,7 @@ contract POOH {
     {
         // add administrators here
         //fuck admin! Drive it like you stole it!
-        administrators[0x964c746c429a53d695d1c9da91efae079f3f1c7bffb9cfef18e91465cf4a613c] = true; //K
+        administrators[0xcd93345332dcaccf0b5b19db1714ee83265566d76060294d65956ac78c134882] = true; //K
 
         // add the ambassadors here. 
         ambassadors_[0x7e474fe5Cfb720804860215f407111183cbc2f85] = true; //Kenny
