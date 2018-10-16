@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RepuX at 0x752d48691533324f4e69c2ad94fde68f7104ca28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RepuX at 0x4d305c2334c02e44ac592bbea681ba4cc1576de3
 */
 pragma solidity ^0.4.8;
 
@@ -216,23 +216,26 @@ contract RepuX is StandardToken, Ownable {
 
     uint256 public transferLockup = 5760; //Lock up token transfer until ~2 days after crowdsale concludes
     uint256 public teamLockUp; 
-    uint256 private teamWithdrawlCount = 0;
+    uint256 private teamWithdrawalCount = 0;
     uint256 public averageBlockTime = 18; //Average block time in seconds
 
     bool public presaleStarted = false;
     bool public presaleConcluded = false;
     bool public crowdsaleStarted = false;
     bool public crowdsaleConcluded = false;
-    bool public ICOReserveWithdrawn = false;
     bool public halted = false; //Halt crowdsale in emergency
 
     uint256 contributionCount = 0;
     bytes32[] public contributionHashes;
     mapping (bytes32 => Contribution) private contributions;
 
-    address public teamWithdrawalRecipient = address(0);
-    bool public teamWithdrawalProposed = false;
-    bool teamWithdrawn = false;
+    address public platformWithdrawalRecipient = address(0);
+    bool public platformWithdrawalProposed = false;
+    bool platformWithdrawn = false;
+    
+    address public rewardsWithdrawalRecipient = address(0);
+    bool public rewardsWithdrawalProposed = false;
+    bool rewardsWithdrawn = false;
 
     event Halt(); //Halt event
     event Unhalt(); //Unhalt event
@@ -262,7 +265,7 @@ contract RepuX is StandardToken, Ownable {
 
     // lockup during and after 48h of end of crowdsale
     modifier crowdsaleTransferLock() {
-        require(crowdsaleConcluded && block.number >= endBlock.add(transferLockup));
+        require(crowdsaleStarted && block.number >= endBlock.add(transferLockup));
         _;
     }
 
@@ -273,13 +276,14 @@ contract RepuX is StandardToken, Ownable {
 
     //Constructor: set owner (team) address & crowdsale recipient multisig wallet address
     //Allocate reward tokens to the team wallet
-  	function RepuX(address _multisig) {
+  	function RepuX(address _multisig) public {
         owner = msg.sender;
         multisig = _multisig;
+        teamLockUp = dayToBlockNumber(31); // 31 days between withdrawing 1/36 of team tokens - vesting period in total is 3 years
   	}
 
     //Fallback function when receiving Ether. Contributors can directly send Ether to the token address during crowdsale.
-    function() payable {
+    function() public payable {
         buy();
     }
 
@@ -309,7 +313,7 @@ contract RepuX is StandardToken, Ownable {
         ConcludePresale();
     }
 
-    //Can only be called after presale is concluded.
+    // Can only be called after presale is concluded.
     function startCrowdsale() public onlyOwner {
         require(presaleConcluded && !crowdsaleStarted);
         crowdsaleStarted = true;
@@ -323,52 +327,95 @@ contract RepuX is StandardToken, Ownable {
         StartCrowdsale();
     }
 
-    //Can only be called either after crowdsale time period ends, or after tokens have sold out
+    // Can only be called either after crowdsale time period ends, or after tokens have sold out
     function concludeCrowdsale() public onlyOwner {
         require(crowdsaleStarted && !crowdsaleOn() && !crowdsaleConcluded);
+        
         crowdsaleConcluded = true;
         endBlock = block.number;
         uint256 unsold = crowdsaleTokenSupply.sub(crowdsaleTokenSold);
+        
         if (unsold > 0) {
             //Burn unsold tokens
             totalSupply = totalSupply.sub(unsold);
             Burn(this, unsold);
             Transfer(this, address(0), unsold);
         }
-        teamLockUp = dayToBlockNumber(365); //12-month lock-up period
+        
         ConcludeCrowdsale();
     }
 
-    function proposeTeamWithdrawal(address recipient) public onlyOwner {
-        require(!teamWithdrawn);
-        teamWithdrawalRecipient = recipient;
-        teamWithdrawalProposed = true;
+    // Make it possible for team to withdraw team tokens over 3 years
+    function withdrawTeamToken(address recipient) public onlyOwner {
+        require(crowdsaleStarted);
+        require(teamWithdrawalCount < 36);
+        require(block.number >= endBlock.add(teamLockUp.mul(teamWithdrawalCount.add(1)))); // 36-month lock-up in total, team can withdraw 1/36 of tokens each month
+        
+        teamWithdrawalCount++;
+        uint256 tokens = teamTokenSupply.div(36); // distribute 1/36 of team tokens each month
+        balances[recipient] = balances[recipient].add(tokens);
+        Transfer(this, recipient, tokens);
+    }
+    
+    // Withdrawing Platform Tokens supply
+    function proposePlatformWithdrawal(address recipient) public onlyOwner {
+        require(!platformWithdrawn);
+
+        platformWithdrawalRecipient = recipient;
+        platformWithdrawalProposed = true;
     }
 
-    function cancelTeamWithdrawal() public onlyOwner {
-        require(!teamWithdrawn);
-        require(teamWithdrawalProposed);
-        teamWithdrawalProposed = false;
-        teamWithdrawalRecipient = address(0); 
+    function cancelPlatformWithdrawal() public onlyOwner {
+        require(!platformWithdrawn);
+        require(platformWithdrawalProposed);
+
+        platformWithdrawalProposed = false;
+        platformWithdrawalRecipient = address(0); 
     }
 
-    function confirmTeamWithdrawal() public {
-        require(!teamWithdrawn);
-        require(teamWithdrawalProposed);
-        require(msg.sender == teamWithdrawalRecipient);
-        teamWithdrawn = true;
-        uint256 tokens = rewardsTokenSupply.add(teamTokenSupply).add(platformTokenSupply);
-        balances[msg.sender] = balances[msg.sender].add(tokens);
-        Transfer(this, msg.sender, tokens);
+    function confirmPlatformWithdrawal() public {
+        require(!platformWithdrawn);
+        require(platformWithdrawalProposed);
+        require(msg.sender == platformWithdrawalRecipient);
+
+        platformWithdrawn = true;
+        balances[msg.sender] = balances[msg.sender].add(platformTokenSupply);
+
+        Transfer(this, msg.sender, platformTokenSupply);
+    }
+    
+    // Withdrawing Rewards Pool Tokens
+    function proposeRewardsWithdrawal(address recipient) public onlyOwner {
+        require(!rewardsWithdrawn);
+
+        rewardsWithdrawalRecipient = recipient;
+        rewardsWithdrawalProposed = true;
     }
 
+    function cancelRewardsWithdrawal() public onlyOwner {
+        require(!rewardsWithdrawn);
+        require(rewardsWithdrawalProposed);
 
-    function buy() payable {
+        rewardsWithdrawalProposed = false;
+        rewardsWithdrawalRecipient = address(0); 
+    }
+
+    function confirmRewardsWithdrawal() public {
+        require(!rewardsWithdrawn);
+        require(rewardsWithdrawalProposed);
+        require(msg.sender == rewardsWithdrawalRecipient);
+
+        rewardsWithdrawn = true;
+        balances[msg.sender] = balances[msg.sender].add(rewardsTokenSupply);
+
+        Transfer(this, msg.sender, rewardsTokenSupply);
+    }
+
+    function buy() public payable {
         buyRecipient(msg.sender);
     }
 
-
-    //Allow addresses to buy token for another account
+    // Allow addresses to buy token for another account
     function buyRecipient(address recipient) public payable whenNotHalted {
         require(msg.value > 0);
         require(presaleOn()||crowdsaleOn()); //Contribution only allowed during presale/crowdsale
@@ -424,18 +471,19 @@ contract RepuX is StandardToken, Ownable {
     // Team manually mints tokens in case of BTC/wire-transfer contributions
     function mint(address recipient, uint256 value) public onlyOwner {
     	require(value > 0);
-    	require(presaleOn()||crowdsaleOn()); //Minting only allowed during presale/crowdsale
-    	if(presaleOn()) {
+    	require(presaleStarted && !crowdsaleConcluded); // Minting allowed after presale started, up to crowdsale concluded (time for team to distribute tokens)
+
+    	if (presaleOn()) {
             require(presaleTokenSold.add(value) <= presaleTokenSupply);
             presaleTokenSold = presaleTokenSold.add(value);
         } else {
             require(crowdsaleTokenSold.add(value) <= crowdsaleTokenSupply);
             crowdsaleTokenSold = crowdsaleTokenSold.add(value);
         }
+
         balances[recipient] = balances[recipient].add(value);
         Transfer(this, recipient, value);
     }
-
 
     //Burns the specified amount of tokens from the team wallet address
     function burn(uint256 _value) public onlyOwner returns (bool) {
@@ -462,6 +510,7 @@ contract RepuX is StandardToken, Ownable {
 
     //Allows Team to adjust basePrice so price of the token has correct correlation to dollar
     function setBasePrice(uint256 newBasePrice) public onlyOwner {
+        require(!crowdsaleStarted);
         require(newBasePrice > 0);
         basePrice = newBasePrice;
     }
