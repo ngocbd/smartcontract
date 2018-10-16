@@ -1,25 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xfa1a95e1f2922c0652f159a1922379d712aa7953
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x5e211d556907edbfee7d05f278c2b2fa5b6a5f16
 */
-// 0.4.21+commit.dfe3193c.Emscripten.clang
 pragma solidity ^0.4.21;
 
-// assume ERC20 or compatible token
-interface ERC20 {
-  function transfer( address to, uint256 value ) external;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
+ */
+contract Ownable {
+  address public owner;
+
+  function Ownable() {
+    owner = msg.sender;
+  }
+ 
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      revert();
+    }
+    _;
+  }
+ 
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
 }
 
-contract Airdropper {
+contract ERC20Basic {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
+}
+ 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
 
-  // NOTE: be careful about array size and block gas limit. check ethstats.net
-  function airdrop( address tokAddr,
-                    address[] dests,
-                    uint[] quantities ) public returns (uint) {
+contract Airdropper is Ownable {
 
-    for (uint ii = 0; ii < dests.length; ii++) {
-      ERC20(tokAddr).transfer( dests[ii], quantities[ii] );
+    function multisend(address _tokenAddr, address[] dests, uint256[] values)
+    onlyOwner
+    returns (uint256) {
+        uint256 i = 0;
+        while (i < dests.length) {
+           ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           i += 1;
+        }
+        return(i);
     }
-
-    return ii;
-  }
 }
