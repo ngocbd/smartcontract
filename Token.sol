@@ -1,86 +1,49 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6ae17842e93dd8079070c6af2dfd759616fc54a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xeE741Ea3DF16526a3836591cD57A8f97cEe80938
 */
-pragma solidity ^0.4.11;
- 
 contract Token {
-    string public symbol = "";
-    string public name = "";
-    uint8 public constant decimals = 18;
-    uint256 _totalSupply = 0;
-    address owner = 0;
-    bool setupDone = false;
-	
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- 
-    mapping(address => uint256) balances;
- 
-    mapping(address => mapping (address => uint256)) allowed;
- 
-    function Token(address adr) {
-		owner = adr;        
+    /* Public variables of the token */
+    string public standard = 'onGCOIN';
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public initialSupply;
+
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+  
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function Token() {
+
+         initialSupply = 300000000;
+         name ="onGCoin";
+        decimals = 8;
+         symbol = "onGC";
+        
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        uint256 totalSupply = initialSupply;                        // Update total supply
+                                   
     }
-	
-	function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
-	{
-		if (msg.sender == owner && setupDone == false)
-		{
-			symbol = tokenSymbol;
-			name = tokenName;
-			_totalSupply = tokenSupply * 1000000000000000000;
-			balances[owner] = _totalSupply;
-			setupDone = true;
-		}
-	}
- 
-    function totalSupply() constant returns (uint256 totalSupply) {        
-		return _totalSupply;
+
+    /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+      
     }
- 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
- 
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-        if (balances[msg.sender] >= _amount 
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) returns (bool success) {
-        if (balances[_from] >= _amount
-            && allowed[_from][msg.sender] >= _amount
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function approve(address _spender, uint256 _amount) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
-    }
- 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+
+   
+
+    
+
+   
+
+    /* This unnamed function is called whenever someone tries to send ether to it */
+    function () {
+        throw;     // Prevents accidental sending of ether
     }
 }
