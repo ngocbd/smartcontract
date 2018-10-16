@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherArk at 0x330C9E999a3885ad04a8CE70CF5A826E029FC3CB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherArk at 0xf834faa2b38e807e7cf05e35b799a151c8ccd35f
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  * @title Ownable
@@ -13,7 +13,7 @@ contract Ownable {
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -31,25 +31,25 @@ contract Ownable {
 }
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -58,8 +58,8 @@ library SafeMath {
 
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -68,22 +68,22 @@ contract BasicToken is ERC20Basic {
 
   mapping(address => uint256) balances;
 
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
   }
 }
 
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
@@ -91,7 +91,7 @@ contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) allowed;
 
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
 
     var _allowance = allowed[_from][msg.sender];
 
@@ -102,7 +102,7 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
-  function approve(address _spender, uint256 _value) returns (bool) {
+  function approve(address _spender, uint256 _value) public returns (bool) {
     require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
     allowed[msg.sender][_spender] = _value;
@@ -110,17 +110,17 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
-  function increaseApproval (address _spender, uint _addedValue) returns (bool success) {
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue) returns (bool success) {
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -139,17 +139,17 @@ contract EtherArk is StandardToken, Ownable {
   string public constant symbol = "EARK";
   uint8 public constant decimals = 8;
 
-  uint256 public constant INITIAL_SUPPLY = 125 * 10**6 * 10**8;
+  uint256 public constant INITIAL_SUPPLY = 125 * 10**6 * (10 ** uint256(decimals));
 
-  function EtherArk() {
+  function EtherArk() public {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
 
-  function airdrop(uint256 amount, address[] addresses) onlyOwner {
+  function airdrop(uint256 amount, address[] addresses) onlyOwner public {
     for (uint i = 0; i < addresses.length; i++) {
-      balances[owner].sub(amount);
-      balances[addresses[i]].add(amount);
+      balances[owner] = balances[owner].sub(amount);
+      balances[addresses[i]] = balances[addresses[i]].add(amount);
       Transfer(owner, addresses[i], amount);
     }
   }
