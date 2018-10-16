@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsightsNetworkContributions at 0xbd42e065f63c3a79b0de9b59b6a9ae62e17dda58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsightsNetworkContributions at 0x97ec9bfb0f6672c358620615a1e4de0348aea05c
 */
 pragma solidity ^0.4.18;
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -42,6 +44,8 @@ contract Ownable {
   }
 
 }
+
+// File: contracts/InsightsNetworkContributions.sol
 
 contract InsightsNetworkContributions is Ownable {
 
