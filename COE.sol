@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0x0091e27b9ef50427ad431be70dc441f9f6639d78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0xc7F1c3500496771B2Ef4e17aD10624131adE5Cd9
 */
+pragma solidity ^0.4.21;
+
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
 }
@@ -11,14 +13,13 @@ contract COE {
     uint8 public decimals = 18;
     string public symbol = "COE";
 
-
     address public _owner;
+    address public _premine = 0x76D05E325973D7693Bb854ED258431aC7DBBeDc3;
     address public _dev = 0xC96CfB18C39DC02FBa229B6EA698b1AD5576DF4c;
     address public _devFeesAddr;
     uint256 public _tokePerEth = 177000000000000000;
     bool public _coldStorage = true;
     bool public _receiveEth = true;
-
     // fees vars - added for future extensibility purposes only
     bool _feesEnabled = false;
     bool _payFees = false;
@@ -50,8 +51,8 @@ contract COE {
     }
 
     function preMine() internal {
-        balances[_owner] = 32664750000000000000000;
-        Transfer(this, _owner, 32664750000000000000000);
+        balances[_premine] = 32664750000000000000000;
+        Transfer(this, _premine, 32664750000000000000000);
         _totalSupply = sub(_totalSupply, 32664750000000000000000);
         _circulatingSupply = add(_circulatingSupply, 32664750000000000000000);
     }
@@ -140,7 +141,7 @@ contract COE {
     // fallback to receive ETH into contract and send tokens back based on current exchange rate
     function () payable public {
         require((msg.value > 0) && (_receiveEth));
-        uint256 _tokens = mul(div(msg.value, 1 ether),_tokePerEth);
+        uint256 _tokens = div(mul(msg.value,_tokePerEth), 1 ether);
         require(_totalSupply >= _tokens);//, "Insufficient tokens available at current exchange rate");
         _totalSupply = sub(_totalSupply, _tokens);
         balances[msg.sender] = add(balances[msg.sender], _tokens);
