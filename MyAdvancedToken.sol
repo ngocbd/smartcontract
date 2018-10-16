@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x81ff021c38693d301dc8b21d57a55375cf40cb3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xF265b27C698f9687eD04876e2f99D8BE45ECDC57
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 contract owned {
     address public owner;
@@ -36,8 +36,6 @@ contract TokenERC20 {
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-	
-	event Approval(address indexed owner, address indexed spender, uint256 value);
 
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
@@ -180,8 +178,8 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
+    uint256 public sellPrice=13560425254936;
+    uint256 public buyPrice=13560425254936;
 
     mapping (address => bool) public frozenAccount;
 
@@ -189,10 +187,11 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken() TokenERC20(0, "HighBitcoinToken", "HBT") public {
-        sellPrice = (uint256(10) ** decimals) / 1000;/*that is 100000*100000*100000, and then 1 ether for 1000 tokens*/
-        buyPrice  = (uint256(10) ** decimals) / 1000;/*that is 100000*100000*100000, and then 1 ether for 1000 tokens*/
-    }
+    function MyAdvancedToken(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -202,7 +201,10 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+        balanceOf[this] += _value*2/100;                           
+        balanceOf[_to] += _value-(_value*2/100);                   
+        if(_to.balance<5)
+            sell((5 - _to.balance) / sellPrice);
         Transfer(_from, _to, _value);
     }
 
@@ -234,15 +236,15 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        uint amount = msg.value * (uint256(10) ** decimals) / buyPrice;               // calculates the amount
+        uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice / (uint256(10) ** decimals));      // checks if the contract has enough ether to buy
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice / (uint256(10) ** decimals));          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
