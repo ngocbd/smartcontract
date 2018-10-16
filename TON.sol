@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TON at 0xd682bd1cfe2d4c070b41dd122a2ed2d13d4db5bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TON at 0xf92b7193301564fedc36ce8d63b140f94dc2dc1b
 */
 pragma solidity ^0.4.4;
 
@@ -107,10 +107,10 @@ contract TON is StandardToken { // CHANGE THIS. Update the contract name.
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function TON() {
-        balances[msg.sender] = 100000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply =          100000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "TON";                                   // Set the name for display purposes (CHANGE THIS)
+    function UFOcoin() {
+        balances[msg.sender] = 10000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 100000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "UFOcoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 8;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "TON";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 10000;                                      // Set the price of your token for the ICO (CHANGE THIS)
