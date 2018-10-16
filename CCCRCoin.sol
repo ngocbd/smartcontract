@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCRCoin at 0x8adc26af51744ca3ead5f2b1a5fe0a6ac1c09393
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCRCoin at 0x158fa3be7111b51f72e16938813bb84fa3246247
 */
 pragma solidity ^0.4.16;
 
@@ -110,14 +110,10 @@ contract BasicToken is ERC20Basic, Pausable {
   address public saleAddress;
 
   mapping(address => uint256) balances;
-  mapping(address => bool) holdTimeBool;
-  mapping(address => uint256) holdTime;
+  mapping(address => uint256) public holdTime;
 
     modifier finishHold() {
-        if (holdTime[msg.sender] >= block.timestamp) {
-            holdTimeBool[msg.sender] = true;
-        }
-        require(holdTimeBool[msg.sender] == false);
+        require(holdTime[msg.sender] <= block.timestamp);
         _;
      }
 
@@ -234,8 +230,8 @@ contract CCCRCoin is StandardToken {
         balances[0x911af73f46c16f0682c707fdc46b3e5a9b756dfc] = 2413068000600;
         Transfer(this, 0x911af73f46c16f0682c707fdc46b3e5a9b756dfc, 2413068000600);
 
-        balances[0x2cec090622838aa3abadd176290dea1bbd506466] = 1500558055700;
-        Transfer(this, 0x2cec090622838aa3abadd176290dea1bbd506466, 1500558055700);
+        balances[0x2cec090622838aa3abadd176290dea1bbd506466] = 150055805570;
+        Transfer(this, 0x2cec090622838aa3abadd176290dea1bbd506466, 150055805570);
 
         balances[0xf023fa938d0fed67e944b3df2efaa344c7a9bfb1] = 966000000400;
         Transfer(this, 0xf023fa938d0fed67e944b3df2efaa344c7a9bfb1, 966000000400);
