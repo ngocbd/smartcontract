@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BWService at 0x8dd65feaf6b1d2c3bd66a8b195f94b7abe357199
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BWService at 0x2b684e8905a850a91f5eea913a19dae3926a6703
 */
 pragma solidity ^0.4.21;
 
@@ -316,6 +316,7 @@ contract BWData {
     }
 }
 
+
 interface ERC20I {
     function transfer(address _recipient, uint256 _amount) external returns (bool);
     function balanceOf(address _holder) external view returns (uint256);
@@ -486,8 +487,8 @@ contract BWService {
         require(totalAttackAmount + totalDefendAmount > totalAttackAmount && totalAttackAmount + totalDefendAmount > totalDefendAmount); // Prevent overflow
 
         // Verify that attack odds are within allowed range.
-        require(_attackAmount / 10 <= blockValue); // Disallow attacks with more than 1000% of defendAmount
-        require(_attackAmount >= blockValue / 10); // Disallow attacks with less than 10% of defendAmount
+        require(totalAttackAmount / 10 <= blockValue); // Disallow attacks with more than 1000% of defendAmount
+        require(totalAttackAmount >= blockValue / 10); // Disallow attacks with less than 10% of defendAmount
 
         // The battle considers boosts.
         uint attackRoll = random(totalAttackAmount + totalDefendAmount); // This is where the excitement happens!
