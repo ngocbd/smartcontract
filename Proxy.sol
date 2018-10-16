@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proxy at 0x12de960e7c6f3ef095251b6b1a7fc39906c384d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proxy at 0x129e27fF40db79B7A395d123413A815E38832E74
 */
 /*
 -----------------------------------------------------------------
@@ -90,7 +90,7 @@ underlying target contract.
 */
 
 contract Proxy is Owned {
-    Proxyable public target;
+    Proxyable target;
 
     function Proxy(Proxyable _target, address _owner)
         Owned(_owner)
