@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x302fE87B56330BE266599FAB2A54747299B5aC5B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x55190829f2B43323b61421b36d6bD1c5b85D1297
 */
 contract BTCRelay {
     function getLastBlockHeight() returns (int);
@@ -156,11 +156,6 @@ contract Lottery {
         return this.balance - numTickets * TICKET_PRICE;
     }
 
-    function checkDepth(uint n) constant returns (bool) {
-        if (n == 0) return true;
-        return checkDepth(n - 1);
-    }
-
     function payoutReady() constant returns (bool) {
         return decidingBlock <= btcRelay.getLastBlockHeight();
     }
@@ -169,7 +164,6 @@ contract Lottery {
         if (!payoutReady()) throw;
         if (getOperatingBudget() < 1 ether) throw;
         if (numTickets == 0) throw;
-        if (!checkDepth(8)) throw;
 
         var (walkingDone, blockHash) = walkTowardsBlock();
         if (!walkingDone) return false;
