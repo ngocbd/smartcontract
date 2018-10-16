@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Campaign at 0xbd6bfb97124bce7cab703e6aa6968706c5f0feea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Campaign at 0x8702b8d7a1eefec7e54636e26a9323dc96a8dc25
 */
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.10;
 
 /*
-    Copyright 2017, Jordi Baylina
+    Copyright 2016, Jordi Baylina
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,13 +20,16 @@ pragma solidity ^0.4.6;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// @title MilestoneTracker Contract
+/// @title MiniMeToken Contract
 /// @author Jordi Baylina
-/// @dev This contract controls the issuance of tokens for the MiniMe Token
-///  Contract. This version specifically acts as a Campaign manager for raising
-///  funds for non-profit causes, but it can be customized for any variety of
-///  purposes.
+/// @dev This token contract's goal is to make it easy for anyone to clone this
+///  token using the token distribution at a given block, this will allow DAO's
+///  and DApps to upgrade their features in a decentralized manner without
+///  affecting the original token
+/// @dev It is ERC20 compliant, but still needs to under go further testing.
 
+
+/// @dev The token controller contract must implement these functions
 contract TokenController {
     /// @notice Called when `_owner` sends ether to the MiniMe Token contract
     /// @param _owner The address that sent the ether to create tokens
@@ -593,30 +596,32 @@ contract MiniMeTokenFactory {
 }
 
 
-/// @dev `Owned` is a base level contract that assigns an `owner` that can be
-///  later changed
+
 contract Owned {
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
+    /// Prevents methods from perfoming any value transfer
+    modifier noEther() {if (msg.value > 0) throw; _; }
+    /// Allows only the owner to call a function
     modifier onlyOwner { if (msg.sender != owner) throw; _; }
 
-    address public owner;
+    address owner;
 
-    /// @notice The Constructor assigns the message sender to be `owner`
     function Owned() { owner = msg.sender;}
 
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    ///  an unowned neutral vault, however that cannot be undone
+
+
     function changeOwner(address _newOwner) onlyOwner {
         owner = _newOwner;
+    }
+
+    function getOwner() noEther constant returns (address) {
+        return owner;
     }
 }
 
 
-/// @dev This is designed to control the issuance of a MiniMe Token for a
-///  non-profit Campaign. This contract effectively dictates the terms of the
-///  funding round.
+/// @title CampaignToken Contract
+/// @author Jordi Baylina
+/// @dev This is designed to control the ChairtyToken contract.
 
 contract Campaign is TokenController, Owned {
 
@@ -624,11 +629,11 @@ contract Campaign is TokenController, Owned {
     uint public endFundingTime;         // In UNIX Time Format
     uint public maximumFunding;         // In wei
     uint public totalCollected;         // In wei
-    MiniMeToken public tokenContract;   // The new token for this Campaign
-    address public vaultAddress;        // The address to hold the funds donated
+    MiniMeToken public tokenContract;  // The new token for this Campaign
+    address public vaultAddress;       // The address to hold the funds donated
 
 /// @notice 'Campaign()' initiates the Campaign by setting its funding
-/// parameters
+/// parameters and creating the deploying the token contract
 /// @dev There are several checks to make sure the parameters are acceptable
 /// @param _startFundingTime The UNIX time that the Campaign will be able to
 /// start receiving funds
@@ -637,7 +642,7 @@ contract Campaign is TokenController, Owned {
 /// @param _maximumFunding In wei, the Maximum amount that the Campaign can
 /// receive (currently the max is set at 10,000 ETH for the beta)
 /// @param _vaultAddress The address that will store the donated funds
-/// @param _tokenAddress Address of the token contract this contract controls
+/// @param _tokenAddress Address of the token contract
 
     function Campaign(
         uint _startFundingTime,
@@ -645,26 +650,25 @@ contract Campaign is TokenController, Owned {
         uint _maximumFunding,
         address _vaultAddress,
         address _tokenAddress
-
     ) {
-        if ((_endFundingTime < now) ||                // Cannot end in the past
+        if ((_endFundingTime < now) ||                // Cannot start in the past
             (_endFundingTime <= _startFundingTime) ||
-            (_maximumFunding > 10000 ether) ||        // The Beta is limited
-            (_vaultAddress == 0))                     // To prevent burning ETH
+            (_maximumFunding > 100000 ether) ||        // The Beta is limited
+            (_vaultAddress == 0))                    // To prevent burning ETH
             {
             throw;
             }
         startFundingTime = _startFundingTime;
         endFundingTime = _endFundingTime;
         maximumFunding = _maximumFunding;
-        tokenContract = MiniMeToken(_tokenAddress);// The Deployed Token Contract
+        tokenContract = MiniMeToken(_tokenAddress); // Deploys the Token Contract
         vaultAddress = _vaultAddress;
     }
 
 /// @dev The fallback function is called when ether is sent to the contract, it
 /// simply calls `doPayment()` with the address that sent the ether as the
 /// `_owner`. Payable is a required solidity modifier for functions to receive
-/// ether, without this modifier functions will throw if ether is sent to them
+/// ether, without this modifier they will throw
 
     function ()  payable {
         doPayment(msg.sender);
@@ -675,16 +679,15 @@ contract Campaign is TokenController, Owned {
 /////////////////
 
 /// @notice `proxyPayment()` allows the caller to send ether to the Campaign and
-/// have the tokens created in an address of their choosing
-/// @param _owner The address that will hold the newly created tokens
+/// have the CampaignTokens created in an address of their choosing
+/// @param _owner The address that will hold the newly created CampaignTokens
 
     function proxyPayment(address _owner) payable returns(bool) {
         doPayment(_owner);
         return true;
     }
 
-/// @notice Notifies the controller about a transfer, for this Campaign all
-///  transfers are allowed by default and no extra notifications are needed
+/// @notice Notifies the controller about a transfer
 /// @param _from The origin of the transfer
 /// @param _to The destination of the transfer
 /// @param _amount The amount of the transfer
@@ -693,11 +696,10 @@ contract Campaign is TokenController, Owned {
         return true;
     }
 
-/// @notice Notifies the controller about an approval, for this Campaign all
-///  approvals are allowed by default and no extra notifications are needed
+/// @notice Notifies the controller about an approval
 /// @param _owner The address that calls `approve()`
 /// @param _spender The spender in the `approve()` call
-/// @param _amount The amount in the `approve()` call
+/// @param _amount The ammount in the `approve()` call
 /// @return False if the controller does not authorize the approval
     function onApprove(address _owner, address _spender, uint _amount)
         returns(bool)
@@ -707,13 +709,13 @@ contract Campaign is TokenController, Owned {
 
 
 /// @dev `doPayment()` is an internal function that sends the ether that this
-///  contract receives to the `vault` and creates tokens in the address of the
-///  `_owner` assuming the Campaign is still accepting funds
-/// @param _owner The address that will hold the newly created tokens
+/// contract receives to the `vault` and creates campaignTokens in the
+/// address of the `_owner` assuming the Campaign is still accepting funds
+/// @param _owner The address that will hold the newly created CampaignTokens
 
     function doPayment(address _owner) internal {
 
-// First check that the Campaign is allowed to receive this donation
+// First we check that the Campaign is allowed to receive this donation
         if ((now<startFundingTime) ||
             (now>endFundingTime) ||
             (tokenContract.controller() == 0) ||           // Extra check
@@ -731,8 +733,8 @@ contract Campaign is TokenController, Owned {
             throw;
         }
 
-// Creates an equal amount of tokens as ether sent. The new tokens are created
-//  in the `_owner` address
+// Creates an equal amount of CampaignTokens as ether sent. The new CampaignTokens
+// are created in the `_owner` address
         if (!tokenContract.generateTokens(_owner, msg.value)) {
             throw;
         }
@@ -740,9 +742,8 @@ contract Campaign is TokenController, Owned {
         return;
     }
 
-/// @notice `finalizeFunding()` ends the Campaign by calling setting the
-///  controller to 0, thereby ending the issuance of new tokens and stopping the
-///  Campaign from receiving more ether
+/// @notice `finalizeFunding()` ends the Campaign by calling removing himself
+/// as a controller.
 /// @dev `finalizeFunding()` can only be called after the end of the funding period.
 
     function finalizeFunding() {
@@ -750,10 +751,34 @@ contract Campaign is TokenController, Owned {
         tokenContract.changeController(0);
     }
 
+////////////
+// Initial import from the old token
+////////////
 
-/// @notice `onlyOwner` changes the location that ether is sent
-/// @param _newVaultAddress The address that will receive the ether sent to this
-///  Campaign
+    bool public sealed;
+
+
+    function fill(uint[] data) onlyOwner {
+        if (sealed)
+            throw;
+
+        for (uint i=0; i< data.length; i+= 2) {
+            address dth = address(data[i]);
+            uint amount = uint(data[i+1]);
+            if (!tokenContract.generateTokens(dth, amount)) {
+                throw;
+            }
+            totalCollected += amount;
+        }
+    }
+
+    function seal() {
+        if (sealed)
+            throw;
+
+        sealed= true;
+    }
+
     function setVault(address _newVaultAddress) onlyOwner {
         vaultAddress = _newVaultAddress;
     }
