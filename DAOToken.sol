@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAOToken at 0x02503c5e9edb416a1d42cd9c6e4d30d283726e8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAOToken at 0x543ff227f64aa17ea132bf9886cab5db55dcaddf
 */
 pragma solidity ^0.4.21;
 
@@ -74,7 +74,7 @@ pragma solidity ^0.4.21;
        */
       function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
       }
 
@@ -117,9 +117,10 @@ pragma solidity ^0.4.21;
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
 
+        // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
+        Transfer(msg.sender, _to, _value);
         return true;
       }
 
@@ -128,7 +129,7 @@ pragma solidity ^0.4.21;
       * @param _owner The address to query the the balance of.
       * @return An uint256 representing the amount owned by the passed address.
       */
-      function balanceOf(address _owner) public view returns (uint256) {
+      function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
       }
 
@@ -153,7 +154,7 @@ pragma solidity ^0.4.21;
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
+        Transfer(_from, _to, _value);
         return true;
       }
 
@@ -169,7 +170,7 @@ pragma solidity ^0.4.21;
        */
       function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);
         return true;
       }
 
@@ -195,7 +196,7 @@ pragma solidity ^0.4.21;
        */
       function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
         allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
       }
 
@@ -216,152 +217,153 @@ pragma solidity ^0.4.21;
         } else {
           allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
       }
 
     }
 
     contract ERC827 is ERC20 {
-      function approveAndCall( address _spender, uint256 _value, bytes _data) public payable returns (bool);
-      function transferAndCall( address _to, uint256 _value, bytes _data) public payable returns (bool);
-      function transferFromAndCall(
-        address _from,
-        address _to,
-        uint256 _value,
-        bytes _data
-      )
-        public
-        payable
-        returns (bool);
+
+      function approve( address _spender, uint256 _value, bytes _data ) public returns (bool);
+      function transfer( address _to, uint256 _value, bytes _data ) public returns (bool);
+      function transferFrom( address _from, address _to, uint256 _value, bytes _data ) public returns (bool);
+
     }
 
     contract ERC827Token is ERC827, StandardToken {
 
       /**
-       * @dev Addition to ERC20 token methods. It allows to
-       * @dev approve the transfer of value and execute a call with the sent data.
-       *
-       * @dev Beware that changing an allowance with this method brings the risk that
-       * @dev someone may use both the old and the new allowance by unfortunate
-       * @dev transaction ordering. One possible solution to mitigate this race condition
-       * @dev is to first reduce the spender's allowance to 0 and set the desired value
-       * @dev afterwards:
-       * @dev https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-       *
-       * @param _spender The address that will spend the funds.
-       * @param _value The amount of tokens to be spent.
-       * @param _data ABI-encoded contract call to call `_to` address.
-       *
-       * @return true if the call function was executed successfully
+         @dev Addition to ERC20 token methods. It allows to
+         approve the transfer of value and execute a call with the sent data.
+
+         Beware that changing an allowance with this method brings the risk that
+         someone may use both the old and the new allowance by unfortunate
+         transaction ordering. One possible solution to mitigate this race condition
+         is to first reduce the spender's allowance to 0 and set the desired value
+         afterwards:
+         https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+
+         @param _spender The address that will spend the funds.
+         @param _value The amount of tokens to be spent.
+         @param _data ABI-encoded contract call to call `_to` address.
+
+         @return true if the call function was executed successfully
        */
-      function approveAndCall(address _spender, uint256 _value, bytes _data) public payable returns (bool) {
+      function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
         require(_spender != address(this));
 
         super.approve(_spender, _value);
 
-        // solium-disable-next-line security/no-call-value
-        require(_spender.call.value(msg.value)(_data));
+        require(_spender.call(_data));
 
         return true;
       }
 
       /**
-       * @dev Addition to ERC20 token methods. Transfer tokens to a specified
-       * @dev address and execute a call with the sent data on the same transaction
-       *
-       * @param _to address The address which you want to transfer to
-       * @param _value uint256 the amout of tokens to be transfered
-       * @param _data ABI-encoded contract call to call `_to` address.
-       *
-       * @return true if the call function was executed successfully
+         @dev Addition to ERC20 token methods. Transfer tokens to a specified
+         address and execute a call with the sent data on the same transaction
+
+         @param _to address The address which you want to transfer to
+         @param _value uint256 the amout of tokens to be transfered
+         @param _data ABI-encoded contract call to call `_to` address.
+
+         @return true if the call function was executed successfully
        */
-      function transferAndCall(address _to, uint256 _value, bytes _data) public payable returns (bool) {
+      function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
         require(_to != address(this));
 
         super.transfer(_to, _value);
 
-        // solium-disable-next-line security/no-call-value
-        require(_to.call.value(msg.value)(_data));
+        require(_to.call(_data));
         return true;
       }
 
       /**
-       * @dev Addition to ERC20 token methods. Transfer tokens from one address to
-       * @dev another and make a contract call on the same transaction
-       *
-       * @param _from The address which you want to send tokens from
-       * @param _to The address which you want to transfer to
-       * @param _value The amout of tokens to be transferred
-       * @param _data ABI-encoded contract call to call `_to` address.
-       *
-       * @return true if the call function was executed successfully
+         @dev Addition to ERC20 token methods. Transfer tokens from one address to
+         another and make a contract call on the same transaction
+
+         @param _from The address which you want to send tokens from
+         @param _to The address which you want to transfer to
+         @param _value The amout of tokens to be transferred
+         @param _data ABI-encoded contract call to call `_to` address.
+
+         @return true if the call function was executed successfully
        */
-      function transferFromAndCall(
-        address _from,
-        address _to,
-        uint256 _value,
-        bytes _data
-      )
-        public payable returns (bool)
-      {
+      function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
         require(_to != address(this));
 
         super.transferFrom(_from, _to, _value);
 
-        // solium-disable-next-line security/no-call-value
-        require(_to.call.value(msg.value)(_data));
+        require(_to.call(_data));
         return true;
       }
 
       /**
        * @dev Addition to StandardToken methods. Increase the amount of tokens that
-       * @dev an owner allowed to a spender and execute a call with the sent data.
+       * an owner allowed to a spender and execute a call with the sent data.
        *
-       * @dev approve should be called when allowed[_spender] == 0. To increment
-       * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-       * @dev the first transaction is mined)
-       * @dev From MonolithDAO Token.sol
-       *
+       * approve should be called when allowed[_spender] == 0. To increment
+       * allowed value is better to use this function to avoid 2 calls (and wait until
+       * the first transaction is mined)
+       * From MonolithDAO Token.sol
        * @param _spender The address which will spend the funds.
        * @param _addedValue The amount of tokens to increase the allowance by.
        * @param _data ABI-encoded contract call to call `_spender` address.
        */
-      function increaseApprovalAndCall(address _spender, uint _addedValue, bytes _data) public payable returns (bool) {
+      function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
         require(_spender != address(this));
 
         super.increaseApproval(_spender, _addedValue);
 
-        // solium-disable-next-line security/no-call-value
-        require(_spender.call.value(msg.value)(_data));
+        require(_spender.call(_data));
 
         return true;
       }
 
       /**
        * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-       * @dev an owner allowed to a spender and execute a call with the sent data.
+       * an owner allowed to a spender and execute a call with the sent data.
        *
-       * @dev approve should be called when allowed[_spender] == 0. To decrement
-       * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-       * @dev the first transaction is mined)
-       * @dev From MonolithDAO Token.sol
-       *
+       * approve should be called when allowed[_spender] == 0. To decrement
+       * allowed value is better to use this function to avoid 2 calls (and wait until
+       * the first transaction is mined)
+       * From MonolithDAO Token.sol
        * @param _spender The address which will spend the funds.
        * @param _subtractedValue The amount of tokens to decrease the allowance by.
        * @param _data ABI-encoded contract call to call `_spender` address.
        */
-      function decreaseApprovalAndCall(address _spender, uint _subtractedValue, bytes _data) public payable returns (bool) {
+      function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
         require(_spender != address(this));
 
         super.decreaseApproval(_spender, _subtractedValue);
 
-        // solium-disable-next-line security/no-call-value
-        require(_spender.call.value(msg.value)(_data));
+        require(_spender.call(_data));
 
         return true;
       }
 
+    }
+
+    contract BurnableToken is BasicToken {
+
+      event Burn(address indexed burner, uint256 value);
+
+      /**
+       * @dev Burns a specific amount of tokens.
+       * @param _value The amount of token to be burned.
+       */
+      function burn(uint256 _value) public {
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
+        Burn(burner, _value);
+        Transfer(burner, address(0), _value);
+      }
     }
 
     contract MintableToken is StandardToken, Ownable {
@@ -385,8 +387,8 @@ pragma solidity ^0.4.21;
       function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
         totalSupply_ = totalSupply_.add(_amount);
         balances[_to] = balances[_to].add(_amount);
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
         return true;
       }
 
@@ -396,32 +398,8 @@ pragma solidity ^0.4.21;
        */
       function finishMinting() onlyOwner canMint public returns (bool) {
         mintingFinished = true;
-        emit MintFinished();
+        MintFinished();
         return true;
-      }
-    }
-
-    contract BurnableToken is BasicToken {
-
-      event Burn(address indexed burner, uint256 value);
-
-      /**
-       * @dev Burns a specific amount of tokens.
-       * @param _value The amount of token to be burned.
-       */
-      function burn(uint256 _value) public {
-        _burn(msg.sender, _value);
-      }
-
-      function _burn(address _who, uint256 _value) internal {
-        require(_value <= balances[_who]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        balances[_who] = balances[_who].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-        emit Burn(_who, _value);
-        emit Transfer(_who, address(0), _value);
       }
     }
 
