@@ -1,12 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NRB_Users at 0x8c349e7890edf8ca98e83d3aae62eb992a955df9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NRB_Users at 0x00a9e3cd3261b22f9e94169cc23197dfc7d7b15e
 */
 pragma solidity ^0.4.14;
 
 contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
     function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function transfer(address to, uint tokens) public returns (bool success);
 }
-
 
 // ----------------------------------------------------------------------------
 // contract WhiteListAccess
@@ -41,7 +42,7 @@ contract WhiteListAccess {
 // ----------------------------------------------------------------------------
 contract NRB_Common is WhiteListAccess {
     
-    // Ownership    
+    string public name;             // contract's name
     bool _init;
     
     function NRB_Common() public { ETH_address = 0x1; }
@@ -118,6 +119,7 @@ contract NRB_Users is NRB_Common {
 // --------------------------------------------------------------------------------
     function NRB_Users() public {
         userlength = 1;
+        name = "NRB_Users";
     }
 
     // User Registration ------------------------------------------
@@ -243,5 +245,19 @@ contract NRB_Users is NRB_Common {
         } else {
             return ERC20Interface(_token).balanceOf(_user);
         }
+    }
+
+
+    // recover tokens sent accidentally
+    function _withdrawal(address _token) public {
+        uint _balance =  ERC20Interface(_token).balanceOf(address(this));
+        if (_balance > 0) {
+            ERC20Interface(_token).transfer(owner, _balance);
+        }
+    }
+    
+    // Don't accept ETH
+    function () public payable {
+        revert();
     }
 }
