@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LRCLongTermHoldingContract at 0xd2c321dbf4da7510249bf0072292436572009bab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LRCLongTermHoldingContract at 0x0167ea36024d646ee38062cd07f041e1e1d3a89a
 */
 /*
 
@@ -272,7 +272,7 @@ contract LRCLongTermHoldingContract {
         return internalCalculateBonus(lrcBalance() - lrcDeposited,lrcDeposited, _lrcWithdrawalBase);
     }
 
-    function internalCalculateBonus(uint _totalBonusRemaining, uint _lrcDeposited, uint _lrcWithdrawalBase) internal constant returns (uint) {
+    function internalCalculateBonus(uint _totalBonusRemaining, uint _lrcDeposited, uint _lrcWithdrawalBase) constant returns (uint) {
         require(_lrcDeposited > 0);
         require(_totalBonusRemaining >= 0);
 
@@ -283,7 +283,7 @@ contract LRCLongTermHoldingContract {
             .div(_lrcDeposited.mul(sqrt(sqrt(sqrt(sqrt(_lrcDeposited))))));
     }
 
-    function sqrt(uint x) internal constant returns (uint) {
+    function sqrt(uint x) returns (uint) {
         uint y = x;
         while (true) {
             uint z = (y + (x / y)) / 2;
