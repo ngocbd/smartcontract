@@ -1,8 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xdf894becf5215041b6bbf695fad29d667527dc88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xa1fb3d537ae38ca00537cdfe2004ad753464136d
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.21;
 
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
   /**
@@ -45,6 +51,13 @@ library SafeMath {
   }
 }
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -80,6 +93,13 @@ contract Ownable {
 
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -87,6 +107,12 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -94,6 +120,14 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
 library SafeERC20 {
   function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
     assert(token.transfer(to, value));
@@ -108,6 +142,14 @@ library SafeERC20 {
   }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/TokenVesting.sol
+
+/**
+ * @title TokenVesting
+ * @dev A token holder contract that can release its token balance gradually like a
+ * typical vesting scheme, with a cliff and vesting period. Optionally revocable by the
+ * owner.
+ */
 contract TokenVesting is Ownable {
   using SafeMath for uint256;
   using SafeERC20 for ERC20Basic;
@@ -209,3 +251,5 @@ contract TokenVesting is Ownable {
     }
   }
 }
+
+// File: contracts/LDLTokenVesting.sol
