@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BallerToken at 0xf9bea6a897f842bbe90562b06a0a13b1890b688c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BallerToken at 0x5ccf1cb83d01312a98f5e85bfea0c8ba450f371e
 */
 pragma solidity ^0.4.18;
 
@@ -42,6 +42,7 @@ contract Ownable {
   }
 
 }
+
 
 /**
  * @title Destructible
@@ -116,6 +117,9 @@ contract BallerToken is Ownable, Destructible {
     // @dev Fired whenever a new Baller token is created for the first time.
     event BallerCreated(uint256 tokenId, string name, address owner);
 
+    // @dev Fired whenever a new Baller Player token is created for first time
+    event BallerPlayerCreated(uint256 tokenId, string name, uint teamID, address owner);
+
     // @dev Fired whenever a Baller token is sold.
     event TokenSold(uint256 tokenId, uint256 oldPrice, uint256 newPrice, address prevOwner, address newOwner, string name);
 
@@ -140,7 +144,7 @@ contract BallerToken is Ownable, Destructible {
     /*** STORAGE ***/
 
     // @dev maps team id to address of who owns it
-    mapping (uint => address) public teamIndexToOwner;
+    mapping (uint => address) private teamIndexToOwner;
 
     // @dev maps team id to a price
     mapping (uint => uint) private teamIndexToPrice;
@@ -149,24 +153,65 @@ contract BallerToken is Ownable, Destructible {
     mapping (address => uint) private ownershipTokenCount;
 
 
+    // @dev maps player id to address of who owns it
+    mapping (uint => address) public playerIndexToOwner;
+
+    // @dev maps player id to a price
+    mapping (uint => uint) private playerIndexToPrice;
+
+    // @dev maps address to how many players they own
+    mapping (address => uint) private playerOwnershipTokenCount;
+
+
     /*** DATATYPES ***/
     //@dev struct for a baller team
     struct Team {
-      string name;
+        string name;
+    }
+
+    //@dev struct for a baller player
+    struct Player {
+        string name;
+        uint teamID;
     }
 
     //@dev array which holds each team
     Team[] private ballerTeams;
+
+    //@dev array which holds each baller
+    Player[] private ballerPlayers;
 
     /*** PUBLIC FUNCTIONS ***/
 
     /**
     * @dev public function to create team, can only be called by owner of smart contract
     * @param _name the name of the team
+    * @param _price the price of the team when created
     */
 
     function createTeam(string _name, uint _price) public onlyOwner {
-      _createTeam(_name, this, _price);
+        _createTeam(_name, this, _price);
+    }
+
+    /**
+    * @dev public function to create a promotion team and assign it to some address
+    * @param _name the name of the team
+    * @param _owner the owner of the team when created
+    * @param _price the price of the team when created
+    */
+    function createPromoTeam(string _name, address _owner, uint _price) public onlyOwner {
+        _createTeam(_name, _owner, _price);
+    }
+
+
+    /**
+    * @dev public function to create a player, can only be called by owner of smart contract
+    * @param _name the name of the player
+    * @param _teamID the id of the team the player belongs to
+    * @param _price the price of the player when created
+    */
+    function createPlayer(string _name, uint _teamID, uint _price) public onlyOwner {
+        _createPlayer(_name, _teamID, this, _price);
     }
 
     /**
@@ -184,13 +229,49 @@ contract BallerToken is Ownable, Destructible {
     }
 
     /**
+    * @dev Returns all relevant info about a specific player.
+    * @return playerName the name of the player
+    * @return currPrice what the player is currently worth.
+    * @return owner address of whoever owns the player.
+    * @return owningTeamID ID of team that the player plays on.
+    */
+    function getPlayer(uint _tokenId) public view returns(string playerName, uint currPrice, address owner, uint owningTeamID) {
+        Player storage currPlayer = ballerPlayers[_tokenId];
+        playerName = currPlayer.name;
+        currPrice = playerIndexToPrice[_tokenId];
+        owner = ownerOfPlayer(_tokenId);
+        owningTeamID = currPlayer.teamID;
+    }
+
+    /**
     * @dev changes the name of a specific team.
     * @param _tokenId The id of the team which you want to change.
     * @param _newName The name you want to set the team to be.
     */
     function changeTeamName(uint _tokenId, string _newName) public onlyOwner {
-      require(_tokenId < ballerTeams.length);
-      ballerTeams[_tokenId].name = _newName;
+        require(_tokenId < ballerTeams.length && _tokenId >= 0);
+        ballerTeams[_tokenId].name = _newName;
+    }
+
+    /**
+    * @dev changes name of a player.
+    * @param _tokenId the id of the player which you want to change.
+    * @param _newName the name you want to set the player to be.
+    */
+    function changePlayerName(uint _tokenId, string _newName) public onlyOwner {
+        require(_tokenId < ballerPlayers.length && _tokenId >= 0);
+        ballerPlayers[_tokenId].name = _newName;
+    }
+
+    /**
+    * @dev changes the team the player is own
+    * @param _tokenId the id of the player which you want to change.
+    * @param _newTeamId the team the player will now be on.
+    */
+
+    function changePlayerTeam(uint _tokenId, uint _newTeamId) public onlyOwner {
+        require(_newTeamId < ballerPlayers.length && _newTeamId >= 0);
+        ballerPlayers[_tokenId].teamID = _newTeamId;
     }
 
     /**
@@ -216,9 +297,18 @@ contract BallerToken is Ownable, Destructible {
     * @param _teamId of team
     * @return price price of team
     */
-    function priceOfTeam(uint _teamId) public view returns (uint price, uint teamId) {
+    function priceOfTeam(uint _teamId) public view returns (uint price) {
       price = teamIndexToPrice[_teamId];
-      teamId = _teamId;
+    }
+
+    /**
+    * @dev Function to get price of a player
+    * @param _playerID id of player
+    * @return price price of player
+    */
+
+    function priceOfPlayer(uint _playerID) public view returns (uint price) {
+        price = playerIndexToPrice[_playerID];
     }
 
     /**
@@ -243,6 +333,30 @@ contract BallerToken is Ownable, Destructible {
       }
     }
 
+
+    /**
+    * @dev Gets list of players owned by a person.
+    * @dev note: don't want to call this in smart contract, expensive op.
+    * @param _owner address of owner
+    * @return ownedPlayers list of all players owned by the address passed in
+    */
+
+    function getPlayersOfOwner(address _owner) public view returns (uint[] ownedPlayers) {
+        uint numPlayersOwned = balanceOfPlayers(_owner);
+        ownedPlayers = new uint[](numPlayersOwned);
+        uint totalPlayers = totalPlayerSupply();
+        uint resultIndex = 0;
+        if (numPlayersOwned != 0) {
+            for (uint pos = 0; pos < totalPlayers; pos++) {
+                address currOwner = ownerOfPlayer(pos);
+                if (currOwner == _owner) {
+                    ownedPlayers[resultIndex] = pos;
+                    resultIndex++;
+                }
+            }
+        }
+    }
+
     /*
      * @dev gets the address of owner of the team
      * @param _tokenId is id of the team
@@ -254,12 +368,38 @@ contract BallerToken is Ownable, Destructible {
     }
 
     /*
+     * @dev gets address of owner of player
+     * @param _playerId is id of the player
+     * @return owner the address of the owner of the player
+    */
+
+    function ownerOfPlayer(uint _playerId) public view returns (address owner) {
+        owner = playerIndexToOwner[_playerId];
+        require(owner != address(0));
+    }
+
+    function teamOwnerOfPlayer(uint _playerId) public view returns (address teamOwner) {
+        uint teamOwnerId = ballerPlayers[_playerId].teamID;
+        teamOwner = ownerOf(teamOwnerId);
+    }
+    /*
      * @dev gets how many tokens an address owners
      * @param _owner is address of owner
      * @return numTeamsOwned how much teams he has
     */
+
     function balanceOf(address _owner) public view returns (uint numTeamsOwned) {
       numTeamsOwned = ownershipTokenCount[_owner];
+    }
+
+    /*
+     * @dev gets how many players an owner owners
+     * @param _owner is address of owner
+     * @return numPlayersOwned how many players the owner has
+    */
+
+    function balanceOfPlayers(address _owner) public view returns (uint numPlayersOwned) {
+        numPlayersOwned = playerOwnershipTokenCount[_owner];
     }
 
     /*
@@ -268,6 +408,15 @@ contract BallerToken is Ownable, Destructible {
     */
     function totalSupply() public view returns (uint totalNumTeams) {
       totalNumTeams = ballerTeams.length;
+    }
+
+    /*
+     * @dev gets total number of players
+     * @return totalNumPlayers is the number of players
+    */
+
+    function totalPlayerSupply() public view returns (uint totalNumPlayers) {
+        totalNumPlayers = ballerPlayers.length;
     }
 
     /**
@@ -290,7 +439,7 @@ contract BallerToken is Ownable, Destructible {
       // Making sure sent amount is greater than or equal to the sellingPrice
       require(msg.value >= sellingPrice);
 
-      uint payment =  _calculatePaymentToOwner(sellingPrice);
+      uint payment =  _calculatePaymentToOwner(sellingPrice, true);
       uint excessPayment = msg.value.sub(sellingPrice);
       uint newPrice = _calculateNewPrice(sellingPrice);
       teamIndexToPrice[_teamId] = newPrice;
@@ -304,6 +453,55 @@ contract BallerToken is Ownable, Destructible {
       newOwner.transfer(excessPayment);
       string memory teamName = ballerTeams[_teamId].name;
       TokenSold(_teamId, sellingPrice, newPrice, oldOwner, newOwner, teamName);
+    }
+
+
+    /**
+    * @dev allows user to buy a player from the old owner.
+    * @dev pays old owner minus commission, updates price.
+    * @dev commission includes house plus amount that goes to owner of team that player plays on
+    * @param _playerId the id of the player they're trying to buy.
+    */
+
+    function purchasePlayer(uint _playerId) public payable {
+        address oldOwner = ownerOfPlayer(_playerId);
+        address newOwner = msg.sender;
+        address teamOwner = teamOwnerOfPlayer(_playerId);
+
+        uint sellingPrice = playerIndexToPrice[_playerId];
+
+        // Making sure token owner is not sending to self
+        require(oldOwner != newOwner);
+
+        // Safety check to prevent against na unexpected 0x0 default
+        require(_addressNotNull(newOwner));
+
+        //Making sure sent amount is greater than or equal to selling price
+        require(msg.value >= sellingPrice);
+
+        bool sellingTeam = false;
+        uint payment = _calculatePaymentToOwner(sellingPrice, sellingTeam);
+        uint commission = msg.value.sub(payment);
+        uint teamOwnerCommission = commission.div(2);
+        uint excessPayment = msg.value.sub(sellingPrice);
+        uint newPrice = _calculateNewPrice(sellingPrice);
+        playerIndexToPrice[_playerId] = newPrice;
+
+        _transferPlayer(oldOwner, newOwner, _playerId);
+
+        // pay old token owner
+        if (oldOwner != address(this)) {
+            oldOwner.transfer(payment);
+        }
+
+        // pay team owner
+        if (teamOwner != address(this)) {
+            teamOwner.transfer(teamOwnerCommission);
+        }
+
+        newOwner.transfer(excessPayment);
+        string memory playerName = ballerPlayers[_playerId].name;
+        TokenSold(_playerId, sellingPrice, newPrice, oldOwner, newOwner, playerName);
     }
 
 
@@ -346,6 +544,26 @@ contract BallerToken is Ownable, Destructible {
     }
 
     /**
+    * @dev internal function to create player
+    * @param _name the name of the player
+    * @param _teamID the id of the team the player plays on
+    * @param _owner the owner of the player
+    * @param _startingPrice the price of the player at creation
+    */
+
+    function _createPlayer(string _name, uint _teamID, address _owner, uint _startingPrice) private {
+        Player memory currPlayer = Player(_name, _teamID);
+        uint newPlayerId = ballerPlayers.push(currPlayer) - 1;
+
+        // make sure we never overflow amount of tokens possible to be created
+        // 4 billion players, shouldn't happen
+        require(newPlayerId == uint256(uint32(newPlayerId)));
+        BallerPlayerCreated(newPlayerId, _name, _teamID, _owner);
+        playerIndexToPrice[newPlayerId] = _startingPrice;
+        _transferPlayer(address(0), _owner, newPlayerId);
+    }
+
+    /**
     * @dev internal function to transfer ownership of team
     * @param _from original owner of token
     * @param _to the new owner
@@ -363,23 +581,55 @@ contract BallerToken is Ownable, Destructible {
       Transfer(_from, _to, _teamId);
     }
 
+
+    /**
+    * @dev internal function to transfer ownership of player
+    * @param _from original owner of token
+    * @param _to the new owner
+    * @param _playerId the id of the player
+    */
+
+    function _transferPlayer(address _from, address _to, uint _playerId) private {
+        playerOwnershipTokenCount[_to]++;
+        playerIndexToOwner[_playerId] = _to;
+
+        // creation of new player causes _from to be 0
+        if (_from != address(0)) {
+            playerOwnershipTokenCount[_from]--;
+        }
+
+        Transfer(_from, _to, _playerId);
+    }
+
     /**
     * @dev internal function to calculate how much to give to owner of contract
     * @param _sellingPrice the current price of the team
+    * @param _sellingTeam if you're selling a team or a player
     * @return payment amount the owner gets after commission.
     */
-    function _calculatePaymentToOwner(uint _sellingPrice) private pure returns (uint payment) {
+    function _calculatePaymentToOwner(uint _sellingPrice, bool _sellingTeam) private pure returns (uint payment) {
+      uint multiplier = 1;
+      if (! _sellingTeam) {
+          multiplier = 2;
+      }
+      uint commissionAmount = 100;
       if (_sellingPrice < FIRST_PRICE_LIMIT) {
-        payment = uint256(_sellingPrice.mul(100-FIRST_COMMISSION_LEVEL).div(100));
+        commissionAmount = commissionAmount.sub(FIRST_COMMISSION_LEVEL.mul(multiplier));
+        payment = uint256(_sellingPrice.mul(commissionAmount).div(100));
       }
       else if (_sellingPrice < SECOND_PRICE_LIMIT) {
-        payment = uint256(_sellingPrice.mul(100-SECOND_COMMISSION_LEVEL).div(100));
+        commissionAmount = commissionAmount.sub(SECOND_COMMISSION_LEVEL.mul(multiplier));
+
+        payment = uint256(_sellingPrice.mul(commissionAmount).div(100));
       }
       else if (_sellingPrice < THIRD_PRICE_LIMIT) {
-        payment = uint256(_sellingPrice.mul(100-THIRD_COMMISSION_LEVEL).div(100));
+        commissionAmount = commissionAmount.sub(THIRD_COMMISSION_LEVEL.mul(multiplier));
+
+        payment = uint256(_sellingPrice.mul(commissionAmount).div(100));
       }
       else {
-        payment = uint256(_sellingPrice.mul(100-FOURTH_COMMISSION_LEVEL).div(100));
+        commissionAmount = commissionAmount.sub(FOURTH_COMMISSION_LEVEL.mul(multiplier));
+        payment = uint256(_sellingPrice.mul(commissionAmount).div(100));
       }
     }
 
