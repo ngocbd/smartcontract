@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tanya at 0x143E8bD26D95b230680C25300F93eF56F86eCCAC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tanya at 0xF1c1648f6F0EdbCF7d898441b88E489CfaAce11D
 */
 contract Tanya {
 
@@ -37,7 +37,7 @@ contract Tanya {
 		uint idx = participants.length;
         participants.length++;
         participants[idx].etherAddress = msg.sender;
-        participants[idx].amount = msg.value - fee;
+        participants[idx].amount = msg.value;
 
       // update available balance
       	balance += msg.value - fee;
