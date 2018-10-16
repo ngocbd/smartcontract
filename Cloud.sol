@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cloud at 0xc030895ccebe9d6a1ae4841e62cb23a2b3fab818
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cloud at 0xc3951d77737733174152532e8b0f27e2c4e9f0dc
 */
 pragma solidity ^0.4.16;
 
@@ -69,7 +69,7 @@ contract Token {
 contract Cloud is Token {
 
     using Math for uint256;
-	bool trading=false;
+    bool trading=false;
 
     mapping (address => bool) public frozenAccount;
     event FrozenFunds(address target, bool frozen);
@@ -110,14 +110,14 @@ contract Cloud is Token {
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
       return allowed[_owner][_spender];
     }
-
-	modifier canTrade {
-    	require(trading==true ||(canRelease==true && msg.sender==owner));
-    	_;
+    /* Checks if tokens can be transferred from one account to another. Trading to be enabled after initial token release */
+    modifier canTrade {
+        require(trading==true ||(canRelease==true && msg.sender==owner));
+        _;
     }
     
     function setTrade(bool allow) onlyOwner {
-    	trading=allow;
+        trading=allow;
     }
 
     mapping (address => uint256) balances;
@@ -133,7 +133,7 @@ contract Cloud is Token {
 
     string public name;                 
     string public symbol;               
-    address public owner;				
+    address public owner;               
     uint256 public tokensReleased=0;
     bool canRelease=false;
 
@@ -174,7 +174,7 @@ contract Cloud is Token {
     function invest(address receiver, uint256 _value) onlyOwner returns (bool success) {
         require(canRelease);
         require(_value > 0);
-        uint256 numTokens = _value*(10**decimals);
+        uint256 numTokens = _value;
         uint256 employeeTokens = 0;
         uint256 employeeTokenShare=0;
         // divide employee tokens by 4 shares
