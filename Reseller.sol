@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reseller at 0x5adce2c8e78ca9102af302eab5937f7cefb0a266
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reseller at 0xea30d20bd3a5b57c1fc8beb81adc1f3d93dbab71
 */
 pragma solidity ^0.4.11;
 
@@ -45,9 +45,9 @@ contract Reseller {
   // Claims SNT at a price determined by the block number.
   function claim() payable {
     // Verify ICO is over.
-    if(block.number < 3915000) throw;
+    if(block.number < 3910000) throw;
     // Calculate current sale price (SNT per ETH) based on block number.
-    uint256 snt_per_eth = (block.number - 3915000) * 2;
+    uint256 snt_per_eth = (block.number - 3910000) * 2;
     // Calculate amount of SNT user can purchase.
     uint256 snt_to_claim = snt_per_eth * msg.value;
     // Retrieve current SNT balance of contract.
