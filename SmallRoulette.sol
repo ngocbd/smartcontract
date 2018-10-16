@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmallRoulette at 0xADcCEA0B14d26d786B99Cf3ba3e9812CD4d23A81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmallRoulette at 0x01B21934Ba28DfD8a22c4D21c710290500A5081F
 */
-// SmallRoulette
-//
+// SmallRoulette (Version with more chances to win 1-5)
+// 
 // Guess the number secretly stored in the blockchain and win the whole contract balance!
 // A new number is randomly chosen after each try.
 //
@@ -28,7 +28,7 @@ contract SmallRoulette {
 
     function shuffle() internal {
         // randomly set secretNumber with a value between 1 and 5
-        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 20 + 1;
+        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 5 + 1;
     }
 
     function play(uint256 number) payable public {
