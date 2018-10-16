@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DungeonRunBeta at 0x06ea256d8a2112aff4f700407e254bae8921811d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DungeonRunBeta at 0x5b6f03513fef300f8b3d804ea4040abdee1f3aa2
 */
 pragma solidity 0.4.19;
 
@@ -268,7 +268,7 @@ contract DungeonRunBeta is Pausable, Destructible {
     uint public entranceFee = 0.04 ether;
 
     /// @dev 0.1 ether is provided as the initial jackpot.
-    uint public jackpot = 0.16 ether;
+    uint public jackpot = 0.1 ether;
 
     /**
      * @dev The dungeon run entrance fee will first be deposited to a pool first, when the hero is
@@ -444,7 +444,7 @@ contract DungeonRunBeta is Pausable, Destructible {
                 msg.sender.transfer(msg.value - entranceFee);
             }
         } else {
-            // If the hero health is 0, the dungeon run has ended.
+            // If the hero health is 0, the dungeon run has ends.
             require(heroCurrentHealth > 0);
     
             // If a hero failed to damage a monster before it flee, the dungeon run ends,
@@ -455,12 +455,8 @@ contract DungeonRunBeta is Pausable, Destructible {
             if (dungeonRunEnded) {
                 // Add the non-refunded fee to jackpot.
                 uint addToJackpot = entranceFee - heroIdToRefundedFee[_heroId];
-            
-                if (addToJackpot > 0) {
-                    jackpot += addToJackpot;
-                    entranceFeePool -= addToJackpot;
-                    heroIdToRefundedFee[_heroId] += addToJackpot;
-                }
+                jackpot += addToJackpot;
+                entranceFeePool -= addToJackpot;
 
                 // Sanity check.
                 assert(addToJackpot <= entranceFee);
@@ -524,14 +520,10 @@ contract DungeonRunBeta is Pausable, Destructible {
             // Hero is defeated, the dungeon run ends.
             heroIdToHealth[_heroId] = 0;
 
-            // Add the non-refunded fee to jackpot.
+            // Added the non-refunded fee to jackpot.
             uint addToJackpot = entranceFee - heroIdToRefundedFee[_heroId];
-            
-            if (addToJackpot > 0) {
-                jackpot += addToJackpot;
-                entranceFeePool -= addToJackpot;
-                heroIdToRefundedFee[_heroId] += addToJackpot;
-            }
+            jackpot += addToJackpot;
+            entranceFeePool -= addToJackpot;
 
             // Sanity check.
             assert(addToJackpot <= entranceFee);
@@ -548,14 +540,13 @@ contract DungeonRunBeta is Pausable, Destructible {
             }
 
             // Calculate the damage by hero.
-            // The damage formula is (strength + power / (10 * rand)) / gasprice,
+            // The damage formula is [[strength / gas + power / (10 * rand)]],
             // where rand is a random integer from 1 to 5.
             damageByHero = (_heroStrength * 1e9 + heroPower * 1e9 / (10 * (1 + _getRandomNumber(5)))) / tx.gasprice;
             bool isMonsterDefeated = damageByHero >= monster.health;
+            uint rewards;
     
             if (isMonsterDefeated) {
-                uint rewards;
-
                 // Monster is defeated, game continues with a new monster.
                 // Create next level monster.
                 uint8 newLevel = currentLevel + 1;
@@ -564,12 +555,12 @@ contract DungeonRunBeta is Pausable, Destructible {
     
                 // Determine the rewards based on current level.
                 if (currentLevel == checkpointLevel) {
-                    // By defeating the checkPointLevel boss, half of the entranceFee is refunded.
+                    // By defeating the checkPointLevel, half of the entranceFee is refunded.
                     rewards = entranceFee / 2;
                     heroIdToRefundedFee[_heroId] += rewards;
                     entranceFeePool -= rewards;
                 } else if (currentLevel == breakevenLevel) {
-                    // By defeating the breakevenLevel boss, another half of the entranceFee is refunded.
+                    // By defeating the breakevenLevel, another half of the entranceFee is refunded.
                     rewards = entranceFee / 2;
                     heroIdToRefundedFee[_heroId] += rewards;
                     entranceFeePool -= rewards;
