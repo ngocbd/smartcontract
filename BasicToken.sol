@@ -1,43 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0x4e022afbaf51487ecaaae11993e21cd6bbac38e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0xe6c24574d4d965d4d369e42e4151e8858ed8f50e
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
+
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public constant returns (uint256);
@@ -45,23 +38,15 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
+
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
-    require(_value > 0 && _value <= balances[msg.sender]);
+    require(_value <= balances[msg.sender]);
 
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -70,20 +55,14 @@ contract BasicToken is ERC20Basic {
     return true;
   }
 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
+
   function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
   }
+
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
+
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) public constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -92,27 +71,13 @@ contract ERC20 is ERC20Basic {
 }
 
 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
 
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
-    require(_value > 0 && _value <= balances[_from]);
+    require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
 
     balances[_from] = balances[_from].sub(_value);
@@ -122,16 +87,6 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
@@ -147,42 +102,44 @@ contract StandardToken is ERC20, BasicToken {
   function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
+
+
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+
 contract Ownable {
   address public owner;
 
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
   function Ownable() {
     owner = msg.sender;
   }
 
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
   function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
@@ -191,112 +148,32 @@ contract Ownable {
 
 }
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+contract COSHACNYToken is StandardToken, Ownable {
+    string constant public name = "COSHA-CNY";
+    string constant public symbol = "CCNY";
+    uint8 constant public decimals = 4;
+    bool public isLocked = true;
 
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-/**
- * @title Pausable token
- *
- * @dev StandardToken modified with pausable transfers.
- **/
-
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-  
-  function batchTransfer(address[] _receivers, uint256 _value) public whenNotPaused returns (bool) {
-    uint cnt = _receivers.length;
-    uint256 amount = uint256(cnt) * _value;
-    require(cnt > 0 && cnt <= 20);
-    require(_value > 0 && balances[msg.sender] >= amount);
-
-    balances[msg.sender] = balances[msg.sender].sub(amount);
-    for (uint i = 0; i < cnt; i++) {
-        balances[_receivers[i]] = balances[_receivers[i]].add(_value);
-        Transfer(msg.sender, _receivers[i], _value);
-    }
-    return true;
-  }
-}
-
-/**
- * @title Bec Token
- *
- * @dev Implementation of Bec Token based on the basic standard token.
- */
-contract BecToken is PausableToken {
-    /**
-    * Public variables of the token
-    * The following variables are OPTIONAL vanities. One does not have to include them.
-    * They allow one to customise the token contract & in no way influences the core functionality.
-    * Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name = "BeautyChain";
-    string public symbol = "BEC";
-    string public version = '1.0.0';
-    uint8 public decimals = 18;
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     */
-    function BecToken() {
-      totalSupply = 7000000000 * (10**(uint256(decimals)));
-      balances[msg.sender] = totalSupply;    // Give the creator all initial tokens
+    function COSHACNYToken(address COSHACNYsoWallet) public {
+        totalSupply = 1 * 10 ** (10+4);
+        balances[COSHACNYsoWallet] = totalSupply;
     }
 
-    function () {
-        //if ether is sent to this address, send it back.
-        revert();
+    modifier illegalWhenLocked() {
+        require(!isLocked || msg.sender == owner);
+        _;
+    }
+
+    // should be called by COSHA-CNYCrowdSale when crowdSale is finished
+    function unlock() onlyOwner {
+        isLocked = false;
+    }
+
+    function transfer(address _to, uint256 _value) illegalWhenLocked public returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) illegalWhenLocked public returns (bool) {
+        return super.transferFrom(_from, _to, _value);
     }
 }
