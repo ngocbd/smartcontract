@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0x0444f06a52320af2df7e60d1923080002838ce93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0xb1d58bad78f33892719cdeba218f8641a71a3f05
 */
 contract ResetPonzi {
 
@@ -32,7 +32,7 @@ contract ResetPonzi {
 
 
   function enter() {
-    if (msg.value != 9/10 ether) {
+    if (msg.value != 9 ether) {
         throw;
     }
 
@@ -57,10 +57,14 @@ contract ResetPonzi {
         investor = 0;
     }
 
-    currentNiceGuy.send(1/10 ether);
 
-    while (this.balance > 10/10 ether) {
-      persons[payoutIdx].addr.send(10/10 ether);
+    if (idx != 0) {
+	  currentNiceGuy.send(1 ether);
+    }
+
+
+    while (this.balance > 10 ether) {
+      persons[payoutIdx].addr.send(10 ether);
       payoutIdx += 1;
     }
   }
