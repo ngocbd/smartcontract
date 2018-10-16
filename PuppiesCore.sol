@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PuppiesCore at 0xa4736870ba7e649847b0b93c1a97c5141ade34d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PuppiesCore at 0xb64e6bef349a0d3e8571ac80b5ec522b417faeb6
 */
 // CryptoPuppies Source code
 // Copied from: https://etherscan.io/address/0x06012c8cf97bead5deae237070f9587f8e7a266d#code
@@ -84,7 +84,7 @@ contract GeneScience {
     /// @dev simply a boolean to indicate this is the contract we expect to be
     function isGeneScience() public pure returns (bool);
 
-    /// @dev given genes of kitten 1 & 2, return a genetic combination - may have a random factor
+    /// @dev given genes of puppies 1 & 2, return a genetic combination - may have a random factor
     /// @param genes1 genes of mom
     /// @param genes2 genes of sire
     /// @return the genes that are supposed to be passed down the child
@@ -1606,7 +1606,7 @@ contract SiringClockAuction is ClockAuction {
 
     // Delegate constructor
     function SiringClockAuction(address _nftAddr, uint256 _cut) public
-        ClockAuction(_nftAddr, _cut) 
+        ClockAuction(_nftAddr, _cut)
     {
 
     }
@@ -1782,7 +1782,7 @@ contract PuppiesAuction is PuppyBreeding {
 
     /// @dev Put a Puppy up for auction.
     ///  Does some ownership trickery to create auctions in one tx.
-    function createSaleAuction(
+    function createPuppySaleAuction(
         uint256 _puppyId,
         uint256 _startingPrice,
         uint256 _endingPrice,
@@ -1814,7 +1814,7 @@ contract PuppiesAuction is PuppyBreeding {
     /// @dev Put a Puppy up for auction to be sire.
     ///  Performs checks to ensure the Puppy can be sired, then
     ///  delegates to reverse auction.
-    function createSiringAuction(
+    function createPuppySiringAuctiona(
         uint256 _puppyId,
         uint256 _startingPrice,
         uint256 _endingPrice,
@@ -2060,7 +2060,7 @@ contract PuppiesCore is PuppiesMinting {
         genes = pup.genes;
     }
 
-    function getPuppyAttributes(uint256 _id) 
+    function getPuppyAttributes(uint256 _id)
     external
         view
         returns (
@@ -2072,14 +2072,14 @@ contract PuppiesCore is PuppiesMinting {
     ) {
         Puppy storage pup = puppies[_id];
 
-        // if this variable is 0 then it's not gestating        
+        // if this variable is 0 then it's not gestating
         childNumber = uint16(pup.childNumber);
         strength = uint16(pup.strength);
         agility = uint16(pup.agility);
         intelligence = uint16(pup.intelligence);
         speed = uint16(pup.speed);
     }
- 
+
     /// @dev Override unpause so it requires all external contract addresses
     ///  to be set before contract can be unpaused. Also, we can't have
     ///  newContractAddress set either, because then the contract was upgraded.
