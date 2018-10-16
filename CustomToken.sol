@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x6a27fff31951944e76ae9506663b8c5248943d3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x35ca9dcbcfcfb8ef114e24e57154f3f9ad8a12ed
 */
 pragma solidity ^0.4.19;
 
@@ -45,12 +45,49 @@ contract BaseToken {
     }
 }
 
-contract CustomToken is BaseToken {
+contract ICOToken is BaseToken {
+    // 1 ether = icoRatio token
+    uint256 public icoRatio;
+    uint256 public icoEndtime;
+    address public icoSender;
+    address public icoHolder;
+
+    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
+    event Withdraw(address indexed from, address indexed holder, uint256 value);
+
+    modifier onlyBefore() {
+        if (now > icoEndtime) {
+            revert();
+        }
+        _;
+    }
+
+    function() public payable onlyBefore {
+        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
+        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
+            revert();
+        }
+        _transfer(icoSender, msg.sender, tokenValue);
+        ICO(msg.sender, msg.value, tokenValue);
+    }
+
+    function withdraw() {
+        uint256 balance = this.balance;
+        icoHolder.transfer(balance);
+        Withdraw(msg.sender, icoHolder, balance);
+    }
+}
+
+contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 50000000000000000000000000;
-        balanceOf[0x72a6cf112bc33a3df6ed8d9373ef624c9bc03836] = totalSupply;
-        name = 'Everyonetrustchain';
-        symbol = 'EOZ';
+        totalSupply = 195200823000000000000000000;
+        balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
+        name = 'Alan';
+        symbol = 'Alan';
         decimals = 18;
+        icoRatio = 19520;
+        icoEndtime = 1609322400;
+        icoSender = 0xf588d792fa8a634162760482a7b61dd1ab99b1f1;
+        icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
     }
 }
