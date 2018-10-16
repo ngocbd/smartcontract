@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAT_ATM at 0x67d0c6e07bde60f88e9f7775f366c223ce6a9160
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAT_ATM at 0x5e0eb5b79aa53d71f338aa147dbdef42860c1188
 */
 pragma solidity 0.4.10;
 
@@ -17,7 +17,7 @@ contract BAT_ATM{
     }
 //only owner
     modifier onlyOwner(){ if(msg.sender == owner) _; }
-
+    
     function changeRate(uint _BATsPerEth) onlyOwner{
         pausedUntil = now + 300; //no new bids for 5 minutes (protects taker)
         BATsPerEth = _BATsPerEth;
@@ -27,7 +27,7 @@ contract BAT_ATM{
         if(!msg.sender.send(this.balance)){ throw; }
     }
     function withdrawBAT() onlyOwner{
-        if(!bat.transfer(msg.sender, bat.balanceOf(this))){ throw; }
+        if(!bat.transfer(msg.sender, bat.balanceOf(msg.sender))){ throw; }
     }
 }
 
