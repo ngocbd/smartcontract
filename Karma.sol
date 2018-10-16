@@ -1,145 +1,353 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Karma at 0x8fbbffe883bd8958b5324a9dba3987b4b2271379
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Karma at 0x360e51857242661de8f3ec4e6c684b45b3c0de87
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.18;
 
-contract SafeMath {
+/** SafeMath libs are inspired by:
+  *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
+  * There is debate as to whether this lib should use assert or require:
+  *  https://github.com/OpenZeppelin/zeppelin-solidity/issues/565
 
-    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
-    }
+  * `require` is used in these libraries for the following reasons:
+  *   - overflows should not be checked in contract function bodies; DRY
+  *   - "valid" user input can cause overflows, which should not assert()
+  */
+library SafeMath {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
+    return a - b;
+  }
 
-    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
-      assert(x >= y);
-      uint256 z = x - y;
-      return z;
-    }
-
-    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
-    }
-    
-    function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
-      assert(b > 0);
-      uint c = a / b;
-      assert(a == b * c + a % b);
-      return c;
-    }
-
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a);
+    return c;
+  }
 }
 
-contract Token {
-    uint256 public totalSupply;
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+library SafeMath64 {
+  function sub(uint64 a, uint64 b) internal pure returns (uint64) {
+    require(b <= a);
+    return a - b;
+  }
+
+  function add(uint64 a, uint64 b) internal pure returns (uint64) {
+    uint64 c = a + b;
+    require(c >= a);
+    return c;
+  }
 }
 
-contract StandardToken is Token {
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-      if (balances[msg.sender] >= _value && _value > 0) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
-    }
+// https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ownership/Ownable.sol
+contract Ownable {
+  address public owner;
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
+  function Ownable() public {
+    owner = msg.sender;
+  }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
-contract Karma is SafeMath, StandardToken {
 
-    string public constant name = "Karma PreSale Token";
-    string public constant symbol = "KRMP";
-    uint256 public constant decimals = 18;
-    uint256 public constant tokenCreationCap =  5000*10**decimals;
+// https://github.com/ethereum/EIPs/issues/179
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    address public multiSigWallet;
-    address public owner;
 
-    // 1 ETH = 300 USD Date: 11.08.2017
-    uint public oneTokenInWei = 333333333333333000;
+// https://github.com/ethereum/EIPs/issues/20
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    modifier onlyOwner {
-        if(owner!=msg.sender) revert();
-        _;
+
+// https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/DetailedERC20.sol
+contract DetailedERC20 is ERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+
+  function DetailedERC20(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+  }
+}
+
+
+/** KarmaToken has the following properties:
+  *
+  * User Creation:
+  * - Self-registration
+  *   - Owner signs hash(address, username, endowment), and sends to user
+  *   - User registers with username, endowment, and signature to create new account.
+  * - Mod creates new user.
+  *
+  * Karma/Token Rules:
+  * - Karma is created by initial user creation endowment.
+  * - Karma can also be minted by mod into an existing account.
+  * - Karma can only be transferred to existing account holder.
+  * - Karma implements the ERC20 token interface.
+  *
+  * Dividends:
+  * - each user can withdraw a dividend once per month.
+  * - dividend is total contract value at end of the month, divided by total number of users as end of the month.
+  * - user has 1 month to withdraw their dividend from the previous month.
+  * - if user does not withdraw their dividend, their share will be rolled over as a donation to the next month.
+  * - mod can place a user on a 1 month "timeout", whereby they won't be eligible for a dividend.
+
+  * Eg: 10 eth is sent to the contract in January. There are 100 token holders on Jan 31. At any time in February, 
+  * each token holder can withdraw .1 eth for their January dividend (unless they were given a "timeout" in January).
+  */
+contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
+  // SafeMath libs are responsible for checking overflow.
+  using SafeMath for uint256;
+  using SafeMath64 for uint64;
+
+  // TODO ensure this all fits in a single 256 bit block.
+  struct User {
+    bytes20 username;
+    uint64 karma; 
+    uint16 canWithdrawPeriod;
+    uint16 birthPeriod;
+  }
+
+  // Manage users.
+  mapping(address => User) public users;
+  mapping(bytes20 => address) public usernames;
+
+  // Manage dividend payments.
+  uint256 public epoch;
+  uint256 public dividend;
+  uint64 public numUsers;
+  uint64 public newUsers;
+  uint16 public currentPeriod = 1;
+
+  address public moderator;
+
+  mapping(address => mapping (address => uint256)) internal allowed;
+
+  event Mint(address indexed to, uint256 amount);
+  event PeriodEnd(uint16 period, uint256 amount, uint64 users);
+  event Donation(address indexed from, uint256 amount);
+  event Withdrawal(address indexed to, uint16 indexed period, uint256 amount);
+  event NewUser(address addr, bytes20 username, uint64 endowment);
+
+  modifier onlyMod() {
+    require(msg.sender == moderator);
+    _;
+  }
+
+  function Karma(uint256 _startEpoch) public {
+    epoch = _startEpoch;
+    moderator = msg.sender;
+  }
+
+  function() payable public {
+    Donation(msg.sender, msg.value);
+  }
+
+  /** 
+   * Owner Functions 
+   */
+
+  function setMod(address _newMod) public onlyOwner {
+    moderator = _newMod;
+  }
+
+  // Owner should call this on 1st of every month.
+  function newPeriod() public onlyOwner {
+    require(now >= epoch + 28 days);
+
+    // Calculate dividend.
+    uint64 existingUsers = numUsers;
+    if (existingUsers == 0) {
+      dividend = 0;
+    } else {
+      dividend = this.balance / existingUsers;
     }
 
-    event CreateKRM(address indexed _to, uint256 _value);
+    numUsers = numUsers.add(newUsers);
+    newUsers = 0;
+    currentPeriod++;
+    epoch = now;
 
-    function Karma(address _SigWallet, address _owner) {
-        multiSigWallet = _SigWallet;
-        owner = _owner;
-        
-        balances[0xDe9a1a8CC771C12D4D85b32742688D3EC955167c] = 1900 * 10**decimals;
-        balances[0x707Db60b19Cfc5d525DD2359D6181248aa0A518d] = 2900 * 10**decimals;
-        balances[0xbfe3d6da33616Ae044c17e203969d37ED5aDF651] = 100 * 10**decimals;
-        balances[0x45d6B3Ed3375B114F3ecD3ac5D7E9Bd2154a1E89] = 100 * 10**decimals;
+    PeriodEnd(currentPeriod-1, this.balance, existingUsers);
+  }
+
+  /**
+    * Mod Functions
+    */
+
+  function createUser(address _addr, bytes20 _username, uint64 _amount) public onlyMod {
+    newUser(_addr, _username, _amount);
+  }
+
+  // Send karma to existing account.
+  function mint(address _addr, uint64 _amount) public onlyMod {
+    require(users[_addr].canWithdrawPeriod != 0);
+
+    users[_addr].karma = users[_addr].karma.add(_amount);
+    totalSupply = totalSupply.add(_amount);
+    Mint(_addr, _amount);
+  }
+
+  // If a user has been bad, they won't be able to receive a dividend :(
+  function timeout(address _addr) public onlyMod {
+    require(users[_addr].canWithdrawPeriod != 0);
+
+    users[_addr].canWithdrawPeriod = currentPeriod + 1;
+  }
+
+  /**
+    * User Functions
+    */
+
+  // Owner will sign hash(address, username, amount), and address owner uses this 
+  // signature to register their account.
+  function register(bytes20 _username, uint64 _endowment, bytes _sig) public {
+    require(recover(keccak256(msg.sender, _username, _endowment), _sig) == owner);
+    newUser(msg.sender, _username, _endowment);
+  }
+
+  // User can withdraw their share of donations from the previous month.
+  function withdraw() public {
+    require(users[msg.sender].canWithdrawPeriod != 0);
+    require(users[msg.sender].canWithdrawPeriod < currentPeriod);
+
+    users[msg.sender].canWithdrawPeriod = currentPeriod;
+    msg.sender.transfer(dividend);
+    Withdrawal(msg.sender, currentPeriod-1, dividend);
+  }
+
+  /**
+    * ERC20 Functions
+    */
+
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return users[_owner].karma;
+  }
+
+  // Contrary to most ERC20 implementations, require that recipient is existing user.
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(users[_to].canWithdrawPeriod != 0);
+    require(_value <= users[msg.sender].karma);
+
+    // Type assertion to uint64 is safe because we require that _value is < uint64 above.
+    users[msg.sender].karma = users[msg.sender].karma.sub(uint64(_value));
+    users[_to].karma = users[_to].karma.add(uint64(_value));
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  // Contrary to most ERC20 implementations, require that recipient is existing user.
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(users[_to].canWithdrawPeriod != 0);
+    require(_value <= users[_from].karma);
+    require(_value <= allowed[_from][msg.sender]);
+
+    users[_from].karma = users[_from].karma.sub(uint64(_value));
+    users[_to].karma = users[_to].karma.add(uint64(_value));
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+    * Private Functions
+    */
+
+  // https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ECRecovery.sol
+  function recover(bytes32 hash, bytes sig) internal pure returns (address) {
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
+
+    //Check the signature length
+    if (sig.length != 65) {
+      return (address(0));
     }
 
-    function () payable {
-        createTokens();
+    // Divide the signature in r, s and v variables
+    assembly {
+      r := mload(add(sig, 32))
+      s := mload(add(sig, 64))
+      v := byte(0, mload(add(sig, 96)))
     }
 
-    function createTokens() internal {
-        if (msg.value <= 0) revert();
-
-        uint multiplier = 10 ** decimals;
-        uint256 tokens = safeMult(msg.value, multiplier) / oneTokenInWei;
-
-        uint256 checkedSupply = safeAdd(totalSupply, tokens);
-        if (tokenCreationCap < checkedSupply) revert();
-
-        balances[msg.sender] += tokens;
-        totalSupply = safeAdd(totalSupply, tokens);
+    // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
+    if (v < 27) {
+      v += 27;
     }
 
-    function finalize() external onlyOwner {
-        multiSigWallet.transfer(this.balance);
+    // If the version is correct return the signer address
+    if (v != 27 && v != 28) {
+      return (address(0));
+    } else {
+      return ecrecover(hash, v, r, s);
     }
-    
-    // add call to oracle 
-    function setEthPrice(uint _etherPrice) onlyOwner {
-        oneTokenInWei = 1 ether / _etherPrice / 100;
-    }
+  }
 
+  // Ensures that username isn't taken, and account doesn't already exist for 
+  // user's address.
+  function newUser(address _addr, bytes20 _username, uint64 _endowment) private {
+    require(usernames[_username] == address(0));
+    require(users[_addr].canWithdrawPeriod == 0);
+
+    users[_addr].canWithdrawPeriod = currentPeriod + 1;
+    users[_addr].birthPeriod = currentPeriod;
+    users[_addr].karma = _endowment;
+    users[_addr].username = _username;
+    usernames[_username] = _addr;
+
+    newUsers = newUsers.add(1);
+    totalSupply = totalSupply.add(_endowment);
+    NewUser(_addr, _username, _endowment);
+  }
 }
