@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetBuyer at 0x8E6057adfdAfBa64a69C53510197B6EA33367B74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetBuyer at 0xd3e55b1c1da60e7e995e70d85c847c975fed5d37
 */
 pragma solidity ^0.4.11;
 
@@ -115,8 +115,10 @@ contract BetBuyer {
   function default_helper() payable {
     // Treat near-zero ETH transactions as check ins and withdrawal requests.
     if (msg.value <= 1 finney) {
-      // Check in during the crowdsale before it has reached the cap.
-      if (bought_tokens && token.totalEthers() < token.CAP()) {
+      // Check in during the crowdsale.
+      if (bought_tokens) {
+        // Only allow checking in before the crowdsale has reached the cap.
+        if (token.totalEthers() >= token.CAP()) throw;
         // Mark user as checked in, meaning they would have been able to enter alone.
         checked_in[msg.sender] = true;
       }
