@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0xc1dbd4e95f0d80ce848848b76c0daf781d649b8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x0411b4652f6087d02f633119043e6199841e37eb
 */
 pragma solidity 0.4.18;
 
@@ -213,7 +213,7 @@ contract KRWT is StandardToken {
     string constant public name = "Korean Won";
     string constant public symbol = "KRWT";
     uint8 constant public decimals = 18;
-    uint public totalSupply = 10000000000000;
+    uint public totalSupply = 10000000000000 * 10**uint(decimals);
 
     function KRWT() public {
         balances[msg.sender] = totalSupply;
