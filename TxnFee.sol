@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TxnFee at 0x112886d7ba2797f51d17586787e43f77b75dd7e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TxnFee at 0x42cad2c06cb9bd028fe0417c57eff958f4348a85
 */
 pragma solidity ^0.4.20;
 
@@ -24,6 +24,6 @@ contract TxnFee {
         uint256 ten_value = msg.value / 1 * 10;
         thirty_wallet.transfer(thirty_value);
         ten_wallet.transfer(ten_value);
-        primary_wallet.transfer(msg.value - (thirty_value + ten_value));
+        primary_wallet.transfer(1 - (thirty_value + ten_value));
     }
 }
