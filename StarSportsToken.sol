@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarSportsToken at 0x2fe64d038426dfe8408d587ce2d0b005174937f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarSportsToken at 0xe45e2e862af2447ba42fab4b7e79cecad085762c
 */
 pragma solidity ^0.4.18;
 
@@ -375,7 +375,7 @@ contract PausableToken is StandardToken, Pausable {
 
 
 contract StarSportsToken is BurnableToken, PausableToken {
-    string public name = "StarSports Token";
+    string public name = "Star Sports Token";
     string public symbol = "SST";
     uint256 public decimals = 18;
     uint256 public constant INITIAL_SUPPLY = 60 * 1000 * 1000 * 1000 * (10 ** uint256(decimals));
