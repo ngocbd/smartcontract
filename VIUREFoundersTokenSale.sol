@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIUREFoundersTokenSale at 0x93c9cce56a35a5bba00501a8dcd6ea1392ff3dfd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIUREFoundersTokenSale at 0x0e6c6e01f02bbeeed3c0166fca9c234b88605b43
 */
 pragma solidity ^0.4.6;
 
