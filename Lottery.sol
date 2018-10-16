@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xae36a22bde48b53c9ee5b68383828c5c90272de2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x8b07e320e1d266bfd274ec333c24ea4a04d178d2
 */
 pragma solidity ^0.4.20;
-//Address: 0xae36A22Bde48b53C9eE5B68383828C5c90272De2
+//Address: 0x8B07e320e1D266bFD274Ec333c24EA4a04d178D2
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -1054,7 +1054,7 @@ contract usingOraclize {
 // </ORACLIZE_API>
 
 // Contract that:
-//      Lets anyone bet with 1.636 ethers
+//      Lets anyone bet with 0.820 ethers
 //      When it reaches 2 bets, it chooses a player at random based on oraclize and sends z% of the ethers received. other v% goes to GiveDirectly
 
 contract Lottery is usingOraclize{
@@ -1094,7 +1094,7 @@ contract Lottery is usingOraclize{
     function Lottery() public{
         owner = msg.sender;
         player_count = 0;
-        ante = 1.636 ether;
+        ante = 0.820 ether;
         required_number_players = 2;
         winner_percentage = 98;
         oraclize_setProof(proofType_Ledger); 
@@ -1318,7 +1318,7 @@ contract Lottery is usingOraclize{
     }
     
     function returneth (bytes32 _roomID) onlyOwner public {
-        //for any rooms that oraclize fails to return the money to, can use this to return ante to owners
+        //for any rooms that oraclize fails to return the money to can use this to return ante to owners
         require (_roomID != bytes32(0)); //make sure address is not null
         require (rooms[_roomID].winner == address(0)); //make sure that the sum cannot be double spent
         
