@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MNY at 0x41b8d6336bdab8991ad1c48e3579d0693db17e79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MNY at 0x9cf67d1b360c2ce6b351d99d55d291d966736fda
 */
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
@@ -16,7 +16,7 @@ contract MNY {
     address public _devFeesAddr;
     uint256 public _tokePerEth = 4877000000000000000000;
     bool public _coldStorage = true;
-    bool public _receiveEth = true;
+    bool public _receiveEth = false;
 
     // fees vars - added for future extensibility purposes only
     bool _feesEnabled = false;
@@ -27,6 +27,7 @@ contract MNY {
     uint256 _devFees = 0;
 
     uint256 public _totalSupply = 1000000928 * 1 ether;
+    uint256 public _circulatingSupply = 0;
     uint256 public _frozenTokens = 0;
     event Transfer(address indexed _from, address indexed _to, uint _value);
     event Exchanged(address indexed _from, address indexed _to, uint _value);
@@ -69,13 +70,16 @@ contract MNY {
                 codeLength := extcodesize(_to)
             }
 
-            // we decided that we don't want to lose tokens into OTHER contracts that aren't exchange partners
-            require(codeLength == 0);
+            if(codeLength != 0) {
+                // only allow transfer to exchange partner contracts - this is handled by another function
+            exchange(_to, _value);
+            }
+            else {
+                balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+                balances[_to] = add(balances[_to], _value);
 
-            balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-            balances[_to] = add(balances[_to], _value);
-
-            Transfer(msg.sender, _to, _value);
+                Transfer(msg.sender, _to, _value);
+            }
         }
     }
 
@@ -97,31 +101,21 @@ contract MNY {
                 codeLength := extcodesize(_to)
             }
 
-            // we decided that we don't want to lose tokens into OTHER contracts that aren't exchange partners
-            require(codeLength == 0);
+            if(codeLength != 0) {
+                // only allow transfer to exchange partner contracts - this is handled by another function
+            exchange(_to, _value);
+            }
+            else {
+                balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+                balances[_to] = add(balances[_to], _value);
 
-            balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-            balances[_to] = add(balances[_to], _value);
-
-            Transfer(msg.sender, _to, _value);
+                Transfer(msg.sender, _to, _value);
+            }
         }
     }
 
-    function exchange(address _partner, uint _amount) public {
-        // msg.sender must have enough tokens to transfer
-        require(balances[msg.sender] >= _amount);
-
-        // intended partner addy must be a contract
-        uint codeLength;
-        assembly {
-        // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_partner)
-        }
-        require(codeLength > 0);
-
-        // contract must be able to exchange with the partner
+    function exchange(address _partner, uint _amount) internal {
         require(exchangePartners[_partner]);
-        // require the transaction to be successful before we adjust the senders balance
         require(requestTokensFromOtherContract(_partner, this, msg.sender, _amount));
 
         if(_coldStorage) {
@@ -135,6 +129,7 @@ contract MNY {
         }
 
         balances[msg.sender] = sub(balanceOf(msg.sender), _amount);
+        _circulatingSupply = sub(_circulatingSupply, _amount);
         Exchanged(msg.sender, _partner, _amount);
         Transfer(msg.sender, this, _amount);
     }
@@ -146,6 +141,7 @@ contract MNY {
         require(_totalSupply >= _tokens);//, "Insufficient tokens available at current exchange rate");
         _totalSupply = sub(_totalSupply, _tokens);
         balances[msg.sender] = add(balances[msg.sender], _tokens);
+        _circulatingSupply = add(_circulatingSupply, _tokens);
         Transfer(this, msg.sender, _tokens);
         _lifeVal = add(_lifeVal, msg.value);
 
@@ -173,6 +169,7 @@ contract MNY {
         require(_exchanged <= _totalSupply);
         balances[_recipient] = add(balances[_recipient],_exchanged);
         _totalSupply = sub(_totalSupply, _exchanged);
+        _circulatingSupply = add(_circulatingSupply, _exchanged);
         Exchanged(_source, _recipient, _exchanged);
         Transfer(this, _recipient, _exchanged);
     }
@@ -274,19 +271,17 @@ contract MNY {
         return _totalSupply;
     }
 
-    // just in case fallback
-    function updateTokenBalance(uint256 newBalance) public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        _totalSupply = newBalance;
-    }
-
     function getBalance() public constant returns (uint256) {
         return this.balance;
     }
 
-    function getLifeVal() public returns (uint256) {
+    function getLifeVal() public constant returns (uint256) {
         require((msg.sender == _owner) || (msg.sender == _dev));
         return _lifeVal;
+    }
+
+    function getCirculatingSupply() public constant returns (uint256) {
+        return _circulatingSupply;
     }
 
     function payFeesToggle() {
