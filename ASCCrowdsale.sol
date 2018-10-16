@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ASCCrowdsale at 0x9c0d525e8656098b96e7787aa7e9cdb33c2d892b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ASCCrowdsale at 0x92b7b3a88ea73f2339141034cbf971bcbcc54ee4
 */
 pragma solidity ^0.4.16;
 
@@ -62,9 +62,8 @@ contract ASCCrowdsale {
         require(msg.value > 0);
         require(now > startDate);
         require(now < endDate);
-        uint amount = msg.value / 1 ether;
-	    amount *= price * 100;
-	    uint amount10 = amount / 10;
+        uint amount = msg.value * price;
+        uint amount10 = amount / 10;
 
         // period 1 : 60%
         if(now > startDate && now < 1516230000) {
