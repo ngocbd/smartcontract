@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MineBlocks at 0x8e0f8adfb17c48f5837228018ace3c711168458d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MineBlocks at 0x09f0df05fa9a047ba5ed6a3a0fd730f527ed024c
 */
 pragma solidity ^0.4.19;
 
@@ -161,7 +161,7 @@ contract MineBlocks is Ownable {
     uint8 public constant decimals = 8; // hardcoded to be a constant
 
     // Contract variables and constants
-    uint256 public constant minPrice = 1500000000000000;
+    uint256 public constant minPrice = 500000000000000;
     uint256 public blockEndICO = block.number + uint256(259200);
     uint256 public buyPrice = minPrice;
 
@@ -198,19 +198,19 @@ contract MineBlocks is Ownable {
         _;  // modified function code should go before prices update
 
     if(balances[this]>600000000000000){
-      buyPrice=1500000000000000;
+      buyPrice=500000000000000;
     }else if(balances[this]>500000000000000 && balances[this]<=600000000000000){
 
-      buyPrice=2000000000000000;
+      buyPrice=1000000000000000;
     }else if(balances[this]>400000000000000 && balances[this]<=500000000000000){
 
-      buyPrice=2500000000000000;
+      buyPrice=1500000000000000;
     }else if(balances[this]>300000000000000 && balances[this]<=400000000000000){
 
-      buyPrice=3000000000000000;
+      buyPrice=2000000000000000;
     }else{
 
-      buyPrice=4000000000000000;
+      buyPrice=2500000000000000;
     }
         
     }
