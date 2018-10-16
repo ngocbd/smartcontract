@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0x0a9b9d976de8e09f0b57d1d7f344abe77925145c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0xf4f5683bc45bb1b3a3c61bb458006682d29d08a5
 */
 pragma solidity ^0.4.15;
 
@@ -50,15 +50,6 @@ contract Slotthereum is Mortal {
 
     event MinBetAmountChanged(uint amount);
     event MaxBetAmountChanged(uint amount);
-    event PointerChanged(uint8 value);
-
-    event GameRoll(
-        address indexed player,
-        uint indexed gameId,
-        uint8 start,
-        uint8 end,
-        uint amount
-    );
 
     event GameWin(
         address indexed player,
@@ -115,8 +106,7 @@ contract Slotthereum is Mortal {
     }
 
     function getNumber(bytes32 _a) internal constant returns (uint8) {
-        // uint8 mint = pointer;
-        uint8 mint = 0;
+        uint8 mint = pointer;
         for (uint i = 31; i >= 1; i--) {
             if ((uint8(_a[i]) >= 48) && (uint8(_a[i]) <= 57)) {
                 return uint8(_a[i]) - 48;
@@ -145,10 +135,7 @@ contract Slotthereum is Mortal {
         }
 
         uint gameId = games.length;
-        games.length++;
-        numberOfGames++;
-
-        GameRoll(msg.sender, gameId, start, end, msg.value);
+        games.length += 1;
 
         games[gameId].id = gameId;
         games[gameId].player = msg.sender;
@@ -194,12 +181,6 @@ contract Slotthereum is Mortal {
         maxBetAmount = _maxBetAmount;
         MaxBetAmountChanged(maxBetAmount);
         return maxBetAmount;
-    }
-
-    function setPointer(uint8 _pointer) onlyowner returns (uint) {
-        pointer = _pointer;
-        PointerChanged(pointer);
-        return pointer;
     }
 
     function getGameIds() constant returns(uint[]) {
