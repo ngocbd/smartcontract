@@ -1,22 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAddressLottery at 0x37eb3cb268a0dd1bc2c383296fe34f58c5b5db8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAddressLottery at 0x4fdc2078d8bc92e1ee594759d7362f94b60b1a3d
 */
 pragma solidity ^0.4.19;
 /*
  * This is a distributed lottery that chooses random addresses as lucky addresses. If these
- * participate, they get the jackpot: 7 times the price of their bet.
+ * participate, they get the jackpot: 1.9 times the price of their bet.
  * Of course one address can only win once. The owner regularly reseeds the secret
  * seed of the contract (based on which the lucky addresses are chosen), so if you did not win,
  * just wait for a reseed and try again!
  *
- * Jackpot chance:   1 in 8
+ * Jackpot chance:   50%
  * Ticket price: Anything larger than (or equal to) 0.1 ETH
- * Jackpot size: 7 times the ticket price
+ * Jackpot size: 1.9 times the ticket price
  *
  * HOW TO PARTICIPATE: Just send any amount greater than (or equal to) 0.1 ETH to the contract's address
  * Keep in mind that your address can only win once
  *
  * If the contract doesn't have enough ETH to pay the jackpot, it sends the whole balance.
+ *
+ * Example: For each address, a random number is generated, either 0 or 1. This number is then compared
+ * with the LuckyNumber - a constant 1. If they are equal, the contract will instantly send you the jackpot:
+ * your bet multiplied by 1.9 (House edge of 0.1)
 */
 
 contract OpenAddressLottery{
@@ -30,7 +34,7 @@ contract OpenAddressLottery{
     address owner; //address of the owner
     uint private secretSeed; //seed used to calculate number of an address
     uint private lastReseed; //last reseed - used to automatically reseed the contract every 1000 blocks
-    uint LuckyNumber = 7; //if the number of an address equals 7, it wins
+    uint LuckyNumber = 1; //if the number of an address equals 1, it wins
         
     mapping (address => bool) winner; //keeping track of addresses that have already won
     
@@ -40,13 +44,16 @@ contract OpenAddressLottery{
     }
     
     function participate() payable {
+        if(msg.value<0.1 ether)
+            return; //verify ticket price
+        
         // make sure he hasn't won already
         require(winner[msg.sender] == false);
         
-        if(luckyNumberOfAddress(msg.sender) == LuckyNumber){ //check if it equals 7
+        if(luckyNumberOfAddress(msg.sender) == LuckyNumber){ //check if it equals 1
             winner[msg.sender] = true; // every address can only win once
             
-            uint win=msg.value*7; //win = 7 times the ticket price
+            uint win=(msg.value/10)*19; //win = 1.9 times the ticket price
             
             if(win>this.balance) //if the balance isnt sufficient...
                 win=this.balance; //...send everything we've got
@@ -58,8 +65,8 @@ contract OpenAddressLottery{
     }
     
     function luckyNumberOfAddress(address addr) constant returns(uint n){
-        // calculate the number of current address - 1 in 8 chance
-        n = uint(keccak256(uint(addr), secretSeed)[0]) % 8;
+        // calculate the number of current address - 50% chance
+        n = uint(keccak256(uint(addr), secretSeed)[0]) % 2; //mod 2 returns either 0 or 1
     }
     
     function reseed(SeedComponents components) internal {
