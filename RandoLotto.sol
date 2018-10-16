@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RandoLotto at 0x6774ff11d7c45052235d052033b4cfd7f8adfb80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RandoLotto at 0x66322181534ff227904daf5ea692a2f2ba62d582
 */
 pragma solidity 0.4.23;
 
@@ -31,7 +31,6 @@ contract RandoLotto {
         if (randomNumber > highScore) {
             currentWinner = msg.sender;
             lastTimestamp = now;
-            highScore = randomNumber;
         }
     }
     
