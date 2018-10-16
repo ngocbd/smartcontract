@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpControllerHelper at 0x850c430378909ba9ff2494d0a4df17928e99f8f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpControllerHelper at 0x3f66500c624d423063ee3a15df6f49cd5098d927
 */
 pragma solidity ^0.4.19;
 
@@ -720,6 +720,11 @@ contract BdpOwnershipStorage is BdpBase {
 
 // File: contracts/libraries/BdpOwnership.sol
 
+/**
+ * Ownership manager
+ * Does not check if the caller is allowed to call functions
+ * State changing methods are not intended to be called from controller
+ */
 library BdpOwnership {
 
 	using SafeMath for uint256;
@@ -902,7 +907,7 @@ library BdpImage {
 			( (msg.sender == imageStorage.getImageOwner(_imageId)) && (imageStorage.getImageCurrentRegionId(_imageId) == 0) ) );
 
 		var nextImageId = dataStorage.getRegionNextImageId(_regionId);
-		require(!_swapImages || imageStorage.imageUploadComplete(nextImageId)); // Can swap images if next image upload is complete
+		require(!_swapImages || imageUploadComplete(_contracts, nextImageId)); // Can swap images if next image upload is complete
 	}
 
 	function setNextImagePart(address[16] _contracts, uint256 _regionId, uint16 _part, uint16 _partsCount, uint16 _imageDescriptor, uint256[] _imageData) public {
@@ -941,6 +946,17 @@ library BdpImage {
 		require(_part <= imageStorage.getImagePartsCount(_imageId));
 
 		imageStorage.setImageData(_imageId, _part, _imageData);
+	}
+
+	function imageUploadComplete(address[16] _contracts, uint256 _imageId) view public returns (bool) {
+		var imageStorage = BdpImageStorage(BdpContracts.getBdpImageStorage(_contracts));
+		var partsCount = imageStorage.getImagePartsCount(_imageId);
+		for (uint16 i = 1; i <= partsCount; i++) {
+			if(imageStorage.getImageDataLength(_imageId, i) == 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }
@@ -1094,7 +1110,7 @@ contract BdpControllerHelper is BdpBase {
 	}
 
 	function imageUploadComplete(uint256 _imageId) view public returns (bool) {
-		return BdpImageStorage(BdpContracts.getBdpImageStorage(contracts)).imageUploadComplete(_imageId);
+		return BdpImage.imageUploadComplete(contracts, _imageId);
 	}
 
 
