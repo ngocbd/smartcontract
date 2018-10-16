@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x7b6c511a94d35b9cf9979b727335c9798edb5c64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xbce39946aba431f8a244153cb8aca6541625bc2e
 */
 pragma solidity ^0.4.20;
 
@@ -123,7 +123,7 @@ contract Hourglass {
     string public name = "POHD";
     string public symbol = "POHD";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 2;
+    uint8 constant internal dividendFee_ = 4;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -153,7 +153,7 @@ contract Hourglass {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false;
+    bool public onlyAmbassadors = true;
     
 
 
@@ -167,23 +167,14 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0x235910f4682cfe7250004430a4ffb5ac78f5217e1f6a4bf99c937edf757c3330] = true;
+        administrators[0xa01f8af244314a5585bd4c9c320d8a2d4375f98982655aec449748112312da4b] = true;
         
         // add the ambassadors here.
         // One lonely developer 
-        ambassadors_[0x71f35825a3B1528859dFa1A64b24242BC0d12990] = true;
+        ambassadors_[0x04569cdb6fc3e0add8d71c4c83b5a4d9232bbded] = true;
         
         // Backup Eth address
-       
-        ambassadors_[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = true;
-         
-        ambassadors_[0x448D9Ae89DF160392Dd0DD5dda66952999390D50] = true;
-        
-    
-         
-         
-        
-        
+        ambassadors_[0x206f60817a5a57a8efeb1d06e0c007201f1c11e9] = true;
      
 
     }
