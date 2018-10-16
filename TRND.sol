@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRND at 0x3a9c0090e0d8d26f5eb83cacbc6361c2d305a500
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRND at 0x443cd38fe8a08f670df8d95ec4eae4273a4353e1
 */
 pragma solidity ^0.4.23;
 
@@ -89,6 +89,7 @@ contract Ownable {
   }
 
 }
+
 
 /**
  * @title ERC20Basic
@@ -524,16 +525,15 @@ contract Crowdsale is Ownable {
 	
     //min Purchase in wei = 0.1 ETH
     minPurchasePreICO      = 100000000000000000;
+    
     // start and end timestamps where investments are allowed
-    //ico
-    //start/end 
-    startIcoPreICO   = 1527843600; //   06/01/2018 @ 9:00am (UTC)
-    endIcoPreICO     = 1530435600; //   07/01/2018 @ 9:00am (UTC)
-    startIcoMainSale = 1530435600; //   07/01/2018 @ 9:00am (UTC)
-    endIcoMainSale   = 1533891600; //   08/10/2018 @ 9:00am (UTC)
+    startIcoPreICO   = 1530435600; //   07/01/2018 @ 9:00am (UTC)
+    endIcoPreICO     = 1533027600; //   07/31/2018 @ 9:00am (UTC)
+    startIcoMainSale = 1534323600; //   08/15/2018 @ 9:00am (UTC)
+    endIcoMainSale   = 1540976400; //   10/31/2018 @ 9:00am (UTC)
 
-    //rate; 0.125$ for ETH = 700$
-    rateIcoPreICO = 5600;
+    //rate; 0.1875$ for ETH = 700$
+    rateIcoPreICO = 3733;
     //rate; 0.25$ for ETH = 700$
     rateIcoMainSale = 2800;
 
@@ -542,30 +542,45 @@ contract Crowdsale is Ownable {
   }
   
   function setStartIcoPreICO(uint256 _startIcoPreICO) public onlyOwner  { 
-    uint256 delta;
+    // Enforce consistency of dates
+    require(_startIcoPreICO < endIcoPreICO);
+    // Once Pre-ICO has started, none of the dates can be moved anymore.
     require(now < startIcoPreICO);
-	if (startIcoPreICO > _startIcoPreICO) {
-	  delta = startIcoPreICO.sub(_startIcoPreICO);
 	  startIcoPreICO   = _startIcoPreICO;
-	  endIcoPreICO     = endIcoPreICO.sub(delta);
-      startIcoMainSale = startIcoMainSale.sub(delta);
-      endIcoMainSale   = endIcoMainSale.sub(delta);
-	}
-	if (startIcoPreICO < _startIcoPreICO) {
-	  delta = _startIcoPreICO.sub(startIcoPreICO);
-	  startIcoPreICO   = _startIcoPreICO;
-	  endIcoPreICO     = endIcoPreICO.add(delta);
-      startIcoMainSale = startIcoMainSale.add(delta);
-      endIcoMainSale   = endIcoMainSale.add(delta);
-	}	
+  }
+
+  function setEndIcoPreICO(uint256 _endIcoPreICO) public onlyOwner  {     
+	// Enforce consistency of dates
+    require(startIcoPreICO < _endIcoPreICO && _endIcoPreICO < startIcoMainSale);
+    // Once Pre-ICO has started, none of the dates can be moved anymore.
+    require(now < startIcoPreICO);
+	  endIcoPreICO   = _endIcoPreICO;
+  }
+  
+  function setStartIcoMainICO(uint256 _startIcoMainSale) public onlyOwner  { 
+    // Enforce consistency of dates
+    require(endIcoPreICO < _startIcoMainSale && _startIcoMainSale < endIcoMainSale);
+    // Once Pre-ICO has started, none of the dates can be moved anymore.    
+    require(now < startIcoPreICO);
+	  startIcoMainSale   = _startIcoMainSale;
+  }
+  
+  function setEndIcoMainICO(uint256 _endIcoMainSale) public onlyOwner  { 
+    // Enforce consistency of dates
+    require(startIcoMainSale < _endIcoMainSale);
+    // Once Pre-ICO has started, none of the dates can be moved anymore.
+    require(now < startIcoPreICO);
+	  endIcoMainSale   = _endIcoMainSale;
   }
   
   function setRateIcoPreICO(uint256 _rateIcoPreICO) public onlyOwner  {
     rateIcoPreICO = _rateIcoPreICO;
   }   
+  
   function setRateIcoMainSale(uint _rateIcoMainSale) public onlyOwner  {
     rateIcoMainSale = _rateIcoMainSale;
-  }     
+  }
+       
   // fallback function can be used to Procure tokens
   function () external payable {
     procureTokens(msg.sender);
@@ -577,7 +592,7 @@ contract Crowdsale is Ownable {
   
   function getRateIcoWithBonus() public view returns (uint256) {
     uint256 bonus;
-	uint256 rateICO;
+	  uint256 rateICO;
     //icoPreICO   
     if (now >= startIcoPreICO && now < endIcoPreICO){
       rateICO = rateIcoPreICO;
