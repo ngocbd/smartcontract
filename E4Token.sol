@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Token at 0x1422a103db05e3d3c3b003f57db5cb519469ab3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Token at 0xdd8a7295d2ea1a9d492631b8e8e3d36ec83123db
 */
-// VERSION M
+// VERSION L
 
 pragma solidity ^0.4.8;
 
@@ -394,15 +394,11 @@ contract E4Token is Token, E4RowRewards {
 
 	// ---------------------------
 	// accept payment from e4row contract
-	// WARNING! DO NOT CALL THIS FUNCTION LEST YOU LOSE YOUR MONEY
-	// HOWEVER ADD THIS GIFT TO THE HOLDOVERBALANCE
-	// YOU HAVE BEEN WARNED
+	// DO NOT CALL THIS FUNCTION LEST YOU LOSE YOUR MONEY
 	// ---------------------------
 	function feePayment() payable  
 	{
 		if (msg.sender != e4_partner) {
-			if (msg.value > 0)
-				holdoverBalance += msg.value;
 			StatEvent("forbidden");
 			return; // thank you
 		}
