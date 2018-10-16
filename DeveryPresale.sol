@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeveryPresale at 0x5e99ff20c437adbb0f503f0b33ba8aa0f9661a9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeveryPresale at 0x91bbf2167fef5b0044d8580c9631a3161616da7a
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'PREVE' 'Presale EVE Tokens' token contract
 //
-// Deployed to : {TBA}
-// Symbol      : PREVE
-// Name        : Presale EVE Tokens
+// Deployed to : 0x91bbf2167Fef5b0044D8580c9631A3161616da7a
+// Symbol      : Zqir6DBAX9VV
+// Name        : Zqir6DBAX9VV
 // Total supply: Minted
 // Decimals    : 18
 //
@@ -190,19 +190,18 @@ contract ERC20Token is ERC20Interface, Owned {
 // ----------------------------------------------------------------------------
 contract DeveryPresale is ERC20Token {
     address public wallet;
-    // 9:00pm, 14 December GMT-5 => 02:00 15 December UTC => 13:00 15 December AEST => 1513303200
-    // new Date(1513303200 * 1000).toUTCString() =>  "Fri, 15 Dec 2017 02:00:00 UTC"
-    uint public constant START_DATE = 1513303200;
+    // new Date(1513267028 * 1000).toUTCString() =>  "Thu, 14 Dec 2017 15:57:08 UTC" = "Fri, 15 Dec 2017 02:57:08 AEDT"
+    uint public constant START_DATE = 1513267028;
     bool public closed;
-    uint public ethMinContribution = 20 ether;
+    uint public ethMinContribution = 0.01 ether;
     uint public constant TEST_CONTRIBUTION = 0.01 ether;
     uint public usdCap = 2000000;
     // ETH/USD 14 Dec 2017 ~ 16:40 AEST => 730 from CMC
     uint public usdPerKEther = 730000;
     uint public contributedEth;
     uint public contributedUsd;
-    DeveryPresaleWhitelist public whitelist;
-    PICOPSCertifier public picopsCertifier;
+    DeveryPresaleWhitelist public whitelist = DeveryPresaleWhitelist(0xB74c2851d55CD01A43BDD0878fe6C0FF984A8203);
+    PICOPSCertifier public picopsCertifier = PICOPSCertifier(0x1e2F058C43ac8965938F6e9CA286685A3E63F24E);
 
     event WalletUpdated(address indexed oldWallet, address indexed newWallet);
     event EthMinContributionUpdated(uint oldEthMinContribution, uint newEthMinContribution);
@@ -212,7 +211,7 @@ contract DeveryPresale is ERC20Token {
     event PICOPSCertifierUpdated(address indexed oldPICOPSCertifier, address indexed newPICOPSCertifier);
     event Contributed(address indexed addr, uint ethAmount, uint ethRefund, uint usdAmount, uint contributedEth, uint contributedUsd);
 
-    function DeveryPresale() public ERC20Token("PREVE", "Presale EVE Tokens", 18) {
+    function DeveryPresale() public ERC20Token("Zqir6DBAX9VV", "Zqir6DBAX9VV", 18) {
         wallet = owner;
     }
     function setWallet(address _wallet) public onlyOwner {
@@ -259,8 +258,8 @@ contract DeveryPresale is ERC20Token {
     function () public payable {
         require(now >= START_DATE || (msg.sender == owner && msg.value == TEST_CONTRIBUTION));
         require(!closed);
-        require(whitelist.whitelist(msg.sender) > 0 || picopsCertifier.certified(msg.sender));
-        require(msg.value >= ethMinContribution);
+        require(addressCanContribute(msg.sender));
+        require(msg.value >= ethMinContribution || (msg.sender == owner && msg.value == TEST_CONTRIBUTION));
         uint ethAmount = msg.value;
         uint ethRefund = 0;
         if (contributedEth.add(ethAmount) > ethCap()) {
