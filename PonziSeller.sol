@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziSeller at 0x7d7415e984f21da7b2ccf7253e3198e7c3ab8dce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziSeller at 0xb7e253fd6a3bbb018ce6aa041514b21f0e68a9c8
 */
 pragma solidity ^0.4.18;
 
@@ -66,7 +66,7 @@ contract PonziSeller {
   mapping(address => AccessRank) private m_admins;
 
   event PriceChanged(address indexed who, uint256 newPrice);
-  event RewardRef(address indexed refAddr, uint256 ponziAmount);
+  event RewardRef(address indexed refAddr, uint256 wieAmount);
   event WithdrawalETH(address indexed to, uint256 amountInWei);
   event WithdrawalPonzi(address indexed to, uint256 amount);
   event ProvidingAccess(address indexed addr, AccessRank rank);
@@ -96,6 +96,7 @@ contract PonziSeller {
     m_rewardDen = 10;
     m_discountNum = 5;
     m_discountDen = 100;
+    m_ponziPriceInWei = 50000000;
   }
 
   function() public payable {
@@ -150,32 +151,29 @@ contract PonziSeller {
   function byPonzi(address refAddr) public payable {
     require(m_ponziPriceInWei > 0 && msg.value > m_ponziPriceInWei);
 
-    uint256 refAmount = 0;
-    uint256 senderAmount = weiToPonzi(msg.value, m_ponziPriceInWei);
+    uint256 refWeiAmount = 0;
+    uint256 senderPonziAmount = weiToPonzi(msg.value, m_ponziPriceInWei);
 
     // check if ref addres is valid and calc reward and discount
     if (refAddr != msg.sender && refAddr != address(0) && refAddr != address(this)) {
       // ref reward
-      refAmount = senderAmount.mul(m_rewardNum).div(m_rewardDen);
+      refWeiAmount = msg.value.mul(m_rewardNum).div(m_rewardDen);
       // sender discount
-      // uint256 d = m_discountDen/(m_discountDen-m_discountNum)
-      senderAmount = senderAmount.mul(m_discountDen).div(m_discountDen-m_discountNum);
-      // senderAmount = senderAmount.add(senderAmount.mul(m_discountNum).div(m_discountDen));
+      senderPonziAmount = senderPonziAmount.mul(m_discountDen).div(m_discountDen-m_discountNum);
     }
     // check if we have enough ponzi on balance
-    if (availablePonzi() < senderAmount.add(refAmount)) {
+    if (availablePonzi() < senderPonziAmount) {
       emit NotEnoughPonzi(msg.sender, msg.value, m_ponziPriceInWei, availablePonzi());
       revert();
     }
-  
     // transfer ponzi to sender
-    require(m_ponzi.transfer(msg.sender, senderAmount));
-    // transfer ponzi to ref if needed
-    if (refAmount > 0) {
-      require(m_ponzi.transfer(refAddr, refAmount));
-      emit RewardRef(refAddr, refAmount);
+    require(m_ponzi.transfer(msg.sender, senderPonziAmount));
+    // transfer eth to ref if needed
+    if (refWeiAmount > 0) {
+      refAddr.transfer(refWeiAmount);
+      emit RewardRef(refAddr, refWeiAmount);
     }
-    emit PonziSold(msg.sender, m_ponziPriceInWei, senderAmount, msg.value, refAddr);
+    emit PonziSold(msg.sender, m_ponziPriceInWei, senderPonziAmount, msg.value, refAddr);
   }
 
   function availablePonzi() public view returns (uint256) {
