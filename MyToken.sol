@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x219101D69455c620700bf02f157f29Ef7a8f7988
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x4711c198e6f04c02413794568990b6a835e8ead9
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 contract MyOwned {
     address public owner;
@@ -11,7 +11,11 @@ contract MyOwned {
 }
 
 interface tokenRecipient { 
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; 
+    function receiveApproval(
+        address _from, 
+        uint256 _value, 
+        address _token, 
+        bytes _extraData) public; 
 }
 
 contract MyToken is MyOwned {   
@@ -25,15 +29,20 @@ contract MyToken is MyOwned {
     event FrozenFunds(address target,bool frozen);
     event Transfer(address indexed from,address indexed to,uint256 value);
     
-    function MyToken(uint256 initialSupply,string tokenName,string tokenSymbol,uint8 decimalUnits){
-        balanceOf[msg.sender] = initialSupply;
-        totalSupply = initialSupply;
+    function MyToken(
+        string tokenName,
+        string tokenSymbol,
+        uint8 decimalUnits,
+        uint256 initialSupply)public{
+
         name = tokenName;
         symbol = tokenSymbol;
         decimals = decimalUnits;
+        totalSupply = initialSupply;
+        balanceOf[msg.sender] = initialSupply;
     }
 
-    function transfer(address _to, uint256 _value){
+    function transfer(address _to, uint256 _value)public{
         require(!frozenAccount[msg.sender]);
         require (balanceOf[msg.sender] >= _value);
         require (balanceOf[_to] + _value >= balanceOf[_to]);
@@ -42,12 +51,12 @@ contract MyToken is MyOwned {
         Transfer(msg.sender, _to, _value);
     }
     
-    function freezeAccount(address target,bool freeze) onlyOwner {
+    function freezeAccount(address target,bool freeze)public onlyOwner {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
     
-    function mintToken(address target, uint256 mintedAmount) onlyOwner {
+    function mintToken(address target, uint256 mintedAmount)public onlyOwner {
         balanceOf[target] += mintedAmount;
         Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
