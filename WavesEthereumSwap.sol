@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0x3ff8c78e266395D08f41Ef1631391f0050D48081
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0xE57A41170f18FaB3248D623F06BD92b32260fae2
 */
 pragma solidity ^0.4.8;
 
 // ----------------------------------------------------------------------------------------------
-// The Incent / ETH smart contract - to find out more, join the Incent Slack; http://incentinvites.herokuapp.com/
+// The Waves / ETH smart contract - to find out more, join the Incent Slack; http://incentinvites.herokuapp.com/
 // A collaboration between Incent and Bok :)
 // Enjoy. (c) Incent Loyalty Pty Ltd and Bok Consulting Pty Ltd 2017. The MIT Licence.
 // ----------------------------------------------------------------------------------------------
 
 // Contract configuration
 contract TokenConfig {
-    string public constant symbol = "INC";
-    string public constant name = "Incent";
+    string public constant symbol = "WAV";
+    string public constant name = "Waves";
     uint8 public constant decimals = 8;  // 8 decimal places, the same as tokens on Wave
-    uint256 _totalSupply = 4601662500000000;
+    uint256 _totalSupply = 10000000000000000;
 }
 
 // ERC Token Standard #20 Interface
@@ -47,7 +47,7 @@ contract ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract IncentToken is ERC20Interface, TokenConfig {
+contract WavesToken is ERC20Interface, TokenConfig {
     // Owner of this contract
     address public owner;
 
@@ -66,7 +66,7 @@ contract IncentToken is ERC20Interface, TokenConfig {
     }
 
     // Constructor
-    function IncentToken() {
+    function WavesToken() {
         owner = msg.sender;
         balances[owner] = _totalSupply;
     }
@@ -132,7 +132,7 @@ contract IncentToken is ERC20Interface, TokenConfig {
     }
 }
 
-contract WavesEthereumSwap is IncentToken {
+contract WavesEthereumSwap is WavesToken {
     event WavesTransfer(address indexed _from, string wavesAddress, uint256 amount);
 
     function moveToWaves(string wavesAddress, uint256 amount) {
