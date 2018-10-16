@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x7824a08a0fe1b4f2562484dc80ca0f75fb00cdfc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0xa1f5a8ad3ae69cf4d42e4ee6e2f8e522b7cffa8d
 */
 pragma solidity ^0.4.23;
+
 
 /**
  * @title ERC20Basic
@@ -15,18 +16,11 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract DetailedERC20Basic is ERC20Basic {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-}
-
 contract MultiTransfer {
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  function name(address _token) public view returns(string) { return DetailedERC20Basic(_token).name(); }
-  function symbol(address _token) public view returns(string) { return DetailedERC20Basic(_token).symbol(); }
-  function decimals(address _token) public view returns(uint8) { return DetailedERC20Basic(_token).decimals(); }
-  function balanceOf(address _token, address _who) public view returns(uint256) { return DetailedERC20Basic(_token).balanceOf(_who); }
+  function balanceOf(address _token, address _who) public view returns(uint256) {
+    return ERC20Basic(_token).balanceOf(_who);
+  }
+
   function transfer(address _token, address[] _to, uint256[] _value) public returns(bool) {
 
     require(_to.length != 0);
@@ -42,9 +36,9 @@ contract MultiTransfer {
 
     assert(balanceOf(_token, msg.sender) >= sum);
 
+
     for (i = 0; i < _to.length; i++) {
-      require(DetailedERC20Basic(_token).transfer(_to[i], _value[i]));
-      emit Transfer(msg.sender, _to[i], _value[i]);
+      ERC20Basic(_token).transfer(_to[i], _value[i]);
     }
 
     return true;
