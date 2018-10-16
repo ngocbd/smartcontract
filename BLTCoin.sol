@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLTCoin at 0x636b7da7f3023052c6cc6e175e68254820bf85f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLTCoin at 0xa718d39790fa150c1d73faef0e25225d71b11758
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
 // Owned contract
@@ -75,7 +75,7 @@ contract BLTCoin is ERC20Interface, Owned{
     bool public bonusCompaignOpen;
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     /**
-    * @dev Reverts if not in crowdsale time range. 
+    * Reverts if not in crowdsale time range. 
     */
     modifier onlyWhileOpen {
         require(icoOpen);
