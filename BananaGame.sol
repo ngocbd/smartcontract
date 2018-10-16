@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BananaGame at 0x9ae7ef94784f71f934a2fcb649f6579ffc4f9bd7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BananaGame at 0xd13c4CE99Da44714b7c1aEdb40F673fb3C5B20Ad
 */
 // <ORACLIZE_API>
 /*
@@ -1032,13 +1032,12 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
-
 contract BananaGame is usingOraclize{
     uint constant times = 16;
     uint safeGas = 2300;
     uint ORACLIZE_GAS_LIMIT = 130000;
     uint percent = 95; 
-    uint minBet =2 finney;
+    uint minBet =1 finney;
     address public owner;
     bool public isStopped;
     uint public maxInvestors = 10; 
@@ -1146,7 +1145,7 @@ contract BananaGame is usingOraclize{
             bytes32 myid =
                 oraclize_query(
                         "nested",
-                        "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BKIKtXqteUWKc5NZV65n1ioNrhWdKsJ2+AK4wkjlUWSympyWgJ0HuO106V/duAf3YGBp/lPr9+wN489QCUgbyyqE7SIG2wxa/DnKwF+z9hr3GGYLM1R64AibTHg12RTzSP/d+kOJKkOo54mCJ1XIuVAm5yT71Rk=},\"n\":16,\"min\":0,\"max\":1${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
+                        "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BNDZzeRNXoAx1pSToLlbg172ucMIwhCuJZLtB2szwUQNdGVCKmx9I3WdmcGx22pGQqd+3Nkf0lV+ap+flZeN3sml6DoflBcARqcigUzT6n+Q6HvJwlOGnDKrm+WqqVt9+Oz15snrb84H4H5hh3NlJFzSlE5qbMo=},\"n\":16,\"min\":0,\"max\":1${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
                         ORACLIZE_GAS_LIMIT + safeGas
                 );
             bets[myid] = Bet(msg.sender, betValue, "");
@@ -1279,7 +1278,7 @@ contract BananaGame is usingOraclize{
    
     function changeOraclizeProofType(byte _proofType)
         onlyOwner {
-        if (_proofType == 0x00) throw;
+        if (_proofType == 0x0) throw;
         oraclize_setProof( _proofType |  proofStorage_IPFS );
     }
 
@@ -1297,7 +1296,7 @@ contract BananaGame is usingOraclize{
 
     function getMaxBetAmount() constant returns (uint){
         uint oraclizeFee = OraclizeI(OAR.getAddress()).getPrice("URL", ORACLIZE_GAS_LIMIT + safeGas);
-        return oraclizeFee+getBankroll()*(100-percent)/100;
+        return oraclizeFee+getBankroll()*(100-percent)*2/100;
     }
 
     function getPlayerBetResult(uint i) constant returns (string){
@@ -1313,13 +1312,13 @@ contract BananaGame is usingOraclize{
     function getLossesShare(address currentInvestor)
         constant
         returns (uint) {
-        return investors[investorIDs[currentInvestor]].amountInvested * (investorsLosses) / invest;
+        return investors[investorIDs[currentInvestor]].amountInvested * investorsLosses / invest;
     }
 
     function getProfitShare(address currentInvestor)
         constant
         returns (uint) {
-        return investors[investorIDs[currentInvestor]].amountInvested * (investorsProfit) / invest;
+        return investors[investorIDs[currentInvestor]].amountInvested * investorsProfit / invest;
     }
     
     function getBalance(address currentInvestor) constant returns(uint){
@@ -1464,15 +1463,16 @@ contract BananaGame is usingOraclize{
     
     function changeDivestFee(uint value) onlyOwner{
         if(value<0 || value>10000){
-            divestFee = value;
+            throw;
         }
+        divestFee = value;
     }
     
     function getBankroll()
         constant
         returns(uint) {
 
-        if ((invest < investorsProfit) ||
+        if ((invest + investorsProfit < investorsProfit) ||
             (invest + investorsProfit < invest) ||
             (invest + investorsProfit < investorsLosses)) {
             return 0;
@@ -1498,8 +1498,8 @@ contract BananaGame is usingOraclize{
     }
     
     function changeMinBet(uint value) onlyOwner{
-         if(value<0 || value >getBankroll()*(100-percent)/100) throw;
-         minBet = value;
+        if(value<0 || value >getBankroll()*(100-percent)*2/100) throw;
+        minBet = value;
     }
     
     function changeORACLIZE_GAS_LIMIT(uint value) onlyOwner{
