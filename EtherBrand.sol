@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherBrand at 0xd3a6967214a24de0a230c66afe0a47fb2ee1bd83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherBrand at 0xe6101e8f83a0ab40fa228d6f4136a80d734055b3
 */
 pragma solidity ^0.4.18;
 
@@ -215,12 +215,12 @@ contract EtherBrand is ERC721 {
     }
     
     if(brand.price > topOwner[5].price){
-        for(uint8 i = 5; i >= 1; i--){
-            if(brand.price > topOwner[i].price){
-                if(i <= 4){ topOwner[5] = topOwner[4]; }
-                if(i <= 3){ topOwner[4] = topOwner[3]; }
-                if(i <= 2){ topOwner[3] = topOwner[2]; }
-                if(i <= 1){ topOwner[2] = topOwner[1]; }
+        for(uint8 i = 1; i <= 5; i++){
+            if(brand.price > topOwner[(i+1)].price){
+                if(i >= 4){ topOwner[5] = topOwner[4]; }
+                if(i >= 3){ topOwner[4] = topOwner[3]; }
+                if(i >= 2){ topOwner[3] = topOwner[2]; }
+                if(i >= 1){ topOwner[2] = topOwner[1]; }
                 topOwner[i] = TopOwner(msg.sender, brand.price);
                 break;
             }
@@ -316,13 +316,13 @@ contract EtherBrand is ERC721 {
     Brand storage brand = brands[brand_count];
     
     if(brand.price > topOwner[5].price){
-        for(uint8 i = 5; i >= 1; i--){
-            if(brand.price > topOwner[i].price){
-                if(i <= 4){ topOwner[5] = topOwner[4]; }
-                if(i <= 3){ topOwner[4] = topOwner[3]; }
-                if(i <= 2){ topOwner[3] = topOwner[2]; }
-                if(i <= 1){ topOwner[2] = topOwner[1]; }
-                topOwner[i] = TopOwner(msg.sender, brand.price);
+        for(uint8 i = 1; i <= 5; i++){
+            if(brand.price > topOwner[(i+1)].price){
+                if(i >= 4){ topOwner[5] = topOwner[4]; }
+                if(i >= 3){ topOwner[4] = topOwner[3]; }
+                if(i >= 2){ topOwner[3] = topOwner[2]; }
+                if(i >= 1){ topOwner[2] = topOwner[1]; }
+                topOwner[i] = TopOwner(brand.owner, brand.price);
                 break;
             }
         }
