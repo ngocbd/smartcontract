@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FreezeTokensWallet at 0xe564e0a6a545671d29ad690398c9e94a398434b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FreezeTokensWallet at 0x8839ca791e499fb659c6cb4bdc59bb413ac7aab1
 */
 pragma solidity ^0.4.18;
 
@@ -592,9 +592,111 @@ contract StagedCrowdsale is Ownable {
 
 }
 
+// File: contracts/ValueBonusFeature.sol
+
+contract ValueBonusFeature is PercentRateProvider {
+
+  using SafeMath for uint;
+
+  bool public activeValueBonus = true;
+
+  struct ValueBonus {
+    uint from;
+    uint bonus;
+  }
+
+  ValueBonus[] public valueBonuses;
+
+  modifier checkPrevBonus(uint number, uint from, uint bonus) {
+    if(number > 0 && number < valueBonuses.length) {
+      ValueBonus storage valueBonus = valueBonuses[number - 1];
+      require(valueBonus.from < from && valueBonus.bonus < bonus);
+    }
+    _;
+  }
+
+  modifier checkNextBonus(uint number, uint from, uint bonus) {
+    if(number + 1 < valueBonuses.length) {
+      ValueBonus storage valueBonus = valueBonuses[number + 1];
+      require(valueBonus.from > from && valueBonus.bonus > bonus);
+    }
+    _;
+  }
+
+  function setActiveValueBonus(bool newActiveValueBonus) public onlyOwner {
+    activeValueBonus = newActiveValueBonus;
+  }
+
+  function addValueBonus(uint from, uint bonus) public onlyOwner checkPrevBonus(valueBonuses.length - 1, from, bonus) {
+    valueBonuses.push(ValueBonus(from, bonus));
+  }
+
+  function getValueBonusTokens(uint tokens, uint invested) public view returns(uint) {
+    uint valueBonus = getValueBonus(invested);
+    if(valueBonus == 0) {
+      return 0;
+    }
+    return tokens.mul(valueBonus).div(percentRate);
+  }
+
+  function getValueBonus(uint value) public view returns(uint) {
+    uint bonus = 0;
+    if(activeValueBonus) {
+      for(uint i = 0; i < valueBonuses.length; i++) {
+        if(value >= valueBonuses[i].from) {
+          bonus = valueBonuses[i].bonus;
+        } else {
+          return bonus;
+        }
+      }
+    }
+    return bonus;
+  }
+
+  function removeValueBonus(uint8 number) public onlyOwner {
+    require(number < valueBonuses.length);
+
+    delete valueBonuses[number];
+
+    for (uint i = number; i < valueBonuses.length - 1; i++) {
+      valueBonuses[i] = valueBonuses[i+1];
+    }
+
+    valueBonuses.length--;
+  }
+
+  function changeValueBonus(uint8 number, uint from, uint bonus) public onlyOwner checkPrevBonus(number, from, bonus) checkNextBonus(number, from, bonus) {
+    require(number < valueBonuses.length);
+    ValueBonus storage valueBonus = valueBonuses[number];
+    valueBonus.from = from;
+    valueBonus.bonus = bonus;
+  }
+
+  function insertValueBonus(uint8 numberAfter, uint from, uint bonus) public onlyOwner checkPrevBonus(numberAfter, from, bonus) checkNextBonus(numberAfter, from, bonus) {
+    require(numberAfter < valueBonuses.length);
+
+    valueBonuses.length++;
+
+    for (uint i = valueBonuses.length - 2; i > numberAfter; i--) {
+      valueBonuses[i + 1] = valueBonuses[i];
+    }
+
+    valueBonuses[numberAfter + 1] = ValueBonus(from, bonus);
+  }
+
+  function clearValueBonuses() public onlyOwner {
+    require(valueBonuses.length > 0);
+    for (uint i = 0; i < valueBonuses.length; i++) {
+      delete valueBonuses[i];
+    }
+    valueBonuses.length = 0;
+  }
+
+}
+
 // File: contracts/ICO.sol
 
-contract ICO is StagedCrowdsale, CommonSale {
+contract ICO is ValueBonusFeature, StagedCrowdsale, CommonSale {
 
   FreezeTokensWallet public teamTokensWallet;
 
@@ -635,12 +737,12 @@ contract ICO is StagedCrowdsale, CommonSale {
   function calculateTokens(uint _invested) internal returns(uint) {
     uint milestoneIndex = currentMilestone(start);
     Milestone storage milestone = milestones[milestoneIndex];
-
     uint tokens = _invested.mul(price).div(1 ether);
+    uint valueBonusTokens = getValueBonusTokens(tokens, _invested);
     if(milestone.bonus > 0) {
       tokens = tokens.add(tokens.mul(milestone.bonus).div(percentRate));
     }
-    return tokens;
+    return tokens.add(valueBonusTokens);
   }
 
   function finish() public onlyOwner {
@@ -676,25 +778,9 @@ contract NextSaleAgentFeature is Ownable {
 
 }
 
-// File: contracts/WhiteListFeature.sol
-
-contract WhiteListFeature is CommonSale {
-
-  mapping(address => bool)  public whiteList;
-
-  function addToWhiteList(address _address) public onlyDirectMintAgentOrOwner {
-    whiteList[_address] = true;
-  }
-
-  function deleteFromWhiteList(address _address) public onlyDirectMintAgentOrOwner {
-    whiteList[_address] = false;
-  }
-
-}
-
 // File: contracts/PreICO.sol
 
-contract PreICO is NextSaleAgentFeature, WhiteListFeature {
+contract PreICO is NextSaleAgentFeature, CommonSale {
 
   uint public period;
 
@@ -716,7 +802,6 @@ contract PreICO is NextSaleAgentFeature, WhiteListFeature {
   
   function fallback() internal minInvestLimited(msg.value) returns(uint) {
     require(now >= start && now < endSaleDate());
-    require(whiteList[msg.sender]);
     wallet.transfer(msg.value);
     return mintTokensByETH(msg.sender, msg.value);
   }
@@ -769,38 +854,38 @@ contract UBCoinToken is MintableToken {
 
 }
 
-// File: contracts/Configurator.sol
+// File: contracts/MigrationConfigurator.sol
 
-contract Configurator is Ownable {
+/**
+ * How to migrate:
+ * 1. deploy
+ * 2. call deploy
+ * 3. token.setSaleAgent(new ito)
+ */
+contract MigrationConfigurator is Ownable {
 
-  MintableToken public token;
-
-  PreICO public preICO;
+  MintableToken public token = MintableToken(0x2D3E7D4870a51b918919E7B851FE19983E4c38d5);
 
   ICO public ico;
 
   FreezeTokensWallet public teamTokensWallet;
 
+  function setToken(address newAddress) public onlyOwner {
+    token = MintableToken(newAddress);
+  }
+
   function deploy() public onlyOwner {
-
-    token = new UBCoinToken();
-
-    preICO = new PreICO();
-
-    preICO.setWallet(0x00EE9d057f66754C7D92550F77Aeb0A87AE34B01);
-    preICO.setStart(1520640000); // 10 Mar 2018 00:00:00 GMT
-    preICO.setPeriod(22);
-    preICO.setPrice(33334000000000000000000);
-    preICO.setMinInvestedLimit(100000000000000000);
-    preICO.setToken(token);
-    preICO.setHardcap(8500000000000000000000);
-    token.setSaleAgent(preICO);
-
     ico = new ICO();
 
     ico.addMilestone(20, 40);
+    ico.addMilestone(20, 25);
     ico.addMilestone(20, 20);
-    ico.addMilestone(20, 0);
+    ico.addMilestone(20, 15);
+    ico.addMilestone(20, 8);
+    ico.addMilestone(4, 0);
+    ico.addValueBonus(20000000000000000000,50);
+    ico.addValueBonus(50000000000000000000,65);
+    ico.addValueBonus(300000000000000000000,80);
     ico.setMinInvestedLimit(100000000000000000);
     ico.setToken(token);
     ico.setPrice(14286000000000000000000);
@@ -822,12 +907,8 @@ contract Configurator is Ownable {
 
     ico.setTeamTokensWallet(teamTokensWallet);
 
-    preICO.setNextSaleAgent(ico);
-
     address manager = 0xF1f94bAD54C8827C3B53754ad7dAa0FF5DCD527d;
 
-    token.transferOwnership(manager);
-    preICO.transferOwnership(manager);
     ico.transferOwnership(manager);
   }
 
