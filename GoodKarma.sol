@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoodKarma at 0xacad29db83879b8a248d1782febf5e7afc1bd747
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoodKarma at 0xbbb88154f8fa94c3b5bc65088ac7db80a926e9b4
 */
 pragma solidity ^0.4.2;
 contract owned {
