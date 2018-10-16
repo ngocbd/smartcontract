@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x3cc971718a7643507fede9248063dbbfaa7ba650
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xbc3969e1a2e7cbf5adcd6dc803268dd16492cfcd
 */
 pragma solidity ^0.4.4;
 
@@ -110,7 +110,23 @@ contract ERC20Token is StandardToken {
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    bytes32 public currentChallenge;                         // The coin starts with a challenge
+    uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
+    uint public difficulty = 10**32;                         // Difficulty starts reasonably low
 
+    function proofOfWork(uint nonce){
+        bytes8 n = bytes8(sha3(nonce, currentChallenge));    // Generate a random hash based on input
+        require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
+
+        uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
+        require(timeSinceLastProof >=  5 seconds);         // Rewards cannot be given too quickly
+        balances[msg.sender] += timeSinceLastProof / 60 seconds;  // The reward to the winner grows by the minute
+
+        difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
+
+        timeOfLastProof = now;                              // Reset the counter
+        currentChallenge = sha3(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
+    }
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
 //
@@ -119,11 +135,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 69696969;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 69696969;                        // Update total supply (100000 for example)
-        name = "Fap Token";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "FAP";                               // Set the symbol for display purposes
+        balances[msg.sender] = 2565000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 2850000000000000;                        // Update total supply (100000 for example)
+        name = "BITCONNECT GOLD";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "BCG";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
@@ -137,4 +153,5 @@ contract ERC20Token is StandardToken {
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
+    
 }
