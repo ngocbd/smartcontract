@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VthinkCoin at 0x566e968802a7013b8260920e25d825058f8f61cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VthinkCoin at 0xc77c69fB69FA5DC087D0f1C236a7BaFA3119736b
 */
 pragma solidity ^0.4.4;
 
@@ -108,12 +108,12 @@ contract VthinkCoin is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function VthinkCoin() {
-        balances[msg.sender] = 1000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 1000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 10000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 10000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "VthinkCoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 12;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "VTC";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 1000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "VTCOIN";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 100000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
