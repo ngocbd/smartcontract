@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DatumTokenDistributor at 0x448019c21743272e40eb8835dac2a7d5474899bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DatumTokenDistributor at 0x6e939629f97cdadf6d6d2f3f1d675383e0046039
 */
 /**
  * @title Ownable
@@ -50,6 +50,7 @@ contract Ownable {
  */
 contract Pausable is Ownable {
   event Unpause();
+  event Pause();
 
   bool public paused = true;
 
@@ -84,6 +85,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public returns (bool) {
     paused = true;
+    Pause();
     return false;
   }
 }
@@ -256,7 +258,7 @@ contract StandardToken is BasicToken, ERC20 {
 /**
  * Pausable token
  *
- * Simple ERC20 Token example, with pausable token transfer
+ * Simple ERC20 Token example, with pausable token transfer and special method for token distribution
  **/
 
 contract PausableToken is StandardToken, Pausable {
@@ -269,7 +271,7 @@ contract PausableToken is StandardToken, Pausable {
     super.transferFrom(_from, _to, _value);
   }
 
-  function transferDistribution(address _to, uint _value) public {
+  function transferDistribution(address _to, uint _value) onlyOwner public {
     super.transfer(_to, _value);
   }
 }
@@ -283,7 +285,7 @@ contract PausableToken is StandardToken, Pausable {
  * @title DATToken
  * @dev DAT Token contract
  */
-contract GODToken is PausableToken {
+contract DATToken is PausableToken {
   using SafeMath for uint256;
 
   string public name = "DAT Token";
@@ -297,7 +299,7 @@ contract GODToken is PausableToken {
   /**
    * @dev Contructor that gives msg.sender all of existing tokens. 
    */
-  function GODToken(address _wallet) public {
+  function DATToken(address _wallet) public {
     totalSupply = INITIAL_SUPPLY;
     balances[_wallet] = INITIAL_SUPPLY;
   }
@@ -318,23 +320,17 @@ contract GODToken is PausableToken {
 
 
 contract DatumTokenDistributor is Ownable {
-  GODToken public token;
-
-  address private distributorWallet;
+  DATToken public token;
+  address public distributorWallet;
   
   function DatumTokenDistributor(address _distributorWallet) public
   {
      distributorWallet = _distributorWallet;
   }
 
-  function setToken(GODToken _token) onlyOwner public
+  function setToken(DATToken _token) onlyOwner public
   {
-    token = _token;
-  }
-
-  function setDistributor(address _wallet) onlyOwner public
-  {
-     distributorWallet = _wallet;
+     token = _token;
   }
 
   function distributeToken(address[] addresses, uint256[] amounts) public {
@@ -344,5 +340,10 @@ contract DatumTokenDistributor is Ownable {
      for (uint i = 0; i < addresses.length; i++) {
          token.transferDistribution(addresses[i], amounts[i]);
      }
+  }
+
+  function resetOwnership() onlyOwner public
+  {
+      token.transferOwnership(msg.sender);
   }
 }
