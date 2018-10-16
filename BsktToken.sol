@@ -1,7 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BsktToken at 0x3a354bfea2b3a00b1130446e80650c5462f702bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BsktToken at 0xe0366f8857B1466452B89C0EE03246F860A0eF01
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.21;
+
+// File: zeppelin-solidity/contracts/ReentrancyGuard.sol
+
+/**
+ * @title Helps contracts guard agains reentrancy attacks.
+ * @author Remco Bloemen <remco@2?.com>
+ * @notice If you mark a function `nonReentrant`, you should also
+ * mark it `external`.
+ */
+contract ReentrancyGuard {
+
+  /**
+   * @dev We use a single lock for the whole contract.
+   */
+  bool private reentrancy_lock = false;
+
+  /**
+   * @dev Prevents a contract from calling itself, directly or indirectly.
+   * @notice If you mark a function `nonReentrant`, you should also
+   * mark it `external`. Calling one nonReentrant function from
+   * another is not supported. Instead, you can implement a
+   * `private` function doing the actual work, and a `external`
+   * wrapper marked as `nonReentrant`.
+   */
+  modifier nonReentrant() {
+    require(!reentrancy_lock);
+    reentrancy_lock = true;
+    _;
+    reentrancy_lock = false;
+  }
+
+}
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -39,7 +71,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -79,7 +111,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    Pause();
+    emit Pause();
   }
 
   /**
@@ -87,7 +119,7 @@ contract Pausable is Ownable {
    */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    Unpause();
+    emit Unpause();
   }
 }
 
@@ -116,13 +148,13 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -166,6 +198,20 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol
+
+contract DetailedERC20 is ERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+
+  function DetailedERC20(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+  }
+}
+
 // File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
@@ -195,10 +241,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -241,7 +286,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -257,7 +302,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -283,7 +328,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -304,7 +349,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -334,28 +379,25 @@ library AddressArrayUtils {
 /// @notice Bskt tokens are transferable, and can be created and redeemed by
 /// anyone. To create, a user must approve the contract to move the underlying
 /// tokens, then call `create`.
-/// @author Cryptofin
-contract BsktToken is StandardToken, Pausable {
+/// @author CryptoFin
+contract BsktToken is StandardToken, DetailedERC20, Pausable, ReentrancyGuard {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
-    string public name;
-    string public symbol;
-    uint8 constant public decimals = 18;
     struct TokenInfo {
         address addr;
         uint256 quantity;
     }
-    uint256 private creationUnit_;
+    uint256 public creationUnit;
     TokenInfo[] public tokens;
 
-    event Mint(address indexed to, uint256 amount);
-    event Burn(address indexed from, uint256 amount);
+    event Create(address indexed creator, uint256 amount);
+    event Redeem(address indexed redeemer, uint256 amount, address[] skippedTokens);
 
     /// @notice Requires value to be divisible by creationUnit
     /// @param value Number to be checked
     modifier requireMultiple(uint256 value) {
-        require((value % creationUnit_) == 0);
+        require((value % creationUnit) == 0);
         _;
     }
 
@@ -377,8 +419,8 @@ contract BsktToken is StandardToken, Pausable {
         uint256 _creationUnit,
         string _name,
         string _symbol
-    ) public {
-        require(0 < addresses.length && addresses.length < 256);
+    ) DetailedERC20(_name, _symbol, 18) public {
+        require(addresses.length > 0);
         require(addresses.length == quantities.length);
         require(_creationUnit >= 1);
 
@@ -389,17 +431,9 @@ contract BsktToken is StandardToken, Pausable {
             }));
         }
 
-        creationUnit_ = _creationUnit;
+        creationUnit = _creationUnit;
         name = _name;
         symbol = _symbol;
-    }
-
-    /// @notice Returns the creationUnit
-    /// @dev Creation quantity concept is similar but not identical to the one
-    /// described by EIP777
-    /// @return creationUnit_ Amount required for one creation unit
-    function creationUnit() external view returns(uint256) {
-        return creationUnit_;
     }
 
     /// @notice Creates Bskt tokens in exchange for underlying tokens. Before
@@ -422,11 +456,12 @@ contract BsktToken is StandardToken, Pausable {
         for (uint256 i = 0; i < tokens.length; i++) {
             TokenInfo memory token = tokens[i];
             ERC20 erc20 = ERC20(token.addr);
-            uint256 amount = baseUnits.div(creationUnit_).mul(token.quantity);
+            uint256 amount = baseUnits.div(creationUnit).mul(token.quantity);
             require(erc20.transferFrom(msg.sender, address(this), amount));
         }
 
         mint(msg.sender, baseUnits);
+        emit Create(msg.sender, baseUnits);
     }
 
     /// @notice Redeems Bskt tokens in exchange for underlying tokens
@@ -459,9 +494,10 @@ contract BsktToken is StandardToken, Pausable {
             if (ok) {
                 continue;
             }
-            uint256 amount = baseUnits.div(creationUnit_).mul(token.quantity);
+            uint256 amount = baseUnits.div(creationUnit).mul(token.quantity);
             require(erc20.transfer(msg.sender, amount));
         }
+        emit Redeem(msg.sender, baseUnits, tokensToSkip);
     }
 
     /// @return addresses Underlying token addresses
@@ -489,8 +525,7 @@ contract BsktToken is StandardToken, Pausable {
     function mint(address to, uint256 amount) internal returns (bool) {
         totalSupply_ = totalSupply_.add(amount);
         balances[to] = balances[to].add(amount);
-        Mint(to, amount);
-        Transfer(address(0), to, amount);
+        emit Transfer(address(0), to, amount);
         return true;
     }
 
@@ -501,8 +536,7 @@ contract BsktToken is StandardToken, Pausable {
     function burn(address from, uint256 amount) internal returns (bool) {
         totalSupply_ = totalSupply_.sub(amount);
         balances[from] = balances[from].sub(amount);
-        Burn(from, amount);
-        Transfer(from, address(0), amount);
+        emit Transfer(from, address(0), amount);
         return true;
     }
 
@@ -519,12 +553,13 @@ contract BsktToken is StandardToken, Pausable {
         return (0, false);
     }
 
-    /// @notice Owner: Withdraw excess funds which don't belong to Bskt Token
+    /// @notice Owner: Withdraw excess funds which don't belong to Bskt token
     /// holders
     /// @param token ERC20 token address to withdraw
     function withdrawExcessToken(address token)
         external
         onlyOwner
+        nonReentrant
     {
         ERC20 erc20 = ERC20(token);
         uint256 withdrawAmount;
@@ -534,7 +569,7 @@ contract BsktToken is StandardToken, Pausable {
         (quantity, ok) = getQuantity(token);
         if (ok) {
             withdrawAmount = amountOwned.sub(
-                totalSupply_.div(creationUnit_).mul(quantity)
+                totalSupply_.div(creationUnit).mul(quantity)
             );
         } else {
             withdrawAmount = amountOwned;
@@ -542,16 +577,21 @@ contract BsktToken is StandardToken, Pausable {
         require(erc20.transfer(owner, withdrawAmount));
     }
 
-    /// @notice Owner: Withdraw Ether
-    function withdrawEther()
-        external
-        onlyOwner
-    {
-        owner.transfer(this.balance);
+    /// @dev Prevent Bskt tokens from being sent to the Bskt contract
+    /// @param _to The address to transfer tokens to
+    /// @param _value the amount of tokens to be transferred
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(this));
+        return super.transfer(_to, _value);
     }
 
-    /// @notice Fallback function
-    function() external payable {
+    /// @dev Prevent Bskt tokens from being sent to the Bskt contract
+    /// @param _from The address to transfer tokens from
+    /// @param _to The address to transfer to
+    /// @param _value The amount of tokens to be transferred
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(this));
+        return super.transferFrom(_from, _to, _value);
     }
 
 }
