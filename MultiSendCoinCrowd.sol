@@ -1,53 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSendCoinCrowd at 0xa31020c042fc18fbad63fc2fe3c0183675a4a3a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSendCoinCrowd at 0xa66cdf7fc3d616daae99a74039ef3f35b5a9816c
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 /**
- * CoinCrowd Token (XCC) multi send contract. More info www.coincrowd.it
+ * CoinCrowd Multi Send Contract. More info www.coincrowd.me
  */
  
 contract Ownable {
-  address public owner;
-  
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+	address public owner;
+	address public newOwner;
 
+	event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-  function Ownable() internal {
-    owner = msg.sender;
-  }
+	constructor() public {
+		owner = msg.sender;
+		newOwner = address(0);
+	}
 
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+	modifier onlyOwner() {
+		require(msg.sender == owner, "msg.sender == owner");
+		_;
+	}
 
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+	function transferOwnership(address _newOwner) public onlyOwner {
+		require(address(0) != _newOwner, "address(0) != _newOwner");
+		newOwner = _newOwner;
+	}
+
+	function acceptOwnership() public {
+		require(msg.sender == newOwner, "msg.sender == newOwner");
+		emit OwnershipTransferred(owner, msg.sender);
+		owner = msg.sender;
+		newOwner = address(0);
+	}
 }
  
 contract tokenInterface {
-    function originTransfer(address _to, uint256 _value) public returns (bool);
+    function transfer(address _to, uint256 _value) public returns (bool);
 }
 
 contract MultiSendCoinCrowd is Ownable {
-	address public tokenAddress;
-	
-	function MultiSendCoinCrowd(address _tokenAddress) public {
-		tokenAddress = _tokenAddress;
-	}
+	tokenInterface public tokenContract;
 	
 	function updateTokenContract(address _tokenAddress) public onlyOwner {
-        tokenAddress = _tokenAddress;
+        tokenContract = tokenInterface(_tokenAddress);
     }
 	
     function multisend(address[] _dests, uint256[] _values) public onlyOwner returns(uint256) {
+        require(_dests.length == _values.length, "_dests.length == _values.length");
         uint256 i = 0;
         while (i < _dests.length) {
-           tokenInterface(tokenAddress).originTransfer(_dests[i], _values[i]);
+           tokenContract.transfer(_dests[i], _values[i]);
            i += 1;
         }
         return(i);
@@ -56,9 +60,13 @@ contract MultiSendCoinCrowd is Ownable {
 	function airdrop( uint256 _value, address[] _dests ) public onlyOwner returns(uint256) {
         uint256 i = 0;
         while (i < _dests.length) {
-           tokenInterface(tokenAddress).originTransfer(_dests[i], _value);
+            tokenContract.transfer(_dests[i], _value);
            i += 1;
         }
         return(i);
+    }
+	
+	function withdrawTokens(address to, uint256 value) public onlyOwner returns (bool) {
+        return tokenContract.transfer(to, value);
     }
 }
