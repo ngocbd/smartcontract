@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x290d7fa908f9b8fe86ac872f6dd417352b50f1ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x04ac42Ce41F0f9831347BDf74fAb03C828173E18
 */
 pragma solidity ^0.4.4;
 
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 10000000;               
-        totalSupply = 10000000;                        
-        name = "NTD Token";                                   
-        decimals = 0;                            
-        symbol = "NTD";                               
+        balances[msg.sender] = 16000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 16000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "PrivacyStake";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "PIVS";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
