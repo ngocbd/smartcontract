@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressLotteryV2 at 0x787b9a8978b21476abb78876f24c49c0e513065e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressLotteryV2 at 0x650734bfd0465b7c6cd2932ea555e721308fd0b3
 */
 pragma solidity ^0.4.0;
 /*
@@ -23,11 +23,9 @@ contract AddressLotteryV2{
     uint private secretSeed;
     uint private lastReseed;
     
+    uint winnerLuckyNumber = 7;
     
-    // LUCKYNUMBER  = 7
-    uint W1NNERLUCK1NUMBERFORWINNINGTHELOTTERY = 7;
-    
-    uint public ticketPrice = 0.5 ether;
+    uint public ticketPrice = 0.1 ether;
         
     mapping (address => bool) participated;
 
@@ -50,15 +48,13 @@ contract AddressLotteryV2{
         ticketPrice = newPrice;
     }
     
-    
-    
     function participate() payable onlyHuman { 
         require(msg.value == ticketPrice);
         
         // every address can only win once, obviously
         require(!participated[msg.sender]);
         
-        if ( luckyNumberOfAddress(msg.sender) == W1NNERLUCK1NUMBERF0RWINNINGTHELOTTERY)
+        if ( luckyNumberOfAddress(msg.sender) == winnerLuckyNumber)
         {
             participated[msg.sender] = true;
             require(msg.sender.call.value(this.balance)());
@@ -93,12 +89,9 @@ contract AddressLotteryV2{
         reseed(s);
     }
     
-    uint W1NNERLUCK1NUMBERF0RWINNINGTHELOTTERY = 0x12345678;
-    
     function () payable {}
     
     // DEBUG, DELETE BEFORE DEPLOYMENT!!
-    // LUCKY NUMBER 7
     function _myLuckyNumber() constant returns(uint n){
         n = luckyNumberOfAddress(msg.sender);
     }
