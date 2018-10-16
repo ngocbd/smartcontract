@@ -1,307 +1,284 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoContract at 0xbb3B11BbC8c48B4Ee17149dD374564C89139Ff01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract icocontract at 0x16058bbd3e684b30ed92810b27a3a18b62184232
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.17;
 
-//EKN: deploy with Current version:0.4.16+commit.d7661dd9.Emscripten.clang
+library SafeMathMod { // Partial SafeMath Library
 
-// ================= Ownable Contract start =============================
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
- */
-contract Ownable {
-  address public owner;
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-}
-
-contract SafeMath {
-
-  function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
-    uint256 z = x + y;
-    assert((z >= x) && (z >= y));
-    return z;
-  }
-
-  function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
-    assert(x >= y);
-    uint256 z = x - y;
-    return z;
-  }
-
-  function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-    uint256 z = x * y;
-    assert((x == 0)||(z/x == y));
-    return z;
-  }
-}
-
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-contract StandardToken is ERC20, SafeMath {
-
-  /**
-  * @dev Fix for the ERC20 short address attack.
-   */
-  modifier onlyPayloadSize(uint size) {
-    require(msg.data.length >= size + 4) ;
-    _;
-  }
-
-  mapping(address => uint) balances;
-  mapping (address => mapping (address => uint)) allowed;
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32)  returns (bool success){
-    balances[msg.sender] = safeSubtract(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
-
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSubtract(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSubtract(_allowance, _value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-}
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-  /**
-  * @dev modifier to allow actions only when the contract IS paused
-  */
-  modifier whenNotPaused() {
-    require (!paused);
-    _;
-  }
-
-  /**
-  * @dev modifier to allow actions only when the contract IS NOT paused
-  */
-  modifier whenPaused {
-    require (paused) ;
-    _;
-  }
-
-  /**
-  * @dev called by the owner to pause, triggers stopped state
-  */
-  function pause() onlyOwner whenNotPaused returns (bool) {
-    paused = true;
-    Pause();
-    return true;
-  }
-
-  /**
-  * @dev called by the owner to unpause, returns to normal state
-  */
-  function unpause() onlyOwner whenPaused returns (bool) {
-    paused = false;
-    Unpause();
-    return true;
-  }
-}
-
-// ================= ZIONToken  start =======================
-
-contract IcoToken is SafeMath, StandardToken, Pausable {
-  string public name;
-  string public symbol;
-  uint256 public decimals;
-  string public version;
-  address public icoContract;
-  address public developer_BSR;
-  address public developer_EKN;
-
-  //EKN: Reserve initial amount tokens for future ZION projects / Exchanges
-  //40 million
-  uint256 public constant INITIAL_SUPPLY = 40000000 * 10**18;
-  //EKN: Developers share
-  //10 million
-  uint256 public constant DEVELOPER_SUPPLY = 10000000 * 10**18;
-
-  function IcoToken() {
-
-    name = "ZION Token";
-    symbol = "ZION";
-    decimals = 18;
-    version = "1.0";
-    developer_BSR = 0xAEf46875Eb00Ce14B5830b8de2e05aB79dC625d9;
-    developer_EKN = 0x1dEB6F7f7F2c4807cE287A8627681044547AB00A;
-
-    balances[msg.sender] = INITIAL_SUPPLY;
-    balances[developer_BSR] = DEVELOPER_SUPPLY / 2;
-    balances[developer_EKN] = DEVELOPER_SUPPLY / 2;
-
-    totalSupply = INITIAL_SUPPLY + DEVELOPER_SUPPLY;
-
-  }
-
-  function transfer(address _to, uint _value) whenNotPaused returns (bool success) {
-    return super.transfer(_to,_value);
-  }
-
-  function approve(address _spender, uint _value) whenNotPaused returns (bool success) {
-    return super.approve(_spender,_value);
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return super.balanceOf(_owner);
-  }
-
-  function setIcoContract(address _icoContract) onlyOwner {
-    if (_icoContract != address(0)) {
-      icoContract = _icoContract;
-    }
-  }
-
-  function sell(address _recipient, uint256 _value) whenNotPaused returns (bool success) {
-      assert(_value > 0);
-      require(msg.sender == icoContract);
-
-      balances[_recipient] += _value;
-      totalSupply += _value;
-
-      Transfer(0x0, owner, _value);
-      Transfer(owner, _recipient, _value);
-      return true;
-  }
-}
-
-// ================= Sale Contract Start ====================
-
-contract IcoContract is SafeMath, Pausable {
-  IcoToken public ico;
-
-  uint256 public tokenCreationCap;
-  uint256 public totalSupply;
-
-  address public ethFundDeposit;
-  address public tokenAddress;
-
-  uint256 public fundingStartTime;
-
-  bool public isFinalized;
-  uint256 public tokenExchangeRate;
-
-  event LogCreateICO(address from, address to, uint256 val);
-
-  function CreateICO(address to, uint256 val) internal returns (bool success) {
-    LogCreateICO(0x0, to, val);
-    return ico.sell(to, val);
-  }
-
-  function IcoContract(
-    address _ethFundDeposit,
-    address _tokenAddress,
-    uint256 _tokenCreationCap,
-    uint256 _tokenExchangeRate,
-    uint256 _fundingStartTime
-
-  )
-  {
-    ethFundDeposit = _ethFundDeposit;         //ETH deposit Address
-    tokenAddress = _tokenAddress;             //ERC20 Token address
-    tokenCreationCap = _tokenCreationCap;     //"100000000000000000000000000", // 100.000.000 Token
-    tokenExchangeRate = _tokenExchangeRate;   //"5000", // Rate: 1 ETH = 5000 Token
-    fundingStartTime = _fundingStartTime;     //"1519862400", // StartTime 01/03/2018 (unixtimestamp.com)
-    ico = IcoToken(tokenAddress);
-    isFinalized = false;
-
-  }
-
-  function () payable {
-    createTokens(msg.sender, msg.value);
-  }
-
-  /// @dev Accepts ether and creates new ICO tokens.
-  function createTokens(address _beneficiary, uint256 _value) internal whenNotPaused {
-    require (tokenCreationCap > totalSupply);
-    require (now >= fundingStartTime);
-    require (!isFinalized);
-
-    uint256 tokens = safeMult(_value, tokenExchangeRate);
-    uint256 checkedSupply = safeAdd(totalSupply, tokens);
-
-    if (tokenCreationCap < checkedSupply) {
-      uint256 tokensToAllocate = safeSubtract(tokenCreationCap, totalSupply);
-      uint256 tokensToRefund   = safeSubtract(tokens, tokensToAllocate);
-      totalSupply = tokenCreationCap;
-      uint256 etherToRefund = tokensToRefund / tokenExchangeRate;
-
-      require(CreateICO(_beneficiary, tokensToAllocate));
-      msg.sender.transfer(etherToRefund);
-      ethFundDeposit.transfer(this.balance);
-      return;
+    function mul(uint256 a, uint256 b) constant internal returns(uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
-    totalSupply = checkedSupply;
+    function div(uint256 a, uint256 b) constant internal returns(uint256) {
+        assert(b != 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-    require(CreateICO(_beneficiary, tokens));
-    ethFundDeposit.transfer(this.balance);
-  }
+    function sub(uint256 a, uint256 b) internal pure returns(uint256 c) {
+        require((c = a - b) < a);
+    }
 
-  /// @dev Ends the funding period and sends the ETH home
-  function finalize() external onlyOwner {
-    require (!isFinalized);
-    // move to operational
-    isFinalized = true;
-    ethFundDeposit.transfer(this.balance);
-  }
+    function add(uint256 a, uint256 b) internal pure returns(uint256 c) {
+        require((c = a + b) > a);
+    }
+}
+
+contract Usdcoins { //is inherently ERC20
+    using SafeMathMod
+    for uint256;
+
+    /**
+     * @constant name The name of the token
+     * @constant symbol  The symbol used to display the currency
+     * @constant decimals  The number of decimals used to dispay a balance
+     * @constant totalSupply The total number of tokens times 10^ of the number of decimals
+     * @constant MAX_UINT256 Magic number for unlimited allowance
+     * @storage balanceOf Holds the balances of all token holders
+     * @storage allowed Holds the allowable balance to be transferable by another address.
+     */
+
+    address owner;
+
+
+
+    string constant public name = "USDC";
+
+    string constant public symbol = "USDC";
+
+    uint256 constant public decimals = 18;
+
+    uint256 constant public totalSupply = 100000000e18;
+
+    uint256 constant private MAX_UINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+    mapping(address => uint256) public balanceOf;
+
+    mapping(address => mapping(address => uint256)) public allowed;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    event TransferFrom(address indexed _spender, address indexed _from, address indexed _to, uint256 _value);
+
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    function() payable {
+        revert();
+    }
+
+    function Usdcoins() public {
+        balanceOf[msg.sender] = totalSupply;
+        owner = msg.sender;
+    }
+
+
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+
+
+
+    /**
+     * @dev function that sells available tokens
+     */
+
+
+    function transfer(address _to, uint256 _value) public returns(bool success) {
+        /* Ensures that tokens are not sent to address "0x0" */
+        require(_to != address(0));
+        /* Prevents sending tokens directly to contracts. */
+
+
+        /* SafeMathMOd.sub will throw if there is not enough balance and if the transfer value is 0. */
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    /**
+     * @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value The amount of token to be transferred
+     * @return Whether the transfer was successful or not
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns(bool success) {
+        /* Ensures that tokens are not sent to address "0x0" */
+        require(_to != address(0));
+        /* Ensures tokens are not sent to this contract */
+
+
+        uint256 allowance = allowed[_from][msg.sender];
+        /* Ensures sender has enough available allowance OR sender is balance holder allowing single transsaction send to contracts*/
+        require(_value <= allowance || _from == msg.sender);
+
+        /* Use SafeMathMod to add and subtract from the _to and _from addresses respectively. Prevents under/overflow and 0 transfers */
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+
+        /* Only reduce allowance if not MAX_UINT256 in order to save gas on unlimited allowance */
+        /* Balance holder does not need allowance to send from self. */
+        if (allowed[_from][msg.sender] != MAX_UINT256 && _from != msg.sender) {
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        }
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Transfer the specified amounts of tokens to the specified addresses.
+     * @dev Be aware that there is no check for duplicate recipients.
+     *
+     * @param _toAddresses Receiver addresses.
+     * @param _amounts Amounts of tokens that will be transferred.
+     */
+    function multiPartyTransfer(address[] _toAddresses, uint256[] _amounts) public {
+        /* Ensures _toAddresses array is less than or equal to 255 */
+        require(_toAddresses.length <= 255);
+        /* Ensures _toAddress and _amounts have the same number of entries. */
+        require(_toAddresses.length == _amounts.length);
+
+        for (uint8 i = 0; i < _toAddresses.length; i++) {
+            transfer(_toAddresses[i], _amounts[i]);
+        }
+    }
+
+    /**
+     * @dev Transfer the specified amounts of tokens to the specified addresses from authorized balance of sender.
+     * @dev Be aware that there is no check for duplicate recipients.
+     *
+     * @param _from The address of the sender
+     * @param _toAddresses The addresses of the recipients (MAX 255)
+     * @param _amounts The amounts of tokens to be transferred
+     */
+    function multiPartyTransferFrom(address _from, address[] _toAddresses, uint256[] _amounts) public {
+        /* Ensures _toAddresses array is less than or equal to 255 */
+        require(_toAddresses.length <= 255);
+        /* Ensures _toAddress and _amounts have the same number of entries. */
+        require(_toAddresses.length == _amounts.length);
+
+        for (uint8 i = 0; i < _toAddresses.length; i++) {
+            transferFrom(_from, _toAddresses[i], _amounts[i]);
+        }
+    }
+
+    /**
+     * @notice `msg.sender` approves `_spender` to spend `_value` tokens
+     *
+     * @param _spender The address of the account able to transfer the tokens
+     * @param _value The amount of tokens to be approved for transfer
+     * @return Whether the approval was successful or not
+     */
+    function approve(address _spender, uint256 _value) public returns(bool success) {
+        /* Ensures address "0x0" is not assigned allowance. */
+        require(_spender != address(0));
+
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @param _owner The address of the account owning tokens
+     * @param _spender The address of the account able to transfer the tokens
+     * @return Amount of remaining tokens allowed to spent
+     */
+    function allowance(address _owner, address _spender) public view returns(uint256 remaining) {
+        remaining = allowed[_owner][_spender];
+    }
+
+    function isNotContract(address _addr) private view returns(bool) {
+        uint length;
+        assembly {
+            /* retrieve the size of the code on target address, this needs assembly */
+            length: = extcodesize(_addr)
+        }
+        return (length == 0);
+    }
+
+}
+
+contract icocontract { //is inherently ERC20
+    using SafeMathMod
+    for uint256;
+
+    uint public raisedAmount = 0;
+    uint256 public RATE = 400;
+    bool public icostart = true;
+    address owner;
+
+    Usdcoins public token;
+
+    function icocontract() public {
+
+        owner = msg.sender;
+
+
+    }
+
+    modifier whenSaleIsActive() {
+        // Check if icostart is true
+        require(icostart == true);
+
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function setToken(Usdcoins _token) onlyOwner {
+
+        token = _token;
+
+    }
+
+    function setraisedAmount(uint raised) onlyOwner {
+
+        raisedAmount = raised;
+
+    }
+
+     function setRate(uint256 rate) onlyOwner {
+
+        RATE = rate;
+
+    }
+
+    function setIcostart(bool newicostart) onlyOwner {
+
+        icostart = newicostart;
+    }
+
+    function() external payable {
+        buyTokens();
+    }
+
+    function buyTokens() payable whenSaleIsActive {
+
+        // Calculate tokens to sell
+        uint256 weiAmount = msg.value;
+        uint256 tokens = weiAmount.mul(RATE);
+
+
+        // Increment raised amount
+        raisedAmount = raisedAmount.add(msg.value);
+
+        token.transferFrom(owner, msg.sender, tokens);
+
+
+        // Send money to owner
+        owner.transfer(msg.value);
+    }
+
+
 }
