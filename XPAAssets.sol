@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XPAAssets at 0xfed40E3C6c17a50704409413E6bb738477631D7E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XPAAssets at 0xD0F7d665996B745b2399a127D5d84DAcd42D251f
 */
 pragma solidity ^0.4.21;
 
@@ -43,27 +43,27 @@ contract SafeMath {
         internal
         pure
     returns(uint) {
-      uint256 z = x + y;
-      require((z >= x) && (z >= y));
-      return z;
+        uint256 z = x + y;
+        require((z >= x) && (z >= y));
+        return z;
     }
 
     function safeSub(uint x, uint y)
         internal
         pure
     returns(uint) {
-      require(x >= y);
-      uint256 z = x - y;
-      return z;
+        require(x >= y);
+        uint256 z = x - y;
+        return z;
     }
 
     function safeMul(uint x, uint y)
         internal
         pure
     returns(uint) {
-      uint z = x * y;
-      require((x == 0) || (z / x == y));
-      return z;
+        uint z = x * y;
+        require((x == 0) || (z / x == y));
+        return z;
     }
     
     function safeDiv(uint x, uint y)
@@ -78,8 +78,8 @@ contract SafeMath {
         internal
         view
     returns(uint) {
-      bytes32 hash = keccak256(block.number, msg.sender, salt);
-      return uint(hash) % N;
+        bytes32 hash = keccak256(block.number, msg.sender, salt);
+        return uint(hash) % N;
     }
 }
 
@@ -177,7 +177,7 @@ contract XPAAssets is SafeMath, Authorization {
     address public XPA = 0x0090528aeb3a2b736b780fd1b6c478bb7e1d643170;
     address public oldXPAAssets = 0x0002992af1dd8140193b87d2ab620ca22f6e19f26c;
     address public newXPAAssets = address(0);
-    address public tokenFactory = 0x0036B86289ccCE0984251CCCA62871b589B0F52d68;
+    address public tokenFactory = 0x001393F1fb2E243Ee68Efe172eBb6831772633A926;
     // setting
     uint256 public maxForceOffsetAmount = 1000000 ether;
     uint256 public minForceOffsetAmount = 10000 ether;
@@ -212,9 +212,15 @@ contract XPAAssets is SafeMath, Authorization {
     
     // constructor
     function XPAAssets(
-        uint256 initCanOffsetTime_
+        uint256 initCanOffsetTime_,
+        address XPAAddr,
+        address factoryAddr,
+        address oldXPAAssetsAddr
     ) public {
         initCanOffsetTime = initCanOffsetTime_;
+        XPA = XPAAddr;
+        tokenFactory = factoryAddr;
+        oldXPAAssets = oldXPAAssetsAddr;
     }
 
     function setFundAccount(
@@ -596,16 +602,28 @@ contract XPAAssets is SafeMath, Authorization {
     }
 
     function transferProfit(
-        uint256 token_,
+        address token_,
         uint256 amount_
     )
         onlyOperator 
         public
     {
-        if(amount_ > 0 && Token(token_).balanceOf(this) >= amount_){
+        require(amount_ > 0);
+        if(
+            XPA != token_ && 
+            Token(token_).balanceOf(this) >= amount_
+        ) {
             require(Token(token_).transfer(bank, amount_));
-            profit = safeSub(profit,amount_);
         }
+
+        if(
+            XPA == token_ && 
+            Token(XPA).balanceOf(this) >= amount_
+        ) {
+            profit = safeSub(profit,amount_);
+            require(Token(token_).transfer(bank, amount_));
+        }
+
     }
         
     function setFeeRate(
@@ -638,6 +656,7 @@ contract XPAAssets is SafeMath, Authorization {
         public
         onlyOwner
     {
+        require(newContract_ != address(0));
         if(
             newXPAAssets == address(0) &&
             XPAAssets(newContract_).transferXPAAssetAndProfit(xpaAsset, profit) &&
@@ -660,6 +679,7 @@ contract XPAAssets is SafeMath, Authorization {
         public
         onlyOperator
     returns(bool) {
+        require(msg.sender == oldXPAAssets);
         xpaAsset = xpaAsset_;
         profit = profit_;
         return true;
@@ -672,6 +692,7 @@ contract XPAAssets is SafeMath, Authorization {
         public
         onlyOperator
     returns(bool) {
+        require(msg.sender == oldXPAAssets);
         unPaidFundAccount[xpaAsset_] = unPaidAmount_;
         return true;
     }
