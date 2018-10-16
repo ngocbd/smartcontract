@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contract at 0x175744fb0849584129fa3d0e6350c00206d95d2f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contract at 0xccffe7182dac0821af63d9498cd2fc99b8b40843
 */
 //author : dm & w
 pragma solidity ^0.4.23;
@@ -112,10 +112,10 @@ contract Contract is Controller {
 		bool _whitelist,
 		uint256 _owner_fee_divisor
 		) {
-			max_amount = calculate_with_fees(_max_amount);
+        FEE_OWNER = _owner_fee_divisor;
+  			max_amount = calculate_with_fees(_max_amount);
 		  	min_amount = calculate_with_fees(_min_amount);
 		  	whitelist_enabled = _whitelist;
-		  	FEE_OWNER = _owner_fee_divisor;
 		  	Contributor storage contributor = contributors[msg.sender];
 		  	contributor.whitelisted = true;
   		}
