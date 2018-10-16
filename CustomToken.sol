@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf47cd932ee150f60cd611c3cfdba51bd33b27ad1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xfd2f8303daa14ef8bac222f4c28e15f9e98af774
 */
 pragma solidity ^0.4.19;
 
@@ -45,34 +45,49 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
+contract ICOToken is BaseToken {
+    // 1 ether = icoRatio token
+    uint256 public icoRatio;
+    uint256 public icoEndtime;
+    address public icoSender;
+    address public icoHolder;
 
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
+    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
+    event Withdraw(address indexed from, address indexed holder, uint256 value);
+
+    modifier onlyBefore() {
+        if (now > icoEndtime) {
+            revert();
+        }
+        _;
     }
 
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
+    function() public payable onlyBefore {
+        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
+        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
+            revert();
+        }
+        _transfer(icoSender, msg.sender, tokenValue);
+        ICO(msg.sender, msg.value, tokenValue);
+    }
+
+    function withdraw() {
+        uint256 balance = this.balance;
+        icoHolder.transfer(balance);
+        Withdraw(msg.sender, icoHolder, balance);
     }
 }
 
-contract CustomToken is BaseToken, BurnToken {
+contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 10000000000000000;
-        balanceOf[0x1dd91123acc8a51392b35b310b2f0bed6ff082f2] = totalSupply;
-        name = 'DXX';
-        symbol = 'DXX';
-        decimals = 8;
+        totalSupply = 113266260898000000000000000000;
+        balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
+        name = 'Coins';
+        symbol = 'Coins';
+        decimals = 18;
+        icoRatio = 888;
+        icoEndtime = 1609322400;
+        icoSender = 0xf588d792fa8a634162760482a7b61dd1ab99b1f1;
+        icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
     }
 }
