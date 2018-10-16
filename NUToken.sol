@@ -1,22 +1,116 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NUToken at 0xc1a28f14218f5c4f533014f8084e1d410274c7bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NUToken at 0xd871242910d43a697bcc9f57947777757b7469aa
 */
 pragma solidity ^0.4.15;
 
-contract InputValidator {
+// File: contracts\infrastructure\ITokenRetreiver.sol
+
+/**
+ * @title Token retrieve interface
+ *
+ * Allows tokens to be retrieved from a contract
+ *
+ * #created 29/09/2017
+ * #author Frank Bonnet
+ */
+contract ITokenRetreiver {
 
     /**
-     * ERC20 Short Address Attack fix
+     * Extracts tokens from the contract
+     *
+     * @param _tokenContract The address of ERC20 compatible token
      */
-    modifier safe_arguments(uint _numArgs) {
-        assert(msg.data.length == _numArgs * 32 + 4);
-        _;
-    }
+    function retreiveTokens(address _tokenContract);
 }
+
+// File: contracts\source\token\IToken.sol
+
+/**
+ * @title ERC20 compatible token interface
+ *
+ * Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+ * - Short address attack fix
+ *
+ * #created 29/09/2017
+ * #author Frank Bonnet
+ */
+contract IToken {
+
+    /**
+     * Get the total supply of tokens
+     *
+     * @return The total supply
+     */
+    function totalSupply() constant returns (uint);
+
+
+    /**
+     * Get balance of `_owner`
+     *
+     * @param _owner The address from which the balance will be retrieved
+     * @return The balance
+     */
+    function balanceOf(address _owner) constant returns (uint);
+
+
+    /**
+     * Send `_value` token to `_to` from `msg.sender`
+     *
+     * @param _to The address of the recipient
+     * @param _value The amount of token to be transferred
+     * @return Whether the transfer was successful or not
+     */
+    function transfer(address _to, uint _value) returns (bool);
+
+
+    /**
+     * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value The amount of token to be transferred
+     * @return Whether the transfer was successful or not
+     */
+    function transferFrom(address _from, address _to, uint _value) returns (bool);
+
+
+    /**
+     * `msg.sender` approves `_spender` to spend `_value` tokens
+     *
+     * @param _spender The address of the account able to transfer the tokens
+     * @param _value The amount of tokens to be approved for transfer
+     * @return Whether the approval was successful or not
+     */
+    function approve(address _spender, uint _value) returns (bool);
+
+
+    /**
+     * Get the amount of remaining tokens that `_spender` is allowed to spend from `_owner`
+     *
+     * @param _owner The address of the account owning tokens
+     * @param _spender The address of the account able to transfer the tokens
+     * @return Amount of remaining tokens allowed to spent
+     */
+    function allowance(address _owner, address _spender) constant returns (uint);
+}
+
+// File: contracts\infrastructure\ownership\ITransferableOwnership.sol
+
+contract ITransferableOwnership {
+
+    /**
+     * Transfer ownership to `_newOwner`
+     *
+     * @param _newOwner The address of the account that will become the new owner
+     */
+    function transferOwnership(address _newOwner);
+}
+
+// File: contracts\infrastructure\modifier\Owned.sol
 
 contract Owned {
 
-    // The address of the account that is the current owner 
+    // The address of the account that is the current owner
     address internal owner;
 
 
@@ -38,6 +132,8 @@ contract Owned {
     }
 }
 
+// File: contracts\infrastructure\ownership\IOwnership.sol
+
 contract IOwnership {
 
     /**
@@ -55,6 +151,8 @@ contract IOwnership {
      */
     function getOwner() constant returns (address);
 }
+
+// File: contracts\infrastructure\ownership\Ownership.sol
 
 contract Ownership is IOwnership, Owned {
 
@@ -79,15 +177,7 @@ contract Ownership is IOwnership, Owned {
     }
 }
 
-contract ITransferableOwnership {
-
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner 
-     */
-    function transferOwnership(address _newOwner);
-}
+// File: contracts\infrastructure\ownership\TransferableOwnership.sol
 
 contract TransferableOwnership is ITransferableOwnership, Ownership {
 
@@ -95,83 +185,68 @@ contract TransferableOwnership is ITransferableOwnership, Ownership {
     /**
      * Transfer ownership to `_newOwner`
      *
-     * @param _newOwner The address of the account that will become the new owner 
+     * @param _newOwner The address of the account that will become the new owner
      */
     function transferOwnership(address _newOwner) public only_owner {
         owner = _newOwner;
     }
 }
 
+// File: contracts\source\token\IManagedToken.sol
 
 /**
- * @title ERC20 compatible token interface
+ * @title ManagedToken interface
  *
- * Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
- * - Short address attack fix
+ * Adds the following functionallity to the basic ERC20 token
+ * - Locking
+ * - Issuing
  *
  * #created 29/09/2017
  * #author Frank Bonnet
  */
-contract IToken { 
+contract IManagedToken is IToken {
 
-    /** 
-     * Get the total supply of tokens
-     * 
-     * @return The total supply
+    /**
+     * Returns true if the token is locked
+     *
+     * @return Whether the token is locked
      */
-    function totalSupply() constant returns (uint);
+    function isLocked() constant returns (bool);
 
 
-    /** 
-     * Get balance of `_owner` 
-     * 
-     * @param _owner The address from which the balance will be retrieved
-     * @return The balance
+    /**
+     * Unlocks the token so that the transferring of value is enabled
+     *
+     * @return Whether the unlocking was successful or not
      */
-    function balanceOf(address _owner) constant returns (uint);
+    function unlock() returns (bool);
 
 
-    /** 
-     * Send `_value` token to `_to` from `msg.sender`
-     * 
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
+    /**
+     * Issues `_value` new tokens to `_to`
+     *
+     * @param _to The address to which the tokens will be issued
+     * @param _value The amount of new tokens to issue
+     * @return Whether the tokens where sucessfully issued or not
      */
-    function transfer(address _to, uint _value) returns (bool);
-
-
-    /** 
-     * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     * 
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transferFrom(address _from, address _to, uint _value) returns (bool);
-
-
-    /** 
-     * `msg.sender` approves `_spender` to spend `_value` tokens
-     * 
-     * @param _spender The address of the account able to transfer the tokens
-     * @param _value The amount of tokens to be approved for transfer
-     * @return Whether the approval was successful or not
-     */
-    function approve(address _spender, uint _value) returns (bool);
-
-
-    /** 
-     * Get the amount of remaining tokens that `_spender` is allowed to spend from `_owner`
-     * 
-     * @param _owner The address of the account owning tokens
-     * @param _spender The address of the account able to transfer the tokens
-     * @return Amount of remaining tokens allowed to spent
-     */
-    function allowance(address _owner, address _spender) constant returns (uint);
+    function issue(address _to, uint _value) returns (bool);
 }
 
+// File: contracts\infrastructure\modifier\InputValidator.sol
+
+contract InputValidator {
+
+
+    /**
+     * ERC20 Short Address Attack fix
+     */
+    modifier safe_arguments(uint _numArgs) {
+        assert(msg.data.length == _numArgs * 32 + 4);
+        _;
+    }
+}
+
+// File: contracts\source\token\Token.sol
 
 /**
  * @title ERC20 compatible token
@@ -186,7 +261,7 @@ contract Token is IToken, InputValidator {
 
     // Ethereum token standard
     string public standard = "Token 0.3";
-    string public name;        
+    string public name;
     string public symbol;
     uint8 public decimals = 8;
 
@@ -204,9 +279,9 @@ contract Token is IToken, InputValidator {
     event Transfer(address indexed _from, address indexed _to, uint _value);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
-    /** 
-     * Construct 
-     * 
+    /**
+     * Construct
+     *
      * @param _name The full token name
      * @param _symbol The token symbol (aberration)
      */
@@ -218,9 +293,9 @@ contract Token is IToken, InputValidator {
     }
 
 
-    /** 
+    /**
      * Get the total token supply
-     * 
+     *
      * @return The total supply
      */
     function totalSupply() public constant returns (uint) {
@@ -228,9 +303,9 @@ contract Token is IToken, InputValidator {
     }
 
 
-    /** 
-     * Get balance of `_owner` 
-     * 
+    /**
+     * Get balance of `_owner`
+     *
      * @param _owner The address from which the balance will be retrieved
      * @return The balance
      */
@@ -239,9 +314,9 @@ contract Token is IToken, InputValidator {
     }
 
 
-    /** 
+    /**
      * Send `_value` token to `_to` from `msg.sender`
-     * 
+     *
      * @param _to The address of the recipient
      * @param _value The amount of token to be transferred
      * @return Whether the transfer was successful or not
@@ -249,7 +324,7 @@ contract Token is IToken, InputValidator {
     function transfer(address _to, uint _value) public safe_arguments(2) returns (bool) {
 
         // Check if the sender has enough tokens
-        require(balances[msg.sender] >= _value);   
+        require(balances[msg.sender] >= _value);
 
         // Check for overflows
         require(balances[_to] + _value >= balances[_to]);
@@ -264,13 +339,13 @@ contract Token is IToken, InputValidator {
     }
 
 
-    /** 
+    /**
      * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     * 
+     *
      * @param _from The address of the sender
      * @param _to The address of the recipient
      * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not 
+     * @return Whether the transfer was successful or not
      */
     function transferFrom(address _from, address _to, uint _value) public safe_arguments(3) returns (bool) {
 
@@ -296,9 +371,9 @@ contract Token is IToken, InputValidator {
     }
 
 
-    /** 
+    /**
      * `msg.sender` approves `_spender` to spend `_value` tokens
-     * 
+     *
      * @param _spender The address of the account able to transfer the tokens
      * @param _value The amount of tokens to be approved for transfer
      * @return Whether the approval was successful or not
@@ -314,9 +389,9 @@ contract Token is IToken, InputValidator {
     }
 
 
-    /** 
+    /**
      * Get the amount of remaining tokens that `_spender` is allowed to spend from `_owner`
-     * 
+     *
      * @param _owner The address of the account owning tokens
      * @param _spender The address of the account able to transfer the tokens
      * @return Amount of remaining tokens allowed to spent
@@ -326,45 +401,7 @@ contract Token is IToken, InputValidator {
     }
 }
 
-
-/**
- * @title ManagedToken interface
- *
- * Adds the following functionallity to the basic ERC20 token
- * - Locking
- * - Issuing
- *
- * #created 29/09/2017
- * #author Frank Bonnet
- */
-contract IManagedToken is IToken { 
-
-    /** 
-     * Returns true if the token is locked
-     * 
-     * @return Whether the token is locked
-     */
-    function isLocked() constant returns (bool);
-
-
-    /**
-     * Unlocks the token so that the transferring of value is enabled 
-     *
-     * @return Whether the unlocking was successful or not
-     */
-    function unlock() returns (bool);
-
-
-    /**
-     * Issues `_value` new tokens to `_to`
-     *
-     * @param _to The address to which the tokens will be issued
-     * @param _value The amount of new tokens to issue
-     * @return Whether the tokens where sucessfully issued or not
-     */
-    function issue(address _to, uint _value) returns (bool);
-}
-
+// File: contracts\source\token\ManagedToken.sol
 
 /**
  * @title ManagedToken
@@ -392,9 +429,9 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
     }
 
 
-    /** 
-     * Construct 
-     * 
+    /**
+     * Construct
+     *
      * @param _name The full token name
      * @param _symbol The token symbol (aberration)
      * @param _locked Whether the token should be locked initially
@@ -404,9 +441,9 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
     }
 
 
-    /** 
+    /**
      * Send `_value` token to `_to` from `msg.sender`
-     * 
+     *
      * @param _to The address of the recipient
      * @param _value The amount of token to be transferred
      * @return Whether the transfer was successful or not
@@ -416,9 +453,9 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
     }
 
 
-    /** 
+    /**
      * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     * 
+     *
      * @param _from The address of the sender
      * @param _to The address of the recipient
      * @param _value The amount of token to be transferred
@@ -429,9 +466,9 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
     }
 
 
-    /** 
+    /**
      * `msg.sender` approves `_spender` to spend `_value` tokens
-     * 
+     *
      * @param _spender The address of the account able to transfer the tokens
      * @param _value The amount of tokens to be approved for transfer
      * @return Whether the approval was successful or not
@@ -441,9 +478,9 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
     }
 
 
-    /** 
+    /**
      * Returns true if the token is locked
-     * 
+     *
      * @return Wheter the token is locked
      */
     function isLocked() public constant returns (bool) {
@@ -452,7 +489,7 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
 
 
     /**
-     * Unlocks the token so that the transferring of value is enabled 
+     * Unlocks the token so that the transferring of value is enabled
      *
      * @return Whether the unlocking was successful or not
      */
@@ -470,7 +507,7 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
      * @return Whether the approval was successful or not
      */
     function issue(address _to, uint _value) public only_owner safe_arguments(2) returns (bool) {
-        
+
         // Check for overflows
         require(balances[_to] + _value >= balances[_to]);
 
@@ -478,7 +515,7 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
         balances[_to] += _value;
         totalTokenSupply += _value;
 
-        // Notify listeners 
+        // Notify listeners
         Transfer(0, this, _value);
         Transfer(this, _to, _value);
 
@@ -486,27 +523,10 @@ contract ManagedToken is IManagedToken, Token, TransferableOwnership {
     }
 }
 
+// File: contracts\source\NUToken.sol
 
 /**
- * @title Token retrieve interface
- *
- * Allows tokens to be retrieved from a contract
- *
- * #created 29/09/2017
- * #author Frank Bonnet
- */
-contract ITokenRetreiver {
-
-    /**
-     * Extracts tokens from the contract
-     *
-     * @param _tokenContract The address of ERC20 compatible token
-     */
-    function retreiveTokens(address _tokenContract);
-}
-
-/**
- * @title NU (Network Units) token
+ * @title NU (NU) token
  *
  * #created 22/10/2017
  * #author Frank Bonnet
@@ -515,15 +535,15 @@ contract NUToken is ManagedToken, ITokenRetreiver {
 
 
     /**
-     * Starts with a total supply of zero and the creator starts with 
+     * Starts with a total supply of zero and the creator starts with
      * zero tokens (just like everyone else)
      */
-    function NUToken() ManagedToken("Network Units Token", "NU", true) {}
+    function NUToken() ManagedToken("NU", "NU", true) {}
 
 
     /**
      * Failsafe mechanism
-     * 
+     *
      * Allows owner to retreive tokens from the contract
      *
      * @param _tokenContract The address of ERC20 compatible token
