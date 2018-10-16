@@ -1,24 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x8cd8baa410e9172b949f2c4433d3b5905f8606ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x228837072115f63d973cdfe83311a434a6075b9c
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
 
+// From https://github.com/ConsenSys/MultiSigWallet/blob/master/contracts/solidity/MultiSigWallet.sol @ e3240481928e9d2b57517bd192394172e31da487
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    uint constant public MAX_OWNER_COUNT = 50;
+    uint constant public MAX_OWNER_COUNT = 3;
 
-    event Confirmation(address indexed _sender, uint indexed _transactionId);
-    event Revocation(address indexed _sender, uint indexed _transactionId);
-    event Submission(uint indexed _transactionId);
-    event Execution(uint indexed _transactionId);
-    event ExecutionFailure(uint indexed _transactionId);
-    event Deposit(address indexed _sender, uint _value);
-    event OwnerAddition(address indexed _owner);
-    event OwnerRemoval(address indexed _owner);
-    event RequirementChange(uint _required);
+    event Confirmation(address indexed sender, uint indexed transactionId);
+    event Revocation(address indexed sender, uint indexed transactionId);
+    event Submission(uint indexed transactionId);
+    event Execution(uint indexed transactionId);
+    event ExecutionFailure(uint indexed transactionId);
+    event Deposit(address indexed sender, uint value);
+    event OwnerAddition(address indexed owner);
+    event OwnerRemoval(address indexed owner);
+    event RequirementChange(uint required);
 
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
@@ -103,19 +104,19 @@ contract MultiSigWallet {
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
+    function MultiSigWallet()
         public
-        validRequirement(_owners.length, _required)
     {
-        for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-                throw;
-            isOwner[_owners[i]] = true;
-        }
-        owners = _owners;
-        required = _required;
+        address owner1 = address(0x4E63227fcFF602b3Fa9e6F4e86b33194f04236B1);
+        address owner2 = address(0x5A50c50666BC556E9737457850885Ee68b8d102E);
+        address owner3 = address(0x4F9049886d8087c7549224383075ffbb3dF2b7a0);
+        owners.push(address(owner1));
+        owners.push(address(owner2));
+        owners.push(address(owner3));
+        isOwner[owner1] = true;
+        isOwner[owner2] = true;
+        isOwner[owner3] = true;
+        required = 2;
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
@@ -295,7 +296,7 @@ contract MultiSigWallet {
                 count += 1;
     }
 
-    /// @dev Returns total number of transactions after filters are applied.
+    /// @dev Returns total number of transactions after filers are applied.
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return Total number of transactions after filters are applied.
