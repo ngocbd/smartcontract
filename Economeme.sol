@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Economeme at 0x64ef6612A67de3Fa96accb645Ae46a3C09227928
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Economeme at 0x834603b8f2e1fd09840a3d44af1fa63a52ca6c28
 */
 pragma solidity ^0.4.18;
 
@@ -174,10 +174,10 @@ contract Economeme is ERC721, Ownable {
     require(msg.value >= price);
     require(oldOwner != msg.sender);
     
-    uint256 devCut = price.mul(3).div(100);
+    uint256 devCut = price.mul(2).div(100);
     developerCut = developerCut.add(devCut);
 
-    uint256 creatorCut = price.div(100);
+    uint256 creatorCut = price.mul(2).div(100);
     creatorBalances[meme.creator] = creatorBalances[meme.creator].add(creatorCut);
 
     uint256 transferAmount = price.sub(creatorCut + devCut);
@@ -339,7 +339,7 @@ contract Economeme is ERC721, Ownable {
   /**
    * @dev Withdraw dev's cut
    * @param _devAmount The amount to withdraw from developer cut.
-   * @param _submissionAmount The amount to withdraw form submission pool.
+   * @param _submissionAmount The amount to withdraw from submission pool.
   */
   function withdraw(uint256 _devAmount, uint256 _submissionAmount) public onlyAdmin() {
     if (_devAmount == 0) { 
