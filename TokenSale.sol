@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x8d7b6fb1523f04e644085e14d5e49b1c6278c92e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x75f398D5B9E92D17EE307268c28779DA26508F54
 */
 contract Token {
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -31,8 +31,8 @@ contract TokenSale is owned {
 
 	function TokenSale()
 	{
-	      asset =  0xE0B7927c4aF23765Cb51314A0E0521A9645F0E2A; // DGX
-	      price = 750000000; // 0.75 ETH
+	      asset =  0xE0B7927c4aF23765Cb51314A0E0521A9645F0E2A; // DGD
+	      price = 1030000000; // 1.03 ETH
 	}
 
 
