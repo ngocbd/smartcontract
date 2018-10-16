@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NeuroToken at 0xd389c08bb987dd7daeb31f51fce1b5b73710b38e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NeuroToken at 0xc45589ddae88e55d128ca2f18a73303c553170a3
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.17;
 
 
 contract owned {
@@ -184,7 +184,7 @@ contract MyAdvancedToken is owned, token {
     }
 
     /// @notice Buy tokens from contract by sending ether
-    function () payable {
+    function buy() payable {
         uint amount = msg.value / buyPrice; // calculates the amount
         _transfer(this, msg.sender, amount); // makes the transfers
     }
@@ -223,11 +223,5 @@ contract NeuroToken is MyAdvancedToken {
 
         frozenTokensSupply -= releasedAmount;
         balanceOf[address(this)] += releasedAmount;
-    }
-
-    // Withdraw the funds
-    function safeWithdrawal(address target, uint256 amount) onlyOwner {
-        require(this.balance >= amount); // checks if the contract has enough ether to withdraw
-        target.transfer(amount); // sends ether to the target. It's important to do this last to avoid recursion attacks
     }
 }
