@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GetBonusInv at 0x42a1dd316338B717078fc504250Bdf845A44429F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GetBonusInv at 0xc07c972ac722eb36f5911fdf89dfe978ef36988c
 */
 pragma solidity ^0.4.21;
 library SafeMath {
@@ -33,7 +33,7 @@ contract Ownable {
         owner = msg.sender;
     }
     function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
+        require(newOwner != address(this));
         owner = newOwner;
         emit OwnershipTransferred(owner, newOwner);
     }
@@ -68,7 +68,7 @@ function balanceOf(address _owner) public view returns(uint256 balance) {
 }
 
 function transfer(address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
+        require(_to != address(this));
         require(_value <= balances[msg.sender]);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -83,7 +83,7 @@ function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
         return true;
 }
     function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
+        require(_to != address(this));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
         balances[_from] = balances[_from].sub(_value);
@@ -131,7 +131,7 @@ contract MintableToken is StandardToken, Ownable {
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
+        emit Transfer(address(this), _to, _amount);
         return true;
     }
     function finishMinting() onlyOwner canMint public returns(bool) {
@@ -180,7 +180,7 @@ contract RewardToken is StandardToken, Ownable {
     event Reward(address indexed to, uint256 amount);
 
     function repayment() onlyOwner payable public {
-        require(msg.value >= 0.01 * 1 ether);
+        require(msg.value >= 0.0001 * 1 ether);
 
         repayments.push(Payment({time : now, amount : msg.value}));
     }
@@ -226,7 +226,7 @@ contract RewardToken is StandardToken, Ownable {
 }
 
 contract Token is CappedToken, BurnableToken, RewardToken {
-    function Token() CappedToken(10 * 1 ether) StandardToken("scammmtt.io", "scammmtt.io", 18) public {
+    function Token() CappedToken(1000 * 1 ether) StandardToken("Get your bonus on http://cryptpro.ru/", "CRPBONUS", 18) public {
         
     }
 }
@@ -245,8 +245,8 @@ contract GetBonusInv is Ownable {
 		InvArr = _arrAddress; // ?????????? ?????? ? ???????????
         for(uint i = 0; i < InvArr.length; i++) {
             Tinve = InvArr[i];
-			emit GetBonus(Tinve, 1, 0);
-	        token.mint(Tinve, 1);
+			emit GetBonus(Tinve,1 * 1 ether, 0);
+	        token.mint(Tinve, 1 * 1 ether);
         }		
 	}
 }
