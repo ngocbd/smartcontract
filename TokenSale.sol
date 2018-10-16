@@ -1,368 +1,443 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x16b888fa2fc83043c3ad6d6c2780c8248461bb15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x4488062671eea4e97b0f31dc4e46b80decc67a07
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+contract Token {
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+  function totalSupply () constant returns (uint256 _totalSupply);
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+  function balanceOf (address _owner) constant returns (uint256 balance);
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+  function transfer (address _to, uint256 _value) returns (bool success);
+
+  function transferFrom (address _from, address _to, uint256 _value) returns (bool success);
+
+  function approve (address _spender, uint256 _value) returns (bool success);
+
+  function allowance (address _owner, address _spender) constant returns (uint256 remaining);
+
+  event Transfer (address indexed _from, address indexed _to, uint256 _value);
+
+  event Approval (address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+contract SafeMath {
+  uint256 constant private MAX_UINT256 =
+  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+  function safeAdd (uint256 x, uint256 y) constant internal returns (uint256 z) {
+    assert (x <= MAX_UINT256 - y);
+    return x + y;
+  }
+
+  function safeSub (uint256 x, uint256 y) constant internal returns (uint256 z) {
+    assert (x >= y);
+    return x - y;
+  }
+
+  function safeMul (uint256 x, uint256 y)  constant internal  returns (uint256 z) {
+    if (y == 0) return 0; // Prevent division by zero at the next line
+    assert (x <= MAX_UINT256 / y);
+    return x * y;
+  }
   
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  
+   function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+  
+}
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() internal {
-    owner = msg.sender;
+
+contract AbstractToken is Token, SafeMath {
+
+  function AbstractToken () {
+    // Do nothing
+  }
+ 
+  function balanceOf (address _owner) constant returns (uint256 balance) {
+    return accounts [_owner];
+  }
+
+  function transfer (address _to, uint256 _value) returns (bool success) {
+    if (accounts [msg.sender] < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (msg.sender, _to, _value);
+    return true;
+  }
+
+  function transferFrom (address _from, address _to, uint256 _value)  returns (bool success) {
+    if (allowances [_from][msg.sender] < _value) return false;
+    if (accounts [_from] < _value) return false;
+
+    allowances [_from][msg.sender] =
+      safeSub (allowances [_from][msg.sender], _value);
+
+    if (_value > 0 && _from != _to) {
+      accounts [_from] = safeSub (accounts [_from], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (_from, _to, _value);
+    return true;
+  }
+
+ 
+  function approve (address _spender, uint256 _value) returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    Approval (msg.sender, _spender, _value);
+    return true;
+  }
+
+  
+  function allowance (address _owner, address _spender) constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
   }
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
    */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+  mapping (address => uint256) accounts;
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  mapping (address => mapping (address => uint256)) private allowances;
+}
+
+
+contract LicerioToken is AbstractToken {
+    
+     address public owner;
+     
+     uint256 tokenCount = 0;
+     
+     bool frozen = false;
+     
+     uint256 constant MAX_TOKEN_COUNT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+     
+	uint public constant _decimals = (10**18);
+     
+    modifier onlyOwner() {
+	    require(owner == msg.sender);
+	    _;
+	}
+     
+     function LicerioToken() {
+         owner = msg.sender;
+         createTokens(100 * (10**24));
+     }
+     
+     function totalSupply () constant returns (uint256 _totalSupply) {
+        return tokenCount;
+     }
+     
+    function name () constant returns (string result) {
+		return "LicerioToken";
+	}
+	
+	function symbol () constant returns (string result) {
+		return "LCR";
+	}
+	
+	function decimals () constant returns (uint result) {
+        return 18;
+    }
+    
+    function transfer (address _to, uint256 _value) returns (bool success) {
+    if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
   }
-}
 
-contract tokenInterface {
-	function balanceOf(address _owner) public constant returns (uint256 balance);
-	function transfer(address _to, uint256 _value) public returns (bool);
-}
+  
+  function transferFrom (address _from, address _to, uint256 _value)
+    returns (bool success) {
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
+  }
 
-contract rateInterface {
-    function readRate(string _currency) public view returns (uint256 oneEtherValue);
-}
+  
+  function approve (address _spender, uint256 _currentValue, uint256 _newValue)
+    returns (bool success) {
+    if (allowance (msg.sender, _spender) == _currentValue)
+      return approve (_spender, _newValue);
+    else return false;
+  }
 
-contract RC {
-    using SafeMath for uint256;
-    TokenSale tokenSaleContract;
-    uint256 public startTime;
-    uint256 public endTime;
-    
-    uint256 public soldTokens;
-    uint256 public remainingTokens;
-    
-    uint256 public oneTokenInEurWei;
+  function burnTokens (uint256 _value) returns (bool success) {
+    if (_value > accounts [msg.sender]) return false;
+    else if (_value > 0) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      tokenCount = safeSub (tokenCount, _value);
+      return true;
+    } else return true;
+  }
 
-    function RC(address _tokenSaleContract, uint256 _oneTokenInEurWei, uint256 _remainingTokens,  uint256 _startTime , uint256 _endTime ) public {
-        require ( _tokenSaleContract != 0 );
-        require ( _oneTokenInEurWei != 0 );
-        require( _remainingTokens != 0 );
-        
-        tokenSaleContract = TokenSale(_tokenSaleContract);
-        
-        tokenSaleContract.addMeByRC();
-        
-        soldTokens = 0;
-        remainingTokens = _remainingTokens;
-        oneTokenInEurWei = _oneTokenInEurWei;
-        
-        setTimeRC( _startTime, _endTime );
+
+  function createTokens (uint256 _value) returns (bool success) {
+    require (msg.sender == owner);
+
+    if (_value > 0) {
+      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
+      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
+      tokenCount = safeAdd (tokenCount, _value);
     }
-    
-    function setTimeRC(uint256 _startTime, uint256 _endTime ) internal {
-        if( _startTime == 0 ) {
-            startTime = tokenSaleContract.startTime();
-        } else {
-            startTime = _startTime;
-        }
-        if( _endTime == 0 ) {
-            endTime = tokenSaleContract.endTime();
-        } else {
-            endTime = _endTime;
-        }
+
+    return true;
+  }
+
+
+  function setOwner (address _newOwner) {
+    require (msg.sender == owner);
+
+    owner = _newOwner;
+  }
+
+  function freezeTransfers () {
+    require (msg.sender == owner);
+
+    if (!frozen) {
+      frozen = true;
+      Freeze ();
     }
+  }
+
+
+  function unfreezeTransfers () {
+    require (msg.sender == owner);
+
+    if (frozen) {
+      frozen = false;
+      Unfreeze ();
+    }
+  }
+
+  event Freeze ();
+
+  event Unfreeze ();
+
+}
+
+
+contract TokenSale is LicerioToken  {
+ 
+    enum State { PRIVATE_SALE, PRE_ICO, ICO_FIRST, ICO_SECOND, STOPPED, CLOSED }
     
-    modifier onlyTokenSaleOwner() {
-        require(msg.sender == tokenSaleContract.owner() );
+    // 0 , 1 , 2 , 3 , 4 , 5
+    
+    State public currentState = State.STOPPED;
+
+    uint public tokenPrice = 250000000000000; // wei , 0.00025 eth , 0.12 usd
+    uint public _minAmount = 0.01 ether;
+	
+    address public beneficiary;
+	
+	uint256 private BountyFound = 10 * (10**24);
+	uint256 private SaleFound = 70 * (10**24);
+	uint256 private PartnersFound = 5 * (10**24);
+	uint256 private TeamFound = 15 * (10**24);
+	
+	uint256 public totalSold = 0;
+	
+	
+	uint256 private _hardcap = 14000 ether;
+	uint256 private _softcap = 2500 ether;
+	
+	bool private _allowedTransfers = true;
+	
+	
+    address[] public Partners;
+    address[] public Holders;
+	
+	modifier minAmount() {
+        require(msg.value >= _minAmount);
         _;
     }
     
-    function setTime(uint256 _newStart, uint256 _newEnd) public onlyTokenSaleOwner {
-        if ( _newStart != 0 ) startTime = _newStart;
-        if ( _newEnd != 0 ) endTime = _newEnd;
-    }
-    
-    event BuyRC(address indexed buyer, bytes trackID, uint256 value, uint256 soldToken, uint256 valueTokenInEurWei );
-    
-    function () public payable {
-        require( now > startTime );
-        require( now < endTime );
-        //require( msg.value >= 1*10**18); //1 Ether
-        require( remainingTokens > 0 );
-        
-        uint256 tokenAmount = tokenSaleContract.buyFromRC.value(msg.value)(msg.sender, oneTokenInEurWei, remainingTokens);
-        
-        remainingTokens = remainingTokens.sub(tokenAmount);
-        soldTokens = soldTokens.add(tokenAmount);
-        
-        BuyRC( msg.sender, msg.data, msg.value, tokenAmount, oneTokenInEurWei );
-    }
-}
-
-contract TokenSale is Ownable {
-    using SafeMath for uint256;
-    tokenInterface public tokenContract;
-    rateInterface public rateContract;
-    
-    address public wallet;
-    address public advisor;
-    uint256 public advisorFee; // 1 = 0,1%
-    
-	uint256 public constant decimals = 18;
-    
-    uint256 public endTime;  // seconds from 1970-01-01T00:00:00Z
-    uint256 public startTime;  // seconds from 1970-01-01T00:00:00Z
-
-    mapping(address => bool) public rc;
-
-
-    function TokenSale(address _tokenAddress, address _rateAddress, uint256 _startTime, uint256 _endTime) public {
-        tokenContract = tokenInterface(_tokenAddress);
-        rateContract = rateInterface(_rateAddress);
-        setTime(_startTime, _endTime); 
-        wallet = msg.sender;
-        advisor = msg.sender;
-        advisorFee = 0 * 10**3;
-    }
-    
-    function tokenValueInEther(uint256 _oneTokenInEurWei) public view returns(uint256 tknValue) {
-        uint256 oneEtherInEur = rateContract.readRate("eur");
-        tknValue = _oneTokenInEurWei.mul(10 ** uint256(decimals)).div(oneEtherInEur);
-        return tknValue;
-    } 
-    
-    modifier isBuyable() {
-        require( now > startTime ); // check if started
-        require( now < endTime ); // check if ended
-        require( msg.value > 0 );
-		
-		uint256 remainingTokens = tokenContract.balanceOf(this);
-        require( remainingTokens > 0 ); // Check if there are any remaining tokens 
+    modifier saleIsOn() {
+        require(currentState != State.STOPPED && currentState != State.CLOSED && totalSold < SaleFound);
         _;
     }
     
-    event Buy(address buyer, uint256 value, address indexed ambassador);
-    
-    modifier onlyRC() {
-        require( rc[msg.sender] ); //check if is an authorized rcContract
-        _;
+	function TokenSale() {
+	    owner = msg.sender;
+	    beneficiary = msg.sender;
+	}
+	
+	function setState(State _newState) public onlyOwner {
+	    require(currentState != State.CLOSED);
+	    currentState = _newState;
+	}
+	
+	function setMinAmount(uint _new) public onlyOwner {
+	    
+	    _minAmount = _new;
+	    
+	}
+	
+	function allowTransfers() public onlyOwner {
+		_allowedTransfers = true;		
+	}
+	
+	function stopTransfers() public onlyOwner {
+		_allowedTransfers = false;
+	}
+	
+	function stopSale() public onlyOwner {
+	    currentState = State.CLOSED;
+	    payoutPartners();
+	    payoutBonusesToHolders();
+	}
+	
+    function setBeneficiaryAddress(address _new) public onlyOwner {
+        
+        beneficiary = _new;
+        
     }
     
-    function buyFromRC(address _buyer, uint256 _rcTokenValue, uint256 _remainingTokens) onlyRC isBuyable public payable returns(uint256) {
-        uint256 oneToken = 10 ** uint256(decimals);
-        uint256 tokenValue = tokenValueInEther(_rcTokenValue);
-        uint256 tokenAmount = msg.value.mul(oneToken).div(tokenValue);
-        address _ambassador = msg.sender;
+    function setTokenPrice(uint _price) public onlyOwner {
         
+        tokenPrice = _price;
         
-        uint256 remainingTokens = tokenContract.balanceOf(this);
-        if ( _remainingTokens < remainingTokens ) {
-            remainingTokens = _remainingTokens;
+    }
+    
+    function addPartner(address _newPartner) public onlyOwner {
+        
+        Partners.push(_newPartner);
+        
+    }
+    
+    function payoutPartners() private returns (bool) {
+
+        if(Partners.length == 0) return false;
+
+        uint tokensToPartners = safeDiv(PartnersFound, Partners.length);
+        
+        for(uint i = 0 ; i <= Partners.length - 1; i++) {
+            address addr = Partners[i];
+            accounts[addr] = safeAdd(accounts[addr], tokensToPartners);
+	        accounts[owner] = safeSub(accounts[owner], tokensToPartners);
         }
         
-        if ( remainingTokens < tokenAmount ) {
-            uint256 refund = (tokenAmount - remainingTokens).mul(tokenValue).div(oneToken);
-            tokenAmount = remainingTokens;
-            forward(msg.value-refund);
-			remainingTokens = 0; // set remaining token to 0
-             _buyer.transfer(refund);
-        } else {
-			remainingTokens = remainingTokens.sub(tokenAmount); // update remaining token without bonus
-            forward(msg.value);
+        return true;
+        
+    }
+    
+    
+    function payoutBonusesToHolders() private returns (bool) {
+        
+        if(Holders.length == 0) return false;
+        
+        uint tokensToHolders = safeDiv(BountyFound, Holders.length);
+        
+        for(uint i = 0 ; i <= Holders.length - 1; i++) {
+            address addr = Holders[i];
+            accounts[addr] = safeAdd(accounts[addr], tokensToHolders);
+	        accounts[owner] = safeSub(accounts[owner], tokensToHolders); 
         }
         
-        tokenContract.transfer(_buyer, tokenAmount);
-        Buy(_buyer, tokenAmount, _ambassador);
-		
-        return tokenAmount; 
+        return true;
     }
     
-    function forward(uint256 _amount) internal {
-        uint256 advisorAmount = _amount.mul(advisorFee).div(10**3);
-        uint256 walletAmount = _amount - advisorAmount;
-        advisor.transfer(advisorAmount);
-        wallet.transfer(walletAmount);
-    }
+	
+	function transferFromOwner(address _address, uint _amount) public onlyOwner returns (bool) {
+	    
+	    uint tokens = get_tokens_count(_amount * 1 ether);
+	    
+	    tokens = safeAdd(tokens, get_bounty_count(tokens));
+	    
+	    accounts[_address] = safeAdd(accounts[_address], tokens);
+	    accounts[owner] = safeSub(accounts[owner], tokens);
+	    
+	    totalSold = safeAdd(totalSold, _amount);
+	    
+	    Holders.push(_address);
+	    
+	    return true;
 
-    event NewRC(address contr);
-    
-    function addMeByRC() public {
-        require(tx.origin == owner);
-        
-        rc[ msg.sender ]  = true;
-        
-        NewRC(msg.sender);
-    }
-    
-    function setTime(uint256 _newStart, uint256 _newEnd) public onlyOwner {
-        if ( _newStart != 0 ) startTime = _newStart;
-        if ( _newEnd != 0 ) endTime = _newEnd;
-    }
-    
-    modifier onlyOwnerOrRC() {
-        require( rc[msg.sender] || msg.sender == owner );
-        _;
-    }
+	}
+	
 
-    function withdraw(address to, uint256 value) public onlyOwner {
-        to.transfer(value);
-    }
-    
-    function withdrawTokens(address to, uint256 value) public onlyOwnerOrRC returns (bool) {
-        return tokenContract.transfer(to, value);
-    }
-    
-    function setTokenContract(address _tokenContract) public onlyOwner {
-        tokenContract = tokenInterface(_tokenContract);
-    }
+	
+	function transferPayable(address _address, uint _amount) private returns (bool) {
+	    
+	    if(SaleFound < _amount) return false;
+	    
+	    accounts[_address] = safeAdd(accounts[_address], _amount);
+	    accounts[owner] = safeSub(accounts[owner], _amount);
+	    
+	    totalSold = safeAdd(totalSold, _amount);
+	    
+	    Holders.push(_address);
+	    
+	    return true;
+	    
+	}
+	
+	
+	function buyLCRTokens() public saleIsOn() minAmount() payable {
+	  
+	    
+	    uint tokens = get_tokens_count(msg.value);
+		require(transferPayable(msg.sender , tokens));
+		if(_allowedTransfers) {
+			beneficiary.transfer(msg.value);
+	    }
+	    
+	}
+	
+	
+	function get_tokens_count(uint _amount) private returns (uint) {
+	    
+	     uint currentPrice = tokenPrice;
+	     uint tokens = safeDiv( safeMul(_amount, _decimals), currentPrice ) ;
+    	 return tokens;
+	    
+	}
+	
+	
+	function get_bounty_count(uint _tokens) private returns (uint) {
+	
+	    uint bonuses = 0;
+	
+	    if(currentState == State.PRIVATE_SALE) {
+	        bonuses = _tokens ;
+	    }
+	    
+	    if(currentState == State.PRE_ICO) {
+	        bonuses = safeDiv(_tokens , 2);
+	    }
+	    
+	    if(currentState == State.ICO_FIRST) {
+	         bonuses = safeDiv(_tokens , 4);
+	    }
+	    
+	    if(currentState == State.ICO_SECOND) {
+	         bonuses = safeDiv(_tokens , 5);
+	    }
+	    
+	    if(BountyFound < bonuses) {
+	        bonuses = BountyFound;
+	    }
+	    
+	    if(bonuses > 0) {
+	        safeSub(BountyFound, bonuses);
+	    }
 
-    function setWalletAddress(address _wallet) public onlyOwner {
-        wallet = _wallet;
+	    return bonuses;
+	
+	}
+	
+	function() external payable {
+      buyLCRTokens();
     }
+	
     
-    function setAdvisorAddress(address _advisor) public onlyOwner {
-            advisor = _advisor;
-    }
-    
-    function setAdvisorFee(uint256 _advisorFee) public onlyOwner {
-            advisorFee = _advisorFee;
-    }
-    
-    function setRateContract(address _rateAddress) public onlyOwner {
-        rateContract = rateInterface(_rateAddress);
-    }
-
-    function () public payable {
-        revert();
-    }
-    
-    function newRC(uint256 _oneTokenInEurWei, uint256 _remainingTokens) onlyOwner public {
-        new RC(this, _oneTokenInEurWei, _remainingTokens, 0, 0 );
-    }
-}
-
-contract PrivateSale {
-    using SafeMath for uint256;
-    TokenSale tokenSaleContract;
-    uint256 public startTime;
-    uint256 internal constant weekInSeconds = 604800; // seconds in a week
-    uint256 public endTime;
-    
-    uint256 public soldTokens;
-    uint256 public remainingTokens;
-    
-    uint256 public oneTokenInEurWei;
-
-    function PrivateSale(address _tokenSaleContract, uint256 _oneTokenInEurWei, uint256 _remainingTokens,  uint256 _startTime , uint256 _endTime ) public {
-        require ( _tokenSaleContract != 0 );
-        require ( _oneTokenInEurWei != 0 );
-        require( _remainingTokens != 0 );
-        
-        tokenSaleContract = TokenSale(_tokenSaleContract);
-        
-        tokenSaleContract.addMeByRC();
-        
-        soldTokens = 0;
-        remainingTokens = _remainingTokens;
-        oneTokenInEurWei = _oneTokenInEurWei;
-        
-        setTimeRC( _startTime, _endTime );
-    }
-    
-    function setTimeRC(uint256 _startTime, uint256 _endTime ) internal {
-        if( _startTime == 0 ) {
-            startTime = tokenSaleContract.startTime();
-        } else {
-            startTime = _startTime;
-        }
-        if( _endTime == 0 ) {
-            endTime = tokenSaleContract.endTime();
-        } else {
-            endTime = _endTime;
-        }
-    }
-    
-    modifier onlyTokenSaleOwner() {
-        require(msg.sender == tokenSaleContract.owner() );
-        _;
-    }
-    
-    function setTime(uint256 _newStart, uint256 _newEnd) public onlyTokenSaleOwner {
-        if ( _newStart != 0 ) startTime = _newStart;
-        if ( _newEnd != 0 ) endTime = _newEnd;
-    }
-    
-    event BuyRC(address indexed buyer, bytes trackID, uint256 value, uint256 soldToken, uint256 valueTokenInEurWei );
-    
-    function () public payable {
-        require( now > startTime );
-        require( now < endTime );
-        //require( msg.value >= 1*10**18); //1 Ether
-        require( remainingTokens > 0 );
-        
-        uint256 tokenAmount = tokenSaleContract.buyFromRC.value(msg.value)(msg.sender, oneTokenInEurWei, remainingTokens);
-        
-        remainingTokens = remainingTokens.sub(tokenAmount);
-        soldTokens = soldTokens.add(tokenAmount);
-        
-        uint256 bonusRate;
-        if( now > startTime + weekInSeconds*0  ) { bonusRate = 1000; }
-        if( now > startTime + weekInSeconds*1  ) { bonusRate = 800; }
-        if( now > startTime + weekInSeconds*2  ) { bonusRate = 600; }
-        if( now > startTime + weekInSeconds*3  ) { bonusRate = 400; }
-        if( now > startTime + weekInSeconds*4  ) { bonusRate = 200; }
-        if( now > startTime + weekInSeconds*5  ) { bonusRate = 0; }
-        
-        tokenSaleContract.withdrawTokens(msg.sender, tokenAmount.mul( bonusRate ).div(10**4) );
-        
-        BuyRC( msg.sender, msg.data, msg.value, tokenAmount, oneTokenInEurWei );
-    }
 }
