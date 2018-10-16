@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xca2bcc87e6ea90826754570d0722b6fc3a9eba21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x777b8a88ab35d3bcc98bf485f5b5c6f83adcfe5e
 */
 pragma solidity ^ 0.4.17;
 
@@ -172,11 +172,11 @@ contract Crowdsale is Pausable {
         
         multisig = 0xC30b7a7d82c71467AF9eC85e039e4ED586EF9812; 
         team = 0xC30b7a7d82c71467AF9eC85e039e4ED586EF9812;       
-        lottery = 0xC30b7a7d82c71467AF9eC85e039e4ED586EF9812;                                                         
+        lottery = 0x027127930D9ae133C08AE480A6E6C2caf1e87861;                                                         
         maxCap = 14700000e18;        
         tokenPriceWei = 6666666666e5;
         totalTokensSent = 0; 
-        minCap = (750 ether * 1e18) / tokenPriceWei;
+        minCap = (250 ether * 1e18) / tokenPriceWei;
         setStep(Step.FundingPreSale);
     }
 
