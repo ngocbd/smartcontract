@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BinaryOption at 0x32f916bcfae02a2a385ec0219a07fa2374bae7bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BinaryOption at 0xa6a8114712c2eb2fa1807b9577bcb2787c07b78c
 */
 pragma solidity ^0.4.18;
 /**
@@ -549,6 +549,7 @@ contract BinaryOption {
     uint public sessionId = 1;
     uint public rate = 190;
     uint public constant MAX_INVESTOR = 20;
+    uint public minimunEth = 10000000000000000; // minimunEth = 0.01 eth
     /**
      * Events for binany option system
      */
@@ -583,7 +584,6 @@ contract BinaryOption {
         mapping(uint => address) investor;
         mapping(uint => bool) win;
         mapping(uint => uint) amountInvest;
-        mapping(address=> uint) investedSession;
     }
     
     function BinaryOption(address _namiCrowdSale, address _escrow, address _namiMultiSigWallet) public {
@@ -611,6 +611,14 @@ contract BinaryOption {
     {
         require(_escrow != 0x0);
         escrow = _escrow;
+    }
+    
+    // chagne minimunEth
+    function changeMinEth(uint _minimunEth) public 
+        onlyEscrow
+    {
+        require(_minimunEth != 0);
+        minimunEth = _minimunEth;
     }
     
     /// @dev Change time for investor can invest in one session, can only change at time not in session
@@ -744,14 +752,13 @@ contract BinaryOption {
         public
         payable
     {
-        require(msg.value >= 100000000000000000 && session.investOpen); // msg.value >= 0.1 ether
+        require(msg.value >= minimunEth && session.investOpen); // msg.value >= 0.1 ether
         require(now < (session.timeOpen + timeInvestInMinute * 1 minutes));
-        require(session.investorCount < MAX_INVESTOR && session.investedSession[msg.sender] != sessionId);
+        require(session.investorCount < MAX_INVESTOR);
         session.investor[session.investorCount] = msg.sender;
         session.win[session.investorCount] = _choose;
         session.amountInvest[session.investorCount] = msg.value;
         session.investorCount += 1;
-        session.investedSession[msg.sender] = sessionId;
         Invest(msg.sender, _choose, msg.value, now, sessionId);
     }
     
