@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardBounties at 0x066128b9f7557b5398db3d4ed141f2e64245ffa1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardBounties at 0x2af47a65da8cd66729b4209c22017d6a5c2d2400
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 contract Token {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -46,7 +46,6 @@ contract Token {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
@@ -91,7 +90,6 @@ contract StandardToken is Token {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
-
 contract HumanStandardToken is StandardToken {
 
     /* Public variables of the token */
@@ -133,10 +131,6 @@ contract HumanStandardToken is StandardToken {
     }
 }
 
-/// @title StandardBounties
-/// @dev Used to pay out individuals or groups for task fulfillment through
-/// stepwise work submission, acceptance, and payment
-/// @author Mark Beylin <mark.beylin@consensys.net>, Gonçalo Sá <goncalo.sa@consensys.net>
 contract StandardBounties {
 
   /*
@@ -593,32 +587,6 @@ contract StandardBounties {
       isAtStage(_bountyId, BountyStages.Draft)
   {
       bounties[_bountyId].arbiter = _newArbiter;
-      BountyChanged(_bountyId);
-  }
-
-  /// @dev changeBountyPaysTokens(): allows the issuer to change a bounty's issuer
-  /// @param _bountyId the index of the bounty
-  /// @param _newPaysTokens the new bool for whether the contract pays tokens
-  /// @param _newTokenContract the new address of the token
-  function changeBountyPaysTokens(uint _bountyId, bool _newPaysTokens, address _newTokenContract)
-      public
-      validateBountyArrayIndex(_bountyId)
-      onlyIssuer(_bountyId)
-      isAtStage(_bountyId, BountyStages.Draft)
-  {
-      HumanStandardToken oldToken = tokenContracts[_bountyId];
-      bool oldPaysTokens = bounties[_bountyId].paysTokens;
-      bounties[_bountyId].paysTokens = _newPaysTokens;
-      tokenContracts[_bountyId] = HumanStandardToken(_newTokenContract);
-      if (bounties[_bountyId].balance > 0){
-        uint oldBalance = bounties[_bountyId].balance;
-        bounties[_bountyId].balance = 0;
-        if (oldPaysTokens){
-            require(oldToken.transfer(bounties[_bountyId].issuer, oldBalance));
-        } else {
-            bounties[_bountyId].issuer.transfer(oldBalance);
-        }
-      }
       BountyChanged(_bountyId);
   }
 
