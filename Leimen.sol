@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leimen at 0x3da18541cab8549885dc9e6ab9101c366cf43b21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leimen at 0xb7b00a6b4cd2e0592bf0b264973d6ff51c7fb0dd
 */
 pragma solidity ^0.4.24;
 
@@ -40,8 +40,8 @@ contract Leimen is owned{
     function Leimen() public {
 	    totalSupply = 1000000000 * 100 ;
     	balanceOf[msg.sender] = totalSupply ;
-        name = "Leimen test";
-        symbol = "Lts";         
+        name = "Leimen coin";
+        symbol = "Leim";         
     }
     
 //????//
@@ -150,7 +150,7 @@ contract Leimen is owned{
 
     function buy() payable returns (uint amount){
 	    require(!stopsell);
-        amount = msg.value * eth_amount / (10 ** 18) ;
+        amount = msg.value * eth_amount  / (10 ** 16) ;
         require(balanceOf[this] >= amount);           
         balanceOf[msg.sender] += amount;           
         balanceOf[this] -= amount; 
