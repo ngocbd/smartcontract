@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctusTokenSale at 0x29f01443384c39381040d6b10bba6631868c760a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctusTokenSale at 0xeee11d01a6d6d17b7945c86e168f7bf96c00864d
 */
 pragma solidity ^0.4.21;
 
@@ -49,7 +49,7 @@ contract AuctusWhitelist {
 contract AuctusTokenSale is ContractReceiver {
 	using SafeMath for uint256;
 
-	address public auctusTokenAddress = 0xfD89de68b246eB3e21B06e9B65450AC28D222488;
+	address public auctusTokenAddress = 0xc12d099be31567add4e4e4d0D45691C3F58f5663;
 	address public auctusWhiteListAddress = 0xA6e728E524c1D7A65fE5193cA1636265DE9Bc982;
 
 	uint256 public startTime = 1522159200; //2018-03-27 2 PM UTC
@@ -166,7 +166,7 @@ contract AuctusTokenSale is ContractReceiver {
 		uint256 vestedEthers = address(this).balance - freeEthers;
 
 		address(0xd1B10607921C78D9a00529294C4b99f1bd250E1c).transfer(freeEthers); //Owner
-		assert(address(0x0285d35508e1A1f833142EB5211adb858Bd3323A).call.value(vestedEthers)()); //AuctusEtherVesting SC
+		assert(address(0xb3cc085B5a56Fdd47545A66EBd3DBd2a903D4565).call.value(vestedEthers)()); //AuctusEtherVesting SC
 
 		AuctusToken token = AuctusToken(auctusTokenAddress);
 		token.setTokenSaleFinished();
@@ -211,7 +211,7 @@ contract AuctusTokenSale is ContractReceiver {
 		//Partnerships and Advisory vested amount 7.2%
 		uint256 partnershipsAdvisoryVested = totalAmount * 72 / 1000;
 
-		uint256 privateSales = 2970000000000000000000000;
+		uint256 privateSales = 6836048000000000000000000;
 		uint256 preSale = 2397307557007329968290000;
 
 		transferTokens(auctusCoreTeam, bounty, reserveForFuture, preSale, partnershipsAdvisoryVested, partnershipsAdvisoryFree, privateSales);
@@ -231,11 +231,11 @@ contract AuctusTokenSale is ContractReceiver {
 	) private {
 		AuctusToken token = AuctusToken(auctusTokenAddress);
 		bytes memory empty;
-		assert(token.transfer(0x6bc58c572d0973cF0EfA1Fe1D7D6c9d7Eea2cd23, auctusCoreTeam, empty)); //AuctusTokenVesting SC
-		assert(token.transfer(0x936Cf3e904B83B1D939C41475DC5F7c470419A3E, bounty, empty)); //AuctusBountyDistribution SC
-		assert(token.transfer(0xF5ad5fF703D0AD0df3bAb3A1194FbCC5c152bf3b, reserveForFuture, empty)); //AuctusTokenVesting SC
-		assert(token.transfer(0x2cE4FAb9F313F1df0978869C5d302768F1bB471d, preSale, empty)); //AuctusPreSaleDistribution SC
-		assert(token.transfer(0x03f6278E5c359a5E8947a62E87D85AC394580d13, partnershipsAdvisoryVested, empty)); //AuctusTokenVesting SC
+		assert(token.transfer(0x8592Ec038ACBA05BC467C6bC17aA855880d490E4, auctusCoreTeam, empty)); //AuctusTokenVesting SC
+		assert(token.transfer(0x389E93aC36Dd8c8E04FB1952B37c4aa4b320b6FF, bounty, empty)); //AuctusBountyDistribution SC
+		assert(token.transfer(0xc83847FCbd217FB8Ec4bc79DbA7DB672d3aB2602, reserveForFuture, empty)); //AuctusTokenVesting SC
+		assert(token.transfer(0xA39cA2768A7B76Aa3bCab68c4d4DEBF9A32c5434, preSale, empty)); //AuctusPreSaleDistribution SC
+		assert(token.transfer(0x8Cb9626BBc5Ec60c386eeEde50ac74f173FBD8a8, partnershipsAdvisoryVested, empty)); //AuctusTokenVesting SC
 		assert(token.transfer(0x6c89Cc03036193d52e9b8386413b545184BDAb99, partnershipsAdvisoryFree));
 		assert(token.transfer(0xd1B10607921C78D9a00529294C4b99f1bd250E1c, privateSales));
 	}
