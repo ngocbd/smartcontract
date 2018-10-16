@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FarmCoinSale at 0x560da6e7f219e37a094342b3a56ea27bfa6798be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FarmCoinSale at 0xeb30a047fb51da2ec987db551522fe63aff2cc76
 */
 pragma solidity ^0.4.16;
 
@@ -29,10 +29,218 @@ library SafeMath {
   }
 }
 
-contract Token {
+contract Ownable {
+  address public owner;
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+ mapping (address => uint) public pendingWithdrawals;
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+
+
+function withdraw() {
+        uint amount = pendingWithdrawals[msg.sender];
+        pendingWithdrawals[msg.sender] = 0;
+        msg.sender.transfer(amount);
+    }
+
+}
+/**
+ * @title Claimable
+ * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
+ * This allows the new owner to accept the transfer.
+ */
+
+contract AirDrop is Ownable {
+
+  Token token;
+
+  event TransferredToken(address indexed to, uint256 value);
+  event FailedTransfer(address indexed to, uint256 value);
+
+  modifier whenDropIsActive() {
+    assert(isActive());
+
+    _;
+  }
+address public creator;
+  function AirDrop () {
+      address _tokenAddr = creator; //here pass address of your token
+      token = Token(_tokenAddr);
+  }
+
+  function isActive() constant returns (bool) {
+    return (
+        tokensAvailable() > 0 // Tokens must be available to send
+    );
+  }
+  //below function can be used when you want to send every recipeint with different number of tokens
+  function sendTokens(address[] dests, uint256[] values) whenDropIsActive onlyOwner external {
+    uint256 i = 0;
+    while (i < dests.length) {
+        uint256 toSend = values[i] ;
+        sendInternally(dests[i] , toSend, values[i]);
+        i++;
+    }
+  }
+
+  // this function can be used when you want to send same number of tokens to all the recipients
+  function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
+    uint256 i = 0;
+    uint256 toSend = value;
+    while (i < dests.length) {
+        sendInternally(dests[i] , toSend, value);
+        i++;
+    }
+  }  
+
+  function sendInternally(address recipient, uint256 tokensToSend, uint256 valueToPresent) internal {
+    if(recipient == address(0)) return;
+
+    if(tokensAvailable() >= tokensToSend) {
+      token.transfer(recipient, tokensToSend);
+      TransferredToken(recipient, valueToPresent);
+    } else {
+      FailedTransfer(recipient, valueToPresent); 
+    }
+  }   
+
+
+  function tokensAvailable() constant returns (uint256) {
+    return token.balanceOf(this);
+  }
+
+  function destroy() onlyOwner {
+    uint256 balance = tokensAvailable();
+    require (balance > 0);
+    token.transfer(owner, balance);
+    selfdestruct(owner);
+  }
+}
+contract Claimable is Ownable {
+    address public pendingOwner;
+
+    /**
+     * @dev Modifier throws if called by any account other than the pendingOwner.
+     */
+    modifier onlyPendingOwner() {
+        require(msg.sender == pendingOwner);
+        _;
+    }
+
+    /**
+     * @dev Allows the current owner to set the pendingOwner address.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner public {
+        pendingOwner = newOwner;
+    }
+
+    /**
+     * @dev Allows the pendingOwner address to finalize the transfer.
+     */
+    function claimOwnership() onlyPendingOwner public {
+        OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
+    }
+
+
+}
+
+
+contract EtherToFARM is Ownable {
+ using SafeMath for uint;
+ using SafeMath for uint256;
+
+
+uint256 public totalSupply;// total no of tokens in supply
+uint remaining;
+uint price;
+
+mapping (address => uint) investors; //it maps no of FarmCoin given to each address
+
+ function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+ function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+function transfer(address _to, uint256 _value) returns (bool success) {}
+
+function ()  payable {// called when ether is send
+
+    uint256 remaining;
+    uint256 totalSupply;
+    uint price;
+    assert(remaining < totalSupply);
+    uint FarmCoin = div(msg.value,price); // calculate no of FarmCoin to be issued depending on the price and ether send
+    assert(FarmCoin < sub(totalSupply,remaining)); //FarmCoin available should be greater than the one to be issued
+    add(investors[msg.sender],FarmCoin);
+    remaining = add(remaining, FarmCoin);
+    transfer(msg.sender, FarmCoin);
+}
+
+function setPrice(uint _price)
+{ //  price need to be set maually as it cannot be done via ethereum network
+    uint price;
+    price = _price;
+}
+
+function giveReward(address _payer,uint _payment) public payable returns (bool _success){
+        uint tokenamount = _payment / price;
+        return transfer(_payer,tokenamount);
+    }    
+}
+
+contract PayToken is EtherToFARM {
+ function() public payable{
+         if(msg.sender!=owner)
+       giveReward(msg.sender,msg.value);
+}
+}
+
+contract Token is EtherToFARM {
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
@@ -84,17 +292,30 @@ contract StandardToken is Token {
         } else { return false; }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+   
+uint constant MAX_UINT = 2**256 - 1;
+
+/// @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited allowance.
+/// @param _from Address to transfer from.
+/// @param _to Address to transfer to.
+/// @param _value Amount to transfer.
+/// @return Success of transfer.
+function transferFrom(address _from, address _to, uint _value)
+    public
+    returns (bool)
+{
+    uint allowance = allowed[_from][msg.sender];
+    require(balances[_from] >= _value
+            && allowance >= _value
+            && balances[_to] + _value >= balances[_to]);
+    balances[_to] += _value;
+    balances[_from] -= _value;
+    if (allowance < MAX_UINT) {
+        allowed[_from][msg.sender] -= _value;
     }
+    Transfer(_from, _to, _value);
+    return true;
+}
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
@@ -114,6 +335,7 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
     uint256 public totalSupply;
 }
+
 
 
 //name this contract whatever you'd like
@@ -160,6 +382,7 @@ contract FarmCoin is StandardToken {
         return true;
     }
 }
+
 
 contract FarmCoinSale is FarmCoin {
 
@@ -253,16 +476,10 @@ contract FarmCoinSale is FarmCoin {
     /// 
     }
 
-     // Send `tokens` amount of tokens from address `from` to address `to`
-     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
-     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-     // fees in sub-currencies; the command should fail unless the _from account has
-     // deliberately authorized the sender of the message via some mechanism; we propose
-     // these standardized APIs for approval:
-     function transferFrom(address from, address to, uint _value) public returns (bool success) {
-                 Transfer(from, to, _value);
-         return true;
-     }
+    function withdraw() {
+    require ( msg.sender == owner );
+    msg.sender.transfer(this.balance);
+}
     // update the ETH/COIN rate
     function updateRate(uint256 rate) external {
         require(msg.sender==creator);
@@ -309,6 +526,5 @@ contract FarmCoinSale is FarmCoin {
         heldTimeline[msg.sender] = 0;
         ReleaseTokens(msg.sender, held);
     }
-
 
 }
