@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameOfThrones at 0x9F8Bf604AbeB04D32B0FFAE9c3A083be5858CF96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameOfThrones at 0x9497043f4CD9450867479f3Fd873d80d9321094C
 */
 contract GameOfThrones {
     address public trueGods;
@@ -7,8 +7,6 @@ contract GameOfThrones {
     address public jester;
     // Record the last collection time
     uint public lastCollection;
-    // Record the last fell time
-    uint public lastFell;
     // Record king life
     uint public onThrone;
     uint public kingCost;
@@ -41,7 +39,6 @@ contract GameOfThrones {
         trueGods = msg.sender;
         madKing = msg.sender;
         jester = msg.sender;
-        lastFell = block.timestamp;
         lastCollection = block.timestamp;
         onThrone = block.timestamp;
         kingCost = 1 ether;
@@ -88,7 +85,6 @@ contract GameOfThrones {
             // Define the new Castle
             jester = msg.sender;
 
-            lastFell = block.timestamp;
             citizensAddresses.push(msg.sender);
             citizensAmounts.push(amount * 110 / 100);
             totalCitizens += 1;
@@ -99,13 +95,8 @@ contract GameOfThrones {
 
             round += 1;
         } else {
-            if (lastFell + TWENTY_FOUR_HOURS * 2 >= block.timestamp) {
-                citizensAddresses.push(msg.sender);
-                citizensAmounts.push(amount * 130 / 100);
-            } else {
-                citizensAddresses.push(msg.sender);
-                citizensAmounts.push(amount * 110 / 100);
-            }
+            citizensAddresses.push(msg.sender);
+            citizensAmounts.push(amount * 110 / 100);
             totalCitizens += 1;
             investInTheSystem(amount);
 
