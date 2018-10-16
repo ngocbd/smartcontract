@@ -1,181 +1,247 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xffff0031d8768861b3172a7c7dc7d91b646f53db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xadfaae1acc9db0440e43214ef5e7aba7e0a88eb8
 */
 pragma solidity ^0.4.20;
 
- 
+/*
 
-contract Lottery{
+Author : RNDM (Discord RNDM#3033)
+Write me if you need coding service
+My Ethereum address : 0x13373FEdb7f8dF156E5718303897Fae2d363Cc96
 
-     /*=================================
-    =            MODIFIERS            =
-    =================================*/
+Description tl;dr :
+Simple trustless lottery with entries
+After the contract reaches a certain amount of ethereum or when the owner calls "payWinnerManually()"
+a winner gets calculated/drawed and paid out (100%, no Dev or Owner fee).
 
-   // Only owner allowed.
-    modifier onlyOwner()
-    {
+*/
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+*/
+contract Ownable {
+    address public owner;
+
+    event OwnershipRenounced(address indexed previousOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-   // The tokens can never be stolen.
-    modifier notPooh(address aContract)
-    {
-        require(aContract != address(revContract));
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function renounceOwnership() public onlyOwner {
+        emit OwnershipRenounced(owner);
+        owner = address(0);
+    }
+}
+
+contract Lottery is Ownable {
+
+    // The tokens can never be stolen
+    modifier secCheck(address aContract) {
+        require(aContract != address(contractCall));
         _;
     }
 
+    // When this is active no one is able to participate
+    modifier restriction() {
+        require(!_restriction);
+        _;
+    }
 
-    /*==============================
-    =            EVENTS            =
-    ==============================*/
+    /**
+    * Events
+    */
 
-
-    event Deposit(
-        uint256 amount,
-        address depositer
-    );
-
-    event WinnerPaid(
-        uint256 amount,
-        address winner
-    );
+    event BoughtTicket(uint256 amount, address customer, uint yourEntry);
+    event WinnerPaid(uint256 amount, address winner);
 
 
-    /*=====================================
-    =            CONFIGURABLES            =
-    =====================================*/
+    /**
+    * Data
+    */
 
-    REV revContract;  //a reference to the REV contract
-    address owner;
-    bool openToPublic; //Is this lottery open for public use
-    uint256 ticketNumber = 0; //Starting ticket number
-    uint256 winningNumber; //The randomly generated winning ticket
+    _Contract contractCall;  // a reference to the contract
+    address[] public entries; // array with entries
+    uint256 entryCounter; // counter for the entries
+    uint256 public automaticThreshold; // automatic Threshold to close the lottery and pay the winner
+    uint256 public ticketPrice = 10 finney; // the price per lottery ticket (0.01 eth)
+    bool public _restriction; // check restriction modifier
+    
 
 
-    /*=======================================
-    =            PUBLIC FUNCTIONS            =
-    =======================================*/
 
-    constructor() public
-    {
-        revContract = REV(0x05215FCE25902366480696F38C3093e31DBCE69A);
-        openToPublic = true;
-        resetLottery();
-        owner = 0xc42559F88481e1Df90f64e5E9f7d7C6A34da5691;
+
+    constructor() public {
+        contractCall = _Contract(0x05215FCE25902366480696F38C3093e31DBCE69A);
+        _restriction = true;
+        automaticThreshold = 100; // 100 tickets
+        ticketPrice = 10 finney; // 10 finney = 0.01 eth
+        entryCounter = 0;
+    }
+
+    // If you send money directly to the contract its like a donation
+    function() payable public {
     }
 
 
-  /* Fallback function allows anyone to send money for the cost of gas which
-     goes into the pool. Used by withdraw/dividend payouts.*/
-    function() payable public { }
+    function buyTickets() restriction() payable public {
+        //You have to send at least ticketPrice to get one entry
+        require(msg.value >= ticketPrice);
 
-
-    function deposit()
-     payable public
-     {
-        //You have to send more than 0.01 ETH
-        require(msg.value >= 10000000000000000);
         address customerAddress = msg.sender;
-
-        //Use deposit to purchase REV tokens
-        revContract.buy.value(msg.value)(customerAddress);
-        emit Deposit(msg.value, msg.sender);
-
-        //if entry more than 0.01 ETH
-        if(msg.value > 10000000000000000)
-        {
-            uint extraTickets = SafeMath.div(msg.value, 10000000000000000); //each additional entry is 0.01 ETH
-            
-            //Compute how many positions they get by how many REV they transferred in.
-            ticketNumber += extraTickets;
+        //Use deposit to purchase _Contract tokens
+        contractCall.buy.value(msg.value)(customerAddress);
+        // add customer to the entry list
+        if (entryCounter == (entries.length)) {
+            entries.push(customerAddress);
+            }
+        else {
+            entries[entryCounter] = customerAddress;
         }
+        // increment the entry counter
+        entryCounter++;
+        //fire event
+        emit BoughtTicket(msg.value, msg.sender, entryCounter);
 
-         //if when we have a winner...
-        if(ticketNumber >= winningNumber)
-        {
-            //sell all tokens and cash out earned dividends
-            revContract.exit();
+         //Automatic Treshhold, checks if the always incremented entryCounter reached the threshold
+        if(entryCounter >= automaticThreshold) {
+            // withdraw + sell all tokens.
+            contractCall.exit();
 
-            //lotteryFee
-            payDev(owner);
-
-            //payout winner
-            payWinner(customerAddress);
-
-            //rinse and repea
-            resetLottery();
-        }
-        else
-        {
-            ticketNumber++;
+            //payout winner & start from beginning
+            payWinner();
         }
     }
 
-    //Number of REV tokens currently in the Lottery pool
-    function myTokens() public view returns(uint256)
-    {
-        return revContract.myTokens();
+    // Other functions
+    function PRNG() internal view returns (uint256) {
+        uint256 initialize1 = block.timestamp;
+        uint256 initialize2 = uint256(block.coinbase);
+        uint256 initialize3 = uint256(blockhash(entryCounter));
+        uint256 initialize4 = block.number;
+        uint256 initialize5 = block.gaslimit;
+        uint256 initialize6 = block.difficulty;
+
+        uint256 calc1 = uint256(keccak256(abi.encodePacked((initialize1 * 5),initialize5,initialize6)));
+        uint256 calc2 = 1-calc1;
+        int256 ov = int8(calc2);
+        uint256 calc3 = uint256(sha256(abi.encodePacked(initialize1,ov,initialize3,initialize4)));
+        uint256 PRN = uint256(keccak256(abi.encodePacked(initialize1,calc1,initialize2,initialize3,calc3)))%(entryCounter);
+        return PRN;
+    }
+    
+
+    // Choose a winner and pay him
+    function payWinner() internal returns (address) {
+        uint256 balance = address(this).balance;
+        uint256 number = PRNG(); // generates a pseudorandom number
+        address winner = entries[number]; // choose the winner with the pseudorandom number
+        winner.transfer(balance); // payout winner
+        entryCounter = 0; // Zero entries again => Lottery resetted
+
+        emit WinnerPaid(balance, winner);
+        return winner;
+    }
+
+    /*
+        If you plan to use this contract for your projects
+        be a man of honor and do not change or delete this function
+    */
+    function donateToDev() payable public {
+        address developer = 0x13373FEdb7f8dF156E5718303897Fae2d363Cc96;
+        developer.transfer(msg.value);
+    }
+
+    //Number of tokens currently in the Lottery pool
+    function myTokens() public view returns(uint256) {
+        return contractCall.myTokens();
+    }
+
+    //Amount of dividends currently in the Lottery pool
+    function myDividends() public view returns(uint256) {
+        return contractCall.myDividends(true);
     }
 
 
-     //Lottery's divs
-    function myDividends() public view returns(uint256)
-    {
-        return revContract.myDividends(true);
+    /**
+    * Administrator functions
+    */
+
+    //Disable the buy restriction
+    function disableRestriction() onlyOwner() public {
+        _restriction = false;
     }
 
-   //Lottery's ETH balance
-    function ethBalance() public view returns (uint256)
-    {
-        return address(this).balance;
+    // change the Threshold
+    function changeThreshold(uint newThreshold) onlyOwner() public {
+        // Owner is only able to change the threshold when no one bought (otherwise it would be unfair)
+        require(entryCounter == 0);
+        automaticThreshold = newThreshold;
     }
+
+    function changeTicketPrice(uint newticketPrice) onlyOwner() public {
+        // Owner is only able to change the ticket price when no one bought (otherwise it would be unfair)
+        require(entryCounter == 0);
+        ticketPrice = newticketPrice;
+    }
+
+    // Admin can call the payWinner (ends lottery round & starts a new one) if it takes too long to reach the threshold
+    function payWinnerManually() public onlyOwner() returns (address) {
+        address winner = payWinner();
+        return winner;
+    }
+
+    // check special functions
+    function imAlive() public onlyOwner() {
+        inactivity = 1;
+    }
+    /**
+    * Special functions
+    */
+
+    /* 
+    *   In case the threshold is way too high and the owner/admin disappeared (inactive for 30days)
+    *   Everyone can call this function then the timestamp gets saved
+    *   after 30 days of owner-inactivity someone can call the function again and calls payWinner with it
+    */
+    uint inactivity = 1;
+    function adminIsDead() public {
+        if (inactivity == 1) {
+            inactivity == block.timestamp;
+        }
+        else {
+            uint256 inactivityThreshold = (block.timestamp - (30 days));
+            assert(inactivityThreshold < block.timestamp);
+            if (inactivity < inactivityThreshold) {
+                inactivity = 1;
+                payWinnerManually2();
+            }
+        }
+    }
+
+    function payWinnerManually2() internal {
+        payWinner();
+    }
+
 
      /* A trap door for when someone sends tokens other than the intended ones so the overseers
       can decide where to send them. (credit: Doublr Contract) */
-    function returnAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens)
-
-    public
-    onlyOwner()
-    notPooh(tokenAddress)
-    returns (bool success)
-    {
+    function returnAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner() secCheck(tokenAddress) returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
-    }
-
-
-     /*======================================
-     =          INTERNAL FUNCTIONS          =
-     ======================================*/
-
-
-     //pay winner
-    function payWinner(address winner) internal
-    {
-        uint balance = address(this).balance;
-        winner.transfer(balance);
-
-        emit WinnerPaid(balance, winner);
-    }
-
-    //donate to dev
-    function payDev(address dev) internal
-    {
-        uint balance = SafeMath.div(address(this).balance, 10);
-        dev.transfer(balance);
-    }
-
-    function resetLottery() internal
-    {
-        ticketNumber = 1;
-        winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
-    }
-
-    function resetLotteryManually() public
-    onlyOwner()
-    {
-        ticketNumber = 1;
-        winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
     }
 
 
@@ -188,24 +254,11 @@ contract ERC20Interface
     function transfer(address to, uint256 tokens) public returns (bool success);
 }
 
-//Need to ensure the Lottery contract knows what a REV token is
-contract REV
+// Interface to actually call contract functions of e.g. REV1
+contract _Contract
 {
     function buy(address) public payable returns(uint256);
     function exit() public;
     function myTokens() public view returns(uint256);
     function myDividends(bool) public view returns(uint256);
-}
-
-library SafeMath {
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
 }
