@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x33116db6c6942903653e74d9580f0f7c7abe1cbe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x0a61e886822f46b4ca9c765c9b984a25a5dc4b9a
 */
 pragma solidity ^0.4.0;
 
@@ -69,53 +69,13 @@ contract ERC20 is ERC20Basic {
 contract VanityLib {
     uint constant m = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f;
 
-    function lengthOfCommonPrefix(bytes a, bytes b) public pure returns(uint) {
-        uint len = (a.length <= b.length) ? a.length : b.length;
-        for (uint i = 0; i < len; i++) {
-            if (a[i] != b[i]) {
-                return i;
-            }
-        }
-        return len;
-    }
-    
-    function lengthOfCommonPrefix32(bytes32 a, bytes b) public pure returns(uint) {
-        for (uint i = 0; i < b.length; i++) {
-            if (a[i] != b[i]) {
-                return i;
-            }
-        }
-        return b.length;
-    }
-
-    function lengthOfCommonPrefix3232(bytes32 a, bytes32 b) public pure returns(uint) {
+    function lengthOfCommonPrefix(bytes32 a, bytes32 b) public pure returns(uint) {
         for (uint i = 0; i < 32; i++) {
             if (a[i] != b[i] || a[i] == 0) {
                 return i;
             }
         }
         return 0;
-    }
-    
-    function equalBytesToBytes(bytes a, bytes b) public pure returns (bool) {
-        if (a.length != b.length) {
-            return false;
-        }
-        for (uint i = 0; i < a.length; i++) {
-            if (a[i] != b[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    function equalBytes32ToBytes(bytes32 a, bytes b) public pure returns (bool) {
-        for (uint i = 0; i < b.length; i++) {
-            if (a[i] != b[i]) {
-                return false;
-            }
-        }
-        return true;
     }
     
     function bytesToBytes32(bytes source) public pure returns(bytes32 result) {
@@ -186,70 +146,6 @@ contract VanityLib {
     
     function createBtcAddress(uint256 publicXPoint, uint256 publicYPoint) public pure returns(bytes32) {
         return toBase58Checked(createBtcAddressHex(publicXPoint, publicYPoint), "1");
-    }
-
-    // https://github.com/stonecoldpat/anonymousvoting/blob/master/LocalCrypto.sol
-    function invmod(uint256 a, uint256 p) public pure returns (uint256) {
-        int t1 = 0;
-        int t2 = 1;
-        uint r1 = p;
-        uint r2 = a;
-        uint q;
-        while (r2 != 0) {
-            q = r1 / r2;
-            (t1, t2, r1, r2) = (t2, t1 - int(q) * t2, r2, r1 - q * r2);
-        }
-
-        return t1 < 0 ? p - uint(-t1) : uint(t1);
-    }
-    
-    // https://github.com/stonecoldpat/anonymousvoting/blob/master/LocalCrypto.sol
-    function submod(uint a, uint b, uint p) public pure returns (uint) {
-        return addmod(a, p - b, p);
-    }
-
-    // https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication#Point_addition
-    // https://github.com/bellaj/Blockchain/blob/6bffb47afae6a2a70903a26d215484cf8ff03859/ecdsa_bitcoin.pdf
-    // https://math.stackexchange.com/questions/2198139/elliptic-curve-formulas-for-point-addition
-    function addXY(uint x1, uint y1, uint x2, uint y2) public pure returns(uint x3, uint y3) {
-        uint anti = invmod(submod(x1, x2, m), m);
-        uint alpha = mulmod(submod(y1, y2, m), anti, m);
-        x3 = submod(submod(mulmod(alpha, alpha, m), x1, m), x2, m);
-        y3 = submod(mulmod(alpha, submod(x2, x3, m), m), y2, m);
-        
-        // x3 = bytes32(mul_mod(uint(x3), uint(y3), m)); == 1!!!!
-        
-        // https://github.com/jbaylina/ecsol/blob/master/ec.sol
-        // x3 = addmod(mulmod(y2, x1, m), mulmod(x2, y1, m), m);
-        // y3 = mulmod(y1, y2, m);
-    }
-
-    function doubleXY(uint x1, uint y1) public pure returns(uint x2, uint y2) {
-        uint anti = invmod(addmod(y1, y1, m), m);
-        uint alpha = mulmod(addmod(addmod(mulmod(x1, x1, m), mulmod(x1, x1, m), m), mulmod(x1, x1, m), m), anti, m);
-        x2 = submod(mulmod(alpha, alpha, m), addmod(x1, x1, m), m);
-        y2 = submod(mulmod(alpha, submod(x1, x2, m), m), y1, m);
-    }
-
-    function mulXY(uint x1, uint y1, uint privateKey) public pure returns(uint x2, uint y2) {
-        bool addition = false;
-        for (uint i = 0; i < 256; i++) {
-            if (((privateKey >> i) & 1) == 1) {
-                if (addition) {
-                    (x2, y2) = addXY(x1, y1, x2, y2);
-                } else {
-                    (x2, y2) = (x1, y1);
-                    addition = true;
-                }
-            }
-            (x1,y1) = doubleXY(x1, y1);
-        }
-    }
-
-    function bitcoinPublicKey(uint256 privateKey) public pure returns(uint, uint) {
-        uint256 gx = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
-        uint256 gy = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
-        return mulXY(gx, gy, privateKey);
     }
 
     function complexityForBtcAddressPrefix(bytes prefix) public pure returns(uint) {
@@ -481,7 +377,7 @@ contract TaskRegister is Upgradable, VanityLib {
 
         // Migrate some vars
         nextTaskId = TaskRegister(upgradableState.prevVersion).nextTaskId();
-        totalReward = TaskRegister(upgradableState.prevVersion).totalReward();
+        totalReward = token.balanceOf(upgradableState.prevVersion);//TODO: TaskRegister(upgradableState.prevVersion).totalReward();
 
         uint index = tasks.length;
         uint tasksCount = TaskRegister(upgradableState.prevVersion).tasksCount();
@@ -539,9 +435,12 @@ contract TaskRegister is Upgradable, VanityLib {
     }
 
     function payForTask(uint256 taskId, uint256 reward) public isLastestVersion {
-        require(reward > 0);
         uint index = safeIndexOfTaskId(taskId);
-        token.transferFrom(tx.origin, this, reward);
+        if (reward > 0) {
+            token.transferFrom(tx.origin, this, reward);
+        } else {
+            reward = token.balanceOf(this) - totalReward;
+        }
         tasks[index].reward += reward;
         totalReward += reward;
         TaskPayed(taskId);
@@ -552,7 +451,8 @@ contract TaskRegister is Upgradable, VanityLib {
         require(index > 0);
         return index - 1;
     }
-    
+
+    // Pass reward == 0 for automatically determine already transferred value
     function createBitcoinAddressPrefixTask(bytes prefix, uint256 reward, uint256 requestPublicXPoint, uint256 requestPublicYPoint) public isLastestVersion {
         require(prefix.length > 5);
         require(prefix[0] == "1");
@@ -561,7 +461,10 @@ contract TaskRegister is Upgradable, VanityLib {
         require(isValidPublicKey(requestPublicXPoint, requestPublicYPoint));
         if (reward > 0) {
             token.transferFrom(tx.origin, this, reward);
+        } else {
+            reward = token.balanceOf(this) - totalReward;
         }
+        totalReward += reward;
 
         bytes32 data;
         assembly {
@@ -619,7 +522,7 @@ contract TaskRegister is Upgradable, VanityLib {
             require(isValidPublicKey(publicXPoint, publicYPoint));
             
             bytes32 btcAddress = createBtcAddress(publicXPoint, publicYPoint);
-            uint prefixLength = lengthOfCommonPrefix3232(btcAddress, task.data);
+            uint prefixLength = lengthOfCommonPrefix(btcAddress, task.data);
             require(prefixLength == task.dataLength);
             
             task.answerPrivateKey = answerPrivateKey;
