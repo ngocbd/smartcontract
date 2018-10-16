@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOC at 0x19d6eb7013504e384cd4d440e0ec674d0b636d7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOC at 0x853f93ede7f5414b28b8b9c0dec55b501c913f0f
 */
 pragma solidity ^0.4.16;
 
@@ -31,7 +31,7 @@ event Approval(address indexed _owner, address indexed _spender, uint _value);
 
 /*MINT TOKEN*/
 constructor() public {
-name = "TokenChanger";
+name = "Token Changer";
 symbol = "TOC";
 decimals = 18;
 /*one billion base units*/
@@ -101,4 +101,5 @@ return true;
 function () payable external{
 revert();  
 }
+
 }/////////////////////////////////end of toc token contract
