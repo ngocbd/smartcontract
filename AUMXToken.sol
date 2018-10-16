@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AUMXToken at 0x4ceae42d5fb3bd6956b2463fdd4a2209382d722c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AUMXToken at 0x17cba58578eecaee898242a02edac75b8cc17231
 */
 pragma solidity ^0.4.18;
 
@@ -76,18 +76,18 @@ contract AUMXToken is ERC223, SafeMath{
 	string public name = "Alteum";
 	string public symbol = "AUM";
 	uint8 public decimals = 8; // Using a Satoshi as base for our decimals: 0.00000001;
-	uint256 public totalSupply = 50000000; // 50,000,000 AUM's, not mineable, not mintable;
+	uint256 public totalSupply = 5000000000000000; // 50,000,000 AUM's, not mineable, not mintable;
 	
 	bool locked;
 	address Owner;
 	address swapperAddress;
 	
-	function MetaCoin() public {
+	function AUMXToken() public {
 		locked = true;
 		Owner = msg.sender;
 		swapperAddress = msg.sender;
-		balances[msg.sender] = totalSupply * 100000000;
-		allowed[msg.sender][swapperAddress] = totalSupply * 100000000;
+		balances[msg.sender] = totalSupply;
+		allowed[msg.sender][swapperAddress] = totalSupply;
 	}
 	
 	modifier isUnlocked()
