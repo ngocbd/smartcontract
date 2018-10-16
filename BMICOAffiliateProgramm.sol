@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMICOAffiliateProgramm at 0x2c8eab1b7c57a6f9f81f761b26b71f99b25ff59c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMICOAffiliateProgramm at 0xbd1e1ea13de6f320e89f33a7076b29d1a00506d8
 */
 pragma solidity ^0.4.15;
 
@@ -9,9 +9,9 @@ contract BMICOAffiliateProgramm {
     mapping (address => uint256) referrals;
 
     struct itemPartners {
-        uint256 balance;
-        string promo;
-        bool create;
+    uint256 balance;
+    string promo;
+    bool create;
     }
     mapping (address => itemPartners) partnersInfo;
 
@@ -19,9 +19,9 @@ contract BMICOAffiliateProgramm {
 
 
     struct itemHistory {
-        uint256 datetime;
-        address referral;
-        uint256 amount_invest;
+    uint256 datetime;
+    address referral;
+    uint256 amount_invest;
     }
     mapping(address => itemHistory[]) history;
 
@@ -140,7 +140,7 @@ contract BMICOAffiliateProgramm {
             h_invest = new uint256[](history[partner_address].length);
             h_referrals = new address[](history[partner_address].length);
 
-            for(uint256 i=0; i<history[partner_address].length; i++){
+            for(var i=0; i<history[partner_address].length; i++){
                 h_datetime[i] = history[partner_address][i].datetime;
                 h_invest[i] = history[partner_address][i].amount_invest;
                 h_referrals[i] = history[partner_address][i].referral;
