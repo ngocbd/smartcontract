@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CARSToken at 0x7be8c35aa12d9edf62a6ccb2b423a8fbfbbd67c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CARSToken at 0x68a2ad881a23a99749d2a00f0cf22190a4b93733
 */
 pragma solidity ^0.4.23;
 
@@ -236,7 +236,7 @@ contract DSTokenBase is ERC20, DSMath {
     }
 }
 
-contract CARSToken is DSTokenBase(10000000000), DSStop {
+contract CARSToken is DSTokenBase(10000000000*10**8), DSStop {
 
     string   public  symbol;
     uint256  public  decimals = 8; // standard token precision. override to customize
@@ -284,9 +284,13 @@ contract CARSToken is DSTokenBase(10000000000), DSStop {
     }
 
     // Optional token name
-    bytes32   public  name = "CarLive Chain";
+    string   public  name = "CarLive Chain";
 
-    function setName(bytes32 name_) public auth {
+    function setName(string name_) public auth {
         name = name_;
+    }
+
+    function resetSymbol(string new_symbol) public auth {
+        symbol = new_symbol;
     }
 }
