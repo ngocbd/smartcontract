@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0x6af199f3d949f37977468933b9ef1ffac3b2615a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0x94c654fef85b8b0a982909a6ca45b66bb2384236
 */
 pragma solidity ^0.4.11;
 
@@ -41,7 +41,7 @@ contract Utils {
 
         @return sum
     */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeAdd(uint256 _x, uint256 _y) internal constant returns (uint256) {
         uint256 z = _x + _y;
         assert(z >= _x);
         return z;
@@ -55,7 +55,7 @@ contract Utils {
 
         @return difference
     */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeSub(uint256 _x, uint256 _y) internal constant returns (uint256) {
         assert(_x >= _y);
         return _x - _y;
     }
@@ -68,11 +68,28 @@ contract Utils {
 
         @return product
     */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeMul(uint256 _x, uint256 _y) internal constant returns (uint256) {
         uint256 z = _x * _y;
         assert(_x == 0 || z / _x == _y);
         return z;
     }
+}
+
+/*
+    ERC20 Standard Token interface
+*/
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public constant returns (string) {}
+    function symbol() public constant returns (string) {}
+    function decimals() public constant returns (uint8) {}
+    function totalSupply() public constant returns (uint256) {}
+    function balanceOf(address _owner) public constant returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public constant returns (uint256) { _owner; _spender; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
 /*
@@ -177,20 +194,10 @@ contract Managed {
 }
 
 /*
-    ERC20 Standard Token interface
+    Token Holder interface
 */
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public constant returns (string) {}
-    function symbol() public constant returns (string) {}
-    function decimals() public constant returns (uint8) {}
-    function totalSupply() public constant returns (uint256) {}
-    function balanceOf(address _owner) public constant returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public constant returns (uint256) { _owner; _spender; }
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
+contract ITokenHolder is IOwned {
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
 
 /*
@@ -206,10 +213,36 @@ contract ITokenConverter {
 }
 
 /*
-    Token Holder interface
+    We consider every contract to be a 'token holder' since it's currently not possible
+    for a contract to deny receiving tokens.
+
+    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
+    the owner to send tokens that were sent to the contract by mistake back to their sender.
 */
-contract ITokenHolder is IOwned {
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+contract TokenHolder is ITokenHolder, Owned, Utils {
+    /**
+        @dev constructor
+    */
+    function TokenHolder() {
+    }
+
+    /**
+        @dev withdraws tokens held by the contract and sends them to an account
+        can only be called by the owner
+
+        @param _token   ERC20 token contract address
+        @param _to      account to receive the new amount
+        @param _amount  amount to withdraw
+    */
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
+        public
+        ownerOnly
+        validAddress(_token)
+        validAddress(_to)
+        notThis(_to)
+    {
+        assert(_token.transfer(_to, _amount));
+    }
 }
 
 /*
@@ -251,39 +284,6 @@ contract IBancorConverterExtensions {
     function formula() public constant returns (IBancorFormula) {}
     function gasPriceLimit() public constant returns (IBancorGasPriceLimit) {}
     function quickConverter() public constant returns (IBancorQuickConverter) {}
-}
-
-/*
-    We consider every contract to be a 'token holder' since it's currently not possible
-    for a contract to deny receiving tokens.
-
-    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
-    the owner to send tokens that were sent to the contract by mistake back to their sender.
-*/
-contract TokenHolder is ITokenHolder, Owned, Utils {
-    /**
-        @dev constructor
-    */
-    function TokenHolder() {
-    }
-
-    /**
-        @dev withdraws tokens held by the contract and sends them to an account
-        can only be called by the owner
-
-        @param _token   ERC20 token contract address
-        @param _to      account to receive the new amount
-        @param _amount  amount to withdraw
-    */
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
-        public
-        ownerOnly
-        validAddress(_token)
-        validAddress(_to)
-        notThis(_to)
-    {
-        assert(_token.transfer(_to, _amount));
-    }
 }
 
 /*
@@ -369,7 +369,7 @@ contract SmartTokenController is TokenHolder {
 }
 
 /*
-    Bancor Converter v0.5
+    Bancor Converter v0.6
 
     The Bancor version of the token converter, allows conversion between a smart token and other ERC20 tokens and between different ERC20 tokens and themselves.
 
@@ -401,7 +401,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         bool isSet;                     // used to tell if the mapping element is defined
     }
 
-    string public version = '0.5';
+    string public version = '0.6';
     string public converterType = 'bancor';
 
     IBancorConverterExtensions public extensions;       // bancor converter extensions contract
@@ -416,6 +416,8 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
     // triggered when a conversion between two tokens occurs (TokenConverter event)
     event Conversion(address indexed _fromToken, address indexed _toToken, address indexed _trader, uint256 _amount, uint256 _return,
                      uint256 _currentPriceN, uint256 _currentPriceD);
+    // triggered when the conversion fee is updated
+    event ConversionFeeUpdate(uint32 _prevFee, uint32 _newFee);
 
     /**
         @dev constructor
@@ -583,6 +585,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         managerOnly
         validConversionFee(_conversionFee)
     {
+        ConversionFeeUpdate(conversionFee, _conversionFee);
         conversionFee = _conversionFee;
     }
 
@@ -794,12 +797,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         // issue new funds to the caller in the smart token
         token.issue(msg.sender, amount);
 
-        // calculate the new price using the simple price formula
-        // price = connector balance / (supply * weight)
-        // weight is represented in ppm, so multiplying by 1000000
-        uint256 connectorAmount = safeMul(getConnectorBalance(_connectorToken), MAX_WEIGHT);
-        uint256 tokenAmount = safeMul(token.totalSupply(), connector.weight);
-        Conversion(_connectorToken, token, msg.sender, _depositAmount, amount, connectorAmount, tokenAmount);
+        dispatchConversionEvent(_connectorToken, _depositAmount, amount, true);
         return amount;
     }
 
@@ -840,12 +838,7 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         // the transfer might fail if the actual connector balance is smaller than the virtual balance
         assert(_connectorToken.transfer(msg.sender, amount));
 
-        // calculate the new price using the simple price formula
-        // price = connector balance / (supply * weight)
-        // weight is represented in ppm, so multiplying by 1000000
-        uint256 connectorAmount = safeMul(getConnectorBalance(_connectorToken), MAX_WEIGHT);
-        uint256 tokenAmount = safeMul(token.totalSupply(), connector.weight);
-        Conversion(token, _connectorToken, msg.sender, _sellAmount, amount, tokenAmount, connectorAmount);
+        dispatchConversionEvent(_connectorToken, _sellAmount, amount, false);
         return amount;
     }
 
@@ -916,6 +909,40 @@ contract BancorConverter is ITokenConverter, SmartTokenController, Managed {
         // deduct the fee from the return amount
         uint256 feeAmount = getConversionFeeAmount(amount);
         return safeSub(amount, feeAmount);
+    }
+
+    /**
+        @dev helper, dispatches the Conversion event
+        The function also takes the tokens' decimals into account when calculating the current price
+
+        @param _connectorToken  connector token contract address
+        @param _amount          amount purchased/sold (in the source token)
+        @param _returnAmount    amount returned (in the target token)
+        @param isPurchase       true if it's a purchase, false if it's a sale
+    */
+    function dispatchConversionEvent(IERC20Token _connectorToken, uint256 _amount, uint256 _returnAmount, bool isPurchase) private {
+        Connector storage connector = connectors[_connectorToken];
+
+        // calculate the new price using the simple price formula
+        // price = connector balance / (supply * weight)
+        // weight is represented in ppm, so multiplying by 1000000
+        uint256 connectorAmount = safeMul(getConnectorBalance(_connectorToken), MAX_WEIGHT);
+        uint256 tokenAmount = safeMul(token.totalSupply(), connector.weight);
+
+        // normalize values
+        uint8 tokenDecimals = token.decimals();
+        uint8 connectorTokenDecimals = _connectorToken.decimals();
+        if (tokenDecimals != connectorTokenDecimals) {
+            if (tokenDecimals > connectorTokenDecimals)
+                connectorAmount = safeMul(connectorAmount, 10 ** uint256(tokenDecimals - connectorTokenDecimals));
+            else
+                tokenAmount = safeMul(tokenAmount, 10 ** uint256(connectorTokenDecimals - tokenDecimals));
+        }
+
+        if (isPurchase)
+            Conversion(_connectorToken, token, msg.sender, _amount, _returnAmount, connectorAmount, tokenAmount);
+        else
+            Conversion(token, _connectorToken, msg.sender, _amount, _returnAmount, tokenAmount, connectorAmount);
     }
 
     /**
