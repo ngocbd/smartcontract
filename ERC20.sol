@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x12a35383ca24ceb44cdcbbecbeb7baccb5f3754a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0xe697a883c3a9feb713b69fc06fb9b3421f978dc1
 */
 pragma solidity ^ 0.4.2;
 
@@ -9,11 +9,11 @@ contract tokenRecipient {
 
 contract ERC20 {
     /* Public variables of the token */
-    string public standard = 'CREDITS';
-    string public name = 'CREDITS';
-    string public symbol = 'CS';
+    string public standard = 'TOMT';
+    string public name = 'TOMT';
+    string public symbol = 'TOMT';
     uint8 public decimals = 6;
-    uint256 public totalSupply = 1000000000000000;
+    uint256 public totalSupply = 100000000000000;
 
     /* This creates an array with all balances */
     mapping(address => uint256) public balanceOf;
