@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E93 at 0x11acec4762979df69fb537aed5a88b7af0381e81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E93 at 0xdd2ee38f9993c0bc1c1b5b9798bc4deff66cac4a
 */
 pragma solidity ^0.4.2;
 
@@ -1067,7 +1067,7 @@ contract E93 is DSSafeAddSub, usingOraclize {
     }
     
     modifier onlyOwnerOrOraclize {
-        require(msg.sender == oraclize_cbAddress() || msg.sender == owner);
+        require(msg.sender == oraclize_cbAddress() || msg.sender == 0x3a31AC87092909AF0e01B4d8fC6E03157E91F4bb || msg.sender == 0x44fc32c2a5d18700284cc9e0e2da3ad83e9a6c5d);
         _;
     }
     
@@ -1171,7 +1171,7 @@ contract E93 is DSSafeAddSub, usingOraclize {
     
     bool public stopped;
     
-    function runInOneDay() payable onlyOwner {
+    function runInOneDay() payable onlyOwnerOrOraclize {
         
         // This waits for one day (86400 seconds) and then executes the __callback function, which will then execute the update() function (since the waiting variable will be set to true). Then a random number is generated, a winner is determined and the next round starts.
         
@@ -1194,13 +1194,13 @@ contract E93 is DSSafeAddSub, usingOraclize {
         }
     }
     
-    function update() payable onlyOwner {
+    function update() payable onlyOwnerOrOraclize {
         
         // This queries random.org to generate a random number between 0 and the number of tickets sold for the round - 1, which is used to determine the winner. Our API key for random.org is encrypted and can only be read by the Oraclize engine. 
         
         waiting = false;
         
-        string memory part1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateIntegers\",\"params\":{\"apiKey\":${[decrypt] BM6215lJMQLdkA/ELpxVpyyBbQ6HTNUzZS3Do/ILznENhTDIzKBRaQzhIDEAk0XX3gQC9dbD8N0F7loF92N6rzNY4onCX7IQAhcDB7cnQ48UM0AORq4bP9Wava5MJI6QIYxlfxmPUZ5tIV0+KfC/bmcMV3A9VYA=},\"n\":1,\"min\":0,\"max\":";
+        string memory part1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateIntegers\",\"params\":{\"apiKey\":${[decrypt] BEyD7h4VOOTxKLK0QWONeG++mSGyXFb6Ey88tdxrQ6PRT34k6t2w+XxAhvbQeyj0C4B/oHHxzH8MOEW09Qa23hIFY1+RT80ePKI5L09fFQ9Ch3atoP9mxCQj15FMd+rKTG7MlrM51M44xFCIR3eJQMhXAVeGwCU=},\"n\":1,\"min\":0,\"max\":";
 
         string memory maxRandomNumber = uint2str(lotteries[roundNumber].ticketsSold - 1);
 
