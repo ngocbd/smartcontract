@@ -1,6 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xef05b2b2a72cb71d3273e8e14ed46846a54783cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xE76DA4946fE8bb6e65D7e7B0F0Fbe3D9ABa41Be7
 */
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+pragma solidity ^0.4.8;
+
 contract Token {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -31,9 +35,9 @@ contract Token {
     /// @return Whether the transfer was successful or not
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
     /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
+    /// @param _value The amount of tokens to be approved for transfer
     /// @return Whether the approval was successful or not
     function approve(address _spender, uint256 _value) returns (bool success);
 
@@ -45,6 +49,15 @@ contract Token {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
+
+/*
+You should inherit from StandardToken or, for a token like you would want to
+deploy in something like Mist, see HumanStandardToken.sol.
+(This implements ONLY the standard functions and NOTHING else.
+If you deploy this, you won't have anything useful.)
+
+Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
 
 contract StandardToken is Token {
 
@@ -90,7 +103,6 @@ contract StandardToken is Token {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
-
 
 contract HumanStandardToken is StandardToken {
 
