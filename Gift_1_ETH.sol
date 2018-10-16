@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gift_1_ETH at 0xd8993f49f372bb014fb088eabec95cfdc795cbf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gift_1_ETH at 0xd6bc92a0f5a2bc17207283679c5ddcc108fd3710
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.19;
 
 contract Gift_1_ETH
 {
@@ -14,6 +14,7 @@ contract Gift_1_ETH
     bytes32 public hashPass;
     
     function SetPass(bytes32 hash)
+    public
     payable
     {
         if(!passHasBeenSet&&(msg.value >= 1 ether))
@@ -23,6 +24,8 @@ contract Gift_1_ETH
     }
     
     function GetGift(bytes pass)
+    external
+    payable
     {
         if(hashPass == sha3(pass))
         {
@@ -31,6 +34,7 @@ contract Gift_1_ETH
     }
     
     function PassHasBeenSet(bytes32 hash)
+    public
     {
         if(hash==hashPass)
         {
