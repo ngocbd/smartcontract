@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SignalsSociety at 0x7275f61c3abfba3596ae71f7128bdc3b0fc01fa9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SignalsSociety at 0xc3a684140448995f6abeb361c56110207da04d57
 */
 pragma solidity ^0.4.17;
 
@@ -78,14 +78,6 @@ contract SignalsSociety is Ownable, Memberships {
   // store the amount of ETH deposited by each account.
   mapping (address => uint) public balances;
 
-  // allows user to withdraw his balance
-  function withdraw(address user) public {
-    require(user == msg.sender);    
-    uint amount = balances[user];
-    // zero the pending refund before sending to prevent re-entrancy attacks
-    balances[user] = 0;
-    user.transfer(amount);
-  }
   // deposits ETH to a user's account
   function deposit(address account, uint amount) public {
     // deposit the amount to the user's account
@@ -104,13 +96,13 @@ contract SignalsSociety is Ownable, Memberships {
     balances[account] -= price;
     // if this comes from a reseller
     if (reseller != 0x0) {
-      // give the reseller his comission
-      balances[reseller] += comission;
-      // and put the rest in the signalsociety account
-      balances[owner] += price - comission;
+      // send the reseller his comission
+      reseller.transfer(comission);
+      // sent SS the rest
+      owner.transfer(price - comission);
     } else {
-      // otherwise put it all in the signalsociety account
-      balances[owner] += price;
+      // otherwise send it all to ss
+      owner.transfer(price);
     }    
     // let the bot know the membership was paid
     MembershipPaid(account, membership, now);
