@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPrePearl at 0xb31fFC2ECa634937a1ACc375811d8A2C969aE61B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPrePearl at 0xc1d7ccb5cc1b4e0b1bba69657392e28f0c0514bc
 */
 pragma solidity ^0.4.16;
 
@@ -13,6 +13,7 @@ contract OysterPrePearl {
     uint256 public totalSupply = 0;
     uint256 public funds = 0;
     address public owner;
+    address public partner;
     bool public saleClosed = false;
 
     // This creates an array with all balances
@@ -32,10 +33,16 @@ contract OysterPrePearl {
      */
     function OysterPrePearl() public {
         owner = msg.sender;
+        partner = 0xec47C68a301219e1704fe43e04294ebF3056889D;
     }
     
     modifier onlyOwner {
         require(msg.sender == owner);
+        _;
+    }
+    
+    modifier onlyAuth {
+        require(msg.sender == owner || msg.sender == partner);
         _;
     }
     
@@ -50,7 +57,7 @@ contract OysterPrePearl {
     function () payable {
         require(!saleClosed);
         require(msg.value >= 100 finney);
-        require(funds + msg.value <= 2800 ether);
+        require(funds + msg.value <= 5000 ether);
         uint buyPrice;
         if (msg.value >= 100 ether) {
             buyPrice = 17500;//250% bonus
@@ -70,8 +77,10 @@ contract OysterPrePearl {
         Transfer(this, msg.sender, amount);               // execute an event reflecting the change
     }
     
-    function withdrawFunds() onlyOwner {
-        owner.transfer(this.balance);
+    function withdrawFunds() onlyAuth {
+        uint256 payout = (this.balance/2) - 2;
+        owner.transfer(payout);
+        partner.transfer(payout);
     }
 
     /**
