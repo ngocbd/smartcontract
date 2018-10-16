@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0xb37e8a251cbf86ed168820364f5edde151675a30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0x085f0d921cb1420195d4f4bd352942ca10dc358b
 */
 pragma solidity ^0.4.16;
 
@@ -53,7 +53,7 @@ contract SafeMath {
         assert(_x == 0 || z / _x == _y);
         return z;
     }
-}
+} 
 
 /*
     ERC20 Standard Token interface
@@ -76,39 +76,30 @@ contract IERC20Token {
     COSS Token implementation
 */
 contract COSSToken is IERC20Token, SafeMath {
-    string public standard = 'COSS';
-    string public name = 'COSS';
-    string public symbol = 'COSS';
-    uint8 public decimals = 18;
-    uint256 public totalSupply = 54359820;
+    string public standard = 'COSS_DEMO';
+    string public name = 'COSS_DEMO';
+    string public symbol = 'COSS_DEMO';
+    uint8 public decimals = 8;
+    uint256 public totalSupply = 200000000;
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-
+    
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+    
     mapping (address => uint256) public revenueShareList;
     mapping (address => string) public revenueShareCurrency;
     mapping (address => uint256) public revenueShareDistribution;
-
-    uint256 public decimalMultiplier = 1000000000000000000;
-    uint256 public icoSold = 9359820;
+    
     address public revenueShareOwnerAddress;
-    address public icoWalletAddress = 0xbf7aa06109ce182203ee3805614736fe18dead43;
-    address public teamWalletAddress = 0x552b3f0c1747cfefc726bc669bd4fde2d20f9cf2;
-    address public affiliateProgramWalletAddress = 0xd30e8e92ee0cc95a7fefb5eafdd0deb678ab41d7;
-    address public shareholdersWalletAddress = 0x56a8330345e75bafbb17443889e19302ba528e7c;    
 
     /**
         @dev constructor
     */
     function COSSToken() {
+        balanceOf[msg.sender] = safeMul(totalSupply,100000000);
         revenueShareOwnerAddress = msg.sender;
-        balanceOf[revenueShareOwnerAddress] = safeMul(icoSold,decimalMultiplier);
-        balanceOf[teamWalletAddress] = safeMul(30000000,decimalMultiplier);
-        balanceOf[affiliateProgramWalletAddress] = safeMul(10000000,decimalMultiplier);
-        balanceOf[shareholdersWalletAddress] = safeMul(5000000,decimalMultiplier);
     }
 
     // validates an address - currently only checks that it isn't null
@@ -116,18 +107,18 @@ contract COSSToken is IERC20Token, SafeMath {
         require(_address != 0x0);
         _;
     }
-
+    
     function activateRevenueShareReference(uint256 _revenueShareItem) {
         revenueShareList[msg.sender] = _revenueShareItem;
     }
-
+    
     function addRevenueShareCurrency(address _currencyAddress,string _currencyName) {
         if (msg.sender == revenueShareOwnerAddress) {
             revenueShareCurrency[_currencyAddress] = _currencyName;
             revenueShareDistribution[_currencyAddress] = 0;
         }
     }
-
+    
     function saveRevenueShareDistribution(address _currencyAddress, uint256 _value) {
         if (msg.sender == revenueShareOwnerAddress) {
             revenueShareDistribution[_currencyAddress] = safeAdd(revenueShareDistribution[_currencyAddress], _value);
