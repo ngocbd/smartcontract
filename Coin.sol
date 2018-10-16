@@ -1,19 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x3491bd2C385849353F231688bFfaDa9D1e005a8a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x88b36B3cE66E0855e9862FBe418675F30729D706
 */
 pragma solidity ^0.4.15;
 /* @file
  * @title Coin
- * @version 1.2.1
+ * @version 1.2.0
 */
 contract Coin {
   string public constant symbol = "BTRC";
-  string public constant name = "BITUBER";
+  string public constant name = "BiTUBER";
   uint8 public constant decimals = 18;
   uint256 public _totalSupply = 0;
-  uint256 public price = 1500;
+  uint256 public price = 100;
   bool private workingState = false;
   bool private transferAllowed = false;
+  bool private generationState = true;
   address public owner;
   address private cur_coin;
   mapping (address => uint256) balances;
@@ -22,13 +23,16 @@ contract Coin {
   event FundsGot(address indexed _sender, uint256 _value);
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  event TokenGenerationEnabled();
+  event TokenGenerationDisabled();
   event ContractEnabled();
   event ContractDisabled();
   event TransferEnabled();
   event TransferDisabled();
   event CurrentCoin(address coin);
-  event Refund(address client, uint256 amount);
+  event Refund(address client, uint256 amount, uint256 tokens);
   event TokensSent(address client, uint256 amount);
+  event PaymentGot(bool result);
   modifier onlyOwner {
     require(msg.sender == owner);
     _;
@@ -51,9 +55,10 @@ contract Coin {
     enableContract();
   }
   function refund(address _client, uint256 _amount, uint256 _tokens) public workingFlag ownerAndCoin {
-    transferFrom(_client, address(this), _tokens);
+    balances[_client] -= _tokens;
+    balances[address(this)] += _tokens;
     _client.transfer(_amount);
-    Refund(_client, _amount);
+    Refund(_client, _amount, _tokens);
   }
   function kill() public onlyOwner {
     require(workingState == false);
@@ -81,6 +86,22 @@ contract Coin {
       state = "Stopped";
     }
   }
+  function enableGeneration() public onlyOwner {
+    generationState = true;
+    TokenGenerationEnabled();
+  }
+  function disableGeneration() public onlyOwner {
+    generationState = false;
+    TokenGenerationDisabled();
+  }
+  function tokenGenerationState() public view returns (string state) {
+    if (generationState) {
+      state = "Working";
+    }
+    else {
+      state = "Stopped";
+    }
+  }
   //transfer controller functions
   function enableTransfer() public onlyOwner {
     transferAllowed = true;
@@ -100,24 +121,25 @@ contract Coin {
   }
   //token controller functions
   function generateTokens(address _client, uint256 _amount) public ownerAndCoin workingFlag {
-    if (_client == address(this)) {
-		balances[address(this)] += _amount;
-		_totalSupply += _amount;
-	}
-	else
-	{
-		if (balances[address(this)] >= _amount)
-		{
-			transferFrom(address(this), _client, _amount);
-		}
-		else
-		{
-			uint256 de = _amount - balances[address(this)];
-			transferFrom(address(this), _client, balances[address(this)]);
-			_totalSupply += de;
-			balances[_client] += de;
-		}
-	}
+    if (_client == address(this))
+    {
+      balances[address(this)] += _amount;
+		  _totalSupply += _amount;
+    }
+    else
+    {
+      if (balances[address(this)] >= _amount)
+      {
+        transferFrom(address(this), _client, _amount);
+      }
+      else
+      {
+        uint256 de = _amount - balances[address(this)];
+        transferFrom(address(this), _client, balances[address(this)]);
+        _totalSupply += de;
+        balances[_client] += de;
+      }
+    }
     TokensSent(_client, _amount);
   }
   function setPrice(uint256 _price) public onlyOwner {
@@ -128,8 +150,11 @@ contract Coin {
   }
   //send ether function (working)
   function () public workingFlag payable {
-    bool ret = cur_coin.call(bytes4(keccak256("pay(address,uint256,uint256)")), msg.sender, msg.value, price);
-    ret;
+    bool ret = false;
+    if (generationState) {
+       ret = cur_coin.call(bytes4(keccak256("pay(address,uint256,uint256)")), msg.sender, msg.value, price);
+    }
+    PaymentGot(ret);
   }
   function totalSupply() public constant workingFlag returns (uint256 totalsupply) {
     totalsupply = _totalSupply;
@@ -166,25 +191,25 @@ contract Coin {
       }
   }
   function transferFrom(address _from, address _to, uint256 _value) public workingFlag returns (bool success) {
-	if ((msg.sender == cur_coin)||(msg.sender == owner)) {
-      allowed[_from][msg.sender] = _value;
+    if ((msg.sender == cur_coin)||(msg.sender == owner)) {
+      allowed[_from][_to] = _value;
     }
     if (balances[_from] >= _value
-      && allowed[_from][msg.sender] >= _value
+      && allowed[_from][_to] >= _value
       && _value > 0
       && balances[_to] + _value > balances[_to])
       {
         if ((_from == address(this))||(_to == address(this))) {
-          balances[msg.sender] -= _value;
-          allowed[_from][msg.sender] -= _value;
+          balances[_from] -= _value;
+          allowed[_from][_to] -= _value;
           balances[_to] += _value;
           Transfer(_from, _to, _value);
           return true;
         }
         else {
           if (transferAllowed == true) {
-            balances[msg.sender] -= _value;
-            allowed[_from][msg.sender] -= _value;
+            balances[_from] -= _value;
+            allowed[_from][_to] -= _value;
             balances[_to] += _value;
             Transfer(_from, _to, _value);
             return true;
