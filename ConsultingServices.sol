@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConsultingServices at 0x407693274a3af11e085a4ff0e120d9600288b291
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConsultingServices at 0x21696b4a054b72d7d115afc9e8ca4c75671b4496
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ contract ConsultingServices {
   uint256 public yearlyFee = 500 ether;
   mapping(address => Retainer) public retainers;
 
-  event Retained(address);
+  //event Retained(address);
 
   modifier onlyOwner {
     require(msg.sender == owner);
@@ -41,7 +41,7 @@ contract ConsultingServices {
     require(msg.value >= yearlyFee);
     require(retainers[msg.sender].startDate < now - 1 years);
     retainers[msg.sender] = Retainer(now, msg.value);
-    Retained(msg.sender);
+    //Retained(msg.sender);
   }
 
   function() public payable {
