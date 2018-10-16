@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x54c1cc3a3bc33839b31ad01c182b6d3bc7f4deea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xf9b978cd0d25713440164b2430b0caf3debfed9d
 */
 pragma solidity ^0.4.8;
 contract ERC20Interface {
@@ -31,12 +31,11 @@ contract ERC20Interface {
 }
  
 contract FixedSupplyToken is ERC20Interface {
-    string public constant symbol = "EECH";
-    string public constant name = "ETHER ECASH (etherecash.io)";
+    string public constant symbol = "MBTC";
+    string public constant name = "MAGIC BITCOIN (magicbtc.org)";
     uint8 public constant decimals = 18;
-    uint256 _totalSupply = 360000000 * 1000000000000000000; //360 million * 10^18;
+    uint256 _totalSupply = 42000000 * 1000000000000000000; //42million * 10^18;
     
-	
     // Owner of this contract
     address public owner;
  
