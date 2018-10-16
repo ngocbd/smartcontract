@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RingCoin at 0x2086ad75dfe620f68196dac32fd2ef78c5869c6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RingCoin at 0x5bf1e908f524c02198046737c5ebb1489249bab7
 */
 pragma solidity ^0.4.16;
 /*
@@ -103,7 +103,7 @@ contract ERC20TokenInterface {
 
 contract ERC20Token is admined, ERC20TokenInterface { //Standar definition of an ERC20Token
     using SafeMath for uint256;
-    uint256 totalSupply;
+    uint256 totalSupply_;
     mapping (address => uint256) balances; //A mapping of all balances per address
     mapping (address => mapping (address => uint256)) allowed; //A mapping of all allowances
 
@@ -114,6 +114,13 @@ contract ERC20Token is admined, ERC20TokenInterface { //Standar definition of an
     function balanceOf(address _owner) public constant returns (uint256 balance) {
       return balances[_owner];
     }
+
+    /**
+    * @dev total number of tokens in existence
+    */
+    function totalSupply() public view returns (uint256) {
+        return totalSupply_;
+    }    
 
     /**
     * @dev transfer token to a specified address
@@ -175,17 +182,17 @@ contract ERC20Token is admined, ERC20TokenInterface { //Standar definition of an
 contract RingCoin is admined, ERC20Token {
     string public name = "RingCoin";
     string public symbol = "RC";
-    string public version = "1.0.0";
+    string public version = "1.0";
     uint8 public decimals = 18;
 
     function RingCoin() public {
-        totalSupply = 90800000 * (10**uint256(decimals));
-        balances[this] = totalSupply;
+        totalSupply_ = 90800000 * (10**uint256(decimals));
+        balances[this] = totalSupply_;
         allowed[this][msg.sender] = balances[this]; //Contract balance is allowed to creator
         /**
         *Log Events
         */
-        Transfer(0, this, totalSupply);
+        Transfer(0, this, totalSupply_);
         Approval(this, msg.sender, balances[this]);
 
     }
