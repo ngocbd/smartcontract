@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0xefe7d276c5a71b21ccef49408dd2870c38089aa3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0x3616f0d3d088e488c291e82a1762a7591661e639
 */
 pragma solidity ^0.4.9;
 
@@ -28,7 +28,7 @@ contract XToken {
   mapping (address => uint256) balances;
   mapping (address => mapping (address => uint256)) allowed;
 
-  function XToken() {
+  function RoundToken() {
     owner = msg.sender;
     balances[owner] = totalSupply;
   }
