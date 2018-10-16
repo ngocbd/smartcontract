@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grid at 0x224a1fd635ec602316decb793370a45509543ce6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grid at 0xf0e4c86ff05fe47476906d7d8456360f0487dac5
 */
 pragma solidity ^0.4.11;
 
@@ -24,6 +24,17 @@ contract Grid {
   //   price = prevPrice + (prevPrice * incrementRate / 100);
   uint public incrementRate;
 
+  // A record of a user who may at any time be an owner of pixels or simply has
+  // unclaimed withdrawal from a failed purchase or a successful sale
+  struct User {
+    // Number of Wei that can be withdrawn by the user
+    uint pendingWithdrawal;
+
+    // Number of Wei in total ever credited to the user as a result of a
+    // successful sale
+    uint totalSales;
+  }
+
   struct Pixel {
     // User with permission to modify the pixel. A successful sale of the
     // pixel will result in payouts being credited to the pendingWithdrawal of
@@ -42,7 +53,7 @@ contract Grid {
   mapping(uint32 => Pixel) pixels;
 
   // The state of all users who have transacted with this contract
-  mapping(address => uint) pendingWithdrawals;
+  mapping(address => User) users;
 
   // An optional message that is shown in some parts of the UI and in the
   // details pane of every owned pixel
@@ -55,6 +66,7 @@ contract Grid {
   event PixelTransfer(uint16 row, uint16 col, uint price, address prevOwner, address newOwner);
   event PixelColor(uint16 row, uint16 col, address owner, uint24 color);
   event PixelPrice(uint16 row, uint16 col, address owner, uint price);
+  event UserMessage(address user, string message);
 
   //============================================================================
   // Basic API and helper functions
@@ -134,28 +146,32 @@ contract Grid {
     return messages[user];
   }
 
+  function getUserTotalSales(address user) constant returns (uint) {
+    return users[user].totalSales;
+  }
+
   //============================================================================
   // Public Transaction API
   //============================================================================
 
   function checkPendingWithdrawal() constant returns (uint) {
-    return pendingWithdrawals[msg.sender];
+    return users[msg.sender].pendingWithdrawal;
   }
 
   function withdraw() {
-    if (pendingWithdrawals[msg.sender] > 0) {
-      uint amount = pendingWithdrawals[msg.sender];
-      pendingWithdrawals[msg.sender] = 0;
+    if (users[msg.sender].pendingWithdrawal > 0) {
+      uint amount = users[msg.sender].pendingWithdrawal;
+      users[msg.sender].pendingWithdrawal = 0;
       msg.sender.transfer(amount);
     }
   }
 
   function buyPixel(uint16 row, uint16 col, uint24 newColor) payable {
-    uint balance = pendingWithdrawals[msg.sender];
+    uint balance = users[msg.sender].pendingWithdrawal;
     // Return instead of letting getKey throw here to correctly refund the
     // transaction by updating the user balance in user.pendingWithdrawal
     if (row >= size || col >= size) {
-      pendingWithdrawals[msg.sender] = SafeMath.add(balance, msg.value);
+      users[msg.sender].pendingWithdrawal = SafeMath.add(balance, msg.value);
       return;
     }
 
@@ -166,18 +182,19 @@ contract Grid {
     // Return instead of throw here to correctly refund the transaction by
     // updating the user balance in user.pendingWithdrawal
     if (msg.value < price) {
-      pendingWithdrawals[msg.sender] = SafeMath.add(balance, msg.value);
+      users[msg.sender].pendingWithdrawal = SafeMath.add(balance, msg.value);
       return;
     }
 
     uint fee = SafeMath.div(msg.value, feeRatio);
     uint payout = SafeMath.sub(msg.value, fee);
 
-    uint adminBalance = pendingWithdrawals[admin];
-    pendingWithdrawals[admin] = SafeMath.add(adminBalance, fee);
+    uint adminBalance = users[admin].pendingWithdrawal;
+    users[admin].pendingWithdrawal = SafeMath.add(adminBalance, fee);
 
-    uint ownerBalance = pendingWithdrawals[owner];
-    pendingWithdrawals[owner] = SafeMath.add(ownerBalance, payout);
+    uint ownerBalance = users[owner].pendingWithdrawal;
+    users[owner].pendingWithdrawal = SafeMath.add(ownerBalance, payout);
+    users[owner].totalSales = SafeMath.add(users[owner].totalSales, payout);
 
     // Increase the price automatically based on the global incrementRate
     uint increase = SafeMath.div(SafeMath.mul(price, incrementRate), 100);
@@ -191,6 +208,15 @@ contract Grid {
   //============================================================================
   // Owner Management API
   //============================================================================
+
+  function transferPixel(uint16 row, uint16 col, address newOwner) onlyOwner(row, col) {
+    uint32 key = getKey(row, col);
+    address owner = pixels[key].owner;
+    if (owner != newOwner) {
+      pixels[key].owner = newOwner;
+      PixelTransfer(row, col, 0, owner, newOwner);
+    }
+  }
 
   function setPixelColor(uint16 row, uint16 col, uint24 color) onlyOwner(row, col) {
     uint32 key = getKey(row, col);
@@ -216,6 +242,7 @@ contract Grid {
 
   function setUserMessage(string message) {
     messages[msg.sender] = message;
+    UserMessage(msg.sender, message);
   }
 }
 
