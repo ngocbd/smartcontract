@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multiplexer at 0x53a30b07bea5b8e9b5f710e038867a1531b0b5dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multiplexer at 0x038cf0fe8b400538211b0cdc2dbf4e9a8a36bda4
 */
 pragma solidity ^0.4.16;
 
@@ -9,7 +9,6 @@ contract ERC20 {
 
 /// @title Multiplexer
 /// @author Chris Hitchcott
-/// :repository https://github.com/DigixGlobal/multiplexer
 
 contract Multiplexer {
 
@@ -45,4 +44,5 @@ contract Multiplexer {
 		}
 		return true;
 	}
+
 }
