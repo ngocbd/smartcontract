@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xb34aa41593deabb2b17e7507e3e413c58f6e0c71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xa51d1e295fb19bef55c91231d0cf7ebb1603e047
 */
 pragma solidity ^0.4.18;
 
@@ -12,32 +12,19 @@ pragma solidity ^0.4.18;
  '-.._/___...-"-.-..__`.
   B
 
- EthPyramid. A no-bullshit, transparent, self-sustaining pyramid scheme.
+This is a PONZI Crypto-GAME and >>NOT<< an investment opportunity! 
+It illustrate the functionallities and possibilities of smart 
+contracts and was just deployed for testing. 
  
  Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
+ 
+ 
+ 
+ To exit and withdraw balance add to transaction data: 0xb1e35242 
+ 
+ 
+ 
 
- Developers:
-	Arc
-	Divine
-	Norsefire
-	ToCsIcK
-	
- Front-End:
-	Cardioth
-	tenmei
-	Trendium
-	
- Moral Support:
-	DeadCow.Rat
-	Dots
-	FatKreamy
-	Kaseylol
-	QuantumDeath666
-	Quentin
- 
- Shit-Tier:
-	HentaiChrist
- 
 */
 
 contract EthPyramid {
@@ -58,7 +45,7 @@ contract EthPyramid {
 
 	// Typical values that we have to declare.
 	string constant public name = "EthPyramid";
-	string constant public symbol = "EPY";
+	string constant public symbol = "EPT";
 	uint8 constant public decimals = 18;
 
 	// Array between each address and their number of tokens.
