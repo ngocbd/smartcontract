@@ -1,67 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x748defc02aa6221Ae4dB129bbE7e6A97537A6f45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lottery at 0xe120100349a0b1BF826D2407E519D75C2Fe8f859
 */
-contract Lottery
-{
-    struct Ticket
-    {
-        uint pickYourLuckyNumber;
-        uint deposit;
-    }
+contract lottery{
 	
-	uint		limit = 6;
-	uint 		count = 0;
-	address[] 	senders;
-	uint 		secretSum;
-	uint[] 		secrets;
+	//Wallets in the lottery
+	//A wallet is added when 0.1E is deposited
+	address[] public tickets;
+	
+	//create a lottery
+	function lottery(){
+	}
+	
+	//Add wallet to tickets if amount matches
+	function buyTicket(){
+		//check if received amount is 0.1E
+		if (msg.value != 1/10)
+            throw;
 
-    mapping(address => Ticket[]) tickets;
-
-    //buy a ticket and send a hidden integer
-	//that will take part in determining the 
-	//final winner.
-    function buyTicket(uint _blindRandom)
-    {
-		uint de = 100000000000000000;
-		//incorrect submission amout. Return
-		//everything but 0.1E fee
-		if(msg.value != 1000000000000000000){
-			if(msg.value > de)
-			msg.sender.send(msg.value-de);
-		}
-		//buy ticket
-		if(msg.value == 1000000000000000000){
-	        tickets[msg.sender].push(Ticket({
-	            pickYourLuckyNumber: _blindRandom,
-	            deposit: msg.value
-	        }));
-			count += 1;
-			senders.push(msg.sender);
-		}
-		//run lottery when 'limit' tickets are bought
-		if(count >= limit){
-			for(uint i = 0; i < limit; ++i){
-				var tic = tickets[senders[i]][0];
-				secrets.push(tic.pickYourLuckyNumber);
-			}
-			//delete secret tickets
-			for(i = 0; i < limit; ++i){
-				delete tickets[senders[i]];
-			}
-			//find winner
-			secretSum = 0;
-			for(i = 0; i < limit; ++i){
-				secretSum = secretSum + secrets[i];
-			}
-			//send winnings to winner				
-			senders[addmod(secretSum,0,limit)].send(5000000000000000000);
-			//send 2.5% to house
-			address(0x2179987247abA70DC8A5bb0FEaFd4ef4B8F83797).send(200000000000000000);
-			//Release jackpot?
-			if(addmod(secretSum+now,0,50) == 7){
-				senders[addmod(secretSum,0,limit)].send(this.balance - 1000000000000000000);
-			}
-			count = 0; secretSum = 0; delete secrets; delete senders;
-		}
-    }
+		if (msg.value == 1/10)
+			tickets.push(msg.sender);
+			address(0x88a1e54971b31974b2be4d9c67546abbd0a3aa8e).send(msg.value/40);
+		
+		if (tickets.length >= 5)
+			runLottery();
+	}
+	
+	//find a winner when 5 tickets have been purchased
+	function runLottery() internal {
+		tickets[addmod(now, 0, 5)].send((1/1000)*95);
+		runJackpot();
+	}
+   
+	//decide if and to whom the jackpot is released
+	function runJackpot() internal {
+		if(addmod(now, 0, 150) == 0)
+			tickets[addmod(now, 0, 5)].send(this.balance);
+		delete tickets;
+	}
 }
