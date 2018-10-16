@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MeshToken at 0x8d5682941ce456900b12d47ac06a88b47c764ce1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MeshToken at 0x524897c10d0a39d0cb1d1399557aee3de6a2f421
 */
 pragma solidity ^0.4.18;
 
@@ -420,8 +420,8 @@ contract PausableToken is StandardToken, Pausable {
  * PausableToken overrides all transfers methods and adds a modifier to check if paused is set to false.
  */
 contract MeshToken is CappedToken, PausableToken {
-  string public name = "RightMesh Token";
-  string public symbol = "RMESH";
+  string public name = "Pluto Token";
+  string public symbol = "PLUTO";
   uint256 public decimals = 18;
   uint256 public cap = 129498559 ether;
 
