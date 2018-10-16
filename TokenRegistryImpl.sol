@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRegistryImpl at 0x004def62c71992615cf22786d0b7efb22850df4a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRegistryImpl at 0xabe12e3548fdb334d11fcc962c413d91ef12233f
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -154,14 +154,15 @@ contract Claimable is Ownable {
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
 contract TokenRegistry {
-    event TokenRegistered(address addr, string symbol);
-    event TokenUnregistered(address addr, string symbol);
+    event TokenRegistered(
+        address indexed addr,
+        string          symbol
+    );
+    event TokenUnregistered(
+        address indexed addr,
+        string          symbol
+    );
     function registerToken(
-        address addr,
-        string  symbol
-        )
-        external;
-    function registerMintedToken(
         address addr,
         string  symbol
         )
@@ -229,14 +230,6 @@ contract TokenRegistryImpl is TokenRegistry, Claimable {
         )
         external
         onlyOwner
-    {
-        registerTokenInternal(addr, symbol);
-    }
-    function registerMintedToken(
-        address addr,
-        string  symbol
-        )
-        external
     {
         registerTokenInternal(addr, symbol);
     }
@@ -321,9 +314,6 @@ contract TokenRegistryImpl is TokenRegistry, Claimable {
         uint end = start + count;
         if (end > num) {
             end = num;
-        }
-        if (start == num) {
-            return;
         }
         addressList = new address[](end - start);
         for (uint i = start; i < end; i++) {
