@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EpisodeManager at 0x29c2b4170d0d418adeab0c6ca454383e538c9b8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EpisodeManager at 0x2175cbfef298c9d7834bc9aff829297c422d1024
 */
 pragma solidity 0.4.19;
 
@@ -13,6 +13,7 @@ contract InterfaceWallet {
     function changeState(uint256 _id, uint8 _state) public returns (bool);
     function changeBranch(uint256 _id, uint8 _branch) public returns (bool);
     function getHolder(uint256 _id) public view returns (address);
+    function getBranch(uint256 _id) public view returns (uint256);
 }
 
 
@@ -23,12 +24,8 @@ contract EpisodeManager {
     //max token supply
     uint256 public cap = 50;
 
-    address public randaoAddress;
-    address public lotteryAddress;
-    InterfaceWallet public lottery = InterfaceWallet(0x0);
+    InterfaceWallet public deusETH = InterfaceWallet(0x0);
     InterfaceRandao public randao = InterfaceRandao(0x0);
-
-    bool public started = false;
 
     uint256 public episodesNum = 0;
 
@@ -65,26 +62,41 @@ contract EpisodeManager {
         require(_wallet != address(0));
         owner = msg.sender;
         wallet = _wallet;
-        randaoAddress = _randao;
         randao = InterfaceRandao(_randao);
     }
 
-    function setLottery(address _lottery) public {
-        require(!started);
-        lotteryAddress = _lottery;
-        lottery = InterfaceWallet(_lottery);
-        started = true;
+    function setLottery(address _lottery) public onlyOwner returns (bool) {
+        deusETH = InterfaceWallet(_lottery);
+        return true;
     }
 
-    function changeRandao(address _randao) public onlyOwner {
-        randaoAddress = _randao;
+    function changeLottery(address _lottery) public onlyOwner returns (bool) {
+        deusETH = InterfaceWallet(_lottery);
+        return true;
+    }
+
+    function changeRandao(address _randao) public onlyOwner returns (bool) {
         randao = InterfaceRandao(_randao);
+        return true;
+    }
+
+    function changeOwner(address _newOwner) public onlyOwner returns (bool) {
+        require(_newOwner != address(0));
+        owner = _newOwner;
+        return true;
+    }
+
+    function changeWallet(address _wallet) public onlyOwner {
+        wallet = _wallet;
+    }
+
+    function checkRandomFromRandao(uint256 _campaignID) public returns (uint256) {
+        return randao.getRandom(_campaignID);
     }
 
     function addEpisode() public onlyOwner returns (bool) {
         episodesNum++;
         episodes[episodesNum].isEpisode = true;
-
         return true;
     }
 
@@ -100,7 +112,7 @@ contract EpisodeManager {
         require(episodes[episodesNum].isEpisode);
         require(!episodes[episodesNum].data[_branch][_step].isSet);
 
-        episodes[episodesNum].data[_branch][_step].random = randao.getRandom(_campaignID);
+        episodes[episodesNum].data[_branch][_step].random = 123;
 
         episodes[episodesNum].data[_branch][_step].command = _command;
         episodes[episodesNum].data[_branch][_step].isSet = true;
@@ -108,7 +120,7 @@ contract EpisodeManager {
         return true;
     }
 
-    function addNewBranchInEpisode(uint256 _branch, uint256 _price) public onlyOwner returns (bool) {
+    function addBranchInEpisode(uint256 _branch, uint256 _price) public onlyOwner returns (bool) {
         require(_branch > 0);
         require(!episodes[episodesNum].branches[_branch].isBranch);
         episodes[episodesNum].branches[_branch].price = _price;
@@ -119,13 +131,17 @@ contract EpisodeManager {
     function changeBranch(uint256 _id, uint8 _branch) public payable returns(bool) {
         require(_branch > 0);
         require(episodes[episodesNum].branches[_branch].isBranch);
-        require((msg.sender == lottery.getHolder(_id)) || (msg.sender == owner));
+        require((msg.sender == deusETH.getHolder(_id)) || (msg.sender == owner));
+
+        if (msg.sender != owner) {
+            require(deusETH.getBranch(_id) == 1);
+        }
 
         if (episodes[episodesNum].branches[_branch].price == 0) {
-            lottery.changeBranch(_id, _branch);
+            deusETH.changeBranch(_id, _branch);
         } else {
             require(msg.value == episodes[episodesNum].branches[_branch].price);
-            lottery.changeBranch(_id, _branch);
+            deusETH.changeBranch(_id, _branch);
             forwardFunds();
         }
         return true;
@@ -134,7 +150,7 @@ contract EpisodeManager {
     function changeState(uint256 _id, uint8 _state) public onlyOwner returns (bool) {
         require(_id > 0 && _id <= cap);
         require(_state <= 1);
-        return lottery.changeState(_id, _state);
+        return deusETH.changeState(_id, _state);
     }
 
     function getEpisodeDataRandom(uint256 _episodeID, uint256 _branch, uint256 _step) public view returns (uint256) {
@@ -149,8 +165,11 @@ contract EpisodeManager {
         return episodes[_episodeID].branches[_branch].price;
     }
 
+    function checkBranchInEpisode(uint256 _episodesNum, uint256 _branch) public view returns (bool) {
+        return episodes[_episodesNum].branches[_branch].isBranch;
+    }
+
     // send ether to the fund collection wallet
-    // override to create custom fund forwarding mechanisms
     function forwardFunds() internal {
         wallet.transfer(msg.value);
     }
