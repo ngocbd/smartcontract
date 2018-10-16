@@ -1,8 +1,30 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Minter at 0x5b66c6b504deceb1d94147f8c50d60abe80b1f2e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Minter at 0x42b486cd262a3b52c69dd8df3e040419531af014
 */
-pragma solidity ^0.4.16;
+pragma solidity 0.4.18;
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @title Ownable
@@ -11,6 +33,9 @@ pragma solidity ^0.4.16;
  */
 contract Ownable {
   address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
   /**
@@ -29,156 +54,489 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
-interface MintableObject {
-  function transfer(address _to, uint256 _value) external returns (bool);
-  function transferOwnership(address newOwner) external;
-  function mint(address _to, uint256 _amount) external returns (bool);
-}
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
 
-contract Minter is Ownable {
-  MintableObject public token = MintableObject(0x02585E4A14dA274D02dF09b222D4606B10a4E940); // HeroOrigenToken contract address
-  uint256 public index = 0;
-  bool public complete = false;
-  address[] public holders =   [
-    0xe875e4C5EC4fF7e0f002Bb9F794C6464551A5b3a,
-    0x4F5695d01cB2f9c1F8578A3Aa351eE38d537cbe3,
-    0xa76977132E3E876c77b1BD8c673dACbA60d9e7e0,
-    0x70203709D6A7863fa4F335F7135109C35fD4c19b,
-    0xc18a235B1a80F9d6A60F963826dD60A582898D28,
-    0xCC677048A3698FF431FD2856D6e91DF29b6183Cf,
-    0xAf6D62e26Baa00889e18a46Fc8e2687d45764427,
-    0x731Ec1abd1366965D321e01Df2AdDc634FAA3518,
-    0x89D7601aB2f543e0417C956d90908BFeC51C03dA,
-    0x9143e0B9Ed5bF0d95aeb60cfa507151036029A41,
-    0x8c64d5B26C4ed5f44Ac7000db1e8031e8dDb6482,
-    0x2b789589A025d7F0DcE4700E6d68366538Cf2c76,
-    0xB9d6B8Bb8528CB14f1DD6BcC28014226d08c1970,
-    0x9d1Fc06b6Da636922cFA676d00737a5A847Ff997,
-    0x70203709D6A7863fa4F335F7135109C35fD4c19b,
-    0x9E966A66021bA3838Ed3E1d9049D0E03ebD01130,
-    0x9eDBABAA6Fc3F4C31116cc810730EF646A461312,
-    0x77FD9368886f69eBB16fAdc7F7E7c62e7e9b9Eb2,
-    0x7A434e1A3348d3A121d155D0935867d45BD699B0,
-    0x98AEE42201B361df981425F9917EAD8375E4569f,
-    0xbcaBD5CDBF1021A61a1E65e360ADf765375404BD,
-    0xda7b0ee914C7FB7A5F45b4598379636e86CA8725,
-    0x9405dAaebeb2e07cEe7Cb8BD21cB1f438a7D2Aa8,
-    0x2ae256c42c4090eD0769A534EF1CE64D7299246F,
-    0x8b16F2026dcCe8Cf0d1365FcbfD91e959692f2C2,
-    0x62496C0bf7e253a80AFBfe41463C47cBff642602,
-    0xB1366F8f379D3C3B8E1EB4B070BE0006b92fCBCb,
-    0xBA6fE917B0951924350756BFC33f4412fcD8A84b,
-    0xcD1fC1e8Ca1D07075e939918c51086749F6EA4C8,
-    0x887f2Bd93fbF3792052C2c67e8c6B1106aB712f0,
-    0xcBA7f4f44473e32Dd01cD863622b2B8797681955,
-    0xF5fE4c4d0133a8fA85d9fD230449416717985582,
-    0xA3cdF9a69A8743ee7cD43Ee5f766E147ee4f592e,
-    0xDfCb03a82f2eE88Fd9C5B5a904762bc1c93F4A7d,
-    0xa7b66707318a888F03356C2b809a687560Df6333,
-    0xd7f75Cc0e1B6bcd713466D57F30b8176BAE38C9F,
-    0x7698DC4aE9dCC82d302aD1336873f99914b428E7,
-    0x4bD33CC493dC30B06ee741470D454eDc0975dca1,
-    0xA488d81060f5663b079BE53f5810c6DA6d9584A9,
-    0xA0E8937E700606551121D7f1AfCA67e85c1E200d,
-    0x65d55520F74e627549BA9140c6811a76f18567Be,
-    0x9cc214e167980171525a3cdacf852cb16283dbfa,
-    0xce562CEED7e5c1AD4E665046bae4f51E7815cc55,
-    0xdc96F5228D5659EEA2826234420014c91ca1De21,
-    0x11AA7f62Eb80Ad7eEFe39b5139cf247bb278AD9C,
-    0xDBf96CaC84EFcC4979557dA4cCCBeC69Bf483e02,
-    0x12aB58DD2d0218E163AB40b5F551C9d51534F443,
-    0xbaf7139e9Cf7aBa4fA0417a9E16E8EeBf9749B24,
-    0x3e81a0844332bc69cae58c47d4ae881d978fa8f7,
-    0x0Ccfe098090b9303854C8dC67804B8BFE21Cc4a0,
-    0x107a99f040da5B62F3033d69C07Efc94956885F7,
-    0x2e006284072fa77142cbed0caa41cdd646ecc381,
-    0xf1ABa2E6140fEc6ccb178C7B97556C2cEf1b0D44,
-    0x73bec2D5C98BC4CacE92c72C5aB55eea1bc39aCC,
-    0x91E11605370356E2576778B0f56a07C3b3d09DF2,
-    0x0729266a0E42204546edAc4CAf53b47dbB620D30,
-    0xB0D3d8338FdE2b781CB5dA295a20C2b31ACCCb6c,
-    0x8a9c644A2c7c460D3FA8716CfEAC5Cb21395D4e1
-  ];
-  uint256[] public amounts =   [
-    387998023671410000000,
-    375278689963090000000,
-    352018257065290000000,
-    332189924227500000000,
-    322751130934770000000,
-    266636326056720000000,
-    252830792367340000000,
-    249895090713520000000,
-    247090173958270000000,
-    219087530879770000000,
-    212499662643820000000,
-    210395705587940000000,
-    209488901593770000000,
-    208291748532060000000,
-    208143209163910000000,
-    205807357302090000000,
-    203773527877870000000,
-    202370569995870000000,
-    194485224897950000000,
-    166596727142350000000,
-    163265586206090000000,
-    153915431947540000000,
-    130546826367650000000,
-    118830472412650000000,
-    114746282689790000000,
-    102954239149280000000,
-    97242612448980000000,
-    97242612448980000000,
-    88220695696750000000,
-    80241961305560000000,
-    71545852761740000000,
-    64709458478980000000,
-    63118711676380000000,
-    63118711676380000000,
-    62709854813140000000,
-    62422556835680000000,
-    58345567469390000000,
-    48621306224490000000,
-    45256711833750000000,
-    42079141117590000000,
-    39083089545730000000,
-    32868182554190000000,
-    28665528215490000000,
-    26873112641410000000,
-    26768102178810000000,
-    24623132523090000000,
-    23712375748650000000,
-    21516742062320000000,
-    20377352787790000000,
-    19022774883970000000,
-    18935613502910000000,
-    18367378448190000000,
-    16340608704300000000,
-    14977129125280000000,
-    4270237122490000000,
-    4064741200370000000,
-    2130277022560000000,
-    2665486175308850000000
-  ];
-  uint256 public total = 9764845721712500000000;
+    bool public paused = false;
 
-  function proceed() public onlyOwner {
-    // Start giving errors if we're not done.
-    require(!complete);
-    token.mint(this, total);
-    for(uint256 i = 0; i < holders.length; i++) {
-      token.transfer(holders[i], amounts[i]);
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
     }
-    returnOwnership();
-    complete = true;
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        Pause();
+    }
+
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        Unpause();
+    }
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
-  function setToken(MintableObject _token) public onlyOwner {
-    token = _token;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
 
-  function returnOwnership() public onlyOwner {
-    token.transferOwnership(owner);
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+library MathUtils {
+    using SafeMath for uint256;
+
+    // Divisor used for representing percentages
+    uint256 public constant PERC_DIVISOR = 1000000;
+
+    /*
+     * @dev Returns whether an amount is a valid percentage out of PERC_DIVISOR
+     * @param _amount Amount that is supposed to be a percentage
+     */
+    function validPerc(uint256 _amount) internal pure returns (bool) {
+        return _amount <= PERC_DIVISOR;
+    }
+
+    /*
+     * @dev Compute percentage of a value with the percentage represented by a fraction
+     * @param _amount Amount to take the percentage of
+     * @param _fracNum Numerator of fraction representing the percentage
+     * @param _fracDenom Denominator of fraction representing the percentage
+     */
+    function percOf(uint256 _amount, uint256 _fracNum, uint256 _fracDenom) internal pure returns (uint256) {
+        return _amount.mul(percPoints(_fracNum, _fracDenom)).div(PERC_DIVISOR);
+    }
+
+    /*
+     * @dev Compute percentage of a value with the percentage represented by a fraction over PERC_DIVISOR
+     * @param _amount Amount to take the percentage of
+     * @param _fracNum Numerator of fraction representing the percentage with PERC_DIVISOR as the denominator
+     */
+    function percOf(uint256 _amount, uint256 _fracNum) internal pure returns (uint256) {
+        return _amount.mul(_fracNum).div(PERC_DIVISOR);
+    }
+
+    /*
+     * @dev Compute percentage representation of a fraction
+     * @param _fracNum Numerator of fraction represeting the percentage
+     * @param _fracDenom Denominator of fraction represeting the percentage
+     */
+    function percPoints(uint256 _fracNum, uint256 _fracDenom) internal pure returns (uint256) {
+        return _fracNum.mul(PERC_DIVISOR).div(_fracDenom);
+    }
+}
+
+contract ILivepeerToken is ERC20, Ownable {
+    function mint(address _to, uint256 _amount) public returns (bool);
+    function burn(uint256 _amount) public;
+}
+
+contract IController is Pausable {
+    event SetContractInfo(bytes32 id, address contractAddress, bytes20 gitCommitHash);
+
+    function setContractInfo(bytes32 _id, address _contractAddress, bytes20 _gitCommitHash) external;
+    function updateController(bytes32 _id, address _controller) external;
+    function getContract(bytes32 _id) public view returns (address);
+}
+
+contract IManager {
+    event SetController(address controller);
+    event ParameterUpdate(string param);
+
+    function setController(address _controller) external;
+}
+
+contract Manager is IManager {
+    // Controller that contract is registered with
+    IController public controller;
+
+    // Check if sender is controller
+    modifier onlyController() {
+        require(msg.sender == address(controller));
+        _;
+    }
+
+    // Check if sender is controller owner
+    modifier onlyControllerOwner() {
+        require(msg.sender == controller.owner());
+        _;
+    }
+
+    // Check if controller is not paused
+    modifier whenSystemNotPaused() {
+        require(!controller.paused());
+        _;
+    }
+
+    // Check if controller is paused
+    modifier whenSystemPaused() {
+        require(controller.paused());
+        _;
+    }
+
+    function Manager(address _controller) public {
+        controller = IController(_controller);
+    }
+
+    /*
+     * @dev Set controller. Only callable by current controller
+     * @param _controller Controller contract address
+     */
+    function setController(address _controller) external onlyController {
+        controller = IController(_controller);
+
+        SetController(_controller);
+    }
+}
+
+/*
+ * @title Interface for BondingManager
+ */
+contract IBondingManager {
+    event TranscoderUpdate(address indexed transcoder, uint256 pendingRewardCut, uint256 pendingFeeShare, uint256 pendingPricePerSegment, bool registered);
+    event TranscoderEvicted(address indexed transcoder);
+    event TranscoderResigned(address indexed transcoder);
+    event TranscoderSlashed(address indexed transcoder, address finder, uint256 penalty, uint256 finderReward);
+    event Reward(address indexed transcoder, uint256 amount);
+    event Bond(address indexed delegate, address indexed delegator);
+    event Unbond(address indexed delegate, address indexed delegator);
+    event WithdrawStake(address indexed delegator);
+    event WithdrawFees(address indexed delegator);
+
+    // External functions
+    function setActiveTranscoders() external;
+    function updateTranscoderWithFees(address _transcoder, uint256 _fees, uint256 _round) external;
+    function slashTranscoder(address _transcoder, address _finder, uint256 _slashAmount, uint256 _finderFee) external;
+    function electActiveTranscoder(uint256 _maxPricePerSegment, bytes32 _blockHash, uint256 _round) external view returns (address);
+
+    // Public functions
+    function transcoderTotalStake(address _transcoder) public view returns (uint256);
+    function activeTranscoderTotalStake(address _transcoder, uint256 _round) public view returns (uint256);
+    function isRegisteredTranscoder(address _transcoder) public view returns (bool);
+    function getTotalBonded() public view returns (uint256);
+}
+
+/**
+ * @title RoundsManager interface
+ */
+contract IRoundsManager {
+    // Events
+    event NewRound(uint256 round);
+
+    // External functions
+    function initializeRound() external;
+
+    // Public functions
+    function blockNum() public view returns (uint256);
+    function blockHash(uint256 _block) public view returns (bytes32);
+    function currentRound() public view returns (uint256);
+    function currentRoundStartBlock() public view returns (uint256);
+    function currentRoundInitialized() public view returns (bool);
+    function currentRoundLocked() public view returns (bool);
+}
+
+/**
+ * @title Minter interface
+ */
+contract IMinter {
+    // Events
+    event SetCurrentRewardTokens(uint256 currentMintableTokens, uint256 currentInflation);
+
+    // External functions
+    function createReward(uint256 _fracNum, uint256 _fracDenom) external returns (uint256);
+    function trustedTransferTokens(address _to, uint256 _amount) external;
+    function trustedBurnTokens(uint256 _amount) external;
+    function trustedWithdrawETH(address _to, uint256 _amount) external;
+    function depositETH() external payable returns (bool);
+    function setCurrentRewardTokens() external;
+
+    // Public functions
+    function getController() public view returns (IController);
+}
+
+/**
+ * @title Minter
+ * @dev Manages inflation rate and the minting of new tokens for each round of the Livepeer protocol
+ */
+contract Minter is Manager, IMinter {
+    using SafeMath for uint256;
+
+    // Per round inflation rate
+    uint256 public inflation;
+    // Change in inflation rate per round until the target bonding rate is achieved
+    uint256 public inflationChange;
+    // Target bonding rate
+    uint256 public targetBondingRate;
+
+    // Current number of mintable tokens. Reset every round
+    uint256 public currentMintableTokens;
+    // Current number of minted tokens. Reset every round
+    uint256 public currentMintedTokens;
+
+    // Checks if caller is BondingManager
+    modifier onlyBondingManager() {
+        require(msg.sender == controller.getContract(keccak256("BondingManager")));
+        _;
+    }
+
+    // Checks if caller is RoundsManager
+    modifier onlyRoundsManager() {
+        require(msg.sender == controller.getContract(keccak256("RoundsManager")));
+        _;
+    }
+
+    // Checks if caller is either BondingManager or JobsManager
+    modifier onlyBondingManagerOrJobsManager() {
+        require(msg.sender == controller.getContract(keccak256("BondingManager")) || msg.sender == controller.getContract(keccak256("JobsManager")));
+        _;
+    }
+
+    // Checks if caller is either the currently registered Minter or JobsManager
+    modifier onlyMinterOrJobsManager() {
+        require(msg.sender == controller.getContract(keccak256("Minter")) || msg.sender == controller.getContract(keccak256("JobsManager")));
+        _;
+    }
+
+    /**
+     * @dev Minter constructor
+     * @param _inflation Base inflation rate as a percentage of current total token supply
+     * @param _inflationChange Change in inflation rate each round (increase or decrease) if target bonding rate is not achieved
+     * @param _targetBondingRate Target bonding rate as a percentage of total bonded tokens / total token supply
+     */
+    function Minter(address _controller, uint256 _inflation, uint256 _inflationChange, uint256 _targetBondingRate) public Manager(_controller) {
+        // Inflation must be valid percentage
+        require(MathUtils.validPerc(_inflation));
+        // Inflation change must be valid percentage
+        require(MathUtils.validPerc(_inflationChange));
+        // Target bonding rate must be valid percentage
+        require(MathUtils.validPerc(_targetBondingRate));
+
+        inflation = _inflation;
+        inflationChange = _inflationChange;
+        targetBondingRate = _targetBondingRate;
+    }
+
+    /**
+     * @dev Set targetBondingRate. Only callable by Controller owner
+     * @param _targetBondingRate Target bonding rate as a percentage of total bonded tokens / total token supply
+     */
+    function setTargetBondingRate(uint256 _targetBondingRate) external onlyControllerOwner {
+        // Must be valid percentage
+        require(MathUtils.validPerc(_targetBondingRate));
+
+        targetBondingRate = _targetBondingRate;
+
+        ParameterUpdate("targetBondingRate");
+    }
+
+    /**
+     * @dev Set inflationChange. Only callable by Controller owner
+     * @param _inflationChange Inflation change as a percentage of total token supply
+     */
+    function setInflationChange(uint256 _inflationChange) external onlyControllerOwner {
+        // Must be valid percentage
+        require(MathUtils.validPerc(_inflationChange));
+
+        inflationChange = _inflationChange;
+
+        ParameterUpdate("inflationChange");
+    }
+
+    /**
+     * @dev Migrate to a new Minter by transferring ownership of the token as well
+     * as the current Minter's token balance to the new Minter. Only callable by Controller when system is paused
+     * @param _newMinter Address of new Minter
+     */
+    function migrateToNewMinter(IMinter _newMinter) external onlyControllerOwner whenSystemPaused {
+        // New Minter cannot be the current Minter
+        require(_newMinter != this);
+        // Check for null address
+        require(address(_newMinter) != address(0));
+
+        IController newMinterController = _newMinter.getController();
+        // New Minter must have same Controller as current Minter
+        require(newMinterController == controller);
+        // New Minter's Controller must have the current Minter registered
+        require(newMinterController.getContract(keccak256("Minter")) == address(this));
+
+        // Transfer ownership of token to new Minter
+        livepeerToken().transferOwnership(_newMinter);
+        // Transfer current Minter's token balance to new Minter
+        livepeerToken().transfer(_newMinter, livepeerToken().balanceOf(this));
+        // Transfer current Minter's ETH balance to new Minter
+        _newMinter.depositETH.value(this.balance)();
+    }
+
+    /**
+     * @dev Create reward based on a fractional portion of the mintable tokens for the current round
+     * @param _fracNum Numerator of fraction (active transcoder's stake)
+     * @param _fracDenom Denominator of fraction (total active stake)
+     */
+    function createReward(uint256 _fracNum, uint256 _fracDenom) external onlyBondingManager whenSystemNotPaused returns (uint256) {
+        // Compute and mint fraction of mintable tokens to include in reward
+        uint256 mintAmount = MathUtils.percOf(currentMintableTokens, _fracNum, _fracDenom);
+        // Update amount of minted tokens for round
+        currentMintedTokens = currentMintedTokens.add(mintAmount);
+        // Minted tokens must not exceed mintable tokens
+        require(currentMintedTokens <= currentMintableTokens);
+        // Mint new tokens
+        livepeerToken().mint(this, mintAmount);
+
+        // Reward = minted tokens
+        return mintAmount;
+    }
+
+    /**
+     * @dev Transfer tokens to a receipient. Only callable by BondingManager - always trusts BondingManager
+     * @param _to Recipient address
+     * @param _amount Amount of tokens
+     */
+    function trustedTransferTokens(address _to, uint256 _amount) external onlyBondingManager whenSystemNotPaused {
+        livepeerToken().transfer(_to, _amount);
+    }
+
+    /**
+     * @dev Burn tokens. Only callable by BondingManager - always trusts BondingManager
+     * @param _amount Amount of tokens to burn
+     */
+    function trustedBurnTokens(uint256 _amount) external onlyBondingManager whenSystemNotPaused {
+        livepeerToken().burn(_amount);
+    }
+
+    /**
+     * @dev Withdraw ETH to a recipient. Only callable by BondingManager or JobsManager - always trusts these two contracts
+     * @param _to Recipient address
+     * @param _amount Amount of ETH
+     */
+    function trustedWithdrawETH(address _to, uint256 _amount) external onlyBondingManagerOrJobsManager whenSystemNotPaused {
+        _to.transfer(_amount);
+    }
+
+    /**
+     * @dev Deposit ETH to this contract. Only callable by the currently registered Minter or JobsManager
+     */
+    function depositETH() external payable onlyMinterOrJobsManager whenSystemNotPaused returns (bool) {
+        return true;
+    }
+
+    /**
+     * @dev Set inflation and mintable tokens for the round. Only callable by the RoundsManager
+     */
+    function setCurrentRewardTokens() external onlyRoundsManager whenSystemNotPaused {
+        setInflation();
+
+        // Set mintable tokens based upon current inflation and current total token supply
+        currentMintableTokens = MathUtils.percOf(livepeerToken().totalSupply(), inflation);
+        currentMintedTokens = 0;
+
+        SetCurrentRewardTokens(currentMintableTokens, inflation);
+    }
+
+    /**
+     * @dev Returns Controller interface
+     */
+    function getController() public view returns (IController) {
+        return controller;
+    }
+
+    /**
+     * @dev Set inflation based upon the current bonding rate and target bonding rate
+     */
+    function setInflation() internal {
+        uint256 currentBondingRate = 0;
+        uint256 totalSupply = livepeerToken().totalSupply();
+
+        if (totalSupply > 0) {
+            uint256 totalBonded = bondingManager().getTotalBonded();
+            currentBondingRate = MathUtils.percPoints(totalBonded, totalSupply);
+        }
+
+        if (currentBondingRate < targetBondingRate) {
+            // Bonding rate is below the target - increase inflation
+            inflation = inflation.add(inflationChange);
+        } else if (currentBondingRate > targetBondingRate) {
+            // Bonding rate is above the target - decrease inflation
+            if (inflationChange > inflation) {
+                inflation = 0;
+            } else {
+                inflation = inflation.sub(inflationChange);
+            }
+        }
+    }
+
+    /**
+     * @dev Returns LivepeerToken interface
+     */
+    function livepeerToken() internal view returns (ILivepeerToken) {
+        return ILivepeerToken(controller.getContract(keccak256("LivepeerToken")));
+    }
+
+    /**
+     * @dev Returns BondingManager interface
+     */
+    function bondingManager() internal view returns (IBondingManager) {
+        return IBondingManager(controller.getContract(keccak256("BondingManager")));
+    }
 }
