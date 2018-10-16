@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Countdown at 0xb44808b969eb2500223b64053acd1d0cf1cba675
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Countdown at 0x0f1cd99bea68f0d994064395d2b45315b185882e
 */
 pragma solidity ^0.4.18;
 
@@ -43,16 +43,14 @@ contract Countdown {
     function Win() public {
         require(msg.sender == winner);
         require(now > deadline);
-        uint pendingReward = reward;
         reward = 0;
-        winner.transfer(pendingReward);
+        winner.transfer(reward);
     }
     
     function withdrawTips() public {
         // The owner can only withdraw the tips
-        uint pendingTips = tips;
         tips = 0;
-        owner.transfer(pendingTips);
+        owner.transfer(tips);
     }
     
 }
