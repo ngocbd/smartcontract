@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTHCrossFork at 0x9EF2767b5c265cD032a94601203639aBCD9Cb92f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTHCrossFork at 0x47358f526ee4f461e92a48abb23ece47540a2943
 */
 // <ORACLIZE_API>
 /*
@@ -31,7 +31,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-pragma solidity ^0.4.10;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
+pragma solidity ^0.4.16;
 
 contract OraclizeI {
     address public cbAddress;
@@ -1039,19 +1039,23 @@ contract usingOraclize {
 // copyright contact@bytether.com
 
 contract BasicUtility {
-    function stringToUint(string s) internal returns (uint256) {
+
+    function stringToUint(string s) constant internal returns (uint result) {
         bytes memory b = bytes(s);
-        uint256 result = 0;
-        for (uint i = 0; i < b.length; i++) { 
-            if (b[i] >= 48 && b[i] <= 57) {
-                result = result * 10 + (uint256(b[i]) - 48); 
+        uint i;
+        result = 0;
+        for (i = 0; i < b.length; i++) {
+            uint c = uint(b[i]);
+            if (c >= 48 && c <= 57) {
+                result = result * 10 + (c - 48);
             }
         }
-        return result;
     }
 
-    function checkValidBitcoinAddress(string bitcoinAddress) internal returns (bool) {
+    function checkValidBitcoinAddress(string bitcoinAddress) constant internal returns (bool) {
         bytes memory bitcoinAddressBytes = bytes(bitcoinAddress);
+        if (bitcoinAddressBytes.length < 20)
+            return false;
         for(uint i = 0; i < bitcoinAddressBytes.length; i++) {
             if (bitcoinAddressBytes[i] < 48 
             || (bitcoinAddressBytes[i] > 57 && bitcoinAddressBytes[i] < 65)
@@ -1062,7 +1066,27 @@ contract BasicUtility {
         return true;
     }
 
-    function addressToString(address x) internal returns (string) {
+    function checkValidBase64(string sig) constant internal returns (bool) {
+        bytes memory sigBytes = bytes(sig);
+        for(uint i = 0; i < sigBytes.length; i++) {
+            if (sigBytes[i] == 43)
+                continue;
+            if (sigBytes[i] == 47)
+                continue;
+            if (sigBytes[i] == 61)
+                continue;
+            if (sigBytes[i] >= 48 && sigBytes[i] <= 57)
+                continue;
+            if (sigBytes[i] >= 65 && sigBytes[i] <= 90)
+                continue;
+            if (sigBytes[i] >= 97 && sigBytes[i] <= 122)
+                continue;
+            return false;
+        }
+        return true;
+    }
+
+    function addressToString(address x) constant internal returns (string) {
         bytes memory s = new bytes(40);
         for (uint i = 0; i < 20; i++) {
             byte b = byte(uint8(uint(x) / (2**(8*(19 - i)))));
@@ -1074,7 +1098,7 @@ contract BasicUtility {
         return string(s);
     }
     
-    function getChar(byte b) internal returns (byte c) {
+    function getChar(byte b) constant internal returns (byte c) {
         if (b < 10) return byte(uint8(b) + 0x30);
         else return byte(uint8(b) + 0x57);
     }
@@ -1151,8 +1175,8 @@ interface CrossForkCallback {
     function callbackCrossFork(uint64 _requestId, uint256 _amount, bytes32 _referCodeHash) public;
 }
 
-interface BytetherOV {
-    function GetOwnershipByAddress(string _btcAddress, address _etherAddress) constant public returns(uint, bytes32);
+interface BytetherOVI {
+    function GetOwnership(string _btcAddress) constant public returns(address, bytes32);
 }
 
 contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossForkDistribution {
@@ -1161,7 +1185,7 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
         SUCCESS,
         NOT_ENOUGH_BALANCE,
         INVALID_QUERY,
-        INVALID_VERIFY_CODE,
+        INVALID_OV_VERIFY,
         INVALID_BITCOIN_ADDRESS
     }
 
@@ -1201,6 +1225,21 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
     
     
     // public
+    
+    function extractBTHAmount(string result) constant public returns(uint256) {
+        // result format v=xxxx
+        uint256 value = 0;
+        bytes memory b = bytes(result);
+        // verify correct format
+        if (b[0] != 118 || b[1] != 61)
+            return value;
+        for (uint i = 2; i < b.length; i++) { 
+            if (b[i] >= 48 && b[i] <= 57) {
+                value = value * 10 + (uint256(b[i]) - 48); 
+            }
+        }
+        return value;
+    }
 
     function __callback(bytes32 _queryId, string _result) public {
         if (msg.sender != oraclize_cbAddress()) {
@@ -1214,7 +1253,7 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
             return;
         }
 
-        uint256 amount = stringToUint(_result);
+        uint256 amount = extractBTHAmount(_result);
         CrossForkCallback crossfork = CrossForkCallback(info.sender);
         crossfork.callbackCrossFork(info.requestId, amount, info.referCodeHash);
         LogReceiveQuery(_queryId, info.requestId, amount, QueryResultCode.SUCCESS);
@@ -1232,13 +1271,13 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
             return;
         }
 
-        BytetherOV bytetherOV = BytetherOV(bytetherOVAddress);
-        uint verifyCode;
+        BytetherOVI bytetherOV = BytetherOVI(bytetherOVAddress);
+        address verifiedReceiver;
         bytes32 referCodeHash;
-        (verifyCode, referCodeHash) = bytetherOV.GetOwnershipByAddress(_btcAddress, _receiver);
+        (verifiedReceiver, referCodeHash) = bytetherOV.GetOwnership(_btcAddress);
 
-        if (verifyCode == 0) {
-            LogTriggerQuery(btcAddressHash, _requestId, _receiver, QueryResultCode.INVALID_VERIFY_CODE);
+        if (verifiedReceiver != _receiver) {
+            LogTriggerQuery(btcAddressHash, _requestId, _receiver, QueryResultCode.INVALID_OV_VERIFY);
             return;
         }
 
@@ -1266,7 +1305,3 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
         LogTriggerQuery(btcAddressHash, _requestId, _receiver, QueryResultCode.SUCCESS);
     }
 }
-
-
-// Contract ABI
-// [{"constant":true,"inputs":[],"name":"verifyUrl","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_queryId","type":"bytes32"},{"name":"_result","type":"string"}],"name":"__callback","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"myid","type":"bytes32"},{"name":"result","type":"string"},{"name":"proof","type":"bytes"}],"name":"__callback","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_verifyUrl","type":"string"}],"name":"setVerifyUrl","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_newModerator","type":"address"}],"name":"AddModerator","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"crossForkBlockNumber","outputs":[{"name":"","type":"uint64"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_requestId","type":"uint64"},{"name":"_btcAddress","type":"string"},{"name":"_receiver","type":"address"}],"name":"getDistributedAmount","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_bytetherOVAddress","type":"address"}],"name":"setBytetherOVAddress","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"bytetherOVAddress","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_oldModerator","type":"address"}],"name":"RemoveModerator","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"moderators","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"Kill","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_blockNumber","type":"uint64"}],"name":"setCrossForkBlockNumber","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_newOwner","type":"address"}],"name":"ChangeOwner","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[{"name":"_bytetherOVAddress","type":"address"},{"name":"_verifyUrl","type":"string"},{"name":"_crossForkBlockNumber","type":"uint64"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"queryId","type":"bytes32"},{"indexed":false,"name":"requestId","type":"uint64"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"resultCode","type":"uint8"}],"name":"LogReceiveQuery","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"btcAddressHash","type":"bytes32"},{"indexed":false,"name":"requestId","type":"uint64"},{"indexed":false,"name":"receiver","type":"address"},{"indexed":false,"name":"resultCode","type":"uint8"}],"name":"LogTriggerQuery","type":"event"}]
