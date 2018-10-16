@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldHotelOrganization at 0x9ceC06600AC633819a448fa73e40FF6032151c3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldHotelOrganization at 0x7B7BA265B15B562151724be322fB0F7135e2EB0d
 */
 pragma solidity ^0.4.10;
 
