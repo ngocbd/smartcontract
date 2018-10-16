@@ -1,12 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSpace at 0x61aa8d00e0ec664a0c0e8d650a613d9de2b6c1f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSpace at 0xefab2a9292a10036006e7a68535724ade16a65ca
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.19;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -15,9 +11,7 @@ library SafeMath {
   }
 
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
@@ -33,117 +27,267 @@ library SafeMath {
   }
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+contract ForeignToken {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
 }
 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20 {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
-
-  /**
-   * @dev Gets the balance of the specified address.
-   * @param _owner The address to query the the balance of.
-   * @return An uint256 representing the amount owned by the passed address.
-   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-  /**
-   * @dev transfer token for a specified address
-   * @param _to The address to transfer to.
-   * @param _value The amount to be transferred.
-   */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    uint256 _allowance = allowed[_from][msg.sender];
-    require(_to != address(0));
-    require (_value <= _allowance);
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract EOSpace is StandardToken {
-  string public constant name = "EOSpace";
-  string public constant symbol = "EOP";
-  uint8 public constant decimals = 18;
-  mapping(address => bool) public claimed;
-  event Claim(address indexed from);
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-  constructor() public {
-    totalSupply = 10000000000e18;
-    balances[msg.sender] = totalSupply;
-  }
+interface Token { 
+    function distr(address _to, uint256 _value) public returns (bool);
+    function totalSupply() constant public returns (uint256 supply);
+    function balanceOf(address _owner) constant public returns (uint256 balance);
+}
 
-  function claim() public returns (bool) {
-    claimed[msg.sender] = true;
-    emit Claim(msg.sender);
-    return true;
-  }
+interface EOSToken {
+  function balanceOf( address who ) constant returns (uint value);
+}
+
+contract EOSpace is ERC20 {
+    
+    using SafeMath for uint256;
+    address owner = msg.sender;
+    address EOSContract = 0x86fa049857e0209aa7d9e616f7eb3b3b78ecfdb0;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => bool) public blacklist;
+
+    string public constant name = "EOSpace";
+    string public constant symbol = "EOP";
+    uint public constant decimals = 18;
+    
+    uint256 public totalSupply = 10000000000e18;
+    uint256 public totalDistributed = 0;
+    uint256 public totalRemaining = totalSupply.sub(totalDistributed);
+    uint256 public value;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+    
+    event Burn(address indexed burner, uint256 value);
+
+    bool public distributionFinished = false;
+    
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    modifier onlyWhitelist() {
+        require(blacklist[msg.sender] == false);
+        _;
+    }
+    
+    function EOSpace () public {
+        owner = msg.sender;
+        value = 1000e18;
+        distr(owner, 9000000000e18);
+    }
+    
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+    
+    function enableWhitelist(address[] addresses) onlyOwner public {
+        for (uint i = 0; i < addresses.length; i++) {
+            blacklist[addresses[i]] = false;
+        }
+    }
+
+    function disableWhitelist(address[] addresses) onlyOwner public {
+        for (uint i = 0; i < addresses.length; i++) {
+            blacklist[addresses[i]] = true;
+        }
+    }
+
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        DistrFinished();
+        return true;
+    }
+    
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        totalDistributed = totalDistributed.add(_amount);
+        totalRemaining = totalRemaining.sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Distr(_to, _amount);
+        Transfer(address(0), _to, _amount);
+        return true;
+        
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+    }
+    
+    function airdrop(address[] addresses) onlyOwner canDistr public {
+        
+        require(addresses.length <= 255);
+        require(value <= totalRemaining);
+        
+        for (uint i = 0; i < addresses.length; i++) {
+            require(value <= totalRemaining);
+            distr(addresses[i], value);
+        }
+	
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+    }
+    
+    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
+        
+        require(addresses.length <= 255);
+        require(amount <= totalRemaining);
+        
+        for (uint i = 0; i < addresses.length; i++) {
+            require(amount <= totalRemaining);
+            distr(addresses[i], amount);
+        }
+	
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+    }
+    
+    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
+
+        require(addresses.length <= 255);
+        require(addresses.length == amounts.length);
+        
+        for (uint8 i = 0; i < addresses.length; i++) {
+            require(amounts[i] <= totalRemaining);
+            distr(addresses[i], amounts[i]);
+            
+            if (totalDistributed >= totalSupply) {
+                distributionFinished = true;
+            }
+        }
+    }
+    
+    function () external payable {
+      getTokens();
+    }
+    
+    function getTokens() payable canDistr onlyWhitelist public {
+        if (value > totalRemaining) {
+          value = totalRemaining;
+        }
+        
+        require(value <= totalRemaining);
+        
+        address investor = msg.sender;
+        EOSToken token = EOSToken(EOSContract);
+        uint256 toGive = token.balanceOf(investor);
+        require(toGive <= totalRemaining);
+        distr(investor, toGive);
+
+        if (toGive > 0) {
+          blacklist[investor] = true;
+        }
+
+        if (totalDistributed >= totalSupply) {
+          distributionFinished = true;
+        }
+
+        value = value.div(100000).mul(99999);
+    }
+
+    function balanceOf(address _owner) constant public returns (uint256) {
+	    return balances[_owner];
+    }
+
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
+    }
+    
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Transfer(msg.sender, _to, _amount);
+        return true;
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+
+        require(_to != address(0));
+        require(_amount <= balances[_from]);
+        require(_amount <= allowed[_from][msg.sender]);
+        
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Transfer(_from, _to, _amount);
+        return true;
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+    
+    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
+        ForeignToken t = ForeignToken(tokenAddress);
+        uint bal = t.balanceOf(who);
+        return bal;
+    }
+    
+    function withdraw() onlyOwner public {
+        uint256 etherBalance = this.balance;
+        owner.transfer(etherBalance);
+    }
+    
+    function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        Burn(burner, _value);
+    }
+    
+    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
+        ForeignToken token = ForeignToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
 }
