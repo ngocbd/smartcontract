@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMoney at 0xb6cd24886ec3474e567436cc0b92cb42511785ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMoney at 0xef95c8da8719799ab2fd46cd065ac32fbbc9f357
 */
 pragma solidity 0.4.15;
 
@@ -195,8 +195,6 @@ contract EtherMoney is StandardToken, Ownable
 {
     string public name = "ETHER MONEY";
     string public symbol = "ETM";
-
-    uint public decimals = 8;
 
     uint private INITIAL_SUPPLY = 18 * 10**16;    //  1 800 000 000 or 1.8 Billions
     
