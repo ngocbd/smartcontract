@@ -1,7 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAddressLottery at 0xd1915A2bCC4B77794d64c4e483E43444193373Fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAddressLottery at 0x0d83102ec81853f3334Bd2b9E9fcCE7adf96ccC7
 */
-pragma solidity ^0.4.19;
 /*
  * This is a distributed lottery that chooses random addresses as lucky addresses. If these
  * participate, they get the jackpot: 1.9 times the price of their bet.
