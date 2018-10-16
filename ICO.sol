@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x44a16f9f7c67bafcbeb5d04a5d1f6248b1222ff7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xdd6022077e43f26da29821df962527157efcf32e
 */
 pragma solidity ^0.4.18;
 /**
@@ -9,9 +9,9 @@ pragma solidity ^0.4.18;
 */
 
 /**
- * @title SafeMath by OpenZeppelin
- * @dev Math operations with safety checks that throw on error
- */
+* @title SafeMath by OpenZeppelin
+* @dev Math operations with safety checks that throw on error
+*/
 library SafeMath {
 
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -21,9 +21,10 @@ library SafeMath {
     }
 
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
+    uint256 c = a / b;
+    return c;
     }
+
 
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
@@ -32,39 +33,34 @@ library SafeMath {
     }
 }
 
-contract DateTime {
-
-    function toTimestamp(uint16 year, uint8 month, uint8 day) constant returns (uint timestamp);
-
-}
-
 contract token {
 
-    function balanceOf(address _owner) public constant returns (uint256 value);
+    function balanceOf(address _owner) public constant returns (uint256 balance);
     function transfer(address _to, uint256 _value) public returns (bool success);
 
     }
 
 contract ICO {
     using SafeMath for uint256;
-    //This ico have 5 states
+    //This ico have 4 stages
     enum State {
-        ico,
+        EarlyPreSale,
+        PreSale,
+        Crowdsale,
         Successful
     }
     //public variables
-    State public state = State.ico; //Set initial stage
+    State public state = State.EarlyPreSale; //Set initial stage
     uint256 public startTime = now; //block-time when it was deployed
-    uint256 public rate = 1250;
+    uint256[2] public price = [6667,5000]; //Price rates for base calculation
     uint256 public totalRaised; //eth in wei
-    uint256 public totalDistributed; //tokens
-    uint256 public ICOdeadline;
-    uint256 public completedAt;
-    token public tokenReward;
-    address public creator;
+    uint256 public totalDistributed; //tokens distributed
+    uint256 public stageDistributed; //tokens distributed on the actual stage
+    uint256 public completedAt; //Time stamp when the ico finish
+    token public tokenReward; //Address of the valit token used as reward
+    address public creator; //Address of the contract deployer
+    string public campaignUrl; //Web site of the campaing
     string public version = '1';
-
-    DateTime dateTimeContract = DateTime(0x1a6184CD4C5Bea62B0116de7962EE7315B7bcBce);
 
     //events for log
     event LogFundingReceived(address _addr, uint _amount, uint _currentTotal);
@@ -72,8 +68,9 @@ contract ICO {
     event LogFundingSuccessful(uint _totalRaised);
     event LogFunderInitialized(
         address _creator,
-        uint256 _ICOdeadline);
+        string _url);
     event LogContributorsPayout(address _addr, uint _amount);
+    event StageDistributed(State _stage, uint256 _stageDistributed);
 
     modifier notFinished() {
         require(state != State.Successful);
@@ -81,17 +78,18 @@ contract ICO {
     }
     /**
     * @notice ICO constructor
+    * @param _campaignUrl is the ICO _url
     * @param _addressOfTokenUsedAsReward is the token totalDistributed
     */
-    function ICO (token _addressOfTokenUsedAsReward ) public {
-
+    function ICO (string _campaignUrl, token _addressOfTokenUsedAsReward) public {
         creator = msg.sender;
-        tokenReward = _addressOfTokenUsedAsReward;
-        ICOdeadline = dateTimeContract.toTimestamp(2018,5,15);
+        campaignUrl = _campaignUrl;
+        tokenReward = token(_addressOfTokenUsedAsReward);
 
         LogFunderInitialized(
             creator,
-            ICOdeadline);
+            campaignUrl
+            );
     }
 
     /**
@@ -99,53 +97,40 @@ contract ICO {
     */
     function contribute() public notFinished payable {
 
-        require(msg.value > (10**10));
-        
-        uint256 tokenBought = 0;
+        require(msg.value >= 100 finney);
 
-        totalRaised = totalRaised.add(msg.value);
+        uint256 tokenBought; //Variable to store amount of tokens bought
+        totalRaised = totalRaised.add(msg.value); //Save the total eth totalRaised (in wei)
 
-        tokenBought = msg.value.div(10 ** 10);//token is 8 decimals, eth 18
-        tokenBought = tokenBought.mul(rate);
+        if (state == State.EarlyPreSale){
 
-        //Bonuses depends on stage
-        if (now < dateTimeContract.toTimestamp(2018,2,15)){//presale
+            tokenBought = msg.value.mul(price[0]); //Base price rate
+            tokenBought = tokenBought.mul(12); // 12/10 = 1.2
+            tokenBought = tokenBought.div(10); // 1.2 => 100% + 20% Bonus               
+            
+            require(stageDistributed.add(tokenBought) <= 60000000 * (10 ** 18)); //Cannot exceed 60.000.000 distributed
 
-            tokenBought = tokenBought.mul(15);
-            tokenBought = tokenBought.div(10); //15/10 = 1.5 = 150%
-            require(totalDistributed.add(tokenBought) <= 100000000 * (10 ** 8));//presale limit
-        
-        } else if (now < dateTimeContract.toTimestamp(2018,2,28)){
+        } else if (state == State.PreSale){
 
-            tokenBought = tokenBought.mul(14);
-            tokenBought = tokenBought.div(10); //14/10 = 1.4 = 140%
-        
-        } else if (now < dateTimeContract.toTimestamp(2018,3,15)){
+            tokenBought = msg.value.mul(price[0]); //Base price rate
+            tokenBought = tokenBought.mul(11); // 11/10 = 1.1
+            tokenBought = tokenBought.div(10); // 1.1 => 100% + 10% Bonus               
+            
+            require(stageDistributed.add(tokenBought) <= 60000000 * (10 ** 18)); //Cannot exceed 60.000.000 distributed
 
-            tokenBought = tokenBought.mul(13);
-            tokenBought = tokenBought.div(10); //13/10 = 1.3 = 130%
-        
-        } else if (now < dateTimeContract.toTimestamp(2018,3,31)){
+        } else if (state == State.Crowdsale){
 
-            tokenBought = tokenBought.mul(12);
-            tokenBought = tokenBought.div(10); //12/10 = 1.2 = 120%
-        
-        } else if (now < dateTimeContract.toTimestamp(2018,4,30)){
+            tokenBought = msg.value.mul(price[1]); //Base price rate
 
-            tokenBought = tokenBought.mul(11);
-            tokenBought = tokenBought.div(10); //11/10 = 1.1 = 110%
-        
-        } else if (now < dateTimeContract.toTimestamp(2018,5,15)){
+            require(stageDistributed.add(tokenBought) <= 80000000 * (10 ** 18)); //Cannot exceed 80.000.000 distributed
 
-            tokenBought = tokenBought.mul(105);
-            tokenBought = tokenBought.div(100); //105/10 = 1.05 = 105%
-        
         }
 
         totalDistributed = totalDistributed.add(tokenBought);
+        stageDistributed = stageDistributed.add(tokenBought);
         
         tokenReward.transfer(msg.sender, tokenBought);
-
+        
         LogFundingReceived(msg.sender, msg.value, totalRaised);
         LogContributorsPayout(msg.sender, tokenBought);
         
@@ -156,14 +141,33 @@ contract ICO {
     * @notice check status
     */
     function checkIfFundingCompleteOrExpired() public {
+        
+        if(state!=State.Successful){ //if we are on ICO period and its not Successful
+            
+            if(state == State.EarlyPreSale && now > startTime.add(8 days)){
 
-        if(now > ICOdeadline && state!=State.Successful ) { //if we reach ico deadline and its not Successful yet
+                StageDistributed(state,stageDistributed);
 
-            state = State.Successful; //ico becomes Successful
-            completedAt = now; //ICO is complete
+                state = State.PreSale;
+                stageDistributed = 0;
+            
+            } else if(state == State.PreSale && now > startTime.add(15 days)){
 
-            LogFundingSuccessful(totalRaised); //we log the finish
-            finished(); //and execute closure
+                StageDistributed(state,stageDistributed);
+
+                state = State.Crowdsale;
+                stageDistributed = 0;
+
+            } else if(state == State.Crowdsale && now > startTime.add(36 days)){
+
+                StageDistributed(state,stageDistributed);
+
+                state = State.Successful; //ico becomes Successful
+                completedAt = now; //ICO is complete
+                LogFundingSuccessful(totalRaised); //we log the finish
+                finished(); //and execute closure
+            
+            }
         }
     }
 
@@ -171,7 +175,6 @@ contract ICO {
     * @notice closure handler
     */
     function finished() public { //When finished eth are transfered to creator
-
         require(state == State.Successful);
         uint256 remanent = tokenReward.balanceOf(this);
 
@@ -180,16 +183,15 @@ contract ICO {
 
         LogBeneficiaryPaid(creator);
         LogContributorsPayout(creator, remanent);
-
     }
 
-    /*
-    * @dev Direct payments handle
+    /**
+    * @notice Function to handle eth transfers
+    * @dev BEWARE: if a call to this functions doesn't have
+    * enought gas, transaction could not be finished
     */
 
     function () public payable {
-        
         contribute();
-
     }
 }
