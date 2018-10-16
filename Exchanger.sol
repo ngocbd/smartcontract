@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchanger at 0x645170008170d601ff71b7dfc8cf871b4f7c2bbe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchanger at 0xb878aa16d7c687e5334f77462b97af129cf67749
 */
 pragma solidity ^0.4.18;
 
@@ -13,19 +13,19 @@ library SafeMath {
     assert(a == 0 || c / a == b);
     return c;
   }
- 
+
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
- 
+
   function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
- 
+
   function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -46,31 +46,17 @@ contract Exchanger {
   // Decimals 6
   ERC20Interface usdt = ERC20Interface(0xdac17f958d2ee523a2206206994597c13d831ec7);
 
-  address creator = 0x34f1e87e890b5683ef7b011b16055113c7194c35;
-  uint feeDAI = 5000000000000000;
-  uint feeUSDT = 5000;
-
   function getDAI(uint _amountInDollars) public returns (bool) {
     // Must first call approve for the usdt contract
     usdt.transferFrom(msg.sender, this, _amountInDollars * (10 ** 6));
-    dai.transfer(msg.sender, _amountInDollars.mul(((10 ** 18) - feeDAI)));
+    dai.transfer(msg.sender, _amountInDollars.mul(((10 ** 18))));
     return true;
   }
 
   function getUSDT(uint _amountInDollars) public returns (bool) {
     // Must first call approve for the dai contract
     dai.transferFrom(msg.sender, this, _amountInDollars * (10 ** 18));
-    usdt.transfer(msg.sender, _amountInDollars.mul(((10 ** 6) - feeUSDT)));
-    return true;
-  }
-
-  function withdrawEquity(uint _amountInDollars, bool isUSDT) public returns (bool) {
-    require(msg.sender == creator);
-    if(isUSDT) {
-      usdt.transfer(creator, _amountInDollars * (10 ** 6));
-    } else {
-      dai.transfer(creator, _amountInDollars * (10 ** 18));
-    }
+    usdt.transfer(msg.sender, _amountInDollars.mul(((10 ** 6))));
     return true;
   }
 }
