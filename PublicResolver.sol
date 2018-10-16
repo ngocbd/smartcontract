@@ -1,32 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicResolver at 0xd784B7429ed0b2D0Ae9624bCFF1DE8D086f13Aa9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicResolver at 0xf551117f5c93867bfc486c73b28b1670d241415f
 */
 pragma solidity ^0.4.18;
-
-interface ENS {
-
-    // Logged when the owner of a node assigns a new owner to a subnode.
-    event NewOwner(bytes32 indexed node, bytes32 indexed label, address owner);
-
-    // Logged when the owner of a node transfers ownership to a new account.
-    event Transfer(bytes32 indexed node, address owner);
-
-    // Logged when the resolver for a node changes.
-    event NewResolver(bytes32 indexed node, address resolver);
-
-    // Logged when the TTL of a node changes
-    event NewTTL(bytes32 indexed node, uint64 ttl);
-
-
-    function setSubnodeOwner(bytes32 node, bytes32 label, address owner) external returns (bytes32);
-    function setResolver(bytes32 node, address resolver) external;
-    function setOwner(bytes32 node, address owner) external;
-    function setTTL(bytes32 node, uint64 ttl) external;
-    function owner(bytes32 node) external view returns (address);
-    function resolver(bytes32 node) external view returns (address);
-    function ttl(bytes32 node) external view returns (uint64);
-}
-
 
 /**
  * A simple resolver anyone can use; only allows the owner of a node to set its
@@ -41,6 +16,7 @@ contract PublicResolver {
     bytes4 constant ABI_INTERFACE_ID = 0x2203ab56;
     bytes4 constant PUBKEY_INTERFACE_ID = 0xc8690233;
     bytes4 constant TEXT_INTERFACE_ID = 0x59d1d43c;
+    bytes4 constant MULTIHASH_INTERFACE_ID = 0xe89401a1;
 
     event AddrChanged(bytes32 indexed node, address a);
     event ContentChanged(bytes32 indexed node, bytes32 hash);
@@ -48,6 +24,7 @@ contract PublicResolver {
     event ABIChanged(bytes32 indexed node, uint256 indexed contentType);
     event PubkeyChanged(bytes32 indexed node, bytes32 x, bytes32 y);
     event TextChanged(bytes32 indexed node, string indexedKey, string key);
+    event MultihashChanged(bytes32 indexed node, bytes hash);
 
     struct PublicKey {
         bytes32 x;
@@ -61,6 +38,7 @@ contract PublicResolver {
         PublicKey pubkey;
         mapping(string=>string) text;
         mapping(uint256=>bytes) abis;
+        bytes multihash;
     }
 
     ENS ens;
@@ -88,7 +66,7 @@ contract PublicResolver {
      */
     function setAddr(bytes32 node, address addr) public only_owner(node) {
         records[node].addr = addr;
-        emit AddrChanged(node, addr);
+        AddrChanged(node, addr);
     }
 
     /**
@@ -101,9 +79,20 @@ contract PublicResolver {
      */
     function setContent(bytes32 node, bytes32 hash) public only_owner(node) {
         records[node].content = hash;
-        emit ContentChanged(node, hash);
+        ContentChanged(node, hash);
     }
 
+    /**
+     * Sets the multihash associated with an ENS node.
+     * May only be called by the owner of that node in the ENS registry.
+     * @param node The node to update.
+     * @param hash The multihash to set
+     */
+    function setMultihash(bytes32 node, bytes hash) public only_owner(node) {
+        records[node].multihash = hash;
+        MultihashChanged(node, hash);
+    }
+    
     /**
      * Sets the name associated with an ENS node, for reverse records.
      * May only be called by the owner of that node in the ENS registry.
@@ -112,7 +101,7 @@ contract PublicResolver {
      */
     function setName(bytes32 node, string name) public only_owner(node) {
         records[node].name = name;
-        emit NameChanged(node, name);
+        NameChanged(node, name);
     }
 
     /**
@@ -126,11 +115,11 @@ contract PublicResolver {
     function setABI(bytes32 node, uint256 contentType, bytes data) public only_owner(node) {
         // Content types must be powers of 2
         require(((contentType - 1) & contentType) == 0);
-
+        
         records[node].abis[contentType] = data;
-        emit ABIChanged(node, contentType);
+        ABIChanged(node, contentType);
     }
-
+    
     /**
      * Sets the SECP256k1 public key associated with an ENS node.
      * @param node The ENS node to query
@@ -139,7 +128,7 @@ contract PublicResolver {
      */
     function setPubkey(bytes32 node, bytes32 x, bytes32 y) public only_owner(node) {
         records[node].pubkey = PublicKey(x, y);
-        emit PubkeyChanged(node, x, y);
+        PubkeyChanged(node, x, y);
     }
 
     /**
@@ -151,7 +140,7 @@ contract PublicResolver {
      */
     function setText(bytes32 node, string key, string value) public only_owner(node) {
         records[node].text[key] = value;
-        emit TextChanged(node, key, key);
+        TextChanged(node, key, key);
     }
 
     /**
@@ -215,6 +204,15 @@ contract PublicResolver {
     }
 
     /**
+     * Returns the multihash associated with an ENS node.
+     * @param node The ENS node to query.
+     * @return The associated multihash.
+     */
+    function multihash(bytes32 node) public view returns (bytes) {
+        return records[node].multihash;
+    }
+
+    /**
      * Returns the address associated with an ENS node.
      * @param node The ENS node to query.
      * @return The associated address.
@@ -235,6 +233,34 @@ contract PublicResolver {
         interfaceID == ABI_INTERFACE_ID ||
         interfaceID == PUBKEY_INTERFACE_ID ||
         interfaceID == TEXT_INTERFACE_ID ||
+        interfaceID == MULTIHASH_INTERFACE_ID ||
         interfaceID == INTERFACE_META_ID;
     }
+}
+
+pragma solidity ^0.4.18;
+
+interface ENS {
+
+    // Logged when the owner of a node assigns a new owner to a subnode.
+    event NewOwner(bytes32 indexed node, bytes32 indexed label, address owner);
+
+    // Logged when the owner of a node transfers ownership to a new account.
+    event Transfer(bytes32 indexed node, address owner);
+
+    // Logged when the resolver for a node changes.
+    event NewResolver(bytes32 indexed node, address resolver);
+
+    // Logged when the TTL of a node changes
+    event NewTTL(bytes32 indexed node, uint64 ttl);
+
+
+    function setSubnodeOwner(bytes32 node, bytes32 label, address owner) public;
+    function setResolver(bytes32 node, address resolver) public;
+    function setOwner(bytes32 node, address owner) public;
+    function setTTL(bytes32 node, uint64 ttl) public;
+    function owner(bytes32 node) public view returns (address);
+    function resolver(bytes32 node) public view returns (address);
+    function ttl(bytes32 node) public view returns (uint64);
+
 }
