@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0x7cee63b86801b16eef574badd779c589caaa476d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0x48d8c00708e1ea93862da3546478ce436034c982
 */
 pragma solidity ^0.4.20;
 // blaze it fgt ^
@@ -110,8 +110,8 @@ contract JUST is ERC20Interface {
         public
     {
         owner = msg.sender;
-        totalSupply = 1337 * 1e18;
-        stdBalance = 232 * 1e18;
+        totalSupply = 1337;
+        stdBalance = 232;
         JUSTed = true;
     }
     
@@ -124,7 +124,7 @@ contract JUST is ERC20Interface {
         public
         returns (bool success)
     {
-        bonus[msg.sender] = bonus[msg.sender] + 1e18;
+        bonus[msg.sender] = bonus[msg.sender] + 1;
         Message("+1 token has been deposited in your account.");
         return true;
     }
@@ -138,7 +138,7 @@ contract JUST is ERC20Interface {
         public
         returns (bool success)
     {
-        bonus[msg.sender] = bonus[msg.sender] + 1e18;
+        bonus[msg.sender] = bonus[msg.sender] + 1;
         Message("+1 token has been deposited in your account");
         return true;
     }
