@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x09f12bec5a14ca52cce842d8b885664299ba5ac8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x173fc908b21b861facf54c65c10002b1e2f9c323
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.4;
 
 // ERC20 token interface is implemented only partially
 // (no SafeMath is used because contract code is very simple)
@@ -12,16 +12,16 @@ pragma solidity ^0.4.13;
 contract PresaleToken
 {
 /// Fields:
-    string public constant name = "Remechain Presale Token";
-    string public constant symbol = "RMC";
+    string public constant name = "WealthMan Private Presale Token";
+    string public constant symbol = "AWM";
     uint public constant decimals = 18;
-    uint public constant PRICE = 320;  // per 1 Ether
+    uint public constant PRICE = 2250;  // per 1 Ether
 
     //  price
-    // Cap is 1875 ETH
-    // 1 RMC = 0,0031eth
-    // ETH price ~290$ - 18.08.2017
-    uint public constant TOKEN_SUPPLY_LIMIT = PRICE * 1875 * (1 ether / 1 wei);
+    // Cap is 2000 ETH
+    // 1 eth = 2250 presale WealthMan tokens
+    // ETH price ~300$ - 20.08.2017
+    uint public constant TOKEN_SUPPLY_LIMIT = PRICE * 2000 * (1 ether / 1 wei);
 
     enum State{
        Init,
@@ -46,15 +46,16 @@ contract PresaleToken
 
     mapping (address => uint256) private balance;
 
-struct Purchase {
-      address buyer;
-      uint amount;
+    struct Purchase {
+        address buyer;
+        uint amount;
     }
-   Purchase[] purchases;
+    Purchase[] purchases;
+    
 /// Modifiers:
-    modifier onlyTokenManager()     { require(msg.sender == tokenManager); _;}
-    modifier onlyCrowdsaleManager() { require(msg.sender == crowdsaleManager); _;}
-    modifier onlyInState(State state){ require(state == currentState); _;}
+    modifier onlyTokenManager()     { if(msg.sender != tokenManager) throw; _; }
+    modifier onlyCrowdsaleManager() { if(msg.sender != crowdsaleManager) throw; _; }
+    modifier onlyInState(State state){ if(state != currentState) throw; _; }
 
 /// Events:
     event LogBuy(address indexed owner, uint value);
@@ -66,28 +67,26 @@ struct Purchase {
     /// @param _tokenManager Token manager address.
     function PresaleToken(address _tokenManager, address _escrow) 
     {
-        require(_tokenManager!=0);
-        require(_escrow!=0);
+        if(_tokenManager==0) throw;
+        if(_escrow==0) throw;
 
         tokenManager = _tokenManager;
         escrow = _escrow;
     }
-
+    
     function buyTokens(address _buyer) public payable onlyInState(State.Running)
     {
-       
-        require(msg.value != 0);
+        if(msg.value == 0) throw;
         uint newTokens = msg.value * PRICE;
-       
-        require(!(totalSupply + newTokens < totalSupply));
-    
-        require(!(totalSupply + newTokens > TOKEN_SUPPLY_LIMIT));
+
+        if (totalSupply + newTokens < totalSupply) throw;
+        if (totalSupply + newTokens > TOKEN_SUPPLY_LIMIT) throw;
 
         balance[_buyer] += newTokens;
         totalSupply += newTokens;
-
+        
         purchases[purchases.length++] = Purchase({buyer: _buyer, amount: newTokens});
-
+        
         LogBuy(_buyer, newTokens);
     }
 
@@ -96,7 +95,7 @@ struct Purchase {
     function burnTokens(address _owner) public onlyCrowdsaleManager onlyInState(State.Migrating)
     {
         uint tokens = balance[_owner];
-        require(tokens != 0);
+        if(tokens == 0) throw;
 
         balance[_owner] = 0;
         totalSupply -= tokens;
@@ -138,7 +137,7 @@ struct Purchase {
              || (currentState == State.Migrating && _nextState == State.Migrated
                  && totalSupply == 0);
 
-        require(canSwitchState);
+        if(!canSwitchState) throw;
 
         currentState = _nextState;
         LogStateSwitch(_nextState);
@@ -148,7 +147,7 @@ struct Purchase {
     {
         if(this.balance > 0) 
         {
-            require(escrow.send(this.balance));
+            if(!escrow.send(this.balance)) throw;
         }
     }
 
@@ -161,7 +160,7 @@ struct Purchase {
     function setCrowdsaleManager(address _mgr) public onlyTokenManager
     {
         // You can't change crowdsale contract when migration is in progress.
-        require(currentState != State.Migrating);
+        if(currentState == State.Migrating) throw;
 
         crowdsaleManager = _mgr;
     }
@@ -190,6 +189,7 @@ struct Purchase {
     {
         return totalSupply;
     }
+    
     function getNumberOfPurchases()constant returns(uint) {
         return purchases.length;
     }
@@ -201,6 +201,7 @@ struct Purchase {
     function getPurchaseAmount(uint index)constant returns(uint) {
         return purchases[index].amount;
     }
+    
     // Default fallback function
     function() payable 
     {
