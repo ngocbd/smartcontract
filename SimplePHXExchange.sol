@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimplePHXExchange at 0xc4fa0ac077a69934d2db0a37654c31395a05b8c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimplePHXExchange at 0xeb71e963645f1e76f233f70e1b0815e8f089bbc8
 */
 pragma solidity ^0.4.21;
 
@@ -98,7 +98,7 @@ contract SimplePHXExchange {
         // Moving the last entry to the middle of the list
         tknOfferors[ndx] = tknOfferors[tknOfferors.length - 1];
         tknAddrNdx[tknOfferors[tknOfferors.length - 1]] = ndx;
-        tknOfferors.length = tknOfferors.length - 1;
+        delete tknOfferors[tknOfferors.length - 1];
         delete tknAddrNdx[_offeror]; // !important
     }
 
@@ -118,7 +118,7 @@ contract SimplePHXExchange {
         // Moving the last entry to the middle of the list
         ethOfferors[ndx] = ethOfferors[ethOfferors.length - 1];
         ethAddrNdx[ethOfferors[ethOfferors.length - 1]] = ndx;
-        ethOfferors.length = ethOfferors.length - 1;
+        delete ethOfferors[ethOfferors.length - 1];
         delete ethAddrNdx[_offeror]; // !important
     }
     
