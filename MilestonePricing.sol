@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilestonePricing at 0x8373ec893a6364930bcc5f9abc30f2ac6a7bb314
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilestonePricing at 0x90e7ee03b2f325e12b26b9860e5069d582fe557c
 */
 /**
  * Interface for defining crowdsale pricing.
