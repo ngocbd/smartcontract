@@ -1,21 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoyTokenStorage at 0x2ea1ea9419a126673d1bbfdfe82524ea9e6f848b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoyTokenStorage at 0x32a3ee39aa653eddb69c1469c7d3619322599f27
 */
 pragma solidity ^0.4.18;
 // **-----------------------------------------------
-// MOYToken Storage.
+// POWToken Storage.
 // Contract in address PowerLineUpStorage.eth
 // Storage for 30,000,000 in-platform MOYTokens. 
 // Tokens only available through mining, stacking and tournaments in-platform through smart contracts.
 // Proyect must have enough funds provided by PowerLineUp and partners to realease tokens. 
 // This Contract stores the token and keeps record of own funding by PowerLineUp and partners. 
-// For Open Distribution refer to contract at powcrowdsale.eth (will be launched only if own funding of proyect succeeds first.)
+// For Open Distribution refer to contract at powcrowdsale.eth (will be launched after private funding is closed).
 // All operations can be monitored at etherscan.io
 
 // **-----------------------------------------------
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/issues/20
 // -------------------------------------------------
+interface ERC20I {
+    function transfer(address _recipient, uint256 _amount) public returns (bool);
+    function balanceOf(address _holder) public view returns (uint256);
+}
 
 contract owned {
     address public owner;
@@ -70,17 +74,19 @@ contract StandardToken is owned, safeMath {
 
 contract MoyTokenStorage is owned, safeMath {
   // owner/admin & token reward
-  address        public admin = owner;   //admin address
-  StandardToken  public tokenReward;     // address of MoibeTV MOY ERC20 Standard Token.
+  address        public admin = owner;                        //admin address
+  StandardToken  public tokenContract;                        // address of MoibeTV MOY ERC20 Standard Token.
 
-  // loop control and limiters for funding proyect and mineable tokens through presale.
+  // loop control and limiters for funding proyect and mineable tokens through own and private partners funding.
 
-  string  public CurrentStatus = "";                          // current preSale status
-  uint256 public fundingStartBlock;                           // preSale start block#
-  uint256 public fundingEndBlock;                             // preSale end block#
-  uint256 public successAtBlock;                              // the private funding succeed at this block. All in-platform tokens backed.
-  uint256 public amountRaisedInUsd;                           //amount raised in USD for tokens backing. 
-  uint256 public tokensPerEthAtRegularPrice;       
+  string  public CurrentStatus = "";                          // Current Funding status
+  uint256 public fundingStartBlock;                           // Funding start block#
+  uint256 public fundingEndBlock;                             // Funding end block#
+  uint256 public successAtBlock;                              // Private funding succeed at this block. All in-platform tokens backed.
+  uint256 public amountRaisedInUsd;                           // Amount raised in USD for tokens backing. 
+  uint256 public tokensPerEthAtRegularPrice;                  // Regular Price of POW Tokens for Funding calculations.
+  bool public successfulFunding;                              // True if amount neccesary for Funding Stored Tokens is achieved.
+         
   
 
   event Transfer(address indexed from, address indexed to, uint256 value); 
@@ -96,13 +102,13 @@ contract MoyTokenStorage is owned, safeMath {
   }
 
   
-  // setup the PreSale parameters
-  function setupStorage(uint256 _fundingStartBlock, uint256 _fundingEndBlock) public onlyOwner returns (bytes32 response) {
+  // setup the Fundung parameters
+  function setupFunding(uint256 _fundingStartBlock, uint256 _fundingEndBlock, address _tokenContract) public onlyOwner returns (bytes32 response) {
       
       if (msg.sender == admin)
       {
-          tokenReward = StandardToken(0x2a47E3c69DeAAe8dbDc5ee272d1a3C0f9853DcBD);  //MOYtoken Smart Contract.
-          tokensPerEthAtRegularPrice = 1000;                                        //Regular Price 1 ETH = 1000 MOY in-platform.Value to calculate proyect funding.
+          tokenContract = StandardToken(_tokenContract);                              //MOYtoken Smart Contract.
+          tokensPerEthAtRegularPrice = 1000;                                         //Regular Price 1 ETH = 1000 MOY in-platform.Value to calculate proyect funding.
           amountRaisedInUsd = 0;
 
           fundingStartBlock = _fundingStartBlock;
@@ -111,7 +117,7 @@ contract MoyTokenStorage is owned, safeMath {
           CurrentStatus = "Fundind of Proyect in Process";
           //PowerLineUp is funding the proyect to be able to launch the tokens. 
           
-          return "Storage is setup.";
+          return "PreSale is setup.";
 
       } else if (msg.sender != admin) {
           return "Not Authorized";
@@ -127,16 +133,23 @@ contract MoyTokenStorage is owned, safeMath {
           // Funding is the capital invested by PowerLineUp and partners to back the whole proyect and the tokens released.
           amountRaisedInUsd = _amountRaisedInUsd; //amount raised includes development, human resources, infraestructure, design and marketing achieved by the proyect founders and partners.
           successAtBlock = _successAtBlock;       //Block when goal reached.
-                 
+          successfulFunding = true;       
           CurrentStatus = "Funding Successful, in-platform tokens ready to use.";
+
           
           return "All in-platform tokens backed.";
       } else if (msg.sender != admin) {
           return "Not Authorized";
-      } else  {
+      } else {
           return "Setup cannot be changed.";
       }
     }
+
+    function transferTokens(address _tokenAddress, address _recipient) public onlyOwner returns (bool) { 
+       ERC20I e = ERC20I(_tokenAddress);
+       require(e.transfer(_recipient, e.balanceOf(this)));
+       return true;
+   }
 
     // default payable function when sending ether to this contract
     // only owner (PowerLineUp) can send ether to this address.
