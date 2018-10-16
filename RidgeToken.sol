@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RidgeToken at 0x7a4528ac52fa6b27aaa1e0dc1bcfbd7f82976595
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RidgeToken at 0x92949fc876ca4c3617d5f5cf4c7e284020bf07f8
 */
 pragma solidity ^0.4.4;
 
@@ -87,7 +87,7 @@ contract RidgeToken is ridgeContract {
         totalSupply = 15000000000000000000000000;                        
         name = "Ridge";                                  
         decimals = 18;                            
-        symbol = "XRG";                               
+        symbol = "RIDGE";                               
     }
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
