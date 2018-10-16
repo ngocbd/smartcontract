@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Savings at 0xeaa77dcef0ef8b0c5145e0c29021094fcd63bd38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Savings at 0x03a2d646d36ffc371e04e840604c5ba46393dd26
 */
 pragma solidity >=0.4.10;
+
+contract Token {
+	function transferFrom(address from, address to, uint amount) returns(bool);
+	function transfer(address to, uint amount) returns(bool);
+	function balanceOf(address addr) constant returns(uint);
+}
 
 contract Owned {
     address public owner;
@@ -43,13 +49,6 @@ contract IOwned {
     function changeOwner(address);
     function acceptOwnership();
 }
-
-contract Token {
-	function transferFrom(address from, address to, uint amount) returns(bool);
-	function transfer(address to, uint amount) returns(bool);
-	function balanceOf(address addr) constant returns(uint);
-}
-
 
 /**
  * Savings is a contract that releases Tokens on a predefined
