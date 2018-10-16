@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAS at 0xd418Fcb33ae1a41BDC34D257A228Ea9CB7C8fd03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAS at 0xe4339c83ead9aa168d3fbfb43384a13b2df7766e
 */
 pragma solidity ^0.4.11;
-
-
-/*
-  Author: Victor Mezrin  victor@mezrin.com
-*/
 
 
 /* Interface of the ERC223 token */
@@ -184,7 +179,6 @@ contract ERC223Token is ERC223TokenInterface, SafeMath {
 }
 
 
-
 // ERC223 token with the ability for the owner to block any account
 contract DASToken is ERC223Token {
     mapping (address => bool) blockedAccounts;
@@ -250,7 +244,6 @@ contract DASToken is ERC223Token {
         return super.transferFrom(_from, _to, _value);
     }
 }
-
 
 
 contract ABCToken is ERC223Token {
