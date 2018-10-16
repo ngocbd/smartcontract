@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PPBC_API at 0x7b4700f2a2e0765aab00b082613b417cecd0f9f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PPBC_API at 0x50bb21BEFA6c04F0C81a44EDaEA5f11D069791f8
 */
 pragma solidity ^0.4.5;
 
@@ -17,7 +17,7 @@ contract PPBC_API {
         @MC/KC - Refer to instructions at PP Tech Vendor Portal
         
         Abstract: Blockchain Contract API Demo, providing access to 3:5 and 2:5 betting odds 
-        (3:5 for FIRST bet only, 2:5 for consecutive bets)
+        (3:5 for first bet, 2:5 for consecutive bets)
         
    ********************************************************************************/
 
@@ -34,11 +34,11 @@ contract PPBC_API {
 
     /* GetMinimumBet_ether()  ToDo: add doc @MC*/
     /* GetMaximumBet_ether()  ToDo: add doc @MC*/
-    // Minimum/Maximum Bet (in ETHER) that can be placed: 1 ether - 10% of available Ether Winning Pool       
-    function GetMinimumBet_Ether() constant returns (uint256){ return 1;   }
-    function GetMaximumBet_Ether() constant returns (uint256){ return GetMaximumBet() / 1000000000000000000;  } 
-    function GetMinimumBet() returns (uint256) { return 1 ether; }   // Minimum Bet that can be placed: 1 ether       
-    function GetMaximumBet() returns (uint256) { return this.balance/10; }   // Maximum Bet that can be placed: 10% of available Ether Winning Pool        
+    // Minimum/Maximum Bet (in ETHER) that can be placed: 1%-10% of available Ether Winning Pool       
+    function GetMinimumBet_ether() constant returns (uint256){ return GetMinimumBet() / 1000000000000000000;   }
+    function GetMaximumBet_ether() constant returns (uint256){ return GetMaximumBet() / 1000000000000000000;  } 
+    function GetMinimumBet() returns (uint256) {return this.balance/100;}   // Minimum Bet that can be placed: 1% of available Ether Winning Pool       
+    function GetMaximumBet() returns (uint256) {return this.balance/10;}   // Maximum Bet that can be placed: 10% of available Ether Winning Pool        
 
     /* PlaceBet using Access Code, and Mode parameter */
     /********************************************************************
@@ -49,10 +49,11 @@ contract PPBC_API {
         
         Parameters:
         - Access Code is SHA3 hashed code, provided by PaddyPowerPromo contract (prevents direct call).
+        - modeA selects Lower vs. Upper number range (same odds)
     *******************************************************************************************/
     
-    function _api_PlaceBet () payable {
-    //function _api_PlaceBet (uint256 accessCode, bool modeA) payable {
+    function _api_PlaceBet (bool modeA) payable{
+    //function _api_PlaceBet (uint256 accessCode, bool modeA) payable returns (uint256){
         //
         // Note total transaction cost ~ 100-200K Gas    
         // START Initial checks
@@ -60,8 +61,8 @@ contract PPBC_API {
         // if ( sha3( accessCode ) != 19498834600303040700126754596537880312193431075463488515213744382615666721600) throw; 
         // @MC disabled access check for PoC, ToDo: enable for Prod release, and allow change of hash if compromised
         
-        // Check if Bet amount is within limits 1 ether to 10% of winning pool (account) balance
-        if (msg.value < GetMinimumBet() || (msg.value + 1) > GetMaximumBet() ) throw; 
+        // Check if Bet amount is within limits 1-10% of winning pool (account) balance
+        if (msg.value < GetMinimumBet() || msg.value > GetMaximumBet() ) throw; 
         
         // Only allow x games per block - to ensure outcome is as random as possible
         uint256 cntBlockUsed = blockUsed[block.number];  
@@ -89,9 +90,18 @@ contract PPBC_API {
         
         // Create new random number
         uint256 random = createRandomNumber(totalPartition); // creates a random number between 0 and 99
+        bool winner = true;
+        
+        // Depending on mode, user wins if numbers are in the lower range or higher range.
+        if (modeA){  // Mode A (default) is: lower numbers win,  0-60, or 0-40, depending on odds
+            if (random > winnerOdds ) winner = false;
+        }
+        else {   // Mode B is: higer numbers win 40-100, or 60-100, depending on odds
+            if (random < (100 - winnerOdds) ) winner = false;
+        }
 
-        // check if user won
-        if (random <= winnerOdds ){
+        // Pay winner (2 * bet amount)
+        if (winner){
             if (!msg.sender.send(msg.value * 2)) // winner double
                 throw; // roll back if there was an error
         }
@@ -114,7 +124,7 @@ contract PPBC_API {
     uint256 private lastGas;
     uint256 private customSeed;
     
-    function createRandomNumber(uint maxnum) payable returns (uint256) {
+    function createRandomNumber(uint maxnum) returns (uint256) {
         uint cnt;
         for (cnt = 0; cnt < lastRandom % 5; cnt++){lastBlock = lastBlock - block.timestamp;} // randomize gas
         uint256 random = 
@@ -140,7 +150,7 @@ contract PPBC_API {
     // Maintenance    ToDo: doc @MC
     /////////////////////////////
     uint256 public maxGamesPerBlock;  // Block limit
-    mapping ( uint256 => uint256 ) blockUsed;  // prevent more than X games per block; 
+    mapping ( uint256 => uint256 ) blockUsed;  // prevent more than 2 games per block; 
                                                //
     
     function PPBC_API()  { // Constructor: ToDo: obfuscate
@@ -163,9 +173,6 @@ contract PPBC_API {
             if (!paddyAdmin.send(amt)) throw;
     }
     
-    function () payable onlyOwner { // default function, used by PaddyAdmin to deposit into winning pool, only owner can do this
-    }
-    
     function _maint_EndPromo () onlyOwner {
          selfdestruct(paddyAdmin); 
     }
@@ -181,5 +188,7 @@ contract PPBC_API {
     function _maint_updateOwner (address newOwner) onlyOwner {
         paddyAdmin = newOwner;
     }
+    
+    function () payable {} // Used by PaddyPower Admin to load Pool
     
 }
