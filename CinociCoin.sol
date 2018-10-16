@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CinociCoin at 0xec0538a6a5835e72910bd26e67b566faf6aa1879
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CinociCoin at 0xae7fd76ac0237d23934b59150f8e5e419d2f4631
 */
 pragma solidity ^0.4.18;
 
@@ -311,7 +311,7 @@ contract CinociCoin is Ownable, TokenERC20 {
         creationDate = now;
 
         address advisor = 0x32c5Ec858c52F8635Bd92e44d8797e5d356eBd05;
-        address bountyManager = 0xC10C83dfE7eed57038905A112F17c80b67Dd893C;
+        address bountyManager = 0xdDa9bcf30AFDC40a5fFa6e1b6f70ef030A3E32f4;
         address earlyInvestor = 0x02FF2bA62440c92D2A02D95Df6fc233eA68c2091;
         address partner = 0x6A45baAEb21D49fD85B309235Ef2920d3A648858;
         address exchange1 = 0x8Bd10d3383504a12FD27A1Fd5c0E7bCeae3C8997;
