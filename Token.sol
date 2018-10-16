@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xb4b7d0c65b3618bc8706ab7b3719519ead624067
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xaa5aa0a6422d54e614421f22b00945ffcab40477
 */
 pragma solidity >=0.4.10;
 
@@ -9,7 +9,7 @@ contract Token {
 
 	string constant public name = "Hodl Token";
 	string constant public symbol = "HODL";
-	uint8 constant public decimals = 8;
+	uint8 constant public digits = 8;
 	mapping (address => uint) public balanceOf;
 	mapping (address => mapping (address => uint)) public allowance;
 	uint public totalSupply;
