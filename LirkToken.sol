@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LirkToken at 0x71871f8d10b2965e06dc29b1be7122086aeb11e0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LirkToken at 0xd266afaf13b8afbe8e949359fe4355fc83cc6ec5
 */
 pragma solidity ^0.4.11;
 
@@ -157,8 +157,8 @@ contract LirkToken is ERC20,LirkTokenStandard,Ownable {
     }
 
     function LirkToken() {
-        maxTotalSupply = 10**25; // 10 Mil.
-        totalInitialSupply = 10**24; // 1 Mil.
+        maxTotalSupply = 20**25; // 20 Mil.
+        totalInitialSupply = 20**24; // 2 Mil.
 
         chainStartTime = now;
         chainStartBlockNumber = block.number;
