@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FideliumToken at 0xfb2b6dc87b0d2ceffdabd0e8d320c9471d6d9084
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FideliumToken at 0x15dfe6135c58f10ba74eb47900816d08470e4d86
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 contract owned {
     address public owner;
@@ -137,13 +137,11 @@ contract TOKENERC20 {
         Burn(msg.sender, _value);
         return true;
     }
-
 }
 
 
 contract FideliumToken is owned, TOKENERC20 {
 
-    mapping (address => bool) public approvedAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event ApprovedFunds(address target, bool approved);
@@ -160,19 +158,10 @@ contract FideliumToken is owned, TOKENERC20 {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
         require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        require(approvedAccount[_from]);                     // Check if sender is frozen
+
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
-        require(approvedAccount[msg.sender]);
-    }
 
-
-    /// @notice `approve? Prevent | Allow` `target` from sending & receiving tokens
-    /// @param target Address to be approved
-    /// @param approve either to approve it or not
-    function approveAccount(address target, bool approve) onlyOwner public {
-        approvedAccount[target] = approve;
-        ApprovedFunds(target, approve);
     }
 }
