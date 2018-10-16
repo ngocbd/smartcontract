@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpCalculator at 0xceab163519b19265ab463efa2da166a4d59209be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpCalculator at 0x02dc5c6317cb81fc1ba5fd7fcb773f5a42deb700
 */
 pragma solidity ^0.4.19;
 
