@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceFeed at 0xbe4a09d4661f631f7e13aa2d5719efc476fb211c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceFeed at 0x8a4774fe82c63484afef97ca8d89a6ea5e21f973
 */
 /// price-feed.sol
 
@@ -12,7 +12,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
 
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.15;
 
 contract DSAuthority {
     function canCall(
