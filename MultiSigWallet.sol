@@ -1,68 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x09F1621d2549bE2A90C3EC8a4e3F361eD7Baa0f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x04c62019ab478bff5874e7b7d9bc84fcf7e30025
 */
 pragma solidity 0.4.18;
-contract Factory {
-
-    /*
-     *  Events
-     */
-    event ContractInstantiation(address sender, address instantiation);
-
-    /*
-     *  Storage
-     */
-    mapping(address => bool) public isInstantiation;
-    mapping(address => address[]) public instantiations;
-
-    /*
-     * Public functions
-     */
-    /// @dev Returns number of instantiations by creator.
-    /// @param creator Contract creator.
-    /// @return Returns number of instantiations by creator.
-    function getInstantiationCount(address creator)
-        public
-        constant
-        returns (uint)
-    {
-        return instantiations[creator].length;
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Registers contract in factory registry.
-    /// @param instantiation Address of contract instantiation.
-    function register(address instantiation)
-        internal
-    {
-        isInstantiation[instantiation] = true;
-        instantiations[msg.sender].push(instantiation);
-        ContractInstantiation(msg.sender, instantiation);
-    }
-}
-
-
-/// @title Multisignature wallet factory - Allows creation of multisig wallet.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWalletFactory is Factory {
-
-    /*
-     * Public functions
-     */
-    /// @dev Allows verified creation of multisignature wallet.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    /// @return Returns wallet address.
-    function create(address[] _owners, uint _required)
-        public
-        returns (address wallet)
-    {
-        wallet = new MultiSigWallet(_owners, _required);
-        register(wallet);
-    }
-}
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
