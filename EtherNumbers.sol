@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherNumbers at 0x3f214f938e4e02c3823b852ab0f275f6c7352ec8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherNumbers at 0x171ad7aa2d6e083ebbbef0e7ada2ef76da4dadb6
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -151,7 +151,7 @@ contract EtherNumbers is ERC721 {
     promoCreatedCount++;
     _createGem(_name, personOwner, _price);
   }
-  
+
 
   /// @dev Creates a new Gem with the given name.
   function createContractGem(string _name) public onlyCLevel {
@@ -237,6 +237,17 @@ contract EtherNumbers is ERC721 {
     TokenSold(_tokenId, sellingPrice, gemIndexToPrice[_tokenId], oldOwner, newOwner, gems[_tokenId].name);
 
     msg.sender.transfer(purchaseExcess);
+  }
+
+
+  function changePrice(uint256 _tokenId) public  {
+    require(_owns(msg.sender, _tokenId));
+
+    uint256 currentPrice = gemIndexToPrice[_tokenId];
+    uint256 onePercent = SafeMath.div(currentPrice, 100);
+    uint256 newPrice = SafeMath.mul(onePercent,95);
+    gemIndexToPrice[_tokenId] = newPrice;
+
   }
 
   function priceOf(uint256 _tokenId) public view returns (uint256 price) {
