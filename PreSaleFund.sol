@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleFund at 0xaa12936a79848938770bDBC5da0d49Fe986678cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleFund at 0xd022969da8a1ace11e2974b3e7ee476c3f9f99c6
 */
 pragma solidity ^0.4.11;
 
@@ -11,6 +11,8 @@ contract PreSaleFund
     event CashMove(uint amount,bytes32 logMsg,address target,address currentOwner);
     
     mapping(address => uint) investors;
+    
+    uint public MinInvestment = 0.1 ether;
    
     function loggedTransfer(uint amount, bytes32 logMsg, address target, address currentOwner) 
     payable
@@ -26,7 +28,7 @@ contract PreSaleFund
     public 
     payable 
     {
-        if (msg.value > 0.1 ether)
+        if (msg.value > MinInvestment)
         {
             investors[msg.sender] += msg.value;
         }
@@ -39,6 +41,15 @@ contract PreSaleFund
         {
             this.loggedTransfer(amount, "", msg.sender, owner);
             investors[msg.sender] -= amount;
+        }
+    }
+    
+    function SetMin(uint min)
+    public
+    {
+        if(msg.sender==owner)
+        {
+            MinInvestment = min;
         }
     }
 
