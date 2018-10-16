@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DIGC at 0x144c7c154fd9952217ac98d06f9bf9fce64d1fd7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DIGC at 0x3c7a72e9859f147e640ccefa87504633f35fc10b
 */
 pragma solidity ^0.4.23;
 // sol token
@@ -53,10 +53,6 @@ contract TokenERC20 is owned {
     modifier m_locked {
         require(!locked || freeAccount[msg.sender]);
         _;
-    }
-
-    function changeLocked() onlyOwner public {
-        locked = false;
     }
 
     /**
