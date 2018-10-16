@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LudumToken at 0x165d7220a34eedebf1e52f6db216b72fdf11b28f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LudumToken at 0x28a40acf39b1d3c932f42dd8068ad00a5ad6448f
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 
 
@@ -22,14 +22,8 @@ library SafeMath {
 
     function add(uint a, uint b) internal returns (uint) {
         uint c = a + b;
-        assert(c >= a);
+        assert(c >= a && c >= b);
         return c;
-    }
-
-    function assert(bool assertion) internal {
-        if (!assertion) {
-            throw;
-        }
     }
 
 }
@@ -66,34 +60,30 @@ contract Token {
 
 contract StandardToken is Token {
 
-    modifier onlyPayloadSize(uint size) {
-        if(msg.data.length < size + 4) {
-            throw;
-        }
-        _;
-    }
+    function transfer(address _to, uint _value) returns (bool success) {
+		require( msg.data.length >= (2 * 32) + 4 );
+		require( _value > 0 );
+		require( balances[msg.sender] >= _value );
+		require( balances[_to] + _value > balances[_to] );
 
-    function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
-	  if (balances[msg.sender] >= _value && _value > 0) {
         balances[msg.sender] -= _value;
         balances[_to] += _value;
         Transfer(msg.sender, _to, _value);
         return true;
-      } else {
-        return false;
-      }
     }
 
-    function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-        balances[_to] += _value;
+    function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+		require( msg.data.length >= (3 * 32) + 4 );
+		require( _value > 0 );
+		require( balances[_from] >= _value );
+		require( allowed[_from][msg.sender] >= _value );
+		require( balances[_to] + _value > balances[_to] );
+
         balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
+		allowed[_from][msg.sender] -= _value;
+		balances[_to] += _value;
         Transfer(_from, _to, _value);
         return true;
-      } else {
-        return false;
-      }
     }
 
     function balanceOf(address _owner) constant returns (uint balance) {
@@ -101,6 +91,8 @@ contract StandardToken is Token {
     }
 
     function approve(address _spender, uint _value) returns (bool success) {
+		require( _value == 0 || allowed[msg.sender][_spender] == 0 );
+
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -123,7 +115,7 @@ contract LudumToken is StandardToken {
 
 	string public constant name = "Ludum"; // Ludum tokens name
     string public constant symbol = "LDM"; // Ludum tokens ticker
-    uint public constant decimals = 18; // Ludum tokens decimals
+    uint8 public constant decimals = 18; // Ludum tokens decimals
 	uint public constant maximumSupply =  100000000000000000000000000; // Maximum 100M Ludum tokens can be created
 
     address public ethDepositAddress;
@@ -137,7 +129,7 @@ contract LudumToken is StandardToken {
 	
 	uint public constant teamPercent = 10;
 	uint public constant operationsPercent = 10;
-	uint public constant marketingPercent = 10;
+	uint public constant marketingPercent = 5;
 
 
     function ludumTokensPerEther() constant returns(uint) {
@@ -158,21 +150,26 @@ contract LudumToken is StandardToken {
     event CreateLudumTokens(address indexed _to, uint _value);
 
     // Ludum token constructor
-    function LudumToken()
+    function LudumToken(
+        address _ethDepositAddress,
+        address _teamFundAddress,
+		address _operationsFundAddress,
+		address _marketingFundAddress
+	)
     {
         isFinalized = false;
-	    ethDepositAddress = "0xD8E4FB6cC1BD2a8eF6E086152877E7ba540B5d9b";
-	    teamFundAddress = "0xB6FCB6EF9b46B4ea0AC403e74b53e3962f6fc41d";
-	    operationsFundAddress = "0x81B9c43a410C86620fbd85509c29E8C93995A8A9";
-	    marketingFundAddress = "0x057CCb6A9061Aa61aEAE047fdCddeCb6511A0865";
+        ethDepositAddress = _ethDepositAddress;
+        teamFundAddress = _teamFundAddress;
+	    operationsFundAddress = _operationsFundAddress;
+	    marketingFundAddress = _marketingFundAddress;
     }
 
 
     function makeTokens() payable  {
-        if (isFinalized) throw;
-        if (now < crowdsaleStart) throw;
-        if (now > crowdsaleEnd) throw;
-        if (msg.value < 10 finney) throw;
+		require( !isFinalized );
+		require( now >= crowdsaleStart );
+		require( now < crowdsaleEnd );
+		require( msg.value >= 10 finney );
 
         uint tokens = msg.value.mul(ludumTokensPerEther());
 	    uint teamTokens = tokens.mul(teamPercent).div(100);
@@ -181,7 +178,7 @@ contract LudumToken is StandardToken {
 
 	    uint currentSupply = totalSupply.add(tokens).add(teamTokens).add(operationsTokens).add(marketingTokens);
 
-        if (maximumSupply < currentSupply) throw;
+		require( maximumSupply >= currentSupply );
 
         totalSupply = currentSupply;
 
@@ -205,13 +202,13 @@ contract LudumToken is StandardToken {
 
 
     function finalizeCrowdsale() external {
-        if (isFinalized) throw;
-        if (msg.sender != ethDepositAddress) throw;
-
-	    if(now <= crowdsaleEnd && totalSupply != maximumSupply) throw;
+		require( !isFinalized );
+		require( msg.sender == ethDepositAddress );
+		require( now >= crowdsaleEnd || totalSupply == maximumSupply );
 
         isFinalized = true;
-        if(!ethDepositAddress.send(this.balance)) throw;
+
+		require( ethDepositAddress.send(this.balance) );
     }
 
 }
