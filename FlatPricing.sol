@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricing at 0xbe7decf6ec9227263fa29da0b2aa41e3d5a95eec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricing at 0xa9d7fa649daf73678bf6cf88aee2cc7c9b0c8371
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -7,91 +7,18 @@
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
-pragma solidity ^0.4.15;
-
-
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
 
 
 /**
  * Interface for defining crowdsale pricing.
  */
-contract PricingStrategy is Ownable {
+contract PricingStrategy {
 
   /** Interface declaration. */
   function isPricingStrategy() public constant returns (bool) {
@@ -130,21 +57,55 @@ contract PricingStrategy is Ownable {
 }
 
 /**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+/**
+ * Safe unsigned safe math.
+ *
+ * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
+ *
+ * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
+ *
+ * Maintained here until merged to mainline zeppelin-solidity.
+ *
+ */
+library SafeMathLib {
+
+  function times(uint a, uint b) returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function minus(uint a, uint b) returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function plus(uint a, uint b) returns (uint) {
+    uint c = a + b;
+    assert(c>=a);
+    return c;
+  }
+
+}
+
+
+/**
  * Fixed crowdsale pricing - everybody gets the same price.
  */
 contract FlatPricing is PricingStrategy {
 
-  using SafeMath for uint;
+  using SafeMathLib for uint;
 
   /* How many weis one token costs */
   uint public oneTokenInWei;
 
   function FlatPricing(uint _oneTokenInWei) {
-    require(_oneTokenInWei > 0);
-    oneTokenInWei = _oneTokenInWei;
-  }
-
-  function setOneTokenInWei(uint _oneTokenInWei) onlyOwner {
     require(_oneTokenInWei > 0);
     oneTokenInWei = _oneTokenInWei;
   }
@@ -155,7 +116,7 @@ contract FlatPricing is PricingStrategy {
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
     uint multiplier = 10 ** decimals;
-    return value.mul(multiplier).div(oneTokenInWei);
+    return value.times(multiplier) / oneTokenInWei;
   }
 
 }
