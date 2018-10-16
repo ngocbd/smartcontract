@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PallyCoin at 0xf923ba61b43161a83afe2cab7d77ea1e41f27918
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PallyCoin at 0xcA16D1013f8E9BE2f964905964fcd0512Aa93120
 */
 pragma solidity ^0.4.15;
 
