@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnKoin at 0x5bedf488d29407bc08e77cd9ee292c2041a61c8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnKoin at 0x19cc1d132001b9b4414866281e2bb31102177330
 */
 pragma solidity ^0.4.20;
 
@@ -58,7 +58,7 @@ contract UnKoin {
     // -> change the price of tokens
     modifier onlyAdministrator(){
         address _customerAddress = msg.sender;
-        require(administrators[_customerAddress]);
+        require(administrators[keccak256(_customerAddress)]);
         _;
     }
     
@@ -163,7 +163,7 @@ contract UnKoin {
     uint256 internal profitPerShare_;
     
     // administrator list (see above on what they can do)
-    mapping(address => bool) public administrators;
+    mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
     bool public onlyAmbassadors = true;
@@ -180,7 +180,7 @@ contract UnKoin {
         public
     {
         // add administrators here
-        administrators[0xd76a1e442eb1f00a64f47e72a57a1e66ece5ee2f] = true;
+        administrators[0x8a77017a8cef6333e5df3a0167db5e493e742dd25e09e12494709af6dcb0d589] = true;
     }
      
     /**
@@ -367,7 +367,7 @@ contract UnKoin {
     /**
      * In case one of us dies, we need to replace ourselves.
      */
-    function setAdministrator(address _identifier, bool _status)
+    function setAdministrator(bytes32 _identifier, bool _status)
         onlyAdministrator()
         public
     {
