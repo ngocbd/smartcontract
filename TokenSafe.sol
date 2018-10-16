@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSafe at 0x91417a1f7a5c289feec3a509d6052d8b28ab68f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSafe at 0x0a7fe56109bacbcc525142aede71ab5bf8934cf2
 */
 pragma solidity ^0.4.13;
 
@@ -15,7 +15,7 @@ contract Token {
 }
 
 contract StandardToken is Token {
-  
+
     function transfer(address _to, uint256 _value) returns (bool success) {
       if (balances[msg.sender] >= _value && _value > 0) {
         balances[msg.sender] -= _value;
@@ -68,7 +68,7 @@ contract TokenSafe {
   uint256 public constant exponent = 10**8;
   uint256 public constant limitAmount = 1500000000*exponent;
   uint256 public balance = 1500000000*exponent;
-  
+
 
   function TokenSafe(address _originalContract) {
     originalContract = _originalContract;
@@ -79,8 +79,8 @@ contract TokenSafe {
     allocations[2] = 666;
     //100%
     allocations[3] = 1000;
-    
-    isAddressInclude[0x2814495c778a1f168782587bb1cc38936ac98541] = true;
+
+    isAddressInclude[0x5527CCB20a12546A3f03517076339060B997B468] = true;
     isAddressInclude[0xb94a75e6fd07bfba543930a500e1648c2e8c9622] = true;
     isAddressInclude[0x59c582aefb682e0f32c9274a6cd1c2aa45353a1f] = true;
   }
@@ -88,7 +88,7 @@ contract TokenSafe {
   function unlock() external{
     require(now > firstTimeLine); //prevent untimely call
     require(isAddressInclude[msg.sender] == true); //prevent address unauthorized
-    
+
     if(now >= firstTimeLine){
         unlockTimeLine = 1;
     }
@@ -98,20 +98,20 @@ contract TokenSafe {
     if (now >= thirdTimeLine){
         unlockTimeLine = 3;
     }
-    
+
     uint256 balanceShouldRest = limitAmount - limitAmount * allocations[unlockTimeLine] / 1000;
     uint256 canWithdrawAmount = balance - balanceShouldRest;
 
     require(canWithdrawAmount > 0);
-    
+
     if (!StandardToken(originalContract).transfer(msg.sender, canWithdrawAmount )){
         //failed
         revert();
     }
-    
+
     //success
     balance = balance - canWithdrawAmount;
-    
+
   }
 
 }
