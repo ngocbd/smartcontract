@@ -1,24 +1,174 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SecondPriceAuction at 0x54a2d42a40F51259DedD1978F6c118a0f0Eff078
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SecondPriceAuction at 0x0d793f640ad69c3b58c4bfe771415d4881a0490f
 */
+pragma solidity ^0.4.19;
+
+// File: contracts/ClaimRegistry.sol
+
+contract ClaimRegistry {
+    function getSingleSubjectByAddress(address linkedAddress, uint subjectIndex) public view returns(address subject);
+    function getSubjectClaimSetSize(address subject, uint typeNameIx, uint attrNameIx) public constant returns (uint) ;
+    function getSubjectClaimSetEntryAt(address subject, uint typeNameIx, uint attrNameIx, uint ix) public constant returns (address issuer, uint url);
+    function getSubjectCountByAddress(address linkedAddress) public view returns(uint subjectCount);
+ }
+
+// File: contracts/NotakeyVerifierForICOP.sol
+
+contract NotakeyVerifierForICOP {
+
+    uint public constant ICO_CONTRIBUTOR_TYPE = 6;
+    uint public constant REPORT_BUNDLE = 6;
+    uint public constant NATIONALITY_INDEX = 7;
+
+    address public claimRegistryAddr;
+    address public trustedIssuerAddr;
+    // address private callerIdentitySubject;
+
+    uint public constant USA = 883423532389192164791648750371459257913741948437809479060803100646309888;
+        // USA is 240nd; blacklist: 1 << (240-1)
+    uint public constant CHINA = 8796093022208;
+        // China is 44th; blacklist: 1 << (44-1)
+    uint public constant SOUTH_KOREA = 83076749736557242056487941267521536;
+        // SK is 117th; blacklist: 1 << (117-1)
+
+     event GotUnregisteredPaymentAddress(address indexed paymentAddress);
+
+
+    function NotakeyVerifierForICOP(address _trustedIssuerAddr, address _claimRegistryAddr) public {
+        claimRegistryAddr = _claimRegistryAddr;
+        trustedIssuerAddr  = _trustedIssuerAddr;
+    }
+
+    modifier onlyVerifiedSenders(address paymentAddress, uint256 nationalityBlacklist) {
+        // DISABLED for ICOP sale
+        // require(_hasIcoContributorType(paymentAddress));
+        require(!_preventedByNationalityBlacklist(paymentAddress, nationalityBlacklist));
+
+        _;
+    }
+
+    function sanityCheck() public pure returns (string) {
+        return "Hello Dashboard";
+    }
+
+    function isVerified(address subject, uint256 nationalityBlacklist) public constant onlyVerifiedSenders(subject, nationalityBlacklist) returns (bool) {
+        return true;
+    }
+
+    function _preventedByNationalityBlacklist(
+        address paymentAddress,
+        uint256 nationalityBlacklist) internal constant returns (bool)
+    {
+        var claimRegistry = ClaimRegistry(claimRegistryAddr);
+
+        uint subjectCount = _lookupOwnerIdentityCount(paymentAddress);
+
+        uint256 ignoredClaims;
+        uint claimCount;
+        address subject;
+
+        // Loop over all isued identities associated to this wallet adress and
+        // throw if any match to blacklist
+        for (uint subjectIndex = 0 ; subjectIndex < subjectCount ; subjectIndex++ ){
+            subject = claimRegistry.getSingleSubjectByAddress(paymentAddress, subjectIndex);
+            claimCount = claimRegistry.getSubjectClaimSetSize(subject, ICO_CONTRIBUTOR_TYPE, NATIONALITY_INDEX);
+            ignoredClaims = 0;
+
+            for (uint i = 0; i < claimCount; ++i) {
+                var (issuer, url) = claimRegistry.getSubjectClaimSetEntryAt(subject, ICO_CONTRIBUTOR_TYPE, NATIONALITY_INDEX, i);
+                var countryMask = 2**(url-1);
+
+                if (issuer != trustedIssuerAddr) {
+                    ignoredClaims += 1;
+                } else {
+                    if (((countryMask ^ nationalityBlacklist) & countryMask) != countryMask) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // If the blacklist is empty (0), then that's fine for the V1 contract (where we validate the bundle);
+        // For our own sale, however, this attribute is a proxy indicator for whether the address is verified.
+        //
+        // Account for ignored claims (issued by unrecognized issuers)
+        require((claimCount - ignoredClaims) > 0);
+
+        return false;
+    }
+
+    function _lookupOwnerIdentityCount(address paymentAddress) internal constant returns (uint){
+        var claimRegistry = ClaimRegistry(claimRegistryAddr);
+        var subjectCount = claimRegistry.getSubjectCountByAddress(paymentAddress);
+
+        // The address is unregistered so we throw and log event
+        // This method and callers have to overriden as non-constant to emit events
+        // if ( subjectCount == 0 ) {
+            // GotUnregisteredPaymentAddress( paymentAddress );
+            // revert();
+        // }
+
+        require(subjectCount > 0);
+
+        return subjectCount;
+    }
+
+    function _hasIcoContributorType(address paymentAddress) internal constant returns (bool)
+    {
+        uint subjectCount = _lookupOwnerIdentityCount(paymentAddress);
+
+        var atLeastOneValidReport = false;
+        var atLeastOneValidNationality = false;
+        address subject;
+
+        var claimRegistry = ClaimRegistry(claimRegistryAddr);
+
+        // Loop over all isued identities associated to this wallet address and
+        // exit loop any satisfy the business logic requirement
+        for (uint subjectIndex = 0 ; subjectIndex < subjectCount ; subjectIndex++ ){
+            subject = claimRegistry.getSingleSubjectByAddress(paymentAddress, subjectIndex);
+
+            var nationalityCount = claimRegistry.getSubjectClaimSetSize(subject, ICO_CONTRIBUTOR_TYPE, NATIONALITY_INDEX);
+            for (uint nationalityIndex = 0; nationalityIndex < nationalityCount; ++nationalityIndex) {
+                var (nationalityIssuer,) = claimRegistry.getSubjectClaimSetEntryAt(subject, ICO_CONTRIBUTOR_TYPE, NATIONALITY_INDEX, nationalityIndex);
+                if (nationalityIssuer == trustedIssuerAddr) {
+                    atLeastOneValidNationality = true;
+                    break;
+                }
+            }
+
+            var reportCount = claimRegistry.getSubjectClaimSetSize(subject, ICO_CONTRIBUTOR_TYPE, REPORT_BUNDLE);
+            for (uint reportIndex = 0; reportIndex < reportCount; ++reportIndex) {
+                var (reportIssuer,) = claimRegistry.getSubjectClaimSetEntryAt(subject, ICO_CONTRIBUTOR_TYPE, REPORT_BUNDLE, reportIndex);
+                if (reportIssuer == trustedIssuerAddr) {
+                    atLeastOneValidReport = true;
+                    break;
+                }
+            }
+        }
+
+        return atLeastOneValidNationality && atLeastOneValidReport;
+    }
+}
+
+// File: contracts/SecondPriceAuction.sol
+
 //! Copyright Parity Technologies, 2017.
+//! (original version: https://github.com/paritytech/second-price-auction)
+//!
+//! Copyright Notakey Latvia SIA, 2017.
+//! Original version modified to verify contributors against Notakey
+//! KYC smart contract.
+//!
 //! Released under the Apache Licence 2.
 
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.19;
+
+
 
 /// Stripped down ERC20 standard token interface.
 contract Token {
-	function transfer(address _to, uint256 _value) public returns (bool success);
-}
-
-// From Certifier.sol
-contract Certifier {
-	event Confirmed(address indexed who);
-	event Revoked(address indexed who);
-	function certified(address) public constant returns (bool);
-	function get(address, string) public constant returns (bytes32);
-	function getAddress(address, string) public constant returns (address);
-	function getUint(address, string) public constant returns (uint);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
 }
 
 /// Simple modified second price auction contract. Price starts high and monotonically decreases
@@ -33,9 +183,6 @@ contract SecondPriceAuction {
 
 	/// Admin injected a purchase.
 	event Injected(address indexed who, uint accounted, uint received);
-
-	/// Admin uninjected a purchase.
-	event Uninjected(address indexed who);
 
 	/// At least 5 minutes has passed since last Ticked event.
 	event Ticked(uint era, uint received, uint accounted);
@@ -52,9 +199,13 @@ contract SecondPriceAuction {
 	// Constructor:
 
 	/// Simple constructor.
-	/// Token cap should take be in whole tokens, not smallest divisible units.
+	/// Token cap should take be in smallest divisible units.
+	/// 	NOTE: original SecondPriceAuction contract stipulates token cap must be given in whole tokens.
+	///		This does not seem correct, as only whole token values are transferred via transferFrom (which - in our wallet's case -
+	///     expects transfers in the smallest divisible amount)
 	function SecondPriceAuction(
-		address _certifierContract,
+		address _trustedClaimIssuer,
+		address _notakeyClaimRegistry,
 		address _tokenContract,
 		address _treasury,
 		address _admin,
@@ -63,27 +214,36 @@ contract SecondPriceAuction {
 	)
 		public
 	{
-		certifier = Certifier(_certifierContract);
+		// this contract must be created by the notakey claim issuer (sender)
+		verifier = new NotakeyVerifierForICOP(_trustedClaimIssuer, _notakeyClaimRegistry);
+
 		tokenContract = Token(_tokenContract);
 		treasury = _treasury;
 		admin = _admin;
 		beginTime = _beginTime;
 		tokenCap = _tokenCap;
-		endTime = beginTime + 28 days;
+		endTime = beginTime + DEFAULT_AUCTION_LENGTH;
 	}
 
-	// No default function, entry-level users
-	function() public { assert(false); }
+	function() public payable { buyin(); }
 
 	// Public interaction:
+	function moveStartDate(uint newStart)
+		public
+		before_beginning
+		only_admin
+	{
+		beginTime = newStart;
+		endTime = calculateEndTime();
+	}
 
 	/// Buyin function. Throws if the sale is not active and when refund would be needed.
-	function buyin(uint8 v, bytes32 r, bytes32 s)
+	function buyin()
 		public
 		payable
 		when_not_halted
 		when_active
-		only_eligible(msg.sender, v, r, s)
+		only_eligible(msg.sender)
 	{
 		flushEra();
 
@@ -141,19 +301,6 @@ contract SecondPriceAuction {
 		Injected(_who, accounted, _received);
 	}
 
-	/// Reverses a previous `inject` command.
-	function uninject(address _who)
-		public
-		only_admin
-		before_beginning
-	{
-		totalAccounted -= buyins[_who].accounted;
-		totalReceived -= buyins[_who].received;
-		delete buyins[_who];
-		endTime = calculateEndTime();
-		Uninjected(_who);
-	}
-
 	/// Mint tokens for a particular participant.
 	function finalise(address _who)
 		public
@@ -172,7 +319,7 @@ contract SecondPriceAuction {
 		uint tokens = total / endPrice;
 		totalFinalised += total;
 		delete buyins[_who];
-		require (tokenContract.transfer(_who, tokens));
+		require (tokenContract.transferFrom(treasury, _who, tokens));
 
 		Finalised(_who, tokens);
 
@@ -202,35 +349,18 @@ contract SecondPriceAuction {
 
 	// Inspection:
 
-	/**
-	 * The formula for the price over time.
-	 *
-	 * This is a hand-crafted formula (no named to the constants) in order to
-	 * provide the following requirements:
-	 *
-	 * - Simple reciprocal curve (of the form y = a + b / (x + c));
-	 * - Would be completely unreasonable to end in the first 48 hours;
-	 * - Would reach $65m effective cap in 4 weeks.
-	 *
-	 * The curve begins with an effective cap (EC) of over $30b, more ether
-	 * than is in existance. After 48 hours, the EC reduces to approx. $1b.
-	 * At just over 10 days, the EC has reduced to $200m, and half way through
-	 * the 19th day it has reduced to $100m.
-	 *
-	 * Here's the curve: https://www.desmos.com/calculator/k6iprxzcrg?embed
-	 */
-
 	/// The current end time of the sale assuming that nobody else buys in.
 	function calculateEndTime() public constant returns (uint) {
-		var factor = tokenCap / DIVISOR * USDWEI;
-		return beginTime + 40000000 * factor / (totalAccounted + 5 * factor) - 5760;
+		var factor = tokenCap / DIVISOR * EURWEI;
+		uint16 scaleDownRatio = 1; // 1 for prod
+		return beginTime + (182035 * factor / (totalAccounted + factor / 10 ) - 0) / scaleDownRatio;
 	}
 
 	/// The current price for a single indivisible part of a token. If a buyin happens now, this is
 	/// the highest price per indivisible token part that the buyer will pay. This doesn't
 	/// include the discount which may be available.
 	function currentPrice() public constant when_active returns (uint weiPerIndivisibleTokenPart) {
-		return (USDWEI * 40000000 / (now - beginTime + 5760) - USDWEI * 5) / DIVISOR;
+		return ((EURWEI * 184325000 / (now - beginTime + 5760) - EURWEI*5) / DIVISOR);
 	}
 
 	/// Returns the total indivisible token parts available for purchase right now.
@@ -313,10 +443,9 @@ contract SecondPriceAuction {
 
 	/// Ensure that the signature is valid, `who` is a certified, basic account,
 	/// the gas price is sufficiently low and the value is sufficiently high.
-	modifier only_eligible(address who, uint8 v, bytes32 r, bytes32 s) {
+	modifier only_eligible(address who) {
 		require (
-			ecrecover(STATEMENT_HASH, v, r, s) == who &&
-			certifier.certified(who) &&
+			verifier.isVerified(who, verifier.USA() | verifier.CHINA() | verifier.SOUTH_KOREA()) &&
 			isBasicAccount(who) &&
 			msg.value >= DUST_LIMIT
 		);
@@ -366,8 +495,8 @@ contract SecondPriceAuction {
 	/// The tokens contract.
 	Token public tokenContract;
 
-	/// The certifier.
-	Certifier public certifier;
+	/// The Notakey verifier contract.
+	NotakeyVerifierForICOP public verifier;
 
 	/// The treasury address; where all the Ether goes.
 	address public treasury;
@@ -394,25 +523,25 @@ contract SecondPriceAuction {
 	/// Anything less than this is considered dust and cannot be used to buy in.
 	uint constant public DUST_LIMIT = 5 finney;
 
-	/// The hash of the statement which must be signed in order to buyin.
-	/// The meaning of this hash is:
-	///
-	/// parity.api.util.sha3(parity.api.util.asciiToHex("\x19Ethereum Signed Message:\n" + tscs.length + tscs))
-	/// where `toUTF8 = x => unescape(encodeURIComponent(x))`
-	/// and `tscs` is the toUTF8 called on the contents of https://gist.githubusercontent.com/gavofyork/5a530cad3b19c1cafe9148f608d729d2/raw/a116b507fd6d96036037f3affd393994b307c09a/gistfile1.txt
-	bytes32 constant public STATEMENT_HASH = 0x2cedb9c5443254bae6c4f44a31abcb33ec27a0bd03eb58e22e38cdb8b366876d;
+	//# Statement to actually sign.
+	//# ```js
+	//# statement = function() { this.STATEMENT().map(s => s.substr(28)) }
+	//# ```
 
 	/// Minimum duration after sale begins that bonus is active.
 	uint constant public BONUS_MIN_DURATION = 1 hours;
 
 	/// Minimum duration after sale begins that bonus is active.
-	uint constant public BONUS_MAX_DURATION = 24 hours;
+	uint constant public BONUS_MAX_DURATION = 12 hours;
 
 	/// Number of consecutive blocks where there must be no new interest before bonus ends.
 	uint constant public BONUS_LATCH = 2;
 
-	/// Number of Wei in one USD, constant.
-	uint constant public USDWEI = 3226 szabo;
+	/// Number of Wei in one EUR, constant.
+	uint constant public EURWEI = 2000 szabo; // 500 eur ~ 1 eth
+
+	/// Initial auction length
+	uint constant public DEFAULT_AUCTION_LENGTH = 2 days;
 
 	/// Divisor of the token.
 	uint constant public DIVISOR = 1000;
