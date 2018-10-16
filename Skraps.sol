@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Skraps at 0xe0bc22509a17bf43e3fe61adcf9be25274cd9232
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Skraps at 0xa0911769e217a9f4d679114c64c9cd2e2a548df3
 */
 pragma solidity 0.4.19;
 
@@ -66,6 +66,8 @@ contract Skraps is ERC20, Owned {
     string public symbol = "SKRP";
     uint8 public decimals = 18;
     uint public totalSupply;
+    
+    uint private endOfFreeze = 1518912000; // Sun, 18 Feb 2018 00:00:00 GMT
 
     mapping (address => uint) private balances;
     mapping (address => mapping (address => uint)) private allowed;
@@ -86,6 +88,7 @@ contract Skraps is ERC20, Owned {
 
     function transfer(address _to, uint _value) public returns (bool success) {
         require(_to != address(0));
+        require(now >= endOfFreeze || msg.sender == owner);
         require(balances[msg.sender] >= _value);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -95,6 +98,7 @@ contract Skraps is ERC20, Owned {
 
     function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
         require(_to != address(0));
+        require(now >= endOfFreeze || msg.sender == owner);
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         balances[_from] = balances[_from].sub(_value);
