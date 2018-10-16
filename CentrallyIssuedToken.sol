@@ -1,57 +1,127 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0x9DA53246714bf10010Aee31ffDb9cf8caB8c6813
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0x805cefaf11df46d609fa34a7723d289b180fe4fa
 */
+/**
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
+ *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
+ */
 pragma solidity ^0.4.11;
 
-contract MyContract {
-    /* Constructor */
-    function MyContract() {
+/**
+ * Centrally issued Ethereum token.
+ *
+ * We mix in burnable and upgradeable traits.
+ *
+ * Token supply is created in the token contract creation and allocated to owner.
+ * The owner can then transfer from its supply to crowdsale participants.
+ * The owner, or anybody, can burn any excessive tokens they are holding.
+ *
+ */
 
+/**
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
+ *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
+ */
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool success);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+/**
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
+ *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
+ */
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool success);
+  function approve(address spender, uint256 value) returns (bool success);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+/**
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
+ *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
+ */
+
+contract ErrorHandler {
+    bool public isInTestMode = false;
+    event evRecord(address msg_sender, uint msg_value, string message);
+
+    function doThrow(string message) internal {
+        evRecord(msg.sender, msg.value, message);
+        if (!isInTestMode) {
+        	throw;
+		}
     }
 }
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
+
+/**
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
+ *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
  */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-
 
 /**
  * Math operations with safety checks
  */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
+  function div(uint256 a, uint256 b) internal returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function sub(uint256 a, uint256 b) internal returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
+  function add(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
     return c;
   }
 
@@ -71,13 +141,17 @@ contract SafeMath {
     return a < b ? a : b;
   }
 
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
 }
 
+
+/**
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
+ *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
+ */
 
 
 /**
@@ -86,43 +160,79 @@ contract SafeMath {
  * Based on code by FirstBlood:
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is ERC20, SafeMath {
+contract NTRYStandardToken is ERC20, ErrorHandler {
+  address public owner;
 
+  /* NTRY functional is paused if there is any emergency */
+  bool public emergency = false;
+
+  using SafeMath for uint;
+
+  /* Actual balances of token holders */
   mapping(address => uint) balances;
-  mapping (address => mapping (address => uint)) allowed;
 
-  // Interface marker
-  bool public constant isToken = true;
+  /* approve() allowances */
+  mapping (address => mapping (address => uint)) allowed;
+  
+  /* freezeAccount() frozen() */
+  mapping (address => bool) frozenAccount;
+
+  /* Notify account frozen activity */
+  event FrozenFunds(address target, bool frozen);
+
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
+  }
 
   /**
-   *
+   * @dev Throws if called by any account other than the owner. 
+   */
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      doThrow("Only Owner!");
+    }
+    _;
+  }
+
+  /**
    * Fix for the ERC20 short address attack
    *
    * http://vessenes.com/the-erc20-short-address-attack-explained/
    */
   modifier onlyPayloadSize(uint size) {
      if(msg.data.length < size + 4) {
-       throw;
+       doThrow("Short address attack!");
      }
      _;
   }
 
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
+  modifier stopInEmergency {
+    if (emergency){
+        doThrow("Emergency state!");
+    }
+    _;
+  }
+  
+  function transfer(address _to, uint _value) stopInEmergency onlyPayloadSize(2 * 32) returns (bool success) {
+    // Check if frozen //
+    if (frozenAccount[msg.sender]) doThrow("Account freezed!");  
+                  
+    balances[msg.sender] = balances[msg.sender].sub( _value);
+    balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value)  returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint _value) stopInEmergency returns (bool success) {
+    // Check if frozen //
+    if (frozenAccount[_from]) doThrow("Account freezed!");
 
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
+    uint _allowance = allowed[_from][msg.sender];
 
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
@@ -131,13 +241,13 @@ contract StandardToken is ERC20, SafeMath {
     return balances[_owner];
   }
 
-  function approve(address _spender, uint _value) returns (bool success) {
+  function approve(address _spender, uint _value) stopInEmergency returns (bool success) {
 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) doThrow("Allowance race condition!");
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
@@ -148,44 +258,56 @@ contract StandardToken is ERC20, SafeMath {
     return allowed[_owner][_spender];
   }
 
-}
 
+  /**
+  * It is called Circuit Breakers (Pause contract functionality), it stop execution if certain conditions are met, 
+  * and can be useful when new errors are discovered. For example, most actions may be suspended in a contract if a 
+  * bug is discovered, so the most feasible option to stop and updated migration message about launching an updated version of contract. 
+  * @param _stop Switch the circuite breaker on or off
+  */
+  function emergencyStop(bool _stop) onlyOwner {
+      emergency = _stop;
+  }
+
+  /**
+  * Owner can set any account into freeze state. It is helpful in case if account holder has 
+  * lost his key and he want administrator to freeze account until account key is recovered
+  * @param target The account address
+  * @param freeze The state of account
+  */
+  function freezeAccount(address target, bool freeze) onlyOwner {
+      frozenAccount[target] = freeze;
+      FrozenFunds(target, freeze);
+  }
+
+  function frozen(address _target) constant returns (bool frozen) {
+    return frozenAccount[_target];
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to. 
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      balances[newOwner] = balances[owner];
+      balances[owner] = 0;
+      owner = newOwner;
+      Transfer(owner, newOwner,balances[newOwner]);
+    }
+  }
+
+}
 
 
 /**
- * A trait that allows any token owner to decrease the token supply.
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
  *
- * We add a Burned event to differentiate from normal transfers.
- * However, we still try to support some legacy Ethereum ecocsystem,
- * as ERC-20 has not standardized on the burn event yet.
- *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
  */
-contract BurnableToken is StandardToken {
-
-  address public constant BURN_ADDRESS = 0;
-
-  /** How many tokens we burned */
-  event Burned(address burner, uint burnedAmount);
-
-  /**
-   * Burn extra tokens from a balance.
-   *
-   */
-  function burn(uint burnAmount) {
-    address burner = msg.sender;
-    balances[burner] = safeSub(balances[burner], burnAmount);
-    totalSupply = safeSub(totalSupply, burnAmount);
-    Burned(burner, burnAmount);
-
-    // Keep token balance tracking services happy by sending the burned amount to
-    // "burn address", so that it will show up as a ERC-20 transaction
-    // in etherscan, etc. as there is no standarized burn event yet
-    Transfer(burner, BURN_ADDRESS, burnAmount);
-  }
-}
-
-
-
 
 /**
  * Upgrade agent interface inspired by Lunyr.
@@ -208,11 +330,21 @@ contract UpgradeAgent {
 
 
 /**
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
+ *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
+ */
+
+
+/**
  * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
  *
  * First envisioned by Golem and Lunyr projects.
  */
-contract UpgradeableToken is StandardToken {
+contract UpgradeableToken is NTRYStandardToken {
 
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
   address public upgradeMaster;
@@ -258,18 +390,17 @@ contract UpgradeableToken is StandardToken {
 
       UpgradeState state = getUpgradeState();
       if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
-        // Called in a bad state
-        throw;
+        doThrow("Called in a bad state!");
       }
 
       // Validate input value.
-      if (value == 0) throw;
+      if (value == 0) doThrow("Value to upgrade is zero!");
 
-      balances[msg.sender] = safeSub(balances[msg.sender], value);
+      balances[msg.sender] = balances[msg.sender].sub(value);
 
       // Take tokens out from circulation
-      totalSupply = safeSub(totalSupply, value);
-      totalUpgraded = safeAdd(totalUpgraded, value);
+      totalSupply = totalSupply.sub(value);
+      totalUpgraded = totalUpgraded.add(value);
 
       // Upgrade agent reissues the tokens
       upgradeAgent.upgradeFrom(msg.sender, value);
@@ -283,21 +414,21 @@ contract UpgradeableToken is StandardToken {
 
       if(!canUpgrade()) {
         // The token is not yet in a state that we could think upgrading
-        throw;
+        doThrow("Token state is not feasible for upgrading yet!");
       }
 
-      if (agent == 0x0) throw;
+      if (agent == 0x0) doThrow("Invalid address!");
       // Only a master can designate the next agent
-      if (msg.sender != upgradeMaster) throw;
+      if (msg.sender != upgradeMaster) doThrow("Only upgrade master!");
       // Upgrade has already begun for an agent
-      if (getUpgradeState() == UpgradeState.Upgrading) throw;
+      if (getUpgradeState() == UpgradeState.Upgrading) doThrow("Upgrade started already!");
 
       upgradeAgent = UpgradeAgent(agent);
 
       // Bad interface
-      if(!upgradeAgent.isUpgradeAgent()) throw;
+      if(!upgradeAgent.isUpgradeAgent()) doThrow("Bad interface!");
       // Make sure that token supplies match in source and target
-      if (upgradeAgent.originalSupply() != totalSupply) throw;
+      if (upgradeAgent.originalSupply() != totalSupply) doThrow("Total supply source is not equall to target!");
 
       UpgradeAgentSet(upgradeAgent);
   }
@@ -318,8 +449,8 @@ contract UpgradeableToken is StandardToken {
    * This allows us to set a new owner for the upgrade mechanism.
    */
   function setUpgradeMaster(address master) public {
-      if (master == 0x0) throw;
-      if (msg.sender != upgradeMaster) throw;
+      if (master == 0x0) doThrow("Invalid address of upgrade master!");
+      if (msg.sender != upgradeMaster) doThrow("Only upgrade master!");
       upgradeMaster = master;
   }
 
@@ -332,31 +463,96 @@ contract UpgradeableToken is StandardToken {
 
 }
 
-
-
 /**
- * Centrally issued Ethereum token.
+ *  NTRY Cointract contract, ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
  *
- * We mix in burnable and upgradeable traits.
- *
- * Token supply is created in the token contract creation and allocated to owner.
- * The owner can then transfer from its supply to crowdsale participants.
- * The owner, or anybody, can burn any excessive tokens they are holding.
- *
+ *  Code is based on multiple sources:
+ *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts
+ *  https://github.com/TokenMarketNet/ico/blob/master/contracts
+ *  https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts
  */
+
+
+contract BurnableToken is NTRYStandardToken {
+
+  address public constant BURN_ADDRESS = 0;
+
+  /** How many tokens we burned */
+  event Burned(address burner, uint burnedAmount);
+
+  /**
+   * Burn extra tokens from a balance.
+   *
+   */
+  function burn(uint burnAmount) {
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(burnAmount);
+    totalSupply = totalSupply.sub(burnAmount);
+    Burned(burner, burnAmount);
+  }
+}
+
+
 contract CentrallyIssuedToken is BurnableToken, UpgradeableToken {
 
   string public name;
   string public symbol;
   uint public decimals;
 
-  function CentrallyIssuedToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals)  UpgradeableToken(_owner) {
-    name = _name;
-    symbol = _symbol;
-    totalSupply = _totalSupply;
-    decimals = _decimals;
+  function CentrallyIssuedToken() UpgradeableToken(owner) {
+    name = "Notary Platform Token";
+    symbol = "NTRY";
+    decimals = 18;
+    owner = 0x1538EF80213cde339A333Ee420a85c21905b1b2D;
 
-    // Allocate initial balance to the owner
-    balances[_owner] = _totalSupply;
+    totalSupply = 150000000 * 1 ether;
+    
+    // Allocate initial balance to the owner //
+    balances[owner] = 150000000 * 1 ether;
+
+    // Freeze notary team funds for one year (One month with pre ico already passed)//
+    unlockedAt =  now + 330 * 1 days;
   }
+
+  uint256 public constant teamAllocations = 15000000 * 1 ether;
+  uint256 public unlockedAt;
+  mapping (address => uint256) allocations;
+  function allocate() public {
+      allocations[0xab1cb1740344A9280dC502F3B8545248Dc3045eA] = 2500000 * 1 ether;
+      allocations[0x330709A59Ab2D1E1105683F92c1EE8143955a357] = 2500000 * 1 ether;
+      allocations[0xAa0887fc6e8896C4A80Ca3368CFd56D203dB39db] = 2500000 * 1 ether;
+      allocations[0x1fbA1d22435DD3E7Fa5ba4b449CC550a933E72b3] = 2500000 * 1 ether;
+      allocations[0xC9d5E2c7e40373ae576a38cD7e62E223C95aBFD4] = 500000 * 1 ether;
+      allocations[0xabc0B64a38DE4b767313268F0db54F4cf8816D9C] = 500000 * 1 ether;
+      allocations[0x5d85bCDe5060C5Bd00DBeDF5E07F43CE3Ccade6f] = 250000 * 1 ether;
+      allocations[0xecb1b0231CBC0B04015F9e5132C62465C128B578] = 250000 * 1 ether;
+      allocations[0xF9b1Cfc7fe3B63bEDc594AD20132CB06c18FD5F2] = 250000 * 1 ether;
+      allocations[0xDbb89a87d9f91EA3f0Ab035a67E3A951A05d0130] = 250000 * 1 ether;
+      allocations[0xC1530645E21D27AB4b567Bac348721eE3E244Cbd] = 200000 * 1 ether;
+      allocations[0xcfb44162030e6CBca88e65DffA21911e97ce8533] = 200000 * 1 ether;
+      allocations[0x64f748a5C5e504DbDf61d49282d6202Bc1311c3E] = 200000 * 1 ether;
+      allocations[0xFF22FA2B3e5E21817b02a45Ba693B7aC01485a9C] = 200000 * 1 ether;
+      allocations[0xC9856112DCb8eE449B83604438611EdCf61408AF] = 200000 * 1 ether;
+      allocations[0x689CCfEABD99081D061aE070b1DA5E1f6e4B9fB2] = 2000000 * 1 ether;
+  }
+
+  function withDraw() public {
+      if(now < unlockedAt){ 
+          doThrow("Allocations are freezed!");
+      }
+      if (allocations[msg.sender] == 0){
+          doThrow("No allocation found!");
+      }
+      balances[owner] -= allocations[msg.sender];
+      balances[msg.sender] += allocations[msg.sender];
+      Transfer(owner, msg.sender, allocations[msg.sender]);
+      allocations[msg.sender] = 0;
+      
+  }
+  
+   function () {
+        //if ether is sent to this address, send it back.
+        throw;
+    }
+  
 }
