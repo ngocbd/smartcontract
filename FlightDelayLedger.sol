@@ -1,252 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayLedger at 0xbd5af6f705e4582c3f2b368ccf278ce39c3cfc17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayLedger at 0xb9255262a3b7a9e9d8372ed87a0979c3324e7820
 */
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	AccessControllerInterface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock
+ */
+
 pragma solidity ^0.4.11;
 
-contract FlightDelayControllerInterface {
-
-    function isOwner(address _addr) returns (bool _isOwner);
-
-    function selfRegister(bytes32 _id) returns (bool result);
-
-    function getContract(bytes32 _id) returns (address _addr);
-}
-
-contract FlightDelayDatabaseModel {
-
-    // Ledger accounts.
-    enum Acc {
-        Premium,      // 0
-        RiskFund,     // 1
-        Payout,       // 2
-        Balance,      // 3
-        Reward,       // 4
-        OraclizeCosts // 5
-    }
-
-    // policy Status Codes and meaning:
-    //
-    // 00 = Applied:	  the customer has payed a premium, but the oracle has
-    //					        not yet checked and confirmed.
-    //					        The customer can still revoke the policy.
-    // 01 = Accepted:	  the oracle has checked and confirmed.
-    //					        The customer can still revoke the policy.
-    // 02 = Revoked:	  The customer has revoked the policy.
-    //					        The premium minus cancellation fee is payed back to the
-    //					        customer by the oracle.
-    // 03 = PaidOut:	  The flight has ended with delay.
-    //					        The oracle has checked and payed out.
-    // 04 = Expired:	  The flight has endet with <15min. delay.
-    //					        No payout.
-    // 05 = Declined:	  The application was invalid.
-    //					        The premium minus cancellation fee is payed back to the
-    //					        customer by the oracle.
-    // 06 = SendFailed:	During Revoke, Decline or Payout, sending ether failed
-    //					        for unknown reasons.
-    //					        The funds remain in the contracts RiskFund.
-
-
-    //                   00       01        02       03        04      05           06
-    enum policyState { Applied, Accepted, Revoked, PaidOut, Expired, Declined, SendFailed }
-
-    // oraclize callback types:
-    enum oraclizeState { ForUnderwriting, ForPayout }
-
-    //               00   01   02   03
-    enum Currency { ETH, EUR, USD, GBP }
-
-    // the policy structure: this structure keeps track of the individual parameters of a policy.
-    // typically customer address, premium and some status information.
-    struct Policy {
-        // 0 - the customer
-        address customer;
-
-        // 1 - premium
-        uint premium;
-        // risk specific parameters:
-        // 2 - pointer to the risk in the risks mapping
-        bytes32 riskId;
-        // custom payout pattern
-        // in future versions, customer will be able to tamper with this array.
-        // to keep things simple, we have decided to hard-code the array for all policies.
-        // uint8[5] pattern;
-        // 3 - probability weight. this is the central parameter
-        uint weight;
-        // 4 - calculated Payout
-        uint calculatedPayout;
-        // 5 - actual Payout
-        uint actualPayout;
-
-        // status fields:
-        // 6 - the state of the policy
-        policyState state;
-        // 7 - time of last state change
-        uint stateTime;
-        // 8 - state change message/reason
-        bytes32 stateMessage;
-        // 9 - TLSNotary Proof
-        bytes proof;
-        // 10 - Currency
-        Currency currency;
-        // 10 - External customer id
-        bytes32 customerExternalId;
-    }
-
-    // the risk structure; this structure keeps track of the risk-
-    // specific parameters.
-    // several policies can share the same risk structure (typically
-    // some people flying with the same plane)
-    struct Risk {
-        // 0 - Airline Code + FlightNumber
-        bytes32 carrierFlightNumber;
-        // 1 - scheduled departure and arrival time in the format /dep/YYYY/MM/DD
-        bytes32 departureYearMonthDay;
-        // 2 - the inital arrival time
-        uint arrivalTime;
-        // 3 - the final delay in minutes
-        uint delayInMinutes;
-        // 4 - the determined delay category (0-5)
-        uint8 delay;
-        // 5 - we limit the cumulated weighted premium to avoid cluster risks
-        uint cumulatedWeightedPremium;
-        // 6 - max cumulated Payout for this risk
-        uint premiumMultiplier;
-    }
-
-    // the oraclize callback structure: we use several oraclize calls.
-    // all oraclize calls will result in a common callback to __callback(...).
-    // to keep track of the different querys we have to introduce this struct.
-    struct OraclizeCallback {
-        // for which policy have we called?
-        uint policyId;
-        // for which purpose did we call? {ForUnderwrite | ForPayout}
-        oraclizeState oState;
-        // time
-        uint oraclizeTime;
-    }
-
-    struct Customer {
-        bytes32 customerExternalId;
-        bool identityConfirmed;
-    }
-}
-
-contract FlightDelayControlledContract is FlightDelayDatabaseModel {
-
-    address public controller;
-    FlightDelayControllerInterface FD_CI;
-
-    modifier onlyController() {
-        require(msg.sender == controller);
-        _;
-    }
-
-    function setController(address _controller) internal returns (bool _result) {
-        controller = _controller;
-        FD_CI = FlightDelayControllerInterface(_controller);
-        _result = true;
-    }
-
-    function destruct() onlyController {
-        selfdestruct(controller);
-    }
-
-    function setContracts() onlyController {}
-
-    function getContract(bytes32 _id) internal returns (address _addr) {
-        _addr = FD_CI.getContract(_id);
-    }
-}
 
 contract FlightDelayAccessControllerInterface {
 
-    function setPermissionById(uint8 _perm, bytes32 _id);
+    function setPermissionById(uint8 _perm, bytes32 _id) public;
 
-    function setPermissionById(uint8 _perm, bytes32 _id, bool _access);
+    function setPermissionById(uint8 _perm, bytes32 _id, bool _access) public;
 
-    function setPermissionByAddress(uint8 _perm, address _addr);
+    function setPermissionByAddress(uint8 _perm, address _addr) public;
 
-    function setPermissionByAddress(uint8 _perm, address _addr, bool _access);
+    function setPermissionByAddress(uint8 _perm, address _addr, bool _access) public;
 
-    function checkPermission(uint8 _perm, address _addr) returns (bool _success);
+    function checkPermission(uint8 _perm, address _addr) public returns (bool _success);
 }
 
-contract FlightDelayDatabaseInterface is FlightDelayDatabaseModel {
+// File: contracts/FlightDelayConstants.sol
 
-    function setAccessControl(address _contract, address _caller, uint8 _perm);
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Events and Constants
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock
+ */
 
-    function setAccessControl(
-        address _contract,
-        address _caller,
-        uint8 _perm,
-        bool _access
-    );
+pragma solidity ^0.4.11;
 
-    function getAccessControl(address _contract, address _caller, uint8 _perm) returns (bool _allowed);
-
-    function setLedger(uint8 _index, int _value);
-
-    function getLedger(uint8 _index) returns (int _value);
-
-    function getCustomerPremium(uint _policyId) returns (address _customer, uint _premium);
-
-    function getPolicyData(uint _policyId) returns (address _customer, uint _premium, uint _weight);
-
-    function getPolicyState(uint _policyId) returns (policyState _state);
-
-    function getRiskId(uint _policyId) returns (bytes32 _riskId);
-
-    function createPolicy(address _customer, uint _premium, Currency _currency, bytes32 _customerExternalId, bytes32 _riskId) returns (uint _policyId);
-
-    function setState(
-        uint _policyId,
-        policyState _state,
-        uint _stateTime,
-        bytes32 _stateMessage
-    );
-
-    function setWeight(uint _policyId, uint _weight, bytes _proof);
-
-    function setPayouts(uint _policyId, uint _calculatedPayout, uint _actualPayout);
-
-    function setDelay(uint _policyId, uint8 _delay, uint _delayInMinutes);
-
-    function getRiskParameters(bytes32 _riskId)
-        returns (bytes32 _carrierFlightNumber, bytes32 _departureYearMonthDay, uint _arrivalTime);
-
-    function getPremiumFactors(bytes32 _riskId)
-        returns (uint _cumulatedWeightedPremium, uint _premiumMultiplier);
-
-    function createUpdateRisk(bytes32 _carrierFlightNumber, bytes32 _departureYearMonthDay, uint _arrivalTime)
-        returns (bytes32 _riskId);
-
-    function setPremiumFactors(bytes32 _riskId, uint _cumulatedWeightedPremium, uint _premiumMultiplier);
-
-    function getOraclizeCallback(bytes32 _queryId)
-        returns (uint _policyId, uint _arrivalTime);
-
-    function getOraclizePolicyId(bytes32 _queryId)
-    returns (uint _policyId);
-
-    function createOraclizeCallback(
-        bytes32 _queryId,
-        uint _policyId,
-        oraclizeState _oraclizeState,
-        uint _oraclizeTime
-    );
-
-    function checkTime(bytes32 _queryId, bytes32 _riskId, uint _offset)
-        returns (bool _result);
-}
-
-contract FlightDelayLedgerInterface is FlightDelayDatabaseModel {
-
-    function receiveFunds(Acc _to) payable;
-
-    function sendFunds(address _recipient, Acc _from, uint _amount) returns (bool _success);
-
-    function bookkeeping(Acc _from, Acc _to, uint amount);
-}
 
 contract FlightDelayConstants {
 
@@ -400,12 +190,9 @@ contract FlightDelayConstants {
     // Deadline for acceptance of policies: 31.12.2030 (Testnet)
     uint constant CONTRACT_DEAD_LINE = 1922396399;
 
-    uint constant MIN_DEPARTURE_LIM = 1508198400;
-
-    uint constant MAX_DEPARTURE_LIM = 1509840000;
-
     // gas Constants for oraclize
-    uint constant ORACLIZE_GAS = 1000000;
+    uint constant ORACLIZE_GAS = 700000;
+    uint constant ORACLIZE_GASPRICE = 4000000000;
 
 
     /*
@@ -418,13 +205,13 @@ contract FlightDelayConstants {
         // ratings api is v1, see https://developer.flightstats.com/api-docs/ratings/v1
         "[URL] json(https://api.flightstats.com/flex/ratings/rest/v1/json/flight/";
     string constant ORACLIZE_RATINGS_QUERY =
-        "?${[decrypt] <!--PUT ENCRYPTED_QUERY HERE--> }).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode']";
+        "?${[decrypt] BAr6Z9QolM2PQimF/pNC6zXldOvZ2qquOSKm/qJkJWnSGgAeRw21wBGnBbXiamr/ISC5SlcJB6wEPKthdc6F+IpqM/iXavKsalRUrGNuBsGfaMXr8fRQw6gLzqk0ecOFNeCa48/yqBvC/kas+jTKHiYxA3wTJrVZCq76Y03lZI2xxLaoniRk}).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode','departureAirportFsCode']";
     string constant ORACLIZE_STATUS_BASE_URL =
         // flight status api is v2, see https://developer.flightstats.com/api-docs/flightstatus/v2/flight
         "[URL] json(https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/";
     string constant ORACLIZE_STATUS_QUERY =
         // pattern:
-        "?${[decrypt] <!--PUT ENCRYPTED_QUERY HERE--> }&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
+        "?${[decrypt] BJxpwRaHujYTT98qI5slQJplj/VbfV7vYkMOp/Mr5D/5+gkgJQKZb0gVSCa6aKx2Wogo/cG7yaWINR6vnuYzccQE5yVJSr7RQilRawxnAtZXt6JB70YpX4xlfvpipit4R+OmQTurJGGwb8Pgnr4LvotydCjup6wv2Bk/z3UdGA7Sl+FU5a+0}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
 // <-- prod-mode
 
 // --> test-mode
@@ -434,7 +221,7 @@ contract FlightDelayConstants {
 //            "[URL] json(https://api-test.etherisc.com/flex/ratings/rest/v1/json/flight/";
 //        string constant ORACLIZE_RATINGS_QUERY =
 //            // for testrpc:
-//            ").ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode']";
+//            ").ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode','departureAirportFsCode']";
 //        string constant ORACLIZE_STATUS_BASE_URL =
 //            // flight status api is v2, see https://developer.flightstats.com/api-docs/flightstatus/v2/flight
 //            "[URL] json(https://api-test.etherisc.com/flex/flightstatus/rest/v2/json/flight/status/";
@@ -444,16 +231,355 @@ contract FlightDelayConstants {
 // <-- test-mode
 }
 
+// File: contracts/FlightDelayControllerInterface.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description Contract interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+contract FlightDelayControllerInterface {
+
+    function isOwner(address _addr) public returns (bool _isOwner);
+
+    function selfRegister(bytes32 _id) public returns (bool result);
+
+    function getContract(bytes32 _id) public returns (address _addr);
+}
+
+// File: contracts/FlightDelayDatabaseModel.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description Database model
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+contract FlightDelayDatabaseModel {
+
+    // Ledger accounts.
+    enum Acc {
+        Premium,      // 0
+        RiskFund,     // 1
+        Payout,       // 2
+        Balance,      // 3
+        Reward,       // 4
+        OraclizeCosts // 5
+    }
+
+    // policy Status Codes and meaning:
+    //
+    // 00 = Applied:	  the customer has payed a premium, but the oracle has
+    //					        not yet checked and confirmed.
+    //					        The customer can still revoke the policy.
+    // 01 = Accepted:	  the oracle has checked and confirmed.
+    //					        The customer can still revoke the policy.
+    // 02 = Revoked:	  The customer has revoked the policy.
+    //					        The premium minus cancellation fee is payed back to the
+    //					        customer by the oracle.
+    // 03 = PaidOut:	  The flight has ended with delay.
+    //					        The oracle has checked and payed out.
+    // 04 = Expired:	  The flight has endet with <15min. delay.
+    //					        No payout.
+    // 05 = Declined:	  The application was invalid.
+    //					        The premium minus cancellation fee is payed back to the
+    //					        customer by the oracle.
+    // 06 = SendFailed:	During Revoke, Decline or Payout, sending ether failed
+    //					        for unknown reasons.
+    //					        The funds remain in the contracts RiskFund.
+
+
+    //                   00       01        02       03        04      05           06
+    enum policyState { Applied, Accepted, Revoked, PaidOut, Expired, Declined, SendFailed }
+
+    // oraclize callback types:
+    enum oraclizeState { ForUnderwriting, ForPayout }
+
+    //               00   01   02   03
+    enum Currency { ETH, EUR, USD, GBP }
+
+    // the policy structure: this structure keeps track of the individual parameters of a policy.
+    // typically customer address, premium and some status information.
+    struct Policy {
+        // 0 - the customer
+        address customer;
+
+        // 1 - premium
+        uint premium;
+        // risk specific parameters:
+        // 2 - pointer to the risk in the risks mapping
+        bytes32 riskId;
+        // custom payout pattern
+        // in future versions, customer will be able to tamper with this array.
+        // to keep things simple, we have decided to hard-code the array for all policies.
+        // uint8[5] pattern;
+        // 3 - probability weight. this is the central parameter
+        uint weight;
+        // 4 - calculated Payout
+        uint calculatedPayout;
+        // 5 - actual Payout
+        uint actualPayout;
+
+        // status fields:
+        // 6 - the state of the policy
+        policyState state;
+        // 7 - time of last state change
+        uint stateTime;
+        // 8 - state change message/reason
+        bytes32 stateMessage;
+        // 9 - TLSNotary Proof
+        bytes proof;
+        // 10 - Currency
+        Currency currency;
+        // 10 - External customer id
+        bytes32 customerExternalId;
+    }
+
+    // the risk structure; this structure keeps track of the risk-
+    // specific parameters.
+    // several policies can share the same risk structure (typically
+    // some people flying with the same plane)
+    struct Risk {
+        // 0 - Airline Code + FlightNumber
+        bytes32 carrierFlightNumber;
+        // 1 - scheduled departure and arrival time in the format /dep/YYYY/MM/DD
+        bytes32 departureYearMonthDay;
+        // 2 - the inital arrival time
+        uint arrivalTime;
+        // 3 - the final delay in minutes
+        uint delayInMinutes;
+        // 4 - the determined delay category (0-5)
+        uint8 delay;
+        // 5 - we limit the cumulated weighted premium to avoid cluster risks
+        uint cumulatedWeightedPremium;
+        // 6 - max cumulated Payout for this risk
+        uint premiumMultiplier;
+    }
+
+    // the oraclize callback structure: we use several oraclize calls.
+    // all oraclize calls will result in a common callback to __callback(...).
+    // to keep track of the different querys we have to introduce this struct.
+    struct OraclizeCallback {
+        // for which policy have we called?
+        uint policyId;
+        // for which purpose did we call? {ForUnderwrite | ForPayout}
+        oraclizeState oState;
+        // time
+        uint oraclizeTime;
+    }
+
+    struct Customer {
+        bytes32 customerExternalId;
+        bool identityConfirmed;
+    }
+}
+
+// File: contracts/FlightDelayControlledContract.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description Controlled contract Interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock
+ */
+
+pragma solidity ^0.4.11;
+
+
+
+
+
+contract FlightDelayControlledContract is FlightDelayDatabaseModel {
+
+    address public controller;
+    FlightDelayControllerInterface FD_CI;
+
+    modifier onlyController() {
+        require(msg.sender == controller);
+        _;
+    }
+
+    function setController(address _controller) internal returns (bool _result) {
+        controller = _controller;
+        FD_CI = FlightDelayControllerInterface(_controller);
+        _result = true;
+    }
+
+    function destruct() public onlyController {
+        selfdestruct(controller);
+    }
+
+    function setContracts() public onlyController {}
+
+    function getContract(bytes32 _id) internal returns (address _addr) {
+        _addr = FD_CI.getContract(_id);
+    }
+}
+
+// File: contracts/FlightDelayDatabaseInterface.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description Database contract interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+
+
+contract FlightDelayDatabaseInterface is FlightDelayDatabaseModel {
+
+    uint public MIN_DEPARTURE_LIM;
+
+    uint public MAX_DEPARTURE_LIM;
+
+    bytes32[] public validOrigins;
+
+    bytes32[] public validDestinations;
+
+    function countOrigins() public constant returns (uint256 _length);
+
+    function getOriginByIndex(uint256 _i) public constant returns (bytes32 _origin);
+
+    function countDestinations() public constant returns (uint256 _length);
+
+    function getDestinationByIndex(uint256 _i) public constant returns (bytes32 _destination);
+
+    function setAccessControl(address _contract, address _caller, uint8 _perm) public;
+
+    function setAccessControl(
+        address _contract,
+        address _caller,
+        uint8 _perm,
+        bool _access
+    ) public;
+
+    function getAccessControl(address _contract, address _caller, uint8 _perm) public returns (bool _allowed) ;
+
+    function setLedger(uint8 _index, int _value) public;
+
+    function getLedger(uint8 _index) public returns (int _value) ;
+
+    function getCustomerPremium(uint _policyId) public returns (address _customer, uint _premium) ;
+
+    function getPolicyData(uint _policyId) public returns (address _customer, uint _premium, uint _weight) ;
+
+    function getPolicyState(uint _policyId) public returns (policyState _state) ;
+
+    function getRiskId(uint _policyId) public returns (bytes32 _riskId);
+
+    function createPolicy(address _customer, uint _premium, Currency _currency, bytes32 _customerExternalId, bytes32 _riskId) public returns (uint _policyId) ;
+
+    function setState(
+        uint _policyId,
+        policyState _state,
+        uint _stateTime,
+        bytes32 _stateMessage
+    ) public;
+
+    function setWeight(uint _policyId, uint _weight, bytes _proof) public;
+
+    function setPayouts(uint _policyId, uint _calculatedPayout, uint _actualPayout) public;
+
+    function setDelay(uint _policyId, uint8 _delay, uint _delayInMinutes) public;
+
+    function getRiskParameters(bytes32 _riskId)
+        public returns (bytes32 _carrierFlightNumber, bytes32 _departureYearMonthDay, uint _arrivalTime) ;
+
+    function getPremiumFactors(bytes32 _riskId)
+        public returns (uint _cumulatedWeightedPremium, uint _premiumMultiplier);
+
+    function createUpdateRisk(bytes32 _carrierFlightNumber, bytes32 _departureYearMonthDay, uint _arrivalTime)
+        public returns (bytes32 _riskId);
+
+    function setPremiumFactors(bytes32 _riskId, uint _cumulatedWeightedPremium, uint _premiumMultiplier) public;
+
+    function getOraclizeCallback(bytes32 _queryId)
+        public returns (uint _policyId, uint _oraclizeTime) ;
+
+    function getOraclizePolicyId(bytes32 _queryId)
+        public returns (uint _policyId) ;
+
+    function createOraclizeCallback(
+        bytes32 _queryId,
+        uint _policyId,
+        oraclizeState _oraclizeState,
+        uint _oraclizeTime
+    ) public;
+
+    function checkTime(bytes32 _queryId, bytes32 _riskId, uint _offset)
+        public returns (bool _result) ;
+}
+
+// File: contracts/FlightDelayLedgerInterface.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Ledger contract interface
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock, Stephan Karpischek
+ */
+
+pragma solidity ^0.4.11;
+
+
+
+
+contract FlightDelayLedgerInterface is FlightDelayDatabaseModel {
+
+    function receiveFunds(Acc _to) public payable;
+
+    function sendFunds(address _recipient, Acc _from, uint _amount) public returns (bool _success);
+
+    function bookkeeping(Acc _from, Acc _to, uint amount) public;
+}
+
+// File: contracts/FlightDelayLedger.sol
+
+/**
+ * FlightDelay with Oraclized Underwriting and Payout
+ *
+ * @description	Ledger contract
+ * @copyright (c) 2017 etherisc GmbH
+ * @author Christoph Mussenbrock
+ */
+
+pragma solidity ^0.4.11;
+
+
+
+
+
+
+
+
 contract FlightDelayLedger is FlightDelayControlledContract, FlightDelayLedgerInterface, FlightDelayConstants {
 
     FlightDelayDatabaseInterface FD_DB;
     FlightDelayAccessControllerInterface FD_AC;
 
-    function FlightDelayLedger(address _controller) {
+    function FlightDelayLedger(address _controller) public {
         setController(_controller);
     }
 
-    function setContracts() onlyController {
+    function setContracts() public onlyController {
         FD_AC = FlightDelayAccessControllerInterface(getContract("FD.AccessController"));
         FD_DB = FlightDelayDatabaseInterface(getContract("FD.Database"));
 
@@ -480,15 +606,22 @@ contract FlightDelayLedger is FlightDelayControlledContract, FlightDelayLedgerIn
     /*
      * @dev Fund contract
      */
-    function fund() payable {
+    function () public payable {
         require(FD_AC.checkPermission(104, msg.sender));
 
         bookkeeping(Acc.Balance, Acc.RiskFund, msg.value);
-
-        // todo: fire funding event
     }
 
-    function receiveFunds(Acc _to) payable {
+    function withdraw(uint256 _amount) {
+        require(FD_AC.checkPermission(104, msg.sender));
+        require(this.balance >= _amount);
+
+        bookkeeping(Acc.RiskFund, Acc.Balance, _amount);
+
+        getContract("FD.Funder").transfer(_amount);
+    }
+
+    function receiveFunds(Acc _to) public payable {
         require(FD_AC.checkPermission(101, msg.sender));
 
         LogReceiveFunds(msg.sender, uint8(_to), msg.value);
@@ -496,7 +629,7 @@ contract FlightDelayLedger is FlightDelayControlledContract, FlightDelayLedgerIn
         bookkeeping(Acc.Balance, _to, msg.value);
     }
 
-    function sendFunds(address _recipient, Acc _from, uint _amount) returns (bool _success) {
+    function sendFunds(address _recipient, Acc _from, uint _amount) public returns (bool _success) {
         require(FD_AC.checkPermission(102, msg.sender));
 
         if (this.balance < _amount) {
@@ -517,7 +650,7 @@ contract FlightDelayLedger is FlightDelayControlledContract, FlightDelayLedgerIn
 
     // invariant: acc_Premium + acc_RiskFund + acc_Payout + acc_Balance + acc_Reward + acc_OraclizeCosts == 0
 
-    function bookkeeping(Acc _from, Acc _to, uint256 _amount) {
+    function bookkeeping(Acc _from, Acc _to, uint256 _amount) public {
         require(FD_AC.checkPermission(103, msg.sender));
 
         // check against type cast overflow
