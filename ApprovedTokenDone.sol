@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x64f09bc2909a4b9402d71f33a3f16eeaaed23823
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xc0eeba83211821a9ed674cc02f916918de7bad18
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'XCOM';
-	string public symbol = 'XCOM';
+	string public name = 'SIMCITY';
+	string public symbol = 'SIMCITY';
 	uint public decimals = 18;
 	uint public initialSupply = 101111101011110010110010;
 	string public publisher = 'TokenDone.io';
