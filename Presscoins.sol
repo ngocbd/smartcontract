@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presscoins at 0x5b8d776e4aecfebd8d03cad7d94f23424de1733a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presscoins at 0x50fec5d840995b5fcca57d4e8f4c6695b2dd411f
 */
 pragma solidity ^0.4.16;
 
