@@ -1,317 +1,324 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x09971fb3ebd22e3afea9f214ddbc85a03f993fe9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa3e97b1da9c3684324fe38627c40e94555f39b18
 */
-pragma solidity ^ 0.4.17;
+pragma solidity ^0.4.18;
+/**
+* @title ICO CONTRACT
+* @dev ERC-20 Token Standard Complian
+*/
 
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    function mul(uint a, uint b) pure internal returns(uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function sub(uint a, uint b) pure internal returns(uint) {
-        assert(b <= a);
-        return a - b;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function add(uint a, uint b) pure internal returns(uint) {
-        uint c = a + b;
-        assert(c >= a && c >= b);
-        return c;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
-
-
-
-
 
 contract Ownable {
-    address public owner;
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public{
+    owner = msg.sender;
+  }
 
-    function Ownable() public {
-        owner = msg.sender;
-    }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    function transferOwnership(address newOwner) public onlyOwner {
-        if (newOwner != address(0)) 
-            owner = newOwner;
-    }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 
-    function kill() public {
-        if (msg.sender == owner) 
-            selfdestruct(owner);
-    }
+}
 
-    modifier onlyOwner() {
-        if (msg.sender == owner)
-            _;
-    }
+contract token {
+
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) public returns (bool success);
+
 }
 
 
-contract Pausable is Ownable {
-    bool public stopped;
+contract Crowdsale is Ownable {
+  using SafeMath for uint256;
+  // The token being sold
+  token public token_reward;
+  // start and end timestamps where investments are allowed (both inclusive
+  
+  uint256 public start_time = now; //for testing
+  //uint256 public start_time = 1517846400; //02/05/2018 @ 4:00pm (UTC) or 5 PM (UTC + 1)
+  uint256 public end_Time = 1522454400; // 03/31/2018 @ 12:00am (UTC)
 
-    modifier stopInEmergency {
-        if (stopped) {
-            revert();
-        }
-        _;
+  uint256 public phase_1_remaining_tokens  = 50000000 * (10 ** uint256(8));
+  uint256 public phase_2_remaining_tokens  = 50000000 * (10 ** uint256(8));
+  uint256 public phase_3_remaining_tokens  = 50000000 * (10 ** uint256(8));
+  uint256 public phase_4_remaining_tokens  = 50000000 * (10 ** uint256(8));
+  uint256 public phase_5_remaining_tokens  = 50000000 * (10 ** uint256(8));
+
+  uint256 public phase_1_bonus  = 40;
+  uint256 public phase_2_bonus  = 20;
+  uint256 public phase_3_bonus  = 15;
+  uint256 public phase_4_bonus  = 10;
+  uint256 public phase_5_bonus  = 5;
+
+  uint256 public token_price  = 2;// 2 cents
+
+  // address where funds are collected
+  address public wallet;
+  // Ether to $ price
+  uint256 public eth_to_usd = 1000;
+  // amount of raised money in wei
+  uint256 public weiRaised;
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  // rate change event
+  event EthToUsdChanged(address indexed owner, uint256 old_eth_to_usd, uint256 new_eth_to_usd);
+  
+  // constructor
+  function Crowdsale(address tokenContractAddress) public{
+    wallet = 0x1aC024482b91fa9AaF22450Ff60680BAd60bF8D3;//wallet where ETH will be transferred
+    token_reward = token(tokenContractAddress);
+  }
+  
+ function tokenBalance() constant public returns (uint256){
+    return token_reward.balanceOf(this);
+  }
+
+  function getRate() constant public returns (uint256){
+    return eth_to_usd.mul(100).div(token_price);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = now >= start_time && now <= end_Time;
+    bool allPhaseFinished = phase_5_remaining_tokens > 0;
+    bool nonZeroPurchase = msg.value != 0;
+    bool minPurchase = eth_to_usd*msg.value >= 100; // minimum purchase $100
+    return withinPeriod && nonZeroPurchase && allPhaseFinished && minPurchase;
+  }
+
+  // @return true if the admin can send tokens manually
+  function validPurchaseForManual() internal constant returns (bool) {
+    bool withinPeriod = now >= start_time && now <= end_Time;
+    bool allPhaseFinished = phase_5_remaining_tokens > 0;
+    return withinPeriod && allPhaseFinished;
+  }
+
+
+  // check token availibility for current phase and max allowed token balance
+  function checkAndUpdateTokenForManual(uint256 _tokens) internal returns (bool){
+    if(phase_1_remaining_tokens > 0){
+      if(_tokens > phase_1_remaining_tokens){
+        uint256 tokens_from_phase_2 = _tokens.sub(phase_1_remaining_tokens);
+        phase_1_remaining_tokens = 0;
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(tokens_from_phase_2);
+      }else{
+        phase_1_remaining_tokens = phase_1_remaining_tokens.sub(_tokens);
+      }
+      return true;
+    }else if(phase_2_remaining_tokens > 0){
+      if(_tokens > phase_2_remaining_tokens){
+        uint256 tokens_from_phase_3 = _tokens.sub(phase_2_remaining_tokens);
+        phase_2_remaining_tokens = 0;
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(tokens_from_phase_3);
+      }else{
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(_tokens);
+      }
+      return true;
+    }else if(phase_3_remaining_tokens > 0){
+      if(_tokens > phase_3_remaining_tokens){
+        uint256 tokens_from_phase_4 = _tokens.sub(phase_3_remaining_tokens);
+        phase_3_remaining_tokens = 0;
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(tokens_from_phase_4);
+      }else{
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(_tokens);
+      }
+      return true;
+    }else if(phase_4_remaining_tokens > 0){
+      if(_tokens > phase_4_remaining_tokens){
+        uint256 tokens_from_phase_5 = _tokens.sub(phase_4_remaining_tokens);
+        phase_4_remaining_tokens = 0;
+        phase_5_remaining_tokens = phase_5_remaining_tokens.sub(tokens_from_phase_5);
+      }else{
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(_tokens);
+      }
+      return true;
+    }else if(phase_5_remaining_tokens > 0){
+      if(_tokens > phase_5_remaining_tokens){
+        return false;
+      }else{
+        phase_5_remaining_tokens = phase_5_remaining_tokens.sub(_tokens);
+       }
+    }else{
+      return false;
     }
+  }
 
-    modifier onlyInEmergency {
-        if (!stopped) {
-            revert();
-        }
-        _;
+  // function to transfer token manually
+  function transferManually(uint256 _tokens, address to_address) onlyOwner public returns (bool){
+    require(to_address != 0x0);
+    require(validPurchaseForManual());
+    require(checkAndUpdateTokenForManual(_tokens));
+    token_reward.transfer(to_address, _tokens);
+    return true;
+  }
+
+
+  // check token availibility for current phase and max allowed token balance
+  function transferIfTokenAvailable(uint256 _tokens, uint256 _weiAmount, address _beneficiary) internal returns (bool){
+
+    uint256 total_token_to_transfer = 0;
+    uint256 bonus = 0;
+    if(phase_1_remaining_tokens > 0){
+      if(_tokens > phase_1_remaining_tokens){
+        uint256 tokens_from_phase_2 = _tokens.sub(phase_1_remaining_tokens);
+        bonus = (phase_1_remaining_tokens.mul(phase_1_bonus).div(100)).add(tokens_from_phase_2.mul(phase_2_bonus).div(100));
+        phase_1_remaining_tokens = 0;
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(tokens_from_phase_2);
+      }else{
+        phase_1_remaining_tokens = phase_1_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_1_bonus).div(100);
+      }
+      total_token_to_transfer = _tokens + bonus;
+    }else if(phase_2_remaining_tokens > 0){
+      if(_tokens > phase_2_remaining_tokens){
+        uint256 tokens_from_phase_3 = _tokens.sub(phase_2_remaining_tokens);
+        bonus = (phase_2_remaining_tokens.mul(phase_2_bonus).div(100)).add(tokens_from_phase_3.mul(phase_3_bonus).div(100));
+        phase_2_remaining_tokens = 0;
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(tokens_from_phase_3);
+      }else{
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_2_bonus).div(100);
+      }
+      total_token_to_transfer = _tokens + bonus;
+    }else if(phase_3_remaining_tokens > 0){
+      if(_tokens > phase_3_remaining_tokens){
+        uint256 tokens_from_phase_4 = _tokens.sub(phase_3_remaining_tokens);
+        bonus = (phase_3_remaining_tokens.mul(phase_3_bonus).div(100)).add(tokens_from_phase_4.mul(phase_4_bonus).div(100));
+        phase_3_remaining_tokens = 0;
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(tokens_from_phase_4);
+      }else{
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_3_bonus).div(100);
+      }
+      total_token_to_transfer = _tokens + bonus;
+    }else if(phase_4_remaining_tokens > 0){
+      if(_tokens > phase_4_remaining_tokens){
+        uint256 tokens_from_phase_5 = _tokens.sub(phase_4_remaining_tokens);
+        bonus = (phase_4_remaining_tokens.mul(phase_4_bonus).div(100)).add(tokens_from_phase_5.mul(phase_5_bonus).div(100));
+        phase_4_remaining_tokens = 0;
+        phase_5_remaining_tokens = phase_5_remaining_tokens.sub(tokens_from_phase_5);
+      }else{
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_4_bonus).div(100);
+      }
+      total_token_to_transfer = _tokens + bonus;
+    }else if(phase_5_remaining_tokens > 0){
+      if(_tokens > phase_5_remaining_tokens){
+        total_token_to_transfer = 0;
+      }else{
+        phase_5_remaining_tokens = phase_5_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_5_bonus).div(100);
+        total_token_to_transfer = _tokens + bonus;
+      }
+    }else{
+      total_token_to_transfer = 0;
     }
-
-    // Called by the owner in emergency, triggers stopped state
-    function emergencyStop() external onlyOwner() {
-        stopped = true;
-    }
-
-    // Called by the owner to end of emergency, returns to normal state
-    function release() external onlyOwner() onlyInEmergency {
-        stopped = false;
-    }
-}
-
-
-// Crowdsale Smart Contract
-// This smart contract collects ETH and in return sends tokens to contributors
-contract Crowdsale is Pausable {
-
-    using SafeMath for uint;
-
-    struct Backer {
-        uint weiReceived; // amount of ETH contributed
-        uint tokensSent; // amount of tokens  sent  
-        bool refunded; // true if user has been refunded       
-    }
-
-    Token public token; // Token contract reference   
-    address public multisig; // Multisig contract that will receive the ETH    
-    address public team; // Address at which the team tokens will be sent        
-    uint public ethReceivedPresale; // Number of ETH received in presale
-    uint public ethReceivedMain; // Number of ETH received in public sale
-    uint public totalTokensSent; // Number of tokens sent to ETH contributors
-    uint public startBlock; // Crowdsale start block
-    uint public endBlock; // Crowdsale end block
-    uint public maxCap; // Maximum number of tokens to sell
-    uint public minCap; // Minimum number of ETH to raise
-    uint public minInvestETH; // Minimum amount to invest   
-    bool public crowdsaleClosed; // Is crowdsale still in progress
-    Step public currentStep;  // to allow for controled steps of the campaign 
-    uint public refundCount;  // number of refunds
-    uint public totalRefunded; // total amount of refunds    
-    uint public tokenPriceWei;  // price of token in wei
-
-    mapping(address => Backer) public backers; //backer list
-    address[] public backersIndex; // to be able to itarate through backers for verification.  
-
-    
-    // @notice to verify if action is not performed out of the campaing range
-    modifier respectTimeFrame() {
-        if ((block.number < startBlock) || (block.number > endBlock)) 
-            revert();
-        _;
-    }
-
-    // @notice to set and determine steps of crowdsale
-    enum Step {
-        Unknown,
-        FundingPreSale,     // presale mode
-        FundingPublicSale,  // public mode
-        Refunding  // in case campaign failed during this step contributors will be able to receive refunds
-    }
-
-    // Events
-    event ReceivedETH(address backer, uint amount, uint tokenAmount);
-    event RefundETH(address backer, uint amount);
-
-
-    // Crowdsale  {constructor}
-    // @notice fired when contract is crated. Initilizes all constnat and initial values.
-    function Crowdsale() public {
-        multisig = 0xc15464420aC025077Ba280cBDe51947Fc12583D6; 
-        team = 0xc15464420aC025077Ba280cBDe51947Fc12583D6;                                  
-        minInvestETH = 1 ether/100;
-        startBlock = 0; // Should wait for the call of the function start
-        endBlock = 0; // Should wait for the call of the function start                  
-        tokenPriceWei = 1 ether/8000;
-        maxCap = 30600000e18;         
-        minCap = 900000e18;        
-        totalTokensSent = 1253083e18;  
-        setStep(Step.FundingPreSale);
-    }
-
-    // @notice to populate website with status of the sale 
-    function returnWebsiteData() external view returns(uint, uint, uint, uint, uint, uint, uint, uint, Step, bool, bool) {            
-    
-        return (startBlock, endBlock, backersIndex.length, ethReceivedPresale.add(ethReceivedMain), maxCap, minCap, totalTokensSent, tokenPriceWei, currentStep, stopped, crowdsaleClosed);
-    }
-
-    // @notice in case refunds are needed, money can be returned to the contract
-    function fundContract() external payable onlyOwner() returns (bool) {
-        return true;
-    }
-
-    // @notice Specify address of token contract
-    // @param _tokenAddress {address} address of token contract
-    // @return res {bool}
-    function updateTokenAddress(Token _tokenAddress) external onlyOwner() returns(bool res) {
-        token = _tokenAddress;
-        return true;
-    }
-
-    // @notice set the step of the campaign 
-    // @param _step {Step}
-    function setStep(Step _step) public onlyOwner() {
-        currentStep = _step;
-        
-        if (currentStep == Step.FundingPreSale) {  // for presale 
-            tokenPriceWei = 1 ether/8000;  
-            minInvestETH = 1 ether/100;                             
-        }else if (currentStep == Step.FundingPublicSale) { // for public sale
-            tokenPriceWei = 1 ether/5000;   
-            minInvestETH = 0;               
-        }            
-    }
-
-    // @notice return number of contributors
-    // @return  {uint} number of contributors   
-    function numberOfBackers() external view returns(uint) {
-        return backersIndex.length;
-    }
-
-    // {fallback function}
-    // @notice It will call internal function which handels allocation of Ether and calculates tokens.
-    function () external payable {           
-        contribute(msg.sender);
-    }
-
-    // @notice It will be called by owner to start the sale    
-    function start(uint _block) external onlyOwner() {   
-
-        require(_block < 246528);  // 4.28*60*24*40 days = 246528     
-        startBlock = block.number;
-        endBlock = startBlock.add(_block); 
-    }
-
-    // @notice Due to changing average of block time
-    // this function will allow on adjusting duration of campaign closer to the end 
-    function adjustDuration(uint _block) external onlyOwner() {
-
-        require(_block < 308160);  // 4.28*60*24*50 days = 308160     
-        require(_block > block.number.sub(startBlock)); // ensure that endBlock is not set in the past
-        endBlock = startBlock.add(_block); 
-    }
-
-    // @notice It will be called by fallback function whenever ether is sent to it
-    // @param  _backer {address} address contributor
-    // @return res {bool} true if transaction was successful
-    function contribute(address _backer) internal stopInEmergency respectTimeFrame returns(bool res) {
-    
-        require(currentStep == Step.FundingPreSale || currentStep == Step.FundingPublicSale); // ensure that this is correct step
-        require(msg.value >= minInvestETH);   // ensure that min contributions amount is met
-          
-        uint tokensToSend = msg.value.mul(1e18) / tokenPriceWei; // calculate amount of tokens to send  (add 18 0s first)     
-        require(totalTokensSent.add(tokensToSend) < maxCap); // Ensure that max cap hasn't been reached  
-            
-        Backer storage backer = backers[_backer];
-    
-        if (backer.weiReceived == 0)      
-            backersIndex.push(_backer);
-           
-        backer.tokensSent = backer.tokensSent.add(tokensToSend); // save contributors tokens to be sent
-        backer.weiReceived = backer.weiReceived.add(msg.value);  // save how much was the contribution
-        totalTokensSent = totalTokensSent.add(tokensToSend);     // update the total amount of tokens sent
-    
-        if (Step.FundingPublicSale == currentStep)  // Update the total Ether recived
-            ethReceivedMain = ethReceivedMain.add(msg.value);
-        else
-            ethReceivedPresale = ethReceivedPresale.add(msg.value);     
-
-        if (!token.transfer(_backer, tokensToSend)) 
-            revert(); // Transfer tokens   
-    
-        multisig.transfer(this.balance);   // transfer funds to multisignature wallet             
-    
-        ReceivedETH(_backer, msg.value, tokensToSend); // Register event
-        return true;
-    }
-
-    // @notice This function will finalize the sale.
-    // It will only execute if predetermined sale time passed or all tokens are sold.
-    // it will fail if minimum cap is not reached
-    function finalize() external onlyOwner() {
-
-        require(!crowdsaleClosed);        
-        // purchasing precise number of tokens might be impractical, thus subtract 1000 tokens so finalizition is possible
-        // near the end 
-        require(block.number >= endBlock || totalTokensSent >= maxCap.sub(1000));                 
-        require(totalTokensSent >= minCap);  // ensure that minimum was reached
-
-        crowdsaleClosed = true;  
-        
-        if (!token.transfer(team, token.balanceOf(this))) // transfer all remaing tokens to team address
-            revert();
-        token.unlock();                      
-    }
-
-    // @notice Failsafe drain
-    function drain() external onlyOwner() {
-        multisig.transfer(this.balance);               
-    }
-
-    // @notice Failsafe token transfer
-    function tokenDrian() external onlyOwner() {
-        if (block.number > endBlock) {
-            if (!token.transfer(team, token.balanceOf(this))) 
-                revert();
-        }
+    if(total_token_to_transfer > 0){
+      token_reward.transfer(_beneficiary, total_token_to_transfer);
+      TokenPurchase(msg.sender, _beneficiary, _weiAmount, total_token_to_transfer);
+      return true;
+    }else{
+      return false;
     }
     
-    // @notice it will allow contributors to get refund in case campaign failed
-    function refund() external stopInEmergency returns (bool) {
+  }
 
-        require(currentStep == Step.Refunding);         
-       
-        require(this.balance > 0);  // contract will hold 0 ether at the end of campaign.                                  
-                                    // contract needs to be funded through fundContract() 
+  // fallback function can be used to buy tokens
+  function () payable public{
+    buyTokens(msg.sender);
+  }
 
-        Backer storage backer = backers[msg.sender];
-
-        require(backer.weiReceived > 0);  // esnure that user has sent contribution
-        require(!backer.refunded);         // ensure that user hasn't been refunded yet
-
-        if (!token.returnTokens(msg.sender, backer.tokensSent)) // transfer tokens
-            revert();
-        backer.refunded = true;  // save refund status to true
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+    uint256 weiAmount = msg.value;
+    // calculate token amount to be created
+    uint256 tokens = (weiAmount.mul(getRate())).div(10 ** uint256(10));
+    // Check is there are enough token available for current phase and per person  
+    require(transferIfTokenAvailable(tokens, weiAmount, beneficiary));
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
     
-        refundCount++;
-        totalRefunded = totalRefunded.add(backer.weiReceived);
-        msg.sender.transfer(backer.weiReceived);  // send back the contribution 
-        RefundETH(msg.sender, backer.weiReceived);
-        return true;
-    }
-}
-
-
-contract ERC20 {
-    uint public totalSupply;
-   
-    function transfer(address to, uint value) public returns(bool ok);  
-    function balanceOf(address who) public view returns(uint);
-}
-
-
-// The token
-contract Token is ERC20, Ownable {
-
-    function returnTokens(address _member, uint256 _value) public returns(bool);
-    function unlock() public;
+    forwardFunds();
+  }
+  
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+  
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    return now > end_Time;
+  }
+  // function to transfer token back to owner
+  function transferBack(uint256 tokens, address to_address) onlyOwner public returns (bool){
+    token_reward.transfer(to_address, tokens);
+    return true;
+  }
+  // function to change rate
+  function changeEth_to_usd(uint256 _eth_to_usd) onlyOwner public returns (bool){
+    EthToUsdChanged(msg.sender, eth_to_usd, _eth_to_usd);
+    eth_to_usd = _eth_to_usd;
+    return true;
+  }
 }
