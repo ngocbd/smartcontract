@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAVToken at 0x19b9707c4cacc82ce1344ed42352b2b1db77e437
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAVToken at 0x0e973e3f25eea2d43919436e59744e7ed993ad9c
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.23;
 
 // File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
