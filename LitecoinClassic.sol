@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LitecoinClassic at 0x9c3a2334d8d7a8b9013c0e572a5bbdfc2fc69063
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LitecoinClassic at 0x009da0220bf71a5443e396c472f575d402b2d974
 */
 pragma solidity ^0.4.4;
 
@@ -47,7 +47,7 @@ contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
        
-    
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
@@ -58,7 +58,7 @@ contract StandardToken is Token {
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         
-        
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
             balances[_from] -= _value;
@@ -97,13 +97,13 @@ contract LitecoinClassic is StandardToken {
     }
 
    
-    string public name;                   
-    uint8 public decimals;                
-    string public symbol;                 
-    string public version = 'H1.0';       
+    string public name;                   //f
+    uint8 public decimals;                //Ho1 
+    string public symbol;                 //An
+    string public version = 'H1.0';       //human 0.1 standard.
 
 
-    function LitecoinClassic(
+    function ERC20Token(
         ) {
         balances[msg.sender] = 21000000000000000000000000;               
         totalSupply = 21000000000000000000000000;                        
@@ -117,7 +117,9 @@ contract LitecoinClassic is StandardToken {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
-        
+        //
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
