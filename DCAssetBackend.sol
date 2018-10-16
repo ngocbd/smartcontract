@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DCAssetBackend at 0x815a46107e5ee2291a76274dc879ce947a3f0850
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DCAssetBackend at 0xe68ca4cb6749e484332d6881137ffaf87f263631
 */
 contract Assertive {
   function assert(bool assertion) {
