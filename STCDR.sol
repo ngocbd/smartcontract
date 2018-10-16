@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STCDR at 0x62acbf7e188fc01fe618442a03a927aa7607da99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STCDR at 0x8d2da938d6f717eb5d84f68bb0eca7584c8faf2a
 */
 pragma solidity ^0.4.23;
 
@@ -88,8 +88,8 @@ contract StandardToken is Token, SafeMath {
       return allowed[_owner][_spender];
     }
 
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) public allowed;
+    mapping (address => uint256)  balances;
+    mapping (address => mapping (address => uint256))  allowed;
 }
 
 contract STCDR is StandardToken {
@@ -135,6 +135,7 @@ contract STCDR is StandardToken {
 		tokenAllocated = newtokenAllocated;
 		whitelist[participant] = true;
 		balances[participant] = safeAdd(balances[participant], thisamountTokens);
+		totalSupply = safeAdd(totalSupply, thisamountTokens);		
 	}
 
 	function allocateTokens(address participant, uint256  amountTokens, address recommended) external onlyFundWallet  {
@@ -158,6 +159,7 @@ contract STCDR is StandardToken {
 		require(newtokenBurned <= tokenCap);
 		tokenBurned = newtokenBurned;
 		balances[thisparticipant] = safeSub(balances[thisparticipant], newTokValue);
+		totalSupply = safeSub(totalSupply, newTokValue);
 	}
 
 	function burnMyTokens(uint256 amountTokens) external onlyWhitelist  {
@@ -172,14 +174,7 @@ contract STCDR is StandardToken {
 		require(newtokenBurned <= tokenCap);
 		tokenBurned = newtokenBurned;
 		balances[msg.sender] = safeSub(balances[thisparticipant],newTokValue );
-	}
-
-  function buy() external payable {
-		buyTo(msg.sender);
-	}
-
-  function buyTo(address participant) public payable onlyWhitelist {
-		require(false);
+		totalSupply = safeSub(totalSupply, newTokValue);
 	}
 
   function changeFundWallet(address newFundWallet) external onlyFundWallet {
@@ -187,12 +182,13 @@ contract STCDR is StandardToken {
 		fundWallet = newFundWallet;
 	}
 
-  // prevent transfers until trading allowed
 	function transfer(address _to, uint256 _value) public returns (bool success) {
+		whitelist[_to] = true;
 		return super.transfer(_to, _value);
 	}
 
 	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+		whitelist[_to] = true;
 		return super.transferFrom(_from, _to, _value);
 	}
 }
