@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x73Dac1423d69651a6F85462B45260f7c05de3548
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xdd54da65b9d9cd69922c6f3ed1ccbbc259674591
 */
 pragma solidity ^0.4.18;
 
@@ -336,7 +336,7 @@ contract MintableToken is PausableToken {
   }
 }
 
-contract FoxTradingToken is MintableToken {
+contract TestToken is MintableToken {
 
   string public name;
   string public symbol;
@@ -348,13 +348,13 @@ contract FoxTradingToken is MintableToken {
   /**
    * @dev Constructor that gives the founder all of the existing tokens.
    */
-    function FoxTradingToken() public {
-        name = "FoxTrading";
-        symbol = "FOXT";
+    function TestToken() public {
+        name = "FTest3";
+        symbol = "FOT3";
         decimals = 18;
         totalSupply = 15000000e18;
-        founder = 0x47dE58a352e40d7FC57Efe57944836a0173206c2;
-        balances[founder] = totalSupply;
+        founder = 0xc85095257946D88585ab12050890bdd6f07a80F0;
+        balances[founder] = totalSupply; //15,000,000 tokens for founders for marketing.
         Transfer(0x0, founder, 15000000e18);
         pause();
     }
@@ -390,7 +390,7 @@ contract Crowdsale is Ownable {
 
     using SafeMath for uint256;
 
-    FoxTradingToken public token;
+    TestToken public token;
     uint256 public tokensForPreICO;
     uint256 public tokenCapForFirstMainStage;
     uint256 public tokenCapForSecondMainStage;
@@ -421,10 +421,10 @@ contract Crowdsale is Ownable {
     event ICOSaleExtended(uint256 newEndTime);
 
     function Crowdsale() public {
-        token = new FoxTradingToken();  
+        token = new TestToken();  //msg.sender is passed as the founder wallet which will recieve the 15,000,000 tokens
         startTime = now; 
-        rate = 1200;
-        wallet = 0x47dE58a352e40d7FC57Efe57944836a0173206c2;
+        rate = 1160;
+        wallet = 0xc85095257946D88585ab12050890bdd6f07a80F0;
         tokensForPreICO = 4500000e18;
 
         tokenCapForFirstMainStage = 11500000e18;  //7,000,000 + 4,500,000
@@ -435,7 +435,7 @@ contract Crowdsale is Ownable {
         totalTokensForSale = 35000000e18;
         tokensSold = 0;
 
-        preICOduration = now.add(31 days);
+        preICOduration = now.add(30 minutes);
         endTime = preICOduration;
 
         mainSaleActive = false;
@@ -447,7 +447,7 @@ contract Crowdsale is Ownable {
 
     function buyTokens(address _addr) public payable {
         require(validPurchase() && tokensSold < totalTokensForSale);
-        require(_addr != 0x0 && msg.value >= 100 finney);  
+        require(_addr != 0x0 && msg.value > 100 finney);  
         uint256 toMint;
         if(now <= preICOduration) {
             if(tokensSold >= tokensForPreICO) { revert(); }
@@ -473,14 +473,9 @@ contract Crowdsale is Ownable {
     }
 
     function validPurchase() internal view returns (bool) {
-        bool withinPeriod = now >= startTime && now <= endTime; 
-        bool nonZeroPurchase = msg.value != 0; 
+        bool withinPeriod = now >= startTime && now <= endTime;                                 // Dins periode total ICO
+        bool nonZeroPurchase = msg.value != 0;                                                  // ETH enviats diferent de 0
         return withinPeriod && nonZeroPurchase;
-    }
-
-    
-    function finishMinting() public onlyOwner {
-        token.finishMinting();
     }
 
 
@@ -494,7 +489,8 @@ contract Crowdsale is Ownable {
 
     /**
     * Function is called when the buy function is invoked  only after the pre sale duration and returns 
-    * the current discount in percentage.
+    * the current discount in percentage. In this example, the discount starts at 20% and reduces by 5% for 
+    * every discount stage that has passed. After the 8th week, the discount percentage will be set to 0.
     *
     * day 31 - 37   / week 1: 20%
     * day 38 - 44   / week 2: 15%
@@ -543,10 +539,10 @@ contract Crowdsale is Ownable {
         require(!mainSaleActive);
         if(now < preICOduration) { preICOduration = now; }
         mainSaleActive = true;
-        ICObonusStages[0] = now.add(7 days);
+        ICObonusStages[0] = now.add(7 minutes);
 
         for (uint y = 1; y < ICObonusStages.length; y++) {
-            ICObonusStages[y] = ICObonusStages[y - 1].add(7 days);
+            ICObonusStages[y] = ICObonusStages[y - 1].add(7 minutes);
         }
 
         endTime = ICObonusStages[3];
