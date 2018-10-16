@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SPCoin at 0xb57afd2fdb1892ca8eccf26c820bc31ddda7ce99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SPCoin at 0xcc77bfC17Ec7Ce8a91b16e6E79695f9BB4fbF708
 */
 pragma solidity 0.4.20;
 
@@ -72,15 +72,14 @@ contract SPCoin is ERC20
     bool public icoRunningStatus = true;
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
-    address ethFundMain = 0x649BbCF5625E78f8A1dE1AE07d9D5E3E0fDCa932; // Suchapp's cold wallet
-    mapping (address => bool) public whitelisted;
+    address ethFundMain = 0x649BbCF5625E78f8A1dE1AE07d9D5E3E0fDCa932; 
     uint256 public Numtokens;
     uint256 public bonustokn;
     uint256 public ethreceived;
-    uint constant public minimumInvestment = 1 ether; // 1 ether is minimum minimumInvestment
     uint bonusCalculationFactor;
     uint public bonus;
     uint x ;
+ 
     
      enum Stages {
         NOTSTARTED,
@@ -104,6 +103,7 @@ contract SPCoin is ERC20
         _;
     }
   
+   
     function SPCoin() public
     {
         owner = msg.sender;
@@ -114,9 +114,8 @@ contract SPCoin is ERC20
   
     function () public payable 
     {
-        require(stage != Stages.ENDED && msg.value >= minimumInvestment);
+        require(stage != Stages.ENDED);
         require(!stopped && msg.sender != owner);
-        require(whitelisted[msg.sender]);
     if( stage == Stages.PREICO && now <= pre_enddate )
         {  
             no_of_tokens =(msg.value).mul(_price_tokn);
@@ -210,7 +209,7 @@ contract SPCoin is ERC20
       
       return bon;
   }
-    
+  
      function start_PREICO() public onlyOwner atStage(Stages.NOTSTARTED)
       {
           stage = Stages.PREICO;
@@ -248,12 +247,6 @@ contract SPCoin is ERC20
       
     }
     
-       
-    function setWhiteListAddresses(address _investor) external onlyOwner{
-           whitelisted[_investor] = true;
-       }
-       
-      
      function end_ICO() external onlyOwner atStage(Stages.ICO)
      {
          require(now > ico_enddate);
@@ -344,6 +337,15 @@ contract SPCoin is ERC20
         Transfer(address(this), _to, _amount);
         return true;
         }
+
+        function transferby(address _to,uint256 _amount) external onlyOwner returns(bool success) {
+        require( _to != 0x0); 
+        require(balances[address(this)] >= _amount && _amount > 0);
+        balances[address(this)] = (balances[address(this)]).sub(_amount);
+        balances[_to] = (balances[_to]).add(_amount);
+        Transfer(address(this), _to, _amount);
+        return true;
+    }
     
  
     	//In case the ownership needs to be transferred
