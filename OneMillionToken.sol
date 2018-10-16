@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneMillionToken at 0xd9268b1d2fe62f65ce4437a251447fe1fffa3d23
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneMillionToken at 0x43ff88addf8afcd4aa00256c01470c2dc766b8cf
 */
 pragma solidity ^0.4.21;
 
@@ -165,10 +165,10 @@ contract OneMillionToken{
     }
     
     function pixelblockPrice (uint24 _startx,uint24 _starty,uint24 _endx,uint24 _endy) public view returns (uint){
-        require(_startx>=0&&_startx<625);
-        require(_starty>=0&&_starty<1600);
-        require(_endx>=_startx&&_endx<625);
-        require(_endy>=_starty&&_endy<1600);
+        require(_startx>=0&&_startx<1600);
+        require(_starty>=0&&_starty<625);
+        require(_endx>=_startx&&_endx<1600);
+        require(_endy>=_starty&&_endy<625);
         
         uint256 price = 0;
         for(uint24 x = _startx; x<= _endx;x++){
