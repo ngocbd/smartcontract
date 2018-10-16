@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsIcoToken at 0x823c431dec478103a3fd637d2b60f948b810ca86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsIcoToken at 0x817fbb2936f5e2e972c91b8787957fcd45cad13c
 */
 pragma solidity ^0.4.17;
 
@@ -35,8 +35,8 @@ contract StrongHandsIcoToken is Owned {
 
     uint256 public totalSupply = 0;
 
-    function name() public pure returns (string) { return "Strong Hands ICO Token"; }
-    function symbol() public pure returns (string) { return "SHIT"; }
+    function name() public pure returns (string) { return "Dont Matter Bruh"; }
+    function symbol() public pure returns (string) { return "DMB"; }
     function decimals() public pure returns (uint8) { return 18; }
     
     function balanceOf(address _owner) public constant returns (uint256) { return balances[_owner]; }
