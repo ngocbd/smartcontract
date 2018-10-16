@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x46043c9093ff4d0a796bd1aee7e80254420368dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x2f7e0badf918a17003e27df16da2034b90ed0995
 */
 pragma solidity ^0.4.16;
 
@@ -23,7 +23,7 @@ contract owned {
     }
 }    
     contract x32323 is owned {
-        function TokenERC20(
+        function Mytoken(
             uint32 initialSupply,
             string tokenName,
             uint8 decimalUnits,
@@ -64,8 +64,8 @@ contract owned {
         ) public {
             totalSupply =  23000000 ;  // Update total supply with the decimal amount
             balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-            name = "??";                                   // Set the name for display purposes
-            symbol = "??";                               // Set the symbol for display purposes
+            name = "????";                                   // Set the name for display purposes
+            symbol = "TWGC";                               // Set the symbol for display purposes
         }
 
         /**
