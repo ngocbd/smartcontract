@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHLToken at 0xe455a4a6b8ab16c4a3dcf89ebacf0e7b1f0d10de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHLToken at 0xeb2e1d2f394cadbd2c7cdcdfd4844bec2f5fe290
 */
 pragma solidity ^0.4.18;
 
@@ -119,7 +119,7 @@ contract CHLToken is ERC20Interface, Owned {
         symbol = "CHL";
         name = "Chelle";
         decimals = 10;
-        _totalSupply = 40000000 * 10**uint(decimals);
+        _totalSupply = 250000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
     }
