@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x7f364c74285cc1fd3ca8f9704e9110eff4c29088
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x691982b11c381d6282161a1a3f0dec8bba681f59
 */
 pragma solidity ^0.4.18;
 
@@ -65,7 +65,7 @@ contract Admined{
     }
 }
 
-contract MyToken is Admined, ERC20,Token("TTL","Talent Token",18,50000000)
+contract MyToken is Admined, ERC20,Token("TTL","Talent Token",8,50000000)
 {
    	mapping(address =>uint) private _balanceOf;
     mapping(address => mapping(address => uint)) private _allowances;
