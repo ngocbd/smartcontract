@@ -1,55 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x43b4ad21b8585de3f758d9829dd5d6b61ffff3c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x0c94c26d41332070976ef0b4ce3441e430a2db81
 */
-pragma solidity ^0.4.18;
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
-interface TokenUpgraderInterface{ function upgradeFor(address _for, uint256 _value) public returns (bool success); function upgradeFrom(address _by, address _for, uint256 _value) public returns (bool success); }
 
 contract TokenERC20 {
-    using SafeMath for uint256;
-
-    address public owner = msg.sender;
-
     // Public variables of the token
-    string public name = "VIOLA";
-    string public symbol = "VIOLA";
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 250000000 * 10 ** uint256(decimals);
-
-    bool public upgradable = false;
-    bool public upgraderSet = false;
-    TokenUpgraderInterface public upgrader;
+    string public name;
+    string public symbol;
+    uint256 public decimals = 8;
+    uint256 public totalSupply;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-    mapping (address => mapping (address => uint256)) allowed;
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -57,18 +22,17 @@ contract TokenERC20 {
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
     /**
      * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20() public {
+        //6 million tokens, 8 decimal places
+        totalSupply = 35000000 * 10 ** decimals;
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = 'ESCoin';                                   // Set the name for display purposes
+        symbol = 'ESC';                               // Set the symbol for display purposes
     }
 
     /**
@@ -128,8 +92,7 @@ contract TokenERC20 {
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -184,57 +147,5 @@ contract TokenERC20 {
         totalSupply -= _value;                              // Update totalSupply
         Burn(_from, _value);
         return true;
-    }
-
-    /**
-   * @dev Function to allow token upgrades
-   * @param _newState New upgrading allowance state
-   * @return A boolean that indicates if the operation was successful.
-   */
-
-    function allowUpgrading(bool _newState) onlyOwner public returns (bool success) {
-        upgradable = _newState;
-        return true;
-    }
-
-    function setUpgrader(address _upgraderAddress) onlyOwner public returns (bool success) {
-        require(!upgraderSet);
-        require(_upgraderAddress != address(0));
-        upgraderSet = true;
-        upgrader = TokenUpgraderInterface(_upgraderAddress);
-        return true;
-    }
-
-    function upgrade() public returns (bool success) {
-        require(upgradable);
-        require(upgraderSet);
-        require(upgrader != TokenUpgraderInterface(0));
-        uint256 value = balanceOf[msg.sender];
-        assert(value > 0);
-        delete balanceOf[msg.sender];
-        totalSupply = totalSupply.sub(value);
-        assert(upgrader.upgradeFor(msg.sender, value));
-        return true;
-    }
-
-    function upgradeFor(address _for, uint256 _value) public returns (bool success) {
-        require(upgradable);
-        require(upgraderSet);
-        require(upgrader != TokenUpgraderInterface(0));
-        uint256 _allowance = allowed[_for][msg.sender];
-        require(_allowance >= _value);
-        balanceOf[_for] = balanceOf[_for].sub(_value);
-        allowed[_for][msg.sender] = _allowance.sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        assert(upgrader.upgradeFrom(msg.sender, _for, _value));
-        return true;
-    }
-
-    function () payable external {
-        if (upgradable) {
-            assert(upgrade());
-            return;
-        }
-        revert();
     }
 }
