@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x8550919cbdf551e8d2739d73197ac4c95dfc2983
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x682e6eba7ddd676346337fbd244d0b2b71dc0c13
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.4;
 
 contract Token {
 
@@ -109,7 +109,7 @@ contract ERC20Token is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.01';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,17 +119,17 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 870752500;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 870752500;                        // Update total supply (100000 for example)
-        name = "Woods coin";                                   // Set the name for display purposes
-        decimals = 2;                            // Amount of decimals for display purposes
-        symbol = "WDSC";                               // Set the symbol for display purposes
+        balances[msg.sender] = 30000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 30000000;                        // Update total supply (100000 for example)
+        name = "TUV coin";                                   // Set the name for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "TUV";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);  
 
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
