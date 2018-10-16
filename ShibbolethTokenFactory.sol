@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShibbolethTokenFactory at 0x2d915c3e78767b123bf56ab2daa49f74bb97904c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShibbolethTokenFactory at 0xac862105a7ca6906d10c56fe5cf61587a04ddff4
 */
 pragma solidity ^0.4.8;
 
@@ -204,15 +204,12 @@ contract ShibbolethTokenFactory {
     ENS ens;
     // namehash('myshibbol.eth')
     bytes32 constant rootNode = 0x2952863bce80be8e995bbf003c7a1901dd801bb90c09327da9d029d0496c7010;
-    bytes32 reverseNode;
-    mapping(bytes32=>address) tokens;
+    mapping(bytes32=>address) public addr;
     
     event NewToken(string indexed symbol, string _symbol, string name, address addr);
     
     function ShibbolethTokenFactory(ENS _ens) {
         ens = _ens;
-        var rr = ReverseRegistrar(ens.owner(0x91d1777781884d03a6757a803996e38de2a42967fb37eeaca72729271025a9e2));
-        reverseNode = rr.claimWithResolver(this, this);
     }
     
     function create(string symbol) returns(address) {
@@ -224,7 +221,7 @@ contract ShibbolethTokenFactory {
 
         ens.setSubnodeOwner(rootNode, sha3(symbol), this);
         ens.setResolver(subnode, this);
-        tokens[subnode] = token;
+        addr[subnode] = token;
 
         return token;
     }
@@ -234,34 +231,8 @@ contract ShibbolethTokenFactory {
         NewToken(symbol, symbol, name, token);
         return token;
     }
-
-    // ENS functionality
-    function supportsInterface(bytes4 interfaceId) returns(bool) {
-        return (interfaceId == 0x01ffc9a7 || // supportsInterface
-                interfaceId == 0x3b3b57de || // addr
-                interfaceId == 0x691f3431 || // name
-                interfaceId == 0x2203ab56);  // ABI
-    }
     
-    function addr(bytes32 node) constant returns (address) {
-        if(node == rootNode) {
-            return this;
-        }
-        return tokens[node];
-    }
-    
-    function ABI(bytes32 node) constant returns (uint256, bytes) {
-        if(node == rootNode || node == reverseNode) {
-            return (1, '[{"constant":false,"inputs":[{"name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"node","type":"bytes32"}],"name":"ABI","outputs":[{"name":"","type":"uint256"},{"name":"","type":"bytes"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"symbol","type":"string"},{"name":"name","type":"string"}],"name":"create","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"node","type":"bytes32"}],"name":"addr","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"node","type":"bytes32"}],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"symbol","type":"string"}],"name":"create","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"inputs":[{"name":"_ens","type":"address"}],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"symbol","type":"string"},{"indexed":false,"name":"_symbol","type":"string"},{"indexed":false,"name":"name","type":"string"},{"indexed":false,"name":"addr","type":"address"}],"name":"NewToken","type":"event"}]');
-        }
+    function abi(bytes32 node) constant returns (uint256, bytes) {
         return (1, '[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"issuer","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"node","type":"bytes32"}],"name":"addr","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_value","type":"uint256"}],"name":"burn","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"version","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_issuer","type":"address"}],"name":"setIssuer","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"node","type":"bytes32"}],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_value","type":"uint256"}],"name":"issue","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"inputs":[{"name":"_ens","type":"address"},{"name":"_name","type":"string"},{"name":"_symbol","type":"string"},{"name":"_issuer","type":"address"}],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_from","type":"address"},{"indexed":true,"name":"_to","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_owner","type":"address"},{"indexed":true,"name":"_spender","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Approval","type":"event"}]');
-    }
-
-    // Reverse resolution support
-    function name(bytes32 node) constant returns (string) { 
-        if(node == reverseNode) {
-            return 'myshibbol.eth';
-        }
-        return '';
     }
 }
