@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xe47e81cd155ee4591a124d0b0eaed1e8481e94d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x00d18a886e30234f8aa9b6d3a349b3bc981deda0
 */
 pragma solidity ^0.4.19;
 
-// Wolf Crypto pooling contract for Dadi
+// Wolf Crypto pooling contract for Consensus
 // written by @iamdefinitelyahuman
 
 library SafeMath {
