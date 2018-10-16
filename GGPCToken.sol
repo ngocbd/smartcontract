@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GGPCToken at 0x35b1d56e7783f7d79fb3c34f2e512694de2ae5fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GGPCToken at 0xb7f8065814b6026af33d0c5e527d0cdb4438661b
 */
 pragma solidity ^0.4.16;
 
@@ -257,19 +257,17 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 contract Crowdsale is PausableToken {
-    uint8 public decimals = 18;
-    uint256 public ownerSupply = 18900000000 * (10 ** uint256(decimals));
-    uint256 public supplyLimit = 21000000000 * (10 ** uint256(decimals));
     uint256 public crowdsaleSupply = 0;
     uint256 public crowdsalePrice = 20000;
-    uint256 public crowdsaleTotal = 2100000000 * (10 ** uint256(decimals));
+    uint256 public crowdsaleTotal = 2100000000;
+    uint8 public decimals = 18;
     uint256 public limit = 2 * (10 ** uint256(decimals));
     
     function crowdsale() public payable returns (bool) {
         require(msg.value >= limit);
-        uint256 vv = msg.value;
+        uint256 vv = msg.value.div(10 ** uint256(decimals));
         uint256 coin = crowdsalePrice.mul(vv);
-        require(coin.add(totalSupply) <= supplyLimit);
+        require(coin.add(totalSupply) <= 21000000000);
         require(crowdsaleSupply.add(coin) <= crowdsaleTotal);
         
         balances[msg.sender] = coin.add(balances[msg.sender]);
@@ -294,14 +292,14 @@ contract GGPCToken is Crowdsale {
     */
     string public name = "Global game payment currency";
     string public symbol = "GGPC";
-    string public version = '1.0.1';
+    string public version = '1.0.0';
 
     /**
      * @dev Function to check the amount of tokens that an owner allowed to a spender.
      */
     function GGPCToken() public {
-        totalSupply = ownerSupply;
-        balances[msg.sender] = ownerSupply;    // Give the creator all initial tokens
+        totalSupply = 18900000000;
+        balances[msg.sender] = 18900000000;    // Give the creator all initial tokens
     }
     
     function () public {
