@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleDice at 0x78b058ccda93816487C655367dCb79664A216AD2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleDice at 0x237f29bbFd52C768A02980eA8D4D983a1D234eDC
 */
 //***********************************Simple Dice Game
 //
@@ -13,7 +13,7 @@
 //  Good Luck and Have Fun!
 //
 //
-// THIS IS AN ATTACHMENT OF THE ETHVENTURES BUSINESS: 0xee462a6717f17c57c826f1ad9b4d3813495296c9 
+// THIS IS AN ATTACHMENT OF THE ETHVENTURES BUSINESS: 0x43e49c79172a1be3ebb4240da727c0da0fa5d233 
 //
 //***********************************START
 contract SimpleDice {
@@ -28,7 +28,7 @@ contract SimpleDice {
   gamblerarray[] public gamblerlist;
   uint public Gamblers_Until_Jackpot=0;
   uint public Total_Gamblers=0;
-  uint public FeeRate=5;
+  uint public FeeRate=7;
   uint public Bankroll = 0;
   uint public Jackpot = 0;
   uint public Total_Deposits=0;
@@ -43,7 +43,7 @@ contract SimpleDice {
 //********************************************INIT
 
   function SimpleDice() {
-    owner = 0xee462a6717f17c57c826f1ad9b4d3813495296c9;  //this contract is an attachment to EthVentures
+    owner = 0x43e49c79172a1be3ebb4240da727c0da0fa5d233;  //this contract is an attachment to EthVentures
   }
 
 //********************************************TRIGGER
@@ -74,7 +74,7 @@ contract SimpleDice {
     // set payout variables
      Total_Deposits+=amount;       	//update deposited amount
 	    
-      Fees   =amount * FeeRate/100;    // 5% fee to the owner
+      Fees   =amount * FeeRate/100;    // 7% fee to the owner
       amount-=amount * FeeRate/100;
 	    
       Bankroll += amount*80/100;     // 80% to the balance
@@ -117,7 +117,7 @@ contract SimpleDice {
 	Jackpot=0;									//jackpot update
 	}
      else   											//you either win the jackpot or the balance, but not both in 1 round
-	if(uint(sha3(gamblerlist[list_length].etherAddress,list_length))+uint(sha3(msg.gas)) % 4 ==0 && Bankroll > 0) 	//if the hashed length of your address is even, 
+	if(uint(sha3(gamblerlist[list_length].etherAddress,list_length))+uint(sha3(msg.gas)) % 2==0 && Bankroll > 0) 	//if the hashed length of your address is even, 
 	{ 												   								//which is a 25% chance, then you get paid out all balance!
 	gamblerlist[list_length].etherAddress.send(Bankroll);        //send pay out to participant
 	Total_Payouts += Bankroll;               					//update paid out amount
