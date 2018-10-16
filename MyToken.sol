@@ -1,58 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x33cb67c11904c24d6898c7f8f1f5e5a90553a79c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xeef56cf5d184794cb42b1de30455b521d5950421
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
-contract MyOwned {
-    address public owner;
-    function MyOwned() public { owner = msg.sender; }
-    modifier onlyOwner { require(msg.sender == owner ); _; }
-    function transferOwnership(address newOwner) onlyOwner public { owner = newOwner; }
-}
-
-interface tokenRecipient { 
-    function receiveApproval(
-        address _from, 
-        uint256 _value, 
-        address _token, 
-        bytes _extraData) public; 
-}
-
-contract MyToken is MyOwned {   
+contract MyToken {
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    
     string public name;
     string public symbol;
     uint8 public decimals;
-    uint256 public totalSupply;
     
-    mapping (address => uint256) public balanceOf;
-    mapping (address => bool) public frozenAccount;
-    event FrozenFunds(address target,bool frozen);
-    event Transfer(address indexed from,address indexed to,uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
     
-    function MyToken(
-        string tokenName,
-        string tokenSymbol,
-        uint8 decimalUnits,
-        uint256 initialSupply)public{
-
-        name = tokenName;
-        symbol = tokenSymbol;
-        decimals = decimalUnits;
-        totalSupply = initialSupply;
-        balanceOf[msg.sender] = initialSupply;
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function MyToken(uint256 initialSupply, string tokenName, string tokenSymbol, uint8 decimalUnits) public {
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
     }
+    
+    /* Send coins */
+    function transfer(address _to, uint256 _value) public {
+        /* Check if sender has balance and for overflows */
+        require(balanceOf[msg.sender] >= _value && balanceOf[_to] + _value >= balanceOf[_to]);
 
-    function transfer(address _to, uint256 _value)public{
-        require(!frozenAccount[msg.sender]);
-        require (balanceOf[msg.sender] >= _value);
-        require (balanceOf[_to] + _value >= balanceOf[_to]);
+        /* Add and subtract new balances */
         balanceOf[msg.sender] -= _value;
         balanceOf[_to] += _value;
+        
+        /* Notify anyone listening that this transfer took place */
         Transfer(msg.sender, _to, _value);
-    }
-    
-    function freezeAccount(address target,bool freeze)public onlyOwner {
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
     }
 }
