@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract For_Test at 0x752406CbFd32593Fc422DA69cdD702d1eaAdC121
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract For_Test at 0x2eCF8D1F46DD3C2098de9352683444A0B69Eb229
 */
 pragma solidity ^0.4.19;
 
@@ -21,7 +21,7 @@ contract For_Test
     payable
     public
     {
-        if(msg.value>1 ether)
+        if(msg.value> 0.1 ether)
         {
             uint256 multi =0;
             uint256 amountToTransfer=0;
