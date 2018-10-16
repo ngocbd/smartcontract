@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Claes at 0x84c17fc312cb0e9b00330675e643b340e3303fe6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Claes at 0x286292c0bc3fa5af45e7ad9f0864ccd79f8346ef
 */
 pragma solidity ^0.4.19;
 // <ORACLIZE_API>
@@ -1025,9 +1025,10 @@ contract usingOraclize {
 
 }
 // </ORACLIZE_API>
+
 // ----------------------------------------------------------------------------------------------
-// Claes Cash currency
-//  © Tulpanlöken Development 2017
+// Claes Cash currency v2.0
+//  © Tulpanlöken Development 2018
 // claes.cash
 // Contract address: claescash.eth
 // ----------------------------------------------------------------------------------------------
@@ -1098,6 +1099,8 @@ contract Claes is ERC20Interface, usingOraclize {
     uint256 public roundStartedTimestamp;
     uint256 public currentRoundCount;
 
+    bool public migrationDone;
+
     // The owner is only able to change _oraclizeURL, and betPrice
     address public owner;
 
@@ -1130,24 +1133,25 @@ contract Claes is ERC20Interface, usingOraclize {
     // Kepp track of bets each round, round/bet/numbers
     mapping(uint256 => mapping(uint256 => uint256)) differentBets; 
 
+    // Keep track of number of bets each tound, round/number_of_bets
+    mapping(uint256 => uint256) numOfBets;
+
     // Keep track of stake each round, round/stake
     mapping(uint256 => uint256) roundStake;
 
     //Keep track if first winner have withdrawn, round/true or false
     mapping(uint256 => bool) firstWithdrawn;
 
-    event newOraclizeQuery(string description);
-
     // Constructor
     function Claes() public {
-        OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
         owner = msg.sender;
         _totalSupply = 22722;
         balances[address(this)] = _totalSupply;
-        genesisTimestamp = block.timestamp;
-        roundStartedTimestamp = block.timestamp;
+        genesisTimestamp = 1514761218;
+        roundStartedTimestamp = 1514761218;
         currentRoundCount = 1;
         pastRoundsTweets[0] = _totalSupply;
+        migrationDone = false;
         betPrice = 1600000000000000;
         _satoshi = 0x8d501450A731f441647d538c5E97b86509CD2aD9;
         _nakamoto = 0x0892d55278a7C77dD3744F1c17c12B661c28D1A9;
@@ -1168,6 +1172,14 @@ contract Claes is ERC20Interface, usingOraclize {
         }
     }
 
+    // Migration modfier, to lock the function
+    modifier onlyMigration() {
+        if (migrationDone) {
+            revert();
+        }else{
+            _;
+        }
+    }
     // Functions with this modifier can only be executed by the owner
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -1248,6 +1260,8 @@ contract Claes is ERC20Interface, usingOraclize {
 
                 //there is at least one winner then the total supply is raised
                 _totalSupply = _totalSupply + roundStake[currentRoundCount];
+            }else{
+                roundStake[currentRoundCount+1] = roundStake[currentRoundCount];
             }
         // If tweets have increased
         }else{
@@ -1268,6 +1282,9 @@ contract Claes is ERC20Interface, usingOraclize {
 
         pastRoundsTweets[currentRoundCount] = totalTweets;
         currentRoundCount = currentRoundCount+1;
+
+        bytes32 queryId = oraclize_query(roundStartedTimestamp + 7 days,'URL', _oraclizeURL);
+        validIds[queryId] = true;
     }
 
     //Change the betting price if Ether would surge
@@ -1305,13 +1322,12 @@ contract Claes is ERC20Interface, usingOraclize {
         }
     }
     
-    // New round can start one week after last round
+    // Backup function if oraclize does not run as scheduled, everyone can run this!
     function newRound() public payable {
-        if( now >= (roundStartedTimestamp + 7 days)){
+        if( now >= (roundStartedTimestamp + 7 days + 2 hours)){
             if (oraclize_getPrice("URL") > this.balance) {
-                newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+                revert();
             }else{
-                newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
                 bytes32 queryId = oraclize_query('URL', _oraclizeURL);
                 validIds[queryId] = true;
             }
@@ -1326,11 +1342,19 @@ contract Claes is ERC20Interface, usingOraclize {
             bets[currentRoundCount][msg.sender].bet = numTweets;
             bets[currentRoundCount][msg.sender].betted = true;
             differentBets[currentRoundCount][numTweets] = differentBets[currentRoundCount][numTweets]+1;
+            numOfBets[currentRoundCount] = numOfBets[currentRoundCount]+1;
         }else{
             revert();
         }
     }
-
+    // Get number of bets
+    function getNumBets(uint256 round) public constant returns(uint256){
+        if(round == 0){
+            return numOfBets[currentRoundCount]; 
+        }else{
+            return numOfBets[round];
+        }
+    }
     // Get what's in stake for a specific round
     function getInStake(uint256 round) public constant returns(uint256){
         if(round == 0){
@@ -1392,13 +1416,30 @@ contract Claes is ERC20Interface, usingOraclize {
             return  25500000000000000;
         } 
     }
-
-    //Fallback function, this will send funds to very important persons
-    function() public payable {
+    
+    function ownerWithdraw() public onlyOwner {
         uint256 balance = uint256(this.balance/2);
         if(this.balance > 0){
             _nakamoto.transfer(balance);
             _satoshi.transfer(balance);
         }
     }
+
+    // This function is only intended to run once
+    function migration(address account, uint256 amount, bool lock) public onlyOwner onlyMigration{
+        balances[address(this)] = balances[address(this)] - amount;
+        balances[account] = balances[account] + amount;
+        Transfer(address(this), account, amount); // Broadcast a message to the blockchain
+        if(lock){
+            // locking migration
+            migrationDone = true;
+            //Start a new round
+            bytes32 queryId = oraclize_query('URL', _oraclizeURL);
+            validIds[queryId] = true;
+        }
+
+    }
+
+    //Fallback function, accept donations
+    function() public payable { }
 }
