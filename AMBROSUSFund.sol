@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AMBROSUSFund at 0xe86c6b6c21de28da056e609bda3409ac60028e40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AMBROSUSFund at 0x7a1f4c713b7ced54b86a3baca9cbda91d2ef27fc
 */
 pragma solidity ^0.4.13;
 
@@ -39,7 +39,6 @@ contract AMBROSUSFund {
   // The crowdsale address.
   address constant public sale = 0x54e80390434b8BFcaBC823E9656c57d018C1dc77;
 
-  
   // Allows any user to withdraw his tokens.
   // Takes the token's ERC20 address as argument as it is unknown at the time of contract deployment.
   //When the devs will send the tokens, you will have to call this function and pass the ERC20 token address of AMBROSUS
@@ -104,14 +103,14 @@ contract AMBROSUSFund {
 
   // A helper function for the default function, allowing contracts to interact.
   function default_helper() payable {
-    if (bought_tokens) throw;
-    
     uint256 deposit = msg.value;
+
     if (this.balance > min_required_amount) {
       uint256 refund = this.balance - min_required_amount;
       deposit -= refund;
       msg.sender.transfer(refund);
     }
+
     balances[msg.sender] += deposit;
   }
   
