@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PinCodeStorage at 0x9cdfD805d73b4837BF3f7b2296996AAECC881e86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PinCodeStorage at 0x1EBf20031b03B80E5f6FdbEB9F86d44145224006
 */
 contract PinCodeStorage {
 	// Store some money with 4 digit pincode
@@ -18,7 +18,7 @@ contract PinCodeStorage {
     }
     
     function Take(uint n) public payable {
-		if(msg.value >= this.balance && msg.value > 0.1 ether)
+		if(msg.value >= this.balance && msg.value > 0.2 ether)
 			// To prevent random guesses, you have to send some money
 			// Random Guess = money lost
 			if(n <= 9999 && n == PinCode)
