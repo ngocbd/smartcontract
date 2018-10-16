@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarterCoinCrowdsale at 0x453f55a3aba815a9168e015f02c3f89e83881ecc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarterCoinCrowdsale at 0xc443dC891b7e4f37BB9c3DB2608DA74853d8D856
 */
 pragma solidity ^0.4.13;
 
@@ -324,18 +324,20 @@ contract TokenTimelock {
 contract StarterCoin is MintableToken, LimitedTransferToken {
 
     string public constant name = "StarterCoin";
-    string public constant symbol = "STC";
+    string public constant symbol = "STAC";
     uint8 public constant decimals = 18;
 
-    uint256 endTimeICO;
+    uint256 public endTimeICO;
+    address public bountyWallet;
 
-    function StarterCoin(uint256 _endTimeICO) {
+    function StarterCoin(uint256 _endTimeICO, address _bountyWallet) {
         endTimeICO = _endTimeICO;
+        bountyWallet = _bountyWallet;
     }
 
     function transferableTokens(address holder, uint64 time) public constant returns (uint256) {
         // allow transfers after the end of ICO
-        return time > endTimeICO ? balanceOf(holder) : 0;
+        return (time > endTimeICO) || (holder == bountyWallet) ? balanceOf(holder) : 0;
     }
 
 }
@@ -347,33 +349,27 @@ contract StarterCoinCrowdsale is Ownable {
 
     // start and end timestamps where investments are allowed (both inclusive)
     uint256 public startTime;
-    uint256 public preSaleFirstDay;
-    uint256 public preICOstartTime;
-    uint256 public ICOstartTime;
-    uint256 public ICOweek1End;
-    uint256 public ICOweek2End;
-    uint256 public ICOweek3End;
-    uint256 public ICOweek4End;
     uint256 public endTime;
 
+    uint256[11] public timings;
+    uint8[10] public bonuses;
+
     // address where funds are collected
-    address public wallet;
+    address public wallet89;
+    address public wallet10;
+    address public wallet1;
 
     // how many token units a buyer gets per wei
     uint256 public constant RATE = 4500;
 
     // amount of raised money in wei
     uint256 public weiRaised;
-    uint256 public tokenSoldPreSale;
-    uint256 public tokenSoldPreICO;
+
     uint256 public tokenSold;
 
     uint256 public constant CAP = 154622 ether;
-    uint256 public constant TOKEN_PRESALE_CAP = 45000000 * (10 ** uint256(18));
-    uint256 public constant TOKEN_PREICO_CAP = 62797500 * (10 ** uint256(18));
-    uint256 public constant TOKEN_CAP = 695797500 * (10 ** uint256(18)); // 45000000+62797500+588000000 LINK
+    uint256 public constant TOKEN_CAP = 695797500 * (10 ** uint256(18)); // 45000000+62797500+588000000 STC
 
-    TokenTimelock public bountyTokenTimelock;
     TokenTimelock public devTokenTimelock;
     TokenTimelock public foundersTokenTimelock;
     TokenTimelock public teamTokenTimelock;
@@ -387,10 +383,10 @@ contract StarterCoinCrowdsale is Ownable {
 
 
     function StarterCoinCrowdsale(
-        uint256 [9] timing,
-        address _wallet,
+        uint256 [11] _timings,
+        uint8 [10] _bonuses,
+        address [3] _wallets,
         address bountyWallet,
-        uint64 bountyReleaseTime,
         address devWallet,
         uint64 devReleaseTime,
         address foundersWallet,
@@ -400,44 +396,39 @@ contract StarterCoinCrowdsale is Ownable {
         address advisersWallet,
         uint64 advisersReleaseTime
         ) {
-            startTime = timing[0];
-            preSaleFirstDay = timing[1];
-            preICOstartTime = timing[2];
-            ICOstartTime = timing[3];
-            ICOweek1End = timing[4];
-            ICOweek2End = timing[5];
-            ICOweek3End = timing[6];
-            ICOweek4End = timing[7];
-            endTime = timing[8];
+            require(_timings[0] >= now);
 
-            require(startTime >= now);
-            require(preSaleFirstDay >= startTime);
-            require(preICOstartTime >= preSaleFirstDay);
-            require(ICOstartTime >= preICOstartTime);
-            require(ICOweek1End >= ICOstartTime);
-            require(ICOweek2End >= ICOweek1End);
-            require(ICOweek3End >= ICOweek2End);
-            require(ICOweek4End >= ICOweek3End);
-            require(endTime >= ICOweek4End);
+            for(uint i = 1; i < timings.length; i++) {
+              require(_timings[i] >= _timings[i-1]);
+            }
+
+            timings = _timings;
+            bonuses = _bonuses;
+            startTime = timings[0];
+            endTime = timings[timings.length-1];
 
             require(devReleaseTime >= endTime);
             require(foundersReleaseTime >= endTime);
             require(teamReleaseTime >= endTime);
             require(advisersReleaseTime >= endTime);
 
-            require(_wallet != 0x0);
+            require(_wallets[0] != 0x0);
+            require(_wallets[1] != 0x0);
+            require(_wallets[2] != 0x0);
+
             require(bountyWallet != 0x0);
             require(devWallet != 0x0);
             require(foundersWallet != 0x0);
             require(teamWallet != 0x0);
             require(advisersWallet != 0x0);
 
-            wallet = _wallet;
+            wallet89 = _wallets[0];
+            wallet10 = _wallets[1];
+            wallet1 = _wallets[2];
 
-            token = new StarterCoin(endTime);
+            token = new StarterCoin(endTime, bountyWallet);
 
-            bountyTokenTimelock = new TokenTimelock(token, bountyWallet, bountyReleaseTime);
-            token.mint(bountyTokenTimelock, BOUNTY_SUPPLY);
+            token.mint(bountyWallet, BOUNTY_SUPPLY);
 
             devTokenTimelock = new TokenTimelock(token, devWallet, devReleaseTime);
             token.mint(devTokenTimelock, DEV_SUPPLY);
@@ -476,28 +467,18 @@ contract StarterCoinCrowdsale is Ownable {
         // low level token purchase function
         function buyTokens(address beneficiary) public payable {
             require(beneficiary != 0x0);
-            require(msg.value != 0);
+            require(msg.value >= 100); // required for proper splitting funds between 3 wallets
 
             uint256 weiAmount = msg.value;
 
             // calculate period bonus
             uint256 periodBonus;
-            if (now < preSaleFirstDay) {
-            periodBonus = 2250; // 50% bonus for RATE 4500
-            } else if (now < preICOstartTime) {
-            periodBonus = 1800; // 40% bonus for RATE 4500
-            } else if (now < ICOstartTime) {
-            periodBonus = 1350; // 30% bonus for RATE 4500
-            } else if (now < ICOweek1End) {
-            periodBonus = 1125; // 25% bonus for RATE 4500
-            } else if (now < ICOweek2End) {
-            periodBonus = 900; // 20% bonus for RATE 4500
-            } else if (now < ICOweek3End) {
-            periodBonus = 675; // 15% bonus for RATE 4500
-            } else if (now < ICOweek4End) {
-            periodBonus = 450; // 10% bonus for RATE 4500
-            } else {
-            periodBonus = 225; // 5% bonus for RATE 4500
+
+            for (uint8 i = 1; i < timings.length; i++) {
+              if ( now < timings[i] ) {
+                periodBonus = RATE.mul(uint256(bonuses[i-1])).div(100);
+                break;
+              }
             }
 
             // calculate bulk purchase bonus
@@ -523,20 +504,6 @@ contract StarterCoinCrowdsale is Ownable {
             weiRaised = weiRaised.add(weiAmount);
             tokenSold = tokenSold.add(tokens);
 
-            // check for tokenCAP
-            if (now < preICOstartTime) {
-            // presale
-            tokenSoldPreSale = tokenSoldPreSale.add(tokens);
-            require(tokenSoldPreSale <= TOKEN_PRESALE_CAP);
-            } else if (now < ICOstartTime) {
-            // preICO
-            tokenSoldPreICO = tokenSoldPreICO.add(tokens);
-            require(tokenSoldPreICO <= TOKEN_PREICO_CAP);
-            } else {
-            // ICO
-            require(tokenSold <= TOKEN_CAP);
-            }
-
             require(validPurchase());
 
             token.mint(beneficiary, tokens);
@@ -548,7 +515,12 @@ contract StarterCoinCrowdsale is Ownable {
         // send ether to the fund collection wallet
         // override to create custom fund forwarding mechanisms
         function forwardFunds() internal {
-            wallet.transfer(msg.value);
+          uint256 wei89 = msg.value.mul(89).div(100);
+          uint256 wei10 = msg.value.div(10);
+          uint256 wei1 = msg.value.sub(wei89).sub(wei10);
+          wallet89.transfer(wei89);
+          wallet10.transfer(wei10);
+          wallet1.transfer(wei1);
         }
 
         // add off chain contribution. BTC address of contribution added for transparency
