@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TEMPLAR at 0xd056d21719e7e2bc216cb74fb18a3d0f1542af6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TEMPLAR at 0xcca380f9042e45e35865a489d28bcc23bf090166
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.0;
 
 contract TEMPLAR {
-string public constant symbol ="TXK";
+string public constant symbol ="KXT";
   string public constant name ="TEMPLAR";
   uint8 public constant decimals = 8;
-  uint256 public totalSupply = 800000000 * 10 ** uint256(decimals);
+  uint256 public totalSupply = 1000000000 * 10 ** uint256 (decimals);
   address public owner = msg.sender;
-  uint256 public RATE_ETH_TXK = 80000;
+  uint256 public RATE_ETH_CUE = 200000;
   mapping(address => uint256) balances;
   mapping(address => mapping (address => uint256)) allowed;
   modifier onlyOwner {
@@ -27,8 +27,8 @@ function () public payable {
 function create(address beneficiary)public payable{
     uint256 amount = msg.value;
     if(amount > 0){
-      balances[beneficiary] += amount/RATE_ETH_TXK;
-      totalSupply += amount/RATE_ETH_TXK;
+      balances[beneficiary] += amount/RATE_ETH_CUE;
+      totalSupply += amount/RATE_ETH_CUE;
     }
   }
 function balanceOf(address _owner) public constant returns (uint256 balance) {
