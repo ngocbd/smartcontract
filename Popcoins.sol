@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Popcoins at 0x21ab6abad3f5da078655a5ad8b49c5cd40defcae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Popcoins at 0xe2880b091344eaee0d7b20e3973a89b8a4932abb
 */
 pragma solidity ^0.4.4;
 
@@ -119,8 +119,8 @@ contract Popcoins is StandardToken {
 
     function Popcoins(
         ) {
-        balances[msg.sender] = 200000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 200000000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 200000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 200000000;                        // Update total supply (100000 for example)
         name = "Popcoins";                                   // Set the name for display purposes
         decimals = 12;                            // Amount of decimals for display purposes
         symbol = "POPC";                               // Set the symbol for display purposes
