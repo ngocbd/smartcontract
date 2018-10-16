@@ -1,75 +1,64 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HODL at 0x9bdeacb145860075af954de6adbb8ad5b52ceac2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hodl at 0xE5b340F7E4b11eAE96D7047e8Bc9322f96093402
 */
-pragma solidity ^0.4.19;
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-/**
-   @title HODL
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-   A smart contract for real HOLDERS, all ETH received here can be withdraw a year 
-   after it was deposited.
- */
-contract HODL {
+contract Hodl {
 
-    // 1 Year to relase the funds
-    uint256 public RELEASE_TIME = 1 years;
+    mapping(address => mapping(address => uint)) private amounts;
+    mapping(address => mapping(address => uint)) private timestamps;
 
-    // Balances on hold
-    mapping(address => Deposit) deposits;
-    
-    struct Deposit {
-        uint256 value;
-        uint256 releaseTime;
+    event Hodling(address indexed sender, address indexed tokenAddress, uint256 amount);
+    event TokenReturn(address indexed sender, address indexed tokenAddress, uint256 amount);
+
+    function hodlTokens(address tokenAddress, uint256 amount, uint timestamp) public {
+        assert(tokenAddress != address(0));
+        assert(amount != uint256(0));
+        assert(timestamp != uint(0));
+        assert(amounts[msg.sender][tokenAddress] == 0);
+
+        amounts[msg.sender][tokenAddress] = amount;
+        timestamps[msg.sender][tokenAddress] = timestamp;
+
+        ERC20 erc20 = ERC20(tokenAddress);
+        assert(erc20.transferFrom(msg.sender, this, amount) == true);
+
+        Hodling(msg.sender, tokenAddress, amount);
     }
-    
-    /**
-     @dev Fallback function
 
-     Everytime the contract receives ETH it will check if there is a deposit
-     made by the `msg.sender` if there is one the value of the tx wil be added
-     to the current deposit and the release time will be reseted adding a year
-     If there is not deposit created by the `msg.sender` it will be created.
-   */
-    function () public payable {
-        require(msg.value > 0);
-        
-        if (deposits[msg.sender].releaseTime == 0) {
-            uint256 releaseTime = now + RELEASE_TIME;
-            deposits[msg.sender] = Deposit(msg.value, releaseTime);
-        } else {
-            deposits[msg.sender].value += msg.value;
-            deposits[msg.sender].releaseTime += RELEASE_TIME;
-        }
+    function getTokens(address tokenAddress) public {
+        assert(tokenAddress != address(0));
+        assert(amounts[msg.sender][tokenAddress] > 0);
+        assert(now >= timestamps[msg.sender][tokenAddress]);
+
+        ERC20 erc20 = ERC20(tokenAddress);
+        uint256 amount = amounts[msg.sender][tokenAddress];
+
+        delete amounts[msg.sender][tokenAddress];
+        delete timestamps[msg.sender][tokenAddress];
+        assert(erc20.transfer(msg.sender, amount) == true);
+
+        TokenReturn(msg.sender, tokenAddress, amount);
     }
-    
-    /**
-     @dev withdraw function
 
-     This function can be called by a holder after a year of his last deposit
-     and it will transfer all the ETH deposited back to him.
-   */
-    function withdraw() public {
-        require(deposits[msg.sender].value > 0);
-        require(deposits[msg.sender].releaseTime < now);
-        
-        msg.sender.transfer(deposits[msg.sender].value);
-        
-        deposits[msg.sender].value = 0;
-        deposits[msg.sender].releaseTime = 0;
+    function getTimestamp(address tokenAddress) public view returns (uint) {
+        return timestamps[msg.sender][tokenAddress];
     }
-    
-    /**
-     @dev getDeposit function
-     It returns the deposited value and release time from a holder.
 
-     @param holder address The holder address
-
-     @return uint256 value Amount of ETH deposited in wei
-     @return uint256 releaseTime Timestamp of when the the deposit can returned
-   */
-    function getDeposit(address holder) public view returns
-        (uint256 value, uint256 releaseTime)
-    {
-        return(deposits[holder].value, deposits[holder].releaseTime);
+    function getAmount(address tokenAddress) public view returns (uint256) {
+        return amounts[msg.sender][tokenAddress];
     }
+
 }
