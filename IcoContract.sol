@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract icocontract at 0x16058bbd3e684b30ed92810b27a3a18b62184232
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract icocontract at 0x47a0e3f58fe508c9ef78016fb4d52febed361e41
 */
 pragma solidity ^0.4.17;
 
@@ -242,17 +242,12 @@ contract icocontract { //is inherently ERC20
 
     }
 
-    function setraisedAmount(uint raised) onlyOwner {
-
-        raisedAmount = raised;
-
-    }
-
-     function setRate(uint256 rate) onlyOwner {
+    function setRate(uint256 rate) onlyOwner {
 
         RATE = rate;
 
     }
+
 
     function setIcostart(bool newicostart) onlyOwner {
 
