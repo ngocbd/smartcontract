@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0x34ea8cdc7837d3a84f5869909104bdb1a7c8cb35
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0xf73616d78a3d6d11215a158fcf4053b2a62e2e89
 */
 pragma solidity ^0.4.19;
 
@@ -28,7 +28,7 @@ contract howbadlycouldthisgowrong {
    * Create the contract, and sets the destination address to that of the creator
    */
   function Forwarder() public {
-    parentAddress = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
+    parentAddress = msg.sender;
   }
 
   /**
