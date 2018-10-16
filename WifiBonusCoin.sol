@@ -1,6 +1,72 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WifiBonusCoin at 0x194ee036eadb8858713ddb5155e5fa0fdab82cac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WifiBonusCoin at 0x35a2b4ea788161e9a7a24bdb9de16df1fba30b46
 */
+// Congratulations! Its your free airdrop token. More about project at: https://worldwifi.io/bonus
+//
+//
+// DECENTRALIZED FREE WI-FI NETWORK POWERED BY BLOCKCHAIN
+// ?????????????WI-FI??
+// RED WI-FI DESCENTRALIZADA GRATUITA EN BASE DE LA TECNOLOG?A BLOCKCHAIN
+// ????????????????????Wi-Fi??????
+// ?????????????????? ?????????? WI-FI ???? ?? ?????????? ????????
+// ???? ??? ?? ??? ?? WI-FI ????
+// DEZENTRALES UND FREIES WI-FI-NETZWERK AUF DER BLOCKCHAIN-TECHNOLOGIE
+// M?NG L??I WI-FI Mi?N PHÍ PHÂN TÁN V?I CÔNG NGH? BLOCKCHAIN
+//
+// 
+//
+//                `:::::::::;.`
+//             `,:::;:::::::::::.
+//            ,:::::::::::::::::::`
+//          `::::::::::::::::::::::,`
+//         `:::::::::::::::::::::::::
+//        .::::::::,        `;:::::::,
+//       .::::::;.           ``::::;:`
+//      `:::;::,                `::,`,+'
+//     `::::::`                   ,: ++''
+//     ::::::`                     `.++++.
+//    `:::::.                       `'++++
+//    :::::,                      :  +++++'
+//   .:::::                      +++, +++++
+//   :::::`                      ++++`,++++;             `        `               ` ,. `                   `                           `                                  `    `                 `
+//  `::::,                       +++++ +++'+         .+++`    ;+++     ++++      ;'+++++:`      ++++++++++.      ++++           ++++++'+;             `:::.    .::;     ;:::  `;:::    ::::::::::::   ::::
+//  :::::                        '++++..++++`        `+++,    ++++     +++;    `++'+++++++`     ++++++++'+++`    ++++           +++'++++++.            :::,    ::::     ::::   ::::    ::::::::::::   ::::
+//  :::::                    ;+'  +++++ '++++         ++++    ++++`   `+++,    ++''+++++++'     +++++++++++'+    ++++           ++'++++++'+,           ::::    ::::.   `:::.   ::::`   ::::::::::::   ::::
+// .::::`                    +++; ,++++ '++++         ++++    ++++:   :+++    ,++++`  .+'+'     ++++`  `'+'++    ++++           ++++  `+'++'           ::::    ::::,   .:::`   ::::`   ::::````````   ::::
+// ,::::                    .++++  ++++:`++++         ;+++   `+++++   ;+++    ++++`    .+++'    ++++     :+++,   ++++           +++'   `,+++'          ::::   `:::::   ,:::    ::::`   ::::           ::::
+// :::::                     '+++' :++++ ++++.        ,+++   :+++++   ++++    +++;      ++++    ++++     `+++;   ++++           +++'   ` ''++          `:::`  .:::::   ::::    ::::`   ::::           ::::
+// ::::.              `+++   ;++++ `++++ ++++;        `+++`  '+++++   ++++   ,+++.    ` ,+++`   ++++      +++;   ++++           +++'     `'++.         `:::`  ::::::` `::::    ::::`   ::::`          ::::
+// ::::`             ,++++#`  ++++` ++++ '+++'         +++:  +++'++`  '++,   '+++       `+++:   ++++      +++;   ++++           +++'      +++;          :::, `::::::`  :::.    ::::`   ::::      `    ::::
+// ::::`             +++++++  ++++: ++++ ;++''         +++'  +++:++: `+++    '+++        ++';   ++++     ;+++`   ++++           +++'      ++++          ::::  ::;.::,  :::`    ::::`   ::::`    ```   ::::
+//`::::`            `+++++++  `'++: ;++'`,++#'         ++++ .++;`++' .+++    '+++        +++'   ++++ ```+++++    ++++           +++'      ++++          ,::: `::: ::: `:::`    ::::`   :::::::::::    ::::
+//`::::`            `         `                        :+++ :++, +++ '+++    '+++        ++++   +++++++'+++'`    ++++           +++'      ++++          .::: ,::. ::: ,:::     ::::`   :::::::::::    ::::
+//`::::`             ,,,,,,,   ':,. .:,: `,,,,          +++ +++` +++ +++'    '+++        +++'   ++++++'++++`     ++++           +++'      ++++          `:::`:::` :::`::::     ::::`   :::::::::::    ::::
+// ::::`             +#++++'  +++': ++++ :++++          +++.+++  ;+'.+++,    '++'        +++:   ++++++++++'      ++++           +++'     `++++           :::`:::  ,::.:::,     ::::`   ::::     ``    ::::
+//`::::`             ;+++++   '+++` ++++ ;+++'          '++,++'  ,++:+++.    ;+++       `+++,   ++++   ++++`     ++++           +++'      +++:           :::,:::  `::,:::`     ::::`   ::::           ::::
+// ::::.              ,+++`` :++++  ++++ ++++;          '+++++;   ++++++     .+++,      ;+++    ++++   :+++;     ++++           +++'     :+++.           :::::::   ::::::      ::::`   ::::           ::::
+// :::::                     +++++ :++++ ++++,          :+++++`   ++++++      ++++`     ++++    ++++  ` ++++     ++++`          ++++     ++++            .:::::.   ::::::      ::::`   ::::           ::::
+// .::::                `   ''+++` ++++:`++++           .+++++    +++++'      '+++:    ;+++;    ++++    '+++,    ++++           +++'    ++++:            `:::::`   ::::::      ::::`   ::::           ::::
+// `::::`                   '+++' .++'+`;++++            +++++    '++++;       +++++,:++++'     ++++     ++++    ++++++++++++   ++++++++++++              :::::    ,::::.     `::::    ::::           ::::
+//  :::::                   :+++  +++'' '++++            +++++    `++++`       ,'+++++++++.     ++++     '+++.   ++++++++++++   +++++++++++               ;::::    `::::`      ::::    ::::           ::::
+//  :::::                    ,:  ;++++.`++++.            '+++:     ++++        `.+++++++'`      ++++     `+++'   ++++++++++++   ++++++++++                ::::,     ::::`      ::::    ::::           ::::
+//  `::::,                      .'++++ ++++'             :+++`     ++++           '++'+;        '+++      ++++` `'+++++++++++   ++++++',                  .:;;`     ::::       ::::    ::::           ::::
+//   :::::`                     ''+++`.++++;             `                                     `        `                   `   `     `                    ```                          ``
+//   ,:::::                     +'++: '++++                                                                                 `                            `    `   `    `
+//    :::::.                   `:++' '++++'
+//    .:::::`                    ```,+++++
+//     ;:::::`                 `    +++++,
+//     `::::::`                    ++++'+
+//      .::::::,                `:`+++++`
+//       ,:::::::`             ,::, +++`
+//        ,:::::::;.  `    ``,:::::` ,
+//         .::::::::::::::::::::::::,
+//          `:::::::::::::::::::::::
+//          ``::::::::::::::::::::.
+//              ::::::::::::::::,
+//              ` .:::::::::::`  `
+//                  ```````
+//
+
 pragma solidity 0.4.19;
 
 /**
@@ -251,43 +317,27 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract MintableToken is StandardToken, Ownable {
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-
-    bool public mintingFinished = false;
-
-
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
+contract Airdropper is Ownable {
+    function multisend(address _tokenAddr, address[] _dests, uint256[] _values)
+        onlyOwner
+        public
+        returns (uint256 _numTxs) 
+    {
+        uint256 i = 0;
+        while (i < _dests.length) {
+           ERC20(_tokenAddr).transfer(_dests[i], _values[i]);
+           i += 1;
+        }
+        return(i);
     }
 
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    /**
-     * @dev Function to stop minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function finishMinting() onlyOwner canMint public returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
+    function transferRemaining(address _tokenAddr, address _recipient, uint256 _botAmount)
+        onlyOwner
+        external
+    {
+        ERC20(_tokenAddr).transfer(_recipient, _botAmount);
     }
 }
-
 
 /**
  * @title SimpleToken
@@ -295,13 +345,14 @@ contract MintableToken is StandardToken, Ownable {
  * Note they can later distribute these tokens as they wish using `transfer` and other
  * `StandardToken` functions.
  */
-contract WifiBonusCoin is StandardToken {
+contract WifiBonusCoin is StandardToken, Ownable, Airdropper {
 
     string public constant name    = "World Wifi Bonus";
-    string public constant symbol  = "WifiB";
+    string public constant symbol  = "WFB";
     uint8 public constant decimals = 0;
 
-    uint256 public constant INITIAL_SUPPLY = 300000000; // * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 300000000;
+
 
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
@@ -311,4 +362,5 @@ contract WifiBonusCoin is StandardToken {
         balances[msg.sender] = INITIAL_SUPPLY;
         Transfer(0x0, msg.sender, INITIAL_SUPPLY);
     }
+
 }
