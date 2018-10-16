@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGems at 0x8416d6cf1ef3b3363a031ea42e4332fa69d2c318
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGems at 0xa690f6a9fa8bcef284f2f4aeb1add87e1d9a4465
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -133,7 +133,7 @@ contract EtherGems is ERC721 {
   }
 
   /// @dev Creates a new Gem with the given name.
-  function createContractGem(string _name) public onlyCOO {
+  function createContractGem(string _name) public onlyCLevel {
     _createGem(_name, address(this), startingPrice);
   }
 
