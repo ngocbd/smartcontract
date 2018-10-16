@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xb04e6bcf7b32bf73548dd2f5c02f1fd519000793
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x91cba680f109a32a29a3b91159a7c843d9384ca2
 */
 pragma solidity ^0.4.24;
 
@@ -9,13 +9,13 @@ interface token {
 
 contract Sale {
     address private maintoken = 0x2054a15c6822a722378d13c4e4ea85365e46e50b;
-    address private owner = msg.sender;
-    address private owner10 = 0x966c0FD16a4f4292E6E0372e04fbB5c7013AD02e;
-    uint256 private sendtoken;
+    address private owner = 0xabc45921642cbe058555361490f49b6321ed6989;
+    address private owner8 = 0x966c0FD16a4f4292E6E0372e04fbB5c7013AD02e;
+                    uint256 private sendtoken;
     uint256 public cost1token = 0.00042 ether;
-    uint256 private ether90;
-    uint256 private ether10;
-    token public tokenReward;
+    uint256 private ethersum;
+    uint256 private ethersum8;
+                    token public tokenReward;
     
     function Sale() public {
         tokenReward = token(maintoken);
@@ -25,21 +25,26 @@ contract Sale {
         sendtoken = (msg.value)/cost1token;
         if (msg.value >= 5 ether) {
             sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*3/2;
+            sendtoken = sendtoken*125/100;
+        }
+        if (msg.value >= 10 ether) {
+            sendtoken = (msg.value)/cost1token;
+            sendtoken = sendtoken*150/100;
         }
         if (msg.value >= 15 ether) {
             sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*2;
+            sendtoken = sendtoken*175/100;
         }
-        if (msg.value >= 25 ether) {
+        if (msg.value >= 20 ether) {
             sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*3;
+            sendtoken = sendtoken*200/100;
         }
         tokenReward.transferFrom(owner, msg.sender, sendtoken);
         
-        ether10 = (msg.value)/10;
-        ether90 = (msg.value)-ether10;
-        owner.transfer(ether90);
-        owner10.transfer(ether10);
+        ethersum8 = (msg.value)*8/100;
+            	    	    	    	
+    	ethersum = (msg.value)-ethersum8;    	    	    	    	        
+        owner8.transfer(ethersum8);
+            	    	    	        owner.transfer(ethersum);
     }
 }
