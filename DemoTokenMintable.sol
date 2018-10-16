@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DemoTokenMintable at 0x65c39f0bfa2a25734969767cd35e883a82cbe351
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DemoTokenMintable at 0xce6dfeb0674c96ed11ddc0d59c5c5e98d3586292
 */
 pragma solidity ^0.4.13;
 
@@ -135,8 +135,8 @@ contract MintableToken is StandardToken, Ownable {
 
 contract DemoTokenMintable is MintableToken {
 
-        string public name = "BiCode";
-        string public symbol = "CODE";
-        uint256 public decimals = 8;
+        string public name = "Quantum Gold";
+        string public symbol = "QTG";
+        uint256 public decimals = 18;
 
 }
