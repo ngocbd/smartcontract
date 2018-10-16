@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x3c7320775ddcb1b8cfef283a65a75715a6ce4d03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x79137ad8bfed047ab7a06e2e946143f2dda9d06d
 */
 // Author : shift
 
@@ -69,7 +69,7 @@ contract Moongang {
   }
 
   //Constants of the contract
-  uint256 constant FEE = 100;    //1% fee
+  uint256 constant FEE = 40;    //2.5% fee
   //SafeMath.div(20, 3) = 6
   uint256 constant FEE_DEV = 6; //15% on the 1% fee
   uint256 constant FEE_AUDIT = 12; //7.5% on the 1% fee
