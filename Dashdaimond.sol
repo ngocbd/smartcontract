@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dashdaimond at 0x2c1cd967051fbfa792950e836ff0769b6792b1fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dashdaimond at 0x84f2688e2230bb5d881ccbd543c34790f33f2200
 */
 pragma solidity ^0.4.18;
 
@@ -60,9 +60,9 @@ contract ERC20 {
 contract Dashdaimond is ERC20, owned {
     using SafeMath for uint256;
     string public name = "Dashdiamond";
-    string public symbol = "DHD";
+    string public symbol = "DASHD";
     uint8 public decimals = 18;
-    uint256 public totalSupply = 10000000;
+    uint256 public totalSupply;
 
     mapping (address => uint256) private balances;
     mapping (address => mapping (address => uint256)) private allowed;
@@ -77,7 +77,7 @@ contract Dashdaimond is ERC20, owned {
 
     function Dashgold() public {
         totalSupply = 10000000 * 1 ether;
-        balances[msg.sender] = totalSupply = 10000000;
+        balances[msg.sender] = totalSupply;
         Transfer(0, msg.sender, totalSupply);
     }
 
