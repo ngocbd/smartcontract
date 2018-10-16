@@ -1,140 +1,310 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MaximumCoin at 0xc5bfe943aef3df9f2e7a2722a752d9fa252a7335
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Maximumcoin at 0x536cb5035dc28f397f03c01aee5aabc06dd9e1dc
 */
 pragma solidity ^0.4.4;
-
-contract Token {
-
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
-
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-}
-
-
-
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    function div(uint256 a, uint256 b) internal constant returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() {
+        owner = msg.sender;
+    }
+
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner {
+        require(newOwner != address(0));
+        owner = newOwner;
+    }
+
+}
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) constant returns (uint256);
+    function transfer(address to, uint256 value) returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) returns (bool);
+    function approve(address spender, uint256 value) returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+/**
+ * @title PoSTokenStandard
+ * @dev the interface of PoSTokenStandard
+ */
+contract PoSTokenStandard {
+    uint256 public stakeStartTime;
+    uint256 public stakeMinAge;
+    uint256 public stakeMaxAge;
+   //Maximumcoin - Modified the correct technical term "mint" to a well know term "mine" for marketing purposes
+    function mine() returns (bool);
+    function coinAge(address who) constant returns (uint256);
+    function annualInterest() constant returns (uint256);
+    event Mine(address indexed _address, uint _reward);
+}
+//Maximumcoin - Changed name of contract
+contract Maximumcoin is ERC20,PoSTokenStandard,Ownable {
+    using SafeMath for uint256;
+//Maximumcoin - Changed name of contract
+    string public name = "Maximum-coin";
+    string public symbol = "xMUM";
+    uint public decimals = 18;
+
+    uint public chainStartTime; //chain start time
+    uint public chainStartBlockNumber; //chain start block number
+    uint public stakeStartTime; //stake start time
+    uint public stakeMinAge = 3 days; // minimum age for coin age: 3D
+    uint public stakeMaxAge = 90 days; // stake age of full weight: 90D
+    uint public maxMintProofOfStake = 10**17; // default 10% annual interest
+
+    uint public totalSupply;
+    uint public maxTotalSupply;
+    uint public totalInitialSupply;
+
+    struct transferInStruct{
+    uint128 amount;
+    uint64 time;
+    }
+
+    mapping(address => uint256) balances;
+    mapping(address => mapping (address => uint256)) allowed;
+    mapping(address => transferInStruct[]) transferIns;
+
+//Maximumcoin - Removed burn system
+    //event Burn(address indexed burner, uint256 value);
+
+    /**
+     * @dev Fix for the ERC20 short address attack.
+     */
+    modifier onlyPayloadSize(uint size) {
+        require(msg.data.length >= size + 4);
+        _;
+    }
+
+    modifier canPoSMint() {
+        require(totalSupply < maxTotalSupply);
+        _;
+    }
+
+    function MaximumcoinStart() onlyOwner {
+        address recipient;
+        uint value;
+        uint64 _now = uint64(now);
+        //kill start if this has already been ran
+        require((maxTotalSupply <= 0));
+
+        maxTotalSupply = 10**25; // 10 Mil.
+        
+        //Maximumcoin - Modified initial supply to 250k
+        totalInitialSupply = 2.5*(10**23); // 250K
+
+        chainStartTime = now;
+        chainStartBlockNumber = block.number;
+
+        //Free Airdrop and Bounty Program - 200K
+        recipient = 0x1748b386a6F008Ce4Ad3a969974F4D7b7c0d92bE;
+        value = 2 * (10**23);
+
+        //run
+        balances[recipient] = value;
+        transferIns[recipient].push(transferInStruct(uint128(value),_now));
+
+        //iMAC development Team - 50K
+        recipient = 0x8067d29f98A8E7F87713867c0e9bF5ae578B3237;
+        value = 5 * (10**22);
+
+        //run
+        balances[recipient] = value;
+        transferIns[recipient].push(transferInStruct(uint128(value),_now));
+
+        totalSupply = totalInitialSupply;
+    }
+
+    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool) {
+        //Maximumcoin - Modified to mine
+        if(msg.sender == _to) return mine();
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        if(transferIns[msg.sender].length > 0) delete transferIns[msg.sender];
+        uint64 _now = uint64(now);
+        transferIns[msg.sender].push(transferInStruct(uint128(balances[msg.sender]),_now));
+        transferIns[_to].push(transferInStruct(uint128(_value),_now));
+        return true;
     }
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) returns (bool) {
+        require(_to != address(0));
+
+        var _allowance = allowed[_from][msg.sender];
+
+        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+        // require (_value <= _allowance);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+        Transfer(_from, _to, _value);
+        if(transferIns[_from].length > 0) delete transferIns[_from];
+        uint64 _now = uint64(now);
+        transferIns[_from].push(transferInStruct(uint128(balances[_from]),_now));
+        transferIns[_to].push(transferInStruct(uint128(_value),_now));
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+        return allowed[_owner][_spender];
     }
+//Maximumcoin - Modified the correct technical term "mint" to a well know term "mine" for marketing purposes.
+    function mine() canPoSMint returns (bool) {
+        if(balances[msg.sender] <= 0) return false;
+        if(transferIns[msg.sender].length <= 0) return false;
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
+        uint reward = getProofOfStakeReward(msg.sender);
+        if(reward <= 0) return false;
 
-
-//name this contract whatever you'd like
-contract MaximumCoin is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
-
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version;                //human 0.1 standard. Just an arbitrary versioning scheme.
-
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
-
-    function MaximumCoin(
-        ) {
-        balances[msg.sender] = 2100000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 2100000000000000 ;                        // Update total supply (100000 for example)
-        name = "MaximumCoin";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "MAX";                               // Set the symbol for display purposes
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        totalSupply = totalSupply.add(reward);
+        balances[msg.sender] = balances[msg.sender].add(reward);
+        delete transferIns[msg.sender];
+        transferIns[msg.sender].push(transferInStruct(uint128(balances[msg.sender]),uint64(now)));
+//Maximumcoin - Change event to Mine
+        Mine(msg.sender, reward);
         return true;
     }
+
+    function getBlockNumber() returns (uint blockNumber) {
+        blockNumber = block.number.sub(chainStartBlockNumber);
+    }
+
+    function coinAge(address who) constant returns (uint myCoinAge) {
+        myCoinAge = getCoinAge(who,now);
+    }
+
+    function annualInterest() constant returns(uint interest) {
+        uint _now = now;
+        interest = maxMintProofOfStake;
+        //Maximumcoin - Modified initial interest rate to 300%
+        if((_now.sub(stakeStartTime)).div(1 years) == 0) {
+            interest = (1650 * maxMintProofOfStake).div(100);
+        } else if((_now.sub(stakeStartTime)).div(1 years) == 1) {
+            interest = (770 * maxMintProofOfStake).div(100);
+        } else if((_now.sub(stakeStartTime)).div(1 years) == 2){
+            interest = (435 * maxMintProofOfStake).div(100);
+        }
+    }
+
+    function getProofOfStakeReward(address _address) internal returns (uint) {
+        require( (now >= stakeStartTime) && (stakeStartTime > 0) );
+
+        uint _now = now;
+        uint _coinAge = getCoinAge(_address, _now);
+        if(_coinAge <= 0) return 0;
+
+        uint interest = maxMintProofOfStake;
+        // Due to the high interest rate for the first two years, compounding should be taken into account.
+        // Effective annual interest rate = (1 + (nominal rate / number of compounding periods)) ^ (number of compounding periods) - 1
+        //Maximumcoin - Modified initial interest rate to 300%
+        if((_now.sub(stakeStartTime)).div(1 years) == 0) {
+            // 1st year effective annual interest rate is 300% when we select the stakeMaxAge (90 days) as the compounding period.
+            interest = (1650 * maxMintProofOfStake).div(100);
+        } else if((_now.sub(stakeStartTime)).div(1 years) == 1) {
+            // 2nd year effective annual interest rate is 100% when we select the stakeMaxAge (90 days) as the compounding period.
+            interest = (770 * maxMintProofOfStake).div(100);
+        } else if((_now.sub(stakeStartTime)).div(1 years) == 2){
+            // 3nd year effective annual interest rate is 50%
+            interest = (435 * maxMintProofOfStake).div(100);
+        }
+
+        return (_coinAge * interest).div(365 * (10**decimals));
+    }
+
+    function getCoinAge(address _address, uint _now) internal returns (uint _coinAge) {
+        if(transferIns[_address].length <= 0) return 0;
+
+        for (uint i = 0; i < transferIns[_address].length; i++){
+            if( _now < uint(transferIns[_address][i].time).add(stakeMinAge) ) continue;
+
+            uint nCoinSeconds = _now.sub(uint(transferIns[_address][i].time));
+            if( nCoinSeconds > stakeMaxAge ) nCoinSeconds = stakeMaxAge;
+
+            _coinAge = _coinAge.add(uint(transferIns[_address][i].amount) * nCoinSeconds.div(1 days));
+        }
+    }
+
+    function ownerSetStakeStartTime(uint timestamp) onlyOwner {
+        require((stakeStartTime <= 0) && (timestamp >= chainStartTime));
+        stakeStartTime = timestamp;
+    }
+
 }
