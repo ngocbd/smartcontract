@@ -1,59 +1,114 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOU at 0x12b6a0936094b21a396023e376a8bf2bf5f5cb99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Iou at 0x8d923f3e3f1c1fc2a95fd7ed97e786755e80f26e
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.10;
 
-/*
-      _____                    _____                    _____                    _____
-     /\    \                  /\    \                  /\    \                  /\    \
-    /::\    \                /::\    \                /::\    \                /::\____\
-    \:::\    \              /::::\    \              /::::\    \              /:::/    /
-     \:::\    \            /::::::\    \            /::::::\    \            /:::/    /
-      \:::\    \          /:::/\:::\    \          /:::/\:::\    \          /:::/    /
-       \:::\    \        /:::/__\:::\    \        /:::/__\:::\    \        /:::/    /
-       /::::\    \      /::::\   \:::\    \      /::::\   \:::\    \      /:::/    /
-      /::::::\    \    /::::::\   \:::\    \    /::::::\   \:::\    \    /:::/    /
-     /:::/\:::\    \  /:::/\:::\   \:::\    \  /:::/\:::\   \:::\    \  /:::/    /
-    /:::/  \:::\____\/:::/__\:::\   \:::\____\/:::/__\:::\   \:::\____\/:::/____/
-   /:::/    \::/    /\:::\   \:::\   \::/    /\:::\   \:::\   \::/    /\:::\    \
-  /:::/    / \/____/  \:::\   \:::\   \/____/  \:::\   \:::\   \/____/  \:::\    \
- /:::/    /            \:::\   \:::\    \       \:::\   \:::\    \       \:::\    \
-/:::/    /              \:::\   \:::\____\       \:::\   \:::\____\       \:::\    \
-\::/    /                \:::\   \::/    /        \:::\   \::/    /        \:::\    \
- \/____/                  \:::\   \/____/          \:::\   \/____/          \:::\    \
-                           \:::\    \               \:::\    \               \:::\    \
-                            \:::\____\               \:::\____\               \:::\____\
-                             \::/    /                \::/    /                \::/    /
-                              \/____/                  \/____/                  \/____/
+contract SafeMath {
 
-  Thank you
-*/
+    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
+      uint256 z = x + y;
+      assert((z >= x) && (z >= y));
+      return z;
+    }
 
-contract NEToken {
-  function balanceOf(address _owner) constant returns (uint256 balance);
-  function transfer(address _to, uint256 _value) returns (bool success);
+    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
+      assert(x >= y);
+      uint256 z = x - y;
+      return z;
+    }
+
+    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
+      uint256 z = x * y;
+      assert((x == 0)||(z/x == y));
+      return z;
+    }
+
 }
 
-contract IOU {
-  uint256 public bal;
+contract ERC20Interface is SafeMath {
 
-  //  NET token contract address (IOU offering)
-  NEToken public token = NEToken(0xcfb98637bcae43C13323EAa1731cED2B716962fD);
+    uint256 public decimals = 0;
+    uint256 public _totalSupply = 5;
+    bool public constant isToken = true;
 
-  // Fallback function/entry point
-  function () payable {
-    if(msg.value == 0) {
-      if(token.balanceOf(0xB00Ae1e677B27Eee9955d632FF07a8590210B366) == 4725000000000000000000) {
-        bal = 4725000000000000000000;
-        return;
-      }
-      else {
-        bal = 10;
-        return;
-      }
+    address public owner;
+    
+    // Store the token balance for each user
+    mapping(address => uint256) balances;
+
+    mapping(address => mapping(address => uint256)) allowed;
+
+    function ERC20Interface()
+    {
+        owner = msg.sender;
+        balances[owner] = _totalSupply;
     }
-    else {
-      throw;
+
+    function transfer(address _to, uint256 _value)
+        returns (bool success)
+    {
+        assert(balances[msg.sender] >= _value);
+        balances[msg.sender] = safeSubtract(balances[msg.sender], _value);
+        balances[_to] = safeAdd(balances[_to], _value);
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
-  }
+
+    function transferFrom(address _from, address _to, uint256 _value)
+        returns (bool success)
+    {
+        assert(allowance(msg.sender, _from) >= _value);
+        balances[_from] = safeSubtract(balances[_from], _value);
+        balances[_to] = safeAdd(balances[_to], _value);
+        allowed[msg.sender][_from] = safeSubtract(allowed[msg.sender][_from], _value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function balanceOf(address _owner) 
+        constant returns (uint256 balance)
+    {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) 
+        returns (bool success)
+    {
+        assert(balances[msg.sender] >= _value);
+        allowed[_spender][msg.sender] = safeAdd(allowed[_spender][msg.sender], _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender)
+        constant returns (uint256 allowance)
+    {
+        return allowed[_owner][_spender];
+    }
+  
+    // Triggered when tokens are transferred.
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  
+    // Triggered whenever approve(address _spender, uint256 _value) is called.
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract Iou is ERC20Interface {
+    string public constant symbol = "IOU";
+    string public constant name = "I owe you";
+    string public constant longDescription = "Buy or trade IOUs from Connor";
+
+    // Basically a decorator _; is were the main function will go
+    modifier onlyOwner() 
+    {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function Iou() ERC20Interface() {}
+
+    function changeOwner(address _newOwner) 
+        onlyOwner()
+    {
+        owner = _newOwner;
+    }
 }
