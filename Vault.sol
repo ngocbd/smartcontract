@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x91151ABe8cea8EE574B50cC01c18CE36cbbA3195
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xf0Cc17Aa0CE1c6595E56c9c60b19C1C546aDe50d
 */
 // Copyright (C) 2017  The Halo Platform by Scott Morrison
 //
 // This is free software and you are welcome to redistribute it under certain conditions.
 // ABSOLUTELY NO WARRANTY; for details visit: https://www.gnu.org/licenses/gpl-2.0.html
 //
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
 // minimum token interface
 contract Token {
@@ -22,18 +22,17 @@ contract Ownable {
 
 // tokens are withdrawable
 contract TokenVault is Ownable {
+    address self = address(this);
 
     function withdrawTokenTo(address token, address to, uint amount) public onlyOwner returns (bool) {
         return Token(token).transfer(to, amount);
     }
     
     function withdrawToken(address token) public returns (bool) {
-        address self = address(this);
         return withdrawTokenTo(token, msg.sender, Token(token).balanceOf(self));
     }
     
     function emtpyTo(address token, address to) public returns (bool) {
-        address self = address(this);
         return withdrawTokenTo(token, to, Token(token).balanceOf(self));
     }
 }
