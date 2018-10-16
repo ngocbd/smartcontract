@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x8e66ffe69b3f8d78f2a696e40c02f7454c0a01d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0xf184279e6d4654890b4410cf300ed55600f018be
 */
 pragma solidity ^0.4.6;
 
@@ -33,13 +33,20 @@ contract RES {
         decimals = 18;
     }
 
+    function buy() public payable {
+      balanceOf[msg.sender] = msg.value;
+      totalSupply += msg.value;
+      Bought(msg.sender, msg.value);
+    }  
+
+
+
 }
 
 contract SwarmRedistribution is RES {
     
-    address public JohanNygren;
-    bool public campaignOpen;    
-
+    address JohanNygren;
+        
     struct dividendPathway {
       address from;
       uint amount;
@@ -59,7 +66,7 @@ contract SwarmRedistribution is RES {
     }
     
     /* Generate a swarm tree */
-    Node[] swarmTree;
+    Node[] public swarmTree;
     
     mapping(address => bool) inSwarmTree;
     
@@ -72,35 +79,18 @@ contract SwarmRedistribution is RES {
     /* Tax-rate in parts per thousand */
     taxRate = 20;
     JohanNygren = 0x948176CB42B65d835Ee4324914B104B66fB93B52;
-    campaignOpen = true;
-    
     }
     
     modifier onlyJohan {
       if(msg.sender != JohanNygren) throw;
       _;
     }
-
-    modifier isOpen {
-      if(campaignOpen != true) throw;
-      _;
-    }
     
     function changeJohanNygrensAddress(address _newAddress) onlyJohan {
       JohanNygren = _newAddress;
     }
-    
-    function closeCampaign() onlyJohan {
-        campaignOpen == false;
-    }
 
-    function buy() isOpen public payable {
-      balanceOf[msg.sender] = msg.value;
-      totalSupply += msg.value;
-      Bought(msg.sender, msg.value);
-    }  
-
-    function buyViaJohan() isOpen public payable {
+    function buyViaJohan() public payable {
       balanceOf[msg.sender] = msg.value;
       totalSupply += msg.value;  
 
@@ -117,8 +107,6 @@ contract SwarmRedistribution is RES {
     function sell(uint256 _value) public {
       if(balanceOf[msg.sender] < _value) throw;
       balanceOf[msg.sender] -= _value;
-    
-      if (!msg.sender.send(_value)) throw;
 
       totalSupply -= _value;
       Sold(msg.sender, _value);
@@ -126,7 +114,7 @@ contract SwarmRedistribution is RES {
     }
 
     /* Send coins */
-    function transfer(address _to, uint256 _value) isOpen {
+    function transfer(address _to, uint256 _value) {
         /* reject transaction to self to prevent dividend pathway loops*/
         if(_to == msg.sender) throw;
         
@@ -188,7 +176,6 @@ contract SwarmRedistribution is RES {
                           });
                           
                   swarmTree.push(node);
-                  inSwarmTree[node.node] = true;
                   iterateThroughSwarm(node.node, timeStamp);
               }
           }
@@ -220,8 +207,6 @@ contract SwarmRedistribution is RES {
           dividendPathways[parent][index].amount -= _taxCollected; 
         }
         else removeDividendPathway(parent, index);
-        
-        inSwarmTree[node] = false;
         
         /* Notifiy anyone listening that this swarm took place */
         if(isJohan) Swarm(_leaf, swarmTree[i].node, share);
