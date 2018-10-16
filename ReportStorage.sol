@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReportStorage at 0x3dff5014b4c23730e682d32c7f6fab6bd86cf59b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReportStorage at 0x6af43411ee83354c53fc6ff1c8987790fa84ae4d
 */
 pragma solidity ^0.4.18;
-
 
 /**
  * @title Ownable
@@ -45,7 +44,6 @@ contract Ownable {
 }
 
 
-
 /**
  * @title Claimable
  * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
@@ -80,8 +78,11 @@ contract Claimable is Ownable {
   }
 }
 
-// Blockchain Report Smart-contract 
-
+/**
+ * @title LibreBank report contract.
+ * @dev Project website: https://librebank.com
+ * @dev Mail: support[@]librebank.com
+ */
 contract ReportStorage is Claimable {
     Report[] public reports;
 
