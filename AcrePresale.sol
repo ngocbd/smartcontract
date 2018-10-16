@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcrePresale at 0x9a3a05ac1fa589bb1d91375c4762ab4c8548239d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcrePresale at 0xc2a6c9b0d73ba060886ce749b1dfe605ea388562
 */
 pragma solidity 0.4.20;
 
@@ -26,7 +26,7 @@ library SafeMath {
 contract AcreConfig {
     using SafeMath for uint;
     
-    uint internal constant TIME_FACTOR = 1 days;
+    uint internal constant TIME_FACTOR = 1 minutes;
 
     // Ownable
     uint internal constant OWNERSHIP_DURATION_TIME = 7; // 7 days
@@ -38,8 +38,8 @@ contract AcreConfig {
     uint internal constant LOCKUP_DURATION_TIME = 365; // 365 days
     
     // AcreToken
-    string internal constant TOKEN_NAME            = "Acre";
-    string internal constant TOKEN_SYMBOL          = "ACRE";
+    string internal constant TOKEN_NAME            = "TAA";
+    string internal constant TOKEN_SYMBOL          = "TAA";
     uint8  internal constant TOKEN_DECIMALS        = 18;
     
     uint   internal constant INITIAL_SUPPLY        =   1*1e8 * 10 ** uint(TOKEN_DECIMALS); // supply
@@ -51,7 +51,7 @@ contract AcreConfig {
     uint internal constant MIN_ETHER               = 1*1e17; // 0.1 ether
     uint internal constant EXCHANGE_RATE           = 1000;   // 1 eth = 1000 acre
     uint internal constant PRESALE_DURATION_TIME   = 15;     // 15 days 
-    uint internal constant CROWDSALE_DURATION_TIME = 23;     // 23 days
+    uint internal constant CROWDSALE_DURATION_TIME = 21;     // 21 days
     
     // helper
     function getDays(uint _time) internal pure returns(uint) {
@@ -653,8 +653,8 @@ contract AcreCrowdsale is AcreSale {
     
     function getCurrentBonusRate() public constant returns(uint8 bonusRate) {
         if      (now <= SafeMath.add(startSaleTime, SafeMath.mul( 7, TIME_FACTOR))) { bonusRate = 20; } // 7days
-        else if (now <= SafeMath.add(startSaleTime, SafeMath.mul(15, TIME_FACTOR))) { bonusRate = 15; } // 8days
-        else if (now <= SafeMath.add(startSaleTime, SafeMath.mul(23, TIME_FACTOR))) { bonusRate = 10; } // 8days
+        else if (now <= SafeMath.add(startSaleTime, SafeMath.mul(14, TIME_FACTOR))) { bonusRate = 15; } // 7days
+        else if (now <= SafeMath.add(startSaleTime, SafeMath.mul(21, TIME_FACTOR))) { bonusRate = 10; } // 7days
         else                                                                        { bonusRate = 0; }  // 
     }
 }
