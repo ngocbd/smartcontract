@@ -1,21 +1,34 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x1f0cf7afa0161b0d8e9ec076fb62bb00742d314a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x69e3b5d1e6847a25a1216112dfe4ce580b46f456
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.15;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    /**
-     *    Constants
-    **/
+    /*
+     *  Events
+     */
+    event Confirmation(address indexed sender, uint indexed transactionId);
+    event Revocation(address indexed sender, uint indexed transactionId);
+    event Submission(uint indexed transactionId);
+    event Execution(uint indexed transactionId);
+    event ExecutionFailure(uint indexed transactionId);
+    event Deposit(address indexed sender, uint value);
+    event OwnerAddition(address indexed owner);
+    event OwnerRemoval(address indexed owner);
+    event RequirementChange(uint required);
+
+    /*
+     *  Constants
+     */
     uint constant public MAX_OWNER_COUNT = 50;
 
-    /**
-     *    Storage
-    **/
+    /*
+     *  Storage
+     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -30,91 +43,79 @@ contract MultiSigWallet {
         bool executed;
     }
 
-    /**
-     *    Events
-    **/
-    event Confirmation(address indexed sender, uint indexed transactionId);
-    event Revocation(address indexed sender, uint indexed transactionId);
-    event Submission(uint indexed transactionId);
-    event Execution(uint indexed transactionId);
-    event ExecutionFailure(uint indexed transactionId);
-    event Deposit(address indexed sender, uint value);
-    event OwnerAddition(address indexed owner);
-    event OwnerRemoval(address indexed owner);
-    event RequirementChange(uint required);
-
-    /**
-     *    Modifiers
-    **/
+    /*
+     *  Modifiers
+     */
     modifier onlyWallet() {
         require(msg.sender == address(this));
         _;
     }
-
 
     modifier ownerDoesNotExist(address owner) {
         require(!isOwner[owner]);
         _;
     }
 
-
     modifier ownerExists(address owner) {
         require(isOwner[owner]);
         _;
     }
-
 
     modifier transactionExists(uint transactionId) {
         require(transactions[transactionId].destination != 0);
         _;
     }
 
-
     modifier confirmed(uint transactionId, address owner) {
         require(confirmations[transactionId][owner]);
         _;
     }
-
 
     modifier notConfirmed(uint transactionId, address owner) {
         require(!confirmations[transactionId][owner]);
         _;
     }
 
-
     modifier notExecuted(uint transactionId) {
         require(!transactions[transactionId].executed);
         _;
     }
-
 
     modifier notNull(address _address) {
         require(_address != 0);
         _;
     }
 
-
     modifier validRequirement(uint ownerCount, uint _required) {
-        require(ownerCount <= MAX_OWNER_COUNT && _required <= ownerCount && _required != 0 && ownerCount != 0);
+        require(ownerCount <= MAX_OWNER_COUNT
+            && _required <= ownerCount
+            && _required != 0
+            && ownerCount != 0);
         _;
     }
 
+    /// @dev Fallback function allows to deposit ether.
+    function()
+        payable
+    {
+        if (msg.value > 0)
+            Deposit(msg.sender, msg.value);
+    }
 
-    /**
+    /*
      * Public functions
-    **/
+     */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
     /// @param _owners List of initial owners.
     /// @param _required Number of required confirmations.
     function MultiSigWallet(address[] _owners, uint _required)
         public
         validRequirement(_owners.length, _required)
-     {
-        for (uint i = 0; i < _owners.length; i++) {
+    {
+        for (uint i=0; i<_owners.length; i++) {
             require(!isOwner[_owners[i]] && _owners[i] != 0);
             isOwner[_owners[i]] = true;
         }
-
         owners = _owners;
         required = _required;
     }
@@ -141,16 +142,14 @@ contract MultiSigWallet {
         ownerExists(owner)
     {
         isOwner[owner] = false;
-        for (uint i = 0; i < owners.length - 1; i++) {
+        for (uint i=0; i<owners.length - 1; i++)
             if (owners[i] == owner) {
                 owners[i] = owners[owners.length - 1];
                 break;
             }
-        }
         owners.length -= 1;
-        if (required > owners.length) {
+        if (required > owners.length)
             changeRequirement(owners.length);
-        }
         OwnerRemoval(owner);
     }
 
@@ -163,12 +162,11 @@ contract MultiSigWallet {
         ownerExists(owner)
         ownerDoesNotExist(newOwner)
     {
-        for (uint i = 0; i < owners.length; i++) {
+        for (uint i=0; i<owners.length; i++)
             if (owners[i] == owner) {
                 owners[i] = newOwner;
                 break;
             }
-        }
         isOwner[owner] = false;
         isOwner[newOwner] = true;
         OwnerRemoval(owner);
@@ -235,13 +233,35 @@ contract MultiSigWallet {
         if (isConfirmed(transactionId)) {
             Transaction storage txn = transactions[transactionId];
             txn.executed = true;
-            if (txn.destination.call.value(txn.value)(txn.data)) {
+            if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
                 Execution(transactionId);
-            } else {
+            else {
                 ExecutionFailure(transactionId);
                 txn.executed = false;
             }
         }
+    }
+
+    // call has been separated into its own function in order to take advantage
+    // of the Solidity's code generator to produce a loop that copies tx.data into memory.
+    function external_call(address destination, uint value, uint dataLength, bytes data) private returns (bool) {
+        bool result;
+        assembly {
+            let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
+            let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
+            result := call(
+                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
+                                   // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
+                                   // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
+                destination,
+                value,
+                d,
+                dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
+                x,
+                0                  // Output is ignored, therefore the output size is zero
+            )
+        }
+        return result;
     }
 
     /// @dev Returns the confirmation status of a transaction.
@@ -253,13 +273,11 @@ contract MultiSigWallet {
         returns (bool)
     {
         uint count = 0;
-        for (uint i = 0; i < owners.length; i++) {
-            if (confirmations[transactionId][owners[i]]) {
+        for (uint i=0; i<owners.length; i++) {
+            if (confirmations[transactionId][owners[i]])
                 count += 1;
-            }
-            if (count == required) {
+            if (count == required)
                 return true;
-            }
         }
     }
 
@@ -298,11 +316,9 @@ contract MultiSigWallet {
         constant
         returns (uint count)
     {
-        for (uint i = 0; i < owners.length; i++) {
-            if (confirmations[transactionId][owners[i]]) {
+        for (uint i=0; i<owners.length; i++)
+            if (confirmations[transactionId][owners[i]])
                 count += 1;
-            }
-        }
     }
 
     /// @dev Returns total number of transactions after filers are applied.
@@ -314,11 +330,10 @@ contract MultiSigWallet {
         constant
         returns (uint count)
     {
-        for (uint i = 0; i < transactionCount; i++) {
-            if ((pending && !transactions[i].executed) || (executed && transactions[i].executed)) {
+        for (uint i=0; i<transactionCount; i++)
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
                 count += 1;
-            }
-        }
     }
 
     /// @dev Returns list of owners.
@@ -342,16 +357,14 @@ contract MultiSigWallet {
         address[] memory confirmationsTemp = new address[](owners.length);
         uint count = 0;
         uint i;
-        for (i = 0; i < owners.length; i++) {
+        for (i=0; i<owners.length; i++)
             if (confirmations[transactionId][owners[i]]) {
                 confirmationsTemp[count] = owners[i];
                 count += 1;
             }
-        }
         _confirmations = new address[](count);
-        for (i = 0; i < count; i++) {
+        for (i=0; i<count; i++)
             _confirmations[i] = confirmationsTemp[i];
-        }
     }
 
     /// @dev Returns list of transaction IDs in defined range.
@@ -360,32 +373,23 @@ contract MultiSigWallet {
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return Returns array of transaction IDs.
-    /// @dev Returns list of transaction IDs in defined range.
     function getTransactionIds(uint from, uint to, bool pending, bool executed)
         public
         constant
         returns (uint[] _transactionIds)
     {
-        require(from <= to || to < transactionCount);
-        uint[] memory transactionIdsTemp = new uint[](to - from + 1);
+        uint[] memory transactionIdsTemp = new uint[](transactionCount);
         uint count = 0;
         uint i;
-        for (i = from; i <= to; i++) {
-            if ((pending && !transactions[i].executed) || (executed && transactions[i].executed)) {
+        for (i=0; i<transactionCount; i++)
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
+            {
                 transactionIdsTemp[count] = i;
                 count += 1;
             }
-        }
-        _transactionIds = new uint[](count);
-        for (i = 0; i < count; i++) {
-            _transactionIds[i] = transactionIdsTemp[i];
-        }
-    }
-
-    /// @dev Fallback function allows to deposit ether.
-    function() public payable {
-        if (msg.value > 0) {
-            Deposit(msg.sender, msg.value);
-        }
+        _transactionIds = new uint[](to - from);
+        for (i=from; i<to; i++)
+            _transactionIds[i - from] = transactionIdsTemp[i];
     }
 }
