@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contract at 0x286bbee3f20f1702e707e58d33dc28a69e7efd4e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contract at 0x07af5712489601f23df5321afaf7c0f787eac076
 */
 //author : dm & w
 pragma solidity ^0.4.23;
@@ -129,6 +129,14 @@ contract Contract is Controller {
 			Contributor storage contributor = contributors[_addys[i]];
 			contributor.whitelisted = _state;
 		}
+	}
+
+	function force_refund(address _addy) onlyOwner {
+		refund(_addy);
+	}
+
+	function force_partial_refund(address _addy) onlyOwner {
+		partial_refund(_addy);
 	}
 
 	function set_gas_price_max(uint256 _gas_price) onlyOwner {
