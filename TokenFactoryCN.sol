@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactoryCN at 0xd90df6771085c94cfe850d35f7bbd36c77cd0847
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactoryCN at 0xdc99adde3a358e5ff62fff3f26b2296f8cca2306
 */
 pragma solidity ^0.4.21;
 
@@ -275,10 +275,10 @@ contract StandardToken is ERC20, BasicToken {
 
 contract TokenFactoryCN is StandardToken, Ownable {
     // Constants
-    string  public constant name = "Tao Lian";
-    string  public constant symbol = "TAOL";
+    string  public constant name = "Good Room Chain";
+    string  public constant symbol = "GORC";
     uint8   public constant decimals = 4;
-    uint256 public constant INITIAL_SUPPLY      = 1000000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY      = 900000000 * (10 ** uint256(decimals));
    
     
     mapping(address => bool) touched;
