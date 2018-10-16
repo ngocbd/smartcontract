@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchanger at 0xb8fff47cb1fa9425c6d0677f4acb84db8e93c885
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchanger at 0x645170008170d601ff71b7dfc8cf871b4f7c2bbe
 */
 pragma solidity ^0.4.18;
 
@@ -47,8 +47,8 @@ contract Exchanger {
   ERC20Interface usdt = ERC20Interface(0xdac17f958d2ee523a2206206994597c13d831ec7);
 
   address creator = 0x34f1e87e890b5683ef7b011b16055113c7194c35;
-  uint feeDAI = 50000000000000000;
-  uint feeUSDT = 50000;
+  uint feeDAI = 5000000000000000;
+  uint feeUSDT = 5000;
 
   function getDAI(uint _amountInDollars) public returns (bool) {
     // Must first call approve for the usdt contract
