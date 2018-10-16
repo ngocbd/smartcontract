@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedController at 0xcf9a1a3a30d859ab8964e6db596a8d2edd449c0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedController at 0xb8e63ef835b54fcd60282271212c75a32adb615c
 */
 pragma solidity ^0.4.18;
 
@@ -265,7 +265,8 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         uint deferBlock;
     }
 
-    struct TransferOwnershipOperation {
+    struct TransferChildOperation {
+        Ownable child;
         address newOwner;
         address admin;
         uint deferBlock;
@@ -278,7 +279,7 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         uint deferBlock;
     }
 
-    struct ChangeInsuranceFeesOperation {
+    struct ChangeStakingFeesOperation {
         uint80 _transferFeeNumerator;
         uint80 _transferFeeDenominator;
         uint80 _mintFeeNumerator;
@@ -291,22 +292,29 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         uint deferBlock;
     }
 
-    struct ChangeInsurerOperation {
-        address newInsurer;
+    struct ChangeStakerOperation {
+        address newStaker;
+        address admin;
+        uint deferBlock;
+    }
+
+    struct DelegateOperation {
+        DelegateERC20 delegate;
         address admin;
         uint deferBlock;
     }
 
     address public admin;
-    TrueUSD public child;
+    TrueUSD public trueUSD;
     AddressList public canBurnWhiteList;
     AddressList public canReceiveMintWhitelist;
     AddressList public blackList;
     MintOperation[] public mintOperations;
-    TransferOwnershipOperation public transferOwnershipOperation;
+    TransferChildOperation[] public transferChildOperations;
     ChangeBurnBoundsOperation public changeBurnBoundsOperation;
-    ChangeInsuranceFeesOperation public changeInsuranceFeesOperation;
-    ChangeInsurerOperation public changeInsurerOperation;
+    ChangeStakingFeesOperation public changeStakingFeesOperation;
+    ChangeStakerOperation public changeStakerOperation;
+    DelegateOperation public delegateOperation;
 
     modifier onlyAdminOrOwner() {
         require(msg.sender == admin || msg.sender == owner);
@@ -322,17 +330,17 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
     }
 
     // starts with no admin
-    function TimeLockedController(address _child, address _canBurnWhiteList, address _canReceiveMintWhitelist, address _blackList) public {
-        child = TrueUSD(_child);
+    function TimeLockedController(address _trueUSD, address _canBurnWhiteList, address _canReceiveMintWhitelist, address _blackList) public {
+        trueUSD = TrueUSD(_trueUSD);
         canBurnWhiteList = AddressList(_canBurnWhiteList);
         canReceiveMintWhitelist = AddressList(_canReceiveMintWhitelist);
         blackList = AddressList(_blackList);
     }
 
     event MintOperationEvent(address indexed _to, uint256 amount, uint deferBlock, uint opIndex);
-    event TransferOwnershipOperationEvent(address newOwner, uint deferBlock);
+    event TransferChildOperationEvent(address indexed _child, address indexed _newOwner, uint deferBlock, uint opIndex);
     event ChangeBurnBoundsOperationEvent(uint newMin, uint newMax, uint deferBlock);
-    event ChangeInsuranceFeesOperationEvent(uint80 _transferFeeNumerator,
+    event ChangeStakingFeesOperationEvent(uint80 _transferFeeNumerator,
                                             uint80 _transferFeeDenominator,
                                             uint80 _mintFeeNumerator,
                                             uint80 _mintFeeDenominator,
@@ -341,7 +349,8 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
                                             uint80 _burnFeeDenominator,
                                             uint256 _burnFeeFlat,
                                             uint deferBlock);
-    event ChangeInsurerOperationEvent(address newInsurer, uint deferBlock);
+    event ChangeStakerOperationEvent(address newStaker, uint deferBlock);
+    event DelegateOperationEvent(DelegateERC20 delegate, uint deferBlock);
     event AdminshipTransferred(address indexed previousAdmin, address indexed newAdmin);
 
     // admin initiates a request to mint _amount TrueUSD for account _to
@@ -352,12 +361,13 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         mintOperations.push(op);
     }
 
-    // admin initiates a request to transfer ownership of the TrueUSD contract and all AddressLists to newOwner.
+    // admin initiates a request to transfer _child to _newOwner
     // Can be used e.g. to upgrade this TimeLockedController contract.
-    function requestTransferChildrenOwnership(address newOwner) public onlyAdminOrOwner {
+    function requestTransferChild(Ownable _child, address _newOwner) public onlyAdminOrOwner {
         uint deferBlock = computeDeferBlock();
-        transferOwnershipOperation = TransferOwnershipOperation(newOwner, admin, deferBlock);
-        TransferOwnershipOperationEvent(newOwner, deferBlock);
+        TransferChildOperation memory op = TransferChildOperation(_child, _newOwner, admin, deferBlock);
+        TransferChildOperationEvent(_child, _newOwner, deferBlock, transferChildOperations.length);
+        transferChildOperations.push(op);
     }
 
     // admin initiates a request that the minimum and maximum amounts that any TrueUSD user can
@@ -368,8 +378,8 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         ChangeBurnBoundsOperationEvent(newMin, newMax, deferBlock);
     }
 
-    // admin initiates a request that the insurance fee be changed
-    function requestChangeInsuranceFees(uint80 _transferFeeNumerator,
+    // admin initiates a request that the staking fee be changed
+    function requestChangeStakingFees(uint80 _transferFeeNumerator,
                                         uint80 _transferFeeDenominator,
                                         uint80 _mintFeeNumerator,
                                         uint80 _mintFeeDenominator,
@@ -378,7 +388,7 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
                                         uint80 _burnFeeDenominator,
                                         uint256 _burnFeeFlat) public onlyAdminOrOwner {
         uint deferBlock = computeDeferBlock();
-        changeInsuranceFeesOperation = ChangeInsuranceFeesOperation(_transferFeeNumerator,
+        changeStakingFeesOperation = ChangeStakingFeesOperation(_transferFeeNumerator,
                                                                     _transferFeeDenominator,
                                                                     _mintFeeNumerator,
                                                                     _mintFeeDenominator,
@@ -388,7 +398,7 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
                                                                     _burnFeeFlat,
                                                                     admin,
                                                                     deferBlock);
-        ChangeInsuranceFeesOperationEvent(_transferFeeNumerator,
+        ChangeStakingFeesOperationEvent(_transferFeeNumerator,
                                           _transferFeeDenominator,
                                           _mintFeeNumerator,
                                           _mintFeeDenominator,
@@ -399,14 +409,21 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
                                           deferBlock);
     }
 
-    // admin initiates a request that the recipient of the insurance fee be changed to newInsurer
-    function requestChangeInsurer(address newInsurer) public onlyAdminOrOwner {
+    // admin initiates a request that the recipient of the staking fee be changed to newStaker
+    function requestChangeStaker(address newStaker) public onlyAdminOrOwner {
         uint deferBlock = computeDeferBlock();
-        changeInsurerOperation = ChangeInsurerOperation(newInsurer, admin, deferBlock);
-        ChangeInsurerOperationEvent(newInsurer, deferBlock);
+        changeStakerOperation = ChangeStakerOperation(newStaker, admin, deferBlock);
+        ChangeStakerOperationEvent(newStaker, deferBlock);
     }
 
-    // after a day, beneficiary of a mint request finalizes it by providing the
+    // admin initiates a request that future ERC20 calls to trueUSD be delegated to _delegate
+    function requestDelegation(DelegateERC20 _delegate) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        delegateOperation = DelegateOperation(_delegate, admin, deferBlock);
+        DelegateOperationEvent(_delegate, deferBlock);
+    }
+
+    // after a day, admin finalizes mint request by providing the
     // index of the request (visible in the MintOperationEvent accompanying the original request)
     function finalizeMint(uint index) public onlyAdminOrOwner {
         MintOperation memory op = mintOperations[index];
@@ -415,19 +432,19 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         address to = op.to;
         uint256 amount = op.amount;
         delete mintOperations[index];
-        child.mint(to, amount);
+        trueUSD.mint(to, amount);
     }
 
-    // after a day, admin finalizes the ownership change
-    function finalizeTransferChildrenOwnership() public onlyAdminOrOwner {
-        require(transferOwnershipOperation.admin == admin);
-        require(transferOwnershipOperation.deferBlock <= block.number);
-        address newOwner = transferOwnershipOperation.newOwner;
-        delete transferOwnershipOperation;
-        child.transferOwnership(newOwner);
-        canBurnWhiteList.transferOwnership(newOwner);
-        canReceiveMintWhitelist.transferOwnership(newOwner);
-        blackList.transferOwnership(newOwner);
+    // after a day, admin finalizes the transfer of a child contract by providing the
+    // index of the request (visible in the TransferChildOperationEvent accompanying the original request)
+    function finalizeTransferChild(uint index) public onlyAdminOrOwner {
+        TransferChildOperation memory op = transferChildOperations[index];
+        require(op.admin == admin);
+        require(op.deferBlock <= block.number);
+        Ownable _child = op.child;
+        address _newOwner = op.newOwner;
+        delete transferChildOperations[index];
+        _child.transferOwnership(_newOwner);
     }
 
     // after a day, admin finalizes the burn bounds change
@@ -437,23 +454,23 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         uint newMin = changeBurnBoundsOperation.newMin;
         uint newMax = changeBurnBoundsOperation.newMax;
         delete changeBurnBoundsOperation;
-        child.changeBurnBounds(newMin, newMax);
+        trueUSD.changeBurnBounds(newMin, newMax);
     }
 
-    // after a day, admin finalizes the insurance fee change
-    function finalizeChangeInsuranceFees() public onlyAdminOrOwner {
-        require(changeInsuranceFeesOperation.admin == admin);
-        require(changeInsuranceFeesOperation.deferBlock <= block.number);
-        uint80 _transferFeeNumerator = changeInsuranceFeesOperation._transferFeeNumerator;
-        uint80 _transferFeeDenominator = changeInsuranceFeesOperation._transferFeeDenominator;
-        uint80 _mintFeeNumerator = changeInsuranceFeesOperation._mintFeeNumerator;
-        uint80 _mintFeeDenominator = changeInsuranceFeesOperation._mintFeeDenominator;
-        uint256 _mintFeeFlat = changeInsuranceFeesOperation._mintFeeFlat;
-        uint80 _burnFeeNumerator = changeInsuranceFeesOperation._burnFeeNumerator;
-        uint80 _burnFeeDenominator = changeInsuranceFeesOperation._burnFeeDenominator;
-        uint256 _burnFeeFlat = changeInsuranceFeesOperation._burnFeeFlat;
-        delete changeInsuranceFeesOperation;
-        child.changeInsuranceFees(_transferFeeNumerator,
+    // after a day, admin finalizes the staking fee change
+    function finalizeChangeStakingFees() public onlyAdminOrOwner {
+        require(changeStakingFeesOperation.admin == admin);
+        require(changeStakingFeesOperation.deferBlock <= block.number);
+        uint80 _transferFeeNumerator = changeStakingFeesOperation._transferFeeNumerator;
+        uint80 _transferFeeDenominator = changeStakingFeesOperation._transferFeeDenominator;
+        uint80 _mintFeeNumerator = changeStakingFeesOperation._mintFeeNumerator;
+        uint80 _mintFeeDenominator = changeStakingFeesOperation._mintFeeDenominator;
+        uint256 _mintFeeFlat = changeStakingFeesOperation._mintFeeFlat;
+        uint80 _burnFeeNumerator = changeStakingFeesOperation._burnFeeNumerator;
+        uint80 _burnFeeDenominator = changeStakingFeesOperation._burnFeeDenominator;
+        uint256 _burnFeeFlat = changeStakingFeesOperation._burnFeeFlat;
+        delete changeStakingFeesOperation;
+        trueUSD.changeStakingFees(_transferFeeNumerator,
                                   _transferFeeDenominator,
                                   _mintFeeNumerator,
                                   _mintFeeDenominator,
@@ -463,13 +480,22 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
                                   _burnFeeFlat);
     }
 
-    // after a day, admin finalizes the insurance fees recipient change
-    function finalizeChangeInsurer() public onlyAdminOrOwner {
-        require(changeInsurerOperation.admin == admin);
-        require(changeInsurerOperation.deferBlock <= block.number);
-        address newInsurer = changeInsurerOperation.newInsurer;
-        delete changeInsurerOperation;
-        child.changeInsurer(newInsurer);
+    // after a day, admin finalizes the staking fees recipient change
+    function finalizeChangeStaker() public onlyAdminOrOwner {
+        require(changeStakerOperation.admin == admin);
+        require(changeStakerOperation.deferBlock <= block.number);
+        address newStaker = changeStakerOperation.newStaker;
+        delete changeStakerOperation;
+        trueUSD.changeStaker(newStaker);
+    }
+
+    // after a day, admin finalizes the delegation
+    function finalizeDelegation() public onlyAdminOrOwner {
+        require(delegateOperation.admin == admin);
+        require(delegateOperation.deferBlock <= block.number);
+        address delegate = delegateOperation.delegate;
+        delete delegateOperation;
+        trueUSD.delegateToNewContract(delegate);
     }
 
     // Owner of this contract (immediately) replaces the current admin with newAdmin
@@ -703,7 +729,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
     uint256 public burnMin = 10000 * 10**uint256(decimals);
     uint256 public burnMax = 20000000 * 10**uint256(decimals);
 
-    uint80 public transferFeeNumerator = 7;
+    uint80 public transferFeeNumerator = 0;
     uint80 public transferFeeDenominator = 10000;
     uint80 public mintFeeNumerator = 0;
     uint80 public mintFeeDenominator = 10000;
@@ -711,7 +737,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
     uint80 public burnFeeNumerator = 0;
     uint80 public burnFeeDenominator = 10000;
     uint256 public burnFeeFlat = 0;
-    address public insurer;
+    address public staker;
 
     // If this contract needs to be upgraded, the new contract will be stored
     // in 'delegate' and any ERC20 calls to this contract will be delegated to that one.
@@ -727,7 +753,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         canReceiveMintWhitelist = AddressList(_canMintWhiteList);
         canBurnWhiteList = AddressList(_canBurnWhiteList);
         blackList = AddressList(_blackList);
-        insurer = msg.sender;
+        staker = msg.sender;
     }
 
     //Burning functions as withdrawing money from the system. The platform will keep track of who burns coins,
@@ -736,7 +762,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         require(canBurnWhiteList.onList(msg.sender));
         require(_value >= burnMin);
         require(_value <= burnMax);
-        uint256 fee = payInsuranceFee(msg.sender, _value, burnFeeNumerator, burnFeeDenominator, burnFeeFlat);
+        uint256 fee = payStakingFee(msg.sender, _value, burnFeeNumerator, burnFeeDenominator, burnFeeFlat);
         uint256 remaining = _value.sub(fee);
         super.burn(remaining);
     }
@@ -749,7 +775,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         balances[_to] = balances[_to].add(_amount);
         Mint(_to, _amount);
         Transfer(address(0), _to, _amount);
-        payInsuranceFee(_to, _amount, mintFeeNumerator, mintFeeDenominator, mintFeeFlat);
+        payStakingFee(_to, _amount, mintFeeNumerator, mintFeeDenominator, mintFeeFlat);
     }
 
     //Change the minimum and maximum amount that can be burned at once. Burning
@@ -770,7 +796,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         require(!blackList.onList(to));
         if (delegate == address(0)) {
             bool result = super.transfer(to, value);
-            payInsuranceFee(to, value, transferFeeNumerator, transferFeeDenominator, 0);
+            payStakingFee(to, value, transferFeeNumerator, transferFeeDenominator, 0);
             return result;
         } else {
             return delegate.delegateTransfer(to, value, msg.sender);
@@ -782,7 +808,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         require(!blackList.onList(to));
         if (delegate == address(0)) {
             bool result = super.transferFrom(from, to, value);
-            payInsuranceFee(to, value, transferFeeNumerator, transferFeeDenominator, 0);
+            payStakingFee(to, value, transferFeeNumerator, transferFeeDenominator, 0);
             return result;
         } else {
             return delegate.delegateTransferFrom(from, to, value, msg.sender);
@@ -845,12 +871,12 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         WipedAccount(account, oldValue);
     }
 
-    function payInsuranceFee(address payer, uint256 value, uint80 numerator, uint80 denominator, uint256 flatRate) private returns (uint256) {
-        uint256 insuranceFee = value.mul(numerator).div(denominator).add(flatRate);
-        if (insuranceFee > 0) {
-            transferFromWithoutAllowance(payer, insurer, insuranceFee);
+    function payStakingFee(address payer, uint256 value, uint80 numerator, uint80 denominator, uint256 flatRate) private returns (uint256) {
+        uint256 stakingFee = value.mul(numerator).div(denominator).add(flatRate);
+        if (stakingFee > 0) {
+            transferFromWithoutAllowance(payer, staker, stakingFee);
         }
-        return insuranceFee;
+        return stakingFee;
     }
 
     // based on 'transfer' in https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/BasicToken.sol
@@ -862,7 +888,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         Transfer(from, _to, _value);
     }
 
-    function changeInsuranceFees(uint80 _transferFeeNumerator,
+    function changeStakingFees(uint80 _transferFeeNumerator,
                                  uint80 _transferFeeDenominator,
                                  uint80 _mintFeeNumerator,
                                  uint80 _mintFeeDenominator,
@@ -883,9 +909,9 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         burnFeeFlat = _burnFeeFlat;
     }
 
-    function changeInsurer(address newInsurer) public onlyOwner {
-        require(newInsurer != address(0));
-        insurer = newInsurer;
+    function changeStaker(address newStaker) public onlyOwner {
+        require(newStaker != address(0));
+        staker = newStaker;
     }
 
     // Can undelegate by passing in newContract = address(0)
