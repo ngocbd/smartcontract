@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x69cf16f4fd36ecfaa1dc40a3cfcced0becf29f03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x382c38146c974db3068337b4ec2c513905f33aed
 */
 pragma solidity ^0.4.4;
 
@@ -106,11 +106,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 1500000000000000;               
-        totalSupply = 1500000000000000;                     
-        name = "LEXEREUM COIN";                                   
+        balances[msg.sender] = 100000000000000;               
+        totalSupply = 100000000000000;                     
+        name = "INSULAR COIN";                                   
         decimals = 8;                            
-        symbol = "LXM";                               
+        symbol = "NSR";                               
     }
 
   
