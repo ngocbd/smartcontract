@@ -1,56 +1,50 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Countdown at 0x0f1cd99bea68f0d994064395d2b45315b185882e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Countdown at 0x3db9f293b2e992f8c339a543561a615559c375dd
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-// See thecryptobutton.com
+// See biteuthusiast.github.io
+
+// Press the button to become the winner (costs 0.0001)
+// Then you can take 10% of the balance whent the countdown reach 0
+
+// Dev fee is 0.0005 per winner
+
+// Enjoy, don't forget to check this account
+// I will refill it
+
 contract Countdown {
+    uint public deadline = now;
+    uint private constant waittime = 12 hours;
     
-    uint public deadline;
-    address owner;
+    address private owner = msg.sender;
     address public winner;
-    uint public reward = 0;
-    uint public tips = 0;
-    uint public buttonClicks = 0;
     
-    function Countdown() public payable {
-        owner = msg.sender;
-        deadline = now + 3 hours;
-        winner = msg.sender;
-        reward += msg.value;
-    }
-    
-    function ClickButton() public payable {
-        // Pay at least 1 dollar to click the button
-        require(msg.value >= 0.001 ether);
+    function () public payable {
         
-        // Refund people who click the button
-        // after it expires
-        if (now > deadline) {
-            revert();
-        }
+    }
     
-        reward += msg.value * 8 / 10;
-        // Take 20% tip for server costs.
-        tips += msg.value * 2 / 10;
+    function click() public payable {
+        require(msg.value >= 0.0001 ether);
+        deadline = now + waittime;
         winner = msg.sender;
-        deadline = now + 30 minutes;
-        buttonClicks += 1;
     }
     
-    // The winner is responsible for withdrawing the funds
-    // after the button expires
-    function Win() public {
-        require(msg.sender == winner);
+    function withdraw() public {
         require(now > deadline);
-        reward = 0;
-        winner.transfer(reward);
+        require(msg.sender == winner);
+        
+        deadline = now + waittime;
+
+        // Winner take 10% of the funds
+        // And the game continues !
+        if(this.balance < 0.0005 ether)
+            msg.sender.transfer(this.balance);
+        else
+            msg.sender.transfer(this.balance /  10);
+
+        // The only fee I will take
+        if(this.balance > 0.0005 ether)
+            owner.transfer(0.0005 ether);
     }
-    
-    function withdrawTips() public {
-        // The owner can only withdraw the tips
-        tips = 0;
-        owner.transfer(tips);
-    }
-    
 }
