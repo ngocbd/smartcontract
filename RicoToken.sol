@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RicoToken at 0x054e39ec36ee6b4a9953a12b52178d4235ddf8d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RicoToken at 0x6f80d952ee3ccd5eb1630e3a26f74f0e178f7e91
 */
 pragma solidity ^0.4.18;
 
@@ -10,6 +10,7 @@ pragma solidity ^0.4.18;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
+    
     function totalSupply() public view returns (uint256);
 
     function balanceOf(address who) public view returns (uint256);
@@ -25,6 +26,7 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
+    
     function allowance(address owner, address spender) public view returns (uint256);
 
     function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -87,6 +89,7 @@ library SafeMath {
  * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
+    
     using SafeMath for uint256;
 
     mapping(address => uint256) balances;
@@ -106,6 +109,7 @@ contract BasicToken is ERC20Basic {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
+        
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
 
@@ -146,6 +150,7 @@ contract StandardToken is ERC20, BasicToken {
      * @param _value uint256 the amount of tokens to be transferred
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        
         require(_to != address(0));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
@@ -391,9 +396,9 @@ contract DividendPayoutToken is BurnableToken, MintableToken {
 
 contract RicoToken is DividendPayoutToken {
 
-    string public constant name = "Rico";
+    string public constant name = "CFE";
 
-    string public constant symbol = "Rico";
+    string public constant symbol = "CFE";
 
     uint8 public constant decimals = 18;
 
