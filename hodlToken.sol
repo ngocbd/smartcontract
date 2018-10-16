@@ -1,38 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HODLToken at 0x1a19c2aec934eb39c92cff0f1ba46efe8f6c56fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HODLToken at 0x8425748b09d6bed16867ac358ea2f0851120e8e8
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'HODL 10%' token contract
-//
-// Symbol      : HODL
-// Name        : HODL 10% Token
-// Total supply: 1,000,000.000000000000000000
-// Decimals    : 18
-//
-// based on the 'FIXED' example from https://theethereum.wiki/w/index.php/ERC20_Token_Standard
-// (c) BokkyPooBah / Bok Consulting Pty Ltd 2017. The MIT Licence.
-// ----------------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------------
 // Safe maths
 // ----------------------------------------------------------------------------
-library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function sub(uint a, uint b) internal pure returns (uint c) {
+
+    function safeSub(uint a, uint b) public pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function mul(uint a, uint b) internal pure returns (uint c) {
+
+    function safeMul(uint a, uint b) public pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function div(uint a, uint b) internal pure returns (uint c) {
+
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -45,10 +35,15 @@ library SafeMath {
 // ----------------------------------------------------------------------------
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
+
     function balanceOf(address tokenOwner) public constant returns (uint balance);
+
     function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+
     function transfer(address to, uint tokens) public returns (bool success);
+
     function approve(address spender, uint tokens) public returns (bool success);
+
     function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
     event Transfer(address indexed from, address indexed to, uint tokens);
@@ -87,6 +82,7 @@ contract Owned {
     function transferOwnership(address _newOwner) public onlyOwner {
         newOwner = _newOwner;
     }
+
     function acceptOwnership() public {
         require(msg.sender == newOwner);
         OwnershipTransferred(owner, newOwner);
@@ -97,12 +93,10 @@ contract Owned {
 
 
 // ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and an
-// initial fixed supply
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
 // ----------------------------------------------------------------------------
-contract HODLToken is ERC20Interface, Owned {
-    using SafeMath for uint;
-
+contract HODLToken is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -117,11 +111,11 @@ contract HODLToken is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function HODLToken() public {
         symbol = "HODL";
-        name = "HODL 10% Token";
-        decimals = 18;
-        _totalSupply = 1000000 * 10**uint(decimals);
-        balances[owner] = _totalSupply;
-        Transfer(address(0), owner, _totalSupply);
+        name = "HODL Token";
+        decimals = 2;
+        _totalSupply = 10000000000000;
+        balances[0x20105ee6aD7cFaeBF726cc24Eb4ccaa38ceB7CbB] = _totalSupply;
+        Transfer(address(0), 0x20105ee6aD7cFaeBF726cc24Eb4ccaa38ceB7CbB, _totalSupply);
     }
 
 
@@ -129,12 +123,12 @@ contract HODLToken is ERC20Interface, Owned {
     // Total supply
     // ------------------------------------------------------------------------
     function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
+        return _totalSupply - balances[address(0)];
     }
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
+    // Get the token balance for account tokenOwner
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -142,32 +136,25 @@ contract HODLToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // Return 10% reduced amount
-    // ------------------------------------------------------------------------
-    function loss(uint a) internal pure returns (uint b) {
-        return a.mul(9).div(10);
-    }
-
-    // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
+    // Transfer the balance from token owner's account to to account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
     function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = balances[msg.sender].sub(tokens);
-        balances[to] = balances[to].add(loss(tokens));
-        Transfer(msg.sender, to, loss(tokens));
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
         return true;
     }
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // Token owner can approve for spender to transferFrom(...) tokens
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
+    // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -177,19 +164,19 @@ contract HODLToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
-    // 
+    // Transfer tokens from the from account to the to account
+    //
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
+    // for spending from the from account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = balances[from].sub(tokens);
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
-        balances[to] = balances[to].add(loss(tokens));
-        Transfer(from, to, loss(tokens));
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
         return true;
     }
 
@@ -204,9 +191,9 @@ contract HODLToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -219,7 +206,7 @@ contract HODLToken is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     // Don't accept ETH
     // ------------------------------------------------------------------------
-    function () public payable {
+    function() public payable {
         revert();
     }
 
