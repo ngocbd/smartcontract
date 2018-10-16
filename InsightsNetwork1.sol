@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsightsNetwork1 at 0x197a2df00e374b7c6760b85ff49d381fee3568b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsightsNetwork1 at 0x0fc8edd50e87229b921e7694f310b0229d31b3e8
 */
 pragma solidity ^0.4.4;
 
 contract InsightsNetwork1 {
-  address public owner;
-  address public successor;
-  mapping (address => uint) public balances;
-  mapping (address => uint) public unlockTimes;
+  address public owner; // Creator
+  address public successor; // May deactivate contract
+  mapping (address => uint) public balances;    // Who has what
+  mapping (address => uint) public unlockTimes; // When balances unlock
   bool public active;
-  uint256 _totalSupply;
+  uint256 _totalSupply; // Sum of minted tokens
 
   string public constant name = "INS";
   string public constant symbol = "INS";
@@ -20,17 +20,17 @@ contract InsightsNetwork1 {
     active = true;
   }
 
-  function register(address newTokenHolder, uint issueAmount) {
+  function register(address newTokenHolder, uint issueAmount) { // Mint tokens and assign to new owner
     require(active);
-    require(msg.sender == owner);
-    require(balances[newTokenHolder] == 0); // Accounts can only be registered once.
+    require(msg.sender == owner);   // Only creator can register
+    require(balances[newTokenHolder] == 0); // Accounts can only be registered once
 
     _totalSupply += issueAmount;
-    Mint(newTokenHolder, issueAmount);
+    Mint(newTokenHolder, issueAmount);  // Trigger event
 
-    require(balances[newTokenHolder] < (balances[newTokenHolder] + issueAmount));
+    require(balances[newTokenHolder] < (balances[newTokenHolder] + issueAmount));   // Overflow check
     balances[newTokenHolder] += issueAmount;
-    Transfer(address(0), newTokenHolder, issueAmount);
+    Transfer(address(0), newTokenHolder, issueAmount);  // Trigger event
 
     uint currentTime = block.timestamp; // seconds since the Unix epoch
     uint unlockTime = currentTime + 365*24*60*60; // one year out from the current time
@@ -38,27 +38,27 @@ contract InsightsNetwork1 {
     unlockTimes[newTokenHolder] = unlockTime;
   }
 
-  function totalSupply() constant returns (uint256) {
+  function totalSupply() constant returns (uint256) {   // ERC20 compliance
     return _totalSupply;
   }
 
-  function transfer(address _to, uint256 _value) returns (bool success) {
+  function transfer(address _to, uint256 _value) returns (bool success) {   // ERC20 compliance
     return false;
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {    // ERC20 compliance
     return false;
   }
 
-  function approve(address _spender, uint256 _value) returns (bool success) {
+  function approve(address _spender, uint256 _value) returns (bool success) {   // ERC20 compliance
     return false;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return 0;
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {   // ERC20 compliance
+    return 0;   // No transfer allowance
   }
 
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) constant returns (uint256 balance) {   // ERC20 compliance
     return balances[_owner];
   }
 
@@ -79,7 +79,7 @@ contract InsightsNetwork1 {
 
   function deactivate() {
     require(active);
-    require(msg.sender == owner || (successor != address(0) && msg.sender == successor));
+    require(msg.sender == owner || (successor != address(0) && msg.sender == successor));   // Called by creator or successor
     active = false;
   }
 }
