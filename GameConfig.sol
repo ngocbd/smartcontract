@@ -1,11 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameConfig at 0xac0b506c613f6edcd447e8c412c7df3ecb3d5524
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameConfig at 0xbd80161e3c4d7d18ec8f86002da2529f1e4b034b
 */
 pragma solidity ^0.4.18;
+/* ==================================================================== */
+/* Copyright (c) 2018 The MagicAcademy Project.  All rights reserved.
+/* 
+/* https://www.magicacademy.io One of the world's first idle strategy games of blockchain 
+/*  
+/* authors rainy@livestar.com/fanny.zheng@livestar.com
+/*                 
+/* ==================================================================== */
 
-/// @notice define the game's configuration
-/// @author rainysiu rainy@livestar.com
-/// @dev MagicAcademy Games 
 contract GameConfig {
   using SafeMath for SafeMath;
   address public owner;
@@ -23,6 +28,7 @@ contract GameConfig {
     uint256 baseCoinProduction;
     bool unitSellable; // Rare units (from raffle) not sellable
   }
+
 
   struct BattleCard {
     uint256 cardId;
@@ -56,10 +62,12 @@ contract GameConfig {
 
   uint256 public Max_CAP = 99;
   uint256 PLATPrice = 65000;
-    
+  string versionNo;
+ 
   // Constructor 
   function GameConfig() public {
     owner = msg.sender;
+    versionNo = "20180523";
   }
   modifier onlyOwner() {
     require(msg.sender == owner);
@@ -88,7 +96,12 @@ contract GameConfig {
   function getPLATPrice() external view returns (uint256) {
     return PLATPrice;
   }
-
+  function getVersion() external view returns(string) {
+    return versionNo;
+  }
+  function setVersion(string _versionNo) external onlyOwner {
+    versionNo = _versionNo;
+  }
   function CreateBattleCards(uint256 _cardId, uint256 _baseCoinCost, uint256 _coinCostIncreaseHalf, uint256 _ethCost, uint _attackValue, uint256 _defenseValue, uint256 _coinStealingCapacity, bool _unitSellable) external onlyAccess {
     BattleCard memory _battlecard = BattleCard({
       cardId: _cardId,
@@ -177,10 +190,16 @@ contract GameConfig {
     if (amount == 1) { 
       if (existing == 0) {  
         return upgradeInfo[cardId].coinCost; 
-      } else {
-        return upgradeInfo[cardId].coinCost + (existing * upgradeInfo[cardId].increase * 2);
-      }
-    } 
+      } else if (existing == 1 || existing == 4){
+        return 0;
+      }else if (existing == 2) {
+        return upgradeInfo[cardId].coinCost * 50; 
+    }else if (existing == 3) {
+      return upgradeInfo[cardId].coinCost * 50 * 40; 
+    }else if (existing == 5) {
+      return upgradeInfo[cardId].coinCost * 50 * 40 * 30; 
+    }
+  }
   }
 
   function getWeakenedDefensePower(uint256 defendingPower) external pure returns (uint256) {
@@ -282,7 +301,7 @@ contract GameConfig {
     unitSellable = battlecardInfo[cardId].unitSellable;
   }
 
-  //upgrade cards
+    //upgrade cards
   function getUpgradeCardsInfo(uint256 upgradecardId, uint256 existing) external constant returns (
     uint256 coinCost, 
     uint256 ethCost, 
@@ -290,15 +309,59 @@ contract GameConfig {
     uint256 cardId, 
     uint256 upgradeValue,
     uint256 platCost
-    ) {  
-    coinCost = getCostForUprade(upgradecardId, existing, 1);
-    ethCost = upgradeInfo[upgradecardId].ethCost * (100 + 10 * existing)/100;
+    ) {
+    coinCost = upgradeInfo[upgradecardId].coinCost;
+    ethCost = upgradeInfo[upgradecardId].ethCost;
     upgradeClass = upgradeInfo[upgradecardId].upgradeClass;
     cardId = upgradeInfo[upgradecardId].cardId;
-    upgradeValue = upgradeInfo[upgradecardId].upgradeValue + existing;
+    uint8 uflag;
+    if (coinCost >0 ) {
+      if (upgradeClass ==0 || upgradeClass ==1 || upgradeClass == 3) {
+        uflag = 1;
+      } else if (upgradeClass==2 || upgradeClass == 4 || upgradeClass==5 || upgradeClass==7) {
+        uflag = 2;
+      } 
+    }
+  
+    if (coinCost>0 && existing>=1) {
+      coinCost = getCostForUprade(upgradecardId, existing, 1);
+    }                                                        
+    if (ethCost>0) {
+      if (upgradecardId == 2) {
+        if (existing>=1) { 
+          ethCost = SafeMath.mul(ethCost,2);
+        } 
+      }
+    }else {
+      if ((existing ==1 || existing ==4)) {
+        if (ethCost<=0) {                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+          ethCost = 0.1 ether;
+          coinCost = 0;
+      }
+    }
+    }
+    upgradeValue = upgradeInfo[upgradecardId].upgradeValue;
+    if (ethCost>0) {
+      if (uflag==1) {
+        upgradeValue = upgradeInfo[upgradecardId].upgradeValue * 2;
+      } else if (uflag==2) {
+        upgradeValue = upgradeInfo[upgradecardId].upgradeValue * 4;
+      } else {
+        if (upgradeClass == 6){
+          if (upgradecardId == 27){
+            upgradeValue = upgradeInfo[upgradecardId].upgradeValue * 5;
+          } else if (upgradecardId == 40) {
+            upgradeValue = upgradeInfo[upgradecardId].upgradeValue * 3;
+          }
+        }
+        
+      }
+    }
+
     platCost = SafeMath.mul(ethCost,PLATPrice);
   }
 }
+
 
 library SafeMath {
 
