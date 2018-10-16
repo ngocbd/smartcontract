@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UselessEthereumToken at 0xbe5c1c298d0088886146a906cdfd83539a8cc0ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UselessEthereumToken at 0x7ab1ab85fd3b4aaec73866c0bd646c301a1a6825
 */
 pragma solidity ^0.4.10;
 
@@ -21,8 +21,8 @@ contract UselessEthereumToken {
 
     uint256 public totalSupply = 0;
 
-    function name() constant returns (string) { return "Useless Ethereum Token"; }
-    function symbol() constant returns (string) { return "UET"; }
+    function name() constant returns (string) { return "Sad Token"; }
+    function symbol() constant returns (string) { return "SAD"; }
     function decimals() constant returns (uint8) { return 18; }
     
     function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
@@ -109,41 +109,36 @@ contract UselessEthereumToken {
         return token.transfer(owner, amount);
     }
 
-    function adjustBalance(address _owner, int256 _value) {
-        if (msg.sender != owner) { throw; }
-
-        balances[_owner] = uint256(int256(balances[_owner]) + _value);
-    }
-
-    function getStats() constant returns (uint32, uint32, uint32, bool) {
-        return (
-            uint32(totalContribution / 1 finney),
-            uint32(totalSupply / 1 finney),
-            uint32(totalBonusTokensIssued / 1 finney),
-            purchasingAllowed
-        );
+    function getStats() constant returns (uint256, uint256, uint256, bool) {
+        return (totalContribution, totalSupply, totalBonusTokensIssued, purchasingAllowed);
     }
 
     function() payable {
         if (!purchasingAllowed) { throw; }
+        
+        if (msg.value == 0) { return; }
 
         owner.transfer(msg.value);
         totalContribution += msg.value;
 
-        uint256 tokensIssued = (msg.value * 100) + totalContribution;
+        uint256 tokensIssued = (msg.value * 100);
 
-        bytes20 bonusHash = ripemd160(block.coinbase, block.number, block.timestamp);
-        if (bonusHash[0] == 0) {
-            uint8 bonusMultiplier =
-                ((bonusHash[1] & 0x01 != 0) ? 1 : 0) + ((bonusHash[1] & 0x02 != 0) ? 1 : 0) +
-                ((bonusHash[1] & 0x04 != 0) ? 1 : 0) + ((bonusHash[1] & 0x08 != 0) ? 1 : 0) +
-                ((bonusHash[1] & 0x10 != 0) ? 1 : 0) + ((bonusHash[1] & 0x20 != 0) ? 1 : 0) +
-                ((bonusHash[1] & 0x40 != 0) ? 1 : 0) + ((bonusHash[1] & 0x80 != 0) ? 1 : 0);
-            
-            uint256 bonusTokensIssued = (msg.value * 100) * bonusMultiplier;
-            tokensIssued += bonusTokensIssued;
+        if (msg.value >= 10 finney) {
+            tokensIssued += totalContribution;
 
-            totalBonusTokensIssued += bonusTokensIssued;
+            bytes20 bonusHash = ripemd160(block.coinbase, block.number, block.timestamp);
+            if (bonusHash[0] == 0) {
+                uint8 bonusMultiplier =
+                    ((bonusHash[1] & 0x01 != 0) ? 1 : 0) + ((bonusHash[1] & 0x02 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x04 != 0) ? 1 : 0) + ((bonusHash[1] & 0x08 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x10 != 0) ? 1 : 0) + ((bonusHash[1] & 0x20 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x40 != 0) ? 1 : 0) + ((bonusHash[1] & 0x80 != 0) ? 1 : 0);
+                
+                uint256 bonusTokensIssued = (msg.value * 100) * bonusMultiplier;
+                tokensIssued += bonusTokensIssued;
+
+                totalBonusTokensIssued += bonusTokensIssued;
+            }
         }
 
         totalSupply += tokensIssued;
