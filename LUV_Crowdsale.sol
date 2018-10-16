@@ -1,76 +1,162 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUV_Crowdsale at 0x60ee2042153d3f0f63a28d41c3d05cd0b255fa05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUV_Crowdsale at 0x58849d4a250bBB9d47d6cD93c7ab39Ab1e06AEDA
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.15;
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract Token {
+
+    /// @return total amount of tokens
+    //function totalSupply() constant returns (uint256 supply);
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance);
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+
+contract StandardToken is Token {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
 }
+
+
+//name this contract whatever you'd like
+contract LUVTOKEN is StandardToken {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        revert();
+    }
+
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customize the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+
+    function LUVTOKEN(
+        ) {
+        decimals = 0; 
+        totalSupply = 200000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = totalSupply;               // Give the creator all initial tokens (100000 for example)
+        name = "LUVTOKEN";                                   // Set the name for display purposes
+        symbol = "LUV";                               // Set the symbol for display purposes
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
+        return true;
+    }
+}
+
 
 /**
  * @title Ownable
@@ -88,9 +174,10 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  function Ownable() {
     owner = msg.sender;
   }
+
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -100,94 +187,88 @@ contract Ownable {
     _;
   }
 
+
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
 
 /**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
+ * @title Token 
+ * @dev API interface for interacting with the LUVTOKEN contract
+ * /
+ interface Token {
+ function transfer (address _to, uint256 _value) returns (bool);
+ function balanceOf (address_owner) constant returns (uint256 balance);
 }
 
-contract LUV_Crowdsale is Pausable {
+/**
+ * @title LUV_Crowdsale
+ * @dev HDK_Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
+ */
+contract LUV_Crowdsale is Ownable {
   using SafeMath for uint256;
 
   // The token being sold
-  ERC20 public token;
+  LUVTOKEN public token;
 
-  // Address where funds are collected
-  address public wallet;
+  // start and end timestamps where investments are allowed (both inclusive)
 
-  // How many token units a buyer gets per wei
-  uint256 public rate;
 
-  // Amount of wei raised
-  uint256 public weiRaised;
-  
+  uint256 public startTime = 1523750400;
+  uint256 public phase_1_Time = 1526342400 ;
+  uint256 public phase_2_Time = 1529020800;
+  uint256 public endTime = 1531612800;
+
   // Max amount of wei accepted in the crowdsale
   uint256 public cap;
   
   // Min amount of wei an investor can send
   uint256 public minInvest;
   
-  // Crowdsale opening time
-  uint256 public openingTime;
   
-  // Crowdsale closing time
-  uint256 public closingTime;
+  // address where funds are collected
+  address public wallet;
 
-  // Crowdsale duration in days
-  uint256 public duration;
+  // how many token units a buyer gets. 1 ETH = 10000 LUV
+  uint256 public phase_1_rate = 13000;
+  uint256 public phase_2_rate = 12000;
+  uint256 public phase_3_rate = 11000;
+  
+  
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  mapping (address => uint256) rates;
+
+  function getRate() constant returns (uint256){
+    uint256 current_time = now;
+
+    if(current_time > startTime && current_time < phase_1_Time){
+      return phase_1_rate;
+    }
+    else if(current_time > phase_1_Time && current_time < phase_2_Time){
+      return phase_2_rate;
+    }
+      else if(current_time > phase_2_Time && current_time < endTime){
+      return phase_3_rate;
+    }
+      
+  }
 
   /**
-   * Event for token purchase logging
+   * event for token purchase logging
    * @param purchaser who paid for the tokens
    * @param beneficiary who got the tokens
    * @param value weis paid for purchase
@@ -195,129 +276,75 @@ contract LUV_Crowdsale is Pausable {
    */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-  function LUV_Crowdsale() public {
-    rate = 10000;
-    wallet = 0x3Ec466054Dc1e8a999689b5E7D1A6fE3D47a50A6;
-    token = ERC20(0x532105F63dF8b2264C020fBee0a29aDfffABA2af);
-    cap = 14300 * 1 ether;
-    minInvest = 0.01 * 1 ether;
-    duration = 91 days;
-    openingTime = 1522562400;  // Determined also by start()
-    closingTime = openingTime + duration;  // Determined also by start()
-  }
-  
-  /**
-   * @dev called by the owner to start the crowdsale
-   */
-  function start() public onlyOwner {
-    openingTime = now;       
-    closingTime =  now + duration;
+
+  function LUV_Crowdsale() {
+    wallet = msg.sender;
+    token = createTokenContract();
+    minInvest = 0.1 * 1 ether;
+    cap = 100000 * 1 ether;
   }
 
-  // -----------------------------------------
-  // Crowdsale external interface
-  // -----------------------------------------
+  // creates the token to be sold.
+  // override this method to have crowdsale of a specific mintable token.
+  function createTokenContract() internal returns (LUVTOKEN) {
+    return new LUVTOKEN();
+  }
 
-  /**
-   * @dev fallback function ***DO NOT OVERRIDE***
-   */
-  function () external payable {
+
+  // fallback function can be used to buy tokens
+  function () payable {
     buyTokens(msg.sender);
   }
 
-  /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
-   * @param _beneficiary Address performing the token purchase
-   */
-  function buyTokens(address _beneficiary) public payable {
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
 
     uint256 weiAmount = msg.value;
-    _preValidatePurchase(_beneficiary, weiAmount);
 
     // calculate token amount to be created
-    uint256 tokens = _getTokenAmount(weiAmount);
+    uint256 tokens = weiAmount.mul(getRate());
 
     // update state
     weiRaised = weiRaised.add(weiAmount);
 
-    _processPurchase(_beneficiary, tokens);
-    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    token.transfer(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
-    _forwardFunds();
+    forwardFunds();
   }
 
-  // -----------------------------------------
-  // Internal interface (extensible)
-  // -----------------------------------------
-
-  /**
-   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal whenNotPaused {
-    require(_beneficiary != address(0));
-    require(_weiAmount >= minInvest);
-    require(weiRaised.add(_weiAmount) <= cap);
-    require(now >= openingTime && now <= closingTime);
-  }
-
-  /**
-   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
-   * @param _beneficiary Address performing the token purchase
-   * @param _tokenAmount Number of tokens to be emitted
-   */
-  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    token.transfer(_beneficiary, _tokenAmount);
-  }
-
-  /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-   * @param _beneficiary Address receiving the tokens
-   * @param _tokenAmount Number of tokens to be purchased
-   */
-  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
-    _deliverTokens(_beneficiary, _tokenAmount);
-  }
-
-  /**
-   * @dev Override to extend the way in which ether is converted to tokens.
-   * @param _weiAmount Value in wei to be converted into tokens
-   * @return Number of tokens that can be purchased with the specified _weiAmount
-   */
-  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-    return _weiAmount.mul(rate);
-  }
-
-  /**
-   * @dev Determines how ETH is stored/forwarded on purchases.
-   */
-  function _forwardFunds() internal {
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
     wallet.transfer(msg.value);
   }
-  
-  /**
-   * @dev Checks whether the cap has been reached. 
-   * @return Whether the cap was reached
-   */
-  function capReached() public view returns (bool) {
-    return weiRaised >= cap;
-  }
-  
-  /**
-   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
-   * @return Whether crowdsale period has elapsed
-   */
-  function hasClosed() public view returns (bool) {
-    return now > closingTime;
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
   }
 
-  /**
-   * @dev called by the owner to withdraw unsold tokens
-   */
-  function withdrawTokens() public onlyOwner {
-    uint256 unsold = token.balanceOf(this);
-    token.transfer(owner, unsold);
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    return now > endTime;
   }
-    
+  
+/**
+ * @notice Terminate contract and refund to owner
+ */
+ function destroy() onlyOwner {
+     // Transfer tokens back to owner
+     uint256 balance = token.balanceOf(this);
+     assert (balance > 0);
+     token.transfer(owner,balance);
+     
+     // There should be no ether in the contract but just in case
+     selfdestruct(owner);
+     
+ }
+
 }
