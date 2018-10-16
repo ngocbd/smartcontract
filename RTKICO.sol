@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTKICO at 0x9f99793f908c58a99f44025c45dd72f2f92fc469
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTKICO at 0xfea795702ac6c7e117d9148aff4dcc12f19e7d42
 */
 //
 // compiler: solcjs -o ./build/contracts --optimize --abi --bin <this file>
@@ -31,6 +31,8 @@ contract RTKICO is owned {
   uint    public start;     // seconds since Jan 1 1970 GMT
   uint    public duration;  // seconds
   uint    public tokpereth; // price NOTE: attention to decimals on setup
+
+  string VERSION = "1.1";
 
   function RTKICO( address _erc20,
                    address _treasury,
