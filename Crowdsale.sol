@@ -1,40 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x28a25d9d37a97ffe59d048a364849d1d749fbd98
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x59ef652ed72bc6b7a8b26da7fe39a853a5c8239a
 */
 pragma solidity ^0.4.18;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
 
 /**
  * @title ERC20Basic
@@ -46,6 +13,16 @@ contract ERC20Basic {
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
+}
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -82,17 +59,6 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -197,7 +163,6 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract Ownable {
   address public owner;
-  address public admin;
 
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -216,8 +181,7 @@ contract Ownable {
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner || msg.sender == admin);
-    // require(msg.sender == owner);
+    require(msg.sender == owner);
     _;
   }
 
@@ -231,26 +195,21 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-  
-  function transferAdmin(address newAdmin) public onlyOwner {
-    require(newAdmin != address(0));
-    OwnershipTransferred(admin, newAdmin);
-    admin = newAdmin;
-  }
 
 }
-
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
+
 contract MintableToken is StandardToken, Ownable {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
 
   bool public mintingFinished = false;
+
 
   modifier canMint() {
     require(!mintingFinished);
@@ -264,6 +223,8 @@ contract MintableToken is StandardToken, Ownable {
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    _amount = _amount * 1 ether;
+    totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
     Transfer(address(0), _to, _amount);
@@ -281,164 +242,243 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+
+
 /**
- * @title SampleCrowdsaleToken
- * @dev Very simple ERC20 Token that can be minted.
- * It is meant to be used in a crowdsale contract.
+ * @title Token Wrapper with constructor
+ * @dev Customized mintable ERC20 Token
+ * @dev Token to support 2 owners only.
  */
-contract CarToken is MintableToken {
-  string public constant name = "car";
-  string public constant symbol = "CAR";
+contract ILMTToken is Ownable, MintableToken {
+  //Event for Presale transfers
+  //event TokenPreSaleTransfer(address indexed purchaser, address indexed beneficiary, uint256 amount);
+
+  // Token details
+  string public constant name = "The Illuminati";
+  string public constant symbol = "ILMT";
+
+  // 18 decimal places, the same as ETH.
   uint8 public constant decimals = 18;
-  uint256 public constant totalSupply = 1000000000 * (10 ** uint256(decimals));
-  
-  function CarToken(address _admin) {
-      admin = _admin;
+
+  /**
+    @dev Constructor. Sets the initial supplies and transfer advisor/founders/presale tokens to the given account
+    @param _owner1 The address of the first owner
+    @param _owner1Percentage The preallocate percentage of tokens belong to the first owner
+    @param _owner2 The address of the second owner
+    @param _owner2Percentage The preallocate percentage of tokens belong to the second owner
+    @param _cap the maximum totalsupply in number of tokens //before multiply to 10**18
+   */
+  function ILMTToken (address _owner1, uint8 _owner1Percentage, address _owner2, uint8 _owner2Percentage, uint256 _cap) public {
+      //Total of 100M tokens
+      require(_owner1Percentage+_owner2Percentage<50);//sanity check
+      require(_cap >0);
+      totalSupply = 0; //initialize total supply
+      // 15% for owner1, 15% for owner 2
+      mint(_owner1, _cap *_owner1Percentage / 100);
+      mint(_owner2, _cap *_owner2Percentage / 100);
+
+  }
+
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
 /**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
+ * @title Public Token Generation Event for ILMT
+ * credit: part of this contract was created from OpenZeppelin Code
+ * @dev It allows multiple Capped CrowdSales. i.e. every crowdsale with capped token limit.
+ * Simplified the deployment function for owner, just click & start, no configuration parameters
  */
-contract Crowdsale is Ownable{
-  using SafeMath for uint256;
+contract Crowdsale is Ownable
+{
+    using SafeMath for uint256;
 
-  // The token being sold
-  MintableToken public token;
-  
-  // define supply
-  uint256 internal SELF_SUPPLY = 600000000 * (10 ** uint256(18));
-  uint256 public EARLY_BIRD_SUPPLY = 100000000 * (10 ** uint256(18));
-  uint256 public PUBLIC_OFFER_SUPPLY = 300000000 * (10 ** uint256(18));
+    // The token being sold
+    ILMTToken public token;
+    // the account to which all incoming ether will be transferred
+    // Flag to track the crowdsale status (Active/InActive)
+    bool public crowdSaleOn = false;
 
-  // address where funds are collected
-  address public wallet;
-  
-  //
-  bool public isEarlybird;
-  bool public isEndOffer;
-  
-  // how many token units a buyer gets per wei
-  uint256 internal rate;
-  uint256 internal earlyBirdRate = 11000;
-  uint256 internal publicOfferRate = 10000;
+    // Current crowdsale sate variables
+    uint256 constant totalCap = 33*10**6;  // Max avaialble number of tokens in total including presale (unit token)
+    uint256 constant crowdSaleCap = 18*10**6*(1 ether);  // Max avaialble number of tokens for crowdsale 18 M (unit wei)
+    uint256 constant bonusPeriod = 11 days; //change to 11 days when deploying
+    uint256 constant tokensPerEther = 3300;
+    uint256 public startTime; // Crowdsale start time
+    uint256 public endTime;  // Crowdsale end time
+    uint256 public weiRaised = 0;  // Total amount ether/wei collected
+    uint256 public tokensMinted = 0; // Total number of tokens minted/sold so far in this crowdsale
+    uint256 public currentRate = 3300;
+    //first_owner receives 90% of ico fund in eth, second_owner receives 10%.
+    //first_owner keeps 25% of token, second_owner keeps 20% token, 55% token for public sale
+    //For transparency this must be hardcoded and uploaded to etherscan.io
+    address constant firstOwner = 0x4F70a11fA322F4614C98AD4D6fEAcAdA55Ce32C2;
+    address constant secondOwner = 0xDf47E759b98a0d95063F44c09a74E2ea33E9f18F;
+    uint8 constant firstOwnerETHPercentage= 90;
+    uint8 constant secondOwnerETHPercentage= 10;
+    uint8 constant firstOwnerTokenPercentage= 25;
+    uint8 constant secondOwnerTokenPercentage= 20;
+    uint256 constant minPurchase = (1*1 ether)/10; //0.1 eth minimum
 
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-  event EarlyBird(bool indexed statue);
-  event EndOffer(bool indexed statue);
+    // Event to be registered when a successful token purchase happens
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-  function Crowdsale(address _wallet) public {
-    require(_wallet != address(0));
-    token = createTokenContract(msg.sender);
-    wallet = _wallet;
-    owner = msg.sender;
-    dealEarlyBird(true);
-  }
-  
-  // mint self supply
-  function mintSelf() onlyOwner public {
-      token.mint(wallet, SELF_SUPPLY);
-      TokenPurchase(wallet, wallet, 0, SELF_SUPPLY);
-  }
-  
-  // set rate
-  function dealEarlyBird(bool statue) internal {
-    if (statue) {
-        isEarlybird = true;
-        rate = earlyBirdRate;
-        EarlyBird(true);
-    } else {
-        isEarlybird = false;
-        rate = publicOfferRate;
-        EarlyBird(false);
+    /** Modifiers to verify the status of the crowdsale*/
+    modifier activeCrowdSale() {
+        require(crowdSaleOn);
+        _;
     }
-  }
-  
-  // deal offing statue
-  function dealEndOffer(bool statue) onlyOwner public {
-    if (statue) {
-        isEndOffer = true;
-        EndOffer(true);
-    } else {
-        isEndOffer = false;
-        EndOffer(false);
+    modifier inactiveCrowdSale() {
+        require(!crowdSaleOn);
+        _;
     }
-  }
-  
-  // creates the token to be sold.
-  // override this method to have crowdsale of a specific mintable token.
-  function createTokenContract(address _admin) internal returns (CarToken) {
-    return new CarToken(_admin);
-  }
 
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens();
-  }
-
-  // low level token purchase function
-  function buyTokens() public payable {
-    require(msg.sender != address(0));
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-    uint256 tokens = weiAmount.mul(rate);
-    uint256 allTokens = calToken(tokens);
-    
-    token.mint(msg.sender, allTokens);
-    TokenPurchase(msg.sender, msg.sender, weiAmount, allTokens);
-    
-    forwardFunds();
-  }
-  
-  // calculate token amount to be created
-  function calToken(uint256 tokens) internal returns (uint256) {
-    if (isEarlybird && EARLY_BIRD_SUPPLY > 0 && EARLY_BIRD_SUPPLY < tokens) {
-      uint256 totalToken = totalToken.add(EARLY_BIRD_SUPPLY);
-      uint256 remainingToken = (tokens - EARLY_BIRD_SUPPLY).mul(10).div(11);
-      EARLY_BIRD_SUPPLY = 0;
-      PUBLIC_OFFER_SUPPLY = PUBLIC_OFFER_SUPPLY.sub(remainingToken);
-      dealEarlyBird(false);
-      totalToken = totalToken.add(remainingToken);
-      return totalToken;
+    /**
+        @dev constructor. Intializes the token to be traded using this contract
+     */
+    function Crowdsale() public {
+        token = new ILMTToken(firstOwner,firstOwnerTokenPercentage,secondOwner,secondOwnerTokenPercentage, totalCap);
     }
-    
-    if (isEarlybird && EARLY_BIRD_SUPPLY >= tokens) {
-      EARLY_BIRD_SUPPLY = EARLY_BIRD_SUPPLY.sub(tokens);
-      if (EARLY_BIRD_SUPPLY == 0) {
-        dealEarlyBird(false);
-      }
-      return tokens;
-    }
-    
-    if (!isEarlybird) {
-      PUBLIC_OFFER_SUPPLY = PUBLIC_OFFER_SUPPLY.sub(tokens);
-      return tokens;
-    }
-  }
 
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
+    /**
+      @dev function to start the crowdsale. it will be called once for each crowdsale session
+      @return A boolean that indicates if the operation is successful
+     */
+    function startCrowdsale() inactiveCrowdSale onlyOwner public returns (bool) {
+        startTime =  uint256(now);
+        //endTime = now + 33 days;
+        endTime = now + 3*bonusPeriod;
+        crowdSaleOn = true;
+        weiRaised = 0;
+        tokensMinted = 0;
+        return true;
+    }
 
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) {
-    bool nonZeroPurchase = msg.value != 0;
-    return nonZeroPurchase && !isEndOffer;
-  }
-  
+    /**
+      @dev function to stop crowdsale session.it will be called once for every crowdsale session and it can be called only its owner
+      @return A boolean that indicates if the operation is successful
+     */
+    function endCrowdsale() activeCrowdSale onlyOwner public returns (bool) {
+        require(now >= endTime);
+        crowdSaleOn = false;
+        token.finishMinting();
+        return true;
+    }
+
+    /**
+      @dev function to calculate and return the discounted token rate based on the current timeslot
+      @return _discountedRate for the current timeslot
+      return rate of Y wei per 1 Token)
+      base rate without bonus : 1 ether = 3 300 tokens
+      rate changes after 11 days
+      the first 11 days: 30% bonus, next 11 days: 15% bonus , last 11 day : 0%
+      hardcoded
+     */
+    function findCurrentRate() constant private returns (uint256 _discountedRate) {
+
+        uint256 elapsedTime = now.sub(startTime);
+        uint256 baseRate = (1*1 ether)/tokensPerEther;
+
+        if (elapsedTime <= bonusPeriod){ // x<= 11days
+            _discountedRate = baseRate.mul(100).div(130);
+        }else{
+            if (elapsedTime < 2*bonusPeriod){ //11days < x <= 22 days
+              _discountedRate = baseRate.mul(100).div(115);
+              }else{
+              _discountedRate = baseRate;
+            }
+        }
+
+    }
+
+    /**
+      @dev  fallback function can be used to buy tokens
+      */
+    function () payable public {
+        buyTokens(msg.sender);
+    }
+
+    /**
+      @dev  low level token purchase function
+      */
+    function buyTokens(address beneficiary) activeCrowdSale public payable {
+        require(beneficiary != 0x0);
+        require(now >= startTime);
+        require(now <= endTime);
+        require(msg.value >= minPurchase); //enforce minimum value of a tx
+
+        // amount ether sent to the contract.. normalized to wei
+        uint256 weiAmount = msg.value;
+        weiRaised = weiRaised.add(weiAmount);
+
+
+        // Find out Token value in wei ( Y wei per 1 Token)
+        uint256 rate = findCurrentRate();
+        //uint256 rate = uint256(1 * 1 ether).div(currentRate);
+        require(rate > 0);
+        //update public variable for viewing only, as requested
+        currentRate = (1*1 ether)/rate;
+        // Find out the number of tokens for given wei and normalize to ether so that tokens can be minted
+        // by token contract
+        uint256 numTokens = weiAmount.div(rate);
+        require(numTokens > 0);
+        require(tokensMinted.add(numTokens.mul(1 ether)) <= crowdSaleCap);
+        tokensMinted = tokensMinted.add(numTokens.mul(1 ether));
+
+        // Mint the tokens and trasfer to the buyer
+        token.mint(beneficiary, numTokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, numTokens);
+        // Transfer the ether to owners according to their share and close the purchase
+        firstOwner.transfer(weiAmount*firstOwnerETHPercentage/100);
+        secondOwner.transfer(weiAmount*secondOwnerETHPercentage/100);
+
+    }
+
+    // ETH balance is always expected to be 0 after the crowsale.
+    // but in case something went wrong, we use this function to extract the eth.
+    // Security idea from kyber.network crowdsale
+    // This should never be used
+    function emergencyDrain(ERC20 anyToken) inactiveCrowdSale onlyOwner public returns(bool){
+        if( this.balance > 0 ) {
+            owner.transfer( this.balance );
+        }
+
+        if( anyToken != address(0x0) ) {
+            assert( anyToken.transfer(owner, anyToken.balanceOf(this)) );
+        }
+
+        return true;
+    }
+
 }
