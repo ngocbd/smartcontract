@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xa8cf661b6a53cab4125bbdd238078d50c9db92a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xd403cc1e2da3aa7d954e0ad34bef2df2b9a9f238
 */
 pragma solidity ^0.4.18;
 
@@ -17,30 +17,9 @@ library SafeMath {
     require(c / a == b);
     return c;
   }
-
-  //function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    //// require(b > 0); // Solidity automatically throws when dividing by 0
-    //uint256 c = a / b;
-    //// require(a == b * c + a % b); // There is no case in which this doesn't hold
-    //return c;
-  //}
-
-  //function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    //require(b <= a);
-    //return a - b;
-  //}
-
-  //function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    //uint256 c = a + b;
-    //require(c >= a);
-    //return c;
-  //}
 }
 
-// A contract that distributes ERC20 tokens with predetermined terms.
-// WARNING: This contract does not protect against malicious token contracts,
-//          under the assumption that if the token sellers are malicious,
-//          the tokens will be worthless anyway.
+
 contract Distribution {
   using SafeMath for uint256;
 
@@ -106,7 +85,6 @@ contract Distribution {
   function doDistribution(uint256 contributorIndex, address contributor,
                           uint256 contributorExpectedTokens)
       public {
-    // Make sure the arguments match the compressed storage.
     require(contributionHashes[contributorIndex] == keccak256(contributor, contributorExpectedTokens));
 
     uint256 numTokens = _numTokensForContributor(contributorExpectedTokens, state);
@@ -155,7 +133,6 @@ contract Distribution {
 
   function temporaryKill(address to) public {
     require(msg.sender == admin);
-    require(state == State.Done);
     require(tokenContract.balanceOf(this) == 0);
     selfdestruct(to);
   }
