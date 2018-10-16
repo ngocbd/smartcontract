@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YesNo at 0xc39d73fca64d4ffe2c78fb17e61b9c8489f7c5fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YesNo at 0x4bbdeadf8334e8a85d3e22ec090af74c3a673118
 */
-//last compiled with soljson-v0.3.5-2016-07-21-6610add.js
+pragma solidity ^0.4.13;
+// Last compiled with 0.4.13+commit.0fb4cb1a
 
 contract SafeMath {
   //internals
@@ -21,10 +22,6 @@ contract SafeMath {
     uint c = a + b;
     assert(c>=a && c>=b);
     return c;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) throw;
   }
 }
 
@@ -116,18 +113,23 @@ contract StandardToken is Token {
 }
 
 contract ReserveToken is StandardToken, SafeMath {
+    string public name;
+    string public symbol;
+    uint public decimals = 18;
     address public minter;
-    function ReserveToken() {
+    function ReserveToken(string name_, string symbol_) {
+      name = name_;
+      symbol = symbol_;
       minter = msg.sender;
     }
     function create(address account, uint amount) {
-      if (msg.sender != minter) throw;
+      require(msg.sender == minter);
       balances[account] = safeAdd(balances[account], amount);
       totalSupply = safeAdd(totalSupply, amount);
     }
     function destroy(address account, uint amount) {
-      if (msg.sender != minter) throw;
-      if (balances[account] < amount) throw;
+      require(msg.sender == minter);
+      require(balances[account] >= amount);
       balances[account] = safeSub(balances[account], amount);
       totalSupply = safeSub(totalSupply, amount);
     }
@@ -137,6 +139,9 @@ contract YesNo is SafeMath {
 
   ReserveToken public yesToken;
   ReserveToken public noToken;
+
+  string public name;
+  string public symbol;
 
   //Reality Keys:
   bytes32 public factHash;
@@ -153,13 +158,11 @@ contract YesNo is SafeMath {
   event Redeem(address indexed account, uint value, uint yesTokens, uint noTokens);
   event Resolve(bool resolved, uint outcome);
 
-  function() {
-    throw;
-  }
-
-  function YesNo(bytes32 factHash_, address ethAddr_, string url_, address feeAccount_, uint fee_) {
-    yesToken = new ReserveToken();
-    noToken = new ReserveToken();
+  function YesNo(string name_, string symbol_, string namey_, string symboly_, string namen_, string symboln_, bytes32 factHash_, address ethAddr_, string url_, address feeAccount_, uint fee_) {
+    name = name_;
+    symbol = symbol_;
+    yesToken = new ReserveToken(namey_, symboly_);
+    noToken = new ReserveToken(namen_, symboln_);
     factHash = factHash_;
     ethAddr = ethAddr_;
     url = url_;
@@ -167,7 +170,11 @@ contract YesNo is SafeMath {
     fee = fee_;
   }
 
-  function create() {
+  function() payable {
+    create();
+  }
+
+  function create() payable {
     //send X Ether, get X Yes tokens and X No tokens
     yesToken.create(msg.sender, msg.value);
     noToken.create(msg.sender, msg.value);
@@ -175,35 +182,32 @@ contract YesNo is SafeMath {
   }
 
   function redeem(uint tokens) {
-    if (!feeAccount.call.value(safeMul(tokens,fee)/(1 ether))()) throw;
+    feeAccount.transfer(safeMul(tokens,fee)/(1 ether));
     if (!resolved) {
       yesToken.destroy(msg.sender, tokens);
       noToken.destroy(msg.sender, tokens);
-      if (!msg.sender.call.value(safeMul(tokens,(1 ether)-fee)/(1 ether))()) throw;
+      msg.sender.transfer(safeMul(tokens,(1 ether)-fee)/(1 ether));
       Redeem(msg.sender, tokens, tokens, tokens);
     } else if (resolved) {
       if (outcome==0) { //no
         noToken.destroy(msg.sender, tokens);
-        if (!msg.sender.call.value(safeMul(tokens,(1 ether)-fee)/(1 ether))()) throw;
+        msg.sender.transfer(safeMul(tokens,(1 ether)-fee)/(1 ether));
         Redeem(msg.sender, tokens, 0, tokens);
       } else if (outcome==1) { //yes
         yesToken.destroy(msg.sender, tokens);
-        if (!msg.sender.call.value(safeMul(tokens,(1 ether)-fee)/(1 ether))()) throw;
+        msg.sender.transfer(safeMul(tokens,(1 ether)-fee)/(1 ether));
         Redeem(msg.sender, tokens, tokens, 0);
       }
     }
   }
 
   function resolve(uint8 v, bytes32 r, bytes32 s, bytes32 value) {
-    if (ecrecover(sha3(factHash, value), v, r, s) != ethAddr) throw;
-    if (resolved) throw;
+    require(ecrecover(sha3(factHash, value), v, r, s) == ethAddr);
+    require(!resolved);
     uint valueInt = uint(value);
-    if (valueInt==0 || valueInt==1) {
-      outcome = valueInt;
-      resolved = true;
-      Resolve(resolved, outcome);
-    } else {
-      throw;
-    }
+    require(valueInt==0 || valueInt==1);
+    outcome = valueInt;
+    resolved = true;
+    Resolve(resolved, outcome);
   }
 }
