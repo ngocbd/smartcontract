@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SocialActivityToken at 0xc56b13ebbcffa67cfb7979b900b736b3fb480d78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SocialActivityToken at 0xd3231a1fc051f436131c70153a678e342bfc8088
 */
 /*
-Social Activity Token (SAT) - Official Smart Contract
-Sphere Social LTD
+Official Social Activity Token (SAT) of Sphere Social
 https://sphere.social
+Sphere Social LTD
 */
+
 pragma solidity 0.4.19;
 
 /**
@@ -61,12 +62,20 @@ contract FiatContract
     function USD(uint _id) constant returns (uint256);
 }
 
+contract TestFiatContract
+{
+    function USD(uint) constant returns (uint256)
+    {
+        return 12305041990000;
+    }
+}
+
 
 contract SocialActivityToken is ERC20
 { 
     using SafeMath for uint256;
 
-    FiatContract price = FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); // MAINNET ADDRESS
+    FiatContract price = FiatContract(new TestFiatContract()); //FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); // MAINNET ADDRESS
 
     // Name of the token
     string public constant name = "Social Activity Token";
@@ -232,10 +241,10 @@ contract SocialActivityToken is ERC20
         stage = Stages.ICO;
         stopped = false;
         startdate = now;
-        ico_first = now + 14 days;
-        ico_second = ico_first + 14 days;
-        ico_third = ico_second + 14 days;
-        ico_fourth = ico_third + 14 days;
+        ico_first = now + 5 minutes; //14 days;
+        ico_second = ico_first + 5 minutes; //14 days;
+        ico_third = ico_second + 5 minutes; //14 days;
+        ico_fourth = ico_third + 5 minutes; //14 days;
     
     }
     
@@ -352,7 +361,7 @@ contract SocialActivityToken is ERC20
         require( _to != 0x0);
         
         // Only allow transferby() to transfer from 0x0 and the ICO account
-        require(_from == address(this));
+        require(_from == 0x0 || _from == address(this));
         
         balances[_from] = (balances[_from]).sub(_amount);
         balances[_to] = (balances[_to]).add(_amount);
