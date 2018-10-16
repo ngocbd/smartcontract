@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0x84e70911f7810100fabfeee94d81146e74f14a50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0x505ce60e6b3b111479f65c016845dcda15ff84ba
 */
 pragma solidity ^0.4.13;
- 
+
 contract Ownable {
     
     address owner;
@@ -10,25 +10,25 @@ contract Ownable {
     function Ownable() {
         owner = msg.sender;
     }
- 
+
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
- 
+
     function transferOwnership(address newOwner) onlyOwner {
         owner = newOwner;
     }
     
 }
- 
-contract T_CAB_001 is Ownable {
+
+contract MITtoken is Ownable {
     
-    string public constant name = "CAB Equity T001";
+    string public constant name = "MIT Token";
     
-    string public constant symbol = "CABT001";
+    string public constant symbol = "MIT";
     
-    uint32 public constant decimals = 8;
+    uint32 public constant decimals = 1;
     
     uint public totalSupply = 0;
     
@@ -45,7 +45,7 @@ contract T_CAB_001 is Ownable {
     function balanceOf(address _owner) constant returns (uint balance) {
         return balances[_owner];
     }
- 
+
     function transfer(address _to, uint _value) returns (bool success) {
         if(balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
             balances[msg.sender] -= _value; 
@@ -84,7 +84,3 @@ contract T_CAB_001 is Ownable {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
     
 }
-
-/*
-0x84e70911F7810100FAbfeee94D81146E74F14A50
-*/
