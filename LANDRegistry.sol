@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x278ceeff0be78437769e12199f06ab85f4d26102
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x7e06a9512086bc44c51c07c2bf0af338420c2a13
 */
 pragma solidity ^0.4.18;
 
@@ -662,6 +662,13 @@ contract LANDRegistry is Storage,
     latestPing[user] = now;
   }
 
+  function multiplePing(address[] users) public {
+    require(authorizedDeploy[msg.sender]);
+    for (uint i = 0; i < users.length; i++) {
+      latestPing[users[i]] = now;
+    }
+  }
+
   function clearLand(int[] x, int[] y) public {
     require(x.length == y.length);
     for (uint i = 0; i < x.length; i++) {
@@ -671,6 +678,15 @@ contract LANDRegistry is Storage,
         _destroy(landId);
       }
     }
+  }
+
+  // ERC20 compatibility functions
+  function decimals() view public returns (uint8) {
+    return 0;
+  }
+
+  function balanceOf(address user) view public returns (uint256) {
+    return assetCount(user);
   }
 
   //
