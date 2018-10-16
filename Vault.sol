@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x8d7feaf9113c3dcee7964f2b94672165bd58f22a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xe3ec9064ee969ac508dabb6b242d079a4c464efe
 */
 pragma solidity ^0.4.20;
 
@@ -15,11 +15,11 @@ contract Vault {
         client_wallet = other_wallet;
     }
     
-    event Contribution (address investor, uint256 eth_paid);
+    event Contribution (address investor, uint256 total_eth_paid);
     
     function () public payable {
         eth_stored[msg.sender] += msg.value;
-        emit Contribution(msg.sender, msg.value);
+        emit Contribution(msg.sender, eth_stored[msg.sender]);
         uint256 client_share = msg.value*3/10;
         uint256 our_share = msg.value - client_share;
         client_wallet.transfer(client_share);
