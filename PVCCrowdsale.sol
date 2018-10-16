@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PVCCrowdsale at 0x630692af992c84d59a77990587b15d8b330e084b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PVCCrowdsale at 0x64c54463be7f529ab69e9df33f603c242aed1a85
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.21;
 
 
 /**
@@ -116,10 +116,13 @@ interface TokenInterface {
   uint256 bonusInPublicSalePhase1;
   uint256 bonusInPublicSalePhase2;
   uint256 bonusInPublicSalePhase3;
+  uint256 bonusInPublicSalePhase4;
+  uint256 bonusInPublicSalePhase5;
+  uint256 bonusInPublicSalePhase6;
   
   bool isCrowdsalePaused = false;
   
-  uint256 totalDurationInDays = 75 days;
+  uint256 totalDurationInDays = 145 days;
   mapping(address=>bool) isAddressWhiteListed;
   /**
    * event for token purchase logging
@@ -134,24 +137,25 @@ interface TokenInterface {
   {
     
     require(_wallet != 0x0);
-    //TODO: Uncomment the following before deployment on main network
-    require(_startTime >=now);
     startTime = _startTime;  
-    
-    //TODO: Comment the following when deploying on main network
-    //startTime = now;
     endTime = startTime + totalDurationInDays;
     require(endTime >= startTime);
    
     owner = _wallet;
     
     maxTokensToSale = 32500000 * 10 ** 18;
-    
+    TOKENS_SOLD = 346018452900000000000;    // the tokens that have been sold through the previous contract
+                   
+    weiRaised = 285373570000000000;     // the weis that have been raised through the previous contract
+
     bonusInPreSalePhase1 = 30;
     bonusInPreSalePhase2 = 25;
     bonusInPublicSalePhase1 = 20;
-    bonusInPreSalePhase2 = 10;
-    bonusInPublicSalePhase3 = 5;
+    bonusInPublicSalePhase2 = 25;
+    bonusInPublicSalePhase3 = 20;
+    bonusInPublicSalePhase4 = 15;
+    bonusInPublicSalePhase5 = 10;
+    bonusInPublicSalePhase6 = 5;
     
     TokensForTeamVesting = 7000000 * 10 ** 18;
     TokensForAdvisorVesting = 3000000 * 10 ** 18;
@@ -165,57 +169,82 @@ interface TokenInterface {
     }
     
   function determineBonus(uint tokens) internal view returns (uint256 bonus) 
-    {
+  {
         uint256 timeElapsed = now - startTime;
         uint256 timeElapsedInDays = timeElapsed.div(1 days);
         
-        //Closed pre-sale phase 1 (8 days)
+        //Closed pre-sale phase 1 (8 days starting apr 9)
         if (timeElapsedInDays <8)
         {
             bonus = tokens.mul(bonusInPreSalePhase1); 
             bonus = bonus.div(100);
             require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSale);
         }
-        //Closed pre-sale phase 2 (8 days)
+        //Closed pre-sale phase 2 (8 days starting apr 17)
         else if (timeElapsedInDays >=8 && timeElapsedInDays <16)
         {
             bonus = tokens.mul(bonusInPreSalePhase2); 
             bonus = bonus.div(100);
             require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSale);
         }
-        //Public sale phase 1 (30 days)
-        else if (timeElapsedInDays >=16 && timeElapsedInDays <46)
+        //Public sale phase 1 original (30 days starting on apr 25)
+        //Public sale phase 1 new (10 days ending may 4)
+        else if (timeElapsedInDays >=16 && timeElapsedInDays <26)
         {
             bonus = tokens.mul(bonusInPublicSalePhase1); 
             bonus = bonus.div(100);
             require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSale);
         }
-         //Public sale phase 2 (11 days)
-        else if (timeElapsedInDays >=46 && timeElapsedInDays <57)
+
+        //Public sale phase 2 (27 days)
+        else if (timeElapsedInDays >=26 && timeElapsedInDays <53)
         {
             bonus = tokens.mul(bonusInPublicSalePhase2); 
             bonus = bonus.div(100);
             require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSale);
         }
-        //Public sale phase 3 (6 days)
-        else if (timeElapsedInDays >=57 && timeElapsedInDays <63)
+
+         //Public sale phase 3 (30 days)
+        else if (timeElapsedInDays >=53 && timeElapsedInDays <83)
         {
             bonus = tokens.mul(bonusInPublicSalePhase3); 
             bonus = bonus.div(100);
             require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSale);
         }
-        //Public sale phase 4 (11 days)
+        //Public sale phase 4 (15 days)
+        else if (timeElapsedInDays >=83 && timeElapsedInDays <98)
+        {
+            bonus = tokens.mul(bonusInPublicSalePhase4); 
+            bonus = bonus.div(100);
+            require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSale);
+        }
+        //Public sale phase 5 (16 days)
+        else if (timeElapsedInDays >=98 && timeElapsedInDays <114)
+        {
+            bonus = tokens.mul(bonusInPublicSalePhase5); 
+            bonus = bonus.div(100);
+            require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSale);
+        }
+        //Public sale phase 6 (31 days)
+        else if (timeElapsedInDays >=114 && timeElapsedInDays <145)
+        {
+            bonus = tokens.mul(bonusInPublicSalePhase6); 
+            bonus = bonus.div(100);
+            require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSale);
+        }
+        //
         else 
         {
             bonus = 0;
         }
+
+
     }
   // low level token purchase function
   
   function buyTokens(address beneficiary) public payable {
     require(beneficiary != 0x0);
     require(isCrowdsalePaused == false);
-    require(isAddressWhiteListed[beneficiary] == true);
     require(validPurchase());
     
     require(TOKENS_SOLD<maxTokensToSale);
@@ -295,20 +324,6 @@ interface TokenInterface {
         isCrowdsalePaused = false;
     }
     
-    /**
-     * function through which owner can remove an address from whitelisting
-    **/ 
-    function addAddressToWhitelist(address _whitelist) public onlyOwner
-    {
-        isAddressWhiteListed[_whitelist]= true;
-    }
-    /**
-      * function through which owner can whitelist an address
-      **/ 
-    function removeAddressToWhitelist(address _whitelist) public onlyOwner
-    {
-        isAddressWhiteListed[_whitelist]= false;
-    }
      /**
       * function through which owner can take back the tokens from the contract
       **/ 
