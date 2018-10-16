@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrystalReignShard at 0x5108e432d40d34a4d0ed88c12e83db0e571bfc75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrystalReignShard at 0x65302d3a313cf7b0bc7badbf0b9b07a4f176ed10
 */
 pragma solidity ^0.4.4;
 
@@ -92,10 +92,6 @@ contract Token {
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
@@ -105,8 +101,6 @@ contract StandardToken is Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
             balances[_from] -= _value;
@@ -135,22 +129,16 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract CrystalReignShard is StandardToken { // CHANGE THIS. Update the contract name.
+contract CrystalReignShard is StandardToken {
   using SafeMath for uint;
-    /* Public variables of the token */
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   // Token Name
-    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol;                 // An identifier: eg SBX, XPR etc..
+    string public name; 
+    uint8 public decimals;            
+    string public symbol; 
     string public version = 'H1.0';
     uint256 public unitsOneEthCanBuy;
     uint256 public preSalePrice;
+    uint256 public preAlphaPrice;
     uint256 public totalEthInWei;
     address public fundsWallet;
     address public dropWallet = 0x88d38F6cb2aF250Ab8f1FA24851ba312b0c48675;
@@ -161,27 +149,30 @@ contract CrystalReignShard is StandardToken { // CHANGE THIS. Update the contrac
     uint public start = 1519477200;
     uint public mintCount = 0;
 
-    // This is a constructor function
-    // which means the following function name has to match the contract name declared above
+
     function CrystalReignShard() {
-        balances[msg.sender] = 16400000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        balances[msg.sender] = 16400000000000000000000000;
         balances[dropWallet] = 16400000000000000000000000;
         balances[compWallet] = 16400000000000000000000000;
         balances[marketingWallet] = 80000000000000000000000;
-        totalSupply = 50000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Crystal Reign Shard";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "CRS";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 1000;                                      // Set the price of your token for the ICO (CHANGE THIS)
-        preSalePrice = 1300;
-        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+        totalSupply = 50000000000000000000000000;                        
+        name = "Crystal Reign Shard";                                  
+        decimals = 18;                                              
+        symbol = "CRS";                                           
+        unitsOneEthCanBuy = 1000;                                      
+        preSalePrice = 2000;
+        preAlphaPrice = 1300;
+        fundsWallet = msg.sender;                         
     }
 
     function() payable{
         totalEthInWei = totalEthInWei + msg.value;
         uint256 amount = msg.value * unitsOneEthCanBuy;
-        if (now < 1524571200) {
-          amount = msg.value * preSalePrice;
+        if (now < 1521028800){
+            amount = msg.value * preSalePrice;
+        }
+        else if (now < 1524571200) {
+          amount = msg.value * preAlphaPrice;
         }
         if (balances[fundsWallet] < amount) {
             msg.sender.transfer(msg.value);
@@ -191,29 +182,23 @@ contract CrystalReignShard is StandardToken { // CHANGE THIS. Update the contrac
         balances[fundsWallet] = balances[fundsWallet] - amount;
         balances[msg.sender] = balances[msg.sender] + amount;
 
-        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+        Transfer(fundsWallet, msg.sender, amount);
 
-        //Transfer ether to fundsWallet
         fundsWallet.transfer(msg.value);
     }
 
-    /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
 
     function mint(){
       if (now >= start + (5 years * mintCount) && msg.sender == fundsWallet) {
-        balances[dropWallet] += 16400000;
+        balances[dropWallet] += 16400000000000000000000000;
         mintCount++;
-        totalSupply += 16400000;
+        totalSupply += 16400000000000000000000000;
       }
     }
 
@@ -235,9 +220,7 @@ contract CrystalReignShard is StandardToken { // CHANGE THIS. Update the contrac
 
         balances[fundsWallet] = balances[fundsWallet] + bonusCRS;
         bonusCRS = 0;
-
         Transfer(fundsWallet, msg.sender, bonusETH); // Broadcast a message to the blockchain
-        //Transfer ether to fundsWallet
         fundsWallet.transfer(bonusETH);
         bonusETH = 0;
         return true;
@@ -247,13 +230,11 @@ contract CrystalReignShard is StandardToken { // CHANGE THIS. Update the contrac
         }
         }
 
-        function purchaseETH() payable returns(uint t){//
+        function purchaseETH() payable returns(bool success){
           bonusETH +=  (msg.value.div(5)).mul(4);
-
-
-          Transfer(fundsWallet, msg.sender, (msg.value.div(5))); // Broadcast a message to the blockchain
+          Transfer(fundsWallet, msg.sender, (msg.value.div(5)));
           fundsWallet.transfer(msg.value.div(5));
-          return block.timestamp;
+          return true;
         }
 
         function purchaseCRS(uint256 amount) public returns(bool success){//
@@ -262,9 +243,6 @@ contract CrystalReignShard is StandardToken { // CHANGE THIS. Update the contrac
             bonusCRS += (amount.div(5)).mul(4);
             balances[msg.sender] = balances[msg.sender] - amount;
           }
-
-
-          //Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
 
           return true;
           }
