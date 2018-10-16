@@ -1,49 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinHot at 0x7d38056d5486df55954477f5426afe6c88789031
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinHot at 0x792e0fc822ac6ff5531e46425f13540f1f68a7a8
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint256 public totalSupply;
+  function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
-}
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
 }
 library DateTime {
         /*
@@ -214,6 +182,38 @@ library DateTime {
         }
 }
 /**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
+/**
  * @title Claimable
  * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
  * This allows the new owner to accept the transfer.
@@ -238,7 +238,7 @@ contract Claimable is Ownable {
    * @dev Allows the pendingOwner address to finalize the transfer.
    */
   function claimOwnership() onlyPendingOwner public {
-    OwnershipTransferred(owner, pendingOwner);
+    emit OwnershipTransferred(owner, pendingOwner);
     owner = pendingOwner;
     pendingOwner = address(0);
   }
@@ -248,26 +248,38 @@ contract Claimable is Ownable {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -279,6 +291,13 @@ library SafeMath {
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
   mapping(address => uint256) balances;
+  uint256 totalSupply_;
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
@@ -287,10 +306,9 @@ contract BasicToken is ERC20Basic {
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
   /**
@@ -298,7 +316,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 }
@@ -334,7 +352,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
   /**
@@ -349,7 +367,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
   /**
@@ -373,7 +391,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
   /**
@@ -393,7 +411,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 }
@@ -407,7 +425,7 @@ contract ReentrancyGuard {
   /**
    * @dev We use a single lock for the whole contract.
    */
-  bool private reentrancy_lock = false;
+  bool private reentrancyLock = false;
   /**
    * @dev Prevents a contract from calling itself, directly or indirectly.
    * @notice If you mark a function `nonReentrant`, you should also
@@ -417,10 +435,10 @@ contract ReentrancyGuard {
    * wrapper marked as `nonReentrant`.
    */
   modifier nonReentrant() {
-    require(!reentrancy_lock);
-    reentrancy_lock = true;
+    require(!reentrancyLock);
+    reentrancyLock = true;
     _;
-    reentrancy_lock = false;
+    reentrancyLock = false;
   }
 }
 /**
@@ -439,8 +457,8 @@ contract StandardBurnableToken is StandardToken {
         // sender's balance is greater than the totalSupply, which *should* be an assertion failure
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
+        totalSupply_ = totalSupply_.sub(_value);
+        emit Burn(burner, _value);
         return true;
     }
 }
@@ -459,69 +477,40 @@ contract Operational is Claimable {
     }
 }
 contract Frozenable is Operational, StandardBurnableToken, ReentrancyGuard {
-    struct FrozenBalance {
-        address owner;
+    using DateTime for uint256;
+    struct FrozenRecord {
         uint256 value;
-        uint256 unfreezeTime;
+        uint256 unfreezeIndex;
     }
-    mapping (uint => FrozenBalance) public frozenBalances;
-    uint public frozenBalanceCount;
+    uint256 public frozenBalance;
+    mapping (uint256 => FrozenRecord) public frozenRecords;
     uint256 mulDecimals = 100000000; // match decimals
-    event SystemFreeze(address indexed owner, uint256 value, uint256 unfreezeTime);
+    event SystemFreeze(address indexed owner, uint256 value, uint256 unfreezeIndex);
     event Unfreeze(address indexed owner, uint256 value, uint256 unfreezeTime);
-    event TransferSystemFreeze(address indexed owner, uint256 value, uint256 time);
     function Frozenable(address _operator) Operational(_operator) public {}
     // freeze system' balance
     function systemFreeze(uint256 _value, uint256 _unfreezeTime) internal {
+        uint256 unfreezeIndex = uint256(_unfreezeTime.parseTimestamp().year) * 10000 + uint256(_unfreezeTime.parseTimestamp().month) * 100 + uint256(_unfreezeTime.parseTimestamp().day);
         balances[owner] = balances[owner].sub(_value);
-        frozenBalances[frozenBalanceCount] = FrozenBalance({owner: owner, value: _value, unfreezeTime: _unfreezeTime});
-        frozenBalanceCount++;
-        SystemFreeze(owner, _value, _unfreezeTime);
-    }
-    // get frozen balance
-    function frozenBalanceOf(address _owner) public constant returns (uint256 value) {
-        for (uint i = 0; i < frozenBalanceCount; i++) {
-            FrozenBalance storage frozenBalance = frozenBalances[i];
-            if (_owner == frozenBalance.owner) {
-                value = value.add(frozenBalance.value);
-            }
-        }
-        return value;
+        frozenRecords[unfreezeIndex] = FrozenRecord({value: _value, unfreezeIndex: unfreezeIndex});
+        frozenBalance = frozenBalance.add(_value);
+        emit SystemFreeze(owner, _value, _unfreezeTime);
     }
     // unfreeze frozen amount
     // everyone can call this function to unfreeze balance
-    function unfreeze() public returns (uint256 releaseAmount) {
-        uint index = 0;
-        while (index < frozenBalanceCount) {
-            if (now >= frozenBalances[index].unfreezeTime) {
-                releaseAmount += frozenBalances[index].value;
-                unfreezeBalanceByIndex(index);
-            } else {
-                index++;
-            }
-        }
-        return releaseAmount;
-    }
-    function unfreezeBalanceByIndex(uint index) internal {
-        FrozenBalance storage frozenBalance = frozenBalances[index];
-        balances[frozenBalance.owner] = balances[frozenBalance.owner].add(frozenBalance.value);
-        Unfreeze(frozenBalance.owner, frozenBalance.value, frozenBalance.unfreezeTime);
-        frozenBalances[index] = frozenBalances[frozenBalanceCount - 1];
-        delete frozenBalances[frozenBalanceCount - 1];
-        frozenBalanceCount--;
-    }
-    function transferSystemFreeze() internal {
-        uint256 totalTransferSysFreezeAmount = 0;
-        for (uint i = 0; i < frozenBalanceCount; i++) {
-            frozenBalances[i].owner = owner;
-            totalTransferSysFreezeAmount += frozenBalances[i].value;
-        }
-        TransferSystemFreeze(owner, totalTransferSysFreezeAmount, now);
+    function unfreeze(uint256 timestamp) public returns (uint256 unfreezeAmount) {
+        require(timestamp <= block.timestamp);
+        uint256 unfreezeIndex = uint256(timestamp.parseTimestamp().year) * 10000 + uint256(timestamp.parseTimestamp().month) * 100 + uint256(timestamp.parseTimestamp().day);
+        frozenBalance = frozenBalance.sub(frozenRecords[unfreezeIndex].value);
+        balances[owner] = balances[owner].add(frozenRecords[unfreezeIndex].value);
+        unfreezeAmount = frozenRecords[unfreezeIndex].value;
+        emit Unfreeze(owner, unfreezeAmount, timestamp);
+        frozenRecords[unfreezeIndex].value = 0;
+        return unfreezeAmount;
     }
 }
 contract Releaseable is Frozenable {
     using SafeMath for uint;
-    using DateTime for uint256;
     uint256 public createTime;
     uint256 public standardReleaseAmount = mulDecimals.mul(1024000); //
     uint256 public releaseAmountPerDay = mulDecimals.mul(1024000);
@@ -529,45 +518,39 @@ contract Releaseable is Frozenable {
     event Release(address indexed receiver, uint256 value, uint256 sysAmount, uint256 releaseTime);
     struct ReleaseRecord {
         uint256 amount; // release amount
-        uint256 releaseTime; // release time
+        uint256 releaseIndex; // release time
     }
-    mapping (uint => ReleaseRecord) public releaseRecords;
-    uint public releaseRecordsCount = 0;
+    mapping (uint256 => ReleaseRecord) public releaseRecords;
     function Releaseable(
                     address _operator, uint256 _initialSupply
                 ) Frozenable(_operator) public {
         createTime = 1514563200;
         releasedSupply = _initialSupply;
         balances[owner] = _initialSupply;
-        totalSupply = mulDecimals.mul(369280000);
+        totalSupply_ = mulDecimals.mul(369280000);
     }
     function release(uint256 timestamp, uint256 sysAmount) public onlyOperator returns(uint256 _actualRelease) {
-        require(timestamp >= createTime && timestamp <= now);
+        require(timestamp >= createTime && timestamp <= block.timestamp);
         require(!checkIsReleaseRecordExist(timestamp));
         updateReleaseAmount(timestamp);
         require(sysAmount <= releaseAmountPerDay.mul(4).div(5));
-        require(totalSupply >= releasedSupply.add(releaseAmountPerDay));
+        require(totalSupply_ >= releasedSupply.add(releaseAmountPerDay));
         balances[owner] = balances[owner].add(releaseAmountPerDay);
         releasedSupply = releasedSupply.add(releaseAmountPerDay);
-        releaseRecords[releaseRecordsCount] = ReleaseRecord(releaseAmountPerDay, timestamp);
-        releaseRecordsCount++;
-        Release(owner, releaseAmountPerDay, sysAmount, timestamp);
+        uint256 _releaseIndex = uint256(timestamp.parseTimestamp().year) * 10000 + uint256(timestamp.parseTimestamp().month) * 100 + uint256(timestamp.parseTimestamp().day);
+        releaseRecords[_releaseIndex] = ReleaseRecord(releaseAmountPerDay, _releaseIndex);
+        emit Release(owner, releaseAmountPerDay, sysAmount, timestamp);
         systemFreeze(sysAmount.div(5), timestamp.add(180 days));
-        systemFreeze(sysAmount.mul(7).div(10), timestamp.add(70 years));
+        systemFreeze(sysAmount.mul(7).div(10), timestamp.add(200 years));
         return releaseAmountPerDay;
     }
     // check is release record existed
     // if existed return true, else return false
     function checkIsReleaseRecordExist(uint256 timestamp) internal view returns(bool _exist) {
         bool exist = false;
-        if (releaseRecordsCount > 0) {
-            for (uint index = 0; index < releaseRecordsCount; index++) {
-                if ((releaseRecords[index].releaseTime.parseTimestamp().year == timestamp.parseTimestamp().year)
-                    && (releaseRecords[index].releaseTime.parseTimestamp().month == timestamp.parseTimestamp().month)
-                    && (releaseRecords[index].releaseTime.parseTimestamp().day == timestamp.parseTimestamp().day)) {
-                    exist = true;
-                }
-            }
+        uint256 releaseIndex = uint256(timestamp.parseTimestamp().year) * 10000 + uint256(timestamp.parseTimestamp().month) * 100 + uint256(timestamp.parseTimestamp().day);
+        if (releaseRecords[releaseIndex].releaseIndex == releaseIndex){
+            exist = true;
         }
         return exist;
     }
@@ -587,19 +570,11 @@ contract Releaseable is Frozenable {
             }
         }
     }
-    function claimOwnership() onlyPendingOwner public {
-        OwnershipTransferred(owner, pendingOwner);
-        owner = pendingOwner;
-        pendingOwner = address(0);
-        transferSystemFreeze();
-    }
 }
 contract CoinHot is Releaseable {
-    string public standard = '2018011603';
+    string public standard = '2018042801';
     string public name = 'CoinHot';
     string public symbol = 'CHT';
     uint8 public decimals = 8;
-    function CoinHot(
-                     address _operator, uint256 _initialSupply
-                     ) Releaseable(_operator, _initialSupply) public {}
+    function CoinHot() Releaseable(0x00C596061777d9A3ffEBcB759e4CE61098e58EA0, mulDecimals.mul(1000000)) public {}
 }
