@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AifiToken at 0x943f1650455d8edec7c13079f63d97366a2de7c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AifiToken at 0x0ccf3426755c88f85445e325f6f0f413e3375b49
 */
 pragma solidity ^0.4.23;
 
@@ -364,8 +364,8 @@ contract AifiAsset is Ownable {
 contract AifiToken is StandardToken, Ownable, BurnableToken {
   using SafeMath for uint256;
 
-  string public name = "Test AIFIToken";
-  string public symbol = "TAIFI";
+  string public name = "AIFIToken";
+  string public symbol = "AIFI";
   uint8 public decimals = 18;
   uint public initialSupply = 0;
   AifiAsset[] public aifiAssets;
@@ -414,6 +414,7 @@ contract AifiToken is StandardToken, Ownable, BurnableToken {
 
   function setAssetToExpire(uint _index) public onlyOwner {
     AifiAsset asset = aifiAssets[_index];
+    require(asset.state() == AifiAsset.AssetState.Active);
     super.burn(asset.totalSupply());
     emit SetAssetToExpireEvent(_index, asset);
   }
