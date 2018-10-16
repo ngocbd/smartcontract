@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0x306e5d0c7b3934af9bdb57c3ef0eb886982c2aee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0xef188cb6cb0e98ad580e5efe69f18b423d76a1e0
 */
 pragma solidity ^0.4.15;
 
@@ -73,11 +73,8 @@ contract Swap {
  	function Swap() {
 	    authorizedCaller = msg.sender;
 
-        collectorAddress = 0x6835706E8e58544deb6c4EC59d9815fF6C20417f;
-        collectorTokens = 0x08A735E8DA11d3ecf9ED684B8013ab53E9D226c2;
 	    oldTokenAdd = 0x58ca3065C0F24C7c96Aee8d6056b5B5deCf9c2f8;
-	    newTokenAdd = 0x22f0af8d78851b72ee799e05f54a77001586b18a;
-        tokenSpender = 0x6835706E8e58544deb6c4EC59d9815fF6C20417f;
+	    newTokenAdd = 0x22f0af8d78851b72ee799e05f54a77001586b18a; 
 
 	    Etherrate = 3000;
 	    Tokenrate = 10;
