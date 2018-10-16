@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RandoLotto at 0x66322181534ff227904daf5ea692a2f2ba62d582
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RandoLotto at 0x954791f9a0f0ff7841cffea32c556ac71168eff8
 */
 pragma solidity 0.4.23;
 
@@ -12,9 +12,10 @@ pragma solidity 0.4.23;
 
 contract RandoLotto {
     
-    uint256 public highScore;
-    address public currentWinner;
-    uint256 public lastTimestamp;
+    uint256 PrizePool;
+    uint256 highScore;
+    address currentWinner;
+    uint256 lastTimestamp;
     
     constructor () public {
         highScore = 0;
@@ -39,5 +40,51 @@ contract RandoLotto {
         require(msg.sender == currentWinner);
         
         msg.sender.transfer(address(this).balance);
+    }
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
