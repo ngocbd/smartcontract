@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MinesFactory at 0x1277ee49236da5c07e93b8b9df29d629842f0ab9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MinesFactory at 0xe683c31d91d73ae12770cc7082511846ea66f8d6
 */
 /*
     CryptoMines game via Ethereum Smart Contract
@@ -65,10 +65,10 @@ contract Resources {
 	mapping(uint8 => mapping(address => uint256) ) public ResourcesOwner; 
 }
 
-contract Mines is Resources {
-	mapping(uint256 => address) public MineOwner; 
-	mapping(uint256 => uint8) public MineLevel; 
-	mapping(uint256 => uint256) public MineCooldown; 
+contract CryptoMines is Resources {
+	mapping(uint256 => address) internal MineOwner; 
+	mapping(uint256 => uint8) internal MineLevel; 
+	mapping(uint256 => uint256) internal MineCooldown; 
 	uint256 public nextMineId = 15;
 	uint256 public nextMineEvent = 1;
 	
@@ -141,7 +141,7 @@ contract Mines is Resources {
 	}
 }
 
-contract Trading is Mines, Payments {
+contract Trading is CryptoMines, Payments {
 
     struct tradeStruct {
         address Seller;
@@ -152,6 +152,7 @@ contract Trading is Mines, Payments {
     }
     //tradeId->tradeOwner->cost
     mapping(uint256 => tradeStruct) public TradeList; 
+	mapping(uint256 => uint256) public MinesOnTrade; 
 	uint128[13] public minesPrice;
 	uint256 public TradeId = 1;
 	uint256 public nextTradeEvent = 1;
@@ -177,8 +178,9 @@ contract Trading is Mines, Payments {
 		}
 		
 		if (_sellMineId>0) {		
-		    require (MineOwner[_sellMineId]==msg.sender);
+		    require (MineOwner[_sellMineId]==msg.sender && MinesOnTrade[_sellMineId]==0);
 			TradeList[TradeId]=tradeStruct({Seller: msg.sender, ResourceId: _sellResourceId, ResourceAmount: _ResourcesAmount, MineId: _sellMineId, Price: _sellPrice});
+			MinesOnTrade[_sellMineId]=TradeId;
 		}
         
 		TradeId++;
@@ -192,6 +194,7 @@ contract Trading is Mines, Payments {
 			ResourcesOwner[TradeLot.ResourceId][TradeLot.Seller] += TradeLot.ResourceAmount;
 		}
 		//stop trade
+		MinesOnTrade[TradeLot.MineId]=0;
 		TradeLot.Price=0;
 		TradeAffected(nextTradeEvent,_TradeId);		
 		nextTradeEvent++;
@@ -218,6 +221,7 @@ contract Trading is Mines, Payments {
 		 
 		if (TradeLot.MineId>0) {
 			MineOwner[TradeLot.MineId]=msg.sender;
+			MinesOnTrade[TradeLot.MineId]=0;
 			MineAffected(nextMineEvent,TradeLot.MineId);
 			nextMineEvent++;					
 		}
@@ -246,14 +250,9 @@ contract FiatContract {
 
 contract MinesFactory is Trading {
 
-
-    function MinesFactory() { //constructon
-		setMinesPrice ();
-	}
-
 	function setMinesPrice () public {
 		// mine level 1 price = getUSD()*10 = 10 USD;
-	    var lvl1MinePrice = getUSD()*10; 
+	   uint128 lvl1MinePrice = getUSD()*10; 
 		
 	    for (uint8 lvl=0; lvl<13; lvl++) {
 			if (lvl<=2)
@@ -300,7 +299,7 @@ contract MinesFactory is Trading {
 		
 		price = FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); //mainnet
 		require (price.USD(0) > 10000000000);
-		var USDtoWEIrounded = uint128((price.USD(0) - price.USD(0) % 10000000000) * 100);
+		uint128 USDtoWEIrounded = uint128((price.USD(0) - price.USD(0) % 10000000000) * 100);
 		
 		//return 1 USD currency value in WEI ;
 		return USDtoWEIrounded;
