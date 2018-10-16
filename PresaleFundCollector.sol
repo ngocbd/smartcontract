@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0xd3fa03c67cfba062325cb6f4f4b5c1e642f1cffe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0xee3dfe33e53deb5256f31f63a59cffd14c94019d
 */
 /**
  * Safe unsigned safe math.
@@ -397,38 +397,6 @@ contract Crowdsale is Haltable {
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
-  }
-
-  /**
-   * Preallocate tokens for the early investors.
-   *
-   * Preallocated tokens have been sold before the actual crowdsale opens.
-   * This function mints the tokens and moves the crowdsale needle.
-   *
-   * Investor count is not handled; it is assumed this goes for multiple investors
-   * and the token distribution happens outside the smart contract flow.
-   *
-   * No money is exchanged, as the crowdsale team already have received the payment.
-   *
-   * @param fullTokens tokens as full tokens - decimal places added internally
-   * @param weiPrice Price of a single full token in wei
-   *
-   */
-  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
-
-    uint tokenAmount = fullTokens * 10**token.decimals();
-    uint weiAmount = weiPrice * tokenAmount; // This can be also 0, we give out tokens for free
-
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
-
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
-
-    assignTokens(receiver, tokenAmount);
-
-    // Tell us invest was success
-    Invested(receiver, weiAmount, tokenAmount, 0);
   }
 
   /**
