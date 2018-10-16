@@ -1,201 +1,86 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xfcc36b6fde12f6726040ced05f04c256f9456327
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9a2e92f57eb9aedf260d091c314a7f52ef0461a1
 */
-pragma solidity ^0.4.18;
-
-
-contract owned {
-    address public owner;
-    address private ownerCandidate;
-
-    function owned() public {
-        owner = msg.sender;
+pragma solidity ^0.4.11;
+ 
+contract Token {
+    string public symbol = "";
+    string public name = "";
+    uint8 public constant decimals = 18;
+    uint256 _totalSupply = 0;
+    address owner = 0;
+    bool setupDone = false;
+	
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ 
+    mapping(address => uint256) balances;
+ 
+    mapping(address => mapping (address => uint256)) allowed;
+ 
+    function Token(address adr) {
+		owner = adr;        
     }
-
-    modifier onlyOwner {
-        assert(owner == msg.sender);
-        _;
+	
+	function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
+	{
+		if (msg.sender == owner && setupDone == false)
+		{
+			symbol = tokenSymbol;
+			name = tokenName;
+			_totalSupply = tokenSupply * 1000000000000000000;
+			balances[owner] = _totalSupply;
+			setupDone = true;
+		}
+	}
+ 
+    function totalSupply() constant returns (uint256 totalSupply) {        
+		return _totalSupply;
     }
-
-    modifier onlyOwnerCandidate() {
-        assert(msg.sender == ownerCandidate);
-        _;
+ 
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
-
-    function transferOwnership(address candidate) external onlyOwner {
-        ownerCandidate = candidate;
-    }
-
-    function acceptOwnership() external onlyOwnerCandidate {
-        owner = ownerCandidate;
-    }
-}
-
-
-
-contract SafeMath {
-    function safeMul(uint a, uint b) pure internal returns (uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function safeDiv(uint a, uint b) pure internal returns (uint) {
-        uint c = a / b;
-        assert(b == 0);
-        return c;
-    }
-
-    function safeSub(uint a, uint b) pure internal returns (uint) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function safeAdd(uint a, uint b) pure internal returns (uint) {
-        uint c = a + b;
-        assert(c >= a && c >= b);
-        return c;
-    }
-}
-
-
-
-
-
-
-
-contract Token is SafeMath, owned {
-
-    string public name;    //  token name
-    string public symbol;      //  token symbol
-    uint public decimals = 8;  //  token digit
-
-    mapping (address => uint) public balanceOf;
-    mapping (address => mapping (address => uint)) public allowance;
-    mapping (address => uint) limitAddress;
-
-    uint public totalSupply = 1 * 10000 * 10000 * 10 ** uint256(decimals);
-
-    modifier validAddress(address _address) {
-        assert(0x0 != _address);
-        _;
-    }
-
-    function addLimitAddress(address _a)
-        public
-        validAddress(_a)
-        onlyOwner
-    {
-        limitAddress[_a] = 1;
-    }
-
-    function delLitAddress(address _a)
-        public
-        validAddress(_a)
-        onlyOwner
-    {
-        limitAddress[_a] = 0;
-    }
-
-    function Token(string _name, string _symbol)
-        public
-    {
-        name = _name;
-        symbol = _symbol;
-        owner = msg.sender;
-        balanceOf[this] = totalSupply;
-        Transfer(0x0, this, totalSupply);
-    }
-
-    function transfer(address _to, uint _value)
-        public
-        validAddress(_to)
-        returns (bool success)
-    {
-        require(balanceOf[msg.sender] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function batchtransfer(address[] _to, uint256[] _amount) public returns(bool success) {
-        for(uint i = 0; i < _to.length; i++){
-            require(transfer(_to[i], _amount[i]));
+ 
+    function transfer(address _to, uint256 _amount) returns (bool success) {
+        if (balances[msg.sender] >= _amount 
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
         }
-        return true;
     }
-
-    function transferInner(address _to, uint _value)
-        private
-        returns (bool success)
-    {
-        balanceOf[this] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(this, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint _value)
-        public
-        validAddress(_from)
-        validAddress(_to)
-        returns (bool success)
-    {
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        require(allowance[_from][msg.sender] >= _value);
-        balanceOf[_to] += _value;
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint _value)
-        public
-        validAddress(_spender)
-        returns (bool success)
-    {
-        require(_value == 0 || allowance[msg.sender][_spender] == 0);
-        allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function ()
-        public
-        payable
-    {
-
-    }
-
-    function mint(address _to, uint _amount) public validAddress(_to)
-    {
-        //white address
-        if(limitAddress[msg.sender] != 1) return;
-        // send token 1:10000
-        uint supply = _amount;
-        // overflow
-        if(balanceOf[this] < supply) {
-            supply = balanceOf[this];
+ 
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
         }
-        require(transferInner(_to, supply));
-        //notify
-        Mint(_to, supply);
     }
-
-    function withdraw(uint amount)
-        public
-        onlyOwner
-    {
-        require(this.balance >= amount);
-        msg.sender.transfer(amount);
+ 
+    function approve(address _spender, uint256 _amount) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
     }
-
-    event Mint(address _to, uint _amount);
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-
+ 
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 }
