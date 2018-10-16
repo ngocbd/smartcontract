@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GigaGivingToken at 0xb0ea8da75cb8695d2519d12f5f2bfafd15a29514
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GigaGivingToken at 0x464e6abc2f9a61cd17e6c52ad06802fbb4af7eab
 */
 pragma solidity ^0.4.16;
 
@@ -86,12 +86,12 @@ contract GigaGivingToken is StandardToken {
     uint256 private fundingGoal = 0 ether;
     uint256 private amountRaised;
 
-    uint256 private constant PHASE_1_PRICE = 1600000000000000;
-    uint256 private constant PHASE_2_PRICE = 2000000000000000; 
-    uint256 private constant PHASE_3_PRICE = 2500000000000000; 
-    uint256 private constant PHASE_4_PRICE = 4000000000000000;
-    uint256 private constant PHASE_5_PRICE = 5000000000000000; 
-    uint256 private constant DURATION = 5 weeks;  
+    uint256 private constant PHASE_1_PRICE = 1600000000000;
+    uint256 private constant PHASE_2_PRICE = 2000000000000; 
+    uint256 private constant PHASE_3_PRICE = 2500000000000; 
+    uint256 private constant PHASE_4_PRICE = 4000000000000;
+    uint256 private constant PHASE_5_PRICE = 5000000000000; 
+    uint256 private constant DURATION = 30 minutes;  
 
     uint256 public constant TOTAL_TOKENS = 15000000;
     uint256 public constant  CROWDSALE_TOKENS = 12000000;  
@@ -103,9 +103,9 @@ contract GigaGivingToken is StandardToken {
     address public creator;
     address public beneficiary;
 
-    string public name = "Giga Coin";
-    string public symbol = "GC";
-    string public version = "GC.7";
+    string public name = "JTEST";
+    string public symbol = "JT";
+    string public version = "JT.0";
     uint256 public decimals = 0;  
     
     // GigaGivingToken public tokenReward;
@@ -126,7 +126,7 @@ contract GigaGivingToken is StandardToken {
         Transfer(0x0, this, CROWDSALE_TOKENS);              
         tokenSupply = CROWDSALE_TOKENS;
         
-        startTime = 1510765200;
+        startTime = 1510527600;
     }   
   
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
@@ -144,13 +144,13 @@ contract GigaGivingToken is StandardToken {
         uint256 amount = msg.value;
         uint256 coinTotal = 0;      
         
-        if (now > startTime + 4 weeks) {
+        if (now > startTime + 20 minutes) {
             coinTotal = amount.div(PHASE_5_PRICE);
-        } else if (now > startTime + 3 weeks) {
+        } else if (now > startTime + 15 minutes) {
             coinTotal = amount.div(PHASE_4_PRICE);
-        } else if (now > startTime + 2 weeks) {
+        } else if (now > startTime + 10 minutes) {
             coinTotal = amount.div(PHASE_3_PRICE);
-        } else if (now > startTime + 1 weeks) {
+        } else if (now > startTime + 5 minutes) {
             coinTotal = amount.div(PHASE_2_PRICE);
         } else {
             coinTotal = amount.div(PHASE_1_PRICE);
