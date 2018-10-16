@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x3eab9a2fa76f16cdc46e707ff928f7995886dee0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x78c4ce8a0f0251da5fa9238a761cf92b23620aba
 */
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.2;
 contract owned {
     address public owner;
 
@@ -63,7 +63,6 @@ contract token {
     function approve(address _spender, uint256 _value)
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
-        tokenRecipient spender = tokenRecipient(_spender);
         return true;
     }
 
@@ -99,7 +98,6 @@ contract MyAdvancedToken is owned, token {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
-    uint256 public totalSupply;
 
     mapping (address => bool) public frozenAccount;
 
@@ -111,12 +109,8 @@ contract MyAdvancedToken is owned, token {
         uint256 initialSupply,
         string tokenName,
         uint8 decimalUnits,
-        string tokenSymbol,
-        address centralMinter
-    ) token (initialSupply, tokenName, decimalUnits, tokenSymbol) {
-        if(centralMinter != 0 ) owner = centralMinter;      // Sets the owner as specified (if centralMinter is not specified the owner is msg.sender)
-        balanceOf[owner] = initialSupply;                   // Give the owner all initial tokens
-    }
+        string tokenSymbol
+    ) token (initialSupply, tokenName, decimalUnits, tokenSymbol) {}
 
     /* Send coins */
     function transfer(address _to, uint256 _value) {
