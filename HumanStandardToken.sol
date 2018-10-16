@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xbd3576583bb2a615e32040485f83df45a8133891
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x759a55a2ea3be0e86cab37a53ff01120b9cfabc5
 */
-pragma solidity ^0.4.17;
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+pragma solidity ^0.4.8;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -18,7 +20,7 @@ contract Token {
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
-    function balanceOf(address _owner) public returns (uint256 balance);
+    function balanceOf(address _owner) public constant returns (uint256 balance);
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
@@ -42,20 +44,11 @@ contract Token {
     /// @param _owner The address of the account owning tokens
     /// @param _spender The address of the account able to transfer the tokens
     /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) public returns (uint256 remaining);
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-
-/*
-You should inherit from StandardToken or, for a token like you would want to
-deploy in something like Mist, see HumanStandardToken.sol.
-(This implements ONLY the standard functions and NOTHING else.
-If you deploy this, you won't have anything useful.)
-
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-.*/
 
 contract StandardToken is Token {
 
@@ -87,7 +80,7 @@ contract StandardToken is Token {
         return true;
     }
 
-    function balanceOf(address _owner) public returns (uint256 balance) {
+    function balanceOf(address _owner) constant public returns (uint256 balance) {
         return balances[_owner];
     }
 
@@ -97,26 +90,14 @@ contract StandardToken is Token {
         return true;
     }
 
-    function allowance(address _owner, address _spender) public returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
 
-/*
-This Token Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
-
-In other words. This is intended for deployment in something like a Token Factory or Mist wallet, and then used by humans.
-Imagine coins, currencies, shares, voting weight, etc.
-Machine-based, rapid creation of many tokens would not necessarily need these extra features or will be minted in other manners.
-
-1) Initial Finite Supply (upon creation one specifies how much is minted).
-2) In the absence of a token registry: Optional Decimal, Symbol & Name.
-3) Optional approveAndCall() functionality to notify a contract if an approval() has occurred.
-
-.*/
 
 contract HumanStandardToken is StandardToken {
 
@@ -139,11 +120,11 @@ contract HumanStandardToken is StandardToken {
         uint8 _decimalUnits,
         string _tokenSymbol
         ) public {
-            balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-            totalSupply = _initialAmount;                        // Update total supply
-            name = _tokenName;                                   // Set the name for display purposes
-            decimals = _decimalUnits;                            // Amount of decimals for display purposes
-            symbol = _tokenSymbol;                               // Set the symbol for display purposes
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        totalSupply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
