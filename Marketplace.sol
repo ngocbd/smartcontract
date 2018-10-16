@@ -1,372 +1,353 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0xb3bca6f5052c7e24726b44da7403b56a8a1b98f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0x8ad5b423096548ff65f4fc3c8bca404dea8c66eb
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.19;
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+contract DigixConstants {
+  /// general constants
+  uint256 constant SECONDS_IN_A_DAY = 24 * 60 * 60;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
+  /// asset events
+  uint256 constant ASSET_EVENT_CREATED_VENDOR_ORDER = 1;
+  uint256 constant ASSET_EVENT_CREATED_TRANSFER_ORDER = 2;
+  uint256 constant ASSET_EVENT_CREATED_REPLACEMENT_ORDER = 3;
+  uint256 constant ASSET_EVENT_FULFILLED_VENDOR_ORDER = 4;
+  uint256 constant ASSET_EVENT_FULFILLED_TRANSFER_ORDER = 5;
+  uint256 constant ASSET_EVENT_FULFILLED_REPLACEMENT_ORDER = 6;
+  uint256 constant ASSET_EVENT_MINTED = 7;
+  uint256 constant ASSET_EVENT_MINTED_REPLACEMENT = 8;
+  uint256 constant ASSET_EVENT_RECASTED = 9;
+  uint256 constant ASSET_EVENT_REDEEMED = 10;
+  uint256 constant ASSET_EVENT_FAILED_AUDIT = 11;
+  uint256 constant ASSET_EVENT_ADMIN_FAILED = 12;
+  uint256 constant ASSET_EVENT_REMINTED = 13;
+
+  /// roles
+  uint256 constant ROLE_ZERO_ANYONE = 0;
+  uint256 constant ROLE_ROOT = 1;
+  uint256 constant ROLE_VENDOR = 2;
+  uint256 constant ROLE_XFERAUTH = 3;
+  uint256 constant ROLE_POPADMIN = 4;
+  uint256 constant ROLE_CUSTODIAN = 5;
+  uint256 constant ROLE_AUDITOR = 6;
+  uint256 constant ROLE_MARKETPLACE_ADMIN = 7;
+  uint256 constant ROLE_KYC_ADMIN = 8;
+  uint256 constant ROLE_FEES_ADMIN = 9;
+  uint256 constant ROLE_DOCS_UPLOADER = 10;
+  uint256 constant ROLE_KYC_RECASTER = 11;
+  uint256 constant ROLE_FEES_DISTRIBUTION_ADMIN = 12;
+
+  /// states
+  uint256 constant STATE_ZERO_UNDEFINED = 0;
+  uint256 constant STATE_CREATED = 1;
+  uint256 constant STATE_VENDOR_ORDER = 2;
+  uint256 constant STATE_TRANSFER = 3;
+  uint256 constant STATE_CUSTODIAN_DELIVERY = 4;
+  uint256 constant STATE_MINTED = 5;
+  uint256 constant STATE_AUDIT_FAILURE = 6;
+  uint256 constant STATE_REPLACEMENT_ORDER = 7;
+  uint256 constant STATE_REPLACEMENT_DELIVERY = 8;
+  uint256 constant STATE_RECASTED = 9;
+  uint256 constant STATE_REDEEMED = 10;
+  uint256 constant STATE_ADMIN_FAILURE = 11;
+
+  /// interactive contracts
+  bytes32 constant CONTRACT_INTERACTIVE_ASSETS_EXPLORER = "i:asset:explorer";
+  bytes32 constant CONTRACT_INTERACTIVE_DIGIX_DIRECTORY = "i:directory";
+  bytes32 constant CONTRACT_INTERACTIVE_MARKETPLACE = "i:mp";
+  bytes32 constant CONTRACT_INTERACTIVE_MARKETPLACE_ADMIN = "i:mpadmin";
+  bytes32 constant CONTRACT_INTERACTIVE_POPADMIN = "i:popadmin";
+  bytes32 constant CONTRACT_INTERACTIVE_PRODUCTS_LIST = "i:products";
+  bytes32 constant CONTRACT_INTERACTIVE_TOKEN = "i:token";
+  bytes32 constant CONTRACT_INTERACTIVE_BULK_WRAPPER = "i:bulk-wrapper";
+  bytes32 constant CONTRACT_INTERACTIVE_TOKEN_CONFIG = "i:token:config";
+  bytes32 constant CONTRACT_INTERACTIVE_TOKEN_INFORMATION = "i:token:information";
+  bytes32 constant CONTRACT_INTERACTIVE_MARKETPLACE_INFORMATION = "i:mp:information";
+  bytes32 constant CONTRACT_INTERACTIVE_IDENTITY = "i:identity";
+
+  /// controller contracts
+  bytes32 constant CONTRACT_CONTROLLER_ASSETS = "c:asset";
+  bytes32 constant CONTRACT_CONTROLLER_ASSETS_RECAST = "c:asset:recast";
+  bytes32 constant CONTRACT_CONTROLLER_ASSETS_EXPLORER = "c:explorer";
+  bytes32 constant CONTRACT_CONTROLLER_DIGIX_DIRECTORY = "c:directory";
+  bytes32 constant CONTRACT_CONTROLLER_MARKETPLACE = "c:mp";
+  bytes32 constant CONTRACT_CONTROLLER_MARKETPLACE_ADMIN = "c:mpadmin";
+  bytes32 constant CONTRACT_CONTROLLER_PRODUCTS_LIST = "c:products";
+
+  bytes32 constant CONTRACT_CONTROLLER_TOKEN_APPROVAL = "c:token:approval";
+  bytes32 constant CONTRACT_CONTROLLER_TOKEN_CONFIG = "c:token:config";
+  bytes32 constant CONTRACT_CONTROLLER_TOKEN_INFO = "c:token:info";
+  bytes32 constant CONTRACT_CONTROLLER_TOKEN_TRANSFER = "c:token:transfer";
+
+  bytes32 constant CONTRACT_CONTROLLER_JOB_ID = "c:jobid";
+  bytes32 constant CONTRACT_CONTROLLER_IDENTITY = "c:identity";
+
+  /// storage contracts
+  bytes32 constant CONTRACT_STORAGE_ASSETS = "s:asset";
+  bytes32 constant CONTRACT_STORAGE_ASSET_EVENTS = "s:asset:events";
+  bytes32 constant CONTRACT_STORAGE_DIGIX_DIRECTORY = "s:directory";
+  bytes32 constant CONTRACT_STORAGE_MARKETPLACE = "s:mp";
+  bytes32 constant CONTRACT_STORAGE_PRODUCTS_LIST = "s:products";
+  bytes32 constant CONTRACT_STORAGE_GOLD_TOKEN = "s:goldtoken";
+  bytes32 constant CONTRACT_STORAGE_JOB_ID = "s:jobid";
+  bytes32 constant CONTRACT_STORAGE_IDENTITY = "s:identity";
+
+  /// service contracts
+  bytes32 constant CONTRACT_SERVICE_TOKEN_DEMURRAGE = "sv:tdemurrage";
+  bytes32 constant CONTRACT_SERVICE_MARKETPLACE = "sv:mp";
+  bytes32 constant CONTRACT_SERVICE_DIRECTORY = "sv:directory";
+
+  /// fees distributors
+  bytes32 constant CONTRACT_DEMURRAGE_FEES_DISTRIBUTOR = "fees:distributor:demurrage";
+  bytes32 constant CONTRACT_RECAST_FEES_DISTRIBUTOR = "fees:distributor:recast";
+  bytes32 constant CONTRACT_TRANSFER_FEES_DISTRIBUTOR = "fees:distributor:transfer";
+}
+
+contract ContractResolver {
   address public owner;
+  bool public locked;
+  function init_register_contract(bytes32 _key, address _contract_address) public returns (bool _success);
+  function unregister_contract(bytes32 _key) public returns (bool _success);
+  function get_contract(bytes32 _key) public constant returns (address _contract);
+}
 
+contract ResolverClient {
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /// The address of the resolver contract for this project
+  address public resolver;
+  /// The key to identify this contract
+  bytes32 public key;
 
+  /// Make our own address available to us as a constant
+  address public CONTRACT_ADDRESS;
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
+  /// Function modifier to check if msg.sender corresponds to the resolved address of a given key
+  /// @param _contract The resolver key
+  modifier if_sender_is(bytes32 _contract) {
+    require(msg.sender == ContractResolver(resolver).get_contract(_contract));
     _;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-// File: zeppelin-solidity/contracts/lifecycle/Destructible.sol
-
-/**
- * @title Destructible
- * @dev Base contract that can be destroyed by owner. All funds in contract will be sent to the owner.
- */
-contract Destructible is Ownable {
-
-  function Destructible() public payable { }
-
-  /**
-   * @dev Transfers the current balance to the owner and terminates the contract.
-   */
-  function destroy() onlyOwner public {
-    selfdestruct(owner);
-  }
-
-  function destroyAndSend(address _recipient) onlyOwner public {
-    selfdestruct(_recipient);
-  }
-}
-
-// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
+  /// Function modifier to check resolver's locking status.
+  modifier unless_resolver_is_locked() {
+    require(is_locked() == false);
     _;
   }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
+  /// @dev Initialize new contract
+  /// @param _key the resolver key for this contract
+  /// @return _success if the initialization is successful
+  function init(bytes32 _key, address _resolver)
+           internal
+           returns (bool _success)
+  {
+    bool _is_locked = ContractResolver(_resolver).locked();
+    if (_is_locked == false) {
+      CONTRACT_ADDRESS = address(this);
+      resolver = _resolver;
+      key = _key;
+      require(ContractResolver(resolver).init_register_contract(key, CONTRACT_ADDRESS));
+      _success = true;
+    }  else {
+      _success = false;
+    }
+  }
+
+  /// @dev Destroy the contract and unregister self from the ContractResolver
+  /// @dev Can only be called by the owner of ContractResolver
+  function destroy()
+           public
+           returns (bool _success)
+  {
+    bool _is_locked = ContractResolver(resolver).locked();
+    require(!_is_locked);
+
+    address _owner_of_contract_resolver = ContractResolver(resolver).owner();
+    require(msg.sender == _owner_of_contract_resolver);
+
+    _success = ContractResolver(resolver).unregister_contract(key);
+    require(_success);
+
+    selfdestruct(_owner_of_contract_resolver);
+  }
+
+  /// @dev Check if resolver is locked
+  /// @return _locked if the resolver is currently locked
+  function is_locked()
+           private
+           constant
+           returns (bool _locked)
+  {
+    _locked = ContractResolver(resolver).locked();
+  }
+
+  /// @dev Get the address of a contract
+  /// @param _key the resolver key to look up
+  /// @return _contract the address of the contract
+  function get_contract(bytes32 _key)
+           public
+           constant
+           returns (address _contract)
+  {
+    _contract = ContractResolver(resolver).get_contract(_key);
+  }
+}
+
+/// @title Some useful constants
+/// @author Digix Holdings Pte Ltd
+contract Constants {
+  address constant NULL_ADDRESS = address(0x0);
+  uint256 constant ZERO = uint256(0);
+  bytes32 constant EMPTY = bytes32(0x0);
+}
+
+/// @title Condition based access control
+/// @author Digix Holdings Pte Ltd
+contract ACConditions is Constants {
+
+  modifier not_null_address(address _item) {
+    require(_item != NULL_ADDRESS);
     _;
   }
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
+  modifier if_null_address(address _item) {
+    require(_item == NULL_ADDRESS);
+    _;
   }
 
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
+  modifier not_null_uint(uint256 _item) {
+    require(_item != ZERO);
+    _;
+  }
+
+  modifier if_null_uint(uint256 _item) {
+    require(_item == ZERO);
+    _;
+  }
+
+  modifier not_empty_bytes(bytes32 _item) {
+    require(_item != EMPTY);
+    _;
+  }
+
+  modifier if_empty_bytes(bytes32 _item) {
+    require(_item == EMPTY);
+    _;
+  }
+
+  modifier not_null_string(string _item) {
+    bytes memory _i = bytes(_item);
+    require(_i.length > 0);
+    _;
+  }
+
+  modifier if_null_string(string _item) {
+    bytes memory _i = bytes(_item);
+    require(_i.length == 0);
+    _;
+  }
+
+  modifier require_gas(uint256 _requiredgas) {
+    require(msg.gas  >= (_requiredgas - 22000));
+    _;
+  }
+
+  function is_contract(address _contract)
+           public
+           constant
+           returns (bool _is_contract)
+  {
+    uint32 _code_length;
+
+    assembly {
+      _code_length := extcodesize(_contract)
+    }
+
+    if(_code_length > 1) {
+      _is_contract = true;
+    } else {
+      _is_contract = false;
+    }
+  }
+
+  modifier if_contract(address _contract) {
+    require(is_contract(_contract) == true);
+    _;
+  }
+
+  modifier unless_contract(address _contract) {
+    require(is_contract(_contract) == false);
+    _;
   }
 }
 
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
+contract MarketplaceAdminController {
+}
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+contract MarketplaceStorage {
+}
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
+contract MarketplaceController {
+  function put_purchase_for(uint256 _wei_sent, address _buyer, address _recipient, uint256 _block_number, uint256 _nonce, uint256 _wei_per_dgx_mg, address _signer, bytes _signature) payable public returns (bool _success, uint256 _purchased_amount);
+}
+
+contract MarketplaceCommon is ResolverClient, ACConditions, DigixConstants {
+
+  function marketplace_admin_controller()
+           internal
+           constant
+           returns (MarketplaceAdminController _contract)
+  {
+    _contract = MarketplaceAdminController(get_contract(CONTRACT_CONTROLLER_MARKETPLACE_ADMIN));
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+  function marketplace_storage()
+           internal
+           constant
+           returns (MarketplaceStorage _contract)
+  {
+    _contract = MarketplaceStorage(get_contract(CONTRACT_STORAGE_MARKETPLACE));
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
+  function marketplace_controller()
+           internal
+           constant
+           returns (MarketplaceController _contract)
+  {
+    _contract = MarketplaceController(get_contract(CONTRACT_CONTROLLER_MARKETPLACE));
   }
 }
 
-// File: contracts/marketplace/Marketplace.sol
+/// @title Digix's Marketplace
+/// @author Digix Holdings Pte Ltd
+/// @notice This contract is for KYC-approved users to purchase DGX using ETH
+contract Marketplace is MarketplaceCommon {
 
-/**
- * @title Interface for contracts conforming to ERC-20
- */
-contract ERC20Interface {
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+  function Marketplace(address _resolver) public
+  {
+    require(init(CONTRACT_INTERACTIVE_MARKETPLACE, _resolver));
+  }
+
+  /// @dev purchase DGX gold
+  /// @param _block_number Block number from DTPO (Digix Trusted Price Oracle)
+  /// @param _nonce Nonce from DTPO
+  /// @param _wei_per_dgx_mg Price in wei for one milligram of DGX
+  /// @param _signer Address of the DTPO signer
+  /// @param _signature Signature of the payload
+  /// @return {
+  ///   "_success": "returns true if operation is successful",
+  ///   "_purchased_amount": "DGX nanograms received"
+  /// }
+  function purchase(uint256 _block_number, uint256 _nonce, uint256 _wei_per_dgx_mg, address _signer, bytes _signature)
+           payable
+           public
+           returns (bool _success, uint256 _purchased_amount)
+  {
+    address _sender = msg.sender;
+
+    (_success, _purchased_amount) =
+      marketplace_controller().put_purchase_for.value(msg.value).gas(600000)(msg.value, _sender, _sender, _block_number,
+                                                                             _nonce, _wei_per_dgx_mg, _signer, _signature);
+    require(_success);
+  }
 }
-
-/**
- * @title Interface for contracts conforming to ERC-721
- */
-contract ERC721Interface {
-    function ownerOf(uint256 assetId) public view returns (address);
-    function safeTransferFrom(address from, address to, uint256 assetId) public;
-    function isAuthorized(address operator, uint256 assetId) public view returns (bool);
-}
-
-contract Marketplace is Ownable, Pausable, Destructible {
-    using SafeMath for uint256;
-
-    ERC20Interface public acceptedToken;
-    ERC721Interface public nonFungibleRegistry;
-
-    struct Auction {
-        // Auction ID
-        bytes32 id;
-        // Owner of the NFT
-        address seller;
-        // Price (in wei) for the published item
-        uint256 price;
-        // Time when this sale ends
-        uint256 expiresAt;
-    }
-
-    mapping (uint256 => Auction) public auctionByAssetId;
-
-    uint256 public ownerCutPercentage;
-    uint256 public publicationFeeInWei;
-
-    /* EVENTS */
-    event AuctionCreated(
-        bytes32 id,
-        uint256 indexed assetId,
-        address indexed seller, 
-        uint256 priceInWei, 
-        uint256 expiresAt
-    );
-    event AuctionSuccessful(
-        bytes32 id,
-        uint256 indexed assetId, 
-        address indexed seller, 
-        uint256 totalPrice, 
-        address indexed winner
-    );
-    event AuctionCancelled(
-        bytes32 id,
-        uint256 indexed assetId, 
-        address indexed seller
-    );
-
-    event ChangedPublicationFee(uint256 publicationFee);
-    event ChangedOwnerCut(uint256 ownerCut);
-
-
-    /**
-     * @dev Constructor for this contract.
-     * @param _acceptedToken - Address of the ERC20 accepted for this marketplace
-     * @param _nonFungibleRegistry - Address of the ERC721 registry contract.
-     */
-    function Marketplace(address _acceptedToken, address _nonFungibleRegistry) public {
-        acceptedToken = ERC20Interface(_acceptedToken);
-        nonFungibleRegistry = ERC721Interface(_nonFungibleRegistry);
-    }
-
-    /**
-     * @dev Sets the publication fee that's charged to users to publish items
-     * @param publicationFee - Fee amount in wei this contract charges to publish an item
-     */
-    function setPublicationFee(uint256 publicationFee) onlyOwner public {
-        publicationFeeInWei = publicationFee;
-
-        ChangedPublicationFee(publicationFeeInWei);
-    }
-
-    /**
-     * @dev Sets the share cut for the owner of the contract that's
-     *  charged to the seller on a successful sale.
-     * @param ownerCut - Share amount, from 0 to 100
-     */
-    function setOwnerCut(uint8 ownerCut) onlyOwner public {
-        require(ownerCut < 100);
-
-        ownerCutPercentage = ownerCut;
-
-        ChangedOwnerCut(ownerCutPercentage);
-    }
-
-    /**
-     * @dev Cancel an already published order
-     * @param assetId - ID of the published NFT
-     * @param priceInWei - Price in Wei for the supported coin.
-     * @param expiresAt - Duration of the auction (in hours)
-     */
-    function createOrder(uint256 assetId, uint256 priceInWei, uint256 expiresAt) public whenNotPaused {
-        address assetOwner = nonFungibleRegistry.ownerOf(assetId);
-        require(msg.sender == assetOwner);
-        require(nonFungibleRegistry.isAuthorized(address(this), assetId));
-        require(priceInWei > 0);
-        require(expiresAt > now.add(1 minutes));
-
-        bytes32 auctionId = keccak256(
-            block.timestamp, 
-            assetOwner,
-            assetId, 
-            priceInWei
-        );
-
-        auctionByAssetId[assetId] = Auction({
-            id: auctionId,
-            seller: assetOwner,
-            price: priceInWei,
-            expiresAt: expiresAt
-        });
-
-        // Check if there's a publication fee and
-        // transfer the amount to marketplace owner.
-        if (publicationFeeInWei > 0) {
-            require(acceptedToken.transferFrom(
-                msg.sender,
-                owner,
-                publicationFeeInWei
-            ));
-        }
-
-        AuctionCreated(
-            auctionId,
-            assetId, 
-            assetOwner,
-            priceInWei, 
-            expiresAt
-        );
-    }
-
-    /**
-     * @dev Cancel an already published order
-     *  can only be canceled by seller or the contract owner.
-     * @param assetId - ID of the published NFT
-     */
-    function cancelOrder(uint256 assetId) public whenNotPaused {
-        require(auctionByAssetId[assetId].seller == msg.sender || msg.sender == owner);
-
-        bytes32 auctionId = auctionByAssetId[assetId].id;
-        address auctionSeller = auctionByAssetId[assetId].seller;
-        delete auctionByAssetId[assetId];
-
-        AuctionCancelled(auctionId, assetId, auctionSeller);
-    }
-
-    /**
-     * @dev Executes the sale for a published NTF
-     * @param assetId - ID of the published NFT
-     */
-    function executeOrder(uint256 assetId, uint256 price) public whenNotPaused {
-        address seller = auctionByAssetId[assetId].seller;
-
-        require(seller != address(0));
-        require(seller != msg.sender);
-        require(auctionByAssetId[assetId].price == price);
-        require(now < auctionByAssetId[assetId].expiresAt);
-
-        require(seller == nonFungibleRegistry.ownerOf(assetId));
-
-        uint saleShareAmount = 0;
-
-        if (ownerCutPercentage > 0) {
-
-            // Calculate sale share
-            saleShareAmount = price.mul(ownerCutPercentage).div(100);
-
-            // Transfer share amount for marketplace Owner.
-            acceptedToken.transferFrom(
-                msg.sender,
-                owner,
-                saleShareAmount
-            );
-        }
-
-        // Transfer sale amount to seller
-        acceptedToken.transferFrom(
-            msg.sender,
-            seller,
-            price.sub(saleShareAmount)
-        );
-
-        // Transfer asset owner
-        nonFungibleRegistry.safeTransferFrom(
-            seller,
-            msg.sender,
-            assetId
-        );
-
-
-        bytes32 auctionId = auctionByAssetId[assetId].id;
-        delete auctionByAssetId[assetId];
-
-        AuctionSuccessful(auctionId, assetId, seller, price, msg.sender);
-    }
- }
