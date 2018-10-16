@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NPTToken at 0x9602324476afa057150e075459da3133a11aa2b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NPTToken at 0x0d7989fdbd23eb4286169f4b4e47fcda8de65566
 */
 pragma solidity ^0.4.13;
-/*News platform System change thet world**/
+/*News platform System change world**/
 
 //Math operations with safety checks that throw on error
 library SafeMath {
@@ -157,11 +157,11 @@ contract StandardToken is ERC20, BasicToken {
 }
 //the main NPTToken contract
 contract NPTToken is StandardToken {
-  string public constant name = "News Platform Token";
+  string public constant name = "News Platform System";
   string public constant symbol = "NPT";
   uint8 public constant decimals = 10;
 
-  uint256 public constant INITIAL_SUPPLY = 2500000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(decimals));
 
   function NPTToken(address wallet) {
     balances[wallet] = INITIAL_SUPPLY;
