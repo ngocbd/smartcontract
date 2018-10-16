@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRM at 0xd7732e3783b0047aa251928960063f863ad022d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRM at 0x61d1641b26394849af829eb8313f35de2716a713
 */
+pragma solidity ^0.4.18;
+
 contract Token {
     uint256 public totalSupply;
     function balanceOf(address _owner) constant returns (uint256 balance);
@@ -10,6 +12,9 @@ contract Token {
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function () public payable {
+        revert();
+    }
 }
 
 
@@ -56,15 +61,89 @@ contract StandardToken is Token {
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
+    function () public payable {
+        revert();
+    }
 }
-contract BRM is StandardToken {
+contract SafeMath {
+
+    /* function assert(bool assertion) internal { */
+    /*   if (!assertion) { */
+    /*     throw; */
+    /*   } */
+    /* }      // assert no longer needed once solidity is on 0.4.10 */
+
+    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
+        uint256 z = x + y;
+        assert((z >= x) && (z >= y));
+        return z;
+    }
+
+    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
+        assert(x >= y);
+        uint256 z = x - y;
+        return z;
+    }
+
+    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
+        uint256 z = x * y;
+        assert((x == 0)||(z/x == y));
+        return z;
+    }
+
+    function () public payable {
+        revert();
+    }
+
+}
+contract Owner {
+
+	/// @dev `owner` is the only address that can call a function with this
+	/// modifier
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
+
+	address public owner;
+
+	/// @notice The Constructor assigns the message sender to be `owner`
+	function Owner() public {
+		owner = msg.sender;
+	}
+
+	address public newOwner;
+
+	/// @notice `owner` can step down and assign some other address to this role
+	/// @param _newOwner The address of the new owner. 0x0 can be used to create
+	///  an unowned neutral vault, however that cannot be undone
+	function changeOwner(address _newOwner) public onlyOwner {
+		newOwner = _newOwner;
+	}
+
+
+	function acceptOwnership() public {
+		if (msg.sender == newOwner) {
+			owner = newOwner;
+		}
+	}
+
+	function () public payable {
+		revert();
+	}
+
+}
+contract BRM is Owner, StandardToken, SafeMath {
 	string public constant name = "BrahmaOS";
 	string public constant symbol = "BRM";
 	uint256 public constant decimals = 18;
+	string public version = "1.0";
+
 
 	uint256 public constant total = 3 * 10**9 * 10**decimals;
 
 	function BRM() {
+
 		totalSupply = total;
 		balances[msg.sender] = total;
 	}
