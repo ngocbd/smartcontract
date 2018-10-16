@@ -1,23 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xe1c9a03cf690256ff7738cbd508c88cf5238a535
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xf5aa54d121dfe0d5eeb37c83aed42238f4f2c5c6
 */
 pragma solidity ^0.4.20;
 
 /*
-* 
-* ==========================*
-*  ____   ___     __        *
-* |  _ \ / _ \   |  |       * 
-* | |_) | | | |  |  |       *
-* |  __/| |_| |__|  |       *
-* |_|    \___/|_____|       *
-*                           *
-* ==========================*
-* -> What?
-* This source code is copy of Proof of Weak Legs (POWL) which is copy of POWH3D
-* Only difference is that, you will receive 50% dividends.
-SUCK A DICK POORGUY
-papa is daddy
+* Power of Real Math.. No fancy design
+* Kudos to devs of Proof of Weak Hands POWH3D
+* we are porm not porn with 20% divs
 */
 
 contract Hourglass {
@@ -122,10 +111,10 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "POHD";
-    string public symbol = "POHD";
+    string public name = "PORM";
+    string public symbol = "PORM";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 2;
+    uint8 constant internal dividendFee_ = 5;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -155,7 +144,7 @@ contract Hourglass {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false;
+    bool public onlyAmbassadors = true;
     
 
 
@@ -169,21 +158,44 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0x235910f4682cfe7250004430a4ffb5ac78f5217e1f6a4bf99c937edf757c3330] = true;
+        administrators[0xb058778bae0aa2d86398ed360c7d4f057a73ba7aec830f94c6948807a9a1ce3b] = true;
         
         // add the ambassadors here.
-        // One lonely developer 
-        ambassadors_[0x6405C296d5728de46517609B78DA3713097163dB] = true;
+        // Marketer - Not a great dev
+        ambassadors_[0xd932daae9e6c01337705986eb2303ff5919ebd2f] = true;
         
         // Backup Eth address
-       
-        ambassadors_[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = true;
-         
-        ambassadors_[0x448D9Ae89DF160392Dd0DD5dda66952999390D50] = true;
+        ambassadors_[0x988758c4338fca14499bc3fa41e1e61f08f6515c] = true;
         
-    
-         
-         
+        //mipans - Discord & telegram admin
+        ambassadors_[0x632d9e6daba00ac01d9db703df804e560f843f48] = true;
+        
+        //juan - Does nothing
+        ambassadors_[0x265268ec9957fffd53020a60cc4bf20aa8b0a851] = true;
+        
+        //antim - trouble maker
+        ambassadors_[0xd2cf365492e563b350c47b8561f63975ac32e8a3] = true;
+        
+        //safi - instant bug fixer
+        ambassadors_[0x3b8edbc36eef0ac3792d37e3c7b302dd3c1d436b] = true;
+        
+        //ripav - test engineer
+        ambassadors_[0x8175201f06d820a8906ae861db84d72498dbc01b] = true;
+        
+        //Private investors
+        ambassadors_[0xb1baabc254a2d56c3a848c78ba431ff779c1c1d1] = true;
+        ambassadors_[0x7b43be33421309ce571f98e4537684655074148b] = true;
+        ambassadors_[0x02e02d8c0599e664da3464b6e3b968a7a6a71222] = true;
+        ambassadors_[0x4eb7dc876547c1d166f6c7d5e7513e77f0bf8600] = true;
+        ambassadors_[0x749499a5cd16a256736372ff3f16c4b59d4fc2cb] = true;
+        ambassadors_[0x6143d0197a618e39361537fc4ce237b6a9332899] = true;
+        ambassadors_[0x88549a1826455b25ef2a6a7eaa364f6667a07b3d] = true;
+        ambassadors_[0xa9ba1169ec64736f9f831e007130f59e422ada66] = true;
+        ambassadors_[0xee510ab4bce25f86291ef36c0bbe553888466acd] = true;
+        ambassadors_[0x1821912c6b65020b2c60759e67e5a4aa354026c4] = true;
+        ambassadors_[0x5323b1e60b018f0252857c7bc18f14aa71208e23] = true;
+        ambassadors_[0x7f4c13265d825d5888b330f40affe49e4e66a607] = true;
+        ambassadors_[0xe10dc0a1c0a6116633148326671600b112a5d900] = true;
         
         
      
