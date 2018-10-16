@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x8b07e320e1d266bfd274ec333c24ea4a04d178d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xe16a567ea438a81994ec7859b9abb0184f3d6028
 */
-pragma solidity ^0.4.20;
-//Address: 0x8B07e320e1D266bFD274Ec333c24EA4a04d178D2
+pragma solidity ^0.4.11;
+
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -32,6 +32,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
+pragma solidity ^0.4.0;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -1053,292 +1055,109 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
-// Contract that:
-//      Lets anyone bet with 0.820 ethers
-//      When it reaches 2 bets, it chooses a player at random based on oraclize and sends z% of the ethers received. other v% goes to GiveDirectly
+contract Lottery is usingOraclize {
+    
+    //Public variables
+    uint public winningNumber=0; //real random winning number
+    address public winningaddr; //public address of winner
+    uint public bet_amount; //cost per ticket
+    
+    uint public durationh;
+    uint public numTickets; //Number of selled tickets
+    
+    uint exit_amount;
+    
+    uint public stage = 3;
+    uint public startTime;
+    
+    bytes32 queryId1;
 
-contract Lottery is usingOraclize{
-    
-    uint8 public player_count; //keep track of how many people are signed up.
-    uint public ante; //how big is the bet per person (in ether)
-    uint8 public required_number_players; //how many sign ups trigger the lottery
-    uint public winner_percentage; // how much does the winner get (in percentage)
-    address owner; // owner of the contract
-    uint oracle_price; //oracle reserved fee from participants
-    uint oraclize_gas;
-    uint private_rooms_index;//index to generate the priate room ids
-    bool public paused;
-    uint public ticket_price;
-    
-    struct Players {
-        address player1;
-        address player2;
-        address winner;
-        string status;
-        bytes32 privateroomid;
-    }
-    
-    struct PrivatePlayers {
-        address player1;
-        address player2;
-        address winner;
-        string status;
-    }
-    
-    Players players;//structure to store two random players
-    
-    mapping (bytes32 => Players) public rooms; //A mapping to store the player pairs based on the ID from oraclize.it in order to perform the payout
-    mapping (bytes32 => PrivatePlayers) public private_rooms; //A mapping to store the player pairs in private rooms based on keccak256 ids generated locally
-    
-        //constructor
-    function Lottery() public{
+    //private variables
+    address owner;
+
+    mapping(uint => address) public tickets;
+ 
+    function Lottery(){
         owner = msg.sender;
-        player_count = 0;
-        ante = 0.820 ether;
-        required_number_players = 2;
-        winner_percentage = 98;
-        oraclize_setProof(proofType_Ledger); 
-        oracle_price = 0.003 ether;
-        oraclize_gas = 285000;
-        private_rooms_index=0;
-        paused = false;
-        ticket_price = ante + oracle_price;
+        //oraclize_setNetwork(networkID_testnet);
     }
     
-    event newRandomNumber_uint(uint rand);
-    event PrivateRoomID (
-        address indexed room_creator,
-        bytes32 indexed roomID
-        );
-    event RoomID (
-        address indexed room_creator,
-        bytes32 indexed roomID
-        );
-    event ShowProof (bytes _proof);
-    event ShowPlayers (address indexed player1, address indexed player2);
-    // announce the winner with an event
-    event Played_room (
-        bytes32 indexed _id,
-        address[2] indexed _players
-        );
-    event Announce_winner(
-        address indexed _player1,
-        address indexed _player2,
-        address indexed _winner,
-        uint _value
-        );
-    event Pause();
-    event Unpause();
-    
-    modifier onlyOwner() {
-        assert(msg.sender == owner);
-        _;
-    }
-    
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
-    
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
-    
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        Pause();
-    }
-    
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        Unpause();
-    }
-
-    function changeParameters(uint newAnte, uint8 newNumberOfPlayers, uint newWinnerPercentage, uint newOraclePrice, uint newOracleGas) onlyOwner whenPaused public{
-        // Only the creator can alter this
-        
-        if (newAnte != uint80(0)) {
-            ante = newAnte;
-        }
-        if (newNumberOfPlayers != uint80(0)) {
-            required_number_players = newNumberOfPlayers;
-        }
-        if (newWinnerPercentage != uint80(0)) {
-            winner_percentage = newWinnerPercentage;
-        }
-        if (newOraclePrice != uint80(0)) {
-            oracle_price = newOraclePrice;
-        }
-        if (newOracleGas != uint80(0)) {
-            oracle_price = newOracleGas;
-        }
-        ticket_price = ante + oracle_price;
-    }
-    
-    // the callback function is called by Oraclize when the result is ready
-    // the oraclize_randomDS_proofVerify modifier prevents an invalid proof to execute this function code:
-    // the proof validity is fully verified on-chain
-    function __callback(bytes32 _queryId, string _result, bytes _proof) public { 
-        require (msg.sender == oraclize_cbAddress());
-        
-        ShowProof (_proof);
+    function __callback(bytes32 _queryId, string _result, bytes _proof)
+    { 
+        if (msg.sender != oraclize_cbAddress()) throw;
+        if(_queryId == queryId1) {stage = 1; return;}
         if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0) {
-            // the proof verification has failed send ante to players
-            rooms[_queryId].player1.transfer(ante);
-            rooms[_queryId].player2.transfer(ante);
-        
-            if (rooms[_queryId].privateroomid != bytes32(0) ) {
-                private_rooms[rooms[_queryId].privateroomid].status = "Failed proof";
-            }
-            rooms[_queryId].status = "Failed proof";
-            
+            stage = 3;
         } else {
             // the proof verification has passed
-            // for simplicity of use, let's also convert the random bytes to uint if we need
-            uint maxRange = 2**(8* 7); // this is the highest uint we want to get. It should never be greater than 2^(8*N), where N is the number of random bytes we had asked the datasource to return
-            uint random = uint(keccak256(_result)) % maxRange; // this is an efficient way to get the uint out in the [0, maxRange] range
-            newRandomNumber_uint(random); // this is the resulting random number (uint)
-            pay (random, _queryId);
+            winningNumber = (uint(sha3(_result)) % (numTickets-1))+1; // this is an efficient way to get the uint out in the [0, maxRange] range
+            winningaddr = tickets[winningNumber];
+            //send all ETH to winner
+            winningaddr.transfer(this.balance);
+            stage = 3;
         }
-    }
-    
-    function update() internal {
-        require (players.player1 != address(0));
-        require (players.player2 != address(0));
-        
-        uint N = 3; // number of random bytes we want the datasource to return
-        uint delay = 0; // number of seconds to wait before the execution takes place
-        uint callbackGas = oraclize_gas; // amount of gas we want Oraclize to set for the callback function
-        bytes32 queryId = oraclize_newRandomDSQuery(delay, N, callbackGas); // this function internally generates the correct oraclize_query and returns its queryId
-        rooms[queryId].player1=players.player1;
-        rooms[queryId].player2=players.player2;
-        rooms[queryId].status = "pending oraclize" ; 
-        RoomID (players.player1,queryId);
-    }
-    
-    
-    function update_private_room(bytes32 roomid) internal {
-        require (private_rooms[roomid].player1 != address(0)); 
-        require (private_rooms[roomid].player2 != address(0)); //check if players are in
-        
-        uint N = 3; // number of random bytes we want the datasource to return
-        uint delay = 0; // number of seconds to wait before the execution takes place
-        uint callbackGas = oraclize_gas; // amount of gas we want Oraclize to set for the callback function
-        bytes32 queryId = oraclize_newRandomDSQuery(delay, N, callbackGas); // this function internally generates the correct oraclize_query and returns its queryId
-        rooms[queryId].player1 = private_rooms[roomid].player1;
-        rooms[queryId].player2 = private_rooms[roomid].player2;
-        rooms[queryId].privateroomid = roomid;
-        rooms[queryId].status = "pending oraclize" ; 
-        RoomID (players.player1,queryId);
     }
 
-    function() whenNotPaused payable public{
-        buy();
-    }
-
-// function when someone gambles a.k.a sends ether to the contract
-    function buy() whenNotPaused payable public{
-        // No arguments are necessary, all
-        // information is already part of
-        // the transaction. The keyword payable
-        // is required for the function to
-        // be able to receive Ether.
-    
-        // If the bet is not equal to the ante + the oracle price, 
-        // send the money back.
-        require (msg.value >= ante + oracle_price);//give it back, revert state changes, abnormal stop
-        require (player_count <2); //make sure that the counter was reset
-        if(msg.value > (ante+oracle_price)) {
-            msg.sender.transfer(msg.value - ante - oracle_price); //If any extra eteher gets transferred return it back to the sender
+    //Owner calls after EndLottery
+    function newGame(uint _bet_amount, uint _durationh, uint _gwei) public payable{
+        if((stage == 3)&&(msg.sender == owner)){
+            //reset for new game
+            for(uint i = 1; i<numTickets; i++){
+                tickets[i] = 0;
+            }
+            oraclize_setCustomGasPrice(_gwei * 1000000000 wei);
+            winningNumber = 0;
+            bet_amount = _bet_amount * 1 finney;
+            durationh = _durationh * 1 hours;
+            numTickets = 1;
+            stage = 0;
+            startTime = now;
+            //ready for next round(next bets)
+            oraclize_setProof(proofType_TLSNotary);
+            queryId1 = oraclize_query(durationh, "URL", "", 75000);
         }
-         
-        player_count +=1;
-        if (player_count == 1) {
-            players.player1 = msg.sender;
-        }
-        if (player_count == 2) {
-            players.player2 = msg.sender;
-            ShowPlayers (players.player1,players.player2);
-            update();
-            player_count =0;
-        }
+        else
+        throw;
     }
     
-    function pay (uint random, bytes32 _queryId) internal{
-        require (rooms[_queryId].winner == address(0));
-        address[2] round_players;
-        round_players[0]=rooms[_queryId].player1;
-        round_players[1]=rooms[_queryId].player2;
-        Played_room(_queryId,[rooms[_queryId].player1,rooms[_queryId].player2]);
-        // pick the winner
-        random = random%required_number_players;
-        uint sum_won=ante*required_number_players*winner_percentage/100;
-        
-        //transfer the money
-        round_players[random].transfer(sum_won);
-        owner.transfer(ante*required_number_players - ante*required_number_players*winner_percentage/100);
-        
-        if (rooms[_queryId].privateroomid != bytes32(0) ) {
-            private_rooms[rooms[_queryId].privateroomid].status ="closed";
-            private_rooms[rooms[_queryId].privateroomid].winner = round_players[random];
+    //Called from participants
+    function Bet() public payable  {
+        if ((msg.value == bet_amount) && (stage == 0)) {
+            tickets[numTickets] = msg.sender; //save address of participant
+            numTickets++;
         }
-        rooms[_queryId].status = "closed";
-        rooms[_queryId].winner = round_players[random];
-        
-        Announce_winner(round_players[0],round_players[1],round_players[random],sum_won);
+        else
+         throw;
     }
     
-    function create_private_room () whenNotPaused payable public{
-        require (msg.value >= ante + oracle_price);//give it back, revert state changes, abnormal stop
-        if(msg.value > (ante+oracle_price)) {
-            msg.sender.transfer(msg.value - ante - oracle_price); //If any extra eteher gets transferred return it back to the sender
+    function payout() public payable{
+        if(stage == 1){
+            if(numTickets == 1)
+            {
+                stage = 3;
+            }
+            else
+            {
+                oraclize_setProof(proofType_Ledger);
+                oraclize_newRandomDSQuery(0, 4, 200000);
+                //Fee for owner 0.66%
+                owner.transfer(this.balance/150);
+                stage = 2;
+            }
         }
-        
-        bytes32 roomid= sha3(private_rooms_index);
-        require (private_rooms[roomid].player1 == address(0)); //make sure that the room is empty
-        private_rooms[roomid].player1= msg.sender;
-        private_rooms[roomid].status = "open";
-        private_rooms_index++;
-        PrivateRoomID (msg.sender,roomid);
+        else
+         throw;
     }
     
-    function join_private_room (bytes32 roomid) whenNotPaused payable public{
-        require (msg.value >= ante + oracle_price);//give it back, revert state changes, abnormal stop
-        require (private_rooms[roomid].player1 != address(0)); //make sure that a player exists in this room
-        require (private_rooms[roomid].player2 == address(0)); //and that a second one has not joiened yet
-        if(msg.value > (ante+oracle_price)) {
-            msg.sender.transfer(msg.value - ante - oracle_price); //If any extra eteher gets transferred return it back to the sender
+    function exit() public payable{
+        if(msg.sender == owner){
+            exit_amount = this.balance / (numTickets-1);
+            for(uint i = 1; i<numTickets; i++){
+                tickets[i].transfer(exit_amount);
+            }
         }
-        
-        private_rooms[roomid].player2= msg.sender;
-        private_rooms[roomid].status = "both players joined";
-        //ShowPlayers (private_rooms[roomid].player1,private_rooms[roomid].player2);
-        update_private_room (roomid);
-    }
-    
-    function returneth (bytes32 _roomID) onlyOwner public {
-        //for any rooms that oraclize fails to return the money to can use this to return ante to owners
-        require (_roomID != bytes32(0)); //make sure address is not null
-        require (rooms[_roomID].winner == address(0)); //make sure that the sum cannot be double spent
-        
-        rooms[_roomID].player1.transfer(ante);
-        rooms[_roomID].player2.transfer(ante);
-        rooms[_roomID].status = "failed";
-        if (rooms[_roomID].privateroomid != bytes32(0) ) {
-            private_rooms[rooms[_roomID].privateroomid].status ="failed";
-        }
-    }
-    
-    function returnante (address _addr) onlyOwner public {
-        require (_addr != address(0));
-        _addr.transfer(ante);
-    }
-
-    function kill() onlyOwner public{
-        //kill switch in case of disaster
-        owner.transfer(this.balance);
-        selfdestruct(owner);
+        else
+         throw;
     }
     
 }
