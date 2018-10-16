@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GNCCrowdsale at 0x01b840bc3f9243733d5ae3f3ca61ca0587073bf4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GNCCrowdsale at 0xf116625f09b645a72739b43977b2645c32b0d554
 */
 pragma solidity ^0.4.18;
 
@@ -27,22 +27,6 @@ library SafeMath {
         uint256 c = a + b;
         assert(c >= a);
         return c;
-    }
-
-    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a >= b ? a : b;
-    }
-
-    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a < b ? a : b;
-    }
-
-    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a >= b ? a : b;
-    }
-
-    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
     }
 }
 
@@ -81,8 +65,8 @@ contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
 
     mapping (address => uint256) balances;
-    uint256 public endTimeLockedTokensTeam = 1598831999; // +2 years (Sun, 30 Aug 2020 23:59:59 GMT)
-    uint256 public endTimeLockedTokensAdvisor = 1551398400; // + 6 months (Fri, 01 Mar 2019 00:00:00 GMT)
+    uint256 public endTimeLockedTokensTeam = 1601510399; // +2 years (Wed, 30 Sep 2020 23:59:59 GMT)
+    uint256 public endTimeLockedTokensAdvisor = 1554076800; // + 6 months (Mon, 01 Apr 2019 00:00:00 GMT)
     address public walletTeam = 0xdEffB0629FD35AD1A462C13D65f003E9079C3bb1;
     address public walletAdvisor = 0xD437f2289B4d20988EcEAc5E050C6b4860FFF4Ac;
 
@@ -104,11 +88,11 @@ contract BasicToken is ERC20Basic {
         require(_value <= balances[msg.sender]);
 
         // Block the sending of tokens from the fund Advisors
-        if( (now < endTimeLockedTokensAdvisor) && (msg.sender == walletAdvisor) ) {
+        if ((msg.sender == walletAdvisor) && (now < endTimeLockedTokensAdvisor)) {
             revert();
         }
         // Block the sending of tokens from the fund Team
-        if( (now < endTimeLockedTokensTeam) && (msg.sender == walletTeam) ) {
+        if((msg.sender == walletTeam) && (now < endTimeLockedTokensTeam)) {
             revert();
         }
 
@@ -249,6 +233,7 @@ contract Ownable {
             permissions[_numberFunction].approveOwnerTwo = _permValue;
         }
     }
+
 /*
     function getApprove(uint8 _numberFunction) public view onlyOwner returns (bool) {
         if(msg.sender == owner){
@@ -259,6 +244,7 @@ contract Ownable {
         }
     }
 */
+
     function removePermission(uint8 _numberFunction) public onlyOwner {
         permissions[_numberFunction].approveOwner = false;
         permissions[_numberFunction].approveOwnerTwo = false;
@@ -299,6 +285,7 @@ contract MintableToken is StandardToken, Ownable {
      * Claim tokens
      */
     function claimTokens(address _token) public  onlyOwner {
+    //function claimTokens(address _token) public {  //for test's
         //require(permissions[4].approveOwner == true && permissions[4].approveOwnerTwo == true);
         if (_token == 0x0) {
                 owner.transfer(this.balance);
@@ -345,10 +332,12 @@ contract GNCCrowdsale is Ownable, Crowdsale, MintableToken {
     using SafeMath for uint256;
 
     /**
-    * 1 Stage  1 ETH = 300  token -- Limit = 0,10  ETH
-    * 2 Stage  1 ETH = 290  token -- Limit = 0,05  ETH
-    * 3 Stage  1 ETH = 275  token -- Limit = 0,01  ETH
-    * 4 Stage  1 ETH = 250  token -- Limit = no
+    * Price: 1 ETH = 500 token
+    *
+    * 1 Stage  1 ETH = 575  token -- discount 15%
+    * 2 Stage  1 ETH = 550  token -- discount 10%
+    * 3 Stage  1 ETH = 525  token -- discount 5%
+    * 4 Stage  1 ETH = 500  token -- discount 0%
     *
     */
     uint256[] public rates  = [575, 550, 525, 500];
@@ -358,11 +347,13 @@ contract GNCCrowdsale is Ownable, Crowdsale, MintableToken {
     mapping(address => bool) public whitelist;
 
     uint256 public constant INITIAL_SUPPLY = 50 * (10 ** 6) * (10 ** uint256(decimals));
-    uint256 public fundForSale = 30 * (10 ** 6) * (10 ** uint256(decimals));
+    uint256 public fundForSale = 30 *   (10 ** 6) * (10 ** uint256(decimals));
     uint256 public fundTeam =    7500 * (10 ** 3) * (10 ** uint256(decimals));
     uint256 public fundAdvisor = 4500 * (10 ** 3) * (10 ** uint256(decimals));
-    uint256 public fundBounty =    500 * (10 ** 3) * (10 ** uint256(decimals));
-    address public bounty;
+    uint256 public fundBounty =  500 *  (10 ** 3) * (10 ** uint256(decimals));
+    uint256 public fundPreIco =  6000 * (10 ** 3) * (10 ** uint256(decimals));
+
+    address public addressBounty = 0xE3dd17FdFaCa8b190D2fd71f3a34cA95Cdb0f635;
 
     uint256 public countInvestor;
 
@@ -375,8 +366,7 @@ contract GNCCrowdsale is Ownable, Crowdsale, MintableToken {
     function GNCCrowdsale(
     address _owner,
     address _wallet,
-    address _ownerTwo,
-    address _bounty
+    address _ownerTwo
     )
     public
     Crowdsale(_wallet)
@@ -384,10 +374,8 @@ contract GNCCrowdsale is Ownable, Crowdsale, MintableToken {
         require(_wallet != address(0));
         require(_owner != address(0));
         require(_ownerTwo != address(0));
-        require(_bounty != address(0));
         owner = _owner;
         ownerTwo = _ownerTwo;
-        bounty = _bounty;
         totalSupply = INITIAL_SUPPLY;
         bool resultMintForOwner = mintForFund(owner);
         require(resultMintForOwner);
@@ -417,36 +405,44 @@ contract GNCCrowdsale is Ownable, Crowdsale, MintableToken {
         return tokens;
     }
 
-    function getTotalAmountOfTokens(uint256 _weiAmount) internal view returns (uint256) {
+    function getTotalAmountOfTokens(uint256 _weiAmount) internal returns (uint256) {
         uint256 currentDate = now;
-        //currentDate = 1526342400; //for test's (Tue, 15 May 2018 00:00:00 GMT)
+        //currentDate = 1529020800; //for test's (Jun, 15)
         uint256 currentPeriod = getPeriod(currentDate);
         uint256 amountOfTokens = 0;
         if(currentPeriod < 4){
             amountOfTokens = _weiAmount.mul(rates[currentPeriod]);
             if(whitelist[msg.sender]){
-                amountOfTokens = amountOfTokens.div(100).mul(110);
+                amountOfTokens = amountOfTokens.mul(105).div(100);
+            }
+            if (currentPeriod == 0) {
+                if (tokenAllocated.add(amountOfTokens) > fundPreIco) {
+                    TokenLimitReached(tokenAllocated, amountOfTokens);
+                    return 0;
+                }
             }
         }
         return amountOfTokens;
     }
 
     function getPeriod(uint256 _currentDate) public pure returns (uint) {
-        //1525132800 - May, 01, 2018 00:00:00 && 1527724799 - May, 30, 2018 23:59:59
-        //1530489600 - Jul, 02, 2018 00:00:00 && 1531785599 - Jul, 16, 2018 23:59:59
-        //1531785600 - Jul, 17, 2018 00:00:00 && 1533081599 - Jul, 31, 2018 23:59:59
-        //1533081600 - Aug, 01, 2018 00:00:00 && 1535673599 - Aug, 30, 2018 23:59:59
+        /**
+        * 1527811200 - Jun, 01, 2018 00:00:00 && 1530403199 - Jun, 30, 2018 23:59:59
+        * 1533081600 - Aug, 01, 2018 00:00:00 && 1534377599 - Aug, 15, 2018 23:59:59
+        * 1534377600 - Aug, 16, 2018 00:00:00 && 1535759999 - Aug, 31, 2018 23:59:59
+        * 1535760000 - Sep, 01, 2018 00:00:00 && 1538351999 - Sep, 30, 2018 23:59:59
+        */
 
-        if( 1525132800 <= _currentDate && _currentDate <= 1527724799){
+        if( 1527811200 <= _currentDate && _currentDate <= 1530403199){
             return 0;
         }
-        if( 1530489600 <= _currentDate && _currentDate <= 1531785599){
+        if( 1533081600 <= _currentDate && _currentDate <= 1534377599){
             return 1;
         }
-        if( 1531785600 <= _currentDate && _currentDate <= 1533081599){
+        if( 1534377600 <= _currentDate && _currentDate <= 1535759999){
             return 2;
         }
-        if( 1533081600 <= _currentDate && _currentDate <= 1535673599){
+        if( 1535760000 <= _currentDate && _currentDate <= 1538351999){
             return 3;
         }
         return 10;
@@ -462,7 +458,7 @@ contract GNCCrowdsale is Ownable, Crowdsale, MintableToken {
         balances[_wallet] = balances[_wallet].add(INITIAL_SUPPLY.sub(fundTeam).sub(fundAdvisor).sub(fundBounty));
         balances[walletTeam] = balances[walletTeam].add(fundTeam);
         balances[walletAdvisor] = balances[walletAdvisor].add(fundAdvisor);
-        balances[bounty] = balances[bounty].add(fundBounty);
+        balances[addressBounty] = balances[addressBounty].add(fundBounty);
         result = true;
     }
 
