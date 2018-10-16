@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PGUC at 0x52324aa1fdfaa263bb7cd102ef9dfcc615df6023
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PGUC at 0xc4ce91d1AC3032Ef734bbEcd2AF41f10c0F293EF
 */
 pragma solidity ^0.4.13;
 
@@ -65,20 +65,20 @@ contract Ownable {
   @notice see https://github.com/ethereum/EIPs/issues/20
  */
 
-contract ERC21Basic {
+contract ERC20Basic {
   uint public totalSupply;
   function balanceOf(address who) constant returns (uint);
   function transfer(address to, uint value);
   event Transfer(address indexed from, address indexed to, uint value);
 }
-contract ERC21 is ERC21Basic {
+contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant returns (uint);
   function transferFrom(address from, address to, uint value);
   function approve(address spender, uint value);
   event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-contract PgucToken is ERC21Basic {
+contract PgucToken is ERC20Basic {
   
   using SafeMath for uint;
   
@@ -100,7 +100,7 @@ contract PgucToken is ERC21Basic {
     return balances[_owner];
   }
 }
-contract StandardToken is PgucToken, ERC21 {
+contract StandardToken is PgucToken, ERC20 {
   mapping (address => mapping (address => uint)) allowed;
   function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
     var _allowance = allowed[_from][msg.sender];
