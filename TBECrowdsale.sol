@@ -1,7 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBECrowdsale at 0xc39bd624909b35c8ce714f301b02917950ed5a17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBECrowdsale at 0x12db622c98d75f6f19493d9acbc7479fe382ec44
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.21;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 
 interface Token {
     function transfer(address _to, uint256 _value) external;
@@ -12,7 +59,7 @@ contract TBECrowdsale {
     Token public tokenReward;
     uint256 public price;
     address public creator;
-    address public owner = 0x7a30DE07DC5469d7A5115b8b5F44305CDE9101D5;
+    address public owner = 0x700635ad386228dEBCfBb5705d2207F529af8323;
     uint256 public startDate;
     uint256 public endDate;
     uint256 public bonusDate;
@@ -40,7 +87,7 @@ contract TBECrowdsale {
         endDate = startDate + 30 days;
         bonusDate = startDate + 5 days;
         tokenCap = 2400000000000000000000;
-        tokenReward = Token(0x647972c6A5bD977Db85dC364d18cC05D3Db70378);
+        tokenReward = Token(0xf18b97b312EF48C5d2b5C21c739d499B7c65Cf96);
     }
 
 
@@ -102,7 +149,7 @@ contract TBECrowdsale {
         require(whitelist[msg.sender]);
         
         if (categorie1[msg.sender] == false) {
-            require((whitelistedMax[msg.sender] +  msg.value) <= 200000000000000000);
+            require((whitelistedMax[msg.sender] +  msg.value) <= 5000000000000000000);
         }
 
         uint256 amount = msg.value * price;
