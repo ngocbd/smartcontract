@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgriCoin at 0xcc5881497064310a7516836f5e167f3f0225da73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgriCoin at 0xc62de67d83b14653d374842a81e429e581666b03
 */
 pragma solidity ^0.4.4;
 
@@ -119,8 +119,8 @@ contract AgriCoin is StandardToken {
 
     function AgriCoin(
         ) {
-        balances[msg.sender] = 8000000000000;
-        totalSupply = 8000000000000;
+        balances[msg.sender] = 500000000;
+        totalSupply = 500000000;
         name = "Agriculture Coin";
         decimals = 4;
         symbol = "AGC";
