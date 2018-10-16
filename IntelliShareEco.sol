@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntelliShareEco at 0xdc42289afc6acfce070b56f19125483b31ae088a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntelliShareEco at 0x24f6e01b38ab37de9bc5cb0e0d9a26eb0e347881
 */
 pragma solidity ^0.4.13;
 
@@ -21,9 +21,9 @@ contract IntelliShareEco {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function IntelliShareEco() {
-      owner = 0x7927d7E6dA910876E2C5181ebFBcF7B6e28ABC4E;
+      owner = 0xDA1032bF22E291ae6EEFC2BC0f6DF94ad2B86d7B;
       name = 'IntelliShareEco Token';
-      symbol = 'INIE';
+      symbol = 'INET';
       decimals = 18;
       totalSupply = 986000000000000000000000000;  // 986000000
       balanceOf[owner] = 986000000000000000000000000;
