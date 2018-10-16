@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgoraToken at 0xbea80c6235486cb352f488f4be14141fe4d788d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgoraToken at 0x2f5e044ad4adac34c8d8df738fac7743eda1409c
 */
 pragma solidity ^0.4.8;
 
@@ -21,7 +21,7 @@ contract AgoraToken is ERC20Interface {
   string public constant symbol = "AGO";
   uint8  public constant decimals = 18;
 
-  uint256 constant minimumToRaise = 1000 ether;
+  uint256 constant minimumToRaise = 500 ether;
   uint256 constant icoStartBlock = 4116800;
   uint256 constant icoPremiumEndBlock = icoStartBlock + 78776; // Two weeks
   uint256 constant icoEndBlock = icoStartBlock + 315106; // Two months
@@ -56,7 +56,7 @@ contract AgoraToken is ERC20Interface {
   // Make a transfer of AGO between two addresses.
   function transfer(address _to, uint256 _value) returns (bool success) {
     // Freeze for dev team
-    require(msg.sender != owner);
+    require(msg.sender != owner && _to != owner);
 
     if (balances[msg.sender] >= _value &&
         _value > 0 &&
@@ -77,6 +77,9 @@ contract AgoraToken is ERC20Interface {
   }
 
   function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+    // Freeze for dev team
+    require(_to != owner);
+
     if(balances[_from] >= _value &&
        _value > 0 &&
        allowed[_from][msg.sender] >= _value &&
@@ -132,8 +135,8 @@ contract AgoraToken is ERC20Interface {
   }
 
   // Get Agora tokens with a Ether payment.
-  function() payable {
-    require(block.number > icoStartBlock && block.number < icoEndBlock);
+  function buy() payable {
+    require(block.number > icoStartBlock && block.number < icoEndBlock && msg.sender != owner);
 
     uint256 tokenAmount = msg.value * ((block.number < icoPremiumEndBlock) ? 550 : 500);
 
