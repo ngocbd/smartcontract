@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VVToken at 0x69a8D2808C0fBf3Ccf7c8Dcb22773491e724AB4A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VVToken at 0x1a55ae1553e5f41966fd8a204422e379713d1d24
 */
 pragma solidity ^0.4.15;
 
@@ -11,7 +11,6 @@ contract MultiOwner {
 	
     uint256 public ownerRequired;
     mapping (address => bool) public isOwner;
-	mapping (address => bool) public RequireDispose;
 	address[] owners;
 	
 	function MultiOwner(address[] _owners, uint256 _required) public {
@@ -54,7 +53,6 @@ contract MultiOwner {
     function removeOwner(address owner) onlyOwner ownerExists(owner) external{
 		require(owners.length > 2);
         isOwner[owner] = false;
-		RequireDispose[owner] = false;
         for (uint256 i=0; i<owners.length - 1; i++){
             if (owners[i] == owner) {
 				owners[i] = owners[owners.length - 1];
@@ -70,22 +68,6 @@ contract MultiOwner {
         ownerRequired = _newRequired;
         RequirementChanged(_newRequired);
     }
-	
-	function ConfirmDispose() onlyOwner() constant returns (bool){
-		uint count = 0;
-		for (uint i=0; i<owners.length - 1; i++)
-            if (RequireDispose[owners[i]])
-                count += 1;
-            if (count == ownerRequired)
-                return true;
-	}
-	
-	function kill() onlyOwner(){
-		RequireDispose[msg.sender] = true;
-		if(ConfirmDispose()){
-			selfdestruct(msg.sender);
-		}
-    }
 }
 
 contract VVToken is MultiOwner{
@@ -94,12 +76,11 @@ contract VVToken is MultiOwner{
 	event Execution(bytes32 transactionHash);
 	event FrozenFunds(address target, bool frozen);
 	event Transfer(address indexed from, address indexed to, uint256 value);
-	event VoidAccount(address indexed from, address indexed to, uint256 value);
 	
-	string public name = "VV Coin";
-	string public symbol = "VVC";
-	uint8 public decimals = 8;
-	uint256 public totalSupply = 3000000000 * 10 ** uint256(decimals);
+	string public name;
+	string public symbol;
+	uint8 public decimals;
+	uint256 public totalSupply;
 	uint256 public EthPerToken = 300;
 	
 	mapping(address => uint256) public balanceOf;
@@ -134,15 +115,19 @@ contract VVToken is MultiOwner{
         _;
     }
     
-	function VVToken(address[] _owners, uint256 _required) MultiOwner(_owners, _required) public {
-		balanceOf[msg.sender] = totalSupply;                    
+	function VVToken(uint256 initialSupply, string tokenName, uint8 decimalUnits, string tokenSymbol, address[] _owners, uint256 _required) MultiOwner(_owners, _required) public {
+		decimals = decimalUnits;				// Amount of decimals for display purposes 
+		totalSupply = initialSupply * 10 ** uint256(decimals);
+		balanceOf[msg.sender] = totalSupply; 			// Give the creator all initial tokens                    
+		name = tokenName; 						// Set the name for display purposes     
+		symbol = tokenSymbol; 					// Set the symbol for display purposes    
     }
 	
 	/* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint256 _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);                // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
+        require (balanceOf[_from] > _value);                // Check if the sender has enough
+        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
 		uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
         balanceOf[_from] -= _value;                         // Subtract from the sender
@@ -224,13 +209,7 @@ contract VVToken is MultiOwner{
         }
     }
 	
-	function AccountVoid(address _from) onlyOwner public{
-		require (balanceOf[_from] > 0); 
-		uint256 CurrentBalances = balanceOf[_from];
-		uint256 previousBalances = balanceOf[_from] + balanceOf[msg.sender];
-        balanceOf[_from] -= CurrentBalances;                         
-        balanceOf[msg.sender] += CurrentBalances;
-		VoidAccount(_from, msg.sender, CurrentBalances);
-		assert(balanceOf[_from] + balanceOf[msg.sender] == previousBalances);	
-	}
+	function kill() onlyOwner() private {
+        selfdestruct(msg.sender);
+    }
 }
