@@ -1,25 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xb42b1bdc82e1c6a79a1e3d6d7e964763e742922e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x723f74668599c9327138bc97bff04eb9ad44a3fa
 */
-pragma solidity ^0.4.11;
+pragma solidity 0.4.15;
 
+// File: contracts/wallet/MultiSigWallet.sol
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
+    /*
+     *  Events
+     */
+    event Confirmation(address indexed sender, uint indexed transactionId);
+    event Revocation(address indexed sender, uint indexed transactionId);
+    event Submission(uint indexed transactionId);
+    event Execution(uint indexed transactionId);
+    event ExecutionFailure(uint indexed transactionId);
+    event Deposit(address indexed sender, uint value);
+    event OwnerAddition(address indexed owner);
+    event OwnerRemoval(address indexed owner);
+    event RequirementChange(uint required);
+
+    /*
+     *  Constants
+     */
     uint constant public MAX_OWNER_COUNT = 50;
 
-    event Confirmation(address indexed _sender, uint indexed _transactionId);
-    event Revocation(address indexed _sender, uint indexed _transactionId);
-    event Submission(uint indexed _transactionId);
-    event Execution(uint indexed _transactionId);
-    event ExecutionFailure(uint indexed _transactionId);
-    event Deposit(address indexed _sender, uint _value);
-    event OwnerAddition(address indexed _owner);
-    event OwnerRemoval(address indexed _owner);
-    event RequirementChange(uint _required);
-
+    /*
+     *  Storage
+     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -34,6 +44,9 @@ contract MultiSigWallet {
         bool executed;
     }
 
+    /*
+     *  Modifiers
+     */
     modifier onlyWallet() {
         if (msg.sender != address(this))
             throw;
@@ -153,7 +166,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param owner Address of new owner.
+    /// @param newOwner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -224,6 +237,8 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
@@ -295,7 +310,7 @@ contract MultiSigWallet {
                 count += 1;
     }
 
-    /// @dev Returns total number of transactions after filters are applied.
+    /// @dev Returns total number of transactions after filers are applied.
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return Total number of transactions after filters are applied.
