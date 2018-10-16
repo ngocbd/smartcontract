@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChangeCoinPresale at 0x78E0743B2cC9967BaC4643D559A027FA53F6BC88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChangeCoinPresale at 0x2ADdf9e74582b970e93C37e0cd0452735e5852AB
 */
 pragma solidity ^0.4.16;
 
@@ -292,12 +292,13 @@ contract ChangeCoinPresale is Ownable {
   event PreSaleClosed();
 
   function ChangeCoinPresale() {
-    startTimestamp = 1504945800;
-    endTimestamp = 1505397600;
+    startTimestamp = 1504785900;
+    endTimestamp = 1504789200;
     rate = 500;
-    hardwareWallet = 0x71B1Ee0848c4F68df05429490fc4237089692e1e;
+    hardwareWallet = 0x12b97A56F63F8CF75052B5b816d7Ad9e794B8198;
     token = new ChangeCoin();
-    minContribution = 9.9 ether;
+    minContribution = 0 ether;
+    //minContribution = 9.9 ether;
     hardcap = 50000 ether;
 
     require(startTimestamp >= now);
@@ -311,7 +312,7 @@ contract ChangeCoinPresale is Ownable {
    */
   function bonusAmmount(uint256 tokens) internal returns(uint256) {
     // first 500 get extra 30%
-    if (numberOfPurchasers < 501) {
+    if (numberOfPurchasers < 2) {
       return tokens * 3 / 10;
     } else {
       return tokens /4;
