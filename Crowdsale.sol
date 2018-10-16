@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc502c37f8b801e9144e785fcd7817b6a85529a95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa987a1fb978abb7c17201a84efbe828d5c66264d
 */
 pragma solidity ^0.4.18;
 
@@ -119,8 +119,6 @@ contract Crowdsale is Ownable{
 
   // amount of raised money in wei
   uint256 public weiRaised;
-  
-  uint256 public tokensSold;
 
   /**
    * event for token purchase logging
@@ -177,7 +175,6 @@ contract Crowdsale is Ownable{
 
     // update state
     weiRaised = weiRaised.add(weiAmount);
-    tokensSold = tokensSold.add(tokens);
 
     uint256 lockedFor = assignTokens(beneficiary, tokens);
     TokenPurchase(msg.sender, beneficiary, weiAmount, tokens, lockedFor);
@@ -233,7 +230,7 @@ contract Crowdsale is Ownable{
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
+    return balances[_owner].div(100000000);
   }
   
 
