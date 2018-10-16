@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CENTIPEDEToken at 0xbf18893b6eeb3237e71a6af3132ac506181261bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CENTIPEDEToken at 0x7f0f564854edd2606d8625023d4641f2dd8dc317
 */
 pragma solidity ^0.4.16;
 
@@ -7,7 +7,7 @@ contract CENTIPEDEToken {
 
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 8;
 
     uint256 public totalSupply;
 
