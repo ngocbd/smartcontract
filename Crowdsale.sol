@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x4ab4710b12409af36472d1ca43d48b4c82919328
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3a81aa1bc9747d73768a9e3b8b5491744bd7a0cf
 */
 pragma solidity ^0.4.15;
 
@@ -104,7 +104,7 @@ contract Crowdsale is Ownable {
   }
 
   function isActive() constant returns (bool) {
-    return (now >= START && now <= START.add(DAYS * 1 days));
+    return (now <= START.add(DAYS * 1 days));
   }
 
   function goalReached() constant returns (bool) {
@@ -138,16 +138,13 @@ contract Crowdsale is Ownable {
 
     tokens = tokens.add(bonus);
 
+    BoughtTokens(msg.sender, tokens);
+
     // Send tokens to buyer
     token.transfer(msg.sender, tokens);
 
-    BoughtTokens(msg.sender, tokens);
-
     // Send money to owner
     owner.transfer(msg.value);
-
-    // Increment raised amount
-    raisedAmount = raisedAmount.add(msg.value);
   }
 
   /**
