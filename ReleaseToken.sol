@@ -1,13 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReleaseToken at 0x75f3dfd3948500d2133d2f0af3ad153c176ec2c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReleaseToken at 0xe03070d46c30b30cfc792fa3b586f2b71be89ad1
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
+interface itoken {
+    function freezeAccount(address _target, bool _freeze) external;
+    function freezeAccountPartialy(address _target, uint256 _value) external;
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
+    function balanceOf(address _owner) external view returns (uint256 balance);
+    // function transferOwnership(address newOwner) external;
+    function allowance(address _owner, address _spender) external view returns (uint256);
+    function frozenAccount(address _account) external view returns (bool);
+    function frozenAmount(address _account) external view returns (uint256);
+}
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
 
   /**
@@ -33,7 +39,7 @@ library SafeMath {
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -50,11 +56,6 @@ library SafeMath {
   }
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
@@ -90,40 +91,74 @@ contract Ownable {
 
 }
 
+contract Claimable is Ownable {
+  address public pendingOwner;
 
-interface itoken {
-    // mapping (address => bool) public frozenAccount;
-    function freezeAccount(address _target, bool _freeze) external;
-    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
-    function balanceOf(address _owner) external view returns (uint256 balance);
-    function transferOwnership(address newOwner) external;
-    function allowance(address _owner, address _spender) external view returns (uint256);
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
+
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
 }
 
-contract OwnerContract is Ownable {
-    itoken public owned;
-    
+contract OwnerContract is Claimable {
+    Claimable public ownedContract;
+    address internal origOwner;
+
     /**
      * @dev bind a contract as its owner
      *
      * @param _contract the contract address that will be binded by this Owner Contract
      */
-    function setContract(address _contract) public onlyOwner {
+    function bindContract(address _contract) onlyOwner public returns (bool) {
         require(_contract != address(0));
-        owned = itoken(_contract);
+        ownedContract = Claimable(_contract);
+        origOwner = ownedContract.owner();
+
+        // take ownership of the owned contract
+        ownedContract.claimOwnership();
+
+        return true;
     }
 
     /**
-     * @dev change the owner of the contract from this contract to another 
+     * @dev change the owner of the contract from this contract address to the original one.
      *
-     * @param _newOwner the new contract/account address that will be the new owner
      */
-    function changeContractOwner(address _newOwner) public onlyOwner returns(bool) {
-        require(_newOwner != address(0));
-        owned.transferOwnership(_newOwner);
-        owned = itoken(address(0));
-        
-        return true;
+    function transferOwnershipBack() onlyOwner public {
+        ownedContract.transferOwnership(origOwner);
+        ownedContract = Claimable(address(0));
+        origOwner = address(0);
+    }
+
+    /**
+     * @dev change the owner of the contract from this contract address to another one.
+     *
+     * @param _nextOwner the contract address that will be next Owner of the original Contract
+     */
+    function changeOwnershipto(address _nextOwner)  onlyOwner public {
+        ownedContract.transferOwnership(_nextOwner);
+        ownedContract = Claimable(address(0));
+        origOwner = address(0);
     }
 }
 
@@ -135,8 +170,10 @@ contract ReleaseToken is OwnerContract {
         uint256 amount;
         uint256 remain;
         uint256 endTime;
-        uint256 duration;
+        uint256 releasePeriodEndTime;
     }
+
+    itoken internal owned;
 
     address[] public frozenAccounts;
     mapping (address => TimeRec[]) frozenTimes;
@@ -145,13 +182,24 @@ contract ReleaseToken is OwnerContract {
 
     event ReleaseFunds(address _target, uint256 _amount);
 
-    function removeAccount(uint _ind) internal returns (bool) {
-        require(_ind >= 0);
-        require(_ind < frozenAccounts.length);
+    /**
+     * @dev bind a contract as its owner
+     *
+     * @param _contract the contract address that will be binded by this Owner Contract
+     */
+    function bindContract(address _contract) onlyOwner public returns (bool) {
+        require(_contract != address(0));
+        owned = itoken(_contract);
+        return super.bindContract(_contract);
+    }
 
-        //if (_ind >= frozenAccounts.length) {
-        //    return false;
-        //}
+    /**
+     * @dev remove an account from the frozen accounts list
+     *
+     * @param _ind the index of the account in the list
+     */
+    function removeAccount(uint _ind) internal returns (bool) {
+        require(_ind < frozenAccounts.length);
 
         uint256 i = _ind;
         while (i < frozenAccounts.length.sub(1)) {
@@ -159,19 +207,21 @@ contract ReleaseToken is OwnerContract {
             i = i.add(1);
         }
 
+        delete frozenAccounts[frozenAccounts.length.sub(1)];
         frozenAccounts.length = frozenAccounts.length.sub(1);
         return true;
     }
 
+    /**
+     * @dev remove a time records from the time records list of one account
+     *
+     * @param _target the account that holds a list of time records which record the freeze period
+     */
     function removeLockedTime(address _target, uint _ind) internal returns (bool) {
-        require(_ind >= 0);
         require(_target != address(0));
 
         TimeRec[] storage lockedTimes = frozenTimes[_target];
         require(_ind < lockedTimes.length);
-        //if (_ind >= lockedTimes.length) {
-        //    return false;
-        //}
 
         uint256 i = _ind;
         while (i < lockedTimes.length.sub(1)) {
@@ -179,6 +229,7 @@ contract ReleaseToken is OwnerContract {
             i = i.add(1);
         }
 
+        delete lockedTimes[lockedTimes.length.sub(1)];
         lockedTimes.length = lockedTimes.length.sub(1);
         return true;
     }
@@ -251,48 +302,30 @@ contract ReleaseToken is OwnerContract {
         //require(_tokenAddr != address(0));
         require(_target != address(0));
         require(_value > 0);
-        require(_frozenEndTime > 0 && _releasePeriod >= 0);
+        require(_frozenEndTime > 0);
 
         uint256 len = frozenAccounts.length;
-        
-        for (uint256 i = 0; i < len; i = i.add(1)) {
+
+        uint256 i = 0;
+        for (; i < len; i = i.add(1)) {
             if (frozenAccounts[i] == _target) {
                 break;
-            }            
+            }
         }
 
         if (i >= len) {
             frozenAccounts.push(_target); // add new account
+        }
 
-            //frozenTimes[_target].push(TimeRec(_value, _value, _frozenEndTime, _releasePeriod))
-        } /* else {
-            uint256 timeArrayLen = frozenTimes[_target].length;
-            uint256 j = 0;
-            while (j < timeArrayLen) {
-                TimeRec storage lastTime = frozenTimes[_target][j];
-                if (lastTime.amount == 0 && lastTime.remain == 0 && lastTime.endTime == 0 && lastTime.duration == 0) {
-                    lastTime.amount = _value;
-                    lastTime.remain = _value;
-                    lastTime.endTime = _frozenEndTime;
-                    lastTime.duration = _releasePeriod; 
-                    
-                    break;
-                }
-
-                j = j.add(1);
-            }
-            
-            if (j >= timeArrayLen) {
-                frozenTimes[_target].push(TimeRec(_value, _value, _frozenEndTime, _releasePeriod));
-            }
-        } */
-
-        // frozenTimes[_target] = _frozenEndTime;
-        
         // each time the new locked time will be added to the backend
-        frozenTimes[_target].push(TimeRec(_value, _value, _frozenEndTime, _releasePeriod));
-        owned.freezeAccount(_target, true);
-        
+        frozenTimes[_target].push(TimeRec(_value, _value, _frozenEndTime, _frozenEndTime.add(_releasePeriod)));
+        if (owned.frozenAccount(_target)) {
+            uint256 preFrozenAmount = owned.frozenAmount(_target);
+            owned.freezeAccountPartialy(_target, _value.add(preFrozenAmount));
+        } else {
+            owned.freezeAccountPartialy(_target, _value);
+        }
+
         return true;
     }
 
@@ -304,25 +337,28 @@ contract ReleaseToken is OwnerContract {
      * @param _frozenEndTime the end time of the lock period, unit is second
      * @param _releasePeriod the locking period, unit is second
      */
-    function transferAndFreeze(/*address _tokenOwner, */address _target, uint256 _value, uint256 _frozenEndTime, uint256 _releasePeriod) onlyOwner public returns (bool) {
+    function transferAndFreeze(address _target, uint256 _value, uint256 _frozenEndTime, uint256 _releasePeriod) onlyOwner public returns (bool) {
         //require(_tokenOwner != address(0));
         require(_target != address(0));
         require(_value > 0);
-        require(_frozenEndTime > 0 && _releasePeriod >= 0);
+        require(_frozenEndTime > 0);
 
         // check firstly that the allowance of this contract has been set
-        assert(owned.allowance(msg.sender, this) > 0);
+        require(owned.allowance(msg.sender, this) > 0);
 
-        // freeze the account at first
+        // now we need transfer the funds before freeze them
+        require(owned.transferFrom(msg.sender, _target, _value));
+
+        // freeze the account after transfering funds
         if (!freeze(_target, _value, _frozenEndTime, _releasePeriod)) {
             return false;
         }
 
-        return (owned.transferFrom(msg.sender, _target, _value));
+        return true;
     }
 
     /**
-     * release the token which are locked for once and will be total released at once 
+     * release the token which are locked for once and will be total released at once
      * after the end point of the lock period
      */
     function releaseAllOnceLock() onlyOwner public returns (bool) {
@@ -332,27 +368,35 @@ contract ReleaseToken is OwnerContract {
         uint256 i = 0;
         while (i < len) {
             address target = frozenAccounts[i];
-            if (frozenTimes[target].length == 1 && 0 == frozenTimes[target][0].duration && frozenTimes[target][0].endTime > 0 && now >= frozenTimes[target][0].endTime) {
-                bool res = removeAccount(i);
-                if (!res) {
+            if (frozenTimes[target].length == 1 && frozenTimes[target][0].endTime == frozenTimes[target][0].releasePeriodEndTime && frozenTimes[target][0].endTime > 0 && now >= frozenTimes[target][0].endTime) {
+                uint256 releasedAmount = frozenTimes[target][0].amount;
+
+                // remove current release period time record
+                if (!removeLockedTime(target, 0)) {
                     return false;
                 }
-                
-                owned.freezeAccount(target, false);
-                //frozenTimes[destAddr][0].endTime = 0;
-                //frozenTimes[destAddr][0].duration = 0;
-                ReleaseFunds(target, frozenTimes[target][0].amount);
+
+                // remove the froze account
+                if (!removeAccount(i)) {
+                    return false;
+                }
+
+                uint256 preFrozenAmount = owned.frozenAmount(target);
+                if (preFrozenAmount > releasedAmount) {
+                    owned.freezeAccountPartialy(target, preFrozenAmount.sub(releasedAmount));
+                } else {
+                    owned.freezeAccount(target, false);
+                }
+
+                ReleaseFunds(target, releasedAmount);
                 len = len.sub(1);
-                //frozenTimes[destAddr][0].amount = 0;
-                //frozenTimes[destAddr][0].remain = 0;
-            } else { 
+            } else {
                 // no account has been removed
                 i = i.add(1);
             }
         }
-        
+
         return true;
-        //return (releaseMultiAccounts(frozenAccounts));
     }
 
     /**
@@ -370,50 +414,37 @@ contract ReleaseToken is OwnerContract {
         while (i < len) {
             address destAddr = frozenAccounts[i];
             if (destAddr == _target) {
-                if (frozenTimes[destAddr].length == 1 && 0 == frozenTimes[destAddr][0].duration && frozenTimes[destAddr][0].endTime > 0 && now >= frozenTimes[destAddr][0].endTime) { 
-                    bool res = removeAccount(i);
-                    if (!res) {
+                if (frozenTimes[destAddr].length == 1 && frozenTimes[destAddr][0].endTime == frozenTimes[destAddr][0].releasePeriodEndTime && frozenTimes[destAddr][0].endTime > 0 && now >= frozenTimes[destAddr][0].endTime) {
+                    uint256 releasedAmount = frozenTimes[destAddr][0].amount;
+
+                    // remove current release period time record
+                    if (!removeLockedTime(destAddr, 0)) {
                         return false;
                     }
 
-                    owned.freezeAccount(destAddr, false);
-                    // frozenTimes[destAddr][0].endTime = 0;
-                    // frozenTimes[destAddr][0].duration = 0;
-                    ReleaseFunds(destAddr, frozenTimes[destAddr][0].amount);
-                    // frozenTimes[destAddr][0].amount = 0;
-                    // frozenTimes[destAddr][0].remain = 0;
+                    // remove the froze account
+                    if (!removeAccount(i)) {
+                        return false;
+                    }
 
+                    uint256 preFrozenAmount = owned.frozenAmount(destAddr);
+                    if (preFrozenAmount > releasedAmount) {
+                        owned.freezeAccountPartialy(destAddr, preFrozenAmount.sub(releasedAmount));
+                    } else {
+                        owned.freezeAccount(destAddr, false);
+                    }
+
+                    ReleaseFunds(destAddr, releasedAmount);
                 }
 
                 // if the account are not locked for once, we will do nothing here
-                return true; 
+                return true;
             }
 
             i = i.add(1);
         }
-        
+
         return false;
-    }
-
-    /**
-     * @dev release the locked tokens owned by a number of accounts
-     *
-     * @param _targets the accounts list that hold an amount of locked tokens 
-     */
-    function releaseMultiAccounts(address[] _targets) onlyOwner public returns (bool) {
-        //require(_tokenAddr != address(0));
-        require(_targets.length != 0);
-
-        uint256 i = 0;
-        while (i < _targets.length) {
-            if (!releaseAccount(_targets[i])) {
-                return false;
-            }
-
-            i = i.add(1);
-        }
-
-        return true;
     }
 
     /**
@@ -421,16 +452,15 @@ contract ReleaseToken is OwnerContract {
      * this need the contract get approval from the account by call approve() in the token contract
      *
      * @param _target the account address that hold an amount of locked tokens
-     * @param _dest the secondary address that will hold the released tokens
      */
-    function releaseWithStage(address _target, address _dest) onlyOwner public returns (bool) {
-        //require(_tokenAddr != address(0));
+    function releaseWithStage(address _target/*, address _dest*/) onlyOwner public returns (bool) {
+        //require(_tokenaddr != address(0));
         require(_target != address(0));
-        require(_dest != address(0));
+        // require(_dest != address(0));
         // require(_value > 0);
-        
+
         // check firstly that the allowance of this contract from _target account has been set
-        assert(owned.allowance(_target, this) > 0);
+        // require(owned.allowance(_target, this) > 0);
 
         uint256 len = frozenAccounts.length;
         uint256 i = 0;
@@ -441,20 +471,21 @@ contract ReleaseToken is OwnerContract {
                 uint256 timeRecLen = frozenTimes[frozenAddr].length;
 
                 bool released = false;
+                uint256 nowTime = now;
                 for (uint256 j = 0; j < timeRecLen; released = false) {
                     // iterate every time records to caculate how many tokens need to be released.
                     TimeRec storage timePair = frozenTimes[frozenAddr][j];
-                    uint256 nowTime = now;
-                    if (nowTime > timePair.endTime && timePair.endTime > 0 && timePair.duration > 0) {                        
-                        uint256 value = timePair.amount * (nowTime - timePair.endTime) / timePair.duration;
+                    if (nowTime > timePair.endTime && timePair.endTime > 0 && timePair.releasePeriodEndTime > timePair.endTime) {
+                        uint256 lastReleased = timePair.amount.sub(timePair.remain);
+                        uint256 value = (timePair.amount * nowTime.sub(timePair.endTime) / timePair.releasePeriodEndTime.sub(timePair.endTime)).sub(lastReleased);
                         if (value > timePair.remain) {
                             value = timePair.remain;
-                        } 
-                        
-                        // owned.freezeAccount(frozenAddr, false);
-                        
-                        timePair.endTime = nowTime;        
+                        }
+
+                        // timePair.endTime = nowTime;
                         timePair.remain = timePair.remain.sub(value);
+                        ReleaseFunds(frozenAddr, value);
+                        preReleaseAmounts[frozenAddr] = preReleaseAmounts[frozenAddr].add(value);
                         if (timePair.remain < 1e8) {
                             if (!removeLockedTime(frozenAddr, j)) {
                                 return false;
@@ -462,30 +493,16 @@ contract ReleaseToken is OwnerContract {
                             released = true;
                             timeRecLen = timeRecLen.sub(1);
                         }
-                        // if (!owned.transferFrom(_target, _dest, value)) {
-                        //     return false;
-                        // }
-                        ReleaseFunds(frozenAddr, value);
-                        preReleaseAmounts[frozenAddr] = preReleaseAmounts[frozenAddr].add(value);
-                        //owned.freezeAccount(frozenAddr, true);
-                    } else if (nowTime >= timePair.endTime && timePair.endTime > 0 && timePair.duration == 0) {
-                        // owned.freezeAccount(frozenAddr, false);
-                        
+                    } else if (nowTime >= timePair.endTime && timePair.endTime > 0 && timePair.releasePeriodEndTime == timePair.endTime) {
+                        timePair.remain = 0;
+                        ReleaseFunds(frozenAddr, timePair.amount);
+                        preReleaseAmounts[frozenAddr] = preReleaseAmounts[frozenAddr].add(timePair.amount);
                         if (!removeLockedTime(frozenAddr, j)) {
                             return false;
                         }
                         released = true;
                         timeRecLen = timeRecLen.sub(1);
-
-                        // if (!owned.transferFrom(_target, _dest, timePair.amount)) {
-                        //     return false;
-                        // }
-                        ReleaseFunds(frozenAddr, timePair.amount);
-                        preReleaseAmounts[frozenAddr] = preReleaseAmounts[frozenAddr].add(timePair.amount);
-                        //owned.freezeAccount(frozenAddr, true);
-                    } //else if (timePair.amount == 0 && timePair.remain == 0 && timePair.endTime == 0 && timePair.duration == 0) {
-                      //  removeLockedTime(frozenAddr, j);
-                    //}
+                    }
 
                     if (!released) {
                         j = j.add(1);
@@ -494,52 +511,304 @@ contract ReleaseToken is OwnerContract {
 
                 // we got some amount need to be released
                 if (preReleaseAmounts[frozenAddr] > 0) {
-                    owned.freezeAccount(frozenAddr, false);
-                    if (!owned.transferFrom(_target, _dest, preReleaseAmounts[frozenAddr])) {
-                        return false;
+                    uint256 preReleasedAmount = preReleaseAmounts[frozenAddr];
+                    uint256 preFrozenAmount = owned.frozenAmount(frozenAddr);
+
+                    // set the pre-release amount to 0 for next time
+                    preReleaseAmounts[frozenAddr] = 0;
+                    if (preFrozenAmount > preReleasedAmount) {
+                        owned.freezeAccountPartialy(frozenAddr, preFrozenAmount.sub(preReleasedAmount));
+                    } else {
+                        owned.freezeAccount(frozenAddr, false);
                     }
+                    // if (!owned.transferFrom(_target, _dest, preReleaseAmounts[frozenAddr])) {
+                    //     return false;
+                    // }
                 }
 
                 // if all the frozen amounts had been released, then unlock the account finally
                 if (frozenTimes[frozenAddr].length == 0) {
                     if (!removeAccount(i)) {
                         return false;
-                    }                    
-                } else {
+                    }
+                } /*else {
                     // still has some tokens need to be released in future
                     owned.freezeAccount(frozenAddr, true);
-                }
+                }*/
 
                 return true;
-            }          
+            }
 
             i = i.add(1);
         }
-        
+
         return false;
     }
 
     /**
-     * @dev release the locked tokens owned by an account
+     * @dev set the new endtime of the released time of an account
      *
-     * @param _targets the account addresses list that hold amounts of locked tokens
-     * @param _dests the secondary addresses list that will hold the released tokens for each target account
+     * @param _target the owner of some amount of tokens
+     * @param _oldEndTime the original endtime for the lock period
+     * @param _newEndTime the new endtime for the lock period
      */
-    function releaseMultiWithStage(address[] _targets, address[] _dests) onlyOwner public returns (bool) {
-        //require(_tokenAddr != address(0));
-        require(_targets.length != 0);
-        require(_dests.length != 0);
-        assert(_targets.length == _dests.length);
+    function setNewEndtime(address _target, uint256 _oldEndTime, uint256 _newEndTime) onlyOwner public returns (bool) {
+        require(_target != address(0));
+        require(_oldEndTime > 0 && _newEndTime > 0);
 
+        uint256 len = frozenAccounts.length;
         uint256 i = 0;
-        while (i < _targets.length) {
-            if (!releaseWithStage(_targets[i], _dests[i])) {
+        while (i < len) {
+            address frozenAddr = frozenAccounts[i];
+            if (frozenAddr == _target) {
+                uint256 timeRecLen = frozenTimes[frozenAddr].length;
+                uint256 j = 0;
+                while (j < timeRecLen) {
+                    TimeRec storage timePair = frozenTimes[frozenAddr][j];
+                    if (_oldEndTime == timePair.endTime) {
+                        uint256 duration = timePair.releasePeriodEndTime.sub(timePair.endTime);
+                        timePair.endTime = _newEndTime;
+                        timePair.releasePeriodEndTime = timePair.endTime.add(duration);
+
+                        return true;
+                    }
+
+                    j = j.add(1);
+                }
+
                 return false;
             }
 
             i = i.add(1);
         }
 
-        return true;
+        return false;
+    }
+
+    /**
+     * @dev set the new released period length of an account
+     *
+     * @param _target the owner of some amount of tokens
+     * @param _origEndTime the original endtime for the lock period
+     * @param _duration the new releasing period
+     */
+    function setNewReleasePeriod(address _target, uint256 _origEndTime, uint256 _duration) onlyOwner public returns (bool) {
+        require(_target != address(0));
+        require(_origEndTime > 0 && _duration > 0);
+
+        uint256 len = frozenAccounts.length;
+        uint256 i = 0;
+        while (i < len) {
+            address frozenAddr = frozenAccounts[i];
+            if (frozenAddr == _target) {
+                uint256 timeRecLen = frozenTimes[frozenAddr].length;
+                uint256 j = 0;
+                while (j < timeRecLen) {
+                    TimeRec storage timePair = frozenTimes[frozenAddr][j];
+                    if (_origEndTime == timePair.endTime) {
+                        timePair.releasePeriodEndTime = _origEndTime.add(_duration);
+                        return true;
+                    }
+
+                    j = j.add(1);
+                }
+
+                return false;
+            }
+
+            i = i.add(1);
+        }
+
+        return false;
+    }
+
+    /**
+     * @dev get the locked stages of an account
+     *
+     * @param _target the owner of some amount of tokens
+     */
+    function getLockedStages(address _target) public view returns (uint) {
+        require(_target != address(0));
+
+        uint256 len = frozenAccounts.length;
+        uint256 i = 0;
+        while (i < len) {
+            address frozenAddr = frozenAccounts[i];
+            if (frozenAddr == _target) {
+                return frozenTimes[frozenAddr].length;
+            }
+
+            i = i.add(1);
+        }
+
+        return 0;
+    }
+
+    /**
+     * @dev get the endtime of the locked stages of an account
+     *
+     * @param _target the owner of some amount of tokens
+     * @param _num the stage number of the releasing period
+     */
+    function getEndTimeOfStage(address _target, uint _num) public view returns (uint256) {
+        require(_target != address(0));
+
+        uint256 len = frozenAccounts.length;
+        uint256 i = 0;
+        while (i < len) {
+            address frozenAddr = frozenAccounts[i];
+            if (frozenAddr == _target) {
+                TimeRec storage timePair = frozenTimes[frozenAddr][_num];
+                return timePair.endTime;
+            }
+
+            i = i.add(1);
+        }
+
+        return 0;
+    }
+
+    /**
+     * @dev get the remain unrleased tokens of the locked stages of an account
+     *
+     * @param _target the owner of some amount of tokens
+     * @param _num the stage number of the releasing period
+     */
+    function getRemainOfStage(address _target, uint _num) public view returns (uint256) {
+        require(_target != address(0));
+
+        uint256 len = frozenAccounts.length;
+        uint256 i = 0;
+        while (i < len) {
+            address frozenAddr = frozenAccounts[i];
+            if (frozenAddr == _target) {
+                TimeRec storage timePair = frozenTimes[frozenAddr][_num];
+                return timePair.remain;
+            }
+
+            i = i.add(1);
+        }
+
+        return 0;
+    }
+
+    /**
+     * @dev get the remain releasing period of an account
+     *
+     * @param _target the owner of some amount of tokens
+     * @param _num the stage number of the releasing period
+     */
+    function getRemainReleaseTimeOfStage(address _target, uint _num) public view returns (uint256) {
+        require(_target != address(0));
+
+        uint256 len = frozenAccounts.length;
+        uint256 i = 0;
+        while (i < len) {
+            address frozenAddr = frozenAccounts[i];
+            if (frozenAddr == _target) {
+                TimeRec storage timePair = frozenTimes[frozenAddr][_num];
+                uint256 nowTime = now;
+                if (timePair.releasePeriodEndTime == timePair.endTime || nowTime <= timePair.endTime ) {
+                    return (timePair.releasePeriodEndTime.sub(timePair.endTime));
+                }
+
+                if (timePair.releasePeriodEndTime < nowTime) {
+                    return 0;
+                }
+
+                return (timePair.releasePeriodEndTime.sub(nowTime));
+            }
+
+            i = i.add(1);
+        }
+
+        return 0;
+    }
+
+    /**
+     * @dev release the locked tokens owned by a number of accounts
+     *
+     * @param _targets the accounts list that hold an amount of locked tokens
+     */
+    function releaseMultiAccounts(address[] _targets) onlyOwner public returns (bool) {
+        //require(_tokenAddr != address(0));
+        require(_targets.length != 0);
+
+        bool res = false;
+        uint256 i = 0;
+        while (i < _targets.length) {
+            res = releaseAccount(_targets[i]) || res;
+            i = i.add(1);
+        }
+
+        return res;
+    }
+
+    /**
+     * @dev release the locked tokens owned by an account
+     *
+     * @param _targets the account addresses list that hold amounts of locked tokens
+     */
+    function releaseMultiWithStage(address[] _targets) onlyOwner public returns (bool) {
+        require(_targets.length != 0);
+
+        bool res = false;
+        uint256 i = 0;
+        while (i < _targets.length) {
+            require(_targets[i] != address(0));
+
+            res = releaseWithStage(_targets[i]) || res; // as long as there is one true transaction, then the result will be true
+            i = i.add(1);
+        }
+
+        return res;
+    }
+
+     /**
+     * @dev freeze multiple of the accounts
+     *
+     * @param _targets the owners of some amount of tokens
+     * @param _values the amounts of the tokens
+     * @param _frozenEndTimes the list of the end time of the lock period, unit is second
+     * @param _releasePeriods the list of the locking period, unit is second
+     */
+    function freezeMulti(address[] _targets, uint256[] _values, uint256[] _frozenEndTimes, uint256[] _releasePeriods) onlyOwner public returns (bool) {
+        require(_targets.length != 0);
+        require(_values.length != 0);
+        require(_frozenEndTimes.length != 0);
+        require(_releasePeriods.length != 0);
+        require(_targets.length == _values.length && _values.length == _frozenEndTimes.length && _frozenEndTimes.length == _releasePeriods.length);
+
+        bool res = true;
+        for (uint256 i = 0; i < _targets.length; i = i.add(1)) {
+            require(_targets[i] != address(0));
+            res = freeze(_targets[i], _values[i], _frozenEndTimes[i], _releasePeriods[i]) && res;
+        }
+
+        return res;
+    }
+
+    /**
+     * @dev transfer a list of amounts of tokens to a list of accounts, and then freeze the tokens
+     *
+     * @param _targets the account addresses that will hold a list of amounts of the tokens
+     * @param _values the amounts of the tokens which have been transferred
+     * @param _frozenEndTimes the end time list of the locked periods, unit is second
+     * @param _releasePeriods the list of locking periods, unit is second
+     */
+    function transferAndFreezeMulti(address[] _targets, uint256[] _values, uint256[] _frozenEndTimes, uint256[] _releasePeriods) onlyOwner public returns (bool) {
+        require(_targets.length != 0);
+        require(_values.length != 0);
+        require(_frozenEndTimes.length != 0);
+        require(_releasePeriods.length != 0);
+        require(_targets.length == _values.length && _values.length == _frozenEndTimes.length && _frozenEndTimes.length == _releasePeriods.length);
+
+        bool res = true;
+        for (uint256 i = 0; i < _targets.length; i = i.add(1)) {
+            require(_targets[i] != address(0));
+            res = transferAndFreeze(_targets[i], _values[i], _frozenEndTimes[i], _releasePeriods[i]) && res;
+        }
+
+        return res;
     }
 }
