@@ -1,112 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Beercoin at 0x1d688a985f56a48a022a98de59fd37b32e2c72f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Beercoin at 0x7367a68039d4704f30bfbf6d948020c3b07dfc59
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.19;
 
 
-contract ERC20Token {
-    event Transfer(address indexed from, address indexed _to, uint256 _value);
-	event Approval(address indexed owner, address indexed _spender, uint256 _value);
-
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0 && _to != address(this));
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        _transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-}
-
-
-contract Owned {
-    address public owner;
-
-    /**
-     * Construct the Owned contract and
-     * make the sender the owner
-     */
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    /**
-     * Restrict to the owner only
-     */
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    /**
-     * Transfer the ownership to another address
-     *
-     * @param newOwner the new owner's address
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        owner = newOwner;
-    }
-}
-
-
-contract Beercoin is ERC20Token, Owned {
-    event Produce(uint256 value, string caps);
-	event Burn(uint256 value);
-
-    string public name = "Beercoin";
-    string public symbol = "?";
-	uint8 public decimals = 18;
-	uint256 public totalSupply = 15496000000 * 10 ** uint256(decimals);
+/**
+ * A contract containing the fundamental state variables of the Beercoin
+ */
+contract InternalBeercoin {
+    // As 18 decimal places will be used, the constants are multiplied by 10^18
+    uint256 internal constant INITIAL_SUPPLY = 15496000000 * 10**18;
+    uint256 internal constant DIAMOND_VALUE = 10000 * 10**18;
+    uint256 internal constant GOLD_VALUE = 100 * 10**18;
+    uint256 internal constant SILVER_VALUE = 10 * 10**18;
+    uint256 internal constant BRONZE_VALUE = 1 * 10**18;
 
     // In addition to the initial total supply of 15496000000 Beercoins,
     // more Beercoins will only be added by scanning bottle caps.
@@ -121,196 +28,580 @@ contract Beercoin is ERC20Token, Owned {
     // Therefore one bottle cap has an average Beercoin value of
     // (1 * 10000 + 9 * 100 + 990 * 10 + 9000 * 1) / 10000 = 2.98.
     //
-    // This means the Beercoin value of all bottle caps that
-    // will be produced in total is 20800000000 * 2.98 = 61984000000.
-    uint256 public unproducedCaps = 20800000000;
-    uint256 public producedCaps = 0;
+    // This means the total Beercoin value of all bottle caps that will
+    // be eventually produced equals 20800000000 * 2.98 = 61984000000.
+    uint64 internal producibleCaps = 20800000000;
 
-    // Stores whether users disallow the owner to
-    // pull Beercoins for the use of redemption.
-    mapping (address => bool) public redemptionLocked;
+    // The  amounts of diamond, gold, silver, and bronze caps are stored
+    // as a single 256-bit value divided into four sections of 64 bits.
+    //
+    // Bits 255 to 192 are used for the amount of diamond caps,
+    // bits 191 to 128 are used for the amount of gold caps,
+    // bits 127 to 64 are used for the amount of silver caps,
+    // bits 63 to 0 are used for the amount of bronze caps.
+    //
+    // For example, the following numbers represent a single cap of a certain type:
+    // 0x0000000000000001000000000000000000000000000000000000000000000000 (diamond)
+    // 0x0000000000000000000000000000000100000000000000000000000000000000 (gold)
+    // 0x0000000000000000000000000000000000000000000000010000000000000000 (silver)
+    // 0x0000000000000000000000000000000000000000000000000000000000000001 (bronze)
+    uint256 internal packedProducedCaps = 0;
+    uint256 internal packedScannedCaps = 0;
+
+    // The amount of irreversibly burnt Beercoins
+    uint256 internal burntValue = 0;
+}
+
+
+/**
+ * A contract containing functions to understand the packed low-level data
+ */
+contract ExplorableBeercoin is InternalBeercoin {
+    /**
+     * The amount of caps that can still be produced
+     */
+    function unproducedCaps() public view returns (uint64) {
+        return producibleCaps;
+    }
+
+    /**
+     * The amount of caps that is produced but not yet scanned
+     */
+    function unscannedCaps() public view returns (uint64) {
+        uint256 caps = packedProducedCaps - packedScannedCaps;
+        uint64 amount = uint64(caps >> 192);
+        amount += uint64(caps >> 128);
+        amount += uint64(caps >> 64);
+        amount += uint64(caps);
+        return amount;
+    }
+
+    /**
+     * The amount of all caps produced so far
+     */
+    function producedCaps() public view returns (uint64) {
+        uint256 caps = packedProducedCaps;
+        uint64 amount = uint64(caps >> 192);
+        amount += uint64(caps >> 128);
+        amount += uint64(caps >> 64);
+        amount += uint64(caps);
+        return amount;
+    }
+
+    /**
+     * The amount of all caps scanned so far
+     */
+    function scannedCaps() public view returns (uint64) {
+        uint256 caps = packedScannedCaps;
+        uint64 amount = uint64(caps >> 192);
+        amount += uint64(caps >> 128);
+        amount += uint64(caps >> 64);
+        amount += uint64(caps);
+        return amount;
+    }
+
+    /**
+     * The amount of diamond caps produced so far
+     */
+    function producedDiamondCaps() public view returns (uint64) {
+        return uint64(packedProducedCaps >> 192);
+    }
+
+    /**
+     * The amount of diamond caps scanned so far
+     */
+    function scannedDiamondCaps() public view returns (uint64) {
+        return uint64(packedScannedCaps >> 192);
+    }
+
+    /**
+     * The amount of gold caps produced so far
+     */
+    function producedGoldCaps() public view returns (uint64) {
+        return uint64(packedProducedCaps >> 128);
+    }
+
+    /**
+     * The amount of gold caps scanned so far
+     */
+    function scannedGoldCaps() public view returns (uint64) {
+        return uint64(packedScannedCaps >> 128);
+    }
+
+    /**
+     * The amount of silver caps produced so far
+     */
+    function producedSilverCaps() public view returns (uint64) {
+        return uint64(packedProducedCaps >> 64);
+    }
+
+    /**
+     * The amount of silver caps scanned so far
+     */
+    function scannedSilverCaps() public view returns (uint64) {
+        return uint64(packedScannedCaps >> 64);
+    }
+
+    /**
+     * The amount of bronze caps produced so far
+     */
+    function producedBronzeCaps() public view returns (uint64) {
+        return uint64(packedProducedCaps);
+    }
+
+    /**
+     * The amount of bronze caps scanned so far
+     */
+    function scannedBronzeCaps() public view returns (uint64) {
+        return uint64(packedScannedCaps);
+    }
+}
+
+
+/**
+ * A contract implementing all standard ERC20 functionality for the Beercoin
+ */
+contract ERC20Beercoin is ExplorableBeercoin {
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    mapping (address => uint256) internal balances;
+    mapping (address => mapping (address => uint256)) internal allowances;
+
+    /**
+     * Beercoin's name
+     */
+    function name() public pure returns (string) {
+        return "Beercoin";
+    }
+
+    /**
+     * Beercoin's symbol
+     */
+    function symbol() public pure returns (string) {
+        return "?";
+    }
+
+    /**
+     * Beercoin's decimal places
+     */
+    function decimals() public pure returns (uint8) {
+        return 18;
+    }
+
+    /**
+     * The current total supply of Beercoins
+     */
+    function totalSupply() public view returns (uint256) {
+        uint256 caps = packedScannedCaps;
+        uint256 supply = INITIAL_SUPPLY;
+        supply += (caps >> 192) * DIAMOND_VALUE;
+        supply += ((caps >> 128) & 0xFFFFFFFFFFFFFFFF) * GOLD_VALUE;
+        supply += ((caps >> 64) & 0xFFFFFFFFFFFFFFFF) * SILVER_VALUE;
+        supply += (caps & 0xFFFFFFFFFFFFFFFF) * BRONZE_VALUE;
+        return supply - burntValue;
+    }
+
+    /**
+     * Check the balance of a Beercoin user
+     *
+     * @param _owner the user to check
+     */
+    function balanceOf(address _owner) public view returns (uint256) {
+        return balances[_owner];
+    }
+
+    /**
+     * Transfer Beercoins to another user
+     *
+     * @param _to the address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != 0x0);
+
+        uint256 balanceFrom = balances[msg.sender];
+
+        require(_value <= balanceFrom);
+
+        uint256 oldBalanceTo = balances[_to];
+        uint256 newBalanceTo = oldBalanceTo + _value;
+
+        require(oldBalanceTo <= newBalanceTo);
+
+        balances[msg.sender] = balanceFrom - _value;
+        balances[_to] = newBalanceTo;
+
+        Transfer(msg.sender, _to, _value);
+
+        return true;
+    }
+
+    /**
+     * Transfer Beercoins from other address if a respective allowance exists
+     *
+     * @param _from the address of the sender
+     * @param _to the address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != 0x0);
+
+        uint256 balanceFrom = balances[_from];
+        uint256 allowanceFrom = allowances[_from][msg.sender];
+
+        require(_value <= balanceFrom);
+        require(_value <= allowanceFrom);
+
+        uint256 oldBalanceTo = balances[_to];
+        uint256 newBalanceTo = oldBalanceTo + _value;
+
+        require(oldBalanceTo <= newBalanceTo);
+
+        balances[_from] = balanceFrom - _value;
+        balances[_to] = newBalanceTo;
+        allowances[_from][msg.sender] = allowanceFrom - _value;
+
+        Transfer(_from, _to, _value);
+
+        return true;
+    }
+
+    /**
+     * Allow another user to spend a certain amount of Beercoins on your behalf
+     *
+     * @param _spender the address of the user authorized to spend
+     * @param _value the maximum amount that can be spent on your behalf
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowances[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * The amount of Beercoins that can be spent by a user on behalf of another
+     *
+     * @param _owner the address of the user user whose Beercoins are spent
+     * @param _spender the address of the user who executes the transaction
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowances[_owner][_spender];
+    }
+}
+
+
+/**
+ * A contract that defines a master with special debiting abilities
+ * required for operating a user-friendly Beercoin redemption system
+ */
+contract MasteredBeercoin is ERC20Beercoin {
+    address internal beercoinMaster;
+    mapping (address => bool) internal directDebitAllowances;
+
+    /**
+     * Construct the MasteredBeercoin contract
+     * and make the sender the master
+     */
+    function MasteredBeercoin() public {
+        beercoinMaster = msg.sender;
+    }
+
+    /**
+     * Restrict to the master only
+     */
+    modifier onlyMaster {
+        require(msg.sender == beercoinMaster);
+        _;
+    }
+
+    /**
+     * The master of the Beercoin
+     */
+    function master() public view returns (address) {
+        return beercoinMaster;
+    }
+
+    /**
+     * Declare a master at another address
+     *
+     * @param newMaster the new owner's address
+     */
+    function declareNewMaster(address newMaster) public onlyMaster {
+        beercoinMaster = newMaster;
+    }
+
+    /**
+     * Allow the master to withdraw Beercoins from your
+     * account so you don't have to send Beercoins yourself
+     */
+    function allowDirectDebit() public {
+        directDebitAllowances[msg.sender] = true;
+    }
+
+    /**
+     * Forbid the master to withdraw Beercoins from you account
+     */
+    function forbidDirectDebit() public {
+        directDebitAllowances[msg.sender] = false;
+    }
+
+    /**
+     * Check whether a user allows direct debits by the master
+     *
+     * @param user the user to check
+     */
+    function directDebitAllowance(address user) public view returns (bool) {
+        return directDebitAllowances[user];
+    }
+
+    /**
+     * Withdraw Beercoins from multiple users
+     *
+     * Beercoins are only withdrawn this way if and only if
+     * a user deliberately wants it to happen by initiating
+     * a transaction on a plattform operated by the owner
+     *
+     * @param users the addresses of the users to take Beercoins from
+     * @param values the respective amounts to take
+     */
+    function debit(address[] users, uint256[] values) public onlyMaster returns (bool) {
+        require(users.length == values.length);
+
+        uint256 oldBalance = balances[msg.sender];
+        uint256 newBalance = oldBalance;
+
+        address currentUser;
+        uint256 currentValue;
+        uint256 currentBalance;
+        for (uint256 i = 0; i < users.length; ++i) {
+            currentUser = users[i];
+            currentValue = values[i];
+            currentBalance = balances[currentUser];
+
+            require(directDebitAllowances[currentUser]);
+            require(currentValue <= currentBalance);
+            balances[currentUser] = currentBalance - currentValue;
+            
+            newBalance += currentValue;
+
+            Transfer(currentUser, msg.sender, currentValue);
+        }
+
+        require(oldBalance <= newBalance);
+        balances[msg.sender] = newBalance;
+
+        return true;
+    }
+
+    /**
+     * Withdraw Beercoins from multiple users
+     *
+     * Beercoins are only withdrawn this way if and only if
+     * a user deliberately wants it to happen by initiating
+     * a transaction on a plattform operated by the owner
+     *
+     * @param users the addresses of the users to take Beercoins from
+     * @param value the amount to take from each user
+     */
+    function debitEqually(address[] users, uint256 value) public onlyMaster returns (bool) {
+        uint256 oldBalance = balances[msg.sender];
+        uint256 newBalance = oldBalance + (users.length * value);
+
+        require(oldBalance <= newBalance);
+        balances[msg.sender] = newBalance;
+
+        address currentUser;
+        uint256 currentBalance;
+        for (uint256 i = 0; i < users.length; ++i) {
+            currentUser = users[i];
+            currentBalance = balances[currentUser];
+
+            require(directDebitAllowances[currentUser]);
+            require(value <= currentBalance);
+            balances[currentUser] = currentBalance - value;
+
+            Transfer(currentUser, msg.sender, value);
+        }
+
+        return true;
+    }
+
+    /**
+     * Send Beercoins to multiple users
+     *
+     * @param users the addresses of the users to send Beercoins to
+     * @param values the respective amounts to send
+     */
+    function credit(address[] users, uint256[] values) public onlyMaster returns (bool) {
+        require(users.length == values.length);
+
+        uint256 balance = balances[msg.sender];
+        uint256 totalValue = 0;
+
+        address currentUser;
+        uint256 currentValue;
+        uint256 currentOldBalance;
+        uint256 currentNewBalance;
+        for (uint256 i = 0; i < users.length; ++i) {
+            currentUser = users[i];
+            currentValue = values[i];
+            currentOldBalance = balances[currentUser];
+            currentNewBalance = currentOldBalance + currentValue;
+
+            require(currentOldBalance <= currentNewBalance);
+            balances[currentUser] = currentNewBalance;
+
+            totalValue += currentValue;
+
+            Transfer(msg.sender, currentUser, currentValue);
+        }
+
+        require(totalValue <= balance);
+        balances[msg.sender] = balance - totalValue;
+
+        return true;
+    }
+
+    /**
+     * Send Beercoins to multiple users
+     *
+     * @param users the addresses of the users to send Beercoins to
+     * @param value the amounts to send to each user
+     */
+    function creditEqually(address[] users, uint256 value) public onlyMaster returns (bool) {
+        uint256 balance = balances[msg.sender];
+        uint256 totalValue = users.length * value;
+
+        require(totalValue <= balance);
+        balances[msg.sender] = balance - totalValue;
+
+        address currentUser;
+        uint256 currentOldBalance;
+        uint256 currentNewBalance;
+        for (uint256 i = 0; i < users.length; ++i) {
+            currentUser = users[i];
+            currentOldBalance = balances[currentUser];
+            currentNewBalance = currentOldBalance + value;
+
+            require(currentOldBalance <= currentNewBalance);
+            balances[currentUser] = currentNewBalance;
+
+            Transfer(msg.sender, currentUser, value);
+        }
+
+        return true;
+    }
+}
+
+
+/**
+ * A contract that defines the central business logic
+ * which also mirrors the life of a Beercoin
+ */
+contract Beercoin is MasteredBeercoin {
+    event Produce(uint256 newCaps);
+    event Scan(address[] users, uint256[] caps);
+    event Burn(uint256 value);
 
     /**
      * Construct the Beercoin contract and
-     * assign the initial supply to the owner.
+     * assign the initial supply to the creator
      */
     function Beercoin() public {
-		balanceOf[owner] = totalSupply;
+        balances[msg.sender] = INITIAL_SUPPLY;
     }
 
     /**
-     * Lock or unlock the redemption functionality
+     * Increase the amounts of produced diamond, gold, silver, and
+     * bronze bottle caps in respect to their occurrence probabilities
      *
-     * If a user doesn't want to redeem Beercoins on the owner's
-     * website and doesn't trust the owner, the owner's capability
-     * of pulling Beercoin from the user's account can be locked
-     *
-     * @param lock whether to lock the redemption capability or not
-     */
-    function lockRedemption(bool lock) public returns (bool success) {
-        redemptionLocked[msg.sender] = lock;
-        return true;
-    }
-
-    /**
-     * Generate a sequence of bottle cap values to be used
-     * for production and send the respective total Beercoin
-     * value to the contract for keeping until a scan is recognized
-     *
-     * We hereby declare that this function is called if and only if
-     * we need to generate codes intended for beer bottle production
+     * This function is called if and only if a brewery has actually
+     * ordered codes to produce the specified amount of bottle caps
      *
      * @param numberOfCaps the number of bottle caps to be produced
      */
-	function produce(uint256 numberOfCaps) public onlyOwner returns (bool success) {
-        require(numberOfCaps <= unproducedCaps);
+    function produce(uint64 numberOfCaps) public onlyMaster returns (bool) {
+        require(numberOfCaps <= producibleCaps);
 
-        uint256 value = 0;
-        bytes memory caps = bytes(new string(numberOfCaps));
-        
-        for (uint256 i = 0; i < numberOfCaps; ++i) {
-            uint256 currentCoin = producedCaps + i;
+        uint256 producedCaps = packedProducedCaps;
 
-            if (currentCoin % 10000 == 0) {
-                value += 10000;
-                caps[i] = "D";
-            } else if (currentCoin % 1000 == 0) {
-                value += 100;
-                caps[i] = "G";
-            } else if (currentCoin % 10 == 0) {
-                value += 10;
-                caps[i] = "S";
-            } else {
-                value += 1;
-                caps[i] = "B";
-            }
-        }
+        uint64 targetTotalCaps = numberOfCaps;
+        targetTotalCaps += uint64(producedCaps >> 192);
+        targetTotalCaps += uint64(producedCaps >> 128);
+        targetTotalCaps += uint64(producedCaps >> 64);
+        targetTotalCaps += uint64(producedCaps);
 
-        unproducedCaps -= numberOfCaps;
-        producedCaps += numberOfCaps;
+        uint64 targetDiamondCaps = (targetTotalCaps - (targetTotalCaps % 10000)) / 10000;
+        uint64 targetGoldCaps = ((targetTotalCaps - (targetTotalCaps % 1000)) / 1000) - targetDiamondCaps;
+        uint64 targetSilverCaps = ((targetTotalCaps - (targetTotalCaps % 10)) / 10) - targetDiamondCaps - targetGoldCaps;
+        uint64 targetBronzeCaps = targetTotalCaps - targetDiamondCaps - targetGoldCaps - targetSilverCaps;
 
-        value = value * 10 ** uint256(decimals);
-        totalSupply += value;
-        balanceOf[this] += value;
-        Produce(value, string(caps));
+        uint256 targetProducedCaps = 0;
+        targetProducedCaps |= uint256(targetDiamondCaps) << 192;
+        targetProducedCaps |= uint256(targetGoldCaps) << 128;
+        targetProducedCaps |= uint256(targetSilverCaps) << 64;
+        targetProducedCaps |= uint256(targetBronzeCaps);
+
+        producibleCaps -= numberOfCaps;
+        packedProducedCaps = targetProducedCaps;
+
+        Produce(targetProducedCaps - producedCaps);
 
         return true;
-	}
-
-	/**
-     * Grant Beercoins to a user who scanned a bottle cap code
-     *
-     * We hereby declare that this function is called if and only if
-	 * our server registers a valid code scan by the given user
-     *
-     * @param user the address of the user who scanned a codes
-     * @param cap a bottle cap value ("D", "G", "S", or "B")
-     */
-	function scan(address user, byte cap) public onlyOwner returns (bool success) {
-        if (cap == "D") {
-            _transfer(this, user, 10000 * 10 ** uint256(decimals));
-        } else if (cap == "G") {
-            _transfer(this, user, 100 * 10 ** uint256(decimals));
-        } else if (cap == "S") {
-            _transfer(this, user, 10 * 10 ** uint256(decimals));
-        } else {
-            _transfer(this, user, 1 * 10 ** uint256(decimals));
-        }
-        
-        return true;
-	}
+    }
 
     /**
-     * Grant Beercoins to users who scanned bottle cap codes
+     * Approve scans of multiple users and grant Beercoins
      *
-     * We hereby declare that this function is called if and only if
-	 * our server registers valid code scans by the given users
+     * This function is called periodically to mass-transfer Beercoins to
+     * multiple users if and only if each of them has scanned codes that
+     * our server has never verified before for the same or another user
      *
-     * @param users the addresses of the users who scanned a codes
-     * @param caps bottle cap values ("D", "G", "S", or "B")
+     * @param users the addresses of the users who scanned valid codes
+     * @param caps the amounts of caps the users have scanned as single 256-bit values
      */
-	function scanMany(address[] users, byte[] caps) public onlyOwner returns (bool success) {
+    function scan(address[] users, uint256[] caps) public onlyMaster returns (bool) {
         require(users.length == caps.length);
 
-        for (uint16 i = 0; i < users.length; ++i) {
-            scan(users[i], caps[i]);
+        uint256 scannedCaps = packedScannedCaps;
+
+        uint256 currentCaps;
+        uint256 capsValue;
+        for (uint256 i = 0; i < users.length; ++i) {
+            currentCaps = caps[i];
+
+            capsValue = DIAMOND_VALUE * (currentCaps >> 192);
+            capsValue += GOLD_VALUE * ((currentCaps >> 128) & 0xFFFFFFFFFFFFFFFF);
+            capsValue += SILVER_VALUE * ((currentCaps >> 64) & 0xFFFFFFFFFFFFFFFF);
+            capsValue += BRONZE_VALUE * (currentCaps & 0xFFFFFFFFFFFFFFFF);
+
+            balances[users[i]] += capsValue;
+            scannedCaps += currentCaps;
         }
 
-        return true;
-	}
+        require(scannedCaps <= packedProducedCaps);
+        packedScannedCaps = scannedCaps;
 
-	/**
-     * Redeem tokens when the will to do so has been
-	 * stated within the user interface of a Beercoin
-	 * redemption system
-	 *
-	 * The owner calls this on behalf of the redeeming user
-	 * so the latter does not need to pay transaction fees
-	 * when redeeming
-	 *
-	 * We hereby declare that this function is called if and only if
-     * a user deliberately wants to redeem Beercoins
-     *
-     * @param user the address of the user who wants to redeem
-     * @param value the amount to redeem
-     */
-    function redeem(address user, uint256 value) public onlyOwner returns (bool success) {
-        require(redemptionLocked[user] == false);
-        _transfer(user, owner, value);
-        return true;
-    }
-
-    /**
-     * Redeem tokens when the will to do so has been
-	 * stated within the user interface of a Beercoin
-	 * redemption system
-	 *
-	 * The owner calls this on behalf of the redeeming users
-	 * so the latter do not need to pay transaction fees
-	 * when redeeming
-	 *
-	 * We hereby declare that this function is called if and only if
-     * users deliberately want to redeem Beercoins
-     *
-     * @param users the addresses of the users who want to redeem
-     * @param values the amounts to redeem
-     */
-    function redeemMany(address[] users, uint256[] values) public onlyOwner returns (bool success) {
-        require(users.length == values.length);
-
-        for (uint16 i = 0; i < users.length; ++i) {
-            redeem(users[i], values[i]);
-        }
+        Scan(users, caps);
 
         return true;
     }
 
     /**
-     * Transfer Beercoins to multiple recipients
-     *
-     * @param recipients the addresses of the recipients
-     * @param values the amounts to send
-     */
-    function transferMany(address[] recipients, uint256[] values) public onlyOwner returns (bool success) {
-        require(recipients.length == values.length);
-
-        for (uint16 i = 0; i < recipients.length; ++i) {
-            transfer(recipients[i], values[i]);
-        }
-
-        return true;
-    }
-
-    /**
-     * Destroy Beercoins by removing them from the system irreversibly
+     * Remove Beercoins from the system irreversibly
      *
      * @param value the amount of Beercoins to burn
      */
-    function burn(uint256 value) public onlyOwner returns (bool success) {
-        require(balanceOf[msg.sender] >= value);
-        balanceOf[msg.sender] -= value;
-        totalSupply -= value;
-		Burn(value);
+    function burn(uint256 value) public onlyMaster returns (bool) {
+        uint256 balance = balances[msg.sender];
+        require(value <= balance);
+
+        balances[msg.sender] = balance - value;
+        burntValue += value;
+
+        Burn(value);
+
         return true;
     }
 }
