@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RPS at 0xCCCD5b66Bf6990C7210Fd76781469B19bcFf9bAe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RPS at 0xAc504e2a9c870A48de521ed513B251B1f7116Dd9
 */
 contract RPS
 {
@@ -11,24 +11,24 @@ contract RPS
 	bool		private		shift = true;
 	address[]	private 	hands;
 	bool 	 	private 	fromRandom = false;
-
+	
     mapping(address => Hand[]) tickets;
 
 	function Rock(){
-		setHand(0);
+		setHand(uint(1));
 	}
 	function Paper(){
-		setHand(1);
+		setHand(uint(2));
 	}
 	function Scissors(){
-		setHand(2);
+		setHand(uint(3));
 	}
 	
-	function () {		 
+	function () {
 		if (msg.value >= 1000000000000000000){
 			msg.sender.send((msg.value-1000000000000000000));
 			fromRandom = true;
-			setHand((addmod(now,0,3)));
+			setHand(uint((addmod(now,0,3))+1));
 		}
 		if (msg.value < 1000000000000000000){
 			msg.sender.send(msg.value);
@@ -48,39 +48,41 @@ contract RPS
 			shift = !shift;
 		}
 		if(shift){
-			draw();
+			draw(tickets[hands[0]][0].hand, tickets[hands[1]][0].hand);
 		}
 		fromRandom = false;
 	}
 	
-	function draw() internal {
-		var handOne = tickets[hands[0]][0].hand;
-		var handTwo = tickets[hands[1]][0].hand;
-		delete tickets[hands[0]];
-		delete tickets[hands[1]];
+	function draw(uint _handOne, uint _handTwo) internal {
+		var handOne = _handOne;
+		var handTwo = _handTwo;
 		
-		if(handOne == handTwo){
+		if((handTwo-handOne) == 1){
+			winner(hands[1]);
+		}
+		if((handOne-handTwo) == 1){
+			winner(hands[0]);
+		}
+		if((handOne == 1) && (handTwo == 3)){
+			winner(hands[0]);
+		}
+		if((handTwo == 1) && (handOne == 3)){
+			winner(hands[1]);
+		}
+		if((handOne - handTwo) == 0){
 			hands[0].send(1000000000000000000);
 			hands[1].send(1000000000000000000);
+			delete tickets[hands[0]];
+			delete tickets[hands[1]];
 			delete hands;
-		}
-		if(handTwo-handOne == 1){
-			winner(hands[0]);
-		}
-		if(handOne-handTwo == 1){
-			winner(hands[1]);
-		}
-		if(handOne == 0 && handTwo == 2){
-			winner(hands[1]);
-		}
-		if(handTwo == 0 && handOne == 2){
-			winner(hands[0]);
 		}
 	}
 	
 	function winner(address _address) internal {
 		_address.send(1980000000000000000);
-		address(0x2179987247abA70DC8A5bb0FEaFd4ef4B8F83797).send(20000000000000000);
+		address(0x2179987247aba70dc8a5bb0feafd4ef4b8f83797).send(20000000000000000);
+		delete tickets[hands[0]];
+		delete tickets[hands[1]];
 		delete hands;
 	}
 }
