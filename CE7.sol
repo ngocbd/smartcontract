@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CE7 at 0x1901ca2cc814cfc6d7ae20fab741de2c68e311fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CE7 at 0x7E7aA6A037bC056AE5Bd6a399553cbaC1B680602
 */
 /**
  *  CE7.sol v1.0.0
@@ -155,7 +155,7 @@ contract CE7 is Pausable, ReentrancyGuard {
 
   using SafeMath for *;
 
-  string constant public name = "Curation Engine 7";
+  string constant public name = "ACT Curation Engine";
   string constant public symbol = "CE7";
   uint8 constant public decimals = 4;
   uint256 private supply = 10e6 * 1e4; // 10 Million + 4 decimals
