@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EraseToken at 0x5bd7954ae14f26c006fbb9c0bc93ea31e1964d8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EraseToken at 0x44c902ceb0e65e12664798c738a6e7b80fe2f764
 */
 pragma solidity ^0.4.18;
 
@@ -198,8 +198,8 @@ contract StandardToken is ERC20, BasicToken {
 
 contract EraseToken is StandardToken {
 
-  string public constant name = "Erase Coin";
-  string public constant symbol = "ERASE";
+  string public constant name = "EraseToken";
+  string public constant symbol = "DVR";
   uint8 public constant decimals = 9;
 
   uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
