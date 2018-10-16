@@ -1,14 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract comm_channel at 0x260972db3571a4297b9e0cfa237eabbc9c6e35ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract comm_channel at 0xf236d15aa8164626e3457cd38e69d7f46f95eeb9
 */
-/* A contract to exchange encrypted messages. Most of the work done on
-   the client side. */
-
 contract comm_channel {
 	
     address owner;
     
-    event content(string datainfo, string senderKey, string recipientKey, uint amount);
+    event content(string datainfo, uint indexed version, string indexed senderKey, string indexed recipientKey, uint amount);
     modifier onlyowner { if (msg.sender == owner) _ }
     
     function comm_channel() public { owner = msg.sender; }
@@ -20,15 +17,16 @@ contract comm_channel {
         owner.send(this.balance);
     }
 
-    function add(string datainfo, string senderKey, string recipientKey,
+    function add(string datainfo, uint version, string senderKey, string recipientKey,
                  address resendTo) {
         
         //try to resend money from message to the address
         if(msg.value > 0) {
+            if(resendTo == 0) throw;
             if(!resendTo.send(msg.value)) throw;
         }
         
         //write to blockchain
-        content(datainfo, senderKey, recipientKey, msg.value);
+        content(datainfo, version, senderKey, recipientKey, msg.value);
     }
 }
