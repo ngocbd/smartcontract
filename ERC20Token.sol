@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x22c19bb0db9d2a5f1c4985cb3c444c922b882bd4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x15bd59ffe8ab884041ef54c6213df418d1e1f149
 */
 pragma solidity ^0.4.4;
 
@@ -119,17 +119,17 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 30000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 30000000;                        // Update total supply (100000 for example)
-        name = "xyz coin";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "xyz";                               // Set the symbol for display purposes
+        balances[msg.sender] = 10000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "Universal Labs";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "YOU";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);  
+        Approval(msg.sender, _spender, _value);
 
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
