@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapToken at 0x9220d625bd6bea95c865b3c4faf273bfbd6bc48a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapToken at 0x50ae8d7c70c33d1f40b36c75fe9f560646134dd5
 */
 pragma solidity ^0.4.6;
 contract owned {
@@ -41,12 +41,10 @@ contract SwapToken is owned {
     // more variables
     uint256 public buyPrice;
     uint256 public issuePrice;
-    uint256 public cPT;
-    bool public creditStatus;
     address public project_wallet;
     address public collectionFunds;
-    //uint public startBlock;
-    //uint public endBlock;
+    uint public startBlock;
+    uint public endBlock;
     
     /* Sets the constructor variables */
     function SwapToken(
@@ -67,8 +65,8 @@ contract SwapToken is owned {
         issuerSymbol = _issuerSymbol;
         issuerDecimals = _issuerDecimals;
         collectionFunds = _collectionFunds;
-        //startBlock = _startBlock;
-        //endBlock = _endBlock;
+        startBlock = _startBlock;
+        endBlock = _endBlock;
     }
 
     /* This creates an array with all balances */
@@ -95,14 +93,14 @@ contract SwapToken is owned {
     */
     
     /* Check if contract has started */
-    /*function has_contract_started() private constant returns (bool) {
+    function has_contract_started() private constant returns (bool) {
 	    return block.number >= startBlock;
-    }*/
+    }
     
     /* Check if contract has ended */
-    /*function has_contract_ended() private constant returns (bool) {
+    function has_contract_ended() private constant returns (bool) {
         return block.number > endBlock;
-    }*/
+    }
     
     /* Set a project Wallet */
     function defineProjectWallet(address target) onlyOwner {
@@ -193,18 +191,17 @@ contract SwapToken is owned {
     */
     
     /* Set token price */
-    function setPrices(uint256 newBuyPrice, uint256 newIssuePrice, uint256 coveragePerToken) onlyOwner {
+    function setPrices(uint256 newBuyPrice, uint256 newIssuePrice) onlyOwner {
         buyPrice = newBuyPrice;
         issuePrice = newIssuePrice;
-        cPT = coveragePerToken;
     }
 
     /* Buy tokens */
     
     // buy buyer tokens
     function buyBuyerTokens() payable {
-        //if(!has_contract_started()) throw;                  // checks if the contract has started
-        //if(has_contract_ended()) throw;                     // checks if the contract has ended 
+        if(!has_contract_started()) throw;                  // checks if the contract has started
+        if(has_contract_ended()) throw;                     // checks if the contract has ended 
         uint amount = msg.value / buyPrice;                // calculates the amount
         if (balanceOfBuyer[this] < amount) throw;               // checks if it has enough to sell
         balanceOfBuyer[msg.sender] += amount;                   // adds the amount to buyer's balance
@@ -219,29 +216,6 @@ contract SwapToken is owned {
         balanceOfIssuer[msg.sender] += amount;
         balanceOfIssuer[this] -= amount;
         Transfer(this, msg.sender, amount);
-    }
-    
-    
-    /* Credit Status Event */
-    function setCreditStatus(bool _status) onlyOwner {
-        creditStatus = _status;
-    }
-
-    /* Collection */
-    
-    // buyer collection sale
-    function sellBuyerTokens(uint amount) returns (uint revenue){
-        if (creditStatus == false) throw;                       // checks if buyer is eligible for a claim
-        if (balanceOfBuyer[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
-        balanceOfBuyer[this] += amount;                         // adds the amount to owner's balance
-        balanceOfBuyer[msg.sender] -= amount;                   // subtracts the amount from seller's balance
-        revenue = amount * cPT;
-        if (!msg.sender.send(revenue)) {                   // sends ether to the seller: it's important
-            throw;                                         // to do this last to prevent recursion attacks
-        } else {
-            Transfer(msg.sender, this, amount);             // executes an event reflecting on the change
-            return revenue;                                 // ends function and returns
-        }
     }
     
     /* After contract ends move funds */
