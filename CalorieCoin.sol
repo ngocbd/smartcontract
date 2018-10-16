@@ -1,7 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CalorieCoin at 0x162d19489babc66a2f8390dd5082eae742a85fd7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CalorieCoin at 0x6e8b6f2d02eacbe33b4c45154cbfa53df1b542ea
 */
 pragma solidity ^0.4.17;
+
+contract owned {
+    address public owner;
+
+    function owned() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
+}
 
 contract ERC223ReceivingContract {
 
@@ -116,13 +133,17 @@ contract StandardToken is Token {
 }
 
 
-contract CalorieCoin is StandardToken {
+contract CalorieCoin is owned, StandardToken {
 
     string constant public name = "CalorieCoin";
-    string constant public symbol = "CLC";
+    string constant public symbol = "CAL";
     uint8 constant public decimals = 18;
-    uint constant multiplier = 10 ** uint(decimals);
+    uint constant multiplier = 1000000000000000000;
 
+
+    mapping (address => bool) public frozenAccount;
+
+    event FrozenFunds(address target, bool frozen);
     event Deployed(uint indexed _total_supply);
     event Burnt(
         address indexed _receiver,
@@ -162,5 +183,12 @@ contract CalorieCoin is StandardToken {
 
         assert(balances[msg.sender] == pre_balance - num);
     }
+    
+        function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+    
+    
 
 }
