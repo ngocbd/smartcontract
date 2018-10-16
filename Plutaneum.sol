@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Plutaneum at 0xfa1e6761c1615ed51fad2eab6b91d70bb35a50e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Plutaneum at 0x1bb491fb9167b09dda879f938d28acc95fc2a1a2
 */
 pragma solidity ^0.4.4;
 
@@ -117,7 +117,7 @@ contract Plutaneum is StandardToken {
 
 //
 
-    function Plutaneum(
+    function FatherToken(
         ) {
         balances[msg.sender] = 200000000;               
         totalSupply = 200000000;                        
