@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Teikhos at 0x326923c142e4a75316b091cfd7d292eeffcf20a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Teikhos at 0x3cce4e3c32b6fda2a582cd01c8c711b09e0167eb
 */
 /* 
    A vault so that anyone can try out the Teikhos authentication method 
@@ -17,9 +17,10 @@ contract SHA3_512 {
 
 contract Teikhos {
 
-    SHA3_512 public sha3_512 = SHA3_512(0x367b9E7d0364CF8aa8fEc906DDa56Faf41292dB7);
+    SHA3_512 public sha3_512 = SHA3_512(0xbD6361cC42fD113ED9A9fdbEDF7eea27b325a222); // Mainnet: 0xbD6361cC42fD113ED9A9fdbEDF7eea27b325a222, 
+                                                                                     // Rinkeby: 0x2513CF99E051De22cEB6cf5f2EaF0dc4065c8F1f
 
-    // Use a string as the account identifier, so people can use any name they want
+    // Use a string as the account identifier, so people can have use any name they want
 
     mapping(string => bytes) proof_of_public_key;
     
