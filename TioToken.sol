@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TioToken at 0x855b177c87aadf123a38fa5909da71775cefe552
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TioToken at 0x938da0a8155a173ece01054ccfd4edb98a75245a
 */
 pragma solidity ^0.4.11;
 /**
@@ -153,10 +153,10 @@ contract StandardToken is ERC20, BasicToken {
   }
 }
 contract TioToken is StandardToken {
-	string public name = "TioTest1";
-  string public symbol = "TIOTEST1";
+	string public name = "TioTest";
+  string public symbol = "TIOTEST";
   uint256 public decimals = 18;
-  uint256 public constant INITIAL_SUPPLY = 17100000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 17100000;
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
