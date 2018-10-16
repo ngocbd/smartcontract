@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyOffer at 0x8c114e498af111f1e2185e34880b59880f1c36ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyOffer at 0xb4ca4689805aea93be2907a95e1dcc4bfd12420b
 */
 pragma solidity ^0.4.13;
 /*I will fastelly  create your own cryptocurrency
