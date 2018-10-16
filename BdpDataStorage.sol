@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpDataStorage at 0xb49fd98874ddd4e1029364faae2977780499da3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpDataStorage at 0xceace976b81e39647188828c384ea5dfc3f925ea
 */
 pragma solidity ^0.4.19;
+
+// File: contracts/BdpBaseData.sol
 
 contract BdpBaseData {
 
@@ -13,11 +15,14 @@ contract BdpBaseData {
 
 	bool public paused = false;
 
-	bool public setupComplete = false;
+	bool public setupCompleted = false;
 
 	bytes8 public version;
 
 }
+
+// File: contracts/libraries/BdpContracts.sol
+
 library BdpContracts {
 
 	function getBdpEntryPoint(address[16] _contracts) pure internal returns (address) {
@@ -50,6 +55,8 @@ library BdpContracts {
 
 }
 
+// File: contracts/BdpBase.sol
+
 contract BdpBase is BdpBaseData {
 
 	modifier onlyOwner() {
@@ -62,15 +69,15 @@ contract BdpBase is BdpBaseData {
 		_;
 	}
 
-	modifier whenContractActive() {
-		require(!paused && setupComplete);
+	modifier whileContractIsActive() {
+		require(!paused && setupCompleted);
 		_;
 	}
 
 	modifier storageAccessControl() {
 		require(
-			(! setupComplete && (msg.sender == ownerAddress || msg.sender == managerAddress))
-			|| (setupComplete && !paused && (msg.sender == BdpContracts.getBdpEntryPoint(contracts)))
+			(! setupCompleted && (msg.sender == ownerAddress || msg.sender == managerAddress))
+			|| (setupCompleted && !paused && (msg.sender == BdpContracts.getBdpEntryPoint(contracts)))
 		);
 		_;
 	}
@@ -97,8 +104,8 @@ contract BdpBase is BdpBaseData {
 		paused = false;
 	}
 
-	function setSetupComplete() external onlyOwner {
-		setupComplete = true;
+	function setSetupCompleted() external onlyOwner {
+		setupCompleted = true;
 	}
 
 	function kill() public onlyOwner {
@@ -107,47 +114,55 @@ contract BdpBase is BdpBaseData {
 
 }
 
+// File: contracts/libraries/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+	/**
+	* @dev Multiplies two numbers, throws on overflow.
+	*/
+	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+		if (a == 0) {
+			return 0;
+		}
+		uint256 c = a * b;
+		assert(c / a == b);
+		return c;
+	}
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+	/**
+	* @dev Integer division of two numbers, truncating the quotient.
+	*/
+	function div(uint256 a, uint256 b) internal pure returns (uint256) {
+		// assert(b > 0); // Solidity automatically throws when dividing by 0
+		uint256 c = a / b;
+		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
+		return c;
+	}
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+	/**
+	* @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+	*/
+	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+		assert(b <= a);
+		return a - b;
+	}
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+	/**
+	* @dev Adds two numbers, throws on overflow.
+	*/
+	function add(uint256 a, uint256 b) internal pure returns (uint256) {
+		uint256 c = a + b;
+		assert(c >= a);
+		return c;
+	}
 }
+
+// File: contracts/storage/BdpDataStorage.sol
 
 contract BdpDataStorage is BdpBase {
 
