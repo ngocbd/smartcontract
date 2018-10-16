@@ -1,105 +1,431 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc99be862b2d0a67a30219094f473a87d9bc7afc4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb93489b75a0cf3bf5a380ab3c986482d15a9ef56
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-interface token {
-    function    transfer(address _to, uint256 _value) public returns (bool success);
-    function    burn( uint256 value ) public returns ( bool success );
-    function    balanceOf( address user ) public view returns ( uint256 );
+
+   
+   
+   
+   
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+
+function div(uint256 a, uint256 b) internal returns (uint256) {
+    
+    uint256 c = a / b;
+    
+    return c;
+    }
+ 
+function sub(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b <= a);
+    return a - b;
+    }
+
+function add(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+    }
+} 
+
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) constant returns (uint256);
+    function transfer(address to, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Burn(address indexed from, uint256 value);
 }
 
-contract Crowdsale {
-    address     public beneficiary;
-    uint        public amountRaised;
-    uint        public price;
-    token       public tokenReward;
-    uint        public excess;
 
-    mapping(address => uint256) public balanceOf;
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value);
+    function approve(address spender, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    bool    public crowdsaleClosed = false;
-    bool    public crowdsaleSuccess = false;
 
-    event   GoalReached(address recipient, uint totalAmountRaised, bool crowdsaleSuccess);
-    event   FundTransfer(address backer, uint amount, bool isContribution);
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
+    
+    mapping(address => uint256) balances;
 
-    /**
-     * Constrctor function
-     *
-     * Setup the owner
-     */
-    function    Crowdsale( ) public {
-        beneficiary = msg.sender;
-        price = 0.1 ether;
-        tokenReward = token(0xe881D262acbfE8997Cfc57E9fd527b175Fb26373);
+
+
+
+
+
+function transfer(address _to, uint256 _value) {
+    
+    require ( balances[msg.sender] >= _value);
+    require ( balances[_to] + _value >= balances[_to]);
+    
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+}
+
+
+function burn(uint256 _value) {
+    
+    require ( balances[msg.sender] >= _value);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    
+    Burn(msg.sender, _value);
+}
+
+
+
+
+
+
+
+function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+}
+
+}
+
+
+contract StandardToken is ERC20, BasicToken {
+   
+    mapping (address => mapping (address => uint256)) allowed;
+   
+   
+   
+   
+   
+   
+   
+   
+   function transferFrom(address _from, address _to, uint256 _value) {
+       var _allowance = allowed[_from][msg.sender];
+       
+       
+       
+       
+       balances[_to] = balances[_to].add(_value);
+       balances[_from] = balances[_from].sub(_value);
+       allowed[_from][msg.sender] = _allowance.sub(_value);
+       Transfer(_from, _to, _value);
+   } 
+   
+
+
+
+
+
+   function approve(address _spender, uint256 _value) {
+    
+    
+    
+    
+    
+    require ( !((_value !=0) && (allowed[msg.sender][_spender] !=0)));
+    
+    
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+}
+
+
+
+
+
+
+
+function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+}
+
+}
+
+contract Ownable {
+    address public owner;
+    
+    
+    
+    
+    
+    
+    function Ownable() {
+        owner = msg.sender;
     }
 
-    /**
-    * Fallback function
-    *
-    * The function without name is the default function that is called whenever anyone sends funds to a contract
-    */
-    function () public payable {
-        require(!crowdsaleClosed);
 
-        uint amount = msg.value;
-        require((amount % price) == 0);
-        balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-        tokenReward.transfer(msg.sender, amount / price);
-        excess += amount % price;
-        FundTransfer(msg.sender, amount, true);
+
+
+
+modifier onlyOwner() {
+    require(msg.sender == owner);
+    
+    _;
+}
+
+
+
+
+
+
+function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+        owner = newOwner;
     }
+}
 
-    modifier onlyOwner() {
-        require(msg.sender == beneficiary);
+}
+
+contract MintableToken is StandardToken, Ownable {
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+    string public name = "Electron World Money";
+    string public symbol = "EWM";
+    uint256 public decimals = 18;
+    
+    bool public mintingFinished = false;
+    
+    
+    modifier canMint() {
+        require(!mintingFinished);
         _;
     }
-
-    function goalManagment(bool statement) public onlyOwner {
-        require(crowdsaleClosed == false);    
-        crowdsaleClosed = true;
-        crowdsaleSuccess = statement;
-        GoalReached(beneficiary, amountRaised, crowdsaleSuccess);
+    
+    function MintableToken() {
+        mint(msg.sender, 1000000000000000000000000000);
+     finishMinting();   
     }
+    
+    
+    
+    
+    
+    
+    
+    function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Mint(_to, _amount);
+        Transfer(0, _to, _amount);
+        return true;
+    }
+    
+    
+    
+    
+    
+    
+    function finishMinting() onlyOwner returns (bool) {
+        mintingFinished = true;
+        MintFinished();
+        return true;
+    }
+    
+     
+}
 
-    /**
-    * Withdraw the funds
-    *
-    * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
-    * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
-    * the amount they contributed.
-    */
-    function    withdrawalMoneyBack() public {
-        uint    amount;
-
-        if (crowdsaleClosed == true && crowdsaleSuccess == false) {
-            amount = balanceOf[msg.sender] * price;
-            balanceOf[msg.sender] = 0;
-            amountRaised -= amount;
-            msg.sender.transfer(amount);
-            FundTransfer(msg.sender, amount, false);
+contract SwapToken is MintableToken {
+    MintableToken BasicToken;
+    mapping(address => bool) migrated;
+    
+    function SwapToken (MintableToken _basicToken) {
+        BasicToken = _basicToken;
+        totalSupply = 1000000000000000000000000000;
+    }
+    
+    function migration (address _owner) internal {
+        if (!migrated[_owner]) {
+            balances[_owner] = balances[_owner].add(BasicToken.balanceOf(_owner));
+            migrated[_owner] = true;
         }
+        
+    }
+    
+    function transfer(address _to, uint256 _value) {
+        migration (msg.sender);
+        require ( balances[msg.sender] >= _value);
+        require ( balances[_to] + _value >= balances[_to]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+    }
+    
+    
+    function burn(uint256 _value) {
+        migration (msg.sender);
+        require ( balances[msg.sender] >= _value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        
+        Burn(msg.sender, _value);
+    }
+    
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        migration(_owner);
+        return balances[_owner];
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _value) {
+        var _allowance = allowed[_from][msg.sender];
+        
+        migration (msg.sender);
+        
+        
+        
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+        Transfer(_from, _to, _value);
+    }
+    
+    
+    
+    
+    
+    
+    function approve(address _spender, uint256 _value) {
+        
+        migration (msg.sender);
+        
+        
+        
+        
+        require ( !((_value != 0) && (allowed[msg.sender][_spender] != 0)));
+        
+        
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
     }
 
-    function    withdrawalOwner() public onlyOwner {
-        if (crowdsaleSuccess == true && crowdsaleClosed == true) {
-            beneficiary.transfer(amountRaised);
-            FundTransfer(beneficiary, amountRaised, false);
-            burnToken();
-        }
-    }
 
-    function takeExcess () public onlyOwner {
-        beneficiary.transfer(excess);
-        FundTransfer(beneficiary, excess, false);
-    }
+}
 
-    function    burnToken() private {
-        uint amount;
-
-        amount = tokenReward.balanceOf(this);
-        tokenReward.burn(amount);
+contract Crowdsale is Ownable {
+    using SafeMath for uint256;
+    
+    
+    MintableToken public token;
+    
+    
+    uint256 public deadline;
+    
+    
+    address public wallet;
+    
+    
+    uint256 public rate;
+    
+    
+    uint256 public weiRaised;
+    
+    
+    uint256 public tokensSold;
+    
+    
+    
+    
+    
+    
+    
+    
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    
+    
+    function Crowdsale(MintableToken tokenContract, uint256 durationInWeeks, uint256 _rate, address _wallet) {
+        
+        require(_rate > 0);
+        require(_wallet != 0x0);
+        
+        
+        token = tokenContract;
+        
+        deadline = now + durationInWeeks * 1 weeks;
+        rate = _rate;
+        wallet = _wallet;
+        
+        
+        
+        
     }
+    
+    
+    function setNewTokenOwner(address newOwner) onlyOwner {
+        token.transferOwnership(newOwner);
+    }
+    
+    
+    
+    function createTokenContract() internal returns (MintableToken) {
+        return new MintableToken();
+    }
+    
+    
+    
+    function () payable {
+        buyTokens(msg.sender);
+    }
+    
+    
+    function buyTokens(address beneficiary) payable {
+        require(beneficiary != 0x0);
+        require(validPurchase());
+        
+        uint256 weiAmount = msg.value;
+        uint256 updatedweiRaised = weiRaised.add(weiAmount);
+        
+        
+        uint256 tokens = weiAmount.mul(rate);
+        
+        
+        require ( tokens <= token.balanceOf(this) );
+        
+        
+        weiRaised = updatedweiRaised;
+        
+        
+        token.transfer(beneficiary, tokens);
+        
+        tokensSold = tokensSold.add(tokens);
+        
+        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+        
+        forwardFunds();
+    }
+    
+    
+    
+    function forwardFunds() internal {
+        wallet.transfer(msg.value);
+    }
+    
+    
+    function validPurchase() internal constant returns (bool) {
+        uint256 current = block.number;
+        bool withinPeriod = now <= deadline;
+        bool nonZeroPurchase = msg.value != 0;
+        
+        return withinPeriod && nonZeroPurchase;
+    }
+    
+    
+    function hasEnded() public constant returns (bool) {
+        return ( now > deadline);
+        
+        
+    }
+    
+    function tokenResend() onlyOwner {
+        
+        
+        
+        token.transfer(owner, token.balanceOf(this));
+    }
+    
 }
