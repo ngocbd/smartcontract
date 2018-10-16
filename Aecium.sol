@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aecium at 0x1ea976a4abbdbcc67d9b4fd6d5dba23618fb52fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aecium at 0x7cdd19121009b3e1500e653d2a8084eb85d7a424
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
 
 /**
@@ -113,17 +113,17 @@ contract PoSTokenStandard {
     event Mint(address indexed _address, uint _reward);
 }
 
-//Contract name changed - Aecium
-contract Aecium is ERC20,PoSTokenStandard,Ownable {
+
+contract Aecium is ERC20, PoSTokenStandard, Ownable {
     using SafeMath for uint256;
 
     string public name = "Aecium";
-    string public symbol = "ACM";
+    string public symbol = "AEM";
     uint public decimals = 18;
 
-    uint public chainStartTime; //chain start time
-    uint public chainStartBlockNumber; //chain start block number
-    uint public stakeStartTime; //stake start time
+    uint public chainStartTime; // chain start time
+    uint public chainStartBlockNumber; // chain start block number
+    uint public stakeStartTime; // stake start time
     uint public stakeMinAge = 3 days; // minimum age for coin age: 3D
     uint public stakeMaxAge = 90 days; // stake age of full weight: 90D
     uint public maxMintProofOfStake = 10**17; // default 10% annual interest
@@ -157,8 +157,8 @@ contract Aecium is ERC20,PoSTokenStandard,Ownable {
     }
 
     function Aecium() {
-        maxTotalSupply = 6*(10**23); // 6 Million.
-        totalInitialSupply = 2.5*(10**23); // 250K
+        maxTotalSupply = 7*(10**24); // 7 Million.
+        totalInitialSupply = 7.5*(10**23); // 750K
 
         chainStartTime = now;
         chainStartBlockNumber = block.number;
@@ -259,10 +259,10 @@ contract Aecium is ERC20,PoSTokenStandard,Ownable {
         // Due to the high interest rate for the first two years, compounding should be taken into account.
         // Effective annual interest rate = (1 + (nominal rate / number of compounding periods)) ^ (number of compounding periods) - 1
         if((_now.sub(stakeStartTime)).div(1 years) == 0) {
-            // Effective yearly interest rate is 100% if max stageage of 90 days as compounding period.
+            // 1st year effective annual interest rate is 100% when we select the stakeMaxAge (90 days) as the compounding period.
             interest = (770 * maxMintProofOfStake).div(100);
         } else if((_now.sub(stakeStartTime)).div(1 years) == 1){
-            // Effective yearly interest rate for 2nd year is 50%
+            // 2nd year effective annual interest rate is 50%
             interest = (435 * maxMintProofOfStake).div(100);
         }
 
