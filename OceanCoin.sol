@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OceanCoin at 0xC3ce3399F5d937b5F82e6285E4a34277fC17D775
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OceanCoin at 0xC394e74AE858B36fF47eF854f57e10c8b42c7C2A
 */
 pragma solidity ^0.4.18;
 
@@ -123,7 +123,7 @@ contract OceanCoin is StandardToken {
         totalSupply = 1900000000000000;                        // Update total supply (100000 for example)
         name = "Ocean Coin";                                  // Set the name for display purposes
         decimals = 8;                                         // Amount of decimals for display purposes
-        symbol = "OCB";                                       // Set the symbol for display purposes
+        symbol = "PCB";                                       // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
