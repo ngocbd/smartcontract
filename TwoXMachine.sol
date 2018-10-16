@@ -1,9 +1,95 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwoXMachine at 0x364bf7acd034b5e883978a5160381a05f0afc18d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwoXMachine at 0xf884911a846c06a32887e266c52d98016182dfef
 */
 pragma solidity ^0.4.18;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-contract TwoXMachine {
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+
+contract TwoXMachine is Ownable, Pausable {
 
   // Address of the contract creator
   address public contractOwner;
@@ -31,24 +117,22 @@ contract TwoXMachine {
     address owner;
   }
 
-  modifier onlyContractOwner() {
-    require(msg.sender == contractOwner);
-    _;
+  /**
+   * Fallback function to handle ethereum that was send straight to the contract
+   */
+  function() whenNotPaused() public payable {
+    purchase();
   }
 
-  function TwoXMachine() public {
-    contractOwner = msg.sender;
-  }
-
-  function purchase() public payable {
+  function purchase() whenNotPaused() public payable {
     // I don't want no scrub
     require(msg.value >= 0.01 ether);
 
-    // Take a 5% fee
-    uint256 value = SafeMath.div(SafeMath.mul(msg.value, 95), 100);
+    // Take a 2% fee
+    uint256 value = SafeMath.div(SafeMath.mul(msg.value, 98), 100);
 
     // HNNNNNNGGGGGG
-    uint256 valueMultiplied = SafeMath.div(SafeMath.mul(msg.value, 169), 100);
+    uint256 valueMultiplied = SafeMath.div(SafeMath.mul(msg.value, 150), 100);
 
     contractTotalInvested += msg.value;
     totalInvested[msg.sender] += msg.value;
@@ -88,8 +172,8 @@ contract TwoXMachine {
     }));
   }
 
-  function payout() public onlyContractOwner {
-    contractOwner.transfer(this.balance);
+  function payout() onlyOwner() public {
+    owner.transfer(this.balance);
   }
 }
 
