@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoolToken at 0xcd72f5c7f7d65f4d7e5260a437edb3242724ea64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoolToken at 0x282fea100d6673c7a8f64a8b4d239995af6cb294
 */
 /**
  * Cool Crypto
@@ -16,13 +16,55 @@
  **/
 pragma solidity >=0.4.4;
 
+//Cool safeMath
+library safeMath {
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+  function div(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+  function sub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}
+
+//Cool Contract
 contract CoolToken {
-    string public standard = 'Cool Token';
+    string public standard = 'CoolToken';
     string public name = 'Cool';
     string public symbol = 'COOL';
-    uint8 public decimals = 8;
-    uint256 public totalSupply = 100000000000000000;
-    // 10000000000000000/10^8=100M COOL.
+    uint8 public decimals = 18;
+    uint256 public totalSupply = 100000000000000000000000000;
+    // 100000000000000000000000000/10^18=100M COOL.
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
