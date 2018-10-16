@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x3bd601b3a50c4f784f02c1e63d3f0f4f308c2fc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x11713c83c7370556e1983b007eec3a848d8ee486
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.23;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name;
-    string public symbol;
+    string public name = "EOS Auction Platform";
+    string public symbol = "EAP";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply = 100000000000000000000000000;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -28,7 +28,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
+    function Constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
