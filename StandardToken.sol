@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0x63ff35a3daee3d4cb05aaae71828376d9e618163
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0x2fa152f6d08e654d8bd4ffe80a260c6f5163561c
 */
 pragma solidity ^0.4.4;
 
@@ -91,7 +91,7 @@ contract StandardToken is Token {
 
 
 //name this contract whatever you'd like
-contract iRegMed is StandardToken {
+contract ERC20Token is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
@@ -106,10 +106,10 @@ contract iRegMed is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                  
-    uint8 public decimals;               
-    string public symbol;                 
-    string public version = 'H1.0';       
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,11 +119,11 @@ contract iRegMed is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 20000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 20000000000000000;                        // Update total supply (100000 for example)
-        name = "iRegMed";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "IRM";                               // Set the symbol for display purposes
+        balances[msg.sender] = 50000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 50000000000000000000000;                        // Update total supply (100000 for example)
+        name = "Carlos Matos Coin";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "CMC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
