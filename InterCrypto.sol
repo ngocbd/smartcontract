@@ -1,8 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InterCrypto at 0xd3a97d46fd0c28a5a035a4e0813afe7c2c1376bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InterCrypto at 0xc876b7545c2b6bfac4cd82db1ebd33f70d738277
 */
 pragma solidity ^0.4.15;
 
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -38,7 +44,7 @@ contract Ownable {
 
 interface OraclizeI {
     // address public cbAddress;
-    function cbAddress() constant returns (address); // Reads public variable cbAddress 
+    function cbAddress() constant returns (address); // Reads public variable cbAddress
     function query(uint _timestamp, string _datasource, string _arg) payable returns (bytes32 _id);
     function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) payable returns (bytes32 _id);
     function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) payable returns (bytes32 _id);
@@ -58,35 +64,36 @@ interface OraclizeAddrResolverI {
     function getAddress() returns (address _addr);
 }
 
-// this is a reduced and optimize version of the usingOracalize contract in https://github.com/oraclize/ethereum-api/blob/master/oraclizeAPI_0.4.sol
-contract myUsingOracalize is Ownable {
+// this is a reduced and optimize version of the usingOraclize contract in https://github.com/oraclize/ethereum-api/blob/master/oraclizeAPI_0.4.sol
+contract myUsingOraclize is Ownable {
     OraclizeAddrResolverI OAR;
     OraclizeI public oraclize;
-    uint public oracalize_gaslimit = 100000;
+    uint public oraclize_gaslimit = 120000;
 
-    function myUsingOracalize() {
+    function myUsingOraclize() {
         oraclize_setNetwork();
-        update_oracalize();
+        update_oraclize();
     }
 
-    function update_oracalize() public {
+    function update_oraclize() onlyOwner public {
         oraclize = OraclizeI(OAR.getAddress());
     }
-    
+
     function oraclize_query(string datasource, string arg1, string arg2) internal returns (bytes32 id) {
-        uint price = oraclize.getPrice(datasource, oracalize_gaslimit);
-        if (price > 1 ether + tx.gasprice*oracalize_gaslimit) return 0; // unexpectedly high price
-        return oraclize.query2_withGasLimit.value(price)(0, datasource, arg1, arg2, oracalize_gaslimit);
-    }
-    
-    function oraclize_getPrice(string datasource) internal returns (uint) {
-        return oraclize.getPrice(datasource, oracalize_gaslimit);
+        uint price = oraclize.getPrice(datasource, oraclize_gaslimit);
+        if (price > 1 ether + tx.gasprice*oraclize_gaslimit) return 0; // unexpectedly high price
+        return oraclize.query2_withGasLimit.value(price)(0, datasource, arg1, arg2, oraclize_gaslimit);
     }
 
-    function setGasLimit(uint _newLimit) onlyOwner public {
-        oracalize_gaslimit = _newLimit;
+    function oraclize_getPrice(string datasource) internal returns (uint) {
+        return oraclize.getPrice(datasource, oraclize_gaslimit);
     }
-    
+
+
+    function setGasLimit(uint _newLimit) onlyOwner public {
+        oraclize_gaslimit = _newLimit;
+    }
+
     function oraclize_setNetwork() internal {
         if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
             OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
@@ -144,94 +151,123 @@ contract myUsingOracalize is Ownable {
     }
 }
 
-/// @title Inter-crypto currency converter
-/// @author Jack Tanner - <jnt16@ic.ac.uk>
-contract InterCrypto is Ownable, myUsingOracalize {
+/**
+ * @title InterCrypto
+ * @dev The InterCrypto offers a no-commission service using Oraclize and ShapeShift
+ * that allows for on-blockchain conversion from Ether to any other blockchain that ShapeShift supports.
+ * @author Jack Tanner - <jnt16@ic.ac.uk>
+ */
+contract InterCrypto is Ownable, myUsingOraclize {
     // _______________VARIABLES_______________
-    struct Transaction {
+    struct Conversion {
         address returnAddress;
         uint amount;
     }
 
-    mapping (uint => Transaction) public transactions;
-    uint transactionCount = 0;
-    mapping (bytes32 => uint) oracalizeMyId2transactionID;
+    mapping (uint => Conversion) public conversions;
+    uint conversionCount = 0;
+    mapping (bytes32 => uint) oraclizeMyId2conversionID;
     mapping (address => uint) public recoverable;
 
     // _______________EVENTS_______________
-    event TransactionStarted(uint indexed transactionID);
-    event TransactionSentToShapeShift(uint indexed transactionID, address indexed returnAddress, address indexed depositAddress, uint amount);
-    event TransactionAborted(uint indexed transactionID, string reason);
+    event ConversionStarted(uint indexed conversionID);
+    event ConversionSentToShapeShift(uint indexed conversionID, address indexed returnAddress, address indexed depositAddress, uint amount);
+    event ConversionAborted(uint indexed conversionID, string reason);
     event Recovered(address indexed recoveredTo, uint amount);
 
     // _______________EXTERNAL FUNCTIONS_______________
-    // constructor
+    /**
+     * Constructor.
+     */
     function InterCrypto() {}
 
-    // suicide function
+    /**
+     * Destroys the contract and returns and Ether to the owner.
+     */
     function kill() onlyOwner external {
         selfdestruct(owner);
     }
 
-    // Default function which will accept Ether
+    /**
+     * Fallback function to allow contract to accept Ether.
+     */
     function () payable {}
 
-    // Return the price of using Oracalize
-    function getInterCryptoPrice() constant public returns (uint) {
-        return oraclize_getPrice('URL');
-    }
-
-    // Create a cryptocurrency conversion using Oracalize and Shapeshift return address = msg.sender
-    function sendToOtherBlockchain1(string _coinSymbol, string _toAddress) external payable returns(uint) {
+    /**
+     * Sets up a ShapeShift cryptocurrency conversion using Oraclize and the ShapeShift API. Must be sent more Ether than the Oraclize price.
+     * Returns a conversionID which can be used for tracking of the conversion.
+     * @param _coinSymbol The coinsymbol of the other blockchain to be used by ShapeShift. See engine() function for more details.
+     * @param _toAddress The address on the other blockchain that the converted cryptocurrency will be sent to.
+     */
+    function convert1(string _coinSymbol, string _toAddress) external payable returns(uint) {
         return engine(_coinSymbol, _toAddress, msg.sender);
     }
-    
-    // Create a cryptocurrency conversion using Oracalize and custom Shapeshift return address
-    function sendToOtherBlockchain2(string _coinSymbol, string _toAddress, address _returnAddress) external payable returns(uint) {
+
+    /**
+     * Sets up a ShapeShift cryptocurrency conversion using Oraclize and the ShapeShift API. Must be sent more Ether than the Oraclize price.
+     * Returns a conversionID which can be used for tracking of the conversion.
+     * @param _coinSymbol The coinsymbol of the other blockchain to be used by ShapeShift. See engine() function for more details.
+     * @param _toAddress The address on the other blockchain that the converted cryptocurrency will be sent to.
+     * @param _returnAddress The Ethereum address that any Ether should be sent back to in the event that the ShapeShift conversion is invalid or fails
+     */
+    function convert2(string _coinSymbol, string _toAddress, address _returnAddress) external payable returns(uint) {
         return engine(_coinSymbol, _toAddress, _returnAddress);
     }
 
-    // Callback function for Oracalize
+    /**
+     * Callback function for use exclusively by Oraclize.
+     * @param myid The Oraclize id of the query.
+     * @param result The result of the query.
+     */
     function __callback(bytes32 myid, string result) {
         if (msg.sender != oraclize.cbAddress()) revert();
 
-        uint transactionID = oracalizeMyId2transactionID[myid];
-        Transaction memory transaction = transactions[transactionID];
-        
+        uint conversionID = oraclizeMyId2conversionID[myid];
+
         if( bytes(result).length == 0 ) {
-            TransactionAborted(transactionID, "Oracalize return value was invalid, this is probably due to incorrect sendToOtherBlockchain() argments");
-            recoverable[transaction.returnAddress] += transaction.amount;
-            transaction.amount = 0;
+            ConversionAborted(conversionID, "Oraclize return value was invalid, this is probably due to incorrect convert() argments");
+            recoverable[conversions[conversionID].returnAddress] += conversions[conversionID].amount;
+            conversions[conversionID].amount = 0;
         }
         else {
             address depositAddress = parseAddr(result);
-            require(depositAddress != msg.sender); // prevent DAO tpe recursion hack that can potentially be done by oracalize
-            uint sendAmount = transaction.amount;
-            transaction.amount = 0;
-            if (depositAddress.send(sendAmount))
-                TransactionSentToShapeShift(transactionID, transaction.returnAddress, depositAddress, sendAmount);
+            require(depositAddress != msg.sender); // prevent DAO tpe re-entracy vulnerability that can potentially be done by Oraclize
+            uint sendAmount = conversions[conversionID].amount;
+            conversions[conversionID].amount = 0;
+            if (depositAddress.send(sendAmount)) {
+                ConversionSentToShapeShift(conversionID, conversions[conversionID].returnAddress, depositAddress, sendAmount);
+            }
             else {
-                TransactionAborted(transactionID, "transaction to address returned by Oracalize failed");
-                recoverable[transaction.returnAddress] += sendAmount;
+                ConversionAborted(conversionID, "deposit to address returned by Oraclize failed");
+                recoverable[conversions[conversionID].returnAddress] += sendAmount;
             }
         }
     }
 
-    // Cancel a transaction that has not been completed
-    // Note that this should only be required if Oracalize should fail to respond
-    function cancelTransaction(uint transactionID) external {
-        Transaction memory transaction = transactions[transactionID];
-        
-        if (transaction.amount > 0) {
-            require(msg.sender == transaction.returnAddress);
-            recoverable[msg.sender] += transaction.amount;
-            transaction.amount = 0;
-            TransactionAborted(transactionID, "transaction cancelled by creator");
+    /**
+     * Cancel a cryptocurrency conversion.
+     * This should only be required to be called if Oraclize fails make a return call to __callback().
+     * @param conversionID The conversion ID of the cryptocurrency conversion, generated during engine().
+     */
+     function cancelConversion(uint conversionID) external {
+        Conversion memory conversion = conversions[conversionID];
+
+        if (conversion.amount > 0) {
+            require(msg.sender == conversion.returnAddress);
+            recoverable[msg.sender] += conversion.amount;
+            conversions[conversionID].amount = 0;
+            ConversionAborted(conversionID, "conversion cancelled by creator");
         }
     }
 
-    // Send any pending funds back to their owner
-    function recover() external {
+    /**
+     * Recover any recoverable funds due to the failure of InterCrypto. Failure can occure due to:
+     * 1. Bad user inputs to convert().
+     * 2. ShapeShift temporarily or permanently discontinues support of other blockchain.
+     * 3. ShapeShift service becomes unavailable.
+     * 4. Oraclize service become unavailable.
+     */
+     function recover() external {
         uint amount = recoverable[msg.sender];
         recoverable[msg.sender] = 0;
         if (msg.sender.send(amount)) {
@@ -242,68 +278,81 @@ contract InterCrypto is Ownable, myUsingOracalize {
         }
     }
     // _______________PUBLIC FUNCTIONS_______________
-
+    /**
+     * Returns the price in Wei paid to Oraclize.
+     */
+    function getInterCryptoPrice() constant public returns (uint) {
+        return oraclize_getPrice('URL');
+    }
 
     // _______________INTERNAL FUNCTIONS_______________
-    // Request for a ShapeShift transaction to be made
-    function engine(string _coinSymbol, string _toAddress, address _returnAddress) internal returns(uint transactionID) {
-        // Example arguments:
-        // "ltc", "LbZcDdMeP96ko85H21TQii98YFF9RgZg3D"   Litecoin
-        // "btc", "1L8oRijgmkfcZDYA21b73b6DewLtyYs87s"   Bitcoin
-        // "dash", "Xoopows17idkTwNrMZuySXBwQDorsezQAx"  Dash
-        // "zec", "t1N7tf1xRxz5cBK51JADijLDWS592FPJtya"  ZCash
-        // "doge", "DMAFvwTH2upni7eTau8au6Rktgm2bUkMei"   Dogecoin
-        // See https://info.shapeshift.io/about
-        // Test symbol pairs using ShapeShift API (shapeshift.io/validateAddress/[address]/[coinSymbol]) or by creating a test
-        // transaction first whenever possible before using it with InterCrypto
-        
-        transactionID = transactionCount++;
+    /**
+     * Sets up a ShapeShift cryptocurrency conversion using Oraclize and the ShapeShift API. Must be sent more Ether than the Oraclize price.
+     * Returns a conversionID which can be used for tracking of the conversion.
+     * @param _coinSymbol The coinsymbol of the other blockchain to be used by ShapeShift. See engine() function for more details.
+     * @param _toAddress The address on the other blockchain that the converted cryptocurrency will be sent to.
+     * Example first two arguments:
+     * "ltc", "LbZcDdMeP96ko85H21TQii98YFF9RgZg3D"    Litecoin
+     * "btc", "1L8oRijgmkfcZDYA21b73b6DewLtyYs87s"    Bitcoin
+     * "dash", "Xoopows17idkTwNrMZuySXBwQDorsezQAx"   Dash
+     * "zec", "t1N7tf1xRxz5cBK51JADijLDWS592FPJtya"   ZCash
+     * "doge", "DMAFvwTH2upni7eTau8au6Rktgm2bUkMei"   Dogecoin
+     * Test symbol pairs using ShapeShift API (shapeshift.io/validateAddress/[address]/[coinSymbol]) or by creating a test
+     * conversion on https://shapeshift.io first whenever possible before using it with InterCrypto.
+     * @param _returnAddress The Ethereum address that any Ether should be sent back to in the event that the ShapeShift conversion is invalid or fails.
+     */
+    function engine(string _coinSymbol, string _toAddress, address _returnAddress) internal returns(uint conversionID) {
+        conversionID = conversionCount++;
 
-        if (!isValidateParameter(_coinSymbol, 6) || !isValidateParameter(_toAddress, 120)) { // Waves smbol is "waves" , Monero integrated addresses are 106 characters
-            TransactionAborted(transactionID, "input parameters are too long or contain invalid symbols");
+        if (
+            !isValidString(_coinSymbol, 6) || // Waves smbol is "waves"
+            !isValidString(_toAddress, 120)   // Monero integrated addresses are 106 characters
+            ) {
+            ConversionAborted(conversionID, "input parameters are too long or contain invalid symbols");
             recoverable[msg.sender] += msg.value;
             return;
         }
-        
-        uint oracalizePrice = getInterCryptoPrice();
 
-        if (msg.value > oracalizePrice) {
-            Transaction memory transaction = Transaction(_returnAddress, msg.value-oracalizePrice);
-            transactions[transactionID] = transaction;
-            
-            // Create post data string like ' {"withdrawal":"LbZcDdMeP96ko85H21TQii98YFF9RgZg3D","pair":"eth_ltc","returnAddress":"558999ff2e0daefcb4fcded4c89e07fdf9ccb56c"}'
-            string memory postData = createShapeShiftTransactionPost(_coinSymbol, _toAddress);
+        uint oraclizePrice = getInterCryptoPrice();
 
-            // TODO: send custom gasLimit for retrn transaction equal to the exact cost of __callback. Note that this should only be donewhen the contract is finalized
+        if (msg.value > oraclizePrice) {
+            Conversion memory conversion = Conversion(_returnAddress, msg.value-oraclizePrice);
+            conversions[conversionID] = Conversion(_returnAddress, msg.value-oraclizePrice);
+
+            string memory postData = createShapeShiftConversionPost(_coinSymbol, _toAddress);
             bytes32 myQueryId = oraclize_query("URL", "json(https://shapeshift.io/shift).deposit", postData);
-            
+
             if (myQueryId == 0) {
-                TransactionAborted(transactionID, "unexpectedly high Oracalize price when calling oracalize_query");
-                recoverable[msg.sender] += msg.value-oracalizePrice;
-                transaction.amount = 0;
+                ConversionAborted(conversionID, "unexpectedly high Oraclize price when calling oraclize_query");
+                recoverable[msg.sender] += msg.value-oraclizePrice;
+                conversions[conversionID].amount = 0;
                 return;
             }
-            oracalizeMyId2transactionID[myQueryId] = transactionID;
-            TransactionStarted(transactionID);
+            oraclizeMyId2conversionID[myQueryId] = conversionID;
+            ConversionStarted(conversionID);
         }
         else {
-            TransactionAborted(transactionID, "Not enough Ether sent to cover Oracalize fee");
-            // transactions[transactionID].amount = 0;
+            ConversionAborted(conversionID, "Not enough Ether sent to cover Oraclize fee");
+            conversions[conversionID].amount = 0;
             recoverable[msg.sender] += msg.value;
         }
     }
-    
-    // Adapted from https://github.com/kieranelby/KingOfTheEtherThrone/blob/master/contracts/KingOfTheEtherThrone.sol
-    function isValidateParameter(string _parameter, uint maxSize) constant internal returns (bool allowed) {
-        bytes memory parameterBytes = bytes(_parameter);
-        uint lengthBytes = parameterBytes.length;
+
+    /**
+     * Returns true if a given string contains only numbers and letters, and is below a maximum length.
+     * @param _string String to be checked.
+     * @param maxSize The maximum allowable sting character length. The address on the other blockchain that the converted cryptocurrency will be sent to.
+     */
+    function isValidString(string _string, uint maxSize) constant internal returns (bool allowed) {
+        bytes memory stringBytes = bytes(_string);
+        uint lengthBytes = stringBytes.length;
         if (lengthBytes < 1 ||
             lengthBytes > maxSize) {
             return false;
         }
-        
+
         for (uint i = 0; i < lengthBytes; i++) {
-            byte b = parameterBytes[i];
+            byte b = stringBytes[i];
             if ( !(
                 (b >= 48 && b <= 57) || // 0 - 9
                 (b >= 65 && b <= 90) || // A - Z
@@ -314,7 +363,13 @@ contract InterCrypto is Ownable, myUsingOracalize {
         }
         return true;
     }
-    
+
+    /**
+     * Returns a concatenation of seven bytes.
+     * @param b1 The first bytes to be concatenated.
+     * ...
+     * @param b7 The last bytes to be concatenated.
+     */
     function concatBytes(bytes b1, bytes b2, bytes b3, bytes b4, bytes b5, bytes b6, bytes b7) internal returns (bytes bFinal) {
         bFinal = new bytes(b1.length + b2.length + b3.length + b4.length + b5.length + b6.length + b7.length);
 
@@ -329,7 +384,15 @@ contract InterCrypto is Ownable, myUsingOracalize {
         for (j = 0; j < b7.length; j++) bFinal[i++] = b7[j];
     }
 
-    function createShapeShiftTransactionPost(string _coinSymbol, string _toAddress) internal returns (string sFinal) {
+    /**
+     * Returns the ShapeShift shift API string that is needed to be sent to Oraclize.
+     * @param _coinSymbol The coinsymbol of the other blockchain to be used by ShapeShift. See engine() function for more details.
+     * @param _toAddress The address on the other blockchain that the converted cryptocurrency will be sent to.
+     * Example output:
+     * ' {"withdrawal":"LbZcDdMeP96ko85H21TQii98YFF9RgZg3D","pair":"eth_ltc","returnAddress":"558999ff2e0daefcb4fcded4c89e07fdf9ccb56c"}'
+     * Note that an extra space ' ' is needed at the start to tell Oraclize to make a POST query
+     */
+    function createShapeShiftConversionPost(string _coinSymbol, string _toAddress) internal returns (string sFinal) {
         string memory s1 = ' {"withdrawal":"';
         string memory s3 = '","pair":"eth_';
         string memory s5 = '","returnAddress":"';
@@ -340,7 +403,11 @@ contract InterCrypto is Ownable, myUsingOracalize {
         sFinal = string(bFinal);
     }
 
-        // Authored by https://github.com/axic
+    /**
+     * Returns the ASCII numeric or lower case character representation of a number.
+     * Authored by from https://github.com/axic
+     * @param nibble Nuber to be converted
+     */
     function nibbleToChar(uint nibble) internal returns (uint ret) {
         if (nibble > 9)
         return nibble + 87; // nibble + 'a'- 10
@@ -348,7 +415,11 @@ contract InterCrypto is Ownable, myUsingOracalize {
         return nibble + 48; // '0'
     }
 
-    // Authored by https://github.com/axic
+    /**
+     * Returns the bytes representation of a provided Ethereum address
+     * Authored by from https://github.com/axic
+     * @param _address Ethereum address to be cast to bytes
+     */
     function addressToBytes(address _address) internal returns (bytes) {
         uint160 tmp = uint160(_address);
 
