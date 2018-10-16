@@ -1,467 +1,655 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestTest at 0x3f5d8e4b7a68f30735de6349c37cee1fec9f383d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestTest at 0xd0066c571eae6f36908b076e29bc62a0b31dd56a
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
 
+/*
+asdasda test test
+*/
 
 contract TestTest {
 
-	// scaleFactor is used to convert Ether into tokens and vice-versa: they're of different
-	// orders of magnitude, hence the need to bridge between the two.
-	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
+    modifier onlyPeopleWithTokens() {
+        require(myTokens() > 0);_; }
 
-	// CRR = 50%
-	// CRR is Cash Reserve Ratio (in this case Crypto Reserve Ratio).
-	// For more on this: check out https://en.wikipedia.org/wiki/Reserve_requirement
-	int constant crr_n = 1; // CRR numerator
-	int constant crr_d = 2; // CRR denominator
+    modifier onlyPeopleWithProfits() {
+        require(myDividends(true) > 0);_;}
 
-	// The price coefficient. Chosen such that at 1 token total supply
-	// the amount in reserve is 0.5 ether and token price is 1 Ether.
-	int constant price_coeff = -0x296ABF784A358468C;
+    modifier onlyAdmin(){
+        address _customerAddress = msg.sender;
+        require(administrator[_customerAddress]);
+        _;
+    }
+    modifier antiEarlyWhale(uint256 _amountOfEthereum){
+        address _customerAddress = msg.sender;
+ 
+        if( onlyAdminsFriends && ((totalEthereumBalance() - _amountOfEthereum) <= adminsFriendQuota_ )){
+            require(
 
-	// Typical values that we have to declare.
-	string constant public name = "TestTest";
-	string constant public symbol = "EPY";
-	uint8 constant public decimals = 18;
+                adminsFriends_[_customerAddress] == true &&
 
-	// Array between each address and their number of tokens.
-	mapping(address => uint256) public tokenBalance;
-		
-	// Array between each address and how much Ether has been paid out to it.
-	// Note that this is scaled by the scaleFactor variable.
-	mapping(address => int256) public payouts;
+                (adminsFriendAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= adminsFriendMaxPurchase_            
+            );
+            
 
-	// Variable tracking how many tokens are in existence overall.
-	uint256 public totalSupply;
+            adminsFriendAccumulatedQuota_[_customerAddress] = SafeMath.add(adminsFriendAccumulatedQuota_[_customerAddress], _amountOfEthereum);
+        
+            _;
+        } else {onlyAdminsFriends = false; _; }
+        
+    }
+    
+    event onTokenPurchase(
+        address indexed customerAddress,
+        uint256 incomingEthereum,
+        uint256 tokensMinted,
+        address indexed referredBy
+    );
+    
+    event onTokenSell(
+        address indexed customerAddress,
+        uint256 tokensBurned,
+        uint256 ethereumEarned
+    );
+    
+    event onReinvestment(
+        address indexed customerAddress,
+        uint256 ethereumReinvested,
+        uint256 tokensMinted
+    );
+    
+    event onWithdraw(
+        address indexed customerAddress,
+        uint256 ethereumWithdrawn
+    );
+    
+    // ERC20
+    event Transfer(
+    address indexed from,
+    address indexed to,
+    uint256 tokens);
+    string public name = "Infinity Hourglass";
+    string public symbol = "INF";
+    uint8 constant public decimals = 18;
+    uint8 constant internal dividendFee_ = 7;
+    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
+    uint256 constant internal magnitude = 2**64;
+    uint256 public stakingRequirement = 100e18;
+    mapping(address => bool) internal adminsFriends_;
+    uint256 constant internal adminsFriendMaxPurchase_ = 1 ether;
+    uint256 constant internal adminsFriendQuota_ = 20 ether;
+    mapping(address => uint256) internal tokenBalanceLedger_;
+    mapping(address => uint256) internal referralBalance_;
+    mapping(address => int256) internal payoutsTo_;
+    mapping(address => uint256) internal adminsFriendAccumulatedQuota_;
+    uint256 internal tokenSupply_ = 0;
+    uint256 internal profitPerShare_;
+    mapping(address => bool) public administrator;
+    bool public onlyAdminsFriends = true;
+    
 
-	// Aggregate sum of all payouts.
-	// Note that this is scaled by the scaleFactor variable.
-	int256 totalPayouts;
 
-	// Variable tracking how much Ether each token is currently worth.
-	// Note that this is scaled by the scaleFactor variable.
-	uint256 earningsPerToken;
-	
-	// Current contract balance in Ether
-	uint256 public contractBalance;
-
-	function TestTest() public {}
-
-	// The following functions are used by the front-end for display purposes.
-
-	// Returns the number of tokens currently held by _owner.
-	function balanceOf(address _owner) public constant returns (uint256 balance) {
-		return tokenBalance[_owner];
-	}
-
-	// Withdraws all dividends held by the caller sending the transaction, updates
-	// the requisite global variables, and transfers Ether back to the caller.
-	function withdraw() public {
-		// Retrieve the dividends associated with the address the request came from.
-		var balance = dividends(msg.sender);
-		
-		// Update the payouts array, incrementing the request address by `balance`.
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		
-		// Increase the total amount that's been paid out to maintain invariance.
-		totalPayouts += (int256) (balance * scaleFactor);
-		
-		// Send the dividends to the address that requested the withdraw.
-		contractBalance = sub(contractBalance, balance);
-		msg.sender.transfer(balance);
-	}
-
-	// Converts the Ether accrued as dividends back into EPY tokens without having to
-	// withdraw it first. Saves on gas and potential price spike loss.
-	function reinvestDividends() public {
-		// Retrieve the dividends associated with the address the request came from.
-		var balance = dividends(msg.sender);
-		
-		// Update the payouts array, incrementing the request address by `balance`.
-		// Since this is essentially a shortcut to withdrawing and reinvesting, this step still holds.
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		
-		// Increase the total amount that's been paid out to maintain invariance.
-		totalPayouts += (int256) (balance * scaleFactor);
-		
-		// Assign balance to a new variable.
-		uint value_ = (uint) (balance);
-		
-		// If your dividends are worth less than 1 szabo, or more than a million Ether
-		// (in which case, why are you even here), abort.
-		if (value_ < 0.000001 ether || value_ > 1000000 ether)
-			revert();
-			
-		// msg.sender is the address of the caller.
-		var sender = msg.sender;
-		
-		// A temporary reserve variable used for calculating the reward the holder gets for buying tokens.
-		// (Yes, the buyer receives a part of the distribution as well!)
-		var res = reserve() - balance;
-
-		// 10% of the total Ether sent is used to pay existing holders.
-		var fee = div(value_, 15);
-		
-		// The amount of Ether used to purchase new tokens for the caller.
-		var numEther = value_ - fee;
-		
-		// The number of tokens which can be purchased for numEther.
-		var numTokens = calculateDividendTokens(numEther, balance);
-		
-		// The buyer fee, scaled by the scaleFactor variable.
-		var buyerFee = fee * scaleFactor;
-		
-		// Check that we have tokens in existence (this should always be true), or
-		// else you're gonna have a bad time.
-		if (totalSupply > 0) {
-			// Compute the bonus co-efficient for all existing holders and the buyer.
-			// The buyer receives part of the distribution for each token bought in the
-			// same way they would have if they bought each token individually.
-			var bonusCoEff =
-			    (scaleFactor - (res + numEther) * numTokens * scaleFactor / (totalSupply + numTokens) / numEther)
-			    * (uint)(crr_d) / (uint)(crr_d-crr_n);
-				
-			// The total reward to be distributed amongst the masses is the fee (in Ether)
-			// multiplied by the bonus co-efficient.
-			var holderReward = fee * bonusCoEff;
-			
-			buyerFee -= holderReward;
-
-			// Fee is distributed to all existing token holders before the new tokens are purchased.
-			// rewardPerShare is the amount gained per token thanks to this buy-in.
-			var rewardPerShare = holderReward / totalSupply;
-			
-			// The Ether value per token is increased proportionally.
-			earningsPerToken += rewardPerShare;
-		}
-		
-		// Add the numTokens which were just created to the total supply. We're a crypto central bank!
-		totalSupply = add(totalSupply, numTokens);
-		
-		// Assign the tokens to the balance of the buyer.
-		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
-		
-		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
-		// Also include the fee paid for entering the scheme.
-		// First we compute how much was just paid out to the buyer...
-		var payoutDiff  = (int256) ((earningsPerToken * numTokens) - buyerFee);
-		
-		// Then we update the payouts array for the buyer with this amount...
-		payouts[sender] += payoutDiff;
-		
-		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
-		totalPayouts    += payoutDiff;
-		
-	}
-
-	// Sells your tokens for Ether. This Ether is assigned to the callers entry
-	// in the tokenBalance array, and therefore is shown as a dividend. A second
-	// call to withdraw() must be made to invoke the transfer of Ether back to your address.
-	function sellMyTokens() public {
-		var balance = balanceOf(msg.sender);
-		sell(balance);
-	}
-
-	// The slam-the-button escape hatch. Sells the callers tokens for Ether, then immediately
-	// invokes the withdraw() function, sending the resulting Ether to the callers address.
-    function getMeOutOfHere() public {
-		sellMyTokens();
+    /*=======================================
+    =            PUBLIC FUNCTIONS            =
+    =======================================*/
+    /*
+    * -- APPLICATION ENTRY POINTS --  
+    */
+    function TestTest()
+        public
+    {administrator[0x703e04F6162f0f6c63F397994EbbF372a90e3d1d] = true;}
+    
+     
+    /**
+     * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
+     */
+    function buy(address _referredBy)
+        public
+        payable
+        returns(uint256)
+    {
+        purchaseTokens(msg.value, _referredBy);
+    }
+    
+    /**
+     * Fallback function to handle ethereum that was send straight to the contract
+     * Unfortunately we cannot use a referral address this way.
+     */
+    function()
+        payable
+        public
+    {
+        purchaseTokens(msg.value, 0x0);
+    }
+    
+    /**
+     * Converts all of caller's dividends to tokens.
+     */
+    function reinvest()
+        onlyPeopleWithProfits()
+        public
+    {
+        // fetch dividends
+        uint256 _dividends = myDividends(false); // retrieve ref. bonus later in the code
+        
+        // pay out the dividends virtually
+        address _customerAddress = msg.sender;
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+        
+        // retrieve ref. bonus
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+        
+        // dispatch a buy order with the virtualized "withdrawn dividends"
+        uint256 _tokens = purchaseTokens(_dividends, 0x0);
+        
+        // fire event
+        onReinvestment(_customerAddress, _dividends, _tokens);
+    }
+    
+    /**
+     * Alias of sell() and withdraw().
+     */
+    function exit()
+        public
+    {
+        // get token count for caller & sell them all
+        address _customerAddress = msg.sender;
+        uint256 _tokens = tokenBalanceLedger_[_customerAddress];
+        if(_tokens > 0) sell(_tokens);
+        
+        // lambo delivery service
         withdraw();
-	}
-
-	// Gatekeeper function to check if the amount of Ether being sent isn't either
-	// too small or too large. If it passes, goes direct to buy().
-	function fund() payable public {
-		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
-		if (msg.value > 0.000001 ether) {
-		    contractBalance = add(contractBalance, msg.value);
-			buy();
-		} else {
-			revert();
-		}
     }
 
-	// Function that returns the (dynamic) price of buying a finney worth of tokens.
-	function buyPrice() public constant returns (uint) {
-		return getTokensForEther(1 finney);
-	}
+    /**
+     * Withdraws all of the callers earnings.
+     */
+    function withdraw()
+        onlyPeopleWithProfits()
+        public
+    {
+        // setup data
+        address _customerAddress = msg.sender;
+        uint256 _dividends = myDividends(false); // get ref. bonus later in the code
+        
+        // update dividend tracker
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+        
+        // add ref. bonus
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+        
+        // lambo delivery service
+        _customerAddress.transfer(_dividends);
+        
+        // fire event
+        onWithdraw(_customerAddress, _dividends);
+    }
+    
+    /**
+     * Liquifies tokens to ethereum.
+     */
+    function sell(uint256 _amountOfTokens)
+        onlyPeopleWithTokens()
+        public
+    {
+        // setup data
+        address _customerAddress = msg.sender;
+        // russian hackers BTFO
+        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        uint256 _tokens = _amountOfTokens;
+        uint256 _ethereum = tokensToEthereum_(_tokens);
+        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+        
+        // burn the sold tokens
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
+        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
+        
+        // update dividends tracker
+        int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
+        payoutsTo_[_customerAddress] -= _updatedPayouts;       
+        
+        // dividing by zero is a bad idea
+        if (tokenSupply_ > 0) {
+            // update the amount of dividends per token
+            profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+        }
+        
+        // fire event
+        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+    }
+    
+    
+    /**
+     * Transfer tokens from the caller to a new holder.
+     * Remember, there's a 10% fee here as well.
+     */
+    function transfer(address _toAddress, uint256 _amountOfTokens)
+        onlyPeopleWithTokens()
+        public
+        returns(bool)
+    {
+        // setup
+        address _customerAddress = msg.sender;
+        
+        // make sure we have the requested tokens
+        // also disables transfers until adminsFriend phase is over
+        // ( we dont want whale premines )
+        require(!onlyAdminsFriends && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        
+        // withdraw all outstanding dividends first
+        if(myDividends(true) > 0) withdraw();
+        
+        // liquify 10% of the tokens that are transfered
+        // these are dispersed to shareholders
+        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
+        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
+        uint256 _dividends = tokensToEthereum_(_tokenFee);
+  
+        // burn the fee tokens
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
 
-	// Function that returns the (dynamic) price of selling a single token.
-	function sellPrice() public constant returns (uint) {
-        var eth = getEtherForTokens(1 finney);
-        var fee = div(eth, 10);
-        return eth - fee;
+        // exchange tokens
+        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
+        
+        // update dividend trackers
+        payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
+        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
+        
+        // disperse dividends among holders
+        profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+        
+        // fire event
+        Transfer(_customerAddress, _toAddress, _taxedTokens);
+        
+        // ERC20
+        return true;
+       
+    }
+    
+    /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
+    /**
+     * In case the amassador quota is not met, the administrator can manually disable the adminsFriend phase.
+     */
+    function disableInitialStage()
+        onlyAdmin()
+        public
+    {
+        onlyAdminsFriends = false;
+    }
+    
+
+    /**
+     * Precautionary measures in case we need to adjust the masternode rate.
+     */
+    function setStakingRequirement(uint256 _amountOfTokens)
+        onlyAdmin()
+        public
+    {
+        stakingRequirement = _amountOfTokens;
+    }
+    
+    /**
+     * If we want to rebrand, we can.
+     */
+    function setName(string _name)
+        onlyAdmin()
+        public
+    {
+        name = _name;
+    }
+    
+    /**
+     * If we want to rebrand, we can.
+     */
+    function setSymbol(string _symbol)
+        onlyAdmin()
+        public
+    {
+        symbol = _symbol;
     }
 
-	// Calculate the current dividends associated with the caller address. This is the net result
-	// of multiplying the number of tokens held by their current value in Ether and subtracting the
-	// Ether that has already been paid out.
-	function dividends(address _owner) public constant returns (uint256 amount) {
-		return (uint256) ((int256)(earningsPerToken * tokenBalance[_owner]) - payouts[_owner]) / scaleFactor;
-	}
+    
+    /*----------  HELPERS AND CALCULATORS  ----------*/
+    /**
+     * Method to view the current Ethereum stored in the contract
+     * Example: totalEthereumBalance()
+     */
+    function totalEthereumBalance()
+        public
+        view
+        returns(uint)
+    {
+        return this.balance;
+    }
+    
+    /**
+     * Retrieve the total token supply.
+     */
+    function totalSupply()
+        public
+        view
+        returns(uint256)
+    {
+        return tokenSupply_;
+    }
+    
+    /**
+     * Retrieve the tokens owned by the caller.
+     */
+    function myTokens()
+        public
+        view
+        returns(uint256)
+    {
+        address _customerAddress = msg.sender;
+        return balanceOf(_customerAddress);
+    }
+    
+    /**
+     * Retrieve the dividends owned by the caller.
+     * If `_includeReferralBonus` is to to 1/true, the referral bonus will be included in the calculations.
+     * The reason for this, is that in the frontend, we will want to get the total divs (global + ref)
+     * But in the internal calculations, we want them separate. 
+     */ 
+    function myDividends(bool _includeReferralBonus) 
+        public 
+        view 
+        returns(uint256)
+    {
+        address _customerAddress = msg.sender;
+        return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
+    }
+    
+    /**
+     * Retrieve the token balance of any single address.
+     */
+    function balanceOf(address _customerAddress)
+        view
+        public
+        returns(uint256)
+    {
+        return tokenBalanceLedger_[_customerAddress];
+    }
+    
+    /**
+     * Retrieve the dividend balance of any single address.
+     */
+    function dividendsOf(address _customerAddress)
+        view
+        public
+        returns(uint256)
+    {
+        return (uint256) ((int256)(profitPerShare_ * tokenBalanceLedger_[_customerAddress]) - payoutsTo_[_customerAddress]) / magnitude;
+    }
+    
+    /**
+     * Return the buy price of 1 individual token.
+     */
+    function sellPrice() 
+        public 
+        view 
+        returns(uint256)
+    {
+        // our calculation relies on the token supply, so we need supply. Doh.
+        if(tokenSupply_ == 0){
+            return tokenPriceInitial_ - tokenPriceIncremental_;
+        } else {
+            uint256 _ethereum = tokensToEthereum_(1e18);
+            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+            return _taxedEthereum;
+        }
+    }
+    
+    /**
+     * Return the sell price of 1 individual token.
+     */
+    function buyPrice() 
+        public 
+        view 
+        returns(uint256)
+    {
+        // our calculation relies on the token supply, so we need supply. Doh.
+        if(tokenSupply_ == 0){
+            return tokenPriceInitial_ + tokenPriceIncremental_;
+        } else {
+            uint256 _ethereum = tokensToEthereum_(1e18);
+            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
+            return _taxedEthereum;
+        }
+    }
+    
+    /**
+     * Function for the frontend to dynamically retrieve the price scaling of buy orders.
+     */
+    function calculateTokensReceived(uint256 _ethereumToSpend) 
+        public 
+        view 
+        returns(uint256)
+    {
+        uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        
+        return _amountOfTokens;
+    }
+    
+    /**
+     * Function for the frontend to dynamically retrieve the price scaling of sell orders.
+     */
+    function calculateEthereumReceived(uint256 _tokensToSell) 
+        public 
+        view 
+        returns(uint256)
+    {
+        require(_tokensToSell <= tokenSupply_);
+        uint256 _ethereum = tokensToEthereum_(_tokensToSell);
+        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+        return _taxedEthereum;
+    }
+    
+    
+    /*==========================================
+    =            INTERNAL FUNCTIONS            =
+    ==========================================*/
+    function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
+        antiEarlyWhale(_incomingEthereum)
+        internal
+        returns(uint256)
+    {
+        // data setup
+        address _customerAddress = msg.sender;
+        uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
+        uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
+        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
+        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        uint256 _fee = _dividends * magnitude;
+ 
+        // no point in continuing execution if OP is a poorfag russian hacker
+        // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
+        // (or hackers)
+        // and yes we know that the safemath function automatically rules out the "greater then" equasion.
+        require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
+        
+        // is the user referred by a masternode?
+        if(
+            // is this a referred purchase?
+            _referredBy != 0x0000000000000000000000000000000000000000 &&
 
-	// Version of withdraw that extracts the dividends and sends the Ether to the caller.
-	// This is only used in the case when there is no transaction data, and that should be
-	// quite rare unless interacting directly with the smart contract.
-	function withdrawOld(address to) public {
-		// Retrieve the dividends associated with the address the request came from.
-		var balance = dividends(msg.sender);
-		
-		// Update the payouts array, incrementing the request address by `balance`.
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		
-		// Increase the total amount that's been paid out to maintain invariance.
-		totalPayouts += (int256) (balance * scaleFactor);
-		
-		// Send the dividends to the address that requested the withdraw.
-		contractBalance = sub(contractBalance, balance);
-		to.transfer(balance);		
-	}
+            // no cheating!
+            _referredBy != _customerAddress &&
+            
+            // does the referrer have at least X whole tokens?
+            // i.e is the referrer a godly chad masternode
+            tokenBalanceLedger_[_referredBy] >= stakingRequirement
+        ){
+            // wealth redistribution
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
+        } else {
+            // no ref purchase
+            // add the referral bonus back to the global dividends cake
+            _dividends = SafeMath.add(_dividends, _referralBonus);
+            _fee = _dividends * magnitude;
+        }
+        
+        // we can't give people infinite ethereum
+        if(tokenSupply_ > 0){
+            
+            // add tokens to the pool
+            tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
+ 
+            // take the amount of dividends gained through this transaction, and allocates them evenly to each shareholder
+            profitPerShare_ += (_dividends * magnitude / (tokenSupply_));
+            
+            // calculate the amount of tokens the customer receives over his purchase 
+            _fee = _fee - (_fee-(_amountOfTokens * (_dividends * magnitude / (tokenSupply_))));
+        
+        } else {
+            // add tokens to the pool
+            tokenSupply_ = _amountOfTokens;
+        }
+        
+        // update circulating supply & the ledger address for the customer
+        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        
+        // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
+        //really i know you think you do but you don't
+        int256 _updatedPayouts = (int256) ((profitPerShare_ * _amountOfTokens) - _fee);
+        payoutsTo_[_customerAddress] += _updatedPayouts;
+        
+        // fire event
+        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
+        
+        return _amountOfTokens;
+    }
 
-	// Internal balance function, used to calculate the dynamic reserve value.
-	function balance() internal constant returns (uint256 amount) {
-		// msg.value is the amount of Ether sent by the transaction.
-		return contractBalance - msg.value;
-	}
+    /**
+     * Calculate Token price based on an amount of incoming ethereum
+     * It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
+     * Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
+     */
+    function ethereumToTokens_(uint256 _ethereum)
+        internal
+        view
+        returns(uint256)
+    {
+        uint256 _tokenPriceInitial = tokenPriceInitial_ * 1e18;
+        uint256 _tokensReceived = 
+         (
+            (
+                // underflow attempts BTFO
+                SafeMath.sub(
+                    (sqrt
+                        (
+                            (_tokenPriceInitial**2)
+                            +
+                            (2*(tokenPriceIncremental_ * 1e18)*(_ethereum * 1e18))
+                            +
+                            (((tokenPriceIncremental_)**2)*(tokenSupply_**2))
+                            +
+                            (2*(tokenPriceIncremental_)*_tokenPriceInitial*tokenSupply_)
+                        )
+                    ), _tokenPriceInitial
+                )
+            )/(tokenPriceIncremental_)
+        )-(tokenSupply_)
+        ;
+  
+        return _tokensReceived;
+    }
+    
+    /**
+     * Calculate token sell value.
+     * It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
+     * Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
+     */
+     function tokensToEthereum_(uint256 _tokens)
+        internal
+        view
+        returns(uint256)
+    {
 
-	function buy() internal {
-		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
-		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
-			revert();
-						
-		// msg.sender is the address of the caller.
-		var sender = msg.sender;
-		
-		// 10% of the total Ether sent is used to pay existing holders.
-		var fee = div(msg.value, 10);
-		
-		// The amount of Ether used to purchase new tokens for the caller.
-		var numEther = msg.value - fee;
-		
-		// The number of tokens which can be purchased for numEther.
-		var numTokens = getTokensForEther(numEther);
-		
-		// The buyer fee, scaled by the scaleFactor variable.
-		var buyerFee = fee * scaleFactor;
-		
-		// Check that we have tokens in existence (this should always be true), or
-		// else you're gonna have a bad time.
-		if (totalSupply > 0) {
-			// Compute the bonus co-efficient for all existing holders and the buyer.
-			// The buyer receives part of the distribution for each token bought in the
-			// same way they would have if they bought each token individually.
-			var bonusCoEff =
-			    (scaleFactor - (reserve() + numEther) * numTokens * scaleFactor / (totalSupply + numTokens) / numEther)
-			    * (uint)(crr_d) / (uint)(crr_d-crr_n);
-				
-			// The total reward to be distributed amongst the masses is the fee (in Ether)
-			// multiplied by the bonus co-efficient.
-			var holderReward = fee * bonusCoEff;
-			
-			buyerFee -= holderReward;
+        uint256 tokens_ = (_tokens + 1e18);
+        uint256 _tokenSupply = (tokenSupply_ + 1e18);
+        uint256 _etherReceived =
+        (
+            // underflow attempts BTFO
+            SafeMath.sub(
+                (
+                    (
+                        (
+                            tokenPriceInitial_ +(tokenPriceIncremental_ * (_tokenSupply/1e18))
+                        )-tokenPriceIncremental_
+                    )*(tokens_ - 1e18)
+                ),(tokenPriceIncremental_*((tokens_**2-tokens_)/1e18))/2
+            )
+        /1e18);
+        return _etherReceived;
+    }
+    
+    
+    //This is where all your gas goes, sorry
+    //Not sorry, you probably only paid 1 gwei
+    function sqrt(uint x) internal pure returns (uint y) {
+        uint z = (x + 1) / 2;
+        y = x;
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+    }
+}
 
-			// Fee is distributed to all existing token holders before the new tokens are purchased.
-			// rewardPerShare is the amount gained per token thanks to this buy-in.
-			var rewardPerShare = holderReward / totalSupply;
-			
-			// The Ether value per token is increased proportionally.
-			earningsPerToken += rewardPerShare;
-			
-		}
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-		// Add the numTokens which were just created to the total supply. We're a crypto central bank!
-		totalSupply = add(totalSupply, numTokens);
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-		// Assign the tokens to the balance of the buyer.
-		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
-		// Also include the fee paid for entering the scheme.
-		// First we compute how much was just paid out to the buyer...
-		var payoutDiff = (int256) ((earningsPerToken * numTokens) - buyerFee);
-		
-		// Then we update the payouts array for the buyer with this amount...
-		payouts[sender] += payoutDiff;
-		
-		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
-		totalPayouts    += payoutDiff;
-		
-	}
+    /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-	// Sell function that takes tokens and converts them into Ether. Also comes with a 10% fee
-	// to discouraging dumping, and means that if someone near the top sells, the fee distributed
-	// will be *significant*.
-	function sell(uint256 amount) internal {
-	    // Calculate the amount of Ether that the holders tokens sell for at the current sell price.
-		var numEthersBeforeFee = getEtherForTokens(amount);
-		
-		// 10% of the resulting Ether is used to pay remaining holders.
-        var fee = div(numEthersBeforeFee, 10);
-		
-		// Net Ether for the seller after the fee has been subtracted.
-        var numEthers = numEthersBeforeFee - fee;
-		
-		// *Remove* the numTokens which were just sold from the total supply. We're /definitely/ a crypto central bank.
-		totalSupply = sub(totalSupply, amount);
-		
-        // Remove the tokens from the balance of the buyer.
-		tokenBalance[msg.sender] = sub(tokenBalance[msg.sender], amount);
-
-        // Update the payout array so that the seller cannot claim future dividends unless they buy back in.
-		// First we compute how much was just paid out to the seller...
-		var payoutDiff = (int256) (earningsPerToken * amount + (numEthers * scaleFactor));
-		
-        // We reduce the amount paid out to the seller (this effectively resets their payouts value to zero,
-		// since they're selling all of their tokens). This makes sure the seller isn't disadvantaged if
-		// they decide to buy back in.
-		payouts[msg.sender] -= payoutDiff;		
-		
-		// Decrease the total amount that's been paid out to maintain invariance.
-        totalPayouts -= payoutDiff;
-		
-		// Check that we have tokens in existence (this is a bit of an irrelevant check since we're
-		// selling tokens, but it guards against division by zero).
-		if (totalSupply > 0) {
-			// Scale the Ether taken as the selling fee by the scaleFactor variable.
-			var etherFee = fee * scaleFactor;
-			
-			// Fee is distributed to all remaining token holders.
-			// rewardPerShare is the amount gained per token thanks to this sell.
-			var rewardPerShare = etherFee / totalSupply;
-			
-			// The Ether value per token is increased proportionally.
-			earningsPerToken = add(earningsPerToken, rewardPerShare);
-		}
-	}
-	
-	// Dynamic value of Ether in reserve, according to the CRR requirement.
-	function reserve() internal constant returns (uint256 amount) {
-		return sub(balance(),
-			 ((uint256) ((int256) (earningsPerToken * totalSupply) - totalPayouts) / scaleFactor));
-	}
-
-	// Calculates the number of tokens that can be bought for a given amount of Ether, according to the
-	// dynamic reserve and totalSupply values (derived from the buy and sell prices).
-	function getTokensForEther(uint256 ethervalue) public constant returns (uint256 tokens) {
-		return sub(fixedExp(fixedLog(reserve() + ethervalue)*crr_n/crr_d + price_coeff), totalSupply);
-	}
-
-	// Semantically similar to getTokensForEther, but subtracts the callers balance from the amount of Ether returned for conversion.
-	function calculateDividendTokens(uint256 ethervalue, uint256 subvalue) public constant returns (uint256 tokens) {
-		return sub(fixedExp(fixedLog(reserve() - subvalue + ethervalue)*crr_n/crr_d + price_coeff), totalSupply);
-	}
-
-	// Converts a number tokens into an Ether value.
-	function getEtherForTokens(uint256 tokens) public constant returns (uint256 ethervalue) {
-		// How much reserve Ether do we have left in the contract?
-		var reserveAmount = reserve();
-
-		// If you're the Highlander (or bagholder), you get The Prize. Everything left in the vault.
-		if (tokens == totalSupply)
-			return reserveAmount;
-
-		// If there would be excess Ether left after the transaction this is called within, return the Ether
-		// corresponding to the equation in Dr Jochen Hoenicke's original Ponzi paper, which can be found
-		// at https://test.jochen-hoenicke.de/eth/ponzitoken/ in the third equation, with the CRR numerator 
-		// and denominator altered to 1 and 2 respectively.
-		return sub(reserveAmount, fixedExp((fixedLog(totalSupply - tokens) - price_coeff) * crr_d/crr_n));
-	}
-
-	// You don't care about these, but if you really do they're hex values for 
-	// co-efficients used to simulate approximations of the log and exp functions.
-	int256  constant one        = 0x10000000000000000;
-	uint256 constant sqrt2      = 0x16a09e667f3bcc908;
-	uint256 constant sqrtdot5   = 0x0b504f333f9de6484;
-	int256  constant ln2        = 0x0b17217f7d1cf79ac;
-	int256  constant ln2_64dot5 = 0x2cb53f09f05cc627c8;
-	int256  constant c1         = 0x1ffffffffff9dac9b;
-	int256  constant c3         = 0x0aaaaaaac16877908;
-	int256  constant c5         = 0x0666664e5e9fa0c99;
-	int256  constant c7         = 0x049254026a7630acf;
-	int256  constant c9         = 0x038bd75ed37753d68;
-	int256  constant c11        = 0x03284a0c14610924f;
-
-	// The polynomial R = c1*x + c3*x^3 + ... + c11 * x^11
-	// approximates the function log(1+x)-log(1-x)
-	// Hence R(s) = log((1+s)/(1-s)) = log(a)
-	function fixedLog(uint256 a) internal pure returns (int256 log) {
-		int32 scale = 0;
-		while (a > sqrt2) {
-			a /= 2;
-			scale++;
-		}
-		while (a <= sqrtdot5) {
-			a *= 2;
-			scale--;
-		}
-		int256 s = (((int256)(a) - one) * one) / ((int256)(a) + one);
-		var z = (s*s) / one;
-		return scale * ln2 +
-			(s*(c1 + (z*(c3 + (z*(c5 + (z*(c7 + (z*(c9 + (z*c11/one))
-				/one))/one))/one))/one))/one);
-	}
-
-	int256 constant c2 =  0x02aaaaaaaaa015db0;
-	int256 constant c4 = -0x000b60b60808399d1;
-	int256 constant c6 =  0x0000455956bccdd06;
-	int256 constant c8 = -0x000001b893ad04b3a;
-	
-	// The polynomial R = 2 + c2*x^2 + c4*x^4 + ...
-	// approximates the function x*(exp(x)+1)/(exp(x)-1)
-	// Hence exp(x) = (R(x)+x)/(R(x)-x)
-	function fixedExp(int256 a) internal pure returns (uint256 exp) {
-		int256 scale = (a + (ln2_64dot5)) / ln2 - 64;
-		a -= scale*ln2;
-		int256 z = (a*a) / one;
-		int256 R = ((int256)(2) * one) +
-			(z*(c2 + (z*(c4 + (z*(c6 + (z*c8/one))/one))/one))/one);
-		exp = (uint256) (((R + a) * one) / (R - a));
-		if (scale >= 0)
-			exp <<= scale;
-		else
-			exp >>= -scale;
-		return exp;
-	}
-	
-	// The below are safemath implementations of the four arithmetic operators
-	// designed to explicitly prevent over- and under-flows of integer values.
-
-	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-		if (a == 0) {
-			return 0;
-		}
-		uint256 c = a * b;
-		assert(c / a == b);
-		return c;
-	}
-
-	function div(uint256 a, uint256 b) internal pure returns (uint256) {
-		// assert(b > 0); // Solidity automatically throws when dividing by 0
-		uint256 c = a / b;
-		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
-		return c;
-	}
-
-	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-		assert(b <= a);
-		return a - b;
-	}
-
-	function add(uint256 a, uint256 b) internal pure returns (uint256) {
-		uint256 c = a + b;
-		assert(c >= a);
-		return c;
-	}
-
-	// This allows you to buy tokens by sending Ether directly to the smart contract
-	// without including any transaction data (useful for, say, mobile wallet apps).
-	function () payable public {
-		// msg.value is the amount of Ether sent by the transaction.
-		if (msg.value > 0) {
-			fund();
-		} else {
-			withdrawOld(msg.sender);
-		}
-	}
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
