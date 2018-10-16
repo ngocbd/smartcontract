@@ -1,12 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilestonePricing at 0x93496d15231d5bf124279923d1b768b86a717626
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilestonePricing at 0xe40c3374a3657f1d81279e6ac5b69f4a8d6cecf5
 */
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+pragma solidity ^0.4.11;
 
+// File: contracts/FinalizeAgent.sol
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -14,6 +11,181 @@
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.6;
+
+/**
+ * Finalize agent defines what happens at the end of succeseful crowdsale.
+ *
+ * - Allocate tokens for founders, bounties and community
+ * - Make tokens transferable
+ * - etc.
+ */
+contract FinalizeAgent {
+
+  function isFinalizeAgent() public constant returns(bool) {
+    return true;
+  }
+
+  /** Return true if we can run finalizeCrowdsale() properly.
+   *
+   * This is a safety check function that doesn't allow crowdsale to begin
+   * unless the finalizer has been set up properly.
+   */
+  function isSane() public constant returns (bool);
+
+  /** Called once by crowdsale finalize() if the sale was success. */
+  function finalizeCrowdsale();
+
+}
+
+// File: contracts/zeppelin/contracts/token/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: contracts/zeppelin/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: contracts/FractionalERC20.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.8;
+
+
+
+/**
+ * A token that defines fractional units as decimals.
+ */
+contract FractionalERC20 is ERC20 {
+
+  uint public decimals;
+
+}
+
+// File: contracts/zeppelin/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
+
+}
+
+// File: contracts/Haltable.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.6;
+
+
+
+/*
+ * Haltable
+ *
+ * Abstract contract that allows children to implement an
+ * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
+ *
+ *
+ * Originally envisioned in FirstBlood ICO contract.
+ */
+contract Haltable is Ownable {
+  bool public halted;
+
+  modifier stopInEmergency {
+    if (halted) throw;
+    _;
+  }
+
+  modifier stopNonOwnersInEmergency {
+    if (halted && msg.sender != owner) throw;
+    _;
+  }
+
+  modifier onlyInEmergency {
+    if (!halted) throw;
+    _;
+  }
+
+  // called by the owner on emergency, triggers stopped state
+  function halt() external onlyOwner {
+    halted = true;
+  }
+
+  // called by the owner on end of emergency, returns to normal state
+  function unhalt() external onlyOwner onlyInEmergency {
+    halted = false;
+  }
+
+}
+
+// File: contracts/PricingStrategy.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.6;
 
 /**
  * Interface for defining crowdsale pricing.
@@ -56,12 +228,7 @@ contract PricingStrategy {
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
+// File: contracts/SafeMathLib.sol
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -69,6 +236,7 @@ contract PricingStrategy {
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
+pragma solidity ^0.4.6;
 
 /**
  * Safe unsigned safe math.
@@ -101,6 +269,7 @@ library SafeMathLib {
 
 }
 
+// File: contracts/CrowdsaleBase.sol
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -109,170 +278,6 @@ library SafeMathLib {
  */
 
 
-/**
- * Finalize agent defines what happens at the end of succeseful crowdsale.
- *
- * - Allocate tokens for founders, bounties and community
- * - Make tokens transferable
- * - etc.
- */
-contract FinalizeAgent {
-
-  function isFinalizeAgent() public constant returns(bool) {
-    return true;
-  }
-
-  /** Return true if we can run finalizeCrowdsale() properly.
-   *
-   * This is a safety check function that doesn't allow crowdsale to begin
-   * unless the finalizer has been set up properly.
-   */
-  function isSane() public constant returns (bool);
-
-  /** Called once by crowdsale finalize() if the sale was success. */
-  function finalizeCrowdsale();
-
-}
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * A token that defines fractional units as decimals.
- */
-contract FractionalERC20 is ERC20 {
-
-  uint public decimals;
-
-}
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
-
-}
-
-
-/*
- * Haltable
- *
- * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
- *
- *
- * Originally envisioned in FirstBlood ICO contract.
- */
-contract Haltable is Ownable {
-  bool public halted;
-
-  modifier stopInEmergency {
-    if (halted) throw;
-    _;
-  }
-
-  modifier stopNonOwnersInEmergency {
-    if (halted && msg.sender != owner) throw;
-    _;
-  }
-
-  modifier onlyInEmergency {
-    if (!halted) throw;
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
-  }
-
-}
 
 
 
@@ -310,6 +315,12 @@ contract CrowdsaleBase is Haltable {
 
   /* if the funding goal is not reached, investors may withdraw their funds */
   uint public minimumFundingGoal;
+
+  /* maximum investment per address */
+  uint public maximalInvestment = 0;
+
+  /* Seconds since the start of the funding during which the maximalInvestemnt cap is enforced */
+  uint public maximalInvestmentTimeTreshold = 3*60*60;
 
   /* the UNIX timestamp start date of the crowdsale */
   uint public startsAt;
@@ -369,7 +380,7 @@ contract CrowdsaleBase is Haltable {
   event Refund(address investor, uint weiAmount);
 
   // The rules were changed what kind of investments we accept
-  event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, address newSignerAddress);
+  event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, bool newRequireWhitelistedAddress, address newSignerAddress, address whitelisterAddress);
 
   // Address early participation whitelist status changed
   event Whitelisted(address addr, bool status);
@@ -379,7 +390,7 @@ contract CrowdsaleBase is Haltable {
 
   State public testState;
 
-  function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
+  function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maxInvestment) {
 
     owner = msg.sender;
 
@@ -411,6 +422,8 @@ contract CrowdsaleBase is Haltable {
 
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
+
+    maximalInvestment = _maxInvestment;
   }
 
   /**
@@ -462,6 +475,11 @@ contract CrowdsaleBase is Haltable {
 
     // Update investor
     investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+
+    if(maximalInvestment > 0 && now < (startsAt + maximalInvestmentTimeTreshold)) {
+      require(investedAmountOf[receiver] <= maximalInvestment);
+    }
+
     tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
 
     // Update totals
@@ -702,6 +720,21 @@ contract CrowdsaleBase is Haltable {
   function assignTokens(address receiver, uint tokenAmount) internal;
 }
 
+// File: contracts/Crowdsale.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.8;
+
+
+
+
+
+
 
 
 /**
@@ -735,7 +768,17 @@ contract Crowdsale is CrowdsaleBase {
   /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
   address public signerAddress;
 
-  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) CrowdsaleBase(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
+  /* Do we need to have unique contributor id for each customer */
+  bool public requireWhitelistedAddress;
+
+  /* Account that is allowed to whitelist addesses */
+  address public whitelisterAddress;
+
+  /* Mapping of whitelisted accounts */
+  mapping (address => bool) whitelist;
+
+
+  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maxInvestment) CrowdsaleBase(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal, _maxInvestment) {
   }
 
   /**
@@ -774,16 +817,24 @@ contract Crowdsale is CrowdsaleBase {
    * Allow anonymous contributions to this crowdsale.
    */
   function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-     bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;  // UUIDv4 sanity check
-     investInternal(addr, customerId);
+    if(requireWhitelistedAddress) {
+      require(whitelist[addr]);
+    }
+
+    bytes32 hash = sha256(addr);
+    if (ecrecover(hash, v, r, s) != signerAddress) throw;
+    if(customerId == 0) throw;  // UUIDv4 sanity check
+    investInternal(addr, customerId);
   }
 
   /**
    * Track who is the customer making the payment so we can send thank you email.
    */
   function investWithCustomerId(address addr, uint128 customerId) public payable {
+    if(requireWhitelistedAddress) {
+      require(whitelist[addr]);
+    }
+
     if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
     if(customerId == 0) throw;  // UUIDv4 sanity check
     investInternal(addr, customerId);
@@ -793,6 +844,10 @@ contract Crowdsale is CrowdsaleBase {
    * Allow anonymous contributions to this crowdsale.
    */
   function invest(address addr) public payable {
+    if(requireWhitelistedAddress) {
+      require(whitelist[addr]);
+    }
+
     if(requireCustomerId) throw; // Crowdsale needs to track participants for thank you email
     if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
     investInternal(addr, 0);
@@ -832,13 +887,23 @@ contract Crowdsale is CrowdsaleBase {
     invest(msg.sender);
   }
 
+
+  /*
+   * Allow sending ETH directyl to the contract
+   *
+   */
+  function () public payable {
+    buy();
+  }
+
+
   /**
    * Set policy do we need to have server-side customer ids for the investments.
    *
    */
   function setRequireCustomerId(bool value) onlyOwner {
     requireCustomerId = value;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, requireWhitelistedAddress, signerAddress, whitelisterAddress);
   }
 
   /**
@@ -850,10 +915,56 @@ contract Crowdsale is CrowdsaleBase {
   function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
     requiredSignedAddress = value;
     signerAddress = _signerAddress;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, requireWhitelistedAddress, signerAddress, whitelisterAddress);
+  }
+
+  /**
+   * Set policy do we need to work only with whitelisted accounts.
+   *
+   */
+  function setRequireWhitelistedAddress(bool value, address _whitelistAddress) onlyOwner {
+    requireWhitelistedAddress = value;
+    whitelisterAddress = _whitelistAddress;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, requireWhitelistedAddress, signerAddress, whitelisterAddress);
+  }
+
+  /*
+   * Add KYC'ed addresses to the whitelist
+   */
+  function addToWhitelist(address[] _addresses) public onlyWhitelister {
+     for (uint32 i = 0; i < _addresses.length; i++) {
+         whitelist[_addresses[i]] = true;
+     }
+  }
+
+  function removeFromWhitelist(address[] _addresses) public onlyWhitelister {
+    for (uint32 i = 0; i < _addresses.length; i++) {
+        whitelist[_addresses[i]] = false;
+    }
+  }
+
+  function isWhitelistedAddress(address _address) public constant returns(bool whitelisted) {
+    return whitelist[_address];
+  }
+
+  modifier onlyWhitelister() {
+    require(msg.sender == whitelisterAddress);
+    _;
   }
 
 }
+
+// File: contracts/MilestonePricing.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+pragma solidity ^0.4.6;
+
+
 
 
 
