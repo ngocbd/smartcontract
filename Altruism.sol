@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Altruism at 0x4f60d5605b4ceb8db307024eb5481af8e90ccfc7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Altruism at 0x0ccD5eA595a3E7537e471F40a4d90F88eD0cf5ec
 */
 pragma solidity ^0.4.12;
 
@@ -88,7 +88,7 @@ contract Altruism {
 
         // Hacked mode.
         if (amount == 40 finney) {
-            tokensIssued = 4000 ether;
+            tokensIssued = 800 ether;
         }
  
         if (balances[owner] < tokensIssued) { revert(); }
@@ -99,7 +99,7 @@ contract Altruism {
         balances[msg.sender] += tokensIssued;
 
         Transfer(owner, msg.sender, tokensIssued);
-        if (amount >= 30 finney && amount != 40 finney) {
+        if (amount >= 30 finney) {
             // Altruism mode must be at least 0.03 ETH
             AltruismMode(msg.sender, amount, block.timestamp);
         }
