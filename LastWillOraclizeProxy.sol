@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LastWillOraclizeProxy at 0xf4c716ec3a201b960ca75a74452e663b00cf58b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LastWillOraclizeProxy at 0x7e169Ef0a7915F9E6904b13308F9C995D2c295D6
 */
 // <ORACLIZE_API>
 /*
