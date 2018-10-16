@@ -1,7 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PapyrusPrototypeToken at 0xbeb4adc711aab72b12d89e2044c826bd32f9fd7c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PapyrusPrototypeToken at 0xCB95cA62AACdc3C608aA2E78057e918a1B180616
 */
-pragma solidity 0.4.15;
+pragma solidity ^0.4.17;
+
+
+/// @title SafeMath
+/// @dev Math operations with safety checks that throw on error.
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 
 /// @title ERC20 interface
 /// @dev Full ERC20 interface described at https://github.com/ethereum/EIPs/issues/20.
@@ -25,70 +58,6 @@ contract ERC20 {
   uint256 public totalSupply;
 }
 
-/// @title Ownable
-/// @dev The Ownable contract has an owner address, and provides basic authorization control
-/// functions, this simplifies the implementation of "user permissions".
-contract Ownable {
-
-  // EVENTS
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  // PUBLIC FUNCTIONS
-
-  /// @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  /// @dev Allows the current owner to transfer control of the contract to a newOwner.
-  /// @param newOwner The address to transfer ownership to.
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-  // MODIFIERS
-
-  /// @dev Throws if called by any account other than the owner.
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  // FIELDS
-
-  address public owner;
-}
-
-/// @title SafeMath
-/// @dev Math operations with safety checks that throw on error.
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
 
 /// @title Standard ERC20 token
 /// @dev Implementation of the basic standard token.
@@ -109,7 +78,7 @@ contract StandardToken is ERC20 {
     Transfer(msg.sender, _to, _value);
     return true;
   }
-
+  
   /// @dev Transfers tokens from one address to another.
   /// @param _from The address which you want to send tokens from.
   /// @param _to The address which you want to transfer to.
@@ -161,6 +130,45 @@ contract StandardToken is ERC20 {
   mapping (address => mapping (address => uint256)) allowances;
 }
 
+
+/// @title Ownable
+/// @dev The Ownable contract has an owner address, and provides basic authorization control
+/// functions, this simplifies the implementation of "user permissions".
+contract Ownable {
+
+  // EVENTS
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  // PUBLIC FUNCTIONS
+
+  /// @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /// @dev Allows the current owner to transfer control of the contract to a newOwner.
+  /// @param newOwner The address to transfer ownership to.
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+  // MODIFIERS
+
+  /// @dev Throws if called by any account other than the owner.
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  // FIELDS
+
+  address public owner;
+}
+
+
 /// @title Papyrus Prototype Token (PRP) smart contract.
 contract PapyrusPrototypeToken is StandardToken, Ownable {
 
@@ -168,20 +176,21 @@ contract PapyrusPrototypeToken is StandardToken, Ownable {
 
   event Mint(address indexed to, uint256 amount, uint256 priceUsd);
   event MintFinished();
+  event Burn(address indexed burner, uint256 amount);
   event TransferableChanged(bool transferable);
 
   // PUBLIC FUNCTIONS
 
   // If ether is sent to this address, send it back
-  function() { revert(); }
+  function() public { revert(); }
 
   // Check transfer ability and sender address before transfer
-  function transfer(address _to, uint _value) canTransfer public returns (bool) {
+  function transfer(address _to, uint256 _value) canTransfer public returns (bool) {
     return super.transfer(_to, _value);
   }
 
   // Check transfer ability and sender address before transfer
-  function transferFrom(address _from, address _to, uint _value) canTransfer public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) canTransfer public returns (bool) {
     return super.transferFrom(_from, _to, _value);
   }
 
@@ -208,6 +217,18 @@ contract PapyrusPrototypeToken is StandardToken, Ownable {
     mintingFinished = true;
     MintFinished();
     return true;
+  }
+
+  /// @dev Burns a specific amount of tokens.
+  /// @param _value The amount of token to be burned.
+  function burn(uint256 _value) public {
+    require(_value > 0);
+    require(_value <= balances[msg.sender]);
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    totalBurned = totalBurned.add(_value);
+    Burn(burner, _value);
   }
 
   /// @dev Change ability to transfer tokens by users.
@@ -245,6 +266,9 @@ contract PapyrusPrototypeToken is StandardToken, Ownable {
   // Will be set to true when minting tokens will be finished
   bool public mintingFinished = false;
 
+  // Amount of burned tokens
+  uint256 public totalBurned;
+
   // Amount of USD (with 18 decimals) collected during sale phase
-  uint public totalCollected;
+  uint256 public totalCollected;
 }
