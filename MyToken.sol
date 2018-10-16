@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xD64f60148A99C12d18C9CEc6140B772364814c83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xf728b0ABDd7F796a79c3DE6AF7B7819418BE20Be
 */
 pragma solidity ^0.4.13;
 
@@ -36,8 +36,8 @@ contract MyToken {
     function MyToken() {
         balanceOf[msg.sender] = 3000000;              // Give the creator all initial tokens
         totalSupply = 3000000;                        // Update total supply
-        name = 'GamityTest3';                                   // Set the name for display purposes
-        symbol = 'GMTEST3';                                     // Set the symbol for display purposes
+        name = 'GamityTest2';                                   // Set the name for display purposes
+        symbol = 'GMTEST2';                                     // Set the symbol for display purposes
         decimals = 0;                                       // Amount of decimals for display purposes
     }
 
@@ -149,7 +149,7 @@ contract MyToken {
     
     
     
-    function setPrice(uint256 newSellPrice) {
+    function setPrice(uint256 newSellPrice){
         require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
         sellPrice = newSellPrice;
     }
@@ -174,16 +174,16 @@ contract MyToken {
         return amount;                                    // ends function and returns
     }
     
-    function sendEther() payable returns (bool success){
+    function sendEther() payable returns (uint amount){
         require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
-        return true;                                   // ends function and returns
+        return amount;                                    // ends function and returns
     }
 
     
-    function getEther(uint amount)  returns (bool success){
+    function getEther()  returns (uint amount){
         require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
         require(msg.sender.send(amount));                 // sends ether to the seller: it's important to do this last to prevent recursion attacks
-        return true;                                  // ends function and returns
+        return amount;                                  // ends function and returns
     }
     
     
