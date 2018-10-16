@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NintendoCoin at 0x7b05a9901a06e77a8462a5f532f388ad406c78c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NintendoCoin at 0x3f5d00617ffb9947f7cf1fadee2cc93ee3ab5426
 */
 pragma solidity ^0.4.4;
 
@@ -38,10 +38,12 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+    
 }
 
-contract StandardToken is Token {
+
+
+contract NintendoCoin is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -87,7 +89,14 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract NintendoCoin is StandardToken { // CHANGE THIS. Update the contract name.
+
+//name this contract whatever you'd like
+contract ERC20Token is NintendoCoin {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
+    }
 
     /* Public variables of the token */
 
@@ -97,40 +106,24 @@ contract NintendoCoin is StandardToken { // CHANGE THIS. Update the contract nam
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   // Token Name
-    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol;                 // An identifier: eg SBX, XPR etc..
-    string public version = 'H1.0'; 
-    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
-    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
-    address public fundsWallet;           // Where should the raised ETH go?
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
-    // This is a constructor function 
-    // which means the following function name has to match the contract name declared above
-    function NintendoCoin() {
-        balances[msg.sender] = 3000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 3000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "NintendoCoin";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "NTD";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 1000;                                      // Set the price of your token for the ICO (CHANGE THIS)
-        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
-    }
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
 
-    function() payable{
-        totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        if (balances[fundsWallet] < amount) {
-            return;
-        }
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-
-        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
-
-        //Transfer ether to fundsWallet
-        fundsWallet.transfer(msg.value);                               
+    function ERC20Token(
+        ) {
+        balances[msg.sender] = 3000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 3000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "NintendoCoin";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "NTD";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
