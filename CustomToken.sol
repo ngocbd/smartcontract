@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf392835e6EB8C5B9B5654132C648b5cEb44ebef6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x02f2d4a04e6e01ace88bd2cd632875543b2ef577
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.23;
 
 contract BaseToken {
     string public name;
@@ -26,9 +26,8 @@ contract BaseToken {
         Transfer(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
-        return true;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
@@ -38,20 +37,79 @@ contract BaseToken {
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 }
 
-contract CustomToken is BaseToken {
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
+    }
+}
+
+contract ICOToken is BaseToken {
+    // 1 ether = icoRatio token
+    uint256 public icoRatio;
+    uint256 public icoEndtime;
+    address public icoSender;
+    address public icoHolder;
+
+    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
+    event Withdraw(address indexed from, address indexed holder, uint256 value);
+
+    modifier onlyBefore() {
+        if (now > icoEndtime) {
+            revert();
+        }
+        _;
+    }
+
+    function() public payable onlyBefore {
+        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
+        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
+            revert();
+        }
+        _transfer(icoSender, msg.sender, tokenValue);
+        ICO(msg.sender, msg.value, tokenValue);
+    }
+
+    function withdraw() {
+        uint256 balance = this.balance;
+        icoHolder.transfer(balance);
+        Withdraw(msg.sender, icoHolder, balance);
+    }
+}
+
+contract CustomToken is BaseToken, BurnToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 32000000000000000000000000;
-        name = 'Artso';
-        symbol = 'ASO';
+        totalSupply = 10000000000000000000000000000;
+        balanceOf[0x8cd103c2164d04d071f4014ac7b3aa42d8fa596c] = totalSupply;
+        name = 'PKG Token';
+        symbol = 'PKG';
         decimals = 18;
-        balanceOf[0x58cbc34576efc4f2591fbc6258f89961e7e34d48] = totalSupply;
-        Transfer(address(0), 0x58cbc34576efc4f2591fbc6258f89961e7e34d48, totalSupply);
+        icoRatio = 100000;
+        icoEndtime = 1601460000;
+        icoSender = 0x8cd103c2164d04d071f4014ac7b3aa42d8fa596c;
+        icoHolder = 0x8cd103c2164d04d071f4014ac7b3aa42d8fa596c;
     }
 }
