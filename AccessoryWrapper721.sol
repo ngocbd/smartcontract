@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccessoryWrapper721 at 0x11b4591dc55d0fb44ce2ab7abe5536ab6e19cf78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccessoryWrapper721 at 0x510663b433ca7c0860c206eb8ed80472146d992e
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,6 @@ pragma solidity ^0.4.18;
  * @title ERC721 interface
  * @dev see https://github.com/ethereum/eips/issues/721
  */
-
 
 
 contract AccessControl {
@@ -58,7 +57,6 @@ contract AccessControl {
 
   
 } 
-
 
 contract SafeMath {
     function safeAdd(uint x, uint y) pure internal returns(uint) {
@@ -132,13 +130,8 @@ contract IAccessoryData is AccessControl, Enums {
 }
 
 
-  
-
-   
-	
-
  
-contract AccessoryWrapper721 is AccessControl {
+contract AccessoryWrapper721 {
   //Events
   event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
   event MarketplaceTransfer(address indexed _from, address indexed _to, uint256 _tokenId, address _marketplace);
@@ -146,8 +139,9 @@ contract AccessoryWrapper721 is AccessControl {
 
 
 //Storage
- 
-   
+    address public ownerAddress;
+    uint16 public totalMarketplaces = 0;
+    mapping (address => bool) public marketplaces;
     address public accessoryDataContract = 0x466c44812835f57b736ef9F63582b8a6693A14D0;
     
         struct Accessory {
@@ -157,10 +151,32 @@ contract AccessoryWrapper721 is AccessControl {
         bool ownerLock;
     }
 
-
-
+      // Constructor
+    function AcceessoryWrapper721() public {
+        ownerAddress = msg.sender;
+    }
     
-    function SetAccessoryDataContact(address _accessoryDataContract) onlyCREATOR external {
+
+    modifier onlyOWNER() {
+        require(msg.sender == ownerAddress);
+        _;
+    }
+
+ function addMARKETPLACE(address _newMarketplace) onlyOWNER public {
+        if (marketplaces[_newMarketplace] == false) {
+           marketplaces[_newMarketplace] = true;
+           totalMarketplaces += 1;
+        }
+    }
+    
+     function removeMARKETPLACE(address _oldMarketplace) onlyOWNER public {
+        if (marketplaces[_oldMarketplace] == true) {
+            marketplaces[_oldMarketplace] = false;
+            totalMarketplaces -= 1;
+        }
+    }
+    
+    function SetAccessoryDataContact(address _accessoryDataContract) onlyOWNER external {
        accessoryDataContract = _accessoryDataContract;
     }
 
@@ -196,6 +212,7 @@ contract AccessoryWrapper721 is AccessControl {
     }
     
    
+
  
   function transfer(address _to, uint256 _tokenId) public {
       
@@ -203,7 +220,7 @@ contract AccessoryWrapper721 is AccessControl {
        address owner;
         (,, owner) = accessoryData.getAccessory(_tokenId);
       
-       if ((seraphims[msg.sender] == true)  || (owner == msg.sender))
+       if ((marketplaces[msg.sender] == true)  || (owner == msg.sender))
        {
          accessoryData.transferAccessory(owner,_to, uint64 (_tokenId)) ;
          Transfer(owner, _to, _tokenId);
@@ -223,7 +240,7 @@ contract AccessoryWrapper721 is AccessControl {
      //this function should never be called - instead use transfer
      revert();
   }
-    function kill() onlyCREATOR external {
-        selfdestruct(creatorAddress);
+    function kill() onlyOWNER external {
+        selfdestruct(ownerAddress);
     }
     }
