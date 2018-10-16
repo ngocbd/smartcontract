@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XTRD at 0x8a4bc94944b2df58fc6d9cf108b8bd213df56972
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XTRD at 0x9c794f933b4dd8b49031a79b0f924d68bef43992
 */
 pragma solidity ^0.4.20;
 
@@ -160,7 +160,7 @@ contract Blacklist is BlacklistInterface, Ownable {
         Unblacklisted(node);
     }
     
-    function isBanned(address node) onlyOwner returns (bool) {
+    function isBanned(address node) returns (bool) {
         if (blacklisted[node]) {
             return true;
         } else {
