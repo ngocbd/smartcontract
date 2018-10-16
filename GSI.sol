@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSI at 0x65bBC91459aAAd9603ef1345c6Bb6396dd6772B9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSI at 0xCE3b5fFca16ffF926c890f0885A3e90cEb89db0A
 */
 contract owned {
     address public owner;
@@ -12,7 +12,8 @@ contract owned {
         if (msg.sender != owner) throw;       
     }
 
-    function transferOwnership(address newOwner) onlyOwner {
+    function transferOwnership(address newOwner)  {
+		if(msg.sender!=owner) throw;
         owner = newOwner;
     }
 }
@@ -20,21 +21,21 @@ contract owned {
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract GSIToken is owned  {
-
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-		    /* Public variables of the token */
+    
+	/* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
     string public symbol;
     uint8 public decimalUnits;
     uint256 public totalSupply;
-
+	GSIToken public exchangeToken;
+	
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
-
+	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function GSIToken(
         uint256 initialSupply,
@@ -67,54 +68,44 @@ contract GSIToken is owned  {
         if (frozenAccount[_from]) throw;                        // Check if frozen            
         if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
         if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
+        if (_value > allowed[_from][msg.sender]) throw;   // Check allowed
         balanceOf[_from] -= _value;                          // Subtract from the sender
         balanceOf[_to] += _value;                            // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
+        allowed[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function mintToken(address target, uint256 mintedAmount) onlyOwner {
+    function mintToken(address target, uint256 mintedAmount) {
+	    if(msg.sender!=owner) throw;
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
         Transfer(0, owner, mintedAmount);
         Transfer(owner, target, mintedAmount);
     }
 
-    function freezeAccount(address target, bool freeze) onlyOwner {
+    function freezeAccount(address target, bool freeze) {
+		if(msg.sender!=owner) throw;
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
 
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-
-    function buy() {
-        uint amount = msg.value / buyPrice;                // calculates the amount
-        if (balanceOf[this] < amount) throw;               // checks if it has enough to sell
-        balanceOf[msg.sender] += amount;                   // adds the amount to buyer's balance
-        balanceOf[this] -= amount;                         // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);                // execute an event reflecting the change
-    }
-
-    function sell(uint256 amount) {
-        if (balanceOf[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
-        balanceOf[this] += amount;                         // adds the amount to owner's balance
-        balanceOf[msg.sender] -= amount;                   // subtracts the amount from seller's balance
-        if (!msg.sender.send(amount * sellPrice)) {        // sends ether to the seller. It's important
-            throw;                                         // to do this last to avoid recursion attacks
-        } else {
-            Transfer(msg.sender, this, amount);            // executes an event reflecting on the change
-        }               
-    }
-
-
+	function setExchangeToken(GSIToken _exchangeToken) {
+		if(msg.sender!=owner) throw;
+		exchangeToken=_exchangeToken;
+	}
+	    
+	function demintTokens(address target,uint8 amount)  {
+		if(msg.sender!=owner) throw;
+		if(balanceOf[target]<amount) throw;
+		balanceOf[msg.sender]+=amount;
+		balanceOf[target]-=amount;
+		Transfer(target,owner,amount);
+	}
+	
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    mapping (address => mapping (address => uint256)) public allowed;
 
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -123,13 +114,22 @@ contract GSIToken is owned  {
     /* Allow another contract to spend some tokens in your behalf */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
         returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
+        allowed[msg.sender][_spender] = _value;
         tokenRecipient spender = tokenRecipient(_spender);
         spender.receiveApproval(msg.sender, _value, this, _extraData);
         return true;
     }
+	
+	function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
-
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+	
     /* This unnamed function is called whenever someone tries to send ether to it */
     function () {
         throw;     // Prevents accidental sending of ether
@@ -138,15 +138,20 @@ contract GSIToken is owned  {
 
 contract GSI is owned {
 		event OracleRequest(address target);
+		event MintedGreen(address target,uint256 amount);
+		event MintedGrey(address target,uint256 amount);
 		
 		GSIToken public greenToken;
 		GSIToken public greyToken;
 		uint256 public requiredGas;
 		uint256 public secondsBetweenReadings;
+		uint8 public pricegreengrey;
 		
 		mapping(address=>Reading) public lastReading;
 		mapping(address=>Reading) public requestReading;
 		mapping(address=>uint8) public freeReadings;
+		mapping(address=>string) public plz;
+		mapping(address=>uint8) public oracles;
 		
 		struct Reading {
 			uint256 timestamp;
@@ -161,61 +166,100 @@ contract GSI is owned {
 							0,
 							'P+',
 							this
-			);
-			//greenToken.mintToken(msg.sender,10000);
+			);			
 			greyToken = new GSIToken(
 							0,
 							'GreyPower',
 							0,
 							'P-',
 							this
-			);							
+			);		
+			greenToken.setExchangeToken(greyToken);
+			greyToken.setExchangeToken(greenToken);
+			oracles[msg.sender]=1;
 		}
 		
-		function oracalizeReading(uint256 _reading,string _zip) {
+		function oracalizeReading(uint256 _reading) {
 			if(msg.value<requiredGas) {  
 				if(freeReadings[msg.sender]==0) throw;
 				freeReadings[msg.sender]--;
 			} 		
 			if(_reading<lastReading[msg.sender].value) throw;
 			if(_reading<requestReading[msg.sender].value) throw;
-			if(now<lastReading[msg.sender].timestamp+secondsBetweenReadings) throw;
+			if(now<lastReading[msg.sender].timestamp+secondsBetweenReadings) throw;			
 			//lastReading[msg.sender]=requestReading[msg.sender];
-			requestReading[msg.sender]=Reading(now,_reading,_zip);
+			requestReading[msg.sender]=Reading(now,_reading,plz[msg.sender]);
 			OracleRequest(msg.sender);
 			owner.send(msg.value);
 		}	
+		
+		function addOracle(address oracle) {
+			if(msg.sender!=owner) throw;
+			oracles[oracle]=1;
 			
-		function setReadingDelay(uint256 delay) onlyOwner {
+		}
+		function setPlz(string _plz) {
+			plz[msg.sender]=_plz;
+		}
+		function setReadingDelay(uint256 delay) {
+			if(msg.sender!=owner) throw;
 			secondsBetweenReadings=delay;
 		}
 		
-		function assignFreeReadings(address _receiver,uint8 _count) onlyOwner {
+		function assignFreeReadings(address _receiver,uint8 _count)  {
+			if(oracles[msg.sender]!=1) throw;
 			freeReadings[_receiver]+=_count;
 		}	
 		
-		function mintGreen(address recipient,uint256 tokens) onlyOwner {			
-			greenToken.mintToken(recipient, tokens);			
+		function mintGreen(address recipient,uint256 tokens) {
+			if(oracles[msg.sender]!=1) throw;
+			greenToken.mintToken(recipient, tokens);	
+			lastReading[recipient]=Reading(now,(tokens/10)+lastReading[recipient].value,plz[msg.sender]);
+			MintedGreen(recipient,tokens);
 		}
 		
-		function mintGrey(address recipient,uint256 tokens) onlyOwner {			
-			greyToken.mintToken(recipient, tokens);			
+		function mintGrey(address recipient,uint256 tokens) {
+			if(oracles[msg.sender]!=1) throw;				
+			greyToken.mintToken(recipient, tokens);		
+			lastReading[recipient]=Reading(now,(tokens/10)+lastReading[recipient].value,plz[msg.sender]);
+			MintedGrey(recipient,tokens);
 		}
 		
-		function commitReading(address recipient,uint256 timestamp,uint256 reading,string zip) onlyOwner {			
-			if(this.balance>0) {
-				owner.send(this.balance);
-			} 
-		  lastReading[recipient]=Reading(timestamp,reading,zip);
+		function commitReading(address recipient) {
+		  if(oracles[msg.sender]!=1) throw;
+		  lastReading[recipient]=requestReading[recipient];		  
+		  //owner.send(this.balance);
 		}
 		
-		function setOracleGas(uint256 _requiredGas) onlyOwner {
+		function setGreenToken(GSIToken _greenToken) {
+			if(msg.sender!=owner) throw;
+			greenToken=_greenToken;			
+		} 
+		
+		function setGreyToken(GSIToken _greyToken) {
+			if(msg.sender!=owner) throw;
+			greyToken=_greyToken;			
+		} 
+		
+		function setOracleGas(uint256 _requiredGas)  {
+			if(msg.sender!=owner) throw;
 			requiredGas=_requiredGas;
 		}
+
+		function setGreyGreenPrice(uint8 price) {
+			if(msg.sender!=owner) throw;
+			pricegreengrey=price;
+		}
 		
+		function convertGreyGreen(uint8 price,uint8 amount) {
+			if(price<pricegreengrey) throw;
+			if(greenToken.balanceOf(msg.sender)<amount*price) throw;
+			if(greyToken.balanceOf(msg.sender)<amount) throw;
+			greyToken.demintTokens(msg.sender,amount);
+		}
 		function() {
 			if(msg.value>0) {
-				owner.send(msg.value);
+				owner.send(this.balance);
 			}
 		}
 }
