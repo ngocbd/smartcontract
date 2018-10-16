@@ -1,43 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x21e44b9bb629d9efef554fafb7d4fa6c5fbdf2d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xc5124aa727b13291a79d35d76273aa1c855f6582
 */
 pragma solidity ^0.4.20;
 
 /*
 * Team JUST presents..
 * ====================================*
-* _____     _ _ _ _____    ___ ____   * 
-*|  _  |___| | | |  |  |  |_  |    \  *
-*|   __| . | | | |     |  |_  |  |  | * 
-*|__|  |___|_____|__|__|  |___|____/  *
-*                                     *
+*  _____   ______          ___        *
+* |  __ \ / __ \ \        / / |       *
+* | |__) | |  | \ \  /\  / /| |       *
+* |  ___/| |  | |\ \/  \/ / | |       *
+* | |    | |__| | \  /\  /  | |____   *
+* |_|     \____/   \/  \/   |______|  *
 * ====================================*
 * -> What?
-* The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
-*
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* 
-* -> Who worked on this project?
-* - PonziBot (math/memes/main site/master)
-* - Mantso (lead solidity dev/lead web3 dev)
-* - swagg (concept design/feedback/management)
-* - Anonymous#1 (main site/web3/test cases)
-* - Anonymous#2 (math formulae/whitepaper)
-*
-* -> Who has audited & approved the projected:
-* - Arc
-* - tocisck
-* - sumpunk
+* This source code is copy of Proof of Weak Hands (POWH3D)
+* Call us copycats coz we love cats :)
 */
 
 contract Hourglass {
@@ -142,10 +120,10 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PAK";
-    string public symbol = "PAK";
+    string public name = "POWL";
+    string public symbol = "POWL";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 10;
+    uint8 constant internal dividendFee_ = 20;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -189,60 +167,49 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0xd2fb1a709b71b8ff0fc31410a5092860f3b9717b10a96abdbf7541bdb62acaef] = true;
+        administrators[0x909b33773fe2c245e253e4d2403e3edd353517c30bc1a85b98d78b392e5fd2c1] = true;
         
         // add the ambassadors here.
-        // mantso - lead solidity dev & lead web dev. 
-        ambassadors_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = true;
+        // rackoo - lead solidity dev & lead web dev. 
+        ambassadors_[0xbe3569068562218c792cf25b98dbf1418aff2455] = true;
         
-        // ponzibot - mathematics & website, and undisputed meme god.
-        ambassadors_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = true;
+        // noncy - Aunt responsible for feeding us.
+        ambassadors_[0x17b88dc23dacf6a905356a342a0d88f055a52f07] = true;
         
-        // swagg - concept design, feedback, management.
-        ambassadors_[0x7563A35d5610eE7c9CD330E255Da0e779a644C19] = true;
+        //tipso - ctrl+c and ctrl+v expert
+        ambassadors_[0xda335f08bec7d84018628c4c9e18c7ef076d8c30] = true;
         
-        // k-dawgz - shilling machine, meme maestro, bizman.
-        ambassadors_[0x215e3C713BADb158A457e61f99325bBB5d278E57] = true;
+        //powl chat - chat expert
+        ambassadors_[0x99d63938007553c3ec9ce032cd94c3655360c197] = true;
         
-        // elmojo - all those pretty .GIFs & memes you see? you can thank this man for that.
-        ambassadors_[0xaFF8B5CDCB339eEf5e1100597740a394C7B9c6cA] = true;
+        //pipper - shiller
+        ambassadors_[0xbe3569068562218c792cf25b98dbf1418aff2455] = true;
         
-        // capex - community moderator.
-        ambassadors_[0x8dc6569c28521560EAF1890bC41b2F3FC2010E1b] = true;
+        //vai - Solidity newbie
+        ambassadors_[0x575850eb0bad2ef3d153d60b6e768c7648c4daeb] = true;
         
-        // jörmungandr - pentests & twitter trendsetter.
-        ambassadors_[0xf14BE3662FE4c9215c27698166759Db6967De94f] = true;
+        //sudpe - Developer
+        ambassadors_[0x575850eb0bad2ef3d153d60b6e768c7648c4daeb] = true; //ho
         
-        // inventor - the source behind the non-intrusive referral model.
-        ambassadors_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = true;
         
-        // tocsick - pentesting, contract auditing.
-        ambassadors_[0x49Aae4D923207e80Fc91E626BCb6532502264dfC] = true;
+        //private dudes
+        ambassadors_[0x8cba9adeb6db06980d9efa38ccf8c50ec1a44335] = true; //ml
+        ambassadors_[0x8c77aab3bf3b55786cb168223b66fbcac1add480] = true; //of
+        ambassadors_[0x54c7cd8969b8e64be047a9808e417e43e7336f00] = true; //kd
+        ambassadors_[0xe9d3a8cd1a7738c52ea1dc5705b4a3cc7132a227] = true; //rr
+        ambassadors_[0x6ca6ef7be51b9504fdcd98ef11908a41d9555dc9] = true; //ms
+        ambassadors_[0x1af7a66440af07e8c31526f5b921e480792f3c5f] = true; //ol
+        ambassadors_[0x798ce730e70f26624924011e1fac8a821d0ff0e7] = true; //we
+        ambassadors_[0x059d0f67c2d4c18b09c2b91ff13a4648a19d68a2] = true; //nb
+        ambassadors_[0x575850eb0bad2ef3d153d60b6e768c7648c4daeb] = true; //ho
+        ambassadors_[0xe3de1731a6d018e2dcd0ad233c870c4aac8e0d54] = true; //pm
+        ambassadors_[0x49b2bf937ca3f7029e2b1b1aa8445c8497da6464] = true; //tp
+        ambassadors_[0xc99868aaa529ebc4c2d7f6e97efc0d883ddbbeec] = true; //sr
+        ambassadors_[0x558d94edc943e0b4dd75001bc91750711e5c8239] = true; //lj
+        ambassadors_[0xd87dd0cd32e1076c52d87175da74a98ece6794a0] = true; //mh
+        ambassadors_[0xde24622f20c56cbf1a3ab75d078ebe42da7ed7b9] = true; //kb
+        ambassadors_[0x65d24fffaeb0b49a5bfbaf0ad7c180d61d012312] = true; //ta
         
-        // arc - pentesting, contract auditing.
-        ambassadors_[0x3a0cca1A832644B60730E5D4c27947C5De609d62] = true;
-        
-        // sumpunk - contract auditing.
-        ambassadors_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = true;
-        
-        // randall - charts & sheets, data dissector, advisor.
-        ambassadors_[0x2b219C2178f099dE4E9A3667d5cCc2cc64da0763] = true;
-        
-        // ambius - 3d chart visualization.
-        ambassadors_[0x2A04C7335f90a6bd4e9c4F713DD792200e27F2E6] = true;
-        
-        // contributors that need to remain private out of security concerns.
-        ambassadors_[0x35668818ba8F768D4C21787a6f45C86C69394dfD] = true; //dp
-        ambassadors_[0xa3120da52e604aC3Fc80A63813Ef15476e0B6AbD] = true; //tc
-        ambassadors_[0x924E71bA600372e2410285423F1Fe66799b717EC] = true; //ja
-        ambassadors_[0x6Ed450e062C20F929CB7Ee72fCc53e9697980a18] = true; //sf
-        ambassadors_[0x18864A6682c8EB79EEA5B899F11bC94ef9a85ADb] = true; //tb
-        ambassadors_[0x9cC1BdC994b7a847705D19106287C0BF94EF04B5] = true; //sm
-        ambassadors_[0x6926572813ec1438088963f208C61847df435a74] = true; //mc
-        ambassadors_[0xE16Ab764a02Ae03681E351Ac58FE79717c0eE8C6] = true; //et
-        ambassadors_[0x276F4a79F22D1BfC51Bd8dc5b27Bfd934C823932] = true; //sn
-        ambassadors_[0xA2b4ed3E2f4beF09FB35101B76Ef4cB9D3eeCaCf] = true; //bt
-        ambassadors_[0x147fc6b04c95BCE47D013c8d7a200ee434323669] = true; //al
         
 
     }
