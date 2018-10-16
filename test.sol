@@ -1,15 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0x081528cdadfca02b74dae6547d04d391c9a698fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Test at 0x56ef98199fb28abdccd3b408885ce7168c9fa9fe
 */
-pragma solidity ^0.4.16;
-
-contract test {
-    // Get balace of an account.
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return 34500000000000000000;
-    }
-    // Transfer function always returns true.
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-        return true;
+// Test contract
+contract Test {
+    // Let's be nice and clean up after ourselves
+    function die() {
+        suicide(0);
     }
 }
