@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDC at 0xf1d8648e56b8caadae415591b491ab13cdc760cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDC at 0xc9b242a67bc2e96d51b79bf4c4f5d26c25396847
 */
+pragma solidity ^0.4.16;
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract IDC {
