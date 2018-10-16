@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBCToken at 0x91654eAf7828E7e05d2847Aa27405D9925C3dc0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBCToken at 0xb0B7C0cDc412E8230C232254068c46E4418b69C9
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.10;
 
 contract ERC20Interface {    
     function totalSupply() constant returns (uint256 totalSupply);
@@ -14,28 +14,20 @@ contract ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-
 contract UBCToken is ERC20Interface{
-    /* ??????*/
-    string public standard = 'Token 1.0.8';
-    string public constant name="Ubiquitous Business Credit 2.0";
+    string public standard = 'Token 1.0';
+    string public constant name="Ubiquitous Business Credit";
     string public constant symbol="UBC";
-    uint8 public constant decimals=10;
-    uint256 public constant _totalSupply=10000000000000000000;
-    /*??????????*/
+    uint8 public constant decimals=4;
+    uint256 public constant _totalSupply=10000000000000;
     mapping(address => mapping (address => uint256)) allowed;
-
-    //mapping (address => uint256) public balanceOf;
     mapping(address => uint256) balances;
-    //mapping (address => mapping (address => uint256)) public allowance;
-    address public owner;
+
     /* ??*/
     function UBCToken() {
-        owner = msg.sender;
-        balances[owner] = _totalSupply; 
+        balances[msg.sender] = _totalSupply; 
     }
-    
-    function totalSupply() constant returns (uint256 totalSupply) {
+   function totalSupply() constant returns (uint256 totalSupply) {
           totalSupply = _totalSupply;
     }
     
@@ -55,7 +47,7 @@ contract UBCToken is ERC20Interface{
               return true;
           } else {
               return false;
-          }
+          }          
     }
 
     /*transferFrom*/
@@ -85,5 +77,4 @@ contract UBCToken is ERC20Interface{
     {
         return allowed[_owner][_spender];
     }
-    
 }
