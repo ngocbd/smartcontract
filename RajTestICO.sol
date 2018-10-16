@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RajTestICO at 0x3dcff2492b076b2a78eac9979f50a413121fc70b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RajTestICO at 0x06f726f750dd2a140a3f3bbe1fa58b624b361a33
 */
 pragma solidity ^0.4.16;
 
@@ -28,7 +28,8 @@ contract RajTest is owned {
     string public symbol = "RT";
     uint8 public decimals = 18;
     uint256 public totalSupply = 0;
-
+    
+    uint256 public sellPrice = 1045;
     uint256 public buyPrice = 1045;
 
     bool public released = false;
@@ -159,7 +160,6 @@ contract RajTest is owned {
     function mintToken(address target, uint256 mintedAmount) onlyCrowdsaleAgent public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
     }
 
@@ -172,15 +172,25 @@ contract RajTest is owned {
     }
 
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
+    /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newBuyPrice) onlyOwner public {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        uint amount = msg.value * buyPrice;               // calculates the amount
+        uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+
+    /// @notice Sell `amount` tokens to contract
+    /// @param amount amount of tokens to be sold
+    function sell(uint256 amount) canTransfer public {
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 
     /// @dev Set the contract that can call release and make the token transferable.
@@ -204,19 +214,13 @@ contract RajTestICO is owned, Killable {
     string public state = "Pre ICO";
 
     /// the UNIX timestamp start date of the crowdsale
-    uint public startsAt = 1521633600;
+    uint public startsAt = 1521721800;
 
     /// the UNIX timestamp end date of the crowdsale
-    uint public endsAt = 1521635400;
+    uint public endsAt = 1521723600;
 
     /// the price of token
     uint256 public TokenPerETH = 1045;
-
-    /// Tokens funding goal in wei.
-    uint public MIN_GOAL_EBC = 2 * 10 ** 18;
-
-    /// Tokens funding goal in wei, if the funding goal is reached, ico will stop
-    uint public MAX_GOAL_EBC = 10 * 10 ** 18;
 
     /// Has this crowdsale been finalized
     bool public finalized = false;
@@ -250,7 +254,6 @@ contract RajTestICO is owned, Killable {
     function investInternal(address receiver) private {
         require(!finalized);
         require(startsAt <= now && endsAt > now);
-        require(tokensSold <= MAX_GOAL_EBC);
 
         if(investedAmountOf[receiver] == 0) {
             // A new investor
@@ -281,7 +284,6 @@ contract RajTestICO is owned, Killable {
 
     function setEndsAt(uint time) onlyOwner {
         require(!finalized);
-        require(time >= now);
         endsAt = time;
         EndsAtChanged(endsAt);
     }
