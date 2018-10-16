@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GODToken at 0xfca4e786e055bc84d9a1a5ed7e232befd94ca1a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GODToken at 0xb59387f424ade7f33604f8f17ba7ecc2bd82e19a
 */
 /**
  * @title Ownable
@@ -268,6 +268,10 @@ contract PausableToken is StandardToken, Pausable {
   function transferFrom(address _from, address _to, uint _value) whenNotPaused public {
     super.transferFrom(_from, _to, _value);
   }
+
+  function transferDistribution(address _to, uint _value) public {
+    super.transfer(_to, _value);
+  }
 }
 
 
@@ -276,26 +280,26 @@ contract PausableToken is StandardToken, Pausable {
 
 
 /**
- * @title GODToken
- * @dev GOD Token contract
+ * @title DATToken
+ * @dev DAT Token contract
  */
 contract GODToken is PausableToken {
   using SafeMath for uint256;
 
-  string public name = "GOD Token";
-  string public symbol = "GOD";
+  string public name = "DAT Token";
+  string public symbol = "DAT";
   uint public decimals = 18;
 
 
-  uint256 private constant INITIAL_SUPPLY = 3000000000 ether;
+  uint256 private constant INITIAL_SUPPLY = 2653841597973271663912484125 wei;
 
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens. 
    */
-  function GODToken() public {
+  function GODToken(address _wallet) public {
     totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
+    balances[_wallet] = INITIAL_SUPPLY;
   }
 
   function changeSymbolName(string symbolName) onlyOwner public
