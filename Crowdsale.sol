@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xcd85b6cfcb0abe69c8c727b45fdef1c9327cd642
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x84c91efa4bfe61907edf6a7fc9e5515e55b1c703
 */
 pragma solidity ^0.4.13;
 
@@ -82,7 +82,6 @@ contract Crowdsale {
 
     function () payable beforeDeadline {
 
-        tokenBalance = 4943733;
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
