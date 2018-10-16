@@ -1,9 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x0dee19332fb83fb343a9fbb722b5395b8e7c9d8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xcb97e65f07da24d46bcdd078ebebd7c6e6e3d750
 */
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-
 contract Token {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -34,9 +31,9 @@ contract Token {
     /// @return Whether the transfer was successful or not
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
     /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
+    /// @param _value The amount of tokens to be approved for transfer
     /// @return Whether the approval was successful or not
     function approve(address _spender, uint256 _value) returns (bool success);
 
@@ -49,6 +46,14 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+/*
+You should inherit from StandardToken or, for a token like you would want to
+deploy in something like Mist, see HumanStandardToken.sol.
+(This implements ONLY the standard functions and NOTHING else.
+If you deploy this, you won't have anything useful.)
+
+Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
 
 contract StandardToken is Token {
 
@@ -95,24 +100,12 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
 }
 
-
-/*
-This Token Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
-
-In other words. This is intended for deployment in something like a Token Factory or Mist wallet, and then used by humans.
-Imagine coins, currencies, shares, voting weight, etc.
-Machine-based, rapid creation of many tokens would not necessarily need these extra features or will be minted in other manners.
-
-1) Initial Finite Supply (upon creation one specifies how much is minted).
-2) In the absence of a token registry: Optional Decimal, Symbol & Name.
-3) Optional approveAndCall() functionality to notify a contract if an approval() has occurred.
-
-.*/
-
-
-pragma solidity ^0.4.15;
-
 contract HumanStandardToken is StandardToken {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
+    }
 
     /* Public variables of the token */
 
@@ -148,7 +141,7 @@ contract HumanStandardToken is StandardToken {
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
 }
