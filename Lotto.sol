@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotto at 0xFb4d20ED9f88798be8348915AA93B0Ef481CE69D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lotto at 0x3C635e7D4A73A09dB2317F0aBCa7243913908929
 */
 pragma solidity ^0.4.18;
 contract Lotto {
@@ -7,7 +7,7 @@ contract Lotto {
   address public owner = msg.sender;
   address[] internal playerPool;
   uint seed = 0;
-  uint amount = 1 ether;
+  uint amount = 0.1 ether;
   // events
   event Payout(address from, address to, uint quantity);
   event BoughtIn(address from);
@@ -34,10 +34,10 @@ The reward is only 1 ether so it's low enough that miners won't try to influence
     return seed % upper;
   }
 
-  // only accepts a value of 0.1 ether. no extra eth please!! don't be crazy!
+  // only accepts a value of 0.01 ether. no extra eth please!! don't be crazy!
   // i'll make contracts for different sized bets eventually.
   function buyIn() payable public returns (uint) {
-    if (msg.value * 10 != 1 ether) {
+    if (msg.value * 10 != 0.1 ether) {
       revert();
       Rejected();
     } else {
@@ -88,7 +88,7 @@ explodes into beautiful digital star dust.
 
 // fallback function acts the same as buyIn(), omitting the return of course.
   function () public payable {
-    require(msg.value * 10 == 1 ether);
+    require(msg.value * 10 == 0.1 ether);
     playerPool.push(msg.sender);
     BoughtIn(msg.sender);
     if (playerPool.length >= 11) {
