@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeTokenizedAsset at 0xa549ef3164556b3fdba16680798032b993c2325b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeTokenizedAsset at 0xec09cc854227b0051e70156269b8c0ca4e9ae93e
 */
 pragma solidity ^0.4.13;
 
