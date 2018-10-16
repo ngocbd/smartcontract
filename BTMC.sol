@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTMC at 0x2a5294b5d15c582eb33b9dae0e271d9003d26826
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTMC at 0x4a8f44be523580a11cdb20e2c7c470adf44ec9bb
 */
 pragma solidity ^0.4.13;
 
@@ -83,8 +83,48 @@ library SafeMath {
   }
 }
 
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
 
-contract BTMC is ERC20,Ownable{
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+
+contract BTMC is ERC20,Ownable,Pausable{
 	using SafeMath for uint256;
 
 	//the base info of the token
@@ -93,37 +133,31 @@ contract BTMC is ERC20,Ownable{
 	string public constant version = "1.0";
 	uint256 public constant decimals = 18;
 
+	//1?????
+	uint256 public constant INIT_SUPPLY=100000000*10**decimals;
+
+	//??5???????????
+	uint256 public constant MINING_SUPPLY=500000000*10**decimals;
+
+
 	//??2?
-	uint256 public constant REWARD_SUPPLY=200000000*10**decimals;
-	//??2?
-	uint256 public constant OPERATE_SUPPLY=200000000*10**decimals;
+	uint256 public constant MAX_FUNDING_SUPPLY=200000000*10**decimals;
 
-	//???????4?
-	uint256 public constant COMMON_WITHDRAW_SUPPLY=REWARD_SUPPLY+OPERATE_SUPPLY;
-
-	//??5?
-	uint256 public constant MAX_FUNDING_SUPPLY=500000000*10**decimals;
-
-	//????1?
-	uint256 public constant TEAM_KEEPING=100000000*10**decimals;	
+	//????2?
+	uint256 public constant TEAM_KEEPING=200000000*10**decimals;	
 
 	//???10?
-	uint256 public constant MAX_SUPPLY=COMMON_WITHDRAW_SUPPLY+MAX_FUNDING_SUPPLY+TEAM_KEEPING;
-
-	//???????
-	uint256 public totalCommonWithdrawSupply;
+	uint256 public constant MAX_SUPPLY=INIT_SUPPLY+MINING_SUPPLY+MAX_FUNDING_SUPPLY+TEAM_KEEPING;
 
 	//????
 	//?????
 	uint256 public totalFundingSupply;
-	uint256 public stepOneStartTime;
-	uint256 public stepTwoStartTime;
+	uint256 public startTime;
 	uint256 public endTime;
-	uint256 public oneStepRate;
-	uint256 public twoStepRate;
+	uint256 public rate;
 
 	//??????
-	uint256 public constant TEAM_UNFREEZE=20000000*10**decimals;
+	uint256 public constant TEAM_UNFREEZE=40000000*10**decimals;
 	bool public hasOneStepWithdraw;
 	bool public hasTwoStepWithdraw;
 	bool public hasThreeStepWithdraw;
@@ -136,25 +170,26 @@ contract BTMC is ERC20,Ownable{
     mapping(address => uint256) balances;
 	mapping (address => mapping (address => uint256)) allowed;
 	
-
 	function BTMC(){
-		totalCommonWithdrawSupply= 0;
-		totalSupply = 0 ;
+		totalSupply=INIT_SUPPLY;
+		balances[msg.sender] = INIT_SUPPLY;
+		Transfer(0x0, msg.sender, INIT_SUPPLY);
 		totalFundingSupply = 0;
 	
-
-		stepOneStartTime=1520352000;
-		stepTwoStartTime=1521475200;
-		endTime=1524153600;
-
-		oneStepRate=5000;
-		twoStepRate=4000;
+		//20180423 235959
+		startTime=1524499199;
+		//20180515 000000
+		endTime=1526313600;
+		rate=5000;
 
 		hasOneStepWithdraw=false;
 		hasTwoStepWithdraw=false;
 		hasThreeStepWithdraw=false;
 		hasFourStepWithdraw=false;
 		hasFiveStepWithdraw=false;
+
+
+
 
 	}
 
@@ -170,13 +205,6 @@ contract BTMC is ERC20,Ownable{
 		assert(MAX_FUNDING_SUPPLY>=totalFundingSupply.add(_value.mul(_rate)));
 		_;
 	}
-
-	modifier notReachCommonWithdrawSupply(uint256 _value,uint256 _rate){
-		assert(COMMON_WITHDRAW_SUPPLY>=totalCommonWithdrawSupply.add(_value.mul(_rate)));
-		_;
-	}
-
-
 	modifier assertFalse(bool withdrawStatus){
 		assert(!withdrawStatus);
 		_;
@@ -203,7 +231,7 @@ contract BTMC is ERC20,Ownable{
 
 
 	//???????????
-	function processFunding(address receiver,uint256 _value,uint256 _rate) internal
+	function processFunding(address receiver,uint256 _value,uint256 _rate)  internal
 		notReachTotalSupply(_value,_rate)
 	{
 		uint256 amount=_value.mul(_rate);
@@ -213,7 +241,7 @@ contract BTMC is ERC20,Ownable{
 		Transfer(0x0, receiver, amount);
 	}
 
-	function funding (address receiver,uint256 _value,uint256 _rate) internal 
+	function funding (address receiver,uint256 _value,uint256 _rate) whenNotPaused internal 
 		notReachFundingSupply(_value,_rate)
 	{
 		processFunding(receiver,_value,_rate);
@@ -223,78 +251,62 @@ contract BTMC is ERC20,Ownable{
 	
 
 	function () payable external
-		notBeforeTime(stepOneStartTime)
+		notBeforeTime(startTime)
 		notAfterTime(endTime)
 	{
-		if(now>=stepOneStartTime&&now<stepTwoStartTime){
-			funding(msg.sender,msg.value,oneStepRate);
-		}else if(now>=stepTwoStartTime&&now<endTime){
-			funding(msg.sender,msg.value,twoStepRate);
-		}else {
-			revert();
-		}
-
+			funding(msg.sender,msg.value,rate);
 	}
 
-	//????
-	function commonWithdraw(uint256 _value) external
-		onlyOwner
-		notReachCommonWithdrawSupply(_value,1)
 
-	{
-		processFunding(msg.sender,_value,1);
-		//??????????
-		totalCommonWithdrawSupply=totalCommonWithdrawSupply.add(_value);
-	}
-	//20180907??
+	//20200423 000000??
 	function withdrawForOneStep() external
 		onlyOwner
 		assertFalse(hasOneStepWithdraw)
-		notBeforeTime(1536249600)
+		notBeforeTime(1587571200)
 	{
 		processFunding(msg.sender,TEAM_UNFREEZE,1);
 		//???????
 		hasOneStepWithdraw = true;
 	}
 
-	//20190307
+	//20201023 000000
 	function withdrawForTwoStep() external
 		onlyOwner
 		assertFalse(hasTwoStepWithdraw)
-		notBeforeTime(1551888000)
+		notBeforeTime(1603382400)
 	{
 		processFunding(msg.sender,TEAM_UNFREEZE,1);
 		//???????
 		hasTwoStepWithdraw = true;
 	}
 
-	//20190907
+	//20210423 000000
 	function withdrawForThreeStep() external
 		onlyOwner
 		assertFalse(hasThreeStepWithdraw)
-		notBeforeTime(1567785600)
+		notBeforeTime(1619107200)
 	{
 		processFunding(msg.sender,TEAM_UNFREEZE,1);
 		//???????
 		hasThreeStepWithdraw = true;
 	}
 
-	//20200307
+	//20211023 000000
 	function withdrawForFourStep() external
 		onlyOwner
 		assertFalse(hasFourStepWithdraw)
-		notBeforeTime(1583510400)
+		notBeforeTime(1634918400)
 	{
 		processFunding(msg.sender,TEAM_UNFREEZE,1);
 		//???????
 		hasFourStepWithdraw = true;
 	}
 
-	//20200907
+	//20220423 000000
 	function withdrawForFiveStep() external
 		onlyOwner
 		assertFalse(hasFiveStepWithdraw)
-		notBeforeTime(1599408000)
+		notBeforeTime(1650643200)
 	{
 		processFunding(msg.sender,TEAM_UNFREEZE,1);
 		//???????
@@ -302,7 +314,7 @@ contract BTMC is ERC20,Ownable{
 	}			
 
 
-  	function transfer(address _to, uint256 _value) public  returns (bool)
+  	function transfer(address _to, uint256 _value) whenNotPaused public  returns (bool)
  	{
 		require(_to != address(0));
 		// SafeMath.sub will throw if there is not enough balance.
@@ -318,7 +330,7 @@ contract BTMC is ERC20,Ownable{
   	}
 
 
-  	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
+  	function transferFrom(address _from, address _to, uint256 _value) whenNotPaused public returns (bool) 
   	{
 		require(_to != address(0));
 		uint256 _allowance = allowed[_from][msg.sender];
@@ -329,7 +341,7 @@ contract BTMC is ERC20,Ownable{
 		return true;
   	}
 
-  	function approve(address _spender, uint256 _value) public returns (bool) 
+  	function approve(address _spender, uint256 _value) whenNotPaused public returns (bool) 
   	{
 		allowed[msg.sender][_spender] = _value;
 		Approval(msg.sender, _spender, _value);
@@ -342,18 +354,16 @@ contract BTMC is ERC20,Ownable{
   	}
 
 
-	function setupFundingRate(uint256 _oneStepRate,uint256 _twoStepRate) external
+	function setupFundingRate(uint256 _rate) external
 		onlyOwner
 	{
-		oneStepRate=_oneStepRate;
-		twoStepRate=_twoStepRate;
+		rate=_rate;
 	}
 
-    function setupFundingTime(uint256 _stepOneStartTime,uint256 _stepTwoStartTime,uint256 _endTime) external
+    function setupFundingTime(uint256 _startTime,uint256 _endTime) external
         onlyOwner
     {
-		stepOneStartTime=_stepOneStartTime;
-		stepTwoStartTime=_stepTwoStartTime;
+		startTime=_startTime;
 		endTime=_endTime;
     }
 	  
