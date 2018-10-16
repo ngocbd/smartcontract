@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpdateConvRate at 0xeDeF91088dB5Abbe9942621b202665B09AEB4C6F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpdateConvRate at 0xB559781c7Fa7468bFF102AaC31a6a88fB7bbf596
 */
 pragma solidity ^0.4.18;
 
@@ -53,91 +53,73 @@ contract UpdateConvRate {
         conversionRate.setTokenControlInfo(
             KNC,
             1000000000000000,
-            3209682992192817725440,
-            5685953420669578379264 );
-
+                3475912029567568052224,
+                5709185508564730380288);
         conversionRate.setTokenControlInfo(
             OMG,
             1000000000000000,
-            401531338213762269184,
-            711312765645680017408 );
-
-
+                439794468212403470336,
+                722362414038872621056);
         conversionRate.setTokenControlInfo(
             EOS,
             1000000000000000,
-            857086802686433558528,
-            1518329270959017033728 );
-
-
+                938890140546807627776,
+                1542127055848131526656);
         conversionRate.setTokenControlInfo(
             SNT,
             10000000000000000,
-            39473220400186602291200,
-            51279660621882430849024 );
-
+                43262133595415336976384,
+                52109239915677776609280);
         conversionRate.setTokenControlInfo(
             GTO,
             10,
-            1298406206,
-            1298406206);
-
-
+            1200696404,
+            1200696404);
         conversionRate.setTokenControlInfo(
             REQ,
             1000000000000000,
-            26380249265656293228544,
-            34270581821014091497472);
-
+                27470469074054960644096,
+                33088179999699195920384);
         conversionRate.setTokenControlInfo(
             BAT,
             1000000000000000,
-            13630787405152438452224,
-            13630787405152438452224);
-
-
+                13641944431813013274624,
+                13641944431813013274624);
         conversionRate.setTokenControlInfo(
             MANA,
             1000000000000000,
-            46922655822319550726144,
-            46922655822319550726144);
-
+                46289152908501773713408,
+                46289152908501773713408);
         conversionRate.setTokenControlInfo(
             POWR,
             1000,
-            7698525732,
-            7698525732);
-
-
+            7989613502,
+            7989613502);
         conversionRate.setTokenControlInfo(
             ELF,
             1000000000000000,
-            5135835425728323649536,
-            6671963801563665793024);
-
+                5906192156691986907136,
+                7114008452735498715136);
         conversionRate.setTokenControlInfo(
             APPC,
             1000000000000000,
-            9671281647528360017920,
-            12563961988304091480064);
-
+                10010270788085346205696,
+                12057371164248796823552);
         conversionRate.setTokenControlInfo(
             ENG,
             10000,
-            277385502667,
-            360351506515);
-
+            288970915691,
+            348065467950);
         conversionRate.setTokenControlInfo(
             RDN,
-            1000000000000000    ,
-            2164249905248327172096,
-            2811577051908102684672);
-
+            1000000000000000,
+                2392730983766020325376,
+                2882044469946171260928);
         conversionRate.setTokenControlInfo(
             SALT,
             10000,
-            121452449847,
-            121452449847);
+            123819203326,
+            123819203326);
 
         conversionRate.transferAdminQuickly(orgAdmin);
         require(orgAdmin == conversionRate.admin());
