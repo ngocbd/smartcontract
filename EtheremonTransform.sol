@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonTransform at 0x57f854ba5baf019ec3a77f81c2966fd0d8905a38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonTransform at 0xf3a8f103574bc64358e372ed68e95db0b2bb0936
 */
 pragma solidity ^0.4.16;
 
@@ -542,6 +542,11 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         if (transformData.getHatchingEggId(msg.sender) > 0) {
             revert();
         }
+        
+        // can not lay egg when trading
+        EtheremonTradeInterface trade = EtheremonTradeInterface(tradeContract);
+        if (trade.isOnTrading(_objId))
+            revert();
         
         // check obj 
         EtheremonDataBase data = EtheremonDataBase(dataContract);
