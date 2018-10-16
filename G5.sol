@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract G5 at 0x703967db0f05c140d77a8d1c02d52435c6eebe20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract G5 at 0x67413902eb4c8fe55006c1b3a914fc1a78c853bb
 */
 pragma solidity ^0.4.11;
 
@@ -192,22 +192,14 @@ contract G5 is StandardToken {
     string public symbol = "G5";
     uint8 public decimals = 8;
     
-    function getFloor() returns(uint256) {
-        return floor;
-    }
-    
-    function getCeiling() returns(uint256) {
-        return ceiling;
-    }
-    
     function updateCeiling() private {
         // ceiling is always 5% above the value of the floor
         ceiling = floor*21/20;
     }
     
-    function G5() {
+    function SafeToken() {
         // 9523 tokens per ETH to start
-        floor = 1 ether / 10000 / 1e8;
+        floor = 1 ether / 10000 * 1e8;
         updateCeiling();
         lastUpdate = block.number;
     }
