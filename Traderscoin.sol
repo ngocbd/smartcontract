@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Traderscoin at 0x55593edffcfb9465660869a44e83b707c8f30d64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRADERSCOIN at 0x5d9afcf314fc10c74fa3383edd31f339b3278a2c
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -25,7 +25,7 @@ library SafeMath {
         return c;
     }
 }
-contract Traderscoin {
+contract TRADERSCOIN {
     using SafeMath
     for uint256;
     mapping(address => mapping(address => uint256)) allowed;
@@ -37,12 +37,12 @@ contract Traderscoin {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function Traderscoin() {
-        totalSupply = 16000000;
-        symbol = 'TSC';
-        owner = 0xe5b43827163ef1c5f9f6c4e2def8a6e9edb84d74;
+    function TRADERSCOIN() {
+        totalSupply = 100000000;
+        symbol = 'TRADE';
+        owner = 0x1104ca8dd85aeFc33d4947fB6d71824Fb33F0A51;
         balances[owner] = totalSupply;
-        decimals = 0;
+        decimals = 8;
     }
 
     function balanceOf(address _owner) constant returns(uint256 balance) {
