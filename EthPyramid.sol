@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xa51d1e295fb19bef55c91231d0cf7ebb1603e047
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x0d1b68d4d65f6ba3f2b9600d1b2682d98e055a62
 */
 pragma solidity ^0.4.18;
 
@@ -12,19 +12,32 @@ pragma solidity ^0.4.18;
  '-.._/___...-"-.-..__`.
   B
 
-This is a PONZI Crypto-GAME and >>NOT<< an investment opportunity! 
-It illustrate the functionallities and possibilities of smart 
-contracts and was just deployed for testing. 
+ EthPyramid. A no-bullshit, transparent, self-sustaining pyramid scheme.
  
  Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
- 
- 
- 
- To exit and withdraw balance add to transaction data: 0xb1e35242 
- 
- 
- 
 
+ Developers:
+	Arc
+	Divine
+	Norsefire
+	ToCsIcK
+	
+ Front-End:
+	Cardioth
+	tenmei
+	Trendium
+	
+ Moral Support:
+	DeadCow.Rat
+	Dots
+	FatKreamy
+	Kaseylol
+	QuantumDeath666
+	Quentin
+ 
+ Shit-Tier:
+	HentaiChrist
+ 
 */
 
 contract EthPyramid {
@@ -45,7 +58,7 @@ contract EthPyramid {
 
 	// Typical values that we have to declare.
 	string constant public name = "EthPyramid";
-	string constant public symbol = "EPT";
+	string constant public symbol = "EPY";
 	uint8 constant public decimals = 18;
 
 	// Array between each address and their number of tokens.
@@ -65,6 +78,9 @@ contract EthPyramid {
 	// Variable tracking how much Ether each token is currently worth.
 	// Note that this is scaled by the scaleFactor variable.
 	uint256 earningsPerToken;
+	
+	// Current contract balance in Ether
+	uint256 public contractBalance;
 
 	function EthPyramid() public {}
 
@@ -88,6 +104,7 @@ contract EthPyramid {
 		totalPayouts += (int256) (balance * scaleFactor);
 		
 		// Send the dividends to the address that requested the withdraw.
+		contractBalance = sub(contractBalance, balance);
 		msg.sender.transfer(balance);
 	}
 
@@ -194,6 +211,7 @@ contract EthPyramid {
 	function fund() payable public {
 		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
 		if (msg.value > 0.000001 ether) {
+		    contractBalance = add(contractBalance, msg.value);
 			buy();
 		} else {
 			revert();
@@ -233,20 +251,21 @@ contract EthPyramid {
 		totalPayouts += (int256) (balance * scaleFactor);
 		
 		// Send the dividends to the address that requested the withdraw.
-		to.transfer(balance);
+		contractBalance = sub(contractBalance, balance);
+		to.transfer(balance);		
 	}
 
 	// Internal balance function, used to calculate the dynamic reserve value.
 	function balance() internal constant returns (uint256 amount) {
 		// msg.value is the amount of Ether sent by the transaction.
-		return this.balance - msg.value;
+		return contractBalance - msg.value;
 	}
 
 	function buy() internal {
 		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
 		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
 			revert();
-			
+						
 		// msg.sender is the address of the caller.
 		var sender = msg.sender;
 		
