@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0xa86e0B4B70CD70d5E4a49Ff1648F77536b890416
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x6C4C7c4b8D7F6c75A991c84bDE6Cf10C5f94d093
 */
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
 
