@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdPotato at 0xc444509db0b150430b423d48a05dcf02a93d2379
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdPotato at 0x8b502f5759f8669f764c4dced0b6231172e1a915
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -25,7 +25,7 @@ contract AdPotato{
     /***CONSTRUCTOR***/
     function AdPotato() public{
         ceoAddress=msg.sender;
-        initialize(0x1d3Aa397363129069aa5957C5B817110918B7523);
+        initialize(0x06483d0742a254fcc92F7240b92A9e728da377b0);
     }
     /*** DATATYPES ***/
     struct Advertisement{
