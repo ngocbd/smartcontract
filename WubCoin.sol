@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WubCoin at 0x1e886ce6d18bf524373a546300dfe97674f5c6d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WubCoin at 0x8c5a05b691288f85e6e27bf6b5a454d2814f5a6f
 */
 pragma solidity ^0.4.11;
 
@@ -11,7 +11,6 @@ pragma solidity ^0.4.11;
  *
  * Copyright by Stefan K.K https://stefan.co.jp
  */
-
 
 /**
  * @title Contract that will work with ERC223 tokens.
@@ -175,11 +174,11 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
     string  public name    = "WubCoin";
     string  public symbol  = "WUB";
     uint8   public decimals = 18;
-    uint256 public totalSupply = 0;
-    address public owner;
+    uint256 public totalSupply = 15000000 * 10 ** 18;
 
-    function WubCoin() {
-        owner = msg.sender;
+    function WubCoin(address companyWallet) {
+        balances[companyWallet].add(totalSupply);
+        Transfer(0x0, companyWallet, totalSupply);
     }
 
     /**
@@ -189,19 +188,6 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
         revert();
     }
 
-    function mint(uint256 _amount, address _to) {
-        require(msg.sender == owner);
-        uint256 tokens = _amount * (uint256(10) ** decimals);
-        totalSupply = totalSupply.add(tokens);
-        balances[_to].add(tokens);
-        bytes memory empty;
-        Transfer(0x0, _to, tokens, empty);
-    }
-
-    function finish() {
-        require(msg.sender == owner);
-        owner = address(0x0);
-    }
 
     /**
      * @dev Transfer the specified amount of tokens to the specified address.
