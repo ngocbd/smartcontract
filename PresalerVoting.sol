@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x8EB0d17f99992Ae3225Cfff03CbB29Ca19d946c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x775677bbbb575bca9f052e2f7e01294cafd5422b
 */
 pragma solidity ^0.4.11;
 
@@ -38,7 +38,7 @@ interface TokenStorage {
 
 contract PresalerVoting {
 
-    string public constant VERSION = "0.0.4";
+    string public constant VERSION = "0.0.3";
 
     /* ====== configuration START ====== */
 
@@ -49,17 +49,17 @@ contract PresalerVoting {
 
     TokenStorage PRESALE_CONTRACT = TokenStorage(0x4Fd997Ed7c10DbD04e95d3730cd77D79513076F2);
 
-    string[3] private stateNames = ["BEFORE_START",  "VOTING_RUNNING", "CLOSED" ];
+    string[5] private stateNames = ["BEFORE_START",  "VOTING_RUNNING", "CLOSED" ];
     enum State { BEFORE_START,  VOTING_RUNNING, CLOSED }
 
     mapping (address => uint) public rawVotes;
 
-    uint private constant MAX_AMOUNT_EQU_0_PERCENT   = 10 finney;
+    uint private constant MAX_AMOUNT_EQU_0_PERCENT   = 1 finney;
     uint private constant MIN_AMOUNT_EQU_100_PERCENT = 1 ether ;
 
-    address public owner;
+    address owner;
 
-    //constructors
+    //constructor
     function PresalerVoting () {
         owner = msg.sender;
     }
@@ -95,9 +95,9 @@ contract PresalerVoting {
     }
 
     /// @notice return voting remaining time (hours, minutes).
-    function votingEndsInHHMM() constant returns (uint8, uint8) {
+    function votingEndsInHHMM() constant returns (uint16, uint16) {
         var tsec = VOTING_END_TIME - now;
-        return VOTING_END_TIME==0 ? (0,0) : (uint8(tsec / 1 hours), uint8(tsec % 1 hours / 1 minutes));
+        return VOTING_END_TIME==0 ? (0,0) : (uint16(tsec / 1 hours), uint16(tsec % 1 hours / 1 minutes));
     }
 
     function currentState() internal constant returns (State) {
