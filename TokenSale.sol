@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x4ac0224821ccc044d358403469c88845dc56f83d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x9f9f8611430796a699dd71233eedc7de0821ac9a
 */
 pragma solidity ^0.4.21;
 
@@ -515,56 +515,7 @@ contract Whitelist is Ownable {
 
 
 
-
-
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
-}
-
-
-contract TokenSale is Ownable, CappedCrowdsale, FinalizableCrowdsale, Whitelist, Pausable {
+contract TokenSale is Ownable, CappedCrowdsale, FinalizableCrowdsale, Whitelist {
 
   bool public initialized;
   uint[10] public rates;
@@ -649,7 +600,7 @@ contract TokenSale is Ownable, CappedCrowdsale, FinalizableCrowdsale, Whitelist,
     msg.sender.transfer(value);
   }
 
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) whenNotPaused internal {
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
     require(_weiAmount >= minContribution);
     require(_weiAmount <= maxContribution);
     super._preValidatePurchase(_beneficiary, _weiAmount);
