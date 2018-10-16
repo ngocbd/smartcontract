@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0xC388F08C071f06Cd6bC02B533D71a81814E11682
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x205AB0056fA8F10Dea6826d65B774d40B24BAc94
 */
 // Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
