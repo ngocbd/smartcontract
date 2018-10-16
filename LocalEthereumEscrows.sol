@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LocalEthereumEscrows at 0x09678741bd50c3e74301f38fbd0136307099ae5d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LocalEthereumEscrows at 0x330e24d4aa0a60acac8f9fe6d674d3cf1e8042c6
 */
 pragma solidity ^0.4.18;
 contract Token {
@@ -134,7 +134,7 @@ contract LocalEthereumEscrows {
     ) private returns (bool) {
         var (_escrow, _tradeHash) = getEscrowAndHash(_tradeID, _seller, _buyer, _value, _fee);
         if (!_escrow.exists) return false;
-        uint128 _gasFees = _escrow.totalGasFeesSpentByRelayer + (msg.sender == relayer ? (GAS_doRelease + _additionalGas) * uint128(tx.gasprice) : 0);
+        uint128 _gasFees = _escrow.totalGasFeesSpentByRelayer + (msg.sender == relayer ? GAS_doRelease + _additionalGas : 0);
         delete escrows[_tradeHash];
         Released(_tradeHash);
         transferMinusFees(_buyer, _value, _gasFees, _fee);
@@ -181,7 +181,7 @@ contract LocalEthereumEscrows {
     ) private returns (bool) {
         var (_escrow, _tradeHash) = getEscrowAndHash(_tradeID, _seller, _buyer, _value, _fee);
         if (!_escrow.exists) return false;
-        uint128 _gasFees = _escrow.totalGasFeesSpentByRelayer + (msg.sender == relayer ? (GAS_doBuyerCancel + _additionalGas) * uint128(tx.gasprice) : 0);
+        uint128 _gasFees = _escrow.totalGasFeesSpentByRelayer + (msg.sender == relayer ? GAS_doBuyerCancel + _additionalGas : 0);
         delete escrows[_tradeHash];
         CancelledByBuyer(_tradeHash);
         transferMinusFees(_seller, _value, _gasFees, 0);
@@ -205,7 +205,7 @@ contract LocalEthereumEscrows {
         var (_escrow, _tradeHash) = getEscrowAndHash(_tradeID, _seller, _buyer, _value, _fee);
         if (!_escrow.exists) return false;
         if(_escrow.sellerCanCancelAfter <= 1 || _escrow.sellerCanCancelAfter > block.timestamp) return false;
-        uint128 _gasFees = _escrow.totalGasFeesSpentByRelayer + (msg.sender == relayer ? (GAS_doSellerCancel + _additionalGas) * uint128(tx.gasprice) : 0);
+        uint128 _gasFees = _escrow.totalGasFeesSpentByRelayer + (msg.sender == relayer ? GAS_doSellerCancel + _additionalGas : 0);
         delete escrows[_tradeHash];
         CancelledBySeller(_tradeHash);
         transferMinusFees(_seller, _value, _gasFees, 0);
