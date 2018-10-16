@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TVToken at 0xeec2cbf6036ffd05fd9a56aa6e229c1037fd24c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TVToken at 0xf639043d58b53b1236b47fef37da768d2dde8507
 */
 pragma solidity ^0.4.13;
 
@@ -325,7 +325,7 @@ contract PausableToken is StandardToken, Pausable {
 
 contract TVToken is PausableToken, MintableToken {
   string public name = 'TV Token';
-  string public symbol = 'TVT';
+  string public symbol = 'TV';
   uint8 public decimals = 18;
 
   function TVToken() public {}
