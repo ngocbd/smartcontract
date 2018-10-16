@@ -1,94 +1,111 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0c4414549531fb8834b247411a763764dfb6c8c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb33ac900927f8b35383d1647d47a62fb16ee6fa2
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.13;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint a, uint b) internal returns (uint) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    uint c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
     assert(c >= a);
     return c;
   }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+}
+
+interface token {
+    function transfer(address receiver, uint amount);
+    function balanceOf(address) returns (uint256);
 }
 
 contract Crowdsale {
+    address public beneficiary;
+    uint public tokenBalance;
+    uint public amountRaised;
+    uint public deadline;
+    uint dollar_exchange;
+    uint test_factor;
+    uint start_time;
+    uint price;
+    token public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
-	using SafeMath for uint256;
+    /**
+     * Constrctor function
+     *
+     * Setup the owner
+     */
+    function Crowdsale() {
+        tokenBalance = 5000000;  //For display purposes
+        beneficiary = 0xD83A4537f917feFf68088eAB619dC6C529A55ad4;
+        start_time = now;
+        deadline = start_time + 14 * 1 days;    
+        dollar_exchange = 280;
+        tokenReward = token(0x2ca8e1fbcde534c8c71d8f39864395c2ed76fb0e);  //chozun coin address
+    }
 
-	address public owner;
-	address public multisig;
-	uint256 public totalRaised;
-	uint256 public constant hardCap = 20000 ether;
-	mapping(address => bool) public whitelist;
+    /**
+     * Fallback function
+    **/
 
-	modifier isWhitelisted() {
-		require(whitelist[msg.sender]);
-		_;
-	}
+    function () payable beforeDeadline {
 
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        price = SafeMath.div(0.35 * 1 ether, dollar_exchange);
+        if (amount >= 37.5 ether && amount < 83 ether) {price = SafeMath.div(SafeMath.mul(100, price), 110);} 
+        if (amount >= 87.5 ether && amount < 166 ether) {price = SafeMath.div(SafeMath.mul(100, price), 115);} 
+        if (amount >= 175 ether) {price = SafeMath.div(SafeMath.mul(100, price), 120);}
+        tokenBalance = SafeMath.sub(tokenBalance, SafeMath.div(amount, price));
+        if (tokenBalance < 0 ) { revert(); }
+        tokenReward.transfer(msg.sender, SafeMath.div(amount * 1 ether, price));
+        FundTransfer(msg.sender, amount, true);
+        
+    }
 
-	modifier belowCap() {
-		require(totalRaised < hardCap);
-		_;
-	}
+    modifier afterDeadline() { if (now >= deadline) _; }
+    modifier beforeDeadline() { if (now <= deadline) _; }
 
-	function Crowdsale(address _multisig) {
-		require (_multisig != 0);
-		owner = msg.sender;
-		multisig = _multisig;
-	}
+    function safeWithdrawal() afterDeadline {
 
-	function whitelistAddress(address _user) onlyOwner {
-		whitelist[_user] = true;
-	}
-
-	function whitelistAddresses(address[] _users) onlyOwner {
-		for (uint i = 0; i < _users.length; i++) {
-			whitelist[_users[i]] = true;
-		}
-	}
-	
-	function() payable isWhitelisted belowCap {
-		totalRaised = totalRaised.add(msg.value);
-		uint contribution = msg.value;
-		if (totalRaised > hardCap) {
-			uint refundAmount = totalRaised.sub(hardCap);
-			msg.sender.transfer(refundAmount);
-			contribution = contribution.sub(refundAmount);
-			refundAmount = 0;
-			totalRaised = hardCap;
-		}
-		multisig.transfer(contribution);
-	}
-
-	function withdrawStuck() onlyOwner {
-		multisig.transfer(this.balance);
-	}
-
+        if (beneficiary.send(amountRaised)) {
+            FundTransfer(beneficiary, amountRaised, false);
+            tokenReward.transfer(beneficiary, tokenReward.balanceOf(this));
+            tokenBalance = 0;
+        }
+    }
 }
