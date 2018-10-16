@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0xab342fd5c681a6553cce46a7d2021493d4fa14ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0x548f7581e85b473da466ef9edbe85c5226eaa3b2
 */
 pragma solidity ^0.4.18;
 
@@ -167,7 +167,7 @@ contract ListingsERC20 is Ownable {
         ERC20 tokenContract = ERC20(contractAddress);
         require(tokenContract.transferFrom(seller, msg.sender, amount));
         seller.transfer(sale - (sale.mul(ownerPercentage).div(10000)));
-        sold[listingId] = sold[listingId].add(amount);
+        sold[listingId] = allowance.sub(amount);
         ListingBought(listingId, contractAddress, price, amount, now, msg.sender);
     }
 
