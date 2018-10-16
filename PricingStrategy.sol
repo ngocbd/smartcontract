@@ -1,18 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0x699191a2964c052f00ca33de9d80c3c4250d6d54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0xa78d79a162b552f2064c957ba3d1f4d42019fe8c
 */
-pragma solidity ^0.4.18;
-
-// File: contracts/IPricingStrategy.sol
-
-interface IPricingStrategy {
-
-    function isPricingStrategy() public view returns (bool);
-
-    /** Calculate the current price for buy in amount. */
-    function calculateTokenAmount(uint weiAmount, uint tokensSold) public view returns (uint tokenAmount);
-
-}
+pragma solidity ^0.4.15;
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -21,28 +10,25 @@ interface IPricingStrategy {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -51,18 +37,21 @@ library SafeMath {
 
 // File: contracts/PricingStrategy.sol
 
-contract PricingStrategy is IPricingStrategy {
+contract PricingStrategy {
 
     using SafeMath for uint;
 
-    uint public rate;
+    uint[] public rates;
+    uint[] public limits;
 
     function PricingStrategy(
-        uint _rate
-    ) public 
+        uint[] _rates,
+        uint[] _limits
+    ) public
     {
-        require(_rate >= 0);
-        rate = _rate;
+        require(_rates.length == _limits.length);
+        rates = _rates;
+        limits = _limits;
     }
 
     /** Interface declaration. */
@@ -71,8 +60,30 @@ contract PricingStrategy is IPricingStrategy {
     }
 
     /** Calculate the current price for buy in amount. */
-    function calculateTokenAmount(uint weiAmount, uint tokensSold) public view returns (uint tokenAmount) {
-        return weiAmount.mul(rate);
+    function calculateTokenAmount(uint weiAmount, uint weiRaised) public view returns (uint tokenAmount) {
+        if (weiAmount == 0) {
+            return 0;
+        }
+
+        var (rate, index) = currentRate(weiRaised);
+        tokenAmount = weiAmount.mul(rate);
+
+        // if we crossed slot border, recalculate remaining tokens according to next slot price
+        if (weiRaised.add(weiAmount) > limits[index]) {
+            uint currentSlotWei = limits[index].sub(weiRaised);
+            uint currentSlotTokens = currentSlotWei.mul(rate);
+            uint remainingWei = weiAmount.sub(currentSlotWei);
+            tokenAmount = currentSlotTokens.add(calculateTokenAmount(remainingWei, limits[index]));
+        }
+    }
+
+    function currentRate(uint weiRaised) public view returns (uint rate, uint8 index) {
+        rate = rates[0];
+        index = 0;
+
+        while (weiRaised >= limits[index]) {
+            rate = rates[++index];
+        }
     }
 
 }
