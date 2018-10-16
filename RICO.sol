@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract rICO at 0x04f7d1d2eb0c9884486543b7d62cc92dba481efa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract rICO at 0x57ae3a491f4555e1eed37338d1b8b5222935f28a
 */
 pragma solidity ^0.4.18;
 
@@ -656,7 +656,7 @@ contract rICO is Ownable, ReentrancyGuard {
     {
         require(_token != address(0));
 
-        startTime = 1525079100;
+        startTime = 1525081800;
         endCrowdSaleTime = startTime + 60 * 1 minutes;
         endRefundableTime = endCrowdSaleTime + 130 * 1 minutes;
 
@@ -672,7 +672,7 @@ contract rICO is Ownable, ReentrancyGuard {
         rate = 1000;
 
         softCap = 1500 * 0.000001 ether;
-        hardCap = 35000 * 0.000001 ether;
+        hardCap = 15000 * 0.000001 ether;
     }
 
     // @return true if the transaction can buy tokens
