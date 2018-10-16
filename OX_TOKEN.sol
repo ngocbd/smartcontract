@@ -1,50 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OX_TOKEN at 0xc0e3cf6d466b2273f3aa105c96325830ba884ba1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OX_TOKEN at 0x44e7786a9dd083ad147cec72cb3a5ef6b7b3f91f
 */
-//
-// compiler: solcjs -o ../build/contracts --optimize --abi --bin OX_TOKEN.sol
-//  version: 0.4.11+commit.68ef5810.Emscripten.clang
-//
-pragma solidity ^0.4.11;
-
+pragma solidity ^0.4.8;
+ 
 contract owned {
-  address public owner;
 
+  address public owner;
+ 
   function owned() { owner = msg.sender; }
 
   modifier onlyOwner {
     if (msg.sender != owner) { throw; }
     _;
   }
+
   function changeOwner( address newowner ) onlyOwner {
     owner = newowner;
   }
 }
 
 contract OX_TOKEN is owned {
-
+ 
   string public constant name = "OX";
-  string public constant symbol = "FIXED";
+  string public constant symbol = "OX"; 
+ 
+  event Receipt( address indexed _to,
+                 uint _oxen,
+                 uint _paymentwei ); 
 
   event Transfer( address indexed _from,
                   address indexed _to,
-                   uint256 _value );
-
-  event Approval( address indexed _owner,
-                  address indexed _spender,
-                  uint256 _value);
-
-  event Receipt( address indexed _to,
-                 uint _oxen,
-                 uint _paymentwei );
+                  uint _ox );
 
   uint public starttime;
+  bool public expanded;
   uint public inCirculation;
   mapping( address => uint ) public oxen;
-  mapping( address => mapping (address => uint256) ) allowed;
 
   function OX_TOKEN() {
     starttime = 0;
+    expanded = false;
     inCirculation = 0;
   }
 
@@ -52,98 +47,75 @@ contract OX_TOKEN is owned {
     selfdestruct( owner );
   }
 
-  function() payable {
-    buyOx(); // forwards value, gas
-  }
+  function() payable {}
 
-  function withdraw( uint amount ) onlyOwner returns (bool success) {
+  function withdraw( uint amount ) onlyOwner {
     if (amount <= this.balance)
-      success = owner.send( amount );
-    else
-      success = false;
+      bool result = owner.send( amount );
   }
 
   function startSale() onlyOwner {
     if (starttime != 0) return;
 
-    starttime = now; // now is block timestamp in unix-seconds
-    inCirculation = 500000000; // reserve for org
-    oxen[owner] = inCirculation;
-    Transfer( address(this), owner, inCirculation );
+    starttime = now; // now is block timestamp, units are unix-seconds
+
+    // allocate 2 for the org itself, so only 5 can be sold
+    inCirculation = 200000000;
+    oxen[OX_ORG] = inCirculation;
+    Transfer( OX_ORG, OX_ORG, inCirculation );
+  }
+
+  // TEST CODE ONLY
+  //function hack() { starttime = now - 32 days; }
+  //function setstart( uint newstart ) { starttime = newstart; }
+  //function gettime() constant returns (uint) { return now; }
+
+  function expand() {
+    if (expanded || saleOn()) { return; }
+
+    expanded = true;
+
+    // 1 / 0.7 = 1.428571..., ext is the number to add
+    uint ext = inCirculation * 1428571428 / 10**9 - inCirculation;
+    oxen[OX_ORG] += ext;
+    inCirculation += ext;
+    Transfer( this, OX_ORG, ext );
   }
 
   function buyOx() payable {
 
     // min purchase .1 E = 10**17 wei
-    if (!saleOn() || msg.value < 100 finney) {
-      throw; // returns caller's Ether and unused gas
+    if (!saleOn() || msg.value < 10**17) {
+      throw; // returns customer's Ether and unused gas
     }
 
     // rate: 1 eth <==> 3000 ox
+    //
     // to buy: msg.value * 3000 * (100 + bonus)
     //         ---------          -------------
     //          10**18                 100
-    uint ox = div( mul(mul(msg.value,3), 100 + bonus()), 10**17 );
 
-    if (inCirculation + ox > 1000000000) {
-      throw;
+    uint tobuy = (msg.value * 3 * (100 + bonus())) / 10**17;
+
+    if (inCirculation + tobuy > 700000000) {
+      throw; // returns customer's Ether and unused gas
     }
 
-    inCirculation += ox;
-    oxen[msg.sender] += ox;
-    Receipt( msg.sender, ox, msg.value );
+    inCirculation += tobuy;
+    oxen[msg.sender] += tobuy;
+    Receipt( msg.sender, tobuy, msg.value );
   }
 
-  function totalSupply() constant returns (uint256 totalSupply) {
-    return inCirculation;
-  }
-
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    balance = oxen[_owner];
-  }
-
-  function approve(address _spender, uint256 _amount) returns (bool success) {
-    if (saleOn()) return false;
-
-    allowed[msg.sender][_spender] = _amount;
-    Approval(msg.sender, _spender, _amount);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) constant returns
-  (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  function transfer( address to, uint ox ) returns (bool success) {
+  function transfer( address to, uint ox ) {
     if ( ox > oxen[msg.sender] || saleOn() ) {
-      return false;
+      return;
     }
+
+    if (!expanded) { expand(); }
 
     oxen[msg.sender] -= ox;
     oxen[to] += ox;
     Transfer( msg.sender, to, ox );
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint256 _amount)
-  returns (bool success) {
-    if (    oxen[_from] >= _amount
-         && allowed[_from][msg.sender] >= _amount
-         && _amount > 0
-         && oxen[_to] + _amount > oxen[_to]
-       )
-    {
-      oxen[_from] -= _amount;
-      allowed[_from][msg.sender] -= _amount;
-      oxen[_to] += _amount;
-      Transfer(_from, _to, _amount);
-      success = true;
-    }
-    else
-    {
-      success = false;
-    }
   }
 
   function saleOn() constant returns(bool) {
@@ -161,19 +133,6 @@ contract OX_TOKEN is owned {
     return 0;
   }
 
-  // ref:
-  // github.com/OpenZeppelin/zeppelin-solidity/
-  // blob/master/contracts/SafeMath.sol
-  function mul(uint256 a, uint256 b) constant returns (uint256) {
-    uint256 c = a * b;
-    if (a == 0 || c / a == b)
-    return c;
-    else throw;
-  }
-  function div(uint256 a, uint256 b) constant returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
-
-  address public constant AUTHOR = 0x008e9342eb769c4039aaf33da739fb2fc8af9afdc1;
+  address public constant OX_ORG = 0x8f256c71a25344948777f333abd42f2b8f32be8e;
+  address public constant AUTHOR = 0x8e9342eb769c4039aaf33da739fb2fc8af9afdc1;
 }
