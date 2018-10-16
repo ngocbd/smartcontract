@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartEtherMining at 0xfa2400c873bf5e7243c5a5c40675868c4b7145ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartEtherMining at 0xd089e34694eb023d25aadd3dc8c18337534a10c0
 */
 pragma solidity ^0.4.18;
 
@@ -29,7 +29,7 @@ contract SmartEtherMining{
         
         uint256 amount = msg.value;
         uint256 commision = SafeMath.div(amount, 20);
-        if(referral != msg.sender && referral != 0x1){
+        if(referral != msg.sender && referral != 0x1 && referral != dev && referral != promoter){
             affiliateCommision[referral] = SafeMath.add(affiliateCommision[referral], commision);
         }
         
@@ -44,9 +44,9 @@ contract SmartEtherMining{
         uint256 profit = getProfit(msg.sender);
         lastInvest[msg.sender] = now;
         
-        //10% fee on taking capital out
+        //20% fee on taking capital out
         uint256 capital = investedETH[msg.sender];
-        uint256 fee = SafeMath.div(capital, 10);
+        uint256 fee = SafeMath.div(capital, 5);
         capital = SafeMath.sub(capital, fee);
         
         uint256 total = SafeMath.add(capital, profit);
