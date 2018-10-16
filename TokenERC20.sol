@@ -1,59 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x5caa790ee0586c78db45da6e37409315d1712f3e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x1455B1cc3050cf6E80f3b7d4b802B72a7ffcE198
 */
 pragma solidity ^0.4.16;
-
-contract owned {
-    address public owner;
-
-    function owned() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
-    // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
-    // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
-    // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
 
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
     function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        totalSupply = initialSupply * 10 ** uint256(decimals);  
+        balanceOf[msg.sender] = totalSupply;              
+        name = tokenName;                                   
+        symbol = tokenSymbol;                              
     }
 
     /**
@@ -170,40 +143,4 @@ contract TokenERC20 {
         Burn(_from, _value);
         return true;
     }
-}
-
-/******************************************/
-/*       ADVANCED TOKEN STARTS HERE       */
-/******************************************/
-
-contract MyAdvancedToken is owned, TokenERC20 {
-
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-
-    mapping (address => bool) public frozenAccount;
-
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
-
-    /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] > _value);                // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        require(!frozenAccount[_from]);                     // Check if sender is frozen
-        require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
-    }
-
-
 }
