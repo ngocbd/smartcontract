@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricing at 0xc95cbe766ecd0e112d6d92eb7a0c764728a985b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricing at 0x24fe9cb0857da47e5d5f56226ebf0fc8138a2f53
 */
 /**
  * Interface for defining crowdsale pricing.
