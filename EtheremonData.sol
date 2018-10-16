@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonData at 0xabc1c404424bdf24c19a5cc5ef8f47781d18eb3e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonData at 0xbe6ca916f280572012abd4ad4292a28386a1ff23
 */
 pragma solidity ^0.4.16;
 
@@ -125,7 +125,7 @@ contract EtheremonDataBase is EtheremonEnum, BasicAccessControl, SafeMath {
     
     // write
     function addElementToArrayType(ArrayType _type, uint64 _id, uint8 _value) onlyModerators public returns(uint);
-    function updateIndexOfArrayType(ArrayType _type, uint64 _id, uint _index, uint8 _value) onlyModerators public returns(uint);
+    function removeElementOfArrayType(ArrayType _type, uint64 _id, uint8 _value) onlyModerators public returns(uint);
     function setMonsterClass(uint32 _classId, uint256 _price, uint256 _returnPrice, bool _catchable) onlyModerators public returns(uint32);
     function addMonsterObj(uint32 _classId, address _trainer, string _name) onlyModerators public returns(uint64);
     function setMonsterObj(uint64 _objId, string _name, uint32 _exp, uint32 _createIndex, uint32 _lastClaimIndex) onlyModerators public;
@@ -205,12 +205,17 @@ contract EtheremonData is EtheremonDataBase {
             array = monsterClass[uint32(_id)].statStarts;
         } else if (_type == ArrayType.OBJ_SKILL) {
             array = monsterWorld[_id].skills;
+        } 
+        for (uint index = 0; index < array.length; index++) {
+            if (array[index] == _value) {
+                return array.length;
+            }
         }
         array.push(_value);
         return array.length;
     }
     
-    function updateIndexOfArrayType(ArrayType _type, uint64 _id, uint _index, uint8 _value) onlyModerators public returns(uint) {
+    function removeElementOfArrayType(ArrayType _type, uint64 _id, uint8 _value) onlyModerators public returns(uint) {
         uint8[] storage array = monsterWorld[_id].statBases;
         if (_type == ArrayType.CLASS_TYPE) {
             array = monsterClass[uint32(_id)].types;
@@ -221,17 +226,16 @@ contract EtheremonData is EtheremonDataBase {
         } else if (_type == ArrayType.OBJ_SKILL) {
             array = monsterWorld[_id].skills;
         }
-        if (_index < array.length) {
-            if (_value == 255) {
-                // consider as delete
-                for(uint i = _index; i < array.length - 1; i++) {
-                    array[i] = array[i+1];
-                }
-                delete array[array.length-1];
-                array.length--;
-            } else {
-                array[_index] = _value;
+        uint foundIndex = 0;
+        for (; foundIndex < array.length; foundIndex++) {
+            if (array[foundIndex] == _value) {
+                break;
             }
+        }
+        if (foundIndex < array.length) {
+            array[foundIndex] = array[array.length-1];
+            delete array[array.length-1];
+            array.length--;
         }
     }
     
