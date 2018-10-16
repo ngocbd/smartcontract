@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UNITStagesManager at 0xda6553c1788dbeea6507c2bc5f87056b769519e2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UNITStagesManager at 0x631d139a4e21c20dd75722ec7428315ce186ffd5
 */
 pragma solidity ^0.4.18;
 
@@ -94,13 +94,13 @@ contract UNITStagesManager is TokenStagesManager, Administrated {
         token = UNITv2(_token);
         _isDebug = isDebug;
 
-        if (!_isDebug) {
-            switchStage();
-        }
-
         buildPreICOStage();
         buildICOStageOne();
         buildICOStageTwo();
+
+        if (!_isDebug) {
+            switchStage();
+        }
     }
 
     function isDebug()
