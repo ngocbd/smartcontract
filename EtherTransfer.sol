@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTransfer at 0xC4216D17a72BD49E404Fe396bB93c9Cd8Cf3e881
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTransfer at 0xb6Db69e99f7E3ccB352FaBde7D98A8FAe0De4297
 */
 contract AmIOnTheFork {
     function forked() constant returns(bool);
@@ -30,10 +30,10 @@ contract Owned{
 contract EtherTransfer is Owned{
 
     //"If you are good at something, never do it for free" - Joker
-    //Fee is 0.1% (it's mean you send 1 ETH fee is 0.001 ETH)
+    //Fee is 0.05% (it's mean you send 1 ETH fee is 0.0005 ETH)
     //Notice Fee is not include transaction fee
-    uint constant Fee = 1;
-    uint constant Decs = 1000;
+    uint constant Fee = 5;
+    uint constant Decs = 10000;
 
     bool public IsEthereum = false; 
 
