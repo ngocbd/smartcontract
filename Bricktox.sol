@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bricktox at 0x162c91e864d37055f7d5696b845f3af520cd911d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bricktox at 0xd5fc6aeefc332a3a31a6d87adcd8f827b58a141b
 */
 pragma solidity ^0.4.16;
 // It is Smartcontract for Bricktox, fully based on the full ERC 20 Token standard
@@ -205,7 +205,7 @@ contract Bricktox is StandardToken {
     */
     
     uint256 constant public decimals = 8; // It consists of 8 decimal
-    uint256 public totalSupply = 56 * (10**6) * 10**8 ; // 56 million tokens is total max available supply
+    uint256 public totalSupply = 56 * (10**7) * 10**8 ; // 56 million tokens is total max available supply
     string constant public name = "Bricktox"; // The finalised name is Bricktox
     string constant public symbol = "XBT"; // Token Symbol is XBT
     string constant public version = "V1"; // The release version is V1. It is just an arbitrary versioning scheme.
