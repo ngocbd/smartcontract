@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Angelscoin at 0x4cffa13d6336490ce281eb52f45d3073d32d0cc4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Angelscoin at 0x95c2e3c9156a9af07374ab0685a7f74d78ae9c09
 */
 pragma solidity ^0.4.4;
 
@@ -97,23 +97,23 @@ contract Angelscoin is StandardToken { // CHANGE THIS. Update the contract name.
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   // Token Name
-    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol;                 // An identifier: eg SBX, XPR etc..
+    string public name = 'Angels Coin';                   // Token Name
+    uint8 public decimals = 18;                // How many decimals to show. To be standard complicant keep it 18
+    string public symbol = 'NGL';                 // An identifier: eg SBX, XPR etc..
     string public version = 'H1.0'; 
-    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
+    uint256 public unitsOneEthCanBuy = 100000;     // How many units of your coin can be bought by 1 ETH?
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
     address public fundsWallet;           // Where should the raised ETH go?
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function Angelscoin() {
+    function HashnodeTestCoin() {
         balances[msg.sender] = 1000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 1000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Angelscoin";                                   // Set the name for display purposes (CHANGE THIS)
+        name = "HashnodeTestCoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "NGL";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 10000000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "HTCN";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 10;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
