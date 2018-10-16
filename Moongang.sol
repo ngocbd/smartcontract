@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x53acdca2213bec8140e2618dfb6bc71a2a2c7080
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x43bf208fc4a395f5b0aac4d5c0a7528567b33e3b
 */
 // Author : shift
 
@@ -75,10 +75,11 @@ contract Moongang {
   uint256 constant FEE_DEV = SafeMath.div(20, 3); //15% on the 1% fee
   address public owner;
   address constant public developer = 0xEE06BdDafFA56a303718DE53A5bc347EfbE4C68f;
+  uint256 individual_cap;
 
   //Variables subject to changes
-  uint256 public max_amount = 0 ether;  //0 means there is no limit
-  uint256 public min_amount = 0 ether;
+  uint256 public max_amount;  //0 means there is no limit
+  uint256 public min_amount;
 
   //Store the amount of ETH deposited by each account.
   mapping (address => uint256) public balances;
@@ -97,17 +98,19 @@ contract Moongang {
   //Records the fees that have to be sent
   uint256 fees;
   //Set by the owner. Allows people to refund totally or partially.
-  bool allow_refunds;
+  bool public allow_refunds;
   //The reduction of the allocation in % | example : 40 -> 40% reduction
   uint256 percent_reduction;
   
-  function Moongang(uint256 max, uint256 min) {
+  //Internal functions
+  function Moongang(uint256 max, uint256 min, uint256 cap) {
     /*
     Constructor
     */
     owner = msg.sender;
     max_amount = max;
     min_amount = min;
+    individual_cap = cap;
   }
 
   //Functions for the owner
@@ -129,7 +132,31 @@ contract Moongang {
     // Transfer all the funds to the crowdsale address.
     sale.transfer(contract_eth_value);
   }
-  
+
+  function force_refund(address _to_refund) onlyOwner {
+    uint256 eth_to_withdraw = SafeMath.div(SafeMath.mul(balances[_to_refund], 100), 99);
+    balances[_to_refund] = 0;
+    balances_bonus[_to_refund] = 0;
+    fees = SafeMath.sub(fees, SafeMath.div(eth_to_withdraw, FEE));
+    _to_refund.transfer(eth_to_withdraw);
+  }
+
+  function force_partial_refund(address _to_refund) onlyOwner {
+    require(allow_refunds && percent_reduction > 0);
+    //Amount to refund is the amount minus the X% of the reduction
+    //amount_to_refund = balance*X
+    uint256 basic_amount = SafeMath.div(SafeMath.mul(balances[_to_refund], percent_reduction), 100);
+    uint256 eth_to_withdraw = basic_amount;
+    if (!bought_tokens) {
+      //We have to take in account the partial refund of the fee too if the tokens weren't bought yet
+      eth_to_withdraw = SafeMath.div(SafeMath.mul(basic_amount, 100), 99);
+      fees = SafeMath.sub(fees, SafeMath.div(eth_to_withdraw, FEE));
+    }
+    balances[_to_refund] = SafeMath.sub(balances[_to_refund], eth_to_withdraw);
+    balances_bonus[_to_refund] = balances[_to_refund];
+    _to_refund.transfer(eth_to_withdraw);
+  }
+
   function set_sale_address(address _sale) onlyOwner {
     //Avoid mistake of putting 0x0 and can't change twice the sale address
     require(_sale != 0x0 && sale == 0x0);
@@ -154,6 +181,10 @@ contract Moongang {
 
   function set_percent_reduction(uint256 _reduction) onlyOwner {
       percent_reduction = _reduction;
+  }
+
+  function change_individual_cap(uint256 _cap) onlyOwner {
+    individual_cap = _cap;
   }
 
   function change_owner(address new_owner) onlyOwner {
@@ -247,6 +278,9 @@ contract Moongang {
     fees = SafeMath.add(fees, fee);
     //Updates both of the balances
     balances[msg.sender] = SafeMath.add(balances[msg.sender], SafeMath.sub(msg.value, fee));
+    //Checks if the individual cap is respected
+    //If it's not, changes are reverted
+    require(individual_cap == 0 || balances[msg.sender] <= individual_cap);
     balances_bonus[msg.sender] = balances[msg.sender];
   }
 }
