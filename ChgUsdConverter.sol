@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChgUsdConverter at 0x40e886aac0ba626b793c25015ed658af4ea92306
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChgUsdConverter at 0xc9dd1e873bdeb36829a752d574755bc00baa7bcd
 */
 pragma solidity ^0.4.18;
 
@@ -238,7 +238,7 @@ contract ChargCoinContract is StandardToken, Ownable {
 
     uint public decimals = 18;
 
-    address public multisig = 0x482EFd447bE88748e7625e2b7c522c388970B790;
+    address public multisig = 0x0fA3d47B2F9C01396108D81aa63e4F20d4cd7994;
 
     struct ChargingData {
     address node;
@@ -634,7 +634,7 @@ contract ChargCoinContract is StandardToken, Ownable {
 
 contract ChgUsdConverter is Ownable{
     address public contractAddress = 0xC4A86561cb0b7EA1214904f26E6D50FD357C7986;
-    address public dashboardAddress = 0x482EFd447bE88748e7625e2b7c522c388970B790;
+    address public dashboardAddress = 0xE27DB398A0BaF2Eb3f748bF7e227E1EF102Cad0e;
     uint public ETHUSDPRICE = 810;
     uint public CHGUSDPRICE = 4; // $0.4
 
