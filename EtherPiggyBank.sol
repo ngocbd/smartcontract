@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherPiggyBank at 0x3695cb4210d5ccd65a11eaa4e1a9d91e628b3bc1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherPiggyBank at 0xc19cc95110af694336b1bfbb545f63309dda1043
 */
 pragma solidity ^0.4.18;
 
@@ -92,7 +92,7 @@ contract EtherPiggyBank {
 
         // make the silver level investor
         investorPositions.push(InvestorPosition({
-            investor: 0x6C0CF053076681CeCBE31E5E19Df8Fb97DeB5756,
+            investor: dev,
             startingLevel: 4, // 1/8 ether * 2^4 = 2 ether
             startingTime: now,
             halfLife: 5 days, // 5 days until the level decreases
@@ -101,7 +101,7 @@ contract EtherPiggyBank {
 
         // make the bronze level investor
         investorPositions.push(InvestorPosition({
-            investor: 0x66fE910c6a556173EA664A94F334d005dDc9cE9E,
+            investor: dev,
             startingLevel: 3, // 1/8 ether * 2^3 = 1 ether
             startingTime: now,
             halfLife: 3 days, // 3 days until the level decreases
