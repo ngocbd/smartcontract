@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x6ffdabfd395d5d902c6ed24c96bbe94fce2ea4d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x0d30e0c083855ac5d3748d3cab4e981be02d2e7b
 */
 pragma solidity ^0.4.4;
 
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 800000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 800000000;                        // Update total supply (100000 for example)
-        name = "Ophelia Token";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "OPHI";                               // Set the symbol for display purposes
+        balances[msg.sender] = 1000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000000000;                        // Update total supply (100000 for example)
+        name = "Free Useless Coin";                                   // Set the name for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "FUC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
