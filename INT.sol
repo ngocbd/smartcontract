@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INT at 0x2c78ac7859423ab8d3efc4ae1f1fc842573830ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INT at 0xec8e116d8840edcd78f9f6cd108d187fd6cea7fb
 */
 pragma solidity ^0.4.10;
 contract owned {
@@ -172,4 +172,4 @@ contract INTToken is owned, token {
         }               
     }
 }
-contract INT is INTToken(1000000000000000, "my test token", 6, "TEST") {}
+contract INT is INTToken(1000000000000000, "INT", 6, "inter") {}
