@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SandwichShop at 0x5cAa6488f965F2F520C5a70f15019952C6e3C1fC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SandwichShop at 0x4dc924eeb4d87ab938f5a72fc0ef4460f6b35a8a
 */
 pragma solidity ^0.4.11;
 
@@ -19,47 +19,55 @@ contract SandwichShop is mortal
         uint sandwichID;
         string sandwichName;
         string sandwichDesc;
-        uint calories;
+        string calories;
         uint price;
         uint availableQuantity;
     }
 
+    struct OrderedSandwich
+    {
+        uint sandID;
+        string notes;
+        uint price;
+    }
+
     Sandwich[5] shopSandwich;
+    mapping( address => OrderedSandwich[] ) public cart; 
 
     function SandwichShop() public
     {
-        shopSandwich[0].sandwichID = 100;
+        shopSandwich[0].sandwichID = 0;
         shopSandwich[0].sandwichName = "100: Ham & Swiss";
         shopSandwich[0].sandwichDesc = "Ham Swiss Mustard Rye";
-        shopSandwich[0].calories = 450;
+        shopSandwich[0].calories = "450 calories";
         shopSandwich[0].price = 5;
         shopSandwich[0].availableQuantity = 200;
 
-        shopSandwich[1].sandwichID = 101;
+        shopSandwich[1].sandwichID = 1;
         shopSandwich[1].sandwichName = "101: Turkey & Pepperjack";
         shopSandwich[1].sandwichDesc = "Turkey Pepperjack Mayo White Bread";
-        shopSandwich[1].calories = 500;
+        shopSandwich[1].calories = "500 calories";
         shopSandwich[1].price = 5;
         shopSandwich[1].availableQuantity = 200;
 
-        shopSandwich[2].sandwichID = 102;
+        shopSandwich[2].sandwichID = 2;
         shopSandwich[2].sandwichName = "102: Roast Beef & American";
         shopSandwich[2].sandwichDesc = "Roast Beef Havarti Horseradish White Bread";
-        shopSandwich[2].calories = 600;
+        shopSandwich[2].calories = "600 calories";
         shopSandwich[2].price = 5;
         shopSandwich[2].availableQuantity = 200;
 
-        shopSandwich[3].sandwichID = 103;
+        shopSandwich[3].sandwichID = 3;
         shopSandwich[3].sandwichName = "103: Reuben";
         shopSandwich[3].sandwichDesc = "Corned Beef Sauerkraut Swiss Rye";
-        shopSandwich[3].calories = 550;
+        shopSandwich[3].calories = "550 calories";
         shopSandwich[3].price = 5;
         shopSandwich[3].availableQuantity = 200;
 
-        shopSandwich[4].sandwichID = 104;
+        shopSandwich[4].sandwichID = 4;
         shopSandwich[4].sandwichName = "104: Italian";
         shopSandwich[4].sandwichDesc = "Salami Peppers Provolone Oil Vinegar White";
-        shopSandwich[4].calories = 500;
+        shopSandwich[4].calories = "500 calories";
         shopSandwich[4].price = 5;
         shopSandwich[4].availableQuantity = 200;
     }
@@ -71,13 +79,42 @@ contract SandwichShop is mortal
                 shopSandwich[4].sandwichName );
     }
 
-    function getSandwichInfoCaloriesPrice(uint _sandID) constant returns (string, string, uint, uint)
+    function getSandwichInfoCaloriesPrice(uint _sandwich) constant returns (string, string, string, uint)
     {
-        if( _sandID < 100 ) throw;
-        if( _sandID > 104 ) throw;
-        return (shopSandwich[_sandID].sandwichName, shopSandwich[_sandID].sandwichDesc,
-                shopSandwich[_sandID].calories, shopSandwich[_sandID].price);
+        if( _sandwich > 4 )
+        {
+            return ( "wrong ID", "wrong ID", "zero", 0);
+        }
+        else
+        {
+            return (shopSandwich[_sandwich].sandwichName, shopSandwich[_sandwich].sandwichDesc,
+                shopSandwich[_sandwich].calories, shopSandwich[_sandwich].price);
+        }
+    }
 
+    function addToCart(uint _orderID, string _notes) returns (uint)
+    {
+        OrderedSandwich memory newOrder;
+        newOrder.sandID = _orderID;
+        newOrder.notes = _notes;
+        newOrder.price = shopSandwich[_orderID].price;
+
+        return cart[msg.sender].push(newOrder);
+    }
+
+    function getCartLength(address _curious) constant returns (uint)
+    {
+        return cart[_curious].length;
+    }
+
+    function readFromCart(address _curious, uint _spot) constant returns (string)
+    {
+        return cart[_curious][_spot].notes;
+    }
+
+    function emptyCart() public
+    {
+        delete cart[msg.sender];
     }
 
 }
