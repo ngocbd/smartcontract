@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAdder at 0xec74d520e6df528bd3f560508ff6735188b42bc6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAdder at 0x7a2dcd9214984f73ca6ce7dc60053eaf291a2fa8
 */
 pragma solidity ^0.4.18;
 
@@ -75,7 +75,7 @@ contract TokenAdder {
         SALT,
         APPC,
         RDN];
-    int[] zeroArray;
+    int[] zeroArray = [int(0)];
 
     function TokenAdder(TokenConfigInterface _network,
                         TokenConfigInterface _reserve,
@@ -144,8 +144,7 @@ contract TokenAdder {
             117682709761,
             117682709761 );
 
-        zeroArray.length = 0;
-        zeroArray.push(int(0));
+
         for( uint i = 0 ; i < newTokens.length ; i++ ) {
             conversionRate.addToken(newTokens[i]);
             conversionRate.enableTokenTrade(newTokens[i]);
