@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CATSPACE at 0x352F46fc71767E48B6Da18742410217FdB9D15DE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CATSPACE at 0x078886b1cbd81941a88cee842971bbc7cd91e069
 */
 pragma solidity ^0.4.4;
 
@@ -119,8 +119,8 @@ contract CATSPACE is StandardToken {
 
     function CATSPACE(
         ) {
-        balances[msg.sender] = 2100000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 2100000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000;                        // Update total supply (100000 for example)
         name = "CatSpace";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
         symbol = "CATS";                               // Set the symbol for display purposes
