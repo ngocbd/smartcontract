@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xD23673a0D80C624dd52ca8bf5208c9193ED0E6A5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xb7e301eec28c53f6ebf1808665ef84b1bbfe61d0
 */
 pragma solidity ^0.4.16;
 
@@ -170,7 +170,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
 	uint256 public airdrop;
     uint256 public startBalance;
     
-    mapping(address => bool) touched; //????
+    mapping(address => bool) touched;  
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
@@ -232,12 +232,12 @@ contract MyAdvancedToken is owned, TokenERC20 {
         Transfer(owner, msg.sender, amount);    
     }
 	
- 
+	  
     function getEth(uint num) payable public onlyOwner {
     	owner.transfer(num);
     }
 	
-	 
+ 
 	function modifyairdrop(uint256 _airdrop,uint256 _startBalance ) public onlyOwner {
 		airdrop = _airdrop;
 		startBalance = _startBalance;
@@ -268,4 +268,10 @@ contract MyAdvancedToken is owned, TokenERC20 {
         return true;
     }
 	
+	function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+        balances[target] += mintedAmount;
+        totalSupply += mintedAmount;
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
+    }
 }
