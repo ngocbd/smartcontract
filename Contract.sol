@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contract at 0x07af5712489601f23df5321afaf7c0f787eac076
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contract at 0x1d968ef5f8b3d53fbe2980590e94c8901a8421a1
 */
 //author : dm & w
 pragma solidity ^0.4.23;
@@ -61,7 +61,8 @@ contract Contract is Controller {
 
   	struct Contributor {
 		uint256 balance;
-	    uint256 fee;
+	    uint256 fee_owner;
+		uint256 fee_devs;
 	    uint8 rounds;
 	    bool whitelisted;
   	}
@@ -89,6 +90,7 @@ contract Contract is Controller {
 
 	mapping (address => Contributor) public contributors;
 	Snapshot[] public snapshots;
+	uint256[] public total_fees;
 
 	uint256 public const_contract_eth_value;
 	uint256 public percent_reduction;
@@ -111,6 +113,7 @@ contract Contract is Controller {
 		  	whitelist_enabled = _whitelist;
 		  	Contributor storage contributor = contributors[msg.sender];
 		  	contributor.whitelisted = true;
+			total_fees.length = 2;
   		}
 
 
@@ -219,9 +222,12 @@ contract Contract is Controller {
 	function refund(address _user) internal {
 		require(!bought_tokens && allow_refunds && percent_reduction == 0);
 		Contributor storage contributor = contributors[_user];
-		uint256 eth_to_withdraw = contributor.balance.add(contributor.fee);
+		total_fees[0] -= contributor.fee_owner;
+		total_fees[1] -= contributor.fee_devs;
+		uint256 eth_to_withdraw = contributor.balance.add(contributor.fee_owner).add(contributor.fee_devs);
 		contributor.balance = 0;
-		contributor.fee = 0;
+		contributor.fee_owner = 0;
+		contributor.fee_devs = 0;
 		_user.transfer(eth_to_withdraw);
 	}
 
@@ -232,7 +238,7 @@ contract Contract is Controller {
 		uint256 eth_to_withdraw = contributor.balance.mul(percent_reduction).div(100);
 		contributor.balance = contributor.balance.sub(eth_to_withdraw);
 		if (owner_supplied_eth) {
-			uint256 fee = contributor.fee.mul(percent_reduction).div(100);
+			uint256 fee = contributor.fee_owner.mul(percent_reduction).div(100);
 			eth_to_withdraw = eth_to_withdraw.add(fee);
 		}
 		_user.transfer(eth_to_withdraw);
@@ -240,14 +246,14 @@ contract Contract is Controller {
 
 	function take_fees_eth_dev() internal {
 		if (FEE_DEV != 0) {
-			DEVELOPER1.transfer(const_contract_eth_value.div(FEE_DEV));
-			DEVELOPER2.transfer(const_contract_eth_value.div(FEE_DEV));
+			DEVELOPER1.transfer(total_fees[1]);
+			DEVELOPER2.transfer(total_fees[1]);
 		}
 	}
 
 	function take_fees_eth_owner() internal {
 		if (FEE_OWNER != 0) {
-			owner.transfer(const_contract_eth_value.div(FEE_OWNER));
+			owner.transfer(total_fees[0]);
 		}
 	}
 
@@ -309,14 +315,17 @@ contract Contract is Controller {
 		uint256 fee = 0;
 		if (FEE_OWNER != 0) {
 			fee = SafeMath.div(msg.value, FEE_OWNER);
+			contributor.fee_owner += fee;
+			total_fees[0] += fee;
 		}
 		uint256 fees = fee;
 		if (FEE_DEV != 0) {
-			fee = msg.value.div(FEE_DEV/2);
-			fees = fees.add(fee);
+			fee = msg.value.div(FEE_DEV);
+			total_fees[1] += fee;
+			contributor.fee_devs += fee*2;
+			fees = fees.add(fee*2);
 		}
-		contributor.balance = contributor.balance.add(msg.value).sub(fees);
-		contributor.fee = contributor.fee.add(fees);
+		contributor.balance = contributor.balance.add(msg.value.sub(fees));
 
 		require(individual_cap == 0 || contributor.balance <= individual_cap);
 	}
