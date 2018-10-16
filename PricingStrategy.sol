@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0x3e978168a6d0c58df641c5826581bc022af417ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0xbbb26e9d4643dc8fc069b30af64e9bf32d60a587
 */
-pragma solidity 0.4.15;
+pragma solidity ^0.4.15;
+
+
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
