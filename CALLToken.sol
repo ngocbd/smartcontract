@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CALLToken at 0xa31acff930ad8eed2192fa1c82c92b717ab10ba8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CALLToken at 0xaa9695bdacc70dc849e3d96769649e9eb349ced5
 */
 /*
-Capital Technologies & Research - Capital (CALL) Smart Contract
+Capital Technologies & Research - Capital (CALL)
 */
 pragma solidity ^0.4.19;
 
@@ -227,7 +227,7 @@ contract BurnableToken is StandardToken, Ownable {
     }
 }
 /**
- * @title CALL Token
+ * @title CAPITAL (CALL) Token
  * @dev Token representing CALL.
  */
  contract CALLToken is BurnableToken {
