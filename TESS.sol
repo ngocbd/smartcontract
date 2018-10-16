@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TESS at 0x5e4acbf3bb439c0d1b36afb1b6c487954d7ea418
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TESS at 0x9fb8fa8dd383f12115d941e2a96c8472c9f567f4
 */
 pragma solidity ^0.4.18;
 
@@ -228,7 +228,7 @@ contract TESS is BurnableToken {
     string public constant name = "TESS";
     string public constant symbol = "HHHH";
     uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 10000000000;
+    uint256 public constant INITIAL_SUPPLY = 10000000000000000000000000000;
 
     function UtrustToken() public {
         totalSupply = INITIAL_SUPPLY.mul(10 ** uint256(decimals));
