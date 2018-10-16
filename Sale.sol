@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x3ec4f3ac06b3334671acd218b3b4d8ec66c41223
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xd75c3a825fed92a1aa75a0bbdacdebbc918931ec
 */
-pragma solidity ^0.4.21;
+pragma solidity 0.4.18;
 
 contract ERC20Basic {
     uint256 public totalSupply;
@@ -57,7 +57,7 @@ contract BasicToken is ERC20Basic {
     function transfer(address _to, uint256 _value) public returns (bool) {
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -90,7 +90,7 @@ contract StandardToken is ERC20, BasicToken {
      * @param _value uint256 the amout of tokens to be transfered
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        uint256 _allowance = allowed[_from][msg.sender];
+        var _allowance = allowed[_from][msg.sender];
 
         // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
         // require (_value <= _allowance);
@@ -98,7 +98,7 @@ contract StandardToken is ERC20, BasicToken {
         balances[_to] = balances[_to].add(_value);
         balances[_from] = balances[_from].sub(_value);
         allowed[_from][msg.sender] = _allowance.sub(_value);
-        emit Transfer(_from, _to, _value);
+        Transfer(_from, _to, _value);
         return true;
     }
 
@@ -116,7 +116,7 @@ contract StandardToken is ERC20, BasicToken {
         require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
         allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -292,7 +292,7 @@ contract DLCToken is StandardToken, Configurable {
         balances[beneficiary] = balances[beneficiary].add(qty);
         balances[toSaleWallet] = balances[toSaleWallet].sub(qty);
 
-        emit Transfer(toSaleWallet, beneficiary, qty);
+        Transfer(toSaleWallet, beneficiary, qty);
     }
 
     function () public payable {
@@ -320,14 +320,14 @@ contract Bonuses {
         if(preset == keccak256('privatesale')){
             bonusOfDay[0] = 313;
         } else
-            if(preset == keccak256('presale')){
-                bonusOfDay[0] = 210;
-            } else
-                if(preset == keccak256('generalsale')){
-                    bonusOfDay[0] = 60;
-                    bonusOfDay[7] = 38;
-                    bonusOfDay[14] = 10;
-                }
+        if(preset == keccak256('presale')){
+            bonusOfDay[0] = 210;
+        } else
+        if(preset == keccak256('generalsale')){
+            bonusOfDay[0] = 60;
+            bonusOfDay[7] = 38;
+            bonusOfDay[14] = 10;
+        }
     }
 
     function calculateTokensQtyByEther(uint256 amount) public constant returns(uint256) {
@@ -375,6 +375,7 @@ contract Sale is Configurable, Bonuses{
         address _multisigWallet
     ) public onlyConfigurer {
         require(!saleInited);
+        require(_startTime >= now);
         require(_endTime >= _startTime);
         require(_tokensLimit > 0);
         require(_multisigWallet != address(0));
@@ -417,7 +418,7 @@ contract Sale is Configurable, Bonuses{
 
         uint256 amount = msg.value;
         uint256 tokens = calculateTokensQtyByEther({
-            amount: amount
+                amount: amount
             });
 
         require(tokensTransferred.add(tokens) < tokensLimit);
@@ -426,7 +427,7 @@ contract Sale is Configurable, Bonuses{
         collected = collected.add(amount);
 
         token.purchase(beneficiary, tokens);
-        emit TokenPurchase(msg.sender, beneficiary, amount, tokens);
+        TokenPurchase(msg.sender, beneficiary, amount, tokens);
 
         forwardFunds();
     }
@@ -452,7 +453,7 @@ contract Sale is Configurable, Bonuses{
 }
 
 
-contract DoubleLandICOtest is Ownable {
+contract DoubleLandICO_TEST is Ownable {
     using SafeMath for uint256;
 
     DLCToken public token;
@@ -555,14 +556,11 @@ contract DoubleLandICOtest is Ownable {
 
         createSale({
             _bonusPreset: 'privatesale',
-            // TODO need remove
             _startTime: 1522342800, // 29.03.2018
-            // _startTime: 1523318400, // 2018-04-10
+           // _startTime: 1523318400, // 2018-04-10
             _endTime:   1524614400, // 2018-04-25
             _tokensLimit: 80000000 * 1 ether,
-            // TODO need remove
-            //_minimalPrice: 1 ether
-            _minimalPrice: 0 ether
+            _minimalPrice: 1 ether
             });
         activateLastSale();
 
