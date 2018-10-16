@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Trust at 0x3da62e9f68ee89fe8cedf8719755c679e596829c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Trust at 0x162ec99bfadf85d72a1cb40c480f4470f21d3760
 */
 contract Assertive {
   function assert(bool assertion) {
@@ -142,7 +142,7 @@ contract Trust is StateTransferrable, TrustEvents {
     }
   }
   function authCall(address from, bytes32 hash) external returns (uint8 code) {
-    if (!masterKeys[from] || !trustedClients[msg.sender]) {
+    if (!masterKeys[from] && !trustedClients[msg.sender]) {
       Unauthorized(from);
       return 0;
     }
@@ -196,7 +196,6 @@ contract Trust is StateTransferrable, TrustEvents {
     return nameRegistry[addr];
   }
 }
-
 contract TrustClient is StateTransferrable, TrustEvents {
   address public trustAddress;
   function setTrust(address addr) setter onlyOwnerUnlocked {
