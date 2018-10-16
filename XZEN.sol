@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XZEN at 0xa24f50fa560d2ec57956955f929273e899994bca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XZEN at 0xe8aa056415e56280666aa77e313564ab2e99d79c
 */
 pragma solidity ^0.4.16;
 
@@ -220,6 +220,7 @@ contract XZEN is StandardToken {
         if(now <= startDate + 1 days) {
             tokens += tokens / 100 * 5;  
         }
+        uint256 checkedSupply = totalSupply.add(tokens);
         if (balances[teamWallet] < tokens) revert();
         balances[teamWallet] -= tokens;        
         balances[msg.sender] += tokens;
@@ -227,6 +228,10 @@ contract XZEN is StandardToken {
         // send eth to multiSigWallet
         multiSigWallet.transfer(msg.value);
         Transfer(teamWallet, msg.sender, tokens);
+    }
+
+    function withdraw() external onlyOwner {
+        multiSigWallet.transfer(this.balance);
     }
 
     function setEthPrice(uint _tokenPrice) external onlyOwner {
