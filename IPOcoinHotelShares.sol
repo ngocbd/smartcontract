@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IPOcoinHotelShares at 0xc2e8595bf77533e5e9c16d30fa6379f5bbc9ed96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IPOcoinHotelShares at 0xDD28848AD5eddcBAe7E9134C6ee344086665D2E0
 */
 pragma solidity ^0.4.13;
 
-// The IPOcoinHotelShares contract
+// ©The IPOcoinHotelShares contract
 // +35799057557
 // ©IT Consulting Group Ltd
 // There is no law stronger than the code
@@ -62,6 +62,17 @@ contract Ownable {
         }
     }
 }
+
+/* ©IT Consulting Group Ltd
+  Oversees projects for investment
+  The company owns factories, hotels, land for construction in England, France, Cyprus, and Ukraine.
+  Clients are offered the opportunity to participate in projects both at the initial stages of construction and to buy out ready-made projects that are fully profitable.
+  The company has a registration in Cyprus. 
+  Based on legal contracts, the company's activities are carried out. 
+  We cooperate with real estate management companies around the world, so our clients never have any problems with real estate management.
+  IPOcoinHotelShares contract. Implements
+  @notice See https://github.com/ethereum/EIPs/issues/20
+ */
 
 contract ERC20Basic {
   uint public totalSupply;
@@ -125,16 +136,6 @@ contract StandardToken is SharesContract, ERC20 {
   }
 }
 
-/* ©IT Consulting Group Ltd
-  Oversees projects for investment
-  The company owns factories, hotels, land for construction in England, France, Cyprus, and Ukraine.
-  Clients are offered the opportunity to participate in projects both at the initial stages of construction and to buy out ready-made projects that are fully profitable.
-  The company has a registration in Cyprus. 
-  Based on legal contracts, the company's activities are carried out. 
-  We cooperate with real estate management companies around the world, so our clients never have any problems with real estate management.
-  IPOcoinHotelShares contract. Implements
-  @notice See https://github.com/ethereum/EIPs/issues/20
- */
  
 contract IPOcoinHotelShares is StandardToken, Ownable {
   string public constant name = "IPOcoinHotelShares";
@@ -142,7 +143,7 @@ contract IPOcoinHotelShares is StandardToken, Ownable {
   uint public constant decimals = 6;
   // Constructor
   function IPOcoinHotelShares() {
-      totalSupply = 210 * 10 ** decimals; //  amount of shares offered to the public
-      balances[msg.sender] = totalSupply; //there are only 210 shares
+      totalSupply = 2100000 * 10 ** decimals; //  amount of shares offered to the public
+      balances[msg.sender] = totalSupply; //there are only 2 100 000 shares
   }
 }
