@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Santa at 0x63011ea1d431f54297d90543689d69177b1846ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Santa at 0xb98d8070dfc448c82dd044f73ae80c24ee11e4d8
 */
 pragma solidity ^0.4.18;
 
@@ -71,6 +71,7 @@ contract Santa {
     function() payable {
 		uint256 amount = msg.value;
 		uint256 numTokens = amount.mul(tokenExchangeRate); 
+		require(numTokens >= 10 * 1 ether);
 		require(!crowdsaleClosed && now >= start && now <= end && tokensSold.add(numTokens) <= tokensForIco);
 		ethFundWallet.transfer(amount);
 		balanceOf[santaFundWallet] = balanceOf[santaFundWallet].sub(numTokens); 
