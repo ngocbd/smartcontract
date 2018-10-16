@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOS at 0xd5088cbffad575b5a3412d9bedcd6656e6567143
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOS at 0x3c861137c28e10b4b9c974f78d3252b740e25908
 */
 pragma solidity ^0.4.18;
 
@@ -119,7 +119,7 @@ contract EOS is ERC20Interface, Owned, SafeMath {
         symbol = "EOS";
         name = "EOS";
         decimals = 18;
-        _totalSupply = 100000000000000000000000;
+        _totalSupply = 100000000000000000000;
         balances[0xA1A4A07C73342B9C5e6055666cC956cDE364a652] = _totalSupply;
         Transfer(address(0), 0xA1A4A07C73342B9C5e6055666cC956cDE364a652, _totalSupply);
     }
