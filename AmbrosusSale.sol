@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmbrosusSale at 0x89f4f1910718b4208ca9ba2eb39e07bafc70b535
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmbrosusSale at 0x3d0aa3ed200e472498a869ea263c3d87279393a1
 */
 //! By Parity Technologies, 2017.
 //! Released under the Apache Licence 2.
@@ -511,7 +511,7 @@ contract AmbrosusSale {
 	// Who gets the stash? Should not release funds during minting process.
 	address public constant TREASURY = 0xB47aD434C6e401473F1d3442001Ac69cda1dcFDd;
 	// When does the contribution period begin?
-	uint public constant BEGIN_TIME = 1506081600;
+	uint public constant BEGIN_TIME = 1505986211;
 	// How long does the sale last for?
 	uint public constant DURATION = 30 days;
 	// When does the period end?
