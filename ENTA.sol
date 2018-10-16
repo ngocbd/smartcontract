@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENTA at 0x542d42cca12149e7bf44cad44a197c4d4cc65351
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENTA at 0xba86789f6f473df297d88ff099a451b91fe99d2f
 */
 pragma solidity ^0.4.4;
 
@@ -158,7 +158,7 @@ contract ENTA is StandardToken {
     string public name = 'ENTA';
     string public symbol = 'ENTA';
     uint public decimals = 8;
-    uint public INITIAL_SUPPLY = 2000000000000000000;
+    uint public INITIAL_SUPPLY = 400000000000000000;
 
     function ENTA() {
         totalSupply = INITIAL_SUPPLY;
