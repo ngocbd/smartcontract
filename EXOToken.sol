@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EXOToken at 0xe52dc28df14d370436c25148b16e78d41b195e99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EXOToken at 0xe58e751aba3b9406367b5f3cbc39c2fa9b519789
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 /**
  * @title SafeMath
@@ -95,7 +95,7 @@ contract BasicToken is ERC20Basic {
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -136,7 +136,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -152,7 +152,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -178,7 +178,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -199,7 +199,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -223,7 +223,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -241,7 +241,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -249,11 +249,11 @@ contract Ownable {
 
 //
 contract EXOToken is StandardToken, Ownable {
-    uint8 constant PERCENT_BOUNTY=3;
-    uint8 constant PERCENT_TEAM=12;
-    uint8 constant PERCENT_FOUNDATION=25;
-    uint8 constant PERCENT_PRE_ICO=10;
-    uint8 constant PERCENT_ICO=50;
+    uint8 constant PERCENT_BOUNTY=1;
+    uint8 constant PERCENT_TEAM=15;
+    uint8 constant PERCENT_FOUNDATION=11;
+    uint8 constant PERCENT_USER_REWARD=3;
+    uint8 constant PERCENT_ICO=70;
     uint256 constant UNFREEZE_FOUNDATION  = 1546214400;
     //20180901 = 1535760000
     //20181231 = 1546214400
@@ -271,58 +271,113 @@ contract EXOToken is StandardToken, Ownable {
     address public accForBounty;
     address public accForTeam;
     address public accFoundation;
-    address public accPreICO;
+    address public accUserReward;
     address public accICO;
-    address public currentMinter;
 
 
     ///////////////
     // EVENTS    //
     ///////////////
     event NewFreeze(address acc, bool isFrozen);
-    event Mint(address indexed to, uint256 amount);
+    event BatchDistrib(uint8 cnt , uint256 batchAmount);
+    event Burn(address indexed burner, uint256 value);
+
 
     // Constructor,  
-    function EXOToken(
+    constructor(
         address _accForBounty, 
         address _accForTeam, 
         address _accFoundation, 
-        address _accPreICO, 
+        address _accUserReward, 
         address _accICO) 
     public 
     {
         name = "EXOLOVER";
         symbol = "EXO";
         decimals = 18;
-        totalSupply_ = 100000000 * (10 ** uint256(decimals));// All EXO tokens in the world
+        totalSupply_ = 1000000000 * (10 ** uint256(decimals));// All EXO tokens in the world
         //Initial token distribution
         balances[_accForBounty] = totalSupply()/100*PERCENT_BOUNTY;
         balances[_accForTeam]   = totalSupply()/100*PERCENT_TEAM;
         balances[_accFoundation]= totalSupply()/100*PERCENT_FOUNDATION;
-        balances[_accPreICO]    = totalSupply()/100*PERCENT_PRE_ICO;
+        balances[_accUserReward]= totalSupply()/100*PERCENT_USER_REWARD;
         balances[_accICO]       = totalSupply()/100*PERCENT_ICO;
         //save for public
         accForBounty  = _accForBounty;
         accForTeam    = _accForTeam;
         accFoundation = _accFoundation;
-        accPreICO     = _accPreICO;
+        accUserReward = _accUserReward;
         accICO        = _accICO;
         //Fixe emission
         emit Transfer(address(0), _accForBounty,  totalSupply()/100*PERCENT_BOUNTY);
         emit Transfer(address(0), _accForTeam,    totalSupply()/100*PERCENT_TEAM);
         emit Transfer(address(0), _accFoundation, totalSupply()/100*PERCENT_FOUNDATION);
-        emit Transfer(address(0), _accPreICO,     totalSupply()/100*PERCENT_PRE_ICO);
+        emit Transfer(address(0), _accUserReward, totalSupply()/100*PERCENT_USER_REWARD);
         emit Transfer(address(0), _accICO,        totalSupply()/100*PERCENT_ICO);
 
         frozenAccounts[accFoundation] = true;
         emit NewFreeze(accFoundation, true);
     }
 
+    modifier onlyTokenKeeper() {
+      require(msg.sender == accICO);
+      _;
+    } 
+
+
     function isFrozen(address _acc) internal view returns(bool frozen) {
         if (_acc == accFoundation && now < UNFREEZE_FOUNDATION) 
             return true;
         return (frozenAccounts[_acc] && now < UNFREEZE_TEAM_BOUNTY);    
     }
+
+    function freezeUntil(address _acc, bool _isfrozen) external onlyOwner returns (bool success){
+        require(now <= UNFREEZE_TEAM_BOUNTY);// nobody cant freeze after ICO finish
+        frozenAccounts[_acc] = _isfrozen;
+        emit NewFreeze(_acc, _isfrozen);
+        return true;
+    }
+
+    
+    function setBountyTeamUnfreezeTime(uint256 _newDate) external onlyOwner {
+       UNFREEZE_TEAM_BOUNTY = _newDate;
+    }
+
+    function burn(uint256 _value) public {
+      _burn(msg.sender, _value);
+    }
+
+    function _burn(address _who, uint256 _value) internal {
+      require(_value <= balances[_who]);
+      // no need to require value <= totalSupply, since that would imply the
+      // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+      balances[_who] = balances[_who].sub(_value);
+      totalSupply_ = totalSupply_.sub(_value);
+      emit Burn(_who, _value);
+      emit Transfer(_who, address(0), _value);
+    }
+
+  //Batch token distribution from cab
+  function multiTransfer(address[] _investors, uint256[] _value )  
+      public 
+      onlyTokenKeeper 
+      returns (uint256 _batchAmount)
+  {
+      uint8      cnt = uint8(_investors.length);
+      uint256 amount = 0;
+      require(cnt >0 && cnt <=255);
+      require(_value.length == _investors.length);
+      for (uint i=0; i<cnt; i++){
+        amount = amount.add(_value[i]);
+        require(_investors[i] != address(0));
+        balances[_investors[i]] = balances[_investors[i]].add(_value[i]);
+        emit Transfer(msg.sender, _investors[i], _value[i]);
+      }
+      require(amount <= balances[msg.sender]);
+      balances[msg.sender] = balances[msg.sender].sub(amount);
+      emit BatchDistrib(cnt, amount);
+      return amount;
+  }
 
     //Override some function for freeze functionality
     function transfer(address _to, uint256 _value) public  returns (bool) {
@@ -362,31 +417,7 @@ contract EXOToken is StandardToken, Ownable {
       return super.decreaseApproval(_spender, _subtractedValue);
     }
 
-    function freezeUntil(address _acc, bool _isfrozen) external onlyOwner returns (bool success){
-        require(now <= UNFREEZE_TEAM_BOUNTY);// nobody cant freeze after ICO finish
-        frozenAccounts[_acc] = _isfrozen;
-        emit NewFreeze(_acc, _isfrozen);
-        return true;
-    }
-
-    function setMinter(address _minter) external onlyOwner returns (bool success) {
-        currentMinter = _minter;
-        return true;
-    }
-
-    function setBountyTeamUnfreezeTime(uint256 _newDate) external onlyOwner {
-       UNFREEZE_TEAM_BOUNTY = _newDate;
-    }
-
-    function mintTokens(address _to, uint256 _amount) external returns (bool) {
-        require(msg.sender==currentMinter);
-        totalSupply_  = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-        return true; 
-    }
-    
+        
     
   //***************************************************************
   // ERC20 part of this contract based on https://github.com/OpenZeppelin/zeppelin-solidity
