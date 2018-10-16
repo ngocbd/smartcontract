@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arbitrage at 0x045c60df00aa2b7ff1753ee81b57bfe5e290e732
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arbitrage at 0xf726f32bb37349f4a44d4022504a3182113c6f14
 */
 pragma solidity ^0.4.14;
  
@@ -175,31 +175,10 @@ contract Ownable {
 contract TheLiquidToken is StandardToken, Ownable {
     // mint can be finished and token become fixed for forever
   event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-  bool public mintingFinished = false;
-  modifier canMint() {
-    require(!mintingFinished);
+   modifier canMint() {
     _;
   }
- 
- function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
- 
-  /*
-  Function to stop minting new tokens.
-  return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-  
-}
+}    
     
 contract Arbitrage is TheLiquidToken {
   string public constant name = "Arbitrage Coin";
