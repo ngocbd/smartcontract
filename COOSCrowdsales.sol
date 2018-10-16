@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COOSCrowdsales at 0x88e2cc7cec1ac2f0d004e85179cad944c3853aec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COOSCrowdsales at 0x8fdebcf5c93dc128de40fefee00f581fd80a1e92
 */
 pragma solidity 0.4.19;
 
@@ -169,6 +169,9 @@ contract COOSCrowdsales is Ownable{
       
       bool public unspentCreditsWithdrawn;
       
+      //to make sure contract is poweredup only once
+      bool contractPoweredUp = false;
+      
       //Event to trigger Sale stop
       event SaleStopped(address _owner, uint256 time);
       
@@ -220,6 +223,9 @@ contract COOSCrowdsales is Ownable{
     *     to reward all possible participations within sale period
     */
     function powerUpContract() external onlyOwner {
+        
+        require(!contractPoweredUp);
+        
         // Contract should not be powered up previously
         require(!salesActive);
 
@@ -231,6 +237,8 @@ contract COOSCrowdsales is Ownable{
       
         //activate the sale process
         salesActive=true;
+        
+        contractPoweredUp = true;
     }
     
     //for Emergency stop of the sale
