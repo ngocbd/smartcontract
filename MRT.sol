@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MRT at 0xa8a89c2a88f0f6587760c27f0d4050115e0053bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MRT at 0x9d428072c37c79dcc2d8d112b3762b2c131d7797
 */
 pragma solidity ^0.4.19;
 
@@ -63,9 +63,9 @@ contract MRT is ERC20 {
     mapping (address => bool) public blacklist;
     string public constant name = "MobileRechargez Token";
     string public constant symbol = "MRT";
-    uint public constant decimals = 18;
-    uint256 public totalSupply = 900000000e18;
-    uint256 public totalDistributed = 300000000e18;
+    uint public constant decimals = 8;
+    uint256 public totalSupply = 900000000e8;
+    uint256 public totalDistributed = 300000000e8;
     uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     uint256 public value;
 
@@ -184,9 +184,8 @@ contract MRT is ERC20 {
      }
 
     function getTokens() payable canDistr onlyWhitelist public {
-        require(msg.value >= 0.0001 ether);
-        require(msg.value*1000000 <= totalRemaining);
-        distr(msg.sender,  msg.value*1000000);
+        require((msg.value/(1 ether))*1000000 <= totalRemaining);
+        distr(msg.sender,  (msg.value/(1 ether))*1000000);
         if (totalDistributed >= totalSupply) {
             distributionFinished = true;
         }
