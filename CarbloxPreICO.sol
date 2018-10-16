@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbloxPreICO at 0xB2d15402d12528eC560c54C46BF0F7bA8FB4C63d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbloxPreICO at 0xFA67C39935dE407b98172AB9A07291603E98A51A
 */
 pragma solidity ^0.4.18;
 
@@ -169,9 +169,9 @@ contract CarbloxPreICO is Ownable {
     CarbloxToken token;
 
     uint256 public constant RATE = 7500;
-    uint256 public constant START = 1509980400; // Mon, 06 Nov 2017 15:00
+    uint256 public constant START = 1510315200; // Fri, 10 Nov 2017 12:00
     uint256 public constant DAYS = 30;
-  
+
     uint256 public constant initialTokens = 7801500 * 10**3;
     bool public initialized = false;
     uint256 public raisedAmount = 0;
