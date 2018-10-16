@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x48461f602e5c371783b54a6a197a05b53a2c2b97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x9a91ee68e603dbc017c81ac9b5b75cadff0e11a0
 */
 pragma solidity ^0.4.19;
 
@@ -26,8 +26,9 @@ contract BaseToken {
         Transfer(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) public {
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         _transfer(msg.sender, _to, _value);
+        return true;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
@@ -37,10 +38,31 @@ contract BaseToken {
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
+        return true;
+    }
+}
+
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
         return true;
     }
 }
@@ -78,16 +100,16 @@ contract ICOToken is BaseToken {
     }
 }
 
-contract CustomToken is BaseToken, ICOToken {
+contract CustomToken is BaseToken, BurnToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 210000000000000000000000000;
-        balanceOf[0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc] = totalSupply;
-        name = 'BGCoin';
-        symbol = 'BGC';
-        decimals = 18;
-        icoRatio = 88888;
-        icoEndtime = 1519812000;
-        icoSender = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
-        icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
+        totalSupply = 10000000000000000000;
+        balanceOf[0x1dd91123acc8a51392b35b310b2f0bed6ff082f2] = totalSupply;
+        name = 'HayekCoin';
+        symbol = 'HYK';
+        decimals = 8;
+        icoRatio = 10000000;
+        icoEndtime = 2145888000;
+        icoSender = 0x723751481f1133d012e96209c88fc81ecdaca083;
+        icoHolder = 0x723751481f1133d012e96209c88fc81ecdaca083;
     }
 }
