@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundAccount at 0x13faB4e51145a04fC0DB51050ae88246f3F123d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundAccount at 0x814dacd481c734d11efd643a617fa4e628e43005
 */
 pragma solidity ^0.4.21;
 
@@ -21,27 +21,27 @@ contract SafeMath {
         internal
         pure
     returns(uint) {
-      uint256 z = x + y;
-      require((z >= x) && (z >= y));
-      return z;
+        uint256 z = x + y;
+        require((z >= x) && (z >= y));
+        return z;
     }
 
     function safeSub(uint x, uint y)
         internal
         pure
     returns(uint) {
-      require(x >= y);
-      uint256 z = x - y;
-      return z;
+        require(x >= y);
+        uint256 z = x - y;
+        return z;
     }
 
     function safeMul(uint x, uint y)
         internal
         pure
     returns(uint) {
-      uint z = x * y;
-      require((x == 0) || (z / x == y));
-      return z;
+        uint z = x * y;
+        require((x == 0) || (z / x == y));
+        return z;
     }
     
     function safeDiv(uint x, uint y)
@@ -56,8 +56,8 @@ contract SafeMath {
         internal
         view
     returns(uint) {
-      bytes32 hash = keccak256(block.number, msg.sender, salt);
-      return uint(hash) % N;
+        bytes32 hash = keccak256(block.number, msg.sender, salt);
+        return uint(hash) % N;
     }
 }
 
@@ -135,10 +135,19 @@ contract Authorization {
 contract FundAccount is Authorization, SafeMath {
     string public version = "0.5.0";
 
-    address public tokenFactory = 0x0036B86289ccCE0984251CCCA62871b589B0F52d68;
+    address public tokenFactory = 0x001393F1fb2E243Ee68Efe172eBb6831772633A926;
     address public xpaExchange = 0x008ea74569c1b9bbb13780114b6b5e93396910070a;
     address public XPA = 0x0090528aeb3a2b736b780fd1b6c478bb7e1d643170;
-    function FundAccount() public {}
+    
+    function FundAccount(
+        address XPAAddr, 
+        address balivAddr, 
+        address factoryAddr
+    ) public {
+        XPA = XPAAddr;
+        xpaExchange = balivAddr;
+        tokenFactory = factoryAddr;
+    }
 
     /*
         10% - 110% price
