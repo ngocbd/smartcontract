@@ -1,36 +1,48 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustedDocument at 0xdc5fd2709a37218f96ac37163a18cf3c2629589d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustedDocument at 0x7d13d1eebfb7f5c0c22b52aa7dc63d52869e0efa
 */
 pragma solidity ^0.4.8;
 
+// 8D806FF01FFBE3374D34C8EC57BE9B1DA7188DF639478D37E4447DE430BA6BF4
 contract TrustedDocument {
-    // Data structure for keeping document bundles signatures
-    // and metadata
+
+    // Data structure for keeping document signatures and metadata.
+    // String data types are used because its easier to read by humans 
+    // without need of decoding, gas price is less important.
     struct Document {
         // Id of the document, starting at 1
-        // 0 reserved for undefined / not found etc
+        // 0 reserved for undefined / not found indicator
         uint documentId;
+
         // File name
-        bytes32 fileName;
-        // Hash of the file -> (SHA256(TOBASE64(FILECONTENT)))
+        string fileName;
+
+        // Hash of the main file
         string documentContentSHA256;
-        // Hash of file containing extra metadata
-        // describing file. Secured same way as
-        // content of the file and can be any
-        // size to save gas on transactions
+
+        // Hash of file containing extra metadata.
+        // Secured same way as content of the file 
+        // size to save gas on transactions.
         string documentMetadataSHA256;
-        // Block time when document was added to
-        // block / was mined
-        uint blockTime;
+
+        // IPFS hash of directory containing the document and metadata binaries.
+        // Hash of the directory is build as merkle tree, so any change
+        // to any of the files in folder will invalidate this hash.
+        // So there is no need to keep IPFS hash for each single file.
+        string IPFSdirectoryHash;
+
         // Block number
         uint blockNumber;
-        // Document validity date from claimed by
+
+        // Document validity begin date, claimed by
         // publisher. Documents can be published
         // before they become valid, or in some
         // cases later.
         uint validFrom;
+
         // Optional valid date to if relevant
         uint validTo;
+
         // Reference to document update. Document
         // can be updated/replaced, but such update 
         // history cannot be hidden and it is 
@@ -56,7 +68,7 @@ contract TrustedDocument {
     // Total count of signed documents
     uint public documentsCount;
 
-    // Base URL on which files will be stored
+    // URLwith documents / GUI
     string public baseUrl;
 
     // Map of signed documents
@@ -64,8 +76,10 @@ contract TrustedDocument {
 
     // Event for confirmation of adding new document
     event EventDocumentAdded(uint indexed documentId);
+
     // Event for updating document
     event EventDocumentUpdated(uint indexed referencingDocumentId, uint indexed updatedDocumentId);
+    
     // Event for going on retirement
     event Retired(address indexed upgradedVersion);
 
@@ -83,7 +97,7 @@ contract TrustedDocument {
     } 
 
     // Constructor
-    function TrustedDocument() public {
+    constructor() public {
         owner = msg.sender;
         baseUrl = "_";
     }
@@ -96,14 +110,29 @@ contract TrustedDocument {
     }
 
     // Adds new document - only owner and if not retired
-    function addDocument(bytes32 _fileName, string _documentContentSHA256, string _documentMetadataSHA256, uint _validFrom, uint _validTo) public onlyOwner ifNotRetired {
+    function addDocument(
+        string _fileName,
+        string _documentContentSHA256, 
+        string _documentMetadataSHA256,
+        string _IPFSdirectoryHash,  
+        uint _validFrom, uint _validTo) public onlyOwner ifNotRetired {
         // Documents incremented before use so documents ids will
         // start with 1 not 0 (shifter by 1)
         // 0 is reserved as undefined value
         uint documentId = documentsCount+1;
         //
-        EventDocumentAdded(documentId);
-        documents[documentId] = Document(documentId, _fileName, _documentContentSHA256, _documentMetadataSHA256, block.timestamp, block.number, _validFrom, _validTo, 0);
+        emit EventDocumentAdded(documentId);
+        documents[documentId] = Document(
+            documentId, 
+            _fileName, 
+            _documentContentSHA256, 
+            _documentMetadataSHA256, 
+            _IPFSdirectoryHash,
+            block.number, 
+            _validFrom, 
+            _validTo, 
+            0
+        );
         documentsCount++;
     }
 
@@ -120,24 +149,34 @@ contract TrustedDocument {
     function retire(address _upgradedVersion) public onlyOwner ifNotRetired {
         // TODO - check if such contract exists
         upgradedVersion = _upgradedVersion;
-        Retired(upgradedVersion);
+        emit Retired(upgradedVersion);
     }
 
     // Gets document with ID
     function getDocument(uint _documentId) public view
     returns (
         uint documentId,
-        bytes32 fileName,
+        string fileName,
         string documentContentSHA256,
         string documentMetadataSHA256,
-        uint blockTime,
+        string IPFSdirectoryHash,
         uint blockNumber,
         uint validFrom,
         uint validTo,
         uint updatedVersionId
     ) {
         Document memory doc = documents[_documentId];
-        return (doc.documentId, doc.fileName, doc.documentContentSHA256, doc.documentMetadataSHA256, doc.blockTime, doc.blockNumber, doc.validFrom, doc.validTo, doc.updatedVersionId);
+        return (
+            doc.documentId, 
+            doc.fileName, 
+            doc.documentContentSHA256, 
+            doc.documentMetadataSHA256, 
+            doc.IPFSdirectoryHash,
+            doc.blockNumber, 
+            doc.validFrom, 
+            doc.validTo, 
+            doc.updatedVersionId
+            );
     }
 
     // Gets document updatedVersionId with ID
@@ -149,7 +188,7 @@ contract TrustedDocument {
         return doc.updatedVersionId;
     }
 
-    // Gets base URL so GUI will know where to seek for storage.
+    // Gets base URL so everyone will know where to seek for files storage / GUI.
     // Multiple URLS can be set in the string and separated by comma
     function getBaseUrl() public view
     returns (string) 
@@ -169,10 +208,10 @@ contract TrustedDocument {
     returns (uint) 
     {
         for (uint i = 0; i < documentsCount; i++) {
-           Document memory doc = documents[i];
-           if (doc.validFrom>=_unixTimeFrom) {
-               return i;
-           }
+            Document memory doc = documents[i];
+            if (doc.validFrom>=_unixTimeFrom) {
+                return i;
+            }
         }
         return 0;
     }
@@ -208,10 +247,24 @@ contract TrustedDocument {
     {
         bytes32 documentContentSHA256Keccak256 = keccak256(_documentContentSHA256);
         for (uint i = 0; i < documentsCount; i++) {
-           Document memory doc = documents[i];
-           if (keccak256(doc.documentContentSHA256)==documentContentSHA256Keccak256) {
-               return i;
-           }
+            Document memory doc = documents[i];
+            if (keccak256(doc.documentContentSHA256)==documentContentSHA256Keccak256) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    // Utility to help seek fo specyfied document
+    function getDocumentIdWithIPFSdirectoryHash(string _IPFSdirectoryHash) public view
+    returns (uint) 
+    {
+        bytes32 IPFSdirectoryHashSHA256Keccak256 = keccak256(_IPFSdirectoryHash);
+        for (uint i = 0; i < documentsCount; i++) {
+            Document memory doc = documents[i];
+            if (keccak256(doc.IPFSdirectoryHash)==IPFSdirectoryHashSHA256Keccak256) {
+                return i;
+            }
         }
         return 0;
     }
@@ -222,10 +275,10 @@ contract TrustedDocument {
     {
         bytes32 fileNameKeccak256 = keccak256(_fileName);
         for (uint i = 0; i < documentsCount; i++) {
-           Document memory doc = documents[i];
-           if (keccak256(doc.fileName)==fileNameKeccak256) {
-               return i;
-           }
+            Document memory doc = documents[i];
+            if (keccak256(doc.fileName)==fileNameKeccak256) {
+                return i;
+            }
         }
         return 0;
     }
@@ -238,6 +291,6 @@ contract TrustedDocument {
         Document memory updated = documents[updatedDocumentId];
         //
         referenced.updatedVersionId = updated.documentId;
-        EventDocumentUpdated(referenced.updatedVersionId,updated.documentId);
+        emit EventDocumentUpdated(referenced.updatedVersionId,updated.documentId);
     }
 }
