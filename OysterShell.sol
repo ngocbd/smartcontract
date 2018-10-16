@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterShell at 0x8542325b72c6d9fc0ad2ca965a78435413a915a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterShell at 0xf85953f59bcd58a35f5a8ac2b2bb07b6fa376d99
 */
 pragma solidity ^0.4.18;
 
@@ -11,14 +11,11 @@ contract OysterShell {
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
-    uint256 public lockedSupply;
     address public director;
     bool public directorLock;
     uint256 public feeAmount;
     uint256 public retentionMin;
     uint256 public retentionMax;
-    uint256 public lockMin;
-    uint256 public lockMax;
 
     // Array definitions
     mapping (address => uint256) public balances;
@@ -35,7 +32,7 @@ contract OysterShell {
     event Burn(address indexed _from, uint256 _value);
     
     // This notifies clients about an address getting locked
-    event Lock(address indexed _target, uint256 _value, uint256 _release);
+    event Lock(address indexed _target, uint256 _value, uint256 _interval);
     
     // This notifies clients about a claim being made on a locked address
     event Claim(address indexed _target, address indexed _payout, address indexed _fee);
@@ -47,30 +44,23 @@ contract OysterShell {
      */
     function OysterShell() public {
         director = msg.sender;
-        name = "Oyster Shell";
-        symbol = "SHL";
+        name = "Oyster Shell TEST";
+        symbol = "PRESHL";
         decimals = 18;
         directorLock = false;
-        totalSupply = 98592692 * 10 ** uint256(decimals);
-        lockedSupply = 0;
+        totalSupply = 98592692;
         
         // Assign total SHL supply to the director
         balances[director] = totalSupply;
         
         // SHL fee paid to brokers
-        feeAmount = 1 * 10 ** uint256(decimals);
+        feeAmount = 10;
         
-        // Minimum SHL that can get locked
-        retentionMin = 20 * 10 ** uint256(decimals);
+        // Maximum time for a sector to remain stored
+        retentionMin = 20;
         
-        // Maximum SHL that can get locked
-        retentionMax = 200 * 10 ** uint256(decimals);
-        
-        // Minimum lock duration
-        lockMin = 10;
-        
-        // Maximum lock duration
-        lockMax = 360;
+        // Maximum time for a sector to remain stored
+        retentionMax = 200;
     }
     
     /**
@@ -78,13 +68,6 @@ contract OysterShell {
      */
     function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
-    }
-    
-    /**
-     * SHL lock time retrieval function
-     */
-    function lockTime(address _owner) public constant returns (uint256 lockedValue) {
-        return locked[_owner];
     }
     
     modifier onlyDirector {
@@ -139,7 +122,7 @@ contract OysterShell {
     }
     
     /**
-     * Director can alter the upper and lower bounds of SHL locking capacity
+     * Director can alter the maximum time of storage retention
      */
     function amendRetention(uint256 retentionMinSet, uint256 retentionMaxSet) public onlyDirector returns (bool success) {
         // Set retentionMin
@@ -151,64 +134,45 @@ contract OysterShell {
     }
     
     /**
-     * Director can alter the upper and lower bounds of SHL locking duration
-     */
-    function amendLock(uint256 lockMinSet, uint256 lockMaxSet) public onlyDirector returns (bool success) {
-        // Set lockMin
-        lockMin = lockMinSet;
-        
-        // Set lockMax
-        lockMax = lockMaxSet;
-        return true;
-    }
-    
-    /**
      * Oyster Protocol Function
-     * More information at https://oyster.ws/ShellWhitepaper.pdf
+     * More information at https://oyster.ws/OysterWhitepaper.pdf
      * 
      * Lock an address
      *
-     * @param _duration the time duration that the SHL should remain locked
+     * When an address is locked; only claimAmount can be withdrawn once per epoch
      */
-    function lock(uint256 _duration) public returns (bool success) {
+    function lock(uint256 interval) public returns (bool success) {
         // The address must be previously unlocked
         require(locked[msg.sender] == 0);
         
         // An address must have at least retentionMin to be locked
         require(balances[msg.sender] >= retentionMin);
         
-        // Prevent addresses with large balances from getting locked
+        // Prevent addresses with large balances from getting buried
         require(balances[msg.sender] <= retentionMax);
         
-        // Enforce minimum lock duration
-        require(_duration >= lockMin);
-        
-        // Enforce maximum lock duration
-        require(_duration <= lockMax);
-        
         // Set locked state to true
-        locked[msg.sender] = block.timestamp + _duration;
-        
-        // Add to lockedSupply
-        lockedSupply += balances[msg.sender];
+        locked[msg.sender] = interval;
         
         // Execute an event reflecting the change
-        Lock(msg.sender, balances[msg.sender], locked[msg.sender]);
+        Lock(msg.sender, balances[msg.sender], interval);
         return true;
     }
     
     /**
      * Oyster Protocol Function
-     * More information at https://oyster.ws/ShellWhitepaper.pdf
+     * More information at https://oyster.ws/OysterWhitepaper.pdf
      * 
      * Claim all SHL from a locked address
+     *
+     * If a prior claim wasn't made during the current epoch, then claimAmount can be withdrawn
      *
      * @param _payout the address of the website owner
      * @param _fee the address of the broker node
      */
     function claim(address _payout, address _fee) public returns (bool success) {
         // The claimed address must have already been locked
-        require(locked[msg.sender] <= block.timestamp && locked[msg.sender] != 0);
+        require(locked[msg.sender] >= block.timestamp);
         
         // The payout and fee addresses must be different
         require(_payout != _fee);
@@ -228,16 +192,13 @@ contract OysterShell {
         // Calculate amount to be paid to _payout
         uint256 payAmount = balances[msg.sender] - feeAmount;
         
-        // Take from lockedSupply
-        lockedSupply -= balances[msg.sender];
-        
-        // Reset locked address balance to zero
+        // Remove claimAmount from the buried address
         balances[msg.sender] = 0;
         
-        // Pay the website owner that invoked the web node that found the SHL seed key
+        // Pay the website owner that invoked the web node that found the PRL seed key
         balances[_payout] += payAmount;
         
-        // Pay the broker node that unlocked the SHL
+        // Pay the broker node that unlocked the PRL
         balances[_fee] += feeAmount;
         
         // Execute events to reflect the changes
@@ -364,7 +325,7 @@ contract OysterShell {
      * @param _value the amount of money to burn
      */
     function burn(uint256 _value) public returns (bool success) {
-        // Locked addresses cannot be burnt
+        // Buried addresses cannot be burnt
         require(locked[msg.sender] == 0);
         
         // Check if the sender has enough
@@ -388,7 +349,7 @@ contract OysterShell {
      * @param _value the amount of money to burn
      */
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        // Locked addresses cannot be burnt
+        // Buried addresses cannot be burnt
         require(locked[_from] == 0);
         
         // Check if the targeted balance is enough
