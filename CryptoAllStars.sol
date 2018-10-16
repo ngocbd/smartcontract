@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoAllStars at 0x7d152fe26431e6585dbff9ef37e375e49b862739
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoAllStars at 0x7460266268341a4c366a034dbd28bf54b9e3b043
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -46,6 +46,8 @@ contract CryptoAllStars is ERC721 {
   uint256 private startingPrice = 0.001 ether;
   uint256 private constant PROMO_CREATION_LIMIT = 10000;
   uint256 private firstStepLimit =  0.053613 ether;
+  uint256 private secondStepLimit = 0.564957 ether;
+
   uint public currentGen = 0;
 
   /*** STORAGE ***/
@@ -208,13 +210,16 @@ contract CryptoAllStars is ERC721 {
     uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 92), 100));
     uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
 
-    // Update prices
+      // Update prices
     if (sellingPrice < firstStepLimit) {
       // first stage
-      allStarIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 94);
-   } else {
-      // second and last stage
-      allStarIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 125), 94);
+      allStarIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 100);
+    } else if (sellingPrice < secondStepLimit) {
+      // second stage
+      allStarIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 125), 100);
+    } else {
+      // third stage
+      allStarIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 125), 100);
     }
 
     _transfer(oldOwner, newOwner, _tokenId);
