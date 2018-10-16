@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AciToken at 0x8207BcaaCD247A03fBD68e1A941092FA678cF492
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AciToken at 0xB4429467a26157Ff9f1D0A9EBBFdC6630c16D67C
 */
 pragma solidity ^0.4.18;
 
@@ -177,7 +177,7 @@ contract AciToken is SafeMath, StandardToken, Pausable {
     string public constant name = "ACI Token";
     string public constant symbol = "ACI";
     uint256 public constant decimals = 18;
-    uint256 public constant maxTokens = 20000000*10**decimals;
+    uint256 public constant maxTokens = 20000000;
 
     uint256 public oneTokenInWei = 700*10**12; //-30%
     //uint256 public oneTokenInWei = 850*10**12; //-15%
@@ -199,8 +199,7 @@ contract AciToken is SafeMath, StandardToken, Pausable {
 
 
     function createTokens() internal whenNotPaused {
-        uint multiplier = 10 ** 10;
-        uint256 tokens = safeDiv(msg.value*100000000, oneTokenInWei) * multiplier;
+        uint256 tokens = safeDiv(msg.value, oneTokenInWei);
         uint256 checkedSupply = safeAdd(totalSupply, tokens);
 
         if ( checkedSupply <= maxTokens ) {
@@ -215,7 +214,7 @@ contract AciToken is SafeMath, StandardToken, Pausable {
         balances[msg.sender] += tokens;
         totalSupply = safeAdd(totalSupply, tokens);
         totalWeiRecieved += msg.value;
-        CreateACI(msg.sender, tokens);
+        CreateACI(msg.sender, tokens*10*18);
     }
 
     function withdraw(address _toAddress, uint256 amount) external onlyOwner {
