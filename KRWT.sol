@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0xee3c19a4a77eefff2c8b882cdb82b22fea94a09e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x97fee0d5ccfeca578bee7fe9446f1a684e52ff34
 */
 pragma solidity ^0.4.21;
 
@@ -398,7 +398,7 @@ contract ERC827Token is ERC827, StandardToken {
 
 }
 
-contract KRWT is StandardToken {
+contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken {
     string constant public name = "Korean Won";
     string constant public symbol = "KRWT";
     uint8 constant public decimals = 8;
