@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RocketToken at 0x2be74d302b681fd270c15d6c28bc1fd1942eadcc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RocketToken at 0x9d98a8323c7dbf49851d4aa18ca90e0f25ee30dc
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 
 
 library SafeMath {
@@ -32,6 +32,8 @@ library SafeMath {
     return c;
   }
 }
+
+pragma solidity ^0.4.11;
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -43,6 +45,9 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
+pragma solidity ^0.4.11;
+
 
 /**
  * @title Basic token
@@ -80,6 +85,10 @@ contract BasicToken is ERC20Basic {
 
 }
 
+
+pragma solidity ^0.4.11;
+
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -90,6 +99,10 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
+
+pragma solidity ^0.4.11;
+
 
 /**
  * @title Standard ERC20 token
@@ -171,6 +184,8 @@ contract StandardToken is ERC20, BasicToken {
   }
 
 }
+
+pragma solidity ^0.4.11;
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -212,6 +227,10 @@ contract Ownable {
   }
 
 }
+
+
+pragma solidity ^0.4.11;
+
 
 /**
  * @title Mintable token
