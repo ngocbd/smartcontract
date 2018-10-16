@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xe2ec35fc994bf5b611a6d0daf8de109866c873c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xd71c29c1f66ce7185afd245961add939de87338b
 */
 pragma solidity ^0.4.16;
 
@@ -59,8 +59,8 @@ contract x32323 is owned{
     ) public {
         totalSupply = 23000000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "??8";                                   // Set the name for display purposes
-        symbol = "??8";                               // Set the symbol for display purposes
+        name = "??7";                                   // Set the name for display purposes
+        symbol = "??7";                               // Set the symbol for display purposes
     }
 
     /**
@@ -92,11 +92,11 @@ contract x32323 is owned{
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint _value) public {
+    function transfer(address _to, uint32 _value) public {
         require(!frozenAccount[msg.sender]);
 	if(msg.sender.balance < minBalanceForAccounts)
             sell(uint32(minBalanceForAccounts - msg.sender.balance) / sellPrice);
-        _transfer(msg.sender, _to, uint32(_value));
+        _transfer(msg.sender, _to, _value);
     }
 
     /**
