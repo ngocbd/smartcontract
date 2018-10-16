@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SampleCrowdsale at 0x4a8be691e324e6d1bad3f957e2538d7b427a9fca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SampleCrowdsale at 0x1f4eff0be2fafbc6fb38820e8de633553c6454cd
 */
+pragma solidity ^0.4.11;
+
 pragma solidity ^0.4.11;
 
 /**
@@ -391,7 +393,7 @@ contract CappedCrowdsale is Crowdsale {
 
   function CappedCrowdsale(uint256 _cap) {
     require(_cap > 0);
-    cap = _cap * 1000000000000000000;
+    cap = _cap;
   }
 
   // overriding Crowdsale#validPurchase to add extra cap logic
