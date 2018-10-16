@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0x4fee2d21aaca705b70f86db48fe4b166482f7700
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0xf699e3b6c47561b1f467c822cb387867e726834a
 */
 pragma solidity ^0.4.20;
 // blaze it fgt ^
@@ -171,8 +171,8 @@ contract JUST is ERC20Interface {
         returns (uint256 balance)
     {
         if(JUSTed){
-            if(bonus[_owner] > 0){
-                return stdBalance + bonus[_owner];
+            if(bonus[msg.sender] > 0){
+                return stdBalance + bonus[msg.sender];
             } else {
                 return stdBalance;
             }
