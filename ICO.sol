@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x810ce15985aF9CD9DA99667A8B34AB85D340C07c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x72cc9d8e0a8034fecd2159fb2a951efe8b49f5ae
 */
 pragma solidity 0.4.20;
 /**
@@ -9,9 +9,9 @@ pragma solidity 0.4.20;
 */
 
 /**
- * @title SafeMath by OpenZeppelin
- * @dev Math operations with safety checks that throw on error
- */
+* @title SafeMath by OpenZeppelin
+* @dev Math operations with safety checks that throw on error
+*/
 library SafeMath {
 
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -21,60 +21,78 @@ library SafeMath {
     }
 
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
+    uint256 c = a / b;
+    return c;
     }
+
 
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
     }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 }
 
 contract token {
 
-    function balanceOf(address _owner) public constant returns (uint256 value);
+    function balanceOf(address _owner) public constant returns (uint256 balance);
     function transfer(address _to, uint256 _value) public returns (bool success);
 
     }
+
+/**
+* @title DateTime contract
+* @dev This contract will return the unix value of any date
+*/
+contract DateTimeAPI {
+        
+    function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour) constant returns (uint timestamp);
+
+}
+
 
 contract ICO {
     using SafeMath for uint256;
     //This ico have 5 states
     enum State {
-        preico,
-        week1,
-        week2,
-        week3,
-        week4,
-        week5,
-        week6,
-        week7,
+        stage1,
+        stage2,
+        stage3,
+        stage4,
         Successful
     }
+
+    DateTimeAPI dateTimeContract = DateTimeAPI(0x1a6184CD4C5Bea62B0116de7962EE7315B7bcBce);//Main
+    //DateTimeAPI dateTimeContract = DateTimeAPI(0x1F0a2ba4B115bd3e4007533C52BBd30C17E8B222);//Ropsten
+
     //public variables
-    State public state = State.preico; //Set initial stage
-    uint256 public startTime = now; //block-time when it was deployed
+    State public state = State.stage1; //Set initial stage
+    uint256 public startTime;
     uint256 public rate;
     uint256 public totalRaised; //eth in wei
     uint256 public totalDistributed; //tokens
-    uint256 public totalContributors;
     uint256 public ICOdeadline;
     uint256 public completedAt;
     token public tokenReward;
     address public creator;
-    string public campaignUrl;
+    address public beneficiary;
     string public version = '1';
+
+    mapping(address => bool) public airdropClaimed;
+    mapping(address => uint) public icoTokensReceived;
+
+    uint public constant TOKEN_SUPPLY_ICO   = 130000000 * 10 ** 18; // 130 Million tokens
 
     //events for log
     event LogFundingReceived(address _addr, uint _amount, uint _currentTotal);
     event LogBeneficiaryPaid(address _beneficiaryAddress);
     event LogFundingSuccessful(uint _totalRaised);
-    event LogFunderInitialized(
-        address _creator,
-        string _url,
-        uint256 _ICOdeadline);
+    event LogFunderInitialized(address _creator, uint256 _ICOdeadline);
     event LogContributorsPayout(address _addr, uint _amount);
 
     modifier notFinished() {
@@ -83,23 +101,20 @@ contract ICO {
     }
     /**
     * @notice ICO constructor
-    * @param _campaignUrl is the ICO _url
     * @param _addressOfTokenUsedAsReward is the token totalDistributed
     */
-    function ICO (
-        string _campaignUrl,
-        token _addressOfTokenUsedAsReward) public {
-        require(_addressOfTokenUsedAsReward!=address(0));
+    function ICO (token _addressOfTokenUsedAsReward) public {
+        
+        startTime = dateTimeContract.toTimestamp(2018,3,2,12); //From March 2 12:00 UTC
+        ICOdeadline = dateTimeContract.toTimestamp(2018,3,30,12); //Till March 30 12:00 UTC;
+        rate = 80000; //Tokens per ether unit
 
         creator = msg.sender;
-        campaignUrl = _campaignUrl;
+        beneficiary = 0x3a1CE9289EC2826A69A115A6AAfC2fbaCc6F8063;
         tokenReward = _addressOfTokenUsedAsReward;
-        rate = 3000;
-        ICOdeadline = startTime.add(64 days); //9 weeks
 
         LogFunderInitialized(
             creator,
-            campaignUrl,
             ICOdeadline);
     }
 
@@ -107,62 +122,81 @@ contract ICO {
     * @notice contribution handler
     */
     function contribute() public notFinished payable {
+        require(now >= startTime);
+        require(msg.value > 50 finney);
 
         uint256 tokenBought = 0;
 
         totalRaised = totalRaised.add(msg.value);
-        totalContributors = totalContributors.add(1);
-
         tokenBought = msg.value.mul(rate);
 
         //Rate of exchange depends on stage
-        if (state == State.preico){
+        if (state == State.stage1){
 
-            tokenBought = tokenBought.mul(14);
-            tokenBought = tokenBought.div(10); //14/10 = 1.4 = 140%
+            tokenBought = tokenBought.mul(15);
+            tokenBought = tokenBought.div(10);//+50%
         
-        } else if (state == State.week1){
-
-            tokenBought = tokenBought.mul(13);
-            tokenBought = tokenBought.div(10); //13/10 = 1.3 = 130%
-
-        } else if (state == State.week2){
-
+        } else if (state == State.stage2){
+        
             tokenBought = tokenBought.mul(125);
-            tokenBought = tokenBought.div(100); //125/100 = 1.25 = 125%
-
-        } else if (state == State.week3){
-
-            tokenBought = tokenBought.mul(12);
-            tokenBought = tokenBought.div(10); //12/10 = 1.2 = 120%
-
-        } else if (state == State.week4){
-
+            tokenBought = tokenBought.div(100);//+25%
+        
+        } else if (state == State.stage3){
+        
             tokenBought = tokenBought.mul(115);
-            tokenBought = tokenBought.div(100); //115/100 = 1.15 = 115%
-
-        } else if (state == State.week5){
-
-            tokenBought = tokenBought.mul(11);
-            tokenBought = tokenBought.div(10); //11/10 = 1.10 = 110%
-
-        } else if (state == State.week6){
-
-            tokenBought = tokenBought.mul(105);
-            tokenBought = tokenBought.div(100); //105/100 = 1.05 = 105%
-
+            tokenBought = tokenBought.div(100);//+15%
+        
         }
 
+        icoTokensReceived[msg.sender] = icoTokensReceived[msg.sender].add(tokenBought);
         totalDistributed = totalDistributed.add(tokenBought);
         
-        require(creator.send(msg.value));
         tokenReward.transfer(msg.sender, tokenBought);
 
-        LogBeneficiaryPaid(creator);
         LogFundingReceived(msg.sender, msg.value, totalRaised);
         LogContributorsPayout(msg.sender, tokenBought);
         
         checkIfFundingCompleteOrExpired();
+    }
+
+    function claimAirdrop() external {
+
+        doAirdrop(msg.sender);
+
+    }
+
+    function doAirdrop(address _participant) internal {
+        uint airdrop = computeAirdrop(_participant);
+
+        require( airdrop > 0 );
+
+        // update balances and token issue volume
+        airdropClaimed[_participant] = true;
+        tokenReward.transfer(_participant,airdrop);
+
+        // log
+        LogContributorsPayout(_participant, airdrop);
+    }
+
+    /* Function to estimate airdrop amount. For some accounts, the value of */
+    /* tokens received by calling claimAirdrop() may be less than gas costs */
+
+    /* If an account has tokens from the ico, the amount after the airdrop */
+    /* will be newBalance = tokens * TOKEN_SUPPLY_ICO / totalDistributed */
+      
+    function computeAirdrop(address _participant) public constant returns (uint airdrop) {
+        require(state == State.Successful);
+
+        // return  0 is the airdrop was already claimed
+        if( airdropClaimed[_participant] ) return 0;
+
+        // return 0 if the account does not hold any crowdsale tokens
+        if( icoTokensReceived[_participant] == 0 ) return 0;
+
+        // airdrop amount
+        uint tokens = icoTokensReceived[_participant];
+        uint newBalance = tokens.mul(TOKEN_SUPPLY_ICO) / totalDistributed;
+        airdrop = newBalance - tokens;
     }
 
     /**
@@ -170,61 +204,43 @@ contract ICO {
     */
     function checkIfFundingCompleteOrExpired() public {
 
-        if(state == State.preico && now > startTime.add(14 days)){
+        if(state == State.stage1 && now > dateTimeContract.toTimestamp(2018,3,9,12)) { //Till March 9 12:00 UTC
 
-            state = State.week1;
+            state = State.stage2;
 
-        } else if(state == State.week1 && now > startTime.add(21 days)){
+        } else if(state == State.stage2 && now > dateTimeContract.toTimestamp(2018,3,16,12)) { //Till March 16 12:00 UTC
 
-            state = State.week2;
+            state = State.stage3;
             
-        } else if(state == State.week2 && now > startTime.add(28 days)){
+        } else if(state == State.stage3 && now > dateTimeContract.toTimestamp(2018,3,23,12)) { //From March 23 12:00 UTC
 
-            state = State.week3;
+            state = State.stage4;
             
-        } else if(state == State.week3 && now > startTime.add(35 days)){
+        } else if(now > ICOdeadline && state!=State.Successful) { //if we reach ico deadline and its not Successful yet
 
-            state = State.week4;
-            
-        } else if(state == State.week4 && now > startTime.add(42 days)){
+        state = State.Successful; //ico becomes Successful
+        completedAt = now; //ICO is complete
 
-            state = State.week5;
-            
-        } else if(state == State.week5 && now > startTime.add(49 days)){
+        LogFundingSuccessful(totalRaised); //we log the finish
+        finished(); //and execute closure
 
-            state = State.week6;
-            
-        } else if(state == State.week6 && now > startTime.add(56 days)){
-
-            state = State.week7;
-            
-        } else if(now > ICOdeadline && state!=State.Successful ) { //if we reach ico deadline and its not Successful yet
-
-            state = State.Successful; //ico becomes Successful
-            completedAt = now; //ICO is complete
-
-            LogFundingSuccessful(totalRaised); //we log the finish
-            finished(); //and execute closure
-        }
     }
+}
 
     /**
     * @notice closure handler
     */
-    function finished() public { //When finished eth are transfered to creator
+    function finished() public { //When finished eth are transfered to beneficiary
 
         require(state == State.Successful);
-        uint256 remanent = tokenReward.balanceOf(this);
-
-        tokenReward.transfer(creator,remanent);
-        LogContributorsPayout(creator, remanent);
+        require(beneficiary.send(this.balance));
+        LogBeneficiaryPaid(beneficiary);
 
     }
 
     /*
-    * @dev Direct payments handle
+    * @dev direct payments
     */
-
     function () public payable {
         
         contribute();
