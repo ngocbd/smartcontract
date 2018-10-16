@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SSDTokenSwap at 0x07eFd6E390222A45aF4A25D0CE31C7710Bf605Bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SSDTokenSwap at 0x9bbc7a40d8732c44fd48ffe6136bbd804c0b03b5
 */
 /**
  * Copyright (C) Siousada.io
@@ -116,14 +116,14 @@ contract SSDTokenSwap is Guarded, Ownable {
 
     string public version = '0.1.2';
 
-    uint256 public StartTime = 1506009600;    // 22nd September 2017, 08:00:00 - 1506009600
-    uint256 public EndTime = 1506528000;     // 28nd September 2017, 08:00:00 - 1506528000
+    uint256 public startBlock = 4303063;                // 22nd September 2017, 08:00:00 - 1506067200
+    uint256 public endBlock = 4324663;                  // 28nd September 2017, 08:00:00 - 1506585600
 
     uint256 public totalEtherCap = 200222 ether;       // Total raised for ICO, at USD 211/ether
     uint256 public weiRaised = 0;                       // wei raised in this ICO
     uint256 public minContrib = 0.05 ether;             // min contribution accepted
 
-    address public wallet = 0x2E0fc8E431cc1b4721698c9e82820D7A71B88400;
+    address public wallet = 0xe53df71148021F280Eb13FcD8679b01200e0C348;
 
     event Contribution(address indexed _contributor, uint256 _amount);
 
@@ -131,13 +131,15 @@ contract SSDTokenSwap is Guarded, Ownable {
     }
 
     // function to start the Token Sale
-    function setStartTime(uint256 _StartTime) onlyOwner public {
-        StartTime = _StartTime;
+    /// start the token sale at `_starBlock`
+    function setStartBlock(uint256 _startBlock) onlyOwner public {
+        startBlock = _startBlock;
     }
 
     // function to stop the Token Swap 
-    function setEndTime(uint256 _EndTime) onlyOwner public {
-        EndTime = _EndTime;
+    /// stop the token swap at `_endBlock`
+    function setEndBlock(uint256 _endBlock) onlyOwner public {
+        endBlock = _endBlock;
     }
 
     // this function is to add the previous token sale balance.
@@ -159,12 +161,12 @@ contract SSDTokenSwap is Guarded, Ownable {
 
     // @return true if token swap event has ended
     function hasEnded() public constant returns (bool) {
-        return now <= EndTime;
+        return block.number >= endBlock;
     }
 
     // @return true if the token swap contract is active.
     function isActive() public constant returns (bool) {
-        return now >= StartTime && now <= EndTime;
+        return block.number >= startBlock && block.number <= endBlock;
     }
 
     function () payable {
@@ -198,7 +200,9 @@ contract SSDTokenSwap is Guarded, Ownable {
 
     // @return true if the transaction can buy tokens
     function validPurchase() internal constant returns (bool) {
-        bool withinPeriod = now >= StartTime && now <= EndTime;
+        uint256 current = block.number;
+
+        bool withinPeriod = current >= startBlock && current <= endBlock;
         bool minPurchase = msg.value >= minContrib;
 
         // add total wei raised
