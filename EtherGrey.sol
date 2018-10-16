@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGrey at 0x9f7eaeb7d987b33db953fca515642a1def0cc39e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGrey at 0x3cf09759df237446a84c4de526d39e7b2dff0cdc
 */
 pragma solidity ^0.4.18;
 
@@ -213,7 +213,7 @@ contract EtherGrey is ERC721 {
     greyIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 125), 100);
     greyIndexToPreviousPrice[_tokenId] = sellingPrice;
 
-    uint256 strangePrice = uint256(SafeMath.mul(SafeMath.div(priceDelta, 100), 10));
+    uint256 strangePrice = uint256(SafeMath.div(SafeMath.mul(priceDelta, 10), 100));
     // Pay previous tokenOwner if owner is not contract
     // and if previous price is not 0
     if (oldOwner != address(this)) {
@@ -224,11 +224,11 @@ contract EtherGrey is ERC721 {
     }
 
     // Next distribute payout Total among previous Owners
-    for (uint i = 0; i < 5; i++) {
+    for (uint i = 0; i <= 5; i++) {
         if (previousOwners[i] != address(this)) {
-            previousOwners[i].transfer(uint256(SafeMath.mul(SafeMath.div(priceDelta, 100), 10)));
+            previousOwners[i].transfer(uint256(SafeMath.div(SafeMath.mul(priceDelta, 10), 100)));
         } else {
-            strangePrice = SafeMath.add(strangePrice, uint256(SafeMath.mul(SafeMath.div(priceDelta, 100), 10)));
+            strangePrice = SafeMath.add(strangePrice, uint256(SafeMath.div(SafeMath.mul(priceDelta, 10), 100)));
         }
     }
     ceoAddress.transfer(strangePrice);
