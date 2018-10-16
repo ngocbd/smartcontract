@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x4A18B5e31dF777CA500470FA4FD1616879c5A1A3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0c4414549531fb8834b247411a763764dfb6c8c2
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.10;
 
 /**
  * @title SafeMath
@@ -40,7 +40,7 @@ contract Crowdsale {
 	address public owner;
 	address public multisig;
 	uint256 public totalRaised;
-	uint256 public constant hardCap = 12800 ether;
+	uint256 public constant hardCap = 20000 ether;
 	mapping(address => bool) public whitelist;
 
 	modifier isWhitelisted() {
