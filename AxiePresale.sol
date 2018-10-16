@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AxiePresale at 0x0a313162fa66c21ea2641040e7e43933e6904880
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AxiePresale at 0xb28a3dd24036151c819c6d401f7a222d9aa3671b
 */
 pragma solidity ^0.4.19;
 
@@ -183,6 +183,9 @@ contract HasNoEther is Ownable {
 contract AxiePresale is HasNoEther, Pausable {
   using SafeMath for uint256;
 
+  // No Axies can be adopted after this end date: Friday, March 16, 2018 11:59:59 PM GMT.
+  uint256 constant public PRESALE_END_TIMESTAMP = 1521244799;
+
   uint8 constant public CLASS_BEAST = 0;
   uint8 constant public CLASS_AQUATIC = 2;
   uint8 constant public CLASS_PLANT = 4;
@@ -252,6 +255,8 @@ contract AxiePresale is HasNoEther, Pausable {
     payable
     whenNotPaused
   {
+    require(now <= PRESALE_END_TIMESTAMP);
+
     require(beastQuantity <= 3);
     require(aquaticQuantity <= 3);
     require(plantQuantity <= 3);
@@ -333,7 +338,6 @@ contract AxiePresale is HasNoEther, Pausable {
   )
     public
     onlyOwner
-    whenNotPaused
     returns (
       uint256 /* remainingBeastQuantity */,
       uint256 /* remainingAquaticQuantity */,
@@ -353,7 +357,6 @@ contract AxiePresale is HasNoEther, Pausable {
   )
     public
     onlyOwner
-    whenNotPaused
     returns (uint256 remainingQuantity)
   {
     remainingQuantity = axiesRewarded[receiver] = axiesRewarded[receiver].sub(quantity);
