@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MysteriumPricing at 0x4679fe9485980650cdd9301b8e260fcbe64e7289
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MysteriumPricing at 0xd2b34de9882923df7a97fbe37f15ba7c2e3deefd
 */
 /**
  * Interface for defining crowdsale pricing.
@@ -666,9 +666,9 @@ contract MysteriumPricing is PricingStrategy, Ownable {
   uint public chfScale = 10000;
 
   /* How many weis one token costs */
-  uint public hardCapPrice = 12000;  // 1.2 * 10000 Expressed as CFH base points
+  uint public hardCapPrice = 10000;  // 1 * 10000  / 1 Expressed as CFH base points
 
-  uint public softCapPrice = 10000;  // 1.0 * 10000 Expressed as CFH base points
+  uint public softCapPrice = 8333;  // 1 * 10000 / 1.2 Expressed as CFH base points
 
   uint public softCapCHF = 6000000 * 10000; // Soft cap set in CHF
 
