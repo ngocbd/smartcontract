@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChiTrader at 0x02cf57be43971ce5446f7893d9a73d3571976e06
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChiTrader at 0xb22a321a01b36139ab046d5d9932c600651ddfc2
 */
 pragma solidity ^0.4.19;
 
