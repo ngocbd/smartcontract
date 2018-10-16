@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcreToken at 0xf31c69c71fc39a936245f8921f81b08d2210591d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcreToken at 0x0dd644300b9cc67917d09ae4bee413e600304266
 */
 pragma solidity 0.4.20;
 
@@ -26,7 +26,7 @@ library SafeMath {
 contract AcreConfig {
     using SafeMath for uint;
     
-    uint internal constant TIME_FACTOR = 1 minutes;
+    uint internal constant TIME_FACTOR = 1 days;
 
     // Ownable
     uint internal constant OWNERSHIP_DURATION_TIME = 7; // 7 days
@@ -38,18 +38,18 @@ contract AcreConfig {
     uint internal constant LOCKUP_DURATION_TIME = 365; // 365 days
     
     // AcreToken
-    string internal constant TOKEN_NAME            = "ACT";
-    string internal constant TOKEN_SYMBOL          = "ACT";
+    string internal constant TOKEN_NAME            = "Acre";
+    string internal constant TOKEN_SYMBOL          = "ACRE";
     uint8  internal constant TOKEN_DECIMALS        = 18;
     
     uint   internal constant INITIAL_SUPPLY        =   1*1e8 * 10 ** uint(TOKEN_DECIMALS); // supply
-    uint   internal constant CAPITAL_SUPPLY        =   4*1e7 * 10 ** uint(TOKEN_DECIMALS); // supply
-    uint   internal constant PRE_PAYMENT_SUPPLY    = 995*1e4 * 10 ** uint(TOKEN_DECIMALS); // supply
+    uint   internal constant CAPITAL_SUPPLY        =  31*1e6 * 10 ** uint(TOKEN_DECIMALS); // supply
+    uint   internal constant PRE_PAYMENT_SUPPLY    =  19*1e6 * 10 ** uint(TOKEN_DECIMALS); // supply
     uint   internal constant MAX_MINING_SUPPLY     =   4*1e8 * 10 ** uint(TOKEN_DECIMALS); // supply
     
     // Sale
-    uint internal constant MIN_ETHER               = 1*1e14; // 0.0001 ether
-    uint internal constant EXCHANGE_RATE           = 1000000;   // 1 eth = 1000000 ACT
+    uint internal constant MIN_ETHER               = 1*1e17; // 0.1 ether
+    uint internal constant EXCHANGE_RATE           = 1000;   // 1 eth = 1000 acre
     uint internal constant PRESALE_DURATION_TIME   = 15;     // 15 days 
     uint internal constant CROWDSALE_DURATION_TIME = 21;     // 21 days
     
@@ -72,9 +72,9 @@ contract Ownable is AcreConfig {
     address public reservedOwner;
     uint public ownershipDeadline;
     
-    event logReserveOwnership(address indexed oldOwner, address indexed newOwner);
-    event logConfirmOwnership(address indexed oldOwner, address indexed newOwner);
-    event logCancelOwnership(address indexed oldOwner, address indexed newOwner);
+    event ReserveOwnership(address indexed oldOwner, address indexed newOwner);
+    event ConfirmOwnership(address indexed oldOwner, address indexed newOwner);
+    event CancelOwnership(address indexed oldOwner, address indexed newOwner);
     
     modifier onlyOwner {
         require(msg.sender == owner);
@@ -87,7 +87,7 @@ contract Ownable is AcreConfig {
     
     function reserveOwnership(address newOwner) onlyOwner public returns (bool success) {
         require(newOwner != address(0));
-        logReserveOwnership(owner, newOwner);
+        ReserveOwnership(owner, newOwner);
         reservedOwner = newOwner;
 		ownershipDeadline = SafeMath.add(now, SafeMath.mul(OWNERSHIP_DURATION_TIME, TIME_FACTOR));
         return true;
@@ -96,7 +96,7 @@ contract Ownable is AcreConfig {
     function confirmOwnership() onlyOwner public returns (bool success) {
         require(reservedOwner != address(0));
         require(now > ownershipDeadline);
-        logConfirmOwnership(owner, reservedOwner);
+        ConfirmOwnership(owner, reservedOwner);
         owner = reservedOwner;
         reservedOwner = address(0);
         return true;
@@ -104,7 +104,7 @@ contract Ownable is AcreConfig {
     
     function cancelOwnership() onlyOwner public returns (bool success) {
         require(reservedOwner != address(0));
-        logCancelOwnership(owner, reservedOwner);
+        CancelOwnership(owner, reservedOwner);
         reservedOwner = address(0);
         return true;
     }
@@ -113,8 +113,8 @@ contract Ownable is AcreConfig {
 contract MultiOwnable is Ownable {
     address[] public owners;
     
-    event logGrantOwners(address indexed owner);
-    event logRevokeOwners(address indexed owner);
+    event GrantOwners(address indexed owner);
+    event RevokeOwners(address indexed owner);
     
     modifier onlyMutiOwners {
         require(isExistedOwner(msg.sender));
@@ -134,14 +134,14 @@ contract MultiOwnable is Ownable {
         require(!isExistedOwner(_owner));
         require(isEmptyOwner());
         owners[getEmptyIndex()] = _owner;
-        logGrantOwners(_owner);
+        GrantOwners(_owner);
         return true;
     }
 
     function revokeOwners(address _owner) onlyOwner public returns (bool success) {
         require(isExistedOwner(_owner));
         owners[getOwnerIndex(_owner)] = address(0);
-        logRevokeOwners(_owner);
+        RevokeOwners(_owner);
         return true;
     }
     
@@ -186,8 +186,8 @@ contract MultiOwnable is Ownable {
 contract Pausable is MultiOwnable {
     bool public paused = false;
     
-    event logPause();
-    event logUnpause();
+    event Pause();
+    event Unpause();
     
     modifier whenNotPaused() {
         require(!paused);
@@ -208,13 +208,13 @@ contract Pausable is MultiOwnable {
     
     function pause() onlyManagers whenNotPaused public returns (bool success) {
         paused = true;
-        logPause();
+        Pause();
         return true;
     }
   
     function unpause() onlyManagers whenPaused public returns (bool success) {
         paused = false;
-        logUnpause();
+        Unpause();
         return true;
     }
 }
@@ -222,12 +222,12 @@ contract Pausable is MultiOwnable {
 contract Lockable is Pausable {
     mapping (address => uint) public locked;
     
-    event logLockup(address indexed target, uint startTime, uint deadline);
+    event Lockup(address indexed target, uint startTime, uint deadline);
     
     function lockup(address _target) onlyOwner public returns (bool success) {
 	    require(!isManageable(_target));
         locked[_target] = SafeMath.add(now, SafeMath.mul(LOCKUP_DURATION_TIME, TIME_FACTOR));
-        logLockup(_target, now, locked[_target]);
+        Lockup(_target, now, locked[_target]);
         return true;
     }
     
@@ -253,10 +253,10 @@ contract TokenERC20 {
     mapping (address => uint) public balanceOf;
     mapping (address => mapping (address => uint)) public allowance;
 
-    event logERC20Token(address indexed owner, string name, string symbol, uint8 decimals, uint supply);
-    event logTransfer(address indexed from, address indexed to, uint value);
-    event logTransferFrom(address indexed from, address indexed to, address indexed spender, uint value);
-    event logApproval(address indexed owner, address indexed spender, uint value);
+    event ERC20Token(address indexed owner, string name, string symbol, uint8 decimals, uint supply);
+    event Transfer(address indexed from, address indexed to, uint value);
+    event TransferFrom(address indexed from, address indexed to, address indexed spender, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
     
     function TokenERC20(
         string _tokenName,
@@ -271,7 +271,7 @@ contract TokenERC20 {
         totalSupply = _initialSupply;
         balanceOf[msg.sender] = totalSupply;
         
-        logERC20Token(msg.sender, name, symbol, decimals, totalSupply);
+        ERC20Token(msg.sender, name, symbol, decimals, totalSupply);
     }
 
     function _transfer(address _from, address _to, uint _value) internal returns (bool success) {
@@ -281,7 +281,7 @@ contract TokenERC20 {
         uint previousBalances = SafeMath.add(balanceOf[_from], balanceOf[_to]);
         balanceOf[_from] = balanceOf[_from].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
-        logTransfer(_from, _to, _value);
+        Transfer(_from, _to, _value);
         assert(SafeMath.add(balanceOf[_from], balanceOf[_to]) == previousBalances);
         return true;
     }
@@ -294,13 +294,13 @@ contract TokenERC20 {
         require(_value <= allowance[_from][msg.sender]);     
         allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
-        logTransferFrom(_from, _to, msg.sender, _value);
+        TransferFrom(_from, _to, msg.sender, _value);
         return true;
     }
 
     function approve(address _spender, uint _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
-        logApproval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -322,10 +322,10 @@ contract AcreToken is Lockable, TokenERC20 {
     uint public totalMineSupply;
     mapping (address => bool) public frozenAccount;
 
-    event logFrozenAccount(address indexed target, bool frozen);
-    event logBurn(address indexed owner, uint value);
-    event logMining(address indexed recipient, uint value);
-    event logWithdrawContractToken(address indexed owner, uint value);
+    event FrozenAccount(address indexed target, bool frozen);
+    event Burn(address indexed owner, uint value);
+    event Mining(address indexed recipient, uint value);
+    event WithdrawContractToken(address indexed owner, uint value);
     
     function AcreToken(address _companyCapital, address _prePayment) TokenERC20(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, INITIAL_SUPPLY) public {
         require(_companyCapital != address(0));
@@ -356,14 +356,14 @@ contract AcreToken is Lockable, TokenERC20 {
         require(!isManageable(_target));
         require(!frozenAccount[_target]);
         frozenAccount[_target] = true;
-        logFrozenAccount(_target, true);
+        FrozenAccount(_target, true);
         return true;
     }
     
     function unfreezeAccount(address _target) onlyManagers public returns (bool success) {
         require(frozenAccount[_target]);
         frozenAccount[_target] = false;
-        logFrozenAccount(_target, false);
+        FrozenAccount(_target, false);
         return true;
     }
     
@@ -371,7 +371,7 @@ contract AcreToken is Lockable, TokenERC20 {
         require(balanceOf[msg.sender] >= _value);   
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);            
         totalSupply = totalSupply.sub(_value);                      
-        logBurn(msg.sender, _value);
+        Burn(msg.sender, _value);
         return true;
     }
     
@@ -383,13 +383,13 @@ contract AcreToken is Lockable, TokenERC20 {
         balanceOf[_recipient] = balanceOf[_recipient].add(_value);
         totalSupply = totalSupply.add(_value);
         totalMineSupply = totalMineSupply.add(_value);
-        logMining(_recipient, _value);
+        Mining(_recipient, _value);
         return true;
     }
     
     function withdrawContractToken(uint _value) onlyManagers public returns (bool success) {
         _transfer(this, msg.sender, _value);
-        logWithdrawContractToken(msg.sender, _value);
+        WithdrawContractToken(msg.sender, _value);
         return true;
     }
     
@@ -424,12 +424,12 @@ contract AcreSale is MultiOwnable {
     mapping(address => Order) public orders;
     uint public funderCount;
     
-    event logStartSale(uint softCapToken, uint hardCapToken, uint minEther, uint exchangeRate, uint startTime, uint deadline);
-    event logReservedToken(address indexed funder, uint amount, uint token, uint bonusRate);
-    event logWithdrawFunder(address indexed funder, uint value);
-    event logWithdrawContractToken(address indexed owner, uint value);
-    event logCheckGoalReached(uint raisedAmount, uint raisedToken, bool reached);
-    event logCheckOrderstate(address indexed funder, eOrderstate oldState, eOrderstate newState);
+    event StartSale(uint softCapToken, uint hardCapToken, uint minEther, uint exchangeRate, uint startTime, uint deadline);
+    event ReservedToken(address indexed funder, uint amount, uint token, uint bonusRate);
+    event WithdrawFunder(address indexed funder, uint value);
+    event WithdrawContractToken(address indexed owner, uint value);
+    event CheckGoalReached(uint raisedAmount, uint raisedToken, bool reached);
+    event CheckOrderstate(address indexed funder, eOrderstate oldState, eOrderstate newState);
     
     enum eOrderstate { NONE, KYC, REFUND }
     
@@ -476,7 +476,7 @@ contract AcreSale is MultiOwnable {
         saleDeadline = SafeMath.add(startSaleTime, SafeMath.mul(_durationTime, TIME_FACTOR));
         saleOpened = true;
         
-        logStartSale(softCapToken, hardCapToken, MIN_ETHER, EXCHANGE_RATE, startSaleTime, saleDeadline);
+        StartSale(softCapToken, hardCapToken, MIN_ETHER, EXCHANGE_RATE, startSaleTime, saleDeadline);
     }
     
     // get
@@ -507,7 +507,7 @@ contract AcreSale is MultiOwnable {
                 fundingGoalReached = true;
             }
             saleOpened = false;
-            logCheckGoalReached(receivedEther, soldToken, fundingGoalReached);
+            CheckGoalReached(receivedEther, soldToken, fundingGoalReached);
         }
     }
     
@@ -531,7 +531,7 @@ contract AcreSale is MultiOwnable {
         kyc.token = kyc.token.add(orders[_funder].reservedToken);
         kyc.eth   = kyc.eth.add(orders[_funder].paymentEther);
         kyc.count = kyc.count.add(1);
-        logCheckOrderstate(_funder, oldState, eOrderstate.KYC);
+        CheckOrderstate(_funder, oldState, eOrderstate.KYC);
     }
     
     function checkRefund(address _funder) onlyManagers afterSaleDeadline public {
@@ -554,7 +554,7 @@ contract AcreSale is MultiOwnable {
         refund.token = refund.token.add(orders[_funder].reservedToken);
         refund.eth   = refund.eth.add(orders[_funder].paymentEther);
         refund.count = refund.count.add(1);
-        logCheckOrderstate(_funder, oldState, eOrderstate.REFUND);
+        CheckOrderstate(_funder, oldState, eOrderstate.REFUND);
     }
     
     // withdraw
@@ -571,12 +571,12 @@ contract AcreSale is MultiOwnable {
         withdrawal.eth   = withdrawal.eth.add(orders[_funder].paymentEther);
         withdrawal.count = withdrawal.count.add(1);
         orders[_funder].withdrawn = true;
-        logWithdrawFunder(_funder, orders[_funder].reservedToken);
+        WithdrawFunder(_funder, orders[_funder].reservedToken);
     }
     
     function withdrawContractToken(uint _value) onlyManagers public {
         tokenReward.transfer(msg.sender, _value);
-        logWithdrawContractToken(msg.sender, _value);
+        WithdrawContractToken(msg.sender, _value);
     }
     
     // payable
@@ -606,7 +606,7 @@ contract AcreSale is MultiOwnable {
         receivedEther = receivedEther.add(amount);
         soldToken = soldToken.add(token);
         
-        logReservedToken(msg.sender, amount, token, curBonusRate);
+        ReservedToken(msg.sender, amount, token, curBonusRate);
     }
 }
 
