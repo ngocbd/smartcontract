@@ -1,18 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewMediaTime at 0x75c7260d0d7b4cbf3c4d4de42ce705f52a020b42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewMediaTime at 0xccde5365c6171b2f39041857c9cc45177ef7f618
 */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract NewMediaTime {
-    /* Public variables of the token */
-    string public standard = 'ButenCoin 0.1';
+    /* Creat By www.hestart.com */
+    string public standard = 'NewMediaTime 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
 
-    /* This creates an array with all balances . */
+    /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
