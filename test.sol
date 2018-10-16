@@ -1,14 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Test at 0xb1e93423182504646bac08696230d59c5e88743e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Test at 0x5485c751c582eaf9e8d0ec47d754ee66a2e6e9eb
 */
 pragma solidity ^0.4.0;
 contract Test {
-    
-    uint[] array = [1,5];
-    address to = 0x1b60840cBaFBe74DB4B9C7Dd7F1d0822fA9b9591;
 
-    function send() public{
-        if (to.call(0xc66ddd68, array)) {
+    function send(address to) public{
+        if (to.call("0xabcdef")) {
             return;
         } else {
             revert();
