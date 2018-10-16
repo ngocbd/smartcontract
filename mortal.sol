@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract mortal at 0x921a8142872f1b76d9288b37fcea6d52ebd41562
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract mortal at 0xF5b86B8a7d3Ad269eDFf19e2f2D0C59b42AEFb13
 */
+pragma solidity 0.4.8;
 contract mortal {
     /* Define variable owner of the type address*/
     address owner;
@@ -9,5 +10,20 @@ contract mortal {
     function mortal() { owner = msg.sender; }
 
     /* Function to recover the funds on the contract */
-    function kill() { if (msg.sender == owner) suicide(owner); }
+    function kill() { if (msg.sender == owner) selfdestruct(owner); }
+}
+
+contract greeter is mortal {
+    /* define variable greeting of the type string */
+    string greeting;
+
+    /* this runs when the contract is executed */
+    function greeter(string _greeting) public {
+        greeting = _greeting;
+    }
+
+    /* main function */
+    function greet() constant returns (string) {
+        return greeting;
+    }
 }
