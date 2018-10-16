@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TorusCoin at 0x1c9f0f414a3e75ee6da0b9f060143c9277169473
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TorusCoin at 0xefc6d9d05d41134b1f44b379e319079ef2855edb
 */
 pragma solidity ^0.4.18;
 
@@ -265,7 +265,7 @@ contract TorusCoin is StandardToken {
     }
 
     modifier duringCrowdSale {
-        require(block.timestamp >= startDatetime && block.timestamp <= endDatetime);
+        require(block.timestamp >= startDatetime && block.timestamp < endDatetime);
         _;
     }
 
@@ -319,7 +319,7 @@ contract TorusCoin is StandardToken {
      * Set up founder address token balance.
      */
     function allocateFounderTokens() public onlyAdmin {
-        require( now > endDatetime );
+        require( block.timestamp > endDatetime );
         require(!founderAllocated);
 
         balances[founder] = balances[founder].add(founderAllocation);
@@ -358,7 +358,7 @@ contract TorusCoin is StandardToken {
       * Inflation
       */
     function inflate(address holder, uint256 tokens) public onlyAdmin {
-        require( now > endDatetime );
+        require( block.timestamp > endDatetime );
         require(saleTokenSupply.add(tokens) <= coinAllocation );
 
         balances[holder] = balances[holder].add(tokens);
