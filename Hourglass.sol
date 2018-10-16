@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x2eeafd9a3a37bfdc12d42296a1b42bbf74ce2e2d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xafd31812e3ac7857944aac4b23c0877f12cb33ea
 */
 pragma solidity ^0.4.20;
 
 /*
-* Team JUST presents
+* Team JUST presents..
 * =====================================================*
 * _____  __          ___    _ __  __          __   __  *
 *|  __ \ \ \        / / |  | |  \/  |   /\    \ \ / /  *
@@ -17,7 +17,7 @@ pragma solidity ^0.4.20;
 * =====================================================*
 * -> What?
 * The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!
+* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
 * [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
 * [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
 * [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
