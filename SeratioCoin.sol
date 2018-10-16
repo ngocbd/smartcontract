@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SeratioCoin at 0xc0ec1c2647d86b659b453cc486a8e5fb7e6857c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SeratioCoin at 0x48fe820e72c424d7eb9999f8ea34cd473a156642
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.8;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
