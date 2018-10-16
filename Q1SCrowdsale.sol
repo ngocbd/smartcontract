@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Q1SCrowdsale at 0xa8a6a0698b6120de28777b45b2c9b4dbe094040f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Q1SCrowdsale at 0x480ede3b46f246ba11cf0d232f78771a0267be98
 */
 pragma solidity ^0.4.16;
 
@@ -11,7 +11,7 @@ contract Q1SCrowdsale {
     
     Token public tokenReward;
     address public creator;
-    address public owner = 0xb1Af3544a2cb2b2B12346D2F2Ca3Cd03251d890a;
+    address public owner =  0xc02E86c673DD62F8Bb1927e16820Ae09D6744da7;
 
     uint256 public price;
     uint256 public startDate;
@@ -21,10 +21,10 @@ contract Q1SCrowdsale {
 
     function Q1SCrowdsale() public {
         creator = msg.sender;
-        startDate = 1517184000;     // 29/01/2018
-        endDate = 1522537200;       // 31/03/2018
-        price = 99108;
-        tokenReward = Token(0x5AB468e962637E4EEcd6660F61b5b4a609E66E13);
+        startDate = 1517184000;
+        endDate = 1520035200;
+        price = 1000;
+        tokenReward = Token(0xBeEbcFe2fbb3c72884341BE2B73aE0FC6559B8Fc);
     }
 
     function setOwner(address _owner) public {
@@ -67,6 +67,38 @@ contract Q1SCrowdsale {
         require(now > startDate);
         require(now < endDate);
 	    uint amount = msg.value * price;
+        uint _amount = amount / 20;
+
+        // period 1 : 40%
+        if(now > 1517184000 && now < 1517529601) {
+            amount += _amount * 8;
+        }
+        
+        // period 1 : 20%
+        if(now > 1517529600 && now < 1518134401) {
+            amount += _amount * 4;
+        }
+
+        // Pperiod 2 : 15%
+        if(now > 1518134400 && now < 1518652801) {
+            amount += _amount * 3;
+        }
+
+        // period 3 : 10%
+        if(now > 1518652800 && now < 1519257601) {
+            amount += _amount * 2;
+        }
+
+        // period 4 : 5%
+        if(now > 1519257600 && now < 1519862401) {
+            amount += _amount;
+        }
+
+        // period 5 : 0%
+        if(now > 1519862400 && now < 1520035200) {
+            amount += _amount;
+        }
+
         tokenReward.transferFrom(owner, msg.sender, amount);
         FundTransfer(msg.sender, amount, true);
         owner.transfer(msg.value);
