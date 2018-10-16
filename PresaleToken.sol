@@ -1,392 +1,249 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleToken at 0xb957961c04bce5c8dd42c228cd5976383b49d6c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x313411D56f191cBC367AeA5e9BdE69817B7c537D
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.13;
 
+// ERC20 token interface is implemented only partially
+// (no SafeMath is used because contract code is very simple)
+// 
+// Some functions left undefined:
+//  - transfer, transferFrom,
+//  - approve, allowance.
+contract PresaleToken
+{
+/// Fields:
+    string public constant name = "Remechain Presale Token";
+    string public constant symbol = "RMC";
+    uint public constant decimals = 18;
+    uint public constant PRICE = 320;  // per 1 Ether
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+    //  price
+    // Cap is 1875 ETH
+    // 1 RMC = 0,003125 ETH or 1 ETH = 320 RMC
+    // ETH price ~300$ - 13.10.2017
+    uint public constant HARDCAP_ETH_LIMIT = 1875;
+    uint public constant SOFTCAP_ETH_LIMIT = 500;
+    uint public constant TOKEN_SUPPLY_LIMIT = PRICE * HARDCAP_ETH_LIMIT * (1 ether / 1 wei);
+    uint public constant SOFTCAP_LIMIT = PRICE * SOFTCAP_ETH_LIMIT * (1 ether / 1 wei);
+    
+    // 25.11.2017 17:00 MSK
+    uint public icoDeadline = 1511618400;
+    
+    uint public constant BOUNTY_LIMIT = 350000 * (1 ether / 1 wei);
+
+    enum State{
+       Init,
+       Running,
+       Paused,
+       Migrating,
+       Migrated
     }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+    State public currentState = State.Init;
+    uint public totalSupply = 0; // amount of tokens already sold
+    uint public bountySupply = 0; // amount of tokens already given as a reward
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+    // Gathered funds can be withdrawn only to escrow's address.
+    address public escrow = 0;
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
+    // Token manager has exclusive priveleges to call administrative
+    // functions on this contract.
+    address public tokenManager = 0;
 
+    // Crowdsale manager has exclusive priveleges to burn presale tokens.
+    address public crowdsaleManager = 0;
 
-contract PreSaleToken {
-    using SafeMath for uint256;
+    mapping (address => uint256) public balances;
+    mapping (address => uint256) public ethBalances;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event AllowExchanger(address indexed exchanger);
-    event RevokeExchanger(address indexed exchanger);
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-    event Exchange(address indexed from, uint256 exchangedValue, string symbol, uint256 grantedValue);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+/// Modifiers:
+    modifier onlyTokenManager()     { require(msg.sender == tokenManager); _;}
+    modifier onlyCrowdsaleManager() { require(msg.sender == crowdsaleManager); _;}
+    modifier onlyInState(State state){ require(state == currentState); _;}
 
-    /// The owner of the contract.
-    address public owner;
+/// Events:
+    event LogBuy(address indexed owner, uint value);
+    event LogBurn(address indexed owner, uint value);
+    event LogStateSwitch(State newState);
 
-    /// The total number of minted tokens, excluding destroyed tokens.
-    uint256 public totalSupply;
-
-    /// The token balance of each address.
-    mapping(address => uint256) balances;
-
-    /// The full list of addresses we have minted tokens for, stored for
-    /// exchange purposes.
-    address[] public holders;
-
-    /// Whether the token is still mintable.
-    bool public mintingFinished = false;
-
-    /// Addresses allowed to exchange the presale tokens for the final
-    /// and/or intermediary tokens.
-    mapping(address => bool) public exchangers;
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier onlyExchanger() {
-        require(exchangers[msg.sender]);
-        _;
-    }
-
-    function PreSaleToken() public {
-        owner = msg.sender;
-    }
-
-    function allowExchanger(address _exchanger) onlyOwner public {
-        require(mintingFinished);
-        require(_exchanger != 0x0);
-        require(!exchangers[_exchanger]);
-
-        exchangers[_exchanger] = true;
-        AllowExchanger(_exchanger);
-    }
-
-    function exchange(
-        address _from,
-        uint256 _amount,
-        string _symbol,
-        uint256 _grantedValue
-    )
-        onlyExchanger
-        public
-        returns (bool)
+/// Functions:
+    /// @dev Constructor
+    /// @param _tokenManager Token manager address.
+    function PresaleToken(address _tokenManager, address _escrow) public
     {
-        require(mintingFinished); // Always true due to exchangers requiring the same condition
-        require(_from != 0x0);
-        require(!exchangers[_from]);
-        require(_amount > 0);
-        require(_amount <= balances[_from]);
+        require(_tokenManager!=0);
+        require(_escrow!=0);
 
-        balances[_from] = balances[_from].sub(_amount);
-        balances[msg.sender] = balances[msg.sender].add(_amount);
-        Exchange(
-            _from,
-            _amount,
-            _symbol,
-            _grantedValue
-        );
-        Transfer(_from, msg.sender, _amount);
-
-        return true;
+        tokenManager = _tokenManager;
+        escrow = _escrow;
+    }
+    
+    function reward(address _user, uint  _amount) public onlyTokenManager {
+        require(_user != 0x0);
+        
+        assert(bountySupply + _amount >= bountySupply);
+        assert(bountySupply + _amount <= BOUNTY_LIMIT);
+        bountySupply += _amount;
+        
+        assert(balances[_user] + _amount >= balances[_user]);
+        balances[_user] += _amount;
+        
+        addAddressToList(_user);
+    }
+    
+    function isIcoSuccessful() constant public returns(bool successful)  {
+        return totalSupply >= SOFTCAP_LIMIT;
+    }
+    
+    function isIcoOver() constant public returns(bool isOver) {
+        return now >= icoDeadline;
     }
 
-    function finishMinting() onlyOwner public returns (bool) {
-        require(!mintingFinished);
+    function buyTokens(address _buyer) public payable onlyInState(State.Running)
+    {
+        assert(!isIcoOver());
+        require(msg.value != 0);
+        
+        uint ethValue = msg.value;
+        uint newTokens = msg.value * PRICE;
+       
+        require(!(totalSupply + newTokens > TOKEN_SUPPLY_LIMIT));
+        assert(ethBalances[_buyer] + ethValue >= ethBalances[_buyer]);
+        assert(balances[_buyer] + newTokens >= balances[_buyer]);
+        assert(totalSupply + newTokens >= totalSupply);
+        
+        ethBalances[_buyer] += ethValue;
+        balances[_buyer] += newTokens;
+        totalSupply += newTokens;
+        
+        addAddressToList(_buyer);
 
-        mintingFinished = true;
-        MintFinished();
-
-        return true;
+        LogBuy(_buyer, newTokens);
+    }
+    
+    address[] public addressList;
+    mapping (address => bool) isAddressInList;
+    function addAddressToList(address _address) private {
+        if (isAddressInList[_address]) {
+            return;
+        }
+        addressList.push(_address);
+        isAddressInList[_address] = true;
     }
 
-    function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
-        require(_to != 0x0);
-        require(!mintingFinished);
-        require(_amount > 0);
+    /// @dev Returns number of tokens owned by given address.
+    /// @param _owner Address of token owner.
+    function burnTokens(address _owner) public onlyCrowdsaleManager onlyInState(State.Migrating)
+    {
+        uint tokens = balances[_owner];
+        require(tokens != 0);
 
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        holders.push(_to);
-        Mint(_to, _amount);
-        Transfer(0x0, _to, _amount);
+        balances[_owner] = 0;
+        totalSupply -= tokens;
 
-        return true;
+        LogBurn(_owner, tokens);
+
+        // Automatically switch phase when migration is done.
+        if(totalSupply == 0) 
+        {
+            currentState = State.Migrated;
+            LogStateSwitch(State.Migrated);
+        }
     }
 
-    function revokeExchanger(address _exchanger) onlyOwner public {
-        require(mintingFinished);
-        require(_exchanger != 0x0);
-        require(exchangers[_exchanger]);
-
-        delete exchangers[_exchanger];
-        RevokeExchanger(_exchanger);
-    }
-
-    function transferOwnership(address _to) onlyOwner public {
-        require(_to != address(0));
-        OwnershipTransferred(owner, _to);
-        owner = _to;
-    }
-
-    function balanceOf(address _owner) public constant returns (uint256) {
+    /// @dev Returns number of tokens owned by given address.
+    /// @param _owner Address of token owner.
+    function balanceOf(address _owner) public constant returns (uint256) 
+    {
         return balances[_owner];
     }
-}
 
-
-contract PreSale {
-    using SafeMath for uint256;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event WalletChanged(address indexed previousWallet, address indexed newWallet);
-    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-    event Pause();
-    event Unpause();
-    event Withdrawal(address indexed wallet, uint256 weiAmount);
-    event Extended(uint256 until);
-    event Finalized();
-    event Refunding();
-    event Refunded(address indexed beneficiary, uint256 weiAmount);
-    event Whitelisted(address indexed participant, uint256 weiAmount);
-
-    /// The owner of the contract.
-    address public owner;
-
-    /// The token we're selling.
-    PreSaleToken public token;
-
-    /// The minimum goal to reach. If the goal is not reached, finishing
-    /// the sale will enable refunds.
-    uint256 public goal;
-
-    /// The sale period.
-    uint256 public startTime;
-    uint256 public endTime;
-    uint256 public timeExtension;
-
-    /// The numnber of tokens to mint per wei.
-    uint256 public rate;
-
-    /// The total number of wei raised. Note that the contract's balance may
-    /// differ from this value if someone has decided to forcefully send us
-    /// ether.
-    uint256 public weiRaised;
-
-    /// The wallet that will receive the contract's balance once the sale
-    /// finishes and the minimum goal is met.
-    address public wallet;
-
-    /// The list of addresses that are allowed to participate in the sale,
-    /// and up to what amount.
-    mapping(address => uint256) public whitelisted;
-
-    /// The amount of wei invested by each investor.
-    mapping(address => uint256) public deposited;
-
-    /// An enumerable list of investors.
-    address[] public investors;
-
-    /// Whether the sale is paused.
-    bool public paused = false;
-
-    /// Whether the sale has finished, and when.
-    bool public finished = false;
-    uint256 public finishedAt;
-
-    /// Whether we're accepting refunds.
-    bool public refunding = false;
-
-    /// The total number of wei refunded.
-    uint256 public weiRefunded;
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier saleOpen() {
-        require(!finished);
-        require(!paused);
-        require(now >= startTime);
-        require(now <= endTime + timeExtension);
-        _;
-    }
-
-    function PreSale(
-        uint256 _goal,
-        uint256 _startTime,
-        uint256 _endTime,
-        uint256 _rate,
-        address _wallet
-    )
-        public
-        payable
+    function setPresaleState(State _nextState) public onlyTokenManager
     {
-        require(msg.value > 0);
-        require(_goal > 0);
-        require(_startTime >= now);
-        require(_endTime >= _startTime);
-        require(_rate > 0);
-        require(_wallet != 0x0);
+        // Init -> Running
+        // Running -> Paused
+        // Running -> Migrating
+        // Paused -> Running
+        // Paused -> Migrating
+        // Migrating -> Migrated
+        bool canSwitchState
+             =  (currentState == State.Init && _nextState == State.Running)
+             || (currentState == State.Running && _nextState == State.Paused)
+             // switch to migration phase only if crowdsale manager is set
+             || ((currentState == State.Running || currentState == State.Paused)
+                 && _nextState == State.Migrating
+                 && crowdsaleManager != 0x0)
+             || (currentState == State.Paused && _nextState == State.Running)
+             // switch to migrated only if everyting is migrated
+             || (currentState == State.Migrating && _nextState == State.Migrated
+                 && totalSupply == 0);
 
-        owner = msg.sender;
-        goal = _goal;
-        startTime = _startTime;
-        endTime = _endTime;
-        rate = _rate;
-        wallet = _wallet;
-        token = new PreSaleToken();
+        require(canSwitchState);
 
-        wallet.transfer(msg.value);
+        currentState = _nextState;
+        LogStateSwitch(_nextState);
     }
 
-    function () public payable {
+    uint public nextInListToReturn = 0;
+    uint private constant transfersPerIteration = 50;
+    function returnToFunders() private {
+        uint afterLast = nextInListToReturn + transfersPerIteration < addressList.length ? nextInListToReturn + transfersPerIteration : addressList.length; 
+        
+        for (uint i = nextInListToReturn; i < afterLast; i++) {
+            address currentUser = addressList[i];
+            if (ethBalances[currentUser] > 0) {
+                currentUser.transfer(ethBalances[currentUser]);
+                ethBalances[currentUser] = 0;
+            }
+        }
+        
+        nextInListToReturn = afterLast;
+    }
+    function withdrawEther() public
+    {
+        if (isIcoSuccessful()) {
+            if(msg.sender == tokenManager && this.balance > 0) 
+            {
+                escrow.transfer(this.balance);
+            }
+        }
+        else {
+            if (isIcoOver()) {
+                returnToFunders();
+            }
+        }
+    }
+    
+    function returnFunds() public {
+        returnFundsFor(msg.sender);
+    }
+    function returnFundsFor(address _user) public {
+        assert(isIcoOver() && !isIcoSuccessful());
+        assert(msg.sender == tokenManager || msg.sender == address(this));
+        
+        if (ethBalances[_user] > 0) {
+            _user.transfer(ethBalances[_user]);
+            ethBalances[_user] = 0;
+        }
+    }
+
+/// Setters
+    function setTokenManager(address _mgr) public onlyTokenManager
+    {
+        tokenManager = _mgr;
+    }
+
+    function setCrowdsaleManager(address _mgr) public onlyTokenManager
+    {
+        // You can't change crowdsale contract when migration is in progress.
+        require(currentState != State.Migrating);
+
+        crowdsaleManager = _mgr;
+    }
+
+    // Default fallback function
+    function()  public payable 
+    {
         buyTokens(msg.sender);
-    }
-
-    function buyTokens(address _beneficiary) saleOpen public payable {
-        require(_beneficiary != address(0));
-        require(msg.value > 0);
-
-        uint256 weiAmount = msg.value;
-        uint256 newDeposited = deposited[_beneficiary].add(weiAmount);
-
-        require(newDeposited <= whitelisted[_beneficiary]);
-
-        uint256 tokens = weiAmount.mul(rate);
-
-        deposited[_beneficiary] = newDeposited;
-        investors.push(_beneficiary);
-
-        weiRaised = weiRaised.add(weiAmount);
-
-        token.mint(_beneficiary, tokens);
-        TokenPurchase(
-            msg.sender,
-            _beneficiary,
-            weiAmount,
-            tokens
-        );
-    }
-
-    function changeWallet(address _wallet) onlyOwner public payable {
-        require(_wallet != 0x0);
-        require(msg.value > 0);
-
-        wallet = _wallet;
-        WalletChanged(_wallet, wallet);
-
-        wallet.transfer(msg.value);
-    }
-
-    function extendTime(uint256 _timeExtension) onlyOwner public {
-        require(!finished);
-        require(now < endTime + timeExtension);
-        require(_timeExtension > 0);
-
-        timeExtension = timeExtension.add(_timeExtension);
-        require(timeExtension <= 7 days);
-
-        Extended(endTime.add(timeExtension));
-    }
-
-    function finish() onlyOwner public {
-        require(!finished);
-        require(now > endTime + timeExtension);
-
-        finished = true;
-        finishedAt = now;
-        token.finishMinting();
-
-        if (goalReached()) {
-            token.transferOwnership(owner);
-            withdraw();
-        } else {
-            refunding = true;
-            Refunding();
-        }
-
-        Finalized();
-    }
-
-    function pause() onlyOwner public {
-        require(!paused);
-        paused = true;
-        Pause();
-    }
-
-    function refund(address _investor) public {
-        require(finished);
-        require(refunding);
-        require(deposited[_investor] > 0);
-
-        uint256 weiAmount = deposited[_investor];
-        deposited[_investor] = 0;
-        weiRefunded = weiRefunded.add(weiAmount);
-        Refunded(_investor, weiAmount);
-
-        _investor.transfer(weiAmount);
-    }
-
-    function transferOwnership(address _to) onlyOwner public {
-        require(_to != address(0));
-        OwnershipTransferred(owner, _to);
-        owner = _to;
-    }
-
-    function unpause() onlyOwner public {
-        require(paused);
-        paused = false;
-        Unpause();
-    }
-
-    function whitelist(address _participant, uint256 _weiAmount) onlyOwner public {
-        require(_participant != 0x0);
-
-        whitelisted[_participant] = _weiAmount;
-        Whitelisted(_participant, _weiAmount);
-    }
-
-    function withdraw() onlyOwner public {
-        require(goalReached() || (finished && now > finishedAt + 14 days));
-
-        uint256 weiAmount = this.balance;
-
-        if (weiAmount > 0) {
-            wallet.transfer(weiAmount);
-            Withdrawal(wallet, weiAmount);
-        }
-    }
-
-    function goalReached() public constant returns (bool) {
-        return weiRaised >= goal;
     }
 }
