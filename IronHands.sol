@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x9ef66248f21f032d4aefd421693126044605bd17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x711b615e714a6b61c61cebba48d12cf97d7a3d0a
 */
 pragma solidity 0.4.23;
 
@@ -39,8 +39,8 @@ pragma solidity 0.4.23;
  * to be split 50/50.
  * 
  * If your seeing this contract in it's initial configuration, it should be
- * set to 200% (double deposits), and pointed at POTJ:
- * 0xC28E860C9132D55A184F9af53FC85e90Aa3A0153
+ * set to 200% (double deposits), and pointed at FART:
+ * 0xAF6DE38Ffc92E0d52857f864048D7af2f345A3CF
  * 
  * But you should verify this for yourself.
  *  
@@ -51,7 +51,7 @@ contract ERC20Interface {
     function transfer(address to, uint256 tokens) public returns (bool success);
 }
 
-contract POTJ {
+contract FART {
     
     function buy(address) public payable returns(uint256);
     function withdraw() public;
@@ -100,8 +100,8 @@ contract IronHands is Owned {
     /**
      * The tokens can never be stolen.
      */
-    modifier notPotj(address aContract) {
-        require(aContract != address(potj));
+    modifier notFart(address aContract) {
+        require(aContract != address(fart));
         _;
     }
    
@@ -138,16 +138,16 @@ contract IronHands is Owned {
     //How much each person is owed
     mapping(address => uint256) public creditRemaining;
     //What we will be buying
-    POTJ potj;
+    FART fart;
     
     address sender;
 
     /**
      * Constructor
      */
-    function IronHands(uint multiplierPercent, address potjAddress) public {
+    function IronHands(uint multiplierPercent, address fartAddress) public {
         multiplier = multiplierPercent;
-        potj = POTJ(potjAddress);
+        fart = FART(fartAddress);
         sender = msg.sender;
     }
     
@@ -157,7 +157,7 @@ contract IronHands is Owned {
      * goes into the pool. Used by withdraw/dividend payouts so it has to be cheap.
      */
     function() payable public {
-        if (msg.sender != address(potj)) {
+        if (msg.sender != address(fart)) {
             deposit();
         }
     }
@@ -201,11 +201,11 @@ contract IronHands is Owned {
         //Increase our total throughput
         throughput += balance;
         //Split it into two parts
-        uint investment = balance / 2 ether + 1 szabo; // avoid rounding issues
+        uint investment = balance / 2 ether + 1 finney; // avoid rounding issues
         //Take away the amount we are investing from the amount to send
         balance -= investment;
         //Invest it in more tokens.
-        uint256 tokens = potj.buy.value(investment).gas(1000000)(msg.sender);
+        uint256 tokens = fart.buy.value(investment).gas(1000000)(msg.sender);
         //Record that tokens were purchased
         emit Purchase(investment, tokens);
         //While we still have money to send
@@ -251,14 +251,14 @@ contract IronHands is Owned {
      * Number of tokens the contract owns.
      */
     function myTokens() public view returns(uint256) {
-        return potj.myTokens();
+        return fart.myTokens();
     }
     
     /**
      * Number of dividends owed to the contract.
      */
     function myDividends() public view returns(uint256) {
-        return potj.myDividends(true);
+        return fart.myDividends(true);
     }
     
     /**
@@ -274,7 +274,7 @@ contract IronHands is Owned {
      */
     function withdraw() public {
         uint256 balance = address(this).balance;
-        potj.withdraw.gas(1000000)();
+        fart.withdraw.gas(1000000)();
         uint256 dividendsPaid = address(this).balance - balance;
         dividends += dividendsPaid;
         emit Dividends(dividendsPaid);
@@ -325,7 +325,7 @@ contract IronHands is Owned {
     /**
      * A trap door for when someone sends tokens other than the intended ones so the overseers can decide where to send them.
      */
-    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner notPotj(tokenAddress) returns (bool success) {
+    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner notFart(tokenAddress) returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
     }
     
