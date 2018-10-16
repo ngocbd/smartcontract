@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CityToken at 0x2f64c53b5d55c0d6e334d82c4dc67ee52b89f88f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CityToken at 0x53e3a7ec57132173ce615debb9a303fd2cd86789
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -47,7 +47,7 @@ contract CityToken is ERC721 {
   string public constant NAME = "CryptoCities"; // solhint-disable-line
   string public constant SYMBOL = "CityToken"; // solhint-disable-line
 
-  uint256 private startingPrice = 0.5 ether;
+  uint256 private startingPrice = 0.05 ether;
 
   uint256 private constant PROMO_CREATION_LIMIT = 5000;
 
@@ -214,11 +214,11 @@ contract CityToken is ERC721 {
     // Making sure sent amount is greater than or equal to the sellingPrice
     require(msg.value >= sellingPrice);
 
-    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 90), 100));
+    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 94), 100));
     uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
 
-    // Update price (25% increase)
-    cityIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 125), 90);
+    // Update price (20% increase)
+    cityIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 94);
     
     _transfer(oldOwner, newOwner, _tokenId);
 
