@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mondo at 0x0c6c78e9D5576818e6638E198bFf0ce9764098b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mondo at 0x71161dfbf5bd789e38a4b4bb8706fdceb2436ab3
 */
 pragma solidity ^0.4.10;
 
@@ -22,7 +22,7 @@ contract SafeMath {
       assert((x == 0)||(z/x == y));
       return z;
     }
-
+    
     function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
       assert(b > 0);
       uint c = a / b;
@@ -91,20 +91,20 @@ contract Mondo is SafeMath, StandardToken {
     string public constant name = "Mondo Token";
     string public constant symbol = "MND";
     uint256 public constant decimals = 18;
-
+    
     uint256 private constant tokenCreationCapPreICO02 =  5000000*10**decimals;
-    uint256 private constant tokenCreationCapPreICO15 =  11000000*10**decimals;
-    uint256 public constant tokenCreationCap = 23500000*10**decimals;
+    uint256 private constant tokenCreationCapPreICO15 =  6000000*10**decimals;
+    uint256 public constant tokenCreationCap = 12500000*10**decimals;
 
     address public constant owner = 0x0077DA9DF6507655CDb3aB9277A347EDe759F93F;
 
-    // 1 ETH = 280 USD Date: 11.08.2017
+    // 1 ETH = 300 USD Date: 11.08.2017
     uint private oneTokenInWeiSale1 = 70175438596491; // 0,02 $
     uint private oneTokenInWei1Sale2 = 526315789473684; // 0,15 $
     uint private oneTokenInWei = 5473684210526320; // 1,56 $
-
+    
     Phase public currentPhase = Phase.PreICO1;
-
+    
     enum Phase {
         PreICO1,
         PreICO2,
@@ -126,12 +126,12 @@ contract Mondo is SafeMath, StandardToken {
 
     function createTokens() internal {
         if (msg.value <= 0) revert();
-
+        
         if (currentPhase == Phase.PreICO1) {
             if (totalSupply <= tokenCreationCapPreICO02) {
                 generateTokens(oneTokenInWeiSale1);
             }
-        }
+        } 
         else if (currentPhase == Phase.PreICO2) {
             if (totalSupply > tokenCreationCapPreICO02 && totalSupply <= tokenCreationCapPreICO15) {
                 generateTokens(oneTokenInWei1Sale2);
@@ -141,11 +141,11 @@ contract Mondo is SafeMath, StandardToken {
             if (totalSupply > tokenCreationCapPreICO15 && totalSupply <= tokenCreationCap) {
                 generateTokens(oneTokenInWei);
             }
-        } else {
+        } else { 
             revert();
         }
     }
-
+    
     function generateTokens(uint _oneTokenInWei) internal {
         uint multiplier = 10 ** decimals;
         uint256 tokens = safeDiv(msg.value, _oneTokenInWei)*multiplier;
@@ -155,17 +155,17 @@ contract Mondo is SafeMath, StandardToken {
         totalSupply = safeAdd(totalSupply, tokens);
         CreateMND(msg.sender,tokens);
     }
-
+    
     function changePhaseToPreICO2() external onlyOwner returns (bool){
         currentPhase = Phase.PreICO2;
         return true;
     }
-
+    
     function changePhaseToICO() external onlyOwner returns (bool){
         currentPhase = Phase.ICO;
         return true;
     }
-
+    
     function changeTokenPrice(uint tpico1, uint tpico2, uint tpico) external onlyOwner returns (bool){
         oneTokenInWeiSale1 = tpico1;
         oneTokenInWei1Sale2 = tpico2;
