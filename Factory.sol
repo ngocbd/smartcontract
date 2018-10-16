@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x2c544275203b0db7550887067507ce2befcea893
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x5aad8436ec6320E846084aa4e6E6231387E8950a
 */
 pragma solidity ^0.4.11;
 
@@ -71,7 +71,7 @@ contract Factory {
 
   // Registrar contract address
 
-  address registrar = 0xaD3e7D2788126250d48598e1DB6A2D3E19B89738;   // set after deployment of Registrar contract
+  address registrar = 0x562b85ACEEE81876D27252B7dc06f03F6A2565fc;   // set after deployment of Registrar contract
 
   // useful to know the row count in artworks index
 
@@ -194,11 +194,11 @@ The owner of a piece can burn it, removing it permanently from the pool of avail
 /* Public variables */
 	address public owner;						// Contract owner.
 	bytes32 public SHA256ofArtwork;				// sha256 hash of the artwork.
-	uint256 public editionSize;					// The edition size of the artwork.
-	string public title;						// The title of the artwork.
-	string public fileLink;						// The link to the file of the artwork.
+	uint256 editionSize;						// The edition size of the artwork.
+	string title;								// The title of the artwork.
+	string fileLink;							// The link to the file of the artwork.
 	string public proofLink;					// Link to the creation proof by the artist -> this has to be done after contract creation
-	string public customText;					// Custom text
+	string public customText;						// Custom text
 	uint256 public ownerCommission;				// Percent given to the contract owner for every sale - must be >=0 && <=975 1000 = 100%.
 	
 	uint256 public lowestAskPrice;				// The lowest price an owner of a piece is willing to sell it for.
@@ -223,12 +223,12 @@ The owner of a piece can burn it, removing it permanently from the pool of avail
 	event Burn (address indexed _owner, uint256 _amount);
 
 	/* Other variables */
-	bool public proofSet;							// Has the proof been set yet?
+	bool proofSet;							// Has the proof been set yet?
 	uint256 ethartAward;					// # of pieces awarded to Ethart.
 
 	mapping (address => uint256) public piecesOwned;				// Maps the number of pieces owned by an address
  	mapping (address => mapping (address => uint256)) allowed;		// Used in burnFrom and transferFrom
-    address registrar = 0xaD3e7D2788126250d48598e1DB6A2D3E19B89738;						// set after deployment of Registrar contract
+    address registrar = 0x562b85ACEEE81876D27252B7dc06f03F6A2565fc;						// set after deployment of Registrar contract
 
 	function Artwork (								// Constructor
 		bytes32 _SHA256ofArtwork,
