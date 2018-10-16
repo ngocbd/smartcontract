@@ -1,368 +1,261 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xbd1b087a787fe99016c396fe30ab5b819e4efe73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc502c37f8b801e9144e785fcd7817b6a85529a95
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
     
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract DragonToken{
+  function transferFrom(address _from, address _to, uint256 _value) returns(bool success);
+}
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive. The contract requires a MintableToken that will be
+ * minted as contributions arrive, note that the crowdsale contract
+ * must be owner of the token in order to be able to mint it.
+ */
+contract Crowdsale is Ownable{
+  using SafeMath for uint256;
+
+  // The token being sold
+  DragonToken public token;
+  
+  // The address of token reserves
+  address public tokenReserve;
+
+  // start and end timestamps where investments are allowed (both inclusive)
+  uint256 public startTime;
+  uint256 public endTime;
+
+  // address where funds are collected
+  address public wallet;
+
+  // token rate in wei
+  uint256 public rate;
+
+  // amount of raised money in wei
+  uint256 public weiRaised;
+  
+  uint256 public tokensSold;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   * @param releaseTime tokens unlock time
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount, uint256 releaseTime);
+  
+  /**
+   * event upon endTime updated
+   */
+  event EndTimeUpdated();
+  
+  /**
+   * Dragon token price updated
+   */
+  event DragonPriceUpdated();
+  
+  /**
+   * event for token releasing
+   * @param holder who is releasing his tokens
+   */
+  event TokenReleased(address indexed holder, uint256 amount);
+
+
+  function Crowdsale() public {
+  
+    owner = 0xF615Ac471E066b5ae4BD211CC5044c7a31E89C4e; // overriding owner
+    startTime = now;
+    endTime = 1521187200;
+    rate = 5000000000000000; // price in wei
+    wallet = 0xF615Ac471E066b5ae4BD211CC5044c7a31E89C4e;
+    token = DragonToken(0x814F67fA286f7572B041D041b1D99b432c9155Ee);
+    tokenReserve = 0xF615Ac471E066b5ae4BD211CC5044c7a31E89C4e;
+  }
+
+  // fallback function can be used to buy tokens
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != address(0));
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokens = getTokenAmount(weiAmount);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+    tokensSold = tokensSold.add(tokens);
+
+    uint256 lockedFor = assignTokens(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens, lockedFor);
+
+    forwardFunds();
+  }
+
+  // @return true if crowdsale event has ended
+  function hasEnded() public view returns (bool) {
+    return now > endTime;
+  }
+
+  function getTokenAmount(uint256 weiAmount) internal view returns(uint256) {
+    uint256 amount = weiAmount.div(rate);
+    return amount.mul(100000000); // multiply with decimals
+  }
+
+  // send ether to the fund collection wallet
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal view returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
+
+  function updateEndTime(uint256 newTime) onlyOwner external {
+    require(newTime > startTime);
+    endTime = newTime;
+    EndTimeUpdated();
+  }
+  
+  function updateDragonPrice(uint256 weiAmount) onlyOwner external {
+    require(weiAmount > 0);
+    rate = weiAmount;
+    DragonPriceUpdated();
+  }
+  
+  mapping(address => uint256) balances;
+  mapping(address => uint256) releaseTime;
+  function assignTokens(address beneficiary, uint256 amount) private returns(uint256 lockedFor){
+      lockedFor = now + 45 days;
+      balances[beneficiary] = balances[beneficiary].add(amount);
+      releaseTime[beneficiary] = lockedFor;
+  }
+  
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+  
+
+  function unlockTime(address _owner) public view returns (uint256 time) {
+    return releaseTime[_owner];
+  }
+
+  /**
+   * @notice Transfers tokens held by timelock to beneficiary.
+   */
+  function releaseDragonTokens() public {
+    require(now >= releaseTime[msg.sender]);
     
-    address public owner;
-
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-}
-
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) constant public returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) constant public returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public  returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract BasicToken is ERC20Basic, Ownable {
-
-    using SafeMath for uint256;
-
-    mapping (address => uint256) balances;
-
-    modifier onlyPayloadSize(uint size) {
-        if (msg.data.length < size + 4) {
-            revert();
-        }
-        _;
-    }
-
-    function transfer(address _to, uint256 _amount) public onlyPayloadSize(2 * 32) returns (bool) {
-        require(balances[msg.sender] >= _amount);
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-
-    function balanceOf(address _addr) public constant returns (uint256) {
-        return balances[_addr];
-    }
-}
-
-contract AdvancedToken is BasicToken, ERC20 {
-
-    mapping (address => mapping (address => uint256)) allowances;
-
-    function transferFrom(address _from, address _to, uint256 _amount) public onlyPayloadSize(3 * 32) returns (bool) {
-        require(allowances[_from][msg.sender] >= _amount && balances[_from] >= _amount);
-        allowances[_from][msg.sender] = allowances[_from][msg.sender].sub(_amount);
-        balances[_from] = balances[_from].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(_from, _to, _amount);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _amount) public returns (bool) {
-        allowances[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
-    }
-
-    function increaseApproval(address _spender, uint256 _amount) public returns (bool) {
-        allowances[msg.sender][_spender] = allowances[msg.sender][_spender].add(_amount);
-        Approval(msg.sender, _spender, allowances[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint256 _amount) public returns (bool) {
-        require(allowances[msg.sender][_spender] != 0);
-        if (_amount >= allowances[msg.sender][_spender]) {
-            allowances[msg.sender][_spender] = 0;
-        } else {
-            allowances[msg.sender][_spender] = allowances[msg.sender][_spender].sub(_amount);
-            Approval(msg.sender, _spender, allowances[msg.sender][_spender]);
-        }
-    }
-
-    function allowance(address _owner, address _spender) public constant returns (uint256) {
-        return allowances[_owner][_spender];
-    }
-
-}
-
-contract MintableToken is AdvancedToken {
-
-    bool public mintingFinished;
-
-    event TokensMinted(address indexed to, uint256 amount);
-    event MintingFinished();
-
-    function mint(address _to, uint256 _amount) external onlyOwner onlyPayloadSize(2 * 32) returns (bool) {
-        require(_to != 0x0 && _amount > 0 && !mintingFinished);
-        balances[_to] = balances[_to].add(_amount);
-        totalSupply = totalSupply.add(_amount);
-        Transfer(0x0, _to, _amount);
-        TokensMinted(_to, _amount);
-        return true;
-    }
-
-    function finishMinting() external onlyOwner {
-        require(!mintingFinished);
-        mintingFinished = true;
-        MintingFinished();
-    }
-
-    function mintingFinished() public constant returns (bool) {
-        return mintingFinished;
-    }
-}
-
-contract ACO is MintableToken {
-
-    uint8 public decimals;
-    string public name;
-    string public symbol;
-
-    function ACO() public {
-        totalSupply = 0;
-        decimals = 18;
-        name = "ACO";
-        symbol = "ACO";
-    }
-}
-
-contract MultiOwnable {
+    uint256 amount = balances[msg.sender];
+    require(amount > 0);
     
-    address[2] public owners;
-
-    event OwnershipTransferred(address from, address to);
-    event OwnershipGranted(address to);
-
-    function MultiOwnable() public {
-        owners[0] = 0x1d554c421182a94E2f4cBD833f24682BBe1eeFe8; 
-        owners[1] = 0x0D7a2716466332Fc5a256FF0d20555A44c099453; 
+    balances[msg.sender] = 0;
+    if(!token.transferFrom(tokenReserve,msg.sender,amount)){
+        revert();
     }
 
-    modifier onlyOwners {
-        require(msg.sender == owners[0] || msg.sender == owners[1]);
-        _;
-    }
-
-    function transferOwnership(address _newOwner) public onlyOwners {
-        require(_newOwner != 0x0 && _newOwner != owners[0] && _newOwner != owners[1]);
-        if (msg.sender == owners[0]) {
-            OwnershipTransferred(owners[0], _newOwner);
-            owners[0] = _newOwner;
-        } else {
-            OwnershipTransferred(owners[1], _newOwner);
-            owners[1] = _newOwner;
-        }
-    }
-}
-
-contract Crowdsale is Ownable, MultiOwnable {
-
-    using SafeMath for uint256;
-
-    ACO public ACO_Token;
-
-    address public constant MULTI_SIG = 0x3Ee28dA5eFe653402C5192054064F12a42EA709e;
-
-    uint256 public rate;
-
-    uint256 public tokensSold;
-    uint256 public startTime;
-    uint256 public endTime;
-    uint256 public softCap;
-    uint256 public hardCap;
-
-    uint256[4] public bonusStages;
-
-    mapping (address => uint256) investments;
-    mapping (address => bool) hasAuthorizedWithdrawal;
-
-    event TokensPurchased(address indexed by, uint256 amount);
-    event RefundIssued(address indexed by, uint256 amount);
-    event FundsWithdrawn(address indexed by, uint256 amount);
-    event DurationAltered(uint256 newEndTime);
-    event NewSoftCap(uint256 newSoftCap);
-    event NewHardCap(uint256 newHardCap);
-    event NewRateSet(uint256 newRate);
-    event HardCapReached();
-    event SoftCapReached();
-
-    function Crowdsale() public {
-        ACO_Token = new ACO();
-        softCap = 0; 
-        hardCap = 250000000e18; 
-        rate = 4000;
-        startTime = now;
-        endTime = startTime.add(365 days);
-        bonusStages[0] = startTime.add(6 weeks);
-
-        for(uint i = 1; i < bonusStages.length; i++) {
-            bonusStages[i] = bonusStages[i - 1].add(6 weeks);
-        }
-    }
-
-    function processOffchainPayment(address _beneficiary, uint256 _toMint) public onlyOwners {
-        require(_beneficiary != 0x0 && now <= endTime && tokensSold.add(_toMint) <= hardCap && _toMint > 0);
-        if(tokensSold.add(_toMint) == hardCap) { HardCapReached(); }
-        if(tokensSold.add(_toMint) >= softCap && !isSuccess()) { SoftCapReached(); }
-        ACO_Token.mint(_beneficiary, _toMint);
-        tokensSold = tokensSold.add(_toMint);
-        TokensPurchased(_beneficiary, _toMint);
-    }
-
-    function() public payable {
-        buyTokens(msg.sender);
-    }
-
-    function buyTokens(address _beneficiary) public payable {
-        require(_beneficiary != 0x0 && validPurchase() && tokensSold.add(calculateTokensToMint()) <= hardCap); 
-        if(tokensSold.add(calculateTokensToMint()) == hardCap) { HardCapReached(); }
-        if(tokensSold.add(calculateTokensToMint()) >= softCap && !isSuccess()) { SoftCapReached(); }
-        uint256 toMint = calculateTokensToMint();
-        ACO_Token.mint(_beneficiary, toMint);
-        tokensSold = tokensSold.add(toMint);
-        investments[_beneficiary] = investments[_beneficiary].add(msg.value);
-        TokensPurchased(_beneficiary, toMint); 
-    }
-
-    function calculateTokensToMint() internal view returns(uint256 toMint) {
-        toMint = msg.value.mul(getCurrentRateWithBonus());
-    }
-
-    function getCurrentRateWithBonus() public view returns (uint256 rateWithBonus) {
-        rateWithBonus = (rate.mul(getBonusPercentage()).div(100)).add(rate);
-    }
-
-    function getBonusPercentage() internal view returns (uint256 bonusPercentage) {
-        uint256 timeStamp = now;
-        if (timeStamp > bonusStages[3]) {
-            bonusPercentage = 0;
-        } else { 
-            bonusPercentage = 25;
-            for (uint i = 0; i < bonusStages.length; i++) {
-                if (timeStamp <= bonusStages[i]) {
-                    break;
-                } else {
-                    bonusPercentage = bonusPercentage.sub(5);
-                }
-            }
-        }
-        return bonusPercentage;
-    }
-
-    function authorizeWithdrawal() public onlyOwners {
-        require(hasEnded() && isSuccess() && !hasAuthorizedWithdrawal[msg.sender]);
-        hasAuthorizedWithdrawal[msg.sender] = true;
-        if (hasAuthorizedWithdrawal[owners[0]] && hasAuthorizedWithdrawal[owners[1]]) {
-            FundsWithdrawn(owners[0], this.balance);
-            MULTI_SIG.transfer(this.balance);
-        }
-    }
-
-    function issueBounty(address _to, uint256 _toMint) public onlyOwners {
-        require(_to != 0x0 && _toMint > 0 && tokensSold.add(_toMint) <= hardCap);
-        ACO_Token.mint(_to, _toMint);
-        tokensSold = tokensSold.add(_toMint);
-    }
-
-    function finishMinting() public onlyOwners {
-        require(hasEnded());
-        ACO_Token.finishMinting();
-    }
-
-    function getRefund(address _addr) public {
-        if(_addr == 0x0) { _addr = msg.sender; }
-        require(!isSuccess() && hasEnded() && investments[_addr] > 0);
-        uint256 toRefund = investments[_addr];
-        investments[_addr] = 0;
-        _addr.transfer(toRefund);
-        RefundIssued(_addr, toRefund);
-    }
-    
-    function giveRefund(address _addr) public onlyOwner {
-        require(_addr != 0x0 && investments[_addr] > 0);
-        uint256 toRefund = investments[_addr];
-        investments[_addr] = 0;
-        _addr.transfer(toRefund);
-        RefundIssued(_addr, toRefund);
-    }
-
-    function isSuccess() public view returns(bool success) {
-        success = tokensSold >= softCap;
-    }
-
-    function hasEnded() public view returns(bool ended) {
-        ended = now > endTime;
-    }
-
-    function investmentOf(address _addr) public view returns(uint256 investment) {
-        investment = investments[_addr];
-    }
-
-    function validPurchase() internal constant returns (bool) {
-        bool withinPeriod = now >= startTime && now <= endTime;
-        bool nonZeroPurchase = msg.value != 0;
-        return withinPeriod && nonZeroPurchase;
-    }
-
-    function setEndTime(uint256 _numberOfDays) public onlyOwners {
-        require(_numberOfDays > 0);
-        endTime = now.add(_numberOfDays * 1 days);
-        DurationAltered(endTime);
-    }
-
-    function changeSoftCap(uint256 _newSoftCap) public onlyOwners {
-        require(_newSoftCap > 0);
-        softCap = _newSoftCap;
-        NewSoftCap(softCap);
-    }
-
-    function changeHardCap(uint256 _newHardCap) public onlyOwners {
-        assert(_newHardCap > 0);
-        hardCap = _newHardCap;
-        NewHardCap(hardCap);
-    }
-
-    function changeRate(uint256 _newRate) public onlyOwners {
-        require(_newRate > 0);
-        rate = _newRate;
-        NewRateSet(rate);
-    }
+    TokenReleased(msg.sender,amount);
+  }
+  
 }
