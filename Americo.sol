@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Americo at 0xbc22bcc8ae58cf5d2f3cc154d06ada297dff761d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Americo at 0x09eaf7b80ec741fa8a163cd4dde8367fab37e8a0
 */
 contract Americo {
   /* Variables públicas del token */
@@ -21,7 +21,7 @@ contract Americo {
          initialSupply=160000000;
          name="Americo";
         decimals=6;
-         symbol="AME";
+         symbol="A";
         
         balanceOf[msg.sender] = initialSupply;              // Americo recibe todas las fichas iniciales
         totalSupply = initialSupply;                        // Actualizar la oferta total
