@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BulleonToken at 0xa67148353b4C2042d82FF34393E5503f9d849788
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BulleonToken at 0x0775c81a273b355e6a5b76e240bf708701f00279
 */
-pragma solidity ^0.4.23;
-
 // © Bulleon. All Rights Reserved
 // https://bulleon.io
 // Contact: info@bulleon.io
+
+pragma solidity ^0.4.21;
 
 /**
  * @title ERC20Basic
@@ -19,7 +19,43 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(
+    ERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    assert(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
+  }
+}
 
 /**
  * @title Ownable
@@ -177,17 +213,6 @@ contract BurnableToken is BasicToken {
     emit Burn(_who, _value);
     emit Transfer(_who, address(0), _value);
   }
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -411,6 +436,26 @@ contract Claimable is Ownable {
   }
 }
 
+/**
+ * @title Contracts that should be able to recover tokens
+ * @author SylTi
+ * @dev This allow a contract to recover any ERC20 token received in a contract by transferring the balance to the contract owner.
+ * This will prevent any accidental loss of tokens.
+ */
+contract CanReclaimToken is Ownable {
+  using SafeERC20 for ERC20Basic;
+
+  /**
+   * @dev Reclaim all ERC20Basic compatible tokens
+   * @param token ERC20Basic The address of the token contract
+   */
+  function reclaimToken(ERC20Basic token) external onlyOwner {
+    uint256 balance = token.balanceOf(this);
+    token.safeTransfer(owner, balance);
+  }
+
+}
+
 interface CrowdsaleContract {
   function isActive() public view returns(bool);
 }
@@ -499,4 +544,5 @@ contract BulleonToken is StandardBurnableToken, PausableToken, Claimable {
     whitelist[wallet] = false;
     emit RemoveWhitelist(wallet);
   }
+
 }
