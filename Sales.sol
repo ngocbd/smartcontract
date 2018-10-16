@@ -1,82 +1,47 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sales at 0x1ebd04228ae2900ccad55193233492ddc3b09de9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SALES at 0x51741c544f0dbff921ca95e85fb66496f9f9131b
 */
-pragma solidity ^0.4.11;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+pragma solidity ^0.4.4;
 
 contract Token {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
+
+    /// @return total amount of tokens
+    function totalSupply(uint256) constant returns (uint256 supply) {}
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
     /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
     /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
+    /// @param _value The amount of wei to be approved for transfer
     /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success) {}
 
     /// @param _owner The address of the account owning tokens
     /// @param _spender The address of the account able to transfer the tokens
     /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
 }
+
+
 
 contract StandardToken is Token {
 
@@ -121,9 +86,12 @@ contract StandardToken is Token {
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
 }
 
-contract HumanStandardToken is StandardToken {
+
+//name this contract whatever you'd like
+contract SALES is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
@@ -141,19 +109,21 @@ contract HumanStandardToken is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
-    function HumanStandardToken(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+
+    function SALES(
         ) {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+        balances[msg.sender] = 1010101010;               // Give the creator all initial tokens (100000 for example)
+        totalSupply =1010101010;                        // Update total supply (100000 for example)
+        name = "SALES";                                   // Set the name for display purposes
+        decimals = 2;                            // Amount of decimals for display purposes
+        symbol = "SALES";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
@@ -161,141 +131,10 @@ contract HumanStandardToken is StandardToken {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+       //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
-}
-
-contract Locked {
-  uint public period;
-
-  function Locked(uint _period) public {
-    period = _period;
-  }
-}
-
-contract Owned {
-    function Owned() { owner = msg.sender; }
-    address owner;
-
-    // This contract only defines a modifier but does not use
-    // it - it will be used in derived contracts.
-    // The function body is inserted where the special symbol
-    // "_;" in the definition of a modifier appears.
-    // This means that if the owner calls this function, the
-    // function is executed and otherwise, an exception is
-    // thrown.
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-}
-
-contract Sales is Owned {
-  address public wallet;
-  HumanStandardToken public token;
-  Locked public locked;
-  uint public price;
-  uint public startBlock;
-  uint public freezeBlock;
-  bool public frozen = false;
-  uint256 public cap = 0;
-  uint256 public sold = 0;
-  uint created;
-
-  event PurchasedTokens(address indexed purchaser, uint amount);
-
-  modifier saleHappening {
-    require(block.number >= startBlock);
-    require(block.number <= freezeBlock);
-    require(!frozen);
-    require(sold < cap);
-    _;
-  }
-
-  function Sales(
-    address _wallet,
-    uint256 _tokenSupply,
-    string _tokenName,
-    uint8 _tokenDecimals,
-    string _tokenSymbol,
-    uint _price,
-    uint _startBlock,
-    uint _freezeBlock,
-    uint256 _cap,
-    uint _locked
-  ) {
-    wallet = _wallet;
-    token = new HumanStandardToken(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol);
-    locked = new Locked(_locked);
-    price = _price;
-    startBlock = _startBlock;
-    freezeBlock = _freezeBlock;
-    cap = _cap;
-    created = now;
-
-    uint256 ownersValue = SafeMath.div(SafeMath.mul(token.totalSupply(), 20), 100);
-    assert(token.transfer(wallet, ownersValue));
-
-    uint256 saleValue = SafeMath.div(SafeMath.mul(token.totalSupply(), 60), 100);
-    assert(token.transfer(this, saleValue));
-
-    uint256 lockedValue = SafeMath.sub(token.totalSupply(), SafeMath.add(ownersValue, saleValue));
-    assert(token.transfer(locked, lockedValue));
-  }
-
-  function purchaseTokens()
-    payable
-    saleHappening {
-    uint excessAmount = msg.value % price;
-    uint purchaseAmount = SafeMath.sub(msg.value, excessAmount);
-    uint tokenPurchase = SafeMath.div(purchaseAmount, price);
-
-    require(tokenPurchase <= token.balanceOf(this));
-
-    if (excessAmount > 0) {
-      msg.sender.transfer(excessAmount);
-    }
-
-    sold = SafeMath.add(sold, tokenPurchase);
-    assert(sold <= cap);
-    wallet.transfer(purchaseAmount);
-    assert(token.transfer(msg.sender, tokenPurchase));
-    PurchasedTokens(msg.sender, tokenPurchase);
-  }
-
-  /* owner only functions */
-  function changeBlocks(uint _newStartBlock, uint _newFreezeBlock)
-    onlyOwner {
-    require(_newStartBlock != 0);
-    require(_newFreezeBlock >= _newStartBlock);
-    startBlock = _newStartBlock;
-    freezeBlock = _newFreezeBlock;
-  }
-
-  function changePrice(uint _newPrice) 
-    onlyOwner {
-    require(_newPrice > 0);
-    price = _newPrice;
-  }
-
-  function changeCap(uint256 _newCap)
-    onlyOwner {
-    require(_newCap > 0);
-    cap = _newCap;
-  }
-
-  function unlockEscrow()
-    onlyOwner {
-    assert((now - created) > locked.period());
-    assert(token.transfer(wallet, token.balanceOf(locked)));
-  }
-
-  function toggleFreeze()
-    onlyOwner {
-      frozen = !frozen;
-  }
 }
