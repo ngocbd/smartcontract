@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Certification at 0xf67986956e5aaa3adb2a9ddb8c99ab857b48df72
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Certification at 0x449c7b654b28ac8f80e98cc50b97db2448382cc4
 */
 pragma solidity ^0.4.18;
 
@@ -61,31 +61,45 @@ contract Certification is Ownable {
   event Certificate(bytes32 indexed certHash, bytes32 innerHash, address indexed certifier);
   event Revocation(bytes32 indexed certHash, bool invalid);
 
-  function setCertifierInfo(address certifier, bool valid, string id)
+  function setCertifierStatus(address certifier, bool valid)
   onlyOwner public {
-    certifiers[certifier] = Certifier({
-      valid: valid,
-      id: id
-    });
+    certifiers[certifier].valid = valid;
   }
 
-  function computeCertHash(address certifier, bytes32 innerHash) pure public returns (bytes32) {
+  function setCertifierId(address certifier, string id)
+  onlyOwner public {
+    certifiers[certifier].id = id;
+  }
+
+  function computeCertHash(address certifier, bytes32 innerHash)
+  pure public returns (bytes32) {
     return keccak256(certifier, innerHash);
   }
 
-  function certify(bytes32 innerHash) public {
-    require(certifiers[msg.sender].valid);
-    Certificate(
+  function _certify(bytes32 innerHash) internal {
+    emit Certificate(
       computeCertHash(msg.sender, innerHash),
       innerHash, msg.sender
     );
   }
 
+  function certify(bytes32 innerHash) public {
+    require(certifiers[msg.sender].valid);
+    _certify(innerHash);
+  }
+
+  function certifyMany(bytes32[] innerHashes) public {
+    require(certifiers[msg.sender].valid);
+    for(uint i = 0; i < innerHashes.length; i++) {
+      _certify(innerHashes[i]);
+    }
+  }
+
   function revoke(bytes32 innerHash, address certifier, bool invalid) public {
     require(msg.sender == owner
-      || (certifiers[msg.sender].valid && msg.sender == certifier)
+      || (certifiers[msg.sender].valid && msg.sender == certifier && invalid)
     );
-    Revocation(computeCertHash(certifier, innerHash), invalid);
+    emit Revocation(computeCertHash(certifier, innerHash), invalid);
   }
 
 }
