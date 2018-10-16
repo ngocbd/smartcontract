@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x18714dba089604fe18a7af33871198fd470ffb3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xc7a74785f4E12a3E1e30Dea4ad9c6c88A90C8F9d
 */
 pragma solidity ^0.4.6;
 
@@ -28,14 +28,14 @@ pragma solidity ^0.4.6;
 // ====
 //
 
-/// @title GPS Presale, 100% bonus
+/// @title Presale Contract
 
 contract Presale {
 
-    string public constant VERSION = "0.1.5-GP";
+    string public constant VERSION = "0.1.4-GP";
 
     /* ====== configuration START ====== */
-    uint public constant PRESALE_START  = 4262000; /* approx. MON SEP 11 2017 12:17:13 GMT+0200 (CEST) */
+    uint public constant PRESALE_START  = 4260000; /* approx. SUN SEP 10 2017 13:03:07 GMT+0200 (CEST) */
     uint public constant PRESALE_END    = 4400000; /* approx. TUE OCT 03 2017 05:38:23 GMT+0200 (CEST) */
     uint public constant WITHDRAWAL_END = 4780000; /* approx. SUN DEC 03 2017 18:25:10 GMT+0100 (CET)  */
 
