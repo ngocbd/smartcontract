@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESTSToken at 0x054ad3cd4a66f14bf5c0de2548a53be66995a4f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESTSToken at 0xa48b17989ebd60f670d65b41f9cfb83ec02fcc33
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -28,7 +28,7 @@ contract TokenERC20 {
     string public symbol;
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply; // 600000000, 'ESTS', 'ESTS'
+    uint256 public totalSupply; // 600000000, “ESTS”, “ESTS”
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
