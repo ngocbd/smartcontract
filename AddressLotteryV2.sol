@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressLotteryV2 at 0x650734bfd0465b7c6cd2932ea555e721308fd0b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressLotteryV2 at 0xe6f245bb5268b16c5d79a349ec57673e477bd015
 */
 pragma solidity ^0.4.0;
 /*
@@ -25,12 +25,14 @@ contract AddressLotteryV2{
     
     uint winnerLuckyNumber = 7;
     
-    uint public ticketPrice = 0.1 ether;
+    uint public ticketPrice = 1 ether;
+        
+    address owner2;
         
     mapping (address => bool) participated;
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == owner||msg.sender==owner2);
         _;
     }
   
@@ -39,8 +41,9 @@ contract AddressLotteryV2{
         _;
     }
     
-    function AddressLotteryV2() {
+    function AddressLotteryV2(address _owner2) {
         owner = msg.sender;
+        owner2 = _owner2;
         reseed(SeedComponents(12345678, 0x12345678, 0xabbaeddaacdc, 0x22222222));
     }
     
@@ -49,15 +52,17 @@ contract AddressLotteryV2{
     }
     
     function participate() payable onlyHuman { 
-        require(msg.value == ticketPrice);
+        require(msg.value >= ticketPrice);
         
         // every address can only win once, obviously
-        require(!participated[msg.sender]);
+        if(!participated[msg.sender]){
         
         if ( luckyNumberOfAddress(msg.sender) == winnerLuckyNumber)
         {
             participated[msg.sender] = true;
             require(msg.sender.call.value(this.balance)());
+        }
+            
         }
     }
     
@@ -80,7 +85,7 @@ contract AddressLotteryV2{
         suicide(owner);
     }
     
-    function forceReseed() {
+    function forceReseed() onlyOwner{
         SeedComponents s;
         s.component1 = uint(owner);
         s.component2 = uint256(block.blockhash(block.number - 1));
