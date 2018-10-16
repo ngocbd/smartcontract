@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x475a8101fdde7f7246e31be77dd7dcb80f25d735
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x465556b0b461a1ed5c9be3711dbd3b3d77ba1498
 */
 pragma solidity ^0.4.19;
 
@@ -36,8 +36,8 @@ contract Exchange {
     
     event PlaceSell(address indexed token, address indexed user, uint price, uint amount, uint id);
     event PlaceBuy(address indexed token, address indexed user, uint price, uint amount, uint id);
-    event FillOrder(uint id, uint amount);
-    event CancelOrder(uint id);
+    event FillOrder(uint indexed id, address indexed user, uint amount);
+    event CancelOrder(uint indexed id);
     event Deposit(address indexed token, address indexed user, uint amount);
     event Withdraw(address indexed token, address indexed user, uint amount);
     event BalanceChanged(address indexed token, address indexed user, uint value);
@@ -133,6 +133,7 @@ contract Exchange {
     
     function fillOrder(uint id, uint amount) external {
         require(id < currentOrderId);
+        require(amount > 0);
         require(orders[id].creator != msg.sender);
         require(orders[id].amount >= amount);
         uint amountEther = calcAmountEther(orders[id].token, orders[id].price, amount);
@@ -188,7 +189,7 @@ contract Exchange {
             );
         }
         orders[id].amount -= amount;
-        FillOrder(id, orders[id].amount);
+        FillOrder(id, msg.sender, orders[id].amount);
     }
     
     function cancelOrder(uint id) external {
