@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaifuToken at 0x82ba2b46483266068f340d538dab41394d01c782
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaifuToken at 0x5b135d7e2774c801a73208f258123d7623e07784
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.23;
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -21,7 +21,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -39,7 +39,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -61,20 +61,20 @@ contract FreezableToken is Ownable {
     * @dev Owner can freeze the token balance for chosen token holder.
     * @param _wallet The address of token holder whose tokens to be frozen.
     */
-    function freezeAccount(address _wallet) onlyOwner public {
+    function freezeAccount(address _wallet) public onlyOwner {
         require(_wallet != address(0));
         frozenList[_wallet] = true;
-        FrozenFunds(_wallet, true);
+        emit FrozenFunds(_wallet, true);
     }
 
     /**
     * @dev Owner can unfreeze the token balance for chosen token holder.
     * @param _wallet The address of token holder whose tokens to be unfrozen.
     */
-    function unfreezeAccount(address _wallet) onlyOwner public {
+    function unfreezeAccount(address _wallet) public onlyOwner {
         require(_wallet != address(0));
         frozenList[_wallet] = false;
-        FrozenFunds(_wallet, false);
+        emit FrozenFunds(_wallet, false);
     }
 
     /**
@@ -127,7 +127,14 @@ library SafeERC20 {
     assert(token.transfer(to, value));
   }
 
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
+  function safeTransferFrom(
+    ERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
     assert(token.transferFrom(from, to, value));
   }
 
@@ -155,7 +162,7 @@ contract TokenTimelock {
     // timestamp when token release is enabled
     uint256 public releaseTime;
 
-    function TokenTimelock(ERC20Basic _token, address _beneficiary, uint256 _releaseTime) public {
+    constructor(ERC20Basic _token, address _beneficiary, uint256 _releaseTime) public {
         require(_releaseTime > now);
         token = _token;
         beneficiary = _beneficiary;
@@ -187,11 +194,11 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -201,13 +208,13 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -217,8 +224,8 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -253,10 +260,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -265,7 +271,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
@@ -299,7 +305,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -315,7 +321,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -341,7 +347,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -362,7 +368,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -373,23 +379,23 @@ contract StandardToken is ERC20, BasicToken {
 contract SaifuToken is StandardToken, FreezableToken {
     using SafeMath for uint256;
 
-    string constant public name = "Saifu";
-    string constant public symbol = "SFU";
-    uint8 constant public decimals = 18;
+    string public constant name = "Saifu";
+    string public constant symbol = "SFU";
+    uint8 public constant decimals = 18;
 
-    uint256 constant public INITIAL_TOTAL_SUPPLY = 200e6 * (uint256(10) ** decimals);
-    uint256 constant public AMOUNT_TOKENS_FOR_SELL = 130e6 * (uint256(10) ** decimals);
+    uint256 public constant INITIAL_TOTAL_SUPPLY = 200e6 * (10 ** uint256(decimals));
+    uint256 public constant AMOUNT_TOKENS_FOR_SELL = 130e6 * (10 ** uint256(decimals));
 
-    uint256 constant public RESERVE_FUND = 20e6 * (uint256(10) ** decimals);
-    uint256 constant public RESERVED_FOR_TEAM = 50e6 * (uint256(10) ** decimals);
+    uint256 public constant RESERVE_FUND = 20e6 * (10 ** uint256(decimals));
+    uint256 public constant RESERVED_FOR_TEAM = 50e6 * (10 ** uint256(decimals));
 
-    uint256 constant public RESERVED_TOTAL_AMOUNT = 70e6 * (uint256(10) ** decimals);
+    uint256 public constant RESERVED_TOTAL_AMOUNT = 70e6 * (10 ** uint256(decimals));
     
     uint256 public alreadyReservedForTeam = 0;
 
-    bool private isReservedFundsDone = false;
-
     address public burnAddress;
+
+    bool private isReservedFundsDone = false;
 
     uint256 private setBurnAddressCount = 0;
 
@@ -407,14 +413,14 @@ contract SaifuToken is StandardToken, FreezableToken {
     /**
     * @dev Create SaifuToken contract
     */
-    function SaifuToken() public {
+    constructor() public {
         totalSupply_ = totalSupply_.add(INITIAL_TOTAL_SUPPLY);
 
         balances[owner] = balances[owner].add(AMOUNT_TOKENS_FOR_SELL);
-        Transfer(address(0), owner, AMOUNT_TOKENS_FOR_SELL);
+        emit Transfer(address(0), owner, AMOUNT_TOKENS_FOR_SELL);
 
         balances[this] = balances[this].add(RESERVED_TOTAL_AMOUNT);
-        Transfer(address(0), this, RESERVED_TOTAL_AMOUNT);
+        emit Transfer(address(0), this, RESERVED_TOTAL_AMOUNT);
     }
 
      /**
@@ -425,7 +431,7 @@ contract SaifuToken is StandardToken, FreezableToken {
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
         require(!isFrozen(msg.sender));
-        super.transfer(_to, _value);
+        return super.transfer(_to, _value);
     }
 
     /**
@@ -438,14 +444,14 @@ contract SaifuToken is StandardToken, FreezableToken {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(!isFrozen(msg.sender));
         require(!isFrozen(_from));
-        super.transferFrom(_from, _to, _value);
+        return super.transferFrom(_from, _to, _value);
     }
 
     /**
     * @dev Set burn address.
     * @param _address New burn address
     */
-    function setBurnAddress(address _address) onlyOwner public {
+    function setBurnAddress(address _address) public onlyOwner {
         require(setBurnAddressCount < 3);
         require(_address != address(0));
         burnAddress = _address;
@@ -456,7 +462,7 @@ contract SaifuToken is StandardToken, FreezableToken {
     * @dev Reserve funds.
     * @param _address the address for reserve funds. 
     */
-    function reserveFunds(address _address) onlyOwner public {
+    function reserveFunds(address _address) public onlyOwner {
         require(_address != address(0));
 
         require(!isReservedFundsDone);
@@ -480,7 +486,7 @@ contract SaifuToken is StandardToken, FreezableToken {
     * @param _amount the specified amount for reserve. 
     * @param _time the specified freezing time (in days). 
     */
-    function reserveForTeam(address _address, uint256 _amount, uint256  _time) onlyOwner public {
+    function reserveForTeam(address _address, uint256 _amount, uint256  _time) public onlyOwner {
         require(_address != address(0));
         require(_amount > 0 && _amount <= RESERVED_FOR_TEAM.sub(alreadyReservedForTeam));
 
@@ -501,7 +507,7 @@ contract SaifuToken is StandardToken, FreezableToken {
     * @param _amount the specified amount for send. 
     * @param _time the specified freezing time (in seconds). 
     */
-    function sendWithFreeze(address _address, uint256 _amount, uint256  _time) onlyOwner public {
+    function sendWithFreeze(address _address, uint256 _amount, uint256  _time) public onlyOwner {
         require(_address != address(0) && _amount > 0 && _time > 0);
 
         address lockedAddress = new TokenTimelock(this, _address, now.add(_time));
@@ -525,13 +531,13 @@ contract SaifuToken is StandardToken, FreezableToken {
     * @dev Burn a specific amount of tokens.
     * @param _amount The Amount of tokens.
     */
-    function burnFromAddress(uint256 _amount) onlyBurnAddress public {
+    function burnFromAddress(uint256 _amount) public onlyBurnAddress {
         require(_amount > 0);
         require(_amount <= balances[burnAddress]);
 
         balances[burnAddress] = balances[burnAddress].sub(_amount);
         totalSupply_ = totalSupply_.sub(_amount);
-        Transfer(burnAddress, address(0), _amount);
+        emit Transfer(burnAddress, address(0), _amount);
     }
 
     /*
@@ -542,6 +548,6 @@ contract SaifuToken is StandardToken, FreezableToken {
     function sendFromContract(address _address, uint256 _amount) internal {
         balances[this] = balances[this].sub(_amount);
         balances[_address] = balances[_address].add(_amount);
-        Transfer(this, _address, _amount);
+        emit Transfer(this, _address, _amount);
     }
 }
