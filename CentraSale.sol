@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraSale at 0x5c24600306ea5ee0d6ba53df3c3db896294c127e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraSale at 0x060e73d693bff0b39239a1dc39274b0ca676a701
 */
-pragma solidity ^0.4.16;        
+pragma solidity ^0.4.13;        
    
   contract CentraSale { 
 
@@ -17,29 +17,29 @@ pragma solidity ^0.4.16;
     mapping(uint => address) public operation_address;
     mapping(uint => uint) public operation_amount;
 
-    uint256 public constant token_price = 1481481481481481;  
+    uint256 public constant token_price = 10**18*1/250;  
     uint256 public tokens_total;  
 
     uint public constant contract_start = 1505844000;
     uint public constant contract_finish = 1507269600;
 
     uint public constant card_titanium_minamount = 500*10**18;
-    uint public constant card_titanium_first = 200000;
+    uint public constant card_titanium_first = 200;
     mapping(address => uint) cards_titanium_check; 
     address[] public cards_titanium;
 
     uint public constant card_black_minamount = 100*10**18;
-    uint public constant card_black_first = 500000;
+    uint public constant card_black_first = 500;
     mapping(address => uint) public cards_black_check; 
     address[] public cards_black;
 
     uint public constant card_metal_minamount = 40*10**18;
-    uint public constant card_metal_first = 750000;
+    uint public constant card_metal_first = 750;
     mapping(address => uint) cards_metal_check; 
     address[] public cards_metal;      
 
     uint public constant card_gold_minamount = 30*10**18;
-    uint public constant card_gold_first = 1000000;
+    uint public constant card_gold_first = 1000;
     mapping(address => uint) cards_gold_check; 
     address[] public cards_gold;      
 
@@ -76,7 +76,7 @@ pragma solidity ^0.4.16;
       if(now < contract_start) throw;
       if(now > contract_finish) throw;                     
 
-      //if(cap + msg.value > cap_max) throw;         
+      if(cap + msg.value > cap_max) throw;         
 
       tokens_total = msg.value*10**18/token_price;
       if(!(tokens_total > 0)) throw;           
