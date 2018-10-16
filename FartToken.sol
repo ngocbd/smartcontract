@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FartToken at 0x6695ff9ef4a5482b89b53b57462f7030ce58ce6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FartToken at 0x08776f41d8507ae16327a2edb86069c74e3453d2
 */
 pragma solidity ^0.4.18;
 
@@ -267,7 +267,7 @@ contract FartToken is StandardToken {
         require(redeemed > 0);
         require(remainingSupply > 10);
 
-        redeemed = redeemed.sub(1);
+        redeemed = redeemed.add(1);
         balances[msg.sender] = balances[msg.sender].add(10);
         remainingSupply = remainingSupply.sub(10);
     }
