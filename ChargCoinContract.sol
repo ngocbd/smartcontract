@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChargCoinContract at 0x65a9bc21b3150ffbcf3bb0e650c13ae0ed7280d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChargCoinContract at 0xd2bfa35d19306a925fc2381d83a9df2ac3faf5d1
 */
 pragma solidity ^0.4.16;
 
@@ -300,7 +300,7 @@ contract ChargCoinContract is StandardToken, Ownable {
 
     event MaxCapReached(uint blockNumber);
 
-    uint public constant BEGIN_TIME = 1512305049;
+    uint public constant BEGIN_TIME = 1512265633;
 
     uint public constant END_TIME = 1514764800;
 
