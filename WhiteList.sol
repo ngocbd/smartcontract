@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xf85f4bb59c5fe860485d9260aef64ed5d2a12fef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xacc45e45f1857f929ec6f9b924f977ba40fde9b6
 */
 // compiler: 0.4.19+commit.c4cbbb05.Emscripten.clang
 pragma solidity ^0.4.19;
@@ -52,7 +52,7 @@ contract Whitelist is owned {
     members_.length--;
   }
 
-  function toIndex( address who ) public constant returns (int)
+  function toIndex( address who ) internal constant returns (int)
   {
     for( uint ix = 0; ix < members_.length; ix++ )
       if (members_[ix] == who) return int(ix);
