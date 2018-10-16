@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetaIdentityManager at 0x27500ae27b6b6ad7de7d64b1def90f3e6e7ced47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetaIdentityManager at 0x7ed7ceb55167eb71e775a352111dae44db754c40
 */
 pragma solidity 0.4.15;
 
@@ -29,11 +29,18 @@ contract Proxy is Owned {
     function () payable { Received(msg.sender, msg.value); }
 
     function forward(address destination, uint value, bytes data) public onlyOwner {
-        require(destination.call.value(value)(data));
+        require(executeCall(destination, value, data));
         Forwarded(destination, value, data);
     }
-}
 
+    // copied from GnosisSafe
+    // https://github.com/gnosis/gnosis-safe-contracts/blob/master/contracts/GnosisSafe.sol
+    function executeCall(address to, uint256 value, bytes data) internal returns (bool success) {
+        assembly {
+            success := call(gas, to, value, add(data, 0x20), mload(data), 0, 0)
+        }
+    }
+}
 
 contract MetaIdentityManager {
     uint adminTimeLock;
