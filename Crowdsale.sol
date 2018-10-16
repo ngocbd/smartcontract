@@ -1,64 +1,155 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xe9e1e3414800886d5210a3f726947387f662ba2a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xead7adf1bf0df9f03b15429d82ea1f70ebd619f1
 */
-pragma solidity ^0.4.2;
-contract token { function transfer(address receiver, uint amount); }
+pragma solidity ^0.4.13;
+contract token { 
+   function mintToken(address target, uint256 mintedAmount);
+}
 
-contract Crowdsale {
+contract owned { 
+    address public owner;
+    
+    function owned() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner {
+        owner = newOwner;
+    }
+}
+
+contract Crowdsale is owned {
     address public beneficiary;
-    uint public fundingGoal; uint public amountRaised; uint public deadline; uint public price;
+    
+    uint256 public preICOLimit;
+    uint256 public totalLimit;
+    
+    uint256 public pricePreICO;
+    uint256 public priceICO;
+
+    bool preICOClosed = false;
+    bool ICOClosed = false;
+
+    bool preICOWithdrawn = false;
+    bool ICOWithdrawn = false;
+
+    bool public preICOActive = false;
+    bool public ICOActive = false;
+
+    uint256 public preICORaised; 
+    uint256 public ICORaised; 
+    uint256 public totalRaised; 
+
     token public tokenReward;
+
+    event FundTransfer(address backer, uint256 amount, bool isContribution);
+
     mapping(address => uint256) public balanceOf;
-    bool fundingGoalReached = false;
-    event GoalReached(address beneficiary, uint amountRaised);
-    event FundTransfer(address backer, uint amount, bool isContribution);
-    bool crowdsaleClosed = false;
 
-    /* data structure to hold information about campaign contributors */
-
-    /*  at initialization, setup the owner */
-    function Crowdsale(
-        address ifSuccessfulSendTo,
-        uint fundingGoalInEthers,
-        uint durationInMinutes,
-        uint etherCostOfEachToken,
-        token addressOfTokenUsedAsReward
-    ) {
-        beneficiary = ifSuccessfulSendTo;
-        fundingGoal = fundingGoalInEthers * 1 wei;
-        deadline = now + durationInMinutes * 1 minutes;
-        price = etherCostOfEachToken * 1 wei;
-        tokenReward = token(addressOfTokenUsedAsReward);
+    function Crowdsale() {
+        preICOLimit = 5000000 * 1 ether;
+        totalLimit = 45000000 * 1 ether; //50m hard cap minus 2.5m for mining and minus 2.5m for bounty
+        pricePreICO = 375;
+        priceICO = 250;
     }
 
-    /* The function without name is the default function that is called whenever anyone sends funds to a contract */
+    function init(address beneficiaryAddress, token tokenAddress)  onlyOwner {
+        beneficiary = beneficiaryAddress;
+        tokenReward = token(tokenAddress);
+    }
+
     function () payable {
-        if (crowdsaleClosed) throw;
-        uint amount = msg.value;
+        require (preICOActive || ICOActive);
+        uint256 amount = msg.value;
+
+        require (amount >= 0.05 * 1 ether); //0.05 - minimum contribution limit
+
+        //mintToken method will work only for owner of the token.
+        //So we need to execute transferOwnership from the token contract and pass ICO contract address as a parameter.
+        //By doing so we will lock minting function to ICO contract only (so no minting will be available after ICO).
+        if(preICOActive)
+        {
+    	    tokenReward.mintToken(msg.sender, amount * pricePreICO);
+            preICORaised += amount;
+        }
+        if(ICOActive)
+        {
+    	    tokenReward.mintToken(msg.sender, amount * priceICO);
+            ICORaised += amount;
+        }
+
         balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-        tokenReward.transfer(msg.sender, amount / price);
+        totalRaised += amount;
         FundTransfer(msg.sender, amount, true);
-        forwardFunds();
-    }
 
-    modifier afterDeadline() { if (now >= deadline) _; }
-
-    /* checks if the goal or time limit has been reached and ends the campaign */
-    function checkGoalReached() afterDeadline {
-        if (amountRaised >= fundingGoal){
-            fundingGoalReached = true;
-            GoalReached(beneficiary, amountRaised);
+        if(preICORaised >= preICOLimit)
+        {
+            preICOActive = false;
+            preICOClosed = true;
+        }
+        
+        if(totalRaised >= totalLimit)
+        {
+            preICOActive = false;
+            ICOActive = false;
+            preICOClosed = true;
+            ICOClosed = true;
         }
     }
-
-    function forwardFunds() internal {
-        beneficiary.transfer(msg.value);
+    
+    function startPreICO() onlyOwner {
+        require(!preICOClosed);
+        require(!preICOActive);
+        require(!ICOClosed);
+        require(!ICOActive);
+        
+        preICOActive = true;
+    }
+    function stopPreICO() onlyOwner {
+        require(preICOActive);
+        
+        preICOActive = false;
+        preICOClosed = true;
+    }
+    function startICO() onlyOwner {
+        require(preICOClosed);
+        require(!ICOClosed);
+        require(!ICOActive);
+        
+        ICOActive = true;
+    }
+    function stopICO() onlyOwner {
+        require(ICOActive);
+        
+        ICOActive = false;
+        ICOClosed = true;
     }
 
-    function safeWithdrawal() afterDeadline {
 
-        forwardFunds();
-        
+    //withdrawal raised funds to beneficiary
+    function withdrawFunds() onlyOwner {
+	require ((!preICOWithdrawn && preICOClosed) || (!ICOWithdrawn && ICOClosed));
+
+            //withdraw results of preICO
+            if(!preICOWithdrawn && preICOClosed)
+            {
+                if (beneficiary.send(preICORaised)) {
+                    preICOWithdrawn = true;
+                    FundTransfer(beneficiary, preICORaised, false);
+                }
+            }
+            //withdraw results of ICO
+            if(!ICOWithdrawn && ICOClosed)
+            {
+                if (beneficiary.send(ICORaised)) {
+                    ICOWithdrawn = true;
+                    FundTransfer(beneficiary, ICORaised, false);
+                }
+            }
     }
 }
