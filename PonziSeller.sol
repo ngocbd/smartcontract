@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziSeller at 0x4f05de977b234b323e57dbae2e9c219627970c49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziSeller at 0x7d7415e984f21da7b2ccf7253e3198e7c3ab8dce
 */
 pragma solidity ^0.4.18;
+
+/**
+* Ponzi Trust Token Seller Smart Contract
+* Code is published on https://github.com/PonziTrust/TokenSeller
+* Ponzi Trust https://ponzitrust.com/
+*/
 
 // see: https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
 library SafeMath {
@@ -34,7 +40,6 @@ library SafeMath {
 }
 
 
-
 // Ponzi Token Minimal Interface
 contract PonziTokenMinInterface {
   function balanceOf(address owner) public view returns(uint256);
@@ -56,11 +61,14 @@ contract PonziSeller {
   uint256 private m_ponziPriceInWei;
   uint256 private m_rewardNum;
   uint256 private m_rewardDen;
+  uint256 private m_discountNum;
+  uint256 private m_discountDen;
   mapping(address => AccessRank) private m_admins;
 
   event PriceChanged(address indexed who, uint256 newPrice);
   event RewardRef(address indexed refAddr, uint256 ponziAmount);
-  event Withdrawal(address indexed to, uint256 amountInWei);
+  event WithdrawalETH(address indexed to, uint256 amountInWei);
+  event WithdrawalPonzi(address indexed to, uint256 amount);
   event ProvidingAccess(address indexed addr, AccessRank rank);
   event PonziSold(
     address indexed purchasedBy, 
@@ -85,7 +93,9 @@ contract PonziSeller {
     m_ponzi = PonziTokenMinInterface(PONZI_ADDRESS);
     m_admins[msg.sender] = AccessRank.Full;
     m_rewardNum = 1;
-    m_rewardDen = 1;
+    m_rewardDen = 10;
+    m_discountNum = 5;
+    m_discountDen = 100;
   }
 
   function() public payable {
@@ -114,6 +124,11 @@ contract PonziSeller {
     denominator = m_rewardDen;
   }
 
+  function discountPercent() public view returns (uint256 numerator, uint256 denominator) {
+    numerator = m_discountNum;
+    denominator = m_discountDen;
+  }
+
   function provideAccess(address adminAddr, uint8 rank) public onlyAdmin(AccessRank.Full) {
     require(rank <= uint8(AccessRank.Full));
     require(m_admins[adminAddr] != AccessRank.Full);
@@ -126,15 +141,26 @@ contract PonziSeller {
     m_rewardDen = newDenominator;
   }
 
+  function setDiscountPercent(uint256 newNumerator, uint256 newDenominator) public onlyAdmin(AccessRank.Full) {
+    require(newDenominator != 0);
+    m_discountNum = newNumerator;
+    m_discountDen = newDenominator;
+  }
+
   function byPonzi(address refAddr) public payable {
     require(m_ponziPriceInWei > 0 && msg.value > m_ponziPriceInWei);
 
     uint256 refAmount = 0;
     uint256 senderAmount = weiToPonzi(msg.value, m_ponziPriceInWei);
 
-    // check if ref addres is valid and calc reward
+    // check if ref addres is valid and calc reward and discount
     if (refAddr != msg.sender && refAddr != address(0) && refAddr != address(this)) {
+      // ref reward
       refAmount = senderAmount.mul(m_rewardNum).div(m_rewardDen);
+      // sender discount
+      // uint256 d = m_discountDen/(m_discountDen-m_discountNum)
+      senderAmount = senderAmount.mul(m_discountDen).div(m_discountDen-m_discountNum);
+      // senderAmount = senderAmount.add(senderAmount.mul(m_discountNum).div(m_discountDen));
     }
     // check if we have enough ponzi on balance
     if (availablePonzi() < senderAmount.add(refAmount)) {
@@ -156,12 +182,20 @@ contract PonziSeller {
     return m_ponzi.balanceOf(address(this));
   }
 
-  function withdraw() public onlyAdmin(AccessRank.Withdraw) {
-    require(address(this).balance > 0);
-    uint256 b = address(this).balance;
-    msg.sender.transfer(b);
-    assert(address(this).balance < b);
-    emit Withdrawal(msg.sender, b);
+  function withdrawETH() public onlyAdmin(AccessRank.Withdraw) {
+    uint256 amountWei = address(this).balance;
+    require(amountWei > 0);
+    msg.sender.transfer(amountWei);
+    assert(address(this).balance < amountWei);
+    emit WithdrawalETH(msg.sender, amountWei);
+  }
+
+  function withdrawPonzi(uint256 amount) public onlyAdmin(AccessRank.Withdraw) {
+    uint256 pt = availablePonzi();
+    require(pt > 0 && amount > 0 && pt >= amount);
+    require(m_ponzi.transfer(msg.sender, amount));
+    assert(availablePonzi() < pt);
+    emit WithdrawalPonzi(msg.sender, pt);
   }
 
   function weiToPonzi(uint256 weiAmount, uint256 tokenPrice) 
