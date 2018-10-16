@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0x5f68698245e8c8949450e68b8bd8acef37faae7d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0xc636277b8250e62632467b7db19ed9111e25eb99
 */
 pragma solidity ^0.4.11;
 
@@ -447,7 +447,6 @@ contract Registrar {
 		{
 			balances[msg.sender] += msg.value * donationMultiplier;
 			_totalPatronSupply += msg.value * donationMultiplier;
-			asyncSend(this, msg.value);
 		}
 
 	function registerArtwork (address _contract, bytes32 _SHA256Hash, uint256 _editionSize, string _title, string _fileLink, uint256 _ownerCommission, address _artist, bool _indexed, bool _ouroboros) registeredFactoriesOnly
