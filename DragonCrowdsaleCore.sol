@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonCrowdsaleCore at 0x73e5451bcf4f7c47946abe89c772f3e6576909c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonCrowdsaleCore at 0xd275b50f71badf4fa2f911e80e1e420730ab403e
 */
 pragma solidity ^0.4.18;
 
@@ -213,10 +213,10 @@ contract DragonCrowdsaleCore is Ownable, DragonPricing {
     
     
     
+  
+    
     modifier onlyFront() {
-        if (msg.sender != front) {
-            throw;
-        }
+       require (msg.sender == front );
         _;
     }
 
@@ -325,6 +325,7 @@ contract DragonCrowdsaleCore is Ownable, DragonPricing {
     // use this to set the crowdsale beneficiary address
     function transferBeneficiary ( address _newbeneficiary ) onlyOwner {
         
+        require ( _newbeneficiary != 0x00 );
         beneficiary = _newbeneficiary;
         
     }
@@ -332,6 +333,7 @@ contract DragonCrowdsaleCore is Ownable, DragonPricing {
     // use this to set the charity address
     function transferCharity ( address _charity ) onlyOwner {
         
+        require ( _charity != 0x00 );
         charity = _charity;
         
     }
@@ -339,12 +341,14 @@ contract DragonCrowdsaleCore is Ownable, DragonPricing {
     // sets crowdsale address
     function setFront ( address _front ) onlyOwner {
         
+        require ( _front != 0x00 );
         front = _front;
         
     }
     // sets advisors address
     function setAdvisor ( address _advisor ) onlyOwner {
         
+        require ( _advisor != 0x00 );
         require ( advisorset == false );
         advisorset = true;
         advisor = _advisor;
@@ -365,7 +369,7 @@ contract DragonCrowdsaleCore is Ownable, DragonPricing {
     //manually send different dragon packages
     function manualSend ( address tokenholder, uint packagenumber ) onlyOwner {
         
-        
+          require ( tokenholder != 0x00 );
           if ( packagenumber != 1 &&  packagenumber != 2 &&  packagenumber != 3 ) revert();
         
           uint award;
