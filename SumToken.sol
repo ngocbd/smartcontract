@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SumToken at 0x88bcdea8132bc4f3f01c39e57f38ccf54f6691e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SumToken at 0x12a6984031cc09b63726b60f8739f278877c74d2
 */
 pragma solidity ^0.4.18;
 
@@ -120,8 +120,8 @@ contract SumToken is ERC20Interface, Owned, SafeMath {
         name = "SumToken";
         decimals = 6;
         _totalSupply = 100000000000000;
-        balances[0x7d7D306706e3CB61bD5A95315aF3feF177b229fb] = _totalSupply;
-        Transfer(address(0), 0x7d7D306706e3CB61bD5A95315aF3feF177b229fb, _totalSupply);
+        balances[0x0dB8Bccc3Ecb27B83D679a942c175d4407995b0b] = _totalSupply;
+        Transfer(address(0), 0x0dB8Bccc3Ecb27B83D679a942c175d4407995b0b, _totalSupply);
     }
 
 
