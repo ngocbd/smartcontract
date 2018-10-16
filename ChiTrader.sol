@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChiTrader at 0xb22a321a01b36139ab046d5d9932c600651ddfc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChiTrader at 0xeb80fb1d117080999559bc1ea5a69d6affb3ec6d
 */
 pragma solidity ^0.4.19;
 
@@ -57,10 +57,10 @@ interface ChiToken {
 
 contract ChiTrader {
     ChiToken Chi = ChiToken(0x71E1f8E809Dc8911FCAC95043bC94929a36505A5); // hardcoded Chi address to avoid scams.
-    address public seller;
-    uint256 public price; // price is in wei, not ether
-    uint256 public Chi_available; // remaining amount of Chi. This is just a convenience variable for buyers, not really used in the contract.
-    uint256 public Amount_of_Chi_for_One_ETH; // shows how much Chi you get for 1 ETH. Helps avoid price scams.
+    address seller;
+    uint256 price; // price is in wei, not ether
+    uint256 Chi_available; // remaining amount of Chi. This is just a convenience variable for buyers, not really used in the contract.
+    uint256 Amount_of_Chi_for_One_ETH; // shows how much Chi you get for 1 ETH. Helps avoid price scams.
     uint256 cooldown_start_time;
 
     function ChiTrader() public {
