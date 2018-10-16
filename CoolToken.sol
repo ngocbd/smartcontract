@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoolToken at 0x82aeb952104e4b7e4fc7002112987ba1f69ae2c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoolToken at 0x815a7c1283c802c61933d3fe6f86f6a890443f84
 */
 /*
  * @title CoolToken Smart Contract
  * @author CoolCrypto
  * @description A Cool Token For Everyone
- * 
  */
 pragma solidity >=0.4.4;
 
