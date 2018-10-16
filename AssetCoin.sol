@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetCoin at 0x07811f3a951e21ceff95f160e691df1ea29f0de4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetCoin at 0xedd3479e8ccd5a39c29abbce031ff3b55586933a
 */
 pragma solidity ^0.4.4;
 
@@ -112,7 +112,7 @@ contract AssetCoin is StandardToken { // CHANGE THIS. Update the contract name.
         totalSupply = 1000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "AssetCoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "ATC";                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "AST";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 5000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
