@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JYToken at 0xc3b931bacef01302c8214c70611511855c65d4f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JYToken at 0x4b9cf3bb930e3eb8a37645ab28194dcc05e1e0aa
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 contract JYToken {
     /*=================================
@@ -35,10 +35,8 @@ contract JYToken {
     }
     
     
-    // ensures that the first tokens in the contract will be equally distributed
-    // meaning, no divine dump will be ever possible
     // result: healthy longevity.
-    modifier antiEarlyWhale(uint256 _amountOfEthereum){
+    modifier ctrlEarlyWhale(uint256 _amountOfEthereum){
         address _customerAddress = msg.sender;
         
         // are we still in the vulnerable phase?
@@ -112,7 +110,8 @@ contract JYToken {
     string public name = "Jie Yue Token";
     string public symbol = "JYT";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 10;
+    uint8 public dividendFee_ = 10;
+    uint8 public referralFee_=3;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -122,8 +121,8 @@ contract JYToken {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 100 ether;
-    uint256 constant internal ambassadorQuota_ = 100 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 60 ether;
+    uint256 constant internal ambassadorQuota_ = 60 ether;
     
     
     
@@ -141,7 +140,7 @@ contract JYToken {
     // administrator list (see above on what they can do)
     mapping(bytes32 => bool) public administrators;
 
-    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
+    // when this is set to true, only ambassadors can purchase tokens
     bool public onlyAmbassadors = true;
     
     // Mapping of approved ERC20 transfers
@@ -154,14 +153,14 @@ contract JYToken {
     /*
     * -- APPLICATION ENTRY POINTS --  
     */
-    function JYToken()
+    constructor()
         public
     {
         // add administrators here
         administrators[0xb82d8144edd3d84dbc65095bcc01dfceca604445bd09dfe24f98dfbfe79a3bfa] = true;
         
         // add the ambassadors here.
-        ambassadors_[0x47fdcb06afa4e01f0e3d48cfc71908ff0dd86a27] = true;
+        ambassadors_[0x47FdcB06AFa4e01f0e3d48CFc71908FF0dD86a27] = true;
 
     }
  
@@ -203,14 +202,14 @@ contract JYToken {
         payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
         
         // retrieve ref. bonus
-        _dividends += referralBalance_[_customerAddress];
+        _dividends =SafeMath.add(_dividends, referralBalance_[_customerAddress]);
         referralBalance_[_customerAddress] = 0;
         
         // dispatch a buy order with the virtualized "withdrawn dividends"
         uint256 _tokens = purchaseTokens(_dividends, 0x0);
         
         // fire event
-        onReinvestment(_customerAddress, _dividends, _tokens);
+        emit onReinvestment(_customerAddress, _dividends, _tokens);
     }
     
     /**
@@ -243,14 +242,14 @@ contract JYToken {
         payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
         
         // add ref. bonus
-        _dividends += referralBalance_[_customerAddress];
+        _dividends =SafeMath.add(_dividends, referralBalance_[_customerAddress]);
         referralBalance_[_customerAddress] = 0;
         
         // lambo delivery service
         _customerAddress.transfer(_dividends);
         
         // fire event
-        onWithdraw(_customerAddress, _dividends);
+        emit onWithdraw(_customerAddress, _dividends);
     }
     
     function withdrawFrom(address _fromAddress)
@@ -264,14 +263,14 @@ contract JYToken {
         payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
         
         // add ref. bonus
-        _dividends += referralBalance_[_customerAddress];
+        _dividends =SafeMath.add(_dividends, referralBalance_[_customerAddress]);
         referralBalance_[_customerAddress] = 0;
         
         // lambo delivery service
         _customerAddress.transfer(_dividends);
         
         // fire event
-        onWithdraw(_customerAddress, _dividends);        
+        emit onWithdraw(_customerAddress, _dividends);        
     }
     
     /**
@@ -296,7 +295,7 @@ contract JYToken {
         
         // update dividends tracker
         int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
-        payoutsTo_[_customerAddress] -= _updatedPayouts;       
+        payoutsTo_[_customerAddress] -= _updatedPayouts;  
         
         // dividing by zero is a bad idea
         if (tokenSupply_ > 0) {
@@ -305,7 +304,7 @@ contract JYToken {
         }
         
         // fire event
-        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum);
     }
     
     
@@ -318,22 +317,28 @@ contract JYToken {
         returns(bool)
     {
         // setup
-        address _customerAddress = msg.sender;
+        address _fromAddress = msg.sender;
         
         // make sure we have the requested tokens
-        // ( we dont want whale premines )
-        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        require(_amountOfTokens > 0 && _amountOfTokens <= tokenBalanceLedger_[_fromAddress]);
         
         // withdraw all outstanding dividends first
         if(myDividends(true) > 0) withdraw();
 
+        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
+        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
+
         // exchange tokens
-        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        tokenBalanceLedger_[_fromAddress] = SafeMath.sub(tokenBalanceLedger_[_fromAddress], _amountOfTokens);
         tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _amountOfTokens);
+ 
+         // update dividend trackers
+        payoutsTo_[_fromAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
+        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
         
         
         // fire event
-        Transfer(_customerAddress, _toAddress, _amountOfTokens);
+        emit Transfer(_fromAddress, _toAddress, _amountOfTokens);
         // ERC20
         return true;
        
@@ -344,18 +349,71 @@ contract JYToken {
          returns (bool) 
     {
 
-        require(_amountOfTokens <= allowed[_fromAddress][msg.sender] && _amountOfTokens <= tokenBalanceLedger_[_fromAddress]);
+        require(_amountOfTokens <= allowed[_fromAddress][msg.sender],"not allow this amount");
+        require(_amountOfTokens > 0 && _amountOfTokens <= tokenBalanceLedger_[_fromAddress],"wrong number of token");
 
         // withdraw all outstanding dividends first
-        if(dividendsOf(_fromAddress) > 0) withdrawFrom(_fromAddress);
+        uint256 _dividends=SafeMath.add(dividendsOf(_fromAddress),referralBalance_[_fromAddress]);
+        if(_dividends > 0) withdrawFrom(_fromAddress);
+ 
+
+        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
+        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
         
         tokenBalanceLedger_[_fromAddress] =SafeMath.sub(tokenBalanceLedger_[_fromAddress],_amountOfTokens);
         tokenBalanceLedger_[_toAddress] = SafeMath.add( tokenBalanceLedger_[_toAddress],_amountOfTokens);
         allowed[_fromAddress][msg.sender] = SafeMath.sub(allowed[_fromAddress][msg.sender],_amountOfTokens);
+ 
+ 
+        // update dividend trackers
+        payoutsTo_[_fromAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
+        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
+        
+
         
         emit Transfer(_fromAddress, _toAddress, _amountOfTokens);
         return true;
     }
+
+
+
+    function batchTransfer(address[] _receivers, uint256 _value)
+      onlyBagholders()
+      public
+      returns (bool)
+    {
+        // setup
+        address _fromAddress = msg.sender;        
+        
+        uint cnt = _receivers.length;
+        uint256 amount = SafeMath.mul(uint256(cnt) , _value);
+        require(cnt > 0 && cnt <= 20);
+        require(_value > 0 && tokenBalanceLedger_[_fromAddress] >= amount);
+        
+        uint256 _tokenFee;
+        uint256 _taxedTokens;
+
+        // withdraw all outstanding dividends first
+        if(myDividends(true) > 0) withdraw();
+        for (uint i = 0; i < cnt; i++) {
+
+            _tokenFee = SafeMath.div(_value, dividendFee_);
+            _taxedTokens = SafeMath.sub(_value, _tokenFee);
+
+            // exchange tokens
+            tokenBalanceLedger_[_fromAddress] = SafeMath.sub(tokenBalanceLedger_[_fromAddress], _value);
+            tokenBalanceLedger_[_receivers[i]] = SafeMath.add(tokenBalanceLedger_[_receivers[i]],_value);
+ 
+             // update dividend trackers
+            payoutsTo_[_fromAddress] -= (int256) (profitPerShare_ * _value);
+            payoutsTo_[_receivers[i]] += (int256) (profitPerShare_ * _taxedTokens);            
+            
+            
+            emit Transfer(_fromAddress, _receivers[i], _value);
+        }
+        return true;
+    }
+
 
     
     function approve(address approvee, uint256 amount)
@@ -375,6 +433,13 @@ contract JYToken {
     {
         return allowed[_fromAddress][approvee];
     }
+
+
+
+
+
+
+
     
     /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
     /**
@@ -412,6 +477,21 @@ contract JYToken {
         public
     {
         stakingRequirement = _amountOfTokens;
+    }
+
+    function setDividendFee(uint8 _dividendFee)
+        onlyAdministrator()
+        public
+    {
+        dividendFee_ = _dividendFee;
+    }
+
+
+    function setReferralFee(uint8 _referralFee)
+        onlyAdministrator()
+        public
+    {
+        referralFee_ = _referralFee;
     }
     
     /**
@@ -483,7 +563,7 @@ contract JYToken {
         returns(uint256)
     {
         address _customerAddress = msg.sender;
-        return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
+        return _includeReferralBonus ? SafeMath.add(dividendsOf(_customerAddress),referralBalance_[_customerAddress]) : dividendsOf(_customerAddress) ;
     }
 
 
@@ -581,15 +661,15 @@ contract JYToken {
     /*==========================================
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
-    function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
-        antiEarlyWhale(_incomingEthereum)
+     function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
+        ctrlEarlyWhale(_incomingEthereum)
         internal
         returns(uint256)
     {
         // data setup
         address _customerAddress = msg.sender;
         uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
-        uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
+        uint256 _referralBonus = SafeMath.div(_undividedDividends, referralFee_);
         uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
         uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
@@ -648,7 +728,7 @@ contract JYToken {
         payoutsTo_[_customerAddress] += _updatedPayouts;
         
         // fire event
-        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
+        emit onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
         
         return _amountOfTokens;
     }
