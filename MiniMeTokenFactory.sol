@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0xe20925cb04b3d825d811921fc69e5b9a190bf4f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0x1308a7ec3e82bcd3b63ada5f5dc27586ad8605ba
 */
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.8;
 
 /*
     Copyright 2016, Jordi Baylina
@@ -68,6 +68,10 @@ contract Controlled {
     function changeController(address _newController) onlyController {
         controller = _newController;
     }
+}
+
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 _amount, address _token, bytes _data);
 }
 
 /// @dev The actual token contract, the default controller is the msg.sender
@@ -207,6 +211,8 @@ contract MiniMeToken is Controlled {
                return true;
            }
 
+           if (parentSnapShotBlock >= block.number) throw;
+
            // Do not allow transfer to 0x0 or the token contract itself
            if ((_to == 0) || (_to == address(this))) throw;
 
@@ -230,6 +236,7 @@ contract MiniMeToken is Controlled {
            // Then update the balance array with the new value for the address
            //  receiving the tokens
            var previousBalanceTo = balanceOfAt(_to, block.number);
+           if (previousBalanceTo + _amount < previousBalanceTo) throw; // Check for overflow
            updateValueAtNow(balances[_to], previousBalanceTo + _amount);
 
            // An event to make the transfer easy to find on the blockchain
@@ -253,7 +260,7 @@ contract MiniMeToken is Controlled {
     function approve(address _spender, uint256 _amount) returns (bool success) {
         if (!transfersEnabled) throw;
 
-        // To change the approve amount you first have to reduce the addresses´
+        // To change the approve amount you first have to reduce the addresses`
         //  allowance to zero by calling `approve(_spender,0)` if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
@@ -289,23 +296,15 @@ contract MiniMeToken is Controlled {
     /// @return True if the function call was successful
     function approveAndCall(address _spender, uint256 _amount, bytes _extraData
     ) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+        if (!approve(_spender, _amount)) throw;
 
-        // This portion is copied from ConsenSys's Standard Token Contract. It
-        //  calls the receiveApproval function that is part of the contract that
-        //  is being approved (`_spender`). The function should look like:
-        //  `receiveApproval(address _from, uint256 _amount, address
-        //  _tokenContract, bytes _extraData)` It is assumed that the call
-        //  *should* succeed, otherwise the plain vanilla approve would be used
-        if(!_spender.call(
-            bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))),
+        ApproveAndCallFallBack(_spender).receiveApproval(
             msg.sender,
             _amount,
             this,
             _extraData
-            )) { throw;
-        }
+        );
+
         return true;
     }
 
@@ -327,20 +326,15 @@ contract MiniMeToken is Controlled {
     function balanceOfAt(address _owner, uint _blockNumber) constant
         returns (uint) {
 
-        // If the `_blockNumber` requested is before the genesis block for the
-        //  the token being queried, the value returned is 0
-        if (_blockNumber < creationBlock) {
-            return 0;
-
         // These next few lines are used when the balance of the token is
         //  requested before a check point was ever created for this token, it
         //  requires that the `parentToken.balanceOfAt` be queried at the
         //  genesis block for that token as this contains initial balance of
         //  this token
-        } else if ((balances[_owner].length == 0)
+        if ((balances[_owner].length == 0)
             || (balances[_owner][0].fromBlock > _blockNumber)) {
             if (address(parentToken) != 0) {
-                return parentToken.balanceOfAt(_owner, parentSnapShotBlock);
+                return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
             } else {
                 // Has no parent
                 return 0;
@@ -350,7 +344,6 @@ contract MiniMeToken is Controlled {
         } else {
             return getValueAt(balances[_owner], _blockNumber);
         }
-
     }
 
     /// @notice Total amount of tokens at a specific `_blockNumber`.
@@ -358,20 +351,15 @@ contract MiniMeToken is Controlled {
     /// @return The total amount of tokens at `_blockNumber`
     function totalSupplyAt(uint _blockNumber) constant returns(uint) {
 
-        // If the `_blockNumber` requested is before the genesis block for the
-        //  the token being queried, the value returned is 0
-        if (_blockNumber < creationBlock) {
-            return 0;
-
         // These next few lines are used when the totalSupply of the token is
         //  requested before a check point was ever created for this token, it
         //  requires that the `parentToken.totalSupplyAt` be queried at the
         //  genesis block for this token as that contains totalSupply of this
         //  token at this block number.
-        } else if ((totalSupplyHistory.length == 0)
+        if ((totalSupplyHistory.length == 0)
             || (totalSupplyHistory[0].fromBlock > _blockNumber)) {
             if (address(parentToken) != 0) {
-                return parentToken.totalSupplyAt(parentSnapShotBlock);
+                return parentToken.totalSupplyAt(min(_blockNumber, parentSnapShotBlock));
             } else {
                 return 0;
             }
@@ -393,7 +381,7 @@ contract MiniMeToken is Controlled {
     /// @param _cloneTokenSymbol Symbol of the clone token
     /// @param _snapshotBlock Block when the distribution of the parent token is
     ///  copied to set the initial distribution of the new clone token;
-    ///  if the block is higher than the actual block, the current block is used
+    ///  if the block is zero than the actual block, the current block is used
     /// @param _transfersEnabled True if transfers are allowed in the clone
     /// @return The address of the new MiniMeToken Contract
     function createCloneToken(
@@ -403,7 +391,7 @@ contract MiniMeToken is Controlled {
         uint _snapshotBlock,
         bool _transfersEnabled
         ) returns(address) {
-        if (_snapshotBlock > block.number) _snapshotBlock = block.number;
+        if (_snapshotBlock == 0) _snapshotBlock = block.number;
         MiniMeToken cloneToken = tokenFactory.createCloneToken(
             this,
             _snapshotBlock,
@@ -431,8 +419,10 @@ contract MiniMeToken is Controlled {
     function generateTokens(address _owner, uint _amount
     ) onlyController returns (bool) {
         uint curTotalSupply = getValueAt(totalSupplyHistory, block.number);
+        if (curTotalSupply + _amount < curTotalSupply) throw; // Check for overflow
         updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
         var previousBalanceTo = balanceOf(_owner);
+        if (previousBalanceTo + _amount < previousBalanceTo) throw; // Check for overflow
         updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
         Transfer(0, _owner, _amount);
         return true;
@@ -526,6 +516,11 @@ contract MiniMeToken is Controlled {
         return size>0;
     }
 
+    /// @dev Helper function to return a min betwen the two uints
+    function min(uint a, uint b) internal returns (uint) {
+        return a < b ? a : b;
+    }
+
     /// @notice The fallback function: If the contract's controller has not been
     ///  set to 0, then the `proxyPayment` method is called which relays the
     ///  ether and creates tokens as described in the token controller contract
@@ -596,113 +591,36 @@ contract MiniMeTokenFactory {
 }
 
 
-// Taken from Zeppelin's standard contracts.
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
+/*
+    Copyright 2017, Jarrad Hope (Status Research & Development GmbH)
 
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
+    // TODO Issuance & Deploy
+*/
 
+contract SGT is MiniMeToken {
+  uint constant D160 = 0x0010000000000000000000000000000000000000000;
 
-/// @dev `Owned` is a base level contract that assigns an `owner` that can be
-///  later changed
-contract Owned {
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner { if (msg.sender != owner) throw; _; }
+  function SGT(
+    address _tokenFactory
+  ) MiniMeToken(
+    _tokenFactory,
+    0x0,                    // no parent token
+    0,                      // no snapshot block number from parent
+    "Status Genesis Token", // Token name
+    1,                     // Decimals
+    "SGT",                  // Symbol
+    false                    // Enable transfers
+    ) {}
 
-    address public owner;
+    // data is an array of uints. Each uint represents a transfer.
+    // The 160 LSB is the destination of the addess that wants to be sent
+    // The 96 MSB is the amount of tokens that wants to be sent.
+    function multiMint(uint[] data) onlyController {
+        for (uint i = 0; i < data.length; i++ ) {
+            address addr = address( data[i] & (D160-1) );
+            uint amount = data[i] / D160;
 
-    /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() { owner = msg.sender;}
-
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    ///  an unowned neutral vault, however that cannot be undone
-    function changeOwner(address _newOwner) onlyOwner {
-        owner = _newOwner;
-    }
-}
-
-contract SWTConverter is TokenController, Owned {
-
-    MiniMeToken public tokenContract;   // The new token
-    address public vaultAddress;        // The address to hold the funds donated
-    ERC20 public arcToken;              // The ARC token address
-
-    function SWTConverter(
-        address _vaultAddress,
-        address _tokenAddress,          // the new MiniMe token address
-        address _arctokenaddress        // the original ARC token address
-    ) {
-        if (_vaultAddress == 0)
-            {
-            throw;
-            }
-        vaultAddress = _vaultAddress;
-        tokenContract = MiniMeToken(_tokenAddress); // The Deployed Token Contract
-        arcToken = ERC20(_arctokenaddress);
-    }
-
-/////////////////
-// TokenController interface
-/////////////////
-
-
- function proxyPayment(address _owner) payable returns(bool) {
-        throw;
-    }
-
-/// @notice Notifies the controller about a transfer, for this SWTConverter all
-///  transfers are allowed by default and no extra notifications are needed
-/// @param _from The origin of the transfer
-/// @param _to The destination of the transfer
-/// @param _amount The amount of the transfer
-/// @return False if the controller does not authorize the transfer
-    function onTransfer(address _from, address _to, uint _amount) returns(bool) {
-        return true;
-    }
-
-/// @notice Notifies the controller about an approval, for this SWTConverter all
-///  approvals are allowed by default and no extra notifications are needed
-/// @param _owner The address that calls `approve()`
-/// @param _spender The spender in the `approve()` call
-/// @param _amount The amount in the `approve()` call
-/// @return False if the controller does not authorize the approval
-    function onApprove(address _owner, address _spender, uint _amount)
-        returns(bool)
-    {
-        return true;
-    }
-
-
-/// @notice `onlyOwner` changes the location that ARC is sent
-/// @param _newVaultAddress The address that will receive the ARC when converting tokens
-    function setVault(address _newVaultAddress) onlyOwner {
-        vaultAddress = _newVaultAddress;
-    }
-
-/// @notice converts ARC tokens to new SWT tokens and forwards ARC to the vault address.
-/// @param _amount The amount of ARC to convert to SWT
- function convert(uint _amount){
-
-        // transfer ARC to the vault address. caller needs to have an allowance from
-        // this controller contract for _amount before calling this or the transferFrom will fail.
-        if (!arcToken.transferFrom.gas(100000)(msg.sender, vaultAddress, _amount)) {
-            throw;
-        }
-
-        // mint new SWT tokens
-        if (!tokenContract.generateTokens(msg.sender, _amount)) {
-            throw;
+            if (!generateTokens(addr, amount)) throw;
         }
     }
-
-
 }
