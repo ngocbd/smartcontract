@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitfuryToken at 0xb4db276661be80413f898023ec31fda6c78aeae4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitfuryToken at 0xc4a6c97738ab3deced513463f3450def3462381c
 */
 pragma solidity ^0.4.17;
 /**
@@ -195,7 +195,7 @@ contract SafeStandardToken is ERC20, SafeBasicToken {
 
 contract BitfuryToken is SafeStandardToken{
   string public constant name = "Bitfury Token";
-  string public constant symbol = "BFY";
+  string public constant symbol = "BTYC";
   uint256 public constant decimals = 18;
   uint256 public constant INITIAL_SUPPLY = 84000000 * (10 ** uint256(decimals));
 
