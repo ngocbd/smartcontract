@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GVE at 0x81705082ef9f0d660f07be80093d46d826d48b25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GVE at 0x23b81010b25645a25a8cfefcdbaabf841d2c9b9b
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.8;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -101,20 +101,20 @@ contract GVE is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
-        revert();
+        throw;
     }
 
-    string public name = "Globalvillage ecosystem";                   //fancy name: eg Simon Bucks
+    string public name = "GVE";                   //fancy name: eg Simon Bucks
     uint8 public decimals = 18;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol = "GVE";                 //An identifier: eg SBX
     string public version = 'v0.1';       //gve 0.1 standard. Just an arbitrary versioning scheme.
 
     address public founder; // The address of the founder
 
-    function GVE() {
+    function GVE(address holder) {
+        require(holder != address(0));
         founder = msg.sender;
-        totalSupply = 1000000000 * 10 ** uint256(decimals);
-        balances[founder] = totalSupply;
+        balances[holder] = 1000000000 * 10 ** uint256(decimals);
     }
 
     /* Approves and then calls the receiving contract */
@@ -125,7 +125,7 @@ contract GVE is StandardToken {
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
 
@@ -135,7 +135,7 @@ contract GVE is StandardToken {
         Approval(msg.sender, _spender, _value);
 
         //Call the contract code
-        if(!_spender.call(_extraData)) { revert(); }
+        if(!_spender.call(_extraData)) { throw; }
         return true;
     }
 }
