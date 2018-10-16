@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimplePonzi at 0xf63600989abe81911c3b177e738d5b41c4d3198c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimplePonzi at 0x428472c5664d079eb4f035d872801241a4e8a4de
 */
 contract SimplePonzi {
     address public currentInvestor;
@@ -9,7 +9,7 @@ contract SimplePonzi {
         require(msg.value > currentInvestment);
         
         // payout previous investor
-        currentInvestor.send(msg.value);
+        currentInvestor.send(currentInvestment);
 
         // document new investment
         currentInvestor = msg.sender;
