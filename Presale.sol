@@ -1,19 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x6183896761a11a42aabbe59f04c844688b97b2cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x17355Bf21DcB9676013b945465BC5EBE60Bce32f
 */
-pragma solidity ^0.4.13;
-
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ *  CanYaCoin Presale contract (3780 ether)
  */
+
+pragma solidity 0.4.15;
+
 library SafeMath {
-    
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
 
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
@@ -21,181 +15,169 @@ library SafeMath {
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    
-  address public owner;
+contract ERC20TokenInterface {
+    /// @return The total amount of tokens
+    function totalSupply() constant returns (uint256 supply);
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant public returns (uint256 balance);
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) public returns (bool success);
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant public returns (uint256 remaining);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-    
-  event Pause();
-  
-  event Unpause();
+contract CanYaCoin is ERC20TokenInterface {
 
-  bool public paused = false;
+    string public constant name = "CanYaCoin";
+    string public constant symbol = "CAN";
+    uint256 public constant decimals = 6;
+    uint256 public constant totalTokens = 100000000 * (10 ** decimals);
 
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
+    mapping (address => uint256) public balances;
+    mapping (address => mapping (address => uint256)) public allowed;
 
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused {
-    paused = false;
-    Unpause();
-  }
-  
-}
-
-
-/**
- * @title PreSale
- * @dev The PreSale contract stores balances investors of pre sale stage.
- */
-contract PreSale is Pausable {
-    
-  event Invest(address, uint);
-
-  using SafeMath for uint;
-    
-  address public wallet;
-
-  uint public start;
-
-  uint public min;
-
-  uint public hardcap;
-  
-  uint public invested;
-  
-  uint public period;
-
-  mapping (address => uint) public balances;
-
-  address[] public investors;
-
-  modifier saleIsOn() {
-    require(now > start && now < start + period * 1 days);
-    _;
-  }
-
-  modifier isUnderHardcap() {
-    require(invested < hardcap);
-    _;
-  }
-
-  function setMin(uint newMin) onlyOwner {
-    min = newMin;
-  }
-
-  function setHardcap(uint newHardcap) onlyOwner {
-    hardcap = newHardcap;
-  }
-  
-  function totalInvestors() constant returns (uint) {
-    return investors.length;
-  }
-  
-  function balanceOf(address investor) constant returns (uint) {
-    return balances[investor];
-  }
-  
-  function setStart(uint newStart) onlyOwner {
-    start = newStart;
-  }
-  
-  function setPeriod(uint16 newPeriod) onlyOwner {
-    period = newPeriod;
-  }
-  
-  function setWallet(address newWallet) onlyOwner {
-    require(newWallet != address(0));
-    wallet = newWallet;
-  }
-
-  function invest() saleIsOn isUnderHardcap whenNotPaused payable {
-    require(msg.value >= min);
-    wallet.transfer(msg.value);
-    if(balances[msg.sender] == 0) {
-      investors.push(msg.sender);    
+    function CanYaCoin() {
+        balances[msg.sender] = totalTokens;
     }
-    balances[msg.sender] = balances[msg.sender].add(msg.value);
-    invested = invested.add(msg.value);
-    Invest(msg.sender, msg.value);
-  }
 
-  function() external payable {
-    invest();
-  }
+    function totalSupply() constant returns (uint256) {
+        return totalTokens;
+    }
 
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        if (balances[msg.sender] >= _value) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        }
+        return false;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value) {
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(_from, _to, _value);
+            return true;
+        }
+        return false;
+    }
+
+    function balanceOf(address _owner) constant public returns (uint256) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+}
+
+
+contract Presale {
+    using SafeMath for uint256;
+
+    CanYaCoin public CanYaCoinToken;
+    bool public ended = false;
+    uint256 internal refundAmount = 0;
+    uint256 public constant MAX_CONTRIBUTION = 3780 ether;
+    uint256 public constant MIN_CONTRIBUTION = 1 ether;
+    address public owner;
+    address public multisig;
+    uint256 public constant pricePerToken = 400000000; // (wei per CAN)
+    uint256 public tokensAvailable = 9450000 * (10**6); // Whitepaper 9.45mil * 10^6
+
+    event LogRefund(uint256 _amount);
+    event LogEnded(bool _soldOut);
+    event LogContribution(uint256 _amount, uint256 _tokensPurchased);
+
+    modifier notEnded() {
+        require(!ended);
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /// @dev Sets up the amount of tokens available as per the whitepaper
+    /// @param _token Address of the CanYaCoin contract
+    function Presale(address _token, address _multisig) {
+        require (_token != address(0) && _multisig != address(0));
+        owner = msg.sender;
+        CanYaCoinToken = CanYaCoin(_token);
+        multisig = _multisig;
+    }
+
+    /// @dev Fallback function, this allows users to purchase tokens by simply sending ETH to the
+    /// contract; they will however need to specify a higher amount of gas than the default (21000)
+    function () notEnded payable public {
+        require(msg.value >= MIN_CONTRIBUTION && msg.value <= MAX_CONTRIBUTION);
+        uint256 tokensPurchased = msg.value.div(pricePerToken);
+        if (tokensPurchased > tokensAvailable) {
+            ended = true;
+            LogEnded(true);
+            refundAmount = (tokensPurchased - tokensAvailable) * pricePerToken;
+            tokensPurchased = tokensAvailable;
+        }
+        tokensAvailable -= tokensPurchased;
+        
+        //Refund the difference
+        if (ended && refundAmount > 0) {
+            uint256 toRefund = refundAmount;
+            refundAmount = 0;
+            // reentry should not be possible
+            msg.sender.transfer(toRefund);
+            LogRefund(toRefund);
+        }
+        LogContribution(msg.value, tokensPurchased);
+        CanYaCoinToken.transfer(msg.sender, tokensPurchased);
+        multisig.transfer(msg.value - toRefund);
+    }
+
+    /// @dev Ends the crowdsale and withdraws any remaining tokens
+    /// @param _to Address to withdraw the tokens to
+    function withdrawTokens(address _to) onlyOwner public {
+        require(_to != address(0));
+        if (!ended) {
+            LogEnded(false);
+        }
+        ended = true;
+        CanYaCoinToken.transfer(_to, tokensAvailable);
+    }
 }
