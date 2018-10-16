@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumaniqToken at 0x9734c136F5c63531b60D02548Bca73a3d72E024D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumaniqToken at 0x73f0608566464c09bb0edb156c22cb781c9c4484
 */
 pragma solidity ^0.4.2;
-/// Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 
+/// Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 /// @title Abstract token contract - Functions to be implemented by token contracts.
-contract Token {
+
+contract AbstractToken {
     // This is not an abstract function, because solc won't recognize generated getter functions for public variables as functions
     function totalSupply() constant returns (uint256 supply) {}
     function balanceOf(address owner) constant returns (uint256 balance);
@@ -16,10 +17,11 @@ contract Token {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Issuance(address indexed to, uint256 value);
 }
 
 
-contract StandardToken is Token {
+contract StandardToken is AbstractToken {
 
     /*
      *  Data structures
@@ -105,7 +107,7 @@ contract HumaniqToken is StandardToken {
      */
     string constant public name = "HumaniQ";
     string constant public symbol = "HMQ";
-    uint8 constant public decimals = 0;
+    uint8 constant public decimals = 8;
 
     address public founder = 0x0;
     bool locked = true;
@@ -154,6 +156,7 @@ contract HumaniqToken is StandardToken {
         }
         balances[_for] += tokenCount;
         totalSupply += tokenCount;
+        Issuance(_for, tokenCount);
         return true;
     }
 
