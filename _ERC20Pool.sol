@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _ERC20Pool at 0x77719ee4dc68a71085b26e7792054f9aad32cab0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _ERC20Pool at 0x2e40bb90b6f0bf8c13e82692f9c6c06e96c71e00
 */
 pragma solidity ^0.4.19; 
 /*
@@ -16,8 +16,6 @@ Description: This smart contract is designed to store mining pool payouts for
 This contract is the 0xBTC (0xBitcoin) payout account for: http://0xpool.io 
 
 Not heard of 0xBitcoin? Head over to http://0xbitcoin.org
-
-May the Qat be with you. 
 */
 
 contract ERC20Interface {
@@ -61,8 +59,8 @@ contract _ERC20Pool {
   }
 
   // Require that the caller actually has tokens to withdraw.
-  modifier hasTokens() {
-    require(minerTokens[msg.sender] > 0);
+  modifier hasTokens(address sentFrom) {
+    require(minerTokens[sentFrom] > 0);
     _;
   }
 
@@ -76,7 +74,7 @@ contract _ERC20Pool {
   
   // Allow miners to withdraw their earnings from the contract. Update internal accounting.
   function withdraw() public
-    hasTokens
+    hasTokens(msg.sender) 
   {
     uint32 amount = minerTokens[msg.sender];
     minerTokens[msg.sender] = 0;
