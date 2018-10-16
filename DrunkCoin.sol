@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DrunkCoin at 0xc44889c52581bc6401be70addb69a13e3f6b8a81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DrunkCoin at 0xd850b215c0a9c357b07e03a540edad6b21193eca
 */
 pragma solidity ^0.4.11;
 
@@ -38,7 +38,6 @@ contract DrunkCoin is IERC20 {
 	string public symbol;
 	string public name;
 	uint8 public decimals;
-	uint256 public rate;
 
 	mapping(address => uint256) balances;
 	mapping(address => mapping(address => uint256)) allowed;
@@ -48,7 +47,6 @@ contract DrunkCoin is IERC20 {
 		symbol = "DRNK";
 		name = "DrunkCoin";
 		decimals = 18;
-		balances[owner] = 1000000 * 1 ether;
 	}
 
 	function balanceOf (address _owner) public constant returns (uint256) {
@@ -63,19 +61,13 @@ contract DrunkCoin is IERC20 {
 		return true;
 	}
 	
-	function give(address[] _persons, uint256 _value) public {
+	function give(address[] _persons, uint256[] _values) public {
 	    require(msg.sender == owner);
 	    for(uint16 a = 0; a < _persons.length; a++)
 	    {
-	        balances[_persons[a]] += _value * 1 ether;
+	        balances[_persons[a]] += _values[a] * 1 ether;
+	        _totalSupply+=_values[a] * 1 ether;
 	    }
-	    _totalSupply+=_value*_persons.length;
-	}
-	
-	function mintTokens(uint256 _value) public {
-		require(msg.sender == owner);
-		balances[owner] += _value * 1 ether;
-		_totalSupply += _value * 1 ether;
 	}
 
 	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
