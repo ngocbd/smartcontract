@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xAE6E3C7160af3C1f524572E5b29C81E6Ff061D90
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xa83a86be031728a7dd99d00aeb76677918133c1a
 */
 pragma solidity ^0.4.4;
 
@@ -43,7 +43,7 @@ contract Token {
 
 
 
-contract UquidCoin is Token {
+contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -91,7 +91,7 @@ contract UquidCoin is Token {
 
 
 //name this contract whatever you'd like
-contract ERC20Token is UquidCoin {
+contract ERC20Token is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
@@ -102,28 +102,25 @@ contract ERC20Token is UquidCoin {
 
     /*
     NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
+    string public name;                   //f
+    uint8 public decimals;                //Ho1 
+    string public symbol;                 //An
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
+//l
+//l
+//l
 
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+//l
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 40000000000000000000000000;               
-        totalSupply = 40000000000000000000000000;                        
-        name = "Uquid Coin";                                  
-        decimals = 18;                            
-        symbol = "UQC";
+        balances[msg.sender] = 21000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 21000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "Litecoin Classic";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "LCC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
