@@ -1,154 +1,313 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinvestToken at 0xe50B0cEfeb80bDD9e3d03517976909765c96E962
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinvestToken at 0x4306ce4a5d8b21ee158cb8396a4f6866f14d6ac8
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.9;
 
+ /*
+ * Contract that is working with ERC223 tokens
+ */
+ 
+contract ContractReceiver {
+    function tokenFallback(address _from, uint _value, bytes _data) public;
+} 
 
-/// @title  Coinvest token presale - https://coinve.st (COIN) - crowdfunding code
-/// Whitepaper:
-///  https://docs.google.com/document/d/1ePI50Vd9MGdkPnH0KdVuhTOOSiqmnE7WteGDtG10GuE
-/// 
+ /**
+ * ERC223 token by Dexaran
+ *
+ * https://github.com/Dexaran/ERC223-tokens
+ */
+ 
+ 
+ /* https://github.com/LykkeCity/EthereumApiDotNetCore/blob/master/src/ContractBuilder/contracts/token/SafeMath.sol */
+contract SafeMath {
+    uint256 constant public MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-contract CoinvestToken {
-    string public name = "Coinvest";
-    string public symbol = "COIN";
-    uint8 public constant decimals = 18;  
-    address public owner;
+    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x > MAX_UINT256 - y) throw;
+        return x + y;
+    }
 
-    uint256 public constant tokensPerEth = 1;
-    uint256 public constant howManyEtherInWeiToBecomeOwner = 1000 ether;
-    uint256 public constant howManyEtherInWeiToKillContract = 500 ether;
-    uint256 public constant howManyEtherInWeiToChangeSymbolName = 400 ether;
+    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x < y) throw;
+        return x - y;
+    }
+
+    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (y == 0) return 0;
+        if (x > MAX_UINT256 / y) throw;
+        return x * y;
+    }
+}
+ 
+contract CoinvestToken is SafeMath {
     
-    bool public funding = true;
-
-    // The current total token supply.
-    uint256 totalTokens = 1000;
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Migrate(address indexed _from, address indexed _to, uint256 _value);
-    event Refund(address indexed _from, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    function CoinvestToken() public {
-        owner = msg.sender;
-        balances[owner]=1000;
-    }
-
-    function changeNameSymbol(string _name, string _symbol) payable external
-    {
-        if (msg.sender==owner || msg.value >=howManyEtherInWeiToChangeSymbolName)
-        {
-            name = _name;
-            symbol = _symbol;
-        }
-    }
+    address public maintainer;
+    address public icoContract; // icoContract is needed to allow it to transfer tokens during crowdsale.
+    uint256 public lockupEndTime; // lockupEndTime is needed to determine when users may start transferring.
     
-    
-    function changeOwner (address _newowner) payable external
-    {
-        if (msg.value>=howManyEtherInWeiToBecomeOwner)
-        {
-            owner.transfer(msg.value);
-            owner.transfer(this.balance);
-            owner=_newowner;
-        }
-    }
+    bool public ERC223Transfer_enabled = false;
+    bool public Transfer_data_enabled = false;
+    bool public Transfer_nodata_enabled = true;
 
-    function killContract () payable external
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+    event ERC223Transfer(address indexed from, address indexed to, uint value, bytes data);
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed _from, address indexed _spender, uint indexed _amount);
+
+    mapping(address => uint) balances;
+
+    // Owner of account approves the transfer of an amount to another account
+    mapping(address => mapping (address => uint256)) allowed;
+  
+
+    string public constant symbol = "COIN";
+    string public constant name = "Coinvest COIN Token";
+    
+    uint8 public constant decimals = 18;
+    uint256 public totalSupply = 107142857 * (10 ** 18);
+    
+    /**
+     * @dev Set owner and beginning balance.
+     * @param _lockupEndTime The time at which the token may be traded.
+    **/
+    function CoinvestToken(uint256 _lockupEndTime)
+      public
     {
-        if (msg.sender==owner || msg.value >=howManyEtherInWeiToKillContract)
-        {
-            selfdestruct(owner);
-        }
+        balances[msg.sender] = totalSupply;
+        lockupEndTime = _lockupEndTime;
+        maintainer = msg.sender;
     }
-    /// @notice Transfer `_value` tokens from sender's account
-    /// `msg.sender` to provided account address `_to`.
-    /// @notice This function is disabled during the funding.
-    /// @dev Required state: Operational
-    /// @param _to The address of the tokens recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        // Abort if not in Operational state.
-        
-        var senderBalance = balances[msg.sender];
-        if (senderBalance >= _value && _value > 0) {
-            senderBalance -= _value;
-            balances[msg.sender] = senderBalance;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
+  
+  
+    // Function that is called when a user or another contract wants to transfer funds .
+    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) transferable returns (bool success) {
+      
+        if(isContract(_to)) {
+            if (balanceOf(msg.sender) < _value) throw;
+            balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+            balances[_to] = safeAdd(balanceOf(_to), _value);
+            assert(_to.call.value(0)(bytes4(sha3(_custom_fallback)), msg.sender, _value, _data));
+            if(Transfer_data_enabled)
+            {
+                Transfer(msg.sender, _to, _value, _data);
+            }
+            if(Transfer_nodata_enabled)
+            {
+                Transfer(msg.sender, _to, _value);
+            }
+            if(ERC223Transfer_enabled)
+            {
+                ERC223Transfer(msg.sender, _to, _value, _data);
+            }
             return true;
         }
-        return false;
+        else {
+            return transferToAddress(_to, _value, _data);
+        }
     }
-    
-    function mintTo(address _to, uint256 _value) public returns (bool) {
-        // Abort if not in Operational state.
-        
-            balances[_to] += _value;
+
+    function ERC20transfer(address _to, uint _value, bytes _data) transferable returns (bool success) {
+        bytes memory empty;
+        return transferToAddress(_to, _value, empty);
+    }
+
+    // Function that is called when a user or another contract wants to transfer funds .
+    function transfer(address _to, uint _value, bytes _data) transferable returns (bool success) {
+        if(isContract(_to)) {
+            return transferToContract(_to, _value, _data);
+        }
+        else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+  
+    // Standard function transfer similar to ERC20 transfer with no _data .
+    // Added due to backwards compatibility reasons .
+    function transfer(address _to, uint _value) transferable returns (bool success) {
+      
+        //standard function transfer similar to ERC20 transfer with no _data
+        //added due to backwards compatibility reasons
+        bytes memory empty;
+        if(isContract(_to)) {
+            return transferToContract(_to, _value, empty);
+        }
+        else {
+            return transferToAddress(_to, _value, empty);
+        }
+    }
+
+    //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+    function isContract(address _addr) public returns (bool is_contract) {
+        uint length;
+        assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
+        }
+        return (length>0);
+    }
+
+    //function that is called when transaction target is an address
+    function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+        if (balanceOf(msg.sender) < _value) throw;
+        balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+        balances[_to] = safeAdd(balanceOf(_to), _value);
+        if(Transfer_data_enabled)
+        {
+            Transfer(msg.sender, _to, _value, _data);
+        }
+        if(Transfer_nodata_enabled)
+        {
             Transfer(msg.sender, _to, _value);
-            return true;
+        }
+        if(ERC223Transfer_enabled)
+        {
+            ERC223Transfer(msg.sender, _to, _value, _data);
+        }
+        return true;
     }
-    
-
-    function totalSupply() external constant returns (uint256) {
-        return totalTokens;
+  
+    //function that is called when transaction target is a contract
+    function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+        if (balanceOf(msg.sender) < _value) throw;
+        balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+        balances[_to] = safeAdd(balanceOf(_to), _value);
+        ContractReceiver receiver = ContractReceiver(_to);
+        receiver.tokenFallback(msg.sender, _value, _data);
+        if(Transfer_data_enabled)
+        {
+            Transfer(msg.sender, _to, _value, _data);
+        }
+        if(Transfer_nodata_enabled)
+        {
+            Transfer(msg.sender, _to, _value);
+        }
+        if(ERC223Transfer_enabled)
+        {
+            ERC223Transfer(msg.sender, _to, _value, _data);
+        }
+        return true;
     }
 
-    function balanceOf(address _owner) external constant returns (uint256) {
+
+    function balanceOf(address _owner) constant returns (uint balance) {
         return balances[_owner];
     }
-
-
-    function transferFrom(
-         address _from,
-         address _to,
-         uint256 _amount
-     ) public returns (bool success) {
-         if (balances[_from] >= _amount
-             && allowed[_from][msg.sender] >= _amount
-             && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[_from] -= _amount;
-             allowed[_from][msg.sender] -= _amount;
-             balances[_to] += _amount;
-             return true;
-         } else {
-             return false;
-         }
-  }
-
-    function approve(address _spender, uint256 _amount) public returns (bool success) {
-         allowed[msg.sender][_spender] = _amount;
-         Approval(msg.sender, _spender, _amount);
-         
-         return true;
-     }
-// Crowdfunding:
-
-    /// @notice Create tokens when funding is active.
-    /// @dev Required state: Funding Active
-    /// @dev State transition: -> Funding Success (only if cap reached)
-    function () payable external {
-        // Abort if not in Funding Active state.
-        // The checks are split (instead of using or operator) because it is
-        // cheaper this way.
-        if (!funding) revert();
-        
-        // Do not allow creating 0 or more than the cap tokens.
-        if (msg.value == 0) revert();
-        
-        var numTokens = msg.value * (1000.0/totalTokens);
-        totalTokens += numTokens;
-
-        // Assign new tokens to the sender
-        balances[msg.sender] += numTokens;
-
-        // Log token creation event
-        Transfer(0, msg.sender, numTokens);
+    
+    function totalSupply() constant returns (uint256) {
+        return totalSupply;
     }
+
+    /**
+     * @dev An allowed address can transfer tokens from another's address.
+     * @param _from The owner of the tokens to be transferred.
+     * @param _to The address to which the tokens will be transferred.
+     * @param _amount The amount of tokens to be transferred.
+    **/
+    function transferFrom(address _from, address _to, uint _amount)
+      external
+      transferable
+    returns (bool success)
+    {
+        require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount);
+
+        allowed[_from][msg.sender] -= _amount;
+        balances[_from] -= _amount;
+        balances[_to] += _amount;
+        bytes memory empty;
+        
+        Transfer(_from, _to, _amount, empty);
+        return true;
+    }
+
+    /**
+     * @dev Approves a wallet to transfer tokens on one's behalf.
+     * @param _spender The wallet approved to spend tokens.
+     * @param _amount The amount of tokens approved to spend.
+    **/
+    function approve(address _spender, uint256 _amount) 
+      external
+      transferable // Protect from unlikely maintainer-receiver trickery
+    {
+        require(balances[msg.sender] >= _amount);
+        
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+    }
+    
+    /**
+     * @dev Allow the owner to take ERC20 tokens off of this contract if they are accidentally sent.
+    **/
+    function token_escape(address _tokenContract)
+      external
+      only_maintainer
+    {
+        CoinvestToken lostToken = CoinvestToken(_tokenContract);
+        
+        uint256 stuckTokens = lostToken.balanceOf(address(this));
+        lostToken.transfer(maintainer, stuckTokens);
+    }
+
+    /**
+     * @dev Allow maintainer to set the ico contract for transferable permissions.
+    **/
+    function setIcoContract(address _icoContract)
+      external
+      only_maintainer
+    {
+        require(icoContract == 0);
+        icoContract = _icoContract;
+    }
+
+    /**
+     * @dev Allowed amount for a user to spend of another's tokens.
+     * @param _owner The owner of the tokens approved to spend.
+     * @param _spender The address of the user allowed to spend the tokens.
+    **/
+    function allowance(address _owner, address _spender) 
+      external
+      constant 
+    returns (uint256) 
+    {
+        return allowed[_owner][_spender];
+    }
+    
+    function adjust_ERC223Transfer(bool _value) only_maintainer
+    {
+        ERC223Transfer_enabled = _value;
+    }
+    
+    function adjust_Transfer_nodata(bool _value) only_maintainer
+    {
+        Transfer_nodata_enabled = _value;
+    }
+    
+    function adjust_Transfer_data(bool _value) only_maintainer
+    {
+        Transfer_data_enabled = _value;
+    }
+    
+    modifier only_maintainer
+    {
+        assert(msg.sender == maintainer);
+        _;
+    }
+    
+    /**
+     * @dev Allows the current maintainer to transfer maintenance of the contract to a new maintainer.
+     * @param newMaintainer The address to transfer ownership to.
+     */
+    function transferMaintainer(address newMaintainer) only_maintainer public {
+        require(newMaintainer != address(0));
+        maintainer = newMaintainer;
+    }
+    
+    modifier transferable
+    {
+        if (block.timestamp < lockupEndTime) {
+            require(msg.sender == maintainer || msg.sender == icoContract);
+        }
+        _;
+    }
+    
 }
