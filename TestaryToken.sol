@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestaryToken at 0x904a5a49b204eb9fdb7dfef24bfcff209975b0f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestaryToken at 0x2299308a360242da987ae049c071eb635579edde
 */
 pragma solidity ^0.4.15;
 
@@ -236,65 +236,49 @@ contract TestaryToken is MintableToken {
     
     string public constant name = "Testary";
     
-    string public constant symbol = "TARY";
+    string public constant symbol = "TTRY";
     
     uint32 public constant decimals = 18;
     
 }
 
 
-contract Crowdsale is Ownable {
-    
+contract Testary is Ownable {
     using SafeMath for uint;
-    
-    address multisig;
-
-    uint restrictedPercent;
-
-    address restricted;
-
     TestaryToken public token = new TestaryToken();
-
-    uint start;
-    
+    address eth_addr;
+    uint start_ico;
     uint period;
-
     uint hardcap;
-
     uint rate;
 
     function Crowdsale() {
-        multisig = 0x785862CEBCEcE601c6E1f79315c9320A6721Ea92;
-        restricted = 0x18A09596E20A84EC5915DC1EBdC0B13312C924cD;
-        restrictedPercent = 5;
+        eth_addr = 0x785862CEBCEcE601c6E1f79315c9320A6721Ea92;
         rate = 500e18;
-        start = 1524060501;
+        start_ico = 1522591701;
         period = 30;
         hardcap = 500 ether;
     }
 
     modifier saleIsOn() {
-    	require(now > start && now < start + period * 1 days);
+    	require(now > start_ico && now < start_ico + period * 1 days);
     	_;
     }
 	
     modifier isUnderHardCap() {
-        require(multisig.balance <= hardcap);
+        require(eth_addr.balance <= hardcap);
         _;
     }
  
     function finishMinting() public onlyOwner {
-	uint issuedTokenSupply = token.totalSupply();
-	uint restrictedTokens = issuedTokenSupply.mul(restrictedPercent).div(100 - restrictedPercent);
-	token.mint(restricted, restrictedTokens);
         token.finishMinting();
     }
  
    function createTokens() isUnderHardCap saleIsOn payable {
-        multisig.transfer(msg.value);
+        eth_addr.transfer(msg.value);
         uint tokens = rate.mul(msg.value).div(1 ether);
         uint bonusTokens = 0;
-        if(now < start + (period * 1 days).div(5)) {
+        if(now < start_ico + (period * 1 days).div(3)) {
           bonusTokens = tokens.div(5);
         } else {
           bonusTokens = 0;
