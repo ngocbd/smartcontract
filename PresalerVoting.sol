@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x0ba0d4399c80fa14a25f91b1584ba59823b12c2a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x67179ACc9850722E7047911e661fEe177bCBa6b8
 */
 pragma solidity ^0.4.11;
 
@@ -96,7 +96,7 @@ contract PresalerVoting {
         stakeWaived_Eth     += uint16((bonus - bonusVoted) / 1 ether);
         stakeConfirmed_Eth  += uint16(bonusVoted / 1 ether);
 
-        stakeRemainingToVote_Eth = uint16(TOTAL_BONUS_SUPPLY_ETH - stakeConfirmed_Eth);
+        stakeRemainingToVote_Eth = uint16((TOTAL_BONUS_SUPPLY_ETH - stakeConfirmed_Eth)/1 ether);
 
     }
 
