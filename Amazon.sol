@@ -1,50 +1,155 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Amazon at 0x922a209B5A6a1dB34D6eB0fB00cF2034C18A8530
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Amazon at 0x97b9a2f5c6aabe6f46a3579dce31483b509500d0
 */
-contract Amazon {
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public initialSupply;
-    uint256 public totalSupply;
+pragma solidity ^0.4.16;
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-  
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Amazon() {
-
-         initialSupply = 100000000000000000;
-         name ="Amazon";
-         decimals = 8;
-         symbol = "AMAZON";
-        
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-                                   
-    }
-
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-      
-    }
-
-   
-
+    /// PUNYA USAHA DAN INGIN MENGEMBANGKAN USAHA ANDA DENGAN MEMBUAT COIN BERBASIS ETHEREUM (ERC20) ? SILAHKAN CONTACT KAMI VIA SMS / WA 082280037283 ATAU 082353636798 ///
     
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-   
+library SafeMath {
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_value > 0);
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_value > 0);
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    require(_value > 0);
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    require(_addedValue > 0);
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    require(_subtractedValue > 0);
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  function burn(uint256 _value) public {
+    require(_value > 0);
+    require(_value <= balances[msg.sender]);
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(burner, _value);
+  }
+}
+
+
+contract Amazon is StandardToken, BurnableToken {
+
+  string public constant name = "Amazon"; 
+  string public constant symbol = "AZN"; 
+  uint8 public constant decimals = 18; 
+
+  uint256 public constant INITIAL_SUPPLY = 10000000000 * (10 ** uint256(decimals));
+
+  function Amazon() public {
+    totalSupply = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+    Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+  }
+
 }
