@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharkToken at 0x12b13919955ce7be34bb09697bdaf1a0edf4be0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharkToken at 0x2cc13780ba2a48a103ad19d458a52945bda7ac7d
 */
 pragma solidity ^0.4.19;
 
@@ -184,8 +184,8 @@ contract StandardToken is BasicToken, ERC20 {
 contract SharkToken is StandardToken {
   using SafeMath for uint256;
 
-  string public name = "Shark Fund";
-  string public symbol = "SAK";
+  string public name = "Shark Trust";
+  string public symbol = "SKT";
   uint public decimals = 18;
   
   function SharkToken() {
