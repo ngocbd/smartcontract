@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthVenturesFinal at 0xEe462A6717f17C57C826F1ad9b4d3813495296C9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthVenturesFinal at 0x41F2d5040726C5328f8366F17041ec012aC8f338
 */
 //***********************************EthVenturesFinal****************************************************************************
 //
@@ -52,7 +52,7 @@ contract EthVenturesFinal {
 struct InvestorArray {
 address etherAddress;
 uint amount;
-//float percentage_ownership; // doesnt work, ethereum doesnt allow float point precision yet
+uint percentage_ownership; //ten-billionth point precision, to get real %, just divide this number by 100,000,000
 }
 InvestorArray[] public investors;
 //********************************************PUBLIC VARIABLES
@@ -90,7 +90,7 @@ if(investors.length !=0 && PRE_amount !=0)
 {
 for(uint PRE_i=0; PRE_i<investors.length;PRE_i++)
 {
-PRE_payout = PRE_amount * investors[PRE_i].amount /totaldeposited; //calculate pay out
+PRE_payout = PRE_amount * investors[PRE_i].percentage_ownership /10000000000; //calculate pay out
 investors[PRE_i].etherAddress.send(PRE_payout); //send dividend to investor
 totalpaidout += PRE_payout; //update paid out amount
 totaldividends+=PRE_payout; // update paid out dividends
@@ -127,24 +127,17 @@ total_investors=investors.length+1;
 investors.length += 1; //increment first
 investors[investors.length-1].etherAddress = msg.sender;
 investors[investors.length-1].amount = amount;
-
-//float
-//investors[investors.length-1].percentage_ownership = amount /totaldeposited*10000000000;
-
-
+investors[investors.length-1].percentage_ownership = amount /totaldeposited*10000000000;
 Message_To_Investors="New Investor has joined us!"; // a new and real investor has joined us
 
-//float
-//for(uint k=0; k<investors.length;k++) //if smaller than incremented, goes into loop
-//{investors[k].percentage_ownership = investors[k].amount/totaldeposited*10000000000;} //recalculate % ownership
+for(uint k=0; k<investors.length;k++) //if smaller than incremented, goes into loop
+{investors[k].percentage_ownership = investors[k].amount/totaldeposited*10000000000;} //recalculate % ownership
 
 }
 else // if its already an investor, then update his investments and his % ownership
 {
 investors[alreadyinvestor_id].amount += amount;
-
-//float
-//investors[alreadyinvestor_id].percentage_ownership = investors[alreadyinvestor_id].amount/totaldeposited*10000000000;
+investors[alreadyinvestor_id].percentage_ownership = investors[alreadyinvestor_id].amount/totaldeposited*10000000000;
 }
 // pay out the 1% management fee
 if (fees != 0)
@@ -196,10 +189,7 @@ total_investors=investors.length+1;
 investors.length += 1; //increment first
 investors[investors.length-1].etherAddress = new_investor;
 investors[investors.length-1].amount = new_amount;
-
-//float
-//investors[investors.length-1].percentage_ownership = new_amount /totaldeposited*10000000000;
-
+investors[investors.length-1].percentage_ownership = new_amount /totaldeposited*10000000000;
 
 Message_To_Investors="New manual Investor has been added by the Manager!"; // you can see if the newest investor was manually added or not, this will add transparency to the contract, since this function should only be used in emergency situations.
 // This will ensure that the manager doesn't add fake investors of his own addresses.
