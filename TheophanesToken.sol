@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheophanesToken at 0x4eea6bdcf9dfca9e5b1daa01c2f6dae3f14ecf9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheophanesToken at 0xbb267d755fdf9cac816aa1d6a347b68bc375928c
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'Theophanes Token' token contract
+// '0Fucks' token contract
 //
 // Deployed to :  0x5Bd9586E9073b075eA83dFfc3c7C2FC0D2c2e858
 // Symbol      : THEO
@@ -103,10 +103,10 @@ contract Owned {
 // token transfers
 // ----------------------------------------------------------------------------
 contract TheophanesToken is ERC20Interface, Owned, SafeMath {
-    string public symbol = "THEO";
-    string public  name = "Theophanes Token";
-    uint8 public decimals = 18;
-    uint public _totalSupply = 100000000000000000000000000;
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
