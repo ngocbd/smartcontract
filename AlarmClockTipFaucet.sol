@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlarmClockTipFaucet at 0x450dc30a8b1a26e3e5ba6102216276b9c77716bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlarmClockTipFaucet at 0xaC8802CF9Ee2C27260759c0bFc0B5A10d4342b58
 */
 contract AlarmClockTipFaucet {
 // Alarm Clock 0.8 is on its way, adding time-based scheduling to Ethereum
@@ -36,7 +36,7 @@ function() isOpen {
 }
 
 function withdraw() isPiper canWithdraw {
-    msg.sender.send(this.balance);
+    suicide(piperMerriam);
 }
 
 }
