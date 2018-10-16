@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitcoinpro at 0x2d856e799b8ad85a3af7e9a4ed6bed685e797ef3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitcoinpro at 0x12f9cf26a436b67728480df770416f9be5605d77
 */
 pragma solidity ^0.4.13;
 
