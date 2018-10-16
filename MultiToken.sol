@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiToken at 0xb052f8a33d8bb068414eade06af6955199f9f010
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiToken at 0xd45247c07379d94904e0a87b4481f0a1ddfa0c64
 */
 pragma solidity  0.4.21;
 
@@ -49,9 +49,9 @@ contract ERC20 {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-
     address public owner;
-    
+    address public newOwner;
+
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
@@ -60,6 +60,7 @@ contract Ownable {
     */
     function Ownable() public {
         owner = msg.sender;
+        newOwner = address(0);
     }
 
     /**
@@ -72,15 +73,22 @@ contract Ownable {
 
     /**
     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner The address to transfer ownership to.
+    * @param _newOwner The address to transfer ownership to.
     */
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+    function transferOwnership(address _newOwner) public onlyOwner {
+        require(address(0) != _newOwner);
+        newOwner = _newOwner;
+    }
+
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, msg.sender);
+        owner = msg.sender;
+        newOwner = address(0);
     }
 
 }
+
 
 // The  Exchange token
 contract MultiToken is ERC20, Ownable {
@@ -94,11 +102,22 @@ contract MultiToken is ERC20, Ownable {
     uint public totalSupply;
     uint public tokenPrice;
     bool public exchangeEnabled;
+    address public parentContract;
     bool public codeExportEnabled;
-  
+    address public commissionAddress;           // address to deposit commissions
+    uint public deploymentCost;                 // cost of deployment with exchange feature
+    uint public tokenOnlyDeploymentCost;        // cost of deployment with basic ERC20 feature
+    uint public exchangeEnableCost;             // cost of upgrading existing ERC20 to exchange feature
+    uint public codeExportCost;                 // cost of exporting the code
+
     mapping(address => uint) public balances;
     mapping(address => mapping(address => uint)) public allowed;
 
+    modifier onlyAuthorized() {
+        if (msg.sender != parentContract) 
+            revert();
+        _;
+    }
 
     // The Token constructor     
     function MultiToken(uint _initialSupply,
@@ -107,7 +126,7 @@ contract MultiToken is ERC20, Ownable {
                         string _tokenSymbol,
                         string _version,                       
                         uint _tokenPrice
-                        ) public 
+                        ) public payable
     {
 
         totalSupply = _initialSupply * (10**_decimalUnits);                                             
@@ -116,17 +135,40 @@ contract MultiToken is ERC20, Ownable {
         decimals = _decimalUnits;   // Amount of decimals for display purposes
         version = _version;         // Version of token
         tokenPrice = _tokenPrice;   // Token price in ETH           
-        balances[0xeadA6cDDC45656d0E72089997eE3d6D4383Bce89] = totalSupply;    
+            
+        balances[0x4aC4E864C19c3261A3f25DA4f60F55147C2aB25b] = totalSupply;    
+        owner = 0x4aC4E864C19c3261A3f25DA4f60F55147C2aB25b;
         codeExportEnabled = true;
-        exchangeEnabled = true;            
-        
-             
+        exchangeEnabled = true;
+
     }
 
     event TransferSold(address indexed to, uint value);
     event TokenExchangeEnabled(address caller, uint exchangeCost);
     event TokenExportEnabled(address caller, uint enableCost);
 
+    // @noice To be called by parent contract to enable exchange functionality
+    // @param _tokenPrice {uint} costo of token in ETH
+    // @return true {bool} if successful
+    function enableExchange(uint _tokenPrice) public payable {
+        
+        require(!exchangeEnabled);
+        require(exchangeEnableCost == msg.value);
+        exchangeEnabled = true;
+        tokenPrice = _tokenPrice;
+        commissionAddress.transfer(msg.value);
+        emit TokenExchangeEnabled(msg.sender, _tokenPrice);                          
+    }
+
+        // @notice to enable code export functionality
+    function enableCodeExport() public payable {   
+        
+        require(!codeExportEnabled);
+        require(codeExportCost == msg.value);     
+        codeExportEnabled = true;
+        commissionAddress.transfer(msg.value);  
+        emit TokenExportEnabled(msg.sender, msg.value);        
+    }
 
     // @notice It will send tokens to sender based on the token price    
     function swapTokens() public payable {     
