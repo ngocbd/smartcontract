@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xf2891b23512ff3735ea6f5ba5a2d314d87c65394
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xb77129403b2ae45bc50e3b41a6fd188eb5fed9cf
 */
 pragma solidity ^0.4.16;
 
-interface tokenRecipient { function receiveApproval(address _from, uint32 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract x32323 {
     // Public variables of the token
@@ -11,17 +11,17 @@ contract x32323 {
     string public symbol;
     uint8 public decimals = 0;
     // 0 decimals is the strongly suggested default, avoid changing it
-    uint32 public totalSupply;
+    uint256 public totalSupply;
 
     // This creates an array with all balances
-    mapping (address => uint32) public balanceOf;
-    mapping (address => mapping (address => uint32)) public allowance;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
     // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint32 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
     // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint32 value);
+    event Burn(address indexed from, uint256 value);
 
     /**
      * Constructor function
@@ -29,20 +29,20 @@ contract x32323 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        uint32 initialSupply,
+        uint256 initialSupply,
         string tokenName,
         string tokenSymbol
     ) public {
         totalSupply = 23000000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "??4";                                   // Set the name for display purposes
-        symbol = "??4";                               // Set the symbol for display purposes
+        name = "??3";                                   // Set the name for display purposes
+        symbol = "??3";                               // Set the symbol for display purposes
     }
 
     /**
      * Internal transfer, only can be called by this contract
      */
-    function _transfer(address _from, address _to, uint32 _value) internal {
+    function _transfer(address _from, address _to, uint _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
@@ -68,7 +68,7 @@ contract x32323 {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint32 _value) public {
+    function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
     }
 
@@ -81,7 +81,7 @@ contract x32323 {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transferFrom(address _from, address _to, uint32 _value) public returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
         allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
@@ -96,7 +96,7 @@ contract x32323 {
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint32 _value) public
+    function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
@@ -111,7 +111,7 @@ contract x32323 {
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
      */
-    function approveAndCall(address _spender, uint32 _value, bytes _extraData)
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
         public
         returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
@@ -128,7 +128,7 @@ contract x32323 {
      *
      * @param _value the amount of money to burn
      */
-    function burn(uint32 _value) public returns (bool success) {
+    function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
@@ -144,7 +144,7 @@ contract x32323 {
      * @param _from the address of the sender
      * @param _value the amount of money to burn
      */
-    function burnFrom(address _from, uint32 _value) public returns (bool success) {
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
         require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
         require(_value <= allowance[_from][msg.sender]);    // Check allowance
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
