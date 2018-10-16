@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract URUNCrowdsale at 0x87c453706f694e27fde749cacb076bdf24c073e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract URUNCrowdsale at 0xdb8459034fc97eed3d43172909e1d353e9f4d282
 */
 pragma solidity 0.4.23;
 
@@ -108,18 +108,19 @@ interface TokenInterface {
 
   uint256 public TOKENS_SOLD;
   
-  uint256 minimumContributionPresalePhase1 = 2 * 10 ** 18; //2 eth is the minimum contribution in presale phase 1
-  uint256 minimumContributionPresalePhase2 = 1 * 10 ** 18; //1 eth is the minimum contribution in presale phase 2
+  uint256 public minimumContributionPresalePhase1 = uint(2).mul(10 ** 18); //2 eth is the minimum contribution in presale phase 1
+  uint256 public minimumContributionPresalePhase2 = uint(1).mul(10 ** 18); //1 eth is the minimum contribution in presale phase 2
   
-  uint256 maxTokensToSaleInClosedPreSale;
+  uint256 public maxTokensToSaleInClosedPreSale;
   
-  uint256 bonusInPreSalePhase1;
-  uint256 bonusInPreSalePhase2;
+  uint256 public bonusInPreSalePhase1;
+  uint256 public bonusInPreSalePhase2;
   
-  bool isCrowdsalePaused = false;
+  bool public isCrowdsalePaused = false;
   
-  uint256 totalDurationInDays = 31 days;
+  uint256 public totalDurationInDays = 31 days;
   
+  mapping(address=>bool) isAddressWhiteListed;
   /**
    * event for token purchase logging
    * @param purchaser who paid for the tokens
@@ -135,7 +136,7 @@ interface TokenInterface {
     require(_wallet != 0x0);
     require(_startTime >=now);
     startTime = _startTime;  
-
+    
     endTime = startTime + totalDurationInDays;
     require(endTime >= startTime);
    
@@ -183,6 +184,7 @@ interface TokenInterface {
   function buyTokens(address beneficiary) public payable {
     require(beneficiary != 0x0);
     require(isCrowdsalePaused == false);
+    require(isAddressWhiteListed[beneficiary]);
     require(validPurchase());
     
     require(isWithinContributionRange());
@@ -222,21 +224,17 @@ interface TokenInterface {
     return now > endTime;
   }
   
-   /**
-    * function to change the end timestamp of the ico
-    * can only be called by owner wallet
-    **/
-    function changeEndDate(uint256 endTimeUnixTimestamp) public onlyOwner{
-        endTime = endTimeUnixTimestamp;
-    }
-    
     /**
-    * function to change the start timestamp of the ico
+    * function to change the end time and start time of the ICO
     * can only be called by owner wallet
     **/
-    
-    function changeStartDate(uint256 startTimeUnixTimestamp) public onlyOwner{
+    function changeStartAndEndDate (uint256 startTimeUnixTimestamp, uint256 endTimeUnixTimestamp) public onlyOwner
+    {
+        require (startTimeUnixTimestamp!=0 && endTimeUnixTimestamp!=0);
+        require(endTimeUnixTimestamp>startTimeUnixTimestamp);
+        require(endTimeUnixTimestamp.sub(startTimeUnixTimestamp) >=totalDurationInDays);
         startTime = startTimeUnixTimestamp;
+        endTime = endTimeUnixTimestamp;
     }
     
     /**
@@ -299,5 +297,55 @@ interface TokenInterface {
      {
          token.transfer(receiver,value);
          TOKENS_SOLD = TOKENS_SOLD.add(value);
+     }
+     
+     /**
+      * Function to add a single address to whitelist
+      * Can only be called by owner wallet address
+      **/ 
+     function addSingleAddressToWhitelist(address whitelistedAddr) public onlyOwner
+     {
+         isAddressWhiteListed[whitelistedAddr] = true;
+     }
+     
+     /**
+      * Function to add multiple addresses to whitelist
+      * Can only be called by owner wallet address
+      **/ 
+     function addMultipleAddressesToWhitelist(address[] whitelistedAddr) public onlyOwner
+     {
+         for (uint i=0;i<whitelistedAddr.length;i++)
+         {
+            isAddressWhiteListed[whitelistedAddr[i]] = true;
+         }
+     }
+     
+     /**
+      * Function to remove an address from whitelist 
+      * Can only be called by owner wallet address 
+      **/ 
+     function removeSingleAddressFromWhitelist(address whitelistedAddr) public onlyOwner
+     {
+         isAddressWhiteListed[whitelistedAddr] = false;
+     }
+     
+     /**
+     * Function to remove multiple addresses from whitelist 
+     * Can only be called by owner wallet address 
+     **/ 
+     function removeMultipleAddressesFromWhitelist(address[] whitelistedAddr) public onlyOwner
+     {
+        for (uint i=0;i<whitelistedAddr.length;i++)
+         {
+            isAddressWhiteListed[whitelistedAddr[i]] = false;
+         }
+     }
+     
+     /**
+      * Function to check if an address is whitelisted 
+      **/ 
+     function checkIfAddressIsWhiteListed(address whitelistedAddr) public view returns (bool)
+     {
+         return isAddressWhiteListed[whitelistedAddr];
      }
 }
