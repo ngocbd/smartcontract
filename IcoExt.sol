@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoExt at 0x94d7e215fcb6d731919b7726f0a3571bf2fe7c6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoExt at 0xb83f661c04890bcf171757fa41e37d94139b0780
 */
 pragma solidity ^0.4.15;
 
@@ -165,7 +165,7 @@ contract IcoExt {
     receivedFrom[_address] += _value;
     totalReceived += _value;
     sentTo[_address] += tokensToSend;
-    totalSent = tokensToSend;
+    totalSent += tokensToSend;
 
     //Send tokens
     require(GXVCtoken.transferFrom(tokenSpender,_address,tokensToSend));
