@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MixinToken at 0x9af79ba0caee7480d077da59dba109abc380a8af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MixinToken at 0x40589fdb5a8ab424b674f73ddcdeb86f9f40e8ba
 */
 pragma solidity ^0.4.18;
 
@@ -130,23 +130,12 @@ contract StandardToken is ERC20 {
 }
 
 contract MixinToken is StandardToken {
-  address public owner;
-  string public constant name = "TestMMMM";
-  string public constant symbol = "TESTm1";
+  string public constant name = "Mixin";
+  string public constant symbol = "XIN";
   uint8 public constant decimals = 18;
 
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
-
   function MixinToken() public {
-    owner = msg.sender;
     totalSupply = 1000000000000000000000000;
-    balances[owner] = totalSupply;
-  }
-
-  function destroy() internal onlyOwner {
-    selfdestruct(owner);
+    balances[msg.sender] = totalSupply;
   }
 }
