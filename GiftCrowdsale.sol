@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftCrowdsale at 0xf4a0767888e483143671f873b40376a7d20ba3e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftCrowdsale at 0x0f72b988c30a4e4472607703c3363dcfe0f58e0d
 */
-pragma solidity ^0.4.15;
+pragma solidity 0.4.19;
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -21,10 +21,9 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
-
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -34,12 +33,11 @@ contract Ownable {
     _;
   }
 
-
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
@@ -54,32 +52,48 @@ contract Ownable {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -87,13 +101,13 @@ library SafeMath {
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/BasicToken.sol
+// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -104,6 +118,15 @@ contract BasicToken is ERC20Basic {
 
   mapping(address => uint256) balances;
 
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
@@ -111,6 +134,7 @@ contract BasicToken is ERC20Basic {
   */
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -124,26 +148,26 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20.sol
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
+  function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/StandardToken.sol
+// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -154,7 +178,7 @@ contract ERC20 is ERC20Basic {
  */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) allowed;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
   /**
@@ -165,15 +189,12 @@ contract StandardToken is ERC20, BasicToken {
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
-
-    uint256 _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
@@ -200,25 +221,37 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
   /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval (address _spender, uint _addedValue)
-    returns (bool success) {
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue)
-    returns (bool success) {
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -246,16 +279,7 @@ contract BurnableToken is StandardToken, Ownable {
     * @param _amount The amount of token to be burned.
     */
     function burn(uint256 _amount) public {
-        require(_amount > 0);
-        require(_amount <= balances[msg.sender]);
-        // no need to require _amount <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_amount);
-        totalSupply = totalSupply.sub(_amount);
-        Transfer(burner, address(0), _amount);
-        Burn(burner, _amount);
+        burnInternal(msg.sender, _amount);
     }
 
     /**
@@ -263,7 +287,16 @@ contract BurnableToken is StandardToken, Ownable {
     * @param _from The address of token holder whose tokens to be burned.
     * @param _amount The amount of token to be burned.
     */
-    function burnFrom(address _from, uint256 _amount) onlyOwner public {
+    function burnFrom(address _from, uint256 _amount) public onlyOwner {
+        burnInternal(_from, _amount);
+    }
+
+    /**
+    * @dev Burns a specific amount of tokens of a token holder.
+    * @param _from The address of token holder whose tokens are to be burned.
+    * @param _amount The amount of token to be burned.
+    */
+    function burnInternal(address _from, uint256 _amount) internal {
         require(_from != address(0));
         require(_amount > 0);
         require(_amount <= balances[_from]);
@@ -271,7 +304,7 @@ contract BurnableToken is StandardToken, Ownable {
         // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
         balances[_from] = balances[_from].sub(_amount);
-        totalSupply = totalSupply.sub(_amount);
+        totalSupply_ = totalSupply_.sub(_amount);
         Transfer(_from, address(0), _amount);
         Burn(_from, _amount);
     }
@@ -327,11 +360,12 @@ contract Pausable is Ownable {
 // File: contracts/GiftToken.sol
 
 contract GiftToken is BurnableToken, Pausable {
-    string constant public name = "Giftcoin";
-    string constant public symbol = "GIFT";
-    uint8 constant public decimals = 18;
 
-    uint256 constant public INITIAL_TOTAL_SUPPLY = 1e8 * (uint256(10) ** decimals);
+    string public name = "Giftcoin";
+    string public symbol = "GIFT";
+    uint8 public decimals = 18;
+  
+    uint256 public initialTotalSupply = uint256(1e8) * (uint256(10) ** decimals);
 
     address private addressIco;
 
@@ -344,16 +378,26 @@ contract GiftToken is BurnableToken, Pausable {
     * @dev Create GiftToken contract and set pause
     * @param _ico The address of ICO contract.
     */
-    function GiftToken (address _ico) {
+    function GiftToken(address _ico) public {
+        pause();
+        setIcoAddress(_ico);
+
+        totalSupply_ = initialTotalSupply;
+        balances[_ico] = balances[_ico].add(initialTotalSupply);
+        Transfer(address(0), _ico, initialTotalSupply);
+    }
+
+    function setIcoAddress(address _ico) public onlyOwner {
         require(_ico != address(0));
+        // to change the ICO address firstly transfer the tokens to the new ICO
+        require(balanceOf(addressIco) == 0);
 
         addressIco = _ico;
-
-        totalSupply = totalSupply.add(INITIAL_TOTAL_SUPPLY);
-        balances[_ico] = balances[_ico].add(INITIAL_TOTAL_SUPPLY);
-        Transfer(address(0), _ico, INITIAL_TOTAL_SUPPLY);
-
-        pause();
+  
+        // the ownership of the token needs to be transferred to the crowdsale contract
+        // but it can be reclaimed using transferTokenOwnership() function
+        // or along withdrawal of the funds
+        transferOwnership(_ico);
     }
 
     /**
@@ -362,8 +406,8 @@ contract GiftToken is BurnableToken, Pausable {
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
-    function transfer(address _to, uint256 _value) whenNotPaused public returns (bool) {
-        super.transfer(_to, _value);
+    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transfer(_to, _value);
     }
 
     /**
@@ -373,8 +417,8 @@ contract GiftToken is BurnableToken, Pausable {
     * @param _to address The address which you want to transfer to
     * @param _value uint256 the amount of tokens to be transferred
     */
-    function transferFrom(address _from, address _to, uint256 _value) whenNotPaused public returns (bool) {
-        super.transferFrom(_from, _to, _value);
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transferFrom(_from, _to, _value);
     }
 
     /**
@@ -382,8 +426,8 @@ contract GiftToken is BurnableToken, Pausable {
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
-    function transferFromIco(address _to, uint256 _value) onlyIco public returns (bool) {
-        super.transfer(_to, _value);
+    function transferFromIco(address _to, uint256 _value) public onlyIco returns (bool) {
+        return super.transfer(_to, _value);
     }
 }
 
@@ -400,26 +444,27 @@ contract Whitelist is Ownable {
         uint256 createdTimestamp;
     }
 
-    address private addressApi;
+    address public backendAddress;
 
     mapping(address => WalletInfo) public whitelist;
 
     uint256 public whitelistLength = 0;
 
-    modifier onlyPrivilegeAddresses {
-        require(msg.sender == addressApi || msg.sender == owner);
-        _;
+    /**
+    * @dev Sets the backend address for automated operations.
+    * @param _backendAddress The backend address to allow.
+    */
+    function setBackendAddress(address _backendAddress) public onlyOwner {
+        require(_backendAddress != address(0));
+        backendAddress = _backendAddress;
     }
 
     /**
-    * @dev Set backend Api address.
-    * @dev Accept request from owner only.
-    * @param _api The address of backend API.
+    * @dev Allows the function to be called only by the owner and backend.
     */
-    function setApiAddress(address _api) onlyOwner public {
-        require(_api != address(0));
-
-        addressApi = _api;
+    modifier onlyPrivilegedAddresses() {
+        require(msg.sender == owner || msg.sender == backendAddress);
+        _;
     }
 
     /**
@@ -428,7 +473,7 @@ contract Whitelist is Ownable {
     * @param _wallet The address of wallet to add.
     * @param _data The checksum of additional wallet data.
     */  
-    function addWallet(address _wallet, string _data) onlyPrivilegeAddresses public {
+    function addWallet(address _wallet, string _data) public onlyPrivilegedAddresses {
         require(_wallet != address(0));
         require(!isWhitelisted(_wallet));
         whitelist[_wallet].data = _data;
@@ -443,7 +488,7 @@ contract Whitelist is Ownable {
     * @param _wallet The address of whitelisted wallet to update.
     * @param _data The checksum of new additional wallet data.
     */      
-    function updateWallet(address _wallet, string _data) onlyPrivilegeAddresses public {
+    function updateWallet(address _wallet, string _data) public onlyPrivilegedAddresses {
         require(_wallet != address(0));
         require(isWhitelisted(_wallet));
         whitelist[_wallet].data = _data;
@@ -454,7 +499,7 @@ contract Whitelist is Ownable {
     * @dev Accept request from privilege adresses only.
     * @param _wallet The address of whitelisted wallet to remove.
     */  
-    function removeWallet(address _wallet) onlyPrivilegeAddresses public {
+    function removeWallet(address _wallet) public onlyPrivilegedAddresses {
         require(_wallet != address(0));
         require(isWhitelisted(_wallet));
         delete whitelist[_wallet];
@@ -465,7 +510,7 @@ contract Whitelist is Ownable {
     * @dev Check the specified wallet whether it is in the whitelist.
     * @param _wallet The address of wallet to check.
     */ 
-    function isWhitelisted(address _wallet) constant public returns (bool) {
+    function isWhitelisted(address _wallet) public view returns (bool) {
         return whitelist[_wallet].whitelisted;
     }
 
@@ -473,7 +518,7 @@ contract Whitelist is Ownable {
     * @dev Get the checksum of additional data for the specified whitelisted wallet.
     * @param _wallet The address of wallet to get.
     */ 
-    function walletData(address _wallet) constant public returns (string) {
+    function walletData(address _wallet) public view returns (string) {
         return whitelist[_wallet].data;
     }
 
@@ -481,31 +526,14 @@ contract Whitelist is Ownable {
     * @dev Get the creation timestamp for the specified whitelisted wallet.
     * @param _wallet The address of wallet to get.
     */
-    function walletCreatedTimestamp(address _wallet) constant public returns (uint256) {
+    function walletCreatedTimestamp(address _wallet) public view returns (uint256) {
         return whitelist[_wallet].createdTimestamp;
-    }
-}
-
-// File: contracts/Whitelistable.sol
-
-contract Whitelistable {
-    Whitelist public whitelist;
-
-    modifier whenWhitelisted(address _wallet) {
-        require(whitelist.isWhitelisted(_wallet));
-        _;
-    }
-
-    function Whitelistable () public {
-        whitelist = new Whitelist();
-
-        whitelist.transferOwnership(msg.sender);
     }
 }
 
 // File: contracts/GiftCrowdsale.sol
 
-contract GiftCrowdsale is Pausable, Whitelistable {
+contract GiftCrowdsale is Pausable {
     using SafeMath for uint256;
 
     uint256 public startTimestamp = 0;
@@ -524,16 +552,22 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     uint256 public endSecondPeriodTimestamp = 0;
     uint256 public endThirdPeriodTimestamp = 0;
 
-    GiftToken public token = new GiftToken(this);
+    GiftToken public token;
+    Whitelist public whitelist;
 
     mapping(address => uint256) public investments;
 
-    modifier whenSaleIsOpen () {
+    modifier beforeSaleOpens() {
+        require(now < startTimestamp);
+        _;
+    }
+
+    modifier whenSaleIsOpen() {
         require(now >= startTimestamp && now < endTimestamp);
         _;
     }
 
-    modifier whenSaleHasEnded () {
+    modifier whenSaleHasEnded() {
         require(now >= endTimestamp);
         _;
     }
@@ -551,7 +585,8 @@ contract GiftCrowdsale is Pausable, Whitelistable {
         uint256 _endTimestamp,
         uint256 _exchangeRate,
         uint256 _minCap
-    ) public
+    )
+        public
     {
         require(_startTimestamp >= now && _endTimestamp > _startTimestamp);
         require(_exchangeRate > 0);
@@ -566,9 +601,11 @@ contract GiftCrowdsale is Pausable, Whitelistable {
         endThirdPeriodTimestamp = _startTimestamp.add(2 weeks);
 
         minCap = _minCap;
+
+        pause();
     }
 
-    function discount() constant public returns (uint256) {
+    function discount() public view returns (uint256) {
         if (now > endThirdPeriodTimestamp)
             return 0;
         if (now > endSecondPeriodTimestamp)
@@ -578,7 +615,7 @@ contract GiftCrowdsale is Pausable, Whitelistable {
         return 25;
     }
 
-    function bonus(address _wallet) constant public returns (uint256) {
+    function bonus(address _wallet) public view returns (uint256) {
         uint256 _created = whitelist.walletCreatedTimestamp(_wallet);
         if (_created > 0 && _created < startTimestamp) {
             return 10;
@@ -590,7 +627,7 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     * @dev Function for sell tokens.
     * @dev Sells tokens only for wallets from Whitelist while ICO lasts
     */
-    function sellTokens () whenSaleIsOpen whenWhitelisted(msg.sender) whenNotPaused public payable {
+    function sellTokens() public payable whenSaleIsOpen whenWhitelisted(msg.sender) whenNotPaused {
         require(msg.value > minimumInvestment);
         uint256 _bonus = bonus(msg.sender);
         uint256 _discount = discount();
@@ -606,7 +643,7 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     /**
     * @dev Fallback function allowing the contract to receive funds
     */
-    function () public payable {
+    function() public payable {
         sellTokens();
     }
 
@@ -615,7 +652,7 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     * @dev transfers funds to specified wallet once ICO is ended
     * @param _wallet address wallet address, to  which funds  will be transferred
     */
-    function withdrawal (address _wallet) onlyOwner whenSaleHasEnded external {
+    function withdrawal(address _wallet) external onlyOwner whenSaleHasEnded {
         require(_wallet != address(0));
         _wallet.transfer(this.balance);
 
@@ -627,8 +664,10 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     * @param _to address The address which you want transfer to
     * @param _value uint256 the amount of tokens to be transferred
     */
-    function assignTokens (address _to, uint256 _value) onlyOwner external {
+    function assignTokens(address _to, uint256 _value) external onlyOwner {
         token.transferFromIco(_to, _value);
+
+        tokensSold = tokensSold.add(_value);
     }
 
     /**
@@ -643,7 +682,7 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     /**
     * @dev Function to return money to one customer, if mincap has not been reached
     */
-    function refundPayment() whenWhitelisted(msg.sender) whenSaleHasEnded external {
+    function refundPayment() external whenWhitelisted(msg.sender) whenSaleHasEnded {
         require(tokensSold < minCap);
         require(investments[msg.sender] > 0);
 
@@ -658,37 +697,47 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     * @dev Allows the current owner to transfer control of the token contract from ICO to a newOwner.
     * @param _newOwner The address to transfer ownership to.
     */
-    function transferTokenOwnership(address _newOwner) onlyOwner public {
+    function transferTokenOwnership(address _newOwner) public onlyOwner {
         token.transferOwnership(_newOwner);
     }
 
-    function updateIcoEnding(uint256 _endTimestamp) onlyOwner public {
+    function updateIcoEnding(uint256 _endTimestamp) public onlyOwner {
         endTimestamp = _endTimestamp;
     }
-}
 
-// File: contracts/GiftFactory.sol
+    modifier whenWhitelisted(address _wallet) {
+        require(whitelist.isWhitelisted(_wallet));
+        _;
+    }
 
-contract GiftFactory {
-    GiftCrowdsale public crowdsale;
+    function init(address _token, address _whitelist) public onlyOwner {
+        require(_token != address(0) && _whitelist != address(0));
+        // function callable only once
+        require(token == address(0) && whitelist == address(0));
+        // required for refund purposes (token.burnFrom())
+        require(Ownable(_token).owner() == address(this));
 
-    function createCrowdsale (
-        uint256 _startTimestamp,
-        uint256 _endTimestamp,
-        uint256 _exchangeRate,
-        uint256 _minCap
-    ) public
-    {
-        crowdsale = new GiftCrowdsale(
-            _startTimestamp,
-            _endTimestamp,
-            _exchangeRate,
-            _minCap
-        );
+        token = GiftToken(_token);
+        whitelist = Whitelist(_whitelist);
 
-        Whitelist whitelist = crowdsale.whitelist();
+        unpause();
+    }
 
-        crowdsale.transferOwnership(msg.sender);
-        whitelist.transferOwnership(msg.sender);
+    /**
+    * @dev Owner can't unpause the crowdsale before calling init().
+    */
+    function unpause() public onlyOwner whenPaused {
+        require(token != address(0) && whitelist != address(0));
+        super.unpause();
+    }
+
+    /**
+    * @dev Owner can change the exchange rate before ICO begins
+    * @param _exchangeRate new exchange rate
+    */
+    function setExchangeRate(uint256 _exchangeRate) public onlyOwner beforeSaleOpens {
+        require(_exchangeRate > 0);
+
+        exchangeRate = _exchangeRate;
     }
 }
