@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyHunter at 0x99c65c81c15cB84DEEC9809fDF755C286B280087
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyHunter at 0x805d6f1827e35a60c4b6d63fd04281bfbc2c3823
 */
 pragma solidity ^0.4.19;
 
@@ -56,7 +56,7 @@ contract BountyHunter {
 
   string public constant NAME = "BountyHunter";
   string public constant SYMBOL = "BountyHunter";
-  address ceoAddress = 0xc10A6AedE9564efcDC5E842772313f0669D79497;
+  address contractAddress = 0xc10A6AedE9564efcDC5E842772313f0669D79497;
   address hunter;
   address hunted;
   address emblemOwner;
@@ -90,7 +90,7 @@ contract BountyHunter {
     previousHunterOwner.transfer(hunterPrice);
   }
   function transactionFee(address, uint256 hunterPrice) private {
-    ceoAddress.transfer(hunterPrice);
+    contractAddress.transfer(hunterPrice);
   }
   function createBounty(uint256 hunterPrice) private {
     this.transfer(hunterPrice);
@@ -114,7 +114,7 @@ contract BountyHunter {
     
     payoutOnPurchase(data[bountyHunterID].user,  (data[bountyHunterID].hunterPrice / 10) * (6));
     
-    transactionFee(ceoAddress, (data[bountyHunterID].hunterPrice / 10) * (1));
+    transactionFee(contractAddress, (data[bountyHunterID].hunterPrice / 10) * (1));
 
     
     data[bountyHunterID].user = msg.sender;
@@ -140,7 +140,7 @@ contract BountyHunter {
     address[] memory users = new address[](8);
     uint256[] memory hunterPrices =  new uint256[](8);
     for (uint i=0; i<8; i++) {
-      if (data[i].user != ceoAddress){
+      if (data[i].user != contractAddress){
         users[i] = (data[i].user);
       }
       else{
@@ -172,12 +172,12 @@ contract BountyHunter {
     killshot = rand(x);
     if( (killshot < 8) &&  (msg.sender != data[killshot].user) ){
       hunter = msg.sender;
-      if( ceoAddress != data[killshot].user &&  emblemOwner != data[killshot].user){
+      if( contractAddress != data[killshot].user &&  emblemOwner != data[killshot].user){
         hunted = data[killshot].user;
             if (this.balance > 100000000000000000) {
               if (killshot == 0) {
                 data[4].hunterPrice = 5000000000000000;
-                data[4].user = ceoAddress;
+                data[4].user = contractAddress;
               }
               if (killshot == 1){
                 data[5].hunterPrice = 5000000000000000;
@@ -185,33 +185,33 @@ contract BountyHunter {
               }
               if (killshot == 2) {
                 data[6].hunterPrice = 5000000000000000;
-                data[6].user = ceoAddress;
+                data[6].user = contractAddress;
               }
               if (killshot == 3) {
                 data[7].hunterPrice = 5000000000000000;
-                data[7].user = ceoAddress;
+                data[7].user = contractAddress;
               }      
               if (killshot == 4) {
                 data[0].hunterPrice = 5000000000000000;
-                data[0].user = ceoAddress;
+                data[0].user = contractAddress;
               }      
               if (killshot == 5) {
                 data[1].hunterPrice = 5000000000000000;
-                data[1].user = ceoAddress;
+                data[1].user = contractAddress;
               }      
               if (killshot == 6) {
                 data[2].hunterPrice = 5000000000000000;
-                data[2].user = ceoAddress;
+                data[2].user = contractAddress;
               }      
               if (killshot == 7) {
                 data[3].hunterPrice = 5000000000000000;
-                data[3].user = ceoAddress;
+                data[3].user = contractAddress;
               }
 
            }
         data[killshot].hunterPrice  = 5000000000000000;
-        data[killshot].user  = ceoAddress;
-        ceoAddress.transfer((this.balance / 100) * (10));
+        data[killshot].user  = contractAddress;
+        contractAddress.transfer((this.balance / 100) * (10));
         msg.sender.transfer(this.balance);
       }
       else {
@@ -221,7 +221,14 @@ contract BountyHunter {
   }
 }
 
-
+  function mayjaKill() public payable returns(uint256){
+    if(msg.value >= 20000000000000000){
+        for(uint256 i=0; i<8; i++){
+          data[i].user = contractAddress;
+          data[i].hunterPrice = 5000000000000000;
+        }
+      }
+  }
 
   function killFeed() public view returns(address, address){
     return(hunter, hunted);
