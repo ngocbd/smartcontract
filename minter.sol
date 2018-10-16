@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Minter at 0x6a802a8bc6b0fa3ce5f5f46eebcfb4d4935c83f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Minter at 0x5f3469aa7298bc88723b53dbb11df291257ca5f1
 */
 /* Token - simple token for PreICO and ICO
    Copyright (C) 2017  Sergey Sherkunov <leinlawun@leinlawun.org>
@@ -260,11 +260,11 @@ contract Minter {
   ERC20MintableToken public token;
 
   Tokensale public PreICO =
-    Tokensale(1511211600, 1513803600, 150, 340000000000000 wei, 10000000, false,
+    Tokensale(1511193600, 1513785600, 150, 340000000000000 wei, 10000000, false,
               1 weeks, 2 weeks, 3 weeks, 4 weeks + 2 days, 25, 15, 10, 5);
 
   Tokensale public ICO =
-    Tokensale(1526850000, 1529528400, 150, 340000000000000 wei, 290000000,
+    Tokensale(1526828400, 1529506800, 150, 340000000000000 wei, 290000000,
               false, 1 weeks, 2 weeks, 3 weeks, 4 weeks + 3 days, 20, 10, 5, 0);
 
   bool public paused = false;
