@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DCE_Coin at 0x56fc1a80912e6b9629c9a9ee3790ccce2408d3c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DCE_Coin at 0xa79a29ff8f2987ed937afb06f62f7866f868839a
 */
 // Abstract contract for the full ERC 20 Token standard
 //@ create by m-chain jerry
@@ -90,8 +90,8 @@ contract DCE_Coin is StandardToken {
     uint8 public decimals;                //How many decimals to show. ie. 
     string public symbol;                 //An identifier: eg SBX
     function DCE_Coin() {
-        balances[msg.sender] = 8600000000000000;               // Give the creator all initial tokens
-        totalSupply = 8600000000000000;                        // Update total supply
+        balances[msg.sender] = 86000000000000000;               // Give the creator all initial tokens
+        totalSupply = 86000000000000000;                        // Update total supply
         name = "DCE Coin";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
         symbol = "DCEC";                               // Set the symbol for display purposes
