@@ -1,12 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crypterium at 0x246023fcbef2465c8e562a2b3a046eba492d39b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crypterium at 0x7ee5d770c14e9ebbdecf24e0cae10a5d13b740ce
 */
 pragma solidity ^0.4.4;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -15,9 +11,7 @@ library SafeMath {
   }
 
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
@@ -107,17 +101,17 @@ contract Crypterium is StandardToken {
 
     string public name;                   
     uint8 public decimals;                
-    string public symbol;                 
-    string public version = 'H1.0';     
+    string public symbol;
+    string public version = "1.0";
 
 
     function Crypterium(
         ) {
-        balances[msg.sender] = 10000000000000000000000000; 
-        totalSupply = 10000000000000000000000000;  
+        balances[msg.sender] = 10000000000000000; 
+        totalSupply = 10000000000000000;  
         name = "Crypterium";   
-        decimals = 18; 
-        symbol = "CRPT";  
+        decimals = 8; 
+        symbol = "CRYPT";  
     }
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
