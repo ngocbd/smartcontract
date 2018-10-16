@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xeb1b869781fe0960d00cc0826ff609d4f3e2fe1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc7923c659461c89aa9b7a706079075241985f35c
 */
 pragma solidity ^0.4.19;
 
@@ -45,6 +45,28 @@ contract BaseToken {
     }
 }
 
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
+    }
+}
+
 contract ICOToken is BaseToken {
     // 1 ether = icoRatio token
     uint256 public icoRatio;
@@ -78,16 +100,16 @@ contract ICOToken is BaseToken {
     }
 }
 
-contract CustomToken is BaseToken, ICOToken {
+contract CustomToken is BaseToken, BurnToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 210000000000000000000000000;
-        balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
-        name = 'ETGcoin';
-        symbol = 'ETG';
-        decimals = 18;
-        icoRatio = 88888;
-        icoEndtime = 1519812000;
-        icoSender = 0xf588d792fa8a634162760482a7b61dd1ab99b1f1;
-        icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
+        totalSupply = 100000000000000;
+        balanceOf[0x0926a20aca505b82f7cb7864e1246894eac27ea0] = totalSupply;
+        name = 'HiPDA';
+        symbol = 'HP';
+        decimals = 8;
+        icoRatio = 1000;
+        icoEndtime = 1546268400;
+        icoSender = 0x0926a20aca505b82f7cb7864e1246894eac27ea0;
+        icoHolder = 0x0926a20aca505b82f7cb7864e1246894eac27ea0;
     }
 }
