@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MSPT at 0xebdc00fc405ea11dd8f7b2db0b50131881d4f720
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MSPT at 0x7357397c090F5ac0Ab4b1194020dB94F77c4D4da
 */
 pragma solidity ^0.4.18;
 
@@ -77,7 +77,7 @@ contract BasicToken is ERC20Basic {
   function transfer(address _to, uint256 _value) public returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -110,7 +110,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _value uint256 the amout of tokens to be transfered
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
+    uint _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
     // require (_value <= _allowance);
@@ -118,7 +118,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
     allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -136,7 +136,7 @@ contract StandardToken is ERC20, BasicToken {
     require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -215,8 +215,8 @@ contract MintableToken is StandardToken, Ownable {
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
     return true;
   }
 
@@ -226,7 +226,7 @@ contract MintableToken is StandardToken, Ownable {
    */
   function finishMinting() onlyOwner canMint public returns (bool) {
     mintingFinished = true;
-    MintFinished();
+    emit MintFinished();
     return true;
   }
 }
@@ -284,18 +284,14 @@ contract Crowdsale is Ownable {
   // The token being sold
   MSPT public token;
   // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startRoundSeed;
   uint256 public startPreICO;
   uint256 public startICO;
-  uint256 public endRoundSeed;
   uint256 public endPreICO;
   uint256 public endICO;           
   
-  uint256 public maxAmountRoundSeed;
   uint256 public maxAmountPreICO;
   uint256 public maxAmountICO;
   
-  uint256 public totalRoundSeedAmount;
   uint256 public totalPreICOAmount;
   uint256 public totalICOAmount;
   
@@ -310,7 +306,6 @@ contract Crowdsale is Ownable {
   address public wallet;
 
   // how many token units a buyer gets per wei
-  uint256 public rateRoundSeed;
   uint256 public ratePreICO;
   uint256 public rateICO;      
 
@@ -343,20 +338,16 @@ contract Crowdsale is Ownable {
     // minimum quantity values
     minQuanValues = 100000000000000000;
     // start and end timestamps where investments are allowed
-    startRoundSeed = 1518710400; //15 Feb 2018 16:00:00 GMT
-    startPreICO = 1521129600; //15 Mar 2018 16:00:00 GMT
-    startICO = 1523808000; //15 Apr 2018 16:00:00 GMT
-    endRoundSeed = startRoundSeed + 14 * 1 days;
-    endPreICO = startPreICO + 30 * 1 days;
+    startPreICO = 1527948000; //3 June 2018 00:00:00 +10 GMT
+    endPreICO = 1530280800; //30 June 2018 00:00:00 +10 GMT
+    startICO = 1530280800; //30 June 2018 00:00:00 +10 GMT
     endICO = startICO +  30 * 1 days;           
     // restrictions on amounts during the ico stages
-    maxAmountRoundSeed = 4000000  * 1 ether;
     maxAmountPreICO = 12000000  * 1 ether;
     maxAmountICO = 24000000  * 1 ether;
     // rate decimals = 2;
-    rateRoundSeed = 400000;
-    ratePreICO = 200000;
-    rateICO = 130000;  
+    ratePreICO = 79294;
+    rateICO = 59470;
     // Remaining Token Allocation    
     mintAmount1 = 10000000 * 1 ether;
     mintAmount2 = 10000000 * 1 ether;
@@ -364,16 +355,13 @@ contract Crowdsale is Ownable {
     mintAmount4 = 10000000 * 1 ether;
     mintAmount5 = 10000000 * 1 ether;
     
-    mintStart1 = 1531674000; //15th July 2018
-    mintStart2 = 1534352400; //15th August 2018
-    mintStart3 = 1544893200; //15th December 2018
-    mintStart4 = 1547571600; //15th January 2019
-    mintStart5 = 1563210000; //15th July 2019     
+    mintStart1 = 1538316000; //1st October  2018 +10 GMT
+    mintStart2 = 1540994400; //1st November 2018 +10 GMT
+    mintStart3 = 1551362400; //1st March    2019 +10 GMT
+    mintStart4 = 1554040800; //1st April    2019 +10 GMT
+    mintStart5 = 1569852000; //1st October  2019 +10 GMT
     // address where funds are collected
     wallet = 0x7Ac93a7A1F8304c003274512F6c46C132106FE8E;
-  }
-  function setRateRoundSeed(uint _rateRoundSeed) public {
-    rateRoundSeed = _rateRoundSeed;
   }
   function setRatePreICO(uint _ratePreICO) public {
     ratePreICO = _ratePreICO;
@@ -399,19 +387,6 @@ contract Crowdsale is Ownable {
     require(beneficiary != address(0));
     //minimum amount in ETH
     require(weiAmount >= minQuanValues);
-    if (now >= startRoundSeed && now < endRoundSeed && totalRoundSeedAmount < maxAmountRoundSeed  && tokens == 0){
-      tokens = weiAmount.div(100).mul(rateRoundSeed);
-      if (maxAmountRoundSeed.sub(totalRoundSeedAmount) < tokens){
-        tokens = maxAmountRoundSeed.sub(totalRoundSeedAmount); 
-        weiAmount = tokens.mul(100).div(rateRoundSeed);
-        backAmount = msg.value.sub(weiAmount);
-      }
-      totalRoundSeedAmount = totalRoundSeedAmount.add(tokens);
-      if (totalRoundSeedAmount >= maxAmountRoundSeed){
-        startPreICO = now;
-        endPreICO = startPreICO + 30 * 1 days;
-      }   
-    }
     if (now >= startPreICO && now < endPreICO && totalPreICOAmount < maxAmountPreICO && tokens == 0){
       tokens = weiAmount.div(100).mul(ratePreICO);
       if (maxAmountPreICO.sub(totalPreICOAmount) < tokens){
@@ -425,7 +400,7 @@ contract Crowdsale is Ownable {
         endICO = startICO + 30 * 1 days;
       }   
     }    
-    if (now >= startICO && now < endICO && totalICOAmount < maxAmountICO  && tokens == 0){
+    if (now >= startICO && totalICOAmount < maxAmountICO  && tokens == 0){
       tokens = weiAmount.div(100).mul(rateICO);
       if (maxAmountICO.sub(totalICOAmount) < tokens){
         tokens = maxAmountICO.sub(totalICOAmount); 
@@ -441,7 +416,7 @@ contract Crowdsale is Ownable {
     if (backAmount > 0){
       msg.sender.transfer(backAmount);    
     }
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
   }
 
   function mintTokens(address _to, uint256 _amount) onlyOwner public returns (bool) {
