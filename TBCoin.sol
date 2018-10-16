@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBCoin at 0xC2Ac61BC8645E5571B433b2Af6110DBD2f094d05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBCoin at 0x6158e3f89b4398f5fb20d20dbfc5a5c955f0f6dd
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
@@ -234,13 +234,13 @@ contract TBCoin is StandardToken, Ownable {
             return 0;
         } else if (at < (startDate + 3 days)) {
             return 1500;
-        } else if (at < (startDate + 7 days)) {
+        } else if (at < (startDate + 9 days)) {
             return 1440;
-        } else if (at < (startDate + 14 days)) {
+        } else if (at < (startDate + 15 days)) {
             return 1380;
         } else if (at < (startDate + 21 days)) {
             return 1320;
-        } else if (at < (startDate + 28 days)) {
+        } else if (at < (startDate + 27 days)) {
             return 1260;
         } else if (at <= endDate) {
             return 1200;
@@ -270,7 +270,6 @@ contract TBCoin is StandardToken, Ownable {
 
     function buyTokens(address sender, uint256 value) internal {
         require(saleActive());
-        require(value >= 0.2 ether);
 
         uint256 weiAmount = value;
         uint256 updatedWeiRaised = weiRaised.add(weiAmount);
