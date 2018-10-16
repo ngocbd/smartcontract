@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheAbyssDAICO at 0x4dbb33a4885c70bb82cc643679f1d22f8aef90bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheAbyssDAICO at 0xb84e224216fec19d8631a0ad187326bc48f91b6b
 */
 pragma solidity ^0.4.21;
 
@@ -568,6 +568,8 @@ contract TransferLimitedToken is ManagedToken {
     address public limitedWalletsManager;
     bool public isLimitEnabled;
 
+    event TransfersEnabled();
+
     modifier onlyManager() {
         require(msg.sender == limitedWalletsManager);
         _;
@@ -600,6 +602,15 @@ contract TransferLimitedToken is ManagedToken {
         limitEndDate = _limitStartDate + LIMIT_TRANSFERS_PERIOD;
         isLimitEnabled = true;
         limitedWalletsManager = _limitedWalletsManager;
+    }
+
+    /**
+     * @dev Enable token transfers
+     */
+    function enableTransfers() public {
+        require(msg.sender == limitedWalletsManager);
+        allowTransfers = true;
+        TransfersEnabled();
     }
 
     /**
@@ -660,7 +671,7 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
     uint256 public constant ETHER_MIN_CONTRIB_USA = 0.2 ether;
     uint256 public constant ETHER_MAX_CONTRIB_USA = 20 ether;
 
-    uint256 public constant SALE_START_TIME = 1523908800; // 16.04.2018 20:00:00 UTC
+    uint256 public constant SALE_START_TIME = 1524060000; // 18.04.2018 14:00:00 UTC
     uint256 public constant SALE_END_TIME = 1526479200; // 16.05.2018 14:00:00 UTC
 
     uint256 public constant BONUS_WINDOW_1_END_TIME = SALE_START_TIME + 2 days;
@@ -703,6 +714,7 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
     uint256 public BNB_MIN_CONTRIB = 1000 ether; // 1K BNB
     mapping(address => uint256) public bnbContributions;
     uint256 public totalBNBContributed = 0;
+    bool public bnbWithdrawEnabled = false;
 
     uint256 public hardCap = 0; // World hard cap will be set right before Token Sale
     uint256 public softCap = 0; // World soft cap will be set right before Token Sale
@@ -1045,7 +1057,7 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
     ) external payable checkCap {
         require(msg.sender == address(reservationFund));
         require(msg.value > 0);
-
+        rawTokenSupply = safeAdd(rawTokenSupply, tokenAmount);
         processPayment(contributor, msg.value, tokenAmount, tokenBonusAmount, false);
     }
 
@@ -1060,17 +1072,27 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
     }
 
     /**
+     * @dev Force crowdsale refund
+     */
+    function forceCrowdsaleRefund() public onlyOwner {
+        pause();
+        fund.enableCrowdsaleRefund();
+        reservationFund.onCrowdsaleEnd();
+        token.finishIssuance();
+        bnbRefundEnabled = true;
+    }
+
+    /**
      * @dev Finalize crowdsale if we reached hard cap or current time > SALE_END_TIME
      */
     function finalizeCrowdsale() public onlyOwner {
         if(
-            (totalEtherContributed >= safeSub(hardCap, 20 ether) && totalBNBContributed >= safeSub(BNB_HARD_CAP, 10000 ether)) ||
+            totalEtherContributed >= safeSub(hardCap, 1000 ether) ||
             (now >= SALE_END_TIME && totalEtherContributed >= softCap)
         ) {
             fund.onCrowdsaleEnd();
             reservationFund.onCrowdsaleEnd();
-            // BNB transfer
-            bnbToken.transfer(bnbTokenWallet, bnbToken.balanceOf(address(this)));
+            bnbWithdrawEnabled = true;
 
             // Referral
             uint256 referralTokenAmount = safeDiv(rawTokenSupply, 10);
@@ -1078,8 +1100,8 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
 
             // Foundation
             uint256 foundationTokenAmount = safeDiv(token.totalSupply(), 2); // 20%
+            token.issue(address(lockedTokens), foundationTokenAmount);
             lockedTokens.addTokens(foundationTokenWallet, foundationTokenAmount, now + 365 days);
-
             uint256 suppliedTokenAmount = token.totalSupply();
 
             // Reserve
@@ -1099,16 +1121,25 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
             // Bounty
             uint256 bountyTokenAmount = safeDiv(suppliedTokenAmount, 60); // 1%
             token.issue(bountyTokenWallet, bountyTokenAmount);
-
-            token.setAllowTransfers(true);
-
+            token.finishIssuance();
         } else if(now >= SALE_END_TIME) {
             // Enable fund`s crowdsale refund if soft cap is not reached
             fund.enableCrowdsaleRefund();
             reservationFund.onCrowdsaleEnd();
+            token.finishIssuance();
             bnbRefundEnabled = true;
         }
-        token.finishIssuance();
+    }
+
+    /**
+     * @dev Withdraw bnb after crowdsale if crowdsale is not in refund mode
+     */
+    function withdrawBNB() public onlyOwner {
+        require(bnbWithdrawEnabled);
+        // BNB transfer
+        if(bnbToken.balanceOf(address(this)) > 0) {
+            bnbToken.transfer(bnbTokenWallet, bnbToken.balanceOf(address(this)));
+        }
     }
 
     /**
