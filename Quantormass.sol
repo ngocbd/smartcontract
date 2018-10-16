@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Quantormass at 0xe9a0025ccc638c44a4e8fc7d4a749b2f3fb2465c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Quantormass at 0x08bbeaee46dd5628e1e3383cdc09dd38f89e58c6
 */
-pragma solidity ^ 0.4 .9;
+pragma solidity ^ 0.4 .19;
 library SafeMath {
     function mul(uint256 a, uint256 b) internal constant returns(uint256) {
         uint256 c = a * b;
@@ -38,9 +38,9 @@ contract Quantormass {
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
     function Quantormass() {
-        totalSupply = 10000000;
+        totalSupply = 100000000;
         symbol = 'qtms';
-        owner = 0x0dbb06eda097ef5ba95a64ea91a0ca8097fa0c1e;
+        owner = 0x8C74391BDBF71CeE7454207741f74BE9C519957e;
         balances[owner] = totalSupply;
         decimals = 0;
     }
