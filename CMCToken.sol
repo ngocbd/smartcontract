@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CMCToken at 0xb260afedf422cd670776edbebe62682bca507456
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CMCTOken at 0xa2f18175360ee441b55064100d915e28e69dfdfe
 */
 pragma solidity ^0.4.11;
 
-contract CMCToken {
+contract CMCTOken {
 
-    string public name = "CMCToken";      //  token name
+    string public name = "CMCTOken";      //  token name
     string public symbol = "CMC";           //  token symbol
     uint256 public decimals = 6;            //  token digit
 
@@ -33,7 +33,7 @@ contract CMCToken {
         _;
     }
 
-    function CMCToken(address _addressFounder) {
+    function CMCTOken(address _addressFounder) {
         owner = msg.sender;
         totalSupply = valueFounder;
         balanceOf[_addressFounder] = valueFounder;
