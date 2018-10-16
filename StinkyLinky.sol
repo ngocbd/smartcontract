@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StinkyLinky at 0x25f1638577b69186c1d7a2e6bb297a82cdc602f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StinkyLinky at 0xd884451d0ea759df8573f60ed61285fbffb7f1ae
 */
 pragma solidity ^0.4.19;
 
