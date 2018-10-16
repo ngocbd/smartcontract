@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xdd3b6b4b3d4aaf9874b3ff24dadb1c7f6f332524
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x4794c7319a69d50d9bab3164143d16bb4f2e52c7
 */
 pragma solidity ^0.4.11;
 
@@ -143,7 +143,7 @@ contract Crowdsale {
 
   function Crowdsale() {
 
-    wallet = 0x3aCE8D4f1C03188B1c5DB124C22a04ef58468B79;
+    wallet = 0x205E2ACd291E235425b5c10feC8F62FE7Ec26063;
 
     // durationInMinutes = _durationInMinutes;
 
@@ -169,7 +169,7 @@ contract Crowdsale {
 
     startTime = now + delay * 1 minutes;
 
-    endTime = startTime + 30 * 24 * 60 * 1 minutes;
+    endTime = startTime + 20 * 24 * 60 * 1 minutes;
 
     started = true;
 
@@ -203,7 +203,7 @@ contract Crowdsale {
 
     // calculate token amount to be sent
 
-    uint256 tokens = (weiAmount/10**10) * 1300;
+    uint256 tokens = (weiAmount/10**10) * 490;
 
 
 
