@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpyceCrowdsale at 0xeeb11ca61353ff0723f058d909debcf9c5d05f88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpyceCrowdsale at 0x75c20f611fcfcdcf008b2a4df602f3b7ace3b47a
 */
 pragma solidity ^0.4.18;
 library SafeMath { //standard library for uint
@@ -80,16 +80,15 @@ contract SpyceCrowdsale is Ownable{
     //1522195199 is equivalent to 03/27/2018 @ 11:59pm (UTC)
     buffer.finishDate = 1522195199;
     buffer.tokenPrice = 0.00016 ether;
-    buffer.minCap = 108 ether;
-    buffer.maxCap = 24000 ether;
+    buffer.minCap = 675000 ether;
+    buffer.maxCap = 150000000 ether;
 
     stages.push(buffer);
   }
 
   /* Destribution addresses */
-  //All ether will be send to this address
-  address distributionAddress = 0xe6997e8359599d0B5f17B7E1bF77f7fFC509Afbe;
-
+  //All ether will be send to this address: 0x003b43733592eFa879B7154eDE5A4Eea47585f30
+  address distributionAddress = 0x003b43733592eFa879B7154eDE5A4Eea47585f30;
 
   function () public payable {
     require (buy(msg.sender, msg.value, now));
