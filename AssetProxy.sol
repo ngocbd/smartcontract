@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetProxy at 0x56baef0f4ac33abeb12112933c003f232e0be0a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetProxy at 0x660b612ec57754d949ac1a09d0c2937a010dee05
 */
 /**
  * This software is a subject to Ambisafe License Agreement.
