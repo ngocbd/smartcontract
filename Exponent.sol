@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exponent at 0x29c24aad19750753289e414053546f54dff08332
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exponent at 0x5156434ab527b4f1903512b90035eb928be44a8d
 */
 pragma solidity ^0.4.18;
 
@@ -28,10 +28,6 @@ contract Exponent {
             if(checkMultOverflow(currentP,p)) return sum;            
             if(checkMultOverflow(currentQ,q)) return sum;
             if(checkMultOverflow(nFact,n)) return sum;
-            
-            currentP *= p;
-            currentQ *= q;
-            nFact *= n;
         }
 
     }
