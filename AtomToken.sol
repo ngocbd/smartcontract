@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AtomToken at 0xb0ef89854c99944eef755f2defd0bace19474731
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AtomToken at 0xa4fb8e396ccc86e09cdf272137bf69725b107d4b
 */
 pragma solidity ^0.4.15;
 /**
@@ -224,7 +224,7 @@ contract MintableToken is StandardToken, Ownable {
 }
 contract AtomToken is MintableToken {
   string public constant name = "AtomToken";
-  string public constant symbol = "ATM";
+  string public constant symbol = "ATT";
   uint8 public constant decimals = 18;
   uint256 public constant initialSupply = 65000000 * (10 ** uint256(decimals));    // number of tokens in reserve
   /*
