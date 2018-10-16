@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayDayToken at 0xe2dcd10f43cd9229f253e5147a793e6f64283f2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayDayToken at 0xcec8702d3f157c4f70d9bf594c0328da966fb531
 */
 pragma solidity ^0.4.19;
 /**
@@ -290,67 +290,21 @@ contract BurnableToken is StandardToken, Ownable {
 	    return (name, symbol, totalSupply);
     }
     
+    function lockTokensForAddress (address lockedAddress, uint lockupAmount, uint lockDays) public onlyOwner
+    {
+        lockupAmount = lockupAmount * 10 ** uint(decimals);
+        require(balances[msg.sender]>=lockupAmount);
+        balances[msg.sender] = balances[msg.sender].sub(lockupAmount);
+        balances[lockedAddress] = balances[lockedAddress].add(lockupAmount);
+        lockDays = lockDays * 1 days;
+        lockup = Lockup({lockupTime:lockDays,lockupAmount:lockupAmount * 10 ** uint256(decimals)});
+        lockupParticipants[lockedAddress] = lockup;
+        
+        
+    }
      
-    function lockTokensForFs (address F1, address F2) public onlyOwner
+    function unlockTokensForAddress (address lockedAddress) public onlyOwner 
     {
-        lockup = Lockup({lockupTime:720 days,lockupAmount:90000000 * 10 ** uint256(decimals)});
-        lockupParticipants[F1] = lockup;
-        
-        lockup = Lockup({lockupTime:720 days,lockupAmount:60000000 * 10 ** uint256(decimals)});
-        lockupParticipants[F2] = lockup;
-    }
-    function lockTokensForAs( address A1, address A2, 
-                         address A3, address A4,
-                         address A5, address A6,
-                         address A7, address A8,
-                         address A9) public onlyOwner
-    {
-        lockup = Lockup({lockupTime:180 days,lockupAmount:90000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A1] = lockup;
-        
-        lockup = Lockup({lockupTime:180 days,lockupAmount:60000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A2] = lockup;
-        
-        lockup = Lockup({lockupTime:180 days,lockupAmount:30000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A3] = lockup;
-        
-        lockup = Lockup({lockupTime:180 days,lockupAmount:60000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A4] = lockup;
-        
-        lockup = Lockup({lockupTime:180 days,lockupAmount:60000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A5] = lockup;
-        
-        lockup = Lockup({lockupTime:180 days,lockupAmount:15000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A6] = lockup;
-        
-        lockup = Lockup({lockupTime:180 days,lockupAmount:15000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A7] = lockup;
-        
-        lockup = Lockup({lockupTime:180 days,lockupAmount:15000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A8] = lockup;
-        
-        lockup = Lockup({lockupTime:180 days,lockupAmount:15000000 * 10 ** uint256(decimals)});
-        lockupParticipants[A9] = lockup;
-    }
-    
-    function lockTokensForCs(address C1,address C2, address C3) public onlyOwner
-    {
-        lockup = Lockup({lockupTime:90 days,lockupAmount:2500000 * 10 ** uint256(decimals)});
-        lockupParticipants[C1] = lockup;
-        
-        lockup = Lockup({lockupTime:90 days,lockupAmount:1000000 * 10 ** uint256(decimals)});
-        lockupParticipants[C2] = lockup;
-        
-        lockup = Lockup({lockupTime:90 days,lockupAmount:1500000 * 10 ** uint256(decimals)});
-        lockupParticipants[C3] = lockup;   
-    }
-    
-    function lockTokensForTeamAndReserve(address team) public onlyOwner
-    {
-        lockup = Lockup({lockupTime:360 days,lockupAmount:63000000 * 10 ** uint256(decimals)});
-        lockupParticipants[team] = lockup;
-        
-        lockup = Lockup({lockupTime:720 days,lockupAmount:415000000 * 10 ** uint256(decimals)});
-        lockupParticipants[ownerWallet] = lockup;
+        lockupParticipants[lockedAddress].lockupAmount = 0;
     }
  }
