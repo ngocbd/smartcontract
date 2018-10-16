@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumUnionToken at 0x443d343b650e4217cb4b1aa52fdc1c06f1307634
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumUnionToken at 0xede4edd0c0209db3172a9a07607b47fcf57e6355
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'EthereumUnion' token contract
+// 'ETU' token contract
 //
-// Deployed to : 0xFB58a9aF395755A4e95805d76bae231FEB01a192
+// Deployed to : 0xfb58a9af395755a4e95805d76bae231feb01a192
 // Symbol      : ETU
 // Name        : Ethereum Union
-// Total supply: 10000000000
+// Total supply: 12500000000000
 // Decimals    : 5
 //
 // Enjoy.
@@ -52,9 +52,14 @@ contract ERC20Interface {
     function transfer(address to, uint tokens) public returns (bool success);
     function approve(address spender, uint tokens) public returns (bool success);
     function transferFrom(address from, address to, uint tokens) public returns (bool success);
+    function burn(uint256 _value) public returns (bool success);
+    function burnFrom(address _from, uint256 _value) public returns (bool success);
+    function increaseSupply(uint value, address to) public returns (bool success);
+    function decreaseSupply(uint value, address from) public returns (bool success);
 
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+    event Burn(address indexed from, uint tokens);
 }
 
 
@@ -119,9 +124,9 @@ contract EthereumUnionToken is ERC20Interface, Owned, SafeMath {
         symbol = "ETU";
         name = "Ethereum Union";
         decimals = 5;
-        _totalSupply = 10000000000;
-        balances[0xFB58a9aF395755A4e95805d76bae231FEB01a192] = _totalSupply;
-        Transfer(address(0), 0xFB58a9aF395755A4e95805d76bae231FEB01a192, _totalSupply);
+        _totalSupply = 12500000000000;
+        balances[0xfb58a9af395755a4e95805d76bae231feb01a192] = _totalSupply;
+        emit Transfer(address(0), 0xfb58a9af395755a4e95805d76bae231feb01a192, _totalSupply);
     }
 
 
@@ -149,7 +154,7 @@ contract EthereumUnionToken is ERC20Interface, Owned, SafeMath {
     function transfer(address to, uint tokens) public returns (bool success) {
         balances[msg.sender] = safeSub(balances[msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
-        Transfer(msg.sender, to, tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
@@ -164,7 +169,7 @@ contract EthereumUnionToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
+        emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
@@ -182,7 +187,7 @@ contract EthereumUnionToken is ERC20Interface, Owned, SafeMath {
         balances[from] = safeSub(balances[from], tokens);
         allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
+        emit Transfer(from, to, tokens);
         return true;
     }
 
@@ -203,7 +208,7 @@ contract EthereumUnionToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
+        emit Approval(msg.sender, spender, tokens);
         ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
         return true;
     }
@@ -222,5 +227,52 @@ contract EthereumUnionToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balances[msg.sender] >= _value);   // Check if the sender has enough
+        balances[msg.sender] -= _value;            // Subtract from the sender
+        _totalSupply -= _value;                      // Updates totalSupply
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+
+    /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balances[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowed[_from][msg.sender]);    // Check allowance
+        balances[_from] -= _value;                         // Subtract from the targeted balance
+        allowed[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        _totalSupply -= _value;                              // Update totalSupply
+        emit Burn(_from, _value);
+        return true;
+    }
+
+    function increaseSupply(uint value, address to) public returns (bool success) {
+        _totalSupply = safeAdd(_totalSupply, value);
+        balances[to] = safeAdd(balances[to], value);
+        emit Transfer(0, to, value);
+        return true;
+    }
+
+    function decreaseSupply(uint value, address from) public returns (bool success) {
+        balances[from] = safeSub(balances[from], value);
+        _totalSupply = safeSub(_totalSupply, value);  
+        emit Transfer(from, 0, value);
+        return true;
     }
 }
