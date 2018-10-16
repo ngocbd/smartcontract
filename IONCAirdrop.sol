@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IONCAirdrop at 0x6f3211e1a8d4963f0a4ef007e868e08560aa8b3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IONCAirdrop at 0xda4762ed1b46f90086b4c2bd0a1227c0e38a960a
 */
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 // File: contracts/commons/SafeMath.sol
 
@@ -128,8 +128,6 @@ contract Lockable is Ownable {
 // File: contracts/base/ERC20Token.sol
 
 interface ERC20Token {
-    function balanceOf(address owner_) external returns (uint);
-    function transfer(address to_, uint value_) external returns (bool);
     function transferFrom(address from_, address to_, uint value_) external returns (bool);
 }
 
@@ -140,13 +138,16 @@ contract BaseAirdrop is Lockable {
 
     ERC20Token public token;
 
+    address public tokenHolder;
+
     mapping(address => bool) public users;
 
     event AirdropToken(address indexed to, uint amount);
 
-    constructor(address _token) public {
-        require(_token != address(0));
+    constructor(address _token, address _tokenHolder) public {
+        require(_token != address(0) && _tokenHolder != address(0));
         token = ERC20Token(_token);
+        tokenHolder = _tokenHolder;
     }
 
     function airdrop(uint8 v, bytes32 r, bytes32 s) public whenNotLocked {
@@ -156,7 +157,7 @@ contract BaseAirdrop is Lockable {
         }
         users[msg.sender] = true;
         uint amount = getAirdropAmount(msg.sender);
-        token.transfer(msg.sender, amount);
+        token.transferFrom(tokenHolder, msg.sender, amount);
         emit AirdropToken(msg.sender, amount);
     }
 
@@ -165,12 +166,6 @@ contract BaseAirdrop is Lockable {
     }
 
     function getAirdropAmount(address user) public constant returns (uint amount);
-
-    function withdrawTokens(address destination) public onlyOwner whenLocked {
-        require(destination != address(0));
-        uint balance = token.balanceOf(address(this));
-        token.transfer(destination, balance);
-    }
 }
 
 // File: contracts/IONCAirdrop.sol
@@ -182,7 +177,7 @@ contract IONCAirdrop is BaseAirdrop {
 
     uint public constant PER_USER_AMOUNT = 20023e6;
 
-    constructor(address _token) public BaseAirdrop(_token) {
+    constructor(address _token, address _tokenHolder) public BaseAirdrop(_token, _tokenHolder) {
         locked = true;
     }
 
