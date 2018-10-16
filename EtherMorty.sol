@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMorty at 0x5bd2cecdc30656adc2ce23812dce369ccca3bbbd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMorty at 0xf73957496aee62e20072179faae860772f4a8523
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -12,15 +12,7 @@ contract EtherMorty {
     uint public hatchingSpeed = 100;
     uint256 public snatchedOn;
     bool public isEnabled = false;
-    
-    
-    function withDrawMoney() public {
-        require(msg.sender == ceoAddress);
-        uint256 myBalance = ceoEtherBalance;
-        ceoEtherBalance = 0;
-        ceoAddress.transfer(myBalance);
-    }
-    
+        
     function buySuperDragon() public payable {
         require(isEnabled);
         require(initialized);
@@ -31,7 +23,7 @@ contract EtherMorty {
         userReferralEggs[superPowerFulDragonOwner] += SafeMath.mul(hatchingSpeed,timeSpent);
         
         hatchingSpeed += SafeMath.div(SafeMath.sub(now, contractStarted), 60*60*24);
-        ceoEtherBalance += calculatePercentage(msg.value, 20);
+        ceoAddress.transfer(calculatePercentage(msg.value,30));
         superPowerFulDragonOwner.transfer(msg.value - calculatePercentage(msg.value, 2));
         lastPrice = currenPrice;
         superPowerFulDragonOwner = msg.sender;
@@ -54,7 +46,6 @@ contract EtherMorty {
     
     bool public initialized=false;
     address public ceoAddress = 0xdf4703369ecE603a01e049e34e438ff74Cd96D66;
-    uint public ceoEtherBalance;
     
     mapping (address => uint256) public iceDragons;
     mapping (address => uint256) public premiumDragons;
@@ -130,7 +121,7 @@ contract EtherMorty {
         uint dragonAmount = SafeMath.div(msg.value, dragonPrice);
         require(dragonAmount > 0);
         
-        ceoEtherBalance += calculatePercentage(msg.value, 40);
+        ceoAddress.transfer(calculatePercentage(msg.value,30));
         premiumDragons[msg.sender] += dragonAmount;
     }
     
@@ -141,7 +132,7 @@ contract EtherMorty {
         uint dragonAmount = SafeMath.div(msg.value, dragonPrice);
         require(dragonAmount > 0);
         
-        ceoEtherBalance += calculatePercentage(msg.value, 40);
+        ceoAddress.transfer(calculatePercentage(msg.value,30));
         iceDragons[msg.sender] += dragonAmount;
     }
     
@@ -173,11 +164,12 @@ contract EtherMorty {
         require(initialized);
         uint256 hasEggs = getMyEggs();
         uint256 eggValue = calculateEggSell(hasEggs);
-        uint256 fee = calculatePercentage(eggValue, 20);
+        uint256 fee = calculatePercentage(eggValue, 10);
         userReferralEggs[msg.sender] = 0;
         lastHatch[msg.sender]=now;
+        normalDragon[msg.sender]=SafeMath.mul(SafeMath.div(normalDragon[msg.sender],3),2);
         marketEggs=SafeMath.add(marketEggs,hasEggs);
-        ceoEtherBalance += fee;
+        ceoAddress.transfer(fee);
         msg.sender.transfer(SafeMath.sub(eggValue,fee));
     }
     
@@ -200,11 +192,11 @@ contract EtherMorty {
     }
     
     function calculateEggSell(uint256 eggs) public view returns(uint256){
-        return calculateTrade(eggs,marketEggs,address(this).balance);
+        return calculatePercentage(calculateTrade(eggs,marketEggs,address(this).balance),80);
     }
     
     function calculateEggSell(uint256 eggs, uint256 eth) public view returns(uint256){
-        return calculateTrade(eggs,marketEggs,eth);
+        return calculatePercentage(calculateTrade(eggs,marketEggs,eth),80);
     }
     
     
