@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WayBackToken at 0xa2cc011e7b1baa8fc99e654e0383b691d884ca47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WayBackToken at 0xf226fd053b0e942e9f96ba9981b657c032a6ccf0
 */
 pragma solidity ^0.4.4;
 
@@ -91,13 +91,9 @@ contract StandardToken is AbstractToken {
 contract WayBackToken is StandardToken {
 
     function () {
-        return kill();
+        //if ether is sent to this address, send it back.
+        throw;
     }
-    
-    function kill()  public {
-        selfdestruct(address(this));
-    }
-
 
     /* Public variables of the token */
 
@@ -107,10 +103,10 @@ contract WayBackToken is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = 'WayBack Token';     //fancy name: eg Simon Bucks
+    string public name = 'WayBack Token';                   //fancy name: eg Simon Bucks
     uint8 public decimals = 7;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol = 'WBT';                 //An identifier: eg SBX
-    string public version = 'H0.2';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
