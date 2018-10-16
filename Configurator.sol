@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x7c6b88fa39a9a60466ddba414821560a060928bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x4dbd16920b3f55f6f8f4c9189ec2c69fc1a22bd7
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.13;
 
 /**
  * @title ERC20Basic
@@ -568,8 +568,8 @@ contract Configurator is Ownable {
     presale.setFoundersTokensPercent(15);
     presale.setBountyTokensPercent(5);
     presale.setPrice(10000000000000000);
+    presale.addMilestone(8,300);
     presale.addMilestone(8,200);
-    presale.addMilestone(8,100);
     token.setSaleAgent(presale);	
 
     mainsale = new CommonSale();
