@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0x13bA3B63268eC5d4fac9aD1b2DFffFD0B3697FD8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0xbe14B2fD42B58bEB9A89A940BE5Ebe6C7B147Bd2
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
 contract TokenController {
     /// @notice Called when `_owner` sends ether to the MiniMe Token contract
