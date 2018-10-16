@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetaGameCore at 0xBAd8E5Bbb4fAD4029Ab444A10855539850a91FB9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetaGameCore at 0x9D8B33f8719470478DBD48711d004a0736d86956
 */
 pragma solidity ^0.4.18;
 
@@ -239,7 +239,7 @@ contract CanReclaimToken is Ownable {
 }
 
 
-/// @dev Implements access control to the DWorld contract.
+/// @dev Implements access control to the MetaGame contract.
 contract MetaGameAccessControl is Claimable, Pausable, CanReclaimToken {
     address public cfoAddress;
     
@@ -264,7 +264,7 @@ contract MetaGameAccessControl is Claimable, Pausable, CanReclaimToken {
 }
 
 
-/// @dev Defines base data structures for DWorld.
+/// @dev Defines base data structures for MetaGame.
 contract MetaGameBase is MetaGameAccessControl {
     using SafeMath for uint256;
     
@@ -743,22 +743,34 @@ contract PullPayment {
 }
 
 
-/// @dev Defines base data structures for DWorld.
+/// @dev Defines base data structures for MetaGame.
 contract MetaGameFinance is MetaGameDeed, PullPayment {
     /// @notice The dividend given to all parents of a deed, 
     /// in 1/1000th of a percentage.
-    uint256 public dividendPercentage = 1000;
+    uint256 public dividendParentsPercentage = 1000;
     
     /// @notice The minimum fee for the contract in 1/1000th
     /// of a percentage.
-    uint256 public minimumFee = 2500;
+    uint256 public minimumFeePercentage = 2500;
     
     /// @notice The minimum total paid in fees and dividends.
     /// If there are (almost) no dividends to be paid, the fee
     /// for the contract is higher. This happens for deeds at
     /// or near the top of the hierarchy. In 1/1000th of a
     /// percentage.
-    uint256 public minimumFeePlusDividends = 7000;
+    uint256 public minimumFeePlusDividendsPercentage = 8000;
+    
+    /// @notice Most-recent card buyers. These will be given
+    /// dividends on the next sale. Then, the buyers will be
+    /// shifted, the least recent buyer dropped, and the buyer
+    /// of this sale is added as the most recent buyer.
+    address[] public recentBuyers = new address[](6);
+    
+    /// @notice The dividend given to the most recent buyers,
+    /// in 1/1000th of a percentage. The dividend decreases by
+    /// the given factor for subsequent levels of recent buyers.
+    uint256 public dividendRecentBuyersPercentage = 1000;
+    uint256 public dividendRecentBuyersPercentageDecreaseFactor = 2;
     
     // @dev A mapping from deed identifiers to the buyout price.
     mapping (uint256 => uint256) public identifierToPrice;
@@ -848,7 +860,7 @@ contract MetaGameFinance is MetaGameDeed, PullPayment {
     /// @param identifier The identifier of the deed to pay its parents dividends for (recursed).
     /// @param dividend The dividend to be paid to parents of the deed.
     /// @param depth The depth of this dividend.
-    function _payDividends(uint256 identifierBought, uint256 identifier, uint256 dividend, uint256 depth)
+    function _payParentDividends(uint256 identifierBought, uint256 identifier, uint256 dividend, uint256 depth)
         internal
         returns(uint256 totalDividendsPaid)
     {
@@ -866,7 +878,7 @@ contract MetaGameFinance is MetaGameDeed, PullPayment {
             totalDividendsPaid = dividend;
         
             // Recursively pay dividends to parents of parents.
-            uint256 dividendsPaid = _payDividends(identifierBought, parentIdentifier, dividend, depth + 1);
+            uint256 dividendsPaid = _payParentDividends(identifierBought, parentIdentifier, dividend, depth + 1);
             
             totalDividendsPaid = totalDividendsPaid.add(dividendsPaid);
         } else {
@@ -876,17 +888,82 @@ contract MetaGameFinance is MetaGameDeed, PullPayment {
         }
     }
     
+    /// @dev Pay dividends to recent buyers.
+    /// @param price The price of the card that was bought.
+    function _payRecentBuyerDividends(uint256 price)
+        internal
+        returns(uint256 totalDividendsPaid)
+    {
+        uint256 dividend = price.mul(dividendRecentBuyersPercentage).div(100000);
+        
+        // Pay first dividend.
+        if (recentBuyers[0] != 0x0) {
+            _sendFunds(recentBuyers[0], dividend);
+        }
+        totalDividendsPaid = dividend;
+        
+        // Pay second dividend.
+        dividend = dividend.div(dividendRecentBuyersPercentageDecreaseFactor);
+        if (recentBuyers[1] != 0x0) {
+            _sendFunds(recentBuyers[1], dividend);
+        }
+        totalDividendsPaid = totalDividendsPaid.add(dividend);
+        
+        // Pay third dividend.
+        dividend = dividend.div(dividendRecentBuyersPercentageDecreaseFactor);
+        if (recentBuyers[2] != 0x0) {
+            _sendFunds(recentBuyers[2], dividend);
+        }
+        totalDividendsPaid = totalDividendsPaid.add(dividend);
+        
+        // Pay fourth dividend.
+        dividend = dividend.div(dividendRecentBuyersPercentageDecreaseFactor);
+        if (recentBuyers[3] != 0x0) {
+            _sendFunds(recentBuyers[3], dividend);
+        }
+        totalDividendsPaid = totalDividendsPaid.add(dividend);
+        
+        // Pay fifth dividend.
+        dividend = dividend.div(dividendRecentBuyersPercentageDecreaseFactor);
+        if (recentBuyers[4] != 0x0) {
+            _sendFunds(recentBuyers[4], dividend);
+        }
+        totalDividendsPaid = totalDividendsPaid.add(dividend);
+        
+        // Pay sixth dividend.
+        dividend = dividend.div(dividendRecentBuyersPercentageDecreaseFactor);
+        if (recentBuyers[5] != 0x0) {
+            _sendFunds(recentBuyers[5], dividend);
+        }
+        totalDividendsPaid = totalDividendsPaid.add(dividend);
+    }
+    
+    /// @dev Pay trade dividends.
+    /// @param price The identifier of the card that was bought.
+    /// @param price The price of the card that was bought.
+    function _payDividends(uint256 identifier, uint256 price)
+        internal
+        returns(uint256 totalDividendsPaid)
+    {
+        // Pay parent dividends.
+        uint256 parentDividend = price.mul(dividendParentsPercentage).div(100000);
+        totalDividendsPaid = _payParentDividends(identifier, identifier, parentDividend, 0);
+        
+        // Pay recent buyer dividends.
+        totalDividendsPaid = totalDividendsPaid.add(_payRecentBuyerDividends(price));
+    }
+    
     /// @dev Calculate the contract fee.
     /// @param price The price of the buyout.
     /// @param dividendsPaid The total amount paid in dividends.
     function calculateFee(uint256 price, uint256 dividendsPaid) public view returns(uint256 fee) {
         // Calculate the absolute minimum fee.
-        fee = price.mul(minimumFee).div(100000);
+        fee = price.mul(minimumFeePercentage).div(100000);
         
         // Calculate the minimum fee plus dividends payable.
         // See also the explanation at the definition of
         // minimumFeePlusDividends.
-        uint256 _minimumFeePlusDividends = price.mul(minimumFeePlusDividends).div(100000);
+        uint256 _minimumFeePlusDividends = price.mul(minimumFeePlusDividendsPercentage).div(100000);
         
         if (_minimumFeePlusDividends > dividendsPaid) {
             uint256 feeMinusDividends = _minimumFeePlusDividends.sub(dividendsPaid);
@@ -897,6 +974,19 @@ contract MetaGameFinance is MetaGameDeed, PullPayment {
                 fee = feeMinusDividends;
             }
         }
+    }
+    
+    /// @dev Shift the 6 most recent buyers, and add the new buyer
+    /// to the front.
+    /// @param newBuyer The buyer to add to the front of the recent
+    /// buyers list.
+    function _shiftRecentBuyers(address newBuyer) internal {
+        recentBuyers[5] = recentBuyers[4];
+        recentBuyers[4] = recentBuyers[3];
+        recentBuyers[3] = recentBuyers[2];
+        recentBuyers[2] = recentBuyers[1];
+        recentBuyers[1] = recentBuyers[0];
+        recentBuyers[0] = newBuyer;
     }
     
     /// @dev Send funds to a beneficiary. If sending fails, assign
@@ -930,7 +1020,7 @@ contract MetaGameFinance is MetaGameDeed, PullPayment {
 }
 
 
-/// @dev Defines core meta game functionality.
+/// @dev Defines core MetaGame functionality.
 contract MetaGameCore is MetaGameFinance {
     
     function MetaGameCore() public {
@@ -1008,9 +1098,11 @@ contract MetaGameCore is MetaGameFinance {
         // Emit price change event.
         Price(identifier, newPrice, nextPrice(newPrice));
         
+        // Emit buy event.
+        Buy(oldOwner, msg.sender, identifier, price, oldOwnerWinnings);
+        
         // Pay dividends.
-        uint256 dividend = price.mul(dividendPercentage).div(100000);
-        uint256 dividendsPaid = _payDividends(identifier, identifier, dividend, 0);
+        uint256 dividendsPaid = _payDividends(identifier, price);
         
         // Calculate the contract fee.
         uint256 fee = calculateFee(price, dividendsPaid);
@@ -1018,8 +1110,8 @@ contract MetaGameCore is MetaGameFinance {
         // Calculate the winnings for the previous owner.
         uint256 oldOwnerWinnings = price.sub(dividendsPaid).sub(fee);
         
-        // Emit buy event.
-        Buy(oldOwner, msg.sender, identifier, price, oldOwnerWinnings);
+        // Add the buyer to the recent buyer list.
+        _shiftRecentBuyers(msg.sender);
         
         if (oldOwner != address(this)) {
             // The old owner is not this contract itself.
@@ -1029,7 +1121,7 @@ contract MetaGameCore is MetaGameFinance {
         
         // Calculate overspent ether. This cannot underflow, as the require
         // guarantees price to be greater than or equal to msg.value.
-        uint256 excess = price - msg.value;
+        uint256 excess = msg.value - price;
         
         if (excess > 0) {
             // Refund overspent Ether.
