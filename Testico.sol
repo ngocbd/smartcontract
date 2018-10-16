@@ -1,171 +1,181 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Testico at 0x1e77b10ead7ae84bc54394bd33821e5c7b74fbb8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestIco at 0xb12c94a581ed60802fc6cd494532487afab70c86
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
-contract ERC20Interface {
-    uint256 public totalSupply;
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+contract Token {
+    function totalSupply() constant public returns (uint supply);
+    function balanceOf(address _owner) public constant returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public constant returns (uint remaining);
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
- 
-contract Testico is ERC20Interface {
-    address public owner;
 
-    string public constant symbol = "TMB";
-    string public constant name = "Test ICO";
-    uint8 public constant decimals = 8;
-    uint256 initialSupply = 2500000000000000;
-    
-    uint256 public shareholdersBalance;
-    uint256 public totalShareholders;
-    mapping (address => bool) registeredShareholders;
-    mapping (uint => address) public shareholders;
-    
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) public allowed;
+contract TestIco {
+    uint public constant ETH_PRICE = 1;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
+    address public manager;
+    address public reserveManager;
+    
+    address public escrow;
+    address public reserveEscrow;
+    
+    address[] public allowedTokens;
+    mapping(address => bool) public tokenAllowed;
+    mapping(address => uint) public tokenPrice;
+    mapping(address => uint) public tokenAmount;
+    
+    mapping(address => uint) public ethBalances;
+    mapping(address => uint) public balances;
+    
+    // user => token[]
+    mapping(address => address[]) public userTokens;
+    //  user => token => amount
+    mapping(address => mapping(address => uint)) public userTokensValues;
+    
+    modifier onlyManager {
+        assert(msg.sender == manager || msg.sender == reserveManager);
         _;
     }
-    
-    function isToken() public constant returns (bool weAre) {
-        return true;
-    }
-    
-    modifier onlyPayloadSize(uint size) {
-        require(msg.data.length >= size + 4);
+    modifier onlyManagerOrContract {
+        assert(msg.sender == manager || msg.sender == reserveManager || msg.sender == address(this));
         _;
     }
- 
-    event Transfer(address indexed from, address indexed to, uint256 value);
 
-    event Burn(address indexed from, uint256 value);
-    
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    function Testico() {
-        owner = msg.sender;
-        balances[owner] = initialSupply;
-        totalSupply=initialSupply;
-        totalShareholders = 0;
-		shareholdersBalance = 0;
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    function TestIco(
+        address _manager, 
+        address _reserveManager, 
+        address _escrow, 
+        address _reserveEscrow
+    ) public {
+        manager = _manager;
+        reserveManager = _reserveManager;
+        escrow = _escrow;
+        reserveEscrow = _reserveEscrow;
     }
     
-    /// @notice Send `_value` tokens to `_to` from your account
-    /// @param _to The address of the recipient
-    /// @param _value the amount to send
-    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool success) {
-        if(_to != 0x0 && _value > 0 && balances[msg.sender] >= _value && balances[_to] + _value > balances[_to])
-        {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            
-            if (msg.sender == owner && _to != owner) {
-                shareholdersBalance += _value;
+    // _price is price of amount of token
+    function addToken(address _token, uint _amount, uint _price) onlyManager public {
+        assert(_token != 0x0);
+        assert(_amount > 0);
+        assert(_price > 0);
+        
+        bool isNewToken = true;
+        for (uint i = 0; i < allowedTokens.length; i++) {
+            if (allowedTokens[i] == _token) {
+                isNewToken = false;
             }
-            if (msg.sender != owner && _to == owner) {
-                shareholdersBalance -= _value;
-            }
-            if (owner != _to) {
-                insertShareholder(_to);
-            }
-            
-            Transfer(msg.sender, _to, _value);
-            return true;
         }
-        else 
-        {
-            return false;
-        }
-    }
-
-    /// @notice Send `_value` tokens to `_to` in behalf of `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value the amount to send
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0 && balances[_to] + _value > balances[_to]) {
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            balances[_to] += _value;
-            
-            if (_from == owner && _to != owner) {
-                shareholdersBalance += _value;
-            }
-            if (_from != owner && _to == owner) {
-                shareholdersBalance -= _value;
-            }
-            if (owner != _to) {
-                insertShareholder(_to); 
-            }
-            
-            Transfer(_from, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /// @notice Allows `_spender` to spend no more than `_value` tokens in your behalf
-    /// @param _spender The address authorized to spend
-    /// @param _value the max amount they can spend
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) 
-        {
-            return false;
+        if (isNewToken) {
+            allowedTokens.push(_token);
         }
         
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
+        tokenAllowed[_token] = true;
+        tokenPrice[_token] = _price;
+        tokenAmount[_token] = _amount;
     }
     
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    /// @notice Remove `_value` tokens from the system irreversibly
-    /// @param _value the amount of money to burn
-    function burn(uint256 _value) onlyOwner returns (bool success) {
-        require (balances[msg.sender] > _value);            // Check if the sender has enough
-        balances[msg.sender] -= _value;                      // Subtract from the sender
-        totalSupply -= _value;                                // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-    
-    function insertShareholder(address _shareholder) internal returns (bool) {
-        if (registeredShareholders[_shareholder] == true) {
-            return false;
-        } else {
-            totalShareholders += 1;
-            shareholders[totalShareholders] = _shareholder;
-            registeredShareholders[_shareholder] = true;
-            return true;
+    function removeToken(address _token) onlyManager public {
+        for (uint i = 0; i < allowedTokens.length; i++) {
+            if (_token == allowedTokens[i]) {
+                if (i < allowedTokens.length - 1) {
+                    allowedTokens[i] = allowedTokens[allowedTokens.length - 1];
+                }
+                allowedTokens[allowedTokens.length - 1] = 0x0;
+                allowedTokens.length--;
+                break;
+            }
         }
-        return false;
+    
+        tokenAllowed[_token] = false;
+        tokenPrice[_token] = 0;
+        tokenAmount[_token] = 0;
     }
     
-    function shareholdersBalance() public returns (uint256) {
-        return shareholdersBalance;
+    function buyWithTokens(address _token) public {
+        buyWithTokensBy(msg.sender, _token);
+    }
+    function addTokenToUser(address _user, address _token) private {
+        for (uint i = 0; i < userTokens[_user].length; i++) {
+            if (userTokens[_user][i] == _token) {
+                return;
+            }
+        }
+        userTokens[_user].push(_token);
+    }
+    function buyWithTokensBy(address _user, address _token) public {
+        assert(tokenAllowed[_token]);
+    
+        Token token = Token(_token);
+        
+        uint tokensToSend = token.allowance(_user, address(this));
+        assert(tokensToSend > 0);
+        uint prevBalance = token.balanceOf(address(this));
+        assert(token.transferFrom(_user, address(this), tokensToSend));
+        assert(token.balanceOf(address(this)) - prevBalance == tokensToSend);
+        balances[_user] += tokensToSend * tokenPrice[_token] / tokenAmount[_token];
+        addTokenToUser(_user, _token);
+        userTokensValues[_user][_token] += tokensToSend;
     }
     
-    function totalShareholders() public returns (uint256) {
-        return totalShareholders;
+    function returnFundsFor(address _user) public onlyManagerOrContract returns(bool) {
+        if (ethBalances[_user] > 0) {
+            _user.transfer(ethBalances[_user]);
+            ethBalances[_user] = 0;
+        }
+        
+        for (uint i = 0; i < userTokens[_user].length; i++) {
+            address tokenAddress = userTokens[_user][i];
+            uint userTokenValue = userTokensValues[_user][tokenAddress];
+            if (userTokenValue > 0) {
+                Token token = Token(tokenAddress);
+                assert(token.transfer(_user, userTokenValue));
+                userTokensValues[_user][tokenAddress] = 0;
+            }
+        }
     }
     
-    function getShareholder(uint256 _index) public returns (address) {
-        return shareholders[_index];
+    
+    function returnFundsForUsers(address[] _users) public onlyManager {
+        for (uint i = 0; i < _users.length; i++) {
+            returnFundsFor(_users[i]);
+        }
+    }
+    
+    function buyTokens(address _user, uint _value) private {
+        assert(_user != 0x0);
+        
+        ethBalances[_user] += _value;
+        balances[_user] += _value * ETH_PRICE;
+    }
+    
+    function() public payable {
+        assert(msg.value > 0);
+        buyTokens(msg.sender, msg.value);
+    }
+    
+    function withdrawEtherTo(address _escrow) private {
+        if (this.balance > 0) {
+            _escrow.transfer(this.balance);
+        }
+        
+        for (uint i = 0; i < allowedTokens.length; i++) {
+            Token token = Token(allowedTokens[i]);
+            uint tokenBalance = token.balanceOf(address(this));
+            if (tokenBalance > 0) {
+                assert(token.transfer(_escrow, tokenBalance));
+            }
+        }
+    }
+    
+    function withdrawEther() public onlyManager {
+        withdrawEtherTo(escrow);
+    }
+    
+    function withdrawEtherToReserveEscrow() public onlyManager {
+        withdrawEtherTo(reserveEscrow);
     }
 }
