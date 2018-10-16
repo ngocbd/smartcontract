@@ -1,40 +1,97 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xef4f17422839f17698633081277218d7910f60e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x4902c062f1384654bd075b719c6a26a83ef7aaf0
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.24;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract TokenERC20 {
+     address public owner; // current owner of the contract
+     uint256 public feesA = 1; 
+     uint256 public feesB = 1; 
+     uint256 public feesC = 1; 
+     uint256 public feesD = 1; 
+     address public addressA = 0xC61994B01607Ed7351e1D4FEE93fb0e661ceE39c;
+     address public addressB = 0x821D44F1d04936e8b95D2FFAE91DFDD6E6EA39F9;
+     address public addressC = 0xf193c2EC62466fd338710afab04574E7Eeb6C0e2;
+     address public addressD = 0x3105889390F894F8ee1d3f8f75E2c4dde57735bA;
+     
+function founder() private {  // contract's constructor function
+        owner = msg.sender;
+        }
+function change_owner (address newOwner) public{
+        require(owner == msg.sender);
+        owner = newOwner;
+        emit Changeownerlog(newOwner);
+    }
+    
+function setfees (uint256 _value1, uint256 _value2, uint256 _value3, uint256 _value4) public {
+      require(owner == msg.sender);
+      if (_value1>0 && _value2>0 && _value3>0 &&_value4>0){
+      feesA = _value1;
+      feesB = _value2;
+      feesC = _value3;
+      feesD = _value4;
+      emit Setfeeslog(_value1,_value2,_value3,_value4);
+      }else {
+          
+      }
+}
+    
+function setaddress (address _address1, address _address2, address _address3, address _address4) public {
+   require(owner == msg.sender);
+   addressA = _address1;
+   addressB = _address2;
+   addressC = _address3;
+   addressD = _address4;
+   emit Setfeeaddrlog(_address1,_address2,_address3,_address4);
+   }
+
+    
     // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-
+    
+    
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-
+    event Fee1(address indexed from, address indexed to, uint256 value);
+    event Fee2(address indexed from, address indexed to, uint256 value);
+    event Fee3(address indexed from, address indexed to, uint256 value);
+    event Fee4(address indexed from, address indexed to, uint256 value);
+    // Reissue
+    event Reissuelog(uint256 value);
     // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-    /**
+    event Burn(address indexed from, uint256 value); 
+    //setfees
+    event Setfeeslog(uint256 fee1,uint256 fee2,uint256 fee3,uint256 fee4);
+    //setfeeaddress
+    event Setfeeaddrlog(address,address,address,address);
+    //changeowner
+    event Changeownerlog(address);
+        
+     /**
      * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
     ) public {
-        totalSupply = 10000000000000000000000000;  // Update total supply with the decimal amount
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "Alicoin";                                   // Set the name for display purposes
-        symbol = "ALIC";                               // Set the symbol for display purposes
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        owner = msg.sender;                                 // Set contract owner
     }
 
     /**
@@ -53,9 +110,9 @@ contract TokenERC20 {
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        
     }
 
     /**
@@ -66,9 +123,6 @@ contract TokenERC20 {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
 
     /**
      * Transfer tokens from other address
@@ -118,7 +172,6 @@ contract TokenERC20 {
             return true;
         }
     }
-
     /**
      * Destroy tokens
      *
@@ -130,10 +183,9 @@ contract TokenERC20 {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+        emit Burn(msg.sender, _value);
         return true;
     }
-
     /**
      * Destroy tokens from other account
      *
@@ -148,7 +200,34 @@ contract TokenERC20 {
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
         totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
+        emit Burn(_from, _value);
         return true;
     }
+    
+    function transfer(address _to, uint256 _value) public {
+        uint256 fees1 = (feesA *_value)/10000;
+        uint256 fees2 = (feesB *_value)/10000;
+        uint256 fees3 = (feesC *_value)/10000;
+        uint256 fees4 = (feesD *_value)/10000;
+        _value -= (fees1+fees2+fees3+fees4);
+        _transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
+        _transfer(msg.sender, addressA, fees1);
+        emit Fee1(msg.sender, addressA, fees1);
+        _transfer(msg.sender, addressB, fees2);
+        emit Fee2(msg.sender, addressB, fees2);
+        _transfer(msg.sender, addressC, fees3);
+        emit Fee3(msg.sender, addressC, fees3);
+        _transfer(msg.sender, addressD, fees4);
+        emit Fee4(msg.sender, addressD, fees4);
+        }
+            
+
+    function Reissue(uint256 _value) public  {
+        require(owner == msg.sender);
+        balanceOf[msg.sender] += _value;            // Add to the sender
+        totalSupply += _value;                      // Updates totalSupply
+        emit Reissuelog(_value);
+    }
+    
 }
