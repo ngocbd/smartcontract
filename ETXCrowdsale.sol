@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETXCrowdsale at 0x9e34127075985c31f3f54be26c76eaee0f3d1ed0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETXCrowdsale at 0x2e20a8d056fe817a9f37cc40e7ee46920b39c0d0
 */
 pragma solidity ^0.4.16;
 
@@ -14,6 +14,9 @@ contract ETXCrowdsale {
     address public owner = 0xC745dA5e0CC68E6Ba91429Ec0F467939f4005Db6;
 
     uint256 private tokenSold;
+    uint256 private price_1;
+    uint256 private price_2;
+    uint256 private price_3;
 
     modifier isCreator() {
         require(msg.sender == creator);
@@ -24,6 +27,9 @@ contract ETXCrowdsale {
 
     function ETXCrowdsale() public {
         creator = msg.sender;
+        price_1 = 600;
+        price_2 = 500;
+        price_3 = 400;
         tokenReward = Token(0x4CFB59BDfB47396e1720F7fF1C1e37071d927112);
     }
 
@@ -33,6 +39,18 @@ contract ETXCrowdsale {
 
     function setCreator(address _creator) isCreator public {
         creator = _creator;      
+    }
+
+    function setPrice1(uint256 _price_1) isCreator public {
+        price_3 = _price_1;      
+    }
+
+    function setPrice2(uint256 _price_2) isCreator public {
+        price_3 = _price_2;      
+    }
+
+    function setPrice3(uint256 _price_3) isCreator public {
+        price_3 = _price_3;      
     }
 
     function setToken(address _token) isCreator public {
@@ -53,17 +71,17 @@ contract ETXCrowdsale {
         
         // period 1
         if (now > 1519862400 && now < 1522018800 && tokenSold < 2100001) {
-            amount = msg.value * 600;
+            amount = msg.value * price_1;
         }
 
         // period 2
         if (now > 1522537200 && now < 1524697200 && tokenSold < 6300001) {
-            amount = msg.value * 500;
+            amount = msg.value * price_2;
         }
 
         // period 3
         if (now > 1525129200 && now < 1527721200 && tokenSold < 12600001) {
-            amount = msg.value * 400;
+            amount = msg.value * price_3;
         }
 
         tokenSold += amount / 1 ether;
