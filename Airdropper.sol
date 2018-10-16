@@ -1,44 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x27058b0fe23a4cdd08aced7ffd646647019cdab9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xc771558812f5db7f24a720cf86259200010fd0de
 */
-pragma solidity ^0.4.11;
-
-contract Ownable {
-  address public owner;
-
-
-  /** 
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner. 
-   */
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
-    }
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to. 
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
+pragma solidity ^0.4.18;
 
 contract ERC20Basic {
   uint public totalSupply;
@@ -46,7 +9,7 @@ contract ERC20Basic {
   function transfer(address to, uint value);
   event Transfer(address indexed from, address indexed to, uint value);
 }
-
+ 
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant returns (uint);
   function transferFrom(address from, address to, uint value);
@@ -54,12 +17,9 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-
-contract Airdropper is Ownable {
-
+contract Airdropper {
     function multisend(address _tokenAddr, address[] dests, uint256[] values)
-    onlyOwner
-    returns (uint256) {
+    public returns (uint256) {
         uint256 i = 0;
         while (i < dests.length) {
            ERC20(_tokenAddr).transfer(dests[i], values[i]);
