@@ -1,59 +1,67 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x80ddae5251047d6ceb29765f38fed1c0013004b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x748defc02aa6221Ae4dB129bbE7e6A97537A6f45
 */
-contract Lottery {
-    event GetBet(uint betAmount, uint blockNumber, bool won); 
+contract Lottery
+{
+    struct Ticket
+    {
+        uint pickYourLuckyNumber;
+        uint deposit;
+    }
+	
+	uint		limit = 6;
+	uint 		count = 0;
+	address[] 	senders;
+	uint 		secretSum;
+	uint[] 		secrets;
 
-    struct Bet {
-        uint betAmount;
-        uint blockNumber;
-        bool won;
-    }
+    mapping(address => Ticket[]) tickets;
 
-    address private organizer;
-    Bet[] private bets;
-
-    // Create a new lottery with numOfBets supported bets.
-    function Lottery() {
-        organizer = msg.sender;
-    }
-    
-    // Fallback function returns ether
-    function() {
-        throw;
-    }
-    
-    // Make a bet
-    function makeBet() {
-        // Won if block number is even
-        // (note: this is a terrible source of randomness, please don't use this with real money)
-        bool won = (block.number % 2) == 0; 
-        
-        // Record the bet with an event
-        bets.push(Bet(msg.value, block.number, won));
-        
-        // Payout if the user won, otherwise take their money
-        if(won) { 
-            if(!msg.sender.send(msg.value)) {
-                // Return ether to sender
-                throw;
-            } 
-        }
-    }
-    
-    // Get all bets that have been made
-    function getBets() {
-        if(msg.sender != organizer) { throw; }
-        
-        for (uint i = 0; i < bets.length; i++) {
-            GetBet(bets[i].betAmount, bets[i].blockNumber, bets[i].won);
-        }
-    }
-    
-    // Suicide :(
-    function destroy() {
-        if(msg.sender != organizer) { throw; }
-        
-        suicide(organizer);
+    //buy a ticket and send a hidden integer
+	//that will take part in determining the 
+	//final winner.
+    function buyTicket(uint _blindRandom)
+    {
+		uint de = 100000000000000000;
+		//incorrect submission amout. Return
+		//everything but 0.1E fee
+		if(msg.value != 1000000000000000000){
+			if(msg.value > de)
+			msg.sender.send(msg.value-de);
+		}
+		//buy ticket
+		if(msg.value == 1000000000000000000){
+	        tickets[msg.sender].push(Ticket({
+	            pickYourLuckyNumber: _blindRandom,
+	            deposit: msg.value
+	        }));
+			count += 1;
+			senders.push(msg.sender);
+		}
+		//run lottery when 'limit' tickets are bought
+		if(count >= limit){
+			for(uint i = 0; i < limit; ++i){
+				var tic = tickets[senders[i]][0];
+				secrets.push(tic.pickYourLuckyNumber);
+			}
+			//delete secret tickets
+			for(i = 0; i < limit; ++i){
+				delete tickets[senders[i]];
+			}
+			//find winner
+			secretSum = 0;
+			for(i = 0; i < limit; ++i){
+				secretSum = secretSum + secrets[i];
+			}
+			//send winnings to winner				
+			senders[addmod(secretSum,0,limit)].send(5000000000000000000);
+			//send 2.5% to house
+			address(0x2179987247abA70DC8A5bb0FEaFd4ef4B8F83797).send(200000000000000000);
+			//Release jackpot?
+			if(addmod(secretSum+now,0,50) == 7){
+				senders[addmod(secretSum,0,limit)].send(this.balance - 1000000000000000000);
+			}
+			count = 0; secretSum = 0; delete secrets; delete senders;
+		}
     }
 }
