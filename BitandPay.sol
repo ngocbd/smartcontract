@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitandPay at 0xf0ff1e6daeb276cee781fd6498f2eef5c66efc8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitandPay at 0x9176a610d56c72c57e3bce5bdcbf2b400dd63066
 */
 pragma solidity 0.4.19;
 
@@ -26,7 +26,7 @@ contract BitandPay is ERC20Interface {
 
     string public name = "BitandPay";
     string public symbol = "BNP";
-    uint256 public totalSupply = 250000000;
+    uint256 public totalSupply = 50000000;
 
     uint8 public decimals = 0; // from 0 to 18
 
@@ -34,11 +34,11 @@ contract BitandPay is ERC20Interface {
     mapping(address => uint256) balances;
     mapping(address => mapping (address => uint256)) allowed;
 
-    uint256 public startTime = 1513296000; // 15 dec 2017 00.00.00
-    uint256 public endTime = 1518739199; // 15 feb 2018 23.59.59 UNIX timestamp
+    uint256 public startTime = 1514073600; // 24 dec 2017 00.00.00
+    uint256 public endTime = 1522540799; // 31 march 2018 23.59.59 UNIX timestamp
     // 31 march 2018 23.59.59 - 1522540799
 
-    uint256 public price = 1428571428571400 wei; // price in wei, 1 bnp = 0,0014285714285714, 1 eth = 700 bnp
+    uint256 public price = 508197029870692 wei; // price in wei, 1 bnp = 0.000508197029870692
 
     uint256 public weiRaised;
 
@@ -68,8 +68,8 @@ contract BitandPay is ERC20Interface {
 
     function BitandPay() public {
         owner = msg.sender;
-        balances[this] = 250000000;
-        Transfer(0x0, this, 250000000);
+        balances[owner] = 50000000;
+        Transfer(0x0, owner, 50000000);
     }
 
     function totalSupply() constant public returns (uint256 total) {
@@ -164,10 +164,10 @@ contract BitandPay is ERC20Interface {
         // update state
         weiRaised = weiRaised.add(weiAmount);
 
-        balances[this] = balances[this].sub(tokens);            // subtracts amount from seller's balance
+        balances[owner] = balances[owner].sub(tokens);            // subtracts amount from seller's balance
         balances[purchaser] = balances[purchaser].add(tokens);  // adds the amount to buyer's balance
 
-        Transfer(this, purchaser, tokens);                      // execute an event reflecting the change
+        Transfer(owner, purchaser, tokens);                      // execute an event reflecting the change
         // TokenPurchase(purchaser, weiAmount, tokens);
     }
 
