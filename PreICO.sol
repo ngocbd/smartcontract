@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICO at 0xd1f70c4962cb9a7db3e4245345e2c7d481859598
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICO at 0xd652c2c57bb8397a790e89ebc392a1bf4e26450f
 */
 contract SafeMath {
   function safeMul(uint a, uint b) internal constant returns (uint) {
@@ -31,21 +31,27 @@ contract PreICO is SafeMath {
   mapping (address => uint) public balance;
   uint public tokensIssued;
 
-  address public ethWallet = 0x412790a9E6A6Dd5b201Bfa29af8d589CB85Ff20c;
+  address public ethWallet;
 
-  // Blocks
-  uint public startPreico = 4307708;
-  uint public endPreico = 4369916;
+  uint public startPreico; // block
+  uint public endPreico; // timestamp
 
   // Tokens with decimals
-  uint public limit = 100000000000000000000000000;
+  uint public limit;
 
   event e_Purchase(address who, uint amount);
 
   modifier onTime() {
-    require(block.number >= startPreico && block.number <= endPreico);
+    require(block.number >= startPreico && now <= endPreico);
 
     _;
+  }
+
+  function PreICO(uint start, uint end, uint tokens, address wallet) {
+    startPreico = start;
+    endPreico = end;
+    limit = tokens;
+    ethWallet = wallet;
   }
 
   function() payable {
@@ -53,7 +59,7 @@ contract PreICO is SafeMath {
   }
 
   function buy() onTime payable {
-    uint numTokens = safeDiv(safeMul(msg.value, getPrice(msg.value)), 1 ether);
+    uint numTokens = safeDiv(safeMul(msg.value, getRate(msg.value)), 1 ether);
     assert(tokensIssued + numTokens <= limit);
 
     ethWallet.transfer(msg.value);
@@ -63,16 +69,16 @@ contract PreICO is SafeMath {
     e_Purchase(msg.sender, numTokens);
   }
 
-  function getPrice(uint value) constant returns (uint price) {
+  function getRate(uint value) constant returns (uint rate) {
     if(value < 150 ether)
       revert();
     else if(value < 300 ether)
-      price = 5800;
+      rate = 5800*10**18;
     else if(value < 1500 ether)
-      price = 6000;
+      rate = 6000*10**18;
     else if(value < 3000 ether)
-      price = 6200;
+      rate = 6200*10**18;
     else if(value >= 3000 ether)
-      price = 6400;
+      rate = 6400*10**18;
   }
 }
