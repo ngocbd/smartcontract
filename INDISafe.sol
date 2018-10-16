@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INDISafe at 0x88ed2e15dcabeaae5a9bf35c3196c8d2505b8a1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INDISafe at 0xca577378bb259b0a28ac58a5a0b48acd58da2c7a
 */
 pragma solidity ^0.4.10;
-
 contract Token {
     uint256 public totalSupply;
     function balanceOf(address _owner) constant returns (uint256 balance);
@@ -58,9 +57,7 @@ contract StandardToken is Token {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
-
-
-// requires 350000000 INDI deposited here
+// requires 300,000,000 INDI deposited here
 contract INDISafe {
   mapping (address => uint256) allocations;
   uint256 public unlockDate;
@@ -68,17 +65,17 @@ contract INDISafe {
   uint256 public constant exponent = 10**18;
 
   function INDISafe() {
-    INDI = 0xa6EccbEfA6969Afb8D35317d3E8c13F3867872fc; //INDI token smart contract address
-    unlockDate = 1522540800; //APRIL 1, 2018
-    allocations[0x6e2991C10714C6259c9EC9F01E1De2D5F041C8EF] = 350000000;
+    INDI = 0xe8c09672cfb9cfce6e2edbb01057d9fa569f97c1;
+    unlockDate = 1515283200;
+    allocations[0x91c594706246Bed9a99CB49718b95D0F067042C8] = 300000000; 
     
   }
 
   function unlock() external {
-    if(now < unlockDate) throw;
+    if(now < unlockDate) revert();
     uint256 entitled = allocations[msg.sender];
     allocations[msg.sender] = 0;
-    if(!StandardToken(INDI).transfer(msg.sender, entitled * exponent)) throw;
+    if(!StandardToken(INDI).transfer(msg.sender, entitled * exponent)) revert();
   }
 
 }
