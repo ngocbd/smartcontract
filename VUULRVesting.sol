@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VUULRVesting at 0x5b66414f132dbcb028120f13efff3f0983f7e6d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VUULRVesting at 0x03e5279e6a8acf5e81d70aaaf7791f497ff5aad9
 */
 pragma solidity ^0.4.19;
 
@@ -455,8 +455,8 @@ contract Salvageable is Operatable {
     }
 }
 
-interface tokenRecipient { 
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; 
+interface tokenRecipient {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external;
 }
 
 
@@ -502,7 +502,7 @@ contract VUULRToken is XClaimable, PausableToken, VUULRTokenConfig, Salvageable 
      */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
         public
-        returns (bool success) 
+        returns (bool success)
     {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
@@ -526,7 +526,7 @@ contract VUULRVesting is XClaimable, Salvageable {
     }
 
     bool public started;
-    
+
 
     VUULRToken public vestingToken;
     address public vestingWallet;
@@ -569,20 +569,20 @@ contract VUULRVesting is XClaimable, Salvageable {
     // Register a vesting schedule to transfer SENC from a group SENC wallet to an individual
     // wallet. For instance, from pre-sale wallet to individual presale contributor address.
     function registerVestingSchedule(address _newAddress, uint _numDays,
-        uint _numPeriods, uint _tokens, uint startFrom) 
-        public 
-        canOperate 
+        uint _numPeriods, uint _tokens, uint startFrom)
+        public
+        canOperate
     {
 
         uint _lockPeriod;
-        
+
         // Let's not allow the common mistake....
         require(_newAddress != address(0));
         // Check that beneficiary is not already registered
         require(vestingSchedules[_newAddress].tokens == 0);
 
         // Some lock period sanity checks.
-        require(_numDays > 0); 
+        require(_numDays > 0);
         require(_numPeriods > 0);
 
         _lockPeriod = _numDays * 1 days;
@@ -603,7 +603,7 @@ contract VUULRVesting is XClaimable, Salvageable {
         emit VestingScheduleRegistered(_newAddress, vestingWallet, _lockPeriod, _tokens);
     }
 
-    // whichPeriod returns the vesting period we are in 
+    // whichPeriod returns the vesting period we are in
     // 0 - before start or not eligible
     // 1 - n : the timeperiod we are in
     function whichPeriod(address whom, uint time) public view returns (uint period) {
