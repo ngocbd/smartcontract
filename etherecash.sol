@@ -1,215 +1,140 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract etherecash at 0xc8ffd394421e09cb48b620dda56168171ca35ab7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherEcash at 0xb79b4f0e05814ba8aa7acf1dfe81598eea32621d
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.4;
 
-/**
- * Contract "Math"
- * Purpose: Math operations with safety checks
- * Status : Complete
- * 
- */
-contract Math {
+contract Token {
 
-    /**
-    * Multiplication with safety check
-    */
-    function Mul(uint a, uint b) pure internal returns (uint) {
-      uint c = a * b;
-      //check result should not be other wise until a=0
-      assert(a == 0 || c / a == b);
-      return c;
-    }
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-    /**
-    * Division with safety check
-    */
-    function Div(uint a, uint b) pure internal returns (uint) {
-      //overflow check; b must not be 0
-      assert(b > 0);
-      uint c = a / b;
-      assert(a == b * c + a % b);
-      return c;
-    }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /**
-    * Subtraction with safety check
-    */
-    function Sub(uint a, uint b) pure internal returns (uint) {
-      //b must be greater that a as we need to store value in unsigned integer
-      assert(b <= a);
-      return a - b;
-    }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    /**
-    * Addition with safety check
-    */
-    function Add(uint a, uint b) pure internal returns (uint) {
-      uint c = a + b;
-      //result must be greater as a or b can not be negative
-      assert(c>=a && c>=b);
-      return c;
-    }
-}
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-  contract ERC20 {
-  function totalSupply()public view returns (uint total_Supply);
-  function balanceOf(address who)public view returns (uint256);
-  function allowance(address owner, address spender)public view returns (uint);
-  function transferFrom(address from, address to, uint value)public returns (bool ok);
-  function approve(address spender, uint value)public returns (bool ok);
-  function transfer(address to, uint value)public returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
 }
 
 
-contract etherecash is ERC20,Math
-{
-   string public constant symbol = "ECH";
-     string public constant name = "EtherEcash";
-     uint8 public constant decimals = 18;
-     uint256 _totalSupply = Mul(360000000,(10 **18));
-     
-     // Owner of this contract
-     address public owner;
-     
-     address central_account;
-  
-     // Balances for each account
-     mapping(address => uint256) balances;
-  
-     // Owner of account approves the transfer of an amount to another account
-     mapping(address => mapping (address => uint256)) allowed;
-     
-     
-  
-     // Functions with this modifier can only be executed by the owner
-     modifier onlyOwner() {
-         require (msg.sender == owner);
-         _;
-     }
-      modifier onlycentralAccount {
-        require(msg.sender == central_account);
-        _;
-    }
-  
-     // Constructor
-     function etherecash() public {
-         owner = msg.sender;
-         balances[owner] = _totalSupply;
-     }
-  
-  function set_centralAccount(address central_Acccount) external onlyOwner
-    {
-        require(central_Acccount != 0x0);
-        central_account = central_Acccount;
-    }
-    
-    // what is the total supply of the ech tokens
-     function totalSupply() public view returns (uint256 total_Supply) {
-         total_Supply = _totalSupply;
-     }
-  
-     // What is the balance of a particular account?
-     function balanceOf(address _owner)public view returns (uint256 balance) {
-         return balances[_owner];
-     }
-  
-     // Transfer the balance from owner's account to another account
-     function transfer(address _to, uint256 _amount)public returns (bool success) {
-         require( _to != 0x0);
-         require(balances[msg.sender] >= _amount 
-             && _amount >= 0
-             && balances[_to] + _amount >= balances[_to]);
-           balances[msg.sender] = Sub(balances[msg.sender], _amount);
-             balances[_to] = Add(balances[_to], _amount);
-             Transfer(msg.sender, _to, _amount);
-             return true;
-        
-     }
-  
-     // Send _value amount of tokens from address _from to address _to
-     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
-     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-     // fees in sub-currencies; the command should fail unless the _from account has
-     // deliberately authorized the sender of the message via some mechanism; we propose
-     // these standardized APIs for approval:
-     function transferFrom(
-         address _from,
-         address _to,
-         uint256 _amount
-     )public returns (bool success) {
-        require(_to != 0x0); 
-         require(balances[_from] >= _amount
-             && allowed[_from][msg.sender] >= _amount
-             && _amount >= 0
-             && balances[_to] + _amount >= balances[_to]);
-        balances[_from] = Sub(balances[_from], _amount);
-             allowed[_from][msg.sender] = Sub(allowed[_from][msg.sender], _amount);
-             balances[_to] = Add(balances[_to], _amount);
-             Transfer(_from, _to, _amount);
-             return true;
-             }
- 
-     // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-     // If this function is called again it overwrites the current allowance with _value.
-     function approve(address _spender, uint256 _amount)public returns (bool success) {
-         allowed[msg.sender][_spender] = _amount;
-         Approval(msg.sender, _spender, _amount);
-         return true;
-     }
-  
-     function allowance(address _owner, address _spender)public view returns (uint256 remaining) {
-         return allowed[_owner][_spender];
-   }
-   
-   event check1(uint taxtoken, uint totalToken);
-   event check2(uint comtoken, uint totalToken);
-   //  0.01 % = 1 and 100% = 10000
-    function zero_fee_transaction(address _from, address _to, uint256 _amount, uint tax) external onlycentralAccount returns(bool success) {
-        require(_to != 0x0 && tax >=0);
 
-      uint256 taxToken = Div((Mul(tax,  _amount)), 10000); 
-      uint256 totalToken = Add(_amount, taxToken);
-      check1(taxToken,totalToken);
-       require (balances[_from] >= totalToken  &&
-            totalToken > 0 &&
-            balances[_to] + totalToken > balances[_to]);
-            balances[_from] = Sub(balances[_from], totalToken);
-            balances[_to] = Add(balances[_to], _amount);
-            balances[owner] = Add(balances[owner], taxToken);
-            Transfer(_from, _to, _amount);
-            Transfer(_from, owner, taxToken);
+contract StandardToken is Token {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
             return true;
-           }
+        } else { return false; }
+    }
 
-   // .01 % = 1 and 100% = 10000
-    function com_fee_transaction(address _from,address _to,address _taxCollector, uint256 _amount, uint commision) external onlycentralAccount returns(bool success) {
-      require(_to != 0x0 && _taxCollector != 0x0 && commision >=0); 
-      uint256 comToken = Div((Mul(commision,  _amount)), 10000); 
-      uint256 totalToken = Sub(_amount, comToken);
-       check1(comToken,totalToken);
-      require (balances[_from] >= _amount &&
-            totalToken >=0 &&
-        balances[_to] + totalToken > balances[_to]);
-           balances[_from] = Sub(balances[_from], _amount);
-           balances[_to] = Add(balances[_to], totalToken);
-            balances[_taxCollector] = Add(balances[_taxCollector], comToken);
-            Transfer(_from, _to, totalToken);
-            Transfer(_from, _taxCollector, comToken);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
             return true;
-       }
+        } else { return false; }
+    }
 
- 
-    
-	//In case the ownership needs to be transferred
-	function transferOwnership(address newOwner)public onlyOwner
-	{
-	    require( newOwner != 0x0);
-	    balances[newOwner] = Add(balances[newOwner],balances[owner]);
-	    balances[owner] = 0;
-	    owner = newOwner;
-	}
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
 
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
+
+
+//name this contract whatever you'd like
+contract EtherEcash is StandardToken {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
+    }
+
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+
+    function EtherEcash(
+        ) {
+        balances[msg.sender] = 360000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 360000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "EtherEcash";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "ECH";                               // Set the symbol for display purposes
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
+    }
 }
