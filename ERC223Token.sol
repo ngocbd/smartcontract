@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x74ea2438157d8bb836cad8419be38f7bba799d30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x5651ad6511e243e4529fc9363cf88fffc7a2a669
 */
 // compiler: 0.4.19+commit.c4cbbb05.Emscripten.clang
 pragma solidity ^0.4.19;
@@ -36,11 +36,10 @@ contract ERC223Token
                   address indexed spender,
                   uint value );
 
-  // ERC223, ERC20-compatible
   event Transfer( address indexed from,
                   address indexed to,
-                  uint256 value,
-                  bytes    data );
+                  uint256 value );
+               // bytes    data );
 
   // Ethereum Token
   event Burn( address indexed from, uint256 value );
@@ -206,6 +205,9 @@ contract ERC223Token
     balances_[from] -= value;
     balances_[to] += value;
 
-    Transfer( from, to, value, data );
+    //Transfer( from, to, value, data ); ERC223-compat version
+    bytes memory empty;
+    empty = data;
+    Transfer( from, to, value ); // ERC20-compat version
   }
 }
