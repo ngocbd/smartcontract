@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hubcoin at 0x443ed8c794478f5d39a6ac0ca25963ed2e2c4f26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hubcoin at 0xf2e51e32d1f546423364a040ef1a6d2f05e31482
 */
 pragma solidity ^0.4.13;
 
@@ -255,10 +255,10 @@ contract Hubcoin is StandardToken, Pausable {
   string public constant name = 'Hubcoin';                       // Set the token name for display
   string public constant symbol = 'HUB';                                       // Set the token symbol for display
   uint8 public constant decimals = 6;                                          // Set the number of decimals for display
-  uint256 public constant INITIAL_SUPPLY = 326804 * 10**uint256(decimals); // 326804 HUB specified in Grains
+  uint256 public constant INITIAL_SUPPLY = 107336 * 10**uint256(decimals); // 326804 HUB specified in Grains
   uint256 public constant total_freeze_term = 86400*365;   //Freeze duration
   uint256 public constant launch_date = 1501545600;
-  uint256 public constant owner_freeze_start = 1506774435;
+  uint256 public constant owner_freeze_start = 1507918487;
   uint256 public constant owner_freeze_term = 3600*24;
 
   mapping (address => uint256) public frozenAccount;
@@ -308,23 +308,37 @@ contract Hubcoin is StandardToken, Pausable {
   }
 
 
+  /**
+   * @dev Freeze of a premine
+   * @param target The address to whom we freeze
+   * @param freeze The amount of tokens freeze.
+   */
   function freezeAccount(address target, uint256 freeze)  onlyOwner  {
-        require(block.timestamp < (owner_freeze_start + owner_freeze_term));
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+    require(block.timestamp < (owner_freeze_start + owner_freeze_term));
+    frozenAccount[target] = freeze;
+    FrozenFunds(target, freeze);
   }
 
+  /**
+   * @dev Is it possible to spend the received amount
+   * @param _from The address which is checked
+   * @param _value The amount to spend
+   */
   function freezeCheck(address _from, uint256 _value)  returns (bool) {
-
-
     uint forbiddenPremine =  launch_date - block.timestamp + total_freeze_term;
-    if (forbiddenPremine < 0) forbiddenPremine = 0;
 
-    require(balances[_from] >= _value.add( frozenAccount[_from] * forbiddenPremine / total_freeze_term) ); // Check if the sender has enough
+    if (forbiddenPremine > 0) {
+      require(balances[_from] >= _value.add( frozenAccount[_from] * forbiddenPremine / total_freeze_term) );
+    }
+
     return true;
   }
 
-   function burn(uint256 _value) onlyOwner public {
+  /**
+   * @dev Burning the rest of the coins
+   * @param _value The amount tokens
+   */
+  function burn(uint256 _value) onlyOwner public {
     require(_value > 0);
 
     address burner = msg.sender;
