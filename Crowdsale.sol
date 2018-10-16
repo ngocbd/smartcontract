@@ -1,424 +1,172 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x456c4350EEFd17315713b265D8BE8b6063A5Fab8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x4ab4710b12409af36472d1ca43d48b4c82919328
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
-  function div(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-  function sub(uint a, uint b) internal returns (uint) {
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
 }
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-    address public owner;
 
-    function Ownable() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-}
-contract Pausable is Ownable {
-  bool public stopped;
-
-  modifier stopInEmergency {
-    if (stopped) {
-      throw;
-    }
-    _;
-  }
-  modifier onlyInEmergency {
-    if (!stopped) {
-      throw;
-    }
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function emergencyStop() external onlyOwner {
-    stopped = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function release() external onlyOwner onlyInEmergency {
-    stopped = false;
-  }
-
-}
-contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  event Transfer(address indexed from, address indexed to, uint value);
-}
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint);
-  function transferFrom(address from, address to, uint value);
-  function approve(address spender, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-contract PullPayment {
-
-  using SafeMath for uint;
-
-  mapping(address => uint) public payments;
-
-  event LogRefundETH(address to, uint value);
-
+  address public owner;
 
   /**
-  *  Store sent amount as credit to be pulled, called by payer
-  **/
-  function asyncSend(address dest, uint amount) internal {
-    payments[dest] = payments[dest].add(amount);
-  }
-
-  // withdraw accumulated balance, called by payee
-  function withdrawPayments() {
-    address payee = msg.sender;
-    uint payment = payments[payee];
-
-    if (payment == 0) {
-      throw;
-    }
-
-    if (this.balance < payment) {
-      throw;
-    }
-
-    payments[payee] = 0;
-
-    if (!payee.send(payment)) {
-      throw;
-    }
-    LogRefundETH(payee,payment);
-  }
-}
-contract BasicToken is ERC20Basic {
-
-  using SafeMath for uint;
-
-  mapping(address => uint) balances;
-
-  /*
-   * Fix for the ERC20 short address attack
-  */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-}
-contract StandardToken is BasicToken, ERC20 {
-  mapping (address => mapping (address => uint)) allowed;
-
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
-    var _allowance = allowed[_from][msg.sender];
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-  }
-  function approve(address _spender, uint _value) {
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-}
-contract SggCoin is StandardToken, Ownable {
-  string public constant name = "SggCoin";
-  string public constant symbol = "SGG";
-  uint public constant decimals = 6;
-
-
-  // Constructor
-  function SggCoin() {
-      totalSupply = 1000000000000000;     // one billion
-      balances[msg.sender] = totalSupply; // Send all tokens to owner
-  }
-
-  /**
-   *  Burn away the specified amount of SggCoin tokens
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
    */
-  function burn(uint _value) onlyOwner returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-    Transfer(msg.sender, 0x0, _value);
-    return true;
+  function Ownable() {
+    owner = msg.sender;
   }
 
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
 }
-/*
-  Crowdsale Smart Contract for the StuffGoGo Project
-  Created and deployed by DAAPPS company
-  This smart contract collects ETH, and in return emits SggCoin tokens to the backers
-*/
-contract Crowdsale is Pausable, PullPayment {
 
-    using SafeMath for uint;
+interface Token {
+  function transfer(address _to, uint256 _value) returns (bool);
+  function balanceOf(address _owner) constant returns (uint256 balance);
+}
 
-  	struct Backer {
-		uint weiReceived; // Amount of Ether given
-		uint coinSent;
-	}
+contract Crowdsale is Ownable {
 
-	/*
-	* Constants
-	*/
-	uint public constant MIN_CAP = 5000000000;           // min: 5,000 SggCoins = 1 eth
-	uint public constant MAX_CAP = 500000000000000;      // max: 500,000,000 SggCoins = 100000 eth
-	uint public constant MIN_INVEST_ETHER = 100 finney;  // 0.1 eth
-	uint private constant CROWDSALE_PERIOD = 28 days;    // 4 weeks
-	uint public constant COIN_PER_ETHER = 5000000000;    // 5,000 SggCoins/ETH
+  using SafeMath for uint256;
 
+  Token token;
 
-	/*
-	* Variables
-	*/
-	/* SggCoin contract reference */
-	SggCoin public coin;
-    /* Multisig contract that will receive the Ether */
-	address public multisigEther;
-	/* Number of Ether received */
-	uint public etherReceived;
-	/* Number of SggCoins sent to Ether contributors */
-	uint public coinSentToEther;
-	/* Crowdsale start time */
-	uint public startTime;
-	/* Crowdsale end time */
-	uint public endTime;
- 	/* Is crowdsale still on going */
-	bool public crowdsaleClosed;
+  uint256 public constant RATE = 1000; // Number of tokens per Ether
+  uint256 public constant CAP = 100000; // Cap in Ether
+  uint256 public constant START = 1505138400; // Sep 11, 2017 @ 14:00 GMT
+  uint256 public DAYS = 30; // 30 Days
 
-	/* Backers Ether indexed by their Ethereum address */
-	mapping(address => Backer) public backers;
+  uint256 public raisedAmount = 0;
 
+  event BoughtTokens(address indexed to, uint256 value);
 
-	/*
-	* Modifiers
-	*/
-	modifier minCapNotReached() {
-		if ((now < endTime) || coinSentToEther >= MIN_CAP ) throw;
-		_;
-	}
+  modifier whenSaleIsActive() {
+    // Check how much Ether has been raised
+    assert(!goalReached());
 
-	modifier respectTimeFrame() {
-		if ((now < startTime) || (now > endTime )) throw;
-		_;
-	}
+    // Check if sale is active
+    assert(isActive());
 
-	/*
-	 * Event
-	*/
-	event LogReceivedETH(address addr, uint value);
-	event LogCoinsEmited(address indexed from, uint amount);
+    _;
+  }
 
-	/*
-	 * Constructor
-	*/
-	function Crowdsale(address _SggCoinAddress, address _to) {
-		coin = SggCoin(_SggCoinAddress);
-		multisigEther = _to;
-	}
+  function Crowdsale(address _tokenAddr) {
+      require(_tokenAddr != 0);
+      token = Token(_tokenAddr);
+  }
 
-	/*
-	 * The fallback function corresponds to a donation in ETH
-	 */
-	function() stopInEmergency respectTimeFrame payable {
-		receiveETH(msg.sender);
-	}
+  function isActive() constant returns (bool) {
+    return (now >= START && now <= START.add(DAYS * 1 days));
+  }
 
-	/*
-	 * To call to start the crowdsale
-	 */
-	function start() onlyOwner {
-		if (startTime != 0) throw; // Crowdsale was already started
+  function goalReached() constant returns (bool) {
+    return (raisedAmount >= CAP * 1 ether);
+  }
 
-		startTime = now ;
-		endTime =  now + CROWDSALE_PERIOD;
-	}
+  function () payable {
+    buyTokens();
+  }
 
-	/*
-	 *	Receives a donation in Ether
-	*/
-	function receiveETH(address beneficiary) internal {
-		if (msg.value < MIN_INVEST_ETHER) throw; // Don't accept funding under a predefined threshold
+  /**
+  * @dev function that sells available tokens
+  */
+  function buyTokens() payable whenSaleIsActive {
 
-		uint coinToSend = bonus(msg.value.mul(COIN_PER_ETHER).div(1 ether)); // Compute the number of SggCoin to send
-		if (coinToSend.add(coinSentToEther) > MAX_CAP) throw;
+    // Calculate tokens to sell
+    uint256 weiAmount = msg.value;
+    uint256 tokens = weiAmount.mul(RATE);
+    uint256 bonus = 0;
 
-		Backer backer = backers[beneficiary];
-		coin.transfer(beneficiary, coinToSend); // Transfer SggCoins right now
+    // Calculate Bonus
+    if (now <= START.add(7 days)) {
+      bonus = tokens.mul(30).div(100);
+    } else if (now <= START.add(14 days)) {
+      bonus = tokens.mul(25).div(100);
+    } else if (now <= START.add(21 days)) {
+      bonus = tokens.mul(20).div(100);
+    } else if (now <= START.add(30 days)) {
+      bonus = tokens.mul(10).div(100);
+    }
 
-		backer.coinSent = backer.coinSent.add(coinToSend);
-		backer.weiReceived = backer.weiReceived.add(msg.value); // Update the total wei collected during the crowdfunding for this backer
+    tokens = tokens.add(bonus);
 
-		etherReceived = etherReceived.add(msg.value); // Update the total wei collected during the crowdfunding
-		coinSentToEther = coinSentToEther.add(coinToSend);
+    // Send tokens to buyer
+    token.transfer(msg.sender, tokens);
 
-		// Send events
-		LogCoinsEmited(msg.sender ,coinToSend);
-		LogReceivedETH(beneficiary, etherReceived);
-	}
+    BoughtTokens(msg.sender, tokens);
 
+    // Send money to owner
+    owner.transfer(msg.value);
 
-	/*
-	 *Compute the SggCoin bonus according to the investment period
-	 */
-	function bonus(uint amount) internal constant returns (uint) {
-		if (now < startTime.add(2 days)) return amount.add(amount.div(5));   // bonus 20%
-		return amount;
-	}
+    // Increment raised amount
+    raisedAmount = raisedAmount.add(msg.value);
+  }
 
-	/*
-	 * Finalize the crowdsale, should be called after the refund period
-	*/
-	function finalize() onlyOwner public {
+  /**
+   * @dev returns the number of tokens allocated to this contract
+   */
+  function tokensAvailable() constant returns (uint256) {
+    return token.balanceOf(this);
+  }
 
-		if (now < endTime) { // Cannot finalise before CROWDSALE_PERIOD or before selling all coins
-			if (coinSentToEther == MAX_CAP) {
-			} else {
-				throw;
-			}
-		}
+  /**
+   * @notice Terminate contract and refund to owner
+   */
+  function destroy() onlyOwner {
+    // Transfer tokens back to owner
+    uint256 balance = token.balanceOf(this);
+    token.transfer(owner, balance);
 
-		if (coinSentToEther < MIN_CAP && now < endTime + 15 days) throw; // If MIN_CAP is not reached donors have 15days to get refund before we can finalise
-
-		if (!multisigEther.send(this.balance)) throw; // Move the remaining Ether to the multisig address
-
-		uint remains = coin.balanceOf(this);
-		if (remains > 0) { // Burn the rest of SggCoins
-			if (!coin.burn(remains)) throw ;
-		}
-		crowdsaleClosed = true;
-	}
-
-	/*
-	* Failsafe drain
-	*/
-	function drain() onlyOwner {
-		if (!owner.send(this.balance)) throw;
-	}
-
-	/**
-	 * Allow to change the team multisig address in the case of emergency.
-	 */
-	function setMultisig(address addr) onlyOwner public {
-		if (addr == address(0)) throw;
-		multisigEther = addr;
-	}
-
-	/**
-	 * Manually back SggCoin owner address.
-	 */
-	function backSggCoinOwner() onlyOwner public {
-		coin.transferOwnership(owner);
-	}
-
-	/**
-	 * Transfer remains to owner in case if impossible to do min invest
-	 */
-	function getRemainCoins() onlyOwner public {
-		var remains = MAX_CAP - coinSentToEther;
-		uint minCoinsToSell = bonus(MIN_INVEST_ETHER.mul(COIN_PER_ETHER) / (1 ether));
-
-		if(remains > minCoinsToSell) throw;
-
-		Backer backer = backers[owner];
-		coin.transfer(owner, remains); // Transfer SggCoins right now
-
-		backer.coinSent = backer.coinSent.add(remains);
-
-		coinSentToEther = coinSentToEther.add(remains);
-
-		// Send events
-		LogCoinsEmited(this ,remains);
-		LogReceivedETH(owner, etherReceived);
-	}
-
-
-	/*
-  	 * When MIN_CAP is not reach:
-  	 * 1) backer call the "approve" function of the SggCoin token contract with the amount of all SggCoins they got in order to be refund
-  	 * 2) backer call the "refund" function of the Crowdsale contract with the same amount of SggCoins
-   	 * 3) backer call the "withdrawPayments" function of the Crowdsale contract to get a refund in ETH
-   	 */
-	function refund(uint _value) minCapNotReached public {
-
-		if (_value != backers[msg.sender].coinSent) throw; // compare value from backer balance
-
-		coin.transferFrom(msg.sender, address(this), _value); // get the token back to the crowdsale contract
-
-		if (!coin.burn(_value)) throw ; // token sent for refund are burnt
-
-		uint ETHToSend = backers[msg.sender].weiReceived;
-		backers[msg.sender].weiReceived=0;
-
-		if (ETHToSend > 0) {
-			asyncSend(msg.sender, ETHToSend); // pull payment to get refund in ETH
-		}
-	}
+    // There should be no ether in the contract but just in case
+    selfdestruct(owner);
+  }
 
 }
