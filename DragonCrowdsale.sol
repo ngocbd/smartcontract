@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonCrowdsale at 0x8977b6c437cbb5bef6fe07cbac770f5984a7ea6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonCrowdsale at 0x987f0b4407e5558699a9b8fc4dda23ff927689ee
 */
 pragma solidity ^0.4.18;
 
@@ -107,6 +107,7 @@ contract DragonCrowdsale {
     // set the dragon crowdsalecore contract
     function setCore( address _core ) onlyOwner {
         
+        require ( _core != 0x00 );
         CoreAddress = _core;
         core = DragonCrowdsaleCore( _core );
         
@@ -114,7 +115,7 @@ contract DragonCrowdsale {
     
     function transferOwnership( address _address ) onlyOwner {
         
-       
+        require ( _address!= 0x00 );
         owner =  _address ;
         
     }
