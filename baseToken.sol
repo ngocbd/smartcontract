@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract baseToken at 0xe881d262acbfe8997cfc57e9fd527b175fb26373
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract baseToken at 0x5a2dacf2d90a89b3d135c7691a74d25afb5f7fb7
 */
 pragma solidity ^0.4.18;
 
@@ -28,10 +28,10 @@ contract ERC20 {
 }
 
 contract    baseToken is ERC20, safeMath {
-    uint256         _totalSupply;
-    string          _name;
-    string          _symbol;
-    uint8           _decimals;
+    uint256     public  _totalSupply;
+    string      public  _name;
+    string      public  _symbol;
+    uint8       public  _decimals;
 
     mapping ( address => uint256 )                          _balanceOf;
     mapping ( address => mapping ( address => uint256 ) )   _allowance;
