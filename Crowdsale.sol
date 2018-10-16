@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb04ee6be2b98c9ed24be5585329891fea036829a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xd946be2b7a614ca2d60bd042cf8a40d0d0af93b9
 */
 pragma solidity ^0.4.11;
 
@@ -43,7 +43,11 @@ contract Crowdsale {
         tokenReward = token(addressOfTokenUsedAsReward);
     }
 
-
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
     function () public payable {
         require(!crowdsaleClosed);
         uint amount = msg.value;
@@ -79,7 +83,13 @@ contract Crowdsale {
     }
 
 
- 
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
     function safeWithdrawal()public afterDeadline {
         if (!fundingGoalReached) {
             uint amount = balanceOf[msg.sender];
