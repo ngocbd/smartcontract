@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoController at 0xfb1fb0eafdbaa51f8ba1332e43599e75b7cc8e2c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoController at 0x0beab0ffa882bf49a2cc49b2e5aabfeb51f70082
 */
 pragma solidity ^0.4.21;
 
@@ -1203,7 +1203,7 @@ contract IcoController is Ownable {
     */
     function mintAndCreatePreIcoBitex(address _walletRemaining,address _teamWallet) onlyOwner public
     {
-        prepare(300000000000000000000000000,_walletRemaining, 0x43bAD62A4aD94c31C659D21be3E3A33FFc97c909);
+        prepare(300000000000000000000000000,_walletRemaining, 0xd68cE8BF133297C3C27cc582A9E5452F64F76E4b);
 
         // mint 63M reserved
         mint(63000000000000000000000000,0xB52c45b43B5c2dC6928149C54A05bA3A91542060);
@@ -1415,6 +1415,14 @@ contract IcoController is Ownable {
         // this call is done under the icoController address the real owner of the kyc. It ensure that only the icoController can call the kyc smart contract
         // until the end of the event, where the ownership is transfered back to the pendingOwner
         kyc.setContributor(_address, cleared, contributor_get, affiliate_get, ref);
+    }
+    /**
+    *
+    * in case the whitelisting admin need to be changed
+    *
+    */
+    function setWhiteListAdmin(address _address) onlyOwner public{
+        whiteListingAdmin=_address;
     }
 
    /**
