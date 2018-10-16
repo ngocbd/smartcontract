@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StableCurrencyToken at 0x841DBdf83A0ae570724126679D7AaB130963D05F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StableCurrencyToken at 0x3658E756e02C1515CD04A27bCAB5281e3Db06d7A
 */
 pragma solidity ^0.4.21;
 
@@ -396,11 +396,6 @@ contract StableCurrencyToken is Pausable, StandardToken, BlackList {
         deprecated = false;
     }
 
-    function changeName(string _name, string _symbol) onlyOwner public {
-        name = _name;
-        symbol = _symbol;
-    }
-
     // Forward ERC20 methods to upgraded contract if this one is deprecated
     function transfer(address _to, uint _value) public whenNotPaused returns (bool) {
         require(!isBlackListed[msg.sender]);
@@ -493,8 +488,8 @@ contract StableCurrencyToken is Pausable, StandardToken, BlackList {
 
     function setParams(uint newBasisPoints, uint newMaxFee) public onlyOwner {
         // Ensure transparency by hardcoding limit beyond which fees can never be added
-        require(newBasisPoints <= 20);
-        require(newMaxFee <= 50);
+        require(newBasisPoints < 20);
+        require(newMaxFee < 50);
 
         basisPointsRate = newBasisPoints;
         maximumFee = newMaxFee.mul(10**decimals);
