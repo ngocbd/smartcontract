@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FishOne at 0x78420eb790e77b4a6b459e58a6d3b16a59e0f6b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FishOne at 0xb851aaeb64d0a9f9ade95973c523767e6265d292
 */
 pragma solidity ^0.4.21;
 
@@ -337,7 +337,7 @@ contract FishOne is PausableToken {
   */
 
   string public name = "FishOne";
-  string public symbol = "FT";
+  string public symbol = "FOT";
   uint256 public decimals = 18;
   uint256 public INITIAL_SUPPLY = 100 * 10000 * 10000 * (10 ** decimals);
 
