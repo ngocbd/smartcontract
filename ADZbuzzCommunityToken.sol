@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x4aa5b5ce349e0ffd07b9eb23ce48e0808c3ad8ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x380b67db85551004f05879a23a5460a473f0336a
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT424205' token contract
+    // 'ACT424190' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT424205
-    // Name        : ADZbuzz Worldanimalprotection.org Community Token
+    // Symbol      : ACT424190
+    // Name        : ADZbuzz Greenpeace.org Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT424205";
-            name = "ADZbuzz Worldanimalprotection.org Community Token";
+            symbol = "ACT424190";
+            name = "ADZbuzz Greenpeace.org Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
