@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JoysoCrowdsale at 0xe0de6bbc6589160e8539230eead301f8481bc1b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JoysoCrowdsale at 0xC857602cbD31145209B5C44e32861be724Bf37c9
 */
 pragma solidity ^0.4.18;
 
@@ -126,7 +126,7 @@ contract JoysoCrowdsale {
 
   // @return true if crowdsale event has ended
   function hasEnded() public view returns (bool) {
-    bool isEnd = now > endTime || weiRaised >= 10 ** (18 + 4);
+    bool isEnd = now > endTime || weiRaised == 10 ** (18 + 4);
     return isEnd;
   }
 
