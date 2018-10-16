@@ -1,9 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x17940cB3e4B4C69c4D8A2cd86c9b63b72a9fF79C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x24030D85201e5B550B9cD1230c0c2d6Cfd146382
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
-// Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
-
 pragma solidity ^0.4.8;
 
 
