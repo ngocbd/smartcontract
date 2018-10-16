@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AffiliateManager at 0x063425e215701d2761a9065e647fa98f209b4ddd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AffiliateManager at 0x93012a1c354b2964ef88a55b7b11ed178f921b3e
 */
 pragma solidity ^0.4.19;
 
@@ -658,7 +658,7 @@ contract AffiliateManager is Pausable {
         mvnpereth = 100;
         mvnperethBonus = 105;
         level1Bonus = 8;
-        level2Bonus = 4;
+        level2Bonus = 5;
         
         minAmountWei = 0.01 ether;
         cap = 32000 ether;
