@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0xfebe90960bd08107f0af9672cfa42527e256e0ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0xec357c7ec21e6e102dcd4c92aa556d459bd2eba3
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.20;
 
 // <ORACLIZE_API>
 /*
@@ -33,7 +33,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-//
+//pragma solidity ^0.4.0;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -1035,18 +1035,18 @@ contract nbagame is usingOraclize {
   address[2] public BOOKIES = [0x0161C8d35f0B603c7552017fe9642523f70d7B6A, 0x8B756b564d6FDFC1d0164174c514B0431ACC2409];
 
   uint public constant NUM_TEAMS = 2;
-  string[NUM_TEAMS] public TEAM_NAMES = ["Los Angeles Clippers", "Golden State Warriors"];
-  enum TeamType { LAClippers, GSWarriors, None } // Clippers vs Warriors
+  string[NUM_TEAMS] public TEAM_NAMES = ["Houston Rockets", "Minnesota Timberwolves"];
+  enum TeamType { HRockets, MTimberwolves, None }
   TeamType public winningTeam = TeamType.None;
 
   uint public constant BOOKIE_POOL_COMMISSION = 10; // The bookies take pseudo 5% (10% from the losing side bet)
   uint public constant MINIMUM_BET = 0.01 ether; // 0.01 ETH is min bet
 
-  uint public constant BETTING_OPENS = 1519095900; // Currently before deployment
-  uint public constant BETTING_CLOSES = 1519355100; // Feb 22, 10:35pm EST
+  uint public constant BETTING_OPENS = 1518905100; // Currently before deployment
+  uint public constant BETTING_CLOSES = 1519434300; // Feb 23, 8:05pm EST
   uint public constant PAYOUT_ATTEMPT_INTERVAL = 43200; // 12 hours
-  uint public constant BET_RELEASE_DATE = 1519527900; // If payouts haven't been completed by this date, bets are released back to the betters (Feb 24, 10:30pm EST)
-  uint public constant PAYOUT_DATE = BETTING_CLOSES + PAYOUT_ATTEMPT_INTERVAL; // First payout attempt: Feb 23, 10:35am EST
+  uint public constant BET_RELEASE_DATE = 1519607100; // Feb 25, 8:05pm EST
+  uint public constant PAYOUT_DATE = BETTING_CLOSES + PAYOUT_ATTEMPT_INTERVAL; // Feb 24, 8:05am EST
 
   bool public scheduledPayout;
   bool public payoutCompleted;
@@ -1101,7 +1101,7 @@ contract nbagame is usingOraclize {
     // at the delay passed. This can be triggered
     // multiple times, but as soon as the payout occurs
     // the function does not do anything
-    oraclize_query(pingDelay, "WolframAlpha", "Clippers vs Warriors on February 22, 2018 Winner");
+    oraclize_query(pingDelay, "WolframAlpha", "Rockets vs Timberwolves on February 23, 2018 Winner");
   }
 
   // Callback from Oraclize
@@ -1153,7 +1153,7 @@ contract nbagame is usingOraclize {
     return (now >= BETTING_OPENS && now < BETTING_CLOSES);
   }
   
-  // We (bookies) can trigger a payout
+  // Trigger a payout
   // immediately, before the scheduled payout,
   // if the data source has already been updated.
   // This is so people can get their $$$ ASAP.
@@ -1161,11 +1161,9 @@ contract nbagame is usingOraclize {
     pingOracle(0);
   }
 
-  // Function for user to bet on team idx,
-  // where 0 = Wizards and 1 = Cavaliers
   function bet(uint teamIdx) public payable {
     require(canBet() == true);
-    require(TeamType(teamIdx) == TeamType.LAClippers || TeamType(teamIdx) == TeamType.GSWarriors);
+    require(TeamType(teamIdx) == TeamType.HRockets || TeamType(teamIdx) == TeamType.MTimberwolves);
     require(msg.value >= MINIMUM_BET);
 
     // Add better to better list if they
