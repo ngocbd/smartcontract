@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLTCoin at 0xa718d39790fa150c1d73faef0e25225d71b11758
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLTCoin at 0xef56166bfc23489b224a1c6b330b3bbd94e3af0c
 */
 pragma solidity ^0.4.24;
 
@@ -87,8 +87,8 @@ contract BLTCoin is ERC20Interface, Owned{
     function BLTCoin(address _owner) public{
         icoOpen = false;
         bonusCompaignOpen = false;
-        symbol = "BLT";
-        name = "BrotherlyLend";
+        symbol = "BRC";
+        name = "Brotherly Coin";
         decimals = 18;
         rate = 142857; //tokens per wei
         owner = _owner;
