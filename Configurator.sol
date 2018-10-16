@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xb98091aca11039eecc087e0b4687b7294d66c68d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xef68fa874c8109b2db02c509d3cf9abcac9603ae
 */
 pragma solidity ^0.4.18;
 
@@ -613,7 +613,7 @@ contract Configurator is Ownable {
   Mainsale public mainsale;
 
   function deploy() public onlyOwner {
-    owner = 0x95EA6A4ec9F80436854702e5F05d238f27166A03;
+    //owner = 0x95EA6A4ec9F80436854702e5F05d238f27166A03;
 
     token = new VestarinToken();
 
@@ -623,7 +623,7 @@ contract Configurator is Ownable {
     presale.addStage(5000,3000);
     presale.setMasterWallet(0x95EA6A4ec9F80436854702e5F05d238f27166A03);
     presale.setSlaveWallet(0x070EcC35a3212D76ad443d529216a452eAA35E3D);
-    presale.setSlaveWalletPercent(30);
+    presale.setSlaveWalletPercent(50);
     presale.setStart(1517317200);
     presale.setPeriod(30);
     presale.setMinPrice(100000000000000000);
@@ -640,7 +640,7 @@ contract Configurator is Ownable {
     mainsale.addStage(40000,1300);
     mainsale.setMasterWallet(0x95EA6A4ec9F80436854702e5F05d238f27166A03);
     mainsale.setSlaveWallet(0x070EcC35a3212D76ad443d529216a452eAA35E3D);
-    mainsale.setSlaveWalletPercent(30);
+    mainsale.setSlaveWalletPercent(50);
     mainsale.setFoundersTokensWallet(0x95EA6A4ec9F80436854702e5F05d238f27166A03);
     mainsale.setBountyTokensWallet(0x95EA6A4ec9F80436854702e5F05d238f27166A03);
     mainsale.setStart(1525352400);
