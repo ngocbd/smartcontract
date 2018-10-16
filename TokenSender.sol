@@ -1,128 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSender at 0x1c57a7ca56b6e044ecc1cf5b1e31fa1a0cf64aeb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSender at 0xb6b2aadddbef17d3a2e67d2e1e321a394176784a
 */
-pragma solidity >=0.4.11;
+pragma solidity ^0.4.21;
 
-contract Owned {
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    address public owner;
-
-    // This contract only defines a modifier and a few useful functions
-    // The function body is inserted where the special symbol "_" in the
-    // definition of a modifier appears.
-    modifier onlyOwner { if (msg.sender == owner) _; }
-
-    function changeOwner(address _newOwner) onlyOwner {
-        owner = _newOwner;
-    }
-
-    // This is a general safty function that allows the owner to do a lot
-    //  of things in the unlikely event that something goes wrong
-    // _dst is the contract being called making this like a 1/1 multisig
-    function execute(address _dst, uint _value, bytes _data) onlyOwner {
-        _dst.call.value(_value)(_data);
-    }
-}
-// to get the needed token functions in the contract
-contract Token {
-    function transfer(address, uint) returns(bool);
-    function balanceOf(address) constant returns (uint);
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract TokenSender is Owned {
-    Token public token; // the token we are working with
-    uint public totalToDistribute;
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    uint public next;
+contract TokenSender {
 
+    event TransferFail(uint256 index, address receiver, uint256 amount);
 
-    struct Transfer {
-        address addr;
-        uint amount;
-    }
-
-    Transfer[] public transfers;
-
-    function TokenSender(address _token) {
-        token = Token(_token);
-    }
-
-    // this is a used to save gas
-    uint constant D160 = 0x0010000000000000000000000000000000000000000;
-
-    // This is the function that makes the list of transfers and various
-    //  checks around that list, it is a little tricky, the data input is
-    //  structured with the `amount` and the (receiving) `addr` combined as one
-    //  long number and then this number is deconstructed in this function to
-    //  save gas and reduce the number of `0`'s that are needed to be stored
-    //   on the blockchain
-    function fill(uint[] data) onlyOwner {
-
-        // If the send has started then we just throw
-        if (next>0) throw;
-
-        uint acc;
-        uint offset = transfers.length;
-        transfers.length = transfers.length + data.length;
-        for (uint i = 0; i < data.length; i++ ) {
-            address addr = address( data[i] & (D160-1) );
-            uint amount = data[i] / D160;
-
-            transfers[offset + i].addr = addr;
-            transfers[offset + i].amount = amount;
-            acc += amount;
-        }
-        totalToDistribute += acc;
-    }
-    // This function actually makes the sends and tracks the amount of gas used
-    //  if it takes more gas than was sent with the transaction then this
-    //  function will need to be called a few times until
-    function run() onlyOwner {
-        if (transfers.length == 0) return;
-
-        // Keep next in the stack var mNext to save gas
-        uint mNext = next;
-
-        // Set the contract as finalized to avoid reentrance
-        next = transfers.length;
-
-        if ((mNext == 0 ) && ( token.balanceOf(this) != totalToDistribute)) throw;
-
-        while ((mNext<transfers.length) && ( gas() > 150000 )) {
-            uint amount = transfers[mNext].amount;
-            address addr = transfers[mNext].addr;
-            if (amount > 0) {
-                if (!token.transfer(addr, transfers[mNext].amount)) throw;
+    function bulkTransfer(address[] receivers, uint256[] amounts, address token) external {
+        address sender = msg.sender;
+        uint256 length = receivers.length;
+        for (uint256 i = 0; i < length; i++) {
+            if (!ERC20(token).transferFrom(sender, receivers[i], amounts[i])) {
+                emit TransferFail(i, receivers[i], amounts[i]);
+                return;
             }
-            mNext ++;
-        }
-
-        // Set the next to the actual state.
-        next = mNext;
-    }
-
-
-    ///////////////////////
-    // Helper functions
-    ///////////////////////
-
-    function hasTerminated() constant returns (bool) {
-        if (transfers.length == 0) return false;
-        if (next < transfers.length) return false;
-        return true;
-    }
-
-    function nTransfers() constant returns (uint) {
-        return transfers.length;
-    }
-
-    function gas() internal constant returns (uint _gas) {
-        assembly {
-            _gas:= gas
         }
     }
-
 }
