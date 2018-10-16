@@ -1,1260 +1,1247 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game at 0x0ce95ef378059f38c5fa21e6d81a5895c0d9911b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game at 0xa464ce87d6ae47c23254f9bb431274cdc4164625
 */
-pragma solidity ^0.4.13;
+// <ORACLIZE_API>
+/*
+Copyright (c) 2015-2016 Oraclize SRL
+Copyright (c) 2016 Oraclize LTD
 
-contract AbstractDatabase
-{
-    function() public payable;
-    function ChangeOwner(address new_owner) public;
-    function ChangeOwner2(address new_owner) public;
-    function Store(address user, uint256 category, uint256 slot, bytes32 data) public;
-    function Load(address user, uint256 category, uint256 index) public view returns (bytes32);
-    function TransferFunds(address target, uint256 transfer_amount) public;
+
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+pragma solidity ^0.4.0;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
+
+contract OraclizeI {
+    address public cbAddress;
+    function query(uint _timestamp, string _datasource, string _arg) payable returns (bytes32 _id);
+    function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) payable returns (bytes32 _id);
+    function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) payable returns (bytes32 _id);
+    function query2_withGasLimit(uint _timestamp, string _datasource, string _arg1, string _arg2, uint _gaslimit) payable returns (bytes32 _id);
+    function queryN(uint _timestamp, string _datasource, bytes _argN) payable returns (bytes32 _id);
+    function queryN_withGasLimit(uint _timestamp, string _datasource, bytes _argN, uint _gaslimit) payable returns (bytes32 _id);
+    function getPrice(string _datasource) returns (uint _dsprice);
+    function getPrice(string _datasource, uint gaslimit) returns (uint _dsprice);
+    function useCoupon(string _coupon);
+    function setProofType(byte _proofType);
+    function setConfig(bytes32 _config);
+    function setCustomGasPrice(uint _gasPrice);
+    function randomDS_getSessionPubKeyHash() returns(bytes32);
 }
-
-contract AbstractGameHidden
-{
-    function CalculateFinalDistance(bytes32 raw0, bytes32 raw1, bytes32 raw2, bytes32 raw3) pure public returns (int64, int64, uint64);
+contract OraclizeAddrResolverI {
+    function getAddress() returns (address _addr);
 }
+contract usingOraclize {
+    uint constant day = 60*60*24;
+    uint constant week = 60*60*24*7;
+    uint constant month = 60*60*24*30;
+    byte constant proofType_NONE = 0x00;
+    byte constant proofType_TLSNotary = 0x10;
+    byte constant proofType_Android = 0x20;
+    byte constant proofType_Ledger = 0x30;
+    byte constant proofType_Native = 0xF0;
+    byte constant proofStorage_IPFS = 0x01;
+    uint8 constant networkID_auto = 0;
+    uint8 constant networkID_mainnet = 1;
+    uint8 constant networkID_testnet = 2;
+    uint8 constant networkID_morden = 2;
+    uint8 constant networkID_consensys = 161;
 
-library CompetitionScoreTypes
-{
-    using Serializer for Serializer.DataComponent;
+    OraclizeAddrResolverI OAR;
 
-    struct CompetitionScore
-    {
-        address m_Owner; // 0
-        uint64 m_Distance; // 20
-        uint32 m_RocketId; // 28
+    OraclizeI oraclize;
+    modifier oraclizeAPI {
+        if((address(OAR)==0)||(getCodeSize(address(OAR))==0))
+            oraclize_setNetwork(networkID_auto);
+
+        if(address(oraclize) != OAR.getAddress())
+            oraclize = OraclizeI(OAR.getAddress());
+
+        _;
+    }
+    modifier coupon(string code){
+        oraclize = OraclizeI(OAR.getAddress());
+        oraclize.useCoupon(code);
+        _;
     }
 
-    function SerializeCompetitionScore(CompetitionScore score) internal pure returns (bytes32)
-    {
-        Serializer.DataComponent memory data;
-        data.WriteAddress(0, score.m_Owner);
-        data.WriteUint64(20, score.m_Distance);
-        data.WriteUint32(28, score.m_RocketId);
-        return data.m_Raw;
+    function oraclize_setNetwork(uint8 networkID) internal returns(bool){
+        if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
+            OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
+            oraclize_setNetworkName("eth_mainnet");
+            return true;
+        }
+        if (getCodeSize(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1)>0){ //ropsten testnet
+            OAR = OraclizeAddrResolverI(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1);
+            oraclize_setNetworkName("eth_ropsten3");
+            return true;
+        }
+        if (getCodeSize(0xB7A07BcF2Ba2f2703b24C0691b5278999C59AC7e)>0){ //kovan testnet
+            OAR = OraclizeAddrResolverI(0xB7A07BcF2Ba2f2703b24C0691b5278999C59AC7e);
+            oraclize_setNetworkName("eth_kovan");
+            return true;
+        }
+        if (getCodeSize(0x146500cfd35B22E4A392Fe0aDc06De1a1368Ed48)>0){ //rinkeby testnet
+            OAR = OraclizeAddrResolverI(0x146500cfd35B22E4A392Fe0aDc06De1a1368Ed48);
+            oraclize_setNetworkName("eth_rinkeby");
+            return true;
+        }
+        if (getCodeSize(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475)>0){ //ethereum-bridge
+            OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
+            return true;
+        }
+        if (getCodeSize(0x20e12A1F859B3FeaE5Fb2A0A32C18F5a65555bBF)>0){ //ether.camp ide
+            OAR = OraclizeAddrResolverI(0x20e12A1F859B3FeaE5Fb2A0A32C18F5a65555bBF);
+            return true;
+        }
+        if (getCodeSize(0x51efaF4c8B3C9AfBD5aB9F4bbC82784Ab6ef8fAA)>0){ //browser-solidity
+            OAR = OraclizeAddrResolverI(0x51efaF4c8B3C9AfBD5aB9F4bbC82784Ab6ef8fAA);
+            return true;
+        }
+        return false;
     }
 
-    function DeserializeCompetitionScore(bytes32 raw) internal pure returns (CompetitionScore)
-    {
-        CompetitionScore memory score;
-
-        Serializer.DataComponent memory data;
-        data.m_Raw = raw;
-
-        score.m_Owner = data.ReadAddress(0);
-        score.m_Distance = data.ReadUint64(20);
-        score.m_RocketId = data.ReadUint32(28);
-
-        return score;
+    function __callback(bytes32 myid, string result) {
+        __callback(myid, result, new bytes(0));
     }
-}
+    function __callback(bytes32 myid, string result, bytes proof) {
+    }
 
-contract Game
-{
-    using GlobalTypes for GlobalTypes.Global;
-    using MarketTypes for MarketTypes.MarketListing;
-    using MissionParametersTypes for MissionParametersTypes.MissionParameters;
-    using GameCommon for GameCommon.LaunchRocketStackFrame;
+    function oraclize_useCoupon(string code) oraclizeAPI internal {
+        oraclize.useCoupon(code);
+    }
 
-    address public m_Owner;
-    AbstractDatabase public m_Database;
-    AbstractGameHidden public m_GameHidden;
-    bool public m_Paused;
+    function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource);
+    }
 
-    uint256 constant GlobalCategory = 0;
-    uint256 constant RocketCategory = 1;
-    uint256 constant OwnershipCategory = 2;
-    uint256 constant InventoryCategory = 3;
-    uint256 constant MarketCategory = 4;
-    uint256 constant ProfitFundsCategory = 5;
-    uint256 constant CompetitionFundsCategory = 6;
-    uint256 constant MissionParametersCategory = 7;
-    uint256 constant CompetitionScoresCategory = 8;
-    uint256 constant WithdrawalFundsCategory = 9;
-    uint256 constant ReferralCategory = 10;
-    uint256 constant RocketStockCategory = 11;
-    uint256 constant RocketStockInitializedCategory = 12;
+    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource, gaslimit);
+    }
 
-    address constant NullAddress = 0;
-    uint256 constant MaxCompetitionScores = 10;
+    function oraclize_query(string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query.value(price)(0, datasource, arg);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query.value(price)(timestamp, datasource, arg);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query_withGasLimit.value(price)(timestamp, datasource, arg, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query_withGasLimit.value(price)(0, datasource, arg, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg1, string arg2) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query2.value(price)(0, datasource, arg1, arg2);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg1, string arg2) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query2.value(price)(timestamp, datasource, arg1, arg2);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg1, string arg2, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query2_withGasLimit.value(price)(timestamp, datasource, arg1, arg2, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg1, string arg2, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query2_withGasLimit.value(price)(0, datasource, arg1, arg2, gaslimit);
+    }
+    function oraclize_query(string datasource, string[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN.value(price)(0, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN.value(price)(timestamp, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(timestamp, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, string[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(0, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, string[1] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[1] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
 
-    mapping(uint32 => RocketTypes.StockRocket) m_InitialRockets;
+    function oraclize_query(string datasource, string[2] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[2] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[3] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[3] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
 
-    modifier OnlyOwner()
-    {
-        require(msg.sender == m_Owner);
+    function oraclize_query(string datasource, string[4] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[4] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[5] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[5] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN.value(price)(0, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN.value(price)(timestamp, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(timestamp, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(0, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[1] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[1] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_query(string datasource, bytes[2] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[2] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[3] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[3] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_query(string datasource, bytes[4] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[4] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[5] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[5] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_cbAddress() oraclizeAPI internal returns (address){
+        return oraclize.cbAddress();
+    }
+    function oraclize_setProof(byte proofP) oraclizeAPI internal {
+        return oraclize.setProofType(proofP);
+    }
+    function oraclize_setCustomGasPrice(uint gasPrice) oraclizeAPI internal {
+        return oraclize.setCustomGasPrice(gasPrice);
+    }
+    function oraclize_setConfig(bytes32 config) oraclizeAPI internal {
+        return oraclize.setConfig(config);
+    }
+
+    function oraclize_randomDS_getSessionPubKeyHash() oraclizeAPI internal returns (bytes32){
+        return oraclize.randomDS_getSessionPubKeyHash();
+    }
+
+    function getCodeSize(address _addr) constant internal returns(uint _size) {
+        assembly {
+            _size := extcodesize(_addr)
+        }
+    }
+
+    function parseAddr(string _a) internal returns (address){
+        bytes memory tmp = bytes(_a);
+        uint160 iaddr = 0;
+        uint160 b1;
+        uint160 b2;
+        for (uint i=2; i<2+2*20; i+=2){
+            iaddr *= 256;
+            b1 = uint160(tmp[i]);
+            b2 = uint160(tmp[i+1]);
+            if ((b1 >= 97)&&(b1 <= 102)) b1 -= 87;
+            else if ((b1 >= 65)&&(b1 <= 70)) b1 -= 55;
+            else if ((b1 >= 48)&&(b1 <= 57)) b1 -= 48;
+            if ((b2 >= 97)&&(b2 <= 102)) b2 -= 87;
+            else if ((b2 >= 65)&&(b2 <= 70)) b2 -= 55;
+            else if ((b2 >= 48)&&(b2 <= 57)) b2 -= 48;
+            iaddr += (b1*16+b2);
+        }
+        return address(iaddr);
+    }
+
+    function strCompare(string _a, string _b) internal returns (int) {
+        bytes memory a = bytes(_a);
+        bytes memory b = bytes(_b);
+        uint minLength = a.length;
+        if (b.length < minLength) minLength = b.length;
+        for (uint i = 0; i < minLength; i ++)
+            if (a[i] < b[i])
+                return -1;
+            else if (a[i] > b[i])
+                return 1;
+        if (a.length < b.length)
+            return -1;
+        else if (a.length > b.length)
+            return 1;
+        else
+            return 0;
+    }
+
+    function indexOf(string _haystack, string _needle) internal returns (int) {
+        bytes memory h = bytes(_haystack);
+        bytes memory n = bytes(_needle);
+        if(h.length < 1 || n.length < 1 || (n.length > h.length))
+            return -1;
+        else if(h.length > (2**128 -1))
+            return -1;
+        else
+        {
+            uint subindex = 0;
+            for (uint i = 0; i < h.length; i ++)
+            {
+                if (h[i] == n[0])
+                {
+                    subindex = 1;
+                    while(subindex < n.length && (i + subindex) < h.length && h[i + subindex] == n[subindex])
+                    {
+                        subindex++;
+                    }
+                    if(subindex == n.length)
+                        return int(i);
+                }
+            }
+            return -1;
+        }
+    }
+
+    function strConcat(string _a, string _b, string _c, string _d, string _e) internal returns (string) {
+        bytes memory _ba = bytes(_a);
+        bytes memory _bb = bytes(_b);
+        bytes memory _bc = bytes(_c);
+        bytes memory _bd = bytes(_d);
+        bytes memory _be = bytes(_e);
+        string memory abcde = new string(_ba.length + _bb.length + _bc.length + _bd.length + _be.length);
+        bytes memory babcde = bytes(abcde);
+        uint k = 0;
+        for (uint i = 0; i < _ba.length; i++) babcde[k++] = _ba[i];
+        for (i = 0; i < _bb.length; i++) babcde[k++] = _bb[i];
+        for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
+        for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
+        for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
+        return string(babcde);
+    }
+
+    function strConcat(string _a, string _b, string _c, string _d) internal returns (string) {
+        return strConcat(_a, _b, _c, _d, "");
+    }
+
+    function strConcat(string _a, string _b, string _c) internal returns (string) {
+        return strConcat(_a, _b, _c, "", "");
+    }
+
+    function strConcat(string _a, string _b) internal returns (string) {
+        return strConcat(_a, _b, "", "", "");
+    }
+
+    // parseInt
+    function parseInt(string _a) internal returns (uint) {
+        return parseInt(_a, 0);
+    }
+
+    // parseInt(parseFloat*10^_b)
+    function parseInt(string _a, uint _b) internal returns (uint) {
+        bytes memory bresult = bytes(_a);
+        uint mint = 0;
+        bool decimals = false;
+        for (uint i=0; i<bresult.length; i++){
+            if ((bresult[i] >= 48)&&(bresult[i] <= 57)){
+                if (decimals){
+                   if (_b == 0) break;
+                    else _b--;
+                }
+                mint *= 10;
+                mint += uint(bresult[i]) - 48;
+            } else if (bresult[i] == 46) decimals = true;
+        }
+        if (_b > 0) mint *= 10**_b;
+        return mint;
+    }
+
+    function uint2str(uint i) internal returns (string){
+        if (i == 0) return "0";
+        uint j = i;
+        uint len;
+        while (j != 0){
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (i != 0){
+            bstr[k--] = byte(48 + i % 10);
+            i /= 10;
+        }
+        return string(bstr);
+    }
+
+    function stra2cbor(string[] arr) internal returns (bytes) {
+            uint arrlen = arr.length;
+
+            // get correct cbor output length
+            uint outputlen = 0;
+            bytes[] memory elemArray = new bytes[](arrlen);
+            for (uint i = 0; i < arrlen; i++) {
+                elemArray[i] = (bytes(arr[i]));
+                outputlen += elemArray[i].length + (elemArray[i].length - 1)/23 + 3; //+3 accounts for paired identifier types
+            }
+            uint ctr = 0;
+            uint cborlen = arrlen + 0x80;
+            outputlen += byte(cborlen).length;
+            bytes memory res = new bytes(outputlen);
+
+            while (byte(cborlen).length > ctr) {
+                res[ctr] = byte(cborlen)[ctr];
+                ctr++;
+            }
+            for (i = 0; i < arrlen; i++) {
+                res[ctr] = 0x5F;
+                ctr++;
+                for (uint x = 0; x < elemArray[i].length; x++) {
+                    // if there's a bug with larger strings, this may be the culprit
+                    if (x % 23 == 0) {
+                        uint elemcborlen = elemArray[i].length - x >= 24 ? 23 : elemArray[i].length - x;
+                        elemcborlen += 0x40;
+                        uint lctr = ctr;
+                        while (byte(elemcborlen).length > ctr - lctr) {
+                            res[ctr] = byte(elemcborlen)[ctr - lctr];
+                            ctr++;
+                        }
+                    }
+                    res[ctr] = elemArray[i][x];
+                    ctr++;
+                }
+                res[ctr] = 0xFF;
+                ctr++;
+            }
+            return res;
+        }
+
+    function ba2cbor(bytes[] arr) internal returns (bytes) {
+            uint arrlen = arr.length;
+
+            // get correct cbor output length
+            uint outputlen = 0;
+            bytes[] memory elemArray = new bytes[](arrlen);
+            for (uint i = 0; i < arrlen; i++) {
+                elemArray[i] = (bytes(arr[i]));
+                outputlen += elemArray[i].length + (elemArray[i].length - 1)/23 + 3; //+3 accounts for paired identifier types
+            }
+            uint ctr = 0;
+            uint cborlen = arrlen + 0x80;
+            outputlen += byte(cborlen).length;
+            bytes memory res = new bytes(outputlen);
+
+            while (byte(cborlen).length > ctr) {
+                res[ctr] = byte(cborlen)[ctr];
+                ctr++;
+            }
+            for (i = 0; i < arrlen; i++) {
+                res[ctr] = 0x5F;
+                ctr++;
+                for (uint x = 0; x < elemArray[i].length; x++) {
+                    // if there's a bug with larger strings, this may be the culprit
+                    if (x % 23 == 0) {
+                        uint elemcborlen = elemArray[i].length - x >= 24 ? 23 : elemArray[i].length - x;
+                        elemcborlen += 0x40;
+                        uint lctr = ctr;
+                        while (byte(elemcborlen).length > ctr - lctr) {
+                            res[ctr] = byte(elemcborlen)[ctr - lctr];
+                            ctr++;
+                        }
+                    }
+                    res[ctr] = elemArray[i][x];
+                    ctr++;
+                }
+                res[ctr] = 0xFF;
+                ctr++;
+            }
+            return res;
+        }
+
+
+    string oraclize_network_name;
+    function oraclize_setNetworkName(string _network_name) internal {
+        oraclize_network_name = _network_name;
+    }
+
+    function oraclize_getNetworkName() internal returns (string) {
+        return oraclize_network_name;
+    }
+
+    function oraclize_newRandomDSQuery(uint _delay, uint _nbytes, uint _customGasLimit) internal returns (bytes32){
+        if ((_nbytes == 0)||(_nbytes > 32)) throw;
+        bytes memory nbytes = new bytes(1);
+        nbytes[0] = byte(_nbytes);
+        bytes memory unonce = new bytes(32);
+        bytes memory sessionKeyHash = new bytes(32);
+        bytes32 sessionKeyHash_bytes32 = oraclize_randomDS_getSessionPubKeyHash();
+        assembly {
+            mstore(unonce, 0x20)
+            mstore(add(unonce, 0x20), xor(blockhash(sub(number, 1)), xor(coinbase, timestamp)))
+            mstore(sessionKeyHash, 0x20)
+            mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
+        }
+        bytes[3] memory args = [unonce, nbytes, sessionKeyHash];
+        bytes32 queryId = oraclize_query(_delay, "random", args, _customGasLimit);
+        oraclize_randomDS_setCommitment(queryId, sha3(bytes8(_delay), args[1], sha256(args[0]), args[2]));
+        return queryId;
+    }
+
+    function oraclize_randomDS_setCommitment(bytes32 queryId, bytes32 commitment) internal {
+        oraclize_randomDS_args[queryId] = commitment;
+    }
+
+    mapping(bytes32=>bytes32) oraclize_randomDS_args;
+    mapping(bytes32=>bool) oraclize_randomDS_sessionKeysHashVerified;
+
+    function verifySig(bytes32 tosignh, bytes dersig, bytes pubkey) internal returns (bool){
+        bool sigok;
+        address signer;
+
+        bytes32 sigr;
+        bytes32 sigs;
+
+        bytes memory sigr_ = new bytes(32);
+        uint offset = 4+(uint(dersig[3]) - 0x20);
+        sigr_ = copyBytes(dersig, offset, 32, sigr_, 0);
+        bytes memory sigs_ = new bytes(32);
+        offset += 32 + 2;
+        sigs_ = copyBytes(dersig, offset+(uint(dersig[offset-1]) - 0x20), 32, sigs_, 0);
+
+        assembly {
+            sigr := mload(add(sigr_, 32))
+            sigs := mload(add(sigs_, 32))
+        }
+
+
+        (sigok, signer) = safer_ecrecover(tosignh, 27, sigr, sigs);
+        if (address(sha3(pubkey)) == signer) return true;
+        else {
+            (sigok, signer) = safer_ecrecover(tosignh, 28, sigr, sigs);
+            return (address(sha3(pubkey)) == signer);
+        }
+    }
+
+    function oraclize_randomDS_proofVerify__sessionKeyValidity(bytes proof, uint sig2offset) internal returns (bool) {
+        bool sigok;
+
+        // Step 6: verify the attestation signature, APPKEY1 must sign the sessionKey from the correct ledger app (CODEHASH)
+        bytes memory sig2 = new bytes(uint(proof[sig2offset+1])+2);
+        copyBytes(proof, sig2offset, sig2.length, sig2, 0);
+
+        bytes memory appkey1_pubkey = new bytes(64);
+        copyBytes(proof, 3+1, 64, appkey1_pubkey, 0);
+
+        bytes memory tosign2 = new bytes(1+65+32);
+        tosign2[0] = 1; //role
+        copyBytes(proof, sig2offset-65, 65, tosign2, 1);
+        bytes memory CODEHASH = hex"fd94fa71bc0ba10d39d464d0d8f465efeef0a2764e3887fcc9df41ded20f505c";
+        copyBytes(CODEHASH, 0, 32, tosign2, 1+65);
+        sigok = verifySig(sha256(tosign2), sig2, appkey1_pubkey);
+
+        if (sigok == false) return false;
+
+
+        // Step 7: verify the APPKEY1 provenance (must be signed by Ledger)
+        bytes memory LEDGERKEY = hex"7fb956469c5c9b89840d55b43537e66a98dd4811ea0a27224272c2e5622911e8537a2f8e86a46baec82864e98dd01e9ccc2f8bc5dfc9cbe5a91a290498dd96e4";
+
+        bytes memory tosign3 = new bytes(1+65);
+        tosign3[0] = 0xFE;
+        copyBytes(proof, 3, 65, tosign3, 1);
+
+        bytes memory sig3 = new bytes(uint(proof[3+65+1])+2);
+        copyBytes(proof, 3+65, sig3.length, sig3, 0);
+
+        sigok = verifySig(sha256(tosign3), sig3, LEDGERKEY);
+
+        return sigok;
+    }
+
+    modifier oraclize_randomDS_proofVerify(bytes32 _queryId, string _result, bytes _proof) {
+        // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
+        if ((_proof[0] != "L")||(_proof[1] != "P")||(_proof[2] != 1)) throw;
+
+        bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
+        if (proofVerified == false) throw;
 
         _;
     }
 
-    modifier NotWhilePaused()
-    {
-        require(m_Paused == false);
+    function oraclize_randomDS_proofVerify__returnCode(bytes32 _queryId, string _result, bytes _proof) internal returns (uint8){
+        // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
+        if ((_proof[0] != "L")||(_proof[1] != "P")||(_proof[2] != 1)) return 1;
 
-        _;
+        bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
+        if (proofVerified == false) return 2;
+
+        return 0;
     }
 
-    function Game() public
-    {
-        m_Owner = msg.sender;
-        m_Paused = true;
-    }
+    function matchBytes32Prefix(bytes32 content, bytes prefix, uint n_random_bytes) internal returns (bool){
+        bool match_ = true;
 
-    event BuyStockRocketEvent(address indexed buyer, uint32 stock_id, uint32 rocket_id, address referrer);
-    event PlaceRocketForSaleEvent(address indexed seller, uint32 rocket_id, uint80 price);
-    event RemoveRocketForSaleEvent(address indexed seller, uint32 rocket_id);
-    event BuyRocketForSaleEvent(address indexed buyer, address indexed seller, uint32 rocket_id);
-    event LaunchRocketEvent(address indexed launcher, uint32 competition_id, int64 leo_displacement, int64 planet_displacement);
-    event StartCompetitionEvent(uint32 competition_id);
-    event FinishCompetitionEvent(uint32 competition_id);
-
-    function ChangeOwner(address new_owner) public OnlyOwner()
-    {
-        m_Owner = new_owner;
-    }
-
-    function ChangeDatabase(address db) public OnlyOwner()
-    {
-        m_Database = AbstractDatabase(db);
-    }
-
-    function ChangeGameHidden(address hidden) public OnlyOwner()
-    {
-        m_GameHidden = AbstractGameHidden(hidden);
-    }
-
-    function Unpause() public OnlyOwner()
-    {
-        m_Paused = false;
-    }
-
-    function Pause() public OnlyOwner()
-    {
-        require(m_Paused == false);
-
-        m_Paused = true;
-    }
-
-    function IsPaused() public view returns (bool)
-    {
-        return m_Paused;
-    }
-
-    // 1 write
-    function WithdrawProfitFunds(uint256 withdraw_amount, address beneficiary) public NotWhilePaused() OnlyOwner()
-    {
-        uint256 profit_funds = uint256(m_Database.Load(NullAddress, ProfitFundsCategory, 0));
-
-        require(withdraw_amount > 0);
-        require(withdraw_amount <= profit_funds);
-        require(beneficiary != address(0));
-        require(beneficiary != address(this));
-        require(beneficiary != address(m_Database));
-
-        profit_funds -= withdraw_amount;
-
-        m_Database.Store(NullAddress, ProfitFundsCategory, 0, bytes32(profit_funds));
-
-        m_Database.TransferFunds(beneficiary, withdraw_amount);
-    }
-
-    // 1 write
-    function WithdrawWinnings(uint256 withdraw_amount) public NotWhilePaused()
-    {
-        require(withdraw_amount > 0);
-
-        uint256 withdrawal_funds = uint256(m_Database.Load(msg.sender, WithdrawalFundsCategory, 0));
-        require(withdraw_amount <= withdrawal_funds);
-
-        withdrawal_funds -= withdraw_amount;
-
-        m_Database.Store(msg.sender, WithdrawalFundsCategory, 0, bytes32(withdrawal_funds));
-
-        m_Database.TransferFunds(msg.sender, withdraw_amount);
-    }
-
-    function GetRocket(uint32 rocket_id) view public returns (bool is_valid, uint32 top_speed, uint32 thrust, uint32 weight, uint32 fuel_capacity, uint16 stock_id, uint64 max_distance, bool is_for_sale, address owner)
-    {
-        RocketTypes.Rocket memory rocket = RocketTypes.DeserializeRocket(m_Database.Load(NullAddress, RocketCategory, rocket_id));
-
-        is_valid = rocket.m_Version >= 1;
-        is_for_sale = rocket.m_IsForSale == 1;
-        top_speed = rocket.m_TopSpeed;
-        thrust = rocket.m_Thrust;
-        weight = rocket.m_Weight;
-        fuel_capacity = rocket.m_FuelCapacity;
-        stock_id = rocket.m_StockId;
-        max_distance = rocket.m_MaxDistance;
-
-        owner = GetRocketOwner(rocket_id);
-    }
-
-    function GetWithdrawalFunds(address target) view public NotWhilePaused() returns (uint256 funds)
-    {
-        funds = uint256(m_Database.Load(target, WithdrawalFundsCategory, 0));
-    }
-
-    function GetProfitFunds() view public OnlyOwner() returns (uint256 funds)
-    {
-        uint256 profit_funds = uint256(m_Database.Load(NullAddress, ProfitFundsCategory, 0));
-        return profit_funds;
-    }
-
-    function GetCompetitionFunds(uint32 competition_id) view public returns (uint256 funds)
-    {
-        return uint256(m_Database.Load(NullAddress, CompetitionFundsCategory, competition_id));
-    }
-
-    function GetRocketOwner(uint32 rocket_id) view internal returns (address owner)
-    {
-        OwnershipTypes.Ownership memory ownership = OwnershipTypes.DeserializeOwnership(m_Database.Load(NullAddress, OwnershipCategory, rocket_id));
-        owner = ownership.m_Owner;
-    }
-
-    function GetAuction(uint32 rocket_id) view public returns (bool is_for_sale, address owner, uint80 price)
-    {
-        RocketTypes.Rocket memory rocket = RocketTypes.DeserializeRocket(m_Database.Load(NullAddress, RocketCategory, rocket_id));
-        is_for_sale = rocket.m_IsForSale == 1;
-
-        OwnershipTypes.Ownership memory ownership = OwnershipTypes.DeserializeOwnership(m_Database.Load(NullAddress, OwnershipCategory, rocket_id));
-        owner = ownership.m_Owner;
-
-        MarketTypes.MarketListing memory listing = MarketTypes.DeserializeMarketListing(m_Database.Load(NullAddress, MarketCategory, rocket_id));
-        price = listing.m_Price;
-    }
-
-    function GetInventoryCount(address target) view public returns (uint256)
-    {
-        require(target != address(0));
-
-        uint256 inventory_count = uint256(m_Database.Load(target, InventoryCategory, 0));
-
-        return inventory_count;
-    }
-
-    function GetInventory(address target, uint256 start_index) view public returns (uint32[8] rocket_ids)
-    {
-        require(target != address(0));
-
-        uint256 inventory_count = GetInventoryCount(target);
-
-        uint256 end = start_index + 8;
-        if (end > inventory_count)
-            end = inventory_count;
-
-        for (uint256 i = start_index; i < end; i++)
-        {
-            rocket_ids[i - start_index] = uint32(uint256(m_Database.Load(target, InventoryCategory, i + 1)));
-        }
-    }
-
-    // 1 write
-    function AddRocket(uint32 stock_id, uint64 cost, uint32 min_top_speed, uint32 max_top_speed, uint32 min_thrust, uint32 max_thrust, uint32 min_weight, uint32 max_weight, uint32 min_fuel_capacity, uint32 max_fuel_capacity, uint64 distance, uint32 max_stock) OnlyOwner() public
-    {
-        m_InitialRockets[stock_id] = RocketTypes.StockRocket({
-            m_IsValid: true,
-            m_Cost: cost,
-            m_MinTopSpeed: min_top_speed,
-            m_MaxTopSpeed: max_top_speed,
-            m_MinThrust: min_thrust,
-            m_MaxThrust: max_thrust,
-            m_MinWeight: min_weight,
-            m_MaxWeight: max_weight,
-            m_MinFuelCapacity: min_fuel_capacity,
-            m_MaxFuelCapacity: max_fuel_capacity,
-            m_Distance: distance
-        });
-
-        min_top_speed = uint32(m_Database.Load(NullAddress, RocketStockInitializedCategory, stock_id));
-
-        if (min_top_speed == 0)
-        {
-            m_Database.Store(NullAddress, RocketStockCategory, stock_id, bytes32(max_stock));
-            m_Database.Store(NullAddress, RocketStockInitializedCategory, stock_id, bytes32(1));
-        }
-    }
-
-    function GetRocketStock(uint16 stock_id) public view returns (uint32)
-    {
-        return uint32(m_Database.Load(NullAddress, RocketStockCategory, stock_id));
-    }
-
-    // 6 writes
-    function BuyStockRocket(uint16 stock_id, address referrer) payable NotWhilePaused() public
-    {
-        //require(referrer != msg.sender);
-        uint32 stock = GetRocketStock(stock_id);
-
-        require(stock > 0);
-
-        GiveRocketInternal(stock_id, msg.sender, true, referrer);
-
-        stock--;
-
-        m_Database.Store(NullAddress, RocketStockCategory, stock_id, bytes32(stock));
-    }
-
-    function GiveReferralRocket(uint16 stock_id, address target) public NotWhilePaused() OnlyOwner()
-    {
-        uint256 already_received = uint256(m_Database.Load(target, ReferralCategory, 0));
-        require(already_received == 0);
-
-        already_received = 1;
-        m_Database.Store(target, ReferralCategory, 0, bytes32(already_received));
-
-        GiveRocketInternal(stock_id, target, false, address(0));
-    }
-
-    function GiveRocketInternal(uint16 stock_id, address target, bool buying, address referrer) internal
-    {
-        RocketTypes.StockRocket storage stock_rocket = m_InitialRockets[stock_id];
-
-        require(stock_rocket.m_IsValid);
-        if (buying)
-        {
-            require(msg.value == stock_rocket.m_Cost);
+        for (uint256 i=0; i< n_random_bytes; i++) {
+            if (content[i] != prefix[i]) match_ = false;
         }
 
-        GlobalTypes.Global memory global = GlobalTypes.DeserializeGlobal(m_Database.Load(NullAddress, GlobalCategory, 0));
+        return match_;
+    }
 
-        uint256 profit_funds = uint256(m_Database.Load(NullAddress, ProfitFundsCategory, 0));
+    function oraclize_randomDS_proofVerify__main(bytes proof, bytes32 queryId, bytes result, string context_name) internal returns (bool){
 
-        global.m_LastRocketId++;
-        uint32 next_rocket_id = global.m_LastRocketId;
+        // Step 2: the unique keyhash has to match with the sha256 of (context name + queryId)
+        uint ledgerProofLength = 3+65+(uint(proof[3+65+1])+2)+32;
+        bytes memory keyhash = new bytes(32);
+        copyBytes(proof, ledgerProofLength, 32, keyhash, 0);
+        if (!(sha3(keyhash) == sha3(sha256(context_name, queryId)))) return false;
 
-        uint256 inventory_count = GetInventoryCount(target);
-        inventory_count++;
+        bytes memory sig1 = new bytes(uint(proof[ledgerProofLength+(32+8+1+32)+1])+2);
+        copyBytes(proof, ledgerProofLength+(32+8+1+32), sig1.length, sig1, 0);
 
-        RocketTypes.Rocket memory rocket;
-        rocket.m_Version = 1;
-        rocket.m_StockId = stock_id;
-        rocket.m_IsForSale = 0;
+        // Step 3: we assume sig1 is valid (it will be verified during step 5) and we verify if 'result' is the prefix of sha256(sig1)
+        if (!matchBytes32Prefix(sha256(sig1), result, uint(proof[ledgerProofLength+32+8]))) return false;
 
-        bytes32 rand = sha256(block.timestamp, block.coinbase, global.m_LastRocketId);
+        // Step 4: commitment match verification, sha3(delay, nbytes, unonce, sessionKeyHash) == commitment in storage.
+        // This is to verify that the computed args match with the ones specified in the query.
+        bytes memory commitmentSlice1 = new bytes(8+1+32);
+        copyBytes(proof, ledgerProofLength+32, 8+1+32, commitmentSlice1, 0);
 
-        // Fix LerpExtra calls in FinishCompetition if anything is added here
-        rocket.m_TopSpeed = uint32(Lerp(stock_rocket.m_MinTopSpeed, stock_rocket.m_MaxTopSpeed, rand[0]));
-        rocket.m_Thrust = uint32(Lerp(stock_rocket.m_MinThrust, stock_rocket.m_MaxThrust, rand[1]));
-        rocket.m_Weight = uint32(Lerp(stock_rocket.m_MinWeight, stock_rocket.m_MaxWeight, rand[2]));
-        rocket.m_FuelCapacity = uint32(Lerp(stock_rocket.m_MinFuelCapacity, stock_rocket.m_MaxFuelCapacity, rand[3]));
-        rocket.m_MaxDistance = uint64(stock_rocket.m_Distance);
+        bytes memory sessionPubkey = new bytes(64);
+        uint sig2offset = ledgerProofLength+32+(8+1+32)+sig1.length+65;
+        copyBytes(proof, sig2offset-64, 64, sessionPubkey, 0);
+
+        bytes32 sessionPubkeyHash = sha256(sessionPubkey);
+        if (oraclize_randomDS_args[queryId] == sha3(commitmentSlice1, sessionPubkeyHash)){ //unonce, nbytes and sessionKeyHash match
+            delete oraclize_randomDS_args[queryId];
+        } else return false;
+
+
+        // Step 5: validity verification for sig1 (keyhash and args signed with the sessionKey)
+        bytes memory tosign1 = new bytes(32+8+1+32);
+        copyBytes(proof, ledgerProofLength, 32+8+1+32, tosign1, 0);
+        if (!verifySig(sha256(tosign1), sig1, sessionPubkey)) return false;
+
+        // verify if sessionPubkeyHash was verified already, if not.. let's do it!
+        if (oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash] == false){
+            oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash] = oraclize_randomDS_proofVerify__sessionKeyValidity(proof, sig2offset);
+        }
+
+        return oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash];
+    }
+
+
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    function copyBytes(bytes from, uint fromOffset, uint length, bytes to, uint toOffset) internal returns (bytes) {
+        uint minLength = length + toOffset;
+
+        if (to.length < minLength) {
+            // Buffer too small
+            throw; // Should be a better way?
+        }
+
+        // NOTE: the offset 32 is added to skip the `size` field of both bytes variables
+        uint i = 32 + fromOffset;
+        uint j = 32 + toOffset;
+
+        while (i < (32 + fromOffset + length)) {
+            assembly {
+                let tmp := mload(add(from, i))
+                mstore(add(to, j), tmp)
+            }
+            i += 32;
+            j += 32;
+        }
+
+        return to;
+    }
+
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    // Duplicate Solidity's ecrecover, but catching the CALL return value
+    function safer_ecrecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal returns (bool, address) {
+        // We do our own memory management here. Solidity uses memory offset
+        // 0x40 to store the current end of memory. We write past it (as
+        // writes are memory extensions), but don't update the offset so
+        // Solidity will reuse it. The memory used here is only needed for
+        // this context.
+
+        // FIXME: inline assembly can't access return values
+        bool ret;
+        address addr;
+
+        assembly {
+            let size := mload(0x40)
+            mstore(size, hash)
+            mstore(add(size, 32), v)
+            mstore(add(size, 64), r)
+            mstore(add(size, 96), s)
+
+            // NOTE: we can reuse the request memory because we deal with
+            //       the return code
+            ret := call(3000, 1, 0, size, 128, size, 32)
+            addr := mload(size)
+        }
+
+        return (ret, addr);
+    }
+
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    function ecrecovery(bytes32 hash, bytes sig) internal returns (bool, address) {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        if (sig.length != 65)
+          return (false, 0);
+
+        // The signature format is a compact form of:
+        //   {bytes32 r}{bytes32 s}{uint8 v}
+        // Compact means, uint8 is not padded to 32 bytes.
+        assembly {
+            r := mload(add(sig, 32))
+            s := mload(add(sig, 64))
+
+            // Here we are loading the last 32 bytes. We exploit the fact that
+            // 'mload' will pad with zeroes if we overread.
+            // There is no 'mload8' to do this, but that would be nicer.
+            v := byte(0, mload(add(sig, 96)))
+
+            // Alternative solution:
+            // 'byte' is not working due to the Solidity parser, so lets
+            // use the second best option, 'and'
+            // v := and(mload(add(sig, 65)), 255)
+        }
+
+        // albeit non-transactional signatures are not specified by the YP, one would expect it
+        // to match the YP range of [27, 28]
         //
+        // geth uses [0, 1] and some clients have followed. This might change, see:
+        //  https://github.com/ethereum/go-ethereum/issues/2053
+        if (v < 27)
+          v += 27;
 
-        OwnershipTypes.Ownership memory ownership;
-        ownership.m_Owner = target;
-        ownership.m_OwnerInventoryIndex = uint32(inventory_count) - 1;
+        if (v != 27 && v != 28)
+            return (false, 0);
 
-        profit_funds += msg.value;
-
-        m_Database.Store(target, InventoryCategory, inventory_count, bytes32(next_rocket_id));
-        m_Database.Store(target, InventoryCategory, 0, bytes32(inventory_count));
-        m_Database.Store(NullAddress, RocketCategory, next_rocket_id, RocketTypes.SerializeRocket(rocket));
-        m_Database.Store(NullAddress, OwnershipCategory, next_rocket_id, OwnershipTypes.SerializeOwnership(ownership));
-        m_Database.Store(NullAddress, GlobalCategory, 0, GlobalTypes.SerializeGlobal(global));
-        if (buying)
-        {
-            m_Database.Store(NullAddress, ProfitFundsCategory, 0, bytes32(profit_funds));
-
-            m_Database.transfer(msg.value);
-        }
-        BuyStockRocketEvent(target, stock_id, next_rocket_id, referrer);
+        return safer_ecrecover(hash, v, r, s);
     }
 
-    // 2 writes
-    function PlaceRocketForSale(uint32 rocket_id, uint80 price) NotWhilePaused() public
-    {
-        RocketTypes.Rocket memory rocket = RocketTypes.DeserializeRocket(m_Database.Load(NullAddress, RocketCategory, rocket_id));
-        require(rocket.m_Version > 0);
+}
+// </ORACLIZE_API>
 
-        OwnershipTypes.Ownership memory ownership = OwnershipTypes.DeserializeOwnership(m_Database.Load(NullAddress, OwnershipCategory, rocket_id));
-        require(ownership.m_Owner == msg.sender);
+pragma solidity ^0.4.17;
 
-        require(rocket.m_IsForSale == 0);
 
-        MarketTypes.MarketListing memory listing;
-        listing.m_Price = price;
 
-        rocket.m_IsForSale = 1;
+contract Game is usingOraclize {
 
-        m_Database.Store(NullAddress, RocketCategory, rocket_id, RocketTypes.SerializeRocket(rocket));
-        m_Database.Store(NullAddress, MarketCategory, rocket_id, MarketTypes.SerializeMarketListing(listing));
+    event payoutLog(uint indexed roundNumber, bytes32 id);
+    event oraclizeResponseLog(uint indexed roundNumber, string result);
+    event oraclizeQueryIdErrorLog(uint indexed roundNumber);
+    event roundStartedLog(uint indexed roundNumber, uint startTime, uint duration);
+    event betLog(bytes32 id, address sender, uint choice, uint amount, uint indexed roundNumber);
 
-        PlaceRocketForSaleEvent(msg.sender, rocket_id, price);
+    uint constant HEADS_CHOICE = 1;
+    uint constant TAILS_CHOICE = 2;
+    uint uniqHashCounter = 0;
+    uint public fees = 3;
+    uint minimalBet = 50000000000000000;
+    uint public roundNumber = 0;
+    uint public totalFeesValue = 0;
+    address public owner;
+    mapping(uint => Round) public rounds;
+    mapping(bytes32 => bool) validOraclizeIds;
+
+    struct Bet {
+        bytes32 id;
+        address bettor;
+        uint choice;
+        uint amount;
+        uint roundNumber;
+        uint payout;
+        bool paid;
     }
 
-    // 1 write
-    function RemoveRocketForSale(uint32 rocket_id) NotWhilePaused() public
-    {
-        RocketTypes.Rocket memory rocket = RocketTypes.DeserializeRocket(m_Database.Load(NullAddress, RocketCategory, rocket_id));
-        require(rocket.m_Version > 0);
-        require(rocket.m_IsForSale == 1);
-
-        OwnershipTypes.Ownership memory ownership = OwnershipTypes.DeserializeOwnership(m_Database.Load(NullAddress, OwnershipCategory, rocket_id));
-        require(ownership.m_Owner == msg.sender);
-
-        rocket.m_IsForSale = 0;
-
-        m_Database.Store(NullAddress, RocketCategory, rocket_id, RocketTypes.SerializeRocket(rocket));
-
-        RemoveRocketForSaleEvent(msg.sender, rocket_id);
+    struct Round {
+        uint number;
+        uint startTime;
+        uint duration;
+        bytes32[] headsSendersIndex;
+        bytes32[] tailsSendersIndex;
+        uint headsBetsValue;
+        uint tailsBetsValue;
+        uint totalBetsValue;
+        uint totalBetsValueWithoutFees;
+        uint extractedFees;
+        uint winningChoice;
+        bool acceptingBets;
+        string oraclizeResult;
+        mapping(bytes32 => Bet) bets;
     }
 
-    // 9-11 writes
-    function BuyRocketForSale(uint32 rocket_id) payable NotWhilePaused() public
-    {
-        RocketTypes.Rocket memory rocket = RocketTypes.DeserializeRocket(m_Database.Load(NullAddress, RocketCategory, rocket_id));
-        require(rocket.m_Version > 0);
+    function Game() public {
 
-        require(rocket.m_IsForSale == 1);
+        owner = msg.sender;
+       // OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
 
-        OwnershipTypes.Ownership memory ownership = OwnershipTypes.DeserializeOwnership(m_Database.Load(NullAddress, OwnershipCategory, rocket_id));
-        require(ownership.m_Owner != msg.sender);
-
-        MarketTypes.MarketListing memory listing = MarketTypes.DeserializeMarketListing(m_Database.Load(NullAddress, MarketCategory, rocket_id));
-        require(msg.value == listing.m_Price);
-
-        uint256 seller_inventory_count = uint256(m_Database.Load(ownership.m_Owner, InventoryCategory, 0));
-        uint256 buyer_inventory_count = uint256(m_Database.Load(msg.sender, InventoryCategory, 0));
-
-        uint256 profit_funds_or_last_rocket_id;
-        uint256 wei_for_profit_funds;
-        uint256 buyer_price_or_wei_for_seller = uint256(listing.m_Price);
-
-        address beneficiary = ownership.m_Owner;
-        ownership.m_Owner = msg.sender;
-        rocket.m_IsForSale = 0;
-
-        listing.m_Price = 0;
-
-        buyer_inventory_count++;
-        profit_funds_or_last_rocket_id = uint256(m_Database.Load(beneficiary, InventoryCategory, seller_inventory_count));
-
-        m_Database.Store(beneficiary, InventoryCategory, seller_inventory_count, bytes32(0));
-
-        if (ownership.m_OwnerInventoryIndex + 1 != seller_inventory_count)
-        {
-            m_Database.Store(beneficiary, InventoryCategory, ownership.m_OwnerInventoryIndex + 1, bytes32(profit_funds_or_last_rocket_id));
-
-            OwnershipTypes.Ownership memory last_rocket_ownership = OwnershipTypes.DeserializeOwnership(m_Database.Load(NullAddress, OwnershipCategory, profit_funds_or_last_rocket_id));
-            last_rocket_ownership.m_OwnerInventoryIndex = uint32(ownership.m_OwnerInventoryIndex);
-
-            m_Database.Store(NullAddress, OwnershipCategory, profit_funds_or_last_rocket_id, OwnershipTypes.SerializeOwnership(last_rocket_ownership));
-        }
-
-        ownership.m_OwnerInventoryIndex = uint32(buyer_inventory_count);
-        m_Database.Store(msg.sender, InventoryCategory, buyer_inventory_count, bytes32(rocket_id));
-
-        wei_for_profit_funds = buyer_price_or_wei_for_seller / 20;
-        buyer_price_or_wei_for_seller = buyer_price_or_wei_for_seller - wei_for_profit_funds;
-
-        profit_funds_or_last_rocket_id = uint256(m_Database.Load(NullAddress, ProfitFundsCategory, 0));
-        profit_funds_or_last_rocket_id += wei_for_profit_funds;
-
-        seller_inventory_count--;
-        m_Database.Store(msg.sender, InventoryCategory, 0, bytes32(buyer_inventory_count));
-        m_Database.Store(beneficiary, InventoryCategory, 0, bytes32(seller_inventory_count));
-
-        m_Database.Store(NullAddress, OwnershipCategory, rocket_id, OwnershipTypes.SerializeOwnership(ownership));
-        m_Database.Store(NullAddress, RocketCategory, rocket_id, RocketTypes.SerializeRocket(rocket));
-        m_Database.Store(NullAddress, MarketCategory, rocket_id, MarketTypes.SerializeMarketListing(listing));
-        m_Database.Store(NullAddress, ProfitFundsCategory, 0, bytes32(profit_funds_or_last_rocket_id));
-
-        buyer_price_or_wei_for_seller += uint256(m_Database.Load(beneficiary, WithdrawalFundsCategory, 0)); // Reuse variable
-        m_Database.Store(beneficiary, WithdrawalFundsCategory, 0, bytes32(buyer_price_or_wei_for_seller));
-
-        m_Database.transfer(msg.value);
-        BuyRocketForSaleEvent(msg.sender, beneficiary, rocket_id);
     }
 
-    // 3 writes + 1-12 writes = 4-15 writes
-    function LaunchRocket(uint32 competition_id, uint32 rocket_id, uint32 launch_thrust, uint32 fuel_to_use, uint32 fuel_allocation_for_launch, uint32 stabilizer_setting) payable NotWhilePaused() public
-    {
-        GameCommon.LaunchRocketStackFrame memory stack;
-        stack.m_Rocket = RocketTypes.DeserializeRocket(m_Database.Load(NullAddress, RocketCategory, rocket_id));
-        stack.m_Mission =  MissionParametersTypes.DeserializeMissionParameters(m_Database.Load(NullAddress, MissionParametersCategory, competition_id));
-        stack.m_Ownership = OwnershipTypes.DeserializeOwnership(m_Database.Load(NullAddress, OwnershipCategory, rocket_id));
+    function setFees(uint _fees) public {
+        require(msg.sender == owner);
+        fees = _fees;
 
-        require(stack.m_Mission.m_IsStarted == 1);
-        require(stack.m_Rocket.m_Version > 0);
-        require(stack.m_Rocket.m_IsForSale == 0);
-        require(msg.value == uint256(stack.m_Mission.m_LaunchCost));
-        require(stack.m_Ownership.m_Owner == msg.sender);
-        require(launch_thrust <= stack.m_Rocket.m_Thrust);
-
-        stack.m_MissionWindSpeed = stack.m_Mission.m_WindSpeed;
-        stack.m_MissionLaunchLocation = stack.m_Mission.m_LaunchLocation;
-        stack.m_MissionWeatherType = stack.m_Mission.m_WeatherType;
-        stack.m_MissionWeatherCoverage = stack.m_Mission.m_WeatherCoverage;
-        stack.m_MissionTargetDistance = stack.m_Mission.m_TargetDistance;
-        stack.m_DebugExtraDistance = stack.m_Mission.m_DebugExtraDistance;
-
-        stack.m_RocketTopSpeed = stack.m_Rocket.m_TopSpeed;
-        stack.m_RocketThrust = stack.m_Rocket.m_Thrust;
-        stack.m_RocketMass = stack.m_Rocket.m_Weight;
-        stack.m_RocketFuelCapacity = stack.m_Rocket.m_FuelCapacity;
-        stack.m_RocketMaxDistance = int64(stack.m_Rocket.m_MaxDistance);
-
-        stack.m_CompetitionId = competition_id;
-        stack.m_RocketId = rocket_id;
-        stack.m_LaunchThrust = launch_thrust * 100 / stack.m_Rocket.m_Thrust;
-        stack.m_FuelToUse = fuel_to_use;
-        stack.m_FuelAllocationForLaunch = fuel_allocation_for_launch;
-        stack.m_StabilizerSetting = stabilizer_setting;
-        stack.m_Launcher = msg.sender;
-
-        LaunchRocketInternal(stack);
     }
 
-    // 3 writes
-    function LaunchRocketInternal(GameCommon.LaunchRocketStackFrame memory stack) internal
-    {
-        stack.SerializeLaunchRocketStackFrame();
+    function setMinimalBet(uint _minimalBet) {
 
-        (stack.m_DisplacementFromLowEarthOrbit, stack.m_DisplacementFromPlanet, stack.m_FinalDistance) = m_GameHidden.CalculateFinalDistance(
-            stack.m_Raw0,
-            stack.m_Raw1,
-            stack.m_Raw2,
-            stack.m_Raw3
+        minimalBet = _minimalBet;
+
+    }
+
+    function __callback(bytes32 _queryId, string _result) {
+         if (!validOraclizeIds[_queryId]) {
+             oraclizeQueryIdErrorLog(roundNumber);
+             throw;
+         }
+         require (msg.sender == oraclize_cbAddress());
+         rounds[roundNumber].oraclizeResult = _result;
+         oraclizeResponseLog(roundNumber, _result);
+
+     }
+
+    function startSettlementProcess() public {
+
+        require(msg.sender == owner);
+
+        rounds[roundNumber].acceptingBets = false;
+
+        uint totalBetsValue = rounds[roundNumber].tailsBetsValue + rounds[roundNumber].headsBetsValue;
+        uint extractedFees = totalBetsValue / 100 * fees;
+
+        uint totalBetsValueWithoutFees = totalBetsValue - extractedFees;
+        totalFeesValue += extractedFees;
+
+        rounds[roundNumber].totalBetsValue = totalBetsValue;
+        rounds[roundNumber].extractedFees = extractedFees;
+        rounds[roundNumber].totalBetsValueWithoutFees = totalBetsValueWithoutFees;
+
+        bytes32 queryId = oraclize_query("WolframAlpha", "RandomInteger[{1, 2}]");
+        validOraclizeIds[queryId] = true;
+
+    }
+
+    function setOwner(address _newOwner) public {
+
+        require(msg.sender == owner);
+        owner = _newOwner;
+
+    }
+
+    function withdrawFees(uint _amount) public {
+
+        require(msg.sender == owner);
+        require(_amount <= totalFeesValue);
+        totalFeesValue -= _amount;
+        owner.transfer(_amount);
+
+    }
+
+    function fund() payable public {}
+
+    function getUniqHash() private returns (bytes32 _uniqHash) {
+
+        uniqHashCounter++;
+        return keccak256(uniqHashCounter);
+
+    }
+
+    function startRound(uint startTime, uint duration) public {
+
+        require(msg.sender == owner);
+
+        roundNumber++;
+        rounds[roundNumber] = Round(
+            roundNumber,
+            startTime,
+            duration,
+            new bytes32[](0),
+            new bytes32[](0),
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            true,
+            'n/a'
         );
 
-        AddScore(stack);
+        roundStartedLog(roundNumber, startTime, duration);
+        rounds[roundNumber].acceptingBets = true;
 
-        stack.m_ProfitFunds = msg.value / 10;
-        stack.m_CompetitionFunds = msg.value - stack.m_ProfitFunds;
-
-        stack.m_ProfitFunds += uint256(m_Database.Load(NullAddress, ProfitFundsCategory, 0));
-        stack.m_CompetitionFunds += uint256(m_Database.Load(NullAddress, CompetitionFundsCategory, stack.m_CompetitionId));
-
-        m_Database.Store(NullAddress, ProfitFundsCategory, 0, bytes32(stack.m_ProfitFunds));
-        m_Database.Store(NullAddress, CompetitionFundsCategory, stack.m_CompetitionId, bytes32(stack.m_CompetitionFunds));
-        m_Database.Store(NullAddress, MissionParametersCategory, stack.m_CompetitionId, stack.m_Mission.SerializeMissionParameters());
-
-        m_Database.transfer(msg.value);
-        LaunchRocketEvent(msg.sender, stack.m_CompetitionId, stack.m_DisplacementFromLowEarthOrbit, stack.m_DisplacementFromPlanet);
     }
 
-    // 0-1 writes
-    function AddScore(GameCommon.LaunchRocketStackFrame memory stack) internal
-    {
-        CompetitionScoreTypes.CompetitionScore memory new_score;
-        new_score.m_Owner = stack.m_Launcher;
-        new_score.m_Distance = stack.m_FinalDistance;
-        new_score.m_RocketId = stack.m_RocketId;
+    function sendBet(address sender, uint choice) payable public {
 
-        CompetitionScoreTypes.CompetitionScore memory score;
+        require(rounds[roundNumber].acceptingBets);
+        require(msg.value >= minimalBet);
 
-        for (uint32 i = 0; i < stack.m_Mission.m_ValidCompetitionScores; i++)
-        {
-            // Check if the new score is better than the score that this user already has (if they are in the top x)
-            score = CompetitionScoreTypes.DeserializeCompetitionScore(m_Database.Load(stack.m_CompetitionId, CompetitionScoresCategory, i));
+        bytes32 id = getUniqHash();
 
-            if (score.m_Owner == stack.m_Launcher)
-            {
-                if (stack.m_FinalDistance < score.m_Distance)
-                {
-                    m_Database.Store(stack.m_CompetitionId, CompetitionScoresCategory, i, CompetitionScoreTypes.SerializeCompetitionScore(new_score));
-                }
-                return;
-            }
+        rounds[roundNumber].bets[id] = Bet(
+            id,
+            sender,
+            choice,
+            msg.value,
+            roundNumber,
+            0,
+            false
+        );
+
+        if (choice == HEADS_CHOICE) {
+
+            rounds[roundNumber].headsBetsValue += msg.value;
+            rounds[roundNumber].headsSendersIndex.push(id);
+
+
+        } else {
+
+            rounds[roundNumber].tailsBetsValue += msg.value;
+            rounds[roundNumber].tailsSendersIndex.push(id);
+
         }
 
-        if (stack.m_Mission.m_ValidCompetitionScores < MaxCompetitionScores)
-        {
-            // Not enough scores, so this one is automatically one of the best
-            m_Database.Store(stack.m_CompetitionId, CompetitionScoresCategory, stack.m_Mission.m_ValidCompetitionScores, CompetitionScoreTypes.SerializeCompetitionScore(new_score));
+        betLog(id, sender, choice, msg.value, roundNumber);
 
-            stack.m_Mission.m_ValidCompetitionScores++;
-            return;
+    }
+
+    function getWinnersIndex(uint _winningChoice) public returns(bytes32[] winnersIndex) {
+
+        return _winningChoice == HEADS_CHOICE ?
+            rounds[roundNumber].headsSendersIndex :
+            rounds[roundNumber].tailsSendersIndex;
+
+    }
+
+    function pay(uint _roundNumber, bytes32 _betId) public {
+
+        require(msg.sender == owner);
+
+        Bet memory bet = rounds[_roundNumber].bets[_betId];
+
+        if (bet.paid) {
+
+            throw;
+
         }
 
-        uint64 highest_distance = 0;
-        uint32 highest_index = 0xFFFFFFFF;
-        for (i = 0; i < stack.m_Mission.m_ValidCompetitionScores; i++)
-        {
-            score = CompetitionScoreTypes.DeserializeCompetitionScore(m_Database.Load(stack.m_CompetitionId, CompetitionScoresCategory, i));
+        uint winnersTotalValue = bet.choice == HEADS_CHOICE ?
+            rounds[_roundNumber].headsBetsValue :
+            rounds[_roundNumber].tailsBetsValue;
 
-            if (score.m_Distance > highest_distance)
-            {
-                highest_distance = score.m_Distance;
-                highest_index = i;
-            }
-        }
+        uint payout = ((rounds[_roundNumber].totalBetsValueWithoutFees * (bet.amount * 1000 / winnersTotalValue )) / 1000);
 
-        if (highest_index != 0xFFFFFFFF)
-        {
-            score = CompetitionScoreTypes.DeserializeCompetitionScore(m_Database.Load(stack.m_CompetitionId, CompetitionScoresCategory, highest_index));
+        bet.paid = true;
+        bet.bettor.transfer(payout);
 
-            // Check if the new score is better than the highest score
-            if (stack.m_FinalDistance < score.m_Distance)
-            {
-                m_Database.Store(stack.m_CompetitionId, CompetitionScoresCategory, highest_index, CompetitionScoreTypes.SerializeCompetitionScore(new_score));
-                return;
-            }
-        }
+        payoutLog(_roundNumber, _betId);
+
     }
 
-    function GetCompetitionInfo(uint32 competition_id) view NotWhilePaused() public returns (bool in_progress, uint8 wind_speed, uint8 launch_location, uint8 weather_type, uint8 weather_coverage, uint80 launch_cost, uint32 target_distance)
-    {
-        MissionParametersTypes.MissionParameters memory parameters = MissionParametersTypes.DeserializeMissionParameters(m_Database.Load(NullAddress, MissionParametersCategory, competition_id));
-
-        in_progress = parameters.m_IsStarted == 1;
-        wind_speed = parameters.m_WindSpeed;
-        launch_location = parameters.m_LaunchLocation;
-        weather_type = parameters.m_WeatherType;
-        weather_coverage = parameters.m_WeatherCoverage;
-        launch_cost = parameters.m_LaunchCost;
-        target_distance = parameters.m_TargetDistance;
-    }
-
-    function SetDebugExtra(uint32 competition_id, uint8 extra) public OnlyOwner()
-    {
-        MissionParametersTypes.MissionParameters memory parameters = MissionParametersTypes.DeserializeMissionParameters(m_Database.Load(NullAddress, MissionParametersCategory, competition_id));
-
-        parameters.m_DebugExtraDistance = extra;
-
-        m_Database.Store(NullAddress, MissionParametersCategory, competition_id, parameters.SerializeMissionParameters());
-    }
-
-    // 2 writes
-    function StartCompetition(uint8 wind_speed, uint8 launch_location, uint8 weather_type, uint8 weather_coverage, uint80 launch_cost, uint32 target_distance) public NotWhilePaused() OnlyOwner()
-    {
-        GlobalTypes.Global memory global = GlobalTypes.DeserializeGlobal(m_Database.Load(NullAddress, GlobalCategory, 0));
-
-        MissionParametersTypes.MissionParameters memory parameters;
-        parameters.m_WindSpeed = wind_speed;
-        parameters.m_LaunchLocation = launch_location;
-        parameters.m_WeatherType = weather_type;
-        parameters.m_WeatherCoverage = weather_coverage;
-        parameters.m_LaunchCost = launch_cost;
-        parameters.m_TargetDistance = target_distance;
-        parameters.m_IsStarted = 1;
-
-        global.m_CompetitionNumber++;
-
-        uint32 competition_id = global.m_CompetitionNumber;
-
-        m_Database.Store(NullAddress, MissionParametersCategory, competition_id, parameters.SerializeMissionParameters());
-        m_Database.Store(NullAddress, GlobalCategory, 0, GlobalTypes.SerializeGlobal(global));
-
-        StartCompetitionEvent(competition_id);
-    }
-
-    function GetCompetitionResults(uint32 competition_id, bool first_half) public view returns (address[], uint64[])
-    {
-        CompetitionScoreTypes.CompetitionScore memory score;
-
-        uint256 offset = (first_half == true ? 0 : 5);
-        address[] memory winners = new address[](5);
-        uint64[] memory distances = new uint64[](5);
-
-        for (uint32 i = 0; i < 5; i++)
-        {
-            score = CompetitionScoreTypes.DeserializeCompetitionScore(m_Database.Load(competition_id, CompetitionScoresCategory, offset + i));
-            winners[i] = score.m_Owner;
-            distances[i] = score.m_Distance;
-        }
-
-        return (winners, distances);
-    }
-
-    function SortCompetitionScores(uint32 competition_id) public NotWhilePaused() OnlyOwner()
-    {
-        CompetitionScoreTypes.CompetitionScore[] memory scores;
-        MissionParametersTypes.MissionParameters memory parameters;
-
-        (scores, parameters) = MakeAndSortCompetitionScores(competition_id);
-
-        for (uint256 i = 0; i < parameters.m_ValidCompetitionScores; i++)
-        {
-            m_Database.Store(competition_id, CompetitionScoresCategory, i, CompetitionScoreTypes.SerializeCompetitionScore(scores[i]));
-        }
-    }
-
-    function MakeAndSortCompetitionScores(uint32 competition_id) internal view returns (CompetitionScoreTypes.CompetitionScore[] memory scores, MissionParametersTypes.MissionParameters memory parameters)
-    {
-        parameters = MissionParametersTypes.DeserializeMissionParameters(m_Database.Load(NullAddress, MissionParametersCategory, competition_id));
-        scores = new CompetitionScoreTypes.CompetitionScore[](MaxCompetitionScores + 1);
-
-        for (uint256 i = 0; i < parameters.m_ValidCompetitionScores; i++)
-        {
-            scores[i] = CompetitionScoreTypes.DeserializeCompetitionScore(m_Database.Load(competition_id, CompetitionScoresCategory, i));
-        }
-
-        BubbleSort(scores, parameters.m_ValidCompetitionScores);
-    }
-
-    // 22 writes (full competition)
-    function FinishCompetition(uint32 competition_id) public NotWhilePaused() OnlyOwner()
-    {
-        CompetitionScoreTypes.CompetitionScore[] memory scores;
-        MissionParametersTypes.MissionParameters memory parameters;
-
-        (scores, parameters) = MakeAndSortCompetitionScores(competition_id);
-
-        require(parameters.m_IsStarted == 1);
-
-        parameters.m_IsStarted = 0;
-
-        uint256 original_competition_funds = uint256(m_Database.Load(NullAddress, CompetitionFundsCategory, competition_id));
-        uint256 competition_funds_remaining = original_competition_funds;
-
-        for (uint256 i = 0; i < parameters.m_ValidCompetitionScores; i++)
-        {
-            RocketTypes.Rocket memory rocket = RocketTypes.DeserializeRocket(m_Database.Load(NullAddress, RocketCategory, scores[i].m_RocketId));
-            RocketTypes.StockRocket storage stock_rocket = m_InitialRockets[rocket.m_StockId];
-
-            // Fix Lerps in BuyStockRocket if anything is added here
-            // This will increase even if they change owners, which is fine
-            rocket.m_TopSpeed = uint32(LerpExtra(stock_rocket.m_MinTopSpeed, stock_rocket.m_MaxTopSpeed, rocket.m_TopSpeed, bytes1(10 - i)));
-            rocket.m_Thrust = uint32(LerpExtra(stock_rocket.m_MinThrust, stock_rocket.m_MaxThrust, rocket.m_Thrust, bytes1(10 - i)));
-            rocket.m_Weight = uint32(LerpLess(stock_rocket.m_MinWeight, stock_rocket.m_MaxWeight, rocket.m_Weight, bytes1(10 - i)));
-            rocket.m_FuelCapacity = uint32(LerpExtra(stock_rocket.m_MinFuelCapacity, stock_rocket.m_MaxFuelCapacity, rocket.m_FuelCapacity, bytes1(10 - i)));
-            //
-
-            m_Database.Store(NullAddress, RocketCategory, scores[i].m_RocketId, RocketTypes.SerializeRocket(rocket));
-
-            uint256 existing_funds = uint256(m_Database.Load(scores[i].m_Owner, WithdrawalFundsCategory, 0));
-
-            uint256 funds_won = original_competition_funds / (2 ** (i + 1));
-
-            if (funds_won > competition_funds_remaining)
-                funds_won = competition_funds_remaining;
-
-            existing_funds += funds_won;
-            competition_funds_remaining -= funds_won;
-
-            m_Database.Store(scores[i].m_Owner, WithdrawalFundsCategory, 0, bytes32(existing_funds));
-        }
-
-        if (competition_funds_remaining > 0)
-        {
-            scores[MaxCompetitionScores] = CompetitionScoreTypes.DeserializeCompetitionScore(m_Database.Load(competition_id, CompetitionScoresCategory, 0));
-            existing_funds = uint256(m_Database.Load(scores[MaxCompetitionScores].m_Owner, WithdrawalFundsCategory, 0));
-            existing_funds += competition_funds_remaining;
-            m_Database.Store(scores[MaxCompetitionScores].m_Owner, WithdrawalFundsCategory, 0, bytes32(existing_funds));
-        }
-
-        m_Database.Store(NullAddress, MissionParametersCategory, competition_id, parameters.SerializeMissionParameters());
-
-        FinishCompetitionEvent(competition_id);
-    }
-
-    function Lerp(uint256 min, uint256 max, bytes1 percent) internal pure returns(uint256)
-    {
-        uint256 real_percent = (uint256(percent) % 100);
-        return uint256(min + (real_percent * (max - min)) / 100);
-    }
-
-    function LerpExtra(uint256 min, uint256 max, uint256 current, bytes1 total_extra_percent) internal pure returns (uint256)
-    {
-        current += Lerp(min, max, total_extra_percent) - min;
-        if (current < min || current > max)
-            current = max;
-        return current;
-    }
-
-    function LerpLess(uint256 min, uint256 max, uint256 current, bytes1 total_less_percent) internal pure returns (uint256)
-    {
-        current -= Lerp(min, max, total_less_percent) - min;
-        if (current < min || current > max)
-            current = min;
-        return current;
-    }
-
-    function BubbleSort(CompetitionScoreTypes.CompetitionScore[] memory scores, uint32 length) internal pure
-    {
-        uint32 n = length;
-        while (true)
-        {
-            bool swapped = false;
-            for (uint32 i = 1; i < n; i++)
-            {
-                if (scores[i - 1].m_Distance > scores[i].m_Distance)
-                {
-                    scores[MaxCompetitionScores] = scores[i - 1];
-                    scores[i - 1] = scores[i];
-                    scores[i] = scores[MaxCompetitionScores];
-                    swapped = true;
-                }
-            }
-            n--;
-            if (!swapped)
-                break;
-        }
-    }
-}
-
-library GameCommon
-{
-    using Serializer for Serializer.DataComponent;
-
-    struct LaunchRocketStackFrame
-    {
-        int64 m_RocketTopSpeed; // 0
-        int64 m_RocketThrust; // 8
-        int64 m_RocketMass; // 16
-        int64 m_RocketFuelCapacity; // 24
-
-        int64 m_RocketMaxDistance; // 0
-        int64 m_MissionWindSpeed; // 8
-        int64 m_MissionLaunchLocation; // 16
-        int64 m_MissionWeatherType; // 24
-
-        int64 m_MissionWeatherCoverage; // 0
-        int64 m_MissionTargetDistance; // 8
-        int64 m_FuelToUse; // 16
-        int64 m_FuelAllocationForLaunch; // 24
-
-        int64 m_StabilizerSetting; // 0
-        int64 m_DebugExtraDistance; // 8
-        int64 m_LaunchThrust; // 16
-
-        RocketTypes.Rocket m_Rocket;
-        OwnershipTypes.Ownership m_Ownership;
-        MissionParametersTypes.MissionParameters m_Mission;
-
-        bytes32 m_Raw0;
-        bytes32 m_Raw1;
-        bytes32 m_Raw2;
-        bytes32 m_Raw3;
-
-        uint32 m_CompetitionId;
-        uint32 m_RocketId;
-        int64 m_LowEarthOrbitPosition;
-        int64 m_DisplacementFromLowEarthOrbit;
-        int64 m_DisplacementFromPlanet;
-        address m_Launcher;
-        uint256 m_ProfitFunds;
-        uint256 m_CompetitionFunds;
-        uint64 m_FinalDistance;
-    }
-
-    function SerializeLaunchRocketStackFrame(LaunchRocketStackFrame memory stack) internal pure
-    {
-        SerializeRaw0(stack);
-        SerializeRaw1(stack);
-        SerializeRaw2(stack);
-        SerializeRaw3(stack);
-    }
-
-    function DeserializeLaunchRocketStackFrame(LaunchRocketStackFrame memory stack) internal pure
-    {
-        DeserializeRaw0(stack);
-        DeserializeRaw1(stack);
-        DeserializeRaw2(stack);
-        DeserializeRaw3(stack);
-    }
-
-    function SerializeRaw0(LaunchRocketStackFrame memory stack) internal pure
-    {
-        Serializer.DataComponent memory data;
-
-        data.WriteUint64(0, uint64(stack.m_RocketTopSpeed));
-        data.WriteUint64(8, uint64(stack.m_RocketThrust));
-        data.WriteUint64(16, uint64(stack.m_RocketMass));
-        data.WriteUint64(24, uint64(stack.m_RocketFuelCapacity));
-
-        stack.m_Raw0 = data.m_Raw;
-    }
-
-    function DeserializeRaw0(LaunchRocketStackFrame memory stack) internal pure
-    {
-        Serializer.DataComponent memory data;
-        data.m_Raw = stack.m_Raw0;
-
-        stack.m_RocketTopSpeed = int64(data.ReadUint64(0));
-        stack.m_RocketThrust = int64(data.ReadUint64(8));
-        stack.m_RocketMass = int64(data.ReadUint64(16));
-        stack.m_RocketFuelCapacity = int64(data.ReadUint64(24));
-    }
-
-    function SerializeRaw1(LaunchRocketStackFrame memory stack) internal pure
-    {
-        Serializer.DataComponent memory data;
-
-        data.WriteUint64(0, uint64(stack.m_RocketMaxDistance));
-        data.WriteUint64(8, uint64(stack.m_MissionWindSpeed));
-        data.WriteUint64(16, uint64(stack.m_MissionLaunchLocation));
-        data.WriteUint64(24, uint64(stack.m_MissionWeatherType));
-
-        stack.m_Raw1 = data.m_Raw;
-    }
-
-    function DeserializeRaw1(LaunchRocketStackFrame memory stack) internal pure
-    {
-        Serializer.DataComponent memory data;
-        data.m_Raw = stack.m_Raw1;
-
-        stack.m_RocketMaxDistance = int64(data.ReadUint64(0));
-        stack.m_MissionWindSpeed = int64(data.ReadUint64(8));
-        stack.m_MissionLaunchLocation = int64(data.ReadUint64(16));
-        stack.m_MissionWeatherType = int64(data.ReadUint64(24));
-    }
-
-    function SerializeRaw2(LaunchRocketStackFrame memory stack) internal pure
-    {
-        Serializer.DataComponent memory data;
-
-        data.WriteUint64(0, uint64(stack.m_MissionWeatherCoverage));
-        data.WriteUint64(8, uint64(stack.m_MissionTargetDistance));
-        data.WriteUint64(16, uint64(stack.m_FuelToUse));
-        data.WriteUint64(24, uint64(stack.m_FuelAllocationForLaunch));
-
-        stack.m_Raw2 = data.m_Raw;
-    }
-
-    function DeserializeRaw2(LaunchRocketStackFrame memory stack) internal pure
-    {
-        Serializer.DataComponent memory data;
-        data.m_Raw = stack.m_Raw2;
-
-        stack.m_MissionWeatherCoverage = int64(data.ReadUint64(0));
-        stack.m_MissionTargetDistance = int64(data.ReadUint64(8));
-        stack.m_FuelToUse = int64(data.ReadUint64(16));
-        stack.m_FuelAllocationForLaunch = int64(data.ReadUint64(24));
-    }
-
-    function SerializeRaw3(LaunchRocketStackFrame memory stack) internal pure
-    {
-        Serializer.DataComponent memory data;
-
-        data.WriteUint64(0, uint64(stack.m_StabilizerSetting));
-        data.WriteUint64(8, uint64(stack.m_DebugExtraDistance));
-        data.WriteUint64(16, uint64(stack.m_LaunchThrust));
-
-        stack.m_Raw3 = data.m_Raw;
-    }
-
-    function DeserializeRaw3(LaunchRocketStackFrame memory stack) internal pure
-    {
-        Serializer.DataComponent memory data;
-        data.m_Raw = stack.m_Raw3;
-
-        stack.m_StabilizerSetting = int64(data.ReadUint64(0));
-        stack.m_DebugExtraDistance = int64(data.ReadUint64(8));
-        stack.m_LaunchThrust = int64(data.ReadUint64(16));
-    }
-}
-
-library GlobalTypes
-{
-    using Serializer for Serializer.DataComponent;
-
-    struct Global
-    {
-        uint32 m_LastRocketId; // 0
-        uint32 m_CompetitionNumber; // 4
-        uint8 m_Unused8; // 8
-        uint8 m_Unused9; // 9
-        uint8 m_Unused10; // 10
-        uint8 m_Unused11; // 11
-    }
-
-    function SerializeGlobal(Global global) internal pure returns (bytes32)
-    {
-        Serializer.DataComponent memory data;
-        data.WriteUint32(0, global.m_LastRocketId);
-        data.WriteUint32(4, global.m_CompetitionNumber);
-        data.WriteUint8(8, global.m_Unused8);
-        data.WriteUint8(9, global.m_Unused9);
-        data.WriteUint8(10, global.m_Unused10);
-        data.WriteUint8(11, global.m_Unused11);
-
-        return data.m_Raw;
-    }
-
-    function DeserializeGlobal(bytes32 raw) internal pure returns (Global)
-    {
-        Global memory global;
-
-        Serializer.DataComponent memory data;
-        data.m_Raw = raw;
-
-        global.m_LastRocketId = data.ReadUint32(0);
-        global.m_CompetitionNumber = data.ReadUint32(4);
-        global.m_Unused8 = data.ReadUint8(8);
-        global.m_Unused9 = data.ReadUint8(9);
-        global.m_Unused10 = data.ReadUint8(10);
-        global.m_Unused11 = data.ReadUint8(11);
-
-        return global;
-    }
-}
-
-library MarketTypes
-{
-    using Serializer for Serializer.DataComponent;
-
-    struct MarketListing
-    {
-        uint80 m_Price; // 0
-    }
-
-    function SerializeMarketListing(MarketListing listing) internal pure returns (bytes32)
-    {
-        Serializer.DataComponent memory data;
-        data.WriteUint80(0, listing.m_Price);
-
-        return data.m_Raw;
-    }
-
-    function DeserializeMarketListing(bytes32 raw) internal pure returns (MarketListing)
-    {
-        MarketListing memory listing;
-
-        Serializer.DataComponent memory data;
-        data.m_Raw = raw;
-
-        listing.m_Price = data.ReadUint80(0);
-
-        return listing;
-    }
-}
-
-library MissionParametersTypes
-{
-    using Serializer for Serializer.DataComponent;
-
-    struct MissionParameters
-    {
-        uint8 m_WindSpeed; // 0
-        uint8 m_LaunchLocation; // 1
-        uint8 m_WeatherType; // 2
-        uint8 m_WeatherCoverage; // 3
-        uint80 m_LaunchCost; // 4
-        uint8 m_IsStarted; // 14
-        uint32 m_TargetDistance; // 15
-        uint32 m_ValidCompetitionScores; // 19
-        uint8 m_DebugExtraDistance; // 23
-    }
-
-    function SerializeMissionParameters(MissionParameters mission) internal pure returns (bytes32)
-    {
-        Serializer.DataComponent memory data;
-
-        data.WriteUint8(0, mission.m_WindSpeed);
-        data.WriteUint8(1, mission.m_LaunchLocation);
-        data.WriteUint8(2, mission.m_WeatherType);
-        data.WriteUint8(3, mission.m_WeatherCoverage);
-        data.WriteUint80(4, mission.m_LaunchCost);
-        data.WriteUint8(14, mission.m_IsStarted);
-        data.WriteUint32(15, mission.m_TargetDistance);
-        data.WriteUint32(19, mission.m_ValidCompetitionScores);
-        data.WriteUint8(23, mission.m_DebugExtraDistance);
-
-        return data.m_Raw;
-    }
-
-    function DeserializeMissionParameters(bytes32 raw) internal pure returns (MissionParameters)
-    {
-        MissionParameters memory mission;
-
-        Serializer.DataComponent memory data;
-        data.m_Raw = raw;
-
-        mission.m_WindSpeed = data.ReadUint8(0);
-        mission.m_LaunchLocation = data.ReadUint8(1);
-        mission.m_WeatherType = data.ReadUint8(2);
-        mission.m_WeatherCoverage = data.ReadUint8(3);
-        mission.m_LaunchCost = data.ReadUint80(4);
-        mission.m_IsStarted = data.ReadUint8(14);
-        mission.m_TargetDistance = data.ReadUint32(15);
-        mission.m_ValidCompetitionScores = data.ReadUint32(19);
-        mission.m_DebugExtraDistance = data.ReadUint8(23);
-
-        return mission;
-    }
-}
-
-library OwnershipTypes
-{
-    using Serializer for Serializer.DataComponent;
-
-    struct Ownership
-    {
-        address m_Owner; // 0
-        uint32 m_OwnerInventoryIndex; // 20
-    }
-
-    function SerializeOwnership(Ownership ownership) internal pure returns (bytes32)
-    {
-        Serializer.DataComponent memory data;
-        data.WriteAddress(0, ownership.m_Owner);
-        data.WriteUint32(20, ownership.m_OwnerInventoryIndex);
-
-        return data.m_Raw;
-    }
-
-    function DeserializeOwnership(bytes32 raw) internal pure returns (Ownership)
-    {
-        Ownership memory ownership;
-
-        Serializer.DataComponent memory data;
-        data.m_Raw = raw;
-
-        ownership.m_Owner = data.ReadAddress(0);
-        ownership.m_OwnerInventoryIndex = data.ReadUint32(20);
-
-        return ownership;
-    }
-}
-
-library RocketTypes
-{
-    using Serializer for Serializer.DataComponent;
-
-    struct Rocket
-    {
-        uint8 m_Version; // 0
-        uint8 m_Unused1; // 1
-        uint8 m_IsForSale; // 2
-        uint8 m_Unused3; // 3
-
-        uint32 m_TopSpeed; // 4
-        uint32 m_Thrust; // 8
-        uint32 m_Weight; // 12
-        uint32 m_FuelCapacity; // 16
-
-        uint16 m_StockId; // 20
-        uint16 m_Unused22; // 22
-        uint64 m_MaxDistance; // 24
-    }
-
-    struct StockRocket
-    {
-        bool m_IsValid; // 0
-        uint64 m_Cost; // 1
-
-        uint32 m_MinTopSpeed; // 5
-        uint32 m_MaxTopSpeed; // 9
-
-        uint32 m_MinThrust; // 13
-        uint32 m_MaxThrust; // 17
-
-        uint32 m_MinWeight; // 21
-        uint32 m_MaxWeight; // 25
-
-        uint32 m_MinFuelCapacity; // 29
-        uint32 m_MaxFuelCapacity; // 33
-
-        uint64 m_Distance; // 37
-    }
-
-    function SerializeRocket(Rocket rocket) internal pure returns (bytes32)
-    {
-        Serializer.DataComponent memory data;
-        data.WriteUint8(0, rocket.m_Version);
-        //data.WriteUint8(1, rocket.m_Unused1);
-        data.WriteUint8(2, rocket.m_IsForSale);
-        //data.WriteUint8(3, rocket.m_Unused3);
-        data.WriteUint32(4, rocket.m_TopSpeed);
-        data.WriteUint32(8, rocket.m_Thrust);
-        data.WriteUint32(12, rocket.m_Weight);
-        data.WriteUint32(16, rocket.m_FuelCapacity);
-        data.WriteUint16(20, rocket.m_StockId);
-        //data.WriteUint16(22, rocket.m_Unused22);
-        data.WriteUint64(24, rocket.m_MaxDistance);
-
-        return data.m_Raw;
-    }
-
-    function DeserializeRocket(bytes32 raw) internal pure returns (Rocket)
-    {
-        Rocket memory rocket;
-
-        Serializer.DataComponent memory data;
-        data.m_Raw = raw;
-
-        rocket.m_Version = data.ReadUint8(0);
-        //rocket.m_Unused1 = data.ReadUint8(1);
-        rocket.m_IsForSale = data.ReadUint8(2);
-        //rocket.m_Unused3 = data.ReadUint8(3);
-        rocket.m_TopSpeed = data.ReadUint32(4);
-        rocket.m_Thrust = data.ReadUint32(8);
-        rocket.m_Weight = data.ReadUint32(12);
-        rocket.m_FuelCapacity = data.ReadUint32(16);
-        rocket.m_StockId = data.ReadUint16(20);
-        //rocket.m_Unused22 = data.ReadUint16(22);
-        rocket.m_MaxDistance = data.ReadUint64(24);
-
-        return rocket;
-    }
-}
-
-library Serializer
-{
-    struct DataComponent
-    {
-        bytes32 m_Raw;
-    }
-
-    function ReadUint8(DataComponent memory self, uint32 offset) internal pure returns (uint8)
-    {
-        return uint8((self.m_Raw >> (offset * 8)) & 0xFF);
-    }
-
-    function WriteUint8(DataComponent memory self, uint32 offset, uint8 value) internal pure
-    {
-        self.m_Raw |= (bytes32(value) << (offset * 8));
-    }
-
-    function ReadUint16(DataComponent memory self, uint32 offset) internal pure returns (uint16)
-    {
-        return uint16((self.m_Raw >> (offset * 8)) & 0xFFFF);
-    }
-
-    function WriteUint16(DataComponent memory self, uint32 offset, uint16 value) internal pure
-    {
-        self.m_Raw |= (bytes32(value) << (offset * 8));
-    }
-
-    function ReadUint32(DataComponent memory self, uint32 offset) internal pure returns (uint32)
-    {
-        return uint32((self.m_Raw >> (offset * 8)) & 0xFFFFFFFF);
-    }
-
-    function WriteUint32(DataComponent memory self, uint32 offset, uint32 value) internal pure
-    {
-        self.m_Raw |= (bytes32(value) << (offset * 8));
-    }
-
-    function ReadUint64(DataComponent memory self, uint32 offset) internal pure returns (uint64)
-    {
-        return uint64((self.m_Raw >> (offset * 8)) & 0xFFFFFFFFFFFFFFFF);
-    }
-
-    function WriteUint64(DataComponent memory self, uint32 offset, uint64 value) internal pure
-    {
-        self.m_Raw |= (bytes32(value) << (offset * 8));
-    }
-
-    function ReadUint80(DataComponent memory self, uint32 offset) internal pure returns (uint80)
-    {
-        return uint80((self.m_Raw >> (offset * 8)) & 0xFFFFFFFFFFFFFFFFFFFF);
-    }
-
-    function WriteUint80(DataComponent memory self, uint32 offset, uint80 value) internal pure
-    {
-        self.m_Raw |= (bytes32(value) << (offset * 8));
-    }
-
-    function ReadAddress(DataComponent memory self, uint32 offset) internal pure returns (address)
-    {
-        return address((self.m_Raw >> (offset * 8)) & (
-            (0xFFFFFFFF << 0)  |
-            (0xFFFFFFFF << 32) |
-            (0xFFFFFFFF << 64) |
-            (0xFFFFFFFF << 96) |
-            (0xFFFFFFFF << 128)
-        ));
-    }
-
-    function WriteAddress(DataComponent memory self, uint32 offset, address value) internal pure
-    {
-        self.m_Raw |= (bytes32(value) << (offset * 8));
-    }
 }
