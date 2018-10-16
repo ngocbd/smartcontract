@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0x3b1c6004e43bf49c521eb382dec02e6c3ff5272a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0x8b168e46281e72d410717b27a6ca97bf9f301173
 */
 pragma solidity ^0.4.13;
 
@@ -29,8 +29,14 @@ contract LINKFund {
   // Record ETH value of tokens currently held by contract.
   uint256 public contract_eth_value;
   
-  // The minimum amount of ETH that must be deposited before the buy-in can be performed
-  uint256 constant public min_required_amount = 100 ether;
+  // The minimum amount of ETH that must be deposited before the buy-in can be performed.
+  // In this special case, the minimum has already been met, hence a 1 ETH minimum.
+  uint256 constant public min_required_amount = 1 ether;
+  
+  // The maximum amount of ETH that can be deposited into the contract.
+  // The owner in question was allowed 1000 ETH, but 300 has already been
+  // contributed, leaving open another 700 ETH for this contract to take.
+  uint256 constant public max_raised_amount = 700 ether;
   
   // The first block after which buy-in is allowed. Set in the contract constructor.
   uint256 public min_buy_block;
@@ -38,16 +44,19 @@ contract LINKFund {
   // The first block after which a refund is allowed. Set in the contract constructor.
   uint256 public min_refund_block;
   
-  // The crowdsale address. Address can be verified at: https://link.smartcontract.com/presales/7e3ad6bc-1d32-4676-86a8-aa04bf63f50b
-  address constant public sale = 0x6E6c083f8425b896d82C2b4c2bc7955AA5F8a534;
+  // The crowdsale address. Address can be verified at: https://link.smartcontract.com/presales/39eb2b34-2dbf-4104-807d-12b9e3179cba
+  address constant public sale = 0x7093128612a02e32F1C1aa44cCD7411d84EE09Ac;
+  
+  // The contract creator. Used to finalize the buying.
+  address constant public creator = 0x0b11C7acb647eCa11d510eEc4fb0c17Bfccd6498;
   
   // Constructor. 
   function LINKFund() {
-    // Buy-in allowed 8640 blocks (approx. 48 hours) after the contract is deployed.
-    min_buy_block = block.number + 8640;
+    // Buy-in allowed 3456 blocks (approx. 24 hours) after the contract is deployed.
+    min_buy_block = block.number + 3456;
     
-    // Refund allowed 86400 blocks (approx. 20 days) after the contract is deployed.
-    min_refund_block = block.number + 86400;
+    // ETH refund allowed 864000 blocks (approx. 24 days) after the contract is deployed.
+    min_refund_block = block.number + 864000;
   }
   
   // Allows any user to withdraw his tokens.
@@ -78,7 +87,7 @@ contract LINKFund {
   
   // Allows any user to get his eth refunded before the purchase is made or after approx. 20 days in case the devs refund the eth.
   function refund_me() {
-    if (bought_tokens) {
+    if (!bought_tokens) {
       // Only allow refunds when the tokens have been bought if the minimum refund block has been reached.
       if (block.number < min_refund_block) throw;
     }
@@ -93,8 +102,11 @@ contract LINKFund {
     msg.sender.transfer(eth_to_withdraw);
   }
   
-  // Buys tokens in the crowdsale
+  // Buy the tokens. Sends ETH to the presale wallet and records the ETH amount held in the contract.
   function buy_the_tokens() {
+    // Verify it's the creator calling.
+	if (msg.sender != creator) throw;
+	
     // Short circuit to save gas if the contract has already bought tokens.
     if (bought_tokens) return;
     
@@ -111,13 +123,19 @@ contract LINKFund {
     contract_eth_value = this.balance;
 
     // Transfer all the funds to the crowdsale address.
-    sale.transfer(contract_eth_value);
+    creator.transfer(contract_eth_value);
   }
   
   // A helper function for the default function, allowing contracts to interact.
   function default_helper() payable {
-    // Update records of deposited ETH to include the received amount.
-    balances[msg.sender] += msg.value;
+    // Throw if the balance is larger than the maximum allowed amount.
+    if (this.balance > max_raised_amount) throw;
+    
+    // Update records of deposited ETH to include the received amount but only if the buy-in hasn't been done yet.
+    // This will handle an eventual refund from the devs while disallowing buy-ins after the deadline.
+    if (!bought_tokens) {
+      balances[msg.sender] += msg.value;
+    }
   }
   
   // Default function.  Called when a user sends ETH to the contract.
