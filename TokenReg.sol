@@ -1,22 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenReg at 0x5f0281910af44bfb5fc7e86a404d0304b0e042f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenReg at 0x87E093F4A39BC0F486f59e45Af64D2D669D61b5B
 */
-//! Token Registry contract.
-//! By Gav Wood (Ethcore), 2016.
-//! Released under the Apache Licence 2.
-
-// From Owned.sol
-contract Owned {
+contract TokenReg {
     modifier only_owner { if (msg.sender != owner) return; _ }
-
     event NewOwner(address indexed old, address indexed current);
-
     function setOwner(address _new) only_owner { NewOwner(owner, _new); owner = _new; }
-
     address public owner = msg.sender;
-}
-
-contract TokenReg is Owned {
     struct Token {
         address addr;
         string tla;
