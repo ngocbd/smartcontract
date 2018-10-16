@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0xfa8b08da751303d320670febcb9b418cf2d4c226
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0xb2236d432dcccd693d53ee3fb57ac506087bd831
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -995,7 +995,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   enum State{Unknown, Funding, Distributing, Refunding}
 
   /** Somebody loaded their investment money */
-  event Invested(address investor, uint value, uint128 customerId);
+  event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
 
   /** Refund claimed */
   event Refunded(address investor, uint value);
@@ -1078,7 +1078,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
     // We will use the same event form the Crowdsale for compatibility reasons
     // despite not having a token amount.
-    //Invested(investor, msg.value, 0, customerId);
+    Invested(investor, msg.value, 0, customerId);
   }
 
   function buyWithCustomerId(uint128 customerId) public stopInEmergency payable {
