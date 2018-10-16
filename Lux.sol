@@ -1,9 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lux at 0x4487adf466d51f20f10b49067e1bea2a9a5b9a06
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lux at 0x50ffce0811ebf81cd4a7df02d476d8d696bdd60f
 */
-pragma solidity ^0.4.9;
+/* Lux is a Ethereum Token property of Lux Corporation  */
+    
+    /* Lux will be used as a form of payment for services and goods*/
+ 
+    pragma solidity ^0.4.9;
 
-library SafeMath {
+
+    library SafeMath {
     function mul(uint256 a, uint256 b) internal constant returns(uint256) {
         uint256 c = a * b;
         assert(a == 0 || c / a == b);
@@ -26,10 +31,10 @@ library SafeMath {
         return c;
     }
     }
-    contract Lux{
+    contract  Lux{
     
 	
-	string public standard = 'Lux 1.0';
+	string public standard = 'Lux 2.0';
     using SafeMath for uint256;
     mapping(address => mapping(address => uint256)) allowed;
     mapping(address => uint256) balances;
@@ -40,12 +45,14 @@ library SafeMath {
     
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
-
-    function Lux() 
+   
+    /* Public variables of the Lux Token. Total Supply 1 million */
+   
+    function  Lux() 
     {
         totalSupply = 1000000;
         symbol = 'luxcorp';
-        owner =0x0720CF3Db1100aF1BEd64940c6D374A69b9935Ae;
+        owner = 0x79FE5E4c313205A6B2385751b0716060C9446A64;
         balances[owner] = 1000000;
         decimals = 0;
     }
