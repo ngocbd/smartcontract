@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartBillions at 0x00f90986cdd79744409f8a3c7747064afa4473b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartBillions at 0x5ace17f87c7391e5792a7683069a8025b83bbd85
 */
 pragma solidity ^0.4.13;
 
@@ -163,7 +163,7 @@ contract SmartBillions is StandardToken {
     event LogInvestment(address indexed investor, address indexed partner, uint amount);
     event LogRecordWin(address indexed player, uint amount);
     event LogLate(address indexed player,uint playerBlockNumber,uint currentBlockNumber);
-    //event LogWithdraw(address indexed who, uint amount);
+    event LogDividend(address indexed investor, uint amount, uint period);
 
     modifier onlyOwner() {
         assert(msg.sender == owner);
@@ -180,7 +180,6 @@ contract SmartBillions is StandardToken {
         owner = msg.sender;
         animator = msg.sender;
         wallets[owner].lastDividendPeriod = uint16(dividendPeriod);
-        //wallets[animator].lastDividendPeriod = uint16(dividendPeriod);
         dividends.push(0); // not used
         dividends.push(0); // current dividend
     }
@@ -322,9 +321,9 @@ contract SmartBillions is StandardToken {
     }
 
     /**
-     * @dev Move funds to contract
+     * @dev Move funds to contract jackpot
      */
-    function hotStore() payable external { // not needed because jackpot is protected
+    function hotStore() payable external {
         houseKeeping();
     }
 
@@ -361,7 +360,6 @@ contract SmartBillions is StandardToken {
             wallets[msg.sender].balance = 0;
             walletBalance -= balance;
             pay(balance);
-            //LogWithdraw(msg.sender,balance);
         }
     }
 
@@ -414,7 +412,6 @@ contract SmartBillions is StandardToken {
         else{
             walletBalance += (investing * 5 / 100) * 2;
             wallets[owner].balance += uint208(investing * 5 / 100); // 5% initial marketing funds
-            //wallets[_partner].lastDividendPeriod = uint16(dividendPeriod); // assert(dividendPeriod == 1);
             wallets[_partner].balance += uint208(investing * 5 / 100);} // 5% for affiliates
         wallets[msg.sender].lastDividendPeriod = uint16(dividendPeriod); // assert(dividendPeriod == 1);
         uint senderBalance = investing / 10**15;
@@ -474,6 +471,7 @@ contract SmartBillions is StandardToken {
         walletBalance += balance;
         wallets[_who].balance += uint208(balance);
         wallets[_who].lastDividendPeriod = uint16(last);
+        LogDividend(_who,balance,last);
     }
 
 /* lottery functions */
@@ -588,11 +586,18 @@ contract SmartBillions is StandardToken {
     }
 
     /**
-     * @dev Send less than 1 ether to contract to play or send 0 to retrieve funds
+     * @dev Send ether to buy tokens during ICO
+     * @dev or send less than 1 ether to contract to play
+     * @dev or send 0 to collect prize
      */
     function () payable external {
         if(msg.value > 0){
-            play();
+            if(investStart>1){ // during ICO payment to the contract is treated as investment
+                invest(owner);
+            }
+            else{ // if not ICO running payment to contract is treated as play
+                play();
+            }
             return;
         }
         //check for dividends and other assets
@@ -616,10 +621,6 @@ contract SmartBillions is StandardToken {
         return playSystem(uint(sha3(msg.sender,block.number)), _partner);
     }
 
-    //function playSystem(uint8 num1, uint8 num2, uint8 num3, address _partner) payable public returns (uint) {
-    //    return playHash(uint24(num1)|(uint24(num2)<<8)|(uint24(num3)<<16), _partner);
-    //}
-    
     /**
      * @dev Play in lottery with own numbers
      * @param _partner Affiliate partner
@@ -630,7 +631,7 @@ contract SmartBillions is StandardToken {
         require(msg.value <= 1 ether && msg.value < hashBetMax);
         if(msg.value > 0){
             if(investStart==0) { // dividends only after investment finished
-                dividends[dividendPeriod] += msg.value / 34; // 3% dividend
+                dividends[dividendPeriod] += msg.value / 20; // 5% dividend
             }
             if(_partner != address(0)) {
                 uint fee = msg.value / 100;
@@ -664,9 +665,14 @@ contract SmartBillions is StandardToken {
      * @param _sadd Number of hashes to add (<=256)
      */
     function addHashes(uint _sadd) public returns (uint) {
-        require(hashes.length + _sadd<=hashesSize);
+        require(hashFirst == 0 && _sadd > 0 && _sadd <= hashesSize);
         uint n = hashes.length;
-        hashes.length += _sadd;
+        if(n + _sadd > hashesSize){
+            hashes.length = hashesSize;
+        }
+        else{
+            hashes.length += _sadd;
+        }
         for(;n<hashes.length;n++){ // make sure to burn gas
             hashes[n] = 1;
         }
