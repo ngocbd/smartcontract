@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x143237dd3a05bc386053d635d3e7fcc49110d83a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x8095ae09bb41c48c49304c42024c16ba322d395b
 */
 pragma solidity ^0.4.21;
 
@@ -102,7 +102,7 @@ contract TraxionWallet is Ownable {
     }
 
     // Address where funds are collectedt
-    address public wallet = 0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c;
+    address public wallet = 0xbee44A7b93509270dbe90000f7ff31268D8F075e;
   
     // How many token units a buyer gets per wei
     uint256 public rate = 2857;
@@ -114,7 +114,7 @@ contract TraxionWallet is Ownable {
     uint256 public investmentUpperBounds = 2E21;        
 
     // Hard cap in wei (100,000 ETH)
-    uint256 public hardcap = 1E23;    
+    uint256 public hardcap = 45E21;
 
     // Amount of wei raised
     uint256 public weiRaised;
