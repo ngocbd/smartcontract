@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x68c85d5aa3f6da0c5776ee7567d1e7e52724381b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xb8fa3b0a0c671a91565f891f390454c2ae44c623
 */
 pragma solidity ^0.4.4;
 
@@ -38,7 +38,7 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+    
 }
 
 
@@ -112,18 +112,18 @@ contract ERC20Token is StandardToken {
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
-// CHANGE THESE VALUES FOR YOUR TOKEN
+
 //
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 100000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100000000000000000000;                        // Update total supply (100000 for example)
-        name = "Lil coin";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "LIL";                               // Set the symbol for display purposes
+        balances[msg.sender] = 100000000000000000000000000;               
+        totalSupply = 100000000000000000000000000;                        
+        name = "LADoken";                                   
+        decimals = 18;                            
+        symbol = "LAD";                               
     }
 
     /* Approves and then calls the receiving contract */
