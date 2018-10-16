@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ASTRICOSale at 0xac91f7764a3eee9476d2f1c622df7c8e7afe1325
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ASTRICOSale at 0xd15d322351667b202f70b2c2d568341da8d39b67
 */
 pragma solidity ^0.4.18;
 
@@ -94,24 +94,11 @@ contract ASTRICOSale is Ownable {
   // 10MIL      10000000
   // 90MIL 4DCP 900000000000
 
-  uint internal BASIC_RATE        = 133 * decimalsConversion; // based on the price of ether at 330 USD
-  uint internal PRICE_STAGE_PS    = 625 * decimalsConversion; 
-  uint internal PRICE_STAGE_ONE   = 445 * decimalsConversion;
-  uint internal PRICE_STAGE_TWO   = 390 * decimalsConversion;
-  uint internal PRICE_STAGE_THREE = 347 * decimalsConversion;
-  uint internal PRICE_STAGE_FOUR  = 312 * decimalsConversion;
+  uint internal BASIC_RATE        = 631 * decimalsConversion; // based on the price of ether at 755 USD
   uint public   PRICE_VARIABLE    = 0 * decimalsConversion;
 
   //TIME LIMITS
-  // uint public constant STAGE_ONE_TIME_END   = 1 weeks;
-  // uint public constant STAGE_TWO_TIME_END   = 2 weeks;
-  // uint public constant STAGE_THREE_TIME_END = 3 weeks;
-  // uint public constant STAGE_FOUR_TIME_END  = 4 weeks;
 
-  uint internal STAGE_ONE_TIME_END   = 1 weeks;
-  uint internal STAGE_TWO_TIME_END   = 2 weeks;
-  uint internal STAGE_THREE_TIME_END = 3 weeks;
-  uint internal STAGE_FOUR_TIME_END  = 4 weeks;
   uint256 public astrSold            = 0;
 
   bool public halted;
@@ -126,10 +113,12 @@ contract ASTRICOSale is Ownable {
 
   /**
     * Constructor for ASTRICOSale
-    * param _token  ASTRCoin   0x80E7a4d750aDe616Da896C49049B7EdE9e04C191
     *
-    * 1511798400
-    * Tuesday, November 28, 2017 12:00:00 AM GMT+08:00
+    * 1513908673
+    *  Friday, December 22, 2017 10:11:13 AM GMT+08:00
+    *
+    * 1517414400
+    * Thursday, February 1, 2018 12:00:00 AM GMT+08:00
     *
     * 90000000000
   */
@@ -141,8 +130,8 @@ contract ASTRICOSale is Ownable {
 
     crowdsaleClosed = false;
     halted          = false;
-    startTime       = 1511798400; // Tuesday, November 28, 2017 12:00:00 AM GMT+08:00
-    endTime         = startTime + STAGE_FOUR_TIME_END; //_startTime + STAGE_FOUR_TIME_END; set start and end the same :/
+    startTime       = 1513908673; // Friday, December 22, 2017 10:11:13 AM GMT+08:00
+    endTime         = 1517414400; // Thursday, February 1, 2018 12:00:00 AM GMT+08:00
     wallet          = ERC20(0x3baDA155408AB1C9898FDF28e545b51f2f9a65CC); // This wallet needs to give permission for the ICO to transfer Tokens 
     ownerAddress    = ERC20(0x3EFAe2e152F62F5cc12cc0794b816d22d416a721);  // This is bad in theory but does fix the 2300 gas problem 
     token           = ERC20(0x80E7a4d750aDe616Da896C49049B7EdE9e04C191); // Ropsten we have pregenerated thiss
@@ -159,7 +148,7 @@ contract ASTRICOSale is Ownable {
     weiRaised                          += weiAmount;
     astrSold                           += tokens;
     token.transferFrom(ownerAddress, msg.sender, tokens);
-    wallet.transfer(msg.value); // transfer straight away PRESALE wallet
+    wallet.transfer(msg.value); // transfer straight away wallet
   }
 
 
@@ -171,22 +160,11 @@ contract ASTRICOSale is Ownable {
   }
 
   function getCurrentRate() internal constant returns (uint256) {  
-    uint delta = SafeMath.sub(now, startTime);
-
     if( PRICE_VARIABLE > 0 ) {
       return PRICE_VARIABLE; // we can manually set prices if we want
     }
 
-    if (delta > STAGE_THREE_TIME_END) {
-      return PRICE_STAGE_FOUR;
-    }
-    if (delta > STAGE_TWO_TIME_END) {
-      return PRICE_STAGE_THREE;
-    }
-    if (delta > STAGE_ONE_TIME_END) {
-      return PRICE_STAGE_TWO;
-    }
-    return PRICE_STAGE_ONE;
+    return BASIC_RATE;
   }
 
 
