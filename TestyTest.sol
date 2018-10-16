@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestyTest at 0x1e83cdd27d0b34c727c417759585e87e2770c28c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestyTest at 0x772685c0ea82fd2c794e8e105a5f2396300d7670
 */
 /*
 file:   TestyTestTest.sol
@@ -159,7 +159,6 @@ contract ERC20Token
         return totalSupply;
     }
 
-
     // Using an explicit getter allows for function overloading
     function allowance(address _owner, address _spender)
         public
@@ -317,7 +316,6 @@ contract TestyTest is
 
         owner = OWNER;
         totalSupply = TOTAL_TOKENS.mul(TOKEN);
-        balances[owner] = totalSupply;
 
     }
 
