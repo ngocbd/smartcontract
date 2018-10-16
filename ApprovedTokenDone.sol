@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xa1e9764a70af02b99e97e3d7c6528889b828c360
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x06d870fe2e35b9dea26406351d8e79842fa68adc
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'AXA';
-	string public symbol = 'AXA';
+	string public name = 'PAMPERS';
+	string public symbol = 'PAMPERS';
 	uint public decimals = 3;
 	uint public initialSupply = 99999999999;
 	string public publishier = 'TokenDone.io';
