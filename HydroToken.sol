@@ -1,222 +1,194 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroToken at 0x9af839687f6c94542ac5ece2e317daae355493a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroToken at 0x12fb5d5802c3b284761d76c3e723ea913877afba
 */
+pragma solidity ^0.4.15;
+
 /*
+Copyright (c) 2016 Smart Contract Solutions, Inc.
 
-  Copyright 2018 The Hydro Protocol Foundation.
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
 
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
 
-    http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-pragma solidity 0.4.18;
+contract owned {
+    address public owner;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    function owned() public {
+        owner = msg.sender;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        owner = newOwner;
+    }
+}
+
+contract basicToken {
+    function balanceOf(address) public view returns (uint256);
+    function transfer(address, uint256) public returns (bool);
+    function transferFrom(address, address, uint256) public returns (bool);
+    function approve(address, uint256) public returns (bool);
+    function allowance(address, address) public view returns (uint256);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract ERC20Standard is basicToken{
+
+    mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => uint256) public balances;
+
+    /* Send coins */
+    function transfer(address _to, uint256 _value) public returns (bool success){
+        require (_to != 0x0);                               // Prevent transfer to 0x0 address
+        require (balances[msg.sender] > _value);            // Check if the sender has enough
+        require (balances[_to] + _value > balances[_to]);   // Check for overflows
+        _transfer(msg.sender, _to, _value);                 // Perform actually transfer
+        Transfer(msg.sender, _to, _value);                  // Trigger Transfer event
+        return true;
+    }
+
+    /* Use admin powers to send from a users account */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success){
+        require (_to != 0x0);                               // Prevent transfer to 0x0 address
+        require (balances[msg.sender] > _value);            // Check if the sender has enough
+        require (balances[_to] + _value > balances[_to]);   // Check for overflows
+        require (allowed[_from][msg.sender] >= _value);     // Only allow if sender is allowed to do this
+        _transfer(msg.sender, _to, _value);                 // Perform actually transfer
+        Transfer(msg.sender, _to, _value);                  // Trigger Transfer event
+        return true;
+    }
+
+    /* Internal transfer, only can be called by this contract */
+    function _transfer(address _from, address _to, uint _value) internal {
+        balances[_from] -= _value;                          // Subtract from the sender
+        balances[_to] += _value;                            // Add the same to the recipient
+    }
+
+    /* Get balance of an account */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    /* Approve an address to have admin power to use transferFrom */
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 
 }
 
-contract HydroToken is StandardToken {
-  string constant public name = "Hydro Protocol Token";
-  string constant public symbol = "HOT";
-  uint8 constant public decimals = 18;
-  uint public totalSupply = 1560000000 * 10**18;
+contract HydroToken is ERC20Standard, owned{
+    event Authenticate(uint partnerId, address indexed from, uint value);     // Event for when an address is authenticated
+    event Whitelist(uint partnerId, address target, bool whitelist);          // Event for when an address is whitelisted to authenticate
+    event Burn(address indexed burner, uint256 value);                        // Event for when tokens are burned
 
-  function HydroToken() public {
-    balances[msg.sender] = totalSupply;
-  }
+    struct partnerValues {
+        uint value;
+        uint challenge;
+    }
+
+    struct hydrogenValues {
+        uint value;
+        uint timestamp;
+    }
+
+    string public name = "Hydro";
+    string public symbol = "HYDRO";
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
+
+    /* This creates an array of all whitelisted addresses
+     * Must be whitelisted to be able to utilize auth
+     */
+    mapping (uint => mapping (address => bool)) public whitelist;
+    mapping (uint => mapping (address => partnerValues)) public partnerMap;
+    mapping (uint => mapping (address => hydrogenValues)) public hydroPartnerMap;
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function HydroToken() public {
+        totalSupply = 11111111111 * 10**18;
+        balances[msg.sender] = totalSupply;                 // Give the creator all initial tokens
+    }
+
+    /* Function to whitelist partner address. Can only be called by owner */
+    function whitelistAddress(address _target, bool _whitelistBool, uint _partnerId) public onlyOwner {
+        whitelist[_partnerId][_target] = _whitelistBool;
+        Whitelist(_partnerId, _target, _whitelistBool);
+    }
+
+    /* Function to authenticate user
+       Restricted to whitelisted partners */
+    function authenticate(uint _value, uint _challenge, uint _partnerId) public {
+        require(whitelist[_partnerId][msg.sender]);         // Make sure the sender is whitelisted
+        require(balances[msg.sender] > _value);             // Check if the sender has enough
+        require(hydroPartnerMap[_partnerId][msg.sender].value == _value);
+        updatePartnerMap(msg.sender, _value, _challenge, _partnerId);
+        transfer(owner, _value);
+        Authenticate(_partnerId, msg.sender, _value);
+    }
+
+    function burn(uint256 _value) public onlyOwner {
+        require(balances[msg.sender] > _value);
+        balances[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+    }
+
+    function checkForValidChallenge(address _sender, uint _partnerId) public view returns (uint value){
+        if (hydroPartnerMap[_partnerId][_sender].timestamp > block.timestamp){
+            return hydroPartnerMap[_partnerId][_sender].value;
+        }
+        return 1;
+    }
+
+    /* Function to update the partnerValuesMap with their amount and challenge string */
+    function updatePartnerMap(address _sender, uint _value, uint _challenge, uint _partnerId) internal {
+        partnerMap[_partnerId][_sender].value = _value;
+        partnerMap[_partnerId][_sender].challenge = _challenge;
+    }
+
+    /* Function to update the hydrogenValuesMap. Called exclusively from the Hydro API */
+    function updateHydroMap(address _sender, uint _value, uint _partnerId) public onlyOwner {
+        hydroPartnerMap[_partnerId][_sender].value = _value;
+        hydroPartnerMap[_partnerId][_sender].timestamp = block.timestamp + 1 days;
+    }
+
+    /* Function called by Hydro API to check if the partner has validated
+     * The partners value and data must match and it must be less than a day since the last authentication
+     */
+    function validateAuthentication(address _sender, uint _challenge, uint _partnerId) public constant returns (bool _isValid) {
+        if (partnerMap[_partnerId][_sender].value == hydroPartnerMap[_partnerId][_sender].value
+        && block.timestamp < hydroPartnerMap[_partnerId][_sender].timestamp
+        && partnerMap[_partnerId][_sender].challenge == _challenge){
+            return true;
+        }
+        return false;
+    }
 }
