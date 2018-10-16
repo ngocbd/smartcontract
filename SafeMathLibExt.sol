@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x2F65E55077513D906E56bBC84526593f3598E1D7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x90d9fe536f8aa816d27e327b6d5ec391dc22beff
 */
-// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
+// Created using ICO Wizard https://github.com/poanetwork/ico-wizard by POA Network 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
