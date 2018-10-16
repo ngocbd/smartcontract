@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashnodeTestCoin at 0x9bf929dcabfaefb177e959fde44a748c49bf3b63
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashnodeTestCoin at 0x74e0630f048b6895cd2fa4bd32b850a1fbe15085
 */
 pragma solidity ^0.4.4;
 
@@ -112,7 +112,7 @@ contract HashnodeTestCoin is StandardToken { // CHANGE THIS. Update the contract
         totalSupply = 51000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "Power Minex";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "XPM";                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "XMP";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 100;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
