@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeyrptoCrowdsale2 at 0xba61bc2fa4e1a424ed707b9df333e295dccfd050
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeyrptoCrowdsale2 at 0x2c26994e27238b383a7de0e55159c6c720043530
 */
 pragma solidity ^0.4.19;
 
@@ -351,10 +351,12 @@ contract KeyrptoCrowdsale2 is TimedCrowdsale, AllowanceCrowdsale {
   function getRateIncludingBonus() internal view returns (uint256) {
     if (now < openingTime + 1 weeks) {
       return rate.mul(125).div(100);
-    } else if (now < openingTime + 2 weeks) {
+    } else if (now < openingTime + 3 weeks) {
       return rate.mul(115).div(100);
-    } else if (now < openingTime + 4 weeks) {
+    } else if (now < openingTime + 5 weeks) {
       return rate.mul(110).div(100);
+    } else if (now < openingTime + 7 weeks) {
+      return rate.mul(105).div(100);
     } else {
       return rate;
     }
