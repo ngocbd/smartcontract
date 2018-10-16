@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAN at 0x6fa8cd6a1a35542ba289437fe69e8f21ca1fa614
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAN at 0xb113c80cb0368792294d1e706b8ed8217b7bcaa4
 */
 pragma solidity ^0.4.11;
 
@@ -20,7 +20,7 @@ pragma solidity ^0.4.11;
 //
 
 /// @author Santiment LLC
-/// @title  SAN - santiment token
+/// @title  CrowdsaleMinter
 
 contract Base {
 
