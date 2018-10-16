@@ -1,15 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kryptos at 0x9aae01dc49d6d790c564ec33c428b1cc06547f0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kryptos at 0x838b7f109449df02e151ec9e7ebe64edb53dcb82
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract Kryptos {
-
 	//***********************************************
 	//*                 18.02.2018                  *
-	//*               www.kryptos.ws                *
 	//*        Kryptos - Secure Communication       *
 	//* Egemen POLAT Tarafindan projelendirilmistir *
     //***********************************************
@@ -27,6 +25,7 @@ contract Kryptos {
 	
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
+
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Burn(address indexed from, uint256 value);
 	
@@ -67,24 +66,12 @@ contract Kryptos {
     function setOwner(uint256 newBuyPrice) public {
         if (msg.sender == owner) {buyPrice = newBuyPrice;}
     }
-		
-    function setTransferactive(bool newdata) public {
-        if (msg.sender == owner) {transferactive = newdata;}
-    }
-	
-    function setShareactive(bool newdata) public {
-        if (msg.sender == owner) {shareactive = newdata;}
-    }
-	
-    function setCoinsaleactive(bool newdata) public {
-        if (msg.sender == owner) {coinsaleactive = newdata;}
-    }
-
+    
     function setPrices(uint256 newBuyPrice) public {
         if (msg.sender == owner) {buyPrice = newBuyPrice;}
     }
     
-    function () payable public {
+    function buy() payable public {
         uint amount = msg.value * buyPrice;
         if (coinsaleactive){_transfer(reserve, msg.sender, amount);}
     }
