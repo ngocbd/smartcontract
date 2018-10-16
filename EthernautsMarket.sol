@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsMarket at 0x97d1761564c564fe0325e5538d35687a73970cd4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsMarket at 0x3b74618d5c023de31bd90fcdf5875099de46a864
 */
 pragma solidity ^0.4.19;
 
@@ -1488,9 +1488,6 @@ contract EthernautsMarket is EthernautsLogic, ClockAuctionBase {
     function purchase(uint256 _tokenId) external payable whenNotPaused {
         // Checking if Asset is a GoldenGoose, if not this purchase is not allowed
         require(ethernautsStorage.hasAnyAttrs(_tokenId, ATTR_GOLDENGOOSE));
-
-        // asset could not be in exploration
-        require(!isExploring(_tokenId));
 
         address oldOwner = ethernautsStorage.ownerOf(_tokenId);
         address newOwner = msg.sender;
