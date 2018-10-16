@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Travelerscash at 0x30b4261dd2d2d9aba289672b61859483e98a9561
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Travelerscash at 0x85739b0269aa11715f822941740f6e2bfd5ed6f5
 */
+pragma solidity ^0.4.11;
+
 contract Travelerscash {
     /* Public variables of the token */
     string public standard = 'Token 0.1';
@@ -8,6 +10,7 @@ contract Travelerscash {
     string public symbol;
     uint8 public decimals;
     uint256 public initialSupply;
+    uint256 public totalSupply;
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
@@ -17,13 +20,13 @@ contract Travelerscash {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function Travelerscash() {
 
-         initialSupply = 250000000;
+         initialSupply = 200000000;
          name ="Travelerscash";
-        decimals = 2;
-         symbol = "TVC";
+        decimals = 0;
+         symbol = "TCASH";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        uint256 totalSupply = initialSupply;                        // Update total supply
+        totalSupply = initialSupply;                        // Update total supply
                                    
     }
 
