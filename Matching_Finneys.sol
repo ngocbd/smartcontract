@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matching_Finneys at 0x213d2b0498d7eef3151aa9af2e5c4eb8674ecce5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matching_Finneys at 0xdb9b3f9c12e710517ac572378c6199bc3624b1ed
 */
 //                       , ; ,   .-'"""'-.   , ; ,
 //                       \\|/  .'         '.  \|//
@@ -89,7 +89,7 @@
 	    owner = msg.sender; 
 	    round_min_size = 16;
 	    round_max_size = 20;
-	    information_cost= 500 szabo; //0.0005 ether, 0.5 finney
+	    information_cost= 500 szabo; //0.005 ether, 5 finney
             gamble_value = 100000 szabo; //0.1 ether
     }
     //FallBack Function (play by sending a transaction)
