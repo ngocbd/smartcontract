@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cthulooo at 0x5094B50ac9b82cA53dD24ED67691D1bf7a92adC2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cthulooo at 0xad43e9372590b2b1c2414f250c0b6d55382ba272
 */
 pragma solidity ^0.4.19;
 
@@ -12,10 +12,10 @@ contract Cthulooo {
     uint public constant WIN_CUTOFF = 10;
     
     // Minimum bid
-    uint public constant MIN_BID = 0.000001 ether; 
+    uint public constant MIN_BID = 0.0001 ether; 
     
     // Countdown duration
-    uint public constant DURATION = 60000 hours;
+    uint public constant DURATION = 2 hours;
     
     //////////////////
     
@@ -49,12 +49,10 @@ contract Cthulooo {
     function win() public {
         require(now > deadline);
         uint amount = pot.div(WIN_CUTOFF);
-        address sendTo;
         for (uint i = 0; i < WIN_CUTOFF; i++) {
-            sendTo = betAddressArray[i];
-            sendTo.transfer(amount);
-            pot = pot.sub(amount);
+            betAddressArray[i].transfer(amount);
         }
+        pot = 0;
         gameIsOver = true;
     }
     
