@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x97ee19d8c8b2d607af236d8beddf9f45aca99585
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x594f1b4fa77be53c36001b2a207e58d8bcbf3d4f
 */
 /**
  * Math operations with safety checks
@@ -257,6 +257,9 @@ contract FractionalERC20 is ERC20 {
  *
  */
 contract Crowdsale is Haltable {
+
+  /* Max investment count when we are still allowed to change the multisig address */
+  uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
 
   using SafeMathLib for uint;
 
@@ -637,6 +640,23 @@ contract Crowdsale is Haltable {
   }
 
   /**
+   * Allow to change the team multisig address in the case of emergency.
+   *
+   * This allows to save a deployed crowdsale wallet in the case the crowdsale has not yet begun
+   * (we have done only few test transactions). After the crowdsale is going
+   * then multisig address stays locked for the safety reasons.
+   */
+  function setMultisig(address addr) public onlyOwner {
+
+    // Change
+    if(investorCount > MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE) {
+      throw;
+    }
+
+    multisigWallet = addr;
+  }
+
+  /**
    * Allow load refunds back on the contract for the refunding.
    *
    * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
@@ -772,6 +792,11 @@ contract StandardToken is ERC20, SafeMath {
   /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
+  }
+
   /**
    *
    * Fix for the ERC20 short address attack
@@ -779,7 +804,7 @@ contract StandardToken is ERC20, SafeMath {
    * http://vessenes.com/the-erc20-short-address-attack-explained/
    */
   modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
+     if(msg.data.length < size + 4) {
        throw;
      }
      _;
@@ -794,9 +819,6 @@ contract StandardToken is ERC20, SafeMath {
 
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
 
     balances[_to] = safeAdd(balances[_to], _value);
     balances[_from] = safeSub(balances[_from], _value);
@@ -824,41 +846,6 @@ contract StandardToken is ERC20, SafeMath {
 
   function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
-  }
-
-  /**
-   * Atomic increment of approved spending
-   *
-   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   *
-   */
-  function addApproval(address _spender, uint _addedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
-      uint oldValue = allowed[msg.sender][_spender];
-      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-  }
-
-  /**
-   * Atomic decrement of approved spending.
-   *
-   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   */
-  function subApproval(address _spender, uint _subtractedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
-
-      uint oldVal = allowed[msg.sender][_spender];
-
-      if (_subtractedValue > oldVal) {
-          allowed[msg.sender][_spender] = 0;
-      } else {
-          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
-      }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
   }
 
 }
@@ -1093,7 +1080,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
-    if(!investor.send(amount)) throw;
+    if(!(investor.call.value(amount)())) throw;
     Refunded(investor, amount);
   }
 
