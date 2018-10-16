@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ColorsMain at 0xb797e24f72945df0c9f137d14b07fd19d73571eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ColorsMain at 0x7d44f43c4c1d4f3e2db9a0aa1af4305b6608a130
 */
 pragma solidity ^0.4.11;
 
@@ -90,7 +90,7 @@ contract ColorsApis is ColorsData {
 		ColorIdToOwner[_ColorId] = msg.sender;
 
 		// Trigger sold event
-        Sold(_ColorId, msg.value, msg.sender); 
+        Sold(_ColorId, price, msg.sender); 
     }
 
     function _transfer(address _from, address _to, uint256 _ColorId) internal {
