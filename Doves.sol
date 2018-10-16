@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Doves at 0x9e10fdb4a2c8a88bc4399beada3a7efb54a806f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Doves at 0x8a63a921b5d678b4a27dc81e44321923e297b4cf
 */
 pragma solidity ^0.4.18;
 
@@ -14,7 +14,7 @@ pragma solidity ^0.4.18;
 //
 // Enjoy.
 //
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// (c) by Doves.Cash and Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -116,7 +116,7 @@ contract Doves is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function Doves() public {
-        symbol = "DOVE";
+        symbol = "Dove";
         name = "Doves";
         decimals = 18;
         _totalSupply = 100000000000000000000000000;
