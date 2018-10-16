@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract newCrowdsale at 0x63506243ff39b29c42c5fa64c73139ea6b4e8fe2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract newCrowdsale at 0x4fcd3023fedf38e105efb150a1e280b7fbc1b950
 */
 /**
  * Investors relations: partners@xrpconnect.co
@@ -101,8 +101,6 @@ interface XRPCToken {
     function showMyTokenBalance(address addr) public;
 }
 
-// partner address is 0x8Cd68F4F20F73960AA1C3BAeA39a827C03e2532C
-
 contract newCrowdsale is Ownable {
     
     // safe math library imported for safe mathematical operations
@@ -117,8 +115,9 @@ contract newCrowdsale is Ownable {
     
     address[] owners;
     
-    uint256 public majorOwnerShares = 90;
+    uint256 public majorOwnerShares = 100;
     uint256 public minorOwnerShares = 10;
+    uint256 public coinPercentage = 5;
   
     // how many token units a buyer gets per wei
     uint256 public rate = 650;
@@ -146,7 +145,7 @@ contract newCrowdsale is Ownable {
     
     function newCrowdsale(uint _daysToStart, address _walletMajorOwner) public 
     {
-        token = XRPCToken(0xAdb41FCD3DF9FF681680203A074271D3b3Dae526);  
+        token = XRPCToken(0xAdb41FCD3DF9FF681680203A074271D3b3Dae526); 
         
         _daysToStart = _daysToStart * 1 days;
         
@@ -182,47 +181,55 @@ contract newCrowdsale is Ownable {
         // update state
         weiRaised = weiRaised.add(weiAmount);
 
-        token.transfer(beneficiary,tokens); 
+        token.transfer(beneficiary,tokens);
+         uint partnerCoins = tokens.mul(coinPercentage);
+        partnerCoins = partnerCoins.div(100);
+        
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
-        forwardFunds();
+        forwardFunds(partnerCoins);
     }
     
      // send ether to the fund collection wallet(s)
-    function forwardFunds() internal {
+    function forwardFunds(uint256 partnerTokenAmount) internal {
       for (uint i=0;i<owners.length;i++)
       {
          uint percent = ownerAddresses[owners[i]];
          uint amountToBeSent = msg.value.mul(percent);
          amountToBeSent = amountToBeSent.div(100);
          owners[i].transfer(amountToBeSent);
+         
+         if (owners[i]!=owner &&  ownerAddresses[owners[i]]>0)
+         {
+             token.transfer(owners[i],partnerTokenAmount);
+         }
       }
     }
    
      /**
-     * function to add a minor owner
+     * function to add a partner
      * can only be called by the major/actual owner wallet
      **/  
-    function addMinorOwner(address minorOwner) public onlyOwner {
+    function addPartner(address partner) public onlyOwner {
 
-        require(minorOwner != 0x0);
+        require(partner != 0x0);
         require(ownerAddresses[owner] >=20);
-        require(ownerAddresses[minorOwner] == 0);
-        owners.push(minorOwner);
-        ownerAddresses[minorOwner] = 10;
+        require(ownerAddresses[partner] == 0);
+        owners.push(partner);
+        ownerAddresses[partner] = 10;
         uint majorOwnerShare = ownerAddresses[owner];
         ownerAddresses[owner] = majorOwnerShare.sub(10);
     }
     
     /**
-     * function to remove a minor owner
+     * function to remove a partner
      * can only be called by the major/actual owner wallet
      **/ 
-    function removeMinorOwner(address minorOwner) public onlyOwner  {
-        require(minorOwner != 0x0);
-        require(ownerAddresses[minorOwner] > 0);
+    function removePartner(address partner) public onlyOwner  {
+        require(partner != 0x0);
+        require(ownerAddresses[partner] > 0);
         require(ownerAddresses[owner] <= 90);
-        ownerAddresses[minorOwner] = 0;
+        ownerAddresses[partner] = 0;
         uint majorOwnerShare = ownerAddresses[owner];
         ownerAddresses[owner] = majorOwnerShare.add(10);
     }
@@ -309,5 +316,13 @@ contract newCrowdsale is Ownable {
      **/
     function checkOwnerShare (address owner) public onlyOwner constant returns (uint share) {
         share = ownerAddresses[owner];
+    }
+
+    /**
+     * function to change the coin percentage awarded to the partners
+     * can only be called from the owner wallet
+     **/
+    function changePartnerCoinPercentage(uint percentage) public onlyOwner {
+        coinPercentage = percentage;
     }
 }
