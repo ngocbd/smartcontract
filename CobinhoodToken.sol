@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CobinhoodToken at 0x6afd9628ef194f2365f6de9c8cee8938dfd936ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CobinhoodToken at 0xb2f7eb1f2c37645be61d73953035360e768d81e6
 */
 pragma solidity ^0.4.11;
 
@@ -190,50 +190,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-/**
- * @title Mintable token
-    * @dev Simple ERC20 Token example, with mintable token creation
-       * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
-          * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
-             */
-
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-        * @param _to The address that will recieve the minted tokens.
-             * @param _amount The amount of tokens to mint.
-                  * @return A boolean that indicates if the operation was successful.
-                       */
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-        * @return True if the operation was successful.
-             */
-  function finishMinting() onlyOwner returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-}
-
 contract CobinhoodToken is StandardToken, Ownable {
     using SafeMath for uint256;
 
@@ -288,11 +244,11 @@ contract CobinhoodToken is StandardToken, Ownable {
         totalSupply = _totalSupply;
 
         balances[wallet] = _totalSupply.sub(saleCap);
-        balances[0x1] = saleCap;
+        balances[0xb1] = saleCap;
     }
 
     function supply() internal returns (uint256) {
-        return balances[0x1];
+        return balances[0xb1];
     }
 
     function getCurrentTimestamp() internal returns (uint256) {
@@ -326,17 +282,10 @@ contract CobinhoodToken is StandardToken, Ownable {
     function push(address buyer, uint256 amount) onlyOwner {
         require(balances[wallet] >= amount);
 
-        uint256 actualRate = 6000;  // pre-ICO has a fixed rate of 6000
-        uint256 weiAmount = amount.div(actualRate);
-        uint256 updatedWeiRaised = weiRaised.add(weiAmount);
-
         // Transfer
         balances[wallet] = balances[wallet].sub(amount);
         balances[buyer] = balances[buyer].add(amount);
         PreICOTokenPushed(buyer, amount);
-
-        // Update state.
-        weiRaised = updatedWeiRaised;
     }
 
     function buyTokens(address sender, uint256 value) internal {
@@ -354,7 +303,7 @@ contract CobinhoodToken is StandardToken, Ownable {
         require(supply() >= amount);
 
         // Transfer
-        balances[0x1] = balances[0x1].sub(amount);
+        balances[0xb1] = balances[0xb1].sub(amount);
         balances[sender] = balances[sender].add(amount);
         TokenPurchase(sender, weiAmount, amount);
 
@@ -369,8 +318,8 @@ contract CobinhoodToken is StandardToken, Ownable {
         require(!saleActive());
 
         // Transfer the rest of token to Cobinhood
-        balances[wallet] = balances[wallet].add(balances[0x1]);
-        balances[0x1] = 0;
+        balances[wallet] = balances[wallet].add(balances[0xb1]);
+        balances[0xb1] = 0;
     }
 
     function saleActive() public constant returns (bool) {
