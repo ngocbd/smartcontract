@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Baliv at 0x3e2a90ed252c282afbcea5489990cd1f21d2dbd0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Baliv at 0x8ea74569c1b9bbb13780114b6b5e93396910070a
 */
 pragma solidity ^0.4.21;
 
@@ -236,7 +236,7 @@ contract Baliv is SafeMath, Authorization {
         function makeOrder(address fromToken, address toToken, uint256 price, uint256 amount, address user, uint256 depositAmount) internal returns(uint256 amount);
         function findAndTrade(address fromToken, address toToken, uint256 price, uint256 amount) internal returns(uint256[2] totalMatchAmount[fromToken, toToken], uint256[2] profit[fromToken, toToken]);
         function makeTrade(address fromToken, address toToken, uint256 price, uint256 bestPrice, uint256 remainingAmount) internal returns(uint256[3] [fillTaker, fillMaker, makerFee]);
-        function makeTradeDetail(address fromToken, address toToken, uint256 price, uint256 bestPrice, address maker, uint256 remainingAmount) internal returns(uint256[3] [fillTaker, fillMaker, makerFee], bool makerFullfill);
+        function makeTradeDetail(address fromToken, address toToken, uint256 price, uint256 bestPrice, address maker, uint256 remainingAmount) internal returns(uint256[3] [fillTaker, fillMaker, makerFee]);
         function caculateFill(uint256 provide, uint256 require, uint256 price, uint256 pairProvide) internal pure returns(uint256 fillAmount);
         function checkPricePair(uint256 price, uint256 bestPrice) internal pure returns(bool matched);
         function fillOrder(address fromToken, address toToken, uint256 price, uint256 amount) internal returns(uint256 fee);
@@ -338,8 +338,8 @@ contract Baliv is SafeMath, Authorization {
             return true;
         }
     }
-/*
-    function userMakeOrder(
+
+    function agentMakeOrder(
         address fromToken_,
         address toToken_,
         uint256 price_,
@@ -355,21 +355,19 @@ contract Baliv is SafeMath, Authorization {
             checkAmount(fromToken_, amount_) &&
             checkPriceAmount(price_)
         ) {
-            address user = getUser(representor_);
+            require(representor_ != address(0));
+            address user = representor_;
             uint256 costAmount = makeOrder(fromToken_, toToken_, price_, amount_, user, depositAmount);
 
             // log event: MakeOrder
-            eMakeOrder(fromToken_, toToken_, price_, user, amount_);
+            emit eMakeOrder(fromToken_, toToken_, price_, user, amount_);
 
-            if(costAmount < depositAmount) {
-                updateBalance(user, fromToken_, safeSub(depositAmount, costAmount), true);
-            } else if(costAmount > depositAmount) {
-                updateBalance(user, fromToken_, safeSub(costAmount, depositAmount), false);
-            }
+            require(costAmount <= depositAmount);
+            updateBalance(msg.sender, fromToken_, safeSub(depositAmount, costAmount), true);
             return true;
         }
     }
-*/
+
     function userTakeOrder(
         address fromToken_,
         address toToken_,
@@ -406,7 +404,7 @@ contract Baliv is SafeMath, Authorization {
                 toAmount = safeDiv(safeMul(fillAmount[0], price_), 1 ether);
                 if(amount_ > fillAmount[0]) {
                     orderAmount = safeSub(amount_, fillAmount[0]);
-                    makeOrder(fromToken_, toToken_, price_, amount_, user, depositAmount);
+                    makeOrder(fromToken_, toToken_, price_, orderAmount, user, depositAmount);
                 }
                 if(toAmount > 0) {
                     (toAmount, fee) = caculateFee(user, toAmount, 1);
@@ -436,6 +434,8 @@ contract Baliv is SafeMath, Authorization {
             }
 
             return true;
+        } else if(depositAmount > 0) {
+            updateBalance(user, fromToken_, depositAmount, true);
         }
     }
 
@@ -457,9 +457,6 @@ contract Baliv is SafeMath, Authorization {
             emit eCancelOrder(fromToken_, toToken_, price_, user, amount);
 
             updateOrderAmount(fromToken_, toToken_, price_, user, amount, false);
-            if(getOrderAmount(fromToken_, toToken_, price_, user) == 0) {
-                disconnectOrderUser(fromToken_, toToken_, price_, user);
-            }
             if(manualWithdraw[user]) {
                 updateBalance(user, fromToken_, amount, true);
             } else {
@@ -729,12 +726,8 @@ contract Baliv is SafeMath, Authorization {
             uint256[3] memory totalFill;
             for(uint256 i = 0; i < autoMatch && remaining > 0 && maker != address(0); i++) {
                 uint256[3] memory fill;
-                bool fullfill;
-                (fill, fullfill) = makeTradeDetail(fromToken_, toToken_, price_, bestPrice_, maker, remaining);
+                fill = makeTradeDetail(fromToken_, toToken_, price_, bestPrice_, maker, remaining);
                 if(fill[0] > 0) {
-                    if(fullfill) {
-                        disconnectOrderUser(toToken_, fromToken_, bestPrice_, maker);
-                    }
                     remaining = safeSub(remaining, fill[0]);
                     totalFill[0] = safeAdd(totalFill[0], fill[0]);
                     totalFill[1] = safeAdd(totalFill[1], fill[1]);
@@ -761,7 +754,7 @@ contract Baliv is SafeMath, Authorization {
         uint256 remaining_
     )
         internal
-    returns(uint256[3], bool) {
+    returns(uint256[3]) {
         /*
             fillAmount[0]: Taker fillAmount
             fillAmount[1]: Maker fillAmount
@@ -775,7 +768,7 @@ contract Baliv is SafeMath, Authorization {
         fillAmount[0] = caculateFill(takerProvide, takerRequire, price_, makerProvide);
         fillAmount[1] = caculateFill(makerProvide, makerRequire, bestPrice_, takerProvide);
         fillAmount[2] = fillOrder(toToken_, fromToken_, bestPrice_, maker_, fillAmount[1]);
-        return (fillAmount, (makerRequire <= takerProvide));
+        return (fillAmount);
     }
 
     function caculateFill(
@@ -823,6 +816,7 @@ contract Baliv is SafeMath, Authorization {
         uint256 fee;
         updateOrderAmount(fromToken_, toToken_, price_, user_, amount_, false);
         (toAmount, fee) = caculateFee(user_, toAmount, 0);
+
         if(manualWithdraw[user_]) {
             updateBalance(user_, toToken_, toAmount, true);
         } else {
@@ -837,25 +831,29 @@ contract Baliv is SafeMath, Authorization {
     )
         internal
     returns(bool) {
-        if(token_ == address(0)) {
-            if(address(this).balance < amount_) {
-                emit Error(1);
-                return false;
-            } else {
+        if(amount_ > 0) {
+            if(token_ == address(0)) {
+                if(address(this).balance < amount_) {
+                    emit Error(1);
+                    return false;
+                } else {
+                    // log event: Withdraw
+                    emit eWithdraw(user_, token_, amount_);
+    
+                    user_.transfer(amount_);
+                    return true;
+                }
+            } else if(Token(token_).transfer(user_, amount_)) {
                 // log event: Withdraw
                 emit eWithdraw(user_, token_, amount_);
-
-                user_.transfer(amount_);
+    
                 return true;
+            } else {
+                emit Error(1);
+                return false;
             }
-        } else if(Token(token_).transfer(user_, amount_)) {
-            // log event: Withdraw
-            emit eWithdraw(user_, token_, amount_);
-
-            return true;
         } else {
-            emit Error(1);
-            return false;
+            return true;
         }
     }
 
@@ -940,9 +938,9 @@ contract Baliv is SafeMath, Authorization {
         uint256 price_,
         address user_
     )
-        internal
+        public
     {
-        if(user_ == address(0)) {
+        if(user_ == address(0) || getOrderAmount(fromToken_, toToken_, price_, user_) > 0) {
             return;
         }
         address currUser = getNextOrderUser(fromToken_, toToken_, price_, address(0));
@@ -1027,6 +1025,7 @@ contract Baliv is SafeMath, Authorization {
             orderBooks[fromToken_][toToken_][price_][user_].amount = safeAdd(orderBooks[fromToken_][toToken_][price_][user_].amount, amount_);
         } else {
             orderBooks[fromToken_][toToken_][price_][user_].amount = safeSub(orderBooks[fromToken_][toToken_][price_][user_].amount, amount_);
+            disconnectOrderUser(fromToken_, toToken_, price_, user_);
         }
     }
 
