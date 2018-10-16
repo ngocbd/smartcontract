@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x0bd95cc8736750d0f63492f903ecd884c585dcd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x2131ad63ea656fdf97e66ad35acd6909a6f7050a
 */
+// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
 pragma solidity ^0.4.8;
 /**
@@ -437,6 +438,10 @@ contract CrowdsaleExt is Haltable {
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
       throw;
     }
+    if(investedAmountOf[receiver] == 0) {
+       // A new investor
+       investorCount++;
+    }
     // Update investor
     investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
     tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
@@ -445,10 +450,6 @@ contract CrowdsaleExt is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
     if(pricingStrategy.isPresalePurchase(receiver)) {
         presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
-    }
-    if(investedAmountOf[receiver] == 0) {
-       // A new investor
-       investorCount++;
     }
     assignTokens(receiver, tokenAmount);
     // Pocket the money
