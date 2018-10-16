@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IQB at 0xab45ce764a2b483bcd0bb2829ada7e0b39287f70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IQB at 0x72aa36c379d681f0813ef0e3834035a2d43f6e8d
 */
 pragma solidity ^0.4.8;
 
@@ -73,10 +73,10 @@ contract IQB is StandardToken {
     string public version = '1.0';
 
     function IQB() {
-        balances[msg.sender] = 18000000000000000;        // Give the creator all initial tokens
-        totalSupply = 18000000000000000;                 // Update total supply
-        name = 'IQB Coin';                               // Set the name for display purposes
-        decimals = 8;                                    // Amount of decimals for display purposes
-        symbol = 'IQB';                                  // Set the symbol for display purposes
+        balances[msg.sender] = 120000000000;               // Give the creator all initial tokens
+        totalSupply = 120000000000;                        // Update total supply
+        name = 'IQB Coin';                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = 'IQB';                               // Set the symbol for display purposes
     }
 }
