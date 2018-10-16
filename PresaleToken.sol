@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0xD8d80210106e2A431c9c43AC133EC22A008a2F07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x55cbc016483d279387f3ec774814bfdfbc1e4582
 */
 pragma solidity ^0.4.4;
 
@@ -36,14 +36,14 @@ contract PresaleToken
     uint public totalSupply = 0; // amount of tokens already sold
 
     // Gathered funds can be withdrawn only to escrow's address.
-    address public escrow = 0;
+    address public escrow;
 
     // Token manager has exclusive priveleges to call administrative
     // functions on this contract.
-    address public tokenManager = 0;
+    address public tokenManager;
 
     // Crowdsale manager has exclusive priveleges to burn presale tokens.
-    address public crowdsaleManager = 0;
+    address public crowdsaleManager;
 
     mapping (address => uint256) private balance;
 
@@ -59,14 +59,11 @@ contract PresaleToken
 
 /// Functions:
     /// @dev Constructor
-    /// @param _tokenManager Token manager address.
-    function PresaleToken(address _tokenManager, address _escrow) 
+    function PresaleToken()
     {
-        if(_tokenManager==0) throw;
-        if(_escrow==0) throw;
-
-        tokenManager = _tokenManager;
-        escrow = _escrow;
+        tokenManager = msg.sender;
+        escrow = 0x9a6Fb86bd26CbcBF5ba1b9dFd55f479875F310Cb;
+        crowdsaleManager = msg.sender;
     }
 
     function buyTokens(address _buyer) public payable onlyInState(State.Running)
