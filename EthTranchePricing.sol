@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x2f6df62bdd34c085915d6f0061150bf222011b5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x944dba268d7919284cc9f04d5e6b2f4dfa0496ca
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -426,8 +426,6 @@ contract Crowdsale is Haltable {
     }
 
     uint weiAmount = msg.value;
-
-    // Account presale sales separately, so that they do not count against pricing tranches
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
@@ -449,7 +447,7 @@ contract Crowdsale is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
 
     if(pricingStrategy.isPresalePurchase(receiver)) {
-        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
+      presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
     }
 
     // Check that we did not bust the cap
