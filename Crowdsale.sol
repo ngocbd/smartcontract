@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x402b92b00552409ed1ad83a74ff037ce1a3d7276
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xbb0292ddd8101517640224c40edb67233ae72dd6
 */
 pragma solidity ^0.4.18;
 
@@ -314,7 +314,7 @@ contract Crowdsale is Ownable {
     uint icoDuration = 20 * 1 days;
     uint public presaleEndTime;
     uint public deadline;
-    uint public price = 1000;
+    uint public price = (1 ether)/1000;
     MintableToken public token;
     mapping(address => uint) public balanceOf;
     bool public icoSuccess = false;
@@ -357,10 +357,10 @@ contract Crowdsale is Ownable {
         balanceOf[msg.sender] += amount;
         if(stage==0) {  //presale
             amountRaisedPreSale += amount;
-            token.mint(msg.sender, amount.mul(2) * price);
+            token.mint(msg.sender, amount.mul(2) / price);
         } else {
             amountRaisedICO += amount;
-            token.mint(msg.sender, amount * price);
+            token.mint(msg.sender, amount / price);
         }
         FundTransfer(msg.sender, amount, true);
     }
