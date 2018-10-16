@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Santa at 0x260a9ceb69fd1dd0848cf9b1eef415feb1b9a580
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Santa at 0x63011ea1d431f54297d90543689d69177b1846ef
 */
 pragma solidity ^0.4.18;
 
@@ -40,7 +40,7 @@ contract Santa {
     uint256 constant public tokensForIco = 600000 * 1 ether;
     uint256 constant public tokensForBonus = 200000 * 1 ether;
 
-    uint256 constant public startAirdropTime = 1514073600;
+    uint256 constant public startAirdropTime = 1514116800;
     uint256 public startTransferTime;
     uint256 public tokensSold;
     bool public burned;
@@ -48,8 +48,8 @@ contract Santa {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
     
-    uint256 constant public start = 1513728000;
-    uint256 constant public end = 1514678399;
+    uint256 constant public start = 1511136000;
+    uint256 constant public end = 1512086399;
     uint256 constant public tokenExchangeRate = 310;
     uint256 public amountRaised;
     bool public crowdsaleClosed = false;
@@ -71,7 +71,6 @@ contract Santa {
     function() payable {
 		uint256 amount = msg.value;
 		uint256 numTokens = amount.mul(tokenExchangeRate); 
-		require(numTokens >= 10 * 1 ether);
 		require(!crowdsaleClosed && now >= start && now <= end && tokensSold.add(numTokens) <= tokensForIco);
 		ethFundWallet.transfer(amount);
 		balanceOf[santaFundWallet] = balanceOf[santaFundWallet].sub(numTokens); 
@@ -130,10 +129,10 @@ contract Santa {
 		require(msg.sender == santaFundWallet);
 		require(now >= startAirdropTime);
 	    
-	    uint bonusRate = tokensForBonus.div(tokensSold); 
+	    uint256 bonusRate = tokensForBonus.div(tokensSold); 
 		for(uint i = 0; i < santaGiftList.length; i++) {
 		    if (balanceOf[santaGiftList[i]] > 0) { 
-				uint bonus = balanceOf[santaGiftList[i]].mul(bonusRate);
+				uint256 bonus = balanceOf[santaGiftList[i]].mul(bonusRate);
 				transferFrom(santaFundWallet, santaGiftList[i], bonus);
 		    }
 		}
