@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JesusCoin at 0xF8A0bDe589196D06a65cf355e4f261F97c5C51bF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JesusCoin at 0x0a1524bfbb8905de0a3b15bdf8d678e7fb9c8c68
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
 
 /**
  * @title SafeMath
@@ -259,7 +259,6 @@ contract MintableToken is StandardToken, Ownable {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
-    Transfer(this, _to, _amount); // so it shows in etherscan
     return true;
   }
 
@@ -311,13 +310,13 @@ contract TokenDestructible is Ownable {
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-
+ 
 contract JesusCoin is StandardToken, Ownable, TokenDestructible {
 
   string public name = "Jesus Coin";
   uint8 public decimals = 18;
   string public symbol = "JC";
-  string public version = "0.1";
+  string public version = "0.2";
 
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
@@ -329,23 +328,14 @@ contract JesusCoin is StandardToken, Ownable, TokenDestructible {
     _;
   }
 
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
   function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
+    Transfer(0x0, _to, _amount);
     return true;
   }
 
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
   function finishMinting() onlyOwner returns (bool) {
     mintingFinished = true;
     MintFinished();
@@ -365,32 +355,17 @@ contract JesusCoin is StandardToken, Ownable, TokenDestructible {
 contract JesusCrowdsale is Ownable, Pausable, TokenDestructible {
   using SafeMath for uint256;
 
-  // The token being sold
   JesusCoin public token;
 
-  // start and end dates where investments are allowed (both inclusive)
   uint256 constant public START = 1507755600; // +new Date(2017, 9, 12) / 1000
   uint256 constant public END = 1513029600; // +new Date(2017, 11, 12) / 1000
 
-  // address where funds are collected
   address public wallet = 0x61cc738Aef5D67ec7954B03871BA13dDe5B87DE8;
   address public bountyWallet = 0x03D299B68f8a0e47edd0609FB2B77FC0F2e4fa9e;
 
-  // amount of raised money in wei
   uint256 public weiRaised;
 
-  // has bounty been distributed?
   bool public bountyDistributed;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */ 
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-  event BountyDistributed(address indexed bountyAddress, uint256 amount);
 
   function JesusCrowdsale() payable {
     token = new JesusCoin();
@@ -399,14 +374,14 @@ contract JesusCrowdsale is Ownable, Pausable, TokenDestructible {
   // function to get the price of the token
   // returns how many token units a buyer gets per wei, needs to be divided by 10
   function getRate() constant returns (uint8) {
-    if      (now < START)            return 166; // presale, 40% bonus
-    else if (now <= START +  6 days) return 162; // day 1 to 6, 35% bonus
-    else if (now <= START + 13 days) return 156; // day 7 to 13, 30% bonus
-    else if (now <= START + 20 days) return 150; // day 14 to 20, 25% bonus
-    else if (now <= START + 27 days) return 144; // day 21 to 27, 20% bonus
-    else if (now <= START + 34 days) return 138; // day 28 to 34, 15% bonus
-    else if (now <= START + 41 days) return 132; // day 35 to 41, 10% bonus
-    else if (now <= START + 48 days) return 126; // day 42 to 48, 5% bonus
+    if      (block.timestamp < START)            return 166; // presale, 40% bonus
+    else if (block.timestamp <= START +  6 days) return 162; // day 1 to 6, 35% bonus
+    else if (block.timestamp <= START + 13 days) return 156; // day 7 to 13, 30% bonus
+    else if (block.timestamp <= START + 20 days) return 150; // day 14 to 20, 25% bonus
+    else if (block.timestamp <= START + 27 days) return 144; // day 21 to 27, 20% bonus
+    else if (block.timestamp <= START + 34 days) return 138; // day 28 to 34, 15% bonus
+    else if (block.timestamp <= START + 41 days) return 132; // day 35 to 41, 10% bonus
+    else if (block.timestamp <= START + 48 days) return 126; // day 42 to 48, 5% bonus
     return 120; // no bonus
   }
 
@@ -415,38 +390,29 @@ contract JesusCrowdsale is Ownable, Pausable, TokenDestructible {
     buyTokens(msg.sender);
   }
 
-  // low level token purchase function
   function buyTokens(address beneficiary) whenNotPaused() payable {
     require(beneficiary != 0x0);
     require(msg.value != 0);
-    require(now <= END);
+    require(block.timestamp <= END);
 
     uint256 weiAmount = msg.value;
-
-    // calculate token amount to be minted
-    uint256 tokens = weiAmount.mul(getRate()).div(10);
-    
-    // update state
     weiRaised = weiRaised.add(weiAmount);
 
+    uint256 tokens = weiAmount.mul(getRate()).div(10);
     token.mint(beneficiary, tokens);
-
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
     wallet.transfer(msg.value);
   }
 
   function distributeBounty() onlyOwner {
     require(!bountyDistributed);
-    require(now >= END);
-
-    bountyDistributed = true;
+    require(block.timestamp >= END);
 
     // calculate token amount to be minted for bounty
-    uint256 amount = weiRaised.mul(2).div(100); // 2% of all tokens
-
+    uint256 amount = weiRaised.div(100).mul(2); // 2% of all tokens
     token.mint(bountyWallet, amount);
-    BountyDistributed(bountyWallet, amount);
+    
+    bountyDistributed = true;
   }
   
   /**
@@ -455,7 +421,7 @@ contract JesusCrowdsale is Ownable, Pausable, TokenDestructible {
    */
   function finishMinting() onlyOwner returns (bool) {
     require(bountyDistributed);
-    require(now >= END);
+    require(block.timestamp >= END);
 
     return token.finishMinting();
   }
