@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EDOGE at 0xb6ca1b4c1e511ce1345bde831ea4f4518401c7c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EDOGE at 0x02dbe2f315e059743376abcd22ab4908ea9fb02d
 */
 pragma solidity ^0.4.17;
 
@@ -8,7 +8,6 @@ pragma solidity ^0.4.17;
 /* Fully backward compatible with ERC20 */
 contract ERC223 {
     uint public totalSupply;
-
     function balanceOf(address who) public constant returns (uint);
 
     function name() constant public returns (string _name);
@@ -18,10 +17,8 @@ contract ERC223 {
 
     function transfer(address to, uint value) public returns (bool ok);
     function transfer(address to, uint value, bytes data) public returns (bool ok);
-    function transfer(address to, uint value, bytes data, string customFallback) public returns (bool ok);
+    function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
     event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
 /**
@@ -132,7 +129,7 @@ contract EDOGE is ERC223, SafeMath {
     // - Balance of owner cannot be negative
     // - All transfers can be fulfilled with remaining owner balance
     // - No new tokens can ever be minted except originally created 100,000,000,000
-    function distributeAirdrop(address[] addresses, uint256 amount) onlyOwner public {
+    function distributeAirdrop(address[] addresses, uint256 amount) onlyOwner public{
         // Only proceed if there are enough tokens to be distributed to all addresses
         // Never allow balance of owner to become negative
         require(balances[owner] >= safeMul(addresses.length, amount));
@@ -259,32 +256,5 @@ contract EDOGE is ERC223, SafeMath {
      // Use after airdrop is complete
     function unlockForever() onlyOwner public {
         unlocked = true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        // Only allow transfer once unlocked
-        // Once it is unlocked, it is unlocked forever and no one can lock again
-        require(unlocked);
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        uint256 allowance = allowed[_from][msg.sender];
-        require(balances[_from] >= _value && allowance >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        if (allowance < MAX_UINT256) {
-            allowed[_from][msg.sender] -= _value;
-        }
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
-      return allowed[_owner][_spender];
     }
 }
