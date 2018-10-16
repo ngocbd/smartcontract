@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomstarterPresale at 0x0c64f31de90463f947f78a623e75414d0c4ac3f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomstarterPresale at 0x2aa216f8126190fe5610b1b6c3c4835d1b07c8c8
 */
 pragma solidity 0.4.23;
 
@@ -1662,7 +1662,8 @@ contract EthPriceDependent is usingOraclize, multiowned {
     uint public m_leeway = 30; // 30 seconds
 
     /// @dev set just enough gas because the rest is not refunded
-    uint public m_callbackGas = 200000;
+    ///      (should be ~105000, additional 5000 just in case)
+    uint public m_callbackGas = 110000;
 }
 
 // File: contracts/IBoomstarterToken.sol
