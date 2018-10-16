@@ -1,137 +1,84 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hodl at 0xf157f2232909106744caea2c3ddc8f0208be3e16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HODL at 0x0d1a667f889f5f0c8a19c4d1868d7e27164b1848
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-pragma solidity ^0.4.11;
-
-interface IERC20 {
-    function totalSupply() constant returns (uint256 totalSupply);
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-pragma solidity ^0.4.11;
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-contract Hodl is IERC20 {
-    
-    using SafeMath for uint256;
-    
-    uint public _totalSupply = 0;
-    
-    string public constant symbol = "HODL";
-    string public constant name = "Hodl";
-    uint8 public constant decimals = 18;
-    
-    uint256 public constant RATE = 500;
-    
+contract owned {
     address public owner;
-    
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address =>uint256)) allowed;
-    
-    function () payable {
-        createTokens();
-    }
-    
-   function Hodl() {
-       owner = msg.sender;
-   }
-    
-    function createTokens() payable {
-        require(msg.value > 0);
-        
-        uint256 tokens = msg.value.mul(RATE);
-        balances[msg.sender] = balances [msg.sender].add(tokens);
-        _totalSupply = _totalSupply.add(tokens);
-        owner.transfer(msg.value);
-    }
-    
-    function totalSupply() constant returns (uint256 totalSupply) {
-        return _totalSupply;
+
+    function owned() public {
+        owner = msg.sender;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-
-        return balances[_owner];
-        
-    }
-    
-     function transfer(address _to, uint256 _value) returns (bool success) {
-        
-        require(
-            balances[msg.sender] >= _value
-            && _value > 0
-            ); 
-            
-            balances[msg.sender] = balances[msg.sender].sub(_value);
-            balances[_to] = balances[_to].add(_value);
-            Transfer(msg.sender, _to, _value);
-            return true;
-        }
-     
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success){
-        require(
-            allowed[_from][msg.sender] >= _value
-            && balances[_from] >= _value
-            && _value > 0
-        );
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }     
-              
-    function approve(address _spender, uint256 _value) returns (bool success) {
-     
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-        
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining){
-        return allowed [_owner][_spender];
-        
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
+}
 
-    
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+
+
+contract HODL is owned {
+
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
+    uint256 public totalSupply;
+
+    // This creates an array with all balances
+    mapping (address => uint256) public balanceOf;
+
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function HODL (
+    )  public {
+        totalSupply = 20000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = 'HODLCOIN,HODLCOIN,HODLCOIN';                                   // Set the name for display purposes
+        symbol = 'HODL';         // Set the symbol for display purposes
+    	buyPrice = 1;
+    	sellPrice = 1;    
+	}
+
+    /* Internal transfer, only can be called by this contract */
+    function _transfer(address _from, address _to, uint _value) internal {
+        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
+        require (balanceOf[_from] >= _value);               // Check if the sender has enough
+        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
+        require(_from == owner);                     // Check if sender is owner
+        balanceOf[_from] -= _value;                         // Subtract from the sender
+        balanceOf[_to] += _value;                           // Add the same to the recipient
+        emit Transfer(_from, _to, _value);
+    }
+
+    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
+    /// @param newSellPrice Price the users can sell to the contract
+    /// @param newBuyPrice Price users can buy from the contract
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
+    }
+
+    /// @notice Buy tokens from contract by sending ether
+    function buy() payable public {
+        uint amount = msg.value / buyPrice;               // calculates the amount
+        _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+
+    /// @notice Sell `amount` tokens to contract
+    /// @param amount amount of tokens to be sold
+    function sell(uint256 amount) public {
+        require(address(this).balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+    }
 }
