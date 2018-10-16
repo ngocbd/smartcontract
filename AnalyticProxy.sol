@@ -1,6 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnalyticProxy at 0x717D6E8B55E0FdF94D74bb27208f5b6074Dd9cD4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnalyticProxy at 0x0e80715d821e1d5c0f91ca82861cc5946d5c9c97
 */
+/*
+ * @title Mixin contract which supports different payment channels and provides analytical per-channel data.
+ * @author Eenae
+ */
 contract InvestmentAnalytics {
 function iaInvestedBy(address investor) external payable;
 }
@@ -8,8 +12,6 @@ function iaInvestedBy(address investor) external payable;
 /*
  * @title This is proxy for analytics. Target contract can be found at field m_analytics (see "read contract").
  * @author Eenae
-
- * FIXME after fix of truffle issue #560: refactor to a separate contract file which uses InvestmentAnalytics interface
  */
 contract AnalyticProxy {
 
