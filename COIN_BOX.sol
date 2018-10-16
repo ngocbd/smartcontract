@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COIN_BOX at 0xdd17afae8a3dd1936d1113998900447ab9aa9bc0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COIN_BOX at 0x85179AC15AA94E3ca32dd1cc04664E9bB0062115
 */
 pragma solidity ^0.4.19;
 
@@ -15,7 +15,7 @@ contract COIN_BOX
     
     uint public MinSum;
     
-    Log LogFile;
+    LogFile Log;
     
     bool intitalized;
     
@@ -30,7 +30,7 @@ contract COIN_BOX
     public
     {
         if(intitalized)throw;
-        LogFile = Log(_log);
+        Log = LogFile(_log);
     }
     
     function Initialized()
@@ -46,7 +46,7 @@ contract COIN_BOX
         var acc = Acc[msg.sender];
         acc.balance += msg.value;
         if(now+_lockTime>acc.unlockTime)acc.unlockTime=now+_lockTime;
-        LogFile.AddMessage(msg.sender,msg.value,"Put");
+        Log.AddMessage(msg.sender,msg.value,"Put");
     }
     
     function Collect(uint _am)
@@ -59,7 +59,7 @@ contract COIN_BOX
             if(msg.sender.call.value(_am)())
             {
                 acc.balance-=_am;
-                LogFile.AddMessage(msg.sender,_am,"Collect");
+                Log.AddMessage(msg.sender,_am,"Collect");
             }
         }
     }
@@ -74,7 +74,7 @@ contract COIN_BOX
 }
 
 
-contract Log 
+contract LogFile
 {
     struct Message
     {
