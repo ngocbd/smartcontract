@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATTRToken at 0xa3c05bc35f68af74e774ff31f3437f340a034822
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATTRToken at 0xaa3aa47f5e3c859168982c2a57659172e0ba89d6
 */
 pragma solidity ^0.4.18;
 
@@ -115,7 +115,7 @@ contract ATTRToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function ATTRToken() public {
+    function ATTToken() public {
         symbol = "ATTR";
         name = "ATTR Token";
         decimals = 18;
