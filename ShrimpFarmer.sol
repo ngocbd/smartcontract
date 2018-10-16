@@ -1,9 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0x9c679e2fae9cc6d307b57e9c0a30d6cf50fbf56e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0xdc078ff399d0001c31454e83896e8881d164fb95
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
+// similar as shrimpfarmer, with three changes:
+// A. one third of your snails die when you sell eggs
+// B. you can transfer ownership of the devfee through sacrificing snails
+// C. the "free" 300 snails cost 0.001 eth (in line with the mining fee)
 
+// bots should have a harder time, and whales can compete for the devfee
 
 contract ShrimpFarmer{
     //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
@@ -18,7 +23,15 @@ contract ShrimpFarmer{
     mapping (address => uint256) public lastHatch;
     mapping (address => address) public referrals;
     uint256 public marketEggs;
+    uint256 public snailmasterReq=100000;
     function ShrimpFarmer() public{
+        ceoAddress=msg.sender;
+    }
+    function becomeSnailmaster() public{
+        require(initialized);
+        require(hatcheryShrimp[msg.sender]>=snailmasterReq);
+        hatcheryShrimp[msg.sender]=SafeMath.sub(hatcheryShrimp[msg.sender],snailmasterReq);
+        snailmasterReq=SafeMath.add(snailmasterReq,100000);//+100k shrimps each time
         ceoAddress=msg.sender;
     }
     function hatchEggs(address ref) public{
@@ -43,6 +56,8 @@ contract ShrimpFarmer{
         uint256 hasEggs=getMyEggs();
         uint256 eggValue=calculateEggSell(hasEggs);
         uint256 fee=devFee(eggValue);
+        // kill one third of the owner's snails on egg sale
+        hatcheryShrimp[msg.sender]=SafeMath.mul(SafeMath.div(hatcheryShrimp[msg.sender],3),2);
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
@@ -78,8 +93,10 @@ contract ShrimpFarmer{
         initialized=true;
         marketEggs=eggs;
     }
-    function getFreeShrimp() public{
+    function getFreeShrimp() public payable{
         require(initialized);
+        require(msg.value==0.001 ether); //similar to mining fee, prevents bots
+        ceoAddress.transfer(msg.value); //snailmaster gets this entrance fee
         require(hatcheryShrimp[msg.sender]==0);
         lastHatch[msg.sender]=now;
         hatcheryShrimp[msg.sender]=STARTING_SHRIMP;
@@ -89,6 +106,9 @@ contract ShrimpFarmer{
     }
     function getMyShrimp() public view returns(uint256){
         return hatcheryShrimp[msg.sender];
+    }
+    function getSnailmasterReq() public view returns(uint256){
+        return snailmasterReq;
     }
     function getMyEggs() public view returns(uint256){
         return SafeMath.add(claimedEggs[msg.sender],getEggsSinceLastHatch(msg.sender));
