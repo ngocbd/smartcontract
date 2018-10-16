@@ -1,11 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract esToken at 0xb9db98dbd8a36341099f06778a48a9fdba3a5514
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract esToken at 0x01245dd1a01affe844ea89ef9176a9f910cf8a67
 */
-//"Token Name","Symbol",Decimal,"WalletAddress","BufferAddress"
-//1526053412,1526163431,Rate,"WalletAddress",Cap,"TokenAddress",Goal
 pragma solidity ^0.4.23;
 
-//import "../../math/SafeMath.sol";
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
