@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x4f4430345194457ec13761dd83dd76819f07cd96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x089bc7f1d5b41b568dbc0cbe18df469bc8e4ae7a
 */
 pragma solidity ^0.4.20;
 
@@ -570,7 +570,7 @@ contract Hourglass {
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
         uint256 _fee = _dividends * magnitude;
  
-        // no point in continuing execution if OP is a poorfag russian hacke
+        // no point in continuing execution if OP is a poorfag russian hacker
         // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
         // (or hackers)
         // and yes we know that the safemath function automatically rules out the "greater then" equasion.
