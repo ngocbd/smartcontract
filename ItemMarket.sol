@@ -1,23 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemMarket at 0xf4c3a48f27666ef8bedab8d73c0117e1aeaf1ba0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemMarket at 0xF73c97245B3bE2559d01343bFFAa3e3a69F6dD3b
 */
 pragma solidity ^0.4.21;
-
-// Updates since last contract 
-// Price increase is now max 200% from 100% 
-// min Price is now 1 szabo from 1 finney. This price is not recommended due to gas. 
-// If you start a new game (amount in pot is 0, and timer hasn't started) then you will pay NO fees
-// This means that you can always start a game without any risk. 
-// If no one decides to buy, then you can pay out back, and you will get the pot, which is 100% of your payment back!!
-
-// WARNING
-// IF SITE GOES DOWN, THEN YOU CAN STILL KEEP PLAYING THE GAME 
-// INSTRUCTIONS:
-// GO TO REMIX.ETHEREUM.ORG, UPLOAD THIS CONTRACT, AND THEN LOAD THIS CONTRACT FROM ADDRESS 
-// MAKE SURE YOU ARE CONNECTED WITH METAMASK TO MAINNET 
-// NOW YOU CAN CALL FUNCTIONS 
-// EX; CALL PAYOUT(ID) SO YOU CAN PAY OUT IF YOU WON A CARD. 
-// NOTE: SITES WHICH HOST UI ARE NOT SUPPOSED TO GO DOWN
 
 contract ItemMarket{
 	address public owner;
@@ -26,12 +10,9 @@ contract ItemMarket{
 	uint16 public devFee = 500;
 	uint256 public ItemCreatePrice = 0.02 ether;
 
-    // note, on etherscan you can see these item calls
-    // if you buy an item, the TX will call ItemCreated with the id it gets - which you can see on etherscan!
 	event ItemCreated(uint256 id);
 	event ItemBought(uint256 id);
 	event ItemWon(uint256 id);
-	//event ItemCreationError(string err);
 
 	struct Item{
 		uint32 timer;
@@ -66,42 +47,16 @@ contract ItemMarket{
     function ItemMarket() public{
     	owner = msg.sender;
     	// Add items 
-       
-    
-        
-    }
-    
-    uint8 IS_STARTED=0;
-    
-    function callOnce() public {
-        require(msg.sender == owner);
-        require(IS_STARTED==0);
-        IS_STARTED = 1;
-        AddItemExtra(600, 1500, 1 finney, 0, 3000, "Battery", msg.sender);
-    	AddItemExtra(600, 150, 4 finney, 0, 5000, "Twig", msg.sender);
-    	AddItemExtra(3600, 2000, 10 finney, 0, 4000, "Solar Panel", msg.sender);
-    	AddItemExtra(3600*24, 5000, 10 finney, 0, 5000, "Moon", msg.sender);
-    	AddItemExtra(3600*24*7, 7500, 50 finney, 0, 7000, "Ethereum", msg.sender);
-    	
-    	// Previous contract had items. Recreate those
-    	
-        AddItemExtra(2000, 10000, 1000000000000000, 500, 2000, "segfault's ego", 0xef764BAC8a438E7E498c2E5fcCf0f174c3E3F8dB);
-        AddItemExtra(300, 10000, 10000000000000000, 500, 2500, "Hellina", 0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285);
-        AddItemExtra(600, 10000, 100000000000000000, 500, 2000, "nightman's gambit", 0x5C035Bb4Cb7dacbfeE076A5e61AA39a10da2E956);
-        AddItemExtra(360000, 10000, 5000000000000000, 200, 1800, "BOHLISH", 0xC84c18A88789dBa5B0cA9C13973435BbcE7e961d);
-        AddItemExtra(900, 2000, 20000000000000000, 1000, 2000, "Phil's labyrinth", 0x457dEA5F9c185419EA47ff80f896d98aadf1c727);
-        AddItemExtra(420, 6899, 4200000000000000, 500, 4000, "69,420 (Nice)", 0x477cCD47d62a4929DD11651ab835E132c8eab3B8);
-        next_item_index = next_item_index + 2; // this was an item I created. We skip this item. Item after this too, to check if != devs could create 
-        // apparently people created wrong settings which got reverted by the add item function. it looked like system was wrong
-        
-        // tfw next item 
-        // i didnt create this name lol 
-        
-        AddItemExtra(600, 10000, 5000000000000000, 2500, 7000, "HELLINA IS A RETARDED DEGENERATE GAMBLER AND A FUCKING FUD QUEEN", 0x26581d1983ced8955C170eB4d3222DCd3845a092);
-        
-        // created this, nice hot potato 
-        
-        AddItemExtra(1800, 9700, 2000000000000000, 0, 2500, "Hot Potato", msg.sender);
+
+    	AddItem(600, 1500, 1 finney, 0, 3000, "Battery");
+
+
+    	AddItem(600, 150, 4 finney, 0, 5000, "Twig");
+
+    	AddItem(3600, 2000, 10 finney, 0, 4000, "Solar Panel");
+    	AddItem(3600*24, 5000, 10 finney, 0, 5000, "Moon");
+    	AddItem(3600*24*7, 7500, 50 finney, 0, 7000, "Ethereum");
+
     }
 
     function ChangeFee(uint16 _fee) public onlyOwner{
@@ -112,26 +67,13 @@ contract ItemMarket{
     function ChangeItemPrice(uint256 _newPrice) public onlyOwner{
     	ItemCreatePrice = _newPrice;
     }
-    
-    // INTERNAL EXTRA FUNCTION TO MOVE OVER OLD ITEMS 
-    
-    function AddItemExtra(uint32 timer, uint16 priceIncrease, uint256 minPrice, uint16 creatorFee, uint16 potFee, string name, address own) internal {
-    	uint16 previousFee = 10000 - devFee - potFee - creatorFee;
-    	var NewItem = Item(timer, 0, priceIncrease, minPrice, 0, minPrice, creatorFee, previousFee, potFee, own, address(0), "", name);
-
-    	Items[next_item_index] = NewItem;
-
-    	//emit ItemCreated(next_item_index);
-
-    	next_item_index = add(next_item_index,1);
-    }
 
     function AddItem(uint32 timer, uint16 priceIncrease, uint256 minPrice, uint16 creatorFee, uint16 potFee, string name) public payable {
     	require (timer >= 300);
     	require (timer < 31622400);
 
-    	require(priceIncrease <= 20000);
-    	require(minPrice >= (1 szabo) && minPrice <= (1 ether));
+    	require(priceIncrease <= 10000);
+    	require(minPrice >= (1 finney) && minPrice <= (1 ether));
     	require(creatorFee <= 2500);
     	require(potFee <= 10000);
     	require(add(add(creatorFee, potFee), devFee) <= 10000);
@@ -232,11 +174,7 @@ contract ItemMarket{
 
    		if (UsedItem.owner == address(0)){
    			// game not started. 
-   			// NO FEES ARE PAID WHEN THE TIMER IS STARTS
-   			// IF NO ONE START PLAYING GAME, then the person who bought first can get 100% of his ETH back!
    			prevFee_used = 0;
-   			devFee_used = 0;
-   			creatorFee_used = 0;
    		}
    		else{
    			prevFee_used = (mul(UsedItem.price, UsedItem.previousFee)) / 10000;
