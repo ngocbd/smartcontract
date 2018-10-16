@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AltCrowdsalePhaseOne at 0xfb840fe0857587910cf0ec1bdbdb4f356f3cd566
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AltCrowdsalePhaseOne at 0xb96f18ad5d26f7b86b969526c30385838dbf91d7
 */
 pragma solidity ^0.4.18;
 
@@ -963,18 +963,18 @@ contract AltCrowdsalePhaseOne is BaseAltCrowdsale {
     false,
 
     // price 1 ETH -> 100000 ALT
-    uint(1 ether).div(100000), 
+    uint(1 ether).div(100000),
 
-    // start
-    block.timestamp,
-    // end 
-    1527764400,
+    // start - 13 Apr 2018 12:18:33 GMT
+    1523621913,
+    // end - 30 Jun 2018 23:59:59 GMT
+    1530403199,
 
     // _softCap,
     2500 ether,
     // _hardCap
     7500 ether
-  ) 
+  )
   public {
-  } 
+  }
 }
