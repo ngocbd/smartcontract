@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x9f75247d6fecd9241ff53aad93c6b18d0e8d1455
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xA7586311970BB3498A10244e654830830BF0219C
 */
 pragma solidity ^0.4.16;
 
@@ -22,15 +22,11 @@ contract owned {
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract SDKTokenERC20 {
-    string public constant _myTokeName = 'Sonder Token';//change here
-    string public constant _mySymbol = 'SDK';//change here
-    uint public constant _myinitialSupply = 1000000000;//leave it
-    uint8 public constant _myDecimal = 18;//leave it
+contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals;
+    uint8 public decimals = 2;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -49,12 +45,15 @@ contract SDKTokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function SDKTokenERC20() public {
-        decimals = _myDecimal;
-        totalSupply = _myinitialSupply * (10 ** uint256(_myDecimal));  // Update total supply with the decimal amount
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = _myTokeName;                                   // Set the name for display purposes
-        symbol = _mySymbol;                               // Set the symbol for display purposes
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
@@ -177,9 +176,7 @@ contract SDKTokenERC20 {
 /*       ADVANCED TOKEN STARTS HERE       */
 /******************************************/
 
-contract MyAdvancedToken is owned, SDKTokenERC20 {
-
-
+contract MyAdvancedToken is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
@@ -190,7 +187,11 @@ contract MyAdvancedToken is owned, SDKTokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken() SDKTokenERC20() public {}
+    function MyAdvancedToken(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
