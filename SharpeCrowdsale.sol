@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpeCrowdsale at 0x705cc76c0102dd386a796258232eec734df54b6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpeCrowdsale at 0xc5fd320ef9b3047872dd089f6b4c026cc8c5b617
 */
 pragma solidity 0.4.15;
 
@@ -19,9 +19,6 @@ pragma solidity 0.4.15;
  */
 
  
-
-
-
 /// @dev `Owned` is a base level contract that assigns an `owner` that can be
 ///  later changed
 contract Owned {
@@ -50,6 +47,7 @@ contract Owned {
         }
     }
 }
+
 
 
 /**
@@ -99,166 +97,8 @@ library SafeMath {
 
 
 
-/// @title Vesting trustee
-contract Trustee is Owned {
-    using SafeMath for uint256;
 
-    // The address of the SHP ERC20 token.
-    SHP public shp;
 
-    struct Grant {
-        uint256 value;
-        uint256 start;
-        uint256 cliff;
-        uint256 end;
-        uint256 transferred;
-        bool revokable;
-    }
-
-    // Grants holder.
-    mapping (address => Grant) public grants;
-
-    // Total tokens available for vesting.
-    uint256 public totalVesting;
-
-    event NewGrant(address indexed _from, address indexed _to, uint256 _value);
-    event UnlockGrant(address indexed _holder, uint256 _value);
-    event RevokeGrant(address indexed _holder, uint256 _refund);
-
-    /// @dev Constructor that initializes the address of the SHP contract.
-    /// @param _shp SHP The address of the previously deployed SHP smart contract.
-    function Trustee(SHP _shp) {
-        require(_shp != address(0));
-        shp = _shp;
-    }
-
-    /// @dev Grant tokens to a specified address.
-    /// @param _to address The address to grant tokens to.
-    /// @param _value uint256 The amount of tokens to be granted.
-    /// @param _start uint256 The beginning of the vesting period.
-    /// @param _cliff uint256 Duration of the cliff period.
-    /// @param _end uint256 The end of the vesting period.
-    /// @param _revokable bool Whether the grant is revokable or not.
-    function grant(address _to, uint256 _value, uint256 _start, uint256 _cliff, uint256 _end, bool _revokable)
-        public onlyOwner {
-        require(_to != address(0));
-        require(_value > 0);
-
-        // Make sure that a single address can be granted tokens only once.
-        require(grants[_to].value == 0);
-
-        // Check for date inconsistencies that may cause unexpected behavior.
-        require(_start <= _cliff && _cliff <= _end);
-
-        // Check that this grant doesn't exceed the total amount of tokens currently available for vesting.
-        require(totalVesting.add(_value) <= shp.balanceOf(address(this)));
-
-        // Assign a new grant.
-        grants[_to] = Grant({
-            value: _value,
-            start: _start,
-            cliff: _cliff,
-            end: _end,
-            transferred: 0,
-            revokable: _revokable
-        });
-
-        // Tokens granted, reduce the total amount available for vesting.
-        totalVesting = totalVesting.add(_value);
-
-        NewGrant(msg.sender, _to, _value);
-    }
-
-    /// @dev Revoke the grant of tokens of a specifed address.
-    /// @param _holder The address which will have its tokens revoked.
-    function revoke(address _holder) public onlyOwner {
-        Grant grant = grants[_holder];
-
-        require(grant.revokable);
-
-        // Send the remaining SHP back to the owner.
-        uint256 refund = grant.value.sub(grant.transferred);
-
-        // Remove the grant.
-        delete grants[_holder];
-
-        totalVesting = totalVesting.sub(refund);
-        shp.transfer(msg.sender, refund);
-
-        RevokeGrant(_holder, refund);
-    }
-
-    /// @dev Calculate the total amount of vested tokens of a holder at a given time.
-    /// @param _holder address The address of the holder.
-    /// @param _time uint256 The specific time.
-    /// @return a uint256 representing a holder's total amount of vested tokens.
-    function vestedTokens(address _holder, uint256 _time) public constant returns (uint256) {
-        Grant grant = grants[_holder];
-        if (grant.value == 0) {
-            return 0;
-        }
-
-        return calculateVestedTokens(grant, _time);
-    }
-
-    /// @dev Calculate amount of vested tokens at a specifc time.
-    /// @param _grant Grant The vesting grant.
-    /// @param _time uint256 The time to be checked
-    /// @return An uint256 representing the amount of vested tokens of a specific grant.
-    ///   |                         _/--------   vestedTokens rect
-    ///   |                       _/
-    ///   |                     _/
-    ///   |                   _/
-    ///   |                 _/
-    ///   |                /
-    ///   |              .|
-    ///   |            .  |
-    ///   |          .    |
-    ///   |        .      |
-    ///   |      .        |
-    ///   |    .          |
-    ///   +===+===========+---------+----------> time
-    ///     Start       Cliff      End
-    function calculateVestedTokens(Grant _grant, uint256 _time) private constant returns (uint256) {
-        // If we're before the cliff, then nothing is vested.
-        if (_time < _grant.cliff) {
-            return 0;
-        }
-
-        // If we're after the end of the vesting period - everything is vested;
-        if (_time >= _grant.end) {
-            return _grant.value;
-        }
-
-        // Interpolate all vested tokens: vestedTokens = tokens/// (time - start) / (end - start)
-         return _grant.value.mul(_time.sub(_grant.start)).div(_grant.end.sub(_grant.start));
-    }
-
-    /// @dev Unlock vested tokens and transfer them to their holder.
-    /// @return a uint256 representing the amount of vested tokens transferred to their holder.
-    function unlockVestedTokens() public {
-        Grant grant = grants[msg.sender];
-        require(grant.value != 0);
-
-        // Get the total amount of vested tokens, acccording to grant.
-        uint256 vested = calculateVestedTokens(grant, now);
-        if (vested == 0) {
-            return;
-        }
-
-        // Make sure the holder doesn't transfer more than what he already has.
-        uint256 transferable = vested.sub(grant.transferred);
-        if (transferable == 0) {
-            return;
-        }
-
-        grant.transferred = grant.transferred.add(transferable);
-        totalVesting = totalVesting.sub(transferable);
-        shp.transfer(msg.sender, transferable);
-
-        UnlockGrant(msg.sender, transferable);
-    }
-}
 
 /// @dev The token controller contract must implement these functions
 contract TokenController {
@@ -793,6 +633,230 @@ contract MiniMeToken is Controlled {
 }
 
 
+////////////////
+// MiniMeTokenFactory
+////////////////
+
+/// @dev This contract is used to generate clone contracts from a contract.
+///  In solidity this is the way to create a contract from a contract of the
+///  same class
+contract MiniMeTokenFactory {
+
+    /// @notice Update the DApp by creating a new token with new functionalities
+    ///  the msg.sender becomes the controller of this clone token
+    /// @param _parentToken Address of the token being cloned
+    /// @param _snapshotBlock Block of the parent token that will
+    ///  determine the initial distribution of the clone token
+    /// @param _tokenName Name of the new token
+    /// @param _decimalUnits Number of decimals of the new token
+    /// @param _tokenSymbol Token Symbol for the new token
+    /// @param _transfersEnabled If true, tokens will be able to be transferred
+    /// @return The address of the new token contract
+    function createCloneToken(
+        address _parentToken,
+        uint _snapshotBlock,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol,
+        bool _transfersEnabled
+    ) returns (MiniMeToken) 
+    {
+        MiniMeToken newToken = new MiniMeToken(
+            this,
+            _parentToken,
+            _snapshotBlock,
+            _tokenName,
+            _decimalUnits,
+            _tokenSymbol,
+            _transfersEnabled
+            );
+
+        newToken.changeController(msg.sender);
+        return newToken;
+    }
+}
+
+
+contract SHP is MiniMeToken {
+    // @dev SHP constructor
+    function SHP(address _tokenFactory)
+            MiniMeToken(
+                _tokenFactory,
+                0x0,                             // no parent token
+                0,                               // no snapshot block number from parent
+                "Sharpe Platform Token",         // Token name
+                18,                              // Decimals
+                "SHP",                           // Symbol
+                true                             // Enable transfers
+            ) {}
+}
+
+
+
+
+
+/// @title Vesting trustee
+contract Trustee is Owned {
+    using SafeMath for uint256;
+
+    // The address of the SHP ERC20 token.
+    SHP public shp;
+
+    struct Grant {
+        uint256 value;
+        uint256 start;
+        uint256 cliff;
+        uint256 end;
+        uint256 transferred;
+        bool revokable;
+    }
+
+    // Grants holder.
+    mapping (address => Grant) public grants;
+
+    // Total tokens available for vesting.
+    uint256 public totalVesting;
+
+    event NewGrant(address indexed _from, address indexed _to, uint256 _value);
+    event UnlockGrant(address indexed _holder, uint256 _value);
+    event RevokeGrant(address indexed _holder, uint256 _refund);
+
+    /// @dev Constructor that initializes the address of the SHP contract.
+    /// @param _shp SHP The address of the previously deployed SHP smart contract.
+    function Trustee(SHP _shp) {
+        require(_shp != address(0));
+        shp = _shp;
+    }
+
+    /// @dev Grant tokens to a specified address.
+    /// @param _to address The address to grant tokens to.
+    /// @param _value uint256 The amount of tokens to be granted.
+    /// @param _start uint256 The beginning of the vesting period.
+    /// @param _cliff uint256 Duration of the cliff period.
+    /// @param _end uint256 The end of the vesting period.
+    /// @param _revokable bool Whether the grant is revokable or not.
+    function grant(address _to, uint256 _value, uint256 _start, uint256 _cliff, uint256 _end, bool _revokable)
+        public onlyOwner {
+        require(_to != address(0));
+        require(_value > 0);
+
+        // Make sure that a single address can be granted tokens only once.
+        require(grants[_to].value == 0);
+
+        // Check for date inconsistencies that may cause unexpected behavior.
+        require(_start <= _cliff && _cliff <= _end);
+
+        // Check that this grant doesn't exceed the total amount of tokens currently available for vesting.
+        require(totalVesting.add(_value) <= shp.balanceOf(address(this)));
+
+        // Assign a new grant.
+        grants[_to] = Grant({
+            value: _value,
+            start: _start,
+            cliff: _cliff,
+            end: _end,
+            transferred: 0,
+            revokable: _revokable
+        });
+
+        // Tokens granted, reduce the total amount available for vesting.
+        totalVesting = totalVesting.add(_value);
+
+        NewGrant(msg.sender, _to, _value);
+    }
+
+    /// @dev Revoke the grant of tokens of a specifed address.
+    /// @param _holder The address which will have its tokens revoked.
+    function revoke(address _holder) public onlyOwner {
+        Grant grant = grants[_holder];
+
+        require(grant.revokable);
+
+        // Send the remaining SHP back to the owner.
+        uint256 refund = grant.value.sub(grant.transferred);
+
+        // Remove the grant.
+        delete grants[_holder];
+
+        totalVesting = totalVesting.sub(refund);
+        shp.transfer(msg.sender, refund);
+
+        RevokeGrant(_holder, refund);
+    }
+
+    /// @dev Calculate the total amount of vested tokens of a holder at a given time.
+    /// @param _holder address The address of the holder.
+    /// @param _time uint256 The specific time.
+    /// @return a uint256 representing a holder's total amount of vested tokens.
+    function vestedTokens(address _holder, uint256 _time) public constant returns (uint256) {
+        Grant grant = grants[_holder];
+        if (grant.value == 0) {
+            return 0;
+        }
+
+        return calculateVestedTokens(grant, _time);
+    }
+
+    /// @dev Calculate amount of vested tokens at a specifc time.
+    /// @param _grant Grant The vesting grant.
+    /// @param _time uint256 The time to be checked
+    /// @return An uint256 representing the amount of vested tokens of a specific grant.
+    ///   |                         _/--------   vestedTokens rect
+    ///   |                       _/
+    ///   |                     _/
+    ///   |                   _/
+    ///   |                 _/
+    ///   |                /
+    ///   |              .|
+    ///   |            .  |
+    ///   |          .    |
+    ///   |        .      |
+    ///   |      .        |
+    ///   |    .          |
+    ///   +===+===========+---------+----------> time
+    ///     Start       Cliff      End
+    function calculateVestedTokens(Grant _grant, uint256 _time) private constant returns (uint256) {
+        // If we're before the cliff, then nothing is vested.
+        if (_time < _grant.cliff) {
+            return 0;
+        }
+
+        // If we're after the end of the vesting period - everything is vested;
+        if (_time >= _grant.end) {
+            return _grant.value;
+        }
+
+        // Interpolate all vested tokens: vestedTokens = tokens/// (time - start) / (end - start)
+         return _grant.value.mul(_time.sub(_grant.start)).div(_grant.end.sub(_grant.start));
+    }
+
+    /// @dev Unlock vested tokens and transfer them to their holder.
+    /// @return a uint256 representing the amount of vested tokens transferred to their holder.
+    function unlockVestedTokens() public {
+        Grant grant = grants[msg.sender];
+        require(grant.value != 0);
+
+        // Get the total amount of vested tokens, acccording to grant.
+        uint256 vested = calculateVestedTokens(grant, now);
+        if (vested == 0) {
+            return;
+        }
+
+        // Make sure the holder doesn't transfer more than what he already has.
+        uint256 transferable = vested.sub(grant.transferred);
+        if (transferable == 0) {
+            return;
+        }
+
+        grant.transferred = grant.transferred.add(transferable);
+        totalVesting = totalVesting.sub(transferable);
+        shp.transfer(msg.sender, transferable);
+
+        UnlockGrant(msg.sender, transferable);
+    }
+}
+
+
 contract TokenSale is Owned, TokenController {
     using SafeMath for uint256;
     
@@ -902,6 +966,18 @@ contract TokenSale is Owned, TokenController {
         NewSale(_destination, 0, _tokens);
     }
 
+    /// @notice Allows the owner to manually destroy some SHP to an address if something goes wrong
+    /// @param _tokens the number of tokens to mint
+    /// @param _destination the address to send the tokens to
+    function destroyTokens(
+        uint256 _tokens, 
+        address _destination
+    ) 
+        onlyOwner 
+    {
+        shp.destroyTokens(_destination, _tokens);
+    }
+
     /// @notice Applies the discount based on the discount tiers
     /// @param _etherAmount The amount of ether used to evaluate the tier the contribution lies within
     /// @param _contributorTokens The tokens allocated based on the contribution
@@ -985,66 +1061,6 @@ contract TokenSale is Owned, TokenController {
         return allowTransfer;
     }
 }
-
-
-////////////////
-// MiniMeTokenFactory
-////////////////
-
-/// @dev This contract is used to generate clone contracts from a contract.
-///  In solidity this is the way to create a contract from a contract of the
-///  same class
-contract MiniMeTokenFactory {
-
-    /// @notice Update the DApp by creating a new token with new functionalities
-    ///  the msg.sender becomes the controller of this clone token
-    /// @param _parentToken Address of the token being cloned
-    /// @param _snapshotBlock Block of the parent token that will
-    ///  determine the initial distribution of the clone token
-    /// @param _tokenName Name of the new token
-    /// @param _decimalUnits Number of decimals of the new token
-    /// @param _tokenSymbol Token Symbol for the new token
-    /// @param _transfersEnabled If true, tokens will be able to be transferred
-    /// @return The address of the new token contract
-    function createCloneToken(
-        address _parentToken,
-        uint _snapshotBlock,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol,
-        bool _transfersEnabled
-    ) returns (MiniMeToken) 
-    {
-        MiniMeToken newToken = new MiniMeToken(
-            this,
-            _parentToken,
-            _snapshotBlock,
-            _tokenName,
-            _decimalUnits,
-            _tokenSymbol,
-            _transfersEnabled
-            );
-
-        newToken.changeController(msg.sender);
-        return newToken;
-    }
-}
-
-
-contract SHP is MiniMeToken {
-    // @dev SHP constructor
-    function SHP(address _tokenFactory)
-            MiniMeToken(
-                _tokenFactory,
-                0x0,                             // no parent token
-                0,                               // no snapshot block number from parent
-                "Sharpe Platform Token",         // Token name
-                18,                              // Decimals
-                "SHP",                           // Symbol
-                true                             // Enable transfers
-            ) {}
-}
-
 
 contract SharpeCrowdsale is TokenSale {
     using SafeMath for uint256;
