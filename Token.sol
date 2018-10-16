@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xb53d1b74e1321a524bb4b3837cef11755b516a61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xdfb0fd446c8bf56e2ba87f0d37e38ace33294339
 */
 pragma solidity ^0.4.18;
 
@@ -193,7 +193,7 @@ contract Token is ERC20 {
     {
         require(msg.value > 0);
         if(tgeSettingsAmountCollect.add(msg.value) >= tgeSettingsAmount){
-            tgeLive = false;
+            _finishTge();
         }
         uint refundAmount = 0;
         uint senderAmount = msg.value;
@@ -210,12 +210,11 @@ contract Token is ERC20 {
         uint amountSender = senderAmount.sub(amountProject).sub(amountFounders);
         _mint(amountProject, amountFounders, amountSender);
         msg.sender.transfer(refundAmount);
-        this.updateStatus();
     }
 
     function setFinished() public only(projectWallet) isNotFrozenOnly isTgeLive {
         if(balances[projectWallet] > 1*BIT){
-            tgeLive = false;
+            _finishTge();
         }
     }
 
@@ -318,6 +317,10 @@ contract Token is ERC20 {
     }
 
     //---------------- INTERNAL ---------------
+    function _finishTge() internal {
+        tgeLive = false;
+    }
+
     function _mint(uint _amountProject, uint _amountFounders, uint _amountSender) internal {
         balances[projectWallet] = balances[projectWallet].add(_amountProject);
         balances[foundersWallet] = balances[foundersWallet].add(_amountFounders);
