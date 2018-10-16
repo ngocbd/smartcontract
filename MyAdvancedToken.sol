@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xe43c2d2814d77174ac5eb21fd1bce3a674b14888
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x7ee2724fd59caa0b5daf33601ca394f1aa8c6e6b
 */
 pragma solidity ^0.4.16;
 
-// Patam :: 100000,"Token1","T1"
+// Param :: 10000000,"ADSL Token","ADSL"
 
 contract owned {
     address public owner;
