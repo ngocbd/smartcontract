@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20ReelToken at 0xd7e39006f6ec0d258dd8e126491d51230fef90f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20ReelToken at 0x9026081927ad897324c19af90bdb1d558e70302e
 */
 pragma solidity ^0.4.4;
 
@@ -119,9 +119,9 @@ contract ERC20ReelToken is StandardToken {
 
     function ERC20ReelToken(
         ) {
-        balances[msg.sender] = 1000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000;                        // Update total supply (100000 for example)
-        name = "Reeliant Coin";                                   // Set the name for display purposes
+        balances[msg.sender] = 2017;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 2017;                        // Update total supply (100000 for example)
+        name = "ReelCoin";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
         symbol = "REEL";                               // Set the symbol for display purposes
     }
