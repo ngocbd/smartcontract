@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Map at 0x2d04a81798ec74de48e09e3fd43ca41757d33e6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Map at 0xe98945936dd2f04294afd798ed7036a8e9ba6acc
 */
 pragma solidity ^0.4.18;
 
@@ -143,7 +143,7 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
     mapping(uint => Round) rounds;
 
     uint constant public ACTION_TAX = 0.02 ether;
-    uint constant public STARTING_CLAIM_PRICE_WEI = 0.05 ether;
+    uint constant public STARTING_CLAIM_PRICE_WEI = 0.01 ether;
     uint constant MAXIMUM_CLAIM_PRICE_WEI = 800 ether;
     uint constant KINGDOM_MULTIPLIER = 20;
     uint constant TEAM_COMMISSION_RATIO = 10;
@@ -185,7 +185,7 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
     //
     //  CONTRACT CONSTRUCTOR
     //
-    function Map(address _bookerAddress, uint _startTime) {
+    function Map(address _bookerAddress) {
         bookerAddress = _bookerAddress;
         currentRound = 1;
         rounds[currentRound] = Round(Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), 0, 0);
@@ -194,8 +194,8 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         rounds[currentRound].jackpot3 = Jackpot(address(0), 0);
         rounds[currentRound].jackpot4 = Jackpot(address(0), 0);
         rounds[currentRound].jackpot5 = Jackpot(address(0), 0);
-        rounds[currentRound].startTime = _startTime;
-        rounds[currentRound].endTime = _startTime + 7 days;
+        rounds[currentRound].startTime = 1523916000;
+        rounds[currentRound].endTime = rounds[currentRound].startTime + 7 days;
         rounds[currentRound].globalJackpot = Jackpot(address(0), 0);
      }
 
@@ -203,10 +203,10 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
 
     function getRemainingKingdoms() public view returns (uint nb) {
         for (uint i = 1; i < 8; i++) {
-            if (now < rounds[currentRound].startTime + (i * 1 days)) {
-                uint result = (10 * i);
-                if (result > 70) { 
-                    return 70; 
+            if (now < rounds[currentRound].startTime + (i * 24 hours)) {
+                uint result = (25 * i);
+                if (result > 125) { 
+                    return 125; 
                 } else {
                     return result;
                 }
@@ -340,55 +340,22 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         if (msg.value > 0) { asyncSend(bookerAddress, msg.value); }
     }
 
-    // function setNbKingdomsType(uint kingdomType, address sender, bool increment) internal {
-    //     if (kingdomType == 1) {
-    //         if (increment == true) {
-    //             rounds[currentRound].nbKingdomsType1[sender]++;
-    //         } else {
-    //             rounds[currentRound].nbKingdomsType1[sender]--;
-    //         }
-    //     } else if (kingdomType == 2) {
-    //         if (increment == true) {
-    //             rounds[currentRound].nbKingdomsType2[sender]++;
-    //         } else {
-    //             rounds[currentRound].nbKingdomsType2[sender]--;
-    //         }
-    //     } else if (kingdomType == 3) {
-    //         if (increment == true) {
-    //             rounds[currentRound].nbKingdomsType3[sender]++;
-    //         } else {
-    //             rounds[currentRound].nbKingdomsType3[sender]--;
-    //         }
-    //     } else if (kingdomType == 4) {
-    //         if (increment == true) {
-    //             rounds[currentRound].nbKingdomsType4[sender]++;
-    //         } else {
-    //             rounds[currentRound].nbKingdomsType4[sender]--;
-    //         }
-    //     } else if (kingdomType == 5) {
-    //         if (increment == true) {
-    //             rounds[currentRound].nbKingdomsType5[sender]++;
-    //         } else {
-    //             rounds[currentRound].nbKingdomsType5[sender]--;
-    //         }
-    //     }
-    // }
-
-    // function upgradeKingdomType(string _key, uint _type) public payable checkKingdomExistence(_key) onlyKingdomOwner(_key, msg.sender) {
-    //     require(msg.value >= ACTION_TAX);
-    //     require(_type > 0);
-    //     require(_type < 6);
-    //     require(kingdoms[rounds[currentRound].kingdomsKeys[_key]].owner == msg.sender);
-    //     uint kingdomType = kingdoms[rounds[currentRound].kingdomsKeys[_key]].kingdomType;
-    //     setNbKingdomsType(kingdomType, msg.sender, false);
-
-        
-    //     setNbKingdomsType(_type, msg.sender, true);
-    //     setTypedJackpotWinner(msg.sender, _type);
-
-    //     kingdoms[rounds[currentRound].kingdomsKeys[_key]].kingdomType = _type;
-    //     asyncSend(bookerAddress, msg.value);
-    // }
+    function giveKingdom(address owner, string _key, string _title, uint _type) onlyOwner() public {
+        require(_type > 0);
+        require(_type < 6);
+        require(rounds[currentRound].kingdomsCreated[_key] == false);
+        uint kingdomId = kingdoms.push(Kingdom("", "", 1, _type, 0, 0, 1, 0.02 ether, address(0), false)) - 1;
+        kingdoms[kingdomId].title = _title;
+        kingdoms[kingdomId].owner = owner;
+        kingdoms[kingdomId].key = _key;
+        kingdoms[kingdomId].minimumPrice = 0.03 ether;
+        kingdoms[kingdomId].locked = false;
+        rounds[currentRound].kingdomsKeys[_key] = kingdomId;
+        rounds[currentRound].kingdomsCreated[_key] = true;
+        uint transactionId = kingdomTransactions.push(Transaction("", msg.sender, 0.01 ether, 0, 0)) - 1;
+        kingdomTransactions[transactionId].kingdomKey = _key;
+        kingdoms[kingdomId].lastTransaction = transactionId;
+    }
 
     //
     //  User can call this function to generate new kingdoms (within the limits of available land)
@@ -415,7 +382,9 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         rounds[currentRound].kingdomsKeys[_key] = kingdomId;
         rounds[currentRound].kingdomsCreated[_key] = true;
         
-        uint jackpotSplitted = requiredPrice.mul(50).div(100);
+        asyncSend(bookerAddress, ACTION_TAX);
+
+        uint jackpotSplitted = basePrice.mul(50).div(100);
         rounds[currentRound].globalJackpot.balance = rounds[currentRound].globalJackpot.balance.add(jackpotSplitted);
 
         uint transactionId = kingdomTransactions.push(Transaction("", msg.sender, msg.value, 0, jackpotSplitted)) - 1;
@@ -454,7 +423,7 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
     function getEndTime() public view returns (uint endTime) {
         return rounds[currentRound].endTime;
     }
-
+    
     function payJackpot(uint _type) public checkIsClosed() {
         Round storage finishedRound = rounds[currentRound];
         if (_type == 1 && finishedRound.jackpot1.winner != address(0) && finishedRound.jackpot1.balance > 0) {
@@ -501,7 +470,7 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
     //
     //  After time expiration, owner can call this function to activate the next round of the game
     //
-    function activateNextRound() public checkIsClosed() {
+    function activateNextRound(uint _startTime) public checkIsClosed() {
         Round storage finishedRound = rounds[currentRound];
         require(finishedRound.globalJackpot.balance == 0);
         require(finishedRound.jackpot5.balance == 0);
@@ -511,8 +480,8 @@ contract Map is PullPayment, Destructible, ReentrancyGuard {
         require(finishedRound.jackpot1.balance == 0);
         currentRound++;
         rounds[currentRound] = Round(Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), 0, 0);
-        rounds[currentRound].startTime = now;
-        rounds[currentRound].endTime = now + 7 days;
+        rounds[currentRound].startTime = _startTime;
+        rounds[currentRound].endTime = _startTime + 7 days;
         delete kingdoms;
         delete kingdomTransactions;
     }
