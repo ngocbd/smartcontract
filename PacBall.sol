@@ -1,10 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PacBall at 0x9C0A3b32e45EC2AA729AB49e44fDa1b68C9EA187
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PacBall at 0x9374eaB80f66BAcf44Afb8B9D8E9becC48652FBe
 */
-pragma solidity ^0.4.0;
-   
-
-
 contract PacBall{
     /* Public variables of the token */
     string public standard = 'Token 0.1';
@@ -20,7 +16,7 @@ contract PacBall{
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function PacBall() {
+    function Token() {
 
          initialSupply =10000;
          name ="PacBall";
