@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distributor at 0xbd74388d6071e24e2eec26983a6f149bc835be14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distributor at 0xc36bdd9a0435f1532499c6a13fcb720bca8bde79
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.17;
 
 contract Owned {
     address public owner;
@@ -36,6 +36,12 @@ contract Owned {
             ChangedOwner(owner);
         }
     }
+}
+
+contract IOwned {
+    function owner() returns (address);
+    function changeOwner(address);
+    function acceptOwnership();
 }
 
 // interface with what we need to withdraw
