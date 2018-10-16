@@ -1,20 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0xb1F4ca3C6256f415E420dE511504Af8ea8a9C8e0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x413c8657b6E6FA2B433dB62271e662A470DE4ba0
 */
-pragma solidity ^0.4.19;
-
 // CryptoRoulette
 //
 // Guess the number secretly stored in the blockchain and win the whole contract balance!
 // A new number is randomly chosen after each try.
 //
-// To play, call the play() method with the guessed number (1-10).  Bet price: 0.2 ether
+// To play, call the play() method with the guessed number (1-10).  Bet price: 0.1 ether
 
 contract CryptoRoulette {
 
     uint256 private secretNumber;
     uint256 public lastPlayed;
-    uint256 public betPrice = 0.2 ether;
+    uint256 public betPrice = 0.1 ether;
     address public ownerAddr;
 
     struct Game {
