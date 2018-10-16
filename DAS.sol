@@ -1,171 +1,192 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAS at 0x9A0ace223eDe819b9A48C605fdB0254b3335f4B2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAS at 0xd418Fcb33ae1a41BDC34D257A228Ea9CB7C8fd03
 */
 pragma solidity ^0.4.11;
 
- /* Receiver must implement this function to receive tokens
- *  otherwise token transaction will fail
- */
- 
- contract ContractReceiver {
-    function tokenFallback(address _from, uint256 _value, bytes _data){
-      _from = _from;
-      _value = _value;
-      _data = _data;
-      // Incoming transaction code here
-    }
-}
- 
- /* New ERC23 contract interface */
 
-contract ERC23 {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function allowance(address owner, address spender) constant returns (uint256);
+/*
+  Author: Victor Mezrin  victor@mezrin.com
+*/
 
-  function name() constant returns (string _name);
-  function symbol() constant returns (string _symbol);
-  function decimals() constant returns (uint8 _decimals);
-  function totalSupply() constant returns (uint256 _supply);
 
-  function transfer(address to, uint256 value) returns (bool ok);
-  function transfer(address to, uint256 value, bytes data) returns (bool ok);
-  function transferFrom(address from, address to, uint256 value) returns (bool ok);
-  function approve(address spender, uint256 value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Transfer(address indexed from, address indexed to, uint256 value, bytes data);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+/* Interface of the ERC223 token */
+contract ERC223TokenInterface {
+    function name() constant returns (string _name);
+    function symbol() constant returns (string _symbol);
+    function decimals() constant returns (uint8 _decimals);
+    function totalSupply() constant returns (uint256 _supply);
+
+    function balanceOf(address _owner) constant returns (uint256 _balance);
+
+    function approve(address _spender, uint256 _value) returns (bool _success);
+    function allowance(address _owner, address spender) constant returns (uint256 _remaining);
+
+    function transfer(address _to, uint256 _value) returns (bool _success);
+    function transfer(address _to, uint256 _value, bytes _metadata) returns (bool _success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool _success);
+
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value, bytes metadata);
 }
 
 
- /**
- * ERC23 token by Dexaran
- *
- * https://github.com/Dexaran/ERC23-tokens
- */
- 
-contract ERC23Token is ERC23 {
-
-  mapping(address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
-
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-  uint256 public totalSupply;
-
-  // Function to access name of token .
-  function name() constant returns (string _name) {
-      return name;
-  }
-  // Function to access symbol of token .
-  function symbol() constant returns (string _symbol) {
-      return symbol;
-  }
-  // Function to access decimals of token .
-  function decimals() constant returns (uint8 _decimals) {
-      return decimals;
-  }
-  // Function to access total supply of tokens .
-  function totalSupply() constant returns (uint256 _totalSupply) {
-      return totalSupply;
-  }
-
-  //function that is called when a user or another contract wants to transfer funds
-  function transfer(address _to, uint256 _value, bytes _data) returns (bool success) {
-  
-    //filtering if the target is a contract with bytecode inside it
-    if(isContract(_to)) {
-        transferToContract(_to, _value, _data);
+/* Interface of the contract that is going to receive ERC223 tokens */
+contract ERC223ContractInterface {
+    function erc223Fallback(address _from, uint256 _value, bytes _data){
+        // to avoid warnings during compilation
+        _from = _from;
+        _value = _value;
+        _data = _data;
+        // Incoming transaction code here
+        throw;
     }
-    else {
-        transferToAddress(_to, _value, _data);
-    }
-    return true;
-  }
-  
-  function transfer(address _to, uint256 _value) returns (bool success) {
-      
-    //standard function transfer similar to ERC20 transfer with no _data
-    //added due to backwards compatibility reasons
-    bytes memory empty;
-    if(isContract(_to)) {
-        transferToContract(_to, _value, empty);
-    }
-    else {
-        transferToAddress(_to, _value, empty);
-    }
-    return true;
-  }
+}
 
-  //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool success) {
-    balances[msg.sender] -= _value;
-    balances[_to] += _value;
-    Transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
-  }
-  
-  //function that is called when transaction target is a contract
-  function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool success) {
-    balances[msg.sender] -= _value;
-    balances[_to] += _value;
-    ContractReceiver reciever = ContractReceiver(_to);
-    reciever.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
-  }
-  
-  //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-  function isContract(address _addr) private returns (bool is_contract) {
-      _addr = _addr;
-      uint256 length;
-      assembly {
+
+/* https://github.com/LykkeCity/EthereumApiDotNetCore/blob/master/src/ContractBuilder/contracts/token/SafeMath.sol */
+contract SafeMath {
+    uint256 constant public MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x > MAX_UINT256 - y) throw;
+        return x + y;
+    }
+
+    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x < y) throw;
+        return x - y;
+    }
+
+    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (y == 0) return 0;
+        if (x > MAX_UINT256 / y) throw;
+        return x * y;
+    }
+}
+
+
+contract ERC223Token is ERC223TokenInterface, SafeMath {
+
+    /*
+      Storage of the contract
+    */
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowances;
+
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+
+
+    /*
+      Getters
+    */
+
+    function name() constant returns (string _name) {
+        return name;
+    }
+
+    function symbol() constant returns (string _symbol) {
+        return symbol;
+    }
+
+    function decimals() constant returns (uint8 _decimals) {
+        return decimals;
+    }
+
+    function totalSupply() constant returns (uint256 _supply) {
+        return totalSupply;
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 _balance) {
+        return balances[_owner];
+    }
+
+
+    /*
+      Allow to spend
+    */
+
+    function approve(address _spender, uint256 _value) returns (bool _success) {
+        allowances[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 _remaining) {
+        return allowances[_owner][_spender];
+    }
+
+
+    /*
+      Transfer
+    */
+
+    function transfer(address _to, uint256 _value) returns (bool _success) {
+        bytes memory emptyMetadata;
+        __transfer(msg.sender, _to, _value, emptyMetadata);
+        return true;
+    }
+
+    function transfer(address _to, uint256 _value, bytes _metadata) returns (bool _success)
+    {
+        __transfer(msg.sender, _to, _value, _metadata);
+        Transfer(msg.sender, _to, _value, _metadata);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool _success) {
+        if (allowances[_from][msg.sender] < _value) throw;
+
+        allowances[_from][msg.sender] = safeSub(allowances[_from][msg.sender], _value);
+        bytes memory emptyMetadata;
+        __transfer(_from, _to, _value, emptyMetadata);
+        return true;
+    }
+
+    function __transfer(address _from, address _to, uint256 _value, bytes _metadata) internal
+    {
+        if (_from == _to) throw;
+        if (_value == 0) throw;
+        if (balanceOf(_from) < _value) throw;
+
+        balances[_from] = safeSub(balanceOf(_from), _value);
+        balances[_to] = safeAdd(balanceOf(_to), _value);
+
+        if (isContract(_to)) {
+            ERC223ContractInterface receiverContract = ERC223ContractInterface(_to);
+            receiverContract.erc223Fallback(_from, _value, _metadata);
+        }
+
+        Transfer(_from, _to, _value);
+    }
+
+
+    /*
+      Helpers
+    */
+
+    // Assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+    function isContract(address _addr) internal returns (bool _isContract) {
+        _addr = _addr; // to avoid warnings during compilation
+
+        uint256 length;
+        assembly {
             //retrieve the size of the code on target address, this needs assembly
             length := extcodesize(_addr)
         }
-        if(length>0) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return (length > 0);
     }
-
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
-    
-    if(_value > _allowance) {
-        throw;
-    }
-
-    balances[_to] += _value;
-    balances[_from] -= _value;
-    allowed[_from][msg.sender] -= _value;
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint256 _value) returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
 }
 
 
+
 // ERC223 token with the ability for the owner to block any account
-contract DASToken is ERC23Token {
+contract DASToken is ERC223Token {
     mapping (address => bool) blockedAccounts;
     address public secretaryGeneral;
 
@@ -208,32 +229,31 @@ contract DASToken is ERC23Token {
     }
 
     // override transfer methods to throw on blocked accounts
-    function transfer(address _to, uint256 _value, bytes _data) returns (bool success) {
+    function transfer(address _to, uint256 _value) returns (bool _success) {
         if (blockedAccounts[msg.sender]) {
             throw;
         }
-        return ERC23Token.transfer(_to, _value, _data);
+        return super.transfer(_to, _value);
     }
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
+    function transfer(address _to, uint256 _value, bytes _metadata) returns (bool _success) {
         if (blockedAccounts[msg.sender]) {
             throw;
         }
-        bytes memory empty;
-        return ERC23Token.transfer(_to, _value, empty);
+        return super.transfer(_to, _value, _metadata);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool _success) {
         if (blockedAccounts[_from]) {
             throw;
         }
-        return ERC23Token.transferFrom(_from, _to, _value);
+        return super.transferFrom(_from, _to, _value);
     }
 }
 
 
 
-contract ABCToken is ERC23Token {
+contract ABCToken is ERC223Token {
     // Constructor
     function ABCToken(
             string _name,
@@ -251,7 +271,7 @@ contract ABCToken is ERC23Token {
 
 
 // Contract with voting on proposals and execution of passed proposals
-contract DAS is ContractReceiver {
+contract DAS is ERC223ContractInterface {
 
     /* Contract Variables */
 
@@ -333,8 +353,16 @@ contract DAS is ContractReceiver {
         RulesChangedEvent(congressMemberThreshold, minimumQuorum, debatingPeriod, marginForMajority);
     }
 
-    // blank fallback to receive ETH
+    // blank fallback functions to receive ETH and tokens
     function() payable { }
+
+    function erc223Fallback(address _from, uint256 _value, bytes _data){
+        // to avoid warnings during compilation
+        _from = _from;
+        _value = _value;
+        _data = _data;
+    }
+
 
     /* Proposal-related functions */
 
