@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GasFiles at 0x75c79b88facE8892E7043797570c390bc2Db52A7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GasFiles at 0xc8b2f8b27c41e143b5380f764d6b402763499381
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.19;
 
 interface IERC20 {
     function totalSupply() constant returns (uint256 totalSupply);
