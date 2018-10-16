@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GemsToken at 0x8fc1c3933cb04bac34bcbccd34b0982ddf0a915c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GemsToken at 0x57e41db46a4381777c0a2f53384ea2ee0d46635c
 */
 pragma solidity ^0.4.18;
 
@@ -10,7 +10,7 @@ pragma solidity ^0.4.18;
 // Symbol      : GEM
 // Name        : Gems Token
 // Total supply: 10000000
-// Decimals    : 18
+// Decimals    : 0
 //
 // Enjoy.
 //
@@ -118,8 +118,8 @@ contract GemsToken is ERC20Interface, Owned, SafeMath {
     function GemsToken() public {
         symbol = "GEM";
         name = "Gems Token";
-        decimals = 18;
-        _totalSupply = 10000000000000000000000000;
+        decimals = 0;
+        _totalSupply = 10000000;
         balances[0x5dDD9bb4d5640cE37c76dDac8B3bbD35D84416A6] = _totalSupply;
         Transfer(address(0), 0x5dDD9bb4d5640cE37c76dDac8B3bbD35D84416A6, _totalSupply);
     }
