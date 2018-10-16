@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x47f9c2af8111c76a64355433f116920bfa8bd1e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xf1153aff0486931edf0b84a320c40b35bc83d856
 */
+pragma solidity ^0.4.4;
+
 contract Token {
 
     /// @return total amount of tokens
@@ -96,32 +98,20 @@ contract ERC20Token is StandardToken {
         throw;
     }
 
-    /* Public variables of the token */
+    
+    string public name;              
+    uint8 public decimals;               
+    string public symbol;                 
+    string public version = 'H1.0';
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 3000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 3000000000000000;                        // Update total supply (100000 for example)
-        name = "LanaCharleen08";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "LC08";                               // Set the symbol for display purposes
+        balances[msg.sender] = 8500000000000000000000000;                
+        totalSupply = 8500000000000000000000000;                       
+        name = "Israel Coin";                                    
+        decimals = 18;                            
+        symbol = "ISRC";                              
     }
 
     /* Approves and then calls the receiving contract */
