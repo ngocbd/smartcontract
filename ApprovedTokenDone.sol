@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x259236e8c5186ab5173efa7f418d78663cd4884a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xff23f9c35922479c2d8bfe3637c48c2917875878
 */
 pragma solidity ^0.4.13;
 
@@ -153,16 +153,16 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'TWO';
-	string public symbol = 'TWO';
-	uint public decimals = 3;
-	uint public initialSupply = 2000;
+	string public name = 'KITTIES';
+	string public symbol = 'KITTIES';
+	uint public decimals = 0;
+	uint public initialSupply = 600000000;
 	string public publishier = 'TokenDone.io';
-	uint public creationTime;
+	uint public CreationTime;
 	
 	function ApprovedTokenDone() {
 		totalSupply = initialSupply;
     	balances[0xe90fFFd34aEcFE44db61a6efD85663296094A09c] = initialSupply;
-		creationTime = now;
+		CreationTime = now;
 	}
 }
