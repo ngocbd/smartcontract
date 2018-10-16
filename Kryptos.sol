@@ -1,31 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kryptos at 0x838b7f109449df02e151ec9e7ebe64edb53dcb82
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kryptos at 0xa2437d1cc372dfe4a1145bc74cb6061f1665d2d3
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract Kryptos {
+
 	//***********************************************
 	//*                 18.02.2018                  *
+	//*               www.kryptos.ws                *
 	//*        Kryptos - Secure Communication       *
 	//* Egemen POLAT Tarafindan projelendirilmistir *
     //***********************************************
     
-	bool public transferactive;
-	bool public shareactive;
-	bool public coinsaleactive;
+	bool public TransferActive;
+	bool public ShareActive;
+	bool public CoinSaleActive;
     string public name;
     string public symbol;
-    uint256 public buyPrice;
-    uint8 public decimals = 4;
+    uint256 public BuyPrice;
+    uint8 public decimals = 18;
     uint256 public totalSupply;
-    address public owner;
-	address public reserve;
+    address public Owner;
+	address public Reserve;
 	
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Burn(address indexed from, uint256 value);
 	
@@ -44,12 +45,12 @@ contract Kryptos {
         balanceOf[msg.sender] = totalSupply;
         name = tokenName;
         symbol = tokenSymbol;
-        owner = tokenowner;
-		reserve = tokenreserve;
-		buyPrice = tokenbuyPrice;
-		transferactive = tokentransferactive;
-		shareactive = tokenshareactive;
-		coinsaleactive = tokencoinsaleactive;
+        Owner = tokenowner;
+		Reserve = tokenreserve;
+		BuyPrice = tokenbuyPrice;
+		TransferActive = tokentransferactive;
+		ShareActive = tokenshareactive;
+		CoinSaleActive = tokencoinsaleactive;
     }
 
     function _transfer(address _from, address _to, uint _value) internal {
@@ -63,26 +64,57 @@ contract Kryptos {
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
     
-    function setOwner(uint256 newBuyPrice) public {
-        if (msg.sender == owner) {buyPrice = newBuyPrice;}
+    function setOwner(address newdata) public {
+        if (msg.sender == Owner) {Owner = newdata;}
     }
-    
+		
+    function setTransferactive(bool newdata) public {
+        if (msg.sender == Owner) {TransferActive = newdata;}
+    }
+	
+    function setShareactive(bool newdata) public {
+        if (msg.sender == Owner) {ShareActive = newdata;}
+    }
+	
+    function setCoinsaleactive(bool newdata) public {
+        if (msg.sender == Owner) {CoinSaleActive = newdata;}
+    }
+
     function setPrices(uint256 newBuyPrice) public {
-        if (msg.sender == owner) {buyPrice = newBuyPrice;}
+        if (msg.sender == Owner) {BuyPrice = newBuyPrice;}
     }
     
-    function buy() payable public {
-        uint amount = msg.value * buyPrice;
-        if (coinsaleactive){_transfer(reserve, msg.sender, amount);}
+    function buy() payable public{	
+        if (CoinSaleActive){
+			uint256 amount = msg.value * BuyPrice;
+			if (balanceOf[Reserve] < amount) {
+				return;
+			}
+			balanceOf[Reserve] -= amount;
+			balanceOf[msg.sender] += amount;
+			Transfer(Reserve, msg.sender, amount);
+			Reserve.transfer(msg.value); 
+		}
     }
     
-    function ShareDATA(string SMS) public {
-        bytes memory string_rep = bytes(SMS);
-        if (shareactive){_transfer(msg.sender, reserve, string_rep.length * 2);}
+    function ShareDATA(string newdata) public {
+        bytes memory string_rep = bytes(newdata);
+        if (ShareActive){_transfer(msg.sender, Reserve, string_rep.length * (2* 10 ** (uint256(decimals)-4)));}
+    }
+	
+    function ShareRoomDATA(address RoomAddress,string newdata) public {
+        bytes memory string_rep = bytes(newdata);
+		uint256 TXfee = string_rep.length * (25* 10 ** (uint256(decimals)-5));
+        if (ShareActive){
+			balanceOf[msg.sender] -= TXfee;
+			balanceOf[Reserve] += TXfee;
+			Transfer(msg.sender, Reserve, TXfee);
+			Transfer(msg.sender, RoomAddress, 0);
+		}
     }
 	
     function transfer(address _to, uint256 _value) public {
-        if (transferactive){_transfer(msg.sender, _to, _value);}
+        if (TransferActive){_transfer(msg.sender, _to, _value);}
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
