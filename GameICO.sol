@@ -1,16 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameICO at 0xb70835d7822ebb9426b56543e391846c107bd32c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameICO at 0xfb9c566774c2f1de4d364a272cbf0de7c23dd825
 */
 pragma solidity ^0.4.8;
 
-// @address 0xb70835d7822ebb9426b56543e391846c107bd32c
-// @multisig
+// @address 0xc0f29cdf021e0900ab6ad8d5c4cd86268d5eb715,0x1317d2b6d164ddf98f63ea54719efaee8d244457
+// @address 0x5445c6027129EdC7677834dc7F3f5E1f00141D2D
+// @multisig 0x664fEdFC0C9EdC1D8F50F5C11a13f3C5AC7a05E2
 // The implementation for the Game ICO smart contract was inspired by
 // the Ethereum token creation tutorial, the FirstBlood token, and the BAT token.
 // compiler: 0.4.17+commit.bdeb9e52
 
 /*
-1. Contract Address: 0xb70835d7822ebb9426b56543e391846c107bd32c
+1. Contract Address: 0x5445c6027129EdC7677834dc7F3f5E1f00141D2D
+0x1c4aca13875aef724f7256beb66dbd6c720fa34c
 
 2. Official Site URL:https://www.game.com/
 
@@ -116,9 +118,6 @@ contract StandardToken is Token {
     function balanceOf(address _owner) constant public returns (uint256 balance){
         return balances[_owner] + lockedBalances[_owner];
     }
-    function availableBalanceOf(address _owner) constant public returns (uint256 balance){
-        return balances[_owner];
-    }
 
     function approve(address _spender, uint256 _value) public returns (bool success){
         allowed[msg.sender][_spender] = _value;
@@ -137,8 +136,8 @@ contract StandardToken is Token {
 
 contract GameICO is StandardToken, SafeMath {
     // Descriptive properties
-    string public constant name = "Game.com Token";
-    string public constant symbol = "GTC";
+    string public constant name = "Test Token";
+    string public constant symbol = "CTG";
     uint256 public constant decimals = 18;
     string public version = "1.0";
 
@@ -186,7 +185,6 @@ contract GameICO is StandardToken, SafeMath {
     // Events for logging refunds and token creation.
     event CreateGameIco(address indexed _to, uint256 _value);
     event PreICOTokenPushed(address indexed _buyer, uint256 _amount);
-    event UnlockBalance(address indexed _owner, uint256 _amount);
     event OwnerAddition(address indexed owner);
     event OwnerRemoval(address indexed owner);
 
@@ -315,7 +313,6 @@ contract GameICO is StandardToken, SafeMath {
         }
         balances[_owner] += shouldUnlockedBalance;
         lockedBalances[_owner] -= shouldUnlockedBalance;
-        UnlockBalance(_owner, shouldUnlockedBalance);
         return true;
     }
 
@@ -376,9 +373,9 @@ contract GameICO is StandardToken, SafeMath {
     function withDraw(uint256 _value) public{
         require(msg.sender == etherProceedsAccount);
         if(multiWallet != 0x0){
-            multiWallet.transfer(_value);
+            if (!multiWallet.send(_value)) require(false);
         }else{
-            etherProceedsAccount.transfer(_value);
+            if (!etherProceedsAccount.send(_value)) require(false);
         }
     }
 
@@ -388,20 +385,15 @@ contract GameICO is StandardToken, SafeMath {
         isFinalized = true;
         if(multiWallet != 0x0){
             assignLockedBalance(multiWallet, totalSupply- window0TotalSupply- window1TotalSupply - window2TotalSupply);
-            if(this.balance > 0) multiWallet.transfer(this.balance);
+            if (!multiWallet.send(this.balance)) require(false);
         }else{
             assignLockedBalance(etherProceedsAccount, totalSupply- window0TotalSupply- window1TotalSupply - window2TotalSupply);
-            if(this.balance > 0) etherProceedsAccount.transfer(this.balance);
+            if (!etherProceedsAccount.send(this.balance)) require(false);
         }
-    }
-
-    function supply() constant public returns (uint256){
-        return window0TotalSupply + window1TotalSupply + window2TotalSupply;
     }
 
     function assignLockedBalance(address _owner, uint256 val) private{
         initLockedBalances[_owner] += val;
         lockedBalances[_owner] += val;
     }
-
 }
