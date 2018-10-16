@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proof at 0x0e7d77bf4c468b6b626b07be5aa1c8222eb08324
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proof at 0xF3cfb35afdbFFeA20892488bA7F1574AddA81B9D
 */
 pragma solidity ^0.4.21;
 
@@ -17,16 +17,42 @@ pragma solidity ^0.4.21;
 * Features:
 * [?] 5% rewards for token purchase, shared among all token holders.
 * [?] 5% rewards for token selling, shared among all token holders.
-* [?] 5% rewards for token transfer, shared among all token holders.
+* [?] 0% rewards for token transfer.
 * [?] 3% rewards is given to referrer which is 60% of the 5% purchase reward.
 * [?] Price increment by 0.000000001 instead of 0.00000001 for lower buy/sell price.
 * [?] 1 token to activate Masternode referrals.
+* [?] Ability to create games and other contracts that transact in One Proof Tokens.
 * [?] No Administrators or Ambassadors that can change anything with the contract.
-*
+* 
 */
 
-contract Proof {
+/**
+ * Definition of contract accepting One Proof Tokens
+ * Other contracts can reuse the AcceptsProof contract below to support One Proof Tokens
+ */
+contract AcceptsProof {
+    Proof public tokenContract;
 
+    function AcceptsProof(address _tokenContract) public {
+        tokenContract = Proof(_tokenContract);
+    }
+
+    modifier onlyTokenContract {
+        require(msg.sender == address(tokenContract));
+        _;
+    }
+
+    /**
+    * @dev Standard ERC677 function that will handle incoming token transfers.
+    *
+    * @param _from  Token sender address.
+    * @param _value Amount of tokens.
+    * @param _data  Transaction metadata.
+    */
+    function tokenFallback(address _from, uint256 _value, bytes _data) external returns (bool);
+}
+
+contract Proof {
 
     /*=================================
     =            MODIFIERS            =
@@ -44,6 +70,10 @@ contract Proof {
         _;
     }
 
+	modifier notContract() {
+      require (msg.sender == tx.origin);
+      _;
+    }
 
     /*==============================
     =            EVENTS            =
@@ -96,9 +126,6 @@ contract Proof {
     /// @dev 5% rewards for token purchase
     uint8 constant internal entryFee_ = 5;
 
-    /// @dev 5% rewards for token transfer
-    uint8 constant internal transferFee_ = 5;
-
     /// @dev 5% rewards for token selling
     uint8 constant internal exitFee_ = 5;
 
@@ -131,7 +158,7 @@ contract Proof {
 
     /// @dev Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
     function buy(address _referredBy) public payable returns (uint256) {
-        purchaseTokens(msg.value, _referredBy);
+        purchaseInternal(msg.value, _referredBy);
     }
 
     /**
@@ -139,7 +166,7 @@ contract Proof {
      *  Unfortunately we cannot use a referral address this way.
      */
     function() payable public {
-        purchaseTokens(msg.value, 0x0);
+        purchaseInternal(msg.value, 0x0);
     }
 
     /// @dev Converts all of caller's dividends to tokens.
@@ -222,12 +249,11 @@ contract Proof {
         emit onTokenSell(_customerAddress, _tokens, _taxedEthereum, now, buyPrice());
     }
 
-
-    /**
-     * @dev Transfer tokens from the caller to a new holder.
-     *  Remember, there's a 15% fee here as well.
+	/**
+     * Transfer tokens from the caller to a new holder.
+     * No fee with this transfer
      */
-    function transfer(address _toAddress, uint256 _amountOfTokens) onlyBagholders public returns (bool) {
+    function transfer(address _toAddress, uint256 _amountOfTokens) onlyBagholders() public returns(bool) {
         // setup
         address _customerAddress = msg.sender;
 
@@ -235,37 +261,54 @@ contract Proof {
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
 
         // withdraw all outstanding dividends first
-        if (myDividends(true) > 0) {
-            withdraw();
-        }
-
-        // liquify 10% of the tokens that are transfered
-        // these are dispersed to shareholders
-        uint256 _tokenFee = SafeMath.div(SafeMath.mul(_amountOfTokens, transferFee_), 100);
-        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
-        uint256 _dividends = tokensToEthereum_(_tokenFee);
-
-        // burn the fee tokens
-        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
+        if(myDividends(true) > 0) withdraw();
 
         // exchange tokens
         tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
-        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
+        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _amountOfTokens);
 
         // update dividend trackers
         payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
-        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
+        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _amountOfTokens);
 
-        // disperse dividends among holders
-        profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
 
         // fire event
-        emit Transfer(_customerAddress, _toAddress, _taxedTokens);
+        emit Transfer(_customerAddress, _toAddress, _amountOfTokens);
 
         // ERC20
         return true;
     }
 
+	/**
+    * Transfer token to a specified address and forward the data to recipient
+    * ERC-677 standard
+    * https://github.com/ethereum/EIPs/issues/677
+    * @param _to    Receiver address.
+    * @param _value Amount of tokens that will be transferred.
+    * @param _data  Transaction metadata.
+    */
+    function transferAndCall(address _to, uint256 _value, bytes _data) external returns (bool) {
+      require(_to != address(0));
+      require(transfer(_to, _value)); // do a normal token transfer to the contract
+
+      if (isContract(_to)) {
+        AcceptsProof receiver = AcceptsProof(_to);
+        require(receiver.tokenFallback(msg.sender, _value, _data));
+      }
+
+      return true;
+    }
+
+	/**
+	* Additional check that the game address we are sending tokens to is a contract
+	* assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+	*/
+	function isContract(address _addr) private constant returns (bool is_contract) {
+       // retrieve the size of the code on target address, this needs assembly
+       uint length;
+       assembly { length := extcodesize(_addr) }
+       return length > 0;
+	}
 
     /*=====================================
     =      HELPERS AND CALCULATORS        =
@@ -361,6 +404,16 @@ contract Proof {
     /*==========================================
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
+	
+    function purchaseInternal(uint256 _incomingEthereum, address _referredBy)
+      notContract()// no contracts allowed
+      internal
+      returns(uint256) {
+
+      purchaseTokens(_incomingEthereum, _referredBy);
+
+    }
+
 
     /// @dev Internal function to actually purchase the tokens.
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy) internal returns (uint256) {
