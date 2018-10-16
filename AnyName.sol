@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnyName at 0x178abbc1574a55ada66114edd68ab95b690158fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnyName at 0x580d69737e11cf2fb306c8fc0161b86f7c9f03ba
 */
-pragma solidity ^0.4.14;
+pragma solidity ^0.4.18;
  
 /* Roman Lanskoj  
    Limited/unlimited coin contract
@@ -203,14 +203,14 @@ contract TheLiquidToken is StandardToken, Ownable {
 }
     
 contract AnyName is TheLiquidToken {
-  string public constant name = "Michael Nguyen 1";
-  string public constant symbol = "MN1";
-  uint public constant decimals = 2;
-  uint256 public initialSupply;
+  string public constant name = "Neubulous Token";
+      string public constant symbol = "NEBO";
+  uint public constant decimals = 3;
+  uint256 public initialSupply = 23000300003;
     
   // Constructor
   function AnyName () { 
-     totalSupply = 2300 * 10 ** 9;
+     totalSupply = 23000300003;
       balances[msg.sender] = totalSupply;
       initialSupply = totalSupply; 
         Transfer(0, this, totalSupply);
