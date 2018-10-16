@@ -1,187 +1,102 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xef650b86c56519826664e20198ee8211616619da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc43fba7bf0250fcd88439af086475fdf117fa255
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-contract FullERC20 {
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-  
-  uint256 public totalSupply;
-  uint8 public decimals;
-
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
+interface token {
+    function transfer(address receiver, uint amount) public;
 }
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+contract Crowdsale {
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public amountRaised;
+    uint public deadline;
+    uint public price;
+    token public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    bool fundingGoalReached = false;
+    bool crowdsaleClosed = false;
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract Crowdsale is Ownable {
-    using SafeMath for uint256;
-
-
-    // start and end timestamps where investments are allowed (both inclusive)
-    uint256 public startTime;
-    uint256 public endTime;
-
-    // address where funds are collected
-    address public wallet;
-    FullERC20 public token;
-
-    // token amount per 1 ETH
-    // eg. 40000000000 = 2500000 tokens.
-    uint256 public rate; 
-
-    // amount of raised money in wei
-    uint256 public weiRaised;
-    uint256 public tokensPurchased;
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
     /**
-    * event for token purchase logging
-    * @param purchaser who paid for the tokens
-    * @param value weis paid for purchase
-    * @param amount amount of tokens purchased
-    */
-    event TokenPurchased(address indexed purchaser, uint256 value, uint256 amount);
-
-    function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, address _token) public {
-        require(_startTime >= now);
-        require(_endTime >= _startTime);
-        require(_rate > 0);
-        require(_wallet != address(0));
-        require(_token != address(0));
-
-        startTime = _startTime;
-        endTime = _endTime;
-        rate = _rate;
-        wallet = _wallet;
-        token = FullERC20(_token);
+     * Constrctor function
+     *
+     * Setup the owner
+     */
+    function Crowdsale (
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint durationInMinutes,
+        uint etherCostOfEachToken,
+        address addressOfTokenUsedAsReward
+    ) public {
+        beneficiary = ifSuccessfulSendTo;
+        fundingGoal = fundingGoalInEthers * 1 ether;
+        deadline = now + durationInMinutes * 1 minutes;
+        price = etherCostOfEachToken * 1 ether;
+        tokenReward = token(addressOfTokenUsedAsReward);
     }
 
-    // fallback function can be used to buy tokens
-    function () public payable {
-        purchase();
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function () payable public {
+        require(!crowdsaleClosed);
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, amount / price);
+        FundTransfer(msg.sender, amount, true);
     }
 
-    function purchase() public payable {
-        require(msg.sender != address(0));
-        require(validPurchase());
+    modifier afterDeadline() { if (now >= deadline) _; }
 
-        uint256 weiAmount = msg.value;
-
-        // calculate token amount to be created
-        uint256 tokens = weiAmount.div(rate);
-        require(tokens > 0);
-        require(token.balanceOf(this) > tokens);
-
-        // update state
-        weiRaised = weiRaised.add(weiAmount);
-        tokensPurchased = tokensPurchased.add(tokens);
-
-        TokenPurchased(msg.sender, weiAmount, tokens);
-        assert(token.transfer(msg.sender, tokens));
-        wallet.transfer(msg.value);
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign
+     */
+    function checkGoalReached() afterDeadline public{
+        if (amountRaised >= fundingGoal){
+            fundingGoalReached = true;
+            GoalReached(beneficiary, amountRaised);
+        }
+        crowdsaleClosed = true;
     }
 
-    // @return true if the transaction can buy tokens
-    function validPurchase() internal view returns (bool) {
-        bool withinPeriod = now >= startTime && now <= endTime;
-        bool nonZeroPurchase = msg.value != 0;
-        return withinPeriod && nonZeroPurchase;
-    }
 
-    // @return true if crowdsale event has ended
-    function hasEnded() public view returns (bool) {
-        return now > endTime;
-    }
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function safeWithdrawal() afterDeadline public {
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                if (msg.sender.send(amount)) {
+                    FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
 
-    // @dev updates the rate
-    function updateRate(uint256 newRate) public onlyOwner {
-        rate = newRate;
-    }
-
-    function updateTimes(uint256 _startTime, uint256 _endTime) public onlyOwner {
-        startTime = _startTime;
-        endTime = _endTime;
-    }
-
-    // @dev returns the number of tokens available in the sale.
-    function tokensAvailable() public view returns (bool) {
-        return token.balanceOf(this) > 0;
-    }
-
-    // @dev Ends the token sale and transfers balance of tokens
-    // and eth to owner. 
-    function endSale() public onlyOwner {
-        wallet.transfer(this.balance);
-        assert(token.transfer(wallet, token.balanceOf(this)));
-        endTime = now;
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
     }
 }
