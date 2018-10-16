@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherHiLo at 0x92ea0d71b3f51883968e52da5db41baf8b35b4c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherHiLo at 0xa1e70923902524faf901a3978f499908f689d114
 */
 pragma solidity ^0.4.18;
 
@@ -1153,17 +1153,13 @@ contract EtherHiLo is usingOraclize, Ownable {
 
     // state
     uint public balanceInPlay;
-    uint public totalGamesPlayed;
-    uint public totalBetsMade;
-    uint public totalWinnings;
 
     mapping(address => Game) private gamesInProgress;
     mapping(uint => address) private rollIdToGameAddress;
+    mapping(uint => uint) private failedRolls;
 
-    event GameStarted(address indexed player, uint indexed playerGameNumber, uint bet);
-    event FirstRoll(address indexed player, uint indexed playerGameNumber, uint bet, uint roll);
-    event DirectionChosen(address indexed player, uint indexed playerGameNumber, uint bet, uint firstRoll, BetDirection direction);
-    event GameFinished(address indexed player, uint indexed playerGameNumber, uint bet, uint firstRoll, uint finalRoll, uint winnings, uint payout);
+    event GameFinished(address indexed player, uint indexed playerGameNumber, uint bet, uint8 firstRoll, uint8 finalRoll, uint winnings, uint payout);
+    event GameError(address indexed player, uint indexed playerGameNumber, uint rollId);
 
     enum BetDirection {
         None,
@@ -1171,58 +1167,33 @@ contract EtherHiLo is usingOraclize, Ownable {
         High
     }
 
+    enum GameState {
+        None,
+        WaitingForFirstCard,
+        WaitingForDirection,
+        WaitingForFinalCard,
+        Finished
+    }
+
     // the game object
     struct Game {
-        uint id;
         address player;
-        uint bet;
-        uint firstRoll;
-        uint finalRoll;
+        GameState state;
+        uint id;
         BetDirection direction;
+        uint bet;
+        uint8 firstRoll;
+        uint8 finalRoll;
         uint winnings;
-        uint when;
-    }
-
-    // modifier that requires the game is running
-    modifier gameIsRunning() {
-        require(gameRunning);
-        _;
-    }
-
-    // modifier that requires there is a game in progress
-    // for the player
-    modifier gameInProgress(address player) {
-        require(player != address(0));
-        require(gamesInProgress[player].player != address(0));
-        _;
-    }
-
-    // modifier that requires there is not a game in progress
-    // for the player
-    modifier gameNotInProgress(address player) {
-        require(player != address(0));
-        require(gamesInProgress[player].player == address(0));
-        _;
-    }
-
-    // modifier that requires the caller come from oraclize
-    modifier onlyOraclize {
-        require(msg.sender == oraclize_cbAddress());
-        _;
     }
 
     // the constructor
     function EtherHiLo() public {
         oraclize_setProof(proofType_Ledger);
-        setRNGCallbackGas(1000000);
-        setRNGCallbackGasPrice(4000000000 wei);
+        setRNGCallbackGasConfig(1000000, 4000000000 wei);
         setMinBet(1 finney);
         setGameRunning(true);
         setMaxBetThresholdPct(50);
-
-        totalGamesPlayed = 0;
-        totalBetsMade = 0;
-        totalWinnings = 0;
     }
 
     /// Default function
@@ -1235,63 +1206,57 @@ contract EtherHiLo is usingOraclize, Ownable {
     /// EXTERNAL GAME RELATED FUNCTIONS
 
     // begins a game
-    function beginGame() public payable
-            gameIsRunning
-            gameNotInProgress(msg.sender) {
-
+    function beginGame() public payable {
         address player = msg.sender;
         uint bet = msg.value;
 
+        require(player != address(0));
+        require(gamesInProgress[player].state == GameState.None || gamesInProgress[player].state == GameState.Finished);
+        require(gameRunning);
         require(bet >= minBet && bet <= getMaxBet());
 
         Game memory game = Game({
-            id:         uint(keccak256(block.number, block.timestamp, player, bet)),
-            player:     player,
-            bet:        bet,
-            firstRoll:  0,
-            finalRoll:  0,
-            direction:  BetDirection.None,
-            winnings:   0,
-            when:       block.timestamp
+                id:         uint(keccak256(block.number, player, bet)),
+                player:     player,
+                state:      GameState.WaitingForFirstCard,
+                bet:        bet,
+                firstRoll:  0,
+                finalRoll:  0,
+                winnings:   0,
+                direction:  BetDirection.None
             });
 
         balanceInPlay = balanceInPlay + game.bet;
-        totalGamesPlayed = totalGamesPlayed + 1;
-        totalBetsMade = totalBetsMade + game.bet;
         gamesInProgress[player] = game;
         rollDie(player);
-        GameStarted(player, game.id, bet);
     }
 
     // finishes a game that is in progress
-    function finishGame(BetDirection direction) public gameInProgress(msg.sender) {
+    function finishGame(BetDirection direction) {
         address player = msg.sender;
+
         require(player != address(0));
-        require(direction != BetDirection.None);
+        require(gamesInProgress[player].state != GameState.None && gamesInProgress[player].state != GameState.Finished);
 
         Game storage game = gamesInProgress[player];
-        require(game.player != address(0));
-
         game.direction = direction;
+        game.state = GameState.WaitingForFinalCard;
         gamesInProgress[player] = game;
 
         rollDie(player);
-        DirectionChosen(player, game.id, game.bet, game.firstRoll, direction);
     }
 
-    // determins whether or not the caller is in a game
+    // returns current game state
     function getGameState(address player) public view returns
-            (bool, uint, uint, uint, BetDirection, uint, uint, uint) {
-        require(player != address(0));
+            (GameState, uint, BetDirection, uint, uint8, uint8, uint) {
         return (
-            gamesInProgress[player].player != address(0),
+            gamesInProgress[player].state,
+            gamesInProgress[player].id,
+            gamesInProgress[player].direction,
             gamesInProgress[player].bet,
             gamesInProgress[player].firstRoll,
             gamesInProgress[player].finalRoll,
-            gamesInProgress[player].direction,
-            gamesInProgress[player].id,
-            getMinBet(),
-            getMaxBet()
+            gamesInProgress[player].winnings
         );
     }
 
@@ -1375,62 +1340,59 @@ contract EtherHiLo is usingOraclize, Ownable {
     /// INTERNAL GAME RELATED FUNCTIONS
 
     // process a successful roll
-    function processDiceRoll(address player, uint roll) private {
+    function processDiceRoll(address player, uint8 roll) private {
 
         Game storage game = gamesInProgress[player];
-        require(game.player != address(0));
 
         if (game.firstRoll == 0) {
 
             game.firstRoll = roll;
+            game.state = GameState.WaitingForDirection;
             gamesInProgress[player] = game;
 
-            FirstRoll(player, game.id, game.bet, game.firstRoll);
-
-        } else if (game.finalRoll == 0) {
-
-            game.finalRoll = roll;
-
-            uint winnings = 0;
-            if (game.direction == BetDirection.High && game.finalRoll > game.firstRoll) {
-                winnings = calculateWinnings(game.bet, getHighWinPercent(game.firstRoll));
-            } else if (game.direction == BetDirection.Low && game.finalRoll < game.firstRoll) {
-                winnings = calculateWinnings(game.bet, getLowWinPercent(game.firstRoll));
-            }
-            game.winnings = winnings;
-
-            // this should never happen according to the odds,
-            // and the fact that we don't allow people to bet
-            // so large that they can take the whole pot in one
-            // fell swoop - however, a number of people could
-            // theoretically all win simultaneously and cause
-            // this scenario.  This will try to at a minimum
-            // send them back what they bet and then since it
-            // is recorded on the blockchain we can verify that
-            // the winnings sent don't match what they should be
-            // and we can manually send the rest to the player.
-            uint transferAmount = winnings;
-            if (transferAmount > this.balance) {
-                if (game.bet < this.balance) {
-                    transferAmount = game.bet;
-                } else {
-                    transferAmount = SafeMath.div(SafeMath.mul(this.balance, 90), 100);
-                }
-            }
-
-            balanceInPlay = balanceInPlay - game.bet;
-
-            if (transferAmount > 0) {
-                game.player.transfer(transferAmount);
-            }
-
-            totalWinnings = totalWinnings + winnings;
-
-            GameFinished(player, game.id, game.bet, game.firstRoll, game.finalRoll, game.winnings, transferAmount);
-
-            delete gamesInProgress[player];
+            return;
         }
 
+        uint8 finalRoll = roll;
+        uint winnings = 0;
+
+        if (game.direction == BetDirection.High && finalRoll > game.firstRoll) {
+            winnings = calculateWinnings(game.bet, getHighWinPercent(game.firstRoll));
+        } else if (game.direction == BetDirection.Low && finalRoll < game.firstRoll) {
+            winnings = calculateWinnings(game.bet, getLowWinPercent(game.firstRoll));
+        }
+
+        // this should never happen according to the odds,
+        // and the fact that we don't allow people to bet
+        // so large that they can take the whole pot in one
+        // fell swoop - however, a number of people could
+        // theoretically all win simultaneously and cause
+        // this scenario.  This will try to at a minimum
+        // send them back what they bet and then since it
+        // is recorded on the blockchain we can verify that
+        // the winnings sent don't match what they should be
+        // and we can manually send the rest to the player.
+        uint transferAmount = winnings;
+        if (transferAmount > this.balance) {
+            if (game.bet < this.balance) {
+                transferAmount = game.bet;
+            } else {
+                transferAmount = SafeMath.div(SafeMath.mul(this.balance, 90), 100);
+            }
+        }
+
+        balanceInPlay = balanceInPlay - game.bet;
+
+        if (transferAmount > 0) {
+            game.player.transfer(transferAmount);
+        }
+
+        game.finalRoll = finalRoll;
+        game.winnings = winnings;
+        game.state = GameState.Finished;
+        gamesInProgress[player] = game;
+
+        GameFinished(player, game.id, game.bet, game.firstRoll, finalRoll, winnings, transferAmount);
     }
 
     // roll the dice for a player
@@ -1439,6 +1401,7 @@ contract EtherHiLo is usingOraclize, Ownable {
         uint delay = 0;
         bytes32 _queryId = oraclize_newRandomDSQuery(delay, N, rngCallbackGas);
         uint rollId = uint(keccak256(_queryId));
+        require(failedRolls[rollId] != rollId);
         rollIdToGameAddress[rollId] = player;
     }
 
@@ -1449,23 +1412,33 @@ contract EtherHiLo is usingOraclize, Ownable {
     // the callback function is called by Oraclize when the result is ready
     // the oraclize_randomDS_proofVerify modifier prevents an invalid proof to execute this function code:
     // the proof validity is fully verified on-chain
-    function __callback(bytes32 _queryId, string _result, bytes _proof) public onlyOraclize {
+    function __callback(bytes32 _queryId, string _result, bytes _proof) public {
         uint rollId = uint(keccak256(_queryId));
         address player = rollIdToGameAddress[rollId];
-        require(player != address(0));
+        require(msg.sender == oraclize_cbAddress());
+
+        // avoid reorgs
+        if (player == address(0)) {
+            failedRolls[rollId] = rollId;
+            return;
+        }
 
         if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0) {
 
             Game storage game = gamesInProgress[player];
-            require(game.player != address(0));
+            if (game.bet > 0) {
+                game.player.transfer(game.bet);
+            }
 
-            game.player.transfer(game.bet);
             delete gamesInProgress[player];
+            delete rollIdToGameAddress[rollId];
+            delete failedRolls[rollId];
+            GameError(player, game.id, rollId);
 
         } else {
-
-            uint randomNumber = (uint(keccak256(_result)) % NUM_DICE_SIDES) + 1;
+            uint8 randomNumber = uint8((uint(keccak256(_result)) % NUM_DICE_SIDES) + 1);
             processDiceRoll(player, randomNumber);
+
         }
 
         delete rollIdToGameAddress[rollId];
@@ -1487,20 +1460,13 @@ contract EtherHiLo is usingOraclize, Ownable {
         Game storage game = gamesInProgress[player];
         require(game.player != address(0));
 
-        uint elapsed = block.timestamp - game.when;
-        require(elapsed >= 86400);
-
         game.player.transfer(game.bet);
         delete gamesInProgress[game.player];
     }
 
     // set RNG callback gas
-    function setRNGCallbackGas(uint gas) public onlyOwner {
+    function setRNGCallbackGasConfig(uint gas, uint price) public onlyOwner {
         rngCallbackGas = gas;
-    }
-
-    // set RNG callback gas
-    function setRNGCallbackGasPrice(uint price) public onlyOwner {
         oraclize_setCustomGasPrice(price);
     }
 
@@ -1517,11 +1483,6 @@ contract EtherHiLo is usingOraclize, Ownable {
     // set the max bet threshold percent
     function setMaxBetThresholdPct(uint v) public onlyOwner {
         maxBetThresholdPct = v;
-    }
-
-    // Transfers the current balance to the owner and terminates the contract.
-    function destroy() public onlyOwner {
-        selfdestruct(owner);
     }
 
     // Transfers the current balance to the recepient and terminates the contract.
