@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0xfc01a484a288dbb404e6bb8aaff4d2b8c8273004
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0x0b48b747436f10c846696e889e66425e05cd740f
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -458,6 +458,14 @@ contract NameRegistry {
         feeRecipient = addressSet.feeRecipient;
         signer = addressSet.signer;
     }
+    function getFeeRecipientById(uint id)
+        external
+        view
+        returns (address feeRecipient)
+    {
+        Participant storage addressSet = participantMap[id];
+        feeRecipient = addressSet.feeRecipient;
+    }
     function getParticipantIds(string name, uint start, uint count)
         external
         view
@@ -506,7 +514,7 @@ contract NameRegistry {
         returns (bytes12 result)
     {
         assembly {
-            result := mload(add(str, 12))
+            result := mload(add(str, 32))
         }
     }
 }
@@ -852,46 +860,61 @@ contract TokenTransferDelegate is Claimable {
     }
     function batchTransferToken(
         address lrcTokenAddress,
-        address feeRecipient,
+        address minerFeeRecipient,
+        uint8 walletSplitPercentage,
         bytes32[] batch)
         onlyAuthorized
         external
     {
         uint len = batch.length;
-        require(len % 6 == 0);
+        require(len % 7 == 0);
+        require(walletSplitPercentage > 0 && walletSplitPercentage < 100);
         ERC20 lrc = ERC20(lrcTokenAddress);
-        for (uint i = 0; i < len; i += 6) {
+        for (uint i = 0; i < len; i += 7) {
             address owner = address(batch[i]);
-            address prevOwner = address(batch[(i + len - 6) % len]);
+            address prevOwner = address(batch[(i + len - 7) % len]);
             // Pay token to previous order, or to miner as previous order's
             // margin split or/and this order's margin split.
             ERC20 token = ERC20(address(batch[i + 1]));
-            // Here batch[i+2] has been checked not to be 0.
+            // Here batch[i + 2] has been checked not to be 0.
             if (owner != prevOwner) {
                 require(
-                    token.transferFrom(owner, prevOwner, uint(batch[i + 2]))
+                    token.transferFrom(
+                        owner,
+                        prevOwner,
+                        uint(batch[i + 2])
+                    )
                 );
             }
-            if (feeRecipient != 0x0 && owner != feeRecipient) {
-                bytes32 item = batch[i + 3];
-                if (item != 0) {
-                    require(
-                        token.transferFrom(owner, feeRecipient, uint(item))
-                    );
-                }
-                item = batch[i + 4];
-                if (item != 0) {
-                    require(
-                        lrc.transferFrom(feeRecipient, owner, uint(item))
-                    );
-                }
-                item = batch[i + 5];
-                if (item != 0) {
-                    require(
-                        lrc.transferFrom(owner, feeRecipient, uint(item))
-                    );
-                }
+            // Miner pays LRx fee to order owner
+            uint lrcReward = uint(batch[i + 4]);
+            if (lrcReward != 0 && minerFeeRecipient != owner) {
+                require(
+                    lrc.transferFrom(
+                        minerFeeRecipient,
+                        owner,
+                        lrcReward
+                    )
+                );
             }
+            // Split margin-split income between miner and wallet
+            splitPayFee(
+                token,
+                uint(batch[i + 3]),
+                owner,
+                minerFeeRecipient,
+                address(batch[i + 6]),
+                walletSplitPercentage
+            );
+            // Split LRx fee income between miner and wallet
+            splitPayFee(
+                lrc,
+                uint(batch[i + 5]),
+                owner,
+                minerFeeRecipient,
+                address(batch[i + 6]),
+                walletSplitPercentage
+            );
         }
     }
     function isAddressAuthorized(address addr)
@@ -900,6 +923,40 @@ contract TokenTransferDelegate is Claimable {
         returns (bool)
     {
         return addressInfos[addr].authorized;
+    }
+    function splitPayFee(
+        ERC20   token,
+        uint    fee,
+        address owner,
+        address minerFeeRecipient,
+        address walletFeeRecipient,
+        uint    walletSplitPercentage
+        )
+        internal
+    {
+        if (fee == 0) {
+            return;
+        }
+        uint walletFee = (walletFeeRecipient == 0x0) ? 0 : fee.mul(walletSplitPercentage) / 100;
+        uint minerFee = fee - walletFee;
+        if (walletFee > 0 && walletFeeRecipient != owner) {
+            require(
+                token.transferFrom(
+                    owner,
+                    walletFeeRecipient,
+                    walletFee
+                )
+            );
+        }
+        if (minerFee > 0 && minerFeeRecipient != 0x0 && minerFeeRecipient != owner) {
+            require(
+                token.transferFrom(
+                    owner,
+                    minerFeeRecipient,
+                    minerFee
+                )
+            );
+        }
     }
 }
 /// @title Loopring Token Exchange Protocol Implementation Contract
@@ -918,11 +975,12 @@ contract LoopringProtocolImpl is LoopringProtocol {
     ////////////////////////////////////////////////////////////////////////////
     /// Variables                                                            ///
     ////////////////////////////////////////////////////////////////////////////
-    address constant public  lrcTokenAddress        = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
-    address constant public  tokenRegistryAddress   = 0xa21c1f2AE7f721aE77b1204A4f0811c642638da9;
-    address constant public  delegateAddress        = 0xc787aE8D6560FB77B82F42CED8eD39f94961e304;
-    address constant public  nameRegistryAddress    = 0xd181c1808e3f010F0F0aABc6Fe1bcE2025DB7Bb7;
-    uint8   constant public  walletSplitPercentage  = 20;
+    address public constant lrcTokenAddress       = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
+    address public constant tokenRegistryAddress  = 0xa21c1f2AE7f721aE77b1204A4f0811c642638da9;
+    address public constant delegateAddress       = 0x7b126ab811f278f288bf1d62d47334351dA20d1d;
+    address public constant nameRegistryAddress   = 0xd181c1808e3f010F0F0aABc6Fe1bcE2025DB7Bb7;
+    uint64  public ringIndex                      = 0;
+    uint8   public constant walletSplitPercentage = 20;
     // Exchange rate (rate) is the amount to sell or sold divided by the amount
     // to buy or bought.
     //
@@ -932,11 +990,10 @@ contract LoopringProtocolImpl is LoopringProtocol {
     // To require all orders' rate ratios to have coefficient ofvariation (CV)
     // smaller than 2.5%, for an example , rateRatioCVSThreshold should be:
     //     `(0.025 * RATE_RATIO_SCALE)^2` or 62500.
-    uint    constant public rateRatioCVSThreshold  = 62500;
-    uint64  public  ringIndex                   = 0;
-    uint    public constant MAX_RING_SIZE       = 16;
-    uint    public constant RATE_RATIO_SCALE    = 10000;
-    uint64  public constant ENTERED_MASK        = 1 << 63;
+    uint    public constant rateRatioCVSThreshold        = 62500;
+    uint    public constant MAX_RING_SIZE                = 16;
+    uint    public constant RATE_RATIO_SCALE             = 10000;
+    uint64  public constant ENTERED_MASK                 = 1 << 63;
     // The following map is used to keep trace of order fill and cancellation
     // history.
     mapping (bytes32 => uint) public cancelledOrFilled;
@@ -1032,6 +1089,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
     ////////////////////////////////////////////////////////////////////////////
     /// Constructor                                                          ///
     ////////////////////////////////////////////////////////////////////////////
+
     ////////////////////////////////////////////////////////////////////////////
     /// Public Functions                                                     ///
     ////////////////////////////////////////////////////////////////////////////
@@ -1296,7 +1354,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         bytes32[] memory orderHashList,
         uint[6][] memory amountsList)
     {
-        bytes32[] memory batch = new bytes32[](ringSize * 6); // ringSize * (owner + tokenS + 4 amounts)
+        bytes32[] memory batch = new bytes32[](ringSize * 7); // ringSize * (owner + tokenS + 4 amounts)
         orderHashList = new bytes32[](ringSize);
         amountsList = new uint[6][](ringSize);
         uint p = 0;
@@ -1313,7 +1371,12 @@ contract LoopringProtocolImpl is LoopringProtocol {
             batch[p + 3] = bytes32(prevSplitB + state.splitS);
             batch[p + 4] = bytes32(state.lrcReward);
             batch[p + 5] = bytes32(state.lrcFee);
-            p += 6;
+            if (order.walletId != 0) {
+                batch[p + 6] = bytes32(NameRegistry(nameRegistryAddress).getFeeRecipientById(order.walletId));
+            } else {
+                batch[p + 6] = bytes32(0x0);
+            }
+            p += 7;
             // Update fill records
             if (order.buyNoMoreThanAmountB) {
                 cancelledOrFilled[state.orderHash] += nextFillAmountS;
@@ -1329,7 +1392,12 @@ contract LoopringProtocolImpl is LoopringProtocol {
             amountsList[i][5] = state.splitB;
         }
         // Do all transactions
-        delegate.batchTransferToken(_lrcTokenAddress, feeRecipient, batch);
+        delegate.batchTransferToken(
+            _lrcTokenAddress,
+            feeRecipient,
+            walletSplitPercentage,
+            batch
+        );
     }
     /// @dev Verify miner has calculte the rates correctly.
     function verifyMinerSuppliedFillRates(
@@ -1337,7 +1405,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         OrderState[]  orders
         )
         private
-        pure
+        view
     {
         uint[] memory rateRatios = new uint[](ringSize);
         uint _rateRatioScale = RATE_RATIO_SCALE;
