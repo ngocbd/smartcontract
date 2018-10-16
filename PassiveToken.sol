@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PassiveToken at 0x7c9d1395d34bab13d734a78a2ed2476c3dfb038d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PassiveToken at 0x596b4cd48e684042947686759a7791cef82b969d
 */
 pragma solidity ^0.4.11;
 
@@ -157,7 +157,7 @@ contract PassiveToken is ERC20,PassiveTokenStandard,Ownable {
     }
 
     function PassiveToken() {
-        maxTotalSupply = 10**25; // 10 Mil.
+        maxTotalSupply = 50**28; // 50 Bil.
         totalInitialSupply = 10**24; // 1 Mil.
 
         chainStartTime = now;
