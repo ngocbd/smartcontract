@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x1442a8fd038e0253ab07fd0e6aa70413d961f315
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x9d0f304c37437437c2aa92d35cfcbd7942ca35e0
 */
 //A BurnableOpenPayment is instantiated with a specified payer and a commitThreshold.
 //The recipient is not set when the contract is instantiated.
@@ -55,7 +55,11 @@ contract BurnableOpenPayment {
     function BurnableOpenPayment(address _payer, string _payerString, uint _commitThreshold, DefaultAction _defaultAction, uint _defaultTimeoutLength)
     public
     payable {
-        state = State.Open;
+        if (msg.value > 0)
+            state = State.Open;
+        else
+            state = State.Expended;
+        
         payer = _payer;
         payerString = _payerString;
         PayerStringUpdated(payerString);
