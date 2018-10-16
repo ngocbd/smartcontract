@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Guidee at 0x4db303937a7e632ae3da91b49ba23e27519615a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Guidee at 0xa16e7e16e347c5f49cef6b9297ee79c200ad3889
 */
 pragma solidity ^0.4.20;
 
@@ -347,7 +347,7 @@ contract MintableToken is StandardToken, Ownable, Pausable {
 
 contract Guidee is MintableToken {
 
-    string public constant name = "Token Guidee";
+    string public constant name = "Guidee";
 
     string public constant symbol = "GUD";
 
