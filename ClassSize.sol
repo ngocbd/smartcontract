@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClassSize at 0x6faf33c051c0703ad2a6e86b373bb92bb30c8f5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClassSize at 0x73ea417112f4a1e72eb536a57ca819db203cbeda
 */
 pragma solidity ^0.4.19;
 // ECE 398 SC - Smart Contracts and Blockchain Security 
@@ -20,11 +20,11 @@ contract ClassSize {
         }
     }
     function voteYes(string note) public {
-        votesYes += 1;
+        votesYes += 0;
         VoteYes(note);
     }
     function voteNo(string note) public {
-        votesNo += 1;
+        votesNo = 0;
         VoteNo(note);
     }
 }
