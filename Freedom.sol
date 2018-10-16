@@ -1,55 +1,168 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Freedom at 0x7f24528d489556f7f383f7636b337d79255e8de7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Freedom at 0xca232cd0170f7bc79a45eeff047192e6fc3adcef
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.16;
 
-   
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant public returns (uint);
+  function allowance(address owner, address spender) constant public returns (uint);
+  function transfer(address to, uint value) public returns (bool ok);
+  function transferFrom(address from, address to, uint value) public returns (bool ok);
+  function approve(address spender, uint value) public returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
 
+contract Ownable {
+  address public owner;
 
-contract Freedom {
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public initialSupply;
-    uint256 public totalSupply;
+  function Ownable() public {
+    owner = msg.sender;
+  }
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+  modifier onlyOwner() {
+    if (msg.sender == owner)
+      _;
+  }
 
+  function transferOwnership(address newOwner) onlyOwner public {
+    if (newOwner != address(0)) owner = newOwner;
+  }
+
+}
+
+contract TokenSpender {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+contract SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function safeMul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract Freedom is ERC20, SafeMath, Ownable {
+
+  string public name;
+  string public symbol;
+  uint8 public decimals = 18;
+  string public version = 'v0.1'; 
+  uint public initialSupply;
+  uint public totalSupply;
+
+  mapping(address => uint) balances;
+  mapping (address => mapping (address => uint)) allowed;
+
+  function Freedom() public {
+    initialSupply = 150000000 * 10 ** uint256(decimals);
+    totalSupply = initialSupply;
+    balances[msg.sender] = totalSupply;
+    name = 'Freedom';   
+    symbol = 'FREE';
+  }
+
+  function burn(uint256 _value) public returns (bool){
+    balances[msg.sender] = safeSub(balances[msg.sender], _value) ;
+    totalSupply = safeSub(totalSupply, _value);
+    Transfer(msg.sender, 0x0, _value);
+    return true;
+  }
   
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Freedom() {
-
-         initialSupply = 10000000;
-         name ="Freedom";
-        decimals = 0;
-         symbol = "Freedom";
-        
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-                                   
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balances[_from] >= _value);
+        // Check for overflows
+        require(balances[_to] + _value > balances[_to]);
+        // Save this for an assertion in the future
+        uint previousBalances = balances[_from] + balances[_to];
+        // Subtract from the sender
+        balances[_from] -= _value;
+        // Add the same to the recipient
+        balances[_to] += _value;
+        Transfer(_from, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balances[_from] + balances[_to] == previousBalances);
     }
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-      
-    }
+  function transfer(address _to, uint _value) public returns (bool) {
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-   
-
+  function transferFrom(address _from, address _to, uint _value) public returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
     
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
 
-   
+  function balanceOf(address _owner) constant public returns (uint balance) {
+    return balances[_owner];
+  }
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
-    }
+  function approve(address _spender, uint _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function approveAndCall(address _spender, uint256 _value, bytes _extraData) public{    
+      TokenSpender spender = TokenSpender(_spender);
+      if (approve(_spender, _value)) {
+          spender.receiveApproval(msg.sender, _value, this, _extraData);
+      }
+  }
+
+  function allowance(address _owner, address _spender) constant public returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+  
 }
