@@ -1,72 +1,114 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xac36d88dffc8d596c3b5a496a76cf5d274100a85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0bee1b7287969e1e8afb50eb587e93217ffab3a3
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
+/**
+* @title ICO CONTRACT
+* @dev ERC-20 Token Standard Complian
+*/
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded 
- to a wallet
- * as they arrive.
- */
-contract token { function transfer(address receiver, uint amount){  } }
-contract Crowdsale {
-  using SafeMath for uint256;
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public{
+    owner = msg.sender;
+  }
 
-  // uint256 durationInMinutes;
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract token {
+
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) public returns (bool success);
+
+}
+
+
+contract Crowdsale is Ownable {
+  using SafeMath for uint256;
+  // The token being sold
+  token public token_reward;
+  // start and end timestamps where investments are allowed (both inclusive
+  
+  uint256 public start_time = now; //for testing
+  //uint256 public start_time = 1517846400; //02/05/2018 @ 4:00pm (UTC) or 5 PM (UTC + 1)
+  uint256 public end_Time = 1524355200; // 04/22/2018 @ 12:00am (UTC)
+
+  uint256 public phase_1_remaining_tokens  = 50000000 * (10 ** uint256(8));
+  uint256 public phase_2_remaining_tokens  = 50000000 * (10 ** uint256(8));
+  uint256 public phase_3_remaining_tokens  = 50000000 * (10 ** uint256(8));
+  uint256 public phase_4_remaining_tokens  = 50000000 * (10 ** uint256(8));
+  uint256 public phase_5_remaining_tokens  = 50000000 * (10 ** uint256(8));
+
+  uint256 public phase_1_bonus  = 40;
+  uint256 public phase_2_bonus  = 20;
+  uint256 public phase_3_bonus  = 15;
+  uint256 public phase_4_bonus  = 10;
+  uint256 public phase_5_bonus  = 5;
+
+  uint256 public token_price  = 2;// 2 cents
+
   // address where funds are collected
   address public wallet;
-  // token address
-  address public addressOfTokenUsedAsReward;
-
-  // uint256 public price = 18000;
-
-  token tokenReward;
-
-  // mapping (address => uint) public contributions;
-  mapping(address => bool) public whitelist;
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
+  // Ether to $ price
+  uint256 public eth_to_usd = 1000;
   // amount of raised money in wei
   uint256 public weiRaised;
-  uint256 public tokensSold;
-
   /**
    * event for token purchase logging
    * @param purchaser who paid for the tokens
@@ -75,137 +117,208 @@ contract Crowdsale {
    * @param amount amount of tokens purchased
    */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale() {
-    // how many minutes
-    startTime = now + 80715 * 1 minutes;
-    endTime = startTime + 31*24*60*1 minutes;
-
-    //You will change this to your wallet where you need the ETH 
-    wallet = 0xe65b6eEAfE34adb2e19e8b2AE9c517688771548E;
-    // durationInMinutes = _durationInMinutes;
-    //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0xA024E8057EEC474a9b2356833707Dd0579E26eF3;
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
+  // rate change event
+  event EthToUsdChanged(address indexed owner, uint256 old_eth_to_usd, uint256 new_eth_to_usd);
+  
+  // constructor
+  function Crowdsale(address tokenContractAddress) public{
+    wallet = 0x1aC024482b91fa9AaF22450Ff60680BAd60bF8D3;//wallet where ETH will be transferred
+    token_reward = token(tokenContractAddress);
+  }
+  
+ function tokenBalance() constant public returns (uint256){
+    return token_reward.balanceOf(this);
   }
 
-  // bool public started = true;
-
-  // function startSale(){
-  //   require(msg.sender == wallet);
-  //   started = true;
-  // }
-
-  // function stopSale(){
-  //   require(msg.sender == wallet);
-  //   started = false;
-  // }
-
-  // function setPrice(uint256 _price){
-  //   require(msg.sender == wallet);
-  //   price = _price;
-  // }
-
-  function changeWallet(address _wallet){
-  	require(msg.sender == wallet);
-  	wallet = _wallet;
+  function getRate() constant public returns (uint256){
+    return eth_to_usd.mul(100).div(token_price);
   }
 
-  // function changeTokenReward(address _token){
-  //   require(msg.sender==wallet);
-  //   tokenReward = token(_token);
-  //   addressOfTokenUsedAsReward = _token;
-  // }
-
-  function whitelistAddresses(address[] _addrs){
-    require(msg.sender==wallet);
-    for(uint i = 0; i < _addrs.length; ++i)
-      whitelist[_addrs[i]] = true;
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = now >= start_time && now <= end_Time;
+    bool allPhaseFinished = phase_5_remaining_tokens > 0;
+    bool nonZeroPurchase = msg.value != 0;
+    bool minPurchase = eth_to_usd*msg.value >= 100; // minimum purchase $100
+    return withinPeriod && nonZeroPurchase && allPhaseFinished && minPurchase;
   }
 
-  function removeAddressesFromWhitelist(address[] _addrs){
-    require(msg.sender==wallet);
-    for(uint i = 0;i < _addrs.length;++i)
-      whitelist[_addrs[i]] = false;
+  // @return true if the admin can send tokens manually
+  function validPurchaseForManual() internal constant returns (bool) {
+    bool withinPeriod = now >= start_time && now <= end_Time;
+    bool allPhaseFinished = phase_5_remaining_tokens > 0;
+    return withinPeriod && allPhaseFinished;
+  }
+
+
+  // check token availibility for current phase and max allowed token balance
+  function checkAndUpdateTokenForManual(uint256 _tokens) internal returns (bool){
+    if(phase_1_remaining_tokens > 0){
+      if(_tokens > phase_1_remaining_tokens){
+        uint256 tokens_from_phase_2 = _tokens.sub(phase_1_remaining_tokens);
+        phase_1_remaining_tokens = 0;
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(tokens_from_phase_2);
+      }else{
+        phase_1_remaining_tokens = phase_1_remaining_tokens.sub(_tokens);
+      }
+      return true;
+    }else if(phase_2_remaining_tokens > 0){
+      if(_tokens > phase_2_remaining_tokens){
+        uint256 tokens_from_phase_3 = _tokens.sub(phase_2_remaining_tokens);
+        phase_2_remaining_tokens = 0;
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(tokens_from_phase_3);
+      }else{
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(_tokens);
+      }
+      return true;
+    }else if(phase_3_remaining_tokens > 0){
+      if(_tokens > phase_3_remaining_tokens){
+        uint256 tokens_from_phase_4 = _tokens.sub(phase_3_remaining_tokens);
+        phase_3_remaining_tokens = 0;
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(tokens_from_phase_4);
+      }else{
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(_tokens);
+      }
+      return true;
+    }else if(phase_4_remaining_tokens > 0){
+      if(_tokens > phase_4_remaining_tokens){
+        uint256 tokens_from_phase_5 = _tokens.sub(phase_4_remaining_tokens);
+        phase_4_remaining_tokens = 0;
+        phase_5_remaining_tokens = phase_5_remaining_tokens.sub(tokens_from_phase_5);
+      }else{
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(_tokens);
+      }
+      return true;
+    }else if(phase_5_remaining_tokens > 0){
+      if(_tokens > phase_5_remaining_tokens){
+        return false;
+      }else{
+        phase_5_remaining_tokens = phase_5_remaining_tokens.sub(_tokens);
+       }
+    }else{
+      return false;
+    }
+  }
+
+  // function to transfer token manually
+  function transferManually(uint256 _tokens, address to_address) onlyOwner public returns (bool){
+    require(to_address != 0x0);
+    require(validPurchaseForManual());
+    require(checkAndUpdateTokenForManual(_tokens));
+    token_reward.transfer(to_address, _tokens);
+    return true;
+  }
+
+
+  // check token availibility for current phase and max allowed token balance
+  function transferIfTokenAvailable(uint256 _tokens, uint256 _weiAmount, address _beneficiary) internal returns (bool){
+
+    uint256 total_token_to_transfer = 0;
+    uint256 bonus = 0;
+    if(phase_1_remaining_tokens > 0){
+      if(_tokens > phase_1_remaining_tokens){
+        uint256 tokens_from_phase_2 = _tokens.sub(phase_1_remaining_tokens);
+        bonus = (phase_1_remaining_tokens.mul(phase_1_bonus).div(100)).add(tokens_from_phase_2.mul(phase_2_bonus).div(100));
+        phase_1_remaining_tokens = 0;
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(tokens_from_phase_2);
+      }else{
+        phase_1_remaining_tokens = phase_1_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_1_bonus).div(100);
+      }
+      total_token_to_transfer = _tokens + bonus;
+    }else if(phase_2_remaining_tokens > 0){
+      if(_tokens > phase_2_remaining_tokens){
+        uint256 tokens_from_phase_3 = _tokens.sub(phase_2_remaining_tokens);
+        bonus = (phase_2_remaining_tokens.mul(phase_2_bonus).div(100)).add(tokens_from_phase_3.mul(phase_3_bonus).div(100));
+        phase_2_remaining_tokens = 0;
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(tokens_from_phase_3);
+      }else{
+        phase_2_remaining_tokens = phase_2_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_2_bonus).div(100);
+      }
+      total_token_to_transfer = _tokens + bonus;
+    }else if(phase_3_remaining_tokens > 0){
+      if(_tokens > phase_3_remaining_tokens){
+        uint256 tokens_from_phase_4 = _tokens.sub(phase_3_remaining_tokens);
+        bonus = (phase_3_remaining_tokens.mul(phase_3_bonus).div(100)).add(tokens_from_phase_4.mul(phase_4_bonus).div(100));
+        phase_3_remaining_tokens = 0;
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(tokens_from_phase_4);
+      }else{
+        phase_3_remaining_tokens = phase_3_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_3_bonus).div(100);
+      }
+      total_token_to_transfer = _tokens + bonus;
+    }else if(phase_4_remaining_tokens > 0){
+      if(_tokens > phase_4_remaining_tokens){
+        uint256 tokens_from_phase_5 = _tokens.sub(phase_4_remaining_tokens);
+        bonus = (phase_4_remaining_tokens.mul(phase_4_bonus).div(100)).add(tokens_from_phase_5.mul(phase_5_bonus).div(100));
+        phase_4_remaining_tokens = 0;
+        phase_5_remaining_tokens = phase_5_remaining_tokens.sub(tokens_from_phase_5);
+      }else{
+        phase_4_remaining_tokens = phase_4_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_4_bonus).div(100);
+      }
+      total_token_to_transfer = _tokens + bonus;
+    }else if(phase_5_remaining_tokens > 0){
+      if(_tokens > phase_5_remaining_tokens){
+        total_token_to_transfer = 0;
+      }else{
+        phase_5_remaining_tokens = phase_5_remaining_tokens.sub(_tokens);
+        bonus = _tokens.mul(phase_5_bonus).div(100);
+        total_token_to_transfer = _tokens + bonus;
+      }
+    }else{
+      total_token_to_transfer = 0;
+    }
+    if(total_token_to_transfer > 0){
+      token_reward.transfer(_beneficiary, total_token_to_transfer);
+      TokenPurchase(msg.sender, _beneficiary, _weiAmount, total_token_to_transfer);
+      return true;
+    }else{
+      return false;
+    }
+    
   }
 
   // fallback function can be used to buy tokens
-  function () payable {
+  function () payable public{
     buyTokens(msg.sender);
   }
 
   // low level token purchase function
-  function buyTokens(address beneficiary) payable {
+  function buyTokens(address beneficiary) public payable {
     require(beneficiary != 0x0);
     require(validPurchase());
-    require(whitelist[beneficiary]);
-
     uint256 weiAmount = msg.value;
-
-    // if(weiAmount < 10**16) throw;
-    // if(weiAmount > 50*10**18) throw;
-
-    // calculate token amount to be sent
-    uint256 tokens = (weiAmount) * 5000;//weiamount * price 
-    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
-
-    //bonus schedule
-
-    /*
-      PRE-ICO. (1ETH= 7000 FXY)
-      Start 1.5.2018
-      End 9.5.2018
-      Total coins with 40% bonus 14.000.000 FXY
-      ICO LEVEL 1 (1ETH=6000 FXY)
-      Start 16.5.2018
-      End 23.5.2018
-      Total coins 54.000.000 FXY with 20% bonus
-      ICO LEVEL 2 (1ETH=5000FXY)
-      Start 25.5.2018
-      End 31.5.2018
-      Total coins —> if on ICO Level 1 not sold out, it will be drop here.
-    */
-    if(now < startTime + 9*24*60* 1 minutes){
-      tokens += (tokens * 40) / 100;//40%
-      if(tokensSold>14000000*10**18) throw;
-    }else if(now < startTime + 16*24*60* 1 minutes){
-      throw;
-    }else if(now < startTime + 23*24*60* 1 minutes){
-      tokens += (tokens * 20) / 100;
-    }else if(now < startTime + 25*24*60* 1 minutes){
-      throw;
-    }
-
+    // calculate token amount to be created
+    uint256 tokens = (weiAmount.mul(getRate())).div(10 ** uint256(10));
+    // Check is there are enough token available for current phase and per person  
+    require(transferIfTokenAvailable(tokens, weiAmount, beneficiary));
     // update state
     weiRaised = weiRaised.add(weiAmount);
     
-    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
-    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
-
-    tokenReward.transfer(beneficiary, tokens);
-    tokensSold = tokensSold.add(tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
     forwardFunds();
   }
-
+  
   // send ether to the fund collection wallet
   // override to create custom fund forwarding mechanisms
   function forwardFunds() internal {
     wallet.transfer(msg.value);
   }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal constant returns (bool) {
-    bool withinPeriod = now >= startTime && now <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
+  
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    return now > end_Time;
   }
-
-  function withdrawTokens(uint256 _amount) {
-    require(msg.sender==wallet);
-    tokenReward.transfer(wallet,_amount);
+  // function to transfer token back to owner
+  function transferBack(uint256 tokens, address to_address) onlyOwner public returns (bool){
+    token_reward.transfer(to_address, tokens);
+    return true;
+  }
+  // function to change rate
+  function changeEth_to_usd(uint256 _eth_to_usd) onlyOwner public returns (bool){
+    EthToUsdChanged(msg.sender, eth_to_usd, _eth_to_usd);
+    eth_to_usd = _eth_to_usd;
+    return true;
   }
 }
