@@ -1,15 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jiggs at 0x8b29b70b2cd8fdd891c1d0cd5808fb92781ba90b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jiggs at 0xa80013dd80b21bcad3d3eed1d514cda361c40613
 */
 pragma solidity ^0.4.20;
 
 /*
-/ J.I.G.G.S / SAW3D
-/
-/ https://www.jiggs.io 
-/ 
-/ This is the ONLY OFFICIAL WEBSITE of the The Jigsaw Games!
-/ If you want to play, be sure to play through this website!
+J.I.G.G.S
 */
 
 contract Jiggs {
