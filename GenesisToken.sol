@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenesisToken at 0x8Ed61279b30201203bc233EA972E10008c8B7C5F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenesisToken at 0x9dfe4643C04078a46803edCC30a3291b76d4c20c
 */
 pragma solidity ^0.4.16;
 
@@ -56,15 +56,14 @@ library SafeMath {
      event Transfer(address indexed _from, address indexed _to, uint256 _value);
      event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     }
-
- contract GenesisToken is ERC20Interface {
+contract GenesisToken is ERC20Interface {
      
      using SafeMath for uint256;
      
      string public constant symbol = "GEN";
      string public constant name = "Genesis";
      uint8 public constant decimals = 18;
-     uint256 _totalSupply = 16000000000000000000000000;
+     uint256 public _totalSupply = 16000000000000000000000000;
      
      address public owner;
  
@@ -83,6 +82,10 @@ library SafeMath {
         owner = msg.sender;
         balances[owner] = _totalSupply;
     } 
+    
+    function totalSupply() constant returns (uint256) {        
+		return _totalSupply;
+    }
     
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
@@ -129,16 +132,7 @@ library SafeMath {
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
          return allowed[_owner][_spender];
     }
-	
-	function airdrop(uint256 amount, address[] addresses) onlyOwner {
-    for (uint i = 0; i < addresses.length; i++) {
-      balances[owner].sub(amount);
-      balances[addresses[i]].add(amount);
-      Transfer(owner, addresses[i], amount);
-    }
-  }
     
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
 }
