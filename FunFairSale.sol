@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunFairSale at 0x5c84c9dd997e16578e62c9f7557e708db05c1076
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunFairSale at 0x55c44fbad82686afb0ca41cefb8d086cb937b2e6
 */
 pragma solidity ^0.4.4;
 
@@ -7,6 +7,7 @@ contract Token {
     function transfer(address _to, uint _value) returns (bool);
     function balanceOf(address owner) returns(uint);
 }
+
 
 contract Owned {
     address public owner;
@@ -48,14 +49,11 @@ contract TokenReceivable is Owned {
 }
 
 contract FunFairSale is Owned, TokenReceivable {
-    uint public deadline;
-    uint public startTime = 123123; //set actual time here
-    uint public saleTime = 14 days;
+    uint public deadline = 1499436000;
+    uint public startTime = 1498140000;
     uint public capAmount;
 
-    function FunFairSale() {
-        deadline = startTime + saleTime;
-    }
+    function FunFairSale() {}
 
     function setSoftCapDeadline(uint t) onlyOwner {
         if (t > deadline) throw;
@@ -63,27 +61,27 @@ contract FunFairSale is Owned, TokenReceivable {
     }
 
     function launch(uint _cap) onlyOwner {
-        // cap is immutable once the sale starts
-        if (this.balance > 0) throw;
         capAmount = _cap;
     }
 
     function () payable {
         if (block.timestamp < startTime || block.timestamp >= deadline) throw;
-        if (this.balance >= capAmount) throw;
-        if (this.balance + msg.value >= capAmount) {
-            deadline = block.timestamp;
+
+        if (this.balance > capAmount) {
+            deadline = block.timestamp - 1;
         }
     }
 
     function withdraw() onlyOwner {
         if (block.timestamp < deadline) throw;
+
+        //testing return value doesn't do anything here
+        //but it stops a compiler warning
         if (!owner.call.value(this.balance)()) throw;
     }
 
-    // for testing
     function setStartTime(uint _startTime, uint _deadline) onlyOwner {
-    	if (_deadline < _startTime) throw;
+        if (block.timestamp >= startTime) throw;
         startTime = _startTime;
         deadline = _deadline;
     }
