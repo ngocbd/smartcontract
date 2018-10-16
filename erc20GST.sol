@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract erc20GST at 0x67a9099f0008c35c61c00042cd9fb03684451097
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract erc20GST at 0x817D4Ea3b56F6ccfEA97DAfa86336c964f27598c
 */
 contract Token {
 
@@ -126,9 +126,9 @@ contract erc20GST is StandardToken {
     uint start3Week =1528880400;
     uint stop3Week =1530349200;
     address storeETH = 0xcaAc6e94dAEFC3BB81CA692a8AE9d5C73f54A024;
-    address admin =0x4eebcc25cD79CDA7845B6aDD99885348bcbFd04A;
-    address tokenSaleStore = 0x02d105f68AbF0Cb98416fD018a25230e80974AbF;
-    address tokenPreIcoStore = 0x1714bA62AEcD1D0fdc8c3b10e1d6076A97BA4CBc;
+    address admin =0x93DB4fD42904af66853C7E9baC48e668Fb5ceA54;
+    address tokenSaleStore = 0xE615cD9e81b912D549A58B4BEfFda7887968EDE2;
+    address tokenPreIcoStore = 0x56E6A8f1be5bD20f5220Ca673191b9AABb3879b5;
     address tokenStore = 0x58258A4cF4514f6379D320ddC5BcB24A315df0d8;
     uint256 public exchangeRates = 19657;
     uint256 BonusPercent=0;
