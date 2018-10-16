@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueToken at 0x3b433c2cfbcc7b78c59243714b1ca7498a2de70c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueToken at 0x00214120d3469a74ca586bc9557c0ff8fb09b157
 */
 pragma solidity ^0.4.18;
 
@@ -77,7 +77,7 @@ contract TrueToken is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "TrueToken";
-    string public constant symbol = "TRUE";
+    string public constant symbol = "TRU";
     uint public constant decimals = 18;
     
     uint256 public totalSupply = 20000000000e18;
