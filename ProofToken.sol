@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofToken at 0xc6390f8bf2fb04fb0f91dc9be93046a1db8fdac3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofToken at 0x6429d9437b9a912cc4ea1e2ef3bef0a1ea3da680
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
 contract TokenFactoryInterface {
 
@@ -11,43 +11,6 @@ contract TokenFactoryInterface {
         string _tokenName,
         string _tokenSymbol
       ) public returns (ProofToken newToken);
-}
-
-contract ControllerInterface {
-
-    function proxyPayment(address _owner) public payable returns(bool);
-    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
-    function onApprove(address _owner, address _spender, uint _amount) public returns(bool);
-}
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract ApproveAndCallReceiver {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
 }
 
 contract Controllable {
@@ -106,6 +69,43 @@ contract ProofTokenInterface is Controllable {
   function enableTransfers(bool _transfersEnabled) public;
   function createCloneToken(uint _snapshotBlock, string _cloneTokenName, string _cloneTokenSymbol) public returns (address);
 
+}
+
+contract ApproveAndCallReceiver {
+    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
+}
+
+contract ControllerInterface {
+
+    function proxyPayment(address _owner) public payable returns(bool);
+    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
+    function onApprove(address _owner, address _spender, uint _amount) public returns(bool);
+}
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 contract ProofToken is Controllable {
