@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Per_Annum at 0xef83e29f3c7e8c0b92a25781e4faecd973a7d55a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Per_Annum at 0x651347bc940355451e02174ae5f0ba2475de5638
 */
-pragma solidity 0.4.18;
+pragma solidity 0.4.19;
 
 /*
-	Per Annum is an ERC20 token which can be mined during the first two weeks of each year for 120 years 
-	starting in 2018. The mining reward starts at 100 tokens and is halved yearly. The maximum mining
-	reward starts at 10,000,000 and is halved every five years. The contract owner was granted 40,000
-	tokens on deployment of the contract, and any unmined tokens at the end of the mining period are 
-	sent to the owner. 20,000 of the initial owner's supply will be given away in order to promote the
-	token. 
+	Per Annum is an ERC20 token which can be mined during the first two weeks of each year for 192 years 
+	starting in 2018. The total supply will be 16,000,000. The maximum amount allowed to be mined starts
+	at 1,000,000 and halves every five years. The reward for each time the mining function is called is
+	.01 percent of the maximum yearly reward, meaning it starts at 100 tokens and the supply will run out
+	after the mining function is called 10,000 times every year. The first year it will only be able to be
+	called 7,500 times because 250,000 tokens are granted to the owner on the creation of the contract.
 
 	
 
@@ -24,9 +24,9 @@ contract Per_Annum{
 	uint256 _totalSupply = 0;
 	address contract_owner;
 	uint256 current_remaining = 0; //to check for left over tokens after mining period
-	uint256 _maxTotalSupply = 10000000000000000; //one hundred million
-	uint256 _miningReward = 10000000000; //100 ANNUM rewarded on successful mine halved every 5 years 
-	uint256 _maxMiningReward = 1000000000000000; //10,000,000 ANNUM - To be halved every 5 years
+	uint256 _maxTotalSupply = 1600000000000000; //sixteen million
+	uint256 _miningReward = 10000000000; //.01 percent of maxMiningReward, halves with miningreward 
+	uint256 _maxMiningReward = 100000000000000; //1,000,000 ANNUM - To be halved every 4 years
 	uint256 _year = 1514782800; // 01/01/2018 12:00AM EST
 	uint256 _year_count = 2018; //contract starts in 2018 first leap year is 2020
 	uint256 _currentMined = 0; //mined for the year
@@ -39,11 +39,11 @@ contract Per_Annum{
 
     //initialize contract - set owner and give owner 20,000 tokens
     function Per_Annum(){
-    	_totalSupply += 4000000000000;
-    	_currentMined += 4000000000000;	
+    	_totalSupply += 25000000000000;
+    	_currentMined += 25000000000000;	
     	contract_owner = msg.sender;
-    	balances[msg.sender] += 4000000000000;
-    	Transfer(this,msg.sender,4000000000000);
+    	balances[msg.sender] += 25000000000000;
+    	Transfer(this,msg.sender,25000000000000);
     }
 
 	function totalSupply() constant returns (uint256) {        
@@ -102,10 +102,9 @@ contract Per_Annum{
 			_year = _year + 31557600;	//changes to new year, 1 day early on leap year, in seconds
 			_year_count = _year_count + 1; //changes to new year in years
 			_currentMined = 0;	//resets for current years supply
-			_miningReward = _miningReward/2; //halved yearly starting at 100
-			if(((_year_count-2018)%5 == 0) && (_year_count != 2018)){
-				_maxMiningReward = _maxMiningReward/2; //halved every 5th year
-				
+			if(((_year_count-2018)%4 == 0) && (_year_count != 2018)){
+				_maxMiningReward = _maxMiningReward/2; //halved every 4th year
+				_miningReward = _maxMiningReward/10000;  //new MiningReward set to .01 percent of max reward 
 
 			}
 			if((_year_count%4 == 1) && ((_year_count-1)%100 != 0)){
