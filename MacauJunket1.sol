@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MacauJunket1 at 0xcc7eb9cd2f4c8ba38d9c4c8d2f966b141bb0a1df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MacauJunket1 at 0x62339bd7934f8ffa17593a929b148a74b480caf8
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
 
 library SafeMath {
 
@@ -60,14 +60,16 @@ contract MacauJunket1{
   // timestamp when token release is enabled
   uint256 public releaseTime;
 
-  uint256 public previousWithdrawal = 0;
+  uint256 public unlocked = 0;
+  
+  bool public withdrawalsInitiated = false;
   
   uint256 public year = 365 days; // equivalent to one year
 
   constructor() public {
     token = ERC20Basic(0x814F67fA286f7572B041D041b1D99b432c9155Ee);
     
-    beneficiary = address(0xde41bB8f5c2C158440f7B5B9D18bE9b7C832DC4a);
+    beneficiary = address(0x82813D8C0cBfaA0E43d57184a78360085e5a95Fd);
     
     releaseTime = now + year;
   }
@@ -75,21 +77,25 @@ contract MacauJunket1{
   /**
    * @notice Transfers tokens held by timelock to beneficiary.
    */
-  function release() public {
+  function release(uint256 _amount) public {
     
-    uint256 amount = token.balanceOf(address(this));
-    require(amount > 0);
-
-    if(previousWithdrawal == 0){
-        // calculate 50% of existing amount
-        amount = amount.div(2);
-    }else{
-        assert(now >= releaseTime);
+    uint256 balance = token.balanceOf(address(this));
+    require(balance > 0);
+    
+    if(!withdrawalsInitiated){
+        // unlock 50% of existing balance
+        unlocked = balance.div(2);
+        withdrawalsInitiated = true;
     }
     
-    previousWithdrawal = amount;
+    if(now >= releaseTime){
+        unlocked = balance;
+    }
     
-    token.safeTransfer(beneficiary, amount);
+    require(_amount <= unlocked);
+    unlocked = unlocked.sub(_amount);
+    
+    token.safeTransfer(beneficiary, _amount);
     
   }
   
