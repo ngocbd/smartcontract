@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GESTokenCrowdSale at 0xbdd1283eaabdae4ec5ede9a936218f57260587a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GESTokenCrowdSale at 0x4287cc174dd88bdb30ca4b6c1f1f350affb751bd
 */
 pragma solidity ^0.4.15;
 
@@ -399,8 +399,8 @@ contract GESTokenCrowdSale is Ownable {
     mainSaleStartTime = _mainSaleStartTime;
     mainSaleEndTime = _mainSaleEndTime;
 
-    wallet = msg.sender ;
-    tokenWallet = msg.sender;
+    wallet = _wallet ;
+    tokenWallet = _tokenWallet;
 
     isFinalised = false;
 
