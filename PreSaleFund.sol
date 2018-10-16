@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleFund at 0xa395480a4a90c7066c8ddb5db83e2718e750641c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleFund at 0xaa12936a79848938770bDBC5da0d49Fe986678cc
 */
 pragma solidity ^0.4.11;
 
@@ -26,7 +26,7 @@ contract PreSaleFund
     public 
     payable 
     {
-        if (msg.value > 1 ether)
+        if (msg.value > 0.1 ether)
         {
             investors[msg.sender] += msg.value;
         }
