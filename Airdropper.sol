@@ -1,41 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x862CB5B6EEAaFB26Ebb137e0c3C5d7728800439A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x6c5208924c5b302f756a79776a8b2918a041ad4d
 */
 pragma solidity ^0.4.11;
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
+ * Token BRAT. Dividends, remuneration, bounty, rewards - are sent continuously, all who have the token BRAT in wallet.
+ * Token BRAT (BRAT - translated into English as BROTHER) is the story of each brother in cryptohistory.
+ * Each brother should be BRAT.
+ * BRAT is the creator of the BRO-Consortium.io
  */
 contract Ownable {
   address public owner;
 
-
-  /** 
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
   function Ownable() {
     owner = msg.sender;
   }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner. 
-   */
+ 
   modifier onlyOwner() {
     if (msg.sender != owner) {
-      throw;
+      revert();
     }
     _;
   }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to. 
-   */
+ 
   function transferOwnership(address newOwner) onlyOwner {
     if (newOwner != address(0)) {
       owner = newOwner;
@@ -44,18 +31,13 @@ contract Ownable {
 
 }
 
-
 contract ERC20Basic {
   uint public totalSupply;
   function balanceOf(address who) constant returns (uint);
   function transfer(address to, uint value);
   event Transfer(address indexed from, address indexed to, uint value);
 }
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
+ 
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant returns (uint);
   function transferFrom(address from, address to, uint value);
