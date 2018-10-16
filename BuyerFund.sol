@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerFund at 0x5ab2e3f693e6961beea08c1db8a3602fcea6b36f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerFund at 0xb29405833e303db3193cf7c058e2c81ef027c6c8
 */
 // ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
 contract ERC20 {
@@ -24,18 +24,18 @@ contract BuyerFund {
   uint256 constant public min_required_amount = 100 ether;
  
   // The maximum amount of ETH that can be deposited into the contract.
-  uint256 public max_raised_amount = 300 ether;
+  uint256 public max_raised_amount = 3000 ether;
  
   // The first block after which a refund is allowed. Set in the contract constructor.
   uint256 public min_refund_block;
  
   // The crowdsale address.
-  address constant public sale = 0x09AE9886C971279E771030aD5Da37f227fb1e7f9;
+  address constant public sale = 0x8C39Ff53c6C3d5307dCF05Ade5eA5D332526ddE4;
  
   // Constructor.
   function BuyerFund() {
     // Minimum block for refund - roughly a week from now, in case of rejected payment.
-    min_refund_block = 4362646;
+    min_refund_block = 4405455;
   }
  
   // Allows any user to withdraw his tokens.
@@ -101,13 +101,6 @@ contract BuyerFund {
         // Transfer all the funds to the crowdsale address.
         sale.transfer(contract_eth_value);
     }
-  }
- 
-  // Raise total cap.
- function upgrade_cap() {
-      if (msg.sender == 0xC68bb418ee2B566E4a3786F0fA838aEa85aE1186) {
-          max_raised_amount = 500 ether;
-      }
   }
  
   // A helper function for the default function, allowing contracts to interact.
