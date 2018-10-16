@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShortOrder at 0xf2cdf0A92075eD6DA179a2AD142021936673651b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShortOrder at 0xD534111478E5cF4BB8806972d1352Fd52837b68e
 */
 pragma solidity ^0.4.18;
 
@@ -85,7 +85,7 @@ contract ShortOrder is SafeMath {
   event TokenFulfillment(address[2] tokenUser,uint[8] minMaxDMWCPNonce,uint8 v,bytes32[2] rs,uint amount);
   event CouponDeposit(address[2] tokenUser,uint[8] minMaxDMWCPNonce,uint8 v,bytes32[2] rs,uint value);
   event LongPlace(address[2] tokenUser,uint[8] minMaxDMWCPNonce,uint8 v,bytes32[2] rs,uint value);
-  event LongBought(address[2] sellerShort,uint[5] amountNonceExpiryDM,uint8 v,bytes32[3] hashRS,uint value);
+  event LongBought(address[2] sellerShort,uint[3] amountNonceExpiry,uint8 v,bytes32[3] hashRS,uint value);
   event TokenLongExercised(address[2] tokenUser,uint[8] minMaxDMWCPNonce,uint8 v,bytes32[2] rs,uint couponAmount,uint amount);
   event EthLongExercised(address[2] tokenUser,uint[8] minMaxDMWCPNonce,uint8 v,bytes32[2] rs,uint couponAmount,uint amount);
   event DonationClaimed(address[2] tokenUser,uint[8] minMaxDMWCPNonce,uint8 v,bytes32[2] rs,uint coupon,uint balance);
@@ -178,25 +178,16 @@ contract ShortOrder is SafeMath {
     LongPlace(tokenUser,minMaxDMWCPNonce,v,rs,msg.value);
   }
   
-  function buyLong(address[2] sellerShort,uint[5] amountNonceExpiryDM,uint8 v,bytes32[3] hashRS) external payable {
-    bytes32 longTransferHash = keccak256 (
-        sellerShort[0],
-        amountNonceExpiryDM[0],
-        amountNonceExpiryDM[1],
-        amountNonceExpiryDM[2],
-        amountNonceExpiryDM[3],
-        amountNonceExpiryDM[4]
-    );
+  function buyLong(address[2] sellerShort,uint[3] amountNonceExpiry,uint8 v,bytes32[3] hashRS) external payable {
+    bytes32 longTransferHash = keccak256(sellerShort[0],amountNonceExpiry);
     require(
-      ecrecover(keccak256("\x19Ethereum Signed Message:\n32",longTransferHash),v,hashRS[1],hashRS[2]) == sellerShort[1] &&
-      block.number > amountNonceExpiryDM[3] &&
-      block.number <= safeSub(amountNonceExpiryDM[4],amountNonceExpiryDM[2]) &&
-      msg.value == amountNonceExpiryDM[0]
+      ecrecover(keccak256("\x19Ethereum Signed Message:\n32",longTransferHash[0]),v,hashRS[1],hashRS[2]) == sellerShort[1] &&
+      msg.value == amountNonceExpiry[0] 
     );
-    sellerShort[0].transfer(amountNonceExpiryDM[0]);
+    sellerShort[0].transfer(msg.value);
     orderRecord[sellerShort[1]][hashRS[0]].longBalance[msg.sender] = orderRecord[sellerShort[1]][hashRS[0]].longBalance[sellerShort[0]];
     orderRecord[sellerShort[1]][hashRS[0]].longBalance[sellerShort[0]] = uint(0);
-    LongBought(sellerShort,amountNonceExpiryDM,v,hashRS,amountNonceExpiryDM[0]);
+    LongBought(sellerShort,amountNonceExpiry,v,hashRS,msg.value);
   }
 
   function exerciseLong(address[2] tokenUser,uint[8] minMaxDMWCPNonce,uint8 v,bytes32[2] rs) external {
