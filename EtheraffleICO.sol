@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheraffleICO at 0x00e52182be36a55161fe40b19a4c29eef0017019
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheraffleICO at 0xA4F902f57Fd9FFcedF4dE6cF7EbC86ea9F76B5d1
 */
 pragma solidity^0.4.15;
 
@@ -26,11 +26,11 @@ contract EtheraffleICO is EtheraffleLOT {
     /* Minimum investment (0.025 Ether) */
     uint public constant minWei = 25 * 10 ** 15;
     /* Crowdsale open, close, withdraw & tier times (UTC Format)*/
-    uint public ICOStart = 1520640000;
-    uint public tier1End = 1521849600;
-    uint public tier2End = 1523664000;
-    uint public tier3End = 1526083200;
-    uint public wdBefore = 1527292800;
+    uint public ICOStart = 1522281600;//Thur 29th March 2018
+    uint public tier1End = 1523491200;//Thur 12th April 2018
+    uint public tier2End = 1525305600;//Thur 3rd May 2018
+    uint public tier3End = 1527724800;//Thur 31st May 2018
+    uint public wdBefore = 1528934400;//Thur 14th June 2018
     /* Variables to track amount of purchases in tier */
     uint public tier0Total;
     uint public tier1Total;
@@ -45,7 +45,7 @@ contract EtheraffleICO is EtheraffleLOT {
     mapping (address => uint) public tier1;
     mapping (address => uint) public tier2;
     mapping (address => uint) public tier3;
-    /* Instantiate the variables to hold Etheraffle's LOT & halfLOT token contract instances */
+    /* Instantiate the variables to hold Etheraffle's LOT & freeLOT token contract instances */
     EtheraffleLOT LOT;
     EtheraffleLOT FreeLOT;
     /* Event loggers */
@@ -83,15 +83,15 @@ contract EtheraffleICO is EtheraffleLOT {
     *       end times, the tier start & end times, the Etheraffle MultiSig Wallet
     *       address & the Etheraffle LOT & FreeLOT token contracts.
     */
-    function EtheraffleICO() public {
+    function EtheraffleICO() public {//address _LOT, address _freeLOT, address _msig) public {
         etheraffle = 0x97f535e98cf250cdd7ff0cb9b29e4548b609a0bd;
-        LOT        = EtheraffleLOT(0xd70b659ae2c61fc52a31723af84a1922747feab7);
-        FreeLOT    = EtheraffleLOT(0x4c388dce25665ea602b92f15718ca278bba45a9a);
+        LOT        = EtheraffleLOT(0xAfD9473dfe8a49567872f93c1790b74Ee7D92A9F);
+        FreeLOT    = EtheraffleLOT(0xc39f7bB97B31102C923DaF02bA3d1bD16424F4bb);
     }
     /**
     * @dev  Purchase LOT tokens.
     *       LOT are sent in accordance with how much ether is invested, and in what
-    *       tier the investment was made in. The function also stores the amount of ether
+    *       tier the investment was made. The function also stores the amount of ether
     *       invested for later conversion to the amount of bonus LOT owed. Once the
     *       crowdsale is over and the final number of tokens sold is known, the purchaser's
     *       bonuses can be calculated. Using the fallback function allows LOT purchasers to
@@ -158,10 +158,10 @@ contract EtheraffleICO is EtheraffleLOT {
     *           claimed, user's purchased amounts are set to 1 wei rather
     *           than zero, to allow the contract to maintain a list of
     *           purchasers in each. All investors, regardless of tier/amount,
-    *           receive five free entries into the flagship Saturday
-    *           Etheraffle via the FreeLOT token.
+    *           receive ten free entries into the flagship Saturday
+    *           Etheraffle via the FreeLOT coupon.
     */
-    function redeemBonusLot() external onlyIfRunning {
+    function redeemBonusLot() external onlyIfRunning { //81k gas
         /* Requires crowdsale to be over and the wdBefore time to not have passed yet */
         require
         (
@@ -263,7 +263,7 @@ contract EtheraffleICO is EtheraffleLOT {
     }
     /**
     * @dev    Function callable only by Etheraffle's multi-sig wallet. It
-    *         transfers the tier's earnt ether to the etheraffle multisig wallet
+    *         transfers the tier's raised ether to the etheraffle multisig wallet
     *         once the tier is over.
     *
     * @param _tier    The tier from which the withdrawal is being made.
