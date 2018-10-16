@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xec40bd2f66d7fb60a70a95b246041d58d4f687d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xb9a008833c1cb31e23493bc2d8a086a5fd0bf398
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.17;
 
 contract Migrations {
   address public owner;
@@ -11,15 +11,15 @@ contract Migrations {
     if (msg.sender == owner) _;
   }
 
-  function Migrations() {
+  function Migrations() public {
     owner = msg.sender;
   }
 
-  function setCompleted(uint completed) restricted {
+  function setCompleted(uint completed) public restricted {
     last_completed_migration = completed;
   }
 
-  function upgrade(address new_address) restricted {
+  function upgrade(address new_address) public restricted {
     Migrations upgraded = Migrations(new_address);
     upgraded.setCompleted(last_completed_migration);
   }
