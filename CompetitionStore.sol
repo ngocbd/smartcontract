@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompetitionStore at 0xb022566fc79552898c4b703cc32d4547b5590633
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompetitionStore at 0x5f742383b6d1298980030d6af943b76cdd902143
 */
 /* Copyright (C) Etherplay <contact@etherplay.io> - All Rights Reserved */
 pragma solidity 0.4.4;
@@ -154,11 +154,6 @@ contract CompetitionStore {
 			return;
 		}
 		
-		//no start found
-		if(gameStart.time == 0){
-			return;
-		}
-		
 		var competition = game.competitions[gameStart.competitionIndex];
 		
 		// game should not take too long to be submited
@@ -199,8 +194,6 @@ contract CompetitionStore {
 			submitBlockNumber:uint64(block.number),
 			version:gameStart.version
 		});
-		
-		gameStart.time = 0; //reset to force the need to start
 		
 	}
 	
