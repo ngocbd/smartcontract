@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RestartEnergyCrowdsale at 0xE90f27fC4EeDb1826dd9965A3A7920DE6e3Cd953
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RestartEnergyCrowdsale at 0xa94C2707e233E5d63f46011A4A158cd2452d1D86
 */
 pragma solidity ^0.4.18;
 
@@ -737,6 +737,8 @@ contract RestartEnergyCrowdsale is TimedCrowdsale, TokenCappedCrowdsale, Pausabl
         tokenAmountOf[to] = tokenAmountOf[to].add(amount);
         soldTokens = soldTokens.add(amount);
         token.mint(to, amount);
+
+        TokenPurchase(msg.sender, to, 0, amount);
     }
 
     function enableTokenTransfers() public onlyOwner {
