@@ -1,18 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Stake at 0xeda12db0e76fe81435da416d60849b5d8b9c83bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Stake at 0x1ed8691cea15e9573282175ffa3e23281fce85c0
 */
-/**
-  * stake users levs
-  * get fee from trading contract
-  * get eth from trading contract
-  * calculate fee tokens to be generated
-  * distribute fee tokens and lev to users in chunks.
-  * re-purpose it for next trading duration.
-  * what happens to extra fee if not enough trading happened? destroy it.
-  * Stake will have full control over FEE.sol
-  */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
+// File: contracts/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -43,6 +34,9 @@ library SafeMath {
     return c;
   }
 }
+
+// File: contracts/Owned.sol
+
 contract Owned {
   event OwnerAddition(address indexed owner);
 
@@ -107,28 +101,11 @@ contract Owned {
 
 }
 
-pragma solidity ^0.4.18;
+// File: contracts/Token.sol
 
-
-contract Validating {
-
-  modifier validAddress(address _address) {
-    require(_address != address(0x0));
-    _;
-  }
-
-  modifier notZero(uint _number) {
-    require(_number != 0);
-    _;
-  }
-
-  modifier notEmpty(string _string) {
-    require(bytes(_string).length != 0);
-    _;
-  }
-
-}
-
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+pragma solidity ^0.4.19;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -174,6 +151,20 @@ contract Token {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
+
+// File: contracts/StandardToken.sol
+
+/*
+You should inherit from StandardToken or, for a token like you would want to
+deploy in something like Mist, see HumanStandardToken.sol.
+(This implements ONLY the standard functions and NOTHING else.
+If you deploy this, you won't have anything useful.)
+
+Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
+pragma solidity ^0.4.19;
+
+
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
@@ -216,6 +207,30 @@ contract StandardToken is Token {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
+
+// File: contracts/Validating.sol
+
+contract Validating {
+
+  modifier validAddress(address _address) {
+    require(_address != address(0x0));
+    _;
+  }
+
+  modifier notZero(uint _number) {
+    require(_number != 0);
+    _;
+  }
+
+  modifier notEmpty(string _string) {
+    require(bytes(_string).length != 0);
+    _;
+  }
+
+}
+
+// File: contracts/Fee.sol
+
 /**
   * @title FEE is an ERC20 token used to pay for trading on the exchange.
   * For deeper rational read https://leverj.io/whitepaper.pdf.
@@ -229,8 +244,7 @@ contract Fee is Owned, Validating, StandardToken {
   string public name;                   //fancy name: eg Simon Bucks
   uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
   string public symbol;                 //An identifier: eg SBX
-  uint256 public feeInCirculation;      //total fee in circulation
-  string public version = 'F0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
+  string public version = 'F0.2';       //human 0.1 standard. Just an arbitrary versioning scheme.
   address public minter;
 
   modifier onlyMinter {
@@ -265,9 +279,8 @@ contract Fee is Owned, Validating, StandardToken {
   /// @param _value Amount of tokens to delete
   function burnTokens(uint _value) public notZero(_value) {
     require(balances[msg.sender] >= _value);
-
     balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
-    feeInCirculation = SafeMath.sub(feeInCirculation, _value);
+    totalSupply = SafeMath.sub(totalSupply, _value);
     Burn(msg.sender, _value);
   }
 
@@ -277,18 +290,58 @@ contract Fee is Owned, Validating, StandardToken {
   /// @param _value The amount o
   function sendTokens(address _to, uint _value) public onlyMinter validAddress(_to) notZero(_value) {
     balances[_to] = SafeMath.add(balances[_to], _value);
-    feeInCirculation = SafeMath.add(feeInCirculation, _value);
-    Transfer(msg.sender, _to, _value);
+    totalSupply = SafeMath.add(totalSupply, _value);
+    Transfer(0x0, _to, _value);
   }
 }
 
+// File: contracts/GenericCall.sol
 
-contract Stake is Owned, Validating {
+contract GenericCall {
+
+  /************************************ abstract **********************************/
+  modifier isAllowed {_;}
+  /********************************************************************************/
+
+  event Execution(address destination, uint value, bytes data);
+
+  function execute(address destination, uint value, bytes data) external isAllowed {
+    if (destination.call.value(value)(data)) {
+      Execution(destination, value, data);
+    }
+  }
+}
+
+// File: contracts/Stake.sol
+
+/**
+  * stake users levs
+  * get fee from trading contract
+  * get eth from trading contract
+  * calculate fee tokens to be generated
+  * distribute fee tokens and lev to users in chunks.
+  * re-purpose it for next trading duration.
+  * what happens to extra fee if not enough trading happened? destroy it.
+  * Stake will have full control over FEE.sol
+  */
+pragma solidity ^0.4.19;
+
+
+
+
+
+
+
+
+contract Stake is Owned, Validating, GenericCall {
   using SafeMath for uint;
 
   event StakeEvent(address indexed user, uint levs, uint startBlock, uint endBlock);
+
   event RedeemEvent(address indexed user, uint levs, uint feeEarned, uint startBlock, uint endBlock);
+
   event FeeCalculated(uint feeCalculated, uint feeReceived, uint weiReceived, uint startBlock, uint endBlock);
+
   event StakingInterval(uint startBlock, uint endBlock);
 
   // User address to (lev tokens)*(blocks left to end)
@@ -329,6 +382,11 @@ contract Stake is Owned, Validating {
 
   modifier isDoneStaking {
     require(block.number >= endBlock);
+    _;
+  }
+
+  modifier isAllowed{
+    require(isOwner[msg.sender]);
     _;
   }
 
