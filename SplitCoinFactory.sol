@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SplitCoinFactory at 0x50d998d0faf680b9cf44d6cfd9f7c3654056dcc5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SplitCoinFactory at 0x4a53e0f5144adcbb606087615bf78078c2097f02
 */
 pragma solidity ^0.4.17;
 
@@ -123,7 +123,6 @@ library CSCLib {
 		}
 	}
 }
-
 contract ClaimableSplitCoin {
 
 	using CSCLib for CSCLib.CSCStorage;
@@ -154,10 +153,6 @@ contract ClaimableSplitCoin {
 		return (csclib.splits[index].to, csclib.splits[index].ppm);
 	}
 
-	function isClaimable() public view returns (bool) {
-		return csclib.isClaimable;
-	}
-
 	event SplitTransfer(address to, uint amount, uint balance);
 
 	function claimFor(address user) public {
@@ -180,7 +175,6 @@ contract ClaimableSplitCoin {
 		csclib.transfer(to, ppm);
 	}
 }
-
 contract SplitCoinFactory {
   mapping(address => address[]) public contracts;
   mapping(address => uint) public referralContracts;
