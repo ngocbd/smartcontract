@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xfe3101486b4f06fe9a5d210ff0294f6d4ec706cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xd0645acdf897a52e7bae4044879e7a9126ab299a
 */
 pragma solidity ^0.4.11;
 
@@ -72,9 +72,9 @@ contract Crowdsale {
 
 
   function Crowdsale() {
-    wallet = 0xCEFACEc39Ddc6A4ffAe43879764b13151Dd84D70;
+    wallet = 0xA10f6f8A723038ca267FD8D5354d1563238dc1De;
     // durationInMinutes = _durationInMinutes;
-    addressOfTokenUsedAsReward = 0x9347A81186287807C1e26A78c172CEE9453932d8;
+    addressOfTokenUsedAsReward = 0xdFF8e7f5496D1e1A4Af3497Cb4712017a9C65442;
 
 
     tokenReward = token(addressOfTokenUsedAsReward);
@@ -85,7 +85,7 @@ contract Crowdsale {
   function startSale(uint256 delay){
     if (msg.sender != wallet || started) throw;
     startTime = now + delay * 1 minutes;
-    endTime = startTime + 60 * 24 * 60 * 1 minutes;
+    endTime = startTime + 42 * 24 * 60 * 1 minutes;
     started = true;
   }
 
@@ -102,16 +102,18 @@ contract Crowdsale {
     uint256 weiAmount = msg.value;
 
     // calculate token amount to be sent
-    uint256 tokens = (weiAmount) * 300;
+    uint256 tokens = (weiAmount) * 3000;
 
     if(now < startTime + 1*7*24*60* 1 minutes){
-      tokens += (tokens * 20) / 100;
+      tokens += (tokens * 60) / 100;
     }else if(now < startTime + 2*7*24*60* 1 minutes){
-      tokens += (tokens * 15) / 100;
+      tokens += (tokens * 40) / 100;
     }else if(now < startTime + 3*7*24*60* 1 minutes){
-      tokens += (tokens * 10) / 100;
+      tokens += (tokens * 30) / 100;
     }else if(now < startTime + 4*7*24*60* 1 minutes){
-      tokens += (tokens * 5) / 100;
+      tokens += (tokens * 20) / 100;
+    }else if(now < startTime + 5*7*24*60* 1 minutes){
+      tokens += (tokens * 10) / 100;
     }
 
     // update state
