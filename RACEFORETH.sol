@@ -1,21 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RACEFORETH at 0xd9ccd56914539ea310827e3037932df8dde3f557
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RACEFORETH at 0x3f9b6264f60cd50b456ed69475862db1c8c62c38
 */
 pragma solidity 0.4.21;
 
-// How fast can you get to 100 points and win the prize?
-// First person to deposit 0.1 eth (100 finney) wins the entire prize!
-// 1 finney = 1 point
+// How fast can you get to 1000 points and win the prize?
 
 contract RACEFORETH {
-    // 100 points to win!
-    uint256 public SCORE_TO_WIN = 100 finney;
-    uint256 public PRIZE;
+    // 1000 points to win!
+    uint256 public SCORE_TO_WIN = 1000 finney;
+    uint256 PRIZE;
     
-    // 100 points = 0.1 ether
-    // Speed limit: 0.05 eth to prevent insta-win
+    // 1000 points = 1 ether
+    // Speed limit: 0.5 eth to prevent insta-win
     // Prevents people from going too fast!
-    uint256 public speed_limit = 50 finney;
+    uint256 public speed_limit = 500 finney;
     
     // Keep track of everyone's score
     mapping (address => uint256) racerScore;
@@ -40,7 +38,7 @@ contract RACEFORETH {
     
         // YOU WON
         if (racerScore[msg.sender] >= SCORE_TO_WIN) {
-            msg.sender.transfer(PRIZE);
+            msg.sender.transfer(this.balance);
         }
     }
     
