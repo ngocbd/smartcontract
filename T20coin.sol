@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract T20coin at 0x6c8fbb97a832aeacaee0c4a8695ab52ac443be06
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract T20coin at 0x662bd4ee8f90edf7f41834fc2e53307ad2b8d96e
 */
 contract T20coin {
   
@@ -21,10 +21,10 @@ contract T20coin {
          initialSupply = 10000000000;
          name ="T20coin";
         decimals = 1;
-         symbol = "T20";
+         symbol = "T20coin";
         
         balanceOf[msg.sender] = initialSupply;              
-        totalSupply = initialSupply;                
+        totalSupply = initialSupply;                        
                                    
     }
 
