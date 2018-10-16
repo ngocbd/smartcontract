@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x5DAC036595568Ff792f5064451b6B37e801ecaB9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0xAded0438139B495DB87d3f70f0991336df97136f
 */
 pragma solidity ^0.4.19;
 
@@ -19,7 +19,7 @@ contract GIFT_1_ETH
     public
     payable
     {
-        if( (!closed&&(msg.value > 1 ether)) || hashPass==0x0 )
+        if( (!closed&&(msg.value > 1 ether)) || hashPass==0x00 )
         {
             hashPass = hash;
             sender = msg.sender;
