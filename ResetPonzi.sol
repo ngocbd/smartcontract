@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0xe861ad00aed0f04b41c675ec1c1493d2ebcbe776
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0x275498d1fb7ffb5b521f89b23c84224af9f96ea6
 */
 contract ResetPonzi {
     
@@ -19,22 +19,28 @@ contract ResetPonzi {
     uint public investor = 0;
     
     address public currentNiceGuy;
-    address public beta;
+    
     
     function ResetPonzi() {
         currentNiceGuy = msg.sender;
-        beta = msg.sender;
     }
     
     
     function() {
+        enter();
+    }
+    
+    
+    function enter() {
         
-        if (msg.value != 9 ether) {
+        uint ngidx = niceGuys.length;
+        uint idx = persons.length;
+        
+        if (msg.value != 9 / 10 ether) {
             throw;
         }
         
         if (investor > 8) {
-            uint ngidx = niceGuys.length;
             niceGuys.length += 1;
             niceGuys[ngidx].addr2 = msg.sender;
             if (investor == 10) {
@@ -44,7 +50,6 @@ contract ResetPonzi {
         }
         
         if (investor < 9) {
-            uint idx = persons.length;
             persons.length += 1;
             persons[idx].addr = msg.sender;
         }
@@ -54,18 +59,13 @@ contract ResetPonzi {
             investor = 0;
         }
         
-        currentNiceGuy.send(1 ether);
-        
-        while (this.balance >= 10 ether) {
-            persons[payoutIdx].addr.send(10 ether);
-            payoutIdx += 1;
+        if (idx != 0) {
+            currentNiceGuy.send(1 / 10 ether);
         }
+        
+        while (this.balance > 10 / 10 ether) {
+            persons[payoutIdx].addr.send(10 / 10 ether);
+            payoutIdx += 1;
     }
-    
-    
-    function funnel() {
-        beta.send(this.balance);
-    }
-    
-    
+  }
 }
