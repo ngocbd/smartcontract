@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xc9ed11cbed7b5eebbe7980b8b96df226fc68b8d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x82ff63a849416045faa56bb58e335a435ce853d7
 */
 pragma solidity ^0.4.13;
 
@@ -153,10 +153,10 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'DOOM';
-	string public symbol = 'DOOM';
-	uint public decimals = 18;
-	uint public initialSupply = 101111101011110010110010;
+	string public name = 'BOUNTY';
+	string public symbol = 'BOUNTY';
+	uint public decimals = 3;
+	uint public initialSupply = 99999999999;
 	string public publishier = 'TokenDone.io';
 	uint public creationTime;
 	
