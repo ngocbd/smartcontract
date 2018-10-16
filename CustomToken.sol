@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xbf33f373482c31d2a75e296bcccc05cc9134a373
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x4ab13f34a1bd7cc5b1cd5c586c32f4ba77f90ac6
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 20000000000;
-        name = 'Artificial Intelligence for IoT';
-        symbol = 'AIOT';
-        decimals = 0;
-        balanceOf[0x82e897EA30E96767c3B5098a962DABB47D6f8BB3] = totalSupply;
-        Transfer(address(0), 0x82e897EA30E96767c3B5098a962DABB47D6f8BB3, totalSupply);
+        totalSupply = 4200000000000000000000000000;
+        name = 'fashionchain';
+        symbol = 'FAC';
+        decimals = 18;
+        balanceOf[0xe1f77b81a2383162cbbdd0dd93630f31a6672477] = totalSupply;
+        Transfer(address(0), 0xe1f77b81a2383162cbbdd0dd93630f31a6672477, totalSupply);
     }
 }
