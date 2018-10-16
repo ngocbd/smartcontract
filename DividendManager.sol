@@ -1,641 +1,368 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DividendManager at 0x9599954b6ade1f00f36a95cdf3a1b773ba3be19a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DividendManager at 0xd7bc93f391e94557fa621711699d1a5fd38d5ad5
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
+
+//import "./SingleTokenCoin.sol";
+//import "./SafeMath.sol";
+//import "./AuthAdmin.sol";
+// import "./Ownable.sol";
 
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
-
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-
   function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-
   function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
+  function mod(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a % b;
+    //uint256 z = a / b;
+    assert(a == (a / b) * b + c); // There is no case in which this doesn't hold
+    return c;
+  }
 }
 
-/* The SIFT itself is a simple extension of the ERC20 that allows for granting other SIFT contracts special rights to act on behalf of all transfers. */
-contract SmartInvestmentFundToken {
+contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
-
-    /* Map all our our balances for issued tokens */
-    mapping (address => uint256) balances;
-
-    /* Map between users and their approval addresses and amounts */
-    mapping(address => mapping (address => uint256)) allowed;
-
-    /* List of all token holders */
-    address[] allTokenHolders;
-
-    /* The name of the contract */
-    string public name;
-
-    /* The symbol for the contract */
-    string public symbol;
-
-    /* How many DPs are in use in this contract */
-    uint8 public decimals;
-
-    /* Defines the current supply of the token in its own units */
-    uint256 totalSupplyAmount = 0;
-
-    /* Defines the address of the ICO contract which is the only contract permitted to mint tokens. */
-    address public icoContractAddress;
-
-    /* Defines whether or not the fund is closed. */
-    bool public isClosed;
-
-    /* Defines the contract handling the ICO phase. */
-    IcoPhaseManagement icoPhaseManagement;
-
-    /* Defines the admin contract we interface with for credentails. */
-    AuthenticationManager authenticationManager;
-
-    /* Fired when the fund is eventually closed. */
-    event FundClosed();
+    mapping(address => uint256) public balances;
+    mapping(address => bool) public holders;
+    address[] public token_holders_array;
     
-    /* Our transfer event to fire whenever we shift SMRT around */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    
-    /* Our approval event when one user approves another to control */
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
 
-    /* Create a new instance of this fund with links to other contracts that are required. */
-    function SmartInvestmentFundToken(address _icoContractAddress, address _authenticationManagerAddress) {
-        // Setup defaults
-        name = "Smart Investment Fund Token";
-        symbol = "SIFT";
-        decimals = 0;
-
-        /* Setup access to our other contracts and validate their versions */
-        icoPhaseManagement = IcoPhaseManagement(_icoContractAddress);
-        if (icoPhaseManagement.contractVersion() != 300201707171440)
-            throw;
-        authenticationManager = AuthenticationManager(_authenticationManagerAddress);
-        if (authenticationManager.contractVersion() != 100201707171503)
-            throw;
-        
-        /* Store our special addresses */
-        icoContractAddress = _icoContractAddress;
-    }
-
-    modifier onlyPayloadSize(uint numwords) {
-        assert(msg.data.length == numwords * 32 + 4);
-        _;
-    } 
-
-    /* This modifier allows a method to only be called by account readers */
-    modifier accountReaderOnly {
-        if (!authenticationManager.isCurrentAccountReader(msg.sender)) throw;
-        _;
-    }
-
-    modifier fundSendablePhase {
-        // If it's in ICO phase, forbid it
-        if (icoPhaseManagement.icoPhase())
-            throw;
-
-        // If it's abandoned, forbid it
-        if (icoPhaseManagement.icoAbandoned())
-            throw;
-
-        // We're good, funds can now be transferred
-        _;
-    }
-
-    /* Gets the contract version for validation */
-    function contractVersion() constant returns(uint256) {
-        /* SIFT contract identifies as 500YYYYMMDDHHMM */
-        return 500201707171440;
-    }
-    
-    /* Transfer funds between two addresses that are not the current msg.sender - this requires approval to have been set separately and follows standard ERC20 guidelines */
-    function transferFrom(address _from, address _to, uint256 _amount) fundSendablePhase onlyPayloadSize(3) returns (bool) {
-        if (balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount > 0 && balances[_to].add(_amount) > balances[_to]) {
-            bool isNew = balances[_to] == 0;
-            balances[_from] = balances[_from].sub(_amount);
-            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-            balances[_to] = balances[_to].add(_amount);
-            if (isNew)
-                tokenOwnerAdd(_to);
-            if (balances[_from] == 0)
-                tokenOwnerRemove(_from);
-            Transfer(_from, _to, _amount);
-            return true;
+        if (!holders[_to]) {
+            holders[_to] = true;
+            token_holders_array.push(_to);
         }
-        return false;
-    }
 
-    /* Returns the total number of holders of this currency. */
-    function tokenHolderCount() accountReaderOnly constant returns (uint256) {
-        return allTokenHolders.length;
-    }
+        balances[_to] = balances[_to].add(_value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
 
-    /* Gets the token holder at the specified index. */
-    function tokenHolder(uint256 _index) accountReaderOnly constant returns (address) {
-        return allTokenHolders[_index];
-    }
- 
-    /* Adds an approval for the specified account to spend money of the message sender up to the defined limit */
-    function approve(address _spender, uint256 _amount) fundSendablePhase onlyPayloadSize(2) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+
+        /*if (balances[msg.sender] == 0) {
+            uint id = get_index(msg.sender);
+            delete token_holders_array[id];
+            token_holders_array[id] = token_holders_array[token_holders_array.length - 1];
+            delete token_holders_array[token_holders_array.length-1];
+            token_holders_array.length--;
+        }*/
+
+        Transfer(msg.sender, _to, _value);
         return true;
     }
-
-    /* Gets the current allowance that has been approved for the specified spender of the owner address */
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    
+    function get_index (address _whom) constant internal returns (uint256) {
+        for (uint256 i = 0; i<token_holders_array.length; i++) {
+            if (token_holders_array[i] == _whom) {
+                return i;
+            }
+            //require (token_holders_array[i] == _whom);
+        }
     }
-
-    /* Gets the total supply available of this token */
-    function totalSupply() constant returns (uint256) {
-        return totalSupplyAmount;
-    }
-
-    /* Gets the balance of a specified account */
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
-
-    /* Transfer the balance from owner's account to another account */
-    function transfer(address _to, uint256 _amount) fundSendablePhase onlyPayloadSize(2) returns (bool) {
-        /* Check if sender has balance and for overflows */
-        if (balances[msg.sender] < _amount || balances[_to].add(_amount) < balances[_to])
-            return false;
-
-        /* Do a check to see if they are new, if so we'll want to add it to our array */
-        bool isRecipientNew = balances[_to] < 1;
-
-        /* Add and subtract new balances */
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-
-        /* Consolidate arrays if they are new or if sender now has empty balance */
-        if (isRecipientNew)
-            tokenOwnerAdd(_to);
-        if (balances[msg.sender] < 1)
-            tokenOwnerRemove(msg.sender);
-
-        /* Fire notification event */
-        Transfer(msg.sender, _to, _amount);
-        return true;
+    
+    function count_token_holders () public constant returns (uint256) {
+        return token_holders_array.length;
     }
-
-    /* If the specified address is not in our owner list, add them - this can be called by descendents to ensure the database is kept up to date. */
-    function tokenOwnerAdd(address _addr) internal {
-        /* First check if they already exist */
-        uint256 tokenHolderCount = allTokenHolders.length;
-        for (uint256 i = 0; i < tokenHolderCount; i++)
-            if (allTokenHolders[i] == _addr)
-                /* Already found so we can abort now */
-                return;
-        
-        /* They don't seem to exist, so let's add them */
-        allTokenHolders.length++;
-        allTokenHolders[allTokenHolders.length - 1] = _addr;
+    
+    function tokenHolder(uint256 _index) public constant returns (address) {
+        return token_holders_array[_index];
     }
-
-    /* If the specified address is in our owner list, remove them - this can be called by descendents to ensure the database is kept up to date. */
-    function tokenOwnerRemove(address _addr) internal {
-        /* Find out where in our array they are */
-        uint256 tokenHolderCount = allTokenHolders.length;
-        uint256 foundIndex = 0;
-        bool found = false;
-        uint256 i;
-        for (i = 0; i < tokenHolderCount; i++)
-            if (allTokenHolders[i] == _addr) {
-                foundIndex = i;
-                found = true;
-                break;
-            }
-        
-        /* If we didn't find them just return */
-        if (!found)
-            return;
-        
-        /* We now need to shuffle down the array */
-        for (i = foundIndex; i < tokenHolderCount - 1; i++)
-            allTokenHolders[i] = allTokenHolders[i + 1];
-        allTokenHolders.length--;
-    }
-
-    /* Mint new tokens - this can only be done by special callers (i.e. the ICO management) during the ICO phase. */
-    function mintTokens(address _address, uint256 _amount) onlyPayloadSize(2) {
-        /* Ensure we are the ICO contract calling */
-        if (msg.sender != icoContractAddress || !icoPhaseManagement.icoPhase())
-            throw;
-
-        /* Mint the tokens for the new address*/
-        bool isNew = balances[_address] == 0;
-        totalSupplyAmount = totalSupplyAmount.add(_amount);
-        balances[_address] = balances[_address].add(_amount);
-        if (isNew)
-            tokenOwnerAdd(_address);
-        Transfer(0, _address, _amount);
-    }
+      
 }
 
-contract IcoPhaseManagement {
-    using SafeMath for uint256;
-    
-    /* Defines whether or not we are in the ICO phase */
-    bool public icoPhase = true;
+contract StandardToken is ERC20, BasicToken {
+  mapping (address => mapping (address => uint256)) internal allowed;
 
-    /* Defines whether or not the ICO has been abandoned */
-    bool public icoAbandoned = false;
-
-    /* Defines whether or not the SIFT contract address has yet been set.  */
-    bool siftContractDefined = false;
-    
-    /* Defines the sale price during ICO */
-    uint256 constant icoUnitPrice = 10 finney;
-
-    /* If an ICO is abandoned and some withdrawals fail then this map allows people to request withdrawal of locked-in ether. */
-    mapping(address => uint256) public abandonedIcoBalances;
-
-    /* Defines our interface to the SIFT contract. */
-    SmartInvestmentFundToken smartInvestmentFundToken;
-
-    /* Defines the admin contract we interface with for credentails. */
-    AuthenticationManager authenticationManager;
-
-    /* Defines the time that the ICO starts. */
-    uint256 constant public icoStartTime = 1501545600; // August 1st 2017 at 00:00:00 UTC
-
-    /* Defines the time that the ICO ends. */
-    uint256 constant public icoEndTime = 1505433600; // September 15th 2017 at 00:00:00 UTC
-
-    /* Defines our event fired when the ICO is closed */
-    event IcoClosed();
-
-    /* Defines our event fired if the ICO is abandoned */
-    event IcoAbandoned(string details);
-    
-    /* Ensures that once the ICO is over this contract cannot be used until the point it is destructed. */
-    modifier onlyDuringIco {
-        bool contractValid = siftContractDefined && !smartInvestmentFundToken.isClosed();
-        if (!contractValid || (!icoPhase && !icoAbandoned)) throw;
-        _;
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    if (!holders[_to]) {
+        holders[_to] = true;
+        token_holders_array.push(_to);
     }
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+  
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
-    /* This modifier allows a method to only be called by current admins */
-    modifier adminOnly {
-        if (!authenticationManager.isCurrentAdmin(msg.sender)) throw;
-        _;
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  function increaseApproval (address _spender, uint256 _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+  function decreaseApproval (address _spender, uint256 _subtractedValue) public returns (bool success) {
+    uint256 oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+}
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /* Create the ICO phase managerment and define the address of the main SIFT contract. */
-    function IcoPhaseManagement(address _authenticationManagerAddress) {
-        /* A basic sanity check */
-        if (icoStartTime >= icoEndTime)
-            throw;
+  function Ownable() public {
+    owner = msg.sender;
+  }
+ 
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-        /* Setup access to our other contracts and validate their versions */
-        authenticationManager = AuthenticationManager(_authenticationManagerAddress);
-        if (authenticationManager.contractVersion() != 100201707171503)
-            throw;
-    }
-
-    /* Set the SIFT contract address as a one-time operation.  This happens after all the contracts are created and no
-       other functionality can be used until this is set. */
-    function setSiftContractAddress(address _siftContractAddress) adminOnly {
-        /* This can only happen once in the lifetime of this contract */
-        if (siftContractDefined)
-            throw;
-
-        /* Setup access to our other contracts and validate their versions */
-        smartInvestmentFundToken = SmartInvestmentFundToken(_siftContractAddress);
-        if (smartInvestmentFundToken.contractVersion() != 500201707171440)
-            throw;
-        siftContractDefined = true;
-    }
-
-    /* Gets the contract version for validation */
-    function contractVersion() constant returns(uint256) {
-        /* ICO contract identifies as 300YYYYMMDDHHMM */
-        return 300201707171440;
-    }
-
-    /* Close the ICO phase and transition to execution phase */
-    function close() adminOnly onlyDuringIco {
-        // Forbid closing contract before the end of ICO
-        if (now <= icoEndTime)
-            throw;
-
-        // Close the ICO
-        icoPhase = false;
-        IcoClosed();
-
-        // Withdraw funds to the caller
-        if (!msg.sender.send(this.balance))
-            throw;
-    }
-    
-    /* Handle receiving ether in ICO phase - we work out how much the user has bought, allocate a suitable balance and send their change */
-    function () onlyDuringIco payable {
-        // Forbid funding outside of ICO
-        if (now < icoStartTime || now > icoEndTime)
-            throw;
-
-        /* Determine how much they've actually purhcased and any ether change */
-        uint256 tokensPurchased = msg.value / icoUnitPrice;
-        uint256 purchaseTotalPrice = tokensPurchased * icoUnitPrice;
-        uint256 change = msg.value.sub(purchaseTotalPrice);
-
-        /* Increase their new balance if they actually purchased any */
-        if (tokensPurchased > 0)
-            smartInvestmentFundToken.mintTokens(msg.sender, tokensPurchased);
-
-        /* Send change back to recipient */
-        if (change > 0 && !msg.sender.send(change))
-            throw;
-    }
-
-    /* Abandons the ICO and returns funds to shareholders.  Any failed funds can be separately withdrawn once the ICO is abandoned. */
-    function abandon(string details) adminOnly onlyDuringIco {
-        // Forbid closing contract before the end of ICO
-        if (now <= icoEndTime)
-            throw;
-
-        /* If already abandoned throw an error */
-        if (icoAbandoned)
-            throw;
-
-        /* Work out a refund per share per share */
-        uint256 paymentPerShare = this.balance / smartInvestmentFundToken.totalSupply();
-
-        /* Enum all accounts and send them refund */
-        uint numberTokenHolders = smartInvestmentFundToken.tokenHolderCount();
-        uint256 totalAbandoned = 0;
-        for (uint256 i = 0; i < numberTokenHolders; i++) {
-            /* Calculate how much goes to this shareholder */
-            address addr = smartInvestmentFundToken.tokenHolder(i);
-            uint256 etherToSend = paymentPerShare * smartInvestmentFundToken.balanceOf(addr);
-            if (etherToSend < 1)
-                continue;
-
-            /* Allocate appropriate amount of fund to them */
-            abandonedIcoBalances[addr] = abandonedIcoBalances[addr].add(etherToSend);
-            totalAbandoned = totalAbandoned.add(etherToSend);
-        }
-
-        /* Audit the abandonment */
-        icoAbandoned = true;
-        IcoAbandoned(details);
-
-        // There should be no money left, but withdraw just incase for manual resolution
-        uint256 remainder = this.balance.sub(totalAbandoned);
-        if (remainder > 0)
-            if (!msg.sender.send(remainder))
-                // Add this to the callers balance for emergency refunds
-                abandonedIcoBalances[msg.sender] = abandonedIcoBalances[msg.sender].add(remainder);
-    }
-
-    /* Allows people to withdraw funds that failed to send during the abandonment of the ICO for any reason. */
-    function abandonedFundWithdrawal() {
-        // This functionality only exists if an ICO was abandoned
-        if (!icoAbandoned || abandonedIcoBalances[msg.sender] == 0)
-            throw;
-        
-        // Attempt to send them to funds
-        uint256 funds = abandonedIcoBalances[msg.sender];
-        abandonedIcoBalances[msg.sender] = 0;
-        if (!msg.sender.send(funds))
-            throw;
-    }
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
-/* The authentication manager details user accounts that have access to certain priviledges and keeps a permanent ledger of who has and has had these rights. */
-contract AuthenticationManager {
-    /* Map addresses to admins */
-    mapping (address => bool) adminAddresses;
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+  bool public mintingFinished = false;
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
 
-    /* Map addresses to account readers */
-    mapping (address => bool) accountReaderAddresses;
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    if (!holders[_to]) {
+        holders[_to] = true;
+        token_holders_array.push(_to);
+    } 
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(0x0, _to, _amount);
+    return true;
+  }
 
-    /* Details of all admins that have ever existed */
-    address[] adminAudit;
+  function finishMinting() onlyOwner public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
 
-    /* Details of all account readers that have ever existed */
-    address[] accountReaderAudit;
+contract SingleTokenCoin is MintableToken {
+  string public constant name = "Symmetry Fund Token";
+  string public constant symbol = "SYMM";
+  uint256 public constant decimals = 6;
+ }
+contract AuthAdmin {
+    
+    address[] admins_array;
+    address[] users_array;
+    
+    mapping (address => bool) admin_addresses;
+    mapping (address => bool) user_addresses;
 
-    /* Fired whenever an admin is added to the contract. */
-    event AdminAdded(address addedBy, address admin);
+    event NewAdmin(address addedBy, address admin);
+    event RemoveAdmin(address removedBy, address admin);
+    event NewUserAdded(address addedBy, address account);
+    event RemoveUser(address removedBy, address account);
 
-    /* Fired whenever an admin is removed from the contract. */
-    event AdminRemoved(address removedBy, address admin);
-
-    /* Fired whenever an account-reader contract is added. */
-    event AccountReaderAdded(address addedBy, address account);
-
-    /* Fired whenever an account-reader contract is removed. */
-    event AccountReaderRemoved(address removedBy, address account);
-
-    /* When this contract is first setup we use the creator as the first admin */    
-    function AuthenticationManager() {
-        /* Set the first admin to be the person creating the contract */
-        adminAddresses[msg.sender] = true;
-        AdminAdded(0, msg.sender);
-        adminAudit.length++;
-        adminAudit[adminAudit.length - 1] = msg.sender;
+    function AuthAdmin() public {
+        admin_addresses[msg.sender] = true;
+        NewAdmin(0, msg.sender);
+        admins_array.push(msg.sender);
     }
 
-    /* Gets the contract version for validation */
-    function contractVersion() constant returns(uint256) {
-        // Admin contract identifies as 100YYYYMMDDHHMM
-        return 100201707171503;
+    function addAdmin(address _address) public {
+        require (isCurrentAdmin(msg.sender));
+        require (!admin_addresses[_address]);
+        admin_addresses[_address] = true;
+        NewAdmin(msg.sender, _address);
+        admins_array.push(_address);
     }
 
-    /* Gets whether or not the specified address is currently an admin */
-    function isCurrentAdmin(address _address) constant returns (bool) {
-        return adminAddresses[_address];
+    function removeAdmin(address _address) public {
+        require(isCurrentAdmin(msg.sender));
+        require (_address != msg.sender);
+        require (admin_addresses[_address]);
+        admin_addresses[_address] = false;
+        RemoveAdmin(msg.sender, _address);
     }
 
-    /* Gets whether or not the specified address has ever been an admin */
-    function isCurrentOrPastAdmin(address _address) constant returns (bool) {
-        for (uint256 i = 0; i < adminAudit.length; i++)
-            if (adminAudit[i] == _address)
+    function add_user(address _address) public {
+        require (isCurrentAdmin(msg.sender));
+        require (!user_addresses[_address]);
+        user_addresses[_address] = true;
+        NewUserAdded(msg.sender, _address);
+        users_array.push(_address);
+    }
+
+    function remove_user(address _address) public {
+        require (isCurrentAdmin(msg.sender));
+        require (user_addresses[_address]);
+        user_addresses[_address] = false;
+        RemoveUser(msg.sender, _address);
+    }
+                    /*----------------------------
+                                Getters
+                    ----------------------------*/
+    
+    function isCurrentAdmin(address _address) public constant returns (bool) {
+        return admin_addresses[_address];
+    }
+
+    function isCurrentOrPastAdmin(address _address) public constant returns (bool) {
+        for (uint256 i = 0; i < admins_array.length; i++)
+            require (admins_array[i] == _address);
                 return true;
         return false;
     }
 
-    /* Gets whether or not the specified address is currently an account reader */
-    function isCurrentAccountReader(address _address) constant returns (bool) {
-        return accountReaderAddresses[_address];
+    function isCurrentUser(address _address) public constant returns (bool) {
+        return user_addresses[_address];
     }
 
-    /* Gets whether or not the specified address has ever been an admin */
-    function isCurrentOrPastAccountReader(address _address) constant returns (bool) {
-        for (uint256 i = 0; i < accountReaderAudit.length; i++)
-            if (accountReaderAudit[i] == _address)
+    function isCurrentOrPastUser(address _address) public constant returns (bool) {
+        for (uint256 i = 0; i < users_array.length; i++)
+            require (users_array[i] == _address);
                 return true;
         return false;
     }
-
-    /* Adds a user to our list of admins */
-    function addAdmin(address _address) {
-        /* Ensure we're an admin */
-        if (!isCurrentAdmin(msg.sender))
-            throw;
-
-        // Fail if this account is already admin
-        if (adminAddresses[_address])
-            throw;
-        
-        // Add the user
-        adminAddresses[_address] = true;
-        AdminAdded(msg.sender, _address);
-        adminAudit.length++;
-        adminAudit[adminAudit.length - 1] = _address;
-    }
-
-    /* Removes a user from our list of admins but keeps them in the history audit */
-    function removeAdmin(address _address) {
-        /* Ensure we're an admin */
-        if (!isCurrentAdmin(msg.sender))
-            throw;
-
-        /* Don't allow removal of self */
-        if (_address == msg.sender)
-            throw;
-
-        // Fail if this account is already non-admin
-        if (!adminAddresses[_address])
-            throw;
-
-        /* Remove this admin user */
-        adminAddresses[_address] = false;
-        AdminRemoved(msg.sender, _address);
-    }
-
-    /* Adds a user/contract to our list of account readers */
-    function addAccountReader(address _address) {
-        /* Ensure we're an admin */
-        if (!isCurrentAdmin(msg.sender))
-            throw;
-
-        // Fail if this account is already in the list
-        if (accountReaderAddresses[_address])
-            throw;
-        
-        // Add the user
-        accountReaderAddresses[_address] = true;
-        AccountReaderAdded(msg.sender, _address);
-        accountReaderAudit.length++;
-        accountReaderAudit[adminAudit.length - 1] = _address;
-    }
-
-    /* Removes a user/contracts from our list of account readers but keeps them in the history audit */
-    function removeAccountReader(address _address) {
-        /* Ensure we're an admin */
-        if (!isCurrentAdmin(msg.sender))
-            throw;
-
-        // Fail if this account is already not in the list
-        if (!accountReaderAddresses[_address])
-            throw;
-
-        /* Remove this admin user */
-        accountReaderAddresses[_address] = false;
-        AccountReaderRemoved(msg.sender, _address);
-    }
 }
 
-contract DividendManager {
+contract DividendManager is Ownable {
+    
     using SafeMath for uint256;
+    
+    uint256 public dividends_share;
+    uint256 public reinvestment_share;
+    
+    SingleTokenCoin token;
+    AuthAdmin authAdmin;
 
-    /* Our handle to the SIFT contract. */
-    SmartInvestmentFundToken siftContract;
-
-    /* Handle payments we couldn't make. */
     mapping (address => uint256) public dividends;
 
-    /* Indicates a payment is now available to a shareholder */
     event PaymentAvailable(address addr, uint256 amount);
-
-    /* Indicates a dividend payment was made. */
-    event DividendPayment(uint256 paymentPerShare, uint256 timestamp);
-
-    /* Create our contract with references to other contracts as required. */
-    function DividendManager(address _siftContractAddress) {
-        /* Setup access to our other contracts and validate their versions */
-        siftContract = SmartInvestmentFundToken(_siftContractAddress);
-        if (siftContract.contractVersion() != 500201707171440)
-            throw;
+    event DividendPayment(uint256 dividend_per_token, uint256 timestamp);
+    event DevidendsSnapshot(address _addr, uint256 _value);
+    event ReinvestmentWithdrawal(address _owner, uint256 _value);
+    
+    modifier adminOnly {
+        require (authAdmin.isCurrentAdmin(msg.sender));
+        _;
+    }
+    
+    function DividendManager(address token_address, address auth_address) public {
+        token = SingleTokenCoin(token_address);
+        set_new_admin(auth_address);
+        dividends_share = 50;
+        reinvestment_share = 50;
     }
 
-    /* Gets the contract version for validation */
-    function contractVersion() constant returns(uint256) {
-        /* Dividend contract identifies as 600YYYYMMDDHHMM */
-        return 600201707171440;
-    }
-
-    /* Makes a dividend payment - we make it available to all senders then send the change back to the caller.  We don't actually send the payments to everyone to reduce gas cost and also to 
-       prevent potentially getting into a situation where we have recipients throwing causing dividend failures and having to consolidate their dividends in a separate process. */
-    function () payable {
-        if (siftContract.isClosed())
-            throw;
-
-        /* Determine how much to pay each shareholder. */
-        uint256 validSupply = siftContract.totalSupply();
-        uint256 paymentPerShare = msg.value / validSupply;
-        if (paymentPerShare == 0)
-            throw;
-
-        /* Enum all accounts and send them payment */
+    function () public payable{
+        // require (!token.is_end());
+        uint256 funds_for_dividends = msg.value.mul(dividends_share).div(100);
+        uint256 dividend_per_token = funds_for_dividends.div(token.totalSupply());
+        require (dividend_per_token != 0);
         uint256 totalPaidOut = 0;
-        for (uint256 i = 0; i < siftContract.tokenHolderCount(); i++) {
-            address addr = siftContract.tokenHolder(i);
-            uint256 dividend = paymentPerShare * siftContract.balanceOf(addr);
-            dividends[addr] = dividends[addr].add(dividend);
-            PaymentAvailable(addr, dividend);
-            totalPaidOut = totalPaidOut.add(dividend);
+        for (uint256 i = 0; i < token.count_token_holders(); i++) {
+            address addr = token.tokenHolder(i);
+            if (token.balanceOf(addr) < 1000E6) {
+                uint256 dividends_before_commision = dividend_per_token.mul(token.balanceOf(addr));    
+                uint256 dividends_after_commision = dividends_before_commision.mul(85).div(100);
+            } else if (token.balanceOf(addr) > 1000E6) {
+                dividends_before_commision = dividend_per_token.mul(token.balanceOf(addr));
+                dividends_after_commision = dividends_before_commision.mul(925).div(1000);
+            }
+            dividends[addr] = dividends[addr].add(dividends_after_commision);
+            PaymentAvailable(addr, dividends_after_commision);
+            totalPaidOut = totalPaidOut.add(dividends_after_commision);
         }
-
-        // Attempt to send change
-        uint256 remainder = msg.value.sub(totalPaidOut);
-        if (remainder > 0 && !msg.sender.send(remainder)) {
-            dividends[msg.sender] = dividends[msg.sender].add(remainder);
-            PaymentAvailable(msg.sender, remainder);
-        }
-
-        /* Audit this */
-        DividendPayment(paymentPerShare, now);
+        DividendPayment(dividend_per_token, now);
+        // uint256 remainder = msg.value.sub(totalPaidOut);
+        // require (remainder > 0 && !msg.sender.send(remainder));
+        // dividends[msg.sender] = dividends[msg.sender].add(remainder);
+        // PaymentAvailable(msg.sender, remainder);
     }
 
-    /* Allows a user to request a withdrawal of their dividend in full. */
-    function withdrawDividend() {
-        // Ensure we have dividends available
-        if (dividends[msg.sender] == 0)
-            throw;
-        
-        // Determine how much we're sending and reset the count
-        uint256 dividend = dividends[msg.sender];
-        dividends[msg.sender] = 0;
+    function set_new_admin (address admin_address) public onlyOwner {
+        authAdmin = AuthAdmin(admin_address);
+    }
 
-        // Attempt to withdraw
-        if (!msg.sender.send(dividend))
-            throw;
+    function set_new_dividend_share (uint256 new_dividends_share) public adminOnly {
+        require (new_dividends_share > 0 && new_dividends_share <= 100);
+        dividends_share = new_dividends_share;
+        reinvestment_share = 100 - dividends_share;                                                                                                                                                                                                                                                                                                                                                                                
+    }
+    
+    function withdrawDividend() public {
+        require (dividends[msg.sender] != 0);
+
+        uint256 amount = dividends[msg.sender];
+        dividends[msg.sender] = 0;
+        msg.sender.transfer(amount);
+        DevidendsSnapshot(msg.sender, amount);
+    }
+    
+    function get_funds_left_for_reinvestment () public onlyOwner {
+        ReinvestmentWithdrawal(owner, this.balance);
+        msg.sender.transfer(this.balance);
     }
 }
