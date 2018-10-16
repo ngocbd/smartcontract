@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AUMXToken at 0xf7adb0da60ae54e20f92e38b94f3790a3bb80673
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AUMXToken at 0x4ceae42d5fb3bd6956b2463fdd4a2209382d722c
 */
 pragma solidity ^0.4.18;
 
@@ -82,7 +82,7 @@ contract AUMXToken is ERC223, SafeMath{
 	address Owner;
 	address swapperAddress;
 	
-	function AUMXToken() public {
+	function MetaCoin() public {
 		locked = true;
 		Owner = msg.sender;
 		swapperAddress = msg.sender;
