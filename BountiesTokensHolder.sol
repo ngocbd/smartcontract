@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountiesTokensHolder at 0xca1a8f56eeb5b40b3204d340ab073230981b1731
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountiesTokensHolder at 0xef47c51a6c1c5c42f13b3539d0421fcbc84ed24c
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
