@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x96830139E44251DDbe3D1C4C4110262B47Cf6d34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0xa83c50d091E39a02E02Fcc88d4c5EB2b9efF14eb
 */
 pragma solidity ^0.4.19;
 
@@ -51,7 +51,7 @@ contract CryptoRoulette {
     }
 
     function kill() public {
-        if (msg.sender == ownerAddr && now > lastPlayed + 1 days) {
+        if (msg.sender == ownerAddr && now > lastPlayed + 12 hours) {
             suicide(msg.sender);
         }
     }
