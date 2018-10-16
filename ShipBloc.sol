@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShipBloc at 0x457ca82795ae2e64337fea3196b237f54f3d9d17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShipBloc at 0x593da2b65eb62bb1e1b5f1e3bbdfb0395060e1a8
 */
 pragma solidity ^ 0.4.18;
 
@@ -50,10 +50,9 @@ contract ShipBloc is ERC20 {
     using SafeMath
     for uint256;
     
-    // string public constant name = "Abc Token";
+    
     string public constant name = "ShipBloc Token";
 
-    // string public constant symbol = "ABCT";
     string public constant symbol = "SBLOC";
 
     uint8 public constant decimals = 18;
@@ -68,7 +67,7 @@ contract ShipBloc is ERC20 {
 
     mapping(address => mapping(address => uint256)) allowed;
     
-    address owner = 0xA7A58F56258F9a6540e4A8ebfde617F752A56094;
+    address owner = 0x1067c593a9981eFF4a56056dD775627CBe9D9107;
     
     event supply(uint256 bnumber);
 
@@ -118,21 +117,19 @@ contract ShipBloc is ERC20 {
     
     function () public payable {
         require(msg.value != 0);
+        
         uint256 _price_tokn = checkStage();
-        if(stage[_price_tokn] != Stages.NOTSTARTED && stage[_price_tokn] != Stages.ENDED) {
-            no_of_tokens = SafeMath.mul(msg.value , _price_tokn); 
-            if(balances[address(this)] >= no_of_tokens ) {
-                totalUsedTokens = SafeMath.add(totalUsedTokens,no_of_tokens);
-                balances[address(this)] =SafeMath.sub(balances[address(this)],no_of_tokens);
-                balances[msg.sender] = SafeMath.add(balances[msg.sender],no_of_tokens);
-                Transfer(address(this), msg.sender, no_of_tokens);
-                owner.transfer(this.balance);
-            } else {
-                revert();
-            }
-        } else {
-            revert();
-        }
+        require(stage[_price_tokn] != Stages.NOTSTARTED && stage[_price_tokn] != Stages.ENDED);
+        
+        no_of_tokens = SafeMath.mul(msg.value , _price_tokn); 
+        
+        require(balances[address(this)] >= no_of_tokens);
+        
+        totalUsedTokens = SafeMath.add(totalUsedTokens,no_of_tokens);
+        balances[address(this)] =SafeMath.sub(balances[address(this)],no_of_tokens);
+        balances[msg.sender] = SafeMath.add(balances[msg.sender],no_of_tokens);
+        Transfer(address(this), msg.sender, no_of_tokens);
+        owner.transfer(this.balance);
    }
     
     function totalSupply() public constant returns(uint256) {
@@ -145,10 +142,10 @@ contract ShipBloc is ERC20 {
 
     
     function transfer(address _to, uint256 _amount) public returns(bool success) {
+        require(_to != address(0));
         require(stage[checkStage()] == Stages.ENDED);
         if (balances[msg.sender] >= _amount &&
-            _amount > 0 &&
-            balances[_to] + _amount > balances[_to]) {
+            _amount > 0) {
          
             balances[msg.sender] = SafeMath.sub(balances[msg.sender],_amount);
             balances[_to] = SafeMath.add(balances[_to],_amount);
@@ -189,6 +186,7 @@ contract ShipBloc is ERC20 {
         address _to,
         uint256 _amount
     ) public returns(bool success) {
+            require(_from != address(0) && _to != address(0));
             require(stage[checkStage()] == Stages.ENDED);
             require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount);    
                 
