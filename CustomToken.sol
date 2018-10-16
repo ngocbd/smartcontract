@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe26221e7fe72122f57eac03f5534c1e9d6cf20d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xee1b90c203b6e0d11b090dd5b588602e44efd7b1
 */
 pragma solidity ^0.4.19;
 
@@ -102,14 +102,14 @@ contract ICOToken is BaseToken {
 
 contract CustomToken is BaseToken, BurnToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 500000000000000000000000000;
-        balanceOf[0xe1f77b81a2383162cbbdd0dd93630f31a6672477] = totalSupply;
-        name = 'HouseChain';
-        symbol = 'HSE';
+        totalSupply = 5000000000000000000000000000;
+        balanceOf[0x88c3101f0d6c2025e2ecbe0bb4d758a0eae64199] = totalSupply;
+        name = 'NewGameToken';
+        symbol = 'NGT';
         decimals = 18;
         icoRatio = 100000;
-        icoEndtime = 1893430800;
-        icoSender = 0xfd3198b99946935d8bbb664f7ce6bac595af103b;
-        icoHolder = 0xfd3198b99946935d8bbb664f7ce6bac595af103b;
+        icoEndtime = 1521043200;
+        icoSender = 0x0e39f9218c5e100692493452c77bbf530122ca72;
+        icoHolder = 0x0e39f9218c5e100692493452c77bbf530122ca72;
     }
 }
