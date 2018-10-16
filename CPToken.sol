@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CPToken at 0x3a1e93708cf93d8d9b7a50d9df17e623bb0e907e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CPToken at 0x2ea91a843aeea778e40e70623612cc720a6f751e
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 
 /**
@@ -336,10 +336,11 @@ contract PausableToken is StandardToken, Pausable {
 
 
 contract CPToken is PausableToken {
-    string public name = 'Chain Partners Token';
+    
+    string public name = 'Chain Partners';
     string public symbol = 'CP';
     uint8 public decimals = 4;
-    uint public INITIAL_SUPPLY = 10000000000;
+    uint private INITIAL_SUPPLY = (10 ** 6) * (10 ** 4);
 
     function CPToken() public {
         totalSupply_ = INITIAL_SUPPLY;
