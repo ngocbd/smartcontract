@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTC10kon54 at 0x22df6619e81892c2113e2a13aa7088bea5929962
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTC10kon54 at 0x2d0b9bffe3acb8ff67952392448832334d2c597f
 */
 pragma solidity ^0.4.11;
 
@@ -1184,7 +1184,7 @@ contract BTC10kon54 is usingOraclize {
     // Oraclize uses the Dockerfile to deploy this script.
     // Look over the Oraclize documentation to verify this
     // for yourself.
-    nextScheduledQuery = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmVKMoJbU3iUjJR25wmGtmafsg31L38a6DBFyo4XFMG1kB', 'bitcoin', '10000']", gas);
+    nextScheduledQuery = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmVKMoJbU3iUjJR25wmGtmafsg31L38a6DBFyo4XFMG1kB', 'bitcoin', '750']", gas);
   }
 
   function makeOraclizeQuery(uint timeOrDelay, string datasource, string query, uint gas) private returns(bytes32) {
