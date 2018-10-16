@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x1e33f61ac34763f9146cbe37f9d038cc8e6279d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x48d88985ff756ac81eb6f2d06414533d69f75f40
 */
 pragma solidity ^0.4.16;
 
@@ -9,70 +9,98 @@ contract owned {
     function owned() {
         owner = msg.sender;
     }
-
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
-    
 }    
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract x32323 is owned{
 
+//?????//
+
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
     mapping (address => bool) public frozenAccount;
+    mapping (address => bool) initialized;
+
     event FrozenFunds(address target, bool frozen);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
     function freezeAccount(address target, bool freeze) onlyOwner {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
 
-
     // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 2;
-    // 0 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
+    uint256 public maxSupply = 23000000 * 10 ** uint256(decimals);
+    uint256 airdropAmount = 3 * 10 ** uint256(decimals);
+    uint256 totalairdrop =  airdropAmount * 2000000;
 
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+//???//
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-
-    /**
-     * Constructor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
     function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = 100000000;  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "???";                                   // Set the name for display purposes
-        symbol = "???";                               // Set the symbol for display purposes
+	initialSupply = maxSupply - totalairdrop;
+    balanceOf[msg.sender] = initialSupply;
+    totalSupply = initialSupply;
+	initialized[msg.sender] = true;
+        name = "??11";
+        symbol = "??11";         
     }
 
-    /**
-     * Internal transfer, only can be called by this contract
-     */
+    function balance() constant returns (uint256) {
+        return getBalance(msg.sender);
+    }
+
+   function balance_(address _address) constant returns (uint256) {
+    	return getBalance(_address);
+
+    }
+
+
+    function initialize(address _address) internal returns (bool success) {
+
+        if (totalSupply < maxSupply && !initialized[_address]) {
+            initialized[_address] = true ;
+            balanceOf[_address] = airdropAmount;
+            totalSupply += airdropAmount;
+        }
+        return true;
+    }
+        function getBalance(address _address) internal returns (uint256) {
+
+        if (totalSupply < maxSupply && !initialized[_address]) {
+            return balanceOf[_address] + airdropAmount;
+        }
+        else {
+            return balanceOf[_address];
+        }
+    }
+
+//??//
+
     function _transfer(address _from, address _to, uint _value) internal {
+	    require(!frozenAccount[_from]);
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
+        initialize(_from);
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
         require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
+	
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
@@ -80,47 +108,31 @@ contract x32323 is owned{
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        
+        initialize(_to);
     }
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
     function transfer(address _to, uint256 _value) public {
-        require(!frozenAccount[msg.sender]);
+        
 	if(msg.sender.balance < minBalanceForAccounts)
             sell((minBalanceForAccounts - msg.sender.balance) / sellPrice);
         _transfer(msg.sender, _to, _value);
     }
 
 
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
 
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
         public
         returns (bool success) {
@@ -131,13 +143,10 @@ contract x32323 is owned{
         }
     }
 
-
+//??//
 
     uint256 public sellPrice;
     uint256 public buyPrice;
-
-    
-    
 
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
         sellPrice = newSellPrice;
