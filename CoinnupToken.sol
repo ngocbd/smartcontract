@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinnupToken at 0x2b2063d4a9a1a270326b8953c977f4c358952b73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinnupToken at 0x148676fd040b7cf207a0c69011e2fc068b969a27
 */
 pragma solidity ^0.4.23;
 
@@ -257,17 +257,15 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
 /**
  * @title CoinnupCrowdsaleToken
  * @dev ERC20-compliant Token that can be minted.
  */
-
 contract CoinnupToken is StandardToken, Ownable {
   using SafeMath for uint256;
 
   string public constant name = "Coinnup Coin"; // solium-disable-line uppercase
-  string public constant symbol = "CU"; // solium-disable-line uppercase
+  string public constant symbol = "PMZ"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
 
   /// @dev store how much in eth users invested to give them a refund in case refund happens
@@ -275,9 +273,10 @@ contract CoinnupToken is StandardToken, Ownable {
   /// @dev to have how much one user bought tokens
   mapping ( address => uint256 ) public tokensBought;
 
+  /// @dev event when someone bought tokens by ETH
   event investmentReceived(
-    address sender, 
-    uint weis, 
+    address sender,
+    uint weis,
     uint total
   );
 
@@ -288,7 +287,11 @@ contract CoinnupToken is StandardToken, Ownable {
   uint256 public bonus = 30;
   uint256 public softCap = 1850000000000000000000;
 
-  uint256 public _sold; //eth
+  uint256 public _sold; //eth sold via payable function
+  /// @dev in this var we store eth when someone bought tokens
+  /// not sending it to smart contract but buying it privately
+  uint256 public _soldOutside; //wei sold not via SC
+  uint256 public _soldOutsidePMZ; //PMZ tokens sold not via SC
 
   bool public isPaused;
 
@@ -307,17 +310,17 @@ contract CoinnupToken is StandardToken, Ownable {
     */
   constructor () public {
     require(maxSupply > 0);
-    require(founder != address(0) && founder != address(this));
+    require(founder != address(0));
     require(rate > 0);
     require(bonus >= 0 && bonus <= 100); // in percentage
     require(allowedToBeSold > 0 && allowedToBeSold < maxSupply);
 
     require(softCap > 0);
 
-    for (uint8 i = 0; i < 5; i++) {
+    for (uint8 i = 0; i < 6; i++) {
       rounds.push( Round(0, 0, 0, 0, 0, 0) );
     }
-    
+
     // mint tokens which initially belongs to founder
     uint256 _forFounder = maxSupply.sub(allowedToBeSold);
     mint(founder, _forFounder);
@@ -360,8 +363,8 @@ contract CoinnupToken is StandardToken, Ownable {
     tokensBought[_sender] = tokensBought[_sender].add(amount);
 
     emit investmentReceived(
-      _sender, 
-      _value, 
+      _sender,
+      _value,
       amount_without_bonus
     );
 
@@ -369,13 +372,14 @@ contract CoinnupToken is StandardToken, Ownable {
   }
 
   /// @dev system can mint tokens for users if they sent funds to BTC, LTC, etc wallets we allow
-  function mintForInvestor(address _to, uint256 _tokens) public onlyOwner onlyWhileOpen isNotPaused {
+  function mintForInvestor(address _to, uint256 _tokens) public onlyOwner onlyWhileOpen {
     uint8 _round = _getCurrentRound(now);
-    require(_round >= 0 && _round <= 4);
+
+    require(_round >= 0 && _round <= 5);
     require(_to != address(0)); // handling incorrect values from system in addresses
-    require(_tokens >= 0); // handing incorrect values from system in tokens calculation
+    require(_tokens >= 0); // handling incorrect values from system in tokens calculation
     require(rounds[_currentRound].allocatedCoins >= _tokens + rounds[_currentRound].soldCoins);
-    
+    require(maxSupply >= _tokens.add(totalSupply_));
     uint8 _currentRound = _getCurrentRound(now);
 
     // minting tokens for investors
@@ -383,7 +387,11 @@ contract CoinnupToken is StandardToken, Ownable {
     rounds[_currentRound].soldCoins = rounds[_currentRound].soldCoins.add(_tokens);
     tokensBought[_to] = tokensBought[_to].add(_tokens); // tokens in wei
 
-    _sold = _sold.add(_tokens); // in wei
+    uint256 _soldInETH = _tokens.div( rate );
+    investments[_to] = investments[_to].add(_soldInETH); // in wei
+    _sold = _sold.add(_soldInETH); // in wei
+    _soldOutside = _soldOutside.add(_soldInETH); // eth
+    _soldOutsidePMZ = _soldOutsidePMZ.add(_tokens); // in PMZ
   }
 
   /**
@@ -449,15 +457,15 @@ contract CoinnupToken is StandardToken, Ownable {
     bonus = _bonus;
   }
 
-  // Don't like this code. Don't know yet how to make it nicer
+  /// @dev gets number of current round
   function _getCurrentRound(uint256 _time) public view returns (uint8) {
-    for (uint8 i = 0; i < 5; i++) {
+    for (uint8 i = 0; i < 6; i++) {
       if (rounds[i].openingTime < _time && rounds[i].closingTime > _time) {
         return i;
       }
     }
 
-    return 100;
+    return 100; // if using 6 in 5 length array it will throw
   }
 
   function setRoundParams(
@@ -468,8 +476,6 @@ contract CoinnupToken is StandardToken, Ownable {
     uint256 _minPurchase,
     uint256 _allocatedCoins
   ) public onlyOwner {
-    require(msg.sender == owner);
-
     rounds[_round].openingTime = _openingTime;
     rounds[_round].closingTime = _closingTime;
     rounds[_round].maxPurchase = _maxPurchase;
@@ -498,14 +504,14 @@ contract CoinnupToken is StandardToken, Ownable {
 
   modifier onlyWhileOpen {
     uint8 _round = _getCurrentRound(now);
-    require(_round >= 0 && _round <= 4); // we hae 5 rounds, other values are invalid 
+    require(_round >= 0 && _round <= 5); // we have 6 rounds, other values are invalid
     _;
   }
 
   /// @dev when ico finishes we can perform other actions
   modifier whenICOFinished {
     uint8 _round = _getCurrentRound(now);
-    require(_round < 0 || _round > 4); // if we do not get current valid round number ICO finished
+    require(_round < 0 || _round > 5); // if we do not get current valid round number ICO finished
     _;
   }
 
