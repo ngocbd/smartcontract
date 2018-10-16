@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapConversionRate at 0x97b82e42a0c04bad5e61e7cfb4806317d608d809
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapConversionRate at 0xa7656c0cf6ac27371c5ed17818c34c9a2b380c5d
 */
 pragma solidity 0.4.18;
 
 // File: ../../wrapConvRate/smart-contracts/contracts/ERC20Interface.sol
 
 // https://github.com/ethereum/EIPs/issues/20
-interface ERC20 {
+contract ERC20 {
     function totalSupply() public view returns (uint supply);
     function balanceOf(address _owner) public view returns (uint balance);
     function transfer(address _to, uint _value) public returns (bool success);
@@ -19,7 +19,7 @@ interface ERC20 {
 
 // File: ../../wrapConvRate/smart-contracts/contracts/ConversionRatesInterface.sol
 
-interface ConversionRatesInterface {
+contract ConversionRatesInterface {
 
     function recordImbalance(
         ERC20 token,
