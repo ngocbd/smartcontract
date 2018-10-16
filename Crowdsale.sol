@@ -1,322 +1,159 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x509887e0ea70bf8f471a2fb8696979b3abf07650
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa6a5878a9715310e80bb932772cad8e9c6a79c04
 */
-pragma solidity ^0.4.11;
-
-
-
-/**
-
- * @title SafeMath
-
- * @dev Math operations with safety checks that throw on error
-
- */
+pragma solidity ^0.4.19;
 
 library SafeMath {
 
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    /*
+        @return sum of a and b
+    */
+    function ADD (uint256 a, uint256 b) pure internal returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 
-    uint256 c = a * b;
-
-    assert(a == 0 || c / a == b);
-
-    return c;
-
-  }
-
-
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
-
-    uint256 c = a / b;
-
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
-    return c;
-
-  }
-
-
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    assert(b <= a);
-
-    return a - b;
-
-  }
-
-
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    uint256 c = a + b;
-
-    assert(c >= a);
-
-    return c;
-
-  }
-
+    /*
+        @return difference of a and b
+    */
+    function SUB (uint256 a, uint256 b) pure internal returns (uint256) {
+        assert(a >= b);
+        return a - b;
+    }
+    
 }
 
-
-
-/**
-
- * @title Crowdsale
-
- * @dev Crowdsale is a base contract for managing a token crowdsale.
-
- * Crowdsales have a start and end timestamps, where investors can make
-
- * token purchases and the crowdsale will assign them tokens based
-
- * on a token per ETH rate. Funds collected are forwarded 
-
- to a wallet
-
- * as they arrive.
-
- */
-
-contract token { function transfer(address receiver, uint amount){  } }
+interface token {
+    function transfer(address receiver, uint amount) external;
+    function burn(uint256 _value) external;
+}
 
 contract Crowdsale {
 
-  using SafeMath for uint256;
-
-
-
-  // uint256 durationInMinutes;
-
-  // address where funds are collected
-
-  address public wallet;
-
-  // token address
-
-  address public addressOfTokenUsedAsReward;
-
-
-
-  uint256 public price = 300;
-
-
-
-  token tokenReward;
-
-
-
-  // mapping (address => uint) public contributions;
-
-  
-
-
-
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-
-  // uint256 public startTime;
-
-  // uint256 public endTime;
-
-  // amount of raised money in wei
-
-  uint256 public weiRaised;
-
-
-
-  /**
-
-   * event for token purchase logging
-
-   * @param purchaser who paid for the tokens
-
-   * @param beneficiary who got the tokens
-
-   * @param value weis paid for purchase
-
-   * @param amount amount of tokens purchased
-
-   */
-
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-
-
-
-  function Crowdsale() {
-
-    //You will change this to your wallet where you need the ETH 
-
-    wallet = 0xCEf8A431c0f0C512A587ab3f8470586c2dD1D3EB;
-
-    // durationInMinutes = _durationInMinutes;
-
-    //Here will come the checksum address we got
-
-    addressOfTokenUsedAsReward = 0xB4E3362ee28105CD6D99278424d2176c4F3d76cE;
-
-
-
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
-
-  }
-
-
-
-  bool public started = true;
-
-
-
-  function startSale(){
-
-    if (msg.sender != wallet) throw;
-
-    started = true;
-
-  }
-
-
-
-  function stopSale(){
-
-    if(msg.sender != wallet) throw;
-
-    started = false;
-
-  }
-
-
-
-  function setPrice(uint256 _price){
-
-    if(msg.sender != wallet) throw;
-
-    price = _price;
-
-  }
-
-  function changeWallet(address _wallet){
-
-  	if(msg.sender != wallet) throw;
-
-  	wallet = _wallet;
-
-  }
-
-
-
-  function changeTokenReward(address _token){
-
-    if(msg.sender!=wallet) throw;
-
-    tokenReward = token(_token);
-
-  }
-
-
-
-  // fallback function can be used to buy tokens
-
-  function () payable {
-
-    buyTokens(msg.sender);
-
-  }
-
-
-
-  // low level token `purchase function
-
-  function buyTokens(address beneficiary) payable {
-
-    require(beneficiary != 0x0);
-
-    require(validPurchase());
-
-
-
-    uint256 weiAmount = msg.value;
-
-
-
-    // calculate token amount to be sent
-
-    uint256 tokens = (weiAmount) * price;//weiamount * price 
-
-    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
-
-
-
-    // update state
-
-    weiRaised = weiRaised.add(weiAmount);
-
+    using SafeMath for uint256;
+
+    address public beneficiary = 0x8b7426A552AE68EbB8cb1C30295551B8D5A05304;
+    address addressOfTokenUsedAsReward = 0x77A4A5b3007EFa19B5D049B914a1271367E27FE4;
+    uint256 public constant hardCapInTokens = 20160000000000000; 
+    uint256 public fundingGoal = 800;       								 //SoftCap
+    uint256 public amountRaised;
+    uint256 public deadline = now + 60720 minutes; 
+    uint256 public price;
+    token public tokenReward;
+    uint256 public soldTokens;  								//Count Outing Tokens sold
+    uint256 public restTokens = (hardCapInTokens - soldTokens);
     
+    uint256 public constant MIN_ETHER = 0.1 ether;     //Min amount of Ether 
+    uint256 public constant MAX_ETHER = 90 ether;              //Max amount of Ether
 
-    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
+    uint256 public START = now;                        //Start crowdsale
 
-    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
+    uint256 public TIER2 = now + 20400 minutes;        //Start + 14 days
 
+    uint256 public TIER3 = now + 40560 minutes;        //Start + 28 days ( 14 days + 14 days)
 
-
-    tokenReward.transfer(beneficiary, tokens);
-
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-
-  }
+    uint256 public TIER4 = now + 50640 minutes;        //Start + 35 days ( 14 days + 14 days + 7 days)
 
 
+    uint256 public constant TIER1_PRICE = 627000;      //Price in 1st tier
+    uint256 public constant TIER2_PRICE = 716600;      //Price in 2nd tier
+    uint256 public constant TIER3_PRICE = 806200;      //Price in 3rd tier
+    uint256 public constant TIER4_PRICE = 895700;      //Price in 4th tier
 
-  // send ether to the fund collection wallet
 
-  // override to create custom fund forwarding mechanisms
+    mapping(address => uint256) public balanceOf;
+    bool fundingGoalReached = false;
+    bool crowdsaleClosed = false;
 
-  function forwardFunds() internal {
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
-    // wallet.transfer(msg.value);
+    function Crowdsale ()
+    public
+    {
+        price = getPrice();
+        tokenReward = token(addressOfTokenUsedAsReward);
+    }
 
-    if (!wallet.send(msg.value)) {
-
-      throw;
+    function () public payable {
+        require(!crowdsaleClosed);
+        uint amount = msg.value;
+        require(amount >= MIN_ETHER);
+        require (amount <= MAX_ETHER);
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        soldTokens += amount / price;
+        tokenReward.transfer(msg.sender, amount / price);
+        FundTransfer(msg.sender, amount, true);
 
     }
 
-  }
+    modifier afterDeadline() { if (now >= deadline) _; }
+
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign
+     */
+    function checkGoalReached() afterDeadline public {
+        if (amountRaised >= fundingGoal){
+            fundingGoalReached = true;
+            GoalReached(beneficiary, amountRaised);
+        }
+
+       	 if (soldTokens >= hardCapInTokens)   {
+        crowdsaleClosed = true;
+
+        tokenReward.burn(hardCapInTokens - soldTokens);
+
+        	}
+    }
+
+        /* Change tier taking block numbers as time */
+    function getPrice()
+        internal
+        constant
+        returns (uint256)
+    {
+        if (now <= TIER2) {
+            return TIER1_PRICE;
+        } else if (now < TIER3) {
+            return TIER2_PRICE;
+        } else if (now < TIER4) {
+            return TIER3_PRICE;
+        }
+        return TIER4_PRICE;
+    }
 
 
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function safeWithdrawal() afterDeadline public {
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                if (msg.sender.send(amount)) {
+                    FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
 
-  // @return true if the transaction can buy tokens
-
-  function validPurchase() internal constant returns (bool) {
-
-    bool withinPeriod = started;
-
-    bool nonZeroPurchase = msg.value != 0;
-
-    return withinPeriod && nonZeroPurchase;
-
-  }
-
-
-
-  function withdrawTokens(uint256 _amount) {
-
-    if(msg.sender!=wallet) throw;
-
-    tokenReward.transfer(wallet,_amount);
-
-  }
-
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
+    }
 }
