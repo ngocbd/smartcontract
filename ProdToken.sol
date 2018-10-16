@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProdToken at 0x3eed0f69a22a50deb0e125b1a526ba657bbb1473
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProdToken at 0x6bec54e4fea5d541fb14de96993b8e11d81159b2
 */
 // our mirrors:
 // ftec.io
@@ -114,8 +114,6 @@ contract StandardToken is ERC20 {
 
     function transfer(address _to, uint256 _value) public returns (bool) {
         require(_to != address(0));
-        require(_value > 0);
-        require(_value <= balances[msg.sender]);
         
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -129,12 +127,9 @@ contract StandardToken is ERC20 {
     /// @param _value Number of tokens to transfer.
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(_to != address(0));
-        require(_value > 0);
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
         
-        balances[_to] = balances[_to].add(_value);
         balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
@@ -159,12 +154,13 @@ contract StandardToken is ERC20 {
 
 contract CommonToken is StandardToken, MultiOwnable {
     
-    string public name   = 'FTEC';
-    string public symbol = 'FTEC';
-    uint8 public decimals = 18;
+    string public constant name   = 'FTEC';
+    string public constant symbol = 'FTEC';
+    uint8 public constant decimals = 18;
     
     uint256 public saleLimit;   // 85% of tokens for sale.
     uint256 public teamTokens;  // 7% of tokens goes to the team and will be locked for 1 year.
+    // 8% of the rest tokens will be used for bounty, advisors, and airdrops.
     
     // 7% of team tokens will be locked at this address for 1 year.
     address public teamWallet; // Team address.
@@ -197,7 +193,7 @@ contract CommonToken is StandardToken, MultiOwnable {
         seller = _seller;
         teamWallet = _teamWallet;
 
-        uint sellerTokens = totalSupply.sub(teamTokens);
+        uint sellerTokens = totalSupply - teamTokens;
         balances[seller] = sellerTokens;
         Transfer(0x0, seller, sellerTokens);
         
@@ -223,22 +219,32 @@ contract CommonToken is StandardToken, MultiOwnable {
         Unlock();
     }
 
+    /**
+     * An address can become a new seller only in case it has no tokens.
+     * This is required to prevent stealing of tokens  from newSeller via 
+     * 2 calls of this function.
+     */
     function changeSeller(address newSeller) onlyOwner public returns (bool) {
         require(newSeller != address(0));
         require(seller != newSeller);
+        
+        // To prevent stealing of tokens from newSeller via 2 calls of changeSeller:
+        require(balances[newSeller] == 0);
 
         address oldSeller = seller;
         uint256 unsoldTokens = balances[oldSeller];
         balances[oldSeller] = 0;
-        balances[newSeller] = balances[newSeller].add(unsoldTokens);
+        balances[newSeller] = unsoldTokens;
         Transfer(oldSeller, newSeller, unsoldTokens);
 
         seller = newSeller;
         ChangeSellerEvent(oldSeller, newSeller);
-        
         return true;
     }
 
+    /**
+     * User-friendly alternative to sell() function.
+     */
     function sellNoDecimals(address _to, uint256 _value) public returns (bool) {
         return sell(_to, _value * 1e18);
     }
@@ -259,7 +265,6 @@ contract CommonToken is StandardToken, MultiOwnable {
         totalSales++;
         tokensSold = tokensSold.add(_value);
         SellEvent(seller, _to, _value);
-
         return true;
     }
     
@@ -279,20 +284,18 @@ contract CommonToken is StandardToken, MultiOwnable {
 
     function burn(uint256 _value) public returns (bool) {
         require(_value > 0);
-        require(_value <= balances[msg.sender]);
 
-        balances[msg.sender] = balances[msg.sender].sub(_value) ;
+        balances[msg.sender] = balances[msg.sender].sub(_value);
         totalSupply = totalSupply.sub(_value);
         Transfer(msg.sender, 0x0, _value);
         Burn(msg.sender, _value);
-
         return true;
     }
 }
 
 contract ProdToken is CommonToken {
     function ProdToken() CommonToken(
-        0x2c21095Ef1E885eB398C802E70DE839311D0B889, 
-        0xB66aDcdba22BDb8597399DbC23d5bE123F239A7E  
+        0x292FDFdD7E2967fc0251e35A2eF6CBA3F312dAd7, 
+        0x5f448809De9e2bBe3120005D94e4D7C0D84d3710  
     ) public {}
 }
