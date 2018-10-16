@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicResolver at 0x1da022710df5002339274aadee8d58218e9d6ab5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicResolver at 0x218ce76c54c3b7c716969e206ee35461dd70b015
 */
 pragma solidity ^0.4.0;
 
@@ -30,18 +30,10 @@ contract AbstractENS {
  * address.
  */
 contract PublicResolver {
-    bytes4 constant INTERFACE_META_ID = 0x01ffc9a7;
     bytes4 constant ADDR_INTERFACE_ID = 0x3b3b57de;
     bytes4 constant CONTENT_INTERFACE_ID = 0xd8389dc5;
-    bytes4 constant NAME_INTERFACE_ID = 0x691f3431;
     bytes4 constant ABI_INTERFACE_ID = 0x2203ab56;
     bytes4 constant PUBKEY_INTERFACE_ID = 0xc8690233;
-
-    event AddrChanged(bytes32 indexed node, address a);
-    event ContentChanged(bytes32 indexed node, bytes32 hash);
-    event NameChanged(bytes32 indexed node, string name);
-    event ABIChanged(bytes32 indexed node, uint256 indexed contentType);
-    event PubkeyChanged(bytes32 indexed node, bytes32 x, bytes32 y);
 
     struct PublicKey {
         bytes32 x;
@@ -51,7 +43,6 @@ contract PublicResolver {
     struct Record {
         address addr;
         bytes32 content;
-        string name;
         PublicKey pubkey;
         mapping(uint256=>bytes) abis;
     }
@@ -80,10 +71,8 @@ contract PublicResolver {
     function supportsInterface(bytes4 interfaceID) constant returns (bool) {
         return interfaceID == ADDR_INTERFACE_ID ||
                interfaceID == CONTENT_INTERFACE_ID ||
-               interfaceID == NAME_INTERFACE_ID ||
                interfaceID == ABI_INTERFACE_ID ||
-               interfaceID == PUBKEY_INTERFACE_ID ||
-               interfaceID == INTERFACE_META_ID;
+               interfaceID == PUBKEY_INTERFACE_ID;
     }
 
     /**
@@ -103,7 +92,6 @@ contract PublicResolver {
      */
     function setAddr(bytes32 node, address addr) only_owner(node) {
         records[node].addr = addr;
-        AddrChanged(node, addr);
     }
 
     /**
@@ -127,30 +115,8 @@ contract PublicResolver {
      */
     function setContent(bytes32 node, bytes32 hash) only_owner(node) {
         records[node].content = hash;
-        ContentChanged(node, hash);
-    }
-
-    /**
-     * Returns the name associated with an ENS node, for reverse records.
-     * Defined in EIP181.
-     * @param node The ENS node to query.
-     * @return The associated name.
-     */
-    function name(bytes32 node) constant returns (string ret) {
-        ret = records[node].name;
     }
     
-    /**
-     * Sets the name associated with an ENS node, for reverse records.
-     * May only be called by the owner of that node in the ENS registry.
-     * @param node The node to update.
-     * @param name The name to set.
-     */
-    function setName(bytes32 node, string name) only_owner(node) {
-        records[node].name = name;
-        NameChanged(node, name);
-    }
-
     /**
      * Returns the ABI associated with an ENS node.
      * Defined in EIP205.
@@ -183,7 +149,6 @@ contract PublicResolver {
         if(((contentType - 1) & contentType) != 0) throw;
         
         records[node].abis[contentType] = data;
-        ABIChanged(node, contentType);
     }
     
     /**
@@ -204,6 +169,5 @@ contract PublicResolver {
      */
     function setPubkey(bytes32 node, bytes32 x, bytes32 y) only_owner(node) {
         records[node].pubkey = PublicKey(x, y);
-        PubkeyChanged(node, x, y);
     }
 }
