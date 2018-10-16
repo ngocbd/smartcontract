@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartSignature at 0x76beeb04fbb6326d3c928484de13481284b2100e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartSignature at 0xcf77b582bbb9afda0abe1d7cedefbaa312c5c45f
 */
-pragma solidity ^0.4.21;
+/// Smart Signature Beta v0.1
+
+pragma solidity ^0.4.20;
 
 library SafeMath {
 
@@ -81,67 +83,46 @@ contract SmartSignature is ERC721{
   address private owner;
   
   uint256 counter;
-  mapping (uint256 => address) private ownerOfToken;
-  mapping (uint256 => uint256) private priceOfToken;
-  mapping (uint256 => address) private approvedOfToken;
-  mapping (uint256 => address) private creatorOfToken;
-  mapping (uint256 => uint256) private parentOfToken;
+  mapping (uint256 => address) private ownerOftoken;
+  mapping (uint256 => uint256) private priceOftoken;
+  mapping (uint256 => address) private approvedOftoken;
+  mapping (uint256 => address) private creatorOftoken;
+  mapping (uint256 => uint256) private parentOftoken;
   mapping (uint256 => uint256) private balanceOfToken;  
-  mapping (uint256 => uint256) private free1OfToken; 
-  mapping (uint256 => uint256) private free2OfToken; 
-   
+  mapping (uint256 => uint256) private freeOftoken;  
+
   function SmartSignature () public {
     owner = msg.sender;
-    creatorOfToken[counter] = ownerOfToken[counter] = msg.sender;
-    priceOfToken[counter] = 1 ether;
-    parentOfToken[counter] = 0;
-    free1OfToken[counter] = 0;
-    free2OfToken[counter] = 0;    
+    creatorOftoken[counter] = ownerOftoken[counter] = msg.sender;
+    priceOftoken[counter] = 1 ether;
+    parentOftoken[counter] = 0;
+    freeOftoken[counter] = now + 120;    
     counter += 1;    
   }
 
   /* Modifiers */
   modifier onlyOwner(uint256 _tokenId) {
-    require(ownerOfToken[_tokenId] == msg.sender);
+    require(ownerOftoken[_tokenId] == msg.sender);
     _;
   }
   
   modifier onlyCreator(uint256 _tokenId) {
-    require(creatorOfToken[_tokenId] == msg.sender);
+    require(creatorOftoken[_tokenId] == msg.sender);
     _;
   }  
-
-  modifier onlyRoot() {
-    require(creatorOfToken[0] == msg.sender);
-    _;
-  }
 
   /* Owner */
   function setCreator (address _creator, uint _tokenId) onlyCreator(_tokenId) public {
-    creatorOfToken[_tokenId] = _creator;
+    creatorOftoken[_tokenId] = _creator;
   }
-
-  /* Judge Fake Token */
-  function judgeFakeToken (uint256 _tokenId) onlyRoot() public {
-    creatorOfToken[_tokenId] = msg.sender;
-  }
-
-  function judgeFakeTokenAndTransfer (uint256 _tokenId, address _plaintiff) onlyRoot() public {    
-    creatorOfToken[_tokenId] = _plaintiff;
-  }  
 
   /* Withdraw */
-  function withdrawAllFromRoot () onlyRoot() public {
-    uint256 t = balanceOfToken[0];
-    balanceOfToken[0] = 0;
-    msg.sender.transfer(t);         
-  }
-  
+
   function withdrawAllFromToken (uint256 _tokenId) onlyCreator(_tokenId) public {
     uint256 t = balanceOfToken[_tokenId];
     uint256 r = t / 20;
     balanceOfToken[_tokenId] = 0;
-    balanceOfToken[parentOfToken[_tokenId]] += r;
+    balanceOfToken[parentOftoken[_tokenId]] += r;
     msg.sender.transfer(t - r);      
   }
 
@@ -149,7 +130,7 @@ contract SmartSignature is ERC721{
     if (t > balanceOfToken[_tokenId]) t = balanceOfToken[_tokenId];
     uint256 r = t / 20;
     balanceOfToken[_tokenId] = 0;
-    balanceOfToken[parentOfToken[_tokenId]] += r;
+    balanceOfToken[parentOftoken[_tokenId]] += r;
     msg.sender.transfer(t - r); 
   }
   
@@ -174,7 +155,6 @@ contract SmartSignature is ERC721{
     require(ownerOf(_tokenId) != msg.sender);
     require(!isContract(msg.sender));
     require(msg.sender != address(0));
-    require(now >= free1OfToken[_tokenId]);
 
     address oldOwner = ownerOf(_tokenId);
     address newOwner = msg.sender;
@@ -182,7 +162,7 @@ contract SmartSignature is ERC721{
     uint256 excess = msg.value.sub(price);
 
     _transfer(oldOwner, newOwner, _tokenId);
-    priceOfToken[_tokenId] = nextPriceOf(_tokenId);
+    priceOftoken[_tokenId] = nextPriceOf(_tokenId);
 
     Bought(_tokenId, newOwner, price);
     Sold(_tokenId, oldOwner, price);
@@ -194,7 +174,7 @@ contract SmartSignature is ERC721{
     // Transfer payment to old owner minus the developer's cut.
     oldOwner.transfer(price.sub(devCut));
     uint256 shareHolderCut = devCut.div(20);
-    ownerOfToken[parentOfToken[_tokenId]].transfer(shareHolderCut);
+    ownerOftoken[parentOftoken[_tokenId]].transfer(shareHolderCut);
     balanceOfToken[_tokenId] += devCut.sub(shareHolderCut);
 
     if (excess > 0) {
@@ -217,34 +197,32 @@ contract SmartSignature is ERC721{
   }
 
   function balanceOf (address _owner) public view returns (uint256 _balance) {
-    uint256 t = 0;
+    uint256 counter = 0;
+
     for (uint256 i = 0; i < counter; i++) {
       if (ownerOf(i) == _owner) {
-        t++;
+        counter++;
       }
     }
-    return t;
+
+    return counter;
   }
 
   function ownerOf (uint256 _tokenId) public view returns (address _owner) {
-    return ownerOfToken[_tokenId];
+    return ownerOftoken[_tokenId];
   }
   
   function creatorOf (uint256 _tokenId) public view returns (address _creator) {
-    return creatorOfToken[_tokenId];
+    return creatorOftoken[_tokenId];
   }  
   
   function parentOf (uint256 _tokenId) public view returns (uint256 _parent) {
-    return parentOfToken[_tokenId];
+    return parentOftoken[_tokenId];
   }    
   
-  function free1Of (uint256 _tokenId) public view returns (uint256 _free) {
-    return free1OfToken[_tokenId];
+  function freeOf (uint256 _tokenId) public view returns (uint256 _free) {
+    return freeOftoken[_tokenId];
   }    
-
-  function free2Of (uint256 _tokenId) public view returns (uint256 _free) {
-    return free2OfToken[_tokenId];
-  }      
   
   function balanceFromToken (uint256 _tokenId) public view returns (uint256 _balance) {
     return balanceOfToken[_tokenId];
@@ -269,7 +247,7 @@ contract SmartSignature is ERC721{
   }
 
   function approvedFor(uint256 _tokenId) public view returns (address _approved) {
-    return approvedOfToken[_tokenId];
+    return approvedOftoken[_tokenId];
   }
 
   function approve(address _to, uint256 _tokenId) public {
@@ -278,12 +256,12 @@ contract SmartSignature is ERC721{
     require(ownerOf(_tokenId) == msg.sender);
 
     if (_to == 0) {
-      if (approvedOfToken[_tokenId] != 0) {
-        delete approvedOfToken[_tokenId];
+      if (approvedOftoken[_tokenId] != 0) {
+        delete approvedOftoken[_tokenId];
         Approval(msg.sender, 0, _tokenId);
       }
     } else {
-      approvedOfToken[_tokenId] = _to;
+      approvedOftoken[_tokenId] = _to;
       Approval(msg.sender, _to, _tokenId);
     }
   }
@@ -305,8 +283,8 @@ contract SmartSignature is ERC721{
     require(_to != address(0));
     require(_to != address(this));
 
-    ownerOfToken[_tokenId] = _to;
-    approvedOfToken[_tokenId] = 0;
+    ownerOftoken[_tokenId] = _to;
+    approvedOftoken[_tokenId] = 0;
 
     Transfer(_from, _to, _tokenId);
   }
@@ -314,7 +292,7 @@ contract SmartSignature is ERC721{
   /* Read */
 
   function priceOf (uint256 _tokenId) public view returns (uint256 _price) {
-    return priceOfToken[_tokenId];
+    return priceOftoken[_tokenId];
   }
 
   function nextPriceOf (uint256 _tokenId) public view returns (uint256 _nextPrice) {
@@ -322,7 +300,7 @@ contract SmartSignature is ERC721{
   }
 
   function allOf (uint256 _tokenId) external view returns (address _owner, address _creator, uint256 _price, uint256 _nextPrice) {
-    return (ownerOfToken[_tokenId], creatorOfToken[_tokenId], priceOfToken[_tokenId], nextPriceOf(_tokenId));
+    return (ownerOftoken[_tokenId], creatorOftoken[_tokenId], priceOftoken[_tokenId], nextPriceOf(_tokenId));
   }
 
   /* Util */
@@ -332,20 +310,17 @@ contract SmartSignature is ERC721{
     return size > 0;
   }
   
-  function changePrice(uint256 _tokenId, uint256 _price, uint256 _frozen1, uint256 _frozen2) onlyOwner(_tokenId) public {
-    require(now >= free2OfToken[_tokenId]);
-    priceOfToken[_tokenId] = _price;
-    free1OfToken[_tokenId] = now + _frozen1;
-    free2OfToken[_tokenId] = now + _frozen1 + _frozen2;
+  function changePrice(uint256 _tokenId, uint256 _price) onlyOwner(_tokenId) public {
+    require(now >= freeOftoken[_tokenId]);
+    priceOftoken[_tokenId] = _price;
   }
   
-  function issueToken(uint256 _price, uint256 _frozen1, uint256 _frozen2, uint256 _parent) public {
+  function issueToken(uint256 _price, uint256 _frozen, uint256 _parent) public {
     require(_parent <= counter);
-    creatorOfToken[counter] = ownerOfToken[counter] = msg.sender;
-    priceOfToken[counter] = _price;
-    parentOfToken[counter] = _parent;
-    free1OfToken[counter] = now + _frozen1;
-    free2OfToken[counter] = now + _frozen1 + _frozen2;
+    creatorOftoken[counter] = ownerOftoken[counter] = msg.sender;
+    priceOftoken[counter] = _price;
+    parentOftoken[counter] = _parent;
+    freeOftoken[counter] = now + _frozen;
     counter += 1;
   }  
 }
