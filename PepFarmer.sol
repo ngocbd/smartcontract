@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0xe6d152f30640b364c82c88f1c91bec5bb8934ec1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0xda6b11e2d9dc140eebe589a9c799680b6dde7422
 */
 pragma solidity ^0.4.18;
 
@@ -60,8 +60,8 @@ contract PepFarmer {
     
     bool private reentrancy_lock = false;
     
-    address public shop = 0x912D92502De8EC2B4057F7F3b39bB67B0418192b;
-    address public object = 0xaC21cCcDE31280257784f02f7201465754E96B0b;
+    address public shop = 0x02e0d32837313d9a5b0f88db5f3ef8075f4afd1c;
+    address public object = 0x63b173cdde9580f49ad80f4f697c4ed40f349ed6;
     
     mapping(address => uint256) public workDone;
     
