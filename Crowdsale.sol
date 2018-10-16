@@ -1,251 +1,269 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xeaf5561d3ff0ed954036ecebf872e3177b73bb27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc6c109003d0cee412ef1fe652761e6cfa2453606
 */
-pragma solidity ^0.4.15;
-contract Base {
-    modifier only(address allowed) {
-        require(msg.sender == allowed);
-        _;
+pragma solidity ^0.4.20;
+
+library SafeMath { //standart library for uint
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0 || b == 0){
+        return 0;
     }
-    // *************************************************
-    // *          reentrancy handling                  *
-    // *************************************************
-    uint constant internal L00 = 2 ** 0;
-    uint constant internal L01 = 2 ** 1;
-    uint constant internal L02 = 2 ** 2;
-    uint constant internal L03 = 2 ** 3;
-    uint constant internal L04 = 2 ** 4;
-    uint constant internal L05 = 2 ** 5;
-    uint private bitlocks = 0;
-    modifier noAnyReentrancy {
-        var _locks = bitlocks;
-        require(_locks == 0);
-        bitlocks = uint(-1);
-        _;
-        bitlocks = _locks;
-    }
-}
-contract IToken {
-    function mint(address _to, uint _amount);
-    function start();
-    function getTotalSupply() returns(uint);
-    function balanceOf(address _owner) returns(uint);
-    function transfer(address _to, uint _amount) returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) returns (bool success);
-}
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
+
+  function pow(uint256 a, uint256 b) internal pure returns (uint256){ //power function
+    if (b == 0){
+      return 1;
+    }
+    uint256 c = a**b;
+    assert (c >= a);
+    return c;
+  }
 }
-contract Owned is Base {
-    address public owner;
-    address newOwner;
-    function Owned() {
-        owner = msg.sender;
+
+//standart contract to identify owner
+contract Ownable {
+
+  address public owner;
+
+  address public newOwner;
+
+  address public techSupport;
+
+  address public newTechSupport;
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  modifier onlyTechSupport() {
+    require(msg.sender == techSupport || msg.sender == owner);
+    _;
+  }
+
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  function transferOwnership(address _newOwner) public onlyOwner {
+    require(_newOwner != address(0));
+    newOwner = _newOwner;
+  }
+
+  function acceptOwnership() public {
+    if (msg.sender == newOwner) {
+      owner = newOwner;
     }
-    function transferOwnership(address _newOwner) only(owner) {
-        newOwner = _newOwner;
+  }
+
+  function transferTechSupport (address _newSupport) public{
+    require (msg.sender == owner || msg.sender == techSupport);
+    newTechSupport = _newSupport;
+  }
+
+  function acceptSupport() public{
+    if(msg.sender == newTechSupport){
+      techSupport = newTechSupport;
     }
-    function acceptOwnership() only(newOwner) {
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-    event OwnershipTransferred(address indexed _from, address indexed _to);
+  }
+
 }
-contract Crowdsale is Owned {
-    using SafeMath for uint;
-    enum State { INIT, PRESALE, PREICO, PREICO_FINISHED, ICO_FIRST, ICO_SECOND, ICO_THIRD, STOPPED, CLOSED, EMERGENCY_STOP}
-    uint public constant MAX_SALE_SUPPLY = 24 * (10**25);
-    uint public constant DECIMALS = (10**18);
-    State public currentState = State.INIT;
-    IToken public token;
-    uint public totalSaleSupply = 0;
-    uint public totalFunds = 0;
-    uint public tokenPrice = 1000000000000000000; //wei
-    uint public bonus = 50000; //50%
-    uint public currentPrice;
-    address public beneficiary;
-    mapping(address => uint) balances;
- 
-    address public foundersWallet; //replace
-    uint public foundersAmount = 160000000 * DECIMALS;
-    uint public maxPreICOSupply = 48 * (10**24);
-    uint public maxICOFirstSupply = 84 * (10**24);
-    uint public maxICOSecondSupply = 48 * (10**24);
-    uint public maxICOThirdSupply = 24 * (10**24);
-    uint public currentRoundSupply = 0;
-    uint private bonusBase = 100000; //100%;
-    modifier inState(State _state){
-        require(currentState == _state);
-        _;
+
+//Abstract Token contract
+contract HeliosToken{
+  function setCrowdsaleContract (address) public;
+  function sendCrowdsaleTokens(address, uint256) public;
+  function endIco() public;
+}
+
+//Crowdsale contract
+contract Crowdsale is Ownable{
+
+  using SafeMath for uint;
+
+  uint decimals = 2;
+  // Token contract address
+  HeliosToken public token;
+
+  // Constructor
+  function Crowdsale(address _tokenAddress) public{
+    token = HeliosToken(_tokenAddress);
+    techSupport = 0xcDDC1cE0b7D4C9B018b8a4b8f7Da2678D56E8619;
+
+    token.setCrowdsaleContract(address(this));
+    owner = 0xA957c13265Cb1b101401d10f5E0b69E0b36ef000;
+  }
+
+  //Crowdsale variables
+  uint public preIcoTokensSold = 0;
+  uint public tokensSold = 0;
+  uint public ethCollected = 0;
+
+  mapping (address => uint) contributorBalances;
+
+  uint public tokenPrice = 0.001 ether;
+
+  //preIco constants
+  uint public constant preIcoStart = 1525168800; //1525168800
+  uint public constant preIcoFinish = 1527847200;
+  uint public constant preIcoMinInvest = 50*(uint(10).pow(decimals)); //50 Tokens
+  uint public constant preIcoMaxCap = 500000*(uint(10).pow(decimals)); //500000 Tokens
+
+  // Ico constants
+  uint public constant icoStart = 1530439200; 
+  uint public constant icoFinish = 1538388000; 
+  uint public constant icoMinInvest = 10*(uint(10).pow(decimals)); //10 Tokens
+
+  uint public constant minCap = 1000000 * uint(10).pow(decimals);
+
+  function isPreIco (uint _time) public pure returns(bool) {
+    if((preIcoStart <= _time) && (_time < preIcoFinish)){
+      return true;
     }
-    modifier salesRunning(){
-        require(currentState == State.PREICO 
-        || currentState == State.ICO_FIRST
-        || currentState == State.ICO_SECOND
-        || currentState == State.ICO_THIRD);
-        _;
+  }
+  
+  //check is now ICO
+  function isIco(uint _time) public pure returns (bool){
+    if((icoStart <= _time) && (_time < icoFinish)){
+      return true;
     }
-    modifier minAmount(){
-        require(msg.value >= 0.2 ether);
-        _;
-    }
-    
-    event Transfer(address indexed _to, uint _value);
-    function Crowdsale(address _foundersWallet, address _beneficiary){
-        beneficiary = _beneficiary;
-        foundersWallet = _foundersWallet;
-    }
-    function initialize(IToken _token)
-    public
-    only(owner)
-    inState(State.INIT)
-    {
-        require(_token != address(0));
-        token = _token;
-        currentPrice = tokenPrice;
-        _mint(foundersWallet, foundersAmount);
-    }
-    function setBonus(uint _bonus) public
-    only(owner)
-    {
-        bonus = _bonus;
-    }
-    function setPrice(uint _tokenPrice)
-    public
-    only(owner)
-    {
-        currentPrice = _tokenPrice;
-    }
-    function setState(State _newState)
-    public
-    only(owner)
-    {
-        require(
-        currentState == State.INIT && _newState == State.PRESALE
-        || currentState == State.PRESALE && _newState == State.PREICO
-        || currentState == State.PREICO && _newState == State.PREICO_FINISHED
-        || currentState == State.PREICO_FINISHED && _newState == State.ICO_FIRST
-        || currentState == State.ICO_FIRST && _newState == State.STOPPED
-        || currentState == State.STOPPED && _newState == State.ICO_SECOND        
-        || currentState == State.ICO_SECOND && _newState == State.STOPPED
-        || currentState == State.STOPPED && _newState == State.ICO_THIRD
-        || currentState == State.ICO_THIRD && _newState == State.CLOSED
-        || _newState == State.EMERGENCY_STOP
-        );
-        currentState = _newState;
-        if(_newState == State.PREICO 
-        || _newState == State.ICO_FIRST
-        || _newState == State.ICO_SECOND
-        || _newState == State.ICO_THIRD){
-            currentRoundSupply = 0;
-        }
-        if(_newState == State.CLOSED){
-            _finish();
-        }
-    }
-    function setStateWithBonus(State _newState, uint _bonus)
-    public
-    only(owner)
-    {
-        require(
-        currentState == State.INIT && _newState == State.PRESALE
-        || currentState == State.PRESALE && _newState == State.PREICO
-        || currentState == State.PREICO && _newState == State.PREICO_FINISHED
-        || currentState == State.PREICO_FINISHED && _newState == State.ICO_FIRST
-        || currentState == State.ICO_FIRST && _newState == State.STOPPED
-        || currentState == State.STOPPED && _newState == State.ICO_SECOND        
-        || currentState == State.ICO_SECOND && _newState == State.STOPPED
-        || currentState == State.STOPPED && _newState == State.ICO_THIRD
-        || currentState == State.ICO_THIRD && _newState == State.CLOSED
-        || _newState == State.EMERGENCY_STOP
-        );
-        currentState = _newState;
-        bonus = _bonus;
-        if(_newState == State.CLOSED){
-            _finish();
-        }
-    }
-    function mintPresale(address _to, uint _amount)
-    public
-    only(owner)
-    inState(State.PRESALE)
-    {
-        require(totalSaleSupply.add(_amount) <= MAX_SALE_SUPPLY);
-        totalSaleSupply = totalSaleSupply.add(_amount);
-        _mint(_to, _amount);
-    }
-    function ()
-    public
-    payable
-    salesRunning
-    minAmount
-    {
-        _receiveFunds();
+    return false;
+  }
+
+  function timeBasedBonus(uint _time) public pure returns(uint) {
+    if(_time < preIcoStart || (_time > preIcoFinish && _time < icoStart)){
+      return 20;
     }
 
-    //==================== Internal Methods =================
-    function _receiveFunds()
-    internal
-    {
-        require(msg.value != 0);
-        uint transferTokens = msg.value.mul(DECIMALS).div(currentPrice);
-        require(totalSaleSupply.add(transferTokens) <= MAX_SALE_SUPPLY);
-        uint bonusTokens = transferTokens.mul(bonus).div(bonusBase);
-        transferTokens = transferTokens.add(bonusTokens);
-        _checkMaxRoundSupply(transferTokens);
-        totalSaleSupply = totalSaleSupply.add(transferTokens);
-        balances[msg.sender] = balances[msg.sender].add(msg.value);
-        totalFunds = totalFunds.add(msg.value);
-        _mint(msg.sender, transferTokens);
-        beneficiary.transfer(msg.value);
-        Transfer(msg.sender, transferTokens);
+    if(isPreIco(_time)){
+      if(preIcoStart + 1 weeks > _time){
+        return 20;
+      }
+      if(preIcoStart + 2 weeks > _time){
+        return 15;
+      }
+      if(preIcoStart + 3 weeks > _time){
+        return 10;
+      }
     }
-    function _mint(address _to, uint _amount)
-    noAnyReentrancy
-    internal
-    {
-        token.mint(_to, _amount);
+    if(isIco(_time)){
+      if(icoStart + 1 weeks > _time){
+        return 20;
+      }
+      if(icoStart + 2 weeks > _time){
+        return 15;
+      }
+      if(icoStart + 3 weeks > _time){
+        return 10;
+      }
     }
-    function _checkMaxRoundSupply(uint _amountTokens)
-    internal
-    {
-        if (currentState == State.PREICO) {
-            require(currentRoundSupply.add(_amountTokens) <= maxPreICOSupply);
-        } else if (currentState == State.ICO_FIRST) {
-            require(currentRoundSupply.add(_amountTokens) <= maxICOFirstSupply);
-        } else if (currentState == State.ICO_SECOND) {
-            require(currentRoundSupply.add(_amountTokens) <= maxICOSecondSupply);
-        } else if (currentState == State.ICO_THIRD) {
-            require(currentRoundSupply.add(_amountTokens) <= maxICOThirdSupply);
-        }
+    return 0;
+  }
+  
+  event OnSuccessfullyBuy(address indexed _address, uint indexed _etherValue, bool indexed isBought, uint _tokenValue);
+
+  //fallback function (when investor send ether to contract)
+  function() public payable{
+    require(isPreIco(now) || isIco(now));
+    require(buy(msg.sender,msg.value, now)); //redirect to func buy
+  }
+
+  //function buy Tokens
+  function buy(address _address, uint _value, uint _time) internal returns (bool){
+    
+    uint tokensToSend = etherToTokens(_value,_time);
+
+    if (isPreIco(_time)){
+      require (tokensToSend >= preIcoMinInvest);
+      require (preIcoTokensSold.add(tokensToSend) <= preIcoMaxCap);
+      
+      token.sendCrowdsaleTokens(_address,tokensToSend);
+      preIcoTokensSold = preIcoTokensSold.add(tokensToSend);
+
+      tokensSold = tokensSold.add(tokensToSend);
+      distributeEther();
+
+    }else{
+      require (tokensToSend >= icoMinInvest);
+      token.sendCrowdsaleTokens(_address,tokensToSend);
+
+      contributorBalances[_address] = contributorBalances[_address].add(_value);
+
+      tokensSold = tokensSold.add(tokensToSend);
+
+      if (tokensSold >= minCap){
+        distributeEther();
+      }
     }
-    function _finish()
-    noAnyReentrancy
-    internal
-    {
-        token.start();
+
+    emit OnSuccessfullyBuy(_address,_value,true, tokensToSend);
+    ethCollected = ethCollected.add(_value);
+
+    return true;
+  }
+
+  address public distributionAddress = 0x769EDcf3756A3Fd4D52B739E06dF060b7379C4Ef;
+  function distributeEther() internal {
+    distributionAddress.transfer(address(this).balance);
+  }
+  
+  event ManualTokensSended(address indexed _address, uint indexed _value, bool );
+  
+  function manualSendTokens (address _address, uint _tokens) public onlyTechSupport {
+    token.sendCrowdsaleTokens(_address, _tokens);
+    tokensSold = tokensSold.add(_tokens);
+    emit OnSuccessfullyBuy(_address,0,false,_tokens);
+  }
+
+  function manualSendEther (address _address, uint _value) public onlyTechSupport {
+    uint tokensToSend = etherToTokens(_value, 0);
+    tokensSold = tokensSold.add(tokensToSend);
+    ethCollected = ethCollected.add(_value);
+
+    token.sendCrowdsaleTokens(_address, tokensToSend);
+    emit OnSuccessfullyBuy(_address,_value,false, tokensToSend);
+  }
+  
+  //convert ether to tokens (without decimals)
+  function etherToTokens(uint _value, uint _time) public view returns(uint res) {
+    if(_time == 0){
+        _time = now;
     }
+    res = _value.mul((uint)(10).pow(decimals))/tokenPrice;
+    uint bonus = timeBasedBonus(_time);
+    res = res.add(res.mul(bonus)/100);
+  }
+
+  event Refund(address indexed contributor, uint ethValue);  
+
+  function refund () public {
+    require (now > icoFinish && tokensSold < minCap);
+    require (contributorBalances[msg.sender] != 0);
+
+    msg.sender.transfer(contributorBalances[msg.sender]);
+
+    emit Refund(msg.sender, contributorBalances[msg.sender]);
+
+    contributorBalances[msg.sender] = 0;
+  }
+  
+  function endIco () public onlyTechSupport {
+    require(now > icoFinish + 5 days);
+    token.endIco();
+  }
+  
 }
