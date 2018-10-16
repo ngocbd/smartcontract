@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0x1368e088682b3ea455c4856297365542ca6828d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0xe861ad00aed0f04b41c675ec1c1493d2ebcbe776
 */
 contract ResetPonzi {
     
