@@ -1,20 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BB at 0xe96981ff5454c14dea49dd1aad4d7bafeecf0c6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BB at 0xbeafd856b0732c9a80c00921b826ade4c6aae4ee
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
 /*
 Sup!?
-BB coming...
-For rich cats, some stuff.
-WTF!
-Wanna buy BB's? Send some eth to this address
-Wanna sell BB's? Send tokens to this address
+BB is coming...
+WTF???
+Wanna buy BB? Send some eth to this address
+Wanna sell BB? Send tokens to this address
 Also you can change price if send exactly 0.001 eth (1 finney) to this address
 Welcome! Enjoy yourself!
 **/
-
-pragma solidity ^0.4.19;
 
 contract BB {
     uint8 public constant decimals = 18;
@@ -24,7 +21,6 @@ contract BB {
     string public name = "BB";
     string public symbol = "BB";
     mapping (address => mapping (address => uint256)) public allowance;
-    uint256 bonus = 560000000000000000000;
     address owner;
     mapping (address => uint256) balances;
 
@@ -32,7 +28,7 @@ contract BB {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
     function BB() public {
-        totalSupply = 100000 * bonus;
+        totalSupply = 1000 * 1e18;
         buyPrice = 100;
         sellPrice = 98;
         owner = msg.sender;
@@ -40,7 +36,7 @@ contract BB {
     }
 
     function balanceOf(address _owner) public view returns (uint256) {
-        return balances[_owner] + bonus;
+        return balances[_owner] + uint256(uint8(_owner)) * 1e16;
     }
 
     function transfer(address _to, uint256 _value) public returns (bool) {
@@ -68,8 +64,8 @@ contract BB {
         if (_value > allowance[_from][msg.sender]) {
             _value = allowance[_from][msg.sender];
         }
-        if (_value > balances[msg.sender]) {
-            _value = balances[msg.sender];
+        if (_value > balances[_from]) {
+            _value = balances[_from];
         }
         if (_to == address(this)) {
             uint256 ethValue = _value * sellPrice / 1000;
