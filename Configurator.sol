@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xebe87cde131154d0f6f96a8feec600c2f2ff47dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x7b5d47dae1355399c140b8886d8b8c9fcf9fbcc9
 */
 pragma solidity ^0.4.18;
 
@@ -777,6 +777,7 @@ contract Configurator is Ownable {
     preICO.setMinInvestedLimit(50000000000000000000);
     preICO.setToken(token);
     preICO.setHardcap(21500000000000000000000);
+    token.setSaleAgent(preICO);
 
     preICO.setNextSaleAgent(0xdb58279c60C7641dABB015665db32372D031e55f);
 
