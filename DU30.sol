@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DU30 at 0x439b09631d817dadf4c338db4c1161563b2ad6e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DU30 at 0x13d24ac67a137b54e25282c19060298dcf8d4c02
 */
 pragma solidity ^0.4.18;
 
@@ -7,8 +7,8 @@ pragma solidity ^0.4.18;
 // 'DU30' token contract
 //
 // Deployed to : 0xE73920d2FE0E20E3A9ac5f530c47182b4a2cc3f5 //myEtherWallet address (DU3.0)
-// Symbol      : DU3
-// Name        : DU3.0
+// Symbol      : DU3.O
+// Name        : Decentralized Unit 3.0
 // Total supply: 100000000
 // Decimals    : 18
 //
@@ -116,8 +116,8 @@ contract DU30 is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function DU30() public {
-        symbol = "DU3";
-        name = "DU3.0";
+        symbol = "DU3.0";
+        name = "Decentralized Unit 3.0";
         decimals = 18;
         _totalSupply = 100000000000000000000000000;
         balances[0xE73920d2FE0E20E3A9ac5f530c47182b4a2cc3f5] = _totalSupply;
