@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x503430838dcf89a8121b68956bb07fd2370f4e5d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x98a66cd588f4903adb6a2587caebfe45dfce42bf
 */
 pragma solidity ^0.4.19;
 
@@ -47,9 +47,9 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1314190000000000000;
-        name = 'shared pay';
-        symbol = 'SPAY';
+        totalSupply = 3980000000000000000;
+        name = 'Hua pay';
+        symbol = 'Hpay';
         decimals = 10;
         balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
         Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
