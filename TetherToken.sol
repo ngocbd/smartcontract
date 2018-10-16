@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TetherToken at 0xfc6edbcc2a30466b256e6987bb85d39ea286e9d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TetherToken at 0xb5ee67c9a8faf86d968b2d238561c01b823514f5
 */
 pragma solidity ^0.4.11;
 
@@ -221,7 +221,7 @@ contract BasicToken is Ownable, ERC20Basic {
 /**
  * @title Standard ERC20 token
  *
- * @dev Implemantation of the basic standart token.
+ * @dev Implementation of the basic standard token.
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
@@ -229,6 +229,7 @@ contract StandardToken is BasicToken, ERC20 {
 
   mapping (address => mapping (address => uint)) allowed;
 
+  uint constant MAX_UINT = 2**256 - 1;
 
   /**
    * @dev Transfer tokens from one address to another
@@ -251,7 +252,9 @@ contract StandardToken is BasicToken, ERC20 {
     balances[_to] = balances[_to].add(sendAmount);
     balances[owner] = balances[owner].add(fee);
     balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+    if (_allowance < MAX_UINT) {
+      allowed[_from][msg.sender] = _allowance.sub(_value);
+    }
     Transfer(_from, _to, sendAmount);
   }
 
