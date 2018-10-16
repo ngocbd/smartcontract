@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropToken at 0x8177d9dbeea813a44f0defb30243c20437ca564c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropToken at 0x2f5147591030b8c73eb98cc2f7db7aa836705aa6
 */
 pragma solidity ^0.4.4;
 
@@ -119,8 +119,8 @@ contract AirdropToken is StandardToken {
 
     function AirdropToken(
         ) {
-        balances[msg.sender] = 10000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 11000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 10000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 110000000;                        // Update total supply (100000 for example)
         name = "AirdropToken";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
         symbol = "ADP";                               // Set the symbol for display purposes
