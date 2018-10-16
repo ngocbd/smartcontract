@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCTestToken at 0xd7bef22678fb7fc7a80c20c112cd08ff9469ddfa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCTestToken at 0x76eee1e4a609f7af20926c268d4eba6f34818abe
 */
 pragma solidity ^0.4.13;
 
@@ -222,7 +222,7 @@ contract StandardToken is ERC20, BasicToken {
    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
    * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
-   * @param _value The amounts of tokens to be spent.
+   * @param _value The amount of tokens to be spent.
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
@@ -231,24 +231,24 @@ contract StandardToken is ERC20, BasicToken {
   }
 
   /**
-   * @dev Function to check the amounts of tokens that an owner allowed to a spender.
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amounts of tokens still available for the spender.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
    */
   function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
   /**
-   * @dev Increase the amounts of tokens that an owner allowed to a spender.
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
    *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    * @param _spender The address which will spend the funds.
-   * @param _addedValue The amounts of tokens to increase the allowance by.
+   * @param _addedValue The amount of tokens to increase the allowance by.
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
@@ -257,14 +257,14 @@ contract StandardToken is ERC20, BasicToken {
   }
 
   /**
-   * @dev Decrease the amounts of tokens that an owner allowed to a spender.
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
    *
    * approve should be called when allowed[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amounts of tokens to decrease the allowance by.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
   function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
@@ -294,7 +294,7 @@ contract MintableToken is StandardToken, Ownable {
   /**
    * @dev Function to mint tokens
    * @param _to The address that will receive the minted tokens.
-   * @param _amount The amounts of tokens to mint.
+   * @param _amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
@@ -341,25 +341,19 @@ contract PausableToken is StandardToken, Pausable {
 
 contract DRCTestToken is BurnableToken, MintableToken, PausableToken {    
 
-    string public name = 'DRC Test Token';
+    string public name = 'DRC Test Token 1';
 
-    string public symbol = 'DRCT';
+    string public symbol = 'DRC1';
 
     uint8 public decimals = 18;
 
-    uint public INITIAL_SUPPLY = 250000000;
-
-    uint public SECOND_SUPPLY = 450000000;
-
-    uint public THIRD_SUPPLY = 300000000;
-
-    uint8 public phase = 1;
+    uint256 public INITIAL_SUPPLY = 1000000000000000000000000000;
 
 
 
     /**
 
-     * constructs the token by total amount 
+     * contruct the token by total amount 
 
      *
 
@@ -369,29 +363,9 @@ contract DRCTestToken is BurnableToken, MintableToken, PausableToken {
 
     function DRCTestToken() public {
 
-        totalSupply = INITIAL_SUPPLY + SECOND_SUPPLY + THIRD_SUPPLY;
+        totalSupply = INITIAL_SUPPLY;
 
-        balances[msg.sender] = INITIAL_SUPPLY;
-
-    }
-
-
-
-    /**
-
-     * start the second release phase 
-
-     *
-
-     * the second phase will use second supply amount of tokens 
-
-     */
-
-    function startSecondPhase() public {
-
-        balances[msg.sender] = balances[msg.sender].add(SECOND_SUPPLY);
-
-        phase = 2;
+        balances[msg.sender] = totalSupply;
 
     }
 
@@ -399,83 +373,7 @@ contract DRCTestToken is BurnableToken, MintableToken, PausableToken {
 
     /**
 
-     * start the third release phase 
-
-     *
-
-     * the third phase will use third supply amount of tokens 
-
-     */
-
-    function startThirdPhase() public {
-
-        balances[msg.sender] = balances[msg.sender].add(THIRD_SUPPLY);
-
-        phase = 3;
-
-    }
-
-
-
-    /**
-
-     * get the first phase total supply
-
-     */
-
-    function getFirstPhaseCap() public view returns (uint256 firstSupply) {
-
-        return INITIAL_SUPPLY;
-
-    }
-
-
-
-    /**
-
-     * get the second phase total supply
-
-     */
-
-    function getSecondPhaseCap() public view returns (uint256 secondSupply) {
-
-        return SECOND_SUPPLY;
-
-    }
-
-
-
-    /**
-
-     * get the third phase total supply
-
-     */
-
-    function getThirdPhaseCap() public view returns (uint256 thirdSupply) {
-
-        return THIRD_SUPPLY;
-
-    }
-
-
-
-    /**
-
-     * get the phase number
-
-     */
-
-    function getPhase() public view returns (uint8 phaseNumber) {
-
-        return phase;
-
-    }
-
-
-
-    /**
-
-     * Destroy tokens from other accounts
+     * Destroy tokens from other account
 
      *
 
