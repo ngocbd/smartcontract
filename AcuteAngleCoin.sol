@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcuteAngleCoin at 0x918ff08e11d55CB8fe575A2B02F0d778194232D5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcuteAngleCoin at 0x5162A13e4B2aDf708878C71F2CAd69525770601F
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------------------------
-// Acute Angle Coin by AAC Limited.
+// Acute Angle Coin by Triangle Technology Co., Ltd. Limited.
 // An ERC20 standard
 //
 // author: AAC Team
@@ -26,15 +26,17 @@ contract AcuteAngleCoin is ERC20Interface {
     string public constant symbol = "AAC";
     string public constant name = "AcuteAngleCoin";
 
+    bool public _selling = true;//initial selling
     uint256 public _totalSupply = 10 ** 14; // total supply is 10^14 unit, equivalent to 10^9 AAC
+    uint256 public _originalBuyPrice = 39 * 10**7; // original buy 1ETH = 3900 AAC = 39 * 10**7 unit
 
     // Owner of this contract
     address public owner;
  
-    // Balances AAC for each account
+    // Balances AAC for each AACount
     mapping(address => uint256) private balances;
     
-    // Owner of account approves the transfer of an amount to another account
+    // Owner of AACount approves the transfer of an amount to another AACount
     mapping(address => mapping (address => uint256)) private allowed;
 
     // List of approved investors
@@ -42,7 +44,7 @@ contract AcuteAngleCoin is ERC20Interface {
     
     // deposit
     mapping(address => uint256) private deposit;
-    
+       
 
     // totalTokenSold
     uint256 public totalTokenSold = 0;
@@ -58,7 +60,24 @@ contract AcuteAngleCoin is ERC20Interface {
         _;
     }
 
+    /**
+     * Functions with this modifier check on sale status
+     * Only allow sale if _selling is on
+     */
+    modifier onSale() {
+        require(_selling);
+        _;
+    }
     
+    /**
+     * Functions with this modifier check the validity of address is investor
+     */
+    modifier validInvestor() {
+        require(approvedInvestorList[msg.sender]);
+        _;
+    }
+    
+
     
     /**
      * 
@@ -68,25 +87,42 @@ contract AcuteAngleCoin is ERC20Interface {
         _;
     }
 
-
-    
-    /**
-     * @dev Fix for the ERC20 short address attack.
-     */
-    modifier onlyPayloadSize(uint size) {
-      if(msg.data.length < size + 4) {
-        revert();
-      }
-      _;
+    /// @dev Fallback function allows to buy ether.
+    function()
+        public
+        payable {
+        buyAAC();
     }
-	
-   
+    
+    /// @dev buy function allows to buy ether. for using optional data
+    function buyAAC()
+        public
+        payable
+        onSale
+        validInvestor {
+        uint256 requestedUnits = (msg.value * _originalBuyPrice) / 10**18;
+        require(balances[owner] >= requestedUnits);
+        // prepare transfer data
+        balances[owner] -= requestedUnits;
+        balances[msg.sender] += requestedUnits;
+        
+        // increase total deposit amount
+        deposit[msg.sender] += msg.value;
+        
+        // check total and auto turnOffSale
+        totalTokenSold += requestedUnits;
+        
+        // submit transfer
+        Transfer(owner, msg.sender, requestedUnits);
+        owner.transfer(msg.value);
+    }
 
     /// @dev Constructor
     function AAC() 
         public {
         owner = msg.sender;
         balances[owner] = _totalSupply;
+        Transfer(0x0, owner, _totalSupply);
     }
     
     /// @dev Gets totalSupply
@@ -98,18 +134,27 @@ contract AcuteAngleCoin is ERC20Interface {
         return _totalSupply;
     }
     
- 
+    /// @dev Enables sale 
+    function turnOnSale() onlyOwner 
+        public {
+        _selling = true;
+    }
+
+    /// @dev Disables sale
+    function turnOffSale() onlyOwner 
+        public {
+        _selling = false;
+    }
     
     function turnOnTradable() 
         public
         onlyOwner{
         tradable = true;
     }
-    
-    
-    /// @dev Gets account's balance
-    /// @param _addr Address of the account
-    /// @return Account balance
+        
+    /// @dev Gets AACount's balance
+    /// @param _addr Address of the AACount
+    /// @return AACount balance
     function balanceOf(address _addr) 
         public
         constant 
@@ -136,8 +181,27 @@ contract AcuteAngleCoin is ERC20Interface {
         return deposit[_addr];
 }
     
+    /// @dev Adds list of new investors to the investors list and approve all
+    /// @param newInvestorList Array of new investors addresses to be added
+    function addInvestorList(address[] newInvestorList)
+        onlyOwner
+        public {
+        for (uint256 i = 0; i < newInvestorList.length; i++){
+            approvedInvestorList[newInvestorList[i]] = true;
+        }
+    }
+
+    /// @dev Removes list of investors from list
+    /// @param investorList Array of addresses of investors to be removed
+    function removeInvestorList(address[] investorList)
+        onlyOwner
+        public {
+        for (uint256 i = 0; i < investorList.length; i++){
+            approvedInvestorList[investorList[i]] = false;
+        }
+    }
  
-    /// @dev Transfers the balance from msg.sender to an account
+    /// @dev Transfers the balance from msg.sender to an AACount
     /// @param _to Recipient address
     /// @param _amount Transfered amount in unit
     /// @return Transfer status
@@ -164,7 +228,7 @@ contract AcuteAngleCoin is ERC20Interface {
     // Send _value amount of tokens from address _from to address _to
     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-    // fees in sub-currencies; the command should fail unless the _from account has
+    // fees in sub-currencies; the command should fail unless the _from AACount has
     // deliberately authorized the sender of the message via some mechanism; we propose
     // these standardized APIs for approval:
     function transferFrom(
@@ -189,7 +253,7 @@ contract AcuteAngleCoin is ERC20Interface {
         }
     }
     
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // Allow _spender to withdraw from your AACount, multiple times, up to the _value amount.
     // If this function is called again it overwrites the current allowance with _value.
     function approve(address _spender, uint256 _amount) 
         public
@@ -208,8 +272,11 @@ contract AcuteAngleCoin is ERC20Interface {
         return allowed[_owner][_spender];
     }
     
-    function () public payable{
-        revert();
+    /// @dev Withdraws Ether in contract (Owner only)
+    /// @return Status of withdrawal
+    function withdraw() onlyOwner 
+        public 
+        returns (bool) {
+        return owner.send(this.balance);
     }
-    
 }
