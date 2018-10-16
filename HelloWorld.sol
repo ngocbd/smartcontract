@@ -1,18 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0xDD9aE24a9E442Fd7af6Cd321400Cc8243458924F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0xa4ebb48e4378e6f771b7f857623298bdb50c11b1
 */
-pragma solidity ^0.4.13;
+/*
+ * DO NOT EDIT! DO NOT EDIT! DO NOT EDIT!
+ *
+ * This is an automatically generated file. It will be overwritten.
+ *
+ * For the original source see
+ *    '/Users/ragolta/ETH/swaldman/helloworld/src/main/solidity/helloworld.sol'
+ */
 
-contract HelloWorld {
-    
-    string wellcomeString = "Hello, world!";
-    
-    function getData() public constant returns (string) {
-        return wellcomeString;
+pragma solidity ^0.4.18;
+
+
+
+
+
+contract HelloWorld{
+    string input = "Hello world.";
+
+    function sayHello() view public returns (string) {
+        return input;
     }
-    
-    function setData(string newData) public {
-        wellcomeString = newData;
+
+    function setNewGreeting(string greeting) public {
+        input = greeting;
     }
-    
 }
