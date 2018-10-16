@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FTICrowdsale at 0xbe0505ec0076ac6082efbc7cd069d34135257c5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FTICrowdsale at 0xd5c059c08a37cebd7f1611b5c84008324a64a9a5
 */
 pragma solidity ^0.4.23;
 
@@ -775,7 +775,7 @@ contract FTICrowdsale is CappedCrowdsale, MintedCrowdsale, ClosedPeriod, Ownable
     uint8 public referralPercent;
     uint8 public referralOwnerPercent;
     bool public openingManualyMining = true;
-  
+     
     modifier onlyOpeningManualyMinig() {
         require(openingManualyMining);
         _;
@@ -822,7 +822,8 @@ contract FTICrowdsale is CappedCrowdsale, MintedCrowdsale, ClosedPeriod, Ownable
         uint8 _additionalTokenRate,
         uint8 _referralPercent,
         uint256 _referralMinimum,
-        uint8 _referralOwnerPercent
+        uint8 _referralOwnerPercent,
+        uint256 _startWeiAmount
     ) public
         Crowdsale(_rate, _wallet, _token)
         CappedCrowdsale(_cap)
@@ -836,6 +837,27 @@ contract FTICrowdsale is CappedCrowdsale, MintedCrowdsale, ClosedPeriod, Ownable
         referralPercent = _referralPercent;
         referralMinimum = _referralMinimum;
         referralOwnerPercent = _referralOwnerPercent;
+        weiRaised = _startWeiAmount;
+    }
+
+    function manualyAddReferral(address ref, uint256 amount) public onlyOwner() {
+        referralAddresses[ref] = ReferalUser(0,0,amount,0);
+    }
+
+    function manualyAddReferralPayer(address ref, address _beneficiary, uint256 _weiAmount) public onlyOwner() {
+        ReferalUser storage rr = referralAddresses[ref];
+        if (rr.amountWEI > 0) {
+            uint mintTokens = _weiAmount.mul(rate);
+            uint256 ownerToken = mintTokens.mul(referralOwnerPercent).div(100);
+            rr.fundsTotal += ownerToken;
+            if (rr.referral[_beneficiary] == 0){
+                rr.paysUniq[rr.numReferrals] = _beneficiary;
+                rr.numReferrals += 1;
+            }
+            rr.referral[_beneficiary] += _weiAmount;
+            rr.pays[rr.paysCount] = Pay(_beneficiary, _weiAmount);
+            rr.paysCount += 1;
+        }
     }
 
     function bytesToAddress(bytes source) internal constant returns(address parsedReferer) {
@@ -900,6 +922,11 @@ contract FTICrowdsale is CappedCrowdsale, MintedCrowdsale, ClosedPeriod, Ownable
             }
         }
     }
+    
+    function addBonusPeriod (uint64 from, uint64 to, uint256 min_amount, uint8 bonus, uint256 max_amount, uint8 index_glob_inv) public onlyOwner {
+        bonus_periods.push(BonusPeriod(from, to, min_amount, max_amount, bonus, index_glob_inv));
+    }
+
 
     function referalCount (address addr) public view returns(uint64 len) {
         len = referralAddresses[addr].numReferrals;
@@ -918,10 +945,6 @@ contract FTICrowdsale is CappedCrowdsale, MintedCrowdsale, ClosedPeriod, Ownable
         amount = referralAddresses[ref_owner].pays[num].amount;
     } 
 
-    function addBonusPeriod (uint64 from, uint64 to, uint256 min_amount, uint8 bonus, uint256 max_amount, uint8 index_glob_inv) public onlyOwner {
-        bonus_periods.push(BonusPeriod(from, to, min_amount, max_amount, bonus, index_glob_inv));
-    }
-
     function getBonusRate (uint256 amount) public constant returns(uint8) {
         for (uint i = 0; i < bonus_periods.length; i++) {
             BonusPeriod storage bonus_period = bonus_periods[i];
@@ -931,8 +954,8 @@ contract FTICrowdsale is CappedCrowdsale, MintedCrowdsale, ClosedPeriod, Ownable
         }
         return 0;
     }
-
-    function indexSuperInvestor (uint256 amount) public view returns(uint8) {
+    
+    function indexSuperInvestor (uint256 amount) internal view returns(uint8) {
         for (uint8 i = 0; i < bonus_periods.length; i++) {
             BonusPeriod storage bonus_period = bonus_periods[i];
             if (bonus_period.from <= now && bonus_period.to > now && bonus_period.min_amount <= amount && bonus_period.max_amount > amount) {
@@ -970,23 +993,6 @@ contract FTICrowdsale is CappedCrowdsale, MintedCrowdsale, ClosedPeriod, Ownable
             mintTokens
         );
         addReferral(_beneficiary, _weiAmount);
-    }
-
-    function makeOptions(uint256 _weiAmount, address _recipient, uint256 optionTokens) public onlyOwner() {
-        require(!hasClosed());
-        require(_recipient != address(0));
-        require(_weiAmount != 0);
-        require(optionTokens != 0);
-        weiRaised = weiRaised.add(_weiAmount);
-        _processPurchase(_recipient, optionTokens);
-        emit TokenPurchase(
-            msg.sender,
-            _recipient,
-            _weiAmount,
-            optionTokens
-        );
-        FTIToken(token).storeOptions(_recipient, _weiAmount);
-        addReferral(_recipient, _weiAmount);
     }
 
 
