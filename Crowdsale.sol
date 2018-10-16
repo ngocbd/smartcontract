@@ -1,384 +1,207 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0x353168f83f16e7becfe3079097fa7ca7d8c7d2b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x65061cfa23aa566316b0215c9eecabeafd4d9e81
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
-/* taking ideas from Zeppelin solidity module */
-contract SafeMath {
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    // it is recommended to define functions which can neither read the state of blockchain nor write in it as pure instead of constant
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function safeAdd(uint256 x, uint256 y) internal pure returns(uint256) {
-        uint256 z = x + y;
-        assert((z >= x));
-        return z;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function safeSubtract(uint256 x, uint256 y) internal pure returns(uint256) {
-        assert(x >= y);
-        return x - y;
-    }
-
-    function safeMult(uint256 x, uint256 y) internal pure returns(uint256) {
-        uint256 z = x * y;
-        assert((x == 0)||(z/x == y));
-        return z;
-    }
-
-    function safeDiv(uint256 x, uint256 y) internal pure returns (uint256) {
-        uint256 z = x / y;
-        return z;
-    }
-
-    // mitigate short address attack
-    // thanks to https://github.com/numerai/contract/blob/c182465f82e50ced8dacb3977ec374a892f5fa8c/contracts/Safe.sol#L30-L34.
-    // TODO: doublecheck implication of >= compared to ==
-    modifier onlyPayloadSize(uint numWords) {
-        assert(msg.data.length >= numWords * 32 + 4);
-        _;
-    }
-
-}
-// The abstract token contract
-
-contract TrakToken {
-    function TrakToken () public {}
-    function transfer (address ,uint) public pure { }
-    function burn (uint256) public pure { }
-    function finalize() public pure { }
-    function changeTokensWallet (address) public pure { }
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract CrowdSale is SafeMath {
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded 
+ to a wallet
+ * as they arrive.
+ */
+contract token { function transfer(address receiver, uint amount){  } }
+contract Crowdsale {
+  using SafeMath for uint256;
 
-    ///metadata
-    enum State { Fundraising,Paused,Successful,Closed }
-    State public state = State.Fundraising; // equal to 0
-    string public version = "1.0";
+  // uint256 durationInMinutes;
+  // address where funds are collected
+  address public wallet;
+  // token address
+  address public addressOfTokenUsedAsReward1;
+  address public addressOfTokenUsedAsReward2;
+  address public addressOfTokenUsedAsReward3;
+  address public addressOfTokenUsedAsReward4;
+  address public addressOfTokenUsedAsReward5;
 
-    //External contracts
-    TrakToken public trakToken;
-    // who created smart contract
-    address public creator;
-    // Address which will receive raised funds
-    address public contractOwner;
-    // adreess vs state mapping (1 for exists , zero default);
-    mapping (address => bool) public whitelistedContributors;
+  uint256 public price = 7500;
 
-    uint256 public fundingStartBlock; // Dec 15 - Dec 25
-    uint256 public firstChangeBlock;  // December 25 - January 5
-    uint256 public secondChangeBlock; // January 5 -January 15
-    uint256 public thirdChangeBlock;  // January 16
-    uint256 public fundingEndBlock;   // Jan 31
-    // funding maximum duration in hours
-    uint256 public fundingDurationInHours;
-    uint256 constant public fundingMaximumTargetInWei = 66685 ether;
-    // We need to keep track of how much ether (in units of Wei) has been contributed
-    uint256 public totalRaisedInWei;
-    // maximum ether we will accept from one user
-    uint256 constant public maxPriceInWeiFromUser = 1500 ether;
-    uint256 public minPriceInWeiForPre = 1 ether;
-    uint256 public minPriceInWeiForIco = 0.5 ether;
-    uint8 constant public  decimals = 18;
-    // Number of tokens distributed to investors
-    uint public tokensDistributed = 0;
-    // tokens per tranche
-    uint constant public tokensPerTranche = 11000000 * (uint256(10) ** decimals);
-    uint256 public privateExchangeRate = 1420; // 23.8%
-    uint256 public firstExchangeRate   = 1289; // 15.25%
-    uint256 public secondExchangeRate  = 1193;  //  8.42%
-    uint256 public thirdExchangeRate   = 1142;  //  4.31%
-    uint256 public fourthExchangeRate  = 1118;  //  2.25%
-    uint256 public fifthExchangeRate   = 1105;  // 1.09%
+  token tokenReward1;
+  token tokenReward2;
+  token tokenReward3;
+  token tokenReward4;
+  token tokenReward5;
 
-    /// modifiers
-    modifier onlyOwner() {
-        require(msg.sender == contractOwner);
-        _;
-    }
-
-    modifier isIcoOpen() {
-        require(block.number >= fundingStartBlock);
-        require(block.number <= fundingEndBlock);
-        require(totalRaisedInWei <= fundingMaximumTargetInWei);
-        _;
-    }
+  // mapping (address => uint) public contributions;
+  
 
 
-    modifier isMinimumPrice() {
-        if (tokensDistributed < safeMult(3,tokensPerTranche) || block.number < thirdChangeBlock ) {
-           require(msg.value >= minPriceInWeiForPre);
-        }
-        else if (tokensDistributed <= safeMult(6,tokensPerTranche)) {
-           require(msg.value >= minPriceInWeiForIco);
-        }
+  // start and end timestamps where investments are allowed (both inclusive)
+  // uint256 public startTime;
+  // uint256 public endTime;
+  // amount of raised money in wei
+  uint256 public weiRaised;
 
-        require(msg.value <= maxPriceInWeiFromUser);
-
-         _;
-    }
-
-    modifier isIcoFinished() {
-        require(totalRaisedInWei >= fundingMaximumTargetInWei || (block.number > fundingEndBlock) || state == State.Successful );
-        _;
-    }
-
-    modifier inState(State _state) {
-        require(state == _state);
-        _;
-    }
-
-    modifier isCreator() {
-        require(msg.sender == creator);
-        _;
-    }
-
-    // wait 100 block after final contract state before allowing contract destruction
-    modifier atEndOfLifecycle() {
-        require(totalRaisedInWei >= fundingMaximumTargetInWei || (block.number > fundingEndBlock + 40000));
-        _;
-    }
-
-    /// constructor
-    function CrowdSale(
-    address _fundsWallet,
-    uint256 _fundingStartBlock,
-    uint256 _firstInHours,
-    uint256 _secondInHours,
-    uint256 _thirdInHours,
-    uint256 _fundingDurationInHours,
-    TrakToken _tokenAddress
-    ) public {
-
-        require(safeAdd(_fundingStartBlock, safeMult(_fundingDurationInHours , 212)) > _fundingStartBlock);
-
-        creator = msg.sender;
-
-        if (_fundsWallet !=0) {
-            contractOwner = _fundsWallet;
-        }
-        else {
-            contractOwner = msg.sender;
-        }
-
-        fundingStartBlock = _fundingStartBlock;
-        firstChangeBlock =  safeAdd(fundingStartBlock, safeMult(_firstInHours , 212));
-        secondChangeBlock = safeAdd(fundingStartBlock, safeMult(_secondInHours , 212));
-        thirdChangeBlock =  safeAdd(fundingStartBlock, safeMult(_thirdInHours , 212));
-        fundingDurationInHours = _fundingDurationInHours;
-        fundingEndBlock = safeAdd(fundingStartBlock, safeMult(_fundingDurationInHours , 212));
-        trakToken = TrakToken(_tokenAddress);
-    }
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
 
-    // fallback function can be used to buy tokens
-    function () external payable {
-        buyTokens(msg.sender);
-    }
+  function Crowdsale() {
+    //You will change this to your wallet where you need the ETH 
+    wallet = 0xE37C4541C34e4A8785DaAA9aEb5005DdD29854ac;
+    // durationInMinutes = _durationInMinutes;
+    //Here will come the checksum address we got
+    //aircoin
+    addressOfTokenUsedAsReward1 = 0xBD17Dfe402f1Afa41Cda169297F8de48d6Dfb613;
+    //diamond
+    addressOfTokenUsedAsReward2 = 0x489DF6493C58642e6a4651dDcd4145eaFBAA1018;
+    //silver
+    addressOfTokenUsedAsReward3 = 0x404a639086eda1B9C8abA3e34a5f8145B4B04ea5;
+    //usdgold
+    addressOfTokenUsedAsReward4 = 0x00755562Dfc1F409ec05d38254158850E4e8362a;
+    //worldcoin
+    addressOfTokenUsedAsReward5 = 0xE7AE9dc8F5F572e4f80655C4D0Ffe32ec16fF0E3;
 
 
-    function buyTokens(address beneficiary) inState(State.Fundraising) isIcoOpen isMinimumPrice  public  payable  {
-        require(beneficiary != 0x0);
-        // state 1 is set for
-        require(whitelistedContributors[beneficiary] == true );
-        uint256 tokenAmount;
-        uint256 checkedReceivedWei = safeAdd(totalRaisedInWei, msg.value);
-        // Check that this transaction wouldn't exceed the ETH max cap
+    tokenReward1 = token(addressOfTokenUsedAsReward1);
+    tokenReward2 = token(addressOfTokenUsedAsReward2);
+    tokenReward3 = token(addressOfTokenUsedAsReward3);
+    tokenReward4 = token(addressOfTokenUsedAsReward4);
+    tokenReward5 = token(addressOfTokenUsedAsReward5);
+  }
 
-        if (checkedReceivedWei > fundingMaximumTargetInWei ) {
+  bool public started = true;
 
-            // update totalRaised After Subtracting
-            totalRaisedInWei = safeAdd(totalRaisedInWei,safeSubtract(fundingMaximumTargetInWei,totalRaisedInWei));
-            // Calculate how many tokens (in units of Wei) should be awarded on this transaction
-            var (rate,/*trancheMaxTokensLeft */) = getCurrentTokenPrice();
-            // Calculate how many tokens (in units of Wei) should be awarded on this transaction
-            tokenAmount = safeMult(safeSubtract(fundingMaximumTargetInWei,totalRaisedInWei), rate);
-            // Send change extra ether to user.
-            beneficiary.transfer(safeSubtract(checkedReceivedWei,fundingMaximumTargetInWei));
-        }
-        else {
-            totalRaisedInWei = safeAdd(totalRaisedInWei,msg.value);
-            var (currentRate,trancheMaxTokensLeft) = getCurrentTokenPrice();
-            // Calculate how many tokens (in units of Wei) should be awarded on this transaction
-            tokenAmount = safeMult(msg.value, currentRate);
-            if (tokenAmount > trancheMaxTokensLeft) {
-                // handle round off error by adding .1 token
-                tokensDistributed =  safeAdd(tokensDistributed,safeAdd(trancheMaxTokensLeft,safeDiv(1,10)));
-                //find remaining tokens by getCurrentTokenPrice() function and sell them from remaining ethers left
-                var (nextCurrentRate,nextTrancheMaxTokensLeft) = getCurrentTokenPrice();
+  function startSale(){
+    if (msg.sender != wallet) throw;
+    started = true;
+  }
 
-                if (nextTrancheMaxTokensLeft <= 0) {
-                    tokenAmount = safeAdd(trancheMaxTokensLeft,safeDiv(1,10));
-                    state =  State.Successful;
-                    // Send change extra ether to user.
-                    beneficiary.transfer(safeDiv(safeSubtract(tokenAmount,trancheMaxTokensLeft),currentRate));
-                } else {
-                    uint256 nextTokenAmount = safeMult(safeSubtract(msg.value,safeMult(trancheMaxTokensLeft,safeDiv(1,currentRate))),nextCurrentRate);
-                    tokensDistributed =  safeAdd(tokensDistributed,nextTokenAmount);
-                    tokenAmount = safeAdd(nextTokenAmount,safeAdd(trancheMaxTokensLeft,safeDiv(1,10)));
-                }
-            }
-            else {
-                tokensDistributed =  safeAdd(tokensDistributed,tokenAmount);
-            }
-        }
+  function stopSale(){
+    if(msg.sender != wallet) throw;
+    started = false;
+  }
 
-        trakToken.transfer(beneficiary,tokenAmount);
-        // immediately transfer ether to fundsWallet
-        forwardFunds();
-    }
+  function setPrice(uint256 _price){
+    if(msg.sender != wallet) throw;
+    price = _price;
+  }
+  function changeWallet(address _wallet){
+  	if(msg.sender != wallet) throw;
+  	wallet = _wallet;
+  }
 
-    function forwardFunds() internal {
-        contractOwner.transfer(msg.value);
-    }
+  // function changeTokenReward(address _token){
+  //   if(msg.sender!=wallet) throw;
+  //   tokenReward = token(_token);
+  // }
 
-    /// @dev Returns the current token rate , minimum ether needed and maximum tokens left in currenttranche
-    function getCurrentTokenPrice() private constant returns (uint256 currentRate, uint256 maximumTokensLeft) {
+  // fallback function can be used to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
 
-        if (tokensDistributed < safeMult(1,tokensPerTranche) && (block.number < firstChangeBlock)) {
-            //  return ( privateExchangeRate, minPriceInWeiForPre, safeSubtract(tokensPerTranche,tokensDistributed) );
-            return ( privateExchangeRate, safeSubtract(tokensPerTranche,tokensDistributed) );
-        }
-        else if (tokensDistributed < safeMult(2,tokensPerTranche) && (block.number < secondChangeBlock)) {
-            return ( firstExchangeRate, safeSubtract(safeMult(2,tokensPerTranche),tokensDistributed) );
-        }
-        else if (tokensDistributed < safeMult(3,tokensPerTranche) && (block.number < thirdChangeBlock)) {
-            return ( secondExchangeRate, safeSubtract(safeMult(3,tokensPerTranche),tokensDistributed) );
-        }
-        else if (tokensDistributed < safeMult(4,tokensPerTranche) && (block.number < fundingEndBlock)) {
-            return  (thirdExchangeRate,safeSubtract(safeMult(4,tokensPerTranche),tokensDistributed)  );
-        }
-        else if (tokensDistributed < safeMult(5,tokensPerTranche) && (block.number < fundingEndBlock)) {
-            return  (fourthExchangeRate,safeSubtract(safeMult(5,tokensPerTranche),tokensDistributed)  );
-        }
-        else if (tokensDistributed <= safeMult(6,tokensPerTranche)) {
-            return  (fifthExchangeRate,safeSubtract(safeMult(6,tokensPerTranche),tokensDistributed)  );
-        }
-    }
+  // low level token `purchase function
+  function buyTokens(address beneficiary) payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
 
+    uint256 weiAmount = msg.value;
 
-    function authorizeKyc(address[] addrs) external onlyOwner returns (bool success) {
+    // if(weiAmount < 10**16) throw;
+    // if(weiAmount > 50*10**18) throw;
 
-        //@TODO  maximum batch size for uploading
-        // @TODO amount of gas for a block of code - and will fail if that is exceeded
-        uint arrayLength = addrs.length;
+    // calculate token amount to be sent
+    uint256 tokens = (weiAmount/10**10) * price;//weiamount * price 
+    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
 
-        for (uint x = 0; x < arrayLength; x++) {
-            whitelistedContributors[addrs[x]] = true;
-        }
-
-        return true;
-    }
-
-
-    function withdrawWei () external onlyOwner {
-        // send the eth to the project multisig wallet
-        contractOwner.transfer(this.balance);
-    }
-
-    function updateFundingEndBlock(uint256 newFundingEndBlock)  external onlyOwner {
-        require(newFundingEndBlock > fundingStartBlock);
-        //require(newFundingEndBlock >= fundingEndBlock);
-        fundingEndBlock = newFundingEndBlock;
-    }
-
-
-    // after ICO only owner can call this
-    function burnRemainingToken(uint256 _value) external  onlyOwner isIcoFinished {
-        //@TODO - check balance of address if no value passed
-        require(_value > 0);
-        trakToken.burn(_value);
-    }
-
-    // after ICO only owner can call this
-    function withdrawRemainingToken(uint256 _value,address trakTokenAdmin)  external onlyOwner isIcoFinished {
-        //@TODO - check balance of address if no value passed
-        require(trakTokenAdmin != 0x0);
-        require(_value > 0);
-        trakToken.transfer(trakTokenAdmin,_value);
-    }
-
-
-    // after ICO only owner can call this
-    function finalize() external  onlyOwner isIcoFinished  {
-        state =  State.Closed;
-        trakToken.finalize();
-    }
-
-    // after ICO only owner can call this
-    function changeTokensWallet(address newAddress) external  onlyOwner  {
-        require(newAddress != address(0));
-        trakToken.changeTokensWallet(newAddress);
-    }
-
-
-    function removeContract ()  external onlyOwner atEndOfLifecycle {
-        // msg.sender will receive all the ethers if this contract has ethers
-        selfdestruct(msg.sender);
-    }
-
-    /// @param newAddress Address of new owner.
-    function changeFundsWallet(address newAddress) external onlyOwner returns (bool)
-    {
-        require(newAddress != address(0));
-        contractOwner = newAddress;
-    }
-
-
-    /// @dev Pauses the contract
-    function pause() external onlyOwner inState(State.Fundraising) {
-        // Move the contract to Paused state
-        state =  State.Paused;
-    }
-
-
-    /// @dev Resume the contract
-    function resume() external onlyOwner {
-        // Move the contract out of the Paused state
-        state =  State.Fundraising;
-    }
-
-    function updateFirstChangeBlock(uint256 newFirstChangeBlock)  external onlyOwner {
-        firstChangeBlock = newFirstChangeBlock;
-    }
-
-    function updateSecondChangeBlock(uint256 newSecondChangeBlock)  external onlyOwner {
-        secondChangeBlock = newSecondChangeBlock;
-    }  
-
-    function updateThirdChangeBlock(uint256 newThirdChangeBlock)  external onlyOwner {
-        thirdChangeBlock = newThirdChangeBlock;
-    }      
-
-    function updatePrivateExhangeRate(uint256 newPrivateExchangeRate)  external onlyOwner {
-        privateExchangeRate = newPrivateExchangeRate;
-    } 
-
-    function updateFirstExhangeRate(uint256 newFirstExchangeRate)  external onlyOwner {
-        firstExchangeRate = newFirstExchangeRate;
-    }    
-
-    function updateSecondExhangeRate(uint256 newSecondExchangeRate)  external onlyOwner {
-        secondExchangeRate = newSecondExchangeRate;
-    }
-
-    function updateThirdExhangeRate(uint256 newThirdExchangeRate)  external onlyOwner {
-        thirdExchangeRate = newThirdExchangeRate;
-    }      
-
-    function updateFourthExhangeRate(uint256 newFourthExchangeRate)  external onlyOwner {
-        fourthExchangeRate = newFourthExchangeRate;
-    }    
-
-    function updateFifthExhangeRate(uint256 newFifthExchangeRate)  external onlyOwner {
-        fifthExchangeRate = newFifthExchangeRate;
-    }    
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
     
-    function updateMinInvestmentForPreIco(uint256 newMinPriceInWeiForPre)  external onlyOwner {
-        minPriceInWeiForPre = newMinPriceInWeiForPre;
-    }
-    function updateMinInvestmentForIco(uint256 newMinPriceInWeiForIco)  external onlyOwner {
-        minPriceInWeiForIco = newMinPriceInWeiForIco;
-    }
+    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
+    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
 
+    tokenReward1.transfer(beneficiary, tokens);
+    tokenReward2.transfer(beneficiary, tokens);
+    tokenReward3.transfer(beneficiary, tokens);
+    tokenReward4.transfer(beneficiary, tokens);
+    tokenReward5.transfer(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    // wallet.transfer(msg.value);
+    if (!wallet.send(msg.value)) {
+      throw;
+    }
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = started;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
+
+  function withdrawTokens1(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward1.transfer(wallet,_amount);
+  }
+  function withdrawTokens2(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward2.transfer(wallet,_amount);
+  }
+  function withdrawTokens3(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward3.transfer(wallet,_amount);
+  }
+  function withdrawTokens4(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward4.transfer(wallet,_amount);
+  }
+  function withdrawTokens5(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward5.transfer(wallet,_amount);
+  }
 }
