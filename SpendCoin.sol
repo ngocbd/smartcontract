@@ -1,14 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpendCoin at 0xed9c3a59f2a8c779148ccd94c059f2a97b967ef5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpendCoin at 0x8b449007fecad398b3c0b8ca27305a4b9ddaa32a
 */
 pragma solidity ^0.4.18;
 
 
 // ----------------------------------------------------------------------------
 
-// 'XSD' 'Spend' token contract
-//
-// Developer Genji Sakamoto
+// 'XSD' 'Spend' Coin contract
 //
 // Symbol      : XSD
 // Name        : SpendCoin
