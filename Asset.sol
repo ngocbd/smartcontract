@@ -1,16 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x9cdF0b3B0B35d0EE593D68C55da1cC79585335bC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x3bedc232d2229168818c3242d418dc65a9588d94
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 /**
-* @title OMEGON TOKEN
-* @dev ERC-20 Token Standar Compliant
+* @notice TOKEN CONTRACT
+* @dev ERC-20 Token Standardd Compliant
 */
 
 /**
-* @title SafeMath by OpenZeppelin
-* @dev Math operations with safety checks that throw on error
-*/
+ * @title SafeMath by OpenZeppelin
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -23,11 +23,13 @@ library SafeMath {
         assert(c >= a);
         return c;
     }
+
 }
 
 /**
-* Token contract interface for external use
-*/
+ * @title ERC20TokenInterface
+ * @dev Token contract interface for external use
+ */
 contract ERC20TokenInterface {
 
     function balanceOf(address _owner) public constant returns (uint256 balance);
@@ -38,97 +40,34 @@ contract ERC20TokenInterface {
 
     }
 
-/**
-* @title Admin parameters
-* @dev Define administration parameters for this contract
-*/
-contract admined { //This token contract is administered
-    address public admin; //Admin address is public
-    bool public lockTransfer; //Transfer Lock flag
-    address public allowedAddress; //an address that can override lock condition
-
-    /**
-    * @dev Contract constructor
-    * define initial administrator
-    */
-    function admined() internal {
-        admin = msg.sender; //Set initial admin to contract creator
-        Admined(admin);
-    }
-
-    /**
-    * @dev Function to set an allowed address
-    * @param _to The address to give privileges.
-    */
-    function setAllowedAddress(address _to) public {
-        allowedAddress = _to;
-        AllowedSet(_to);
-    }
-
-    modifier onlyAdmin() { //A modifier to define admin-only functions
-        require(msg.sender == admin);
-        _;
-    }
-
-    modifier transferLock() { //A modifier to lock transactions
-        require(lockTransfer == false || allowedAddress == msg.sender);
-        _;
-    }
-
-    /**
-    * @dev Function to set new admin address
-    * @param _newAdmin The address to transfer administration to
-    */
-    function transferAdminship(address _newAdmin) onlyAdmin public { //Admin can be transfered
-        admin = _newAdmin;
-        TransferAdminship(admin);
-    }
-
-    /**
-    * @dev Function to set transfer lock
-    * @param _set boolean flag (true | false)
-    */
-    function setTransferLock(bool _set) onlyAdmin public { //Only the admin can set a lock on transfers
-        lockTransfer = _set;
-        SetTransferLock(_set);
-    }
-
-    //All admin actions have a log for public review
-    event AllowedSet(address _to);
-    event SetTransferLock(bool _set);
-    event TransferAdminship(address newAdminister);
-    event Admined(address administer);
-
-}
 
 /**
-* @title Token definition
-* @dev Define token paramters including ERC20 ones
+* @title ERC20Token
+* @notice Token definition contract
 */
-contract ERC20Token is ERC20TokenInterface, admined { //Standar definition of a ERC20Token
-    using SafeMath for uint256;
-    uint256 public totalSupply;
+contract ERC20Token is ERC20TokenInterface { //Standard definition of an ERC20Token
+    using SafeMath for uint256; //SafeMath is used for uint256 operations
     mapping (address => uint256) balances; //A mapping of all balances per address
     mapping (address => mapping (address => uint256)) allowed; //A mapping of all allowances
-    mapping (address => bool) public frozen; //A mapping of frozen accounts
-
+    uint256 public totalSupply;
+    
     /**
-    * @dev Get the balance of an specified address.
+    * @notice Get the balance of an _owner address.
     * @param _owner The address to be query.
     */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-      return balances[_owner];
+    function balanceOf(address _owner) public constant returns (uint256 bal) {
+        return balances[_owner];
     }
 
     /**
-    * @dev transfer token to a specified address
+    * @notice transfer _value tokens to address _to
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
+    * @return success with boolean value true if done
     */
-    function transfer(address _to, uint256 _value) transferLock public returns (bool success) {
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         require(_to != address(0)); //If you dont want that people destroy token
         require(balances[msg.sender] >= _value);
-        require(frozen[msg.sender]==false);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
@@ -136,15 +75,15 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standar definition of a 
     }
 
     /**
-    * @dev transfer token from an address to another specified address using allowance
-    * @param _from The address where token comes.
+    * @notice Transfer _value tokens from address _from to address _to using allowance msg.sender allowance on _from
+    * @param _from The address where tokens comes.
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
+    * @return success with boolean value true if done
     */
-    function transferFrom(address _from, address _to, uint256 _value) transferLock public returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_to != address(0)); //If you dont want that people destroy token
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        require(frozen[_from]==false);
         balances[_to] = balances[_to].add(_value);
         balances[_from] = balances[_from].sub(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
@@ -153,68 +92,61 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standar definition of a 
     }
 
     /**
-    * @dev Assign allowance to an specified address to use the owner balance
+    * @notice Assign allowance _value to _spender address to use the msg.sender balance
     * @param _spender The address to be allowed to spend.
     * @param _value The amount to be allowed.
+    * @return success with boolean value true
     */
     function approve(address _spender, uint256 _value) public returns (bool success) {
-      allowed[msg.sender][_spender] = _value;
+        allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
     /**
-    * @dev Get the allowance of an specified address to use another address balance.
+    * @notice Get the allowance of an specified address to use another address balance.
     * @param _owner The address of the owner of the tokens.
     * @param _spender The address of the allowed spender.
+    * @return remaining with the allowance value
     */
     function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
+        return allowed[_owner][_spender];
     }
-
-    /**
-    * @dev Frozen account.
-    * @param _target The address to being frozen.
-    * @param _flag The status of the frozen
-    */
-    function setFrozen(address _target,bool _flag) onlyAdmin public {
-        frozen[_target]=_flag;
-        FrozenStatus(_target,_flag);
-    }
-
 
     /**
     * @dev Log Events
     */
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event FrozenStatus(address _target,bool _flag);
+
 }
 
 /**
 * @title Asset
-* @dev Initial supply creation
+* @notice Token creation.
+* @dev ERC20 Token
 */
 contract Asset is ERC20Token {
-    string public name = 'OMEGON';
+    string public name = 'Expert Token';
     uint8 public decimals = 18;
-    string public symbol = 'OMGN';
+    string public symbol = 'EXP';
     string public version = '1';
-
+    
+    /**
+    * @notice token contructor.
+    */
     function Asset() public {
-        totalSupply = 2000000000 * (10**uint256(decimals)); //2.000.000.000 initial token creation
-        balances[0x1789bD78712815e7Fc955DbbA6803303f4Ef15AC] = 1000000000 * (10**uint256(decimals)); //1.000.000.000 To Dev Address
-        balances[0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6] = 4000000 * (10**uint256(decimals)); //0.2% for contract writer
-        balances[msg.sender] = 996000000 * (10**uint256(decimals)); //Tokens for sale
-        
+
+        totalSupply = 39000000 * (10 ** uint256(decimals)); //Token initial supply;
+        balances[msg.sender] = totalSupply;
         Transfer(0, this, totalSupply);
-        Transfer(this, 0x1789bD78712815e7Fc955DbbA6803303f4Ef15AC, balances[0x1789bD78712815e7Fc955DbbA6803303f4Ef15AC]);
-        Transfer(this, 0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6, balances[0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6]);
-        Transfer(this, msg.sender, balances[msg.sender]);
+        Transfer(this, msg.sender, totalSupply);       
+    
     }
     
     /**
-    *@dev Function to handle callback calls
+    * @notice this contract will revert on direct non-function calls
+    * @dev Function to handle callback calls
     */
     function() public {
         revert();
