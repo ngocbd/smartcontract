@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x383ece94bfdbdefe651aa2cba51e7fca2773b788
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x193192b74e3d09f49cd7624f59b43170137966df
 */
 pragma solidity ^0.4.18;
 
@@ -471,31 +471,22 @@ contract PreSale is Ownable, ReentrancyGuard {
      */
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-    function PreSale(
-        uint256 _startTime,
-        uint256 _period,
-        address _wallet,
-        address _token,
-        uint256 _minimumInvest) public
+    function PreSale() public
     {
-        require(_period != 0);
-        require(_token != address(0));
+        startTime = 1524303600;
+        endTime = startTime + 20 * 1 minutes;
 
-        startTime = _startTime;
-        endTime = startTime + _period * 1 days;
-
-        wallet = _wallet;
-        token = RicoToken(_token);
-        tokenContractAddress = _token;
+        wallet = 0x34FCc63E538f39a0E68E0f01A901713eF9Dd235c;
+        token = new RicoToken();
 
         // minimumInvest in wei
-        minimumInvest = _minimumInvest;
+        minimumInvest = 0.0001 ether;
 
         // 1 token for approximately 0.00015 eth
         rate = 6667;
 
-        softCap = 150 * 1 ether;
-        hardCap = 1500 * 1 ether;
+        softCap = 0.0150 ether;
+        hardCap = 0.1500 ether;
         bonusPercent = 50;
     }
 
