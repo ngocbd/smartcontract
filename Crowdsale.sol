@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa04e5dddc787d72258ab1c976be082d48e83de66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x9dbbf858bfe0b76f21d6c780a98272f4543a3023
 */
 pragma solidity ^0.4.13;
  
@@ -262,10 +262,6 @@ contract Crowdsale is Ownable {
 
     uint preIcoEnd;
     
-    //uint period;
-
-    //uint hardcap;
-    
     uint preICOhardcap;
 
     uint public ETHUSD;
@@ -290,7 +286,7 @@ contract Crowdsale is Ownable {
         //????? ??????  
         start = now;
 	//????? ?????????? prICO
-        preIcoEnd = 1546300800;//Tue, 01 Jan 2019 00:00:00 GMT
+        preIcoEnd = 1546300800; //Tue, 01 Jan 2019 00:00:00 GMT
         //?????? ICO ? ???????
         //period = 25;
         //???????????? ????? ????? ? ??????? ?? PreICO
@@ -348,7 +344,10 @@ contract Crowdsale is Ownable {
         uint256 tokenRest = 0;
         uint256 rest = 0;
         
+          require(totalSupply < preICOhardcap);
+          
           tokenRest = preICOhardcap.sub(totalSupply);
+
           require(tokenRest > 0);
             
           
@@ -400,6 +399,7 @@ contract Crowdsale is Ownable {
     function setPause( bool _newPause ) {
         require(msg.sender == manager);
         pause = _newPause;
-    } 
+    }
+
     
 }
