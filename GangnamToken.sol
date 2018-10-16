@@ -1,91 +1,109 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GangnamToken at 0x01417fea37677b581c1237b74a86c225136b3465
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GangnamToken at 0x72f3f3b2fdadd95182e26031e3ba99f0d62b5600
 */
-pragma solidity ^0.4.11;
+pragma solidity 0.4.19;
 
-contract GangnamToken {
+contract Token {
 
-    string public name = "GangnamToken";      //  token name
-    string public symbol = "GNMT";           //  token symbol
-    uint256 public decimals = 18;            //  token digit
 
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    function totalSupply() constant returns (uint supply) {}
 
-    uint256 public totalSupply = 0;
-    bool public stopped = false;
 
-    uint256 constant valueFounder = 1000000000000000000000000000;
-    address owner = 0x0;
+    function balanceOf(address _owner) constant returns (uint balance) {}
 
-    modifier isOwner {
-        assert(owner == msg.sender);
-        _;
+
+    function transfer(address _to, uint _value) returns (bool success) {}
+
+
+    function transferFrom(address _from, address _to, uint _value) returns (bool success) {}
+
+
+    function approve(address _spender, uint _value) returns (bool success) {}
+
+
+    function allowance(address _owner, address _spender) constant returns (uint remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+contract RegularToken is Token {
+
+    function transfer(address _to, uint _value) returns (bool) {
+       
+        if (balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    modifier isRunning {
-        assert (!stopped);
-        _;
+    function transferFrom(address _from, address _to, uint _value) returns (bool) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    modifier validAddress {
-        assert(0x0 != msg.sender);
-        _;
+    function balanceOf(address _owner) constant returns (uint) {
+        return balances[_owner];
     }
 
-    function GangnamTokene(address _addressFounder) {
-        owner = msg.sender;
-        totalSupply = valueFounder;
-        balanceOf[_addressFounder] = valueFounder;
-        Transfer(0x0, _addressFounder, valueFounder);
-    }
-
-    function transfer(address _to, uint256 _value) isRunning validAddress returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        require(allowance[_from][msg.sender] >= _value);
-        balanceOf[_to] += _value;
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) isRunning validAddress returns (bool success) {
-        require(_value == 0 || allowance[msg.sender][_spender] == 0);
-        allowance[msg.sender][_spender] = _value;
+    function approve(address _spender, uint _value) returns (bool) {
+        allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function stop() isOwner {
-        stopped = true;
+    function allowance(address _owner, address _spender) constant returns (uint) {
+        return allowed[_owner][_spender];
     }
 
-    function start() isOwner {
-        stopped = false;
-    }
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
+    uint public totalSupply;
+}
 
-    function setName(string _name) isOwner {
-        name = _name;
-    }
+contract UnboundedRegularToken is RegularToken {
 
-    function burn(uint256 _value) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[0x0] += _value;
-        Transfer(msg.sender, 0x0, _value);
-    }
+    uint constant MAX_UINT = 2**256 - 1;
+    
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function transferFrom(address _from, address _to, uint _value)
+        public
+        returns (bool)
+    {
+        uint allowance = allowed[_from][msg.sender];
+        if (balances[_from] >= _value
+            && allowance >= _value
+            && balances[_to] + _value >= balances[_to]
+        ) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            if (allowance < MAX_UINT) {
+                allowed[_from][msg.sender] -= _value;
+            }
+            Transfer(_from, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+contract GangnamToken is UnboundedRegularToken {
+
+    uint public totalSupply = 20*10**26;
+    uint8 constant public decimals = 18;
+    string constant public name = "GangnamToken";
+    string constant public symbol = "GNLT";
+
+    function GangnamToken() {
+        balances[msg.sender] = totalSupply;
+        Transfer(address(0), msg.sender, totalSupply);
+    }
 }
