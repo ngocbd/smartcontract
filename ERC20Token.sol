@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xdbf3bf0c3ff7d43769d5150daa90f0014a0e2c4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xa3735d41ffddd5abe07386ce07b1b1fbd9067aad
 */
 pragma solidity ^0.4.4;
 
@@ -72,8 +72,8 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 12000000000000000000000000;               // 12 Million Total Supply
-        totalSupply = 12000000000000000000000000;                     
+        balances[msg.sender] = 1200000000000000000000000;               // 12 Million Total Supply
+        totalSupply = 1200000000000000000000000;                     
         name = "Monetize Coin";                                   
         decimals = 18;                            
         symbol = "MNZ";                              
