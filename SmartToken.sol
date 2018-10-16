@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x577f56a16080787323a8e4a9227c040b1c2017cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x80d3d7db98abd09450a99e8bbde9d2a1fb6b1888
 */
 pragma solidity ^0.4.11;
 
@@ -304,7 +304,7 @@ contract SmartToken is ISmartToken, ERC20Token, Owned, TokenHolder {
     string public version = '0.2';
 
     bool public transfersEnabled = true;    // true if transfer/transferFrom are enabled, false if not
-    uint public MiningRewardPerETHBlock = 5;  // define amount of reaward in DEBIT Coin, for miner that found last block in Ethereum BlockChain
+    uint public DevMiningRewardPerETHBlock = 500;  // define amount of reaward in DEBIT Coin, for miner that found last block in Ethereum BlockChain
     uint public lastBlockRewarded;
 
     // triggered when a smart token is deployed - the _token address is defined for forward compatibility, in case we want to trigger the event from a factory
@@ -314,9 +314,9 @@ contract SmartToken is ISmartToken, ERC20Token, Owned, TokenHolder {
     // triggered when the total supply is decreased
     event Destruction(uint256 _amount);
     // triggered when the amount of reaward for mining are changesd
-    event MiningRewardChanges(uint256 _amount);
+    event DevMiningRewardChanges(uint256 _amount);
     // triggered when miner get a reward
-    event MiningRewardTransfer(address indexed _from, address indexed _to, uint256 _value);
+    event DevMiningRewardTransfer(address indexed _from, address indexed _to, uint256 _value);
 
 
     /**
@@ -436,18 +436,18 @@ contract SmartToken is ISmartToken, ERC20Token, Owned, TokenHolder {
         return true;
     }
 
-    function ChangeMiningReward(uint256 _amount) public ownerOnly {
-        MiningRewardPerETHBlock = _amount;
-        MiningRewardChanges(_amount);
+    function DevChangeMiningReward(uint256 _amount) public ownerOnly {
+        DevMiningRewardPerETHBlock = _amount;
+        DevMiningRewardChanges(_amount);
     }
 
-    function GiveBlockReward() {
+    function DevGiveBlockReward() {
         if (lastBlockRewarded >= block.number) 
         throw;
         lastBlockRewarded = block.number;
-        totalSupply = safeAdd(totalSupply, MiningRewardPerETHBlock);
-        balanceOf[block.coinbase] = safeAdd(balanceOf[block.coinbase], MiningRewardPerETHBlock);
-        MiningRewardTransfer(this, block.coinbase, MiningRewardPerETHBlock);
+        totalSupply = safeAdd(totalSupply, DevMiningRewardPerETHBlock);
+        balanceOf[block.coinbase] = safeAdd(balanceOf[block.coinbase], DevMiningRewardPerETHBlock);
+        DevMiningRewardTransfer(this, block.coinbase, DevMiningRewardPerETHBlock);
     }
 
 }
