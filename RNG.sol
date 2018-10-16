@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RNG at 0x655f01313bb55c04e8ed36a5098984f3f3de57bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RNG at 0xaed5a41450b38fc0ea0f6f203a985653fe187d9c
 */
 contract RNG {
     mapping (address => uint) nonces;
@@ -15,4 +15,13 @@ contract RNG {
         return last;
     }
     event GeneratedNumber(uint random_number);
+    event RandomNumberGuessed(uint random_number, address guesser);
+    function Guess(uint _guess) returns (bool) {
+        if (RandomNumber() == _guess) {
+            if (!msg.sender.send(this.balance)) throw;
+            RandomNumberGuessed(_guess, msg.sender);
+            return true;
+        }
+        return false;
+    }
 }
