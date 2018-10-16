@@ -1,319 +1,362 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZilleriumPresale at 0xb533aae346245e2e05b23f420C140bCA2529b8a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZilleriumPresale at 0x3dd99088eaaaf4dd958899d65c8d1e11d04d3376
 */
-pragma solidity ^0.4.4;
+pragma solidity 0.4.15;
 
-contract SafeMath 
-{
-     function safeMul(uint a, uint b) internal returns (uint) 
-     {
-          uint c = a * b;
-          assert(a == 0 || c / a == b);
-          return c;
-     }
+// This code was taken from https://etherscan.io/address/0x3931E02C9AcB4f68D7617F19617A20acD3642607#code
+// This was a presale from ProofSuite.com
+// This was based on https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/crowdsale/Crowdsale.sol from what I saw
 
-     function safeSub(uint a, uint b) internal returns (uint) 
-     {
-          assert(b <= a);
-          return a - b;
-     }
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-     function safeAdd(uint a, uint b) internal returns (uint) 
-     {
-          uint c = a + b;
-          assert(c>=a && c>=b);
-          return c;
-     }
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-     function assert(bool assertion) internal 
-     {
-          if (!assertion) throw;
-     }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-// Standard token interface (ERC 20)
-// https://github.com/ethereum/EIPs/issues/20
-contract Token 
-{
-// Functions:
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
-// Events:
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+ }
+
 }
 
-contract StdToken is Token 
-{
-// Fields:
-     mapping(address => uint256) balances;
-     mapping (address => mapping (address => uint256)) allowed;
 
-     uint256 public allSupply = 0;
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
 
-// Functions:
-     function transfer(address _to, uint256 _value) returns (bool success) 
-     {
-          if((balances[msg.sender] >= _value) && (balances[_to] + _value > balances[_to])) 
-          {
-               balances[msg.sender] -= _value;
-               balances[_to] += _value;
+  bool public paused = false;
 
-               Transfer(msg.sender, _to, _value);
-               return true;
-          } 
-          else 
-          { 
-               return false; 
-          }
-     }
 
-     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) 
-     {
-          if((balances[_from] >= _value) && (allowed[_from][msg.sender] >= _value) && (balances[_to] + _value > balances[_to])) 
-          {
-               balances[_to] += _value;
-               balances[_from] -= _value;
-               allowed[_from][msg.sender] -= _value;
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
 
-               Transfer(_from, _to, _value);
-               return true;
-          } 
-          else 
-          { 
-               return false; 
-          }
-     }
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused {
+    require(paused);
+    _;
+  }
 
-     function balanceOf(address _owner) constant returns (uint256 balance) 
-     {
-          return balances[_owner];
-     }
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused returns (bool) {
+    paused = true;
+    Pause();
+    return true;
+  }
 
-     function approve(address _spender, uint256 _value) returns (bool success) 
-     {
-          allowed[msg.sender][_spender] = _value;
-          Approval(msg.sender, _spender, _value);
-
-          return true;
-     }
-
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining) 
-     {
-          return allowed[_owner][_spender];
-     }
-
-     function totalSupply() constant returns (uint256 supplyOut) 
-     {
-          supplyOut = allSupply;
-          return;
-     }
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused returns (bool) {
+    paused = false;
+    Unpause();
+    return true;
+  }
 }
 
-contract ZilleriumToken is StdToken
-{
-     string public name = "Zillerium Token";
-     uint public decimals = 18;
-     string public symbol = "ZTK";
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
 
-     address public creator = 0x0;
-     address public tokenClient = 0x0; // who can issue more tokens
+  uint256 public totalSupply;
 
-     bool locked = false;
+  function balanceOf(address _owner) constant returns (uint256);
+  function transfer(address _to, uint256 _value) returns (bool);
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool);
+  function approve(address _spender, uint256 _value) returns (bool);
+  function allowance(address _owner, address _spender) constant returns (uint256);
 
-     function ZilleriumToken()
-     {
-          creator = msg.sender;
-          tokenClient = msg.sender;
-     }
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-     function changeClient(address newAddress)
-     {
-          if(msg.sender!=creator)throw;
-
-          tokenClient = newAddress;
-     }
-
-     function lock(bool value)
-     {
-          if(msg.sender!=creator) throw;
-
-          locked = value;
-     }
-
-     function transfer(address to, uint256 value) returns (bool success)
-     {
-          if(locked)throw;
-
-          success = super.transfer(to, value);
-          return;
-     }
-
-     function transferFrom(address from, address to, uint256 value) returns (bool success)
-     {
-          if(locked)throw;
-
-          success = super.transferFrom(from, to, value);
-          return;
-     }
-
-     function issueTokens(address forAddress, uint tokenCount) returns (bool success)
-     {
-          if(msg.sender!=tokenClient)throw;
-          
-          if(tokenCount==0) {
-               success = false;
-               return ;
-          }
-
-          balances[forAddress]+=tokenCount;
-          allSupply+=tokenCount;
-
-          success = true;
-          return;
-     }
 }
 
-contract Presale
-{
-     // Will allow changing the block number if set to true
-     bool public isStop = false;
+/**
+ * @title ZilleriumPresaleToken (ZILL)
+ * Standard Mintable ERC20 Token
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood:
+ * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 
-     uint public presaleTokenSupply = 0; //this will keep track of the token supply created during the crowdsale
-     uint public presaleEtherRaised = 0; //this will keep track of the Ether raised during the crowdsale
+contract ZilleriumPresaleToken is ERC20, Ownable {
 
-// Parameters:
-     uint public maxPresaleWei = 0;
-     uint public presaleTotalWei = 0;
+  using SafeMath for uint256;
 
-     // Please see our whitepaper for details
-     // sell 2.5M tokens for the pre-ICO with a 20% bonus 
-     // 1 ETH = 500 tokens 
-     function getCurrentTokenPriceWei() constant returns (uint out)
-     {
-          out = 2000000000000000;  // 2000000000000000 Wei = 1 token
-          return;
-     }
+  mapping(address => uint) balances;
+  mapping (address => mapping (address => uint)) allowed;
+
+  string public constant name = "Zillerium Presale Token";
+  string public constant symbol = "ZILL";
+  uint8 public constant decimals = 18;
+  bool public mintingFinished = false;
+
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  function ZilleriumPresaleToken() {}
+
+
+  function() payable {
+    revert();
+  }
+
+  function balanceOf(address _owner) constant returns (uint256) {
+    return balances[_owner];
+  }
+
+  function transfer(address _to, uint _value) returns (bool) {
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function transferFrom(address _from, address _to, uint _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function approve(address _spender, uint _value) returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * Function to mint tokens
+   * @param _to The address that will recieve the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+   // canMint removed from this line - the function kept failing on canMint
+  function mint(address _to, uint256 _amount) onlyOwner  returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+
+  /**
+   * Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+  function allowMinting() onlyOwner returns (bool) {
+    mintingFinished = false;
+    return true;
+  }
+
 }
 
-contract ZilleriumPresale is Presale, SafeMath
-{
-     address public creator = 0x0;
-     address public fund = 0x0;
+/**
+ * @title ZilleriumPresale
+ * ZilleriumPresale allows investors to make
+ * token purchases and assigns them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
+ */
 
-     ZilleriumToken public zilleriumToken;
+contract ZilleriumPresale is Pausable {
+  using SafeMath for uint256;
 
-// Events:
-     event Buy(address indexed sender, uint eth, uint fbt);
+  ZilleriumPresaleToken public token;
 
-// Functions:
-     function ZilleriumPresale(
-          address zilleriumToken_,
-          uint maxIcoEth_,
-          address fundAddress_)  
-     {
-          creator = msg.sender;
-          zilleriumToken = ZilleriumToken(zilleriumToken_);
 
-          maxPresaleWei = maxIcoEth_ * 10**18;
+  address public wallet; //wallet towards which the funds are forwarded
+  uint256 public weiRaised; //total amount of ether raised
+  uint256 public cap; // cap above which the presale ends
+  uint256 public minInvestment; // minimum investment
+  uint256 public rate; // number of tokens for one ether
+  bool public isFinalized;
+  string public contactInformation;
 
-          fund = fundAddress_;
-     }
 
-     function transfer(address _to, uint256 _value) returns (bool success) 
-     {
-          if(!presaleEnded() && (msg.sender!=creator)) {
-               throw;
-          }
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-          return zilleriumToken.transfer(_to, _value);
-     }
-     
-     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) 
-     {
-          if(!presaleEnded() && (msg.sender!=creator)) {
-               throw;
-          }
+  /**
+   * event for signaling finished crowdsale
+   */
+  event Finalized();
 
-          return zilleriumToken.transferFrom(_from, _to, _value);
-     }
 
-     function stop(bool _stop)
-     {
-          if(msg.sender!=creator) throw;
-          isStop = _stop;
-     }
+  function ZilleriumPresale() {
 
-     function buyTokens()
-     {
-          address to = msg.sender;
-          buyTokensFor(to);
-     }
+    token = createTokenContract();
+    wallet = 0x898091cB76927EE5B41a731EE15dDFdd0560a67b; // live
+    //  wallet = 0x48884f1f259a4fdbb22b77b56bfd486fe7784304; // testing
+    rate = 100;
+    minInvestment = 1 * (10**16);  //minimum investment in wei  (=.01 ether, this is based on wei being 10 to 18)
+    cap = 16600 * (10**18);  //cap in token base units (=295257 tokens)
 
-     function buyTokensFor(address to)
-     {
-          if(msg.value==0) throw;
-          if(isStop) throw;
-          if(presaleEnded()) throw;
+  }
 
-          uint pricePerToken = getCurrentTokenPriceWei();
-          if(msg.value<pricePerToken)
-          {
-               // Not enough Wei to buy at least 1 token
-               throw; 
-          }
+  // creates presale token
+  function createTokenContract() internal returns (ZilleriumPresaleToken) {
+    return new ZilleriumPresaleToken();
+  }
 
-          // the div rest is not returned!
-          uint tokens = (msg.value / pricePerToken);
+  // fallback function to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
 
-          if(!fund.send(msg.value)) 
-          {
-               // Can not send money
-               throw;
-          }
+  /**
+   * Low level token purchse function
+   * @param beneficiary will recieve the tokens.
+   */
+  function buyTokens(address beneficiary) payable whenNotPaused {
+    require(beneficiary != 0x0);
+    require(validPurchase());
 
-          zilleriumToken.issueTokens(to,tokens);
-          presaleTotalWei = safeAdd(presaleTotalWei, msg.value);
 
-          Buy(to, msg.value, tokens);
-     }
+    uint256 weiAmount = msg.value;
+    // update weiRaised
+    weiRaised = weiRaised.add(weiAmount);
+    // compute amount of tokens created
+    uint256 tokens = weiAmount.mul(rate);
 
-     function presaleEnded() returns(bool){
-          return (presaleTotalWei>=maxPresaleWei);
-     }
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
 
-     /// This function is called when someone sends money to this contract directly.
-     function() 
-     {
-          throw;
-     }
+  // send ether to the fund collection wallet
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  // return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+
+    uint256 weiAmount = weiRaised.add(msg.value);
+    bool notSmallAmount = msg.value >= minInvestment;
+    bool withinCap = weiAmount.mul(rate) <= cap;
+
+    return (notSmallAmount && withinCap);
+  }
+
+  //allow owner to finalize the presale once the presale is ended
+  function finalize() onlyOwner {
+    require(!isFinalized);
+    require(hasEnded());
+
+    token.finishMinting();
+    Finalized();
+
+    isFinalized = true;
+  }
+
+
+  function setContactInformation(string info) onlyOwner {
+      contactInformation = info;
+  }
+
+
+  //return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    bool capReached = (weiRaised.mul(rate) >= cap);
+    return capReached;
+  }
+
 }
