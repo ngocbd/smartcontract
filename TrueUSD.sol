@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueUSD at 0xc9fffd34cd7f376b51e2698ecc9a0b48dd09d3d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueUSD at 0x8dd5fbce2f6a956c3022ba3663759011dd51e73e
 */
 pragma solidity ^0.4.18;
 
@@ -254,6 +254,42 @@ contract HasNoTokens is CanReclaimToken {
 contract NoOwner is HasNoEther, HasNoTokens, HasNoContracts {
 }
 
+contract AllowanceSheet is Claimable {
+    using SafeMath for uint256;
+
+    mapping (address => mapping (address => uint256)) public allowanceOf;
+
+    function addAllowance(address tokenHolder, address spender, uint256 value) public onlyOwner {
+        allowanceOf[tokenHolder][spender] = allowanceOf[tokenHolder][spender].add(value);
+    }
+
+    function subAllowance(address tokenHolder, address spender, uint256 value) public onlyOwner {
+        allowanceOf[tokenHolder][spender] = allowanceOf[tokenHolder][spender].sub(value);
+    }
+
+    function setAllowance(address tokenHolder, address spender, uint256 value) public onlyOwner {
+        allowanceOf[tokenHolder][spender] = value;
+    }
+}
+
+contract BalanceSheet is Claimable {
+    using SafeMath for uint256;
+
+    mapping (address => uint256) public balanceOf;
+
+    function addBalance(address addr, uint256 value) public onlyOwner {
+        balanceOf[addr] = balanceOf[addr].add(value);
+    }
+
+    function subBalance(address addr, uint256 value) public onlyOwner {
+        balanceOf[addr] = balanceOf[addr].sub(value);
+    }
+
+    function setBalance(address addr, uint256 value) public onlyOwner {
+        balanceOf[addr] = value;
+    }
+}
+
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -261,12 +297,17 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract BasicToken is ERC20Basic {
+contract BasicToken is ERC20Basic, Claimable {
   using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+  BalanceSheet public balances;
 
   uint256 totalSupply_;
+
+  function setBalanceSheet(address sheet) external onlyOwner {
+    balances = BalanceSheet(sheet);
+    balances.claimOwnership();
+  }
 
   /**
   * @dev total number of tokens in existence
@@ -281,14 +322,19 @@ contract BasicToken is ERC20Basic {
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint256 _value) public returns (bool) {
+    transferAllArgsNoAllowance(msg.sender, _to, _value);
+    return true;
+  }
+
+  function transferAllArgsNoAllowance(address _from, address _to, uint256 _value) internal {
     require(_to != address(0));
-    require(_value <= balances[msg.sender]);
+    require(_from != address(0));
+    require(_value <= balances.balanceOf(_from));
 
     // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
+    balances.subBalance(_from, _value);
+    balances.addBalance(_to, _value);
+    Transfer(_from, _to, _value);
   }
 
   /**
@@ -297,9 +343,8 @@ contract BasicToken is ERC20Basic {
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
+    return balances.balanceOf(_owner);
   }
-
 }
 
 contract BurnableToken is BasicToken {
@@ -311,14 +356,15 @@ contract BurnableToken is BasicToken {
    * @param _value The amount of token to be burned.
    */
   function burn(uint256 _value) public {
-    require(_value <= balances[msg.sender]);
+    require(_value <= balances.balanceOf(msg.sender));
     // no need to require value <= totalSupply, since that would imply the
     // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
     address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
+    balances.subBalance(burner, _value);
     totalSupply_ = totalSupply_.sub(_value);
     Burn(burner, _value);
+    Transfer(burner, address(0), _value);
   }
 }
 
@@ -345,8 +391,12 @@ library SafeERC20 {
 
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+  AllowanceSheet public allowances;
 
+  function setAllowanceSheet(address sheet) external onlyOwner {
+    allowances = AllowanceSheet(sheet);
+    allowances.claimOwnership();
+  }
 
   /**
    * @dev Transfer tokens from one address to another
@@ -355,15 +405,15 @@ contract StandardToken is ERC20, BasicToken {
    * @param _value uint256 the amount of tokens to be transferred
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    transferAllArgsYesAllowance(_from, _to, _value, msg.sender);
     return true;
+  }
+
+  function transferAllArgsYesAllowance(address _from, address _to, uint256 _value, address spender) internal {
+    require(_value <= allowances.allowanceOf(_from, spender));
+
+    allowances.subAllowance(_from, spender, _value);
+    transferAllArgsNoAllowance(_from, _to, _value);
   }
 
   /**
@@ -377,9 +427,13 @@ contract StandardToken is ERC20, BasicToken {
    * @param _value The amount of tokens to be spent.
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    approveAllArgs(_spender, _value, msg.sender);
     return true;
+  }
+
+  function approveAllArgs(address _spender, uint256 _value, address _tokenHolder) internal {
+    allowances.setAllowance(_tokenHolder, _spender, _value);
+    Approval(_tokenHolder, _spender, _value);
   }
 
   /**
@@ -389,7 +443,7 @@ contract StandardToken is ERC20, BasicToken {
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
   function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
+    return allowances.allowanceOf(_owner, _spender);
   }
 
   /**
@@ -403,9 +457,13 @@ contract StandardToken is ERC20, BasicToken {
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    increaseApprovalAllArgs(_spender, _addedValue, msg.sender);
     return true;
+  }
+
+  function increaseApprovalAllArgs(address _spender, uint _addedValue, address tokenHolder) internal {
+    allowances.addAllowance(tokenHolder, _spender, _addedValue);
+    Approval(tokenHolder, _spender, allowances.allowanceOf(tokenHolder, _spender));
   }
 
   /**
@@ -419,135 +477,47 @@ contract StandardToken is ERC20, BasicToken {
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
   function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    decreaseApprovalAllArgs(_spender, _subtractedValue, msg.sender);
     return true;
   }
 
+  function decreaseApprovalAllArgs(address _spender, uint _subtractedValue, address tokenHolder) internal {
+    uint oldValue = allowances.allowanceOf(tokenHolder, _spender);
+    if (_subtractedValue > oldValue) {
+      allowances.setAllowance(tokenHolder, _spender, 0);
+    } else {
+      allowances.subAllowance(tokenHolder, _spender, _subtractedValue);
+    }
+    Approval(tokenHolder, _spender, allowances.allowanceOf(tokenHolder, _spender));
+  }
+
 }
 
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
-
-contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
-    string public constant name = "TrueUSD";
-    string public constant symbol = "TUSD";
-    uint8 public constant decimals = 18;
-
-    AddressList public canReceiveMintWhitelist;
-    AddressList public canBurnWhiteList;
-    AddressList public blackList;
-    AddressList public noFeesList;
-    uint256 public burnMin = 10000 * 10**uint256(decimals);
-    uint256 public burnMax = 20000000 * 10**uint256(decimals);
-
-    uint80 public transferFeeNumerator = 7;
-    uint80 public transferFeeDenominator = 10000;
-    uint80 public mintFeeNumerator = 0;
-    uint80 public mintFeeDenominator = 10000;
-    uint256 public mintFeeFlat = 0;
-    uint80 public burnFeeNumerator = 0;
-    uint80 public burnFeeDenominator = 10000;
-    uint256 public burnFeeFlat = 0;
-    address public staker;
-
+contract CanDelegate is StandardToken {
     // If this contract needs to be upgraded, the new contract will be stored
     // in 'delegate' and any ERC20 calls to this contract will be delegated to that one.
     DelegateERC20 public delegate;
 
-    event ChangeBurnBoundsEvent(uint256 newMin, uint256 newMax);
-    event Mint(address indexed to, uint256 amount);
-    event WipedAccount(address indexed account, uint256 balance);
     event DelegatedTo(address indexed newContract);
 
-    function TrueUSD(address _canMintWhiteList, address _canBurnWhiteList, address _blackList, address _noFeesList) public {
-        totalSupply_ = 0;
-        canReceiveMintWhitelist = AddressList(_canMintWhiteList);
-        canBurnWhiteList = AddressList(_canBurnWhiteList);
-        blackList = AddressList(_blackList);
-        noFeesList = AddressList(_noFeesList);
-        staker = msg.sender;
+    // Can undelegate by passing in newContract = address(0)
+    function delegateToNewContract(DelegateERC20 newContract) public onlyOwner {
+        delegate = newContract;
+        DelegatedTo(delegate);
     }
 
-    //Burning functions as withdrawing money from the system. The platform will keep track of who burns coins,
-    //and will send them back the equivalent amount of money (rounded down to the nearest cent).
-    function burn(uint256 _value) public {
-        require(canBurnWhiteList.onList(msg.sender));
-        require(_value >= burnMin);
-        require(_value <= burnMax);
-        uint256 fee = payStakingFee(msg.sender, _value, burnFeeNumerator, burnFeeDenominator, burnFeeFlat, 0x0);
-        uint256 remaining = _value.sub(fee);
-        super.burn(remaining);
-    }
-
-    //Create _amount new tokens and transfer them to _to.
-    //Based on code by OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/MintableToken.sol
-    function mint(address _to, uint256 _amount) onlyOwner public {
-        require(canReceiveMintWhitelist.onList(_to));
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        payStakingFee(_to, _amount, mintFeeNumerator, mintFeeDenominator, mintFeeFlat, 0x0);
-    }
-
-    //Change the minimum and maximum amount that can be burned at once. Burning
-    //may be disabled by setting both to 0 (this will not be done under normal
-    //operation, but we can't add checks to disallow it without losing a lot of
-    //flexibility since burning could also be as good as disabled
-    //by setting the minimum extremely high, and we don't want to lock
-    //in any particular cap for the minimum)
-    function changeBurnBounds(uint newMin, uint newMax) onlyOwner public {
-        require(newMin <= newMax);
-        burnMin = newMin;
-        burnMax = newMax;
-        ChangeBurnBoundsEvent(newMin, newMax);
-    }
-
+    // If a delegate has been designated, all ERC20 calls are forwarded to it
     function transfer(address to, uint256 value) public returns (bool) {
-        require(!blackList.onList(msg.sender));
-        require(!blackList.onList(to));
         if (delegate == address(0)) {
-            bool result = super.transfer(to, value);
-            payStakingFee(to, value, transferFeeNumerator, transferFeeDenominator, 0, msg.sender);
-            return result;
+            return super.transfer(to, value);
         } else {
             return delegate.delegateTransfer(to, value, msg.sender);
         }
     }
 
     function transferFrom(address from, address to, uint256 value) public returns (bool) {
-        require(!blackList.onList(from));
-        require(!blackList.onList(to));
         if (delegate == address(0)) {
-            bool result = super.transferFrom(from, to, value);
-            payStakingFee(to, value, transferFeeNumerator, transferFeeDenominator, 0, from);
-            return result;
+            return super.transferFrom(from, to, value);
         } else {
             return delegate.delegateTransferFrom(from, to, value, msg.sender);
         }
@@ -600,11 +570,173 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
             return delegate.delegateDecreaseApproval(spender, subtractedValue, msg.sender);
         }
     }
+}
+
+contract StandardDelegate is StandardToken, DelegateERC20 {
+    address public delegatedFrom;
+
+    modifier onlySender(address source) {
+        require(msg.sender == source);
+        _;
+    }
+
+    function setDelegatedFrom(address addr) onlyOwner public {
+        delegatedFrom = addr;
+    }
+
+    // All delegate ERC20 functions are forwarded to corresponding normal functions
+    function delegateTotalSupply() public view returns (uint256) {
+        return totalSupply();
+    }
+
+    function delegateBalanceOf(address who) public view returns (uint256) {
+        return balanceOf(who);
+    }
+
+    function delegateTransfer(address to, uint256 value, address origSender) onlySender(delegatedFrom) public returns (bool) {
+        transferAllArgsNoAllowance(origSender, to, value);
+        return true;
+    }
+
+    function delegateAllowance(address owner, address spender) public view returns (uint256) {
+        return allowance(owner, spender);
+    }
+
+    function delegateTransferFrom(address from, address to, uint256 value, address origSender) onlySender(delegatedFrom) public returns (bool) {
+        transferAllArgsYesAllowance(from, to, value, origSender);
+        return true;
+    }
+
+    function delegateApprove(address spender, uint256 value, address origSender) onlySender(delegatedFrom) public returns (bool) {
+        approveAllArgs(spender, value, origSender);
+        return true;
+    }
+
+    function delegateIncreaseApproval(address spender, uint addedValue, address origSender) onlySender(delegatedFrom) public returns (bool) {
+        increaseApprovalAllArgs(spender, addedValue, origSender);
+        return true;
+    }
+
+    function delegateDecreaseApproval(address spender, uint subtractedValue, address origSender) onlySender(delegatedFrom) public returns (bool) {
+        decreaseApprovalAllArgs(spender, subtractedValue, origSender);
+        return true;
+    }
+}
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+contract TrueUSD is StandardDelegate, PausableToken, BurnableToken, NoOwner, CanDelegate {
+    string public name = "TrueUSD";
+    string public symbol = "TUSD";
+    uint8 public constant decimals = 18;
+
+    AddressList public canReceiveMintWhiteList;
+    AddressList public canBurnWhiteList;
+    AddressList public blackList;
+    AddressList public noFeesList;
+    uint256 public burnMin = 10000 * 10**uint256(decimals);
+    uint256 public burnMax = 20000000 * 10**uint256(decimals);
+
+    uint80 public transferFeeNumerator = 7;
+    uint80 public transferFeeDenominator = 10000;
+    uint80 public mintFeeNumerator = 0;
+    uint80 public mintFeeDenominator = 10000;
+    uint256 public mintFeeFlat = 0;
+    uint80 public burnFeeNumerator = 0;
+    uint80 public burnFeeDenominator = 10000;
+    uint256 public burnFeeFlat = 0;
+    address public staker;
+
+    event ChangeBurnBoundsEvent(uint256 newMin, uint256 newMax);
+    event Mint(address indexed to, uint256 amount);
+    event WipedAccount(address indexed account, uint256 balance);
+
+    function TrueUSD() public {
+        totalSupply_ = 0;
+        staker = msg.sender;
+    }
+
+    function setLists(AddressList _canReceiveMintWhiteList, AddressList _canBurnWhiteList, AddressList _blackList, AddressList _noFeesList) onlyOwner public {
+        canReceiveMintWhiteList = _canReceiveMintWhiteList;
+        canBurnWhiteList = _canBurnWhiteList;
+        blackList = _blackList;
+        noFeesList = _noFeesList;
+    }
+
+    function changeName(string _name, string _symbol) onlyOwner public {
+        name = _name;
+        symbol = _symbol;
+    }
+
+    //Burning functions as withdrawing money from the system. The platform will keep track of who burns coins,
+    //and will send them back the equivalent amount of money (rounded down to the nearest cent).
+    function burn(uint256 _value) public {
+        require(canBurnWhiteList.onList(msg.sender));
+        require(_value >= burnMin);
+        require(_value <= burnMax);
+        uint256 fee = payStakingFee(msg.sender, _value, burnFeeNumerator, burnFeeDenominator, burnFeeFlat, 0x0);
+        uint256 remaining = _value.sub(fee);
+        super.burn(remaining);
+    }
+
+    //Create _amount new tokens and transfer them to _to.
+    //Based on code by OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/MintableToken.sol
+    function mint(address _to, uint256 _amount) onlyOwner public {
+        require(canReceiveMintWhiteList.onList(_to));
+        totalSupply_ = totalSupply_.add(_amount);
+        balances.addBalance(_to, _amount);
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
+        payStakingFee(_to, _amount, mintFeeNumerator, mintFeeDenominator, mintFeeFlat, 0x0);
+    }
+
+    //Change the minimum and maximum amount that can be burned at once. Burning
+    //may be disabled by setting both to 0 (this will not be done under normal
+    //operation, but we can't add checks to disallow it without losing a lot of
+    //flexibility since burning could also be as good as disabled
+    //by setting the minimum extremely high, and we don't want to lock
+    //in any particular cap for the minimum)
+    function changeBurnBounds(uint newMin, uint newMax) onlyOwner public {
+        require(newMin <= newMax);
+        burnMin = newMin;
+        burnMax = newMax;
+        ChangeBurnBoundsEvent(newMin, newMax);
+    }
+
+    // transfer and transferFrom are both dispatched to this function, so we
+    // check blacklist and pay staking fee here.
+    function transferAllArgsNoAllowance(address _from, address _to, uint256 _value) internal {
+        require(!blackList.onList(_from));
+        require(!blackList.onList(_to));
+        super.transferAllArgsNoAllowance(_from, _to, _value);
+        payStakingFee(_to, _value, transferFeeNumerator, transferFeeDenominator, 0, _from);
+    }
 
     function wipeBlacklistedAccount(address account) public onlyOwner {
         require(blackList.onList(account));
         uint256 oldValue = balanceOf(account);
-        balances[account] = 0;
+        balances.setBalance(account, 0);
         totalSupply_ = totalSupply_.sub(oldValue);
         WipedAccount(account, oldValue);
     }
@@ -615,18 +747,9 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         }
         uint256 stakingFee = value.mul(numerator).div(denominator).add(flatRate);
         if (stakingFee > 0) {
-            transferFromWithoutAllowance(payer, staker, stakingFee);
+            super.transferAllArgsNoAllowance(payer, staker, stakingFee);
         }
         return stakingFee;
-    }
-
-    // based on 'transfer' in https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/BasicToken.sol
-    function transferFromWithoutAllowance(address from, address _to, uint256 _value) private {
-        assert(_to != address(0));
-        assert(_value <= balances[from]);
-        balances[from] = balances[from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(from, _to, _value);
     }
 
     function changeStakingFees(uint80 _transferFeeNumerator,
@@ -653,11 +776,5 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
     function changeStaker(address newStaker) public onlyOwner {
         require(newStaker != address(0));
         staker = newStaker;
-    }
-
-    // Can undelegate by passing in newContract = address(0)
-    function delegateToNewContract(DelegateERC20 newContract) public onlyOwner {
-        delegate = newContract;
-        DelegatedTo(delegate);
     }
 }
