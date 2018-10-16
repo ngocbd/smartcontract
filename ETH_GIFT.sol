@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH_GIFT at 0xe830D955CbE549d9BcF55e3960b86ffAc6ef83F1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH_GIFT at 0xEFBfc3f373c9cc5c0375403177d71Bcc387D3597
 */
 pragma solidity ^0.4.19;
 
@@ -9,7 +9,7 @@ contract ETH_GIFT
     external
     payable
     {
-        if(hashPass == keccak256(pass) && now>giftTime)
+        if(hashPass == keccak256(pass))
         {
             msg.sender.transfer(this.balance);
         }
@@ -19,7 +19,7 @@ contract ETH_GIFT
     public
     payable
     {
-        if(msg.sender==reciver && now>giftTime)
+        if(msg.sender==reciver)
         {
             msg.sender.transfer(this.balance);
         }
@@ -33,8 +33,6 @@ contract ETH_GIFT
     
     address reciver;
  
-    uint giftTime;
- 
     function GetHash(bytes pass) public pure returns (bytes32) {return keccak256(pass);}
     
     function SetPass(bytes32 hash)
@@ -45,19 +43,10 @@ contract ETH_GIFT
         {
             hashPass = hash;
             sender = msg.sender;
-            giftTime = now;
+
         }
     }
-    
-    function SetGiftTime(uint date)
-    public
-    {
-        if(msg.sender==sender)
-        {
-            giftTime = date;
-        }
-    }
-    
+   
     function SetReciver(address _reciver)
     public
     {
