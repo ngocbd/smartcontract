@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract grantVestedEDEX at 0xf18ce25236df15506a16314a4a4a4fdf9e77daa3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract grantVestedEDEX at 0x9518396b86f703c88b8927e48fbba7e64ef164a2
 */
 pragma solidity ^0.4.16;
 
