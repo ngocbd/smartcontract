@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RICHToken at 0xe7cbf5437d084067f64fed612b9ac025c9e962b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RICHToken at 0xd8bbc96b7e6203a14c96cdc51276cd7a5bec6b8d
 */
 pragma solidity ^0.4.6;
 
@@ -125,10 +125,10 @@ contract RICHToken is Owned, Token {
     string public standard = "Token 0.1";
 
     // Full name
-    string public name = "RICH token";
+    string public name = "RICH";
 
     // Symbol
-    string public symbol = "RCH";
+    string public symbol = "RICH";
 
     // No decimal points
     uint8 public decimals = 8;
