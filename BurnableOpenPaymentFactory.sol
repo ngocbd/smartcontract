@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0xbaeb0499524ebdcaf4367ef940fa9ebc845b4e4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x1953da4bcebc9579156586c4528af151381d6bb6
 */
 //A BurnableOpenPayment is instantiated with a specified payer and a commitThreshold.
 //The recipient is not set when the contract is instantiated.
@@ -8,10 +8,11 @@
 //Only the payer can fund the Payment after instantiation.
 
 //All behavior of the contract is directed by the payer, but
-//the payer can never directly recover the payment unless he becomes the recipient.
+//the payer can never directly recover the payment,
+//unless he calls the recover() function before anyone else commit()s.
 
-//Anyone can become the recipient by contributing the commitThreshold.
-//The recipient cannot change once it's been set.
+//Anyone can become the recipient by contributing the commitThreshold with commit().
+//The recipient will never be changed once it's been set via commit().
 
 //The payer can at any time choose to burn or release to the recipient any amount of funds.
 
@@ -34,20 +35,19 @@ contract BurnableOpenPayment {
     string public payerString;
     string public recipientString;
     
-    //Amount of ether a prospective recipient must pay to become (permanently) the recipient. See commit().
+    //Amount of ether a prospective recipient must pay to permanently become the recipient. See commit().
     uint public commitThreshold;
     
     //What if the payer falls off the face of the planet?
-    //A BOP is instantiated with a chosen defaultAction, and this cannot be changed.
+    //A BOP is instantiated with a chosen defaultAction, which cannot be changed after instantiation.
     enum DefaultAction {None, Release, Burn}
     DefaultAction public defaultAction;
     
-    //if defaultAction != None, how long should we wait before giving up?
-    //Set in constructor:
+    //if defaultAction != None, how long should we wait allowing the default action to be called?
     uint public defaultTimeoutLength;
     
-    //Calculated from defaultTimeoutLength on a successful recipient commit(),
-    //as well as whenever the payer (or possibly the recipient) calls delayDefaultAction()
+    //Calculated from defaultTimeoutLength in commit(),
+    //and recaluclated whenever the payer (or possibly the recipient) calls delayDefaultAction()
     uint public defaultTriggerTime;
     
     //Most action happens in the Committed state.
@@ -56,10 +56,10 @@ contract BurnableOpenPayment {
     //Note that a BOP cannot go from Committed back to Open, but it can go from Expended back to Committed
     //(this would retain the committed recipient). Search for Expended and Unexpended events to see how this works.
     
-    modifier inState(State s) { if (s != state) throw; _; }
-    modifier onlyPayer() { if (msg.sender != payer) throw; _; }
-    modifier onlyRecipient() { if (msg.sender != recipient) throw; _; }
-    modifier onlyPayerOrRecipient() { if ((msg.sender != payer) && (msg.sender != recipient)) throw; _; }
+    modifier inState(State s) { require(s == state); _; }
+    modifier onlyPayer() { require(msg.sender == payer); _; }
+    modifier onlyRecipient() { require(msg.sender == recipient); _; }
+    modifier onlyPayerOrRecipient() { require((msg.sender == payer) || (msg.sender == recipient)); _; }
     
     event FundsAdded(uint amount);//The payer has added funds to the BOP.
     event PayerStringUpdated(string newPayerString);
@@ -104,7 +104,7 @@ contract BurnableOpenPayment {
     public
     onlyPayer()
     payable {
-        if (msg.value == 0) throw;
+        require(msg.value > 0);
         
         FundsAdded(msg.value);
         amountDeposited += msg.value;
@@ -128,7 +128,7 @@ contract BurnableOpenPayment {
     inState(State.Open)
     payable
     {
-        if (msg.value < commitThreshold) throw;
+        require(msg.value >= commitThreshold);
         
         if (msg.value > 0) {
             FundsAdded(msg.value);
@@ -147,56 +147,47 @@ contract BurnableOpenPayment {
     function internalBurn(uint amount)
     private
     inState(State.Committed)
-    returns (bool)
     {
-        bool success = burnAddress.send(amount);
-        if (success) {
-            FundsBurned(amount);
-            amountBurned += amount;
-        }
+        burnAddress.transfer(amount);
+        
+        amountBurned += amount;
+        FundsBurned(amount);
         
         if (this.balance == 0) {
             state = State.Expended;
             Expended();
         }
-        
-        return success;
     }
     
     function burn(uint amount)
     public
     inState(State.Committed)
     onlyPayer()
-    returns (bool)
     {
-        return internalBurn(amount);
+        internalBurn(amount);
     }
     
     function internalRelease(uint amount)
     private
     inState(State.Committed)
-    returns (bool)
     {
-        bool success = recipient.send(amount);
-        if (success) {
-            FundsReleased(amount);
-            amountReleased += amount;
-        }
+        recipient.transfer(amount);
+        
+        amountReleased += amount;
+        FundsReleased(amount);
         
         if (this.balance == 0) {
             state = State.Expended;
             Expended();
         }
-        return success;
     }
     
     function release(uint amount)
     public
     inState(State.Committed)
     onlyPayer()
-    returns (bool)
     {
-        return internalRelease(amount);
+        internalRelease(amount);
     }
     
     function setPayerString(string _string)
@@ -220,10 +211,10 @@ contract BurnableOpenPayment {
     onlyPayerOrRecipient()
     inState(State.Committed)
     {
-        if (defaultAction == DefaultAction.None) throw;
+        require(defaultAction != DefaultAction.None);
         
-        DefaultActionDelayed();
         defaultTriggerTime = now + defaultTimeoutLength;
+        DefaultActionDelayed();
     }
     
     function callDefaultAction()
@@ -231,16 +222,16 @@ contract BurnableOpenPayment {
     onlyPayerOrRecipient()
     inState(State.Committed)
     {
-        if (defaultAction == DefaultAction.None) throw;
-        if (now < defaultTriggerTime) throw;
+        require(defaultAction != DefaultAction.None);
+        require(now >= defaultTriggerTime);
         
-        DefaultActionCalled();
         if (defaultAction == DefaultAction.Burn) {
             internalBurn(this.balance);
         }
         else if (defaultAction == DefaultAction.Release) {
             internalRelease(this.balance);
         }
+        DefaultActionCalled();
     }
 }
 
