@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract depositofferToken at 0xba92a78ffa23012002f9df25ff25b406287c61e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract depositofferToken at 0x4a3b35487a56cfb9df80716054f793aa4c3bc1f2
 */
 /*
 file:   depositoffer.sol
-ver:    0.1.1
+ver:    0.1.2
 author: Chris Kwan
-date:   28-OCT-2017/11-March-2018
+date:   28-OCT-2017/11-March-2018/2-April-2018
 email:  ecorpnu AT gmail.com
 
 A collated contract set for a token sale specific to the requirments of
@@ -32,8 +32,8 @@ pragma solidity ^0.4.18;
 contract depositofferTokenConfig
 {
     // ERC20 trade name and symbol
-    string public           name            = "Depositoffer.com USPat7376612";
-    string public           symbol          = "DOT";
+    string public           name            = "USPat7376612 depositoffer";
+    string public           symbol          = "DO";
 
     // Owner has power to abort, discount addresses, sweep successful funds,
     // change owner, sweep alien tokens.
@@ -42,7 +42,10 @@ contract depositofferTokenConfig
     // Fund wallet should also be audited prior to deployment
     // NOTE: Must be checksummed address!
     //address public          fundWallet      = 0xE4Be3157DBD71Acd7Ad5667db00AA111C0088195; // multiSig address checksummed
-    address public            fundWallet =      0xcce1f6f4ceb0f046cf57fe8e1c409fc47afe6aab; 
+     address public           fundWallet      = 0x46FF7006F8EA5AD7570A84D7BE0ed78224D3ab5e; // main
+    //address public          fundWallet = 0x0f097fA3Dc319C5ec299eA33F941744fC5ccE3ec; //ropster test
+    
+    //you cannot use regular address, you need to create a contract wallet and need to make it checkedsummed search net  
     
     // Tokens awarded per USD contributed
     uint public constant    TOKENS_PER_USD  = 2;
