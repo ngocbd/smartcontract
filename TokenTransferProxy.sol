@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferProxy at 0xb714f66892dddf4a5567c279841dcd149e1798f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferProxy at 0x42839cf89def7cc156c6065877967ed670f0717c
 */
 /*
 
