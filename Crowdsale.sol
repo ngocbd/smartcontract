@@ -1,328 +1,187 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x65c9b5f1578f2a6e19d29b5ed31d259b95ca20c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1ba0d3ddb07a2893efd55c865848ce42b6d502b1
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-
-
-/**
-
- * @title SafeMath
-
- * @dev Math operations with safety checks that throw on error
-
+/* 
+ * IGNITE RATINGS "PHASED DISCOUNT" CROWDSALE CONTRACT. COPYRIGHT 2018 TRUSTIC HOLDING INC. Author - Damon Barnard (damon@igniteratings.com)
+ * CONTRACT DEPLOYS A CROWDSALE WITH TIME-BASED REDUCING DISCOUNTS.
  */
 
-library SafeMath {
-
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    uint256 c = a * b;
-
-    assert(a == 0 || c / a == b);
-
-    return c;
-
-  }
-
-
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
-
-    uint256 c = a / b;
-
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
-    return c;
-
-  }
-
-
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    assert(b <= a);
-
-    return a - b;
-
-  }
-
-
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    uint256 c = a + b;
-
-    assert(c >= a);
-
-    return c;
-
-  }
-
+interface token {
+    function transfer(address receiver, uint amount) public;
 }
 
-
-
-/**
-
- * @title Crowdsale
-
- * @dev Crowdsale is a base contract for managing a token crowdsale.
-
- * Crowdsales have a start and end timestamps, where investors can make
-
- * token purchases and the crowdsale will assign them tokens based
-
- * on a token per ETH rate. Funds collected are forwarded 
-
- to a wallet
-
- * as they arrive.
-
+/*
+ * CONTRACT PERMITS IGNITE TO RECLAIM UNSOLD IGNT
  */
+contract withdrawToken {
+    function transfer(address _to, uint _value) external returns (bool success);
+    function balanceOf(address _owner) external constant returns (uint balance);
+}
 
-contract token { function transfer(address receiver, uint amount){  } }
+/*
+ * SAFEMATH - MATH OPERATIONS WITH SAFETY CHECKS THAT THROW ON ERROR
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+/*
+ * CROWDSALE CONTRACT CONSTRUCTOR
+ */
 contract Crowdsale {
-
-  using SafeMath for uint256;
-
-
-
-  // uint256 durationInMinutes;
-
-  // address where funds are collected
-
-  address public wallet;
-
-  // token address
-
-  address public addressOfTokenUsedAsReward;
-
-
-
-  uint256 public price = 10000;
-
-
-
-  token tokenReward;
-
-
-
-  // mapping (address => uint) public contributions;
-
-  
-
-
-
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-
-  // uint256 public startTime;
-
-  // uint256 public endTime;
-
-  // amount of raised money in wei
-
-  uint256 public weiRaised;
-
-
-
-  /**
-
-   * event for token purchase logging
-
-   * @param purchaser who paid for the tokens
-
-   * @param beneficiary who got the tokens
-
-   * @param value weis paid for purchase
-
-   * @param amount amount of tokens purchased
-
-   */
-
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-
-
-
-  function Crowdsale() {
-
-    //You will change this to your wallet where you need the ETH 
-
-    wallet = 0xe30EC6264873675ddB5c98a694D94D9613755082;
-
-    // durationInMinutes = _durationInMinutes;
-
-    //Here will come the checksum address we got
-
-    addressOfTokenUsedAsReward = 0x78C857ee6633193C843B93Bd2db7f38befcf6732;
-
-
-
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
-
-  }
-
-
-
-  bool public started = true;
-
-
-
-  function startSale(){
-
-    if (msg.sender != wallet) throw;
-
-    started = true;
-
-  }
-
-
-
-  function stopSale(){
-
-    if(msg.sender != wallet) throw;
-
-    started = false;
-
-  }
-
-
-
-  function setPrice(uint256 _price){
-
-    if(msg.sender != wallet) throw;
-
-    price = _price;
-
-  }
-
-  function changeWallet(address _wallet){
-
-  	if(msg.sender != wallet) throw;
-
-  	wallet = _wallet;
-
-  }
-
-
-
-  function changeTokenReward(address _token){
-
-    if(msg.sender!=wallet) throw;
-
-    tokenReward = token(_token);
-
-  }
-
-
-
-  // fallback function can be used to buy tokens
-
-  function () payable {
-
-    buyTokens(msg.sender);
-
-  }
-
-
-
-  // low level token `purchase function
-
-  function buyTokens(address beneficiary) payable {
-
-    require(beneficiary != 0x0);
-
-    require(validPurchase());
-
-
-
-    uint256 weiAmount = msg.value;
-
-
-
-    // if(weiAmount < 10**16) throw;
-
-    // if(weiAmount > 50*10**18) throw;
-
-
-
-    // calculate token amount to be sent
-
-    uint256 tokens = (weiAmount) * price;//weiamount * price 
-
-    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
-
-
-
-    // update state
-
-    weiRaised = weiRaised.add(weiAmount);
-
-    
-
-    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
-
-    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
-
-
-
-    tokenReward.transfer(beneficiary, tokens);
-
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-
-  }
-
-
-
-  // send ether to the fund collection wallet
-
-  // override to create custom fund forwarding mechanisms
-
-  function forwardFunds() internal {
-
-    // wallet.transfer(msg.value);
-
-    if (!wallet.send(msg.value)) {
-
-      throw;
-
+    using SafeMath for uint256;
+
+    address public owner; /* CONTRACT OWNER */
+    address public operations; /* OPERATIONS MULTISIG WALLET */
+    address public index; /* IGNITE INDEX WALLET */
+    uint256 public amountRaised; /* TOTAL ETH CONTRIBUTIONS*/
+    uint256 public amountRaisedPhase; /* ETH CONTRIBUTIONS SINCE LAST WITHDRAWAL EVENT */
+    uint256 public tokensSold; /* TOTAL TOKENS SOLD */
+    uint256 public phase1Price; /* PHASE 1 TOKEN PRICE */
+    uint256 public phase2Price; /* PHASE 2 TOKEN PRICE */
+    uint256 public phase3Price; /* PHASE 3 TOKEN PRICE */
+    uint256 public phase4Price; /* PHASE 4 TOKEN PRICE */
+    uint256 public phase5Price; /* PHASE 5 TOKEN PRICE */
+    uint256 public phase6Price; /* PHASE 6 TOKEN PRICE */
+    uint256 public startTime; /* CROWDSALE START TIME */
+    token public tokenReward; /* IGNT */
+    mapping(address => uint256) public contributionByAddress;
+
+    event FundTransfer(address backer, uint amount, bool isContribution);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
 
-  }
+    function Crowdsale(
+        uint saleStartTime,
+        address ownerAddress,
+        address operationsAddress,
+        address indexAddress,
+        address rewardTokenAddress
 
+    ) public {
+        startTime = saleStartTime; /* SETS START TIME */
+        owner = ownerAddress; /* SETS OWNER */
+        operations = operationsAddress; /* SETS OPERATIONS MULTISIG WALLET */
+        index = indexAddress; /* SETS IGNITE INDEX WALLET */
+        phase1Price = 0.00600 ether; /* SETS PHASE 1 TOKEN PRICE */
+        phase2Price = 0.00613 ether; /* SETS PHASE 2 TOKEN PRICE */
+        phase3Price = 0.00627 ether; /* SETS PHASE 3 TOKEN PRICE */
+        phase4Price = 0.00640 ether; /* SETS PHASE 4 TOKEN PRICE */
+        phase5Price = 0.00653 ether; /* SETS PHASE 5 TOKEN PRICE */
+        phase6Price = 0.00667 ether; /* SETS PHASE 6 TOKEN PRICE */
+        tokenReward = token(rewardTokenAddress); /* SETS IGNT AS CONTRACT REWARD */
+    }
 
+    /*
+     * FALLBACK FUNCTION FOR ETH CONTRIBUTIONS - SET OUT PER DISCOUNT PHASE FOR EASE OF UNDERSTANDING/TRANSPARENCY
+     */
+    function () public payable {
+        uint256 amount = msg.value;
+        require(now > startTime);
+        require(amount <= 1000 ether);
 
-  // @return true if the transaction can buy tokens
+        if(now < startTime.add(7 days)) { /* SETS PAYMENT RULES FOR CROWDSALE PHASE 1 */
+            contributionByAddress[msg.sender] = contributionByAddress[msg.sender].add(amount);
+            amountRaised = amountRaised.add(amount);
+            amountRaisedPhase = amountRaisedPhase.add(amount);
+            tokensSold = tokensSold.add(amount.mul(10**18).div(phase1Price));
+            tokenReward.transfer(msg.sender, amount.mul(10**18).div(phase1Price));
+            FundTransfer(msg.sender, amount, true);
+        }
 
-  function validPurchase() internal constant returns (bool) {
+        else if(now > startTime.add(7 days) && now < startTime.add(14 days)) { /* SETS PAYMENT RULES FOR CROWDSALE PHASE 2 */
+            contributionByAddress[msg.sender] = contributionByAddress[msg.sender].add(amount);
+            amountRaised = amountRaised.add(amount);
+            amountRaisedPhase = amountRaisedPhase.add(amount);
+            tokensSold = tokensSold.add(amount.mul(10**18).div(phase2Price));
+            tokenReward.transfer(msg.sender, amount.mul(10**18).div(phase2Price));
+            FundTransfer(msg.sender, amount, true);
+        }
 
-    bool withinPeriod = started;
+        else if(now > startTime.add(14 days) && now < startTime.add(21 days)) { /* SETS PAYMENT RULES FOR CROWDSALE PHASE 3 */
+            contributionByAddress[msg.sender] = contributionByAddress[msg.sender].add(amount);
+            amountRaised = amountRaised.add(amount);
+            amountRaisedPhase = amountRaisedPhase.add(amount);
+            tokensSold = tokensSold.add(amount.mul(10**18).div(phase3Price));
+            tokenReward.transfer(msg.sender, amount.mul(10**18).div(phase3Price));
+            FundTransfer(msg.sender, amount, true);
+        }
 
-    bool nonZeroPurchase = msg.value != 0;
+        else if(now > startTime.add(21 days) && now < startTime.add(28 days)) { /* SETS PAYMENT RULES FOR CROWDSALE PHASE 4 */
+            contributionByAddress[msg.sender] = contributionByAddress[msg.sender].add(amount);
+            amountRaised = amountRaised.add(amount);
+            amountRaisedPhase = amountRaisedPhase.add(amount);
+            tokensSold = tokensSold.add(amount.mul(10**18).div(phase4Price));
+            tokenReward.transfer(msg.sender, amount.mul(10**18).div(phase4Price));
+            FundTransfer(msg.sender, amount, true);
+        }
 
-    return withinPeriod && nonZeroPurchase;
+        else if(now > startTime.add(28 days) && now < startTime.add(35 days)) { /* SETS PAYMENT RULES FOR CROWDSALE PHASE 5 */
+            contributionByAddress[msg.sender] = contributionByAddress[msg.sender].add(amount);
+            amountRaised = amountRaised.add(amount);
+            amountRaisedPhase = amountRaisedPhase.add(amount);
+            tokensSold = tokensSold.add(amount.mul(10**18).div(phase5Price));
+            tokenReward.transfer(msg.sender, amount.mul(10**18).div(phase5Price));
+            FundTransfer(msg.sender, amount, true);
+        }
 
-  }
+        else if(now > startTime.add(35 days)) { /* SETS PAYMENT RULES FOR CROWDSALE PHASE 6 */
+            contributionByAddress[msg.sender] = contributionByAddress[msg.sender].add(amount);
+            amountRaised = amountRaised.add(amount);
+            amountRaisedPhase = amountRaisedPhase.add(amount);
+            tokensSold = tokensSold.add(amount.mul(10**18).div(phase6Price));
+            tokenReward.transfer(msg.sender, amount.mul(10**18).div(phase6Price));
+            FundTransfer(msg.sender, amount, true);
+        }
+    }
 
+    /*
+     * ALLOW IGNITE TO RECLAIM UNSOLD IGNT
+     */
+    function withdrawTokens(address tokenContract) external onlyOwner {
+        withdrawToken tc = withdrawToken(tokenContract);
 
-
-  function withdrawTokens(uint256 _amount) {
-
-    if(msg.sender!=wallet) throw;
-
-    tokenReward.transfer(wallet,_amount);
-
-  }
-
+        tc.transfer(owner, tc.balanceOf(this));
+    }
+    
+    /*
+     * ALLOW IGNITE TO WITHDRAW CROWDSALE PROCEEDS TO OPERATIONS AND INDEX WALLETS
+     */
+    function withdrawEther() external onlyOwner {
+        uint256 total = this.balance;
+        uint256 operationsSplit = 40;
+        uint256 indexSplit = 60;
+        operations.transfer(total * operationsSplit / 100);
+        index.transfer(total * indexSplit / 100);
+    }
 }
