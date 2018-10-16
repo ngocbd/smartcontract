@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IzubrToken at 0x355aca372adbc5e2930d4620f2bbb425561f8598
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IzubrToken at 0x07e9b9a2f6e916b641660f649afcba9b54edb3ef
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.18;
 
 contract Ownable 
 {
@@ -281,6 +281,7 @@ contract IzubrToken is Ownable, ERC20, SafeMath
             if( nday < 7*4 ) bonus = 60;
             else
             if( nday < 7*5 ) bonus = 50;
+            else             bonus = 40;
         }
         else
         if (state == State.Crowdsale) 
