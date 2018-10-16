@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CatICO at 0x26fbe4f306d09469a8e7bd792c875f0bb0b3a360
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CatICO at 0x0dd85300caae26fcf0547231c63c68ea212223b3
 */
 pragma solidity ^0.4.16;
 
@@ -268,13 +268,14 @@ contract Token is ERC20 {
     }
 }
 
+
 /**
  * @title Cat's Token, miaow!!!
  *
  * @dev Defines token with name "Cat's Token", symbol "CTS"
  * and 3 digits after the point
  */
-contract Cat is Token("Test's Token", "TTS", 3), Owned {
+contract Cat is Token("Cat's Token", "CTS", 3), Owned {
 
     /**
      * @dev Emits specified number of tokens. Only owner can emit.
@@ -296,7 +297,6 @@ contract Cat is Token("Test's Token", "TTS", 3), Owned {
     }
 }
 
-
 /**
  * @title Drives Cat's Token ICO
  */
@@ -305,8 +305,7 @@ contract CatICO {
     using SafeMath for uint256;
 
     /// Starts at 21 Sep 2017 05:00:00 UTC
-    // uint256 public start = 1505970000;
-    uint256 public start = 1503970000;
+    uint256 public start = 1505970000;
     /// Ends at 21 Nov 2017 05:00:00 UTC
     uint256 public end = 1511240400;
 
