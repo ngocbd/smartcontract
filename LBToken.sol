@@ -1,157 +1,99 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LBToken at 0xcef38fd768c0b468772ce9215d3af8473a0d7823
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LBToken at 0xdc7b3fd9b42a4102cb9cb9b14ea5d79c4fb16fc0
 */
-pragma solidity 0.4.18;
-
-contract Ownable {
-	address public owner;
-	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-	function Ownable() {
-		owner = msg.sender;
-	}
-
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
-
-	function transferOwnership(address newOwner) onlyOwner public {
-		require(newOwner != address(0));
-		OwnershipTransferred(owner, newOwner);
-		owner = newOwner;
-	}
-}
-
-library SafeMath {
-	function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-		uint256 c = a * b;
-		assert(a == 0 || c / a == b);
-		return c;
-	}
-
-	function div(uint256 a, uint256 b) internal constant returns (uint256) {
-		uint256 c = a / b;
-		return c;
-	}
-
-	function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-		assert(b <= a);
-		return a - b;
-	}
-
-	function add(uint256 a, uint256 b) internal constant returns (uint256) {
-		uint256 c = a + b;
-		assert(c >= a);
-		return c;
-	}
-}
+pragma solidity 0.4.15;
 
 contract ERC20 {
-	uint256 public totalSupply;
-	function balanceOf(address who) public constant returns (uint256);
-	function transfer(address to, uint256 value) public returns (bool);
-	event Transfer(address indexed from, address indexed to, uint256 value);
+    function totalSupply() constant returns (uint256 totalSupply) {}
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function transfer(address _recipient, uint256 _value) returns (bool success) {}
+    function transferFrom(address _from, address _recipient, uint256 _value) returns (bool success) {}
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
-	function allowance(address owner, address spender) public constant returns (uint256);
-	function transferFrom(address from, address to, uint256 value) public returns (bool);
-	function approve(address spender, uint256 value) public returns (bool);
-	event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(address indexed _from, address indexed _recipient, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 contract StandardToken is ERC20 {
-	using SafeMath for uint256;
 
+	uint256 public totalSupply;
 	mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
+    
+    modifier when_can_transfer(address _from, uint256 _value) {
+        if (balances[_from] >= _value) _;
+    }
 
-	function transfer(address _to, uint256 _value) public returns (bool) {
-		require(_to != address(0));
+    modifier when_can_receive(address _recipient, uint256 _value) {
+        if (balances[_recipient] + _value > balances[_recipient]) _;
+    }
 
-		balances[msg.sender] = balances[msg.sender].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		Transfer(msg.sender, _to, _value);
-		return true;
-	}
+    modifier when_is_allowed(address _from, address _delegate, uint256 _value) {
+        if (allowed[_from][_delegate] >= _value) _;
+    }
 
-	function balanceOf(address _owner) public constant returns (uint256 balance) {
-		return balances[_owner];
-	}
+    function transfer(address _recipient, uint256 _value)
+        when_can_transfer(msg.sender, _value)
+        when_can_receive(_recipient, _value)
+        returns (bool o_success)
+    {
+        balances[msg.sender] -= _value;
+        balances[_recipient] += _value;
+        Transfer(msg.sender, _recipient, _value);
+        return true;
+    }
 
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-		require(_to != address(0));
+    function transferFrom(address _from, address _recipient, uint256 _value)
+        when_can_transfer(_from, _value)
+        when_can_receive(_recipient, _value)
+        when_is_allowed(_from, msg.sender, _value)
+        returns (bool o_success)
+    {
+        allowed[_from][msg.sender] -= _value;
+        balances[_from] -= _value;
+        balances[_recipient] += _value;
+        Transfer(_from, _recipient, _value);
+        return true;
+    }
 
-		uint256 _allowance = allowed[_from][msg.sender];
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
 
-		balances[_from] = balances[_from].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		allowed[_from][msg.sender] = _allowance.sub(_value);
-		Transfer(_from, _to, _value);
-		return true;
-	}
+    function approve(address _spender, uint256 _value) returns (bool o_success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
-	function approve(address _spender, uint256 _value) public returns (bool) {
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-		return true;
-	}
-
-	function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-		return allowed[_owner][_spender];
-	}
+    function allowance(address _owner, address _spender) constant returns (uint256 o_remaining) {
+        return allowed[_owner][_spender];
+    }
 }
 
 contract LBToken is StandardToken {
-	string public constant name = "LB Token";
-    string public constant symbol = "LB";
-    uint8  public constant decimals = 18;
 
-	address public minter; 
-	uint    public tokenSaleEndTime; 
+	string public name = "LB Coin";
+    string public symbol = "LB";
+    uint public decimals = 18;
 
-	modifier onlyMinter {
-		require (msg.sender == minter);
-		_;
+	function LBToken (address _bank, uint _totalSupply) {
+		balances[_bank] += _totalSupply;
+		totalSupply += _totalSupply;
 	}
 
-	modifier whenMintable {
-		require (now <= tokenSaleEndTime);
-		_;
-	}
-
-    modifier validDestination(address to) {
-        require(to != address(this));
-        _;
-    }
-
-	function LBToken(address _minter, uint _tokenSaleEndTime) public {
-		minter = _minter;
-		tokenSaleEndTime = _tokenSaleEndTime;
-    }
-
-	function transfer(address _to, uint _value)
-        public
-        validDestination(_to)
-        returns (bool) 
-    {
-        return super.transfer(_to, _value);
-    }
-
-	function transferFrom(address _from, address _to, uint _value)
-        public
-        validDestination(_to)
-        returns (bool) 
-    {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-	function createToken(address _recipient, uint _value)
-		whenMintable
-		onlyMinter
-		returns (bool)
+	// Transfer amount of tokens from sender account to recipient.
+	function transfer(address _recipient, uint _amount)
+		returns (bool o_success)
 	{
-		balances[_recipient] += _value;
-		totalSupply += _value;
-		return true;
+		return super.transfer(_recipient, _amount);
+	}
+
+	// Transfer amount of tokens from a specified address to a recipient.
+	function transferFrom(address _from, address _recipient, uint _amount)
+		returns (bool o_success)
+	{
+		return super.transferFrom(_from, _recipient, _amount);
 	}
 }
