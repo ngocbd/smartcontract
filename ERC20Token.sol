@@ -1,31 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xefa9abb5f6187974774aee75f4ea765770943a1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x6e00c1dc26676ce615946fa21d1c691b79bd8978
 */
 pragma solidity ^0.4.4;
 
-contract owned {
+contract Token {
 
-    address owner;
-
-    /*this function is executed at initialization and sets the owner of the contract */
-    function owned() { owner = msg.sender; }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-}
-
-contract mortal is owned {
-
-    /* Function to recover the funds on the contract */
-    function kill() onlyOwner() {
-        selfdestruct(owner);
-    }
-
-}
-
-contract Token is owned, mortal {
     /// @return total amount of tokens
     function totalSupply() constant returns (uint256 supply) {}
 
@@ -140,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000000;                        // Update total supply (100000 for example)
-        name = "Mehul Coin 2.0";                                   // Set the name for display purposes
-        decimals = 3;                            // Amount of decimals for display purposes
-        symbol = "MCT";                               // Set the symbol for display purposes
+        balances[msg.sender] = 8000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 8000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "ETHERSHARES";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "ETS";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
