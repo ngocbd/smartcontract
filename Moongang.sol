@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x45d4c8eb7f60a89c483228c6bb1eddf4430d006c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0xd2943044a142895fe07650c3bcd70bd2e17885d9
 */
 // Author : shift
 
@@ -79,7 +79,7 @@ contract Moongang {
   uint256 public individual_cap;
 
   //Variables subject to changes
-  uint256 public max_amount = 1000000000000000000000;  //0 means there is no limit
+  uint256 public max_amount;  //0 means there is no limit
   uint256 public min_amount;
 
   //Store the amount of ETH deposited by each account.
@@ -108,13 +108,16 @@ contract Moongang {
   bool public whitelist_enabled;
 
   //Internal functions
-  function Moongang() {
+  function Moongang(uint256 max, uint256 min, uint256 cap) {
     /*
     Constructor
     */
-    owner = 0x72b485634DF6f90A7683Beed4ee892299Cf6D1a9;
+    owner = msg.sender;
+    max_amount = SafeMath.div(SafeMath.mul(max, 100), 99);
+    min_amount = min;
+    individual_cap = cap;
     //enable whitelist by default
-    whitelist_enabled = false;
+    whitelist_enabled = true;
   }
 
   //Functions for the owner
