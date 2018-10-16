@@ -1,139 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeyRewardPool at 0x6c543F2A4FAFCEBEef4C668538Ff75AE7600B047
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeyRewardPool at 0x69726AE4D92F48b97405D4E2785e4006C208A28a
 */
-// Copyright (C) 2017 DappHub, LLC
+pragma solidity 0.4.18;
 
-pragma solidity ^0.4.11;
-
-//import "ds-exec/exec.sol";
-
-contract DSExec {
-    function tryExec( address target, bytes calldata, uint value)
-    internal
-    returns (bool call_ret)
-    {
-        return target.call.value(value)(calldata);
-    }
-    function exec( address target, bytes calldata, uint value)
-    internal
-    {
-        if(!tryExec(target, calldata, value)) {
-            throw;
-        }
-    }
-
-    // Convenience aliases
-    function exec( address t, bytes c )
-    internal
-    {
-        exec(t, c, 0);
-    }
-    function exec( address t, uint256 v )
-    internal
-    {
-        bytes memory c; exec(t, c, v);
-    }
-    function tryExec( address t, bytes c )
-    internal
-    returns (bool)
-    {
-        return tryExec(t, c, 0);
-    }
-    function tryExec( address t, uint256 v )
-    internal
-    returns (bool)
-    {
-        bytes memory c; return tryExec(t, c, v);
-    }
-}
-
-//import "ds-auth/auth.sol";
-contract DSAuthority {
-    function canCall(
-    address src, address dst, bytes4 sig
-    ) constant returns (bool);
-}
-
-contract DSAuthEvents {
-    event LogSetAuthority (address indexed authority);
-    event LogSetOwner     (address indexed owner);
-}
-
-contract DSAuth is DSAuthEvents {
-    DSAuthority  public  authority;
-    address      public  owner;
-
-    function DSAuth() {
-        owner = msg.sender;
-        LogSetOwner(msg.sender);
-    }
-
-    function setOwner(address owner_)
-    auth
-    {
-        owner = owner_;
-        LogSetOwner(owner);
-    }
-
-    function setAuthority(DSAuthority authority_)
-    auth
-    {
-        authority = authority_;
-        LogSetAuthority(authority);
-    }
-
-    modifier auth {
-        assert(isAuthorized(msg.sender, msg.sig));
-        _;
-    }
-
-    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else if (authority == DSAuthority(0)) {
-            return false;
-        } else {
-            return authority.canCall(src, this, sig);
-        }
-    }
-
-    function assert(bool x) internal {
-        if (!x) throw;
-    }
-}
-
-//import "ds-note/note.sol";
-contract DSNote {
-    event LogNote(
-    bytes4   indexed  sig,
-    address  indexed  guy,
-    bytes32  indexed  foo,
-    bytes32  indexed  bar,
-    uint        wad,
-    bytes             fax
-    ) anonymous;
-
-    modifier note {
-        bytes32 foo;
-        bytes32 bar;
-
-        assembly {
-        foo := calldataload(4)
-        bar := calldataload(36)
-        }
-
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
-
-        _;
-    }
-}
-
+//import "ds-token/token.sol";
+    //import "ds-stop/stop.sol";
+        //import "ds-auth/auth.sol";
+        //import "ds-note/note.sol";
+    //import "./base.sol";
+        //import "erc20/erc20.sol";
+        //import "ds-math/math.sol";
 
 //import "ds-math/math.sol";
 contract DSMath {
-
+    
     /*
     standard uint256 functions
      */
@@ -308,19 +188,17 @@ contract ERC20 {
     event Approval( address indexed owner, address indexed spender, uint value);
 }
 
-
-
-//import "ds-token/base.sol";
+//import "./base.sol";
 contract DSTokenBase is ERC20, DSMath {
     uint256                                            _supply;
     mapping (address => uint256)                       _balances;
     mapping (address => mapping (address => uint256))  _approvals;
-
+    
     function DSTokenBase(uint256 supply) {
         _balances[msg.sender] = supply;
         _supply = supply;
     }
-
+    
     function totalSupply() constant returns (uint256) {
         return _supply;
     }
@@ -330,44 +208,122 @@ contract DSTokenBase is ERC20, DSMath {
     function allowance(address src, address guy) constant returns (uint256) {
         return _approvals[src][guy];
     }
-
+    
     function transfer(address dst, uint wad) returns (bool) {
         assert(_balances[msg.sender] >= wad);
-
+        
         _balances[msg.sender] = sub(_balances[msg.sender], wad);
         _balances[dst] = add(_balances[dst], wad);
-
+        
         Transfer(msg.sender, dst, wad);
-
+        
         return true;
     }
-
+    
     function transferFrom(address src, address dst, uint wad) returns (bool) {
         assert(_balances[src] >= wad);
         assert(_approvals[src][msg.sender] >= wad);
-
+        
         _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
         _balances[src] = sub(_balances[src], wad);
         _balances[dst] = add(_balances[dst], wad);
-
+        
         Transfer(src, dst, wad);
-
+        
         return true;
     }
-
+    
     function approve(address guy, uint256 wad) returns (bool) {
         _approvals[msg.sender][guy] = wad;
-
+        
         Approval(msg.sender, guy, wad);
-
+        
         return true;
     }
 
 }
 
+//import "ds-auth/auth.sol";
+contract DSAuthority {
+    function canCall(
+        address src, address dst, bytes4 sig
+    ) constant returns (bool);
+}
+
+contract DSAuthEvents {
+    event LogSetAuthority (address indexed authority);
+    event LogSetOwner     (address indexed owner);
+}
+
+contract DSAuth is DSAuthEvents {
+    DSAuthority  public  authority;
+    address      public  owner;
+
+    function DSAuth() {
+        owner = msg.sender;
+        LogSetOwner(msg.sender);
+    }
+
+    function setOwner(address owner_)
+        auth
+    {
+        owner = owner_;
+        LogSetOwner(owner);
+    }
+
+    function setAuthority(DSAuthority authority_)
+        auth
+    {
+        authority = authority_;
+        LogSetAuthority(authority);
+    }
+
+    modifier auth {
+        assert(isAuthorized(msg.sender, msg.sig));
+        _;
+    }
+
+    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
+        if (src == address(this)) {
+            return true;
+        } else if (src == owner) {
+            return true;
+        } else if (authority == DSAuthority(0)) {
+            return false;
+        } else {
+            return authority.canCall(src, this, sig);
+        }
+    }
+}
+
+//import "ds-note/note.sol";
+contract DSNote {
+    event LogNote(
+        bytes4   indexed  sig,
+        address  indexed  guy,
+        bytes32  indexed  foo,
+        bytes32  indexed  bar,
+        uint              wad,
+        bytes             fax
+    ) anonymous;
+
+    modifier note {
+        bytes32 foo;
+        bytes32 bar;
+
+        assembly {
+            foo := calldataload(4)
+            bar := calldataload(36)
+        }
+
+        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+
+        _;
+    }
+}
 
 //import "ds-stop/stop.sol";
-contract DSStop is DSAuth, DSNote {
+contract DSStop is DSNote, DSAuth {
 
     bool public stopped;
 
@@ -385,28 +341,22 @@ contract DSStop is DSAuth, DSNote {
 }
 
 
+
 //import "ds-token/token.sol";
 contract DSToken is DSTokenBase(0), DSStop {
 
     bytes32  public  symbol;
     uint256  public  decimals = 18; // standard token precision. override to customize
-    address  public  generator;
-
-    modifier onlyGenerator {
-        if(msg.sender!=generator) throw;
-        _;
-    }
 
     function DSToken(bytes32 symbol_) {
         symbol = symbol_;
-        generator=msg.sender;
     }
 
     function transfer(address dst, uint wad) stoppable note returns (bool) {
         return super.transfer(dst, wad);
     }
     function transferFrom(
-    address src, address dst, uint wad
+        address src, address dst, uint wad
     ) stoppable note returns (bool) {
         return super.transferFrom(src, dst, wad);
     }
@@ -430,15 +380,10 @@ contract DSToken is DSTokenBase(0), DSStop {
         _supply = sub(_supply, wad);
     }
 
-    // owner can transfer token even stop,
-    function generatorTransfer(address dst, uint wad) onlyGenerator note returns (bool) {
-        return super.transfer(dst, wad);
-    }
-
     // Optional token name
 
     bytes32   public  name = "";
-
+    
     function setName(bytes32 name_) auth {
         name = name_;
     }
@@ -447,7 +392,8 @@ contract DSToken is DSTokenBase(0), DSStop {
 
 
 
-contract KeyRewardPool is DSStop , DSMath{
+
+contract KeyRewardPool is DSMath, DSNote{
 
     DSToken public key;
     uint public rewardStartTime;
@@ -456,31 +402,48 @@ contract KeyRewardPool is DSStop , DSMath{
     uint public totalRewardThisYear;
     uint public collectedTokens;
     address public withdrawer;
+    address public owner;
+    bool public paused;
 
     event TokensWithdrawn(address indexed _holder, uint _amount);
     event LogSetWithdrawer(address indexed _withdrawer);
+    event LogSetOwner(address indexed _owner);
 
     modifier onlyWithdrawer {
         require(msg.sender == withdrawer);
         _;
     }
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 
-    function KeyRewardPool(uint _rewardStartTime, address _key, address _withdrawer){
+    modifier notPaused {
+        require(!paused);
+        _;
+    }
+
+    function KeyRewardPool(uint _rewardStartTime, address _key, address _withdrawer) public{
         require(_rewardStartTime != 0 );
         require(_key != address(0) );
         require(_withdrawer != address(0) );
+        uint _time = time();
+        require(_rewardStartTime > _time - 364 days);
 
         rewardStartTime = _rewardStartTime;
         key = DSToken(_key);
         withdrawer = _withdrawer;
+        owner = msg.sender;
+        paused = false;
     }
 
     // @notice call this method to extract the tokens
-    function collectToken() stoppable onlyWithdrawer{
+    function collectToken() public notPaused onlyWithdrawer{
         uint _time = time();
+        require(_time > rewardStartTime);
+
         var _key = key;  // create a in memory variable for storage variable will save gas usage.
 
-        require(_time > rewardStartTime);
 
         uint balance = _key.balanceOf(address(this));
         uint total = add(collectedTokens, balance);
@@ -498,7 +461,7 @@ contract KeyRewardPool is DSStop , DSMath{
         // the reward will be increasing linearly in one year.
         uint canExtractThisYear = div( mul(totalRewardThisYear, (_time - rewardStartTime)  % 365 days), 365 days);
 
-        uint canExtract = canExtractThisYear + total - remainingTokens;
+        uint canExtract = canExtractThisYear + (total - remainingTokens);
 
         canExtract = sub(canExtract, collectedTokens);
 
@@ -514,20 +477,34 @@ contract KeyRewardPool is DSStop , DSMath{
     }
 
 
-    function yearFor(uint timestamp) constant returns(uint) {
+    function yearFor(uint timestamp) public constant returns(uint) {
         return timestamp < rewardStartTime
             ? 0
             : sub(timestamp, rewardStartTime) / (365 days);
     }
 
     // overrideable for easy testing
-    function time() constant returns (uint) {
+    function time() public constant returns (uint) {
         return now;
     }
 
-    function setWithdrawer(address _withdrawer) auth {
+    function setWithdrawer(address _withdrawer) public onlyOwner {
         withdrawer = _withdrawer;
         LogSetWithdrawer(_withdrawer);
+    }
+
+    function setOwner(address _owner) public onlyOwner {
+        owner = _owner;
+        LogSetOwner(_owner);
+    }
+
+
+    function pauseCollectToken() public onlyOwner {
+        paused = true;
+    }
+
+    function resumeCollectToken() public onlyOwner {
+        paused = false;
     }
 
     // @notice This method can be used by the controller to extract mistakenly
@@ -535,7 +512,7 @@ contract KeyRewardPool is DSStop , DSMath{
     // @param dst The address that will be receiving the tokens
     // @param wad The amount of tokens to transfer
     // @param _token The address of the token contract that you want to recover
-    function transferTokens(address dst, uint wad, address _token) public auth note {
+    function transferTokens(address dst, uint wad, address _token) public onlyWithdrawer {
         require( _token != address(key));
         if (wad > 0) {
             ERC20 token = ERC20(_token);
