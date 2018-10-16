@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccountLevels at 0x3d3583a1532c16f589026852461d56cef74e5cc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccountLevels at 0xd77120A1155cf1B4c7a283970E8AAbe31B8dDE53
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.9;
 
 contract SafeMath {
   function safeMul(uint a, uint b) internal returns (uint) {
@@ -62,7 +62,7 @@ contract Token {
   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
   uint public decimals;
-  string public name;
+  string public name = "black";
 }
 
 contract StandardToken is Token {
@@ -151,7 +151,7 @@ contract AccountLevelsTest is AccountLevels {
   }
 }
 
-contract DecentrEx is SafeMath {
+contract EtherDelta is SafeMath {
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
   address public accountLevelsAddr; //the address of the AccountLevels contract
@@ -168,7 +168,7 @@ contract DecentrEx is SafeMath {
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
 
-  function DecentrEx(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+  function EtherDelta(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
     admin = admin_;
     feeAccount = feeAccount_;
     accountLevelsAddr = accountLevelsAddr_;
