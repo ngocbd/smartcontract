@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x4dcadd9adfd450c2ef997bb71888c2995e2d33a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x57e03e646642c81f29c947ee35ff0bf430d4ac14
 */
 pragma solidity ^0.4.16;
 
@@ -7,11 +7,12 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name = "UniCoin";
-    string public symbol = "UNC";
-    uint256 public decimals = 0;
+    string public name = "XAOS";
+    string public symbol = "XAOS";
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 16*1000*1000*1000*10**decimals;
+    uint256 public totalSupply;
+    uint256 public initialSupply = 38000000;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -24,13 +25,18 @@ contract TokenERC20 {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
+        string tokenName,
+        string tokenSymbol
     ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
@@ -135,7 +141,7 @@ contract TokenERC20 {
      *
      * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
      *
-     * @param _from the address of the senderT
+     * @param _from the address of the sender
      * @param _value the amount of money to burn
      */
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
@@ -148,3 +154,5 @@ contract TokenERC20 {
         return true;
     }
 }
+
+/* XAOS.LTD */
