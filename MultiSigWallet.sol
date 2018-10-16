@@ -1,229 +1,369 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultisigWallet at 0x7199C3fBc0832e8798d2514eEAa88f0CE597698D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xBBF0cC1C63F509d48a4674e270D26d80cCAF6022
 */
 pragma solidity ^0.4.11;
 
-contract Multisig {
-  event Deposit(address _from, uint value);
-  event SingleTransact(address owner, uint value, address to, bytes data);
-  event MultiTransact(address owner, bytes32 operation, uint value, address to, bytes data);
-  event ConfirmationNeeded(bytes32 operation, address initiator, uint value, address to, bytes data);
-  function changeOwner(address _from, address _to) external;
-  function execute(address _to, uint _value, bytes _data) external returns (bytes32);
-  function confirm(bytes32 _h) returns (bool);
-}
 
+/// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
+/// @author Stefan George - <stefan.george@consensys.net>
+contract MultiSigWallet {
 
-contract Shareable {
-  struct PendingState {
-    uint yetNeeded;
-    uint ownersDone;
-    uint index;
-  }
-  uint public required;
-  address[256] owners;
-  mapping(address => uint) ownerIndex;
-  mapping(bytes32 => PendingState) pendings;
-  bytes32[] pendingsIndex;
-  event Confirmation(address owner, bytes32 operation);
-  event Revoke(address owner, bytes32 operation);
-  modifier onlyOwner {
-    if (!isOwner(msg.sender)) {
-      throw;
-    }
-    _;
-  }
-  modifier onlymanyowners(bytes32 _operation) {
-    if (confirmAndCheck(_operation)) {
-      _;
-    }
-  }
-  function Shareable(address[] _owners, uint _required) {
-    owners[1] = msg.sender;
-    ownerIndex[msg.sender] = 1;
-    for (uint i = 0; i < _owners.length; ++i) {
-      owners[2 + i] = _owners[i];
-      ownerIndex[_owners[i]] = 2 + i;
-    }
-    required = _required;
-    if (required > owners.length) {
-      throw;
-    }
-  }
-  function revoke(bytes32 _operation) external {
-    uint index = ownerIndex[msg.sender];
-    if (index == 0) {
-      return;
-    }
-    uint ownerIndexBit = 2**index;
-    var pending = pendings[_operation];
-    if (pending.ownersDone & ownerIndexBit > 0) {
-      pending.yetNeeded++;
-      pending.ownersDone -= ownerIndexBit;
-      Revoke(msg.sender, _operation);
-    }
-  }
-  function getOwner(uint ownerIndex) external constant returns (address) {
-    return address(owners[ownerIndex + 1]);
-  }
-  function isOwner(address _addr) constant returns (bool) {
-    return ownerIndex[_addr] > 0;
-  }
-  function hasConfirmed(bytes32 _operation, address _owner) constant returns (bool) {
-    var pending = pendings[_operation];
-    uint index = ownerIndex[_owner];
-    if (index == 0) {
-      return false;
-    }
-    uint ownerIndexBit = 2**index;
-    return !(pending.ownersDone & ownerIndexBit == 0);
-  }
-  function confirmAndCheck(bytes32 _operation) internal returns (bool) {
-    uint index = ownerIndex[msg.sender];
-    if (index == 0) {
-      throw;
+    uint constant public MAX_OWNER_COUNT = 50;
+
+    event Confirmation(address indexed _sender, uint indexed _transactionId);
+    event Revocation(address indexed _sender, uint indexed _transactionId);
+    event Submission(uint indexed _transactionId);
+    event Execution(uint indexed _transactionId);
+    event ExecutionFailure(uint indexed _transactionId);
+    event Deposit(address indexed _sender, uint _value);
+    event OwnerAddition(address indexed _owner);
+    event OwnerRemoval(address indexed _owner);
+    event RequirementChange(uint _required);
+
+    mapping (uint => Transaction) public transactions;
+    mapping (uint => mapping (address => bool)) public confirmations;
+    mapping (address => bool) public isOwner;
+    address[] public owners;
+    uint public required;
+    uint public transactionCount;
+
+    struct Transaction {
+        address destination;
+        uint value;
+        bytes data;
+        bool executed;
     }
 
-    var pending = pendings[_operation];
-    if (pending.yetNeeded == 0) {
-      pending.yetNeeded = required;
-      pending.ownersDone = 0;
-      pending.index = pendingsIndex.length++;
-      pendingsIndex[pending.index] = _operation;
+    modifier onlyWallet() {
+        if (msg.sender != address(this))
+            throw;
+        _;
     }
-    uint ownerIndexBit = 2**index;
-    if (pending.ownersDone & ownerIndexBit == 0) {
-      Confirmation(msg.sender, _operation);
-      if (pending.yetNeeded <= 1) {
-        delete pendingsIndex[pendings[_operation].index];
-        delete pendings[_operation];
-        return true;
-      } else {
-        pending.yetNeeded--;
-        pending.ownersDone |= ownerIndexBit;
-      }
+
+    modifier ownerDoesNotExist(address owner) {
+        if (isOwner[owner])
+            throw;
+        _;
     }
-    return false;
-  }
-  function clearPending() internal {
-    uint length = pendingsIndex.length;
-    for (uint i = 0; i < length; ++i) {
-      if (pendingsIndex[i] != 0) {
-        delete pendings[pendingsIndex[i]];
-      }
+
+    modifier ownerExists(address owner) {
+        if (!isOwner[owner])
+            throw;
+        _;
     }
-    delete pendingsIndex;
-  }
 
-}
-
-
-contract DayLimit {
-
-  uint public dailyLimit;
-  uint public spentToday;
-  uint public lastDay;
-  function DayLimit(uint _limit) {
-    dailyLimit = _limit;
-    lastDay = today();
-  }
-  function _setDailyLimit(uint _newLimit) internal {
-    dailyLimit = _newLimit;
-  }
-  function _resetSpentToday() internal {
-    spentToday = 0;
-  }
-  function underLimit(uint _value) internal returns (bool) {
-    if (today() > lastDay) {
-      spentToday = 0;
-      lastDay = today();
+    modifier transactionExists(uint transactionId) {
+        if (transactions[transactionId].destination == 0)
+            throw;
+        _;
     }
-    if (spentToday + _value >= spentToday && spentToday + _value <= dailyLimit) {
-      spentToday += _value;
-      return true;
+
+    modifier confirmed(uint transactionId, address owner) {
+        if (!confirmations[transactionId][owner])
+            throw;
+        _;
     }
-    return false;
-  }
-  function today() private constant returns (uint) {
-    return now / 1 days;
-  }
-  modifier limitedDaily(uint _value) {
-    if (!underLimit(_value)) {
-      throw;
+
+    modifier notConfirmed(uint transactionId, address owner) {
+        if (confirmations[transactionId][owner])
+            throw;
+        _;
     }
-    _;
-  }
-}
 
-
-
-contract MultisigWalletZeppelin is Multisig, Shareable, DayLimit {
-
-  struct Transaction {
-    address to;
-    uint value;
-    bytes data;
-  }
-  function MultisigWalletZeppelin(address[] _owners, uint _required, uint _daylimit)       
-    Shareable(_owners, _required)        
-    DayLimit(_daylimit) { 
+    modifier notExecuted(uint transactionId) {
+        if (transactions[transactionId].executed)
+            throw;
+        _;
     }
-  function destroy(address _to) onlymanyowners(keccak256(msg.data)) external {
-    selfdestruct(_to);
-  }
-  function() payable {
-    if (msg.value > 0)
-      Deposit(msg.sender, msg.value);
-  }
-  function execute(address _to, uint _value, bytes _data) external onlyOwner returns (bytes32 _r) {
-    if (underLimit(_value)) {
-      SingleTransact(msg.sender, _value, _to, _data);
-      if (!_to.call.value(_value)(_data)) {
-        throw;
-      }
-      return 0;
+
+    modifier notNull(address _address) {
+        if (_address == 0)
+            throw;
+        _;
     }
-    _r = keccak256(msg.data, block.number);
-    if (!confirm(_r) && txs[_r].to == 0) {
-      txs[_r].to = _to;
-      txs[_r].value = _value;
-      txs[_r].data = _data;
-      ConfirmationNeeded(_r, msg.sender, _value, _to, _data);
+
+    modifier validRequirement(uint ownerCount, uint _required) {
+        if (   ownerCount > MAX_OWNER_COUNT
+            || _required > ownerCount
+            || _required == 0
+            || ownerCount == 0)
+            throw;
+        _;
     }
-  }
-  function confirm(bytes32 _h) onlymanyowners(_h) returns (bool) {
-    if (txs[_h].to != 0) {
-      if (!txs[_h].to.call.value(txs[_h].value)(txs[_h].data)) {
-        throw;
-      }
-      MultiTransact(msg.sender, _h, txs[_h].value, txs[_h].to, txs[_h].data);
-      delete txs[_h];
-      return true;
+
+    /// @dev Fallback function allows to deposit ether.
+    function()
+        payable
+    {
+        if (msg.value > 0)
+            Deposit(msg.sender, msg.value);
     }
-  }
-  function setDailyLimit(uint _newLimit) onlymanyowners(keccak256(msg.data)) external {
-    _setDailyLimit(_newLimit);
-  }
-  function resetSpentToday() onlymanyowners(keccak256(msg.data)) external {
-    _resetSpentToday();
-  }
-  function clearPending() internal {
-    uint length = pendingsIndex.length;
-    for (uint i = 0; i < length; ++i) {
-      delete txs[pendingsIndex[i]];
+
+    /*
+     * Public functions
+     */
+    /// @dev Contract constructor sets initial owners and required number of confirmations.
+    /// @param _owners List of initial owners.
+    /// @param _required Number of required confirmations.
+    function MultiSigWallet(address[] _owners, uint _required)
+        public
+        validRequirement(_owners.length, _required)
+    {
+        for (uint i=0; i<_owners.length; i++) {
+            if (isOwner[_owners[i]] || _owners[i] == 0)
+                throw;
+            isOwner[_owners[i]] = true;
+        }
+        owners = _owners;
+        required = _required;
     }
-    super.clearPending();
-  }
-  mapping (bytes32 => Transaction) txs;
-}
 
+    /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
+    /// @param owner Address of new owner.
+    function addOwner(address owner)
+        public
+        onlyWallet
+        ownerDoesNotExist(owner)
+        notNull(owner)
+        validRequirement(owners.length + 1, required)
+    {
+        isOwner[owner] = true;
+        owners.push(owner);
+        OwnerAddition(owner);
+    }
 
-contract MultisigWallet is MultisigWalletZeppelin {
-  uint public totalSpending;
+    /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
+    /// @param owner Address of owner.
+    function removeOwner(address owner)
+        public
+        onlyWallet
+        ownerExists(owner)
+    {
+        isOwner[owner] = false;
+        for (uint i=0; i<owners.length - 1; i++)
+            if (owners[i] == owner) {
+                owners[i] = owners[owners.length - 1];
+                break;
+            }
+        owners.length -= 1;
+        if (required > owners.length)
+            changeRequirement(owners.length);
+        OwnerRemoval(owner);
+    }
 
-  function MultisigWallet(address[] _owners, uint _required, uint _daylimit)
-    MultisigWalletZeppelin(_owners, _required, _daylimit) payable { }
+    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
+    /// @param owner Address of owner to be replaced.
+    /// @param owner Address of new owner.
+    function replaceOwner(address owner, address newOwner)
+        public
+        onlyWallet
+        ownerExists(owner)
+        ownerDoesNotExist(newOwner)
+    {
+        for (uint i=0; i<owners.length; i++)
+            if (owners[i] == owner) {
+                owners[i] = newOwner;
+                break;
+            }
+        isOwner[owner] = false;
+        isOwner[newOwner] = true;
+        OwnerRemoval(owner);
+        OwnerAddition(newOwner);
+    }
 
-  function changeOwner(address _from, address _to) external { }
+    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
+    /// @param _required Number of required confirmations.
+    function changeRequirement(uint _required)
+        public
+        onlyWallet
+        validRequirement(owners.length, _required)
+    {
+        required = _required;
+        RequirementChange(_required);
+    }
 
+    /// @dev Allows an owner to submit and confirm a transaction.
+    /// @param destination Transaction target address.
+    /// @param value Transaction ether value.
+    /// @param data Transaction data payload.
+    /// @return Returns transaction ID.
+    function submitTransaction(address destination, uint value, bytes data)
+        public
+        returns (uint transactionId)
+    {
+        transactionId = addTransaction(destination, value, data);
+        confirmTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to confirm a transaction.
+    /// @param transactionId Transaction ID.
+    function confirmTransaction(uint transactionId)
+        public
+        ownerExists(msg.sender)
+        transactionExists(transactionId)
+        notConfirmed(transactionId, msg.sender)
+    {
+        confirmations[transactionId][msg.sender] = true;
+        Confirmation(msg.sender, transactionId);
+        executeTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to revoke a confirmation for a transaction.
+    /// @param transactionId Transaction ID.
+    function revokeConfirmation(uint transactionId)
+        public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
+        notExecuted(transactionId)
+    {
+        confirmations[transactionId][msg.sender] = false;
+        Revocation(msg.sender, transactionId);
+    }
+
+    /// @dev Allows anyone to execute a confirmed transaction.
+    /// @param transactionId Transaction ID.
+    function executeTransaction(uint transactionId)
+        public
+        notExecuted(transactionId)
+    {
+        if (isConfirmed(transactionId)) {
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
+                Execution(transactionId);
+            else {
+                ExecutionFailure(transactionId);
+                tx.executed = false;
+            }
+        }
+    }
+
+    /// @dev Returns the confirmation status of a transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Confirmation status.
+    function isConfirmed(uint transactionId)
+        public
+        constant
+        returns (bool)
+    {
+        uint count = 0;
+        for (uint i=0; i<owners.length; i++) {
+            if (confirmations[transactionId][owners[i]])
+                count += 1;
+            if (count == required)
+                return true;
+        }
+    }
+
+    /*
+     * Internal functions
+     */
+    /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
+    /// @param destination Transaction target address.
+    /// @param value Transaction ether value.
+    /// @param data Transaction data payload.
+    /// @return Returns transaction ID.
+    function addTransaction(address destination, uint value, bytes data)
+        internal
+        notNull(destination)
+        returns (uint transactionId)
+    {
+        transactionId = transactionCount;
+        transactions[transactionId] = Transaction({
+            destination: destination,
+            value: value,
+            data: data,
+            executed: false
+        });
+        transactionCount += 1;
+        Submission(transactionId);
+    }
+
+    /*
+     * Web3 call functions
+     */
+    /// @dev Returns number of confirmations of a transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Number of confirmations.
+    function getConfirmationCount(uint transactionId)
+        public
+        constant
+        returns (uint count)
+    {
+        for (uint i=0; i<owners.length; i++)
+            if (confirmations[transactionId][owners[i]])
+                count += 1;
+    }
+
+    /// @dev Returns total number of transactions after filters are applied.
+    /// @param pending Include pending transactions.
+    /// @param executed Include executed transactions.
+    /// @return Total number of transactions after filters are applied.
+    function getTransactionCount(bool pending, bool executed)
+        public
+        constant
+        returns (uint count)
+    {
+        for (uint i=0; i<transactionCount; i++)
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
+                count += 1;
+    }
+
+    /// @dev Returns list of owners.
+    /// @return List of owner addresses.
+    function getOwners()
+        public
+        constant
+        returns (address[])
+    {
+        return owners;
+    }
+
+    /// @dev Returns array with owner addresses, which confirmed transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Returns array of owner addresses.
+    function getConfirmations(uint transactionId)
+        public
+        constant
+        returns (address[] _confirmations)
+    {
+        address[] memory confirmationsTemp = new address[](owners.length);
+        uint count = 0;
+        uint i;
+        for (i=0; i<owners.length; i++)
+            if (confirmations[transactionId][owners[i]]) {
+                confirmationsTemp[count] = owners[i];
+                count += 1;
+            }
+        _confirmations = new address[](count);
+        for (i=0; i<count; i++)
+            _confirmations[i] = confirmationsTemp[i];
+    }
+
+    /// @dev Returns list of transaction IDs in defined range.
+    /// @param from Index start position of transaction array.
+    /// @param to Index end position of transaction array.
+    /// @param pending Include pending transactions.
+    /// @param executed Include executed transactions.
+    /// @return Returns array of transaction IDs.
+    function getTransactionIds(uint from, uint to, bool pending, bool executed)
+        public
+        constant
+        returns (uint[] _transactionIds)
+    {
+        uint[] memory transactionIdsTemp = new uint[](transactionCount);
+        uint count = 0;
+        uint i;
+        for (i=0; i<transactionCount; i++)
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
+            {
+                transactionIdsTemp[count] = i;
+                count += 1;
+            }
+        _transactionIds = new uint[](to - from);
+        for (i=from; i<to; i++)
+            _transactionIds[i - from] = transactionIdsTemp[i];
+    }
 }
