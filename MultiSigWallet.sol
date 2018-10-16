@@ -1,22 +1,34 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x3d49be967b884b91078a7946a772be1c804e806c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xdb2f9f086561d378d8d701fedd5569b515f9e7f7
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.15;
 
+
+/// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
+/// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    uint constant public MAX_OWNER_COUNT = 50;
-
+    /*
+     *  Events
+     */
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
-    event Execution(uint indexed transactionId, string indexed reference);
-    event ExecutionFailure(uint indexed transactionId, string indexed reference);
+    event Execution(uint indexed transactionId);
+    event ExecutionFailure(uint indexed transactionId);
     event Deposit(address indexed sender, uint value);
     event OwnerAddition(address indexed owner);
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
+    /*
+     *  Constants
+     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
+    /*
+     *  Storage
+     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -29,7 +41,6 @@ contract MultiSigWallet {
         uint value;
         bytes data;
         bool executed;
-        string reference;
     }
 
     /*
@@ -102,8 +113,7 @@ contract MultiSigWallet {
         validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-                throw;
+            require(!isOwner[_owners[i]] && _owners[i] != 0);
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
@@ -145,7 +155,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param owner Address of new owner.
+    /// @param newOwner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -177,15 +187,13 @@ contract MultiSigWallet {
     /// @dev Allows an owner to submit and confirm a transaction.
     /// @param destination Transaction target address.
     /// @param value Transaction ether value.
-    /// @param reference Transaction reference.
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, string reference, bytes data)
+    function submitTransaction(address destination, uint value, bytes data)
         public
-        ownerExists(msg.sender)
         returns (uint transactionId)
     {
-        transactionId = addTransaction(destination, value, reference, data);
+        transactionId = addTransaction(destination, value, data);
         confirmTransaction(transactionId);
     }
 
@@ -218,18 +226,42 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction tx = transactions[transactionId];
-            tx.executed = true;
-            if (tx.destination.call.value(tx.value)(tx.data))
-                Execution(transactionId, tx.reference);
+            Transaction storage txn = transactions[transactionId];
+            txn.executed = true;
+            if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
+                Execution(transactionId);
             else {
-                ExecutionFailure(transactionId, tx.reference);
-                tx.executed = false;
+                ExecutionFailure(transactionId);
+                txn.executed = false;
             }
         }
+    }
+
+    // call has been separated into its own function in order to take advantage
+    // of the Solidity's code generator to produce a loop that copies tx.data into memory.
+    function external_call(address destination, uint value, uint dataLength, bytes data) private returns (bool) {
+        bool result;
+        assembly {
+            let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
+            let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
+            result := call(
+                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
+                                   // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
+                                   // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
+                destination,
+                value,
+                d,
+                dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
+                x,
+                0                  // Output is ignored, therefore the output size is zero
+            )
+        }
+        return result;
     }
 
     /// @dev Returns the confirmation status of a transaction.
@@ -255,10 +287,9 @@ contract MultiSigWallet {
     /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
     /// @param destination Transaction target address.
     /// @param value Transaction ether value.
-    /// @param reference Transaction reference.
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
-    function addTransaction(address destination, uint value, string reference, bytes data)
+    function addTransaction(address destination, uint value, bytes data)
         internal
         notNull(destination)
         returns (uint transactionId)
@@ -268,7 +299,6 @@ contract MultiSigWallet {
             destination: destination,
             value: value,
             data: data,
-            reference: reference,
             executed: false
         });
         transactionCount += 1;
@@ -292,16 +322,17 @@ contract MultiSigWallet {
     }
 
     /// @dev Returns total number of transactions after filers are applied.
-    /// @param executed Transaction executed transactions.
+    /// @param pending Include pending transactions.
+    /// @param executed Include executed transactions.
     /// @return Total number of transactions after filters are applied.
-    function getTransactionCount(bool executed)
+    function getTransactionCount(bool pending, bool executed)
         public
         constant
         returns (uint count)
     {
         for (uint i=0; i<transactionCount; i++)
-            if ((!executed && !transactions[i].executed)
-                || (executed && transactions[i].executed))
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
                 count += 1;
     }
 
@@ -336,10 +367,13 @@ contract MultiSigWallet {
             _confirmations[i] = confirmationsTemp[i];
     }
 
-    /// @dev Returns list of transaction IDs after filers are applied.
-    /// @param executed Transaction executed transactions.
-    /// @return Returns array of transaction IDs after filers are applied.
-    function getTransactionIds(bool executed)
+    /// @dev Returns list of transaction IDs in defined range.
+    /// @param from Index start position of transaction array.
+    /// @param to Index end position of transaction array.
+    /// @param pending Include pending transactions.
+    /// @param executed Include executed transactions.
+    /// @return Returns array of transaction IDs.
+    function getTransactionIds(uint from, uint to, bool pending, bool executed)
         public
         constant
         returns (uint[] _transactionIds)
@@ -348,114 +382,14 @@ contract MultiSigWallet {
         uint count = 0;
         uint i;
         for (i=0; i<transactionCount; i++)
-            if ((!executed && !transactions[i].executed)
-                || (executed && transactions[i].executed)) {
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
+            {
                 transactionIdsTemp[count] = i;
                 count += 1;
             }
-        _transactionIds = new uint[](count);
-        for (i=0; i<count; i++) {
-            _transactionIds[i] = transactionIdsTemp[i];
-        }
-    }
-}
-
-
-contract MultiSigWalletWithDailyLimit is MultiSigWallet {
-
-    event DailyLimitChange(uint dailyLimit);
-
-    uint public dailyLimit;
-    uint public lastDay;
-    uint public spentToday;
-
-    modifier isNotZero(uint amount) {
-        require(amount > 0);
-        _;
-    }
-
-    /*
-     * Public functions
-     */
-    /// @dev Contract constructor sets initial owners, required number of confirmations and daily withdraw limit.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    /// @param _dailyLimit Amount in wei, which can be withdrawn without confirmations on a daily basis.
-    function MultiSigWalletWithDailyLimit(address[] _owners, uint _required, uint _dailyLimit)
-        public
-        isNotZero(_dailyLimit)
-        MultiSigWallet(_owners, _required)
-    {
-        dailyLimit = _dailyLimit;
-    }
-
-    /// @dev Allows to change the daily limit. Transaction has to be sent by wallet.
-    /// @param _dailyLimit Amount in wei.
-    function changeDailyLimit(uint _dailyLimit)
-        public
-        onlyWallet
-        isNotZero(_dailyLimit)
-    {
-        dailyLimit = _dailyLimit;
-        DailyLimitChange(_dailyLimit);
-    }
-
-    /// @dev Allows anyone to execute a confirmed transaction or ether withdraws until daily limit is reached.
-    /// @param transactionId Transaction ID.
-    function executeTransaction(uint transactionId)
-        public
-        notExecuted(transactionId)
-    {
-        Transaction tx = transactions[transactionId];
-        bool confirmed = isConfirmed(transactionId);
-        if (confirmed || tx.data.length == 0 && isUnderLimit(tx.value)) {
-            tx.executed = true;
-            if (!confirmed)
-                spentToday += tx.value;
-            if (tx.destination.call.value(tx.value)(tx.data))
-                Execution(transactionId, tx.reference);
-            else {
-                ExecutionFailure(transactionId, tx.reference);
-                tx.executed = false;
-                if (!confirmed)
-                    spentToday -= tx.value;
-            }
-        }
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Returns if amount is within daily limit and resets spentToday after one day.
-    /// @param amount Amount to withdraw.
-    /// @return Returns if amount is under daily limit.
-    function isUnderLimit(uint amount)
-        internal
-        returns (bool)
-    {
-        if (now > lastDay + 24 hours) {
-            lastDay = now;
-            spentToday = 0;
-        }
-        if (spentToday + amount > dailyLimit || spentToday + amount < spentToday)
-            return false;
-        return true;
-    }
-
-    /*
-     * Web3 call functions
-     */
-    /// @dev Returns maximum withdraw amount.
-    /// @return Returns amount.
-    function calcMaxWithdraw()
-        public
-        constant
-        returns (uint)
-    {
-        if (now > lastDay + 24 hours)
-            return dailyLimit;
-        if (dailyLimit < spentToday)
-            return 0;
-        return dailyLimit - spentToday;
+        _transactionIds = new uint[](to - from);
+        for (i=from; i<to; i++)
+            _transactionIds[i - from] = transactionIdsTemp[i];
     }
 }
