@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnicornRanch at 0x76273a63d7c102a61104149f3cc567ec2b4e4257
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnicornRanch at 0x78faea8994efe7fc448e743b7b342e1a96ba3807
 */
 pragma solidity ^0.4.11;
 
@@ -70,6 +70,8 @@ contract UnicornRanch {
     uint startBlock;
     uint expiresBlock;
     VisitState state;
+    uint completedBlock;
+    uint completedCount;
   }
   struct VisitMeta {
     address owner;
@@ -84,10 +86,10 @@ contract UnicornRanch {
   mapping (uint8 => uint) public visitLength;
   mapping (uint8 => uint) public visitCost;
   uint public visitingUnicorns = 0;
-  uint public repossessionBlocks = 120960;
+  uint public repossessionBlocks = 43200;
   uint8 public repossessionBountyPerTen = 2;
   uint8 public repossessionBountyPerHundred = 25;
-  uint public birthBlockThreshold = 60480;
+  uint public birthBlockThreshold = 43860;
   uint8 public birthPerTen = 1;
   uint8 public birthPerHundred = 15;
 
@@ -111,19 +113,19 @@ contract UnicornRanch {
     
     visitCost[uint8(VisitType.Spa)] = 0;
     visitCost[uint8(VisitType.Afternoon)] = 0;
-    visitCost[uint8(VisitType.Day)] = 1 szabo;
-    visitCost[uint8(VisitType.Overnight)] = 1 szabo;
-    visitCost[uint8(VisitType.Week)] = 1 szabo;
-    visitCost[uint8(VisitType.Extended)] = 1 szabo;
+    visitCost[uint8(VisitType.Day)] = 10 szabo;
+    visitCost[uint8(VisitType.Overnight)] = 30 szabo;
+    visitCost[uint8(VisitType.Week)] = 50 szabo;
+    visitCost[uint8(VisitType.Extended)] = 70 szabo;
   }
 
 
   function getBookingCount(address _who) constant returns (uint count) {
     return bookings[_who].length;
   }
-  function getBooking(address _who, uint _index) constant returns (uint _unicornCount, VisitType _type, uint _startBlock, uint _expiresBlock, VisitState _state) {
+  function getBooking(address _who, uint _index) constant returns (uint _unicornCount, VisitType _type, uint _startBlock, uint _expiresBlock, VisitState _state, uint _completedBlock, uint _completedCount) {
     Visit storage v = bookings[_who][_index];
-    return (v.unicornCount, v.t, v.startBlock, v.expiresBlock, v.state);
+    return (v.unicornCount, v.t, v.startBlock, v.expiresBlock, v.state, v.completedBlock, v.completedCount);
   }
 
   function bookSpaVisit(uint _unicornCount) payable {
@@ -162,7 +164,9 @@ contract UnicornRanch {
       _type,
       block.number,
       expiresBlock,
-      VisitState.InProgress
+      VisitState.InProgress,
+      0,
+      0
     ));
     uint newIndex = bookings[msg.sender].length - 1;
     bytes32 uniqueKey = keccak256(msg.sender, newIndex); // Create a unique key for this booking
@@ -211,6 +215,8 @@ contract UnicornRanch {
         
     // Update the status of the Visit
     v.state = VisitState.Completed;
+    v.completedBlock = block.number;
+    v.completedCount = unicornsToReturn;
     bookings[msg.sender][_index] = v;
     
     // Transfer the asset back to the owner
@@ -227,9 +233,6 @@ contract UnicornRanch {
     require(block.number > v.expiresBlock.add(repossessionBlocks)); // Repossession time must be past
     require(v.state == VisitState.InProgress); // Visit must not be complete or repossessed
     
-    // Update the status of the Visit
-    v.state = VisitState.Repossessed;
-    bookings[_who][_index] = v;
     visitingUnicorns = visitingUnicorns.sub(v.unicornCount);
     
     // Send event about this update
@@ -249,6 +252,12 @@ contract UnicornRanch {
     
     // Send event about the bounty payout
     RepossessionBounty(msg.sender, bountyCount);
+
+    // Update the status of the Visit
+    v.state = VisitState.Repossessed;
+    v.completedBlock = block.number;
+    v.completedCount = v.unicornCount - bountyCount;
+    bookings[_who][_index] = v;
   }
   
   function availableBalance(address _who) internal returns (uint) {
