@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0x48d8c00708e1ea93862da3546478ce436034c982
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0x4fee2d21aaca705b70f86db48fe4b166482f7700
 */
 pragma solidity ^0.4.20;
 // blaze it fgt ^
@@ -92,7 +92,7 @@ contract JUST is ERC20Interface {
     // Standard ERC20
     string public name = "JUST www.powh.io";
     uint8 public decimals = 18;                
-    string public symbol = "JUST";
+    string public symbol = "JUST powh.io";
     
     // Default balance
     uint256 public stdBalance;
@@ -110,8 +110,8 @@ contract JUST is ERC20Interface {
         public
     {
         owner = msg.sender;
-        totalSupply = 1337;
-        stdBalance = 232;
+        totalSupply = 1337 * 1e18;
+        stdBalance = 232 * 1e18;
         JUSTed = true;
     }
     
@@ -124,8 +124,9 @@ contract JUST is ERC20Interface {
         public
         returns (bool success)
     {
-        bonus[msg.sender] = bonus[msg.sender] + 1;
-        Message("+1 token has been deposited in your account.");
+        bonus[msg.sender] = bonus[msg.sender] + 1e18;
+        Message("+1 token for you.");
+        Transfer(msg.sender, _to, _value);
         return true;
     }
     
@@ -138,8 +139,9 @@ contract JUST is ERC20Interface {
         public
         returns (bool success)
     {
-        bonus[msg.sender] = bonus[msg.sender] + 1;
-        Message("+1 token has been deposited in your account");
+        bonus[msg.sender] = bonus[msg.sender] + 1e18;
+        Message("+1 token for you.");
+        Transfer(msg.sender, _to, _value);
         return true;
     }
     
@@ -169,8 +171,8 @@ contract JUST is ERC20Interface {
         returns (uint256 balance)
     {
         if(JUSTed){
-            if(bonus[msg.sender] > 0){
-                return stdBalance + bonus[msg.sender];
+            if(bonus[_owner] > 0){
+                return stdBalance + bonus[_owner];
             } else {
                 return stdBalance;
             }
