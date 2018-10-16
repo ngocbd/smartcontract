@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x82a0b12a0d1509be8ebc9e416ea370724461fd1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xfaa5f725d1c4ca57d285c0ab885d437c555e954d
 */
 pragma solidity ^0.4.20;
 
@@ -107,10 +107,10 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "POTD";
-    string public symbol = "POTD";
+    string public name = "POWC";
+    string public symbol = "POWC";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 10;
+    uint8 constant internal dividendFee_ = 2;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -258,7 +258,7 @@ contract Hourglass {
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
         uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
+        uint256 _dividends = SafeMath.mul(_dividendsraw, 1);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         
         // burn the sold tokens
@@ -303,7 +303,7 @@ contract Hourglass {
         // liquify 10% of the tokens that are transfered
         // these are dispersed to shareholders
         uint256 _tokenFeeraw = SafeMath.div(_amountOfTokens, dividendFee_);
-        uint256 _tokenFee = SafeMath.mul(_tokenFeeraw, 3);
+        uint256 _tokenFee = SafeMath.mul(_tokenFeeraw, 1);
         uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
         uint256 _dividends = tokensToEthereum_(_tokenFee);
   
@@ -468,7 +468,7 @@ contract Hourglass {
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
             uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_  );
-            uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
+            uint256 _dividends = SafeMath.mul(_dividendsraw, 1);
             uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -488,7 +488,7 @@ contract Hourglass {
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
             uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_  );
-            uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
+            uint256 _dividends = SafeMath.mul(_dividendsraw, 1);
             uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -521,7 +521,7 @@ contract Hourglass {
         require(_tokensToSell <= tokenSupply_);
         uint256 _ethereum = tokensToEthereum_(_tokensToSell);
         uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
+        uint256 _dividends = SafeMath.mul(_dividendsraw, 1);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         return _taxedEthereum;
     }
@@ -537,7 +537,7 @@ contract Hourglass {
     {
         // data setup
         address _customerAddress = msg.sender;
-        uint256 _undividedDividends = SafeMath.mul(SafeMath.div(_incomingEthereum, dividendFee_), 3);
+        uint256 _undividedDividends = SafeMath.mul(SafeMath.div(_incomingEthereum, dividendFee_), 1);
         uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
         uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
         uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
