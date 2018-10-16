@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeatherTestToken at 0x9b8ffa46065eee3f15897dcfa095e14804f56de9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeatherTestToken at 0x890b708cd5f499d5b1b557609a0685adb80d3a92
 */
 pragma solidity ^0.4.18;
 
