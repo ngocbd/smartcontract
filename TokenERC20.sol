@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x70d4e41984b8d1b04d912e9aa5814e4f07f6eb58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x4dcadd9adfd450c2ef997bb71888c2995e2d33a0
 */
 pragma solidity ^0.4.16;
 
@@ -7,11 +7,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals;
+    string public name = "UniCoin";
+    string public symbol = "UNC";
+    uint256 public decimals = 0;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply = 16*1000*1000*1000*10**decimals;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -29,16 +29,8 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol,
-        uint8 _decimals
     ) public {
-        decimals = _decimals;
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
@@ -77,7 +69,7 @@ contract TokenERC20 {
     /**
      * Transfer tokens from other address
      *
-     * Send `_value` tokens to `_to` on behalf of `_from`
+     * Send `_value` tokens to `_to` in behalf of `_from`
      *
      * @param _from The address of the sender
      * @param _to The address of the recipient
@@ -93,7 +85,7 @@ contract TokenERC20 {
     /**
      * Set allowance for other address
      *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -107,7 +99,7 @@ contract TokenERC20 {
     /**
      * Set allowance for other address and notify
      *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -143,7 +135,7 @@ contract TokenERC20 {
      *
      * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
      *
-     * @param _from the address of the sender
+     * @param _from the address of the senderT
      * @param _value the amount of money to burn
      */
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
