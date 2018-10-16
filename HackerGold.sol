@@ -1,99 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HackerGold at 0x2563c25db9d2fb94f65e7632544eb057fc3dfcf0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HackerGold at 0xF6FE061efa2a8e15936696BaF5E8CBa8C3F3485B
 */
-pragma solidity ^0.4.0;
-
-/*
- * Token - is a smart contract interface 
- * for managing common functionality of 
- * a token.
- *
- * ERC.20 Token standard: https://github.com/eth ereum/EIPs/issues/20
- */
 contract TokenInterface {
-
-        
-    // total amount of tokens
     uint totalSupply;
-
-    
-    /**
-     *
-     * balanceOf() - constant function check concrete tokens balance  
-     *
-     *  @param owner - account owner
-     *  
-     *  @return the value of balance 
-     */                               
     function balanceOf(address owner) constant returns (uint256 balance);
     
     function transfer(address to, uint256 value) returns (bool success);
 
     function transferFrom(address from, address to, uint256 value) returns (bool success);
-
-    /**
-     *
-     * approve() - function approves to a person to spend some tokens from 
-     *           owner balance. 
-     *
-     *  @param spender - person whom this right been granted.
-     *  @param value   - value to spend.
-     * 
-     *  @return true in case of succes, otherwise failure
-     * 
-     */
     function approve(address spender, uint256 value) returns (bool success);
-
-    /**
-     *
-     * allowance() - constant function to check how much is 
-     *               permitted to spend to 3rd person from owner balance
-     *
-     *  @param owner   - owner of the balance
-     *  @param spender - permitted to spend from this balance person 
-     *  
-     *  @return - remaining right to spend 
-     * 
-     */
     function allowance(address owner, address spender) constant returns (uint256 remaining);
 
     // events notifications
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
-/*
- * StandardToken - is a smart contract  
- * for managing common functionality of 
- * a token.
- *
- * ERC.20 Token standard: 
- *         https://github.com/eth ereum/EIPs/issues/20
- */
 contract StandardToken is TokenInterface {
 
-
-    // token ownership
     mapping (address => uint256) balances;
 
-    // spending permision management
     mapping (address => mapping (address => uint256)) allowed;
-    
-    
     
     function StandardToken(){
     }
-    
-    
-    /**
-     * transfer() - transfer tokens from msg.sender balance 
-     *              to requested account
-     *
-     *  @param to    - target address to transfer tokens
-     *  @param value - ammount of tokens to transfer
-     *
-     *  @return - success / failure of the transaction
-     */    
     function transfer(address to, uint256 value) returns (bool success) {
         
         
@@ -112,18 +41,6 @@ contract StandardToken is TokenInterface {
         }
     }
     
-    
-
-    
-    /**
-     * transferFrom() - 
-     *
-     *  @param from  - 
-     *  @param to    - 
-     *  @param value - 
-     *
-     *  @return 
-     */
     function transferFrom(address from, address to, uint256 value) returns (bool success) {
     
         if ( balances[from] >= value && 
@@ -148,102 +65,40 @@ contract StandardToken is TokenInterface {
             return false; 
         }
     }
-
-    
-
-    
-    /**
-     *
-     * balanceOf() - constant function check concrete tokens balance  
-     *
-     *  @param owner - account owner
-     *  
-     *  @return the value of balance 
-     */                               
     function balanceOf(address owner) constant returns (uint256 balance) {
         return balances[owner];
     }
 
-    
-    
-    /**
-     *
-     * approve() - function approves to a person to spend some tokens from 
-     *           owner balance. 
-     *
-     *  @param spender - person whom this right been granted.
-     *  @param value   - value to spend.
-     * 
-     *  @return true in case of succes, otherwise failure
-     * 
-     */
     function approve(address spender, uint256 value) returns (bool success) {
         
-        // now spender can use balance in 
-        // ammount of value from owner balance
         allowed[msg.sender][spender] = value;
-        
-        // rise event about the transaction
         Approval(msg.sender, spender, value);
         
         return true;
     }
 
-    /**
-     *
-     * allowance() - constant function to check how mouch is 
-     *               permited to spend to 3rd person from owner balance
-     *
-     *  @param owner   - owner of the balance
-     *  @param spender - permited to spend from this balance person 
-     *  
-     *  @return - remaining right to spend 
-     * 
-     */
     function allowance(address owner, address spender) constant returns (uint256 remaining) {
       return allowed[owner][spender];
     }
 
 }
-
-/**
- *
- * @title Hacker Gold
- * 
- * The official token powering the hack.ether.camp virtual accelerator.
- * This is the only way to acquire tokens from startups during the event.
- *
- * Whitepaper https://hack.ether.camp/whitepaper
- *
- */
 contract HackerGold is StandardToken {
 
-    // Name of the token    
     string public name = "HackerGold";
 
-    // Decimal places
     uint8  public decimals = 3;
-    // Token abbreviation        
     string public symbol = "HKG";
     
-    // 1 ether = 200 hkg
     uint BASE_PRICE = 200;
-    // 1 ether = 150 hkg
     uint MID_PRICE = 150;
-    // 1 ether = 100 hkg
     uint FIN_PRICE = 100;
-    // Safety cap
     uint SAFETY_LIMIT = 4000000 ether;
-    // Zeros after the point
     uint DECIMAL_ZEROS = 1000;
     
-    // Total value in wei
     uint totalValue;
     
-    // Address of multisig wallet holding ether from sale
     address wallet;
 
-    // Structure of sale increase milestones
     struct milestones_struct {
       uint p1;
       uint p2; 
@@ -255,14 +110,6 @@ contract HackerGold is StandardToken {
     // Milestones instance
     milestones_struct milestones;
     
-    /**
-     * Constructor of the contract.
-     * 
-     * Passes address of the account holding the value.
-     * HackerGold contract itself does not hold any value
-     * 
-     * @param multisig address of MultiSig wallet which will hold the value
-     */
     function HackerGold(address multisig) {
         
         wallet = multisig;
