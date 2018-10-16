@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Americo at 0x0a473605d21ac72ab6f942cd536dfb2776110de1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Americo at 0xbc22bcc8ae58cf5d2f3cc154d06ada297dff761d
 */
 contract Americo {
   /* Variables públicas del token */
@@ -18,7 +18,7 @@ contract Americo {
     /* Inicializa el contrato con los tokens de suministro inicial al creador del contrato */
     function Americo() {
 
-         initialSupply=160000000000000;
+         initialSupply=160000000;
          name="Americo";
         decimals=6;
          symbol="AME";
