@@ -1,78 +1,80 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sender at 0x5a109163996ee56d88e7ce6e9579a45eddea036e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sender at 0xa1f06f9de4cd404cf017456eeb2f9b43dd0417b0
 */
 pragma solidity ^0.4.11;
+/**
+* Token Batch assignments 
+*/
+
+ contract token {
+
+    function balanceOf(address _owner) public returns (uint256 bal);
+    function transfer(address _to, uint256 _value) public returns (bool); 
+ 
+ }
+
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
+ * This contract is administered
  */
-contract Ownable {
-  address public owner;
 
-
-  /** 
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner. 
-   */
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
+contract admined {
+    address public admin; //Admin address is public
+    /**
+    * @dev This constructor set the initial admin of the contract
+    */
+    function admined() internal {
+        admin = msg.sender; //Set initial admin to contract creator
+        Admined(admin);
     }
-    _;
-  }
 
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to. 
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+    modifier onlyAdmin() { //A modifier to define admin-only functions
+        require(msg.sender == admin);
+        _;
     }
-  }
 
+    /**
+    * @dev Transfer the adminship of the contract
+    * @param _newAdmin The address of the new admin.
+    */
+    function transferAdminship(address _newAdmin) onlyAdmin public { //Admin can be transfered
+        require(_newAdmin != address(0));
+        admin = _newAdmin;
+        TransferAdminship(admin);
+    }
+
+    //All admin actions have a log for public review
+    event TransferAdminship(address newAdmin);
+    event Admined(address administrador);
 }
 
+contract Sender is admined {
+    
+    token public ERC20Token;
+    mapping (address => bool) public flag; //Balances mapping
+    uint256 public price; //with all decimals
+    
+    function Sender (token _addressOfToken, uint256 _initialPrice) public {
+        price = _initialPrice;
+        ERC20Token = _addressOfToken; 
+    }
 
-contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  event Transfer(address indexed from, address indexed to, uint value);
-}
+    function updatePrice(uint256 _newPrice) onlyAdmin public {
+        price = _newPrice;
+    }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint);
-  function transferFrom(address from, address to, uint value);
-  function approve(address spender, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
+    function contribute() public payable { //It takes an array of addresses and an amount
+        require(flag[msg.sender] == false);
+        flag[msg.sender] = true;
+        ERC20Token.transfer(msg.sender,price);
+    }
 
-contract Sender is Ownable {
+    function withdraw() onlyAdmin public{
+        require(admin.send(this.balance));
+        ERC20Token.transfer(admin, ERC20Token.balanceOf(this));
+    }
 
-    function multisend(address _tokenAddr, address[] dests, uint256[] values)
-    onlyOwner
-    returns (uint256) {
-        uint256 i = 0;
-        while (i < dests.length) {
-           ERC20(_tokenAddr).transfer(dests[i], values[i]);
-           i += 1;
-        }
-        return(i);
+    function() public payable {
+        contribute();
     }
 }
