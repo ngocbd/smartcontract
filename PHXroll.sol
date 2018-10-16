@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PHXroll at 0xdd1bd98403f24a6dff1c948cfdec509bfc244fc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PHXroll at 0xbd0df049391e2419c8146f222907967b46e8b034
 */
 pragma solidity ^0.4.21;
 
@@ -46,13 +46,6 @@ pragma solidity ^0.4.21;
 */
 
 contract PHXReceivingContract {
-    /**
-     * @dev Standard ERC223 function that will handle incoming token transfers.
-     *
-     * @param _from  Token sender address.
-     * @param _value Amount of tokens.
-     * @param _data  Transaction metadata.
-     */
     function tokenFallback(address _from, uint _value, bytes _data) public;
 }
 
@@ -62,21 +55,14 @@ contract PHXInterface {
     function transfer(address _to, uint _value, bytes _data) public returns (bool);
 }
 
-contract usingDSSafeAddSub {
-    function safeToAdd(uint a, uint b) internal pure returns (bool) {
-        return (a + b >= a);
-    }
+contract usingMathLibraries {
     function safeAdd(uint a, uint b) internal pure returns (uint) {
-        require(safeToAdd(a, b));
+        require(a + b >= a);
         return a + b;
     }
 
-    function safeToSubtract(uint a, uint b) pure internal returns (bool) {
-        return (b <= a);
-    }
-
     function safeSub(uint a, uint b) pure internal returns (uint) {
-        require(safeToSubtract(a, b));
+        require(b <= a);
         return a - b;
     } 
 
@@ -105,7 +91,7 @@ contract usingDSSafeAddSub {
     }
 }
 
-contract PHXroll is PHXReceivingContract, usingDSSafeAddSub {
+contract PHXroll is PHXReceivingContract, usingMathLibraries {
     
     /*
      * checks player profit, bet size and player number is within range
@@ -224,11 +210,13 @@ contract PHXroll is PHXReceivingContract, usingDSSafeAddSub {
     // 
     // ¯\_(?)_/¯ 
     // 
+    uint seed3;
     function _pRand(uint _modulo) internal view returns (uint) {
         require((1 < _modulo) && (_modulo <= 1000));
         uint seed1 = uint(block.coinbase); // Get Miner's Address
         uint seed2 = now; // Get the timestamp
-        return uint(keccak256(seed1, seed2)) % _modulo;
+        seed3++; // Make all pRand calls unique
+        return uint(keccak256(seed1, seed2, seed3)) % _modulo;
     }
 
     /*
