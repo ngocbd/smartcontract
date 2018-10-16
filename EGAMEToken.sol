@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGAMEToken at 0xa05C48fff5dA158EdD45DF5659ca2f3D55509A6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGAMEToken at 0xa1fF3c0a1AB89D310D8F2d08732C18d333c24A0e
 */
 pragma solidity ^0.4.4;
 
@@ -104,8 +104,8 @@ contract EGAMEToken is StandardToken {
 
     function EGAMEToken(
         ) {
-        balances[msg.sender] = 120000000000000000;
-        totalSupply = 120000000000000000;
+        balances[msg.sender] = 1200000000000000;
+        totalSupply = 1200000000000000;
         name = "EGAME Token";
         decimals = 8;
         symbol = "EGAMET";
