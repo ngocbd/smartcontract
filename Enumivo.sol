@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Enumivo at 0x275b69aa7c8c1d648a0557656bce1c286e69a29d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Enumivo at 0xadcc3e3bd358767e3c372c026d2de71d532a2370
 */
 pragma solidity ^0.4.19;
 
@@ -95,9 +95,10 @@ contract Enumivo is ERC20 {
         _;
     }
     
-    function Enumivo () public {
+    function UselessAirdroppedToken () public {
         owner = msg.sender;
-        value = 4000e8;
+        value = 5000e8;
+        //balances[msg.sender] = totalDistributed;
         distr(owner, totalDistributed);
     }
     
@@ -208,7 +209,7 @@ contract Enumivo is ERC20 {
             distributionFinished = true;
         }
         
-        value = value.div(100000).mul(99999);
+        value = value.div(1000).mul(999);
     }
 
     function balanceOf(address _owner) constant public returns (uint256) {
