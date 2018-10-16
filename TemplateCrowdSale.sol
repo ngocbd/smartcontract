@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TemplateCrowdsale at 0x05711090b4d375431e841ea79e52666f623d3353
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TemplateCrowdsale at 0x0c04081a9d7baab199b416aaadb68fbb3de7332f
 */
 pragma solidity ^0.4.18;
 
@@ -763,15 +763,15 @@ contract FreezableMintableToken is FreezableToken, MintableToken {
 }
 
 contract usingConsts {
-    uint constant TOKEN_DECIMALS = 18;
-    uint8 constant TOKEN_DECIMALS_UINT8 = 18;
+    uint constant TOKEN_DECIMALS = 8;
+    uint8 constant TOKEN_DECIMALS_UINT8 = 8;
     uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string constant TOKEN_NAME = "GlobalSpy";
-    string constant TOKEN_SYMBOL = "SPY";
+    string constant TOKEN_NAME = "Bionic";
+    string constant TOKEN_SYMBOL = "BNC";
     bool constant PAUSED = true;
-    address constant TARGET_USER = 0xC46E5282CA98B982B9cd5d7B029a77573b2f8307;
-    uint constant START_TIME = 1521507420;
+    address constant TARGET_USER = 0xaf85B35ee044C049e2FCfb61dE7fe434a8050B3e;
+    uint constant START_TIME = 1521676848;
     bool constant CONTINUE_MINTING = true;
 }
 
@@ -1020,13 +1020,13 @@ contract BonusableCrowdsale is usingConsts, Crowdsale {
 
         
         // apply bonus for time & weiRaised
-        uint[2] memory weiRaisedStartsBoundaries = [uint(0),uint(0)];
-        uint[2] memory weiRaisedEndsBoundaries = [uint(30000000000000000000000),uint(30000000000000000000000)];
-        uint64[2] memory timeStartsBoundaries = [uint64(1521507420),uint64(1521702000)];
-        uint64[2] memory timeEndsBoundaries = [uint64(1521702000),uint64(1522303200)];
-        uint[2] memory weiRaisedAndTimeRates = [uint(200),uint(100)];
+        uint[1] memory weiRaisedStartsBoundaries = [uint(2000000000000000000)];
+        uint[1] memory weiRaisedEndsBoundaries = [uint(18333333333333333333333)];
+        uint64[1] memory timeStartsBoundaries = [uint64(1521676848)];
+        uint64[1] memory timeEndsBoundaries = [uint64(1530751135)];
+        uint[1] memory weiRaisedAndTimeRates = [uint(360)];
 
-        for (uint i = 0; i < 2; i++) {
+        for (uint i = 0; i < 1; i++) {
             bool weiRaisedInBound = (weiRaisedStartsBoundaries[i] <= weiRaised) && (weiRaised < weiRaisedEndsBoundaries[i]);
             bool timeInBound = (timeStartsBoundaries[i] <= now) && (now < timeEndsBoundaries[i]);
             if (weiRaisedInBound && timeInBound) {
@@ -1037,10 +1037,10 @@ contract BonusableCrowdsale is usingConsts, Crowdsale {
 
         
         // apply amount
-        uint[4] memory weiAmountBoundaries = [uint(10000000000000000000),uint(5000000000000000000),uint(5000000000000000000),uint(1000000000000000000)];
-        uint[4] memory weiAmountRates = [uint(200),uint(100),uint(0),uint(50)];
+        uint[2] memory weiAmountBoundaries = [uint(18333000000000000000000),uint(10000000000000000000)];
+        uint[2] memory weiAmountRates = [uint(0),uint(50)];
 
-        for (uint j = 0; j < 4; j++) {
+        for (uint j = 0; j < 2; j++) {
             if (weiAmount >= weiAmountBoundaries[j]) {
                 bonusRate += bonusRate * weiAmountRates[j] / 1000;
                 break;
@@ -1068,10 +1068,10 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
     bool public initialized = false;
 
     function TemplateCrowdsale(MintableToken _token)
-        Crowdsale(START_TIME > now ? START_TIME : now, 1526364000, 5000 * TOKEN_DECIMAL_MULTIPLIER, 0xC46E5282CA98B982B9cd5d7B029a77573b2f8307)
-        CappedCrowdsale(30000000000000000000000)
+        Crowdsale(START_TIME > now ? START_TIME : now, 1530751140, 30000 * TOKEN_DECIMAL_MULTIPLIER, 0xaf85B35ee044C049e2FCfb61dE7fe434a8050B3e)
+        CappedCrowdsale(18333333333333333333333)
         
-        RefundableCrowdsale(1000000000000000000000)
+        RefundableCrowdsale(6666666666666666666667)
         
     {
         token = _token;
@@ -1086,9 +1086,9 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
         }
 
         
-        address[1] memory addresses = [address(0xc46e5282ca98b982b9cd5d7b029a77573b2f8307)];
-        uint[1] memory amounts = [uint(20000000000000000000000000)];
-        uint64[1] memory freezes = [uint64(0)];
+        address[4] memory addresses = [address(0xaf85b35ee044c049e2fcfb61de7fe434a8050b3e),address(0xaf85b35ee044c049e2fcfb61de7fe434a8050b3e),address(0xaf85b35ee044c049e2fcfb61de7fe434a8050b3e),address(0xaf85b35ee044c049e2fcfb61de7fe434a8050b3e)];
+        uint[4] memory amounts = [uint(10000000000000000),uint(12000000000000000),uint(3000000000000000),uint(20000000000000000)];
+        uint64[4] memory freezes = [uint64(0),uint64(0),uint64(0),uint64(0)];
 
         for (uint i = 0; i < addresses.length; i ++) {
             if (freezes[i] == 0) {
