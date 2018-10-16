@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftCard2017 at 0x2a0dc33d1bfc8e210bca025a363c5168ef0453b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftCard2017 at 0xf01d0e76efcea913b3203484a0d82b3995202001
 */
 pragma solidity ^0.4.18;
+// Version 2
 
 contract GiftCard2017{
     address owner;
@@ -13,11 +14,11 @@ contract GiftCard2017{
     }
     
     /// Redeems authorized ETH.
-    function () public {
-        uint256 _redemption = authorizations[msg.sender];   // Amount mEth available to redeem.
+    function () public payable {                               // Accept ether only because some clients require it.
+        uint256 _redemption = authorizations[msg.sender];      // Amount mEth available to redeem.
         require (_redemption > 0);
-        authorizations[msg.sender] = 0;                     // Clear authorization.
-        msg.sender.transfer(_redemption * 1e15);            // convert mEth to wei for transfer()
+        authorizations[msg.sender] = 0;                        // Clear authorization.
+        msg.sender.transfer(_redemption * 1e15 + msg.value);   // convert mEth to wei for transfer()
     }
     
     /// Contract owner deposits ETH.
