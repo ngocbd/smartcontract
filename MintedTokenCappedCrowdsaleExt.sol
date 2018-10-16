@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x806ECB4316bF70EE87E09a9AE7f33291F8D67afC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x2C853A9899c23cb22380FbE635BC270C1C6dd24C
 */
 // Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
