@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WETH at 0xaec71b3be50bc4cd99b44ea84fcf1ecc913bc33d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WETH at 0x353f8931ce1c52f643121be129985aab09c4bf52
 */
 // Copyright (C) 2015, 2016, 2017 Dapphub
 
@@ -19,14 +19,10 @@
 pragma solidity ^0.4.18;
 
 contract WETH {
-    string public name     = "Wrapped Ether";
-    string public symbol   = "WETH";
-    uint8  public decimals = 18;
-
-    event  Approval(address indexed src, address indexed guy, uint wad);
-    event  Transfer(address indexed src, address indexed dst, uint wad);
-    event  Deposit(address indexed dst, uint wad);
-    event  Withdraw(address indexed src, uint wad);
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
+    event Deposit(address indexed dst, uint wad);
+    event Withdraw(address indexed src, uint wad);
 
     mapping (address => uint)                       public  balanceOf;
     mapping (address => mapping (address => uint))  public  allowance;
@@ -59,10 +55,9 @@ contract WETH {
         return transferFrom(msg.sender, dst, wad);
     }
 
-    function transferFrom(address src, address dst, uint wad) 
-        public 
-        returns (bool) 
-    {
+    function transferFrom(
+        address src, address dst, uint wad
+    ) public returns (bool) {
         require(balanceOf[src] >= wad);
 
         if (src != msg.sender && allowance[src][dst] != uint(-1)) {
