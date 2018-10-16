@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeseToken at 0xba659edda4e6806a047fef72f2e937defb582c7a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeseToken at 0xc3866fb1c2a6c647cb4374cac42e8fbdf6217072
 */
 pragma solidity ^0.4.18;
 
@@ -852,7 +852,7 @@ contract Configurator is Ownable {
 
     preITO = new PreITO();
 
-    preITO.setWallet(0xa86780383E35De330918D8e4195D671140A60A74);
+    preITO.setWallet(0x1B139Ad79ED5F69ca4545EE9c4F1C774FbEc99Fe);
     preITO.setStart(1526342400);
     preITO.setPeriod(15);
     preITO.setPrice(786700);
@@ -867,7 +867,7 @@ contract Configurator is Ownable {
 
     ito = new ITO();
 
-    ito.setWallet(0x98882D176234AEb736bbBDB173a8D24794A3b085);
+    ito.setWallet(0x1B139Ad79ED5F69ca4545EE9c4F1C774FbEc99Fe);
     ito.setStart(1527811200);
     ito.addMilestone(5, 33);
     ito.addMilestone(5, 18);
