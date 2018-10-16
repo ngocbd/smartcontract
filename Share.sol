@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Share at 0xbc9363b59cd73f59102ad6a45494f274d311c0c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Share at 0x67257572dc786eea23e2050fe30c2d182ff52926
 */
 pragma solidity ^0.4.24;
 
@@ -44,7 +44,8 @@ contract Control {
  * all income will be split to holders according to their holds
  * user can buy holds from shareholders at his will
  */
-contract Share is Control {    /**
+contract Share is Control {    
+    /**
      * the holds of every holder
      * the total holds stick to total
      */
@@ -52,7 +53,7 @@ contract Share is Control {    /**
 
     /**
      * since we don't record holders' address in a list
-     * and we don't want to loop holders list everytime when there is income
+     * and we don't want to loop holders list everytime when income
      *
      * we use a mechanism called 'watermark'
      * 
@@ -71,6 +72,7 @@ contract Share is Control {    /**
      */
     mapping (address => uint256) public sellPrice;
     mapping (address => uint256) public toSell;
+    
     mapping (address => mapping(address => uint256)) public allowance;
     uint256 public watermark;
     uint256 public total;
@@ -216,12 +218,8 @@ contract Share is Control {    /**
         emit Approval(msg.sender, to, amount);
         return true;
     }
-    
+
     function totalSupply() public view returns (uint256) {
         return total;
-    }
-    
-    function allowance(address owner, address spender) public view returns (uint256) {
-        return allowance[owner][spender];
     }
 }
