@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SONICToken at 0xae16921eea230edac4ea76bca43ecdf885ac9a8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SONICToken at 0x7b7080794af5ec137c9101fb729461cacb2d5171
 */
 pragma solidity ^0.4.20;
 
@@ -31,7 +31,7 @@ contract SONICToken {
     uint public timeWait = 30 days;
    // uint public timeWait = 10 minutes; // uncomment for TestNet
 
-    uint256 public constant initialSupply = 6000500;
+    uint256 public constant initialSupply = 15000000;
 
     /**
      * ERC20 events these generate a public event on the blockchain that will notify clients
@@ -58,7 +58,7 @@ contract SONICToken {
     ) {
 
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens (0 in this case)
-        totalSupply = initialSupply;                        // Update total supply (0 in this case)
+        totalSupply = initialSupply * 1000000000000000000;                        // Update total supply (0 in this case)
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
         decimals = decimalUnits;                            // Amount of decimals for display purposes
