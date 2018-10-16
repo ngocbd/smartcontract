@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITCOINBLUE at 0x8d6e79f25302dee4caaf9187fb1434c4a1465c3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITCOINBLUE at 0xece4d2652f2b52241335649442c4f93911d27f3e
 */
 pragma solidity ^0.4.4;
 
@@ -69,7 +69,7 @@ contract BITCOINBLUE is StandardToken {
     string public name;                   
     uint8 public decimals;                
     string public symbol;                
-    string public version = 'BTCBLUE 1.0'; 
+    string public version = 'C1.0'; 
     uint256 public unitsOneEthCanBuy;     
     uint256 public totalEthInWei;         
     address public fundsWallet;  
@@ -77,10 +77,10 @@ contract BITCOINBLUE is StandardToken {
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function BITCOINBLUE() {
-        balances[msg.sender] = 21000000e18;  
-        totalSupply = 21000000e18;  
+        balances[msg.sender] = 21000000e8;  
+        totalSupply = 21000000e8;  
         name = "BITCOINBLUE";                                 
-        decimals = 18;                                              
+        decimals = 8;                                              
         symbol = "BTCBLUE";                                           
         unitsOneEthCanBuy = 20000;                                
         fundsWallet = msg.sender;                             
