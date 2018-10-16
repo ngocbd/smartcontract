@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ComBillAdvancedToken at 0xb7d25b738cc48a0b721b5a3f2fdce9ccbb121e1f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ComBillAdvancedToken at 0x6292cec07c345c6c6953e9166324f58db6d9f814
 */
 pragma solidity ^0.4.16;
 
@@ -15,29 +15,6 @@ contract owned {
     function transferOwnership(address newOwner) onlyOwner public {
         owner = newOwner;
     }
-}
-
-/* taking ideas from FirstBlood token */
-contract SafeMath {
-
-    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
-    }
-
-    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
-      assert(x >= y);
-      uint256 z = x - y;
-      return z;
-    }
-
-    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
-    }
-
 }
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
@@ -123,7 +100,7 @@ contract ComBillToken {
     }
 }
 
-contract ComBillAdvancedToken is owned, ComBillToken, SafeMath {
+contract ComBillAdvancedToken is owned, ComBillToken {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
@@ -158,13 +135,6 @@ contract ComBillAdvancedToken is owned, ComBillToken, SafeMath {
         allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
-    }
-
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
     }
 
     function freezeAccount(address target, bool freeze) onlyOwner public {
