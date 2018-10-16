@@ -1,37 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1130f5f6b66a8ff0acb3807e2a56ce6fc0105644
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xbb9eee068c8fe966eb03ba7aa59159ad4c74c455
 */
-pragma solidity ^0.4.16;
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+pragma solidity ^0.4.15;
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-    
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
@@ -55,226 +31,202 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-  
 }
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-    
+contract Ownable {
+
+  address public owner;
+  function Ownable() public { owner = msg.sender; }
+
+  modifier onlyOwner {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner {owner = newOwner;}
+}
+
+contract ERC20Interface {
+
+  function totalSupply() public constant returns (uint256);
+
+  function balanceOf(address _owner) public constant returns (uint256);
+
+  function transfer(address _to, uint256 _value) public returns (bool);
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+
+  function approve(address _spender, uint256 _value) public returns (bool);
+
+  function allowance(address _owner, address _spender) public constant returns (uint256);
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+ }
+
+contract SmartOToken is Ownable, ERC20Interface {
+
   using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+  /* Public variables of the token */
+  string public constant name = "STO";
+  string public constant symbol = "STO";
+  uint public constant decimals = 18;
+  uint256 public constant initialSupply = 12000000000 * 1 ether;
+  uint256 public totalSupply;
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+  /* This creates an array with all balances */
+  mapping (address => uint256) public balances;
+  mapping (address => mapping (address => uint256)) public allowed;
+
+  /* Events */
+  event Burn(address indexed burner, uint256 value);
+  event Mint(address indexed to, uint256 amount);
+
+  /* Constuctor: Initializes contract with initial supply tokens to the creator of the contract */
+  function SmartOToken() public {
+      balances[msg.sender] = initialSupply;              // Give the creator all initial tokens
+      totalSupply = initialSupply;                        // Update total supply
+  }
+
+
+  /* Implementation of ERC20Interface */
+
+  function totalSupply() public constant returns (uint256) { return totalSupply; }
+
+  function balanceOf(address _owner) public constant returns (uint256) { return balances[_owner]; }
+
+  /* Internal transfer, only can be called by this contract */
+  function _transfer(address _from, address _to, uint _amount) internal {
+      require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
+      require (balances[_from] >= _amount);                // Check if the sender has enough
+      balances[_from] = balances[_from].sub(_amount);
+      balances[_to] = balances[_to].add(_amount);
+      Transfer(_from, _to, _amount);
+
+  }
+
+  function transfer(address _to, uint256 _amount) public returns (bool) {
+    _transfer(msg.sender, _to, _amount);
     return true;
   }
 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
+    require (_value <= allowed[_from][msg.sender]);     // Check allowance
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    _transfer(_from, _to, _value);
     return true;
   }
 
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+  function approve(address _spender, uint256 _amount) public returns (bool) {
+    allowed[msg.sender][_spender] = _amount;
+    Approval(msg.sender, _spender, _amount);
     return true;
   }
 
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public constant returns (uint256) {
     return allowed[_owner][_spender];
   }
 
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    
-  address public owner;
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
-
-}
-
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is StandardToken {
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint _value) public {
-    require(_value > 0);
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-    Burn(burner, _value);
-  }
-
-  event Burn(address indexed burner, uint indexed value);
-
-}
-
-contract MRDSTSCoinToken is BurnableToken {
-    
-  string public constant name = "MRDSTS Coin Token";
-  string public constant symbol = "MRDSTS";
- 
-  uint32 public constant decimals = 18;
-  uint256 public INITIAL_SUPPLY = 270000000 * 1 ether; // INITIAL SUPPLY
-
-  function MRDSTSCoinToken() public {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
-    
-}
 
 contract Crowdsale is Ownable {
-    
-  using SafeMath for uint;
-    
-  address multisig;
 
-  uint restrictedPercent;
+  using SafeMath for uint256;
 
-  address restricted;
+  // The token being sold
+  SmartOToken public token;
 
-  MRDSTSCoinToken public token = new MRDSTSCoinToken();
+  // Flag setting that investments are allowed (both inclusive)
+  bool public saleIsActive;
 
-  uint start;
-    
-  uint period;
+  // address where funds are collected
+  address public wallet;
 
-  uint rate;
+  // Number of tokents for 1 ETH, i.e. 683 tokens for 1 ETH
+  uint256 public rate;
 
-  function Crowdsale() public {
-    multisig = 0x4E25acbc3f7CfFceD2A1D758B577B52f855cf022;  // WALLET FOR ALL FUNDS TO ESCROW
-    restricted = 0x4E25acbc3f7CfFceD2A1D758B577B52f855cf022; // 60% send to restricted
-    restrictedPercent = 60;
-    rate = 25000000000000000000000; // 1 ETH = 25000 MRDS 
-    start = 1520096361;
-    period = 17;
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  /* -----------   A D M I N        F U N C T I O N S    ----------- */
+
+  function Crowdsale(uint256 _initialRate, address _targetWallet) public {
+
+    //Checks
+    require(_initialRate > 0);
+    require(_targetWallet != 0x0);
+
+    //Init
+    token = new SmartOToken();
+    rate = _initialRate;
+    wallet = _targetWallet;
+    saleIsActive = true;
+
   }
 
-  modifier saleIsOn() {
-    require(now > start && now < start + period * 1 days);
-    _;
+  function close() public onlyOwner {
+    selfdestruct(owner);
   }
 
-  function createTokens() public saleIsOn payable {
-    multisig.transfer(msg.value);
-    uint tokens = rate.mul(msg.value).div(1 ether);
-    uint bonusTokens = 0;
-    if(now < start + (period * 1 days).div(4)) {
-      bonusTokens = tokens.div(10).mul(6);
-    } else if(now >= start + (period * 1 days).div(4) && now < start + (period * 1 days).div(4).mul(2)) {
-      bonusTokens = tokens.div(10).mul(6);
-    } else if(now >= start + (period * 1 days).div(4).mul(2) && now < start + (period * 1 days).div(4).mul(3)) {
-      bonusTokens = tokens.div(10).mul(6);
-    }
-    uint tokensWithBonus = tokens.add(bonusTokens);
-    token.transfer(msg.sender, tokensWithBonus);
-    uint restrictedTokens = tokens.mul(restrictedPercent).div(100 - restrictedPercent);
-    token.transfer(restricted, restrictedTokens);
+  //Transfer token to
+  function transferToAddress(address _targetWallet, uint256 _tokenAmount) public onlyOwner {
+    token.transfer(_targetWallet, _tokenAmount * 1 ether);
   }
 
-  function() external payable {
-    createTokens();
+
+  //Setters
+  function enableSale() public onlyOwner {
+    saleIsActive = true;
   }
-    
+
+  function disableSale() public onlyOwner {
+    saleIsActive = false;
+  }
+
+  function setRate(uint256 _newRate) public onlyOwner {
+    rate = _newRate;
+  }
+
+
+  /* -----------   P U B L I C      C A L L B A C K       F U N C T I O N     ----------- */
+
+  function () public payable {
+
+    require(msg.sender != 0x0);
+    require(saleIsActive);
+    require(msg.value >= 0.1 * 1 ether);
+
+    uint256 weiAmount = msg.value;
+
+    //Update total wei counter
+    weiRaised = weiRaised.add(weiAmount);
+
+    //Calc number of tokents
+    uint256 tokenAmount = weiAmount.mul(rate);
+
+    //Forward wei to wallet account
+    wallet.transfer(weiAmount);
+
+    //Transfer token to sender
+    token.transfer(msg.sender, tokenAmount);
+    TokenPurchase(msg.sender, wallet, weiAmount, tokenAmount);
+
+  }
+
+
+
 }
