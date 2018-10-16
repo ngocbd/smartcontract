@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0xae2522fd28d29dd7a6802578ad84d39b04d4ea14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howbadlycouldthisgowrong at 0x34ea8cdc7837d3a84f5869909104bdb1a7c8cb35
 */
 pragma solidity ^0.4.19;
 
@@ -21,22 +21,41 @@ interface Corn
  */
 contract howbadlycouldthisgowrong {
   // Address to which any funds sent to this contract will be forwarded
-  address public destinationAddress;
+  address public parentAddress;
+  event ForwarderDeposited(address from, uint value, bytes data);
 
   /**
-   * Create the contract, and set the destination address to that of the creator
+   * Create the contract, and sets the destination address to that of the creator
    */
-  function Forwarder() {
-    destinationAddress = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
+  function Forwarder() public {
+    parentAddress = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
   }
-  
-function () payable {
-      if (msg.value > 0) {
-          if (!destinationAddress.send(msg.value)) throw; // also reverts the transfer.
-      }
-}
 
-address public farmer = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
+  /**
+   * Modifier that will execute internal code block only if the sender is the parent address
+   */
+  modifier onlyParent {
+    if (msg.sender != parentAddress) {
+      revert();
+    }
+    _;
+  }
+
+  /**
+   * Default function; Gets called when Ether is deposited, and forwards it to the parent address
+   */
+  function() public payable {
+    // throws on failure
+    parentAddress.transfer(msg.value);
+    // Fire off the deposited event if we can forward it
+    ForwarderDeposited(msg.sender, msg.value, msg.data);
+  }
+
+
+
+
+
+address public farmer = 0xC4C6328405F00Fa4a93715D2349f76DF0c7E8b79;
     
     function sowCorn(address soil, uint8 seeds) external
     {
@@ -50,6 +69,9 @@ address public farmer = 0x3D14410609731Ec7924ea8B1f13De544BB46A9A6;
     {
         Corn(corn).transfer(farmer, Corn(corn).balanceOf(this));
     }
+
+
+
 
 
 }
