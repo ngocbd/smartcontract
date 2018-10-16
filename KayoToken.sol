@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KayoToken at 0x2eb1a3b71bee2bc135af75436ed5cd8cceac3e96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KayoToken at 0xcdf3be99c296828301847025b547faa0c3deb04e
 */
 pragma solidity ^0.4.18;
 
@@ -54,7 +54,7 @@ pragma solidity ^0.4.18;
 
         Checkpoint[] totalSupplyHistory;
 
-        bool public transfersEnabled;
+        bool public tradeEnabled;
         
         bool public IsPreSaleEnabled = false;
 
@@ -71,17 +71,6 @@ pragma solidity ^0.4.18;
         mapping (address => bool) public frozenAccount;
         event FrozenFunds(address target, bool frozen);
         
-        modifier canReleaseToken {
-            if (IsSaleEnabled == true || IsPreSaleEnabled == true) 
-                _;
-            else
-                revert();
-        }
-
-        modifier onlyairDropManager { 
-            require(msg.sender == airDropManager); _; 
-        }
-
         function KayoToken(
             address _tokenFactory,
             address _parentToken,
@@ -89,7 +78,7 @@ pragma solidity ^0.4.18;
             string _tokenName,
             uint8 _decimalUnits,
             string _tokenSymbol,
-            bool _transfersEnabled
+            bool _tradeEnabled
         ) public {
             owner = _tokenFactory;
             name = _tokenName;                                 
@@ -97,12 +86,27 @@ pragma solidity ^0.4.18;
             symbol = _tokenSymbol;                             
             parentToken = KayoToken(_parentToken);
             parentSnapShotBlock = _parentSnapShotBlock;
-            transfersEnabled = _transfersEnabled;
+            tradeEnabled = _tradeEnabled;
             creationBlock = block.number;
         }
 
+        function IsAirdrop() public view returns (bool result){
+            if(msg.sender == airDropManager)
+                return true;
+            else
+                return false;
+        }
+
+        function IsReleaseToken() public view returns(bool result){
+            if ((IsSaleEnabled == true || IsPreSaleEnabled == true) && msg.sender == owner)
+                return true;
+            else
+                return false;
+        }
+
+
         function transfer(address _to, uint256 _amount) public returns (bool success) {
-            require(transfersEnabled);
+            require(tradeEnabled);
             transferFrom(msg.sender, _to, _amount);
             return true;
         }
@@ -134,65 +138,59 @@ pragma solidity ^0.4.18;
             return true;
         }
 
-        function airDrop(address _to, uint256 _amount) onlyairDropManager public returns (bool success){
+        function airDrop(address _to, uint256 _amount) public returns (bool success){
             
-            require((_to != 0) && (_to != address(this)));
             require(IsAirDropEnabled);
-            
-            require(allowed[owner][msg.sender] >= _amount);
-            allowed[owner][msg.sender] -= _amount;
-            Transfer(owner, _to, _amount);
+            require((_to != 0) && (_to != address(this)));
+
+            transferFrom(owner, _to, _amount);
             return true;
         }
 
-        function invest(address _to, uint256 _amount) canReleaseToken onlyOwner public returns (bool success) {
+        function invest(address _to, uint256 _amount) public returns (bool success) {
             
             require((_to != 0) && (_to != address(this)));
 
-            bool IsTransferAllowed = false;
-
             if(IsPreSaleEnabled){
                 require(preSaleTokenBalances >= _amount);
-                IsTransferAllowed = true;
                 preSaleTokenBalances = preSaleTokenBalances - _amount;
             }
-            else if(IsSaleEnabled){
-                IsTransferAllowed = true;
-            }
-            else{
+            else if(!IsSaleEnabled){
                 revert();
             }
-
-            require(IsTransferAllowed);
-            var previousBalanceFrom = balanceOfAt(msg.sender, block.number);
-            require(previousBalanceFrom >= _amount);
-            updateValueAtNow(balances[msg.sender], previousBalanceFrom - _amount);
-
-            var previousBalanceTo = balanceOfAt(_to, block.number);
-            require(previousBalanceTo + _amount >= previousBalanceTo);
-            updateValueAtNow(balances[_to], previousBalanceTo + _amount);
-
-            transferFrom(msg.sender, _to, _amount); //Owner sending tokens
+            
+            transferFrom(msg.sender, _to, _amount);
             return true;
         }
 
         function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
 
-            require(IsSaleEnabled && !IsPreSaleEnabled);
+            if(IsReleaseToken() || IsAirdrop() || tradeEnabled == true){
+                if (_amount == 0) {
+                    Transfer(_from, _to, _amount);
+                    return;
+                }
 
-            if (_amount == 0) {
+                if (msg.sender != owner) {
+                    require(allowed[_from][msg.sender] >= _amount);
+                    allowed[_from][msg.sender] -= _amount;
+                }
+
+                var previousBalanceFrom = balanceOfAt(_from, block.number);
+                var previousBalanceTo = balanceOfAt(_to, block.number);
+
+                require(previousBalanceFrom >= _amount);
+                require(previousBalanceTo + _amount >= previousBalanceTo);
+
+                updateValueAtNow(balances[msg.sender], previousBalanceFrom - _amount);
+                updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+
                 Transfer(_from, _to, _amount);
-                return;
+
+                return true;
             }
-
-            if (msg.sender != owner) {
-                require(allowed[_from][msg.sender] >= _amount);
-                allowed[_from][msg.sender] -= _amount;
-            }
-
-            Transfer(_from, _to, _amount);
-
-            return true;
+            else
+                revert();
         }
 
         function balanceOf(address _owner) public constant returns (uint256 tokenBalance) {
@@ -270,26 +268,28 @@ pragma solidity ^0.4.18;
             return true;
         }
 
-        function destroyTokens(address _owner, uint _amount) onlyOwner public returns (bool) {
+        function destroyTokens(address _address, uint _amount) onlyOwner public returns (bool) {
             uint curTotalSupply = totalSupply();
             require(curTotalSupply >= _amount);
-            uint previousBalanceFrom = balanceOf(_owner);
+            uint previousBalanceFrom = balanceOf(_address);
             require(previousBalanceFrom >= _amount);
             updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
-            updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
-            Transfer(_owner, 0, _amount);
+            updateValueAtNow(balances[_address], previousBalanceFrom - _amount);
+            Transfer(_address, owner, _amount);
             return true;
         }
         
-        function destroyAllTokens(address _owner) onlyOwner public returns (bool) {
+        function destroyAllTokens() onlyOwner public returns (bool) {
+            uint curBalance = balanceOfAt(msg.sender, block.number);
             updateValueAtNow(totalSupplyHistory, 0);
-            updateValueAtNow(balances[_owner], 0);
-            Transfer(_owner, 0, 0);
+            updateValueAtNow(balances[msg.sender], 0);
+            preSaleTokenBalances = 0;
+            Transfer(msg.sender, 0, curBalance);
             return true;
         }
 
-        function enableTransfers(bool _transfersEnabled) public onlyOwner {
-            transfersEnabled = _transfersEnabled;
+        function enableTransfers(bool _tradeEnabled) public onlyOwner {
+            tradeEnabled = _tradeEnabled;
         }
 
         function getValueAt(Checkpoint[] storage checkpoints, uint _block) constant internal returns (uint) {
