@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LordCoinICO at 0x799440e7066e5360f1e7e2383134b0ac6710ffe1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LordCoinICO at 0x47b8b6256f49cba6c8bd37361cac8b0fe324d605
 */
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 /**
  * @title SafeMath
