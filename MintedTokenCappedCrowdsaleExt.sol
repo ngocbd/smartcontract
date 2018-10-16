@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x18af7a3f870f4f9ef48b272080d1cbbbc7d26fab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x8caeab04c108078d479da6966e515981d26036d1
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -10,6 +10,44 @@
 pragma solidity ^0.4.11;
 
 
+
+/**
+ * Safe unsigned safe math.
+ *
+ * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
+ *
+ * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
+ *
+ * Maintained here until merged to mainline zeppelin-solidity.
+ *
+ */
+library SMathLib {
+
+    function times(uint a, uint b) returns (uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+
+    function divides(uint a, uint b) returns (uint) {
+        assert(b > 0);
+        uint c = a / b;
+        assert(a == b * c + a % b);
+        return c;
+    }
+
+    function minus(uint a, uint b) returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function plus(uint a, uint b) returns (uint) {
+        uint c = a + b;
+        assert(c>=a);
+        return c;
+    }
+
+}
 
 /**
  * Math operations with safety checks
@@ -1223,11 +1261,9 @@ contract CrowdsaleExt is Haltable {
         isWhiteListed = _isWhiteListed;
     }
 
-    /**
-     * Don't expect to just send in money and get tokens.
-     */
+
     function() payable {
-        throw;
+        invest(msg.sender);
     }
 
     /**
@@ -1801,43 +1837,3 @@ contract MintedTokenCappedCrowdsaleExt is CrowdsaleExt {
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-
-
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
-library SMathLib {
-
-    function times(uint a, uint b) returns (uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function divides(uint a, uint b) returns (uint) {
-        assert(b > 0);
-        uint c = a / b;
-        assert(a == b * c + a % b);
-        return c;
-    }
-
-    function minus(uint a, uint b) returns (uint) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function plus(uint a, uint b) returns (uint) {
-        uint c = a + b;
-        assert(c>=a);
-        return c;
-    }
-
-}
