@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MSCE at 0xcb421c4fe6ec187706dfcc02f6063e0d46f2830a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MSCE at 0x2efb0309f41648a9faa935e189e2c8ff763bce75
 */
 pragma solidity ^0.4.18;
 
 
 /**
  * @title Global Mobile Industry Service Ecosystem Chain 
- * @dev Developed By Jack 5/14 2018 
+ * @dev Developed By Jack 5/15 2018 
  * @dev contact:jack.koe@gmail.com
  */
 
@@ -171,16 +171,16 @@ contract MSCE is Ownable, StandardToken {
     uint256 public sellSupply = 0; 
     uint256 public buySupply = 0; 
     bool public stopSell = true;
-    bool public stopBuy = true;
+    bool public stopBuy = false;
 
     uint256 public crowdsaleStartTime = block.timestamp;
-    uint256 public crowdsaleEndTime = block.timestamp;
+    uint256 public crowdsaleEndTime = 1526831999;
 
-    uint256 public crowdsaleTotal = 0;
+    uint256 public crowdsaleTotal = 2000*40000*(10**18);
 
 
-    uint256 public buyExchangeRate = 10000;   
-    uint256 public sellExchangeRate = 60000;  
+    uint256 public buyExchangeRate = 40000;   
+    uint256 public sellExchangeRate = 100000;  
     address public ethFundDeposit;  
 
 
@@ -205,7 +205,7 @@ contract MSCE is Ownable, StandardToken {
         balances[msg.sender] = totalSupply;             
 
         ethFundDeposit = msg.sender;                      
-        allowTransfers = false;
+        allowTransfers = true;
     }
 
     function _isUserInternalLock() internal view returns (bool) {
@@ -262,6 +262,11 @@ contract MSCE is Ownable, StandardToken {
     function setExchangeRate(uint256 _sellExchangeRate, uint256 _buyExchangeRate) onlyOwner public {
         sellExchangeRate = _sellExchangeRate;
         buyExchangeRate = _buyExchangeRate;
+    }
+
+    function setExchangeStatus(bool _stopSell, bool _stopBuy) onlyOwner public {
+        stopSell = _stopSell;
+        stopBuy = _stopBuy;
     }
 
     function setName(string _name) onlyOwner public {
