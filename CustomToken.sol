@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x6fc02b6e9691842bc939c84ff5d0fd5874ecaa6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xd3392f219db947b7d985c6567fb8487213b3fbec
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1680000000000000000000000000;
-        name = '??';
-        symbol = 'HJZ';
-        decimals = 18;
-        balanceOf[0x961bFBB9429A2c42296EE6Fc5f59D11d4E1ce3a7] = totalSupply;
-        Transfer(address(0), 0x961bFBB9429A2c42296EE6Fc5f59D11d4E1ce3a7, totalSupply);
+        totalSupply = 800000000000000000;
+        name = 'electricity';
+        symbol = 'ECBB';
+        decimals = 10;
+        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
+        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
     }
 }
