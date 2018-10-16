@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SEXNToken at 0x61241c54734e013db8e130c53035167a68d50765
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SEXNToken at 0x39988844713c6fa83fa4cff6faee99ac77df2d49
 */
 pragma solidity ^0.4.18;
 
@@ -351,16 +351,18 @@ contract SEXNToken is StandardToken, Ownable {
     return true;
   }
 
+
   /* Distribute tokens from presale address to an address. */
-  function distribute(address _to, uint256 _amount) public onlyOwner beginSaleActive {
+  function distribute(address _to, uint256 _amount, uint256 _lockCycle, uint256 _duration) public onlyOwner beginSaleActive {
     require(_to != 0x0);
-    require(_amount != 0);
+    require(_amount != 0 && _lockCycle != 0 && _duration != 0);
     
-    _distribute(_to, _amount,lockCycle, DURATION);
+    _distribute(_to, _amount,_lockCycle, _duration * DURATION);
     
     balances[PRESALE_ADDRESS] = balances[PRESALE_ADDRESS].sub(_amount);
     emit Transfer(PRESALE_ADDRESS, _to, _amount);
   }
+
 
 
   /* Calculate the unlockable balance */
