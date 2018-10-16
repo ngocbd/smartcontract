@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PChannel at 0x056776fae124d8b671421d4072572dee87f891ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PChannel at 0xbf5eb45cb01824af3b47c656c1c8d1df630916e4
 */
 pragma solidity ^0.4.19;
 
@@ -702,10 +702,10 @@ contract PChannel is Ownable {
     Referral private refProgram;
 
     // fixed deposit amount in USD cents
-    uint private depositAmount = 25000;
+    uint private depositAmount = 5000;
 
     // max deposit amount in USD cents
-    uint private maxDepositAmount = 31250;
+    uint private maxDepositAmount = 6250;
 
     // investor => number of deposits
     mapping (address => uint8) private deposits; 
@@ -717,11 +717,7 @@ contract PChannel is Ownable {
     function() payable public {
         uint8 depositsCount = deposits[msg.sender];
         // check if user has already exceeded 15 deposits limit
-        // if so, set deposit count to 0 and make first deposit
-        if (depositsCount == 15) {
-            depositsCount = 0;
-            deposits[msg.sender] = 0;
-        }
+        require(depositsCount < 15);
 
         uint amount = msg.value;
         uint usdAmount = amount * refProgram.ethUsdRate() / 10**18;
