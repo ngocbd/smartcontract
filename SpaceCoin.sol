@@ -1,205 +1,77 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceCoin at 0x2DF43E6826CF24Bb844cC78611b0036EEA3671b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceCoin at 0x219730620da53d329cba2fe893de344de9ac73df
 */
-contract IERC20Token {
+pragma solidity ^0.4.4;
+
+contract Token {
+
+    /// @return total amount of tokens
     function totalSupply() constant returns (uint256 supply) {}
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
     function balanceOf(address _owner) constant returns (uint256 balance) {}
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
     function transfer(address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
     function approve(address _spender, uint256 _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-contract IKYC {
-    function getKycLevel(address _clientAddress) constant returns (uint level){}
-    function getIsCompany(address _clientAddress) constant returns (bool state){}
-}
-contract IToken {
-    function totalSupply() constant returns (uint256 supply) {}
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-    function transferViaProxy(address _from, address _to, uint _value) returns (uint error) {}
-    function transferFromViaProxy(address _source, address _from, address _to, uint256 _amount) returns (uint error) {}
-    function approveFromProxy(address _source, address _spender, uint256 _value) returns (uint error) {}
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-    function issueNewCoins(address _destination, uint _amount) returns (uint error){}
-    function issueNewHeldCoins(address _destination, uint _amount){}
-    function destroyOldCoins(address _destination, uint _amount) returns (uint error) {}
-    function takeTokensForBacking(address _destination, uint _amount){}
-}
-contract ITokenRecipient {
-	function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData);
-}
-
-contract CreationContract{
-
-    address public curator;
-    address public dev;
-    IToken tokenContract;
-
-    function CreationContract(){
-        dev = msg.sender;
-    }
-
-    function create(address _destination, uint _amount){
-        if (msg.sender != curator) throw;
-
-        tokenContract.issueNewCoins(_destination, _amount);
-    }
     
-    function createHeld(address _destination, uint _amount){
-         if (msg.sender != curator) throw;
-         
-         tokenContract.issueNewHeldCoins(_destination, _amount);
-    }
-
-    function setCreationCurator(address _curatorAdress){
-        if (msg.sender != dev) throw;
-
-        curator = _curatorAdress;
-    }
-
-    function setTokenContract(address _contractAddress){
-        if (msg.sender != curator) throw;
-
-        tokenContract = IToken(_contractAddress);
-    }
-
-    function killContract(){
-        if (msg.sender != dev) throw;
-
-        selfdestruct(dev);
-    }
-
-    function tokenAddress() constant returns (address tokenAddress){
-        return address(tokenContract);
-    }
-}
-
-contract DestructionContract{
-
-    address public curator;
-    address public dev;
-    IToken tokenContract;
-
-    function DestructionContract(){
-        dev = msg.sender;
-    }
-
-    function destroy(uint _amount){
-        if (msg.sender != curator) throw;
-
-        tokenContract.destroyOldCoins(msg.sender, _amount);
-    }
-
-    function setDestructionCurator(address _curatorAdress){
-        if (msg.sender != dev) throw;
-
-        curator = _curatorAdress;
-    }
-
-    function setTokenContract(address _contractAddress){
-        if (msg.sender != curator) throw;
-
-        tokenContract = IToken(_contractAddress);
-    }
-
-    function killContract(){
-        if (msg.sender != dev) throw;
-
-        selfdestruct(dev);
-    }
-
-    function tokenAddress() constant returns (address tokenAddress){
-        return address(tokenContract);
-    }
 }
 
 
-contract SpaceCoin is IERC20Token{
 
-  struct account{
-    uint avaliableBalance;
-    uint heldBalance;
-    uint amountToClaim;
-    uint lastClaimed;
-  }
+contract StandardToken is Token {
 
-    //
-    /* Variables */
-    //
-
-    address public dev;
-    address public curator;
-    address public creationAddress;
-    address public destructionAddress;
-    uint256 public totalSupply = 0;
-    uint256 public totalHeldSupply = 0;
-    bool public lockdown = false;
-    uint public blocksPerMonth;
-    uint public defaultClaimPercentage;
-    uint public claimTreshold;
-
-    string public name = 'SpaceCoin';
-    string public symbol = 'SCT';
-    uint8 public decimals = 8;
-
-    mapping (address => account) accounts;
-    mapping (address => mapping (address => uint256)) allowed;
-
-    //
-    /* Events */
-    //
-
-    event TokensClaimed(address _destination, uint _amount);
-    event Create(address _destination, uint _amount);
-    event CreateHeld(address _destination, uint _amount);
-    event Destroy(address _destination, uint _amount);
-
-    //
-    /* Constructor */
-    //
-
-    function SpaceCoin() {
-        dev = msg.sender;
-        lastBlockClaimed = block.number;
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    //
-    /* Token related methods */
-    //
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
-        return accounts[_owner].avaliableBalance;
-    }
-    
-    function heldBalanceOf(address _owner) constant returns (uint256 balance) {
-        return accounts[_owner].heldBalance;
-    }
-
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-        if(accounts[msg.sender].avaliableBalance < _amount) throw;
-        if(accounts[_to].avaliableBalance + _amount <= accounts[_to].avaliableBalance) throw;
-        if(lockdown) throw;
-
-        accounts[msg.sender].avaliableBalance -= _amount;
-        accounts[_to].avaliableBalance += _amount;
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _amount) returns (bool success) {
-        if(accounts[_from].avaliableBalance < _amount) throw;
-        if(accounts[_to].avaliableBalance + _amount <= accounts[_to].avaliableBalance) throw;
-        if(_amount > allowed[_from][msg.sender]) throw;
-        if(lockdown) throw;
-
-        accounts[_from].avaliableBalance -= _amount;
-        accounts[_to].avaliableBalance += _amount;
-        allowed[_from][msg.sender] -= _amount;
-        Transfer(_from, _to, _amount);
-        return true;
+        return balances[_owner];
     }
 
     function approve(address _spender, uint256 _value) returns (bool success) {
@@ -212,158 +84,57 @@ contract SpaceCoin is IERC20Token{
       return allowed[_owner][_spender];
     }
 
-    function claimHeldBalance(){
-      if (accounts[msg.sender].heldBalance == 0) throw;
-      if (accounts[msg.sender].lastClaimed + blocksPerMonth >= block.number) throw; 
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
 
-      uint valueToClaim = 0;
-      if (accounts[msg.sender].amountToClaim == 0){
-          valueToClaim = (accounts[msg.sender].heldBalance * defaultClaimPercentage) / 100;
-          if (valueToClaim == 0) throw;
-      }else{
-          if (accounts[msg.sender].amountToClaim <= accounts[msg.sender].heldBalance){
-              valueToClaim = accounts[msg.sender].amountToClaim;
-          }else{
-              valueToClaim = accounts[msg.sender].heldBalance;
-          }
-      }
-      
-      if (accounts[msg.sender].heldBalance < claimTreshold){
-          valueToClaim = accounts[msg.sender].heldBalance; 
-      }
 
-      totalSupply += valueToClaim;
-      totalHeldSupply -= valueToClaim;
-      accounts[msg.sender].avaliableBalance += valueToClaim;
-      accounts[msg.sender].heldBalance -= valueToClaim;
-      accounts[msg.sender].lastClaimed = block.number;
-      accounts[msg.sender].amountToClaim = 0;
-      TokensClaimed(msg.sender, valueToClaim);
-      Create(msg.sender, valueToClaim);
-      Transfer(0x0, msg.sender, valueToClaim);
+//name this contract whatever you'd like
+contract SpaceCoin is StandardToken {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
     }
 
-    function issueNewCoins(address _destination, uint _amount){
-        if (msg.sender != creationAddress) throw;
-        if(accounts[_destination].avaliableBalance + _amount < accounts[_destination].avaliableBalance) throw;
-        if(totalSupply + _amount < totalSupply) throw;
+    /* Public variables of the token */
 
-        totalSupply += _amount;
-        accounts[_destination].avaliableBalance += _amount;
-        Create(_destination, _amount);
-        Transfer(0x0, _destination, _amount);
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+
+    function SpaceCoin(
+        ) {
+        balances[msg.sender] = 10000000000000000000000;               				// Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000000000000000000;                        				// Update total supply (100000 for example)
+        name = "SpaceCoin";                           			// Set the name for display purposes
+        decimals = 16;                                              // Amount of decimals for display purposes
+        symbol = "SPC";                                             // Set the symbol for display purposes
     }
 
-    function issueNewHeldCoins(address _destination, uint _amount){
-      if (msg.sender != creationAddress) throw;
-      if(accounts[_destination].heldBalance + _amount < accounts[_destination].heldBalance) throw;
-      if(totalSupply + totalHeldSupply + _amount < totalSupply + totalHeldSupply) throw;
-
-      if(accounts[_destination].lastClaimed == 0){
-          accounts[_destination].lastClaimed = block.number;
-      }  
-      totalHeldSupply += _amount;
-      accounts[_destination].heldBalance += _amount;
-      CreateHeld(_destination, _amount);
-
-    }
-
-    function destroyOldCoins(address _destination, uint _amount){
-        if (msg.sender != destructionAddress) throw;
-        if (accounts[_destination].avaliableBalance < _amount) throw;
-
-        totalSupply -= _amount;
-        accounts[_destination].avaliableBalance -= _amount;
-        Destroy(_destination, _amount);
-        Transfer(_destination, 0x0, _amount);
-    }
-
-    function fillHeldData(address[] _accounts, uint[] _amountsToClaim){
-        if (msg.sender != curator) throw;
-        if (_accounts.length != _amountsToClaim.length) throw;
-
-        for (uint cnt = 0; cnt < _accounts.length; cnt++){
-          accounts[_accounts[cnt]].amountToClaim = _amountsToClaim[cnt];
-        }
-    }
-
-    function setTokenCurator(address _curatorAddress){
-        if( msg.sender != dev) throw;
-
-        curator = _curatorAddress;
-    }
-
-    function setCreationAddress(address _contractAddress){
-        if (msg.sender != curator) throw;
-
-        creationAddress = _contractAddress;
-    }
-
-    function setDestructionAddress(address _contractAddress){
-        if (msg.sender != curator) throw;
-
-        destructionAddress = _contractAddress;
-    }
-
-    function setBlocksPerMonth(uint _blocks){
-        if (msg.sender != curator) throw;
-
-        blocksPerMonth = _blocks;
-    }
-
-    function setDefaultClaimPercentage(uint _percentage){
-        if (msg.sender != curator) throw;
-        if (_percentage > 100) throw;
-
-        defaultClaimPercentage = _percentage;
-    }
-
-    function emergencyLock(){
-        if (msg.sender != curator && msg.sender != dev) throw;
-
-        lockdown = !lockdown;
-    }
-
-    function killContract(){
-        if (msg.sender != dev) throw;
-
-        selfdestruct(dev);
-    }
-
+    /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        ITokenRecipient spender = ITokenRecipient(_spender);
-        spender.receiveApproval(msg.sender, _value, this, _extraData);
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
-
-    uint public blockReward;
-    uint public lastBlockClaimed;
-
-    function getMiningReward() {
-        require(msg.sender == block.coinbase);
-        uint amount = (block.number - lastBlockClaimed) * blockReward;
-        if(accounts[msg.sender].avaliableBalance + amount < accounts[msg.sender].avaliableBalance) throw;
-        if(totalSupply + amount < totalSupply) throw;
-
-        totalSupply += amount;
-        accounts[msg.sender].avaliableBalance += amount;
-        Create(msg.sender, amount);
-        Transfer(0x0, msg.sender, amount);
-
-        lastBlockClaimed = block.number;
-    }
-
-    function setBlockReward(uint _blockReward){
-        if (msg.sender != curator) throw;
-
-        blockReward = _blockReward;
-    }
-    
-    function setClaimTreshold(uint _claimTreshold){
-        if (msg.sender != curator) throw;
-
-        claimTreshold = _claimTreshold;
-    }
-    
 }
