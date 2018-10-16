@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExtremeToken at 0xff1560afef58be59b11c72734ad1d89db63e4e71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExtremeToken at 0x95b5a10ed52b84edd61d8205bb946323fcaedbec
 */
 pragma solidity ^0.4.14;
 
@@ -125,65 +125,58 @@ contract StandardToken is newToken, ERC20 {
   }
 }
 
-contract Extreme is StandardToken, Ownable {
+ contract Extreme is StandardToken, Ownable {
   string public constant name = "Extreme Coin";
   string public constant symbol = "XT";
   uint public constant decimals = 2;
+  mapping (address => uint256) public balanceOf;
   uint256 public initialSupply;
     
   // Constructor
   function Extreme () { 
-     totalSupply = 59347950076;
+     totalSupply = 59347951976;
       balances[msg.sender] = totalSupply;
       initialSupply = totalSupply; 
-        Transfer(0, this, totalSupply);
-        Transfer(this, msg.sender, totalSupply);
   }
 }
 
 contract ExtremeToken is Ownable, Extreme {
 
-uint256 public sellPrice;
-uint256 public buyPrice;
-
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-
-    function buy() payable returns (uint amount)
-    {
-        amount = msg.value / buyPrice;
-        if (balances[this] < amount) throw; 
-        balances[msg.sender] += amount;
-        balances[this] -= amount;
-        Transfer(this, msg.sender, amount);
-    }
-
-    function sell(uint256 amount) {
-        if (balances[msg.sender] < amount ) throw;
-        balances[this] += amount;
-        balances[msg.sender] -= amount;
-        if (!msg.sender.send(amount * sellPrice)) {
-            throw;
-        } else {
-            Transfer(msg.sender, this, amount);
-        }               
-    }
-    
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+   function ExtremeToken() Extreme () {}
+  mapping (address => mapping (address => uint)) allowed;
+  
   function transfer(address _to, uint256 _value) {
-        require(balances[msg.sender] > _value);
-        require(balances[_to] + _value > balances[_to]);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
     }
+  
 
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
+    var _allowance = allowed[_from][msg.sender];
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+  }
+  function approve(address _spender, uint _value) {
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+  }
    function mintToken(address target, uint256 mintedAmount) onlyOwner {
-        balances[target] += mintedAmount;
+        balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
         Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
     }
-
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
 }
