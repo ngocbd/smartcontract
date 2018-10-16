@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x6fbcf353cbdb10cafd500b26a979f2c999d4fefb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0xbd47dc21aeddd58985ac1133aaf7b72eb3be2af3
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
