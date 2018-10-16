@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x1faed56f890f309939dcd6b108d25545890c68d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x193b5e917375c9b39d2479e183561b26cd8287c4
 */
 pragma solidity ^0.4.4;
 
@@ -106,9 +106,9 @@ contract ERC20Token is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
+    string public name = 'Magnificent Bubble Coins';                   //fancy name: eg Simon Bucks
+    uint8 public decimals = 4;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol = 'BBLE';                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100000000;                        // Update total supply (100000 for example)
-        name = "VENTURE";                                   // Set the name for display purposes
-        decimals = 6;                            // Amount of decimals for display purposes
-        symbol = "VENT";                               // Set the symbol for display purposes
+        balances[msg.sender] = 12000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 12000000000000;                        // Update total supply (100000 for example)
+        name = "BubbleCoin";                                   // Set the name for display purposes
+        decimals = 4;                            // Amount of decimals for display purposes
+        symbol = "BBLE";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
