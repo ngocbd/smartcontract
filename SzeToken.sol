@@ -1,22 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SzeToken at 0x662412869d4a94939cd61d30602d3e972b292154
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SZETOKEN at 0xfe131c21ac78996dbce22a2dade59f657f8df4db
 */
 pragma solidity ^0.4.11;
 
-contract SzeToken {
+contract SZETOKEN {
 
-    string public name = "Szechuan Sauce Coin";      //  token name
+    string public name = "SzechuanSauceCoin";      //  token name
     string public symbol = "SZE";           //  token symbol
     uint256 public decimals = 6;            //  token digit
 
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
-    uint256 public totalSupply = 0;
+    uint256 public totalSupply = 100000000000000000;
     bool public stopped = false;
 
     uint256 constant valueFounder = 100000000000000000;
-    address owner = 0x0;
+    address owner = 0x10cCD0cC3eAfB3E9AcB36AE04f02A58d86F5c3a3;
 
     modifier isOwner {
         assert(owner == msg.sender);
@@ -33,7 +33,7 @@ contract SzeToken {
         _;
     }
 
-    function SzeToken(address _addressFounder) {
+    function TronToken(address _addressFounder) {
         owner = msg.sender;
         totalSupply = valueFounder;
         balanceOf[_addressFounder] = valueFounder;
