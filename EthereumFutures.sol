@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumFutures at 0x299e5dcabcfb61203fe0326d1212589a3108bc77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumFutures at 0x97d6939cef5421813d3594b81317bb82a09522ca
 */
 pragma solidity ^0.4.17;
 
@@ -119,8 +119,8 @@ contract EthereumFutures is StandardToken {
 
     function EthereumFutures(
         ) {
-        balances[msg.sender] = 10000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 10000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000;                        // Update total supply (100000 for example)
         name = "Ethereum Futures";                                   // Set the name for display purposes
         decimals = 6;                            // Amount of decimals for display purposes
         symbol = "ETHF";                               // Set the symbol for display purposes
