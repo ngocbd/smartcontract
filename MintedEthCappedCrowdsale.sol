@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedEthCappedCrowdsale at 0xfc5de599c9fe4e5cf0744aef3139ae53aa30a566
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedEthCappedCrowdsale at 0xa62298341d83b93bd08a6e73bb80c7cf992d424d
 */
 pragma solidity ^0.4.11;
 // Thanks to OpenZeppeline & TokenMarket for the awesome Libraries.
@@ -711,6 +711,9 @@ contract Crowdsale is Haltable, SafeMathLib {
   // Crowdsale end time has been changed
   event EndsAtChanged(uint endsAt);
 
+  // Crowdsale start time has been changed
+  event StartsAtChanged(uint startsAt);
+
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
@@ -1001,6 +1004,26 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
 
   /**
+   * Allow crowdsale owner to start early or extend the crowdsale.
+   *
+   * This is useful if the beginning of the crowdsale is not determined
+   *
+   * This may put the crowdsale to an invalid state,
+   * but we trust owners know what they are doing.
+   *
+   */
+  function setStartsAt(uint time) onlyOwner {
+
+    // new start time must be 10 minutes ahead from current time
+    if(now+600 > time) {
+      throw; // Don't change past
+    }
+
+    startsAt = time;
+    StartsAtChanged(startsAt);
+  }
+
+  /**
    * Allow to (re)set pricing strategy.
    *
    * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
@@ -1146,6 +1169,7 @@ contract Crowdsale is Haltable, SafeMathLib {
    */
   function assignTokens(address receiver, uint tokenAmount) private;
 }
+
 
 /**
  * At the end of the successful crowdsale allocate % bonus of tokens to the team.
