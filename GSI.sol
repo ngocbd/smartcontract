@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSI at 0xF0d8af9125dE2761B42DBB0B1014bF232219a1c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSI at 0x65bBC91459aAAd9603ef1345c6Bb6396dd6772B9
 */
 contract owned {
     address public owner;
@@ -12,8 +12,7 @@ contract owned {
         if (msg.sender != owner) throw;       
     }
 
-    function transferOwnership(address newOwner)  {
-		if(msg.sender!=owner) throw;
+    function transferOwnership(address newOwner) onlyOwner {
         owner = newOwner;
     }
 }
@@ -76,22 +75,19 @@ contract GSIToken is owned  {
         return true;
     }
 
-    function mintToken(address target, uint256 mintedAmount) {
-	    if(msg.sender!=owner) throw;
+    function mintToken(address target, uint256 mintedAmount) onlyOwner {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
         Transfer(0, owner, mintedAmount);
         Transfer(owner, target, mintedAmount);
     }
 
-    function freezeAccount(address target, bool freeze) {
-		if(msg.sender!=owner) throw;
+    function freezeAccount(address target, bool freeze) onlyOwner {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
 
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice)  {
-		if(msg.sender!=owner) throw;
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
@@ -142,8 +138,6 @@ contract GSIToken is owned  {
 
 contract GSI is owned {
 		event OracleRequest(address target);
-		event MintedGreen(address target,uint256 amount);
-		event MintedGrey(address target,uint256 amount);
 		
 		GSIToken public greenToken;
 		GSIToken public greyToken;
@@ -153,8 +147,6 @@ contract GSI is owned {
 		mapping(address=>Reading) public lastReading;
 		mapping(address=>Reading) public requestReading;
 		mapping(address=>uint8) public freeReadings;
-		mapping(address=>string) public plz;
-		mapping(address=>uint8) public oracles;
 		
 		struct Reading {
 			uint256 timestamp;
@@ -169,80 +161,55 @@ contract GSI is owned {
 							0,
 							'P+',
 							this
-			);			
+			);
+			//greenToken.mintToken(msg.sender,10000);
 			greyToken = new GSIToken(
 							0,
 							'GreyPower',
 							0,
 							'P-',
 							this
-			);		
-			oracles[msg.sender]=1;
+			);							
 		}
 		
-		function oracalizeReading(uint256 _reading) {
+		function oracalizeReading(uint256 _reading,string _zip) {
 			if(msg.value<requiredGas) {  
 				if(freeReadings[msg.sender]==0) throw;
 				freeReadings[msg.sender]--;
 			} 		
 			if(_reading<lastReading[msg.sender].value) throw;
 			if(_reading<requestReading[msg.sender].value) throw;
-			if(now<lastReading[msg.sender].timestamp+secondsBetweenReadings) throw;			
+			if(now<lastReading[msg.sender].timestamp+secondsBetweenReadings) throw;
 			//lastReading[msg.sender]=requestReading[msg.sender];
-			requestReading[msg.sender]=Reading(now,_reading,plz[msg.sender]);
+			requestReading[msg.sender]=Reading(now,_reading,_zip);
 			OracleRequest(msg.sender);
 			owner.send(msg.value);
 		}	
-		
-		function addOracle(address oracle) {
-			if(msg.sender!=owner) throw;
-			oracles[oracle]=1;
 			
-		}
-		function setPlz(string _plz) {
-			plz[msg.sender]=_plz;
-		}
-		function setReadingDelay(uint256 delay) {
-			if(msg.sender!=owner) throw;
+		function setReadingDelay(uint256 delay) onlyOwner {
 			secondsBetweenReadings=delay;
 		}
 		
-		function assignFreeReadings(address _receiver,uint8 _count)  {
-			if(oracles[msg.sender]!=1) throw;
+		function assignFreeReadings(address _receiver,uint8 _count) onlyOwner {
 			freeReadings[_receiver]+=_count;
 		}	
 		
-		function mintGreen(address recipient,uint256 tokens) {
-			if(oracles[msg.sender]!=1) throw;
-			greenToken.mintToken(recipient, tokens);	
-			MintedGreen(recipient,tokens);
+		function mintGreen(address recipient,uint256 tokens) onlyOwner {			
+			greenToken.mintToken(recipient, tokens);			
 		}
 		
-		function mintGrey(address recipient,uint256 tokens) {
-			if(oracles[msg.sender]!=1) throw;	
-			greyToken.mintToken(recipient, tokens);		
-			MintedGrey(recipient,tokens);
+		function mintGrey(address recipient,uint256 tokens) onlyOwner {			
+			greyToken.mintToken(recipient, tokens);			
 		}
 		
-		function commitReading(address recipient) {
-		  if(oracles[msg.sender]!=1) throw;
-		  lastReading[recipient]=requestReading[recipient];
-		  msg.sender.send(this.balance);
-		  //owner.send(this.balance);
+		function commitReading(address recipient,uint256 timestamp,uint256 reading,string zip) onlyOwner {			
+			if(this.balance>0) {
+				owner.send(this.balance);
+			} 
+		  lastReading[recipient]=Reading(timestamp,reading,zip);
 		}
 		
-		function setGreenToken(GSIToken _greenToken) {
-			if(msg.sender!=owner) throw;
-			greenToken=_greenToken;			
-		} 
-		
-		function setGreyToken(GSIToken _greyToken) {
-			if(msg.sender!=owner) throw;
-			greyToken=_greyToken;			
-		} 
-		
-		function setOracleGas(uint256 _requiredGas)  {
-			if(msg.sender!=owner) throw;
+		function setOracleGas(uint256 _requiredGas) onlyOwner {
 			requiredGas=_requiredGas;
 		}
 		
