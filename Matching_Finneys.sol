@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matching_Finneys at 0x2c2e3baa2191cf325a28a01ff42340f2ae677572
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matching_Finneys at 0x213d2b0498d7eef3151aa9af2e5c4eb8674ecce5
 */
 //                       , ; ,   .-'"""'-.   , ; ,
 //                       \\|/  .'         '.  \|//
@@ -85,7 +85,7 @@
     mapping (address => uint) times_played_history;    
      
     //Contract Construtor
-    function Matching_Finneys() { //Initial settings
+    function Matching_Ethers() { //Initial settings
 	    owner = msg.sender; 
 	    round_min_size = 16;
 	    round_max_size = 20;
@@ -119,7 +119,6 @@
 			blockEndRound=block.number;}
         }
     }
-
     //Random Number Generator (between 1 and range)
     function randomGen(uint seed, uint range) private constant returns (uint randomNumber) {
         return(uint(sha3(block.blockhash(block.number-1), seed))%range+1);
