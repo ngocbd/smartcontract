@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RICHToken at 0xaf12b1b76202fdfd9e584e2e4e230250e8eb8494
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RICHToken at 0xe7cbf5437d084067f64fed612b9ac025c9e962b0
 */
 pragma solidity ^0.4.6;
 
@@ -122,7 +122,7 @@ contract RICHToken is Owned, Token {
     using SafeMath for uint256;
 
     // Ethereum token standaard
-    string public standard = "Token 0.2";
+    string public standard = "Token 0.1";
 
     // Full name
     string public name = "RICH token";
