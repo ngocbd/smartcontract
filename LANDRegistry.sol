@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x7403d5b81024efd07cbe0d803cb2f3abeac93f35
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0xddd001ced3619edfbdb5be7cf7f982002093f426
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.21;
 
 // File: contracts/land/LANDStorage.sol
 
@@ -134,7 +134,6 @@ interface ILANDRegistry {
 
   // After one year, land can be claimed from an inactive public key
   function ping() public;
-  function clearLand(int[] x, int[] y) public;
 
   // LAND-centric getters
   function encodeTokenId(int x, int y) view public returns (uint256);
@@ -803,17 +802,6 @@ contract LANDRegistry is Storage,
   function setLatestToNow(address user) public {
     require(msg.sender == proxyOwner || isApprovedForAll(msg.sender, user));
     latestPing[user] = now;
-  }
-
-  function clearLand(int[] x, int[] y) public {
-    require(x.length == y.length);
-    for (uint i = 0; i < x.length; i++) {
-      uint landId = encodeTokenId(x[i], y[i]);
-      address holder = ownerOf(landId);
-      if (latestPing[holder] < now - 1 years) {
-        _destroy(landId);
-      }
-    }
   }
 
   //
