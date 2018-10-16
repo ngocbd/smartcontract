@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xab02f8275ddf77a2a99b5c72c88c39767fbda59e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x8c37188945c02818f09c7650093befcaa4085127
 */
 pragma solidity ^0.4.19;
 
@@ -45,25 +45,26 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
+contract AirdropToken is BaseToken {
+    uint256 public airAmount;
+    uint256 public airBegintime;
+    uint256 public airEndtime;
+    address public airSender;
+    uint32 public airLimitCount;
 
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
+    mapping (address => uint32) public airCountOf;
 
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
+    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
+
+    function airdrop() public payable {
+        require(now >= airBegintime && now <= airEndtime);
+        require(msg.value == 0);
+        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+            revert();
+        }
+        _transfer(airSender, msg.sender, airAmount);
+        airCountOf[msg.sender] += 1;
+        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
     }
 }
 
@@ -95,41 +96,33 @@ contract ICOToken is BaseToken {
     }
 }
 
-contract LockToken is BaseToken {
-    struct LockMeta {
-        uint256 amount;
-        uint256 endtime;
-    }
-    
-    mapping (address => LockMeta) public lockedAddresses;
-
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(balanceOf[_from] >= _value);
-        LockMeta storage meta = lockedAddresses[_from];
-        require(now >= meta.endtime || meta.amount <= balanceOf[_from] - _value);
-        super._transfer(_from, _to, _value);
-    }
-}
-
-contract CustomToken is BaseToken, BurnToken, ICOToken, LockToken {
+contract CustomToken is BaseToken, AirdropToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 300000000000000000000000000;
-        name = 'Biwan';
-        symbol = 'BWB';
+        totalSupply = 12000000000000000000000000000;
+        name = 'Fantasy';
+        symbol = 'FT';
         decimals = 18;
-        balanceOf[0xc50a3762ec6e21d43346441561519878ae2200d7] = totalSupply;
-        Transfer(address(0), 0xc50a3762ec6e21d43346441561519878ae2200d7, totalSupply);
+        balanceOf[0xa06ea172c01d7551d66f0df294eabd8d6c5822be] = totalSupply;
+        Transfer(address(0), 0xa06ea172c01d7551d66f0df294eabd8d6c5822be, totalSupply);
 
-        icoRatio = 6000;
-        icoBegintime = 1520343000;
-        icoEndtime = 1528291800;
-        icoSender = 0x6ba6aa2d828e3656e5c05cccacf85bffa9715f62;
-        icoHolder = 0x5f813daec2c13c26e4f68b6ae46faa54fa5a1905;
+        airAmount = 5000000000000000000000;
+        airBegintime = 1520312400;
+        airEndtime = 1609390800;
+        airSender = 0xa06ea172c01d7551d66f0df294eabd8d6c5822be;
+        airLimitCount = 1;
 
-        lockedAddresses[0x71b0db63d55ff3be82b1aa5e6d116ab794f135ad] = LockMeta({amount: 30000000000000000000000000, endtime: 1552224600});
+        icoRatio = 200000;
+        icoBegintime = 1520312400;
+        icoEndtime = 1924923600;
+        icoSender = 0xa06ea172c01d7551d66f0df294eabd8d6c5822be;
+        icoHolder = 0xa06ea172c01d7551d66f0df294eabd8d6c5822be;
     }
 
     function() public payable {
-        ico();
+        if (msg.value == 0) {
+            airdrop();
+        } else {
+            ico();
+        }
     }
 }
