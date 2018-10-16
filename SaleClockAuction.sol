@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleClockAuction at 0xfe32125731d36b91569df1ac14343890b5d068ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleClockAuction at 0x1f52b87c3503e537853e160adbf7e330ea0be7c4
 */
 pragma solidity ^0.4.18;
 
@@ -279,7 +279,7 @@ contract ClockAuctionBase {
     /// @param _nft - Address of the NFT.
     function _getNft(address _nft) internal view returns (ERC721) {
         ERC721 candidateContract = ERC721(_nft);
-        require(candidateContract.implementsERC721());
+        //require(candidateContract.implementsERC721());
         return candidateContract;
     }
 
