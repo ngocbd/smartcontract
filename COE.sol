@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0x7b203459eb87fbf70ca42624b4304dc24ede9c50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0x77562e7c5cedf35d3264fd13469b9e9d9fee90cc
 */
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
@@ -17,67 +17,158 @@ contract COE {
 
     address public owner;
     address public devFeesAddr = 0xF772464393Ac87a1b7C628bF79090e014d931A23;
-    address public premine;
-    address tierController;
-
-    uint256[] tierTokens = [
-        1000000000000000000000,
-        900000000000000000000,
-        800000000000000000000,
-        700000000000000000000,
-        2300000000000000000000,
-        6500000000000000000000,
-        2000000000000000000000,
-        1200000000000000000000,
-        4500000000000000000000,
-        75000000000000000000
-    ];
-
-    // cost per token (cents *10^18) amounts for each tier.
-    uint256[] costPerToken = [
-        385000000000000000000000,
-        610000000000000000000000,
-        415000000000000000000000,
-        592000000000000000000000,
-        947000000000000000000000,
-        1100000000000000000000000,
-        1123000000000000000000000,
-        1115000000000000000000000,
-        1135000000000000000000000,
-        1013000000000000000000000
-    ];
+    address tierAdmin;
 
     uint256 public totalSupply = 100000000000000000000000;
-    uint tierLevel = 0;
-    uint fiatPerEth = 385000000000000000000000;    // cents per ETH in this case (*10^18)
+    uint tierLevel = 1;
+    uint fiatPerEth = 385000000000000000000000;
     uint256 circulatingSupply = 0;
-    uint maxTier = 9;
-    uint256 devFees = 0;
+    uint maxTier = 132;
+    uint256 public devFees = 0;
     uint256 fees = 10000;  // the calculation expects % * 100 (so 10% is 1000)
 
     // flags
-    bool public receiveEth = true;
+    bool public receiveEth = false;
     bool payFees = true;
     bool distributionDone = false;
-    bool canExchange = true;
+    bool canExchange = false;
+    bool addTiers = true;
+    bool public initialTiers = false;
 
     // Storage
     mapping (address => uint256) public balances;
     mapping (address => bool) public exchangePartners;
+
+    // mining schedule
+    mapping(uint => uint256) public scheduleTokens;
+    mapping(uint => uint256) public scheduleRates;
 
     // events
     event Transfer(address indexed _from, address indexed _to, uint _value);
 
     function COE() {
         owner = msg.sender;
+        doPremine();
     }
 
-    function premine() public {
+    function doPremine() public {
         require(msg.sender == owner);
-        balances[premine] = add(balances[premine],32664993546427000000000);
-        Transfer(this, premine, 32664993546427000000000);
+        require(distributionDone == false);
+        balances[owner] = add(balances[owner],32664993546427000000000);
+        Transfer(this, owner, 32664993546427000000000);
         circulatingSupply = add(circulatingSupply, 32664993546427000000000);
         totalSupply = sub(totalSupply,32664993546427000000000);
+        distributionDone = true;
+    }
+
+    function populateTierTokens() public {
+        require((msg.sender == owner) && (initialTiers == false));
+        scheduleTokens[1] = 1E21;
+        scheduleTokens[2] = 9E20;
+        scheduleTokens[3] = 8E20;
+        scheduleTokens[4] = 7E20;
+        scheduleTokens[5] = 2.3E21;
+        scheduleTokens[6] = 6.5E21;
+        scheduleTokens[7] = 2E21;
+        scheduleTokens[8] = 1.2E21;
+        scheduleTokens[9] = 4.5E21;
+        scheduleTokens[10] = 7.5E19;
+        scheduleTokens[11] = 7.5E19;
+        scheduleTokens[12] = 7.5E19;
+        scheduleTokens[13] = 7.5E19;
+        scheduleTokens[14] = 7.5E19;
+        scheduleTokens[15] = 7.5E19;
+        scheduleTokens[16] = 7.5E19;
+        scheduleTokens[17] = 7.5E19;
+        scheduleTokens[18] = 5.6E21;
+        scheduleTokens[19] = 7.5E19;
+        scheduleTokens[20] = 7.5E19;
+        scheduleTokens[21] = 7.5E19;
+        scheduleTokens[22] = 7.5E19;
+        scheduleTokens[23] = 7.5E19;
+        scheduleTokens[24] = 8.2E21;
+        scheduleTokens[25] = 2.5E21;
+        scheduleTokens[26] = 1.45E22;
+        scheduleTokens[27] = 7.5E19;
+        scheduleTokens[28] = 7.5E19;
+        scheduleTokens[29] = 7.5E19;
+        scheduleTokens[30] = 7.5E19;
+        scheduleTokens[31] = 7.5E19;
+        scheduleTokens[32] = 7.5E19;
+        scheduleTokens[33] = 7.5E19;
+        scheduleTokens[34] = 7.5E19;
+        scheduleTokens[35] = 7.5E19;
+        scheduleTokens[36] = 7.5E19;
+        scheduleTokens[37] = 7.5E19;
+        scheduleTokens[38] = 7.5E19;
+        scheduleTokens[39] = 7.5E19;
+        scheduleTokens[40] = 7.5E19;
+        scheduleTokens[41] = 7.5E19;
+        scheduleTokens[42] = 7.5E19;
+        scheduleTokens[43] = 7.5E19;
+        scheduleTokens[44] = 7.5E19;
+        scheduleTokens[45] = 7.5E19;
+        scheduleTokens[46] = 7.5E19;
+        scheduleTokens[47] = 7.5E19;
+        scheduleTokens[48] = 7.5E19;
+        scheduleTokens[49] = 7.5E19;
+        scheduleTokens[50] = 7.5E19;
+    }
+
+    function populateTierRates() public {
+        require((msg.sender == owner) && (initialTiers == false));
+        require(msg.sender == owner);
+        scheduleRates[1] = 3.85E23;
+        scheduleRates[2] = 6.1E23;
+        scheduleRates[3] = 4.15E23;
+        scheduleRates[4] = 5.92E23;
+        scheduleRates[5] = 9.47E23;
+        scheduleRates[6] = 1.1E24;
+        scheduleRates[7] = 1.123E24;
+        scheduleRates[8] = 1.115E24;
+        scheduleRates[9] = 1.135E24;
+        scheduleRates[10] = 1.013E24;
+        scheduleRates[11] = 8.48E23;
+        scheduleRates[12] = 8.17E23;
+        scheduleRates[13] = 7.3E23;
+        scheduleRates[14] = 9.8E23;
+        scheduleRates[15] = 1.007E24;
+        scheduleRates[16] = 1.45E24;
+        scheduleRates[17] = 1.242E24;
+        scheduleRates[18] = 1.383E24;
+        scheduleRates[19] = 1.442E24;
+        scheduleRates[20] = 2.048E24;
+        scheduleRates[21] = 1.358E24;
+        scheduleRates[22] = 1.245E24;
+        scheduleRates[23] = 9.94E23;
+        scheduleRates[24] = 1.14E24;
+        scheduleRates[25] = 1.253E24;
+        scheduleRates[26] = 1.29E24;
+        scheduleRates[27] = 1.126E24;
+        scheduleRates[28] = 1.173E24;
+        scheduleRates[29] = 1.074E24;
+        scheduleRates[30] = 1.127E24;
+        scheduleRates[31] = 1.223E24;
+        scheduleRates[32] = 1.145E24;
+        scheduleRates[33] = 1.199E24;
+        scheduleRates[34] = 1.319E24;
+        scheduleRates[35] = 1.312E24;
+        scheduleRates[36] = 1.287E24;
+        scheduleRates[37] = 1.175E24;
+        scheduleRates[38] = 1.175E24;
+        scheduleRates[39] = 1.146E24;
+        scheduleRates[40] = 1.098E24;
+        scheduleRates[41] = 1.058E24;
+        scheduleRates[42] = 9.97E23;
+        scheduleRates[43] = 9.32E23;
+        scheduleRates[44] = 8.44E23;
+        scheduleRates[45] = 8.33E23;
+        scheduleRates[46] = 7.8E23;
+        scheduleRates[47] = 7.67E23;
+        scheduleRates[48] = 8.37E23;
+        scheduleRates[49] = 1.011E24;
+        scheduleRates[50] = 9.79E23;
+        initialTiers = true;
     }
 
     function () payable public {
@@ -94,24 +185,22 @@ contract COE {
     }
 
     function allocateTokens(uint256 _submitted) internal {
-        uint256 _availableInTier = mul(tierTokens[tierLevel], costPerToken[tierLevel]);
+        uint256 _availableInTier = mul(scheduleTokens[tierLevel], scheduleRates[tierLevel]);
         uint256 _allocation = 0;
-        // multiply _submitted by cost per token and see if that is greater than _availableInTier
 
         if(_submitted >= _availableInTier) {
-            _allocation = tierTokens[tierLevel];
-            tierTokens[tierLevel] = 0;
+            _allocation = scheduleTokens[tierLevel];
+            scheduleTokens[tierLevel] = 0;
             tierLevel++;
             _submitted = sub(_submitted, _availableInTier);
         }
         else {
-            uint256 _tokens = div(div(mul(_submitted, 1 ether), costPerToken[tierLevel]), 1 ether);
+            uint256 _tokens = div(div(mul(_submitted, 1 ether), scheduleRates[tierLevel]), 1 ether);
             _allocation = add(_allocation, _tokens);
-            tierTokens[tierLevel] = sub(tierTokens[tierLevel], _tokens);
-            _submitted = sub(_submitted, mul(_tokens, costPerToken[tierLevel]));
+            scheduleTokens[tierLevel] = sub(scheduleTokens[tierLevel], _tokens);
+            _submitted = sub(_submitted, mul(_tokens, scheduleRates[tierLevel]));
         }
 
-        // transfer tokens allocated so far to wallet address from contract
         balances[msg.sender] = add(balances[msg.sender],_allocation);
         circulatingSupply = add(circulatingSupply, _allocation);
         totalSupply = sub(totalSupply, _allocation);
@@ -120,13 +209,11 @@ contract COE {
             allocateTokens(_submitted);
         }
         else {
-            // emit transfer event
             Transfer(this, msg.sender, balances[msg.sender]);
         }
     }
 
     function transfer(address _to, uint _value) public {
-        // sender must have enough tokens to transfer
         require(balances[msg.sender] >= _value);
         totalSupply = add(totalSupply, _value);
         circulatingSupply = sub(circulatingSupply, _value);
@@ -145,17 +232,18 @@ contract COE {
             }
 
             if(codeLength != 0) {
-                if(exchangePartners[_to]) {
-                    if(canExchange == true) {
+                if(canExchange == true) {
+                    if(exchangePartners[_to]) {
+                        // WARNING: exchanging COE into MNY costs more Gas than a normal transfer as we interact directly
+                        // with the MNY contract - suggest doubling the recommended gas limit
                         exchange(_to, _value);
                     }
-                    else revert();  // until MNY is ready to accept COE revert attempts to exchange
-                }
-                else {
-                    // WARNING: if you transfer to a contract that cannot handle incoming tokens you may lose them
-                    balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-                    balances[_to] = add(balances[_to], _value);
-                    Transfer(msg.sender, _to, _value);
+                    else {
+                        // WARNING: if you transfer to a contract that cannot handle incoming tokens you may lose them
+                        balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+                        balances[_to] = add(balances[_to], _value);
+                        Transfer(msg.sender, _to, _value);
+                    }
                 }
             }
             else {
@@ -168,7 +256,7 @@ contract COE {
 
     function exchange(address _partner, uint _amount) internal {
         require(exchangePartners[_partner]);
-        require(requestTokensFromOtherContract(_partner, this, msg.sender, _amount));
+        requestTokensFromOtherContract(_partner, this, msg.sender, _amount);
         balances[msg.sender] = sub(balanceOf(msg.sender), _amount);
         circulatingSupply = sub(circulatingSupply, _amount);
         totalSupply = add(totalSupply, _amount);
@@ -186,14 +274,22 @@ contract COE {
     }
 
     function balanceInTier() public constant returns (uint256) {
-        return tierTokens[tierLevel];
+        return scheduleTokens[tierLevel];
     }
 
     function currentTier() public constant returns (uint256) {
         return tierLevel;
     }
 
-    function setFiatPerEthRate(uint256 _newRate) {
+    function balanceInSpecificTier(uint256 _tier) public constant returns (uint256) {
+        return scheduleTokens[_tier];
+    }
+
+    function rateOfSpecificTier(uint256 _tier) public constant returns (uint256) {
+        return scheduleRates[_tier];
+    }
+
+    function setFiatPerEthRate(uint256 _newRate) public {
         require(msg.sender == owner);
         fiatPerEth = _newRate;
     }
@@ -223,12 +319,7 @@ contract COE {
         devFeesAddr = _devFees;
     }
 
-    function changePreMine(address _preMine) {
-        require(msg.sender == owner);
-        premine = _preMine;
-    }
-
-    function payFeesToggle() {
+    function payFeesToggle() public {
         require(msg.sender == owner);
         if(payFees) {
             payFees = false;
@@ -241,6 +332,7 @@ contract COE {
     function safeWithdrawal(address _receiver, uint256 _value) public {
         require(msg.sender == owner);
         // check balance before transferring
+        withdrawDevFees();
         require(_value <= this.balance);
         _receiver.transfer(_value);
     }
@@ -259,29 +351,17 @@ contract COE {
         t.transfer(_recipient, _tokens);
     }
 
-    function changeOwner(address _recipient) {
+    function changeOwner(address _recipient) public {
         require(msg.sender == owner);
         owner = _recipient;
     }
 
-    function changeTierController(address _controller) {
-        require(msg.sender == owner);
-        tierController = _controller;
+    function changeTierAdmin(address _tierAdmin) public {
+        require((msg.sender == owner) || (msg.sender == tierAdmin));
+        tierAdmin = _tierAdmin;
     }
 
-    function setTokenAndRate(uint256 _tokens, uint256 _rate) {
-        require((msg.sender == owner) || (msg.sender == tierController));
-        maxTier++;
-        tierTokens[maxTier] = _tokens;
-        costPerToken[maxTier] = _rate;
-    }
-
-    function setPreMineAddress(address _premine) {
-        require(msg.sender == owner);
-        premine = _premine;
-    }
-
-    function toggleReceiveEth() {
+    function toggleReceiveEth() public {
         require(msg.sender == owner);
         if(receiveEth == true) {
             receiveEth = false;
@@ -289,13 +369,26 @@ contract COE {
         else receiveEth = true;
     }
 
-    function toggleTokenExchange() {
+    function toggleTokenExchange() public {
         require(msg.sender == owner);
         if(canExchange == true) {
             canExchange = false;
         }
         else canExchange = true;
     }
+
+    function addTierRateAndTokens(uint256 _rate, uint256 _tokens, uint256 _level) public {
+        require(((msg.sender == owner) || (msg.sender == tierAdmin)) && (addTiers == true));
+        scheduleTokens[_level] = _tokens;
+        scheduleRates[_level] = _rate;
+    }
+
+    // not really needed as we fix the max tiers on contract creation but just for completeness' sake
+    function closeTierAddition() public {
+        require(msg.sender == owner);
+        addTiers = false;
+    }
+
 
     function mul(uint a, uint b) internal pure returns (uint) {
         uint c = a * b;
