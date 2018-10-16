@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherBrand at 0xc39a638f2d6d297d184b3a48167f9bd9414052c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherBrand at 0x3ccd3f8531f1cc5d9075e8a5bb2e09f688644300
 */
 pragma solidity ^0.4.18;
 
@@ -62,7 +62,6 @@ contract EtherBrand is ERC721 {
   uint256 lowest_top_brand;
  
   mapping (uint256 => Brand) private brands;
-  //Brand[] public brands;
 
   /*** ACCESS MODIFIERS ***/
   modifier onlyCEO() { require(msg.sender == ceoAddress); _; }
