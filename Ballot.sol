@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0x85b846d361f861c9363f769e65f76b83dc80b531
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0x5a4964bb5fdd3ce646bb6aa020704f7d4db79302
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.0;
 contract Ballot {
 
     struct Voter {
