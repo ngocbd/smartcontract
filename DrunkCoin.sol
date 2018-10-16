@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DrunkCoin at 0xfb609ccf46f34acf6059e138fedb85e2e42411ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DrunkCoin at 0xde4122d820af3fe9b30aaf2b439e319a127989c0
 */
 pragma solidity ^0.4.11;
 
