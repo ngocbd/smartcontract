@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnyName at 0x7259fddca8d5f0184b3b12aa7e8401964b703a4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnyName at 0xd6c250b86f24b546a085bc41a2528d95bb14b84c
 */
 pragma solidity ^0.4.18;
  
@@ -203,14 +203,14 @@ contract TheLiquidToken is StandardToken, Ownable {
 }
     
 contract AnyName is TheLiquidToken {
-  string public constant name = "HyperTV Token";
-      string public constant symbol = "HYTV";
+  string public constant name = "FANACRYPT";
+      string public constant symbol = "XFC";
   uint public constant decimals = 3;
-  uint256 public initialSupply = 20000000000;
+  uint256 public initialSupply = 15000000000;
     
   // Constructor
   function AnyName () { 
-     totalSupply = 20000000000;
+     totalSupply = 15000000000;
       balances[msg.sender] = totalSupply;
       initialSupply = totalSupply; 
         Transfer(0, this, totalSupply);
