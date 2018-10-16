@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeltaBalances at 0xf5f563d3a99152c18ce8b133232fe34317f60fef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeltaBalances at 0x3e25f0ba291f202188ae9bda3004a7b3a803599a
 */
 pragma solidity ^0.4.21;
 
 /* 
-    Contract for DeltaBalances.github.io V2
+    Contract for DeltaBalances.github.io V3
     Check balances for multiple ERC20 tokens in 1 batched request.
-    For the previous version, see 0x3150954EAE1a8a5e5EE1F1B8E8444Fe16EA9F94C
+    For the previous versions, see 0x3150954EAE1a8a5e5EE1F1B8E8444Fe16EA9F94C, 0xf5f563D3A99152c18cE8b133232Fe34317F60FEF
     
     // address 0x0 is used to indicate ETH
 */
@@ -98,8 +98,8 @@ contract DeltaBalances {
     uint256 tokenCode;
     assembly { tokenCode := extcodesize(token) } // contract code size
    
-   // is it a contract and does it implement balanceOf
-    if(tokenCode > 0 && token.call(bytes4(keccak256("balanceOf(address)")), user)) {
+   // is it a contract and does it implement balanceOf 
+    if(tokenCode > 0 && token.call(bytes4(0x70a08231), user)) {    // bytes4(keccak256("balanceOf(address)")) == bytes4(0x70a08231)  
       return Token(token).balanceOf(user);
     } else {
       return 0; // not a valid token, return 0 instead of error
@@ -113,7 +113,6 @@ contract DeltaBalances {
         
     Returns array of token balances in wei units. */
   function walletBalances(address user,  address[] tokens) external view returns (uint[]) {
-    require(tokens.length > 0);
     uint[] memory balances = new uint[](tokens.length);
     
     for(uint i = 0; i < tokens.length; i++) {
