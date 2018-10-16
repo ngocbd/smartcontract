@@ -1,7 +1,37 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xf04436b2edaa1b777045e1eefc6dba8bd2aebab8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xc2cb0401d640a150a74d92c9b1814974bede8d87
 */
-pragma solidity ^0.4.18;
+/*
+ * NYX Token sale smart contract
+ *
+ * Supports ERC20, ERC223 stadards
+ *
+ * The NYX token is mintable during Token Sale. On Token Sale finalization it
+ * will be minted up to the cap and minting will be finished forever
+ */
+
+
+pragma solidity ^0.4.16;
+
+
+/*************************************************************************
+ * import "./include/MintableToken.sol" : start
+ *************************************************************************/
+
+/*************************************************************************
+ * import "zeppelin/contracts/token/StandardToken.sol" : start
+ *************************************************************************/
+
+
+/*************************************************************************
+ * import "./BasicToken.sol" : start
+ *************************************************************************/
+
+
+/*************************************************************************
+ * import "./ERC20Basic.sol" : start
+ *************************************************************************/
+
 
 /**
  * @title ERC20Basic
@@ -10,47 +40,55 @@ pragma solidity ^0.4.18;
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
+/*************************************************************************
+ * import "./ERC20Basic.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "../math/SafeMath.sol" : start
+ *************************************************************************/
+
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
+/*************************************************************************
+ * import "../math/SafeMath.sol" : end
+ *************************************************************************/
+
 
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
+ * @dev Basic version of StandardToken, with no allowances. 
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -62,11 +100,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
+  function transfer(address _to, uint256 _value) returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -75,25 +109,39 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
+  * @param _owner The address to query the the balance of. 
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
+/*************************************************************************
+ * import "./BasicToken.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "./ERC20.sol" : start
+ *************************************************************************/
+
+
+
+
 
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+/*************************************************************************
+ * import "./ERC20.sol" : end
+ *************************************************************************/
+
 
 /**
  * @title Standard ERC20 token
@@ -104,38 +152,41 @@ contract ERC20 is ERC20Basic {
  */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+  mapping (address => mapping (address => uint256)) allowed;
 
 
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
+   * @param _value uint256 the amout of tokens to be transfered
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
 
-    balances[_from] = balances[_from].sub(_value);
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
     balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
   /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -145,176 +196,20 @@ contract StandardToken is ERC20, BasicToken {
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
+   * @return A uint256 specifing the amount of tokens still avaible for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
 }
+/*************************************************************************
+ * import "zeppelin/contracts/token/StandardToken.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "zeppelin/contracts/ownership/Ownable.sol" : start
+ *************************************************************************/
 
-//
-// CPYToken is a standard ERC20 token with additional functionality:
-// - tokenSaleContract receives the whole balance for distribution
-// - Tokens are only transferable by the tokenSaleContract until finalization
-// - Token holders can burn their tokens after finalization
-//
-contract Token is StandardToken {
-
-    string  public constant name   = "COPYTRACK Token";
-    string  public constant symbol = "CPY";
-
-    uint8 public constant   decimals = 18;
-
-    uint256 constant EXA       = 10 ** 18;
-    uint256 public totalSupply = 100 * 10 ** 6 * EXA;
-
-    bool public finalized = false;
-
-    address public tokenSaleContract;
-
-    //
-    // EVENTS
-    //
-    event Finalized();
-
-    event Burnt(address indexed _from, uint256 _amount);
-
-
-    // Initialize the token with the tokenSaleContract and transfer the whole balance to it
-    function Token(address _tokenSaleContract)
-        public
-    {
-        // Make sure address is set
-        require(_tokenSaleContract != 0);
-
-        balances[_tokenSaleContract] = totalSupply;
-
-        tokenSaleContract = _tokenSaleContract;
-    }
-
-
-    // Implementation of the standard transfer method that takes the finalize flag into account
-    function transfer(address _to, uint256 _value)
-        public
-        returns (bool success)
-    {
-        checkTransferAllowed(msg.sender);
-
-        return super.transfer(_to, _value);
-    }
-
-
-    // Implementation of the standard transferFrom method that takes into account the finalize flag
-    function transferFrom(address _from, address _to, uint256 _value)
-        public
-        returns (bool success)
-    {
-        checkTransferAllowed(msg.sender);
-
-        return super.transferFrom(_from, _to, _value);
-    }
-
-
-    function checkTransferAllowed(address _sender)
-        private
-        view
-    {
-        if (finalized) {
-            // Every token holder should be allowed to transfer tokens once token was finalized
-            return;
-        }
-
-        // Only allow tokenSaleContract to transfer tokens before finalization
-        require(_sender == tokenSaleContract);
-    }
-
-
-    // Finalize method marks the point where token transfers are finally allowed for everybody
-    function finalize()
-        external
-        returns (bool success)
-    {
-        require(!finalized);
-        require(msg.sender == tokenSaleContract);
-
-        finalized = true;
-
-        Finalized();
-
-        return true;
-    }
-
-
-    // Implement a burn function to permit msg.sender to reduce its balance which also reduces totalSupply
-    function burn(uint256 _value)
-        public
-        returns (bool success)
-    {
-        require(finalized);
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-
-        Burnt(msg.sender, _value);
-
-        return true;
-    }
-}
-
-contract TokenSaleConfig  {
-    uint public constant EXA = 10 ** 18;
-
-    uint256 public constant PUBLIC_START_TIME         = 1515542400; //Wed, 10 Jan 2018 00:00:00 +0000
-    uint256 public constant END_TIME                  = 1518220800; //Sat, 10 Feb 2018 00:00:00 +0000
-    uint256 public constant CONTRIBUTION_MIN          = 0.1 ether;
-    uint256 public constant CONTRIBUTION_MAX          = 2500.0 ether;
-
-    uint256 public constant COMPANY_ALLOCATION        = 40 * 10 ** 6 * EXA; //40 million;
-
-    Tranche[4] public tranches;
-
-    struct Tranche {
-        // How long this tranche will be active
-        uint untilToken;
-
-        // How many tokens per ether you will get while this tranche is active
-        uint tokensPerEther;
-    }
-
-    function TokenSaleConfig()
-        public
-    {
-        tranches[0] = Tranche({untilToken : 5000000 * EXA, tokensPerEther : 1554});
-        tranches[1] = Tranche({untilToken : 10000000 * EXA, tokensPerEther : 1178});
-        tranches[2] = Tranche({untilToken : 20000000 * EXA, tokensPerEther : 1000});
-        tranches[3] = Tranche({untilToken : 60000000, tokensPerEther : 740});
-    }
-}
 
 /**
  * @title Ownable
@@ -325,14 +220,11 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  function Ownable() {
     owner = msg.sender;
   }
 
@@ -350,373 +242,313 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
   }
 
 }
+/*************************************************************************
+ * import "zeppelin/contracts/ownership/Ownable.sol" : end
+ *************************************************************************/
 
-contract TokenSale is TokenSaleConfig, Ownable {
+/**
+ * Mintable token
+ */
+
+contract MintableToken is StandardToken, Ownable {
+    uint public totalSupply = 0;
+    address private minter;
+
+    modifier onlyMinter(){
+        require(minter == msg.sender);
+        _;
+    }
+
+    function setMinter(address _minter) onlyOwner {
+        minter = _minter;
+    }
+
+    function mint(address _to, uint _amount) onlyMinter {
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Transfer(address(0x0), _to, _amount);
+    }
+}
+/*************************************************************************
+ * import "./include/MintableToken.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "./include/ERC23PayableToken.sol" : start
+ *************************************************************************/
+
+
+
+/*************************************************************************
+ * import "./ERC23.sol" : start
+ *************************************************************************/
+
+
+
+
+/*
+ * ERC23
+ * ERC23 interface
+ * see https://github.com/ethereum/EIPs/issues/223
+ */
+contract ERC23 is ERC20Basic {
+    function transfer(address to, uint value, bytes data);
+
+    event TransferData(address indexed from, address indexed to, uint value, bytes data);
+}
+/*************************************************************************
+ * import "./ERC23.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "./ERC23PayableReceiver.sol" : start
+ *************************************************************************/
+
+/*
+* Contract that is working with ERC223 tokens
+*/
+
+contract ERC23PayableReceiver {
+    function tokenFallback(address _from, uint _value, bytes _data) payable;
+}
+
+/*************************************************************************
+ * import "./ERC23PayableReceiver.sol" : end
+ *************************************************************************/
+
+/**  https://github.com/Dexaran/ERC23-tokens/blob/master/token/ERC223/ERC223BasicToken.sol
+ *
+ */
+contract ERC23PayableToken is BasicToken, ERC23{
+    // Function that is called when a user or another contract wants to transfer funds .
+    function transfer(address to, uint value, bytes data){
+        transferAndPay(to, value, data);
+    }
+
+    // Standard function transfer similar to ERC20 transfer with no _data .
+    // Added due to backwards compatibility reasons .
+    function transfer(address to, uint value) returns (bool){
+        bytes memory empty;
+        transfer(to, value, empty);
+        return true;
+    }
+
+    function transferAndPay(address to, uint value, bytes data) payable {
+
+        uint codeLength;
+
+        assembly {
+            // Retrieve the size of the code on target address, this needs assembly .
+            codeLength := extcodesize(to)
+        }
+
+        balances[msg.sender] = balances[msg.sender].sub(value);
+        balances[to] = balances[to].add(value);
+
+        if(codeLength>0) {
+            ERC23PayableReceiver receiver = ERC23PayableReceiver(to);
+            receiver.tokenFallback.value(msg.value)(msg.sender, value, data);
+        }else if(msg.value > 0){
+            to.transfer(msg.value);
+        }
+
+        Transfer(msg.sender, to, value);
+        if(data.length > 0)
+            TransferData(msg.sender, to, value, data);
+    }
+}
+/*************************************************************************
+ * import "./include/ERC23PayableToken.sol" : end
+ *************************************************************************/
+
+
+contract NYXToken is MintableToken, ERC23PayableToken {
+    string public constant name = "NYX Token";
+    string public constant symbol = "NYX";
+    uint public constant decimals = 0;
+
+    bool public transferEnabled = false;
+
+    //The cap is 150 mln NYX
+    uint private constant CAP = 150*(10**6);
+
+    function mint(address _to, uint _amount){
+        require(totalSupply.add(_amount) <= CAP);
+        super.mint(_to, _amount);
+    }
+
+    function NYXToken(address multisigOwner) {
+        //Transfer ownership on the token to multisig on creation
+        transferOwnership(multisigOwner);
+    }
+
+    /**
+    * Overriding all transfers to check if transfers are enabled
+    */
+    function transferAndPay(address to, uint value, bytes data) payable{
+        require(transferEnabled);
+        super.transferAndPay(to, value, data);
+    }
+
+    function enableTransfer(bool enabled) onlyOwner{
+        transferEnabled = enabled;
+    }
+
+}
+
+contract TokenSale is Ownable {
     using SafeMath for uint;
 
-    Token  public  tokenContract;
+    // Constants
+    // =========
+    uint private constant millions = 1e6;
 
-    // We keep track of whether the sale has been finalized, at which point
-    // no additional contributions will be permitted.
-    bool public finalized = false;
+    uint private constant CAP = 150*millions;
+    uint private constant SALE_CAP = 12*millions;
 
-    // lookup for max wei amount per user allowed
-    mapping (address => uint256) public contributors;
+    uint public price = 0.002 ether;
 
-    // the total amount of wei raised
-    uint256 public totalWeiRaised = 0;
+    // Events
+    // ======
 
-    // the total amount of token raised
-    uint256 public totalTokenSold = 0;
+    event AltBuy(address holder, uint tokens, string txHash);
+    event Buy(address holder, uint tokens);
+    event RunSale();
+    event PauseSale();
+    event FinishSale();
+    event PriceSet(uint weiPerNYX);
 
-    // address where funds are collected
-    address public fundingWalletAddress;
+    // State variables
+    // ===============
+    bool public presale;
+    NYXToken public token;
+    address authority; //An account to control the contract on behalf of the owner
+    address robot; //An account to purchase tokens for altcoins
+    bool public isOpen = false;
 
-    // address which manages the whitelist (KYC)
-    mapping (address => bool) public whitelistOperators;
+    // Constructor
+    // ===========
 
-    // lookup addresses for whitelist
-    mapping (address => bool) public whitelist;
+    function TokenSale(address _token, address _multisig, address _authority, address _robot){
+        token = NYXToken(_token);
+        authority = _authority;
+        robot = _robot;
+        transferOwnership(_multisig);
+    }
+
+    // Public functions
+    // ================
+    function togglePresale(bool activate) onlyOwner {
+        presale = activate;
+    }
 
 
-    // early bird investments
-    address[] public earlyBirds;
+    function getCurrentPrice() constant returns(uint) {
+        if(presale) {
+            return price - (price*20/100);
+        }
+        return price;
+    }
+    /**
+    * Computes number of tokens with bonus for the specified ether. Correctly
+    * adds bonuses if the sum is large enough to belong to several bonus intervals
+    */
+    function getTokensAmount(uint etherVal) constant returns (uint) {
+        uint tokens = 0;
+        tokens += etherVal/getCurrentPrice();
+        return tokens;
+    }
 
-    mapping (address => uint256) public earlyBirdInvestments;
+    function buy(address to) onlyOpen payable{
+        uint amount = msg.value;
+        uint tokens = getTokensAmountUnderCap(amount);
+        
+        owner.transfer(amount);
 
+		token.mint(to, tokens);
 
-    //
-    // MODIFIERS
-    //
+        Buy(to, tokens);
+    }
 
-    // Throws if purchase would exceed the min max contribution.
-    // @param _contribute address
-    // @param _weiAmount the amount intended to spend
-    modifier withinContributionLimits(address _contributorAddress, uint256 _weiAmount) {
-        uint256 totalContributionAmount = contributors[_contributorAddress].add(_weiAmount);
-        require(_weiAmount >= CONTRIBUTION_MIN);
-        require(totalContributionAmount <= CONTRIBUTION_MAX);
+    function () payable{
+        buy(msg.sender);
+    }
+
+    // Modifiers
+    // =================
+
+    modifier onlyAuthority() {
+        require(msg.sender == authority || msg.sender == owner);
         _;
     }
 
-    // Throws if called by any account not on the whitelist.
-    // @param _address Address which should execute the function
-    modifier onlyWhitelisted(address _address) {
-        require(whitelist[_address] == true);
+    modifier onlyRobot() {
+        require(msg.sender == robot);
         _;
     }
 
-    // Throws if called by any account not on the whitelistOperators list
-    modifier onlyWhitelistOperator()
-    {
-        require(whitelistOperators[msg.sender] == true);
+    modifier onlyOpen() {
+        require(isOpen);
         _;
     }
 
-    //Throws if sale is finalized or token sale end time has been reached
-    modifier onlyDuringSale() {
-        require(finalized == false);
-        require(currentTime() <= END_TIME);
-        _;
+    // Priveleged functions
+    // ====================
+
+    /**
+    * Used to buy tokens for altcoins.
+    * Robot may call it before TokenSale officially starts to migrate early investors
+    */
+    function buyAlt(address to, uint etherAmount, string _txHash) onlyRobot {
+        uint tokens = getTokensAmountUnderCap(etherAmount);
+        token.mint(to, tokens);
+        AltBuy(to, tokens, _txHash);
     }
 
-    //Throws if sale is finalized
-    modifier onlyAfterFinalized() {
-        require(finalized);
-        _;
+    function setAuthority(address _authority) onlyOwner {
+        authority = _authority;
     }
 
-
-
-    //
-    // EVENTS
-    //
-    event LogWhitelistUpdated(address indexed _account);
-
-    event LogTokensPurchased(address indexed _account, uint256 _cost, uint256 _tokens, uint256 _totalTokenSold);
-
-    event UnsoldTokensBurnt(uint256 _amount);
-
-    event Finalized();
-
-    // Initialize a new TokenSale contract
-    // @param _fundingWalletAddress Address which all ether will be forwarded to
-    function TokenSale(address _fundingWalletAddress)
-        public
-    {
-        //make sure _fundingWalletAddress is set
-        require(_fundingWalletAddress != 0);
-
-        fundingWalletAddress = _fundingWalletAddress;
+    function setRobot(address _robot) onlyAuthority {
+        robot = _robot;
     }
 
-    // Connect a token to the tokenSale
-    // @param _fundingWalletAddress Address which all ether will be forwarded to
-    function connectToken(Token _tokenContract)
-        external
-        onlyOwner
-    {
-        require(totalTokenSold == 0);
-        require(tokenContract == address(0));
-
-        //make sure token is untouched
-        require(_tokenContract.balanceOf(address(this)) == _tokenContract.totalSupply());
-
-        tokenContract = _tokenContract;
-
-        // sent tokens to company vault
-        tokenContract.transfer(fundingWalletAddress, COMPANY_ALLOCATION);
-        processEarlyBirds();
+    function setPrice(uint etherPerNYX) onlyAuthority {
+        price = etherPerNYX;
+        PriceSet(price);
     }
 
-    function()
-        external
-        payable
-    {
-        uint256 cost = buyTokens(msg.sender, msg.value);
-
-        // forward contribution to the fundingWalletAddress
-        fundingWalletAddress.transfer(cost);
+    // SALE state management: start / pause / finalize
+    // --------------------------------------------
+    function open(bool open) onlyAuthority {
+        isOpen = open;
+        open ? RunSale() : PauseSale();
     }
 
-    // execution of the actual token purchase
-    function buyTokens(address contributorAddress, uint256 weiAmount)
-        onlyDuringSale
-        onlyWhitelisted(contributorAddress)
-        withinContributionLimits(contributorAddress, weiAmount)
-        private
-    returns (uint256 costs)
-    {
-        assert(tokenContract != address(0));
-
-        uint256 tokensLeft = getTokensLeft();
-
-        // make sure we still have tokens left for sale
-        require(tokensLeft > 0);
-
-        uint256 tokenAmount = calculateTokenAmount(weiAmount);
-        uint256 cost = weiAmount;
-        uint256 refund = 0;
-
-        // we sell till we dont have anything left
-        if (tokenAmount > tokensLeft) {
-            tokenAmount = tokensLeft;
-
-            // calculate actual cost for partial amount of tokens.
-            cost = tokenAmount / getCurrentTokensPerEther();
-
-            // calculate refund for contributor.
-            refund = weiAmount.sub(cost);
-        }
-
-        // transfer the tokens to the contributor address
-        tokenContract.transfer(contributorAddress, tokenAmount);
-
-        // keep track of the amount bought by the contributor
-        contributors[contributorAddress] = contributors[contributorAddress].add(cost);
-
-
-        //if we got a refund process it now
-        if (refund > 0) {
-            // transfer back everything that exceeded the amount of tokens left
-            contributorAddress.transfer(refund);
-        }
-
-        // increase stats
-        totalWeiRaised += cost;
-        totalTokenSold += tokenAmount;
-
-        LogTokensPurchased(contributorAddress, cost, tokenAmount, totalTokenSold);
-
-        // If all tokens available for sale have been sold out, finalize the sale automatically.
-        if (tokensLeft.sub(tokenAmount) == 0) {
-            finalizeInternal();
-        }
-
-
-        //return the actual cost of the sale
-        return cost;
+    function finalize() onlyAuthority {
+        uint diff = CAP.sub(token.totalSupply());
+        if(diff > 0) //The unsold capacity moves to team
+            token.mint(owner, diff);
+        selfdestruct(owner);
+        FinishSale();
     }
 
-    // ask the connected token how many tokens we have left 
-    function getTokensLeft()
-        public
-        view
-    returns (uint256 tokensLeft)
-    {
-        return tokenContract.balanceOf(this);
+    // Private functions
+    // =========================
+
+    /**
+    * Gets tokens for specified ether provided that they are still under the cap
+    */
+    function getTokensAmountUnderCap(uint etherAmount) private constant returns (uint){
+        uint tokens = getTokensAmount(etherAmount);
+        require(tokens > 0);
+        require(tokens.add(token.totalSupply()) <= SALE_CAP);
+        return tokens;
     }
 
-    // calculate the current tokens per ether
-    function getCurrentTokensPerEther()
-        public
-        view
-    returns (uint256 tokensPerEther)
-    {
-        uint i;
-        uint defaultTokensPerEther = tranches[tranches.length - 1].tokensPerEther;
-
-        if (currentTime() >= PUBLIC_START_TIME) {
-            return defaultTokensPerEther;
-        }
-
-        for (i = 0; i < tranches.length; i++) {
-            if (totalTokenSold >= tranches[i].untilToken) {
-                continue;
-            }
-
-            //sell until the contract has nor more tokens
-            return tranches[i].tokensPerEther;
-        }
-
-        return defaultTokensPerEther;
-    }
-
-    // calculate the token amount for a give weiAmount
-    function calculateTokenAmount(uint256 weiAmount)
-        public
-        view
-    returns (uint256 tokens)
-    {
-        return weiAmount * getCurrentTokensPerEther();
-    }
-
-    //
-    // WHITELIST
-    //
-
-    // add a new whitelistOperator
-    function addWhitelistOperator(address _address)
-        public
-        onlyOwner
-    {
-        whitelistOperators[_address] = true;
-    }
-
-    // remove a whitelistOperator
-    function removeWhitelistOperator(address _address)
-        public
-        onlyOwner
-    {
-        require(whitelistOperators[_address]);
-
-        delete whitelistOperators[_address];
-    }
-
-
-    // Allows whitelistOperators to add an account to the whitelist.
-    // Only those accounts will be allowed to contribute during the sale.
-    function addToWhitelist(address _address)
-        public
-        onlyWhitelistOperator
-    {
-        require(_address != address(0));
-
-        whitelist[_address] = true;
-        LogWhitelistUpdated(_address);
-    }
-
-    // Allows whitelistOperators to remove an account from the whitelist.
-    function removeFromWhitelist(address _address)
-        public
-        onlyWhitelistOperator
-    {
-        require(_address != address(0));
-
-        delete whitelist[_address];
-    }
-
-    //returns the current time, needed for tests
-    function currentTime()
-        public
-        view
-        returns (uint256 _currentTime)
-    {
-        return now;
-    }
-
-
-    // Allows the owner to finalize the sale.
-    function finalize()
-        external
-        onlyOwner
-        returns (bool)
-    {
-        //allow only after the defined end_time
-        require(currentTime() > END_TIME);
-
-        return finalizeInternal();
-    }
-
-
-    // The internal one will be called if tokens are sold out or
-    // the end time for the sale is reached, in addition to being called
-    // from the public version of finalize().
-    function finalizeInternal() private returns (bool) {
-        require(!finalized);
-
-        finalized = true;
-
-        Finalized();
-
-        //also finalize the token contract
-        tokenContract.finalize();
-
-        return true;
-    }
-
-    // register an early bird investment
-    function addEarlyBird(address _address, uint256 weiAmount)
-        onlyOwner
-        withinContributionLimits(_address, weiAmount)
-        external
-    {
-        // only allowed as long as we dont have a connected token
-        require(tokenContract == address(0));
-
-        earlyBirds.push(_address);
-        earlyBirdInvestments[_address] = weiAmount;
-
-        // auto whitelist early bird;
-        whitelist[_address] = true;
-    }
-
-    // transfer the tokens bought by the early birds before contract creation
-    function processEarlyBirds()
-        private
-    {
-        for (uint256 i = 0; i < earlyBirds.length; i++)
-        {
-            address earlyBirdAddress = earlyBirds[i];
-            uint256 weiAmount = earlyBirdInvestments[earlyBirdAddress];
-
-            buyTokens(earlyBirdAddress, weiAmount);
-        }
-    }
-
-
-    // allows everyone to burn all unsold tokens in the sale contract after finalized.
-    function burnUnsoldTokens()
-        external
-        onlyAfterFinalized
-        returns (bool)
-    {
-        uint256 leftTokens = getTokensLeft();
-
-        require(leftTokens > 0);
-
-        // let'em burn
-        require(tokenContract.burn(leftTokens));
-
-        UnsoldTokensBurnt(leftTokens);
-
-        return true;
-    }
 }
