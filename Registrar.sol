@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0x562b85aceee81876d27252b7dc06f03f6a2565fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0x5cc6940d930001b1e1d29725cbfd68afe479e968
 */
 pragma solidity ^0.4.11;
 
-/* Ethart Registrar Contract:
+/* Ethart unindexed Factory Contract:
 
 	Ethart ARCHITECTURE
 	-------------------
