@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TariInvestment at 0xcad708773b0ee530998e9d9699a65f8367f65cad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TariInvestment at 0xad739df5b0ad62f927dd2b58d350c8ee5ea0c89d
 */
 pragma solidity ^0.4.19;
 
@@ -41,89 +41,40 @@ contract Ownable {
 
 }
 
+// The owner of this contract should be an externally owned account
 contract TariInvestment is Ownable {
 
   // Address of the target contract
-  address public investmentAddress = 0x33eFC5120D99a63bdF990013ECaBbd6c900803CE;
+  address public investment_address = 0x33eFC5120D99a63bdF990013ECaBbd6c900803CE;
   // Major partner address
-  address public majorPartnerAddress = 0x8f0592bDCeE38774d93bC1fd2c97ee6540385356;
+  address public major_partner_address = 0x8f0592bDCeE38774d93bC1fd2c97ee6540385356;
   // Minor partner address
-  address public minorPartnerAddress = 0xC787C3f6F75D7195361b64318CE019f90507f806;
-  // Record balances to allow refunding
-  mapping(address => uint) public balances;
-  // Total received. Used for refunding.
-  uint public totalInvestment;
-  // Available refunds. Used for refunding.
-  uint public availableRefunds;
-  // Deadline when refunding starts.
-  uint public refundingDeadline;
-  // Gas used for withdrawals.
-  uint public withdrawal_gas;
-  // States: Open for investments - allows investments and transfers,
-  //         Refunding investments - any state can transition to refunding state
-  enum State{Open, Refunding}
-
-
-  State public state = State.Open;
-
-  function TariInvestment() public {
-    refundingDeadline = now + 4 days;
-    // Withdrawal gas is added to the standard 2300 by the solidity compiler.
-    set_withdrawal_gas(1000);
-  }
+  address public minor_partner_address = 0xC787C3f6F75D7195361b64318CE019f90507f806;
+  // Gas used for transfers.
+  uint public gas = 3000;
 
   // Payments to this contract require a bit of gas. 100k should be enough.
   function() payable public {
-    // Reject any value transfers once we have finished sending the balance to the target contract.
-    require(state == State.Open);
-    balances[msg.sender] += msg.value;
-    totalInvestment += msg.value;
+    execute_transfer(msg.value);
   }
 
   // Transfer some funds to the target investment address.
-  function execute_transfer(uint transfer_amount, uint gas_amount) public onlyOwner {
-    // Transferral of funds shouldn't be possible during refunding.
-    require(state == State.Open);
-
+  function execute_transfer(uint transfer_amount) internal {
     // Major fee is 1,50% = 15 / 1000
     uint major_fee = transfer_amount * 15 / 1000;
     // Minor fee is 1% = 10 / 1000
     uint minor_fee = transfer_amount * 10 / 1000;
-    require(majorPartnerAddress.call.gas(gas_amount).value(major_fee)());
-    require(minorPartnerAddress.call.gas(gas_amount).value(minor_fee)());
+
+    require(major_partner_address.call.gas(gas).value(major_fee)());
+    require(minor_partner_address.call.gas(gas).value(minor_fee)());
 
     // Send the rest
-    require(investmentAddress.call.gas(gas_amount).value(transfer_amount - major_fee - minor_fee)());
+    require(investment_address.call.gas(gas).value(transfer_amount - major_fee - minor_fee)());
   }
 
-  // Convenience function to transfer all available balance.
-  function execute_transfer_all(uint gas_amount) public onlyOwner {
-    execute_transfer(this.balance, gas_amount);
-  }
-
-  // Refund an investor when he sends a withdrawal transaction.
-  // Only available once refunds are enabled or the deadline for transfers is reached.
-  function withdraw() public {
-    if (state != State.Refunding) {
-      require(refundingDeadline <= now);
-      state = State.Refunding;
-      availableRefunds = this.balance;
-    }
-
-    // withdrawal = availableRefunds * investor's share
-    uint withdrawal = availableRefunds * balances[msg.sender] / totalInvestment;
-    balances[msg.sender] = 0;
-    require(msg.sender.call.gas(withdrawal_gas).value(withdrawal)());
-  }
-
-  // Convenience function to allow immediate refunds.
-  function enable_refunds() public onlyOwner {
-    state = State.Refunding;
-  }
-
-  // Sets the amount of gas allowed to withdrawers
-  function set_withdrawal_gas(uint gas_amount) public onlyOwner {
-    withdrawal_gas = gas_amount;
+    // Sets the amount of gas allowed to investors
+  function set_transfer_gas(uint transfer_gas) public onlyOwner {
+    gas = transfer_gas;
   }
 
 }
