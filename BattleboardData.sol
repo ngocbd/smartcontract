@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleboardData at 0x33201831496217a779bf6169038dd9232771f179
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleboardData at 0xe60fc4632bd6713e923fe93f8c244635e6d5009e
 */
 pragma solidity ^0.4.17;
 
@@ -76,7 +76,7 @@ function clearAngelsFromBoard(uint16 battleboardId) private;
      
 function getTileHp(uint16 battleboardId, uint8 tileId) constant external returns (uint32) ;
 function getMedalsBurned(uint16 battleboardId) constant external returns (uint8) ;
-function getTeam(uint16 battleboardId, uint8 tileId) external returns (uint8) ;
+function getTeam(uint16 battleboardId, uint8 tileId) constant external returns (uint8) ;
 function getMaxFreeTeams() constant public returns (uint8);
 function getBarrierNum(uint16 battleboardId) public constant returns (uint8) ;
 function getTileFromBattleboard(uint16 battleboardId, uint8 tileId) public constant returns (uint8 tileType, uint8 value, uint8 id, uint8 position, uint32 hp, uint16 petPower, uint64 angelId, uint64 petId, bool isLive, address owner)   ;
@@ -274,7 +274,9 @@ contract BattleboardData is IBattleboardData  {
      }
        
         function setTilePosition (uint16 battleboardId, uint8 tileId, uint8 _positionTo) onlySERAPHIM public  {
-            TilesonBoard[battleboardId][tileId].position= _positionTo;
+            uint8 oldPos = TilesonBoard[battleboardId][tileId].position;
+            positionsTiles[battleboardId][oldPos+1] = 0;
+            TilesonBoard[battleboardId][tileId].position = _positionTo;
             positionsTiles[battleboardId][_positionTo+1] = tileId;
             
         }
@@ -333,8 +335,8 @@ function setLastMoveTime(uint16 battleboardId) onlySERAPHIM external {
         }
   
  
- function getTeam(uint16 battleboardId, uint8 tileId) external returns (uint8) {
-     TilesonBoard[battleboardId][tileId].team;
+ function getTeam(uint16 battleboardId, uint8 tileId) constant external returns (uint8) {
+     return TilesonBoard[battleboardId][tileId].team;
  }
         
 
