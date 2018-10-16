@@ -1,25 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenCampaign at 0x32ec2e6967687825123c5c0f30c18e2c47708df1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenCampaign at 0xDa830AfA460526071D3D149E898feAd664F0A4bB
 */
-// This is the code fot the smart contract 
-// used for the Realisto ICO 
+// Smart contract used for the EatMeCoin Crowdsale 
 //
-// @author: Pavel Metelitsyn
-// September 2017
-
-
-pragma solidity ^0.4.15;
-
-
-// import "./library.sol";
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- * 
- * Source: Zeppelin Solidity
- */
+// @author: Pavel Metelitsyn, Geejay101
+// April 2018
 
 library SafeMath {
   function mul(uint a, uint b) internal returns (uint) {
@@ -86,9 +71,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-//import "./RealistoToken.sol";
-
-
 /*
     Copyright 2016, Jordi Baylina
 
@@ -120,7 +102,7 @@ contract TokenController {
     /// @notice Called when `_owner` sends ether to the MiniMe Token contract
     /// @param _owner The address that sent the ether to create tokens
     /// @return True if the ether is accepted, false if it throws
-    function proxyPayment(address _owner) payable returns(bool);
+    function proxyPayment(address _owner) public payable returns(bool);
 
     /// @notice Notifies the controller about a token transfer allowing the
     ///  controller to react if desired
@@ -128,7 +110,7 @@ contract TokenController {
     /// @param _to The destination of the transfer
     /// @param _amount The amount of the transfer
     /// @return False if the controller does not authorize the transfer
-    function onTransfer(address _from, address _to, uint _amount) returns(bool);
+    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
 
     /// @notice Notifies the controller about an approval allowing the
     ///  controller to react if desired
@@ -136,7 +118,7 @@ contract TokenController {
     /// @param _spender The spender in the `approve()` call
     /// @param _amount The amount in the `approve()` call
     /// @return False if the controller does not authorize the approval
-    function onApprove(address _owner, address _spender, uint _amount)
+    function onApprove(address _owner, address _spender, uint _amount) public
         returns(bool);
 }
 
@@ -147,17 +129,17 @@ contract Controlled {
 
     address public controller;
 
-    function Controlled() { controller = msg.sender;}
+    function Controlled() public { controller = msg.sender;}
 
     /// @notice Changes the controller of the contract
     /// @param _newController The new controller of the contract
-    function changeController(address _newController) onlyController {
+    function changeController(address _newController) public onlyController {
         controller = _newController;
     }
 }
 
 contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data);
+    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
 }
 
 /// @dev The actual token contract, the default controller is the msg.sender
@@ -168,7 +150,7 @@ contract MiniMeToken is Controlled {
     string public name;                //The Token's name: e.g. DigixDAO Tokens
     uint8 public decimals;             //Number of decimals of the smallest unit
     string public symbol;              //An identifier: e.g. REP
-    string public version = 'MMT_0.1'; //An arbitrary versioning scheme
+    string public version = 'MMT_0.2'; //An arbitrary versioning scheme
 
 
     /// @dev `Checkpoint` is the structure that attaches a block number to a
@@ -236,7 +218,7 @@ contract MiniMeToken is Controlled {
         uint8 _decimalUnits,
         string _tokenSymbol,
         bool _transfersEnabled
-    ) {
+    ) public {
         tokenFactory = MiniMeTokenFactory(_tokenFactory);
         name = _tokenName;                                 // Set the name
         decimals = _decimalUnits;                          // Set the decimals
@@ -256,9 +238,10 @@ contract MiniMeToken is Controlled {
     /// @param _to The address of the recipient
     /// @param _amount The amount of tokens to be transferred
     /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _amount) returns (bool success) {
+    function transfer(address _to, uint256 _amount) public returns (bool success) {
         require(transfersEnabled);
-        return doTransfer(msg.sender, _to, _amount);
+        doTransfer(msg.sender, _to, _amount);
+        return true;
     }
 
     /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
@@ -268,7 +251,7 @@ contract MiniMeToken is Controlled {
     /// @param _amount The amount of tokens to be transferred
     /// @return True if the transfer was successful
     function transferFrom(address _from, address _to, uint256 _amount
-    ) returns (bool success) {
+    ) public returns (bool success) {
 
         // The controller of this contract can move tokens around at will,
         //  this is important to recognize! Confirm that you trust the
@@ -278,10 +261,11 @@ contract MiniMeToken is Controlled {
             require(transfersEnabled);
 
             // The standard ERC 20 transferFrom functionality
-            if (allowed[_from][msg.sender] < _amount) return false;
+            require(allowed[_from][msg.sender] >= _amount);
             allowed[_from][msg.sender] -= _amount;
         }
-        return doTransfer(_from, _to, _amount);
+        doTransfer(_from, _to, _amount);
+        return true;
     }
 
     /// @dev This is the actual transfer function in the token contract, it can
@@ -291,10 +275,11 @@ contract MiniMeToken is Controlled {
     /// @param _amount The amount of tokens to be transferred
     /// @return True if the transfer was successful
     function doTransfer(address _from, address _to, uint _amount
-    ) internal returns(bool) {
+    ) internal {
 
            if (_amount == 0) {
-               return true;
+               Transfer(_from, _to, _amount);    // Follow the spec to louch the event when transfer 0
+               return;
            }
 
            require(parentSnapShotBlock < block.number);
@@ -303,11 +288,10 @@ contract MiniMeToken is Controlled {
            require((_to != 0) && (_to != address(this)));
 
            // If the amount being transfered is more than the balance of the
-           //  account the transfer returns false
+           //  account the transfer throws
            var previousBalanceFrom = balanceOfAt(_from, block.number);
-           if (previousBalanceFrom < _amount) {
-               return false;
-           }
+
+           require(previousBalanceFrom >= _amount);
 
            // Alerts the token controller of the transfer
            if (isContract(controller)) {
@@ -327,12 +311,11 @@ contract MiniMeToken is Controlled {
            // An event to make the transfer easy to find on the blockchain
            Transfer(_from, _to, _amount);
 
-           return true;
     }
 
     /// @param _owner The address that's balance is being requested
     /// @return The balance of `_owner` at the current block
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balanceOfAt(_owner, block.number);
     }
 
@@ -342,7 +325,7 @@ contract MiniMeToken is Controlled {
     /// @param _spender The address of the account able to transfer the tokens
     /// @param _amount The amount of tokens to be approved for transfer
     /// @return True if the approval was successful
-    function approve(address _spender, uint256 _amount) returns (bool success) {
+    function approve(address _spender, uint256 _amount) public returns (bool success) {
         require(transfersEnabled);
 
         // To change the approve amount you first have to reduce the addresses`
@@ -367,7 +350,7 @@ contract MiniMeToken is Controlled {
     /// @return Amount of remaining tokens of _owner that _spender is allowed
     ///  to spend
     function allowance(address _owner, address _spender
-    ) constant returns (uint256 remaining) {
+    ) public constant returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
 
@@ -379,7 +362,7 @@ contract MiniMeToken is Controlled {
     /// @param _amount The amount of tokens to be approved for transfer
     /// @return True if the function call was successful
     function approveAndCall(address _spender, uint256 _amount, bytes _extraData
-    ) returns (bool success) {
+    ) public returns (bool success) {
         require(approve(_spender, _amount));
 
         ApproveAndCallFallBack(_spender).receiveApproval(
@@ -394,7 +377,7 @@ contract MiniMeToken is Controlled {
 
     /// @dev This function makes it easy to get the total number of tokens
     /// @return The total number of tokens
-    function totalSupply() constant returns (uint) {
+    function totalSupply() public constant returns (uint) {
         return totalSupplyAt(block.number);
     }
 
@@ -407,7 +390,7 @@ contract MiniMeToken is Controlled {
     /// @param _owner The address from which the balance will be retrieved
     /// @param _blockNumber The block number when the balance is queried
     /// @return The balance at `_blockNumber`
-    function balanceOfAt(address _owner, uint _blockNumber) constant
+    function balanceOfAt(address _owner, uint _blockNumber) public constant
         returns (uint) {
 
         // These next few lines are used when the balance of the token is
@@ -433,7 +416,7 @@ contract MiniMeToken is Controlled {
     /// @notice Total amount of tokens at a specific `_blockNumber`.
     /// @param _blockNumber The block number when the totalSupply is queried
     /// @return The total amount of tokens at `_blockNumber`
-    function totalSupplyAt(uint _blockNumber) constant returns(uint) {
+    function totalSupplyAt(uint _blockNumber) public constant returns(uint) {
 
         // These next few lines are used when the totalSupply of the token is
         //  requested before a check point was ever created for this token, it
@@ -474,7 +457,7 @@ contract MiniMeToken is Controlled {
         string _cloneTokenSymbol,
         uint _snapshotBlock,
         bool _transfersEnabled
-        ) returns(address) {
+        ) public returns(address) {
         if (_snapshotBlock == 0) _snapshotBlock = block.number;
         MiniMeToken cloneToken = tokenFactory.createCloneToken(
             this,
@@ -501,7 +484,7 @@ contract MiniMeToken is Controlled {
     /// @param _amount The quantity of tokens generated
     /// @return True if the tokens are generated correctly
     function generateTokens(address _owner, uint _amount
-    ) onlyController returns (bool) {
+    ) public onlyController returns (bool) {
         uint curTotalSupply = totalSupply();
         require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
         uint previousBalanceTo = balanceOf(_owner);
@@ -518,7 +501,7 @@ contract MiniMeToken is Controlled {
     /// @param _amount The quantity of tokens to burn
     /// @return True if the tokens are burned correctly
     function destroyTokens(address _owner, uint _amount
-    ) onlyController returns (bool) {
+    ) onlyController public returns (bool) {
         uint curTotalSupply = totalSupply();
         require(curTotalSupply >= _amount);
         uint previousBalanceFrom = balanceOf(_owner);
@@ -536,7 +519,7 @@ contract MiniMeToken is Controlled {
 
     /// @notice Enables token holders to transfer their tokens freely if true
     /// @param _transfersEnabled True if transfers are allowed in the clone
-    function enableTransfers(bool _transfersEnabled) onlyController {
+    function enableTransfers(bool _transfersEnabled) public onlyController {
         transfersEnabled = _transfersEnabled;
     }
 
@@ -601,14 +584,14 @@ contract MiniMeToken is Controlled {
     }
 
     /// @dev Helper function to return a min betwen the two uints
-    function min(uint a, uint b) internal returns (uint) {
+    function min(uint a, uint b) pure internal returns (uint) {
         return a < b ? a : b;
     }
 
     /// @notice The fallback function: If the contract's controller has not been
     ///  set to 0, then the `proxyPayment` method is called which relays the
     ///  ether and creates tokens as described in the token controller contract
-    function ()  payable {
+    function () public payable {
         require(isContract(controller));
         require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender));
     }
@@ -621,7 +604,7 @@ contract MiniMeToken is Controlled {
     ///  sent tokens to this contract.
     /// @param _token The address of the token contract that you want to recover
     ///  set to 0 in case you want to extract ether.
-    function claimTokens(address _token) onlyController {
+    function claimTokens(address _token) public onlyController {
         if (_token == 0x0) {
             controller.transfer(this.balance);
             return;
@@ -674,7 +657,7 @@ contract MiniMeTokenFactory {
         uint8 _decimalUnits,
         string _tokenSymbol,
         bool _transfersEnabled
-    ) returns (MiniMeToken) {
+    ) public returns (MiniMeToken) {
         MiniMeToken newToken = new MiniMeToken(
             this,
             _parentToken,
@@ -690,7 +673,9 @@ contract MiniMeTokenFactory {
     }
 }
 
-contract RealistoToken is MiniMeToken { 
+
+
+contract EatMeCoin is MiniMeToken { 
 
   // we use this variable to store the number of the finalization block
   uint256 public checkpointBlock;
@@ -699,7 +684,7 @@ contract RealistoToken is MiniMeToken {
   address public mayGenerateAddr;
 
   // flag
-  bool tokenGenerationEnabled; //<- added after first audit
+  bool tokenGenerationEnabled = true; //<- added after first audit
 
 
   modifier mayGenerate() {
@@ -709,17 +694,17 @@ contract RealistoToken is MiniMeToken {
   }
 
   // Constructor
-  function RealistoToken(address _tokenFactory) 
+  function EatMeCoin(address _tokenFactory) 
     MiniMeToken(
       _tokenFactory,
       0x0,
       0,
-      "Realisto Token",
+      "EatMeCoin",
       18, // decimals
-      "REA",
+      "EAT",
       // SHOULD TRANSFERS BE ENABLED? -- NO
       false){
-    tokenGenerationEnabled = true;
+    
     controller = msg.sender;
     mayGenerateAddr = controller;
   }
@@ -740,14 +725,13 @@ contract RealistoToken is MiniMeToken {
   
   /// @notice This function is copy-paste of the generateTokens of the original MiniMi contract
   ///   except it uses mayGenerate modifier (original uses onlyController)
-  /// this is because we don't want the Sale campaign contract to be the controller
-  function generate_token_for(address _addrTo, uint _amount) mayGenerate returns (bool) {
+  function generate_token_for(address _addrTo, uint256 _amount) mayGenerate returns (bool) {
     
     //balances[_addr] += _amount;
    
-    uint curTotalSupply = totalSupply();
+    uint256 curTotalSupply = totalSupply();
     require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow    
-    uint previousBalanceTo = balanceOf(_addrTo);
+    uint256 previousBalanceTo = balanceOf(_addrTo);
     require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
     updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
     updateValueAtNow(balances[_addrTo], previousBalanceTo + _amount);
@@ -756,7 +740,7 @@ contract RealistoToken is MiniMeToken {
   }
 
   // overwrites the original function
-  function generateTokens(address _owner, uint _amount
+  function generateTokens(address _owner, uint256 _amount
     ) onlyController returns (bool) {
     revert();
     generate_token_for(_owner, _amount);    
@@ -765,340 +749,253 @@ contract RealistoToken is MiniMeToken {
 
   // permanently disables generation of new tokens
   function finalize() mayGenerate {
-    tokenGenerationEnabled = false; //<- added after first audit
+    tokenGenerationEnabled = false;
+    transfersEnabled = true;
     checkpointBlock = block.number;
   }  
 }
 
 
-
-
-//import "./LinearTokenVault.sol";
-
-
-
-// simple time locked vault allows controlled extraction of tokens during a period of time
-
-
-// Controlled is implemented in MiniMeToken.sol 
-contract TokenVault is Controlled {
-	using SafeMath for uint256;
-
-
-	//address campaignAddr;
-	TokenCampaign campaign;
-	//uint256 tUnlock = 0;
-	uint256 tDuration;
-	uint256 tLock = 12 * 30 * (1 days); // 12 months 
-	MiniMeToken token;
-
-	uint256 extracted = 0;
-
-	event Extract(address indexed _to, uint256 _amount);
-
-	function TokenVault(
-		address _tokenAddress,
-	 	address _campaignAddress,
-	 	uint256 _tDuration
-	 	) {
-
-			require( _tDuration > 0);
-			tDuration = _tDuration;
-
-			//campaignAddr = _campaignAddress;
-			token = RealistoToken(_tokenAddress);
-			campaign = TokenCampaign(_campaignAddress);
-		}
-
-	/// WE DONT USE IT ANYMORE
-	/// sale campaign calls this function to set the time lock
-	/// @param _tUnlock - Unix timestamp of the first date 
-	///							on which tokens become available
-	//function setTimeLock(uint256 _tUnlock){
-		// prevent change of the timestamp by anybody other than token sale contract
-		// once unlock time is set it cannot be changed
-		//require( (msg.sender == campaignAddr) && (tUnlock == 0));
-	//	tUnlock = _tUnlock;
-	//}
-
-	/// @notice Send all available tokens to a given address
-	function extract(address _to) onlyController {
-		
-		require (_to != 0x0);
-
-		uint256 available = availableNow();
-	
-		require( available > 0 );
-
-		extracted = extracted.add(available);
-		assert( token.transfer(_to, available) );
-		
-
-		Extract(_to, available);
-
-	}
-
-	// returns amount of tokens held in this vault
-	function balance() returns (uint256){
-		return token.balanceOf(address(this));
-	}
-
-	function get_unlock_time() returns (uint256){
-		return campaign.tFinalized() + tLock;
-	}
-
-	// returns amount of tokens available for extraction now
-	function availableNow() returns (uint256){
-		
-		uint256 tUnlock = get_unlock_time();
-		uint256 tNow = now;
-
-		// if before unlock time or unlock time is not set  => 0 is available 
-		if (tNow < tUnlock ) { return 0; }
-
-		uint256 remaining = balance();
-
-		// if after longer than tDuration since unlock time => everything that is left is available
-		if (tNow > tUnlock + tDuration) { return remaining; }
-
-		// otherwise:
-		// compute how many extractions remaining based on time
-
-			// time delta
-		uint256 t = (tNow.sub(tUnlock)).mul(remaining.add(extracted));
-		return (t.div(tDuration)).sub(extracted);
-	}
-
-}
-
-
-contract rea_token_interface{
+contract eat_token_interface{
   uint8 public decimals;
-  function generate_token_for(address _addr,uint _amount) returns (bool);
+  function generate_token_for(address _addr,uint256 _amount) returns (bool);
   function finalize();
 }
 
-
 // Controlled is implemented in MiniMeToken.sol
-contract TokenCampaign is Controlled{
+contract TokenCampaign is Controlled {
   using SafeMath for uint256;
 
   // this is our token
-  rea_token_interface public token;
+  eat_token_interface public token;
 
-  TokenVault teamVault;
+  uint8 public constant decimals = 18;
 
- 
+  uint256 public constant scale = (uint256(10) ** decimals);
+
+  uint256 public constant hardcap = 100000000 * scale;
+
   ///////////////////////////////////
   //
   // constants related to token sale
 
-  // after slae ends, additional tokens will be generated
+  // after sale ends, additional tokens will be generated
   // according to the following rules,
   // where 100% correspond to the number of sold tokens
 
-  // percent of tokens to be generated for the team
-  uint256 public constant PRCT_TEAM = 10;
-  // percent of tokens to be generated for bounty
-  uint256 public constant PRCT_BOUNTY = 3;
- 
-  // we keep ETH in the contract until the sale is finalized
-  // however a small part of every contribution goes to opperational costs
-  // percent of ETH going to operational account
-  uint256 public constant PRCT_ETH_OP = 10;
+  // percent of reward tokens to be generated
+  uint256 public constant PRCT100_D_TEAM = 63; // % * 100 , 0.63%
+  uint256 public constant PRCT100_R_TEAM = 250; // % * 100 , 2.5%
+  uint256 public constant PRCT100_R2 = 150;  // % * 100 , 1.5%
 
-  uint8 public constant decimals = 18;
-  uint256 public constant scale = (uint256(10) ** decimals);
+  // fixed reward
+  uint256 public constant FIXEDREWARD_MM = 100000 * scale; // fixed
 
+  // we keep some of the ETH in the contract until the sale is finalized
+  // percent of ETH going to operational and reserve account
+  uint256 public constant PRCT100_ETH_OP = 4000; // % * 100 , 2x 40%
 
-  // how many tokens for one ETH
-  // we may adjust this number before deployment based on the market conditions
-  uint256 public constant baseRate = 330; //<-- unscaled
-
-  // we want to limit the number of available tokens during the bonus stage 
-  // payments during the bonus stage will not be accepted after the TokenTreshold is reached or exceeded
-  // we may adjust this number before deployment based on the market conditions
-
-  uint256 public constant bonusTokenThreshold = 2000000 * scale ; //<--- new 
+  // preCrowd structure, Wei
+  uint256 public constant preCrowdMinContribution = (20 ether);
 
   // minmal contribution, Wei
   uint256 public constant minContribution = (1 ether) / 100;
 
-  // bonus structure, Wei
-  uint256 public constant bonusMinContribution = (1 ether) /10;
-  // 
-  uint256 public constant bonusAdd = 99; // + 30% <-- corrected
-  uint256 public constant stage_1_add = 50;// + 15,15% <-- corrected
-  uint256 public constant stage_2_add = 33;// + 10%
-  uint256 public constant stage_3_add = 18;// + 5,45%
-  
+  // how many tokens for one ETH
+  uint256 public constant preCrowd_tokens_scaled = 7142857142857140000000; // 30% discount
+  uint256 public constant stage_1_tokens_scaled =  6250000000000000000000; // 20% discount
+  uint256 public constant stage_2_tokens_scaled =  5555555555555560000000; // 10% discount
+  uint256 public constant stage_3_tokens_scaled =  5000000000000000000000; //<-- scaled
+
+  // Tokens allocated for each stage
+  uint256 public constant PreCrowdAllocation =  20000000 * scale ; // Tokens
+  uint256 public constant Stage1Allocation =    15000000 * scale ; // Tokens
+  uint256 public constant Stage2Allocation =    15000000 * scale ; // Tokens
+  uint256 public constant Stage3Allocation =    20000000 * scale ; // Tokens
+
+  // keeps track of tokens allocated, scaled value
+  uint256 public tokensRemainingPreCrowd = PreCrowdAllocation;
+  uint256 public tokensRemainingStage1 = Stage1Allocation;
+  uint256 public tokensRemainingStage2 = Stage2Allocation;
+  uint256 public tokensRemainingStage3 = Stage3Allocation;
+
+  // If necessary we can cap the maximum amount 
+  // of individual contributions in case contributions have exceeded the hardcap
+  // this avoids to cap the contributions already when funds flow in
+  uint256 public maxPreCrowdAllocationPerInvestor =  20000000 * scale ; // Tokens
+  uint256 public maxStage1AllocationPerInvestor =    15000000 * scale ; // Tokens
+  uint256 public maxStage2AllocationPerInvestor =    15000000 * scale ; // Tokens
+  uint256 public maxStage3AllocationPerInvestor =    20000000 * scale ; // Tokens
+
+  // keeps track of tokens generated so far, scaled value
+  uint256 public tokensGenerated = 0;
+
+  address[] public joinedCrowdsale;
+
+  // total Ether raised (= Ether paid into the contract)
+  uint256 public amountRaised = 0; 
+
+  // How much wei we have given back to investors.
+  uint256 public amountRefunded = 0;
+
+
   ////////////////////////////////////////////////////////
   //
   // folowing addresses need to be set in the constructor
   // we also have setter functions which allow to change
   // an address if it is compromised or something happens
 
-  // destination for team's share
-  // this should point to an instance of TokenVault contract
-  address public teamVaultAddr = 0x0;
+  // destination for D-team's share
+  address public dteamVaultAddr1;
+  address public dteamVaultAddr2;
+  address public dteamVaultAddr3;
+  address public dteamVaultAddr4;
+
+  // destination for R-team's share
+  address public rteamVaultAddr;
+
+  // advisor address
+  address public r2VaultAddr;
+
+  // adivisor address
+  address public mmVaultAddr;
   
-  // destination for reward tokens
-  address public bountyVaultAddr;
+  // destination for reserve tokens
+  address public reserveVaultAddr;
 
   // destination for collected Ether
   address public trusteeVaultAddr;
   
   // destination for operational costs account
   address public opVaultAddr;
-  
 
   // adress of our token
   address public tokenAddr;
-
-
-  // address of our bitcoin payment processing robot
-  // the robot is allowed to generate tokens without
-  // sending ether
-  // we do it to have more granular rights controll 
-  address public robotAddr;
   
-  
-  /////////////////////////////////
-  // Realted to Campaign
-
-
   // @check ensure that state transitions are 
   // only in one direction
-  // 4 - passive, not accepting funds
-  // 3 - is not used
+  // 3 - passive, not accepting funds
   // 2 - active main sale, accepting funds
   // 1 - closed, not accepting funds 
   // 0 - finalized, not accepting funds
-  uint8 public campaignState = 4; 
+  uint8 public campaignState = 3; 
   bool public paused = false;
 
-  // keeps track of tokens generated so far, scaled value
-  uint256 public tokensGenerated = 0;
-
-  // total Ether raised (= Ether paid into the contract)
-  uint256 public amountRaised = 0; 
-
-  
-  // this is the address where the funds 
-  // will be transfered after the sale ends
-  
   // time in seconds since epoch 
   // set to midnight of saturday January 1st, 4000
   uint256 public tCampaignStart = 64060588800;
-  uint256 public tBonusStageEnd = 7 * (1 days);
-  uint256 public tRegSaleStart = 8 * (1 days);
-  uint256 public t_1st_StageEnd = 15 * (1 days);
-  uint256 public t_2nd_StageEnd = 22* (1 days);
-  uint256 public t_3rd_StageEnd = 29 * (1 days);
-  uint256 public tCampaignEnd = 38 * (1 days);
+
+  uint256 public t_1st_StageEnd = 5 * (1 days); // Stage1 3 days open
+  // for testing
+  // uint256 public t_1st_StageEnd = 3 * (1 hours); // Stage1 3 days open
+
+  uint256 public t_2nd_StageEnd = 2 * (1 days); // Stage2 2 days open
+  // for testing
+  // uint256 public t_2nd_StageEnd = 2 * (1 hours); // Stage2 2 days open
+
+  uint256 public tCampaignEnd = 35 * (1 days); // Stage3 35 days open
+  // for testing
+  // uint256 public tCampaignEnd = 35 * (1 hours); // Stage3 35 days open
+
   uint256 public tFinalized = 64060588800;
 
-  //////////////////////////////////////////////
-  //
-  // Modifiers
+  // participant data
+  struct ParticipantListData {
 
-  /// @notice The robot is allowed to generate tokens 
-  ///   without sending ether
-  ///  We do it to have more granular rights controll 
-  modifier onlyRobot () { 
-   require(msg.sender == robotAddr); 
-   _;
+    bool participatedFlag;
+
+    uint256 contributedAmountPreAllocated;
+    uint256 contributedAmountPreCrowd;
+    uint256 contributedAmountStage1;
+    uint256 contributedAmountStage2;
+    uint256 contributedAmountStage3;
+
+    uint256 preallocatedTokens;
+    uint256 allocatedTokens;
+
+    uint256 spentAmount;
   }
+
+  /** participant addresses */
+  mapping (address => ParticipantListData) public participantList;
+
+  uint256 public investorsProcessed = 0;
+  uint256 public investorsBatchSize = 100;
+
+  bool public isWhiteListed = true;
+
+  struct WhiteListData {
+    bool status;
+    uint256 maxCap;
+  }
+
+  /** Whitelisted addresses */
+  mapping (address => WhiteListData) public participantWhitelist;
+
 
   //////////////////////////////////////////////
   //
   // Events
  
-  event CampaignOpen(uint256 time);
-  event CampaignClosed(uint256 time);
-  event CampaignPausd(uint256 time);
-  event CampaignResumed(uint256 time);
-  event TokenGranted(address indexed backer, uint amount, string ref);
-  event TokenGranted(address indexed backer, uint amount);
-  event TotalRaised(uint raised);
-  event Finalized(uint256 time);
-  event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
- 
+  event CampaignOpen(uint256 timenow);
+  event CampaignClosed(uint256 timenow);
+  event CampaignPaused(uint256 timenow);
+  event CampaignResumed(uint256 timenow);
+
+  event PreAllocated(address indexed backer, uint256 raised);
+  event RaisedPreCrowd(address indexed backer, uint256 raised);
+  event RaisedStage1(address indexed backer, uint256 raised);
+  event RaisedStage2(address indexed backer, uint256 raised);
+  event RaisedStage3(address indexed backer, uint256 raised);
+  event Airdropped(address indexed backer, uint256 tokensairdropped);
+
+  event Finalized(uint256 timenow);
+
+  event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
+
+  // Address early participation whitelist status changed
+  event Whitelisted(address addr, bool status);
+
+  // Refund was processed for a contributor
+  event Refund(address investor, uint256 weiAmount);
 
   /// @notice Constructor
   /// @param _tokenAddress Our token's address
-  /// @param  _trusteeAddress Team share 
-  /// @param  _opAddress Team share 
-  /// @param  _bountyAddress Team share 
-  /// @param  _robotAddress Address of our processing backend
+  /// @param  _trusteeAddress Trustee address
+  /// @param  _opAddress Operational expenses address 
+  /// @param  _reserveAddress Project Token Reserve
   function TokenCampaign(
     address _tokenAddress,
+    address _dteamAddress1,
+    address _dteamAddress2,
+    address _dteamAddress3,
+    address _dteamAddress4,
+    address _rteamAddress,
+    address _r2Address,
+    address _mmAddress,
     address _trusteeAddress,
     address _opAddress,
-    address _bountyAddress,
-    address _robotAddress)
+    address _reserveAddress)
   {
 
     controller = msg.sender;
     
     /// set addresses     
     tokenAddr = _tokenAddress;
-    //teamVaultAddr = _teamAddress;
+    dteamVaultAddr1 = _dteamAddress1;
+    dteamVaultAddr2 = _dteamAddress2;
+    dteamVaultAddr3 = _dteamAddress3;
+    dteamVaultAddr4 = _dteamAddress4;
+    rteamVaultAddr = _rteamAddress;
+    r2VaultAddr = _r2Address;
+    mmVaultAddr = _mmAddress;
     trusteeVaultAddr = _trusteeAddress; 
     opVaultAddr = _opAddress;
-    bountyVaultAddr = _bountyAddress;
-    robotAddr = _robotAddress;
+    reserveVaultAddr = _reserveAddress;
 
     /// reference our token
-    token = rea_token_interface(tokenAddr);
+    token = eat_token_interface(tokenAddr);
    
-    // adjust 'constants' for decimals used
-    // decimals = token.decimals(); // should be 18
-   
-  }
-
-
-  //////////////////////////////////////////////////
-  ///
-  /// Functions that do not change contract state
-  function get_presale_goal() constant returns (bool){
-    if ((now <= tBonusStageEnd) && (tokensGenerated >= bonusTokenThreshold)){
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  /// @notice computes the current rate
-  ///  according to time passed since the start
-  /// @return amount of tokens per ETH
-  function get_rate() constant returns (uint256){
-    
-    // obviously one gets 0 tokens
-    // if campaign not yet started
-    // or is already over
-    if (now < tCampaignStart) return 0;
-    if (now > tCampaignEnd) return 0;
-    
-    // compute rate per ETH based on time
-    // assumes that time marks are increasing
-    // from tBonusStageEnd through t_3rd_StageEnd
-    // adjust by factor 'scale' depending on token's decimals
-    // NOTE: can't cause overflow since all numbers are known at compile time
-    if (now <= tBonusStageEnd)
-      return scale * (baseRate + bonusAdd);
-
-    if (now <= t_1st_StageEnd)
-      return scale * (baseRate + stage_1_add);
-    
-    else if (now <= t_2nd_StageEnd)
-      return scale * (baseRate + stage_2_add);
-    
-    else if (now <= t_3rd_StageEnd)
-      return scale * (baseRate + stage_3_add);
-    
-    else 
-      return baseRate * scale; 
   }
 
 
@@ -1110,40 +1007,20 @@ contract TokenCampaign is Controlled{
   /// Setters
   ///
 
-
-  /// this is only for emergency case
-  function setRobotAddr(address _newRobotAddr) public onlyController {
-    require( _newRobotAddr != 0x0 );
-    robotAddr = _newRobotAddr;
-  }
-
-  // we have to set team token address before campaign start
-  function setTeamAddr(address _newTeamAddr) public onlyController {
-     require( campaignState > 2 && _newTeamAddr != 0x0 );
-     teamVaultAddr = _newTeamAddr;
-     teamVault = TokenVault(teamVaultAddr);
-  }
- 
-
-
   /// @notice  Puts campaign into active state  
   ///  only controller can do that
   ///  only possible if team token Vault is set up
   ///  WARNING: usual caveats apply to the Ethereum's interpretation of time
   function startSale() public onlyController {
-    // we only can start if team token Vault address is set
-    require( campaignState > 2 && teamVaultAddr != 0x0);
+    require( campaignState > 2 );
 
     campaignState = 2;
 
     uint256 tNow = now;
     // assume timestamps will not cause overflow
     tCampaignStart = tNow;
-    tBonusStageEnd += tNow;
-    tRegSaleStart += tNow;
     t_1st_StageEnd += tNow;
     t_2nd_StageEnd += tNow;
-    t_3rd_StageEnd += tNow;
     tCampaignEnd += tNow;
 
     CampaignOpen(now);
@@ -1156,7 +1033,7 @@ contract TokenCampaign is Controlled{
   function pauseSale() public onlyController {
     require( campaignState  == 2 );
     paused = true;
-    CampaignPausd(now);
+    CampaignPaused(now);
   }
 
 
@@ -1182,59 +1059,341 @@ contract TokenCampaign is Controlled{
   }   
 
 
+  function setParticipantWhitelist(address addr, bool status, uint256 maxCap) public onlyController {
+    participantWhitelist[addr] = WhiteListData({status:status, maxCap:maxCap});
+    Whitelisted(addr, status);
+  }
+
+  function setMultipleParticipantWhitelist(address[] addrs, bool[] statuses, uint[] maxCaps) public onlyController {
+    for (uint256 iterator = 0; iterator < addrs.length; iterator++) {
+      setParticipantWhitelist(addrs[iterator], statuses[iterator], maxCaps[iterator]);
+    }
+  }
+
+  function investorCount() public constant returns (uint256) {
+    return joinedCrowdsale.length;
+  }
+
+  function contractBalance() public constant returns (uint256) {
+    return this.balance;
+  }
+
+  /**
+   * Investors can claim refund after finalisation.
+   *
+   * Note that any refunds from proxy buyers should be handled separately,
+   * and not through this contract.
+   */
+  function refund() public {
+    require (campaignState == 0);
+
+    uint256 weiValue = participantList[msg.sender].contributedAmountPreCrowd;
+    weiValue = weiValue.add(participantList[msg.sender].contributedAmountStage1);
+    weiValue = weiValue.add(participantList[msg.sender].contributedAmountStage2);
+    weiValue = weiValue.add(participantList[msg.sender].contributedAmountStage3);
+    weiValue = weiValue.sub(participantList[msg.sender].spentAmount);
+
+    if (weiValue <= 0) revert();
+
+    participantList[msg.sender].contributedAmountPreCrowd = 0;
+    participantList[msg.sender].contributedAmountStage1 = 0;
+    participantList[msg.sender].contributedAmountStage2 = 0;
+    participantList[msg.sender].contributedAmountStage3 = 0;
+
+    amountRefunded = amountRefunded.add(weiValue);
+
+    // send it
+    if (!msg.sender.send(weiValue)) revert();
+
+    // announce to world
+    Refund(msg.sender, weiValue);
+
+  }
 
   /// @notice Finalizes the campaign
-  ///   Get funds out, generates team, bounty and reserve tokens
-  function finalizeCampaign() public {     
+  ///   Get funds out, generates team, reserve and reserve tokens
+  function allocateInvestors() public onlyController {     
       
-      /// only if sale was closed or 48 hours = 2880 minutes have passed since campaign end
-      /// we leave this time to complete possibly pending orders
-      /// from offchain contributions 
-      
-      require ( (campaignState == 1) ||
-                ((campaignState != 0) && (now > tCampaignEnd + (2880 minutes))));
-      
-      campaignState = 0;
+    /// only if sale was closed or 48 hours = 2880 minutes have passed since campaign end
+    /// we leave this time to complete possibly pending orders from offchain contributions 
 
-     
+    require ( (campaignState == 1) || ((campaignState != 0) && (now > tCampaignEnd + (2880 minutes))));
 
+    uint256 nTokens = 0;
+    uint256 rate = 0;
+    uint256 contributedAmount = 0; 
+
+    uint256 investorsProcessedEnd = investorsProcessed + investorsBatchSize;
+
+    if (investorsProcessedEnd > joinedCrowdsale.length) {
+      investorsProcessedEnd = joinedCrowdsale.length;
+    }
+
+    for (uint256 i = investorsProcessed; i < investorsProcessedEnd; i++) {
+
+        investorsProcessed++;
+
+        address investorAddress = joinedCrowdsale[i];
+
+        // PreCrowd stage
+        contributedAmount = participantList[investorAddress].contributedAmountPreCrowd;
+
+        if (isWhiteListed) {
+
+            // is contributeAmount within whitelisted amount
+            if (contributedAmount > participantWhitelist[investorAddress].maxCap) {
+                contributedAmount = participantWhitelist[investorAddress].maxCap;
+            }
+
+            // calculate remaining whitelisted amount
+            if (contributedAmount>0) {
+                participantWhitelist[investorAddress].maxCap = participantWhitelist[investorAddress].maxCap.sub(contributedAmount);
+            }
+
+        }
+
+        if (contributedAmount>0) {
+
+            // calculate the number of tokens
+            rate = preCrowd_tokens_scaled;
+            nTokens = (rate.mul(contributedAmount)).div(1 ether);
+
+            // check whether individual allocations are capped
+            if (nTokens > maxPreCrowdAllocationPerInvestor) {
+              nTokens = maxPreCrowdAllocationPerInvestor;
+            }
+
+            // If tokens are bigger than whats left in the stage, give the rest 
+            if (tokensRemainingPreCrowd.sub(nTokens) < 0) {
+                nTokens = tokensRemainingPreCrowd;
+            }
+
+            // update spent amount
+            participantList[joinedCrowdsale[i]].spentAmount = participantList[joinedCrowdsale[i]].spentAmount.add(nTokens.div(rate).mul(1 ether));
+
+            // calculate leftover tokens for the stage 
+            tokensRemainingPreCrowd = tokensRemainingPreCrowd.sub(nTokens);
+
+            // update the new token holding
+            participantList[investorAddress].allocatedTokens = participantList[investorAddress].allocatedTokens.add(nTokens);
+
+        }
+
+        //  stage1
+        contributedAmount = participantList[investorAddress].contributedAmountStage1;
+
+        if (isWhiteListed) {
+
+            // is contributeAmount within whitelisted amount
+            if (contributedAmount > participantWhitelist[investorAddress].maxCap) {
+                contributedAmount = participantWhitelist[investorAddress].maxCap;
+            }
+
+            // calculate remaining whitelisted amount
+            if (contributedAmount>0) {
+                participantWhitelist[investorAddress].maxCap = participantWhitelist[investorAddress].maxCap.sub(contributedAmount);
+            }
+
+        }
+
+        if (contributedAmount>0) {
+
+            // calculate the number of tokens
+            rate = stage_1_tokens_scaled;
+            nTokens = (rate.mul(contributedAmount)).div(1 ether);
+
+            // check whether individual allocations are capped
+            if (nTokens > maxStage1AllocationPerInvestor) {
+              nTokens = maxStage1AllocationPerInvestor;
+            }
+
+            // If tokens are bigger than whats left in the stage, give the rest 
+            if (tokensRemainingStage1.sub(nTokens) < 0) {
+                nTokens = tokensRemainingStage1;
+            }
+
+            // update spent amount
+            participantList[joinedCrowdsale[i]].spentAmount = participantList[joinedCrowdsale[i]].spentAmount.add(nTokens.div(rate).mul(1 ether));
+
+            // calculate leftover tokens for the stage 
+            tokensRemainingStage1 = tokensRemainingStage1.sub(nTokens);
+
+            // update the new token holding
+            participantList[investorAddress].allocatedTokens = participantList[investorAddress].allocatedTokens.add(nTokens);
+
+        }
+
+        //  stage2
+        contributedAmount = participantList[investorAddress].contributedAmountStage2;
+
+        if (isWhiteListed) {
+
+            // is contributeAmount within whitelisted amount
+            if (contributedAmount > participantWhitelist[investorAddress].maxCap) {
+                contributedAmount = participantWhitelist[investorAddress].maxCap;
+            }
+
+            // calculate remaining whitelisted amount
+            if (contributedAmount>0) {
+                participantWhitelist[investorAddress].maxCap = participantWhitelist[investorAddress].maxCap.sub(contributedAmount);
+            }
+
+        }
+
+        if (contributedAmount>0) {
+
+            // calculate the number of tokens
+            rate = stage_2_tokens_scaled;
+            nTokens = (rate.mul(contributedAmount)).div(1 ether);
+
+            // check whether individual allocations are capped
+            if (nTokens > maxStage2AllocationPerInvestor) {
+              nTokens = maxStage2AllocationPerInvestor;
+            }
+
+            // If tokens are bigger than whats left in the stage, give the rest 
+            if (tokensRemainingStage2.sub(nTokens) < 0) {
+                nTokens = tokensRemainingStage2;
+            }
+
+            // update spent amount
+            participantList[joinedCrowdsale[i]].spentAmount = participantList[joinedCrowdsale[i]].spentAmount.add(nTokens.div(rate).mul(1 ether));
+
+            // calculate leftover tokens for the stage 
+            tokensRemainingStage2 = tokensRemainingStage2.sub(nTokens);
+
+            // update the new token holding
+            participantList[investorAddress].allocatedTokens = participantList[investorAddress].allocatedTokens.add(nTokens);
+
+        }
+
+        //  stage3
+        contributedAmount = participantList[investorAddress].contributedAmountStage3;
+
+        if (isWhiteListed) {
+
+            // is contributeAmount within whitelisted amount
+            if (contributedAmount > participantWhitelist[investorAddress].maxCap) {
+                contributedAmount = participantWhitelist[investorAddress].maxCap;
+            }
+
+            // calculate remaining whitelisted amount
+            if (contributedAmount>0) {
+                participantWhitelist[investorAddress].maxCap = participantWhitelist[investorAddress].maxCap.sub(contributedAmount);
+            }
+
+        }
+
+        if (contributedAmount>0) {
+
+            // calculate the number of tokens
+            rate = stage_3_tokens_scaled;
+            nTokens = (rate.mul(contributedAmount)).div(1 ether);
+
+            // check whether individual allocations are capped
+            if (nTokens > maxStage3AllocationPerInvestor) {
+              nTokens = maxStage3AllocationPerInvestor;
+            }
+
+            // If tokens are bigger than whats left in the stage, give the rest 
+            if (tokensRemainingStage3.sub(nTokens) < 0) {
+                nTokens = tokensRemainingStage3;
+            }
+
+            // update spent amount
+            participantList[joinedCrowdsale[i]].spentAmount = participantList[joinedCrowdsale[i]].spentAmount.add(nTokens.div(rate).mul(1 ether));
+
+            // calculate leftover tokens for the stage 
+            tokensRemainingStage3 = tokensRemainingStage3.sub(nTokens);
+
+            // update the new token holding
+            participantList[investorAddress].allocatedTokens = participantList[investorAddress].allocatedTokens.add(nTokens);
+
+        }
+
+        do_grant_tokens(investorAddress, participantList[investorAddress].allocatedTokens);
+
+    }
+
+  }
+
+  /// @notice Finalizes the campaign
+  ///   Get funds out, generates team, reserve and reserve tokens
+  function finalizeCampaign() public onlyController {     
+      
+    /// only if sale was closed or 48 hours = 2880 minutes have passed since campaign end
+    /// we leave this time to complete possibly pending orders from offchain contributions 
+
+    require ( (campaignState == 1) || ((campaignState != 0) && (now > tCampaignEnd + (2880 minutes))));
+
+    campaignState = 0;
+
+    // dteam tokens
+    uint256 drewardTokens = (tokensGenerated.mul(PRCT100_D_TEAM)).div(10000);
+
+    // rteam tokens
+    uint256 rrewardTokens = (tokensGenerated.mul(PRCT100_R_TEAM)).div(10000);
+
+    // r2 tokens
+    uint256 r2rewardTokens = (tokensGenerated.mul(PRCT100_R2)).div(10000);
+
+    // mm tokens
+    uint256 mmrewardTokens = FIXEDREWARD_MM;
+
+    do_grant_tokens(dteamVaultAddr1, drewardTokens);
+    do_grant_tokens(dteamVaultAddr2, drewardTokens);
+    do_grant_tokens(dteamVaultAddr3, drewardTokens);
+    do_grant_tokens(dteamVaultAddr4, drewardTokens);     
+    do_grant_tokens(rteamVaultAddr, rrewardTokens);
+    do_grant_tokens(r2VaultAddr, r2rewardTokens);
+    do_grant_tokens(mmVaultAddr, mmrewardTokens);
+
+    // generate reserve tokens 
+    // uint256 reserveTokens = rest of tokens under hardcap
+    uint256 reserveTokens = hardcap.sub(tokensGenerated);
+    do_grant_tokens(reserveVaultAddr, reserveTokens);
+
+    // prevent further token generation
+    token.finalize();
+
+    tFinalized = now;
+    
+    // notify the world
+    Finalized(tFinalized);
+  }
+
+
+  ///   Get funds out
+  function retrieveFunds() public onlyController {     
+
+      require (campaignState == 0);
+      
       // forward funds to the trustee 
       // since we forward a fraction of the incomming ether on every contribution
       // 'amountRaised' IS NOT equal to the contract's balance
       // we use 'this.balance' instead
 
+      // we do this manually to give people the chance to claim refunds in case of overpayments
+
       trusteeVaultAddr.transfer(this.balance);
-      
-      
-      uint256 bountyTokens = (tokensGenerated.mul(PRCT_BOUNTY)).div(100);
-      
-      uint256 teamTokens = (tokensGenerated.mul(PRCT_TEAM)).div(100);
-      
-      // generate bounty tokens 
-      assert( do_grant_tokens(bountyVaultAddr, bountyTokens) );
-      // generate team tokens
-      // time lock team tokens before transfer
-      
-      // we dont use it anymore
-      //teamVault.setTimeLock( tCampaignEnd + 6 * (6 minutes));  
-      
-      tFinalized = now;
 
-      // generate all the tokens
-      assert( do_grant_tokens(teamVaultAddr, teamTokens) );
-      
-      // prevent further token generation
-      token.finalize();     
+  }
 
-      // notify the world
-      Finalized(tFinalized);
-   }
+     ///   Get funds out
+  function emergencyFinalize() public onlyController {     
+
+    campaignState = 0;
+
+    // prevent further token generation
+    token.finalize();
+
+  }
 
 
   /// @notice triggers token generaton for the recipient
   ///  can be called only from the token sale contract itself
   ///  side effect: increases the generated tokens counter 
-  ///  CAUTION: we do not check campaign state and parameters assuming that's calee's task
+  ///  CAUTION: we do not check campaign state and parameters assuming that's callee's task
   function do_grant_tokens(address _to, uint256 _nTokens) internal returns (bool){
     
     require( token.generate_token_for(_to, _nTokens) );
@@ -1249,119 +1408,231 @@ contract TokenCampaign is Controlled{
   ///   checks campaign state, time window and minimal contribution
   ///   throws if one of the conditions fails
   function process_contribution(address _toAddr) internal {
-    
+
     require ((campaignState == 2)   // active main sale
          && (now <= tCampaignEnd)   // within time window
          && (paused == false));     // not on hold
-      
-
-    // contributions are not possible before regular sale starts 
-    if ( (now > tBonusStageEnd) && //<--- new
-         (now < tRegSaleStart)){ //<--- new
-      revert(); //<--- new
-    }
-
-    // during the bonus phase we require a minimal eth contribution 
-    if ((now <= tBonusStageEnd) && 
-        ((msg.value < bonusMinContribution ) ||
-        (tokensGenerated >= bonusTokenThreshold))) //<--- new, revert if bonusThreshold is exceeded 
-    {
-      revert();
-    }      
-
     
-  
-    // otherwise we check that Eth sent is sufficient to generate at least one token
+    // we check that Eth sent is sufficient 
     // though our token has decimals we don't want nanocontributions
     require ( msg.value >= minContribution );
 
-    // compute the rate
-    // NOTE: rate is scaled to account for token decimals
-    uint256 rate = get_rate();
-    
-    // compute the amount of tokens to be generated
-    uint256 nTokens = (rate.mul(msg.value)).div(1 ether);
-    
+    amountRaised = amountRaised.add(msg.value);
+
+    // check whether we know this investor, if not add him to list
+    if (!participantList[_toAddr].participatedFlag) {
+
+       // A new investor
+       participantList[_toAddr].participatedFlag = true;
+       joinedCrowdsale.push(_toAddr);
+    }
+
+    if ( msg.value >= preCrowdMinContribution ) {
+
+      participantList[_toAddr].contributedAmountPreCrowd = participantList[_toAddr].contributedAmountPreCrowd.add(msg.value);
+      
+      // notify the world
+      RaisedPreCrowd(_toAddr, msg.value);
+
+    } else {
+
+      if (now <= t_1st_StageEnd) {
+
+        participantList[_toAddr].contributedAmountStage1 = participantList[_toAddr].contributedAmountStage1.add(msg.value);
+
+        // notify the world
+        RaisedStage1(_toAddr, msg.value);
+
+      } else if (now <= t_2nd_StageEnd) {
+
+        participantList[_toAddr].contributedAmountStage2 = participantList[_toAddr].contributedAmountStage2.add(msg.value);
+
+        // notify the world
+        RaisedStage2(_toAddr, msg.value);
+
+      } else {
+
+        participantList[_toAddr].contributedAmountStage3 = participantList[_toAddr].contributedAmountStage3.add(msg.value);
+        
+        // notify the world
+        RaisedStage3(_toAddr, msg.value);
+
+      }
+
+    }
+
     // compute the fraction of ETH going to op account
-    uint256 opEth = (PRCT_ETH_OP.mul(msg.value)).div(100);
+    uint256 opEth = (PRCT100_ETH_OP.mul(msg.value)).div(10000);
 
     // transfer to op account 
     opVaultAddr.transfer(opEth);
-    
-    // @todo check success (NOTE we have no cap now so success is assumed)
+
+    // transfer to reserve account 
+    reserveVaultAddr.transfer(opEth);
+
+  }
+
+  /**
+  * Preallocated tokens have been sold or given in airdrop before the actual crowdsale opens. 
+  * This function mints the tokens and moves the crowdsale needle.
+  *
+  */
+  function preallocate(address _toAddr, uint fullTokens, uint weiPaid) public onlyController {
+
+    require (campaignState != 0);
+
+    uint tokenAmount = fullTokens * scale;
+    uint weiAmount = weiPaid ; // This can be also 0, we give out tokens for free
+
+    if (!participantList[_toAddr].participatedFlag) {
+
+       // A new investor
+       participantList[_toAddr].participatedFlag = true;
+       joinedCrowdsale.push(_toAddr);
+
+    }
+
+    participantList[_toAddr].contributedAmountPreAllocated = participantList[_toAddr].contributedAmountPreAllocated.add(weiAmount);
+    participantList[_toAddr].preallocatedTokens = participantList[_toAddr].preallocatedTokens.add(tokenAmount);
+
+    amountRaised = amountRaised.add(weiAmount);
+
     // side effect: do_grant_tokens updates the "tokensGenerated" variable
-    require( do_grant_tokens(_toAddr, nTokens) );
+    require( do_grant_tokens(_toAddr, tokenAmount) );
 
-
-    amountRaised = amountRaised.add(msg.value);
-    
     // notify the world
-    TokenGranted(_toAddr, nTokens);
-    TotalRaised(amountRaised);
+    PreAllocated(_toAddr, weiAmount);
+
   }
 
+  function airdrop(address _toAddr, uint fullTokens) public onlyController {
 
-  /// @notice Gnenerate token "manually" without payment
-  ///  We intend to use this to generate tokens from Bitcoin contributions without 
-  ///  without Ether being sent to this contract
-  ///  Note that this function can be triggered only by our BTC processing robot.  
-  ///  A string reference is passed and logged for better book keeping
-  ///  side effect: increases the generated tokens counter via do_grant_tokens
-  /// @param _toAddr benificiary address
-  /// @param _nTokens amount of tokens to be generated
-  /// @param _ref payment reference e.g. Bitcoin address used for contribution 
-  function grant_token_from_offchain(address _toAddr, uint _nTokens, string _ref) public onlyRobot {
-    require ( (campaignState == 2)
-              ||(campaignState == 1));
+    require (campaignState != 0);
 
-    do_grant_tokens(_toAddr, _nTokens);
-    TokenGranted(_toAddr, _nTokens, _ref);
+    uint tokenAmount = fullTokens * scale;
+
+    if (!participantList[_toAddr].participatedFlag) {
+
+       // A new investor
+       participantList[_toAddr].participatedFlag = true;
+       joinedCrowdsale.push(_toAddr);
+
+    }
+
+    participantList[_toAddr].preallocatedTokens = participantList[_toAddr].allocatedTokens.add(tokenAmount);
+
+    // side effect: do_grant_tokens updates the "tokensGenerated" variable
+    require( do_grant_tokens(_toAddr, tokenAmount) );
+
+    // notify the world
+    Airdropped(_toAddr, fullTokens);
+
   }
 
+  function multiAirdrop(address[] addrs, uint[] fullTokens) public onlyController {
+
+    require (campaignState != 0);
+
+    for (uint256 iterator = 0; iterator < addrs.length; iterator++) {
+      airdrop(addrs[iterator], fullTokens[iterator]);
+    }
+  }
+
+  // set individual preCrowd cap
+  function setInvestorsBatchSize(uint256 _batchsize) public onlyController {
+      investorsBatchSize = _batchsize;
+  }
+
+  // set individual preCrowd cap
+  function setMaxPreCrowdAllocationPerInvestor(uint256 _cap) public onlyController {
+      maxPreCrowdAllocationPerInvestor = _cap;
+  }
+
+  // set individual stage1Crowd cap
+  function setMaxStage1AllocationPerInvestor(uint256 _cap) public onlyController {
+      maxStage1AllocationPerInvestor = _cap;
+  }
+
+  // set individual stage2Crowd cap
+  function setMaxStage2AllocationPerInvestor(uint256 _cap) public onlyController {
+      maxStage2AllocationPerInvestor = _cap;
+  }
+
+  // set individual stage3Crowd cap
+  function setMaxStage3AllocationPerInvestor(uint256 _cap) public onlyController {
+      maxStage3AllocationPerInvestor = _cap;
+  }
+
+  function setdteamVaultAddr1(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    dteamVaultAddr1 = _newAddr;
+  }
+
+  function setdteamVaultAddr2(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    dteamVaultAddr2 = _newAddr;
+  }
+
+  function setdteamVaultAddr3(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    dteamVaultAddr3 = _newAddr;
+  }
+
+  function setdteamVaultAddr4(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    dteamVaultAddr4 = _newAddr;
+  }
+
+  function setrteamVaultAddr(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    rteamVaultAddr = _newAddr;
+  }
+
+  function setr2VaultAddr(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    r2VaultAddr = _newAddr;
+  }
+
+  function setmmVaultAddr(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    mmVaultAddr = _newAddr;
+  }
+
+  function settrusteeVaultAddr(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    trusteeVaultAddr = _newAddr;
+  }
+
+  function setopVaultAddr(address _newAddr) public onlyController {
+    require( _newAddr != 0x0 );
+    opVaultAddr = _newAddr;
+  }
+
+  function toggleWhitelist(bool _isWhitelisted) public onlyController {
+    isWhiteListed = _isWhitelisted;
+  }
 
   /// @notice This function handles receiving Ether in favor of a third party address
   ///   we can use this function for buying tokens on behalf
   /// @param _toAddr the address which will receive tokens
   function proxy_contribution(address _toAddr) public payable {
     require ( _toAddr != 0x0 );
-    /// prevent contracts from buying tokens
-    /// we assume it is still usable for a while
-    /// we aknowledge the fact that this prevents ALL contracts including MultiSig's
-    /// from contributing, it is intended and we add a corresponding statement 
-    /// to our Terms and the ICO site
-    require( msg.sender == tx.origin );
+
     process_contribution(_toAddr);
   }
 
 
   /// @notice This function handles receiving Ether
   function () payable {
-    /// prevent contracts from buying tokens
-    /// we assume it is still usable for a while
-    /// we aknowledge the fact that this prevents ALL contracts including MultiSig's
-    /// from contributing, it is intended and we add a corresponding statement 
-    /// to our Terms and the ICO site
-    require( msg.sender == tx.origin );
-    process_contribution(msg.sender);  
+      process_contribution(msg.sender); 
   }
 
-  //////////
-  // Safety Methods
-  //////////
-
-  /* inspired by MiniMeToken.sol */
-
-  /// @notice This method can be used by the controller to extract mistakenly
+  /// This method can be used by the controller to extract mistakenly
   ///  sent tokens to this contract.
   function claimTokens(address _tokenAddr) public onlyController {
-     
-     // if (_token == 0x0) {
-     //     controller.transfer(this.balance);
-     //     return;
-     // }
 
       ERC20Basic some_token = ERC20Basic(_tokenAddr);
-      uint balance = some_token.balanceOf(this);
+      uint256 balance = some_token.balanceOf(this);
       some_token.transfer(controller, balance);
       ClaimedTokens(_tokenAddr, controller, balance);
   }
