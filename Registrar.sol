@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0xea84b8b889ee41d9c05c14e20e4ae1c59f8d1a32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0x012233b3c8177f0778d910ed88170b82de3bfe57
 */
 pragma solidity ^0.4.0;
 
@@ -16,6 +16,7 @@ and all ether still locked after 8 years will become unreachable.
 The plan is to test the basic features and then move to a new contract in at most
 2 years, when some sort of renewal mechanism will be enabled.
 */
+
 
 contract AbstractENS {
     function owner(bytes32 node) constant returns(address);
@@ -177,7 +178,7 @@ contract Registrar {
     }
     
     modifier registryOpen() {
-        if(now < registryStarted  || now > registryStarted + 4 years || ens.owner(rootNode) != address(this)) throw;
+        if(now < registryStarted  || now > registryStarted + 4 years) throw;
         _;
     }
     
@@ -348,8 +349,8 @@ contract Registrar {
         } else if(auctionState != Mode.Reveal) {
             // Invalid phase
             throw;
-        } else if (_value < minPrice || bid.creationDate() > h.registrationDate - revealPeriod) {
-            // Bid too low or too late, refund 99.5%
+        } else if (_value < minPrice) {
+            // Bid too low, refund 99.5%
             bid.closeDeed(995);
             BidRevealed(_hash, _owner, actualValue, 0);
         } else if (_value > h.highestBid) {
@@ -460,7 +461,7 @@ contract Registrar {
         ens.setSubnodeOwner(rootNode, hash, 0);
         if(address(h.deed) != 0) {
             // Reward the discoverer with 50% of the deed
-            // The previous owner gets 50%
+            // The previous owner gets nothing
             h.deed.setBalance(h.deed.value()/2);
             h.deed.setOwner(msg.sender);
             h.deed.closeDeed(1000);
@@ -481,16 +482,5 @@ contract Registrar {
 
         entry h = _entries[_hash];
         h.deed.setRegistrar(registrar);
-    }
-
-    /**
-     * @dev Returns a deed created by a previous instance of the registrar.
-     * @param deed The address of the deed.
-     */
-    function returnDeed(Deed deed) {
-        // Only return if we own the deed, and it was created before our start date.
-        if(deed.registrar() != address(this) || deed.creationDate() > registryStarted)
-            throw;
-        deed.closeDeed(1000);
     }
 }
