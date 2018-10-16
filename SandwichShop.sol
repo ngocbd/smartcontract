@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SandwichShop at 0x5f939A81B13B5490a66a3b58FdE465Ff2aB8684E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SandwichShop at 0xf23C63AAc10E66b6f8988f1Dad4AFfFEF274b631
 */
 pragma solidity ^0.4.11;
 
@@ -121,9 +121,9 @@ contract SandwichShop
         return cart[_curious].length;
     }
 
-    function getCartItemInfo(address _curious, uint _slot) constant returns (uint, string)
+    function getCartItemInfo(address _curious, uint _slot) constant returns (string)
     {
-        return (cart[_curious][_slot].sandwichIdNumber, cart[_curious][_slot].notes);
+        return cart[_curious][_slot].notes;
     }
 
     function emptyCart() public
@@ -157,7 +157,6 @@ contract SandwichShop
         }
         subtotal[msg.sender] = 0;
         delete cart[msg.sender];
-        return now;
     }
 
     function transferFundsAdminOnly(address addr, uint amount) onlyOwner
