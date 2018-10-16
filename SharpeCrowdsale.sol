@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpeCrowdsale at 0x8fbbb1102e2a3ddf920808609592b4a462e29330
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpeCrowdsale at 0x705cc76c0102dd386a796258232eec734df54b6d
 */
 pragma solidity 0.4.15;
 
@@ -19,6 +19,38 @@ pragma solidity 0.4.15;
  */
 
  
+
+
+
+/// @dev `Owned` is a base level contract that assigns an `owner` that can be
+///  later changed
+contract Owned {
+
+    /// @dev `owner` is the only address that can call a function with this
+    /// modifier
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    address public owner;
+
+    /// @notice The Constructor assigns the message sender to be `owner`
+    function Owned() {
+        owner = msg.sender;
+    }
+
+    address public newOwner;
+
+    /// @notice `owner` can step down and assign some other address to this role
+    /// @param _newOwner The address of the new owner. 0x0 can be used to create
+    function changeOwner(address _newOwner) onlyOwner {
+        if(msg.sender == owner) {
+            owner = _newOwner;
+        }
+    }
+}
+
 
 /**
  * Math operations with safety checks
@@ -64,38 +96,6 @@ library SafeMath {
     return a < b ? a : b;
   }
 }
-
-
-
-/// @dev `Owned` is a base level contract that assigns an `owner` that can be
-///  later changed
-contract Owned {
-
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    address public owner;
-
-    /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    address public newOwner;
-
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    function changeOwner(address _newOwner) onlyOwner {
-        if(msg.sender == owner) {
-            owner = _newOwner;
-        }
-    }
-}
-
 
 
 
@@ -259,11 +259,6 @@ contract Trustee is Owned {
         UnlockGrant(msg.sender, transferable);
     }
 }
-
-
-
-
-
 
 /// @dev The token controller contract must implement these functions
 contract TokenController {
@@ -798,66 +793,6 @@ contract MiniMeToken is Controlled {
 }
 
 
-////////////////
-// MiniMeTokenFactory
-////////////////
-
-/// @dev This contract is used to generate clone contracts from a contract.
-///  In solidity this is the way to create a contract from a contract of the
-///  same class
-contract MiniMeTokenFactory {
-
-    /// @notice Update the DApp by creating a new token with new functionalities
-    ///  the msg.sender becomes the controller of this clone token
-    /// @param _parentToken Address of the token being cloned
-    /// @param _snapshotBlock Block of the parent token that will
-    ///  determine the initial distribution of the clone token
-    /// @param _tokenName Name of the new token
-    /// @param _decimalUnits Number of decimals of the new token
-    /// @param _tokenSymbol Token Symbol for the new token
-    /// @param _transfersEnabled If true, tokens will be able to be transferred
-    /// @return The address of the new token contract
-    function createCloneToken(
-        address _parentToken,
-        uint _snapshotBlock,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol,
-        bool _transfersEnabled
-    ) returns (MiniMeToken) 
-    {
-        MiniMeToken newToken = new MiniMeToken(
-            this,
-            _parentToken,
-            _snapshotBlock,
-            _tokenName,
-            _decimalUnits,
-            _tokenSymbol,
-            _transfersEnabled
-            );
-
-        newToken.changeController(msg.sender);
-        return newToken;
-    }
-}
-
-
-contract SHP is MiniMeToken {
-    // @dev SHP constructor
-    function SHP(address _tokenFactory)
-            MiniMeToken(
-                _tokenFactory,
-                0x0,                             // no parent token
-                0,                               // no snapshot block number from parent
-                "Sharpe Platform Token",         // Token name
-                18,                              // Decimals
-                "SHP",                           // Symbol
-                true                             // Enable transfers
-            ) {}
-}
-
-
-
 contract TokenSale is Owned, TokenController {
     using SafeMath for uint256;
     
@@ -876,7 +811,7 @@ contract TokenSale is Owned, TokenController {
     uint256 constant public RESERVE_EXCHANGE_SHARE = 30;
     uint256 constant public FOUNDER_EXCHANGE_SHARE = 20;
     uint256 constant public BOUNTY_EXCHANGE_SHARE = 10;
-    uint256 constant public MAX_GAS_PRICE = 50000000000;
+    uint256 constant public MAX_GAS_PRICE = 5000000000000;
 
     bool public paused;
     bool public closed;
@@ -1051,6 +986,64 @@ contract TokenSale is Owned, TokenController {
     }
 }
 
+
+////////////////
+// MiniMeTokenFactory
+////////////////
+
+/// @dev This contract is used to generate clone contracts from a contract.
+///  In solidity this is the way to create a contract from a contract of the
+///  same class
+contract MiniMeTokenFactory {
+
+    /// @notice Update the DApp by creating a new token with new functionalities
+    ///  the msg.sender becomes the controller of this clone token
+    /// @param _parentToken Address of the token being cloned
+    /// @param _snapshotBlock Block of the parent token that will
+    ///  determine the initial distribution of the clone token
+    /// @param _tokenName Name of the new token
+    /// @param _decimalUnits Number of decimals of the new token
+    /// @param _tokenSymbol Token Symbol for the new token
+    /// @param _transfersEnabled If true, tokens will be able to be transferred
+    /// @return The address of the new token contract
+    function createCloneToken(
+        address _parentToken,
+        uint _snapshotBlock,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol,
+        bool _transfersEnabled
+    ) returns (MiniMeToken) 
+    {
+        MiniMeToken newToken = new MiniMeToken(
+            this,
+            _parentToken,
+            _snapshotBlock,
+            _tokenName,
+            _decimalUnits,
+            _tokenSymbol,
+            _transfersEnabled
+            );
+
+        newToken.changeController(msg.sender);
+        return newToken;
+    }
+}
+
+
+contract SHP is MiniMeToken {
+    // @dev SHP constructor
+    function SHP(address _tokenFactory)
+            MiniMeToken(
+                _tokenFactory,
+                0x0,                             // no parent token
+                0,                               // no snapshot block number from parent
+                "Sharpe Platform Token",         // Token name
+                18,                              // Decimals
+                "SHP",                           // Symbol
+                true                             // Enable transfers
+            ) {}
+}
 
 
 contract SharpeCrowdsale is TokenSale {
