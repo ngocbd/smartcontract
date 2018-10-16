@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TVTToken at 0x4b43629ae22543f5042504cef4d8601ed6879938
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TVTToken at 0xd0b4fda55a2390e2dae76f1e6f263a7ee18dbdbb
 */
 pragma solidity ^0.4.13;
 
@@ -15,8 +15,8 @@ contract ERC20 {
  }
   
   contract TVTToken is ERC20 {
-     string public constant symbol = "AL-CHAIN";
-     string public constant name = " ALC";
+     string public constant symbol = "ALC";
+     string public constant name = "AngelChain";
      uint8 public constant decimals = 8;
      uint256 _totalSupply = 160000000 * 10**8;
      
@@ -28,9 +28,9 @@ contract ERC20 {
      mapping(address => mapping (address => uint256)) allowed;
      
   
-     function TzTToken() {
+     function TVTToken() {
          owner = msg.sender;
-         balances[owner] = 1000000000 * 10**8;
+         balances[owner] = 160000000 * 10**8;
      }
      
      modifier onlyOwner() {
