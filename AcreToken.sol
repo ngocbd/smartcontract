@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcreToken at 0x0dd644300b9cc67917d09ae4bee413e600304266
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcreToken at 0xcf4af1f0fcb410d3ca319a638a425604231be865
 */
 pragma solidity 0.4.20;
 
@@ -26,7 +26,7 @@ library SafeMath {
 contract AcreConfig {
     using SafeMath for uint;
     
-    uint internal constant TIME_FACTOR = 1 days;
+    uint internal constant TIME_FACTOR = 1 minutes;
 
     // Ownable
     uint internal constant OWNERSHIP_DURATION_TIME = 7; // 7 days
@@ -38,8 +38,8 @@ contract AcreConfig {
     uint internal constant LOCKUP_DURATION_TIME = 365; // 365 days
     
     // AcreToken
-    string internal constant TOKEN_NAME            = "Acre";
-    string internal constant TOKEN_SYMBOL          = "ACRE";
+    string internal constant TOKEN_NAME            = "TAA";
+    string internal constant TOKEN_SYMBOL          = "TAA";
     uint8  internal constant TOKEN_DECIMALS        = 18;
     
     uint   internal constant INITIAL_SUPPLY        =   1*1e8 * 10 ** uint(TOKEN_DECIMALS); // supply
