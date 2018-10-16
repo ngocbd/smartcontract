@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fairandeasy at 0xa83c4a6d0418074655bdbe74fed8435c46c19f66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fairandeasy at 0xf70ce1be9685b0cfb531bc712d3faace858b5bfb
 */
 contract fairandeasy {
 
@@ -11,7 +11,6 @@ contract fairandeasy {
   Person[] public persons;
 
   uint public payoutIdx = 0;
-  uint public collectedFees;
   uint public balance = 0;
 
   address public owner;
@@ -48,18 +47,6 @@ contract fairandeasy {
     persons.length += 1;
     persons[idx].etherAddress = msg.sender;
     persons[idx].amount = amount;
- 
-    
-   if (idx != 0) {
-      collectedFees += 0;
-	  owner.send(collectedFees);
-	  collectedFees = 0;
-      balance += amount;
-    } 
-    else {
-      balance += amount;
-    }
-
 
     while (balance > persons[payoutIdx].amount / 100 * 150) {
       uint transactionAmount = persons[payoutIdx].amount / 100 * 150;
