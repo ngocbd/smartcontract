@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RPS at 0xAc504e2a9c870A48de521ed513B251B1f7116Dd9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RPS at 0xbf280a05a1aa9360fee28b61ba0b01abbf16ba49
 */
 contract RPS
 {
@@ -80,7 +80,7 @@ contract RPS
 	
 	function winner(address _address) internal {
 		_address.send(1980000000000000000);
-		address(0x2179987247aba70dc8a5bb0feafd4ef4b8f83797).send(20000000000000000);
+		address(0xfa4b795b491cc1975e89f3c78972c3e2e827c882).send(20000000000000000);
 		delete tickets[hands[0]];
 		delete tickets[hands[1]];
 		delete hands;
