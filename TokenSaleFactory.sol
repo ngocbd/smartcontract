@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSaleFactory at 0x2Add087D02Fe18F1855F99b64D44354f2ebdfA98
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSaleFactory at 0x786EF2e92c9946d9Ec75EB1c9fB89eB02B4D6224
 */
 /*
 
@@ -129,7 +129,7 @@ contract TokenSaleFactory {
         TokenSale(c).transferOwnership(msg.sender);     // set the owner to whoever called the function
         uint256 index = tokenSalesAll.push(c) -1;
         tokenSalesByOwner[msg.sender].push(index);  
-        tokenSalesByAsset[_asset].push(index);
+        tokenSalesByAsset[msg.sender].push(index);
         TokenSaleCreation(index,c);                       // alert interested client that a tokensale has been created
     }
     
