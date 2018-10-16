@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PPCToken at 0x809faaf63ee61b9133102b4fbe560219b534b6e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PPCToken at 0x142020a28b22f7e68a9d8f9e9d24c43a2572a8cd
 */
 pragma solidity ^0.4.18;
 /*
@@ -120,7 +120,7 @@ function transferOwnership(address newOwner) onlyOwner {
 contract PPCToken is StandardToken,Ownable, SafeMath {
 
     // crowdsale parameters
-    string  public constant name = "PurpleCoin";
+    string  public constant name = "PPCCoin";
     string  public constant symbol = "PPC";
     uint256 public constant decimals = 18;
     string  public version = "1.0";
