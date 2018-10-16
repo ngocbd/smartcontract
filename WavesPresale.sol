@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesPresale at 0x407113f6b520F3ac72386CFb0EEe9ed3930512c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesPresale at 0xbD37672116c2F4C14BA5a23921BDC57860e64Aa0
 */
 contract WavesPresale {
     address public owner;
@@ -28,16 +28,12 @@ contract WavesPresale {
     function newSale(bytes16 txidHash, uint amount, uint timestamp) {
         if (msg.sender != owner) return;
 
-        if (sales[txidHash].date == 0) {
-            sales[txidHash] = Sale({
-                    amount: amount,
-                    date: timestamp
-                });
-            numberOfSales += 1;
-            totalTokens += amount;
-        } else {
-            throw;
-        }
+        sales[txidHash] = Sale({
+                amount: amount,
+                date: timestamp
+            });
+        numberOfSales += 1;
+        totalTokens += amount;
     }
 
     function getSaleDate(bytes16 txidHash) constant returns (uint, uint) {
