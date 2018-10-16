@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game at 0xf459034afc1fc2e0e8bddc8e3645c2b2935186f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game at 0xb8c5952d4ec0407f0edf23480655bca641480623
 */
 pragma solidity ^0.4.24;
 
@@ -65,13 +65,13 @@ contract Game is Owned {
     mapping(address => bool) internal activator;
     
     // Constants
-    uint256 public constant BET = 100 finney; //0.1 ETH
+    uint256 public constant BET = 10 finney; //0.01 ETH
     uint8 public constant ODD = 1;
     uint8 public constant EVEN = 2;
     uint8 public constant noBets = 3;
     uint256 public constant COMMISSION_PERCENTAGE = 10;
-    uint256 public constant END_DURATION_BETTING_BLOCK = 23;
-    uint256 public constant TARGET_DURATION_BETTING_BLOCK = 30;
+    uint256 public constant END_DURATION_BETTING_BLOCK = 5520;
+    uint256 public constant TARGET_DURATION_BETTING_BLOCK = 5760;
 	
 	uint256 public constant CONTRACT_VERSION = 201805311200;
     
