@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TetherToken at 0xf6445627bc9d06516d317a0dbbc4660bab7a17c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TetherToken at 0x0e98db51010dd1ade14dd3fb164e218805fdba1b
 */
 pragma solidity ^0.4.18;
 
@@ -249,7 +249,7 @@ contract StandardTokenWithFees is StandardToken, Ownable {
 
   uint public constant MAX_UINT = 2**256 - 1;
 
-  function calcFee(uint _value) public constant returns (uint) {
+  function calcFee(uint _value) constant returns (uint) {
     uint fee = (_value.mul(basisPointsRate)).div(10000);
     if (fee > maximumFee) {
         fee = maximumFee;
@@ -349,87 +349,33 @@ contract Pausable is Ownable {
   }
 }
 
-/// @title Whitelist contract - Only addresses which are registered as part of the market maker loyalty scheme can be whitelisted to earn and own Nectar tokens
-contract Whitelist is Ownable {
 
-  bool public listActive = true;
+contract BlackList is Ownable {
 
-  // Only users who are on the whitelist
-  function isRegistered(address _user) public constant returns (bool) {
-    if (!listActive) {
-      return true;
-    } else {
-      return isOnList[_user];
+    /////// Getter to allow the same blacklist to be used also by other contracts (including upgraded Tether) ///////
+    function getBlackListStatus(address _maker) external constant returns (bool) {
+        return isBlackListed[_maker];
     }
-  }
 
-  // Only authorised sources/contracts can contribute fees on behalf of makers to earn tokens
-  modifier authorised () {
-    require(isAuthorisedMaker[msg.sender]);
-    _;
-  }
+    mapping (address => bool) public isBlackListed;
 
-  // This is the whitelist of users who are registered to be able to own the tokens
-  mapping (address => bool) public isOnList;
-
-  // This is a more select list of a few contracts or addresses which can contribute fees on behalf of makers, to generate tokens
-  mapping (address => bool) public isAuthorisedMaker;
-
-
-  /// @dev register
-  /// @param newUsers - Array of users to add to the whitelist
-  function register(address[] newUsers) public onlyOwner {
-    for (uint i = 0; i < newUsers.length; i++) {
-      isOnList[newUsers[i]] = true;
+    function addBlackList (address _evilUser) public onlyOwner {
+        isBlackListed[_evilUser] = true;
+        AddedBlackList(_evilUser);
     }
-  }
 
-  /// @dev deregister
-  /// @param bannedUsers - Array of users to remove from the whitelist
-  function deregister(address[] bannedUsers) public onlyOwner {
-    for (uint i = 0; i < bannedUsers.length; i++) {
-      isOnList[bannedUsers[i]] = false;
+    function removeBlackList (address _clearedUser) public onlyOwner {
+        isBlackListed[_clearedUser] = false;
+        RemovedBlackList(_clearedUser);
     }
-  }
 
-  /// @dev authoriseMaker
-  /// @param maker - Source to add to authorised contributors
-  function authoriseMaker(address maker) public onlyOwner {
-      isAuthorisedMaker[maker] = true;
-      // Also add any authorised Maker to the whitelist
-      address[] memory makers = new address[](1);
-      makers[0] = maker;
-      register(makers);
-  }
+    event AddedBlackList(address indexed _user);
 
-  /// @dev deauthoriseMaker
-  /// @param maker - Source to remove from authorised contributors
-  function deauthoriseMaker(address maker) public onlyOwner {
-      isAuthorisedMaker[maker] = false;
-  }
-
-  function activateWhitelist(bool newSetting) public onlyOwner {
-      listActive = newSetting;
-  }
-
-  /////// Getters to allow the same whitelist to be used also by other contracts (including upgraded Controllers) ///////
-
-  function getRegistrationStatus(address _user) constant external returns (bool) {
-    return isOnList[_user];
-  }
-
-  function getAuthorisationStatus(address _maker) constant external returns (bool) {
-    return isAuthorisedMaker[_maker];
-  }
-
-  function getOwner() external constant returns (address) {
-    return owner;
-  }
-
+    event RemovedBlackList(address indexed _user);
 
 }
 
-contract TetherToken is Pausable, StandardTokenWithFees, Whitelist {
+contract TetherToken is Pausable, StandardTokenWithFees, BlackList {
 
     address public upgradedAddress;
     bool public deprecated;
@@ -452,7 +398,7 @@ contract TetherToken is Pausable, StandardTokenWithFees, Whitelist {
 
     // Forward ERC20 methods to upgraded contract if this one is deprecated
     function transfer(address _to, uint _value) public whenNotPaused returns (bool) {
-        require(isRegistered(msg.sender));
+        require(!isBlackListed[msg.sender]);
         if (deprecated) {
             return UpgradedStandardToken(upgradedAddress).transferByLegacy(msg.sender, _to, _value);
         } else {
@@ -462,7 +408,7 @@ contract TetherToken is Pausable, StandardTokenWithFees, Whitelist {
 
     // Forward ERC20 methods to upgraded contract if this one is deprecated
     function transferFrom(address _from, address _to, uint _value) public whenNotPaused returns (bool) {
-        require(isRegistered(_from));
+        require(!isBlackListed[_from]);
         if (deprecated) {
             return UpgradedStandardToken(upgradedAddress).transferFromByLegacy(msg.sender, _from, _to, _value);
         } else {
@@ -559,6 +505,16 @@ contract TetherToken is Pausable, StandardTokenWithFees, Whitelist {
         Redeem(amount);
         Transfer(owner, address(0), amount);
     }
+
+    function destroyBlackFunds (address _blackListedUser) public onlyOwner {
+        require(isBlackListed[_blackListedUser]);
+        uint dirtyFunds = balanceOf(_blackListedUser);
+        balances[_blackListedUser] = 0;
+        _totalSupply = _totalSupply.sub(dirtyFunds);
+        DestroyedBlackFunds(_blackListedUser, dirtyFunds);
+    }
+
+    event DestroyedBlackFunds(address indexed _blackListedUser, uint _balance);
 
     // Called when new token are issued
     event Issue(uint amount);
