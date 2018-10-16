@@ -1,608 +1,328 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x9f9f8611430796a699dd71233eedc7de0821ac9a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x8026b0587e033a1acf607e84a7bbe9fa8410d5e3
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.18;
 
+contract Token {
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+  function totalSupply () constant returns (uint256 _totalSupply);
+
+  function balanceOf (address _owner) constant returns (uint256 balance);
+
+  function transfer (address _to, uint256 _value) returns (bool success);
+
+  function transferFrom (address _from, address _to, uint256 _value) returns (bool success);
+
+  function approve (address _spender, uint256 _value) returns (bool success);
+
+  function allowance (address _owner, address _spender) constant returns (uint256 remaining);
+
+  event Transfer (address indexed _from, address indexed _to, uint256 _value);
+
+  event Approval (address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+contract SafeMath {
+  uint256 constant private MAX_UINT256 =
+  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
+  function safeAdd (uint256 x, uint256 y) constant internal returns (uint256 z) {
+    assert (x <= MAX_UINT256 - y);
+    return x + y;
   }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
+  function safeSub (uint256 x, uint256 y) constant internal returns (uint256 z) {
+    assert (x >= y);
+    return x - y;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function safeMul (uint256 x, uint256 y)  constant internal  returns (uint256 z) {
+    if (y == 0) return 0; // Prevent division by zero at the next line
+    assert (x <= MAX_UINT256 / y);
+    return x * y;
   }
-
-}
-
-
-
-
-
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
+  
+  
+   function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
     return c;
   }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
+  
 }
 
 
+contract AbstractToken is Token, SafeMath {
 
+  function AbstractToken () {
+    // Do nothing
+  }
+ 
+  function balanceOf (address _owner) constant returns (uint256 balance) {
+    return accounts [_owner];
+  }
 
+  function transfer (address _to, uint256 _value) returns (bool success) {
+    if (accounts [msg.sender] < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (msg.sender, _to, _value);
+    return true;
+  }
 
+  function transferFrom (address _from, address _to, uint256 _value)  returns (bool success) {
+    if (allowances [_from][msg.sender] < _value) return false;
+    if (accounts [_from] < _value) return false;
 
+    allowances [_from][msg.sender] =
+      safeSub (allowances [_from][msg.sender], _value);
 
+    if (_value > 0 && _from != _to) {
+      accounts [_from] = safeSub (accounts [_from], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (_from, _to, _value);
+    return true;
+  }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+ 
+  function approve (address _spender, uint256 _value) returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    Approval (msg.sender, _spender, _value);
+    return true;
+  }
+
+  
+  function allowance (address _owner, address _spender) constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
+  }
+
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) accounts;
+
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) private allowances;
 }
 
 
-
-
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale,
- * allowing investors to purchase tokens with ether. This contract implements
- * such functionality in its most fundamental form and can be extended to provide additional
- * functionality and/or custom behavior.
- * The external interface represents the basic interface for purchasing tokens, and conform
- * the base architecture for crowdsales. They are *not* intended to be modified / overriden.
- * The internal interface conforms the extensible and modifiable surface of crowdsales. Override
- * the methods to add functionality. Consider using 'super' where appropiate to concatenate
- * behavior.
- */
-contract Crowdsale {
-  using SafeMath for uint256;
-
-  // The token being sold
-  ERC20 public token;
-
-  // Address where funds are collected
-  address public wallet;
-
-  // How many token units a buyer gets per wei
-  uint256 public rate;
-
-  // Amount of wei raised
-  uint256 public weiRaised;
-
-  /**
-   * Event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-  /**
-   * @param _rate Number of token units a buyer gets per wei
-   * @param _wallet Address where collected funds will be forwarded to
-   * @param _token Address of the token being sold
-   */
-  function Crowdsale(uint256 _rate, address _wallet, ERC20 _token) public {
-    require(_rate > 0);
-    require(_wallet != address(0));
-    require(_token != address(0));
-
-    rate = _rate;
-    wallet = _wallet;
-    token = _token;
+contract RebateCoin is AbstractToken {
+    
+     address public owner;
+     
+     uint256 tokenCount = 0;
+     
+     bool frozen = false;
+     
+     uint256 constant MAX_TOKEN_COUNT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+     
+	uint public constant _decimals = (10**18);
+     
+    modifier onlyOwner() {
+	    require(owner == msg.sender);
+	    _;
+	}
+     
+     function RebateCoin() {
+         owner = msg.sender;
+     }
+     
+     function totalSupply () constant returns (uint256 _totalSupply) {
+        return tokenCount;
+     }
+     
+    function name () constant returns (string result) {
+		return "Rebate Coin";
+	}
+	
+	function symbol () constant returns (string result) {
+		return "RBC";
+	}
+	
+	function decimals () constant returns (uint result) {
+        return 18;
+    }
+    
+    function transfer (address _to, uint256 _value) returns (bool success) {
+    if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
   }
 
-  // -----------------------------------------
-  // Crowdsale external interface
-  // -----------------------------------------
-
-  /**
-   * @dev fallback function ***DO NOT OVERRIDE***
-   */
-  function () external payable {
-    buyTokens(msg.sender);
+  
+  function transferFrom (address _from, address _to, uint256 _value)
+    returns (bool success) {
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
   }
 
-  /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
-   * @param _beneficiary Address performing the token purchase
-   */
-  function buyTokens(address _beneficiary) public payable {
-
-    uint256 weiAmount = msg.value;
-    _preValidatePurchase(_beneficiary, weiAmount);
-
-    // calculate token amount to be created
-    uint256 tokens = _getTokenAmount(weiAmount);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    _processPurchase(_beneficiary, tokens);
-    emit TokenPurchase(
-      msg.sender,
-      _beneficiary,
-      weiAmount,
-      tokens
-    );
-
-    _updatePurchasingState(_beneficiary, weiAmount);
-
-    _forwardFunds();
-    _postValidatePurchase(_beneficiary, weiAmount);
+  
+  function approve (address _spender, uint256 _currentValue, uint256 _newValue)
+    returns (bool success) {
+    if (allowance (msg.sender, _spender) == _currentValue)
+      return approve (_spender, _newValue);
+    else return false;
   }
 
-  // -----------------------------------------
-  // Internal interface (extensible)
-  // -----------------------------------------
-
-  /**
-   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    require(_beneficiary != address(0));
-    require(_weiAmount != 0);
+  function burnTokens (uint256 _value) returns (bool success) {
+    if (_value > accounts [msg.sender]) return false;
+    else if (_value > 0) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      tokenCount = safeSub (tokenCount, _value);
+      return true;
+    } else return true;
   }
 
-  /**
-   * @dev Validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    // optional override
+
+  function createTokens (uint256 _value) returns (bool success) {
+
+    if (_value > 0) {
+      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
+      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
+      tokenCount = safeAdd (tokenCount, _value);
+    }
+
+    return true;
   }
 
-  /**
-   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
-   * @param _beneficiary Address performing the token purchase
-   * @param _tokenAmount Number of tokens to be emitted
-   */
-  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    token.transfer(_beneficiary, _tokenAmount);
+
+  function setOwner (address _newOwner) {
+    require (msg.sender == owner);
+
+    owner = _newOwner;
   }
 
-  /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-   * @param _beneficiary Address receiving the tokens
-   * @param _tokenAmount Number of tokens to be purchased
-   */
-  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
-    _deliverTokens(_beneficiary, _tokenAmount);
-  }
+  function freezeTransfers () {
+    require (msg.sender == owner);
 
-  /**
-   * @dev Override for extensions that require an internal state to check for validity (current user contributions, etc.)
-   * @param _beneficiary Address receiving the tokens
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
-    // optional override
-  }
-
-  /**
-   * @dev Override to extend the way in which ether is converted to tokens.
-   * @param _weiAmount Value in wei to be converted into tokens
-   * @return Number of tokens that can be purchased with the specified _weiAmount
-   */
-  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-    return _weiAmount.mul(rate);
-  }
-
-  /**
-   * @dev Determines how ETH is stored/forwarded on purchases.
-   */
-  function _forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-}
-
-
-
-/**
- * @title CappedCrowdsale
- * @dev Crowdsale with a limit for total contributions.
- */
-contract CappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public cap;
-
-  /**
-   * @dev Constructor, takes maximum amount of wei accepted in the crowdsale.
-   * @param _cap Max amount of wei to be contributed
-   */
-  function CappedCrowdsale(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
-  }
-
-  /**
-   * @dev Checks whether the cap has been reached. 
-   * @return Whether the cap was reached
-   */
-  function capReached() public view returns (bool) {
-    return weiRaised >= cap;
-  }
-
-  /**
-   * @dev Extend parent behavior requiring purchase to respect the funding cap.
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(weiRaised.add(_weiAmount) <= cap);
-  }
-
-}
-
-
-
-
-
-
-
-/**
- * @title TimedCrowdsale
- * @dev Crowdsale accepting contributions only within a time frame.
- */
-contract TimedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public openingTime;
-  uint256 public closingTime;
-
-  /**
-   * @dev Reverts if not in crowdsale time range.
-   */
-  modifier onlyWhileOpen {
-    // solium-disable-next-line security/no-block-members
-    require(block.timestamp >= openingTime && block.timestamp <= closingTime);
-    _;
-  }
-
-  /**
-   * @dev Constructor, takes crowdsale opening and closing times.
-   * @param _openingTime Crowdsale opening time
-   * @param _closingTime Crowdsale closing time
-   */
-  function TimedCrowdsale(uint256 _openingTime, uint256 _closingTime) public {
-    // solium-disable-next-line security/no-block-members
-    require(_openingTime >= block.timestamp);
-    require(_closingTime >= _openingTime);
-
-    openingTime = _openingTime;
-    closingTime = _closingTime;
-  }
-
-  /**
-   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
-   * @return Whether crowdsale period has elapsed
-   */
-  function hasClosed() public view returns (bool) {
-    // solium-disable-next-line security/no-block-members
-    return block.timestamp > closingTime;
-  }
-
-  /**
-   * @dev Extend parent behavior requiring to be within contributing period
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal onlyWhileOpen {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-  }
-
-}
-
-
-
-
-
-
-
-
-/**
- * @title FinalizableCrowdsale
- * @dev Extension of Crowdsale where an owner can do extra work
- * after finishing.
- */
-contract FinalizableCrowdsale is TimedCrowdsale, Ownable {
-  using SafeMath for uint256;
-
-  bool public isFinalized = false;
-
-  event Finalized();
-
-  /**
-   * @dev Must be called after crowdsale ends, to do some extra finalization
-   * work. Calls the contract's finalization function.
-   */
-  function finalize() onlyOwner public {
-    require(!isFinalized);
-    require(hasClosed());
-
-    finalization();
-    emit Finalized();
-
-    isFinalized = true;
-  }
-
-  /**
-   * @dev Can be overridden to add finalization logic. The overriding function
-   * should call super.finalization() to ensure the chain of finalization is
-   * executed entirely.
-   */
-  function finalization() internal {
-  }
-
-}
-
-
-
-
-
-
-
-/**
- * @title Whitelist
- * @dev The Whitelist contract has a whitelist of addresses, and provides basic authorization control functions.
- * @dev This simplifies the implementation of "user permissions".
- */
-contract Whitelist is Ownable {
-  mapping(address => bool) public whitelist;
-
-  event WhitelistedAddressAdded(address addr);
-  event WhitelistedAddressRemoved(address addr);
-
-  /**
-   * @dev Throws if called by any account that's not whitelisted.
-   */
-  modifier onlyWhitelisted() {
-    require(whitelist[msg.sender]);
-    _;
-  }
-
-  /**
-   * @dev add an address to the whitelist
-   * @param addr address
-   * @return true if the address was added to the whitelist, false if the address was already in the whitelist
-   */
-  function addAddressToWhitelist(address addr) onlyOwner public returns(bool success) {
-    if (!whitelist[addr]) {
-      whitelist[addr] = true;
-      emit WhitelistedAddressAdded(addr);
-      success = true;
+    if (!frozen) {
+      frozen = true;
+      Freeze ();
     }
   }
 
-  /**
-   * @dev add addresses to the whitelist
-   * @param addrs addresses
-   * @return true if at least one address was added to the whitelist,
-   * false if all addresses were already in the whitelist
-   */
-  function addAddressesToWhitelist(address[] addrs) onlyOwner public returns(bool success) {
-    for (uint256 i = 0; i < addrs.length; i++) {
-      if (addAddressToWhitelist(addrs[i])) {
-        success = true;
-      }
+
+  function unfreezeTransfers () {
+    require (msg.sender == owner);
+
+    if (frozen) {
+      frozen = false;
+      Unfreeze ();
     }
   }
 
-  /**
-   * @dev remove an address from the whitelist
-   * @param addr address
-   * @return true if the address was removed from the whitelist,
-   * false if the address wasn't in the whitelist in the first place
-   */
-  function removeAddressFromWhitelist(address addr) onlyOwner public returns(bool success) {
-    if (whitelist[addr]) {
-      whitelist[addr] = false;
-      emit WhitelistedAddressRemoved(addr);
-      success = true;
-    }
-  }
+  event Freeze ();
 
-  /**
-   * @dev remove addresses from the whitelist
-   * @param addrs addresses
-   * @return true if at least one address was removed from the whitelist,
-   * false if all addresses weren't in the whitelist in the first place
-   */
-  function removeAddressesFromWhitelist(address[] addrs) onlyOwner public returns(bool success) {
-    for (uint256 i = 0; i < addrs.length; i++) {
-      if (removeAddressFromWhitelist(addrs[i])) {
-        success = true;
-      }
-    }
-  }
+  event Unfreeze ();
 
 }
 
 
+contract TokenSale is RebateCoin  {
+ 
+    enum State { PRE_ICO, ICO_FIRST, ICO_SECOND, STOPPED, CLOSED }
+    
+    // 0 , 1 , 2 , 3 , 4 
+    
+    State public currentState = State.STOPPED;
 
-contract TokenSale is Ownable, CappedCrowdsale, FinalizableCrowdsale, Whitelist {
+    uint public tokenPrice = 1000000000000000; // wei , 0.0001 eth , 0.6 usd
+ 
+    address public beneficiary;
+	
+	uint256 private BountyFound = 10 * (10**24);
+	uint256 private SaleFound = 70 * (10**24);
+	uint256 private PartnersFound = 5 * (10**24);
+	uint256 private TeamFound = 15 * (10**24);
+	
+	uint256 public totalSold = 0;
+	
+	uint256 private _hardcap = 22800 ether;
+	uint256 private _softcap = 62250 ether;
+	
+	bool private _allowedTransfers = true;
 
-  bool public initialized;
-  uint[10] public rates;
-  uint[10] public times;
-  uint public noOfWaves;
-  address public wallet;
-  address public reserveWallet;
-  uint public minContribution;
-  uint public maxContribution;
-
-  function TokenSale(uint _openingTime, uint _endTime, uint _rate, uint _hardCap, ERC20 _token, address _reserveWallet, uint _minContribution, uint _maxContribution)
-  Crowdsale(_rate, _reserveWallet, _token)
-  CappedCrowdsale(_hardCap) TimedCrowdsale(_openingTime, _endTime) {
-    require(_token != address(0));
-    require(_reserveWallet !=address(0));
-    require(_maxContribution > 0);
-    require(_minContribution > 0);
-    reserveWallet = _reserveWallet;
-    minContribution = _minContribution;
-    maxContribution = _maxContribution;
-  }
-
-  function initRates(uint[] _rates, uint[] _times) external onlyOwner {
-    require(now < openingTime);
-    require(_rates.length == _times.length);
-    require(_rates.length > 0);
-    noOfWaves = _rates.length;
-
-    for(uint8 i=0;i<_rates.length;i++) {
-      rates[i] = _rates[i];
-      times[i] = _times[i];
+    modifier saleIsOn() {
+        require(currentState != State.STOPPED && currentState != State.CLOSED && totalSold < SaleFound);
+        _;
     }
-    initialized = true;
-  }
-
-  function getCurrentRate() public view returns (uint256) {
-    for(uint i=0;i<noOfWaves;i++) {
-      if(now <= times[i]) {
-        return rates[i];
-      }
+    
+	function TokenSale() {
+	    owner = msg.sender;
+	    beneficiary = msg.sender;
+	}
+	
+	function setState(State _newState) public onlyOwner {
+	    require(currentState != State.CLOSED);
+	    currentState = _newState;
+	}
+	
+	
+	function allowTransfers() public onlyOwner {
+		_allowedTransfers = true;		
+	}
+	
+	function stopTransfers() public onlyOwner {
+		_allowedTransfers = false;
+	}
+	
+	function stopSale() public onlyOwner {
+	    currentState = State.CLOSED;
+	}
+	
+    function setBeneficiaryAddress(address _new) public onlyOwner {
+        
+        beneficiary = _new;
+        
     }
-    return 0;
-  }
+    
+    function setTokenPrice(uint _price) public onlyOwner {
+        
+        tokenPrice = _price;
+        
+    }
+    
+	
+	function transferPayable(uint _amount) private returns (bool) {
+	    
+	    if(SaleFound < _amount) return false;
 
-  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-    uint rate  = getCurrentRate();
-    return _weiAmount.mul(rate);
-  }
+	    return true;
+	    
+	}
+	
+	
+	function buyRBCTokens() public saleIsOn() payable {
 
-  function setWallet(address _wallet) onlyOwner public {
-    wallet = _wallet;
-  }
-
-  function setReserveWallet(address _reserve) onlyOwner public {
-    require(_reserve != address(0));
-    reserveWallet = _reserve;
-  }
-
-  function setMinContribution(uint _min) onlyOwner public {
-    require(_min > 0);
-    minContribution = _min;
-  }
-
-  function setMaxContribution(uint _max) onlyOwner public {
-    require(_max > 0);
-    maxContribution = _max;
-  }
-
-  function finalization() internal {
-    require(wallet != address(0));
-    wallet.transfer(this.balance);
-    token.transfer(reserveWallet, token.balanceOf(this));
-    super.finalization();
-  }
-
-  function _forwardFunds() internal {
-    //overridden to make the smart contracts hold funds and not the wallet
-  }
-
-  function withdrawFunds(uint value) onlyWhitelisted external {
-    require(this.balance >= value);
-    msg.sender.transfer(value);
-  }
-
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    require(_weiAmount >= minContribution);
-    require(_weiAmount <= maxContribution);
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-  }
+	    uint tokens = get_tokens_count(msg.value);
+		require(transferPayable(tokens));
+		createTokens(tokens);
+		if(_allowedTransfers) {
+			beneficiary.transfer(msg.value);
+			emit Transfer(owner, msg.sender, tokens);
+	    }
+	    
+	}
+	
+	
+	function get_tokens_count(uint _amount) private returns (uint) {
+	    
+	     uint currentPrice = tokenPrice;
+	     uint tokens = safeDiv( safeMul(_amount, _decimals), currentPrice ) ;
+    	 return tokens;
+	    
+	}
+	
+	
+	function() external payable {
+      buyRBCTokens();
+    }
+	
+    
 }
