@@ -1,69 +1,184 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CATToken at 0x56ba2Ee7890461f463F7be02aAC3099f6d5811A8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CATToken at 0xb291eb985f3a994a0f8fd84bba15538c9079005b
 */
-pragma solidity^0.4.11;
+pragma solidity ^0.4.11;
+
+//
+// SafeMath
+//
+// Ownable
+// Destructible
+// Pausable
+//
+// ERC20Basic
+// ERC20 : ERC20Basic
+// BasicToken : ERC20Basic
+// StandardToken : ERC20, BasicToken
+// MintableToken : StandardToken, Ownable
+// PausableToken : StandardToken, Pausable
+//
+// CAToken : MintableToken, PausableToken
+//
+// Crowdsale
+// PausableCrowdsale
+// BonusCrowdsale
+// TokensCappedCrowdsale
+// FinalizableCrowdsale
+//
+// CATCrowdsale
+//
+
+// Date.now()/1000+3600,  Date.now()/1000+3600*2, 4700, "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4"
+// 1508896220, 1509899832, 4700, "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4"
+// 1507909923, 1508514723, 4700, "0x0b8e27013dfA822bF1cc01b6Ae394B76DA230a03", "0x5F85A0e9DD5Bd2F11a54b208427b286e9B0B519F", "0x7F781d08FD165DBEE1D573Bdb79c43045442eac4", "0x98bf67b6a03DA7AcF2Ee7348FdB3F9c96425a130"
+// 1509120669, 1519120669, 3000, "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820", "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820", "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820"
 
 /**
- * Math operations with safety checks
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint a, uint b) internal returns (uint) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
+    uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint a, uint b) internal returns (uint) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
     return c;
   }
+}
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
   }
 
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
   }
 
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
+}
+
+/**
+ * @title Destructible
+ * @dev Base contract that can be destroyed by owner. All funds in contract will be sent to the owner.
+ */
+contract Destructible is Ownable {
+
+  function Destructible() public payable { }
+
+  /**
+   * @dev Transfers the current balance to the owner and terminates the contract.
+   */
+  function destroy() onlyOwner public {
+    selfdestruct(owner);
   }
 
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
+  function destroyAndSend(address _recipient) onlyOwner public {
+    selfdestruct(_recipient);
+  }
+}
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
   }
 }
 
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  event Transfer(address indexed from, address indexed to, uint value);
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
@@ -71,322 +186,224 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint);
-  function transferFrom(address from, address to, uint value);
-  function approve(address spender, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
+ * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
-  using SafeMath for uint;
+  using SafeMath for uint256;
 
-  mapping(address => uint) balances;
-
-  /**
-   * @dev Fix for the ERC20 short address attack.
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
+  mapping(address => uint256) balances;
 
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
+    return true;
   }
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint representing the amount owned by the passed address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint balance) {
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
 
-
 /**
  * @title Standard ERC20 token
  *
- * @dev Implemantation of the basic standart token.
+ * @dev Implementation of the basic standard token.
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is BasicToken, ERC20 {
+contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint)) allowed;
+  mapping (address => mapping (address => uint256)) allowed;
 
 
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint the amout of tokens to be transfered
+   * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
-    var _allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    uint256 _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
+    // require (_value <= _allowance);
 
-    balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
+    return true;
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on beahlf of msg.sender.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint _value) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
-
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
+    return true;
   }
 
   /**
-   * @dev Function to check the amount of tokens than an owner allowed to a spender.
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint specifing the amount of tokens still avaible for the spender.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) public
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
 }
 
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
 
-contract CATToken is StandardToken {
-	using SafeMath for uint256;
-	
-	// keccak256 hash of hidden cap
-	string public constant HIDDEN_CAP = "0xd22f19d54193ff5e08e7ba88c8e52ec1b9fc8d4e0cf177e1be8a764fa5b375fa";
-	
-	// Events
-	event CreatedCAT(address indexed _creator, uint256 _amountOfCAT);
-	event CATRefundedForWei(address indexed _refunder, uint256 _amountOfWei);
-	
-	// Token data
-	string public constant name = "BlockCAT Token";
-	string public constant symbol = "CAT";
-	uint256 public constant decimals = 18;  // Since our decimals equals the number of wei per ether, we needn't multiply sent values when converting between CAT and ETH.
-	string public version = "1.0";
-	
-	// Addresses and contracts
-	address public executor;
-	address public devETHDestination;
-	address public devCATDestination;
-	address public reserveCATDestination;
-	
-	// Sale data
-	bool public saleHasEnded;
-	bool public minCapReached;
-	bool public allowRefund;
-	mapping (address => uint256) public ETHContributed;
-	uint256 public totalETHRaised;
-	uint256 public saleStartBlock;
-	uint256 public saleEndBlock;
-	uint256 public saleFirstEarlyBirdEndBlock;
-	uint256 public saleSecondEarlyBirdEndBlock;
-	uint256 public constant DEV_PORTION = 20;  // In percentage
-	uint256 public constant RESERVE_PORTION = 1;  // In percentage
-	uint256 public constant ADDITIONAL_PORTION = DEV_PORTION + RESERVE_PORTION;
-	uint256 public constant SECURITY_ETHER_CAP = 1000000 ether;
-	uint256 public constant CAT_PER_ETH_BASE_RATE = 300;  // 300 CAT = 1 ETH during normal part of token sale
-	uint256 public constant CAT_PER_ETH_FIRST_EARLY_BIRD_RATE = 330;
-	uint256 public constant CAT_PER_ETH_SECOND_EARLY_BIRD_RATE = 315;
-	
-	function CATToken(
-		address _devETHDestination,
-		address _devCATDestination,
-		address _reserveCATDestination,
-		uint256 _saleStartBlock,
-		uint256 _saleEndBlock
-	) {
-		// Reject on invalid ETH destination address or CAT destination address
-		if (_devETHDestination == address(0x0)) throw;
-		if (_devCATDestination == address(0x0)) throw;
-		if (_reserveCATDestination == address(0x0)) throw;
-		// Reject if sale ends before the current block
-		if (_saleEndBlock <= block.number) throw;
-		// Reject if the sale end time is less than the sale start time
-		if (_saleEndBlock <= _saleStartBlock) throw;
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
 
-		executor = msg.sender;
-		saleHasEnded = false;
-		minCapReached = false;
-		allowRefund = false;
-		devETHDestination = _devETHDestination;
-		devCATDestination = _devCATDestination;
-		reserveCATDestination = _reserveCATDestination;
-		totalETHRaised = 0;
-		saleStartBlock = _saleStartBlock;
-		saleEndBlock = _saleEndBlock;
-		saleFirstEarlyBirdEndBlock = saleStartBlock + 6171;  // Equivalent to 24 hours later, assuming 14 second blocks
-		saleSecondEarlyBirdEndBlock = saleFirstEarlyBirdEndBlock + 12342;  // Equivalent to 48 hours later after first early bird, assuming 14 second blocks
+  bool public mintingFinished = false;
 
-		totalSupply = 0;
-	}
-	
-	function createTokens() payable external {
-		// If sale is not active, do not create CAT
-		if (saleHasEnded) throw;
-		if (block.number < saleStartBlock) throw;
-		if (block.number > saleEndBlock) throw;
-		// Check if the balance is greater than the security cap
-		uint256 newEtherBalance = totalETHRaised.add(msg.value);
-		if (newEtherBalance > SECURITY_ETHER_CAP) throw; 
-		// Do not do anything if the amount of ether sent is 0
-		if (0 == msg.value) throw;
-		
-		// Calculate the CAT to ETH rate for the current time period of the sale
-		uint256 curTokenRate = CAT_PER_ETH_BASE_RATE;
-		if (block.number < saleFirstEarlyBirdEndBlock) {
-			curTokenRate = CAT_PER_ETH_FIRST_EARLY_BIRD_RATE;
-		}
-		else if (block.number < saleSecondEarlyBirdEndBlock) {
-			curTokenRate = CAT_PER_ETH_SECOND_EARLY_BIRD_RATE;
-		}
-		
-		// Calculate the amount of CAT being purchased
-		uint256 amountOfCAT = msg.value.mul(curTokenRate);
-		
-		// Ensure that the transaction is safe
-		uint256 totalSupplySafe = totalSupply.add(amountOfCAT);
-		uint256 balanceSafe = balances[msg.sender].add(amountOfCAT);
-		uint256 contributedSafe = ETHContributed[msg.sender].add(msg.value);
 
-		// Update individual and total balances
-		totalSupply = totalSupplySafe;
-		balances[msg.sender] = balanceSafe;
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
 
-		totalETHRaised = newEtherBalance;
-		ETHContributed[msg.sender] = contributedSafe;
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(0x0, _to, _amount);
+    return true;
+  }
 
-		CreatedCAT(msg.sender, amountOfCAT);
-	}
-	
-	function endSale() {
-		// Do not end an already ended sale
-		if (saleHasEnded) throw;
-		// Can't end a sale that hasn't hit its minimum cap
-		if (!minCapReached) throw;
-		// Only allow the owner to end the sale
-		if (msg.sender != executor) throw;
-		
-		saleHasEnded = true;
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
 
-		// Calculate and create developer and reserve portion of CAT
-		uint256 additionalCAT = (totalSupply.mul(ADDITIONAL_PORTION)).div(100 - ADDITIONAL_PORTION);
-		uint256 totalSupplySafe = totalSupply.add(additionalCAT);
+/**
+ * @title Pausable token
+ *
+ * @dev StandardToken modified with pausable transfers.
+ **/
 
-		uint256 reserveShare = (additionalCAT.mul(RESERVE_PORTION)).div(ADDITIONAL_PORTION);
-		uint256 devShare = additionalCAT.sub(reserveShare);
+contract PausableToken is StandardToken, Pausable {
 
-		totalSupply = totalSupplySafe;
-		balances[devCATDestination] = devShare;
-		balances[reserveCATDestination] = reserveShare;
-		
-		CreatedCAT(devCATDestination, devShare);
-		CreatedCAT(reserveCATDestination, reserveShare);
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
 
-		if (this.balance > 0) {
-			if (!devETHDestination.call.value(this.balance)()) throw;
-		}
-	}
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
 
-	// Allows BlockCAT to withdraw funds
-	function withdrawFunds() {
-		// Disallow withdraw if the minimum hasn't been reached
-		if (!minCapReached) throw;
-		if (0 == this.balance) throw;
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
 
-		if (!devETHDestination.call.value(this.balance)()) throw;
-	}
-	
-	// Signals that the sale has reached its minimum funding goal
-	function triggerMinCap() {
-		if (msg.sender != executor) throw;
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
 
-		minCapReached = true;
-	}
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
 
-	// Opens refunding.
-	function triggerRefund() {
-		// No refunds if the sale was successful
-		if (saleHasEnded) throw;
-		// No refunds if minimum cap is hit
-		if (minCapReached) throw;
-		// No refunds if the sale is still progressing
-		if (block.number < saleEndBlock) throw;
-		if (msg.sender != executor) throw;
+/**
+* @dev Pre main Bitcalve BTL token ERC20 contract
+* Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
+* 
+*/
+contract CATToken is MintableToken, PausableToken, Destructible {
+    
+    // Metadata
+    string public constant symbol = "PreCAT";
+    string public constant name = "Pre CAT Token";
+    uint8 public constant decimals = 18;
+    string public constant version = "1.0";
 
-		allowRefund = true;
-	}
+    /**
+    * @dev Override MintableTokenn.finishMinting() to add canMint modifier
+    */
+    function finishMinting() onlyOwner canMint public returns(bool) {
+        return super.finishMinting();
+    }
 
-	function refund() external {
-		// No refunds until it is approved
-		if (!allowRefund) throw;
-		// Nothing to refund
-		if (0 == ETHContributed[msg.sender]) throw;
-
-		// Do the refund.
-		uint256 etherAmount = ETHContributed[msg.sender];
-		ETHContributed[msg.sender] = 0;
-
-		CATRefundedForWei(msg.sender, etherAmount);
-		if (!msg.sender.send(etherAmount)) throw;
-	}
-
-	function changeDeveloperETHDestinationAddress(address _newAddress) {
-		if (msg.sender != executor) throw;
-		devETHDestination = _newAddress;
-	}
-	
-	function changeDeveloperCATDestinationAddress(address _newAddress) {
-		if (msg.sender != executor) throw;
-		devCATDestination = _newAddress;
-	}
-	
-	function changeReserveCATDestinationAddress(address _newAddress) {
-		if (msg.sender != executor) throw;
-		reserveCATDestination = _newAddress;
-	}
-	
-	function transfer(address _to, uint _value) {
-		// Cannot transfer unless the minimum cap is hit
-		if (!minCapReached) throw;
-		
-		super.transfer(_to, _value);
-	}
-	
-	function transferFrom(address _from, address _to, uint _value) {
-		// Cannot transfer unless the minimum cap is hit
-		if (!minCapReached) throw;
-		
-		super.transferFrom(_from, _to, _value);
-	}
 }
