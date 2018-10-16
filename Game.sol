@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game at 0xa26640d8a467a957f195c1ff566e167d457a8087
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game at 0x15d8502417beaebe6abbb48f07b6b31fbcccff52
 */
 pragma solidity ^0.4.18;
 
@@ -21,6 +21,7 @@ contract Game is ownerOnly {
     
     struct cows {
         uint cow;
+        bool place;
         uint date_buy;
         bool cow_live;
         uint milk;
@@ -56,14 +57,14 @@ contract Game is ownerOnly {
     	cow_code = 0;
     	
         //??????? ?????? ???? ?????? ?? 5 ?????
-        volume_milk = 1;
+        volume_milk = 20;
         //????? ??????? ?????? ????? ????? ??????
         time_to_milk = 60;
         //??????? ?????? ????? ?????? - 30 ???
-        time_to_live = 600;  
+        time_to_live = 1800;  
         
         //??????? ????? ??????? ?????? ? ???????
-        milkcost = 0.0013 ether;
+        milkcost = 0.001083333333333 ether;
     }
     
     function pay() public payable {
@@ -76,16 +77,16 @@ contract Game is ownerOnly {
         uint time= now;
         uint cows_count = users_cows[msg.sender];
         
-        uint index = msg.value/0.01 ether;
+        uint index = msg.value/0.1 ether;
         
         for (uint i = 1; i <= index; i++) {
             
             cow_code++;
             cows_count++;
-            user[keccak256(msg.sender) & keccak256(i)]=cows(cow_code,time,true,0,time);
+            user[keccak256(msg.sender) & keccak256(i)]=cows(cow_code,true,time,true,0,time);
         }
         users_cows[msg.sender] = cows_count;
-        rico.transfer(0.001 ether);
+        rico.transfer(0.01 ether);
     }    
     
     //???? ??????
@@ -97,7 +98,7 @@ contract Game is ownerOnly {
         for (uint i=1; i<=users_cows[gamer]; i++) {
             
             //???? ?????? ???? ???? ????? ????
-            if (user[keccak256(gamer) & keccak256(i)].cow_live==true) {
+            if (user[keccak256(gamer) & keccak256(i)].cow_live==true && user[keccak256(gamer) & keccak256(i)].place) {
                 
                 //???????? ????? ?????? ??????
                 uint datedeadcow=user[keccak256(gamer) & keccak256(i)].date_buy+time_to_live;
@@ -154,7 +155,6 @@ contract Game is ownerOnly {
                 user[keccak256(msg.sender) & keccak256(i)].milk = 0;
             }
             //???????? ???? ?? ????????? ??????
-            uint a=milkcost*milk_to_sale;
             msg.sender.transfer(milkcost*milk_to_sale);
         }            
     }
@@ -163,14 +163,14 @@ contract Game is ownerOnly {
     function TransferCow(address gamer, uint num_cow) public {
         
         //????????? ??????????? ?????? ????? ??????
-        if (user[keccak256(msg.sender) & keccak256(num_cow)].cow_live == true) {
+        if (user[keccak256(msg.sender) & keccak256(num_cow)].cow_live == true && user[keccak256(msg.sender) & keccak256(num_cow)].place==true) {
             
             //???????? ?????????? ????? ? ??????????
             uint cows_count = users_cows[gamer];
             
             //??????? ? ????????? ?????? ?????? ??? ?????? ???????, ??? ???? ?????? ?? ??????????
             user[keccak256(gamer) & keccak256(cows_count)]=cows(user[keccak256(msg.sender) & keccak256(num_cow)].cow,
-            user[keccak256(msg.sender) & keccak256(num_cow)].date_buy,
+            true,user[keccak256(msg.sender) & keccak256(num_cow)].date_buy,
             user[keccak256(msg.sender) & keccak256(num_cow)].cow_live,0,now);
             
             //??????? ?????? ? ???????? ???????
@@ -214,8 +214,9 @@ contract Game is ownerOnly {
     }
 
     //??????? ??????? ????? ? ???????
-    function StatusCow(address gamer, uint num_cow) public view returns (uint,uint,bool,uint,uint) {
+    function StatusCow(address gamer, uint num_cow) public view returns (uint,bool,uint,bool,uint,uint) {
         return (user[keccak256(gamer) & keccak256(num_cow)].cow,
+        user[keccak256(gamer) & keccak256(num_cow)].place,
         user[keccak256(gamer) & keccak256(num_cow)].date_buy,
         user[keccak256(gamer) & keccak256(num_cow)].cow_live,
         user[keccak256(gamer) & keccak256(num_cow)].milk,
