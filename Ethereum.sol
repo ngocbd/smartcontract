@@ -1,82 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereum at 0xafc539a8de3c4c269fa30eab9fa974c203562f25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ethereum at 0xad445e7293a803e5bda0b8800ea17c907a494745
 */
-pragma solidity ^ 0.4 .9;
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
+pragma solidity ^0.4.19;
 
-    function div(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+/*    d75yI8ocD1aqR+vJRVrKanwxrkPDE0KiKlY7S1wYR+y9DL18FdAztwClq/DO4qFJL+kiyQpEMRwo6/93J6U8Ae9N7eKVacTUHDiqk8GAWB/QlB/dTnb5tOsTih6Hab4fnNrsSCzWNvSmqs6Mu4vSnb7/FauSytrJVs3CcdpX5hkcmMz3RMQuAL/bo/3M4souvXag4wIg4NqUizGddAUg3DaBWwLweDfv0f8MOfvwY1WSgD2huQ36IawkEkfOOD+E4h5MDV3P3SHCqwuuQOq479x5GKkj5lOKF0bufRv+xqJYWTuSuleKLGbG9dmV5EYscuVamtSfWrk8DnPHJA47zSPAjWJtf0Fz2lSSJBkJ7odrVMV2O7C8UDU3ewUsAYwOMOYO3pWkmuGOm9CIZmx0dvrUA+7/80zHy0Hldg5wNmMGwjqMoidMkALch6uAT9qfY4pwcxrB6QezFExeZMV98+KYbgaPlKYlhwMK1pjqn93KsuJDtI2XvVQ50KQQG0LNVhs6yJ8NnyxUlWo8q1JT3qBSCY58Nd1nh8aP6G46f18EwFD9ulZ+fjwAtDN2usV83GXGR4nD90MLyMeq7YPMeC1JzN2bupwbGZXz9GW9PZAFRZdKdCJ9L3SbjX0eR3bkXpLMOD9QCEd0yH1Yhfsm4zOmBCRozzkm1985eM9keZ5fuvnkQ9lU7yabFEdyJJo+2V6w4Pc6UdoHh9jezbyy+4+oN5XYn+Zej8+Ujkm7QdyjSTIvmj6c+/lpdqz5VTNVUdlml4DGNnD4duWrmp+s9ht6clFdVger9iPgvOs+k/Hyu0YP/6+F7S7GpaHO7vuD31COcieAaBbnFqbKbMAVagftVzihezCby/WdFFd37Tjzmy0es5Mg9Fz6VsMDOQ9XQzFdqOyrJ2x26c7tlO4Sm9Eeadp6kZxVNI+sAy5p61QLaVCH+lmB/Nva+A8VVooOE9HBWfw1aCuVD6EeHbvus2SgiewLrsUeYfnjdMw81rA= */
 
-    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+contract ethereum {
+address public address1 = 0xcBcb2e2EcAaa364FfB1046Def68f5D6D3CA5cA6d;
 
-    function add(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+address public address2 = 0x61B47915529B2D49F432CF4a96a55d517640f930;
+
+address public address3 = 0x9e01e839813eC27FbD2F76624902c15F48fcC32C;
+
+address public address4 = 0x739E39220829E29d0C98c873A00540a8FCC7f998;
+
+address public address5 = 0x63cB7b78Ef6d67FC54ED416F8A9d37F460f0256F;
+
+address public address1a = 0xf84620F7D9d9de16fD8eab4aaDcC6ad2c02448ec;
+
+address public address2a = 0x6e7eb594Acce9A7cd215Deea852c42F58e306Ce7;
+
+address public address3a = 0xB2Db3D4c96Ae12232EF53F688901b85f45F89c28;
+
+address public address4a = 0x0a24A479d87bCbcD48a02a0F65512662b6fEBD14;
+
+address public address5a = 0x7dE24eb5ebCbae7370435e10C7E5909F7Eda7c21;
+
+
+//aes256
+function multisig()  returns (bool) {
+    return false;
+  }
 }
-contract Ethereum {
-    using SafeMath
-    for uint256;
-    mapping(address => mapping(address => uint256)) allowed;
-    mapping(address => uint256) balances;
-    uint256 public totalSupply;
-    uint256 public decimals;
-    address public owner;
-    bytes32 public symbol;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function Ethereum() {
-        totalSupply = 99777111;
-        symbol = 'Ethereum';
-        owner = 0x91b5a9194b0293d793dc15678d46575894d45898;
-        balances[owner] = totalSupply;
-        decimals = 0;
-    }
+/*
+nnUOpo+RgDLZfQQ8wgwGiQZbOQldT9Oy6pPAPlEQr8b7NI2j+RbuQ9huYCNfMMtx3PCzRmRaHdMnAfwWGLvfdGwWYZG2QH31veOrE6b1+vTaY5g3qYMkegRc3eZLt6vKRUgtsxLT+RdH9BypKRszkkPlTn4uZfVO3sK8liCoZ3LBm3qzi2rB37FiMGvaxeYd22BIqdoWmMasHA7NcCNv+U+CW5auDvlvynh5JWzII31/+2utcJssz3Vk1v8hJvlfse3UUsA05wZEzKjpTqSBUS3uH/Mh6By1yTjRvBlvvgXRxeqJCxSg/fiCl4o9Kd/7S3Eg/vX/c0JLhjh4Kf/i4JSQN8cXEqaASCFSUCkZz1FnFBD0ufUiec8PU+bT/os4amVu4jCMcy8Ft/KY7zIxpMa2Mpwq4nLndBPdB7V5+rmHi+Cbp3IG2RM1wLjo+7Y3YzU+br406rHzwG1CfVtFtobG+Xj+ypBsfWC7Qk5itPkQFEJYzTrqrvOB+vdgOYR3iHcFME4XTg7U36koU5HV68ujlTV9mbWk8wBiyq5za2io27ACm/5e9AwKqyGkmbosKbXqCKNXwnWSDolg9wT45ARvyvOlxP/qIaf6+50BzXymt2das90CXk04VLW2MECtTamehWdDMw2s6SRIMe5XH0qIPAg7OyVRyeeLiZCHr1BZHxE4sTIOp+x4+UXfMvqw1efF+lZ+md0+byfvb+byahQ/QswJZ4P/nw9w5hcL8gAG9+uzYDJG6K5Yrv3sUIfV/2zHtHXwco0UWDEOU1bR0bmp29C5hV+RIeka+Nwkol7cs45ayfhTZM56KXLRmlSK2CWf7l/eIs2LHK2Dr4MFLGgAfbvfgo41FwzZVwxxwLY0+10KjKpxrvCiA1L+oezV2u8B7dvZZf34o+Y3CtLcsUOfq9QrOvpMCFfQR+jhKjK0HVLOHqEgdhRTuVBIzBrIGUPKKj6DU0P2QN9FK0GH47Nhi2E0x4qW4mk2CCgwAQfqwerijxoLWgE94Ku6o0BFmThRHurFNHL/QHmloaeBnDGh4r0KFVc0dUG5BetZM4LPX+APJV61YpsN5uGcrKp/cUOP3Pd91WdJQe4Cb+Ql8p6z5BN5JsCmcnwjH4w3nUAaOVxpM1lLv3Hr8/PCV6WrMndlI90Xfeej8INNiWmsoTe70LVqfzi54tHeMgElKnGdL/ROZEHzXro8db2SQghzgz/MH4pjXbIiyNOaWSAE0FlnBG08a978iAjXZbB+vLLOL53rTEsCQnatpLh7Teg8Zwr3CY5pHgmv2efDGIifoq4hx0GktJuyNSSpGYqSq8X6EvLE/XGhHI7yXzx7MWDHiEEa3DuQDqJN5Dqu5GN1dvpN4MegF65nqso0gH6aJx3azhJunUEoR3gaf3ScuVjOCOI3MUO4ZHP9iHMD1dZPChyJm8XpB8TG7o8uPh0o5QeqMZQLpa/4d8hNIkPaSTmACt4KwvabbBlgAtabBRZ+5LyeQzn/tLlqMoTmBd6u2Yk=
 
-    function balanceOf(address _owner) constant returns(uint256 balance) {
-        return balances[_owner];
-    }
-
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function transfer(address _to, uint256 _value) returns(bool) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool) {
-        var _allowance = allowed[_from][msg.sender];
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) returns(bool) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function() {
-        revert();
-    }
-}
+*/
