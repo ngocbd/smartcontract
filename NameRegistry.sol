@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NameRegistry at 0xf16af7f69697465f92ff469a837a2b4a82c77423
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NameRegistry at 0xc897816c1a6db4a2923b7d75d9b812e2f62cf504
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 /// @title Ethereum Address Register Contract
 /// @dev This contract maintains a name service for addresses and miner.
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
@@ -68,7 +68,7 @@ contract NameRegistry {
         nameInfoMap[msg.sender] = NameInfo(nameBytes, new uint[](0));
         ownerMap[nameBytes] = msg.sender;
         nameMap[msg.sender] = name;
-        NameRegistered(name, msg.sender);
+        emit NameRegistered(name, msg.sender);
     }
     function unregisterName(string name)
         external
@@ -77,13 +77,13 @@ contract NameRegistry {
         uint[] storage participantIds = nameInfo.participantIds;
         bytes12 nameBytes = stringToBytes12(name);
         require(nameInfo.name == nameBytes);
-        for (uint i = participantIds.length - 1; i >= 0; i--) {
+        for (uint i = 0; i < participantIds.length; i++) {
             delete participantMap[participantIds[i]];
         }
         delete nameInfoMap[msg.sender];
         delete nameMap[msg.sender];
         delete ownerMap[nameBytes];
-        NameUnregistered(name, msg.sender);
+        emit NameUnregistered(name, msg.sender);
     }
     function transferOwnership(address newOwner)
         external
@@ -101,7 +101,7 @@ contract NameRegistry {
         delete nameMap[msg.sender];
         nameInfoMap[newOwner] = nameInfo;
         nameMap[newOwner] = name;
-        OwnershipTransfered(nameInfo.name, msg.sender, newOwner);
+        emit OwnershipTransfered(nameInfo.name, msg.sender, newOwner);
     }
     /* function addParticipant(address feeRecipient) */
     /*     external */
@@ -129,7 +129,7 @@ contract NameRegistry {
         uint participantId = ++nextId;
         participantMap[participantId] = participant;
         nameInfo.participantIds.push(participantId);
-        ParticipantRegistered(
+        emit ParticipantRegistered(
             name,
             msg.sender,
             participantId,
@@ -152,7 +152,7 @@ contract NameRegistry {
                 participantIds.length -= 1;
             }
         }
-        ParticipantUnregistered(participantId, msg.sender);
+        emit ParticipantUnregistered(participantId, msg.sender);
     }
     function getParticipantById(uint id)
         external
