@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HPBToken at 0x38c6A68304cdEfb9BEc48BbFaABA5C5B47818bb2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HPBToken at 0xa4c958980ae0db0bb0838dbceccba5a7b3c64294
 */
 pragma solidity ^0.4.11;
 
@@ -198,7 +198,7 @@ contract StandardToken is BasicToken, ERC20 {
 /// For more information about this token sale, please visit https://gxn.io
 /// @author Arnold - <arnold@gxn.io>, Bob - <bob@gxn.io>.
 contract HPBToken is StandardToken {
-    string public constant NAME = "HPBCoin";
+    string public constant NAME = "???";
     string public constant SYMBOL = "HPB";
     uint public constant DECIMALS = 18;
 
