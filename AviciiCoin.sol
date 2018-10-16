@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AviciiCoin at 0x629540f0955778be6b7165a602f9f25714be234a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AviciiCoin at 0xa589fb6491d807d95b6a3750d9faf60a23df78d3
 */
 pragma solidity ^0.4.20;
 
@@ -124,8 +124,8 @@ contract AviciiCoin {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "AVICII";
-    string public symbol = "AVICII";
+    string public name = "HARJ";
+    string public symbol = "HARJ";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 99;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
