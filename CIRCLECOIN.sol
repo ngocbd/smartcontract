@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CIRCLECOIN at 0xec020bd391caad3f3a31ff10abeae099476a6c5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CIRCLECOIN at 0xf026ba160c18f5342031e25f6e93e2ba264ed64f
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'CIRCLE COIN' token contract
 //
-// Deployed to : 0xFe347DDC005B9FB002c6A87aF1393d3298555a56
-// Symbol      : XCC
+// Deployed to : 0x63D8a091d446949ce806f5B9a45Cf8b254896ee5
+// Symbol      : XCCT
 // Name        : CIRCLE COIN
 // Total supply: 100000000
 // Decimals    : 16
@@ -116,12 +116,12 @@ contract CIRCLECOIN is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function CIRCLECOIN() public {
-        symbol = "XCC";
+        symbol = "XCCT";
         name = "CIRCLE COIN";
         decimals = 16;
         _totalSupply = 1000000000000000000000000;
-        balances[0xFe347DDC005B9FB002c6A87aF1393d3298555a56] = _totalSupply;
-        Transfer(address(0), 0xFe347DDC005B9FB002c6A87aF1393d3298555a56, _totalSupply);
+        balances[0x63D8a091d446949ce806f5B9a45Cf8b254896ee5] = _totalSupply;
+        Transfer(address(0), 0x63D8a091d446949ce806f5B9a45Cf8b254896ee5, _totalSupply);
     }
 
 
