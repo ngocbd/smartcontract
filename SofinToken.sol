@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SofinToken at 0x16c452375d23d49ec94eb0743c7a644a17e48e2e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SofinToken at 0xd51ef370830dd8a04a6131f1e4b7b9ee2b8dbd26
 */
-pragma solidity 0.4.18;
+pragma solidity 0.4.19;
 
-// File: src\zeppelin\math\SafeMath.sol
+// File: src/zeppelin/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -35,7 +35,7 @@ library SafeMath {
   }
 }
 
-// File: src\zeppelin\token\ERC20Basic.sol
+// File: src/zeppelin/token/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -49,7 +49,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: src\zeppelin\token\BasicToken.sol
+// File: src/zeppelin/token/BasicToken.sol
 
 /**
  * @title Basic token
@@ -86,7 +86,7 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: src\zeppelin\token\ERC20.sol
+// File: src/zeppelin/token/ERC20.sol
 
 /**
  * @title ERC20 interface
@@ -99,7 +99,7 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: src\zeppelin\token\StandardToken.sol
+// File: src/zeppelin/token/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -189,7 +189,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: src\zeppelin\token\BurnableToken.sol
+// File: src/zeppelin/token/BurnableToken.sol
 
 /**
  * @title Burnable Token
@@ -212,21 +212,21 @@ contract BurnableToken is StandardToken {
   }
 }
 
-// File: src\SofinToken.sol
+// File: src/SofinToken.sol
 
 contract SofinToken is BurnableToken {
-  string public constant NAME = 'SOFIN ICO';
-  string public constant SYMBOL = 'SOFIN';
-  uint256 public constant DECIMALS = 18;
+  string public constant name = 'SOFIN';
+  string public constant symbol = 'SOFIN';
+  uint256 public constant decimals = 18;
 
-  uint256 public constant TOKEN_CREATION_CAP =  450000000 * 10 ** DECIMALS;
+  uint256 public constant token_creation_cap =  450000000 * 10 ** decimals;
 
   address public multiSigWallet;
   address public owner;
 
   bool public active = true;
 
-  uint256 public oneTokenInWei = 153846153846200;
+  uint256 public oneTokenInWei = 200000000000000;
 
   modifier onlyOwner {
     if (owner != msg.sender) {
@@ -273,9 +273,9 @@ contract SofinToken is BurnableToken {
    * @param  _amount Amount of SOFIN tokens, _NOT_ multiplied to decimals.
    */
   function mintTokens(address _to, uint256 _amount) external onlyOwner {
-    uint256 decimalsMultipliedAmount = _amount.mul(10 ** DECIMALS);
+    uint256 decimalsMultipliedAmount = _amount.mul(10 ** decimals);
     uint256 checkedSupply = totalSupply.add(decimalsMultipliedAmount);
-    if (TOKEN_CREATION_CAP < checkedSupply) {
+    if (token_creation_cap < checkedSupply) {
       revert();
     }
 
@@ -308,11 +308,11 @@ contract SofinToken is BurnableToken {
       revert();
     }
 
-    uint256 multiplier = 10 ** DECIMALS;
+    uint256 multiplier = 10 ** decimals;
     uint256 tokens = msg.value.mul(multiplier) / oneTokenInWei;
 
     uint256 checkedSupply = totalSupply.add(tokens);
-    if (TOKEN_CREATION_CAP < checkedSupply) {
+    if (token_creation_cap < checkedSupply) {
       revert();
     }
 
