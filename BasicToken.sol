@@ -1,178 +1,137 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0x27055f0bcb158a0239bfac2ebd8bae8806298c3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0xc83AE87b42E1c64d968A4b422d121414EFa449cD
 */
-pragma solidity ^0.4.18;
- 
-/* 
-    NJES COIN
-  
- */
- 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+pragma solidity ^0.4.16;
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
- 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
- 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
- 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
- 
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-  mapping(address => uint256) balances;
- 
- function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
- 
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
+	function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+		uint256 c = a * b;
+		assert(a == 0 || c / a == b);
+		return c;
+	}
+
+	function div(uint256 a, uint256 b) internal constant returns (uint256) {
+		uint256 c = a / b;
+		return c;
+	}
+
+	function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+		assert(b <= a);
+		return a - b;
+	}
+
+	function add(uint256 a, uint256 b) internal constant returns (uint256) {
+		uint256 c = a + b;
+		assert(c >= a);
+		return c;
+	}
 }
 
-contract StandardToken is ERC20, BasicToken {
-  mapping (address => mapping (address => uint256)) allowed;
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
- 
-  function approve(address _spender, uint256 _value) returns (bool) {
-   require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
- 
-  /*
-  Function to check the amount of tokens that an owner allowed to a spender.
-  param _owner address The address which owns the funds.
-  param _spender address The address which will spend the funds.
-  return A uint256 specifing the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-}
-}
- 
-/*
-The Ownable contract has an owner address, and provides basic authorization control
- functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    
-  address public owner;
- // 0xa18602a78dE929b9e82aA24A5A216DE49e03447c
- 
-  function Ownable() {
-    owner = msg.sender;
-  }
-  /*
-  Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
- 
-  /*
-  Allows the current owner to transfer control of the contract to a newOwner.
-  param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
- 
-}
- 
-contract TheLiquidToken is StandardToken, Ownable {
-    // mint can be finished and token become fixed for forever
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-  bool mintingFinished = false;
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
- 
- function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
- 
-  /*
-  Function to stop minting new tokens.
-  return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner returns (bool) {}
-  
-  function burn(uint _value)
-        public
-    {
-        require(_value > 0);
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
+contract owned {
+    address public owner;
+
+    function owned() {
+        owner = msg.sender;
     }
 
-    event Burn(address indexed burner, uint indexed value);
-  
+    modifier onlyOwner {
+        if (msg.sender != owner) {
+            revert();
+        }
+        _;
+    }
 }
-    
-contract NJES is TheLiquidToken {
-  string public constant name = "NJES COIN";
-  string public constant symbol = "NJES";
-  uint public constant decimals = 3;
-  uint256 public initialSupply;
-    
-  function NJES () { 
-     totalSupply = 2000000 * 10 ** decimals;
-      balances[msg.sender] = totalSupply;
-      initialSupply = totalSupply; 
-        Transfer(0, this, totalSupply);
-        Transfer(this, msg.sender, totalSupply);
-  }
+
+contract BasicToken is owned {
+    using SafeMath for uint256;
+
+    // Token Variables Initialization
+    string public constant name = "Valorem";
+    string public constant symbol = "VLR";
+    uint8 public constant decimals = 18;
+
+    uint256 public totalSupply;
+    uint256 constant initialSupply = 200000000 * (10 ** uint256(decimals));
+
+    address public reserveAccount;
+    address public bountyAccount;
+
+    uint256 reserveToken;
+    uint256 bountyToken;
+
+    mapping (address => bool) public frozenAccount;
+    mapping (address => uint256) public balanceOf;
+
+    event Burn(address indexed _from,uint256 _value);
+    event FrozenFunds(address _account, bool _frozen);
+    event Transfer(address indexed _from,address indexed _to,uint256 _value);
+
+    function BasicToken () {
+        totalSupply = initialSupply;
+        balanceOf[msg.sender] = initialSupply;
+
+        bountyTransfers();
+    }
+
+    function bountyTransfers() internal {
+        reserveAccount = 0x000f1505CdAEb27197FB652FB2b1fef51cdc524e;
+        bountyAccount = 0x00892214999FdE327D81250407e96Afc76D89CB9;
+
+        reserveToken = ( totalSupply * 25 ) / 100;
+        bountyToken = ( reserveToken * 7 ) / 100;
+
+        balanceOf[msg.sender] = totalSupply - reserveToken;
+        balanceOf[bountyAccount] = bountyToken;
+        reserveToken = reserveToken - bountyToken;
+        balanceOf[reserveAccount] = reserveToken;
+
+        Transfer(msg.sender,reserveAccount,reserveToken);
+        Transfer(msg.sender,bountyAccount,bountyToken);
+    }
+
+    function _transfer(address _from,address _to,uint256 _value) internal {
+        require(balanceOf[_from] > _value);
+        require(!frozenAccount[_from]);
+        require(!frozenAccount[_to]);
+
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(_from, _to, _value);
+    }
+
+    function transfer(address _to,uint256 _value) {
+        _transfer(msg.sender, _to, _value);
+    }
+
+    function freezeAccount(address _account, bool _frozen) onlyOwner {
+        frozenAccount[_account] = _frozen;
+        FrozenFunds(_account, _frozen);
+    }
+
+    function burnTokens(uint256 _value) onlyOwner returns (bool success) {
+        require(balanceOf[msg.sender] > _value);
+
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(msg.sender,_value);
+
+        return true;
+    }
+
+    function newTokens(address _owner, uint256 _value) onlyOwner {
+        balanceOf[_owner] = balanceOf[_owner].add(_value);
+        totalSupply = totalSupply.add(_value);
+        Transfer(this, _owner, _value);
+    }
+
+    function escrowAmount(address _account, uint256 _value) onlyOwner {
+        _transfer(msg.sender, _account, _value);
+        freezeAccount(_account, true);
+    }
+
+    function () {
+        revert();
+    }
+
 }
