@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FreelancerCoin at 0xdaa372a9c8037d7f4a096edde31a49d0fa7397d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FreelancerCoin at 0xc08be21394e0260bd27dbbf1e02ed4e373938b44
 */
 pragma solidity ^0.4.18;
 
