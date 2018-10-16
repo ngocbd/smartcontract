@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x6eef1677aa5bb4bb71fa676020d13068eb0357bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xf64712bf0c6ab3fc62bf9f20e077a6682c30da17
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -9,7 +9,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 9;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -75,7 +75,7 @@ contract TokenERC20 {
     /**
      * Transfer tokens from other address
      *
-     * Send `_value` tokens to `_to` in behalf of `_from`
+     * Send `_value` tokens to `_to` on behalf of `_from`
      *
      * @param _from The address of the sender
      * @param _to The address of the recipient
@@ -91,7 +91,7 @@ contract TokenERC20 {
     /**
      * Set allowance for other address
      *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -105,7 +105,7 @@ contract TokenERC20 {
     /**
      * Set allowance for other address and notify
      *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
