@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x9ab62fef0e2435c8e1e107bb9e954208624b3227
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x39d6ddeb924cc42356ddafe104318eae0b99f9a7
 */
 pragma solidity ^0.4.4;
 
@@ -106,11 +106,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 1200000000000000;               
-        totalSupply = 1200000000000000;                     
-        name = "INFINIX COIN";                                   
+        balances[msg.sender] = 12000000000000000;               
+        totalSupply = 12000000000000000;                     
+        name = "AXIMUS";                                   
         decimals = 8;                            
-        symbol = "IFX";                               
+        symbol = "AXS";                               
     }
 
   
