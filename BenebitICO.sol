@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BenebitICO at 0xd03cf495ec384640802dbef640d15f7b79194973
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BenebitICO at 0x1a853aa1e872d330f9e743777e02c3ced98b56cc
 */
 pragma solidity ^0.4.11;
 /**
@@ -331,10 +331,11 @@ contract Crowdsale is Ownable {
     token = createTokenContract();
     // Pre-ICO start Time
     preStartTime = _startTime;
+    
     // Pre-ICO end time
-    preEndTime = 1521637200;
-    // ICO start Time
-    ICOstartTime = 1521982800;
+     preEndTime = 1521637200;
+    // // ICO start Time
+     ICOstartTime = 1521982800;
     // ICO end Time
     ICOEndTime = _endTime;
     // Base Rate of BNE Token
