@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AriumToken at 0x3eb6025d2eb27f038508192bffb71ef823e9b3f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AriumToken at 0x4d10b0e0c6a333b62928c766fb3d4db0e84da8f3
 */
 pragma solidity ^0.4.21;
  
@@ -217,7 +217,7 @@ contract AriumToken is BurnableToken {
    
   uint32 public constant decimals = 10;
  
-  uint256 public INITIAL_SUPPLY = 420000000000000000;        // supply 42 000 000
+  uint256 public INITIAL_SUPPLY = 400000000000000000;        // supply 40 000 000
  
  
   function AriumToken() {
@@ -225,92 +225,4 @@ contract AriumToken is BurnableToken {
     balances[msg.sender] = INITIAL_SUPPLY;
   }
  
-}
- 
-contract AriumCrowdsale is Ownable {
-   
-  using SafeMath for uint;
-   
-  address multisig;
- 
-  uint restrictedPercent;
- 
-  address restricted;
- 
-  AriumToken public token;
- 
-  uint start;
-   
-  uint preico;
- 
-  uint rate;
- 
-  uint icostart;
- 
-  uint ico;
- 
-  function AriumCrowdsale(AriumToken _token) {
-    token=_token;
-    multisig = 0x661AD28e92d43Af07E1508e7A04f74E4a0D6728d;          // ether holder
-    restricted = 0xC357d4e9601B11BF0d63a718228bfc021360E05E;        // team holder
-    restrictedPercent = 13;             // percent to team
-    rate = 10000000000000;
-    start = 1520496194;     //start pre ico
-    preico = 30;        // pre ico period
-    icostart= 1537760157;       // ico start
-    ico = 60;           // ico period
-   
-   
-  }
- 
-  modifier saleIsOn() {
-    require((now > start && now < start + preico * 1 days) || (now > icostart && now < icostart + ico * 1 days ) );
-    _;
-  }
- 
-  function createTokens() saleIsOn payable {
-    multisig.transfer(msg.value);
-   
-    uint tokens = rate.mul(msg.value).div(1 ether);
-    uint bonusTokens = 0;
-    uint BonusPerAmount = 0;
-    if(msg.value >= 0.5 ether && msg.value < 1 ether){
-        BonusPerAmount = tokens.div(20);                     // 5% 5/100=1/20
-    } else if (msg.value >= 1 ether && msg.value < 5 ether){
-        BonusPerAmount = tokens.div(10);                     // 10%
-    } else if (msg.value >= 5 ether && msg.value < 10 ether){
-        BonusPerAmount = tokens.mul(15).div(100);
-    } else if (msg.value >= 10 ether && msg.value < 20 ether){
-        BonusPerAmount = tokens.div(5);
-    } else if (msg.value >= 20 ether){
-        BonusPerAmount = tokens.div(4);
-    }
-    if(now < start + (preico * 1 days).div(3)) {
-      bonusTokens = tokens.div(10).mul(3);
-    } else if(now >= start + (preico * 1 days).div(3) && now < start + (preico * 1 days).div(3).mul(2)) {
-      bonusTokens = tokens.div(5);
-    } else if(now >= start + (preico * 1 days).div(3).mul(2) && now < start + (preico * 1 days)) {
-      bonusTokens = tokens.div(10);
-    }
-    uint tokensWithBonus = tokens.add(BonusPerAmount);
-    tokensWithBonus = tokensWithBonus.add(bonusTokens);
-    token.transfer(msg.sender, tokensWithBonus);
-    uint restrictedTokens = tokens.mul(restrictedPercent).div(100);
-    token.transfer(restricted, restrictedTokens);
-  }
- 
-    function manualTransfer(address _to , uint ammount) saleIsOn onlyOwner payable{           //function for manual transfer(purchase with no ETH)
-    token.transfer(_to, rate.div(1000).mul(ammount));                              
-    token.transfer(restricted, rate.div(100000).mul(restrictedPercent).mul(ammount));             // transfer 13% to team balance
-    }
-   
-    function BurnUnsoldToken(uint _value) onlyOwner payable{                                // burn unsold token after
-        token.burn(_value);
-       
-    }
- 
-  function() external payable {
-    createTokens();
-  }
-   
 }
