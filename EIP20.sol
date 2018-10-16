@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0xdf6dcf1a46679e2f54ec112b7ef4ccff6155240d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0xe3d947fe594e67c973e744a7a159ccd9abde1ab6
 */
 pragma solidity ^0.4.18;
 
@@ -49,7 +49,6 @@ contract EIP20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-
 contract EIP20 is EIP20Interface {
 
     uint256 constant private MAX_UINT256 = 2**256 - 1;
@@ -82,7 +81,7 @@ contract EIP20 is EIP20Interface {
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;
         balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -94,7 +93,7 @@ contract EIP20 is EIP20Interface {
         if (allowance < MAX_UINT256) {
             allowed[_from][msg.sender] -= _value;
         }
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -104,7 +103,7 @@ contract EIP20 is EIP20Interface {
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
