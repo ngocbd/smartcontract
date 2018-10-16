@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgentExt at 0x81C9e5A10fBf0Fe6a5b7096c1B553416851e0807
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgentExt at 0xcD9785aaBfbDF291501bCB5a6C83CcbD73c10B3a
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
+// MeNet.IO 
 pragma solidity ^0.4.11;
 
 
