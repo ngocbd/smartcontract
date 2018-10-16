@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdToken at 0x9ed3b1520f60d1075c2b9a65ec8a253f9ceb456f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdToken at 0x8ac77770de6a3b690e9f3ec368fb64ba3c112cdd
 */
 pragma solidity ^0.4.11;
 
@@ -16,7 +16,7 @@ interface IERC20 {
 contract CrowdToken is IERC20 {
     
     using SafeMath for uint256;
-    uint public _totalSupply = 10000000;
+    uint private _totalSupply = 10000000;
     
     string public constant symbol ="CRCN";
     string public constant name = "Crowd Token";
@@ -26,7 +26,6 @@ contract CrowdToken is IERC20 {
     uint256 public constant RATE = 350;
     
     address public owner;
-    
     
     
     mapping(address => uint256) balances;
@@ -50,10 +49,11 @@ contract CrowdToken is IERC20 {
         owner.transfer(msg.value);
     }
         
-    function totalSupply() constant returns (uint256 _totalSupply) {
+   function totalSupply() constant returns (uint256) {
         return _totalSupply;
-        
     }
+        
+
     
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner]; 
