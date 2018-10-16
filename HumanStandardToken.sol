@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x01e4031d7338c3ae80233b1d66c96d85be98ff90
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x5695F2DB095F6ffd153D064dEa5666Ad13D8a1a6
 */
 contract Token {
 
@@ -36,10 +36,17 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
 }
 
 
+/*
+This implements ONLY the standard functions and NOTHING else.
+For a token like you would want to deploy in something like Mist, see HumanStandardToken.sol.
+
+If you deploy this, you won't have anything useful.
+
+Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
 
 contract StandardToken is Token {
 
@@ -87,6 +94,19 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
+/*
+This Token Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
+
+In other words. This is intended for deployment in something like a Token Factory or Mist wallet, and then used by humans.
+Imagine coins, currencies, shares, voting weight, etc.
+Machine-based, rapid creation of many tokens would not necessarily need these extra features or will be minted in other manners.
+
+1) Initial Finite Supply (upon creation one specifies how much is minted).
+2) In the absence of a token registry: Optional Decimal, Symbol & Name.
+3) Optional approveAndCall() functionality to notify a contract if an approval() has occurred.
+
+.*/
+
 contract HumanStandardToken is StandardToken {
 
     function () {
@@ -102,20 +122,22 @@ contract HumanStandardToken is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;
-    uint8 public decimals;
-    string public symbol;
-    string public version = 'H1.0';
-
-
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
     function HumanStandardToken(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
         ) {
-        balances[msg.sender] = 11000000000000000;
-        totalSupply = 11000000000000000;
-        name = "TIM";
-        decimals = 8;
-        symbol = "TIM";
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        totalSupply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
