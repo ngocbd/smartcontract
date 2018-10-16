@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonPayment at 0xfec769e54c266de2bc3fa5df7d9f0fe2a1e39461
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonPayment at 0xeb0058ce60d753004b0efa2164f88b2a5b528e7d
 */
 pragma solidity ^0.4.16;
 
@@ -38,7 +38,7 @@ contract BasicAccessControl {
     // address[] public moderators;
     uint16 public totalModerators = 0;
     mapping (address => bool) public moderators;
-    bool public isMaintaining = true;
+    bool public isMaintaining = false;
 
     function BasicAccessControl() public {
         owner = msg.sender;
@@ -165,6 +165,10 @@ contract TransformInterface {
     function buyEggWithToken(address _trainer) external;
 }
 
+contract AdventureInterface {
+    function placeEMONTBid(address _bidder, uint8 _siteId, uint _bidAmount) external;
+}
+
 contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
     uint8 constant public STAT_COUNT = 6;
     uint8 constant public STAT_MAX = 32;
@@ -173,7 +177,8 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
     enum PayServiceType {
         NONE,
         FAST_HATCHING,
-        RANDOM_EGG
+        RANDOM_EGG,
+        ADVENTURE_PRESALE
     }
     
     struct MonsterClassAcc {
@@ -200,16 +205,16 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
     address public battleContract;
     address public tokenContract;
     address public transformContract;
+    address public adventureContract;
     
     address private lastHunter = address(0x0);
     
     // config
-    uint public brickPrice = 3 * 10 ** 8; // 3 tokens
+    uint public brickPrice = 6 * 10 ** 8; // 6 tokens
     uint public fastHatchingPrice = 35 * 10 ** 8; // 15 tokens 
-    uint public buyEggPrice = 50 * 10 ** 8; // 50 tokens
+    uint public buyEggPrice = 80 * 10 ** 8; // 80 tokens
     uint public tokenPrice = 0.004 ether / 10 ** 8;
     uint public maxDexSize = 200;
-    uint public latestValue = 0;
     
     // event
     event EventCatchMonster(address indexed trainer, uint64 objId);
@@ -235,11 +240,12 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
         _;
     }
     
-    function EtheremonPayment(address _dataContract, address _battleContract, address _tokenContract, address _transformContract) public {
+    function EtheremonPayment(address _dataContract, address _battleContract, address _tokenContract, address _transformContract, address _adventureContract) public {
         dataContract = _dataContract;
         battleContract = _battleContract;
         tokenContract = _tokenContract;
         transformContract = _transformContract;
+        adventureContract = _adventureContract;
     }
     
     // helper
@@ -260,11 +266,12 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
         token.transfer(_sendTo, _amount);
     }
     
-    function setContract(address _dataContract, address _battleContract, address _tokenContract, address _transformContract) onlyModerators external {
+    function setContract(address _dataContract, address _battleContract, address _tokenContract, address _transformContract, address _adventureContract) onlyModerators external {
         dataContract = _dataContract;
         battleContract = _battleContract;
         tokenContract = _tokenContract;
         transformContract = _transformContract;
+        adventureContract = _adventureContract;
     }
     
     function setConfig(uint _brickPrice, uint _tokenPrice, uint _maxDexSize, uint _fastHatchingPrice, uint _buyEggPrice) onlyModerators external {
@@ -330,6 +337,7 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
             revert();
         
         TransformInterface transform = TransformInterface(transformContract);
+        AdventureInterface adventure = AdventureInterface(adventureContract);
         if (_type == uint32(PayServiceType.FAST_HATCHING)) {
             // remove hatching time 
             if (_tokens < fastHatchingPrice)
@@ -343,6 +351,9 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
             transform.buyEggWithToken(_trainer);
 
             return buyEggPrice;
+        } else if (_type == uint32(PayServiceType.ADVENTURE_PRESALE)) {
+            adventure.placeEMONTBid(_trainer, uint8(_param1), _tokens);
+            return _tokens;
         } else {
             revert();
         }
