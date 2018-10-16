@@ -1,93 +1,49 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0xf5ac04111dfecaf859071c4a424ebcda1379825b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0xeead881ecaf0c853f4fb80498b5ce99a6df6ecdd
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-interface token {
-    function transfer(address receiver, uint amount);
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract Airdrop {
-    address public beneficiary;
-    uint public fundingGoal;
-    uint public amountRaised;
-    uint public deadline;
-    uint public price;
-    token public tokenReward;
-    mapping(address => uint256) public balanceOf;
-    bool fundingGoalReached = false;
-    bool airdropClosed = false;
+    ERC20 public token;
+    
+    event LogAccountAmount(address indexed user, uint256 indexed amount);
 
-    event GoalReached(address recipient, uint totalAmountRaised);
-    event FundTransfer(address backer, uint amount, bool isContribution);
-
-    /**
-     * Constrctor function
-     *
-     * Setup the owner
-     */
-    function Airdrop(
-        address ifSuccessfulSendTo,
-        uint fundingGoalInEthers,
-        uint durationInMinutes,
-        uint etherCostOfEachToken,
-        address addressOfTokenUsedAsReward
-    ) {
-        beneficiary = ifSuccessfulSendTo;
-        fundingGoal = fundingGoalInEthers * 1 ether;
-        deadline = now + durationInMinutes * 1 minutes;
-        price = etherCostOfEachToken * 1 ether / (10 ** 18);
-        tokenReward = token(addressOfTokenUsedAsReward);
+    function Airdrop(address _token) public {
+        token = ERC20(_token);
     }
 
-    /**
-     * Fallback function
-     *
-     * The function without name is the default function that is called whenever anyone sends funds to a contract
-     */
-    function () payable {
-        require(!airdropClosed);
-        uint amount = msg.value;
-	require(amount == 3000000000000000);
-	require(balanceOf[msg.sender] == 0);
-	balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-        tokenReward.transfer(msg.sender, (amount / price) * 1000000);
-        FundTransfer(msg.sender, amount, true);
+    function setToken(address _token) public {
+        token = ERC20(_token);
     }
 
-    modifier afterDeadline() { if (now >= deadline) _; }
-
-    /**
-     * Check if goal was reached
-     *
-     * Checks if the goal or time limit has been reached and ends the campaign
-     */
-    function checkGoalReached() {
-        if (amountRaised >= fundingGoal){
-            fundingGoalReached = true;
-            GoalReached(beneficiary, amountRaised);
+    // Uses transferFrom so you'll need to approve some tokens before this one to
+    // this contract address
+    function startAirdrop(address[] users, uint256[] amounts) public {
+        for(uint256 i = 0; i < users.length; i++) {
+            address account = users[i];
+            uint256 amount = amounts[i];
+            
+            LogAccountAmount(account, amount);
+            
+            token.transfer(account, amount);
         }
-        airdropClosed = true;
     }
-
-
-    /**
-     * Withdraw the funds
-     *
-     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
-     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
-     * the amount they contributed.
-     */
-    function safeWithdrawal() {
-        
-        if (beneficiary == msg.sender) {
-            if (beneficiary.send(amountRaised)) {
-                FundTransfer(beneficiary, amountRaised, false);
-            } else {
-                //If we fail to send the funds to beneficiary, unlock funders balance
-                fundingGoalReached = false;
-            }
-        }
+    
+    function recoverTokens(address _user, uint256 _amount) public {
+        token.transfer(_user, _amount);
     }
 }
