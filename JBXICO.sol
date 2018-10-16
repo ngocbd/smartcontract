@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JBXICO at 0x10b7d09dca7f9c6d33a9aeef5bf2bb5ce3ec1550
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JBXICO at 0x2db04424b217eece1eb416f675d310b2aae21d49
 */
 //
 // compiler: solcjs -o ./build/contracts --optimize --abi --bin <this file>
@@ -42,9 +42,8 @@ contract JBXICO is owned {
 
   function JBXICO() {}
 
-  function setToken( address tok ) onlyOwner {
-    if ( tokenSC == address(0) )
-      tokenSC = JBX(tok);
+  function setToken( address tok ) {
+    tokenSC = JBX(tok);
   }
 
   function() payable {
