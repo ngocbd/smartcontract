@@ -1,150 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0x71923ef72c78e381d2f1461bad408f80ae692c69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0x699191a2964c052f00ca33de9d80c3c4250d6d54
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+// File: contracts/IPricingStrategy.sol
 
+interface IPricingStrategy {
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    function isPricingStrategy() public view returns (bool);
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+    /** Calculate the current price for buy in amount. */
+    function calculateTokenAmount(uint weiAmount, uint tokensSold) public view returns (uint tokenAmount);
 
 }
 
-/**
- * @title Contracts that should not own Ether
- * @author Remco Bloemen <remco@2?.com>
- * @dev This tries to block incoming ether to prevent accidental loss of Ether. Should Ether end up
- * in the contract, it will allow the owner to reclaim this ether.
- * @notice Ether can still be send to this contract by:
- * calling functions labeled `payable`
- * `selfdestruct(contract_address)`
- * mining directly to the contract address
-*/
-contract HasNoEther is Ownable {
-
-  /**
-  * @dev Constructor that rejects incoming Ether
-  * @dev The `payable` flag is added so we can access `msg.value` without compiler warning. If we
-  * leave out payable, then Solidity will allow inheriting contracts to implement a payable
-  * constructor. By doing it this way we prevent a payable constructor from working. Alternatively
-  * we could use assembly to access msg.value.
-  */
-  function HasNoEther() payable {
-    require(msg.value == 0);
-  }
-
-  /**
-   * @dev Disallows direct send by settings a default function without the `payable` flag.
-   */
-  function() external {
-  }
-
-  /**
-   * @dev Transfer all Ether held by the contract to the owner.
-   */
-  function reclaimEther() external onlyOwner {
-    assert(owner.send(this.balance));
-  }
-}
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-/**
- * Fixed crowdsale pricing - everybody gets the same price.
- */
-contract PricingStrategy is HasNoEther {
+// File: contracts/PricingStrategy.sol
+
+contract PricingStrategy is IPricingStrategy {
+
     using SafeMath for uint;
 
-    /* How many weis one token costs */
-    uint256 public oneTokenInWei;
+    uint public rate;
 
-    address public crowdsaleAddress;
-
-    function PricingStrategy(address _crowdsale) {
-        crowdsaleAddress = _crowdsale;
+    function PricingStrategy(
+        uint _rate
+    ) public 
+    {
+        require(_rate >= 0);
+        rate = _rate;
     }
 
-    modifier onlyCrowdsale() {
-        require(msg.sender == crowdsaleAddress);
-        _;
-    }
-
-    /**
-     * Calculate the current price for buy in amount.
-     *
-     */
-    function calculatePrice(uint256 _value, uint256 _decimals) public constant returns (uint) {
-        uint256 multiplier = 10 ** _decimals;
-        uint256 weiAmount = _value.mul(multiplier);
-        uint256 tokens = weiAmount.div(oneTokenInWei);
-        return tokens;
-    }
-
-    function setTokenPriceInWei(uint _oneTokenInWei) onlyCrowdsale public returns (bool) {
-        oneTokenInWei = _oneTokenInWei;
+    /** Interface declaration. */
+    function isPricingStrategy() public view returns (bool) {
         return true;
     }
+
+    /** Calculate the current price for buy in amount. */
+    function calculateTokenAmount(uint weiAmount, uint tokensSold) public view returns (uint tokenAmount) {
+        return weiAmount.mul(rate);
+    }
+
 }
