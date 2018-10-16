@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CovestingToken at 0xe2fb6529ef566a080e6d23de0bd351311087d567
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CovestingToken at 0x21a16c2b16c3f0dc75d7ddf0bdd0f76ab26d148b
 */
 pragma solidity ^0.4.17;
 
@@ -541,6 +541,51 @@ contract Mainsale is CommonSale {
 
 }
 
+contract TestConfigurator is Ownable {
+
+  CovestingToken public token; 
+
+  Presale public presale;
+
+  Mainsale public mainsale;
+
+  function deploy() public onlyOwner {
+    token = new CovestingToken();
+
+    presale = new Presale();
+
+    presale.setToken(token);
+    presale.addStage(5,300);
+    presale.setMultisigWallet(0x055fa3f2DAc0b9Db661A4745965DDD65490d56A8);
+    presale.setStart(1507208400);
+    presale.setPeriod(2);
+    presale.setMinPrice(100000000000000000);
+    token.setSaleAgent(presale);	
+
+    mainsale = new Mainsale();
+
+    mainsale.setToken(token);
+    mainsale.addStage(1,200);
+    mainsale.addStage(2,100);
+    mainsale.setMultisigWallet(0x4d9014eF9C3CE5790A326775Bd9F609969d1BF4f);
+    mainsale.setFoundersTokensWallet(0x59b398bBED1CC6c82b337B3Bd0ad7e4dCB7d4de3);
+    mainsale.setBountyTokensWallet(0x555635F2ea026ab65d7B44526539E0aB3874Ab24);
+    mainsale.setStart(1507467600);
+    mainsale.setPeriod(2);
+    mainsale.setLockPeriod(1);
+    mainsale.setMinPrice(100000000000000000);
+    mainsale.setFoundersTokensPercent(13);
+    mainsale.setBountyTokensPercent(5);
+
+    presale.setMainsale(mainsale);
+
+    token.transferOwnership(owner);
+    presale.transferOwnership(owner);
+    mainsale.transferOwnership(owner);
+  }
+
+}
+
 contract Configurator is Ownable {
 
   CovestingToken public token; 
@@ -574,7 +619,7 @@ contract Configurator is Ownable {
     mainsale.setMultisigWallet(0x15A071B83396577cCbd86A979Af7d2aBa9e18970);
     mainsale.setFoundersTokensWallet(0x25ED4f0D260D5e5218D95390036bc8815Ff38262);
     mainsale.setBountyTokensWallet(0x717bfD30f039424B049D918F935DEdD069B66810);
-    mainsale.setStart(1511528400);
+    mainsale.setStart(1511222400);
     mainsale.setPeriod(30);
     mainsale.setLockPeriod(90);
     mainsale.setMinPrice(100000000000000000);
