@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xa403c021d8e20a09946a086db43a815fbce4e39f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xab32cdd8d4796f5ae968ac176b3cc54a3200c723
 */
 //
 // compiler: 0.4.21+commit.dfe3193c.Emscripten.clang
@@ -32,6 +32,7 @@ contract ICO is owned {
   uint public  start;     // seconds since Jan 1 1970 GMT
   uint public  duration;  // seconds
   uint public  tokpereth; // rate, price
+  uint public  minfinney; // enforce minimum spend to buy tokens
 
   function ICO( address _erc20,
                 address _treasury,
@@ -49,6 +50,7 @@ contract ICO is owned {
     start = _startSec;
     duration = _durationSec;
     tokpereth = _tokpereth;
+    minfinney = 25;
   }
 
   function setToken( address erc ) public onlyOwner { tokenSC = ERC20(erc); }
@@ -56,9 +58,10 @@ contract ICO is owned {
   function setStart( uint newstart ) public onlyOwner { start = newstart; }
   function setDuration( uint dur ) public onlyOwner { duration = dur; }
   function setRate( uint rate ) public onlyOwner { tokpereth = rate; }
+  function setMinimum( uint newmin ) public onlyOwner { minfinney = newmin; }
 
   function() public payable {
-    require( msg.value >= 500 finney );
+    require( msg.value >= minfinney );
     if (now < start || now > (start + duration)) revert();
 
     // quantity =
