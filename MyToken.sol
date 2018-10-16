@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x941995615e760A95a684513f5fFb12f16a343AAE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x73a8de5bbeab01b0be663cea7b64a0c35de8df29
 */
 pragma solidity ^0.4.13;
 
@@ -11,14 +11,10 @@ contract MyToken {
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
-    string public votingDescription;
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-    mapping (address => uint256) public voted;  
-    mapping (address => string) public votedFor;  
-
 
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -26,17 +22,18 @@ contract MyToken {
     /* This notifies clients about the amount burnt */
     event Burn(address indexed from, uint256 value);
 
-    /* This notifies clients about the voting */
-    event voting(address target, uint256 voteType, string votedDesc);
-    
-    
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyToken() {
-        balanceOf[msg.sender] = 500000;              // Give the creator all initial tokens
-        totalSupply = 500000;                        // Update total supply
-        name = 'GamityTest';                                   // Set the name for display purposes
-        symbol = 'GMTEST';                                     // Set the symbol for display purposes
-        decimals = 1;                                       // Amount of decimals for display purposes
+    function MyToken(
+        uint256 initialSupply,
+        string tokenName,
+        uint8 decimalUnits,
+        string tokenSymbol
+        ) {
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
     }
 
     /* Internal transfer, only can be called by this contract */
@@ -108,39 +105,4 @@ contract MyToken {
         Burn(_from, _value);
         return true;
     }
-    
-    
-    
-    
-    
-    function voteFor()  returns (bool success){   
-        voted[msg.sender] = 1;    
-        votedFor[msg.sender] = votingDescription;    
-        voting (msg.sender, 1, votingDescription);          
-        return true;                                  // ends function and returns
-    }
-    
-    function voteAgainst()  returns (bool success){   
-        voted[msg.sender] = 2;
-        votedFor[msg.sender] = votingDescription;   
-        voting (msg.sender, 2, votingDescription);          
-        return true;                                  // ends function and returns
-    }
-    
-    
-    
-   function newVoting(string description)  returns (bool success){    
-        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
-        votingDescription=description;
-        return true; 
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }
