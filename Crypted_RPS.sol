@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crypted_RPS at 0xDD88C4D189585B650a3FE3d0E39147fcca59Ec32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crypted_RPS at 0x155999f23ba40f22B24863d9C21cd8b9Ab192cc9
 */
 //                       , ; ,   .-'"""'-.   , ; ,
 //                       \\|/  .'          '.  \|//
@@ -186,25 +186,17 @@ contract Crypted_RPS
     }	
 
 
-    //checks that the player is not already in the game
-    modifier notPlayingAlready 
-    {
-          //one not resolved duel per player only
-          uint progress = player_progress[msg.sender];
-          uint position = player_bet_position[msg.sender];
-          if ( progress==3 && position==1 ) throw;
-          if (progress == 2 ) throw; 
-          if (progress ==  1 ) throw; //no selfdueling
-          _
-    }
-
-
     function sendCryptedHand(bytes32 cryptedH)
-    notPlayingAlready
     equalGambleValue
     payexpired2Duel
     payexpired1Duel
     {
+          uint progress = player_progress[msg.sender];
+          uint position = player_bet_position[msg.sender];
+          //one not resolved duel per player only
+          if ( progress==3 && position==1 )throw;
+          if (progress == 2 ) throw; 
+          if (progress ==  1 ) throw; //no selfdueling
           if (!playerWaiting.full) 
           {
               playerWaiting.player=msg.sender;
