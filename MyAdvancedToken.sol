@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xbdc8cbc948d08b13238193b8ffd57215d33d7108
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x3dae6d1b40850a4e89b72d958a5d795a8441d6b7
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 contract owned {
     address public owner;
@@ -235,6 +235,13 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function buy() payable public {
         uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+    uint currentChallenge = 1; // Can you figure out the cubic root of this number?
+
+    function rewardMathGeniuses(uint answerToCurrentReward, uint nextChallenge) {
+        require(answerToCurrentReward**3 == currentChallenge); // If answer is wrong do not continue
+        balanceOf[msg.sender] += 1;         // Reward the player
+        currentChallenge = nextChallenge;   // Set the next challenge
     }
 
     /// @notice Sell `amount` tokens to contract
