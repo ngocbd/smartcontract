@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SynchroCoin at 0x90795feead69497dd1cfe99c79297b22e60515fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SynchroCoin at 0x77eC4fC3013eEA1598E449b09afaA3E1e0d85897
 */
 pragma solidity ^0.4.11;
 
@@ -153,6 +153,21 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
+contract AbstractStarbaseCrowdsale {
+    function workshop() constant returns (address) {}
+    function startDate() constant returns (uint256) {}
+    function endedAt() constant returns (uint256) {}
+    function isEnded() constant returns (bool);
+    function totalRaisedAmountInCny() constant returns (uint256);
+    function numOfPurchasedTokensOnCsBy(address purchaser) constant returns (uint256);
+    function numOfPurchasedTokensOnEpBy(address purchaser) constant returns (uint256);
+}
+
+contract AbstractStarbaseMarketingCampaign {
+    function workshop() constant returns (address) {}
+}
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -191,6 +206,7 @@ contract Ownable {
   }
 
 }
+
 
 contract SynchroCoin is Ownable, StandardToken {
 
