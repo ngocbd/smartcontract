@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xf8559183ef711b4f42873d96ed66bcad29f13e11
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xfd2eb46ff56d785b64f1567e53083819c7f0168b
 */
 /*
  * ERC20 interface
@@ -186,9 +186,6 @@ contract TokenVault is Ownable {
   /** How many investors we have now */
   uint public investorCount;
 
-  /** Sum from the spreadsheet how much tokens we should get on the contract. If the sum does not match at the time of the lock the vault is faulty and must be recreated.*/
-  uint public tokensToBeAllocated;
-
   /** How many tokens investors have claimed so far */
   uint public totalClaimed;
 
@@ -229,15 +226,13 @@ contract TokenVault is Ownable {
   /**
    * Create presale contract where lock up period is given days
    *
-   * @param _owner Who can load investor data and lock
    * @param _freezeEndsAt UNIX timestamp when the vault unlocks
    * @param _token Token contract address we are distributing
-   * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplcation
    *
    */
-  function TokenVault(address _owner, uint _freezeEndsAt, StandardToken _token, uint _tokensToBeAllocated) {
+  function TokenVault(uint _freezeEndsAt, StandardToken _token) {
 
-    owner = _owner;
+    owner = msg.sender;
 
     // Invalid owenr
     if(owner == 0) {
@@ -256,13 +251,7 @@ contract TokenVault is Ownable {
       throw;
     }
 
-    // Sanity check on _tokensToBeAllocated
-    if(_tokensToBeAllocated == 0) {
-      throw;
-    }
-
     freezeEndsAt = _freezeEndsAt;
-    tokensToBeAllocated = _tokensToBeAllocated;
   }
 
   /// @dev Add a presale participating allocation
@@ -290,10 +279,11 @@ contract TokenVault is Ownable {
   }
 
   /// @dev Lock the vault
+  /// @param tokensToBeAllocated Sum from the spreadsheet how much tokens we should get on the contract. If the sum does not match at the time of the lock the vault is faulty and must be recreated.
   ///      - All balances have been loaded in correctly
   ///      - Tokens are transferred on this vault correctly
   ///      - Checks are in place to prevent creating a vault that is locked with incorrect token balances.
-  function lock() onlyOwner {
+  function lock(uint tokensToBeAllocated) onlyOwner {
 
     if(lockedAt > 0) {
       throw; // Already locked
