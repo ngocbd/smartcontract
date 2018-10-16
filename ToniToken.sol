@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToniToken at 0x8a203055b45171d71b037464a55b4c0d126c1582
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToniToken at 0x1cb2e74469db0ae44bedef0824f2e8573c06e888
 */
 pragma solidity ^0.4.18;
 
@@ -61,7 +61,7 @@ contract ToniToken is ERC20Interface, Owned, SafeMath {
 
     event Migrate(address indexed _from, address indexed _to, uint256 _value);
 
-    function ToniToken() public {
+    function ToToken() public {
         balances[msg.sender] = totalSupply;
         emit Transfer(address(0), msg.sender, totalSupply);
     }
