@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthRoulette at 0x36F726E01CC85FDb0d998Dfc442856379c569274
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthRoulette at 0x04baddfb21723eC467E9993B715C5E0D673baC96
 */
 // EthRoulette
 //
@@ -21,7 +21,7 @@ contract EthRoulette {
     }
     Game[] public gamesPlayed;
 
-    function CryptoRoulette() public {
+    function EthRoulette() public {
         ownerAddr = msg.sender;
         shuffle();
     }
@@ -32,7 +32,7 @@ contract EthRoulette {
     }
 
     function play(uint256 number) payable public {
-        require(msg.value >= betPrice && number <= 10);
+        require(msg.value >= betPrice && number <= 20);
 
         Game game;
         game.player = msg.sender;
