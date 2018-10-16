@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOKENMOM at 0x59c31e53c40696b4ce39581205be6bf774e86693
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOKENMOM at 0x05cda2f1e70b01072038c3a62f8aa30cf9d4d509
 */
 pragma solidity ^0.4.12;
 
@@ -251,7 +251,7 @@ contract TOKENMOM is BurnableToken, Ownable {
 
     //you just have to touch these 4 lines don't touch anything else , else you might break the code.
     string public constant name = "Tokenmom Token";//here you define the name
-    string public constant symbol = "TM";//here yuou define the symbol of token
+    string public constant symbol = "TMT";//here yuou define the symbol of token
     uint public constant decimals = 18; //just till here.
     uint256 public constant initialSupply = 200000000 * (10 ** uint256(decimals));// yes ok let's deploy it now
 
