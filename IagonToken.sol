@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IagonToken at 0xa14d6d3d0f6bcfb2f658291e2a341bad316f1032
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IagonToken at 0x6c541450d0942c99e043e9df791414b34637a8e1
 */
 pragma solidity ^0.4.11;
 
@@ -435,8 +435,8 @@ contract Claimable is Ownable {
 */
 
 contract IagonToken is Ownable, Claimable, PausableToken, CappedToken {
-    string public constant name = "Iagon Presale";
-    string public constant symbol = "IAGT";
+    string public constant name = "Iagon Test";
+    string public constant symbol = "BLA";
     uint8 public constant decimals = 18;
 
     event Fused();
@@ -447,7 +447,7 @@ contract IagonToken is Ownable, Claimable, PausableToken, CappedToken {
      * @dev Constructor 
      */
     function IagonToken() public CappedToken(1) PausableToken() {
-        cap = 200000001 * (10 ** uint256(decimals)); // hardcoding cap
+        cap = 200000000 * (10 ** uint256(decimals)); // hardcoding cap
     }
 
     /** 
