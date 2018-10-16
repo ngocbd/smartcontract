@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CellBlocksToken at 0xd3a8d7f28d014b18185236ce568cdbcebd809c2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CellBlocksToken at 0x86fd7abfc9f80a1ffc1a2be01dc3859017801ae1
 */
 pragma solidity ^0.4.19;
 
@@ -242,18 +242,18 @@ contract CellBlocksToken is EIP20Interface, Ownable {
     string public symbol;                 //An identifier: eg SBX
 
     function CellBlocksToken() public {
-        balances[msg.sender] = (10**26);            // Give the creator all initial tokens
-        totalSupply = (10**26);                     // Update total supply
+        balances[msg.sender] = 25*(10**25);            // Give the creator all initial tokens
+        totalSupply = 25*(10**25);                     // Update total supply
         name = "CellBlocks";                          // Set the name for display purposes
         decimals = 18;                                // Amount of decimals for display purposes
         symbol = "CLBK";                               // Set the symbol for display purposes
     }
 
-    //as long as supply > 10**26 and timestamp is after 6/20/18 12:01 am MST, 
+    //as long as supply > 83*(10**24) and timestamp is after 6/20/18 12:01 am MST, 
     //transfer will call halfPercent() and burn() to burn 0.5% of each transaction 
     function transfer(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender] >= _value);
-        if (totalSupply > 33*(10**24) && block.timestamp >= 1529474460) {
+        if (totalSupply > 83*(10**24) && block.timestamp >= 1529474460) {
             uint halfP = halfPercent(_value);
             burn(msg.sender, halfP);
             _value = SafeMath.sub(_value, halfP);
@@ -264,12 +264,12 @@ contract CellBlocksToken is EIP20Interface, Ownable {
         return true;
     }
 
-    //as long as supply > 10**26 and timestamp is after 6/20/18 12:01 am MST, 
+    //as long as supply > 83*(10**24) and timestamp is after 6/20/18 12:01 am MST, 
     //transferFrom will call halfPercent() and burn() to burn 0.5% of each transaction
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         uint256 allowance = allowed[_from][msg.sender];
         require(balances[_from] >= _value && allowance >= _value);
-        if (totalSupply > 33*(10**24) && block.timestamp >= 1529474460) {
+        if (totalSupply > 83*(10**24) && block.timestamp >= 1529474460) {
             uint halfP = halfPercent(_value);
             burn(_from, halfP);
             _value = SafeMath.sub(_value, halfP);
