@@ -1,19 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleSaleToken at 0x8d5571467baf9f6e5c1e7b4408a36fe2582d6280
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleSaleToken at 0x96ddcf85c3798f01dae5212c6984f9cc467111f6
 */
-pragma solidity ^0.4.18;
-
-/**
- *
- * Version D
- * @author  Pratyush Bhatt <MysticMonsoon@protonmail.com>
- *
- * Overview:
- * This is an implimentation of a simple sale token. The tokens do not pay any dividends -- they only exist
- * as a database of purchasers. A limited number of tokens are created on-the-fly as funds are deposited into the
- * contract. All of the funds are tranferred to the beneficiary at the end of the token-sale.
- */
-
 pragma solidity ^0.4.18;
 
 /*
@@ -68,7 +55,6 @@ contract SafeMath {
     }
 }
 
-pragma solidity ^0.4.18;
 
 // Token standard API
 // https://github.com/ethereum/EIPs/issues/20
@@ -85,6 +71,11 @@ contract iERC20Token {
   event Transfer( address indexed from, address indexed to, uint value);
   event Approval( address indexed owner, address indexed spender, uint value);
 }
+
+contract ReverseRegistrar {
+  function claim(address owner) public returns (bytes32 node);
+}
+
 
 contract SimpleSaleToken is iERC20Token, SafeMath {
 
@@ -104,7 +95,9 @@ contract SimpleSaleToken is iERC20Token, SafeMath {
   address public beneficiary;
   mapping (address => uint) balances;
   mapping (address => mapping (address => uint)) approvals;  //transfer approvals, from -> to
-
+  // namehash('addr.reverse')
+  //bytes32 constant ADDR_REVERSE_NODE = 0x91d1777781884d03a6757a803996e38de2a42967fb37eeaca72729271025a9e2;
+  address constant ENS_REVERSE_REGISTRAR = 0x9062C0A6Dbd6108336BcBe4593a3D1cE05512069;
 
   modifier ownerOnly {
     require(msg.sender == owner);
@@ -134,6 +127,10 @@ contract SimpleSaleToken is iERC20Token, SafeMath {
   function SimpleSaleToken() public {
     owner = msg.sender;
     beneficiary = msg.sender;
+    //so we can set a name
+    //ReverseRegistrar registrar = ReverseRegistrar(ens.owner(ADDR_REVERSE_NODE));
+    //registrar.claim(msg.sender);
+    ReverseRegistrar(ENS_REVERSE_REGISTRAR).claim(msg.sender);
   }
 
 
