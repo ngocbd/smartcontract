@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x11e0d60eff1c70457010150fbf9f6efddb91b5c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xdd1736b49c39d81c27d9d3e397e89bfb98df47d9
 */
 contract Token {
 
@@ -117,13 +117,15 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 100000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100000000000;                        // Update total supply (100000 for example)
-        name = "Kuwaiti Dinar";                                   // Set the name for display purposes
-        decimals = 2;                            // Amount of decimals for display purposes
-        symbol = "KWDR";                               // Set the symbol for display purposes
+        balances[msg.sender] = 10000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000000000000;                        // Update total supply (100000 for example)
+        name = "OKMcoin";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "OKM";                               // Set the symbol for display purposes
+        
     }
-
+        
+        
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
