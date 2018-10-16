@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VanityToken at 0x777777764382a3ae5e7631570583893bfdea7e05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VanityToken at 0x7777777189c4e413bbe6ea9df6c2b4f34f53cdd3
 */
 pragma solidity ^0.4.11;
 
@@ -426,7 +426,7 @@ contract VanityToken is MintableToken, PausableToken {
     string public constant symbol = "VIP";
     string public constant name = "VipCoin";
     uint8 public constant decimals = 18;
-    string public constant version = "1.1";
+    string public constant version = "1.2";
 
     uint256 public constant TOKEN_RATE = 1000000; // 1 ETH = 1000000 VPL
     uint256 public constant OWNER_TOKENS_PERCENT = 70;
@@ -450,7 +450,11 @@ contract VanityToken is MintableToken, PausableToken {
         for (uint i = 0; i < count; i++) {
             address participant = crowdsale.participants(distributedCount + i);
             uint256 bonus = crowdsale.participantBonus(participant);
-            uint256 tokens = participant.balance.mul(TOKEN_RATE).mul(100 + bonus).div(100);
+            uint256 balance = participant.balance;
+            if (balance > 3 ether) {
+                balance = 3 ether;
+            }
+            uint256 tokens = balance.mul(TOKEN_RATE).mul(100 + bonus).div(100);
             mint(participant, tokens);
             distributedTokens += tokens;
         }
