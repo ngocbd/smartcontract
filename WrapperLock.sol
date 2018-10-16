@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLock at 0x328b6e9d6dc8908a860623a037f80ec5f501f4dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLock at 0x7f15d6124be1d67584f9f1c306d6aaf0c04a7556
 */
-pragma solidity ^0.4.22;
+pragma solidity 0.4.16;
 
 
 
@@ -62,15 +62,10 @@ contract BasicToken is ERC20Basic {
 
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+contract ERC20Interface {
+    function balanceOf(address _owner) public constant returns (uint balance) {}
+    function transfer(address _to, uint _value) public {}
+    function transferFrom(address _from, address _to, uint _value) public {}
 }
 
 
@@ -191,10 +186,11 @@ contract WrapperLock is BasicToken, Ownable {
         isSigner[msg.sender] = true;
     }
 
-    function deposit(uint _value, uint _forTime) public returns (bool success) {
+    function deposit(uint _value, uint _forTime) public returns (bool) {
         require(_forTime >= 1);
         require(now + _forTime * 1 hours >= depositLock[msg.sender]);
-        require(ERC20(originalToken).transferFrom(msg.sender, this, _value));
+        ERC20Interface token = ERC20Interface(originalToken);
+        token.transferFrom(msg.sender, address(this), _value);
         balances[msg.sender] = balances[msg.sender].add(_value);
         depositLock[msg.sender] = now + _forTime * 1 hours;
         return true;
@@ -209,19 +205,19 @@ contract WrapperLock is BasicToken, Ownable {
     )
         public
         returns
-        (bool success)
+        (bool)
     {
         require(balanceOf(msg.sender) >= _value);
         if (now > depositLock[msg.sender]) {
             balances[msg.sender] = balances[msg.sender].sub(_value);
-            success = ERC20(originalToken).transfer(msg.sender, _value);
+            ERC20Interface(originalToken).transfer(msg.sender, _value);
         } else {
             require(block.number < signatureValidUntilBlock);
             require(isValidSignature(keccak256(msg.sender, address(this), signatureValidUntilBlock), v, r, s));
             balances[msg.sender] = balances[msg.sender].sub(_value);
-            success = ERC20(originalToken).transfer(msg.sender, _value);
+            ERC20Interface(originalToken).transfer(msg.sender, _value);
         }
-        require(success);
+        return true;
     }
 
     function transfer(address _to, uint256 _value) public returns (bool) {
