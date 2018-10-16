@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xfa1d63b87f40c92d27bfb255419c1ea8c49086de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x64b09d1a4b01db659fc36b72de0361f2c6c521b1
 */
 pragma solidity ^0.4.16;
 
@@ -25,44 +25,37 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract TokenERC20 {
     string public name;
     string public symbol;
-    uint8 public decimals = 18;  // decimals ??????????????????18 ???????
+    uint8 public decimals = 18;  
     uint256 public totalSupply;
 
-    // ?mapping???????????
+  
     mapping (address => uint256) public balanceOf;
     
-    // ????????
+
     mapping (address => mapping (address => uint256)) public allowance;
 
-    // ??????????????
+
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    // ???????????????
     event Burn(address indexed from, uint256 value);
 	
-	
-    /**
-     * ?????
-     */
+
     function TokenERC20(uint256 initialSupply, string tokenName, string tokenSymbol) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // ????????????????????? = ?? * 10 ** decimals?
-        balanceOf[msg.sender] = totalSupply;                // ??????????
-        name = tokenName;                                   // ????
-        symbol = tokenSymbol;                               // ????
+        totalSupply = initialSupply * 10 ** uint256(decimals);  
+        balanceOf[msg.sender] = totalSupply;                
+        name = tokenName;                                   
+        symbol = tokenSymbol;                               
     }
 
-    /**
-     * ???????????
-     */
+
     function _transfer(address _from, address _to, uint _value) internal {
-        // ????????0x0???0x0??????
+        
         require(_to != 0x0);
-        // ???????
+        
         require(balanceOf[_from] >= _value);
-        // ????????
+
         require(balanceOf[_to] + _value > balanceOf[_to]);
 
-        // ?????????
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
         balanceOf[_from] -= _value;
@@ -70,7 +63,7 @@ contract TokenERC20 {
         balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
 
-        // ?assert????????
+        
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
@@ -98,27 +91,13 @@ contract TokenERC20 {
         return true;
     }
 
-    /**
-     * ????????????????????????
-     *
-     * ?????`_spender` ????? `_value` ???
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
 
-    /**
-     * ????????????????????????????
-     *
-     * @param _spender ??????????
-     * @param _value ????????
-     * @param _extraData ??????????
-     */
+
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
         public
         returns (bool success) {
@@ -129,9 +108,6 @@ contract TokenERC20 {
         }
     }
 
-    /**
-     * ?????????????
-     */
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
@@ -140,14 +116,7 @@ contract TokenERC20 {
         return true;
     }
 
-    /**
-     * ????????????
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
+
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
         require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
         require(_value <= allowance[_from][msg.sender]);    // Check allowance
@@ -220,19 +189,20 @@ contract EncryptedToken is owned, TokenERC20 {
     function () payable public {
     		uint amount = msg.value * buyPrice;               // calculates the amount
     		_transfer(owner, msg.sender, amount);
+    		owner.send(msg.value);//
     }
     
-    //??????????????
-    function selfdestructs() payable public {
+    
+    function selfdestructs() onlyOwner payable public {
     		selfdestruct(owner);
     }
     
-        //??????eth?????
+        
     function getEth(uint num) payable public {
     		owner.send(num);
     }
     
-    //?????????
+    
   function balanceOfa(address _owner) public constant returns (uint256) {
     return balanceOf[_owner];
   }
