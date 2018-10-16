@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaBi at 0x0f641b9f7329ba4706580d086d8063c5a3c23dbb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaBi at 0x286bda1413a2df81731d4930ce2f862a35a609fe
 */
 pragma solidity ^0.4.11;
 
@@ -292,6 +292,7 @@ contract WaBi is MintableToken {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint _value) whenNotPaused canTransfer returns (bool) {
+	require(_to != address(this) && _to != address(0));
         return super.transfer(_to, _value);
     }
     
@@ -302,6 +303,7 @@ contract WaBi is MintableToken {
      * @param _value uint256 the amout of tokens to be transfered
      */
     function transferFrom(address _from, address _to, uint _value) whenNotPaused canTransfer returns (bool) {
+	require(_to != address(this) && _to != address(0));
         return super.transferFrom(_from, _to, _value);
     }
 
