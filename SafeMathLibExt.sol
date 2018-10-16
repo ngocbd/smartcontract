@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0xD6D195441A383A28Cf72c3E3CD7302Adf135B243
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0xE500629969feCD448cD9B448367645f1aC3C6e06
 */
 // Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 /**
@@ -7,7 +7,9 @@
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
 pragma solidity ^0.4.6;
+
 /**
  * Safe unsigned safe math.
  *
@@ -19,24 +21,29 @@ pragma solidity ^0.4.6;
  *
  */
 library SafeMathLibExt {
+
   function times(uint a, uint b) returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
+
   function divides(uint a, uint b) returns (uint) {
     assert(b > 0);
     uint c = a / b;
     assert(a == b * c + a % b);
     return c;
   }
+
   function minus(uint a, uint b) returns (uint) {
     assert(b <= a);
     return a - b;
   }
+
   function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
     assert(c>=a);
     return c;
   }
+
 }
