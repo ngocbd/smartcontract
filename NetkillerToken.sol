@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NetkillerToken at 0xb2486fc307bffaad3bfe4df43288c4c5869589e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NetkillerToken at 0x8fba9ebf1c82e881368bec8972477581d98fb8dc
 */
 pragma solidity ^0.4.21;
 
@@ -17,11 +17,11 @@ contract NetkillerToken {
 
   function NetkillerToken(uint256 initialSupply, string tokenName, string tokenSymbol, uint decimalUnits) public {
     owner = msg.sender;
+    totalSupply = initialSupply * 10 ** uint256(decimals);
     balanceOf[msg.sender] = totalSupply;
     name = tokenName;
     symbol = tokenSymbol;
     decimals = decimalUnits;
-    totalSupply = initialSupply * 10 ** uint256(decimals);
   }
 
   /* Send coins */
