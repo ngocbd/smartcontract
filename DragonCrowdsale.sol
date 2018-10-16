@@ -1,41 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonCrowdsale at 0xb13F155D788De3e8BDD64a354c052DBF9ADCdBad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonCrowdsale at 0x8977b6c437cbb5bef6fe07cbac770f5984a7ea6c
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-contract token {
-    function transfer(address receiver, uint amount);
+
+
+contract DragonCrowdsaleCore {
+    
+    function crowdsale( address _address )payable;
+    function precrowdsale( address _address )payable;
+}
+
+contract Dragon {
+    function transfer(address receiver, uint amount)returns(bool ok);
     function balanceOf( address _address )returns(uint256);
 }
 
 contract DragonCrowdsale {
-    address public beneficiary;
+    
     address public owner;
-    address public charity;
-  
-    uint public amountRaised;
-    uint public tokensSold;
-    uint public deadline;
-    uint public price;
-    uint public preICOspecial;
+    Dragon tokenReward;
     
-    
-    token public tokenReward;
-    mapping( address => uint256 ) public contributions;
-    mapping( address => bool )    public preICOparticipated;
-    
-    bool public crowdSaleStart;
-    bool public crowdSalePause;
-    bool public crowdSaleClosed;
-    
-    enum Package { Zero, Small, Large }
-    
-    Package package;
-    
-
    
-    event FundTransfer(address participant, uint amount);
-
+    bool public crowdSaleStarted;
+    bool public crowdSaleClosed;
+    bool public  crowdSalePause;
+    
+    uint public deadline;
+    
+    address public CoreAddress;
+    DragonCrowdsaleCore  core;
+    
+    
+    
+    
     modifier onlyOwner() {
         if (msg.sender != owner) {
             throw;
@@ -43,73 +41,44 @@ contract DragonCrowdsale {
         _;
     }
 
-    function DragonCrowdsale() {
-        beneficiary = msg.sender; //beneficiary is initially the contract deployer
-        charity = msg.sender; //charity is initially the contract deployer
-        owner = msg.sender;// owner is initially the contract deployer
-        price =  .000000000033333333 ether;
-        tokenReward = token( 0x1d1CF6cD3fE91fe4d1533BA3E0b7758DFb59aa1f );
-        crowdSaleStart == false;
-        preICOspecial = 3500000000000000;
+    
+    
+    
+    function DragonCrowdsale(){
+        
+        crowdSaleStarted = false;
+        crowdSaleClosed = false;
+        crowdSalePause = false;
+        owner = msg.sender;
+        
+        tokenReward = Dragon( 0x814f67fa286f7572b041d041b1d99b432c9155ee );
         
     }
-
+    
+    // fallback function to receive all incoming ether funds and then forwarded to the DragonCrowdsaleCore contract 
     function () payable {
         
-        require(!crowdSaleClosed);
-        require(!crowdSalePause);
+        require ( crowdSaleClosed == false && crowdSalePause == false  );
         
-        
-        
-        // only two purchase values acceptable due to ppre-ico packages
-        if( msg.value != .3333333 ether && msg.value != 3.3333333 ether  && crowdSaleStart == false  ) throw;
-        if ( crowdSaleStart == false && preICOparticipated[msg.sender] == true ) throw;
-        if ( crowdSaleStart == false ) {
+        if ( crowdSaleStarted ) { 
+            require ( now < deadline );
+            core.crowdsale.value( msg.value )( msg.sender); // forward all ether to core contract
             
-            if ( msg.value ==  .3333333 ether ) package = Package.Small;
-            if ( msg.value == 3.3333333 ether ) package = Package.Large;
-        }
-        
+        } 
+        else
+        { core.precrowdsale.value( msg.value )( msg.sender); }  // forward all ether to core contract
        
-        if ( crowdSaleStart) require( now < deadline );
-        uint amount = msg.value;
-        
-        tokenReward.transfer( msg.sender, amount / price ); // what buyer purchases
-        
-        // only triggers before official launch
-        if ( package == Package.Small  && crowdSaleStart == false && tokensSold < preICOspecial ) { 
-        
-            tokenReward.transfer( charity    , 800000000  );  //charitable donation
-            tokenReward.transfer( msg.sender , 800000000  );  // buyer's reward bonus
-            preICOparticipated[ msg.sender ] = true; 
-            tokensSold +=  1600000000;
-            
-        }
-        
-        // only triggers before official launch
-        if ( package == Package.Large  && crowdSaleStart == false && tokensSold < preICOspecial ) { 
-        
-            tokenReward.transfer( charity    , 8000000000 );  // charitable donation
-            tokenReward.transfer( msg.sender , 8000000000 );  // buyer's reward bonus
-            preICOparticipated[ msg.sender ] = true; 
-            tokensSold += 16000000000;
-            
-        }
-        
-        contributions[msg.sender] += amount;
-        tokensSold += amount / price;
-        amountRaised += amount;
-        FundTransfer( msg.sender, amount );
-        beneficiary.transfer( amount );
-        
-        
     }
-
-    // Start this October 27 and crowdsale will run for 60 days
+    
+    
+   
+    // Start this to initiate crowdsale - will run for 60 days
     function startCrowdsale() onlyOwner  {
         
-        crowdSaleStart = true;
+        crowdSaleStarted = true;
         deadline = now + 60 days;
+       
+                
     }
 
     //terminates the crowdsale
@@ -119,7 +88,7 @@ contract DragonCrowdsale {
         crowdSaleClosed = true;
     }
 
-
+    //pauses the crowdsale
     function pauseCrowdsale() onlyOwner {
         
         crowdSalePause = true;
@@ -127,6 +96,7 @@ contract DragonCrowdsale {
         
     }
 
+    //unpauses the crowdsale
     function unpauseCrowdsale() onlyOwner {
         
         crowdSalePause = false;
@@ -134,34 +104,32 @@ contract DragonCrowdsale {
         
     }
     
-    function transferOwnership ( address _newowner ) onlyOwner {
+    // set the dragon crowdsalecore contract
+    function setCore( address _core ) onlyOwner {
         
-        owner = _newowner;
-        
-    }
-    
-    // use this to set the crowdsale beneficiary address
-    function transferBeneficiary ( address _newbeneficiary ) onlyOwner {
-        
-        beneficiary = _newbeneficiary;
+        CoreAddress = _core;
+        core = DragonCrowdsaleCore( _core );
         
     }
     
-    // use this to set the charity address
-    function transferCharity ( address _newcharity ) onlyOwner {
+    function transferOwnership( address _address ) onlyOwner {
         
-        charity = _newcharity;
+       
+        owner =  _address ;
         
     }
     
-    //empty the crowdsale contract and forward balance to beneficiary
-    function withdrawDragons() onlyOwner{
+    
+    //emergency withdrawal of Dragons incase sent to this address
+    function withdrawCrowdsaleDragons() onlyOwner{
         
-        uint256 balance = tokenReward.balanceOf(address(this));
-        
-        tokenReward.transfer( beneficiary, balance );
+        uint256 balance = tokenReward.balanceOf( address( this ) );
+        tokenReward.transfer( msg.sender , balance );
         
         
     }
+    
+    
+    
     
 }
