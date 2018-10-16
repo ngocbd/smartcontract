@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleBCO at 0xcb22b112bfb0b01ba37a5a74c2be29120e510ed6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleBCO at 0x7725b8e47d65d2e1b01d088d0b55db7c2f2a2688
 */
 pragma solidity ^0.4.11;
 
@@ -518,8 +518,11 @@ contract PreSaleBCO {
         msg.sender.transfer(actualGotETH[msg.sender]);
     }
 
+    function WithdrawETH(uint amount) onlyOwner {
+        beneficiary.transfer(amount);
+    }
+
     function WithdrawAllETH() onlyOwner {
-        amountRaised = 0;
         beneficiary.transfer(amountRaised);
     }
 
