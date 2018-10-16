@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Petro at 0xe964de82b9b83915ab8591bbebf1bfc4c65bb1dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Petro at 0x7abf8a69cba9dbf808b5984624eb55a528ea44f2
 */
 pragma solidity ^0.4.19;
  
@@ -111,7 +111,7 @@ contract Petro is ERC20, SafeMath{
 	string 	public name = "Petro";
 	string 	public symbol = "PTR";
 	uint 	public decimals = 8;
-	uint 	public INITIAL_SUPPLY = 10000000000000000;
+	uint 	public INITIAL_SUPPLY = 100000000;
 	uint256 public price;
 	address public owner;
 
