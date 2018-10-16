@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SandwichShop at 0x4dc924eeb4d87ab938f5a72fc0ef4460f6b35a8a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SandwichShop at 0xC44c15BC10D0f8673B7a5DAE8e7D9fA69716A371
 */
 pragma solidity ^0.4.11;
 
@@ -102,14 +102,14 @@ contract SandwichShop is mortal
         return cart[msg.sender].push(newOrder);
     }
 
-    function getCartLength(address _curious) constant returns (uint)
+    function getCartLength() constant returns (uint)
     {
-        return cart[_curious].length;
+        return cart[msg.sender].length;
     }
 
-    function readFromCart(address _curious, uint _spot) constant returns (string)
+    function readFromCart(uint _spot) constant returns (string)
     {
-        return cart[_curious][_spot].notes;
+        return cart[msg.sender][_spot].notes;
     }
 
     function emptyCart() public
