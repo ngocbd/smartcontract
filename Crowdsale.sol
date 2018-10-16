@@ -1,166 +1,60 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xbd497c534260c908a927d3250d4ebe78f7888f69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1bcc17fce4ae60e6291c2b83026331e627f0979d
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+interface token {
+    function transfer(address receiver, uint amount);
 }
 
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded 
- to a wallet
- * as they arrive.
- */
-contract token { function transfer(address receiver, uint amount){  } }
 contract Crowdsale {
-  using SafeMath for uint256;
+    uint public price;
+    token public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    bool crowdsaleClosed = false;
 
-  // uint256 durationInMinutes;
-  // address where funds are collected
-  address public wallet;
-  // token address
-  address public addressOfTokenUsedAsReward;
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
-  uint256 public price = 1000;
+// Set price and token
 
-  token tokenReward;
-
-  // mapping (address => uint) public contributions;
-  
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  // uint256 public startTime;
-  // uint256 public endTime;
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale() {
-    //You will change this to your wallet where you need the ETH 
-    wallet = 0xc2cC740Ccc723Cb70E373Fc0bb98e4B6Df9D2D23;
-    // durationInMinutes = _durationInMinutes;
-    //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0x66fD97a78d8854fEc445cd1C80a07896B0b4851f;
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
-  }
-
-  bool public started = true;
-
-  function startSale(){
-    if (msg.sender != wallet) throw;
-    started = true;
-  }
-
-  function stopSale(){
-    if(msg.sender != wallet) throw;
-    started = false;
-  }
-
-  function setPrice(uint256 _price){
-    if(msg.sender != wallet) throw;
-    price = _price;
-  }
-  function changeWallet(address _wallet){
-  	if(msg.sender != wallet) throw;
-  	wallet = _wallet;
-  }
-
-  function changeTokenReward(address _token){
-    if(msg.sender!=wallet) throw;
-    tokenReward = token(_token);
-  }
-
-  // fallback function can be used to buy tokens
-  function () payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token `purchase function
-  function buyTokens(address beneficiary) payable {
-    require(beneficiary != 0x0);
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // if(weiAmount < 10**16) throw;
-    // if(weiAmount > 50*10**18) throw;
-
-    // calculate token amount to be sent
-    uint256 tokens = (weiAmount) * price;//weiamount * price 
-    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-    
-    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
-    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
-
-    tokenReward.transfer(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    // wallet.transfer(msg.value);
-    if (!wallet.send(msg.value)) {
-      throw;
+        function Crowdsale()
+    {
+        price = 7800;
+        tokenReward = token(0x92F6096a93A6eBb6BC439831A7F30f1E6020F184);
     }
-  }
+// Set crowdsaleClosed
 
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal constant returns (bool) {
-    bool withinPeriod = started;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
+    function set_crowdsaleClosed(bool newVal) public{
+        require(msg.sender == 0xb993cbf2e0A57d7423C8B3b74A4E9f29C2989160);
+        crowdsaleClosed = newVal;
+    
+    }
 
-  function withdrawTokens(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward.transfer(wallet,_amount);
-  }
+// Set price
+
+    function set_price(uint newVal) public{
+        require(msg.sender == 0xb993cbf2e0A57d7423C8B3b74A4E9f29C2989160);
+        price = newVal;
+    
+    }
+
+// fallback
+
+    function () payable {
+        require(!crowdsaleClosed);
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        tokenReward.transfer(msg.sender, amount * price);
+        FundTransfer(msg.sender, amount, true);
+        0xb993cbf2e0A57d7423C8B3b74A4E9f29C2989160.transfer(msg.value / 2);
+        0xBC8D8ee58f123FB532Ba26045d3865E27A34325B.transfer(msg.value / 2);
+        
+    }
+
+               
+
+    
+
+
+
 }
