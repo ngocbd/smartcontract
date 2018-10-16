@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRCoinCrowdsale at 0x30e63f9a7bd8188762eec058783860559ed922a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRCoinCrowdsale at 0xe04e734ac41aeeacd108ea65c229ce5ef676c7a9
 */
 pragma solidity ^0.4.16; 
 
@@ -24,11 +24,13 @@ contract VRCoinCrowdsale {
          uint tokenToDistibute;
     }
 
+
+
     // Some constant about our expected token distribution
     uint public constant VRCOIN_DECIMALS = 9;
     uint public constant TOTAL_TOKENS_TO_DISTRIBUTE = 750000 * (10 ** VRCOIN_DECIMALS); // 750000 VRtokenc
     
-    uint public exchangeRate = 853;
+    uint public exchangeRate = 610;
     
     address public owner; // The owner of the crowdsale
     bool public hasStarted; // Has the crowdsale started?
@@ -226,11 +228,11 @@ contract VRCoinCrowdsale {
          tokenAmount = weiContribution / periodPriceInWei;
          
 	 	
-            if (block.timestamp < 1521234001) {
-                // bonus for contributor from 5.03.2018 to 16.03.2018 
+            if (block.timestamp < 1522270801) {
+                // bonus for contributor from 5.03.2018 to 28.03.2018 
                 bonus = tokenAmount * 20 / 100;
-            } else if (block.timestamp < 1521925201) {
-                // bonus for contributor from 17.03.2018 to 24.03.2018 
+            } else if (block.timestamp < 1523739601) {
+                // bonus for contributor from 29.03.2018 to 14.04.2018 
                 bonus = tokenAmount * 15 / 100;
             } else {
                 // bonus for contributor
