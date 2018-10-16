@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Communitytoken at 0xf44b800999bf10844e10530587b4878c94f0e73c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CommunityToken at 0xeffdda4220a61bb62d7bff9d89615e05b3f156e8
 */
 pragma solidity ^ 0.4.18;
 library SafeMath {
@@ -25,7 +25,7 @@ library SafeMath {
         return c;
     }
 }
-contract Communitytoken {
+contract CommunityToken {
     using SafeMath
     for uint256;
     mapping(address => mapping(address => uint256)) allowed;
@@ -39,7 +39,7 @@ contract Communitytoken {
 
     function CommunityToken() {
         totalSupply = 1000000;
-        symbol = 'CMT';
+        symbol = 'CTN';
         owner = 0xd21Ef1Fb710c17cA568380f20a3ceE46c254d315;
         balances[owner] = totalSupply;
         decimals = 0;
