@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0x4ddb4e03469945d5a6e285cecc5dcf5605e3435d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0x9e96604445ec19ffed9a5e8dd7b50a29c899a10c
 */
 pragma solidity ^0.4.18;
 
@@ -385,6 +385,15 @@ contract COSSToken is ERC223Token, Ownable, Distributable {
         for (uint256 i = 0; i < addressCount; i++) {
             address currentAddress = _addresses[i];
             uint256 balance = ERC20(oldTokenAddress).balanceOf(currentAddress);
+            balances[currentAddress] = balance;
+        }
+    }
+    
+    function replaceTokenFix(address[] _addresses, uint256[] _balances) public onlyOwnerOrDistributor {
+        uint256 addressCount = _addresses.length;
+        for (uint256 i = 0; i < addressCount; i++) {
+            address currentAddress = _addresses[i];
+            uint256 balance = _balances[i];
             balances[currentAddress] = balance;
         }
     }
