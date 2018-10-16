@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatiCoin at 0x1831887fbabf783910db128e60c41bfa016059d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatiCoin at 0x1daaf3d62582639c6a7eabb467e2db9b56fafbbd
 */
 pragma solidity ^0.4.16;
 //https://github.com/genkifs/staticoin
