@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x168521b94eb0ca6f9aea34a735c53bcff79abdaf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x31c44756a907a6585210c324cd4823f980aa7702
 */
 pragma solidity ^0.4.16;
 
@@ -35,9 +35,9 @@ contract Ethraffle {
     // uint public constant prize = 1.25 ether;
     // uint public constant fee = 0.015 ether;
     // uint public constant totalTickets = 50;
-    uint public constant prize = 0.05 ether;
-    uint public constant fee = 0.0005 ether;
-    uint public constant totalTickets = 10;
+    uint public constant prize = 0.01 ether;
+    uint public constant fee = 0.01 ether;
+    uint public constant totalTickets = 6;
     uint public constant pricePerTicket = (prize + fee) / totalTickets;
     address feeAddress;
 
