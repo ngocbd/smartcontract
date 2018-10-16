@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CECoin at 0x15823159eba7aad58da974d577df494cf1c30d41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CECoin at 0x63feb038852c79465b3c071e1971492d7ef6ca51
 */
 pragma solidity ^0.4.4;
 
@@ -108,10 +108,10 @@ contract CECoin is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function CECoin() {
-        balances[msg.sender] = 200000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 10, set this value to X * 10000000000. (CHANGE THIS)
-        totalSupply = 200000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 20000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 10, set this value to X * 10000000000. (CHANGE THIS)
+        totalSupply = 20000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "CECoin";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 10;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "CEC";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 90000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
