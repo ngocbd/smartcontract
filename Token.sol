@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x1b794d0aa615eb34f6c61d12e0841fb18721cad7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x913bd3f549542e553b3fb3c7ea504aee7d5e41a5
 */
 /*! mlmc.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
 
@@ -254,7 +254,7 @@ contract Crowdsale is Pausable {
     }
 
     Token public token;
-    address public beneficiary = 0x45674a9bB2ed1081C6c9798b30A1F72482c92Ac6;
+    address public beneficiary = 0x7cE9A678A78Dca8555269bA39036098aeA68b819;
 
     Step[] public steps;
     uint8 public currentStep = 0;
