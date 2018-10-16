@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0xfac50f760d114de38bf0a6d44f31a9c22f778db3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0x9ffa45c5943a0203ee462c48c8b97064abbe28f3
 */
 /**
 *	This investment contract accepts investments, which will be sent to the Edgeless ICO contract as soon as it starts buy calling buyTokens().
-*   This way investors do not have to buy tokens in time theirselves and still do profit from the power hour offer.
+*     This way investors do not have to buy tokens in time theirselves and still do profit from the power hour offer.
 *	Investors may withdraw their funds anytime if they change their mind as long as the tokens have not yet been purchased.
 *	Author: Julia Altenried
 **/
@@ -14,19 +14,7 @@ contract Crowdsale {
 	function invest(address receiver) payable{}
 }
 
-contract SafeMath {
-  //internals
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-  function assert(bool assertion) internal {
-    if (!assertion) throw;
-  }
-}
-
-contract Investment is SafeMath{
+contract Investment{
 	Crowdsale public ico;
 	address[] public investors;
 	mapping(address => uint) public balanceOf;
@@ -34,7 +22,7 @@ contract Investment is SafeMath{
 
 	/** constructs an investment contract for an ICO contract **/
 	function Investment(){
-		ico = Crowdsale(0xf66ca56fc0cf7b5d9918349150026be80b327892);
+		ico = Crowdsale(0x0807a2d6a675e7196a3d9b1910700cae9795b72a);
 	}
 
 	/** make an investment **/
@@ -42,7 +30,7 @@ contract Investment is SafeMath{
 		if(!isInvestor(msg.sender)){
 			investors.push(msg.sender);
 		}
-		balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], msg.value);
+		balanceOf[msg.sender] += msg.value;
 	}
 
 	/** checks if the address already invested **/
@@ -72,10 +60,7 @@ contract Investment is SafeMath{
 	/** In case an investor wants to retrieve his or her funds he or she can call this function.
 	*   (only possible before tokens are bought) **/
 	function withdraw(){
-		uint amount = balanceOf[msg.sender];
-		balanceOf[msg.sender] = 0;
-		if(!msg.sender.send(amount))
-			balanceOf[msg.sender] = amount;
+		msg.sender.send(balanceOf[msg.sender]);
 	}
 
 	/** returns the number of investors **/
