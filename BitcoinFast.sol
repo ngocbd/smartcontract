@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinFast at 0x7122c76ee312ba759e38807b0cdb2928ab5dc983
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinFast at 0x67e2a1c885c7f34e9fd24b4fcf61e57236a10a32
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'BitcoinFast' token contract
+// 'Bitcoin Fast' token contract
 //
 // Deployed to : 0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9
-// Symbol      : BTCF
-// Name        : BitcoinFast
+// Symbol      : BFAST
+// Name        : Bitcoin Fast
 // Total supply: 100000000
 // Decimals    : 18
 //
@@ -116,8 +116,8 @@ contract BitcoinFast is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function BitcoinFast() public {
-        symbol = "BTCF";
-        name = "BitcoinFast ";
+        symbol = "BFAST";
+        name = "Bitcoin Fast ";
         decimals = 18;
         _totalSupply = 21000000000000000000000000;
         balances[0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9] = _totalSupply;
