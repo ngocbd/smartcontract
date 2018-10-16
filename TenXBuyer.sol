@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TenXBuyer at 0x146e59f69a68b645367bdc94f3855df0d8214f4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TenXBuyer at 0xabeeb06752a6da54773f00508baabb1c279f32d2
 */
 pragma solidity ^0.4.11;
 
@@ -39,7 +39,7 @@ contract TenXBuyer {
   // Record the time the contract bought the tokens.
   uint public time_bought;
   // Emergency kill switch in case a critical bug is found.
-  bool public kill_switch;
+  bool kill_switch;
   
   // Hard Cap of TenX Crowdsale
   uint hardcap = 200000 ether;
