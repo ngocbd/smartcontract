@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CosmosToken at 0xCc9CceAeff5fFcf4c3657F78B11Ad59a46dA0B55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CosmosToken at 0x2636E24D8c1c820eE786aA16Df2085f852b677f5
 */
 pragma solidity ^0.4.10;
 
 // Inspiration from other ICO's are used in this contract!
 // Please contact me when there are critical errors, thanks!
 
-contract GalacticToken {
+contract ForeignToken {
     function balanceOf(address _owner) constant returns (uint256);
     function transfer(address _to, uint256 _value) returns (bool);
 }
@@ -93,10 +93,10 @@ contract CosmosToken {
         purchasingAllowed = false;
     }
 
-    function withdrawGalacticTokens(address _tokenContract) returns (bool) {
+    function withdrawForeignTokens(address _tokenContract) returns (bool) {
         if (msg.sender != owner) { throw; }
 
-        GalacticToken token = GalacticToken(_tokenContract);
+        ForeignToken token = ForeignToken(_tokenContract);
 
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
