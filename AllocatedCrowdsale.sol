@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllocatedCrowdsale at 0xbacd554538c8037545098a36361f54c4e1d0f94e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllocatedCrowdsale at 0x9fdabd60fb538469b16bbe12db2e9401116a66e1
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -71,9 +71,6 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
@@ -96,9 +93,8 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
     owner = newOwner;
   }
 
@@ -118,17 +114,17 @@ contract Haltable is Ownable {
   bool public halted;
 
   modifier stopInEmergency {
-    if (halted) throw;
+    require(!halted);
     _;
   }
 
   modifier stopNonOwnersInEmergency {
-    if (halted && msg.sender != owner) throw;
+    require(!halted || msg.sender == owner);
     _;
   }
 
   modifier onlyInEmergency {
-    if (!halted) throw;
+    require(halted);
     _;
   }
 
@@ -242,8 +238,8 @@ contract FinalizeAgent {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -254,9 +250,9 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
@@ -386,6 +382,12 @@ contract Crowdsale is Haltable {
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
+    require(_multisigWallet != 0);
+    require(_start != 0 && _end != 0);
+
+    // Don't mess the dates
+    require(_start < _end);
+
     owner = msg.sender;
 
     token = FractionalERC20(_token);
@@ -393,36 +395,19 @@ contract Crowdsale is Haltable {
     setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
-    if(multisigWallet == 0) {
-        throw;
-    }
-
-    if(_start == 0) {
-        throw;
-    }
-
     startsAt = _start;
 
-    if(_end == 0) {
-        throw;
-    }
-
     endsAt = _end;
-
-    // Don't mess the dates
-    if(startsAt >= endsAt) {
-        throw;
-    }
 
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
   }
 
   /**
-   * Don't expect to just send in money and get tokens.
+   * Do expect to just send in money and get tokens.
    */
   function() payable {
-    throw;
+    buy();
   }
 
   /**
@@ -440,15 +425,13 @@ contract Crowdsale is Haltable {
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
       // Are we whitelisted for early deposit
-      if(!earlyParticipantWhitelist[receiver]) {
-        throw;
-      }
+      require(earlyParticipantWhitelist[receiver]);
     } else if(getState() == State.Funding) {
       // Retail participants can only come in when the crowdsale is running
       // pass
     } else {
       // Unwanted state
-      throw;
+      assert(false);
     }
 
     uint weiAmount = msg.value;
@@ -456,10 +439,7 @@ contract Crowdsale is Haltable {
     // Account presale sales separately, so that they do not count against pricing tranches
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
-    if(tokenAmount == 0) {
-      // Dust transaction
-      throw;
-    }
+    require(tokenAmount != 0); // Dust transaction
 
     if(investedAmountOf[receiver] == 0) {
        // A new investor
@@ -479,14 +459,12 @@ contract Crowdsale is Haltable {
     }
 
     // Check that we did not bust the cap
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
+    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
 
     assignTokens(receiver, tokenAmount);
 
     // Pocket the money
-    if(!multisigWallet.send(weiAmount)) throw;
+    require(multisigWallet.send(weiAmount));
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
@@ -529,8 +507,8 @@ contract Crowdsale is Haltable {
    */
   function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
      bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;  // UUIDv4 sanity check
+     require(ecrecover(hash, v, r, s) == signerAddress);
+     require(customerId != 0);  // UUIDv4 sanity check
      investInternal(addr, customerId);
   }
 
@@ -538,8 +516,8 @@ contract Crowdsale is Haltable {
    * Track who is the customer making the payment so we can send thank you email.
    */
   function investWithCustomerId(address addr, uint128 customerId) public payable {
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    if(customerId == 0) throw;  // UUIDv4 sanity check
+    require(!requiredSignedAddress); // Crowdsale allows only server-side signed participants
+    require(customerId != 0);  // UUIDv4 sanity check
     investInternal(addr, customerId);
   }
 
@@ -547,8 +525,8 @@ contract Crowdsale is Haltable {
    * Allow anonymous contributions to this crowdsale.
    */
   function invest(address addr) public payable {
-    if(requireCustomerId) throw; // Crowdsale needs to track participants for thank you email
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    require(!requireCustomerId); // Crowdsale needs to track participants for thank you email
+    require(!requiredSignedAddress); // Crowdsale allows only server-side signed participants
     investInternal(addr, 0);
   }
 
@@ -585,9 +563,7 @@ contract Crowdsale is Haltable {
   function finalize() public inState(State.Success) onlyOwner stopInEmergency {
 
     // Already finalized
-    if(finalized) {
-      throw;
-    }
+    require(!finalized);
 
     // Finalizing is optional. We only call it if we are given a finalizing agent.
     if(address(finalizeAgent) != 0) {
@@ -603,12 +579,10 @@ contract Crowdsale is Haltable {
    * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
    */
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
-    finalizeAgent = addr;
 
     // Don't allow setting bad agent
-    if(!finalizeAgent.isFinalizeAgent()) {
-      throw;
-    }
+    require(addr.isFinalizeAgent());
+    finalizeAgent = addr;
   }
 
   /**
@@ -654,9 +628,7 @@ contract Crowdsale is Haltable {
    */
   function setEndsAt(uint time) onlyOwner {
 
-    if(now > time) {
-      throw; // Don't change past
-    }
+    require(now <= time); // Don't change past
 
     endsAt = time;
     EndsAtChanged(endsAt);
@@ -668,12 +640,10 @@ contract Crowdsale is Haltable {
    * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
    */
   function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
-    pricingStrategy = _pricingStrategy;
 
     // Don't allow setting bad agent
-    if(!pricingStrategy.isPricingStrategy()) {
-      throw;
-    }
+    require(_pricingStrategy.isPricingStrategy());
+    pricingStrategy = _pricingStrategy;
   }
 
   /**
@@ -686,9 +656,7 @@ contract Crowdsale is Haltable {
   function setMultisig(address addr) public onlyOwner {
 
     // Change
-    if(investorCount > MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE) {
-      throw;
-    }
+    require(investorCount <= MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE);
 
     multisigWallet = addr;
   }
@@ -699,7 +667,7 @@ contract Crowdsale is Haltable {
    * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
    */
   function loadRefund() public payable inState(State.Failure) {
-    if(msg.value == 0) throw;
+    require(msg.value != 0);
     loadedRefund = loadedRefund.plus(msg.value);
   }
 
@@ -711,11 +679,11 @@ contract Crowdsale is Haltable {
    */
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
-    if (weiValue == 0) throw;
+    require(weiValue != 0);
     investedAmountOf[msg.sender] = 0;
     weiRefunded = weiRefunded.plus(weiValue);
     Refund(msg.sender, weiValue);
-    if (!msg.sender.send(weiValue)) throw;
+    require(msg.sender.send(weiValue));
   }
 
   /**
@@ -772,7 +740,7 @@ contract Crowdsale is Haltable {
 
   /** Modified allowing execution only if the crowdsale is currently running.  */
   modifier inState(State state) {
-    if(getState() != state) throw;
+    require(getState() == state);
     _;
   }
 
@@ -859,6 +827,6 @@ contract AllocatedCrowdsale is Crowdsale {
    * Use approve() given to this crowdsale to distribute the tokens.
    */
   function assignTokens(address receiver, uint tokenAmount) private {
-    if(!token.transferFrom(beneficiary, receiver, tokenAmount)) throw;
+    require(token.transferFrom(beneficiary, receiver, tokenAmount));
   }
 }
