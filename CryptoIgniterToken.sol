@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoIgniterToken at 0x1c2699cbb862c6bfccd9ff8c80734263cd486578
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoIgniterToken at 0x3E91504fCDab30596B53C29394d4F80944b3d5AA
 */
 pragma solidity ^0.4.19;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract CryptoIgniterToken {
+    // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 18;
@@ -28,7 +29,7 @@ contract CryptoIgniterToken {
      */
     function CryptoIgniterToken() public {
         totalSupply = 8000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;            
+        balanceOf[msg.sender] = totalSupply;
         name = 'CryptoIgniter Token';                       // The name for display purposes
         symbol = 'CIT';                               // The symbol for display purposes
     }
