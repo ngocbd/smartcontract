@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x0F822AE3FC6E3305B33F95D905C9967bae244d82
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xf0cfB6e33aF9A0bBF70b37662C0f5B3C7483B16D
 */
 //just updated the encrypted api key
 //updated contractBalance -= 57245901639344;
@@ -1443,11 +1443,11 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 
         /* total number of bets */
         //todo - update in live contract
-        //totalBets += 1;
+        totalBets += 1;
 
         /* total wagered */
         //todo - update in live contract
-        //totalWeiWagered += playerBetValue[myid];    
+        totalWeiWagered += playerBetValue[myid];    
         
         /* keep oraclize honest by retrieving the serialNumber from random.org result */
         var sl_result = result.toSlice();
