@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpOwnership at 0xe5568ad7f29e67890bfe8f76a0f50b4113a62c77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpOwnership at 0xa82ee9a7f6b57124bace0cd46f7de722a7a8e186
 */
 pragma solidity ^0.4.19;
 
@@ -547,6 +547,11 @@ contract BdpOwnershipStorage is BdpBase {
 
 // File: contracts/libraries/BdpOwnership.sol
 
+/**
+ * Ownership manager
+ * Does not check if the caller is allowed to call functions
+ * State changing methods are not intended to be called from controller
+ */
 library BdpOwnership {
 
 	using SafeMath for uint256;
