@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xa5629861c9c345f50221996ef852fd9665eb1c05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xb6aca06a3588f4ce5ce33a1a7e9152892b250ca3
 */
 pragma solidity ^0.4.21;
 
@@ -150,7 +150,7 @@ contract IronHands is Owned {
     //What we will be buying
     REV weak_hands;
     // Limitation
-    uint256 public limit = 50 finney; // 1000 = 1eth, 100 = 0,1 eth | 50 finney = 0.05 eth
+    uint256 public limit = 100 finney; // 1000 = 1eth | 100 finney = 0.1 eth
 
     /**
      * Constructor
