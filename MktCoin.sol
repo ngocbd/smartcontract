@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MKTcoin at 0x2bae5c3a17a34975483f21582f0e55d057eb76af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MKTcoin at 0xa95ca23ed65bd013d6b6fddff7a0831689f7e237
 */
 contract MKTcoin {
     /* Public variables of the token */
@@ -20,7 +20,7 @@ contract MKTcoin {
 
          initialSupply = 1000000000;
          name ="MKTcoin";
-        decimals = 0;
+        decimals = 8;
          symbol = "MKT";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
