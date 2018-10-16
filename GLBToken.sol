@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLBToken at 0xd1e0c981742d04d1d75856a0a751a4eef488fed5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLBToken at 0xccade9b770aaf1b29269fad4e0930bf63547abfb
 */
 pragma solidity ^0.4.18;
 
@@ -209,6 +209,12 @@ contract GLBToken is IERC20Token, Utils, TokenHolder {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 
+	// Constructor
+    function GLBToken() public{
+        owner = msg.sender;
+        balanceOf[owner] = totalSupply;
+    }
+	
     /**
         @dev send coins
         throws on any error rather then return a false flag to minimize user errors
