@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x9d3a16d9de3294495305a61946a048ce6f5fea3e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x7587623e6a351add10fb8f7212b8f97e0315b570
 */
 pragma solidity ^0.4.21;
 
@@ -340,7 +340,7 @@ contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken {
     string constant public name = "Korean Won";
     string constant public symbol = "KRWT";
     uint8 constant public decimals = 8;
-    uint256 public totalSupply_ = 10000000000  * (10 ** uint256(decimals));
+    uint256 public totalSupply = 10000000000  * (10 ** uint256(decimals));
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -349,7 +349,7 @@ contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken {
     event Mint(address indexed to, uint256 amount);
 
     function KRWT () public {
-        balances[msg.sender] = totalSupply_;
-        Transfer(address(0), msg.sender, totalSupply_);
+        balances[msg.sender] = totalSupply;
+        emit Transfer(address(0), msg.sender, totalSupply);
     }
 }
