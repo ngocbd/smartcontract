@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLib at 0x02d509d0af485c8da54d8aeb42c624e7d9e2eeb6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLib at 0x6d271cbF16be9E9D037DDA5F0dc507777bA27a1c
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  * @title TokenLib
  * @author Majoolr.io
  *
- * version 1.1.0
+ * version 1.2.0
  * Copyright (c) 2017 Majoolr, LLC
  * The MIT License (MIT)
  * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
@@ -36,13 +36,14 @@ library TokenLib {
   using BasicMathLib for uint256;
 
   struct TokenStorage {
+    bool initialized;
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 
     string name;
     string symbol;
     uint256 totalSupply;
-    uint256 INITIAL_SUPPLY;
+    uint256 initialSupply;
     address owner;
     uint8 decimals;
     bool stillMinting;
@@ -68,12 +69,14 @@ library TokenLib {
                 uint8 _decimals,
                 uint256 _initial_supply,
                 bool _allowMinting)
+                public
   {
-    require(self.INITIAL_SUPPLY == 0);
+    require(!self.initialized);
+    self.initialized = true;
     self.name = _name;
     self.symbol = _symbol;
     self.totalSupply = _initial_supply;
-    self.INITIAL_SUPPLY = _initial_supply;
+    self.initialSupply = _initial_supply;
     self.decimals = _decimals;
     self.owner = _owner;
     self.stillMinting = _allowMinting;
@@ -85,7 +88,7 @@ library TokenLib {
   /// @param _to Address to send tokens
   /// @param _value Number of tokens to send
   /// @return True if completed
-  function transfer(TokenStorage storage self, address _to, uint256 _value) returns (bool) {
+  function transfer(TokenStorage storage self, address _to, uint256 _value) public returns (bool) {
     bool err;
     uint256 balance;
 
@@ -108,6 +111,7 @@ library TokenLib {
                         address _from,
                         address _to,
                         uint256 _value)
+                        public
                         returns (bool)
   {
     var _allowance = self.allowed[_from][msg.sender];
@@ -133,7 +137,7 @@ library TokenLib {
   /// @param self Stored token from token contract
   /// @param _owner Address to retrieve balance of
   /// @return balance The number of tokens in the subject account
-  function balanceOf(TokenStorage storage self, address _owner) constant returns (uint256 balance) {
+  function balanceOf(TokenStorage storage self, address _owner) public view returns (uint256 balance) {
     return self.balances[_owner];
   }
 
@@ -142,7 +146,10 @@ library TokenLib {
   /// @param _spender Address to authorize
   /// @param _value Number of tokens authorized account may send
   /// @return True if completed
-  function approve(TokenStorage storage self, address _spender, uint256 _value) returns (bool) {
+  function approve(TokenStorage storage self, address _spender, uint256 _value) public returns (bool) {
+    // must set to zero before changing approval amount in accordance with spec
+    require((_value == 0) || (self.allowed[msg.sender][_spender] == 0));
+
     self.allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -153,7 +160,10 @@ library TokenLib {
   /// @param _owner Address of token holder
   /// @param _spender Address of authorized spender
   /// @return remaining Number of tokens spender has left in owner's account
-  function allowance(TokenStorage storage self, address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(TokenStorage storage self, address _owner, address _spender)
+                     public
+                     view
+                     returns (uint256 remaining) {
     return self.allowed[_owner][_spender];
   }
 
@@ -164,7 +174,7 @@ library TokenLib {
   /// @param _increase True if increasing allowance, false if decreasing allowance
   /// @return True if completed
   function approveChange (TokenStorage storage self, address _spender, uint256 _valueChange, bool _increase)
-                          returns (bool)
+                          public returns (bool)
   {
     uint256 _newAllowed;
     bool err;
@@ -191,7 +201,7 @@ library TokenLib {
   /// @param self Stored token from token contract
   /// @param _newOwner Address for the new owner
   /// @return True if completed
-  function changeOwner(TokenStorage storage self, address _newOwner) returns (bool) {
+  function changeOwner(TokenStorage storage self, address _newOwner) public returns (bool) {
     require((self.owner == msg.sender) && (_newOwner > 0));
 
     self.owner = _newOwner;
@@ -203,7 +213,7 @@ library TokenLib {
   /// @param self Stored token from token contract
   /// @param _amount Number of tokens to mint
   /// @return True if completed
-  function mintToken(TokenStorage storage self, uint256 _amount) returns (bool) {
+  function mintToken(TokenStorage storage self, uint256 _amount) public returns (bool) {
     require((self.owner == msg.sender) && self.stillMinting);
     uint256 _newAmount;
     bool err;
@@ -220,7 +230,7 @@ library TokenLib {
   /// @dev Permanent stops minting
   /// @param self Stored token from token contract
   /// @return True if completed
-  function closeMint(TokenStorage storage self) returns (bool) {
+  function closeMint(TokenStorage storage self) public returns (bool) {
     require(self.owner == msg.sender);
 
     self.stillMinting = false;
@@ -232,7 +242,7 @@ library TokenLib {
   /// @param self Stored token from token contract
   /// @param _amount Amount of tokens to burn
   /// @return True if completed
-  function burnToken(TokenStorage storage self, uint256 _amount) returns (bool) {
+  function burnToken(TokenStorage storage self, uint256 _amount) public returns (bool) {
       uint256 _newBalance;
       bool err;
 
@@ -247,45 +257,14 @@ library TokenLib {
   }
 }
 
-pragma solidity ^0.4.13;
-
-/**
- * @title Basic Math Library
- * @author Majoolr.io
- *
- * version 1.1.0
- * Copyright (c) 2017 Majoolr, LLC
- * The MIT License (MIT)
- * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
- *
- * The Basic Math Library is inspired by the Safe Math library written by
- * OpenZeppelin at https://github.com/OpenZeppelin/zeppelin-solidity/ .
- * Majoolr works on open source projects in the Ethereum community with the
- * purpose of testing, documenting, and deploying reusable code onto the
- * blockchain to improve security and usability of smart contracts. Majoolr
- * also strives to educate non-profits, schools, and other community members
- * about the application of blockchain technology.
- * For further information: majoolr.io, openzeppelin.org
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 library BasicMathLib {
-  event Err(string typeErr);
-
   /// @dev Multiplies two numbers and checks for overflow before returning.
-  /// Does not throw but rather logs an Err event if there is overflow.
+  /// Does not throw.
   /// @param a First number
   /// @param b Second number
   /// @return err False normally, or true if there is overflow
   /// @return res The product of a and b, or 0 if there is overflow
-  function times(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+  function times(uint256 a, uint256 b) public view returns (bool err,uint256 res) {
     assembly{
       res := mul(a,b)
       switch or(iszero(b), eq(div(res,b), a))
@@ -294,36 +273,38 @@ library BasicMathLib {
         res := 0
       }
     }
-    if (err)
-      Err("times func overflow");
   }
 
   /// @dev Divides two numbers but checks for 0 in the divisor first.
-  /// Does not throw but rather logs an Err event if 0 is in the divisor.
+  /// Does not throw.
   /// @param a First number
   /// @param b Second number
   /// @return err False normally, or true if `b` is 0
   /// @return res The quotient of a and b, or 0 if `b` is 0
-  function dividedBy(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+  function dividedBy(uint256 a, uint256 b) public view returns (bool err,uint256 i) {
+    uint256 res;
     assembly{
       switch iszero(b)
       case 0 {
         res := div(a,b)
-        mstore(add(mload(0x40),0x20),res)
-        return(mload(0x40),0x40)
+        let loc := mload(0x40)
+        mstore(add(loc,0x20),res)
+        i := mload(add(loc,0x20))
+      }
+      default {
+        err := 1
+        i := 0
       }
     }
-    Err("tried to divide by zero");
-    return (true, 0);
   }
 
   /// @dev Adds two numbers and checks for overflow before returning.
-  /// Does not throw but rather logs an Err event if there is overflow.
+  /// Does not throw.
   /// @param a First number
   /// @param b Second number
   /// @return err False normally, or true if there is overflow
   /// @return res The sum of a and b, or 0 if there is overflow
-  function plus(uint256 a, uint256 b) constant returns (bool err, uint256 res) {
+  function plus(uint256 a, uint256 b) public view returns (bool err, uint256 res) {
     assembly{
       res := add(a,b)
       switch and(eq(sub(res,b), a), or(gt(res,b),eq(res,b)))
@@ -332,8 +313,6 @@ library BasicMathLib {
         res := 0
       }
     }
-    if (err)
-      Err("plus func overflow");
   }
 
   /// @dev Subtracts two numbers and checks for underflow before returning.
@@ -342,7 +321,7 @@ library BasicMathLib {
   /// @param b Second number
   /// @return err False normally, or true if there is underflow
   /// @return res The difference between a and b, or 0 if there is underflow
-  function minus(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+  function minus(uint256 a, uint256 b) public view returns (bool err,uint256 res) {
     assembly{
       res := sub(a,b)
       switch eq(and(eq(add(res,b), a), or(lt(res,a), eq(res,a))), 1)
@@ -351,7 +330,5 @@ library BasicMathLib {
         res := 0
       }
     }
-    if (err)
-      Err("minus func underflow");
   }
 }
