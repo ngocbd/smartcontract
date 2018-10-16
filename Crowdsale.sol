@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb82bcf416e22b2550f1c864612cd368634c86f6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x97c9fc1b1380521201fc671e20bb5fb75130c469
 */
 pragma solidity ^0.4.19;
 
@@ -329,15 +329,15 @@ contract Crowdsale is Pausable {
   function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
       uint256 bonusRate;
       uint256 realRate;
-	  if (weiRaised <= 450 ether) {
+	  if (cap <= 450 ether) {
 		   bonusRate = baseRate.mul(firstTierRate).div(100);
 		   realRate = baseRate.add(bonusRate);
 		  return _weiAmount.mul(realRate);
-	  } else if (weiRaised <= 800 ether) {
+	  } else if ( cap <= 800 ether) {
 		   bonusRate = baseRate.mul(secondTierRate).div(100);
 		   realRate = baseRate.add(bonusRate);
 		  return _weiAmount.mul(realRate);
-	  } else if (weiRaised <= 3000 ether) {
+	  } else if ( cap <= 3000 ether) {
 		   bonusRate = baseRate.mul(thirdTierRate).div(100);
 		   realRate = baseRate.add(bonusRate);
 		  return _weiAmount.mul(realRate);
