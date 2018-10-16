@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShortOrder at 0x3cB6C45A7689769de60d423ee6c546d3ca4B15a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShortOrder at 0x3c96c6e76c403c774ba2ab023df5730375c09b2d
 */
 pragma solidity ^0.4.18;
 
@@ -169,6 +169,7 @@ contract ShortOrder is SafeMath {
     require(
       ecrecover(keccak256("\x19Ethereum Signed Message:\n32",orderHash),v,rs[0],rs[1]) == tokenUser[1] &&
       block.number <= minMaxDMWCPNonce[2] &&
+      orderRecord[tokenUser[1]][orderHash].coupon >= minMaxDMWCPNonce[5]&&
       orderRecord[tokenUser[1]][orderHash].balance <= minMaxDMWCPNonce[1]
     );
     orderRecord[tokenUser[1]][orderHash].longBalance[msg.sender] = safeAdd(orderRecord[tokenUser[1]][orderHash].longBalance[msg.sender],msg.value);
@@ -389,24 +390,33 @@ contract ShortOrder is SafeMath {
     return orderRecord[tokenUser[1]][orderHash].tokenDeposit;
   }
  
-  function returnHash(address[2] tokenUser,uint[8] minMaxDMWCPNonce)  external pure returns (bytes32) {
-    return  
-      keccak256 (
+  function returnHash(address[2] tokenUser,uint[8] minMaxDMWCPNonce) external pure returns (bytes32) {
+    bytes32 orderHash = keccak256 (
         tokenUser[0],
         tokenUser[1],
         minMaxDMWCPNonce[0],
         minMaxDMWCPNonce[1],
-        minMaxDMWCPNonce[2], 
+        minMaxDMWCPNonce[2],
         minMaxDMWCPNonce[3],
         minMaxDMWCPNonce[4],
         minMaxDMWCPNonce[5],
-        minMaxDMWCPNonce[6], 
+        minMaxDMWCPNonce[6],
         minMaxDMWCPNonce[7]
       );
+    return keccak256("\x19Ethereum Signed Message:\n32",orderHash);
+  }
+
+  function returnAddress(bytes32 orderHash,uint8 v,bytes32[2] rs) external pure returns (address) {
+    return ecrecover(orderHash,v,rs[0],rs[1]);
   }
 
   function returnHashLong(address seller,uint[3] amountNonceExpiry)  external pure returns (bytes32) {
-    return keccak256(seller,amountNonceExpiry[0],amountNonceExpiry[1],amountNonceExpiry[2]);
+    bytes32 orderHash =  keccak256(seller,amountNonceExpiry[0],amountNonceExpiry[1],amountNonceExpiry[2]);
+    return keccak256("\x19Ethereum Signed Message:\n32",orderHash);
+  }
+
+  function returnLongAddress(bytes32 orderHash,uint8 v,bytes32[2] rs) external pure returns (address) {
+    return ecrecover(orderHash,v,rs[0],rs[1]);
   }
 
 }
