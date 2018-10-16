@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0x1cca91a47db357445b89269f2fb4f647cd209968
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xb52b2ef444df36cbe70a0162f8aeee9b7610da6f
 */
 pragma solidity ^0.4.18;
 
@@ -40,15 +40,31 @@ contract Owned {
         owner = _newOwner;
     }
 }
+contract Ownable {
 
+  address public owner;
+
+  function Ownable() internal {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
+}
 
 interface Token {
   function transfer(address _to, uint256 _value) public constant returns (bool);
   function balanceOf(address _owner) public constant returns (uint256 balance);
 }
 
-contract Distribution is Owned {
-    using SafeMath for uint256;
+contract Distribution is Ownable {
 
   Token token;
 
@@ -75,7 +91,7 @@ contract Distribution is Owned {
   function sendTokens(address[] dests, uint256[] values) whenDropIsActive onlyOwner external {
     uint256 i = 0;
     while (i < dests.length) {
-        uint256 toSend = values[i] * 10**8;
+        uint256 toSend = values[i] * 10**18;
         sendInternally(dests[i] , toSend, values[i]);
         i++;
     }
@@ -84,7 +100,7 @@ contract Distribution is Owned {
   // this function can be used when you want to send same number of tokens to all the recipients
   function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
     uint256 i = 0;
-    uint256 toSend = value * 10**8;
+    uint256 toSend = value * 10**18;
     while (i < dests.length) {
         sendInternally(dests[i] , toSend, value);
         i++;
