@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UniContract at 0x6EF5B9ae723Fe059Cac71aD620495575d19dAc42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UniContract at 0x37aa63c4cbd06a57f1ea35bceee4e46f0a7ce924
 */
-pragma solidity ^0.4.7;
+pragma solidity ^0.4.11;
 
 
 /**
@@ -76,6 +76,12 @@ contract BasicToken is ERC20Basic {
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint256 _value) {
+      
+      if (balances[msg.sender] < _value) {
+            // Balance too low
+            throw;
+        }
+      
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -106,8 +112,10 @@ contract StandardToken is ERC20, BasicToken {
   function transferFrom(address _from, address _to, uint256 _value) {
     var _allowance = allowed[_from][msg.sender];
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
+    if (balances[_from] < _value || allowed[_from][msg.sender] < _value) {
+            // Balance or allowance too low
+            throw;
+        }
 
     balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
@@ -121,12 +129,6 @@ contract StandardToken is ERC20, BasicToken {
    * @param _value The amount of tokens to be spent.
    */
   function approve(address _spender, uint256 _value) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
@@ -182,11 +184,11 @@ contract UniContract is StandardToken, owned {
    uint public end;
    uint public launch;
    
-   //Dynamic Pricing PRICE IN UCN
-   uint256 public PRICE = 300000;  
+   //Dynamic Pricing PRICE IN UCN //UniContract V2
+   uint256 public PRICE = 217135;  
    
-   //Dynamic Status of sold UCN Tokens
-   uint256 public OVERALLSOLD = 0;  
+   //Dynamic Status of sold UCN Tokens //UniContract V2
+   uint256 public OVERALLSOLD = 3148890;  
    
    //Maximum of Tokens to be sold 85.000.000
    uint256 public MAXTOKENSOLD = 85000000;  
@@ -197,11 +199,14 @@ contract UniContract is StandardToken, owned {
   
    function UniContract() onlyOwner { 
        founder = 0x204244062B04089b6Ef55981Ad82119cEBf54F88; 
-       multisig= 0x9FA2d2231FE8ac207831B376aa4aE35671619960; 
+       multisig= 0x9FA2d2231FE8ac207831B376aa4aE35671619960;
+       
        start = 1507543200;
        end = 1509098400; 
  	   launch = 1509534000;
-       balances[founder] = balances[founder].add(15000000); // Founder (15% = 15.000.000 UCN)
+ 	   //UniContract V2
+       balances[founder] = balances[founder].add(18148890); // Founder (15% = 15.000.000 UCN + 3148890 redistribute)
+ 
    }
    
    
@@ -322,6 +327,7 @@ contract UniContract is StandardToken, owned {
         		if (!multisig.send(msg.value)) {
           			throw;
         			}
+        		Transfer(address(this), recipient, tokens);
        		}
    	  	  else
    	  			{
@@ -450,7 +456,7 @@ contract UniContract is StandardToken, owned {
 	
  
       function addMessageToQueue(string msg_from, string name_from, uint spendToken) {
-        if(balances[msg.sender]>spendToken && spendToken>=10)
+        if(balances[msg.sender]>=spendToken && spendToken>=10)
         {
            if(spendToken>maxSpendToken) 
                {
@@ -492,11 +498,11 @@ contract UniContract is StandardToken, owned {
 	
     function feedUnicorn(uint spendToken) {
 	
-   	 	if(balances[msg.sender]>spendToken)
-        	{
+   	 	if(balances[msg.sender] < spendToken)
+        	{ throw; }
        	 	UniCoinSize=UniCoinSize.add(spendToken);
         	balances[msg.sender] = balances[msg.sender].sub(spendToken);
-			}
+			
 		
 	 } 
 	
