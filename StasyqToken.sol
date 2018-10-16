@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StasyqToken at 0x11f29ded1a1ed54f4e4d666334d33b80fbeaab79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StasyqToken at 0x7900a696ff44253536e128cddbe10079cfd33fca
 */
 pragma solidity ^0.4.18;
 
@@ -372,7 +372,7 @@ contract StasyqToken is MintableToken {
 
   function lock(address addr, uint periodInDays) public {
     require(locked[addr] < now && (msg.sender == saleAgent || msg.sender == addr));
-    locked[addr] = now.add(periodInDays * 1 days);
+    locked[addr] = now + periodInDays * 1 days;
   }
 
   function registerCallback(address callback) public onlyOwner {
