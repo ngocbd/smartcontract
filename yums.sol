@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract yums at 0x9ab6c2d19a2f89624c05f8b06b3c691871579734
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YUMS at 0x42ee30c77fe0ed0375579b6e5af9ea846c203210
 */
-contract yums {
+contract YUMS {
     /* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
@@ -16,9 +16,9 @@ contract yums {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function yums() {
+    function YUMS() {
 
-         initialSupply = 1000000000000000000000000000;
+         initialSupply = 1000000000;
         name ="Yums";
         decimals = 18;
         symbol = "YUMS";
