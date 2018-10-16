@@ -1,293 +1,123 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bob at 0xfef736cfa3b884669a4e0efd6a081250cce228e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BOB at 0x233d6c2361d966464fe4c516396cd12f5802204f
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.8;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
+
+contract SafeMath {
+  function safeMul(uint256 a, uint256 b) internal returns (uint256) {
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
+  function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b > 0);
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    assert(a == b * c + a % b);
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeSub(uint256 a, uint256 b) internal returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
     uint256 c = a + b;
-    assert(c >= a);
+    assert(c>=a && c>=b);
     return c;
   }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
 }
+contract BOB is SafeMath{
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+	address public owner;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+    mapping (address => uint256) public balanceOf;
+	mapping (address => uint256) public freezeOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+ 
+    event Transfer(address indexed from, address indexed to, uint256 value);
+	
+    event Freeze(address indexed from, uint256 value);
+	
+    event Unfreeze(address indexed from, uint256 value);
 
-contract Bob {
-  using SafeMath for uint;
-
-  enum DepositState {
-    Uninitialized,
-    BobMadeDeposit,
-    AliceClaimedDeposit,
-    BobClaimedDeposit
-  }
-
-  enum PaymentState {
-    Uninitialized,
-    BobMadePayment,
-    AliceClaimedPayment,
-    BobClaimedPayment
-  }
-
-  struct BobDeposit {
-    bytes20 depositHash;
-    uint64 lockTime;
-    DepositState state;
-  }
-
-  struct BobPayment {
-    bytes20 paymentHash;
-    uint64 lockTime;
-    PaymentState state;
-  }
-
-  mapping (bytes32 => BobDeposit) public deposits;
-
-  mapping (bytes32 => BobPayment) public payments;
-
-  function Bob() {
-  }
-
-  function bobMakesEthDeposit(
-    bytes32 _txId,
-    address _alice,
-    bytes20 _secretHash,
-    uint64 _lockTime
-  ) external payable {
-    require(_alice != 0x0 && msg.value > 0 && deposits[_txId].state == DepositState.Uninitialized);
-    bytes20 depositHash = ripemd160(
-      _alice,
-      msg.sender,
-      _secretHash,
-      address(0),
-      msg.value
-    );
-    deposits[_txId] = BobDeposit(
-      depositHash,
-      _lockTime,
-      DepositState.BobMadeDeposit
-    );
-  }
-
-  function bobMakesErc20Deposit(
-    bytes32 _txId,
-    uint256 _amount,
-    address _alice,
-    bytes20 _secretHash,
-    address _tokenAddress,
-    uint64 _lockTime
-  ) external {
-    bytes20 depositHash = ripemd160(
-      _alice,
-      msg.sender,
-      _secretHash,
-      _tokenAddress,
-      _amount
-    );
-    deposits[_txId] = BobDeposit(
-      depositHash,
-      _lockTime,
-      DepositState.BobMadeDeposit
-    );
-    ERC20 token = ERC20(_tokenAddress);
-    assert(token.transferFrom(msg.sender, address(this), _amount));
-  }
-
-  function bobClaimsDeposit(
-    bytes32 _txId,
-    uint256 _amount,
-    bytes32 _secret,
-    address _alice,
-    address _tokenAddress
-  ) external {
-    require(deposits[_txId].state == DepositState.BobMadeDeposit);
-    bytes20 depositHash = ripemd160(
-      _alice,
-      msg.sender,
-      ripemd160(sha256(_secret)),
-      _tokenAddress,
-      _amount
-    );
-    require(depositHash == deposits[_txId].depositHash && now < deposits[_txId].lockTime);
-    deposits[_txId].state = DepositState.BobClaimedDeposit;
-    if (_tokenAddress == 0x0) {
-      msg.sender.transfer(_amount);
-    } else {
-      ERC20 token = ERC20(_tokenAddress);
-      assert(token.transfer(msg.sender, _amount));
+    function BOB(
+        ) {
+        balanceOf[msg.sender] = 1000000000000000000000000000;
+        totalSupply = 1000000000000000000000000000;
+        name = "BOBO Coin";
+        symbol = "BOB";
+        decimals = 18;
+		owner = msg.sender;
     }
-  }
 
-  function aliceClaimsDeposit(
-    bytes32 _txId,
-    uint256 _amount,
-    address _bob,
-    address _tokenAddress,
-    bytes20 _secretHash
-  ) external {
-    require(deposits[_txId].state == DepositState.BobMadeDeposit);
-    bytes20 depositHash = ripemd160(
-      msg.sender,
-      _bob,
-      _secretHash,
-      _tokenAddress,
-      _amount
-    );
-    require(depositHash == deposits[_txId].depositHash && now >= deposits[_txId].lockTime);
-    deposits[_txId].state = DepositState.AliceClaimedDeposit;
-    if (_tokenAddress == 0x0) {
-      msg.sender.transfer(_amount);
-    } else {
-      ERC20 token = ERC20(_tokenAddress);
-      assert(token.transfer(msg.sender, _amount));
+    function transfer(address _to, uint256 _value) {
+        if (_to == 0x0) throw;
+		if (_value <= 0) throw; 
+        if (balanceOf[msg.sender] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);
+        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);
+        Transfer(msg.sender, _to, _value);
     }
-  }
 
-  function bobMakesEthPayment(
-    bytes32 _txId,
-    address _alice,
-    bytes20 _secretHash,
-    uint64 _lockTime
-  ) external payable {
-    require(_alice != 0x0 && msg.value > 0 && payments[_txId].state == PaymentState.Uninitialized);
-    bytes20 paymentHash = ripemd160(
-      _alice,
-      msg.sender,
-      _secretHash,
-      address(0),
-      msg.value
-    );
-    payments[_txId] = BobPayment(
-      paymentHash,
-      _lockTime,
-      PaymentState.BobMadePayment
-    );
-  }
-
-  function bobMakesErc20Payment(
-    bytes32 _txId,
-    uint256 _amount,
-    address _alice,
-    bytes20 _secretHash,
-    address _tokenAddress,
-    uint64 _lockTime
-  ) external {
-    require(
-      _alice != 0x0 &&
-      _amount > 0 &&
-      payments[_txId].state == PaymentState.Uninitialized &&
-      _tokenAddress != 0x0
-    );
-    bytes20 paymentHash = ripemd160(
-      _alice,
-      msg.sender,
-      _secretHash,
-      _tokenAddress,
-      _amount
-    );
-    payments[_txId] = BobPayment(
-      paymentHash,
-      _lockTime,
-      PaymentState.BobMadePayment
-    );
-    ERC20 token = ERC20(_tokenAddress);
-    assert(token.transferFrom(msg.sender, address(this), _amount));
-  }
-
-  function bobClaimsPayment(
-    bytes32 _txId,
-    uint256 _amount,
-    address _alice,
-    address _tokenAddress,
-    bytes20 _secretHash
-  ) external {
-    require(payments[_txId].state == PaymentState.BobMadePayment);
-    bytes20 paymentHash = ripemd160(
-      _alice,
-      msg.sender,
-      _secretHash,
-      _tokenAddress,
-      _amount
-    );
-    require(now >= payments[_txId].lockTime && paymentHash == payments[_txId].paymentHash);
-    payments[_txId].state = PaymentState.BobClaimedPayment;
-    if (_tokenAddress == 0x0) {
-      msg.sender.transfer(_amount);
-    } else {
-      ERC20 token = ERC20(_tokenAddress);
-      assert(token.transfer(msg.sender, _amount));
+    function approve(address _spender, uint256 _value)
+        returns (bool success) {
+		if (_value <= 0) throw; 
+        allowance[msg.sender][_spender] = _value;
+        return true;
     }
-  }
+       
 
-  function aliceClaimsPayment(
-    bytes32 _txId,
-    uint256 _amount,
-    bytes32 _secret,
-    address _bob,
-    address _tokenAddress
-  ) external {
-    require(payments[_txId].state == PaymentState.BobMadePayment);
-    bytes20 paymentHash = ripemd160(
-      msg.sender,
-      _bob,
-      ripemd160(sha256(_secret)),
-      _tokenAddress,
-      _amount
-    );
-    require(now < payments[_txId].lockTime && paymentHash == payments[_txId].paymentHash);
-    payments[_txId].state = PaymentState.AliceClaimedPayment;
-    if (_tokenAddress == 0x0) {
-      msg.sender.transfer(_amount);
-    } else {
-      ERC20 token = ERC20(_tokenAddress);
-      assert(token.transfer(msg.sender, _amount));
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (_to == 0x0) throw;
+		if (_value <= 0) throw; 
+        if (balanceOf[_from] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        if (_value > allowance[_from][msg.sender]) throw;
+        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);
+        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);
+        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
+        Transfer(_from, _to, _value);
+        return true;
     }
-  }
+	
+	function freeze(uint256 _value) returns (bool success) {
+        if (balanceOf[msg.sender] < _value) throw;
+		if (_value <= 0) throw; 
+        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);
+        freezeOf[msg.sender] = SafeMath.safeAdd(freezeOf[msg.sender], _value);
+        Freeze(msg.sender, _value);
+        return true;
+    }
+	
+	function unfreeze(uint256 _value) returns (bool success) {
+        if (freezeOf[msg.sender] < _value) throw;
+		if (_value <= 0) throw; 
+        freezeOf[msg.sender] = SafeMath.safeSub(freezeOf[msg.sender], _value);
+		balanceOf[msg.sender] = SafeMath.safeAdd(balanceOf[msg.sender], _value);
+        Unfreeze(msg.sender, _value);
+        return true;
+    }
+	
+	function withdrawEther(uint256 amount) {
+		if(msg.sender != owner)throw;
+		owner.transfer(amount);
+	}
+	
+	function() payable {
+		throw;
+    }
 }
