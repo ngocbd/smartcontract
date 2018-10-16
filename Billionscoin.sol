@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Billionscoin at 0xe667ee64fca09f2c4a36af46397537edf8382c80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Billionscoin at 0x86d2C3315b2a087dD492FeAf25aEd5640BdA6A53
 */
 pragma solidity ^0.4.9;
  
@@ -20,7 +20,7 @@ contract Billionscoin {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function Billionscoin() {
 
-         initialSupply = 74000000;
+         initialSupply = 50000;
          name ="Billionscoin";
         decimals = 2;
          symbol = "No1";
