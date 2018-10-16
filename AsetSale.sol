@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AsetSale at 0x34fc4fb108e5b2836bd776a5ef5969d6da5d8601
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AsetSale at 0x6bfa4c3c887fdc965bda1f09ff65fbf1f3d8b58d
 */
 pragma solidity ^0.4.18;
 
@@ -147,6 +147,11 @@ contract AsetSale is Ownable {
         token.transfer(wallet, tokensToSale());
     }
 
+    function withdrawTokensWei(uint256 _amount) public onlyOwner {
+        require(address(token) != address(0));
+        require(tokensToSale() > 0);
+        token.transfer(wallet, _amount);
+    }
 
     function() public payable {
         require(msg.value > 0);
