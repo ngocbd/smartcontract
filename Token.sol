@@ -1,101 +1,105 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd4010881cfab9c385a33db0d7797941be834c0eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x8385bfdb96c285f63af35bda5ed9ef615eedc3d2
 */
-pragma solidity ^ 0.4 .2;
+pragma solidity ^0.4.11;
+
 contract Token {
-    string public standard = 'Token 0.1';
-    string public name;
     string public symbol;
+    string public name;
     uint8 public decimals;
     uint256 public totalSupply;
-    address public owner;
-    address[] public users;
-    bytes32 public filehash;
-    
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
+
+    // Balances for each account
+    mapping(address => uint256) balances;
+
+    // Owner of account approves the transfer of an amount to another account
+    mapping(address => mapping (address => uint256)) allowed;
+
     event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed from, address indexed to, uint256 value);
 
-    modifier onlyOwner() {
-        if (owner != msg.sender) {
-            throw;
-        } else {
-            _;
-        }
+    //Modifiers
+
+    modifier when_can_transfer(address _from, uint256 _value) {
+        require (balances[_from] >= _value);
+        _;
     }
 
-    function Token() {
-        owner = 0x7F325a2d8365385e4B189b708274526899c17453;
-       // filehash = 0x26be3f796356cf26183f91fea302911533808f5ee8f58cad05c03249a1b96997;
-        address firstOwner = owner;
-        balanceOf[firstOwner] = 100000000;
-        totalSupply = 100000000;
-        name = 'Cryptonian';
-        symbol = 'crypt';
-        decimals = 8;
-        msg.sender.send(msg.value);
-        users.push(0x7F325a2d8365385e4B189b708274526899c17453);
+    modifier when_can_receive(address _recipient, uint256 _value) {
+        require (balances[_recipient] + _value > balances[_recipient]);
+        _;
     }
 
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        bool userExists = false;
-        uint memberCount = users.length;
-        for (uint i = 0; i < memberCount; i++) {
-            if (users[i] == _to) {
-                userExists = true;
-            }
-        }
-        if (userExists == false) {
-            users.push(_to);
-        }
+    modifier when_is_allowed(address _from, address _delegate, uint256 _value) {
+        require (allowed[_from][_delegate] >= _value);
+        _;
     }
 
-    function approve(address _spender, uint256 _value) returns(bool success) {
-        allowance[msg.sender][_spender] = _value;
+    // Constructor
+    function Token(uint256 initialSupply, string tokenName, string tokenSymbol, uint8 decimalUnits) {
+        balances[msg.sender] = initialSupply;
+        totalSupply = initialSupply;
+        decimals = decimalUnits;
+        symbol = tokenSymbol;
+        name = tokenName;
+    }
+
+    function totalSupply() constant returns (uint256 _totalSupply) {
+        _totalSupply = totalSupply;
+    }
+
+
+    // What is the balance of a particular account?
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    // Transfer the balance from owner's account to another account
+    function transfer(address _to, uint256 _amount)
+      when_can_transfer(msg.sender, _amount)
+      when_can_receive(_to, _amount)
+      returns (bool success) {
+        balances[msg.sender] -= _amount;
+        balances[_to] += _amount;
+        Transfer(msg.sender, _to, _amount);
         return true;
     }
 
-    function collectExcess() onlyOwner {
-        owner.send(this.balance - 2100000);
+    // Send _value amount of tokens from address _from to address _to
+    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+    // fees in sub-currencies; the command should fail unless the _from account has
+    // deliberately authorized the sender of the message via some mechanism:
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    )
+      when_can_transfer(_from, _amount)
+      when_can_receive(_to, _amount)
+      when_is_allowed(_from, msg.sender, _amount)
+      returns (bool success) {
+        allowed[_from][msg.sender] -= _amount;
+        balances[_from] -= _amount;
+        balances[_to] += _amount;
+        Transfer(_from, _to, _amount);
+        return true;
     }
 
-    function liquidate(address newOwner) onlyOwner {
-        uint sellAmount = msg.value;
-        uint memberCount = users.length;
-        owner = newOwner;
-        for (uint i = 0; i < memberCount; i++) {
-            liquidateUser(users[i], sellAmount);
-        }
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    function approve(address _spender, uint256 _amount) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
     }
 
-    function liquidateUser(address user, uint sentValue) onlyOwner {
-        uint userBalance = balanceOf[user] * 10000000;
-        uint userPercentage = userBalance / totalSupply;
-        uint etherAmount = (sentValue * userPercentage) / 10000000;
-        if (user.send(etherAmount)) {
-            balanceOf[user] = 0;
-        }
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 
-    function issueDividend() onlyOwner {
-        uint sellAmount = msg.value;
-        uint memberCount = users.length;
-        for (uint i = 0; i < memberCount; i++) {
-            sendDividend(users[i], sellAmount);
-        }
+    // Fallback function throws when called.
+    function() {
+      require(true);
     }
-
-    function sendDividend(address user, uint sentValue) onlyOwner {
-        uint userBalance = balanceOf[user] * 10000000;
-        uint userPercentage = userBalance / totalSupply;
-        uint etherAmount = (sentValue * userPercentage) / 10000000;
-        if (user.send(etherAmount)) {}
-    }
-
-    function() {}
 }
