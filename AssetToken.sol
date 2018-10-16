@@ -1,11 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetToken at 0xbacc0a58ecd510597cac918344137c7fb49eb9ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetToken at 0x068bd35f0f2aaf9b6e51c903500f8ed72e55afaa
 */
 pragma solidity ^0.4.11;
-/*
-Original Code from Toshendra Sharma Course at UDEMY
-Personalization and modifications by Fares Akel - f.antonio.akel@gmail.com
-*/
+ 
 contract admined {
 	address public admin;
 
@@ -14,7 +11,7 @@ contract admined {
 	}
 
 	modifier onlyAdmin(){
-		if(msg.sender != admin) revert();
+		require(msg.sender == admin);
 		_;
 	}
 
@@ -24,28 +21,31 @@ contract admined {
 
 }
 
-contract Token {
+contract AllInOne {
 
 	mapping (address => uint256) public balanceOf;
 	// balanceOf[address] = 5;
 	string public name;
 	string public symbol;
 	uint8 public decimal; 
+	uint256 public intialSupply=500000000;
 	uint256 public totalSupply;
+	
+	
 	event Transfer(address indexed from, address indexed to, uint256 value);
 
 
-	function Token(uint256 initialSupply, string tokenName, string tokenSymbol, uint8 decimalUnits){
-		balanceOf[msg.sender] = initialSupply;
-		totalSupply = initialSupply;
-		decimal = decimalUnits;
-		symbol = tokenSymbol;
-		name = tokenName;
+	function AllInOne(){
+		balanceOf[msg.sender] = intialSupply;
+		totalSupply = intialSupply;
+		decimal = 2;
+		symbol = "AIO";
+		name = "AllInOne";
 	}
 
 	function transfer(address _to, uint256 _value){
-		if(balanceOf[msg.sender] < _value) revert();
-		if(balanceOf[_to] + _value < balanceOf[_to]) revert();
+		require(balanceOf[msg.sender] > _value);
+		require(balanceOf[_to] + _value > balanceOf[_to]) ;
 		//if(admin)
 
 		balanceOf[msg.sender] -= _value;
@@ -55,17 +55,14 @@ contract Token {
 
 }
 
-contract AssetToken is admined, Token{
+contract AssetToken is admined, AllInOne{
 
 
-	function AssetToken(uint256 initialSupply, string tokenName, string tokenSymbol, uint8 decimalUnits, address centralAdmin) Token (0, tokenName, tokenSymbol, decimalUnits ){
-		totalSupply = initialSupply;
-		if(centralAdmin != 0)
-			admin = centralAdmin;
-		else
-			admin = msg.sender;
-		balanceOf[admin] = initialSupply;
-		totalSupply = initialSupply;	
+	function AssetToken() AllInOne (){
+		totalSupply = 500000000;
+		admin = msg.sender;
+		balanceOf[admin] = 500000000;
+		totalSupply = 500000000;	
 	}
 
 	function mintToken(address target, uint256 mintedAmount) onlyAdmin{
@@ -76,9 +73,9 @@ contract AssetToken is admined, Token{
 	}
 
 	function transfer(address _to, uint256 _value){
-		if(balanceOf[msg.sender] <= 0) revert();
-		if(balanceOf[msg.sender] < _value) revert();
-		if(balanceOf[_to] + _value < balanceOf[_to]) revert();
+		require(balanceOf[msg.sender] > 0);
+		require(balanceOf[msg.sender] > _value) ;
+		require(balanceOf[_to] + _value > balanceOf[_to]);
 		//if(admin)
 		balanceOf[msg.sender] -= _value;
 		balanceOf[_to] += _value;
