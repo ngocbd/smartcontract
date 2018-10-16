@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPiranha at 0x2b434a1b41afe100299e5be39c4d5be510a6a70c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPiranha at 0x162e50e02b33cebd3cdfe998f9ca91d30dec128e
 */
 pragma solidity ^0.4.21;
 
@@ -199,26 +199,23 @@ contract EthPiranha is ERC721, Ownable {
 	Piranha storage victimPiranha = piranhas[_victimTokenId];
 	require (piranha.hungry == 1 && victimPiranha.hungry == 1);
 
-	uint256 vitimPiranhaSize=victimPiranha.size+(now-victimPiranha.growthStartTime)/300;
+	uint8 vitimPiranhaSize=uint8(victimPiranha.size+(now-victimPiranha.growthStartTime)/300);
 	
 	require (vitimPiranhaSize>40); // don't bite a small
 
-	uint256 piranhaSize=piranha.size+(now-piranha.growthStartTime)/300+10;
+	uint8 piranhaSize=uint8(piranha.size+(now-piranha.growthStartTime)/300)+10;
 	
 	if (piranhaSize>240) { 
 	    piranha.size = 240; //maximum
 		piranha.hungry = 0;
 	} else {
-	    piranha.size = uint8(piranhaSize);
+	    piranha.size = piranhaSize;
 	}
      
 	//decrease victim size 
-	if (vitimPiranhaSize>240) 
-	    vitimPiranhaSize=240;
-		
 	if (vitimPiranhaSize>=50) {
 	    vitimPiranhaSize-=10;
-	    victimPiranha.size = uint8(vitimPiranhaSize);
+	    victimPiranha.size = vitimPiranhaSize;
 	}
     else {
 		victimPiranha.size=40;
@@ -237,19 +234,21 @@ contract EthPiranha is ERC721, Ownable {
 	Piranha storage piranhaMale = piranhas[_maleTokenId];
 	Piranha storage piranhaFemale = piranhas[_femaleTokenId];
 	
-	uint256 maleSize=piranhaMale.size+(now-piranhaMale.growthStartTime)/300;
-	
+	uint8 maleSize=uint8(piranhaMale.size+(now-piranhaMale.growthStartTime)/300);
 	if (maleSize>240)
-	   maleSize=240;
+	   piranhaMale.size=240;
+	else 
+	   piranhaMale.size=maleSize;
 
-	uint256 femaleSize=piranhaFemale.size+(now-piranhaFemale.growthStartTime)/300;
-
+	uint8 femaleSize=uint8(piranhaFemale.size+(now-piranhaFemale.growthStartTime)/300);
 	if (femaleSize>240)
-	    femaleSize=240;
+	   piranhaFemale.size=240;
+	else 
+	   piranhaFemale.size=femaleSize;
 	   
-	require (maleSize > 150 && femaleSize > 150);
+	require (piranhaMale.size > 150 && piranhaFemale.size > 150);
 	
-	uint8 newbornSize = uint8(SafeMath.div(SafeMath.add(maleSize, femaleSize),4));
+	uint8 newbornSize = uint8(SafeMath.div(SafeMath.add(piranhaMale.size, piranhaMale.size),4));
 	
 	uint256 maxGen=piranhaFemale.gen;
 	uint256 minGen=piranhaMale.gen;
@@ -276,12 +275,15 @@ contract EthPiranha is ERC721, Ownable {
 		newbornUnique = 0;
 		
      //initiate new size, cancel selling
-	 piranhaMale.size = uint8(SafeMath.div(maleSize,2));		
-     piranhaFemale.size = uint8(SafeMath.div(femaleSize,2));	
+	 piranhaMale.size = uint8(SafeMath.div(piranhaMale.size,2));		
+     piranhaFemale.size = uint8(SafeMath.div(piranhaFemale.size,2));	
 
 	 piranhaMale.growthStartTime = now;	 
 	 piranhaFemale.growthStartTime = now;	 
 
+	 piranhaMale.sellPrice = 0;	 
+	 piranhaFemale.sellPrice = 0;	 
+		
 	_createPiranha("EthPiranha", msg.sender, 0, newbornSize, newbornGen, newbornUnique, 0);
   
   }
