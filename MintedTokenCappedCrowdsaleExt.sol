@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0xc6a446ca27a1f3f80cfc1c0e14fa12a943aa3974
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x99eC7487B91800287E2150FcBCA5fD1f87a8D076
 */
-// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
+// Created using ICO Wizard https://github.com/poanetwork/ico-wizard by POA Network 
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
 
 pragma solidity ^0.4.8;
