@@ -1,10 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jiggs at 0x6bacca3cce57a46fd0822df7c07afbf9d81d96d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jiggs at 0x8b29b70b2cd8fdd891c1d0cd5808fb92781ba90b
 */
 pragma solidity ^0.4.20;
 
 /*
-J.I.G.G.S
+/ J.I.G.G.S / SAW3D
+/
+/ https://www.jiggs.io 
+/ 
+/ This is the ONLY OFFICIAL WEBSITE of the The Jigsaw Games!
+/ If you want to play, be sure to play through this website!
 */
 
 contract Jiggs {
@@ -63,17 +68,17 @@ contract Jiggs {
     =            CONFIGURABLES            =
     =====================================*/
     string public name = "The Jigsaw Games";
-    string public symbol = "Jiggs";
+    string public symbol = "Jiggs3D";
     uint8 constant public decimals = 18;
     uint8 constant internal entryFee_ = 25; 
-    uint8 constant internal refferalFee_ = 60; 
+    uint8 constant internal refferalFee_ = 50; 
     uint8 constant internal exitFee_ = 25; 
     uint256 constant internal tokenPriceInitial_ = 0.000000001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.000000003 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.0000000007 ether;
     uint256 constant internal magnitude = 2**64;
 
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 175e18;
+    uint256 public stakingRequirement = 50e18;
 
     // referral program
     mapping(address => uint256) internal referrals;
