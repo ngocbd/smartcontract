@@ -1,12 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigBallerRoulette at 0x13b87fB8E6152032fD525F64f158c129a230b6ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigBallerRoulette at 0xf6c61Cb3B0aDD944AC53c9c2dECAF2954F0515cb
 */
+pragma solidity ^0.4.19;
+
 // BigBallerRoulette: Go big or go home
 // 
-// Guess the number secretly stored in the blockchain and win the whole contract balance!
+// Guess the number secretly stored in the blockchain and win the whole contract balance.
 // A new number is randomly chosen after each try.
 //
-// To play, call the play() method with the guessed number (1-3). Big balls edition: Bet price: 1 ether
+// To play, call the play() method with the guessed number (1-10). Big balls edition: Bet price: 0.5 ether
 
 contract BigBallerRoulette {
 
@@ -27,12 +29,12 @@ contract BigBallerRoulette {
     }
 
     function shuffle() internal {
-        // randomly set secretNumber with a value between 1 and 3
-        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 3 + 1;
+        // randomly set secretNumber with a value between 1 and 10
+        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 10 + 1;
     }
 
     function play(uint256 number) payable public {
-        require(msg.value >= betPrice && number <= 3);
+        require(msg.value >= betPrice && number <= 10);
 
         Game game;
         game.player = msg.sender;
