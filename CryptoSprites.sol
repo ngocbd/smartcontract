@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x0cf5a500a615adbb12ea08d681b39186c9bde4fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x4d7edd5f94515b0f35b38f6fb2ea975a20823465
 */
 pragma solidity ^0.4.2;
 
@@ -15,6 +15,8 @@ interface KittyCore {
 interface SaleClockAuction {
     
     function getCurrentPrice (uint256 _tokenId) external view returns (uint256);
+    
+    function getAuction(uint256 _tokenId) external view returns (address seller, uint256 startingPrice, uint256 endingPrice, uint256 duration, uint256 startedAt);
     
 }
 
@@ -169,6 +171,17 @@ contract CryptoSprites is ERC721 {
         featuredSprites.push(spriteId);
     }
     
+    function calculatePrice (uint kittyId) view returns (uint) {
+        
+        uint priceIfAny = SaleClockAuction(SaleClockAuctionAddress).getCurrentPrice(kittyId);
+        
+        var _ownerCut = ((priceIfAny / 1000) * ownerCut) * priceMultiplier / priceDivider;
+        var _charityCut = ((priceIfAny / 1000) * charityCut) * priceMultiplier / priceDivider;
+        
+        return (priceIfAny * priceMultiplier / priceDivider) + _ownerCut + _charityCut;
+        
+    }
+    
     function buySprite (uint spriteId) payable {
         
         uint _ownerCut;
@@ -209,9 +222,13 @@ contract CryptoSprites is ERC721 {
             _ownerCut = ((priceIfAny / 1000) * ownerCut) * priceMultiplier / priceDivider;
             _charityCut = ((priceIfAny / 1000) * charityCut) * priceMultiplier / priceDivider;
             
-            require (msg.value == (priceIfAny * priceMultiplier / priceDivider) + _ownerCut + _charityCut);
+            // Crypto Kitty prices decrease every few seconds by a fractional amount, so use >=
             
-            address kittyOwner = KittyCore(KittyCoreAddress).ownerOf(spriteId);
+            require (msg.value >= (priceIfAny * priceMultiplier / priceDivider) + _ownerCut + _charityCut);
+            
+            // Get the owner of the Kitty for sale
+            
+            var (kittyOwner,,,,) = SaleClockAuction(SaleClockAuctionAddress).getAuction(spriteId);
             
             kittyOwner.transfer(priceIfAny * priceMultiplier / priceDivider);
             
@@ -267,35 +284,37 @@ contract CryptoSprites is ERC721 {
     
     // The following functions are in case a different contract wants to pull this data, which requires a function returning it (even if the variables are public) since solidity contracts can't directly pull storage of another contract
     
-    function featuredSpritesLength() view returns (uint) {
+    function featuredSpritesLength() view external returns (uint) {
         return featuredSprites.length;
     }
     
-    function usersSpriteOwningHistory (address user) view returns (uint[]) {
+    function usersSpriteOwningHistory (address user) view external returns (uint[]) {
         return spriteOwningHistory[user];
     }
     
-    function lookupSprite (uint spriteId) view returns (address, uint, bool, uint, uint, bool) {
+    function lookupSprite (uint spriteId) view external returns (address, uint, bool, uint, uint, bool) {
         return (broughtSprites[spriteId].owner, broughtSprites[spriteId].spriteImageID, broughtSprites[spriteId].forSale, broughtSprites[spriteId].price, broughtSprites[spriteId].timesTraded, broughtSprites[spriteId].featured);
     }
     
-    function lookupFeaturedSprites (uint spriteId) view returns (uint) {
+    function lookupFeaturedSprites (uint spriteId) view external returns (uint) {
         return featuredSprites[spriteId];
     }
     
-    function lookupAllSprites (uint spriteId) view returns (uint) {
+    function lookupAllSprites (uint spriteId) view external returns (uint) {
         return allPurchasedSprites[spriteId];
     }
     
-    // Will call both KittyCore and SaleClockAuction to get the owner of a kitten and check its price (if it's for sale)
+    // Will call SaleClockAuction to get the owner of a kitten and check its price (if it's for sale). We're calling the getAuction() function in the SaleClockAuction to get the kitty owner (that function returns 5 variables, we only want the owner). ownerOf() in the KittyCore contract won't return the kitty owner if the kitty is for sale, and this probably won't be used (including it in case it's needed to lookup an owner of a kitty not for sale later for any reason)
     
-    function lookupKitty (uint kittyId) view returns (address, uint) {
+    function lookupKitty (uint kittyId) view returns (address, uint, address) {
         
-        address kittyOwner = KittyCore(KittyCoreAddress).ownerOf(kittyId);
+        var (kittyOwner,,,,) = SaleClockAuction(SaleClockAuctionAddress).getAuction(kittyId);
 
         uint priceIfAny = SaleClockAuction(SaleClockAuctionAddress).getCurrentPrice(kittyId);
+        
+        address kittyOwnerNotForSale = KittyCore(KittyCoreAddress).ownerOf(kittyId);
 
-        return (kittyOwner, priceIfAny);
+        return (kittyOwner, priceIfAny, kittyOwnerNotForSale);
 
     }
     
