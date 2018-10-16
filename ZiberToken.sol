@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0x6F7e6b48d610b903F28AAcAB271Bdad8B7612495
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0x4a9d54e391812c54da8bc57ddfa32dfe13ac3d0f
 */
 pragma solidity ^0.4.11;
 
@@ -81,7 +81,7 @@ contract ZiberToken {
         
         /* Unless you add other functions these variables will never change */
         balanceOf[msg.sender] = _supply;
-        name = "ZIBER CW Tokens";     
+        name = "ZIBER Crowdsale Tokens";     
         symbol = "ZBR";
         
         /* If you want a divisible token then add the amount of decimals the base unit has  */
@@ -250,24 +250,6 @@ contract ZiberToken {
         }
       }
   }
-
-    //Check is msg_sender is contract dev
-  modifier onlyOwner() {
-    if (msg.sender != developer_address) {
-      throw;
-    }
-    _;
-  }
-  
-  // Send fund when ico end
-  function withdrawEth() onlyOwner {        
-        msg.sender.transfer(this.balance);
-  }
-  
-  //Kill contract
-  function kill() onlyOwner {        
-        selfdestruct(developer_address);
-  }
   
   // A helper function for the default function, allowing contracts to interact.
   function default_helper() payable {
@@ -302,4 +284,21 @@ contract ZiberToken {
     default_helper();
   }
   
+  //Check is msg_sender is contract dev
+  modifier onlyOwner() {
+    if (msg.sender != developer_address) {
+      throw;
+    }
+    _;
+  }
+  
+  // Send fund when ico end
+  function withdrawEth() onlyOwner {        
+        msg.sender.transfer(this.balance);
+  }
+  
+  //Kill contract
+  function kill() onlyOwner {        
+        selfdestruct(developer_address);
+  }
 }
