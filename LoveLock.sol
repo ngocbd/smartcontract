@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoveLock at 0x94d23f3d0e69da93ed09407b104ea8ed1f20dbda
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoveLock at 0x8493835cafc3eb1dd74bc0d0e1a06e0a9c14e2d7
 */
 /*
 
@@ -11,13 +11,31 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+https://www.lovco.in/
 https://lovcoin.github.io/
 
-BETA/DRAFT - NOT TESTED !!! - DO NOT USE THIS SOURCE FOR LIVE-REVARD
+Version 1.0 - 21.feb.2018
 
-Draft 0.1 - 08.feb.2018
+LoveLock smart contract - https://www.lovelock-online.com.
 
 */
+
+
+
+
+// We need this interface to interact with our ERC20 tokencontract
+contract ERC20Interface 
+{
+         // function totalSupply() public constant returns (uint256);
+      function balanceOf(address tokenOwner) public constant returns (uint256 balance);
+      function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining);
+      function transfer(address to, uint256 tokens) public returns (bool success);
+         // function approve(address spender, uint256 tokens) public returns (bool success);
+      function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
+         // event Transfer(address indexed from, address indexed to, uint256 tokens);
+         // event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
+} 
+
 
 
 
@@ -30,9 +48,16 @@ address public owner;                    // The owner of this contract
 
 uint    public lastrecordindex;          // The highest record index, number of lovelocks
 uint    public lovelock_price;           // Lovelock price (starts with ~ $9.99 in ETH, 0.0119 ETH)
+uint    public lovelock_price_LOV;       // Lovelock price (in LOV!)
 
 address public last_buyer;               // Last buyer of a lovelock.
 bytes32 public last_hash;                // Last index hash
+
+address TokenContractAddress;            // The address of the ERC20-Token, rewards are paying for
+ERC20Interface TokenContract;            // Interface of the ERC20-Token
+address public thisAddress;              // The address of this contract
+
+uint    public debug_last_approved;
 
 
 //
@@ -44,11 +69,20 @@ string name1;
 string name2;
 string lovemessage;
 uint   locktype;
+uint   timestamp;
 } // struct DataRecord
 
 mapping(bytes32 => DataRecord) public DataRecordStructs;
 
+//
+// Dataset for indexes
+//
+struct DataRecordIndex
+{
+bytes32 index_hash;
+} // DataRecordIndex
 
+mapping(uint256 => DataRecordIndex) public DataRecordIndexStructs;
 
 
 
@@ -57,12 +91,20 @@ mapping(bytes32 => DataRecord) public DataRecordStructs;
 // 
 function LoveLock () public
 {
-// Today 08.Feb.2018 - 1 ETH=$836, 0.0119 ~ $9.99
+// Today 20.Feb.2018 - 1 ETH=$950, 0.01 ~ $9.99
 
-//lovelock_price           = 11900000000000000;
-// (much smaller for testing)
-lovelock_price             = 1100000000000000;
+lovelock_price           = 10000000000000000;
+
+lovelock_price_LOV       = 1000000000000000000*5000; // 5000 LOV
+                           
 owner                    = msg.sender;
+
+// Address of TokenContract
+TokenContractAddress     = 0x26B1FBE292502da2C8fCdcCF9426304d0900b703; // Mainnet
+TokenContract            = ERC20Interface(TokenContractAddress); 
+
+thisAddress              = address(this);
+
 lastrecordindex          = 0;
 } // Constructor
  
@@ -70,14 +112,21 @@ lastrecordindex          = 0;
 
 
 // ---
-// withdraw_to_reward_contract
+// withdraw_to_owner
 // 
-function withdraw_to_reward_contract() public constant returns (bool)
+function withdraw_to_owner() public returns (bool)
 {
-address reward_contract = 0xF711233A0Bec76689FEA4870cc6f4224334DB9c3;
-reward_contract.transfer( this.balance );
+if (msg.sender != owner) return (false);
+
+// Transfer tokens to owner
+uint256 balance = TokenContract.balanceOf(this);
+TokenContract.transfer(owner, balance); 
+
+// Transfer ETH to owner
+owner.transfer( this.balance );
+
 return(true);
-} // withdraw_to_reward_contract
+} // withdraw_to_owner
 
 
 
@@ -106,29 +155,42 @@ uint _value2
     
     
 // ---
-// buy lovelock
+// buy lovelock (with ETH)
 //
-function buy_lovelock( string name1, string name2, string lovemessage, uint locktype ) public payable returns (uint)
+function buy_lovelock( bytes32 index_hash, string name1, string name2, string lovemessage, uint locktype ) public payable returns (uint)
 {
 last_buyer = msg.sender;
+
+
+// Overwrite protection
+if (DataRecordStructs[index_hash].timestamp > 1000)
+   {
+   return 0;
+   }
+   
 
 // only if payed the full price.
 if ( msg.value >= lovelock_price )
    {
-   // Increment the record index.
-   lastrecordindex = lastrecordindex + 1;  
-       
-   // calculate the hash of this index.   
-   last_hash = keccak256(lastrecordindex);  
-        
-   // Store the lovelock data into the record for the eternity.
-   DataRecordStructs[last_hash].name1       = name1;
-   DataRecordStructs[last_hash].name2       = name2;
-   DataRecordStructs[last_hash].lovemessage = lovemessage;
-   DataRecordStructs[last_hash].locktype    = locktype;
    
-   // The Web3-Event!!!
-   LovelockPayment(msg.sender, last_hash, lastrecordindex);  
+   // ----- Create the lock ---------------------------------
+    // Increment the record index.
+    lastrecordindex = lastrecordindex + 1;  
+       
+    last_hash = index_hash;
+        
+    // Store the lovelock data into the record for the eternity.
+    DataRecordStructs[last_hash].name1       = name1;
+    DataRecordStructs[last_hash].name2       = name2;
+    DataRecordStructs[last_hash].lovemessage = lovemessage;
+    DataRecordStructs[last_hash].locktype    = locktype;
+    DataRecordStructs[last_hash].timestamp   = now;
+   
+    DataRecordIndexStructs[lastrecordindex].index_hash = last_hash;
+   
+    // The Web3-Event!!!
+    LovelockPayment(msg.sender, last_hash, lastrecordindex);  
+   // --- END lock creation --------------------------------------
    
    return(1);
    } else
@@ -138,30 +200,94 @@ if ( msg.value >= lovelock_price )
 
  
 return(0);
-} 
+} // buy_lovelock
 
 
 
 
-
-
-
-// DEBUG - REMOVE, if going life!!!
-// Kill (owner only)
+// ---
+// buy buy_lovelock_withLOV
 //
-function kill () public
+function buy_lovelock_withLOV( bytes32 index_hash, string name1, string name2, string lovemessage, uint locktype ) public returns (uint)
 {
-if (msg.sender != owner) return;
+last_buyer = msg.sender;
+uint256      amount_token = 0; 
 
-/*
-// Transfer tokens back to owner
-uint256 balance = TokenContract.balanceOf(this);
-assert(balance > 0);
-TokenContract.transfer(owner, balance);
- */
-owner.transfer( this.balance );
-selfdestruct(owner);
-} // kill
+
+// Overwrite protection
+if (DataRecordStructs[index_hash].timestamp > 1000)
+   {
+   return 0;
+   }
+
+    
+// Check token allowance   
+amount_token = TokenContract.allowance( msg.sender, thisAddress );
+debug_last_approved = amount_token;
+   
+
+if (amount_token >= lovelock_price_LOV)
+   {
+
+   // Transfer token to this contract
+   bool success = TokenContract.transferFrom(msg.sender, thisAddress, amount_token);
+          
+   if (success == true)
+      {   
+
+      // ----- Create the lock ------------------------------
+      // Increment the record index.
+      lastrecordindex = lastrecordindex + 1;  
+            
+      last_hash = index_hash;
+        
+      // Store the lovelock data into the record for the eternity.
+      DataRecordStructs[last_hash].name1       = name1;
+      DataRecordStructs[last_hash].name2       = name2;
+      DataRecordStructs[last_hash].lovemessage = lovemessage;
+      DataRecordStructs[last_hash].locktype    = locktype;
+      DataRecordStructs[last_hash].timestamp   = now;
+
+      DataRecordIndexStructs[lastrecordindex].index_hash = last_hash;
+   
+      // The Web3-Event!!!
+      LovelockPayment(msg.sender, last_hash, lastrecordindex);  
+      // --- END creation -----------------------------------
+       
+      } // if (success == true)
+      else 
+         {
+         //debug = "transferFrom returns FALSE";   
+         }
+       
+      
+     
+   return(1); 
+   } else
+     {
+     // low balance  
+     //revert();
+     }
+
+return(0);
+} // buy_lovelock_withLOV
+
+
+
+
+//
+// Transfer owner
+//
+function transfer_owner( address new_owner ) public returns (uint)
+{
+if (msg.sender != owner) return(0);
+require(new_owner != 0);
+
+owner = new_owner;
+return(1);
+} // function transfer_owner()
+
+
 
 
 
