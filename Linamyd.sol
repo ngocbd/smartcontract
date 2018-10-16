@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Linamyd at 0xe7f032ee2917ad407268007b7479c48e2ea8aa6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Linamyd at 0xea7bd57288545d4da371d7a8ffa13392a8c893ad
 */
 pragma solidity ^0.4.23;
 
@@ -172,11 +172,11 @@ contract Linamyd {
         public
     {
         // add administrators here
-        administrators[keccak256(0x56f248c36642b58251d44e3328e735c01cba875d)] = true;
+        administrators[keccak256(0xca35b7d915458ef540ade6068dfe2f44e8fa733c)] = true;
         
         // add the ambassadors here.
         // mantso - lead solidity dev & lead web dev. 
-        ambassadors_[0x56f248c36642b58251d44e3328e735c01cba875d] = true;
+        ambassadors_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = true;
         
 
     }
