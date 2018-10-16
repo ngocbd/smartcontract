@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x0c04792e92e6b2896a18568fd936781e9857feb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x237a4ecd450e4a792d506f4b97d1fb3f903d1f21
 */
 pragma solidity ^0.4.19;
 
@@ -70,7 +70,7 @@ contract PresalePool {
   uint constant public maxGasPrice = 50000000000;
   // whitelisting contract
   WhiteList constant public whitelistContract = WhiteList(0x8D95B038cA80A986425FA240C3C17Fb2B6e9bc63);
-  bool whitelistIsActive;
+  
   
   // These variables are all initially set to 0 and will be set at some point during the contract
   // epoch time that the next contribution caps become active
@@ -356,13 +356,8 @@ contract PresalePool {
     }
   }
   
-  function toggleWhitelist (bool active) public onlyOwner {
-    whitelistIsActive = active;
-  }
-  
   // This internal function returns the cap amount of a whitelisted address.
   function _checkCap (address addr) internal returns (uint) {
-    if (!whitelistIsActive) return contributionCaps[0];
     _checkWhitelistContract(addr);
     var c = whitelist[addr];
     if (!c.authorized) return 0;
@@ -398,10 +393,9 @@ contract PresalePool {
   // This callable function returns the balance, contribution cap, and remaining available balance of any contributor.
   function checkContributorBalance (address addr) view public returns (uint balance, uint cap, uint remaining) {
     var c = whitelist[addr];
-    if (!whitelistIsActive) cap = contributionCaps[0];
-    else if (!c.authorized) {
+    if (!c.authorized) {
       cap = whitelistContract.checkMemberLevel(addr);
-      if (cap == 0) return (c.balance,0,0);
+      if (cap == 0) return (0,0,0);
     } else {
       cap = c.cap;
     }
