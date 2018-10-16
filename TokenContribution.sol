@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenContribution at 0xf598aab521dd147074d6e93d69cc0d4446ecb49d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenContribution at 0xf8a06ef897755bbd49707d8a8ce0ca9e6a0f0c34
 */
 pragma solidity 0.4.19;
 
@@ -753,10 +753,10 @@ contract ERC20Token {
 contract TokenContribution is Owned, TokenController {
     using SafeMath for uint256;
 
-    uint256 constant public maxSupply = 10000000 * 10**8;
+    uint256 constant public maxSupply = 1000000000 * 10**8;
 
     // Half of the max supply. 50% for ico
-    uint256 constant public saleLimit = 5000000 * 10**8;
+    uint256 constant public saleLimit = 500000000 * 10**8;
 
     uint256 constant public maxGasPrice = 50000000000;
 
