@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xd71c29c1f66ce7185afd245961add939de87338b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x6f7ad850ef94320cb88f5ae66e5eb8244e81c949
 */
 pragma solidity ^0.4.16;
 
@@ -17,11 +17,10 @@ contract owned {
     
 }    
 
-interface tokenRecipient { function receiveApproval(address _from, uint32 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract x32323 is owned{
-    
-    
+
     mapping (address => bool) public frozenAccount;
     event FrozenFunds(address target, bool frozen);
 
@@ -36,15 +35,14 @@ contract x32323 is owned{
     string public symbol;
     uint8 public decimals = 0;
     // 0 decimals is the strongly suggested default, avoid changing it
-    uint32 public totalSupply;
+    uint256 public totalSupply;
 
     // This creates an array with all balances
-    mapping (address => uint32) public balanceOf;
-    mapping (address => mapping (address => uint32)) public allowance;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-
 
 
     /**
@@ -53,20 +51,20 @@ contract x32323 is owned{
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        uint32 initialSupply,
+        uint256 initialSupply,
         string tokenName,
         string tokenSymbol
     ) public {
         totalSupply = 23000000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "??7";                                   // Set the name for display purposes
-        symbol = "??7";                               // Set the symbol for display purposes
+        name = "???";                                   // Set the name for display purposes
+        symbol = "TW?";                               // Set the symbol for display purposes
     }
 
     /**
      * Internal transfer, only can be called by this contract
      */
-    function _transfer(address _from, address _to, uint32 _value) internal {
+    function _transfer(address _from, address _to, uint _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
@@ -92,22 +90,12 @@ contract x32323 is owned{
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint32 _value) public {
+    function transfer(address _to, uint256 _value) public {
         require(!frozenAccount[msg.sender]);
 	if(msg.sender.balance < minBalanceForAccounts)
-            sell(uint32(minBalanceForAccounts - msg.sender.balance) / sellPrice);
+            sell((minBalanceForAccounts - msg.sender.balance) / sellPrice);
         _transfer(msg.sender, _to, _value);
     }
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` on behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
 
 
     /**
@@ -118,7 +106,7 @@ contract x32323 is owned{
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint32 _value) public
+    function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
@@ -133,7 +121,7 @@ contract x32323 is owned{
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
      */
-    function approveAndCall(address _spender, uint32 _value, bytes _extraData)
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
         public
         returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
@@ -145,19 +133,19 @@ contract x32323 is owned{
 
 
 
-    uint32 public sellPrice;
-    uint32 public buyPrice;
+    uint256 public sellPrice;
+    uint256 public buyPrice;
 
     
     
 
-    function setPrices(uint32 newSellPrice, uint32 newBuyPrice) onlyOwner {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
 
-    function buy() payable returns (uint32 amount){
-        amount = uint32(msg.value) / buyPrice;                    // calculates the amount
+    function buy() payable returns (uint amount){
+        amount = msg.value / buyPrice;                    // calculates the amount
         require(balanceOf[this] >= amount);               // checks if it has enough to sell
         balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
         balanceOf[this] -= amount;                        // subtracts amount from seller's balance
@@ -165,7 +153,7 @@ contract x32323 is owned{
         return amount;                                    // ends function and returns
     }
 
-    function sell(uint32 amount) returns (uint32 revenue){
+    function sell(uint amount) returns (uint revenue){
         require(balanceOf[msg.sender] >= amount);         // checks if the sender has enough to sell
         balanceOf[this] += amount;                        // adds the amount to owner's balance
         balanceOf[msg.sender] -= amount;                  // subtracts the amount from seller's balance
@@ -178,7 +166,7 @@ contract x32323 is owned{
 
     uint minBalanceForAccounts;
     
-    function setMinBalance(uint32 minimumBalanceInFinney) onlyOwner {
+    function setMinBalance(uint minimumBalanceInFinney) onlyOwner {
          minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
     }
 
