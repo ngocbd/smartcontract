@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOBuyer at 0xee68907c93b57d57a1c4d60940ff1b310e18e467
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOBuyer at 0x22EbaB2fBA4A1648Aa8A0bdAeA975738A7810E24
 */
 pragma solidity ^0.4.11;
 
@@ -28,11 +28,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
@@ -81,14 +76,17 @@ contract ICOBuyer is Ownable {
 
   //Notify on contract updates
   event ICOStartBlockChanged(uint256 _icoStartBlock);
+  event ICOStartTimeChanged(uint256 _icoStartTime);
   event ExecutorChanged(address _executor);
   event CrowdSaleChanged(address _crowdSale);
   event TokenChanged(address _token);
   event PurchaseCapChanged(uint256 _purchaseCap);
 
   // only owner can change these
-  // Earliest time contract is allowed to buy into the crowdsale.
+  // Earliest block number contract is allowed to buy into the crowdsale.
   uint256 public icoStartBlock;
+  // Earliest time contract is allowed to buy into the crowdsale.
+  uint256 public icoStartTime;
   // The crowdsale address.
   address public crowdSale;
   // The address that can trigger ICO purchase (may be different to owner)
@@ -101,10 +99,11 @@ contract ICOBuyer is Ownable {
     _;
   }
 
-  function ICOBuyer(address _executor, address _crowdSale, uint256 _icoStartBlock, uint256 _purchaseCap) {
+  function ICOBuyer(address _executor, address _crowdSale, uint256 _icoStartBlock, uint256 _icoStartTime, uint256 _purchaseCap) {
     executor = _executor;
     crowdSale = _crowdSale;
     icoStartBlock = _icoStartBlock;
+    icoStartTime = _icoStartTime;
     purchaseCap = _purchaseCap;
   }
 
@@ -113,9 +112,14 @@ contract ICOBuyer is Ownable {
     CrowdSaleChanged(crowdSale);
   }
 
-  function changeICOStartBlock(uint256 _icoStartBlock) onlyOwner {
+  function changeICOStartBlock(uint256 _icoStartBlock) onlyExecutorOrOwner {
     icoStartBlock = _icoStartBlock;
     ICOStartBlockChanged(icoStartBlock);
+  }
+
+  function changeICOStartTime(uint256 _icoStartTime) onlyExecutorOrOwner {
+    icoStartTime = _icoStartTime;
+    ICOStartTimeChanged(icoStartTime);
   }
 
   function changePurchaseCap(uint256 _purchaseCap) onlyOwner {
@@ -149,8 +153,10 @@ contract ICOBuyer is Ownable {
 
   // Buys tokens in the crowdsale and rewards the caller, callable by anyone.
   function buyICO() onlyExecutorOrOwner {
+    // Short circuit to save gas if the earliest block number hasn't been reached.
+    if ((icoStartBlock != 0) && (getBlockNumber() < icoStartBlock)) return;
     // Short circuit to save gas if the earliest buy time hasn't been reached.
-    if (getBlockNumber() < icoStartBlock) return;
+    if ((icoStartTime != 0) && (getNow() < icoStartTime)) return;
     // Return if no balance
     if (this.balance == 0) return;
 
@@ -169,6 +175,11 @@ contract ICOBuyer is Ownable {
   //Function is mocked for tests
   function getBlockNumber() internal constant returns (uint256) {
     return block.number;
+  }
+
+  //Function is mocked for tests
+  function getNow() internal constant returns (uint256) {
+    return now;
   }
 
 }
