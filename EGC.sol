@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGC at 0x748e0216c9c0ccf215dcd1e848d461e6ce86a5f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGC at 0x848217a9569ca64fffba9d000cda05f9d2fa97f5
 */
 pragma solidity ^0.4.11;
 
@@ -115,7 +115,7 @@ contract StandardToken is BasicToken, ERC20 {
 
 contract EGC is StandardToken{
     string public constant name = "ExchangeGoodsChain";
-    string public constant symbol = "EGC+";
+    string public constant symbol = "EGC";
     uint public constant decimals = 18;
     string public constant version = "1.0";
     // uint public constant totalNumber =13*(10**8)*(10**decimals);
