@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DatareumToken at 0x015ba4339d4d5e51c57e346af2877e920c632eb4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DatareumToken at 0x451d4994cd2f2f691632b3d574e4a3d69c8cd7c6
 */
 pragma solidity ^0.4.20;
 
@@ -94,8 +94,17 @@ contract DatareumToken is Ownable { //ERC - 20 token contract
   }
   
   bool public locked = true;
+  bool public canChangeLocked = true;
+
   function changeLockTransfer (bool _request) public onlyOwner {
+    require(canChangeLocked);
     locked = _request;
+  }
+
+  function finalUnlockTransfer () public {
+    require (now > finishDate + 4 weeks);
+    locked = false;
+    canChangeLocked = false;
   }
   
   //standart ERC-20 function
@@ -112,6 +121,7 @@ contract DatareumToken is Ownable { //ERC - 20 token contract
   //standart ERC-20 function
   function transferFrom(address _from, address _to, uint256 _amount) public returns(bool success){
     require(this != _to);
+    require (_to != address(0));
     require(!locked);
     balances[_from] = balances[_from].sub(_amount);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
@@ -154,7 +164,7 @@ contract DatareumToken is Ownable { //ERC - 20 token contract
     finishDate = _date;
   }
 
-  uint finishDate = 1893456000;
+  uint public finishDate = 1893456000;
   
   uint public crowdsaleBalance = 600000000 ether;
   
@@ -214,7 +224,7 @@ contract DatareumToken is Ownable { //ERC - 20 token contract
     balances[this] = balances[this].sub(buffer);
   }
 
-  uint public constant PRE_ICO_FINISH = 1525564740;
+  uint public constant PRE_ICO_FINISH = 1525737540;
 
   mapping (address => bool) public bountyAddresses;
 
