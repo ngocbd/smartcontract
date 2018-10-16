@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GigaGivingToken at 0x09287b5f9eb273023facd94ab5a61f5af749ecc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GigaGivingToken at 0xb0ea8da75cb8695d2519d12f5f2bfafd15a29514
 */
 pragma solidity ^0.4.16;
 
@@ -83,7 +83,7 @@ library SafeMath {
 contract GigaGivingToken is StandardToken {
     using SafeMath for uint256;
          
-    uint256 private fundingGoal;
+    uint256 private fundingGoal = 0 ether;
     uint256 private amountRaised;
 
     uint256 private constant PHASE_1_PRICE = 1600000000000000;
@@ -95,7 +95,7 @@ contract GigaGivingToken is StandardToken {
 
     uint256 public constant TOTAL_TOKENS = 15000000;
     uint256 public constant  CROWDSALE_TOKENS = 12000000;  
-    string public constant VERSION = "GC.6";
+    
 
     uint256 public startTime;
     uint256 public tokenSupply;
@@ -105,15 +105,14 @@ contract GigaGivingToken is StandardToken {
 
     string public name = "Giga Coin";
     string public symbol = "GC";
+    string public version = "GC.7";
     uint256 public decimals = 0;  
     
     // GigaGivingToken public tokenReward;
     mapping(address => uint256) public ethBalanceOf;
     bool public fundingGoalReached = false;
-    bool public crowdsaleClosed = false;
-
-    event GoalReached(address goalBeneficiary, uint256 totalAmountRaised);
-    event FundTransfer(address backer, uint256 amount, bool isContribution);
+    bool public crowdsaleClosed = false;   
+    bool public refundsOpen = false;   
 
     function GigaGivingToken (address icoBeneficiary) public {
         creator = msg.sender;
@@ -125,10 +124,9 @@ contract GigaGivingToken is StandardToken {
 
         balances[this] = CROWDSALE_TOKENS;
         Transfer(0x0, this, CROWDSALE_TOKENS);              
+        tokenSupply = CROWDSALE_TOKENS;
         
-        fundingGoal = 1000 ether;         
-        startTime = 1510765200;              
-        tokenSupply = 12000000;
+        startTime = 1510765200;
     }   
   
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
@@ -157,12 +155,13 @@ contract GigaGivingToken is StandardToken {
         } else {
             coinTotal = amount.div(PHASE_1_PRICE);
         }
-       
-        ethBalanceOf[msg.sender] = ethBalanceOf[msg.sender].add(amount);
+
+        ethBalanceOf[msg.sender] = ethBalanceOf[msg.sender].add(amount);              
+        balances[msg.sender] = balances[msg.sender].add(coinTotal);
+        balances[this] = balances[this].sub(coinTotal);
         amountRaised = amountRaised.add(amount);
         tokenSupply = tokenSupply.sub(coinTotal);
         transfer(msg.sender, coinTotal);
-        FundTransfer(msg.sender, amount, true);
     }  
 
     modifier afterDeadline() { 
@@ -174,19 +173,16 @@ contract GigaGivingToken is StandardToken {
     function checkGoalReached() public afterDeadline {
         if (amountRaised >= fundingGoal) {
             fundingGoalReached = true;
-            GoalReached(beneficiary, amountRaised);
         }
         crowdsaleClosed = true;
     }
 
     function safeWithdrawal() public afterDeadline {
-        if (!fundingGoalReached) {
+        if (refundsOpen) {
             uint amount = ethBalanceOf[msg.sender];
             ethBalanceOf[msg.sender] = 0;
             if (amount > 0) {
-                if (msg.sender.send(amount)) {
-                    FundTransfer(msg.sender, amount, false);
-                } else {
+                if (!msg.sender.send(amount)) {
                     ethBalanceOf[msg.sender] = amount;
                 }
             }
@@ -195,10 +191,14 @@ contract GigaGivingToken is StandardToken {
         if (fundingGoalReached && beneficiary == msg.sender) {
             if (beneficiary.send(amountRaised)) {
                 this.transfer(msg.sender, tokenSupply);
-                FundTransfer(beneficiary, amountRaised, false);                
             } else {               
                 fundingGoalReached = false;
             }
         }
+    }
+
+    function enableRefunds() public afterDeadline {
+        require(msg.sender == beneficiary);
+        refundsOpen = true;
     }
 }
