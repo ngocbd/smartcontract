@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeseToken at 0xc3866fb1c2a6c647cb4374cac42e8fbdf6217072
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeseToken at 0x60e97447083a8b6c84ebcc854c32f43e93b86d9b
 */
 pragma solidity ^0.4.18;
 
@@ -256,25 +256,49 @@ contract MintableToken is StandardToken, Ownable {
 
   address public saleAgent;
 
-  address public unlockedAddress;
+  mapping(address => bool) public lockedAddressesAfterITO;
 
-  function setUnlockedAddress(address newUnlockedAddress) public onlyOwner {
-    unlockedAddress = newUnlockedAddress;
-  }
+  mapping(address => bool) public unlockedAddressesDuringITO;
 
-  modifier notLocked() {
-    require(msg.sender == owner || msg.sender == saleAgent || msg.sender == unlockedAddress || mintingFinished);
+  address[] public tokenHolders;
+
+  modifier onlyOwnerOrSaleAgent() {
+    require(msg.sender == saleAgent || msg.sender == owner);
     _;
   }
 
-  function setSaleAgent(address newSaleAgnet) public {
-    require(msg.sender == saleAgent || msg.sender == owner);
+  function unclockAddressDuringITO(address addressToUnlock) public onlyOwnerOrSaleAgent {
+    unlockedAddressesDuringITO[addressToUnlock] = true;
+  }
+
+  function lockAddressAfterITO(address addressToLock) public onlyOwnerOrSaleAgent {
+    lockedAddressesAfterITO[addressToLock] = true;
+  }
+
+  function unlockAddressAfterITO(address addressToUnlock) public onlyOwnerOrSaleAgent {
+    lockedAddressesAfterITO[addressToUnlock] = false;
+  }
+
+  function unlockBatchOfAddressesAfterITO(address[] addressesToUnlock) public onlyOwnerOrSaleAgent {
+    for(uint i = 0; i < addressesToUnlock.length; i++) lockedAddressesAfterITO[addressesToUnlock[i]] = false;
+  }
+
+
+  modifier notLocked() {
+    require((mintingFinished && !lockedAddressesAfterITO[msg.sender]) ||
+            msg.sender == saleAgent || 
+            msg.sender == owner ||
+            (!mintingFinished && unlockedAddressesDuringITO[msg.sender]));
+    _;
+  }
+
+  function setSaleAgent(address newSaleAgnet) public onlyOwnerOrSaleAgent {
     saleAgent = newSaleAgnet;
   }
 
   function mint(address _to, uint256 _amount) public returns (bool) {
     require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
-    
+    if(balances[_to] == 0) tokenHolders.push(_to);
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
@@ -409,9 +433,15 @@ contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, Re
 
   uint public hardcap;
 
+  bool public lockAfterManuallyMint = true;
+
   modifier isUnderHardcap() {
     require(invested < hardcap);
     _;
+  }
+
+  function setLockAfterManuallyMint(bool newLockAfterManuallyMint) public onlyOwner {
+    lockAfterManuallyMint = newLockAfterManuallyMint;
   }
 
   function setHardcap(uint newHardcap) public onlyOwner {
@@ -452,17 +482,18 @@ contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, Re
 
   function mintTokensExternal(address to, uint tokens) public onlyDirectMintAgentOrOwner {
     mintTokens(to, tokens);
+    if(lockAfterManuallyMint) token.lockAddressAfterITO(to);
   }
 
   function mintTokens(address to, uint tokens) internal {
-    token.mint(this, tokens);
-    token.transfer(to, tokens);
+    token.mint(to, tokens);
   }
 
   function endSaleDate() public view returns(uint);
 
-  function mintTokensByETHExternal(address to, uint _invested) public onlyDirectMintAgentOrOwner returns(uint) {
-    return mintTokensByETH(to, _invested);
+  function mintTokensByETHExternal(address to, uint _invested) public onlyDirectMintAgentOrOwner {
+    mintTokensByETH(to, _invested);
+    if(lockAfterManuallyMint) token.lockAddressAfterITO(to);
   }
 
   function mintTokensByETH(address to, uint _invested) internal isUnderHardcap returns(uint) {
@@ -475,6 +506,7 @@ contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, Re
   function fallback() internal minInvestLimited(msg.value) returns(uint) {
     require(now >= start && now < endSaleDate());
     wallet.transfer(msg.value);
+    token.lockAddressAfterITO(msg.sender);
     return mintTokensByETH(msg.sender, msg.value);
   }
 
@@ -823,6 +855,7 @@ contract PreITO is NextSaleAgentFeature, SoftcapFeature, ReferersCommonSale {
 
   function fallback() internal minInvestLimited(msg.value) returns(uint) {
     require(now >= start && now < endSaleDate());
+    token.lockAddressAfterITO(msg.sender);
     uint tokens = mintTokensByETH(msg.sender, msg.value);
     if(msg.value >= referalsMinInvestLimit) {
       address referer = getInputAddress();
@@ -852,9 +885,9 @@ contract Configurator is Ownable {
 
     preITO = new PreITO();
 
-    preITO.setWallet(0x1B139Ad79ED5F69ca4545EE9c4F1C774FbEc99Fe);
-    preITO.setStart(1526342400);
-    preITO.setPeriod(15);
+    preITO.setWallet(0xa86780383E35De330918D8e4195D671140A60A74);
+    preITO.setStart(1529971200);
+    preITO.setPeriod(14);
     preITO.setPrice(786700);
     preITO.setMinInvestedLimit(100000000000000000);
     preITO.setHardcap(3818000000000000000000);
@@ -867,8 +900,8 @@ contract Configurator is Ownable {
 
     ito = new ITO();
 
-    ito.setWallet(0x1B139Ad79ED5F69ca4545EE9c4F1C774FbEc99Fe);
-    ito.setStart(1527811200);
+    ito.setWallet(0x98882D176234AEb736bbBDB173a8D24794A3b085);
+    ito.setStart(1536105600);
     ito.addMilestone(5, 33);
     ito.addMilestone(5, 18);
     ito.addMilestone(5, 11);
