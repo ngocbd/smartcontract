@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tangle at 0xc943ae4364115518ce94906d4af797809335a67a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tangle at 0xd1eba2334b86022d2ac3f507f0c4e78f1916ce39
 */
 pragma solidity ^0.4.18;
 
@@ -50,14 +50,15 @@ contract Tangle is Own {
     
     using SafeMath for uint;
     string public constant name = "Tangle";
-    string public constant symbol = "TNG";
+    string public constant symbol = "TNC";
     uint32 public constant decimals = 7;
     uint public totalSupply = 10000000;
     mapping (address => uint) balances;
     mapping (address => mapping(address => uint)) allowed;
     
     
-    function Tangle() {
+    function Tangle() public {
+        totalSupply = totalSupply * 10 ** uint(decimals);
         balances[owner] = totalSupply;
     }
     
