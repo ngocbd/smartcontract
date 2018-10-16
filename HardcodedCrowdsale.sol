@@ -1,26 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HardcodedCrowdsale at 0xcda4377806cb09f226aa4840a9df8b5c2b7744ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HardcodedCrowdsale at 0x961bb40fd91453da2c9a40987cb85db494b8ec3d
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a / b;
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -46,12 +46,12 @@ contract HardcodedCrowdsale {
     address public owner = msg.sender;
     ManagedToken public managedTokenLedger;
 
-    string public name = "Uservice Token";
-    string public symbol = "UST";
+    string public name = "Tokensale of CPL";
+    string public symbol = "CPL";
 
     bool public halted = false;
      
-    uint256 public minWeiToBuy = 200000000000000000;          //  minimum 0.2 ETH to buy
+    uint256 public minTokensToBuy = 700;
     
     uint256 public preICOcontributors = 0;
 
@@ -59,17 +59,22 @@ contract HardcodedCrowdsale {
     uint256 public preICOend;
     uint256 public preICOgoal;
     uint256 public preICOcollected = 0;
-    uint256 public preICOcap = 10000 ether;
+    uint256 public preICOcap = 0 ether;
     uint256 public preICOtokensSold = 0;
     ICOStateEnum public preICOstate = ICOStateEnum.NotStarted;
     
-    uint8 public decimals = 18;
+    uint8 public decimals = 9;
     uint256 public DECIMAL_MULTIPLIER = 10**uint256(decimals);
 
     uint8 public saleIndex = 0;
  
-    uint256 public preICOprice = uint256(0.25 ether).div(1000);
-    uint256[3] public preICOcoinsLeft = [40000000*DECIMAL_MULTIPLIER, 0*DECIMAL_MULTIPLIER, 0*DECIMAL_MULTIPLIER];
+    uint256 public preICOprice = uint256(1 ether).div(1000);
+    uint256[3] public preICObonusMultipiersInPercent = [150, 145, 140];
+    uint256[3] public preICOcoinsLeft = [1000000*DECIMAL_MULTIPLIER, 1000000*DECIMAL_MULTIPLIER, 1000000*DECIMAL_MULTIPLIER];
+    uint256 public totalPreICOavailibleWithBonus = 4350000*DECIMAL_MULTIPLIER; 
+    uint256 public maxIssuedWithAmountBasedBonus = 4650000*DECIMAL_MULTIPLIER; 
+    uint256[4] public preICOamountBonusLimits = [5 ether, 20 ether, 50 ether, 300 ether];
+    uint256[4] public preICOamountBonusMultipierInPercent = [103, 105, 107, 110];
 
     mapping(address => uint256) public weiForRefundPreICO;
 
@@ -142,7 +147,7 @@ contract HardcodedCrowdsale {
 
 
     function HardcodedCrowdsale (uint _preICOstart, uint _preICOend, uint _preICOgoal, uint _preICOcap, address _newLedgerAddress) public {
-//        require(_preICOstart > now);
+        require(_preICOstart > now);
         require(_preICOend > _preICOstart);
         require(_preICOgoal > 0);
         require(_newLedgerAddress != address(0));
@@ -187,7 +192,7 @@ contract HardcodedCrowdsale {
         return true;
     }
 
-    function calculateAmountBoughtPreICO(uint256 _weisSentScaled)
+    function calculateAmountBoughtPreICO(uint256 _weisSentScaled, uint256 _amountBonusMultiplier) 
         internal returns (uint256 _tokensToBuyScaled, uint256 _weisLeftScaled) {
         uint256 value = _weisSentScaled;
         uint256 totalPurchased = 0;
@@ -208,20 +213,34 @@ contract HardcodedCrowdsale {
             }
             uint256 consumed = forThisRate.mul(preICOprice);
             value = value.sub(consumed);
+            forThisRate = forThisRate.mul(_amountBonusMultiplier.add(preICObonusMultipiersInPercent[i]).sub(100)).div(100);
             totalPurchased = totalPurchased.add(forThisRate);
         }
         return (totalPurchased, value);
     }
 
+    function getBonusMultipierInPercents(uint256 _sentAmount) public view returns (uint256 _multi) {
+        uint256 bonusMultiplier = 100;
+        for (uint8 i = 0; i < preICOamountBonusLimits.length; i++) {
+            if (_sentAmount < preICOamountBonusLimits[i]) {
+                break;
+            } else {
+                bonusMultiplier = preICOamountBonusMultipierInPercent[i];
+            }
+        }
+        return bonusMultiplier;
+    }
+
     function preICOBuy() internal notHalted returns (bool success) {
         uint256 weisSentScaled = msg.value.mul(DECIMAL_MULTIPLIER);
         address _for = msg.sender;
-        var (tokensBought, fundsLeftScaled) = calculateAmountBoughtPreICO(weisSentScaled);
-        uint256 fundsLeft = fundsLeftScaled.div(DECIMAL_MULTIPLIER);
-        uint256 totalSpent = msg.value.sub(fundsLeft);
-        if (totalSpent < minWeiToBuy) {
+        uint256 amountBonus = getBonusMultipierInPercents(msg.value);
+        var (tokensBought, fundsLeftScaled) = calculateAmountBoughtPreICO(weisSentScaled, amountBonus);
+        if (tokensBought < minTokensToBuy.mul(DECIMAL_MULTIPLIER)) {
             revert();
         }
+        uint256 fundsLeft = fundsLeftScaled.div(DECIMAL_MULTIPLIER);
+        uint256 totalSpent = msg.value.sub(fundsLeft);
         if (balanceOf(_for) == 0) {
             preICOcontributors = preICOcontributors + 1;
         }
@@ -255,6 +274,7 @@ contract HardcodedCrowdsale {
     }
 
     function cleanup() onlyOwner public {
+        require(preICOstate == ICOStateEnum.Successful);
         selfdestruct(owner);
     }
 
