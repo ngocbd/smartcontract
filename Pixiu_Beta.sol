@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pixiu_Beta at 0x53344c813fbc35890a7304187dc920358b5acf4a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pixiu_Beta at 0xbef44157a4afbfcce76db29353b6c103a03ed803
 */
 pragma solidity ^0.4.9;
 
@@ -190,32 +190,32 @@ contract Pixiu_Beta is StandardToken {
         
     }
     
-    exchangeRate[] public exchangeRateArray;  
+    exchangeRate[] private exchangeRateArray;  
 
-	mapping (address => Member) public members; 
-    address[] public adminArray;   
-    address[] public memberArray;
+	mapping (address => Member) private members; 
+    address[] private adminArray;   
+    address[] private memberArray;
 	
-    address public deposit_address;
-    uint256 public INITIAL_SUPPLY = 21000000000000;
-    uint256 public tokenExchangeRateInWei = 300000000;
+    address private deposit_address;
+    uint256 private INITIAL_SUPPLY = 21000000000000;
+    uint256 private tokenExchangeRateInWei = 0;
 
 	//???
-	uint256 public total_tokenwei = 0; 
-	uint256 public min_pay_wei = 0;
+	uint256 private total_tokenwei = 0; 
 
 	// drawall ??
-	uint256 public total_devidend = 0; //member
-	uint256 public total_withdraw = 0; //member
-    uint256 public deposit_amount = 0;  //deposit
-    uint256 public withdraw_amount = 0; //deposit
-    uint256 public dividend_amount = 0; //admin   
+	uint256 private total_devidend = 0; //member
+	uint256 private total_withdraw = 0; //member
+    uint256 private deposit_amount = 0;  //deposit
+    uint256 private withdraw_amount = 0; //deposit
+    uint256 private dividend_amount = 0; //admin   
     
     function Pixiu_Beta() {
      
         totalSupply = INITIAL_SUPPLY; 
         adminArray.push(msg.sender);
-        admin_set_deposit(msg.sender);
+        set_deposit_address(msg.sender);
+        set_exchange_rate_in_eth(300);
          
     }
 
@@ -332,7 +332,7 @@ contract Pixiu_Beta is StandardToken {
     
     }
     
-    function admin_set_exchange_rate(uint[] exchangeRates) onlyAdmin{
+    function set_exchange_rate(uint[] exchangeRates) onlyAdmin{
          
         uint len = exchangeRates.length;
         exchangeRateArray.length = 0;
@@ -348,8 +348,9 @@ contract Pixiu_Beta is StandardToken {
         
     }
 
-	function get_exchange_wei() constant returns(uint256){
+	function get_exchange_wei() returns(uint256){
 
+        
 		uint len = exchangeRateArray.length;  
 		uint nowTime = block.timestamp;
         for(uint i = 0; i < len; i += 3){
@@ -366,27 +367,20 @@ contract Pixiu_Beta is StandardToken {
         }
 		return tokenExchangeRateInWei;
 	}
-	
-	function admin_set_min_pay(uint256 _min_pay) onlyAdmin{
-	    
-	    require(_min_pay >= 0);
-	    min_pay_wei = _min_pay * 10 ** 18;
-	    
-	}
     
-    function get_admin_list() constant returns(address[] _adminArray){
+    function get_admin_list() constant onlyAdmin returns(address[]){
         
-        _adminArray = adminArray;
+        return adminArray;
         
     }
     
-    function admin_add(address admin) onlyAdmin adminDoesNotExist(admin){
+    function add_admin(address admin) onlyAdmin adminDoesNotExist(admin){
         
         adminArray.push(admin);
         
     }
     
-    function admin_del(address admin) onlyAdmin adminExists(admin){
+    function del_admin(address admin) onlyAdmin adminExists(admin){
         
         for (uint i = 0; i < adminArray.length - 1; i++)
             if (adminArray[i] == admin) {
@@ -398,75 +392,106 @@ contract Pixiu_Beta is StandardToken {
         
     }
     
-    function admin_set_deposit(address addr) onlyAdmin{
+    function set_deposit_address(address addr) onlyAdmin{
         
         deposit_address = addr;
         
     }
     
-    function admin_active_payable() onlyAdmin{
+    function set_exchange_rate_in_eth(uint256 _exchangeRateInEth) onlyAdmin {
+        
+        require(_exchangeRateInEth > 0);
+        tokenExchangeRateInWei = _exchangeRateInEth * 10**6;
+        
+    }
+    
+    function active_payable() onlyAdmin{
     
         isPayable = true;
         
     }
     
-    function admin_inactive_payable() onlyAdmin{
+    function inactive_payable() onlyAdmin{
         
         isPayable = false;
         
     }
     
-    function admin_active_withdrawable() onlyAdmin{
+    function active_withdrawable() onlyAdmin{
         
         isWithdrawable = true;
         
     }
     
-    function admin_inactive_withdrawable() onlyAdmin{
+    function inactive_withdrawable() onlyAdmin{
         
         isWithdrawable = false;
         
     }
     
-    function admin_active_dividend(address _member) onlyAdmin memberExists(_member){
+    function active_dividend(address _member) onlyAdmin memberExists(_member){
         
         members[_member].isDividend = true;
         
     }
     
-    function admin_inactive_dividend(address _member) onlyAdmin memberExists(_member){
+    function inactive_dividend(address _member) onlyAdmin memberExists(_member){
         
         members[_member].isDividend = false;
         
     }
     
-    function admin_active_withdraw(address _member) onlyAdmin memberExists(_member){
+    function active_withdraw(address _member) onlyAdmin memberExists(_member){
         
         members[_member].isWithdraw = true;
         
     }
     
-    function admin_inactive_withdraw(address _member) onlyAdmin memberExists(_member){
+    function inactive_withdraw(address _member) onlyAdmin memberExists(_member){
         
         members[_member].isWithdraw = false;
         
     }
     
-    function get_total_info() constant returns(uint256 _deposit_amount, uint256 _total_devidend, uint256 _total_remain, uint256 _total_withdraw){
+    function get_total_info() onlyAdmin returns(uint256[]){
 
-        _total_remain = total_devidend - total_withdraw;
-        _deposit_amount = deposit_amount;
-        _total_devidend = total_devidend;
-        _total_withdraw = total_withdraw;
+        uint256 total_remain = total_devidend - total_withdraw;
+        uint256[] memory info = new uint256[](6);
+        info[0] = deposit_amount;
+        info[1] = total_devidend;
+        info[2] = total_remain;
+        info[3] = total_withdraw;
+        
+        return info;
         
     }
     
-    function get_info(address _member) constant returns (uint256 _balance, uint256 _devidend, uint256 _remain, uint256 _withdraw){
+    function get_member_info(address _member) onlyAdmin memberExists(_member) returns(uint256[]){
         
-        _devidend = members[_member].dividend;
-        _withdraw = members[_member].withdraw;
-        _remain = _devidend - _withdraw;
-        _balance = balances[_member];
+        return get_info(_member);
+        
+    }
+    
+    function get_my_info() returns(uint256[]){
+        
+        return get_info(msg.sender);
+        
+    }
+    
+    function get_info(address _member) private returns (uint256[]){
+        
+        uint256 _devidend = members[_member].dividend;
+        uint256 _withdraw = members[_member].withdraw;
+        uint256 _remain = _devidend - _withdraw;
+        uint256 _balance = balances[_member];
+        
+        uint256[] memory _info = new uint256[](4);
+        _info[0] = _balance;
+        _info[1] = _devidend;
+        _info[2] = _remain;
+        _info[3] = _withdraw;
+        
+        return _info;
         
     }
     
@@ -508,6 +533,7 @@ contract Pixiu_Beta is StandardToken {
         
     }
  
+	 
 	function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32)     {
 		require(_to != deposit_address);
         require(isPayable);
@@ -545,6 +571,7 @@ contract Pixiu_Beta is StandardToken {
 		Transfer(_from, _to, _value);
 	}
 
+    
     function () payable {
         
         pay();
@@ -552,16 +579,23 @@ contract Pixiu_Beta is StandardToken {
     }
   
     function pay() public payable returns (bool) {
+        
       
-        require(msg.value > min_pay_wei);
+        require(msg.value > 0);
         require(isPayable);
+        
+        /*
+        uint256 amount = msg.value;
+        uint256 refund = amount % tokenExchangeRateInWei;
+        uint256 tokens = (amount - refund) / tokenExchangeRateInWei;
+        balances[msg.sender] = balances[msg.sender].add(tokens);*/
         
         if(msg.sender == deposit_address){
              deposit_amount += msg.value;
         }else{
         
     		uint256 exchangeWei = get_exchange_wei();
-    		uint256 thisTokenWei = exchangeWei * msg.value / 10**18 ;
+    		uint256 thisTokenWei =  exchangeWei * msg.value / 10**18 ;
         
             if (members[msg.sender].isExists != true) {
                 
@@ -579,8 +613,20 @@ contract Pixiu_Beta is StandardToken {
         return true;
     
     }
+  
+    function get_balance(address a) public returns(uint256){
+      
+        return balances[a];
+      
+    }
+        
+    function get_balance() public returns(uint256){
+      
+        return balances[msg.sender];
+      
+    }
             
-    function get_this_balance() constant returns(uint256){
+    function get_this_balance() public returns(uint256){
       
         return this.balance;
       
