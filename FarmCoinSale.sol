@@ -1,7 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FarmCoinSale at 0x63f134b1cb7f8f39ce3d8e508be443bd40323125
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FarmCoinSale at 0x560da6e7f219e37a094342b3a56ea27bfa6798be
 */
 pragma solidity ^0.4.16;
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 contract Token {
 
@@ -93,11 +119,7 @@ contract StandardToken is Token {
 //name this contract whatever you'd like
 contract FarmCoin is StandardToken {
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
-
+   
     /* Public variables of the token */
 
     /*
@@ -134,7 +156,7 @@ contract FarmCoin is StandardToken {
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert; }
         return true;
     }
 }
@@ -218,6 +240,29 @@ contract FarmCoinSale is FarmCoin {
         Contribution(msg.sender, amount);
     }
 
+    function deposit() payable {
+      create(msg.sender);
+    }
+    function register(address sender) payable {
+    }
+    function () payable {
+    }
+  
+    function create(address _beneficiary) payable{
+    uint256 amount = msg.value;
+    /// 
+    }
+
+     // Send `tokens` amount of tokens from address `from` to address `to`
+     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+     // fees in sub-currencies; the command should fail unless the _from account has
+     // deliberately authorized the sender of the message via some mechanism; we propose
+     // these standardized APIs for approval:
+     function transferFrom(address from, address to, uint _value) public returns (bool success) {
+                 Transfer(from, to, _value);
+         return true;
+     }
     // update the ETH/COIN rate
     function updateRate(uint256 rate) external {
         require(msg.sender==creator);
