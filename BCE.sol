@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCE at 0x71449c1f769d01fbe0f5d84a7b762f1ad84f8993
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCE at 0x1a9c17043a10d650eb42ffb37162412beca10910
 */
 pragma solidity ^0.4.18;
 
@@ -44,8 +44,8 @@ contract BCE {
     string public name;
     string public symbol;
     uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    uint256 public supplyLeftAtOrigin = totalSupply;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -82,12 +82,17 @@ contract BCE {
         createTokens();
     } 
     
+    /*function BCEToken() public {
+        balanceOf[msg.sender] = totalSupply;
+        owner = msg.sender;
+    } */
+    
 	function createTokens() public payable {
-	    require(supplyLeftAtOrigin > 1000000 * 10 ** uint256(decimals)); // Security reserve = 1 Mil. Max BCE in circulation = 21 mil.
+	    require(totalSupply > 0); // Max Bitcoin Ethers in circulation = 21 mil. 
         require(msg.value > 0);
         uint256 tokens = msg.value.mul(RATE);
         balanceOf[msg.sender] = balanceOf[msg.sender].add(tokens);
-        supplyLeftAtOrigin = supplyLeftAtOrigin.sub(tokens);
+        totalSupply = totalSupply.sub(tokens);
         owner.transfer(msg.value);
     } 
     
