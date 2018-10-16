@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PollManagedFund at 0x113bc56e0a8164b71a6b44d44fd1ed4ab54ea204
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PollManagedFund at 0x49db6ee4507132d1fdac92318e0e6150bf786728
 */
 pragma solidity ^0.4.21;
 
@@ -424,7 +424,7 @@ interface ITokenEventListener {
      * @param _to Receiver address
      * @param _value Amount of tokens
      */
-    function onTokenTransfer(address _from, address _to, uint256 _value) public;
+    function onTokenTransfer(address _from, address _to, uint256 _value) external;
 }
 
 // File: contracts/token/ManagedToken.sol
@@ -610,6 +610,8 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
     address public bountyTokenWallet;
     address public companyTokenWallet;
     address public advisorTokenWallet;
+    address public lockedTokenAddress;
+    address public refundManager;
 
     uint256 public tap;
     uint256 public lastWithdrawTime = 0;
@@ -641,6 +643,7 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
         address _reserveTokenWallet,
         address _bountyTokenWallet,
         address _advisorTokenWallet,
+        address _refundManager,
         address[] _owners
     ) public
     {
@@ -651,6 +654,7 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
         reserveTokenWallet = _reserveTokenWallet;
         bountyTokenWallet = _bountyTokenWallet;
         advisorTokenWallet = _advisorTokenWallet;
+        refundManager = _refundManager;
         _setOwners(_owners);
     }
 
@@ -674,6 +678,11 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
     function setTokenAddress(address _tokenAddress) public onlyOwner {
         require(address(token) == address(0));
         token = ManagedToken(_tokenAddress);
+    }
+
+    function setLockedTokenAddress(address _lockedTokenAddress) public onlyOwner {
+        require(address(lockedTokenAddress) == address(0));
+        lockedTokenAddress = _lockedTokenAddress;
     }
 
     /**
@@ -717,6 +726,21 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
         token.destroy(msg.sender, token.balanceOf(msg.sender));
         msg.sender.transfer(refundAmount);
         RefundContributor(msg.sender, refundAmount, now);
+    }
+
+    /**
+    * @dev Function is called by owner to refund payments if crowdsale failed to reach soft cap
+    */
+    function autoRefundCrowdsaleContributor(address contributorAddress) external {
+        require(ownerByAddress[msg.sender] == true || msg.sender == refundManager);
+        require(state == FundState.CrowdsaleRefund);
+        require(contributions[contributorAddress] > 0);
+
+        uint256 refundAmount = contributions[contributorAddress];
+        contributions[contributorAddress] = 0;
+        token.destroy(contributorAddress, token.balanceOf(contributorAddress));
+        contributorAddress.transfer(refundAmount);
+        RefundContributor(contributorAddress, refundAmount, now);
     }
 
     /**
@@ -770,6 +794,7 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
     function enableRefund() internal {
         require(state == FundState.TeamWithdraw);
         state = FundState.Refund;
+        token.destroy(lockedTokenAddress, token.balanceOf(lockedTokenAddress));
         token.destroy(companyTokenWallet, token.balanceOf(companyTokenWallet));
         token.destroy(reserveTokenWallet, token.balanceOf(reserveTokenWallet));
         token.destroy(foundationTokenWallet, token.balanceOf(foundationTokenWallet));
@@ -1098,14 +1123,14 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
     bool public isWithdrawEnabled = true;
 
     uint256[] public refundPollDates = [
-        1522540800, // 01.04.2018
-        1522540800, // 01.04.2018
-        1522540800, // 01.04.2018
-        1522540800, // 01.04.2018
-        1522540800, // 01.04.2018
-        1522540800, // 01.04.2018
-        1522540800, // 01.04.2018
-        1522540800  // 01.04.2018
+        1530403200, // 01.07.2018
+        1538352000, // 01.10.2018
+        1546300800, // 01.01.2019
+        1554076800, // 01.04.2019
+        1561939200, // 01.07.2019
+        1569888000, // 01.10.2019
+        1577836800, // 01.01.2020
+        1585699200  // 01.04.2020
     ];
 
     modifier onlyTokenHolder() {
@@ -1130,9 +1155,10 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
         address _reserveTokenWallet,
         address _bountyTokenWallet,
         address _advisorTokenWallet,
+        address _refundManager,
         address[] _owners
         ) public
-    Fund(_teamWallet, _referralTokenWallet, _foundationTokenWallet, _companyTokenWallet, _reserveTokenWallet, _bountyTokenWallet, _advisorTokenWallet, _owners)
+    Fund(_teamWallet, _referralTokenWallet, _foundationTokenWallet, _companyTokenWallet, _reserveTokenWallet, _bountyTokenWallet, _advisorTokenWallet, _refundManager, _owners)
     {
     }
 
@@ -1152,7 +1178,7 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
     /**
      * @dev ITokenEventListener implementation. Notify active poll contracts about token transfers
      */
-    function onTokenTransfer(address _from, address /*_to*/, uint256 _value) public {
+    function onTokenTransfer(address _from, address /*_to*/, uint256 _value) external {
         require(msg.sender == address(token));
         if(address(tapPoll) != address(0) && !tapPoll.finalized()) {
             tapPoll.onTokenTransfer(_from, _value);
@@ -1179,9 +1205,9 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
     function createTapPoll(uint8 tapIncPerc) public onlyOwner {
         require(state == FundState.TeamWithdraw);
         require(tapPoll == address(0));
-        require(getDay(now) == 1);
-        require(tapIncPerc <= 100);
-        uint256 _tap = safeAdd(tap, safeDiv(safeMul(tap, tapIncPerc), 50));
+        require(getDay(now) == 10);
+        require(tapIncPerc <= 50);
+        uint256 _tap = safeAdd(tap, safeDiv(safeMul(tap, tapIncPerc), 100));
         uint256 startTime = now;
         uint256 endTime = startTime + TAP_POLL_DURATION;
         tapPoll = new TapPoll(_tap, token, this, startTime, endTime, minVotedTokensPerc);
@@ -1205,7 +1231,7 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
         }
 
         for(uint i; i < refundPollDates.length; i++) {
-            if(now >= refundPollDates[i] && now <= safeAdd(refundPollDates[i], 12 days)) {
+            if(now >= refundPollDates[i] && now <= safeAdd(refundPollDates[i], 1 days)) {
                 return true;
             }
         }
@@ -1217,7 +1243,7 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
         require(address(refundPoll) == address(0));
         require(checkRefundPollDate());
 
-        if(secondRefundPollDate > 0 && now > safeAdd(secondRefundPollDate, 12 days)) {
+        if(secondRefundPollDate > 0 && now > safeAdd(secondRefundPollDate, 1 days)) {
             secondRefundPollDate = 0;
         }
 
@@ -1246,7 +1272,7 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
                 uint256 startTime = refundPoll.startTime();
                 secondRefundPollDate = toTimestamp(
                     getYear(startTime),
-                    getMonth(startTime) + 1,
+                    getMonth(startTime) + 2,
                     1
                 );
                 isWithdrawEnabled = false;
@@ -1260,7 +1286,8 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
         delete refundPoll;
     }
 
-    function forceRefund() public onlyOwner {
+    function forceRefund() public {
+        require(msg.sender == refundManager);
         enableRefund();
     }
 }
