@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Lib at 0x71ecde7c4b184558e8dba60d9f323d7a87411946
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Lib at 0x7bc3a3d4d304127d04f6aec09dd546d254e02ce1
 */
 pragma solidity ^0.4.11;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.11;
  * @title ERC20Lib
  * @author Majoolr.io
  *
- * version 1.0.0
+ * version 1.0.1
  * Copyright (c) 2017 Majoolr, LLC
  * The MIT License (MIT)
  * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
@@ -37,82 +37,6 @@ pragma solidity ^0.4.11;
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library BasicMathLib {
-  event Err(string typeErr);
-
-  /// @dev Multiplies two numbers and checks for overflow before returning.
-  /// Does not throw but rather logs an Err event if there is overflow.
-  /// @param a First number
-  /// @param b Second number
-  /// @return err False normally, or true if there is overflow
-  /// @return res The product of a and b, or 0 if there is overflow
-  function times(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
-    assembly{
-      res := mul(a,b)
-      jumpi(allGood, or(iszero(b), eq(div(res,b), a)))
-      err := 1
-      res := 0
-      allGood:
-    }
-    if (err)
-      Err("times func overflow");
-  }
-
-  /// @dev Divides two numbers but checks for 0 in the divisor first.
-  /// Does not throw but rather logs an Err event if 0 is in the divisor.
-  /// @param a First number
-  /// @param b Second number
-  /// @return err False normally, or true if `b` is 0
-  /// @return res The quotient of a and b, or 0 if `b` is 0
-  function dividedBy(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
-    assembly{
-      jumpi(e, iszero(b))
-      res := div(a,b)
-      mstore(add(mload(0x40),0x20),res)
-      return(mload(0x40),0x40)
-      e:
-    }
-    Err("tried to divide by zero");
-    return (true, 0);
-  }
-
-  /// @dev Adds two numbers and checks for overflow before returning.
-  /// Does not throw but rather logs an Err event if there is overflow.
-  /// @param a First number
-  /// @param b Second number
-  /// @return err False normally, or true if there is overflow
-  /// @return res The sum of a and b, or 0 if there is overflow
-  function plus(uint256 a, uint256 b) constant returns (bool err, uint256 res) {
-    assembly{
-      res := add(a,b)
-      jumpi(allGood, and(eq(sub(res,b), a), gt(res,b)))
-      err := 1
-      res := 0
-      allGood:
-    }
-    if (err)
-      Err("plus func overflow");
-  }
-
-  /// @dev Subtracts two numbers and checks for underflow before returning.
-  /// Does not throw but rather logs an Err event if there is underflow.
-  /// @param a First number
-  /// @param b Second number
-  /// @return err False normally, or true if there is underflow
-  /// @return res The difference between a and b, or 0 if there is underflow
-  function minus(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
-    assembly{
-      res := sub(a,b)
-      jumpi(allGood, eq(and(eq(add(res,b), a), or(lt(res,a), eq(res,a))), 1))
-      err := 1
-      res := 0
-      allGood:
-    }
-    if (err)
-      Err("minus func underflow");
-  }
-}
-
 library ERC20Lib {
   using BasicMathLib for uint256;
 
@@ -130,6 +54,7 @@ library ERC20Lib {
   /// @param self Stored token from token contract
   /// @param _initial_supply The initial token supply
   function init(TokenStorage storage self, uint256 _initial_supply) {
+    require(self.totalSupply == 0);
     self.totalSupply = _initial_supply;
     self.balances[msg.sender] = _initial_supply;
   }
@@ -216,5 +141,110 @@ library ERC20Lib {
   /// @return remaining Number of tokens spender has left in owner's account
   function allowance(TokenStorage storage self, address _owner, address _spender) constant returns (uint256 remaining) {
     return self.allowed[_owner][_spender];
+  }
+}
+
+pragma solidity ^0.4.11;
+
+/**
+ * @title Basic Math Library
+ * @author Majoolr.io
+ *
+ * version 1.0.0
+ * Copyright (c) 2017 Majoolr, LLC
+ * The MIT License (MIT)
+ * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
+ *
+ * The Basic Math Library is inspired by the Safe Math library written by
+ * OpenZeppelin at https://github.com/OpenZeppelin/zeppelin-solidity/ .
+ * Majoolr works on open source projects in the Ethereum community with the
+ * purpose of testing, documenting, and deploying reusable code onto the
+ * blockchain to improve security and usability of smart contracts. Majoolr
+ * also strives to educate non-profits, schools, and other community members
+ * about the application of blockchain technology.
+ * For further information: majoolr.io, openzeppelin.org
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+library BasicMathLib {
+  event Err(string typeErr);
+
+  /// @dev Multiplies two numbers and checks for overflow before returning.
+  /// Does not throw but rather logs an Err event if there is overflow.
+  /// @param a First number
+  /// @param b Second number
+  /// @return err False normally, or true if there is overflow
+  /// @return res The product of a and b, or 0 if there is overflow
+  function times(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+    assembly{
+      res := mul(a,b)
+      jumpi(allGood, or(iszero(b), eq(div(res,b), a)))
+      err := 1
+      res := 0
+      allGood:
+    }
+    if (err)
+      Err("times func overflow");
+  }
+
+  /// @dev Divides two numbers but checks for 0 in the divisor first.
+  /// Does not throw but rather logs an Err event if 0 is in the divisor.
+  /// @param a First number
+  /// @param b Second number
+  /// @return err False normally, or true if `b` is 0
+  /// @return res The quotient of a and b, or 0 if `b` is 0
+  function dividedBy(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+    assembly{
+      jumpi(e, iszero(b))
+      res := div(a,b)
+      mstore(add(mload(0x40),0x20),res)
+      return(mload(0x40),0x40)
+      e:
+    }
+    Err("tried to divide by zero");
+    return (true, 0);
+  }
+
+  /// @dev Adds two numbers and checks for overflow before returning.
+  /// Does not throw but rather logs an Err event if there is overflow.
+  /// @param a First number
+  /// @param b Second number
+  /// @return err False normally, or true if there is overflow
+  /// @return res The sum of a and b, or 0 if there is overflow
+  function plus(uint256 a, uint256 b) constant returns (bool err, uint256 res) {
+    assembly{
+      res := add(a,b)
+      jumpi(allGood, and(eq(sub(res,b), a), gt(res,b)))
+      err := 1
+      res := 0
+      allGood:
+    }
+    if (err)
+      Err("plus func overflow");
+  }
+
+  /// @dev Subtracts two numbers and checks for underflow before returning.
+  /// Does not throw but rather logs an Err event if there is underflow.
+  /// @param a First number
+  /// @param b Second number
+  /// @return err False normally, or true if there is underflow
+  /// @return res The difference between a and b, or 0 if there is underflow
+  function minus(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+    assembly{
+      res := sub(a,b)
+      jumpi(allGood, eq(and(eq(add(res,b), a), or(lt(res,a), eq(res,a))), 1))
+      err := 1
+      res := 0
+      allGood:
+    }
+    if (err)
+      Err("minus func underflow");
   }
 }
