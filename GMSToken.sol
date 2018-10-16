@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMSToken at 0xdEE35d7EE9e60b6db6446114367aC52D09d3dC50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMSToken at 0x44456721189001766a7157ed8f8727e819a58446
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.11;
 
 // Token standard API
 // https://github.com/ethereum/EIPs/issues/20
@@ -28,19 +28,6 @@ contract DSMath {
     }
     function sub(uint256 x, uint256 y) constant internal returns (uint256 z) {
         assert((z = x - y) <= x);
-    }
-    function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        z = x * y;
-        assert(x == 0 || z / x == y);
-    }
-    function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        z = x / y;
-    }
-    function min(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x <= y ? x : y;
-    }
-    function max(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x >= y ? x : y;
     }
 }
 
@@ -104,6 +91,10 @@ contract GMSToken is BaseToken {
     string public symbol;
     uint8 public decimals;
 
+	function () {
+        //if ether is sent to this address, send it back.
+        revert();
+    }
 
     function GMSToken(
         uint256 initialSupply,
