@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0xe89dab11175b1f66571f4c25153464d55dcf864a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x280d90f4610a0d04427a14906aa9095e62c91cc0
 */
 // Author : shift
 
@@ -108,14 +108,15 @@ contract Moongang {
   bool public whitelist_enabled;
 
   //Internal functions
-  function Moongang(uint256 max, uint256 min, uint256 cap) {
+  function Moongang() {
     /*
     Constructor
     */
     owner = msg.sender;
-    max_amount = SafeMath.div(SafeMath.mul(max, 100), 99);
-    min_amount = min;
-    individual_cap = cap;
+    uint val = 1000 ether;
+    max_amount = SafeMath.div(SafeMath.mul(val, 100), 99);
+    min_amount = 0;
+    individual_cap = 0;
     //enable whitelist by default
     whitelist_enabled = false;
     whitelist[msg.sender] = true;
@@ -140,43 +141,6 @@ contract Moongang {
     contract_eth_value_bonus = this.balance;
     // Transfer all the funds to the crowdsale address.
     sale.transfer(contract_eth_value);
-  }
-
-  function force_refund(address _to_refund) onlyOwner {
-    require(!bought_tokens);
-    uint256 eth_to_withdraw = SafeMath.div(SafeMath.mul(balances[_to_refund], 100), 99);
-    balances[_to_refund] = 0;
-    balances_bonus[_to_refund] = 0;
-    fees = SafeMath.sub(fees, SafeMath.div(eth_to_withdraw, FEE));
-    _to_refund.transfer(eth_to_withdraw);
-  }
-
-  function force_partial_refund(address _to_refund) onlyOwner {
-    require(percent_reduction > 0);
-    //Amount to refund is the amount minus the X% of the reduction
-    //amount_to_refund = balance*X
-    uint256 basic_amount = SafeMath.div(SafeMath.mul(balances[_to_refund], percent_reduction), 100);
-    uint256 eth_to_withdraw = basic_amount;
-    if (!bought_tokens) {
-      //We have to take in account the partial refund of the fee too if the tokens weren't bought yet
-      eth_to_withdraw = SafeMath.div(SafeMath.mul(basic_amount, 100), 99);
-      fees = SafeMath.sub(fees, SafeMath.div(eth_to_withdraw, FEE));
-    }
-    balances[_to_refund] = SafeMath.sub(balances[_to_refund], eth_to_withdraw);
-    balances_bonus[_to_refund] = balances[_to_refund];
-    _to_refund.transfer(eth_to_withdraw);
-  }
-
-  function whitelist_addys(address[] _addys) onlyOwner {
-    for (uint256 i = 0; i < _addys.length; i++) {
-      whitelist[_addys[i]] = true;
-    }
-  }
-
-  function blacklist_addys(address[] _addys) onlyOwner {
-    for (uint256 i = 0; i < _addys.length; i++) {
-      whitelist[_addys[i]] = false;
-    }
   }
 
   function set_sale_address(address _sale) onlyOwner {
@@ -204,10 +168,6 @@ contract Moongang {
   function set_percent_reduction(uint256 _reduction) onlyOwner {
     require(_reduction <= 100);
     percent_reduction = _reduction;
-  }
-
-  function set_whitelist_enabled(bool _boolean) onlyOwner {
-    whitelist_enabled = _boolean;
   }
 
   function change_individual_cap(uint256 _cap) onlyOwner {
