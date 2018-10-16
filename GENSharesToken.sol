@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GENSharesToken at 0xe17276888d1b3c0eac64309c15f5d4195d24c695
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GENSharesToken at 0x48ca21691aba904a97a2f6807d5433b9b7ae3197
 */
 pragma solidity ^0.4.18;
 
@@ -571,7 +571,7 @@ contract Deployer is Ownable {
     presale = new Presale();
     presale.setToken(token);
     token.setSaleAgent(presale);
-    presale.setMinInvestedLimit(40000000000000000000);  
+    presale.setMinInvestedLimit(100000000000000000);  
     presale.setPrice(250000000000000000000);
     presale.setBountyTokensPercent(4);
     presale.setAdvisorsTokensPercent(2);
