@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UVDICO at 0x8cdc892df28249ad590d07bdfd5ed6d496f29a01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UVDICO at 0x2dbfafd20f56213b75cf5c32a922b12d60de68ca
 */
 pragma solidity ^0.4.15;
 
@@ -58,7 +58,7 @@ contract Ownable {
 
 /**
  * @title Token
- * @dev API interface for interacting with the WILD Token contract 
+
  */
 interface Token {
   function transfer(address _to, uint256 _value) returns (bool);
@@ -74,8 +74,8 @@ contract UVDICO is Ownable {
   uint256 public constant RATE = 192000; // Number of tokens per Ether with 20% bonus
   uint256 public constant CAP = 9375; // Cap in Ether
   uint256 public constant BONUS = 20; // 20% bonus 
-  uint256 public constant START = 1525694400; // start date in epoch timestamp 7 may 2018 12:00:00 utc
-  uint256 public constant DAYS = 7; // 7 days for round 1 with 20% bonus
+  uint256 public constant START = 1525719600; // start date in epoch timestamp 7 may 2018 19:00:00 utc
+  uint256 public constant DAYS = 21; // 21 days for round 1 with 20% bonus
   uint256 public constant initialTokens =  1800000000 * 10**18; // Initial number of tokens available
   bool public initialized = false;
   uint256 public raisedAmount = 0;
