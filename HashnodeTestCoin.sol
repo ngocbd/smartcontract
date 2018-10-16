@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashnodeTestCoin at 0x5e7e2fb79e44bed2b682b0fa1079ae7e932ead3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashnodeTestCoin at 0x8e020b3e7b4589bf926b29d3b554c809b22285f9
 */
 pragma solidity ^0.4.4;
 
@@ -110,9 +110,9 @@ contract HashnodeTestCoin is StandardToken { // CHANGE THIS. Update the contract
     function HashnodeTestCoin() {
         balances[msg.sender] = 100000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 100000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Modern Coin";                                   // Set the name for display purposes (CHANGE THIS)
+        name = "Avoratio Coin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "MODC";                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "AORC";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 10;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
