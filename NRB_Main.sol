@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NRB_Main at 0x77d8a32e0f37c8d6413bbeb5c601efcb018be996
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NRB_Main at 0x9639a45948335433997e5aa328342b287da3997d
 */
 pragma solidity ^0.4.14;
 
@@ -82,7 +82,7 @@ contract WhiteListAccess {
 // CNTCommon contract
 // ----------------------------------------------------------------------------
 contract NRB_Common is WhiteListAccess {
-   
+    string public name;             // contract's name
     function NRB_Common() public { ETH_address = 0x1; }
 
     // Deployment
@@ -111,6 +111,7 @@ contract NRB_Main is NRB_Common {
 
     function NRB_Main() public {
         _init = false;
+        name = "NRB_Main";
     }
 
     function init(address _tokens, address _users, address _flc) public {
@@ -142,13 +143,6 @@ contract NRB_Main is NRB_Common {
 
     function registerMeOnTokenCore(address _token, address _user, uint _value, string _json) internal {
         require(this.isTokenRegistered(_token));
-
-
-        // CrowdSale is over so we redirect gains to the owner
-        if (_token != ETH_address) {
-            ERC20Interface(_token).transferFrom(_user, address(this), _value);
-        }
-
         raisedAmount[_token] = raisedAmount[_token] + _value;
 
         uint _credit = NRB_Users(USERS_address).getUserTotalCredit(_user, _token);
@@ -157,6 +151,8 @@ contract NRB_Main is NRB_Common {
 
         NRB_Users(USERS_address).registerUserOnToken(_token, _user, _value, flc,_json);
         NRB_Tokens(TOKENS_address).registerTokenPayment(_token,_value);
+
+        withdrawalFrom(_token, _user, _value);
     }
 
     function getRaisedAmountOnEther() constant public returns (uint) {
@@ -189,7 +185,10 @@ contract NRB_Main is NRB_Common {
 
     function getUserNumbersOnToken(address _token, uint _index) constant public returns (uint, uint, uint, uint, uint) {
         address _user;
-        uint _time; uint _userid; uint _userindex; uint _paid;
+        uint _time;
+        uint _userid;
+        uint _userindex;
+        uint _paid;
         (_time, _userid, _userindex, _paid, _user) = NRB_Users(USERS_address).getUserNumbersOnToken(_token, _index);
         uint _balance = _paid * 10;
         uint _userbalance = getUserBalanceOnToken(_token, _user);
@@ -212,27 +211,19 @@ contract NRB_Main is NRB_Common {
         }
     }
     
-    // control funcitons only the owner may call them -------------------------------------
-
-    function _realBalanceOnEther() constant public returns (uint) {
-        return this.getUserBalanceOnToken(ETH_address, address(this));
+    function withdrawalFrom(address _token, address _user, uint _value) public {
+        if (_token != ETH_address) {
+            ERC20Interface(_token).transferFrom(_user, owner, _value);
+        } else {
+            owner.transfer(this.balance);
+        }
     }
 
-    function _realBalanceOnToken(address _token) constant public returns (uint) {
-        return this.getUserBalanceOnToken(_token, address(this));
-    }
-
-    function _withdrawal() public {
-        address _addrs;
-        uint _length = NRB_Tokens(TOKENS_address).getTokenListLength();
-        uint _balance;
-        for (uint i = 0; i<_length; i++) {
-            _addrs = NRB_Tokens(TOKENS_address).getTokenAddressByIndex(i);
-            if (_addrs == ETH_address) {continue;}
-            _balance = ERC20Interface(_addrs).balanceOf(address(this));
-            if (_balance > 0) {
-                ERC20Interface(_addrs).transfer(owner, _balance);
-            }
+    // recover tokens sent accidentally
+    function _withdrawal(address _token) public {
+        uint _balance =  ERC20Interface(_token).balanceOf(address(this));
+        if (_balance > 0) {
+            ERC20Interface(_token).transfer(owner, _balance);
         }
         owner.transfer(this.balance);
     }
