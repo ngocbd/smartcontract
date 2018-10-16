@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xD4759F1862D2F7b37ffc9b31FF2586124801B5FE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x5b86a33f0c232fe909eb4602a9d039072869d915
 */
 pragma solidity ^0.4.4;
 
@@ -38,7 +38,7 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+
 }
 
 
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 10000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "JYF";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "JYF";                               // Set the symbol for display purposes
+        balances[msg.sender] = 7650713157000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 7650713157000;                        // Update total supply (100000 for example)
+        name = "Bitfranken";                                   // Set the name for display purposes
+        decimals = 2;                            // Amount of decimals for display purposes
+        symbol = "BIFRA";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
