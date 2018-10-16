@@ -1,8 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0xed9f3f3f22443a8ab92cbff999111b0d9380d640
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0x3e978168a6d0c58df641c5826581bc022af417ef
 */
-pragma solidity ^0.4.11;
-
+pragma solidity 0.4.15;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -29,31 +32,22 @@ library SafeMath {
   }
 }
 
-
 contract PricingStrategy {
 
     using SafeMath for uint;
 
-    uint public newRateTime;
-    uint public rate1;
-    uint public rate2;
-    uint public minimumWeiAmount;
+    uint[6] public limits;
+    uint[6] public rates;
 
     function PricingStrategy(
-        uint _newRateTime,
-        uint _rate1,
-        uint _rate2,
-        uint _minimumWeiAmount
-    ) {
-        require(_newRateTime > 0);
-        require(_rate1 > 0);
-        require(_rate2 > 0);
-        require(_minimumWeiAmount > 0);
-
-        newRateTime = _newRateTime;
-        rate1 = _rate1;
-        rate2 = _rate2;
-        minimumWeiAmount = _minimumWeiAmount;
+        uint[6] _limits,
+        uint[6] _rates
+    ) public 
+    {
+        require(_limits.length == _rates.length);
+        
+        limits = _limits;
+        rates = _rates;
     }
 
     /** Interface declaration. */
@@ -62,17 +56,15 @@ contract PricingStrategy {
     }
 
     /** Calculate the current price for buy in amount. */
-    function calculateTokenAmount(uint weiAmount) public constant returns (uint tokenAmount) {
-        uint bonusRate = 0;
+    function calculateTokenAmount(uint weiAmount, uint tokensSold) public constant returns (uint tokenAmount) {
+        uint rate = 0;
 
-        if (weiAmount >= minimumWeiAmount) {
-            if (now < newRateTime) {
-                bonusRate = rate1;
-            } else {
-                bonusRate = rate2;
+        for (uint8 i = 0; i < limits.length; i++) {
+            if (tokensSold >= limits[i]) {
+                rate = rates[i];
             }
         }
 
-        return weiAmount.mul(bonusRate);
+        return weiAmount.mul(rate);
     }
 }
