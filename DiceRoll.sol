@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceRoll at 0xba2f1399df21c75ce578630ff9ed9285b2146b8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceRoll at 0x93eeabbe86d19bda39ea2d1049baf2c0878ded23
 */
 pragma solidity ^0.4.9;
 
@@ -23,49 +23,35 @@ contract owned {
 contract DiceRoll is owned {
 	uint public minBet = 10 finney;
 	uint public maxBet = 2 ether;
-	uint private countRolls = 0;
-	uint private totalEthSended = 0;
-    mapping (address => uint) public totalRollsByUser;
+	
     enum GameState {
 		InProgress,
 		PlayerWon,
-		PlayerLose,
-		NoBank
+		PlayerLose
 	}
 	
-	event logAdr(
-        address str
-    );
 	event logStr(
         string str
     );
 	event log8(
         uint8 value
     );
-	event log32(
-        uint32 value
-    );
 	event log256(
         uint value
     );
 	event logClassic(
         string str,
-        address value
+        uint8 value
     );
 	event logState(
         string str,
         GameState state
     );
-	event logCheck(
-        uint value1,
-        string sign,
-        uint value2
-    );
 	
 	struct Game {
 		address player;
 		uint bet;
-		uint chance;
+		uint8 chance;
 		GameState state;
 		uint8 seed;
 	}
@@ -101,12 +87,8 @@ contract DiceRoll is owned {
 		}
 	}
 	
-	function () payable {
-
-	}
-	
 	// starts a new game
-	function roll(uint value) 
+	function roll(uint8 chance) 
 	    public 
 	    payable 
 	    gameIsNotInProgress
@@ -115,12 +97,7 @@ contract DiceRoll is owned {
 		if (gameInProgress(games[msg.sender])) {
 			throw;
 		}
-		
-		uint bet = msg.value;
-		uint payout = bet*(10000-100)/value;
-		uint chance = value;
-		bool isBank = true;
-		
+        
 		Game memory game = Game({
 			player: msg.sender,
 			bet: msg.value,
@@ -128,60 +105,43 @@ contract DiceRoll is owned {
 			state: GameState.InProgress,
 			seed: 3,
 		});
-		
-    	games[msg.sender] = game;
-		
-        totalRollsByUser[msg.sender]++;
         
-		if(payout > this.balance){
-		    isBank = false;
-		    games[msg.sender].state = GameState.NoBank;
-		    if(msg.sender.send(bet)) {
-		    }
-		}
+		games[msg.sender] = game;
 		
-		if(isBank){
-    		countRolls ++;
-    		
-    		uint rnd = randomGen(msg.sender);
-            uint profit = payout - bet;
-            logAdr(msg.sender);
-            log256(payout);
-            log256(profit);
-            log256(bet);
-            log256(chance);
-    
-    		
-    		if(rnd > value){
-    		    log8(0);
-    		    games[msg.sender].state = GameState.PlayerLose;
-            } else {
-                log8(1);
-                
-    		    games[msg.sender].state = GameState.PlayerWon;
-    		    if(msg.sender.send(payout)) {
-    	            totalEthSended += payout;
-    	        } else {
-    	            logStr("Money is not send.");
-    	        }
-            }
-		}
-		logState("state:", games[msg.sender].state);
+		uint rnd = randomGen(msg.sender, games[msg.sender].seed);
+		uint valueMax = chance*100;
+		uint bet = msg.value;
+		uint payout = bet*100/games[msg.sender].chance;
+        uint profit = payout - bet;
+        log256(now);
+        log256(payout);
+        log256(profit);
+        log256(bet);
+        log8(chance);
+		
+		if(rnd > valueMax){
+		    log8(0);
+		    games[msg.sender].state = GameState.PlayerLose;
+        } else {
+            log8(1);
+		     games[msg.sender].state = GameState.PlayerWon;
+		     if(!msg.sender.send(payout)) {
+	            logStr("Money is not send.");
+	        }
+        }
+        
+        //logState("state:", games[msg.sender].state);
 	}
 	
-	function randomGen(address player) private returns (uint) {
+	function randomGen(address player, uint8) internal returns (uint8) {
 		uint b = block.number;
 		uint timestamp = block.timestamp;
-		return uint(uint256(keccak256(block.blockhash(b), player, timestamp)) % 10000);
+		return uint8(uint256(keccak256(block.blockhash(b), player, timestamp)) % 10000);
 	}
 	
-	function getCount() public constant returns (uint) {
-		return totalRollsByUser[msg.sender];
-	}
-	
-	function getState() public constant returns (GameState) {
+	function getGameState() public constant returns (GameState) {
 		Game memory game = games[msg.sender];
-		
+        
 		if (game.player == 0) {
 			// game doesn't exist
 			throw;
@@ -190,7 +150,7 @@ contract DiceRoll is owned {
 		return game.state;
 	}
 	
-	function getGameChance() public constant returns (uint) {
+	function getGameChance() public constant returns (uint8) {
 		Game memory game = games[msg.sender];
         
 		if (game.player == 0) {
@@ -199,13 +159,5 @@ contract DiceRoll is owned {
 		}
 
 		return game.chance;
-	}
-	
-	function getTotalRollMade() public constant returns (uint) {
-		return countRolls;
-	}
-	
-	function getTotalEthSended() public constant returns (uint) {
-		return totalEthSended;
 	}
 }
