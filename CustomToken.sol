@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x9b13ef21b4cd039c250d5694cedfee699478f978
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x315bc4cabe904814b27cf69af786b6eee7159969
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1200000000000000000000000000;
-        name = 'Motioncoin';
-        symbol = 'MTC';
+        totalSupply = 1000000000000000000000000000;
+        name = 'GrowthHackerCoin';
+        symbol = 'GHC';
         decimals = 18;
-        balanceOf[0xa7ae5391681d264af3abe7f91bd05666bee57b91] = totalSupply;
-        Transfer(address(0), 0xa7ae5391681d264af3abe7f91bd05666bee57b91, totalSupply);
+        balanceOf[0x3b732654fa97fff4baa6831be3efc32f595bb1df] = totalSupply;
+        Transfer(address(0), 0x3b732654fa97fff4baa6831be3efc32f595bb1df, totalSupply);
     }
 }
