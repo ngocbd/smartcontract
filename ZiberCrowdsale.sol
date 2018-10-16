@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberCrowdsale at 0xa9b989224ebe38b52c4ee4c071191cc0fbc05807
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberCrowdsale at 0xd2c5c0d51c8d97d0deb0a5efa416de90600db62d
 */
+pragma solidity ^0.4.13;
+
 pragma solidity ^0.4.13;
 
  /// @title SafeMath contract - math operations with safety checks
@@ -51,6 +53,10 @@ contract SafeMath {
   }
 }
 
+pragma solidity ^0.4.13;
+
+pragma solidity ^0.4.13;
+
  /// @title Ownable contract - base contract with an owner
  /// @author dev@smartcontracteam.com
 contract Ownable {
@@ -100,6 +106,13 @@ contract Haltable is Ownable {
   }
 }
 
+pragma solidity ^0.4.13;
+
+pragma solidity ^0.4.13;
+
+ 
+
+
  /// @title Killable contract - base contract that can be killed by owner. All funds in contract will be sent to the owner.
  /// @author dev@smartcontracteam.com
 contract Killable is Ownable {
@@ -108,6 +121,13 @@ contract Killable is Ownable {
   }
 }
 
+pragma solidity ^0.4.13;
+
+pragma solidity ^0.4.13;
+
+ 
+
+pragma solidity ^0.4.13;
 
  /// @title ERC20 interface see https://github.com/ethereum/EIPs/issues/20
  /// @author dev@smartcontracteam.com
@@ -122,6 +142,10 @@ contract ERC20 {
   event Transfer(address indexed from, address indexed to, uint value);
   event Approval(address indexed owner, address indexed spender, uint value);
 }
+
+pragma solidity ^0.4.13;
+
+ 
 
 
 /// @title ZiberToken contract - standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
@@ -280,11 +304,11 @@ contract ZiberCrowdsale is Haltable, Killable, SafeMath {
   uint public constant TOTAL_ICO_TOKENS = 1e8;
 
   /// Miminal tokens funding goal in Wei, if this goal isn't reached during ICO, refund will begin
-  uint public constant MIN_ICO_GOAL = 5000 ether;
+  uint public constant MIN_ICO_GOAL = 5e3 ether;
 
   /// Maximal tokens funding goal in Wei
-  uint public constant MAX_ICO_GOAL = 50000 ether;
-  
+  uint public constant MAX_ICO_GOAL = 5e4 ether;
+
   /// the UNIX timestamp 5e4 ether funded
   uint public maxGoalReachedAt = 0;
 
