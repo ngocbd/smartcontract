@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WASpace at 0x77e7cbec290e902732932b0f43f59523ef4aa650
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WASpace at 0xbe2bb215192a8297027cdcf7e29a41031e6fda7a
 */
 pragma solidity ^0.4.16;
 
@@ -19,7 +19,7 @@ contract WASpace {
         totalSupply = 2600000000 * 10 ** uint256(decimals);
         balanceOf[msg.sender] = totalSupply;
         name = "WA Space";
-        symbol = "WAS";
+        symbol = "WA";
     }
 
     function _transfer(address _from, address _to, uint _value) internal {
