@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fee at 0xe00e451da1ab65beab172ef6055293c53a2c4507
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fee at 0xffe4a5a685efc53f45bf50f3dab45ded1b028134
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-
-
+// File: contracts/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -35,6 +34,9 @@ library SafeMath {
     return c;
   }
 }
+
+// File: contracts/Owned.sol
+
 contract Owned {
   event OwnerAddition(address indexed owner);
 
@@ -99,25 +101,11 @@ contract Owned {
 
 }
 
-contract Validating {
+// File: contracts/Token.sol
 
-  modifier validAddress(address _address) {
-    require(_address != address(0x0));
-    _;
-  }
-
-  modifier notZero(uint _number) {
-    require(_number != 0);
-    _;
-  }
-
-  modifier notEmpty(string _string) {
-    require(bytes(_string).length != 0);
-    _;
-  }
-
-}
-
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+pragma solidity ^0.4.19;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -164,6 +152,19 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+// File: contracts/StandardToken.sol
+
+/*
+You should inherit from StandardToken or, for a token like you would want to
+deploy in something like Mist, see HumanStandardToken.sol.
+(This implements ONLY the standard functions and NOTHING else.
+If you deploy this, you won't have anything useful.)
+
+Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
+pragma solidity ^0.4.19;
+
+
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
@@ -207,7 +208,28 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
 }
 
+// File: contracts/Validating.sol
 
+contract Validating {
+
+  modifier validAddress(address _address) {
+    require(_address != address(0x0));
+    _;
+  }
+
+  modifier notZero(uint _number) {
+    require(_number != 0);
+    _;
+  }
+
+  modifier notEmpty(string _string) {
+    require(bytes(_string).length != 0);
+    _;
+  }
+
+}
+
+// File: contracts/Fee.sol
 
 /**
   * @title FEE is an ERC20 token used to pay for trading on the exchange.
@@ -222,8 +244,7 @@ contract Fee is Owned, Validating, StandardToken {
   string public name;                   //fancy name: eg Simon Bucks
   uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
   string public symbol;                 //An identifier: eg SBX
-  uint256 public feeInCirculation;      //total fee in circulation
-  string public version = 'F0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
+  string public version = 'F0.2';       //human 0.1 standard. Just an arbitrary versioning scheme.
   address public minter;
 
   modifier onlyMinter {
@@ -258,9 +279,8 @@ contract Fee is Owned, Validating, StandardToken {
   /// @param _value Amount of tokens to delete
   function burnTokens(uint _value) public notZero(_value) {
     require(balances[msg.sender] >= _value);
-
     balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
-    feeInCirculation = SafeMath.sub(feeInCirculation, _value);
+    totalSupply = SafeMath.sub(totalSupply, _value);
     Burn(msg.sender, _value);
   }
 
@@ -270,7 +290,7 @@ contract Fee is Owned, Validating, StandardToken {
   /// @param _value The amount o
   function sendTokens(address _to, uint _value) public onlyMinter validAddress(_to) notZero(_value) {
     balances[_to] = SafeMath.add(balances[_to], _value);
-    feeInCirculation = SafeMath.add(feeInCirculation, _value);
-    Transfer(msg.sender, _to, _value);
+    totalSupply = SafeMath.add(totalSupply, _value);
+    Transfer(0x0, _to, _value);
   }
 }
