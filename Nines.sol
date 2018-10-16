@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Nines at 0x6f176ca12cc7e7a3b59e9a51eadf1b29fd98dae1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Nines at 0x9de9ba9a3cc906e3feacda2c365ef4657e38eb28
 */
 pragma solidity ^0.4.18;
 
@@ -9,13 +9,13 @@ contract Nines {
   struct Nine {
     address owner;
     uint256 cost;
-  }
+  }    
 
   mapping (uint256 => Nine) public nines;
   mapping (address => string) public msgs;
 
   address public ceoAddress;
-  uint256 public seatPrice = 2500000000000000;
+  uint256 public seatPrice = 1000000000000000;
 
   modifier onlyCEO() { require(msg.sender == ceoAddress); _; }
 
@@ -67,7 +67,7 @@ contract Nines {
     seatPrice = SafeMath.mul(SafeMath.div(seatPrice, 100), 109);
     msg.sender.transfer(excess);
   }
-
+  
   function setMessage(string message) public payable {
     msgs[msg.sender] = message;
   }
