@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEBCOIN at 0x201916ad6b61df24a0982f885376d382e764ee5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEBcoin at 0xfec7b4c8c4bd73522c574d31f6801f3f8955ffdc
 */
 pragma solidity ^0.4.11;
 
@@ -58,13 +58,13 @@ contract ERC20Standard {
 
 }
 
-contract WEBCOIN is ERC20Standard {
+contract WEBcoin is ERC20Standard {
 	string public name = "WEBCoin";
 	uint8 public decimals = 18;
 	string public symbol = "WEB";
-	uint public totalSupply = 21000000000000000000000000;
+	uint public totalSupply = 21000000;
 	    
-	function WEBCOIN() {
+	function WEBcoin() {
 	    balances[msg.sender] = totalSupply;
 	}
 }
