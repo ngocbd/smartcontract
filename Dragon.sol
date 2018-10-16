@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dragon at 0x5b29a6277c996b477d6632e60eef41268311ce1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dragon at 0x1d1CF6cD3fE91fe4d1533BA3E0b7758DFb59aa1f
 */
 pragma solidity ^ 0.4 .11;
 
@@ -30,15 +30,17 @@ contract ERC20 {
 
 }
 
+contract Burner { function dragonHandler( uint256 _amount){} }
  
 contract Dragon is ERC20 {
 
 
-    string public standard = 'DRAGON 1.0';
+    string public standard = 'DRAGON 1.1';
     string public name;
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
+  
     
     address public owner;
     mapping( address => uint256) public balanceOf;
@@ -46,6 +48,9 @@ contract Dragon is ERC20 {
     uint accountCount;
     
     mapping(address => mapping(address => uint256)) public allowance;
+    address public burner;
+    bool public burnerSet;
+    
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint value);
     event Message ( address a, uint256 amount );
@@ -54,17 +59,63 @@ contract Dragon is ERC20 {
     
     function Dragon() {
          
-        uint supply = 500000000; 
+        uint supply = 50000000000000000; 
         appendTokenHolders( msg.sender );
         balanceOf[msg.sender] =  supply;
         totalSupply = supply; // 
         name = "DRAGON"; // Set the name for display purposes
         symbol = "DRG"; // Set the symbol for display purposes
-        decimals = 0; // Amount of decimals for display purposes
+        decimals = 8; // Amount of decimals for display purposes
+        owner = msg.sender;
         
   
     }
+    
+    
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            throw;
+        }
+        _;
+    }
 
+     modifier onlyBurner() {
+        if (msg.sender != burner) {
+            throw;
+        }
+        _;
+    }
+    
+    function changeOwnership( address _owner ) onlyOwner {
+        
+        owner = _owner;
+        
+    }
+    
+    function setBurner( address _burner ) onlyOwner {
+        require ( !burnerSet );
+        burner = _burner;
+        burnerSet = true;
+        
+    }
+
+    function burnCheck( address _tocheck , uint256 amount ) internal {
+        
+        if ( _tocheck != burner )return;
+        
+        Burner burn = Burner ( burner );
+        burn.dragonHandler( amount );
+        
+        
+    }
+    
+    function burnDragons ( uint256 _amount ) onlyBurner{
+        
+        
+        burn( _amount );
+        
+        
+    }
     
     function balanceOf(address tokenHolder) constant returns(uint256) {
 
@@ -91,6 +142,7 @@ contract Dragon is ERC20 {
     function appendTokenHolders(address tokenHolder) private {
 
         if (balanceOf[tokenHolder] == 0) {
+            if ( tokenHolder == burner ) return;
             accountIndex[accountCount] = tokenHolder;
             accountCount++;
         }
@@ -107,6 +159,7 @@ contract Dragon is ERC20 {
         balanceOf[msg.sender] -= _value; 
         balanceOf[_to] += _value; 
         Transfer(msg.sender, _to, _value); 
+        burnCheck( _to, _value );
         
         return true;
     }
@@ -143,11 +196,13 @@ contract Dragon is ERC20 {
         balanceOf[_to] += _value; 
         allowance[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
+       
         return true;
     }
   
     function burn(uint256 _value) returns(bool success) {
         if (balanceOf[msg.sender] < _value) throw; 
+        if( totalSupply -  _value < 2100000000000000) throw;
         balanceOf[msg.sender] -= _value; 
         totalSupply -= _value; 
         Burn(msg.sender, _value);
