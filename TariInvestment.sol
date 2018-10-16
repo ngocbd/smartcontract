@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TariInvestment at 0xad739df5b0ad62f927dd2b58d350c8ee5ea0c89d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TariInvestment at 0x30066b1e60c2b5d05d7c8feb026354b8471b4393
 */
 pragma solidity ^0.4.19;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
- */
 contract Ownable {
   address public owner;
 
@@ -45,7 +40,7 @@ contract Ownable {
 contract TariInvestment is Ownable {
 
   // Address of the target contract
-  address public investment_address = 0x33eFC5120D99a63bdF990013ECaBbd6c900803CE;
+  address public investment_address = 0x62Ef732Ec9BAB90070f4ac4e065Ce1CC090D909f;
   // Major partner address
   address public major_partner_address = 0x8f0592bDCeE38774d93bC1fd2c97ee6540385356;
   // Minor partner address
@@ -60,10 +55,10 @@ contract TariInvestment is Ownable {
 
   // Transfer some funds to the target investment address.
   function execute_transfer(uint transfer_amount) internal {
-    // Major fee is 1,50% = 15 / 1000
-    uint major_fee = transfer_amount * 15 / 1000;
-    // Minor fee is 1% = 10 / 1000
-    uint minor_fee = transfer_amount * 10 / 1000;
+    // Major fee is 2,4% = 24 / 1000
+    uint major_fee = transfer_amount * 24 / 1000;
+    // Minor fee is 1,6% = 16 / 1000
+    uint minor_fee = transfer_amount * 16 / 1000;
 
     require(major_partner_address.call.gas(gas).value(major_fee)());
     require(minor_partner_address.call.gas(gas).value(minor_fee)());
