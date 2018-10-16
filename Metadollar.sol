@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetaDollar at 0x39685718663bf4ad2206f1baf7aadbca0e7d7f95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract METADOLLAR at 0x238f29b3e5f5d199d37444e7118cc49f8e1bf58c
 */
 pragma solidity ^0.4.18;
 
@@ -54,14 +54,14 @@ pragma solidity ^0.4.18;
 	event ownerChanged(address whoTransferredOwnership, address formerOwner, address newOwner);
  }
 
-contract MetaDollar is ERC20Interface, owned{
+contract METADOLLAR is ERC20Interface, owned{
 
 	string public constant name = "METADOLLAR";
 	string public constant symbol = "DOL";
 	uint public constant decimals = 18;
-	uint256 public _totalSupply = 100000000000000000000000000000;  // Total Supply 100,000,000,000
-	uint256 public icoMin = 1000000000000000000;				 //  Min ICO 1	
-	uint256 public preIcoLimit = 100000000000000000000000000000;		 // Pre Ico Limit 100,000,000,000
+	uint256 public _totalSupply = 1000000000000000000000000000000;  // Total Supply 100,000,000,000
+	uint256 public icoMin = 1000000000000000000000000000000;				 //  Min ICO 100,000,000	
+	uint256 public preIcoLimit = 1000000000000000000;		 // Pre Ico Limit 1
 	uint256 public countHolders = 0;				// count how many unique holders have metadollars
 	uint256 public amountOfInvestments = 0;	// amount of collected wei
 	
@@ -69,8 +69,6 @@ contract MetaDollar is ERC20Interface, owned{
 	uint256 ICOprice;										// price of 1 metadollar in weis for the ICO time
 	uint256 public currentTokenPrice;				// current metadollar price in weis
 	uint256 public sellPrice;								// buyback price of one metadollar in weis
-	uint256 public buyCommission;								// Commission for buy
-	uint256 public sellCommission;								// Commission for sell
 	
 	bool public preIcoIsRunning;
 	bool public minimalGoalReached;
@@ -121,7 +119,7 @@ contract MetaDollar is ERC20Interface, owned{
 	event icoStatusUpdated(address _initiator, string status);
 
 	/// @notice Constructor of the contract
-	function BFreeContract() {
+	function STARTMETADOLLAR() {
 		preIcoIsRunning = true;
 		minimalGoalReached = false;
 		icoExitIsPossible = false;
@@ -129,12 +127,10 @@ contract MetaDollar is ERC20Interface, owned{
 		tokenBalanceOf[this] += _totalSupply;
 		allowed[this][owner] = _totalSupply;
 		allowed[this][supervisor] = _totalSupply;
-		currentTokenPrice = 0.001 * 1 ether;	// initial price of 1 metadollar
-		preICOprice = 0.001 * 1 ether; 			// price of 1 metadollar in weis for the preICO time 
-		ICOprice = 0.001 * 1 ether;				// price of 1 metadollar in weis for the ICO time
-		sellPrice = 0.00090 * 1 ether;
-		buyCommission = 20;
-		sellCommission = 20;
+		currentTokenPrice = 1 * 1000 ether;	// initial price of 1 metadollar
+		preICOprice = 1 * 1000 ether; 			// price of 1 metadollar in weis for the preICO time 
+		ICOprice = 1 * 1000 ether;				// price of 1 metadollar in weis for the ICO time
+		sellPrice = 1 * 950 ether;
 		updatePrices();
 	}
 
@@ -180,8 +176,6 @@ contract MetaDollar is ERC20Interface, owned{
 	function buy() payable public {
 		require(!frozenAccount[msg.sender]);
 		require(msg.value > 0);
-		uint commission = msg.value/buyCommission; // Buy Commission 0.2% of wei tx
-        require(address(this).send(commission));
 		buyToken();
 	}
 
@@ -193,9 +187,6 @@ contract MetaDollar is ERC20Interface, owned{
 		require(sellPrice > 0);
 		_transfer(msg.sender, this, amount);
 		uint256 revenue = amount * sellPrice;
-		require(this.balance >= revenue);
-	    uint commission = msg.value/sellCommission; // Sell Commission 0.2% of wei tx
-        require(address(this).send(commission));
 		msg.sender.transfer(revenue);         // sends ether to the seller: it's important to do this last to prevent recursion attacks
 	}
 	
@@ -355,23 +346,7 @@ contract MetaDollar is ERC20Interface, owned{
 		updatePrices();
 	}
 	
-	/// @notice Set current Buy Commission price in wei
-	/// @param buyCommissionInWei - is the amount in wei
-	function setBuyCommission(uint256 buyCommissionInWei) isOwner {
-		require(buyCommissionInWei > 0);
-		require(buyCommission != buyCommissionInWei);
-		buyCommission = buyCommissionInWei;
-		updatePrices();
-	}
 	
-	/// @notice Set current Sell Commission price in wei for one metadollar
-	/// @param sellCommissionInWei - is the amount in wei for one metadollar
-	function setSellCommission(uint256 sellCommissionInWei) isOwner {
-		require(sellCommissionInWei > 0);
-		require(sellCommission != sellCommissionInWei);
-		buyCommission = sellCommissionInWei;
-		updatePrices();
-	}
 
 	/// @notice Set both prices at the same time
 	/// @param priceForPreIcoInWei - Price of the metadollar in pre ICO
@@ -384,16 +359,7 @@ contract MetaDollar is ERC20Interface, owned{
 		updatePrices();
 	}
 	
-	/// @notice Set both commissions at the same time
-	/// @param buyCommissionInWei - Commission for buy
-	/// @param sellCommissionInWei - Commission for sell
-	function setCommissions(uint256 buyCommissionInWei, uint256 sellCommissionInWei) isOwner {
-		require( buyCommissionInWei> 0);
-		require(sellCommissionInWei > 0);
-		buyCommission = buyCommissionInWei;
-		sellCommission = buyCommissionInWei;
-		updatePrices();
-	}
+	
 
 	/// @notice Set the current sell price in wei for one metadollar
 	/// @param priceInWei - is the amount in wei for one metadollar
@@ -459,7 +425,6 @@ contract MetaDollar is ERC20Interface, owned{
 	/// @notice Transfer ether from smartcontract to owner
 	function collect() isOwner {
         require(this.balance > 0);
-		require(minimalGoalReached);	// Owner can get funds only if minimal fundrising is reached
 		withdraw(this.balance);
     }
 
@@ -469,7 +434,6 @@ contract MetaDollar is ERC20Interface, owned{
 		uint256 contractbalance = this.balance;
 		address sender = msg.sender;
 		require(contractbalance >= summeInWei);
-		require(minimalGoalReached);	// Owner can get funds only if minimal fundrising is reached
 		withdrawed(sender, summeInWei, "wei withdrawed");
         sender.transfer(summeInWei);
 	}
