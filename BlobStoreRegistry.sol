@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlobStoreRegistry at 0x71e080a2e36753f880c060ee38139a799c6366a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlobStoreRegistry at 0xfe99717095fc8cefb8baf25e2075c0cb723f1ca0
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.3;
 
 
 /**
@@ -190,7 +190,6 @@ contract AbstractBlobStore {
     function getAllRevisionBlockNumbers(bytes20 blobId) external constant returns (uint[] blockNumbers);
 
 }
-
 
 /**
  * @title BlobStoreRegistry
