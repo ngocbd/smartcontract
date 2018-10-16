@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CellBlocksToken at 0x4b46c859865e9846c3b033fd18cb66acd010e9d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CellBlocksToken at 0xd3a8d7f28d014b18185236ce568cdbcebd809c2b
 */
 pragma solidity ^0.4.19;
 
@@ -24,6 +24,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
+
+
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -70,8 +73,6 @@ library SafeMath {
   }
 }
 
-
-
 /*
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -91,6 +92,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
+
 contract EIP20Interface {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -136,9 +139,6 @@ contract EIP20Interface {
     event Transfer(address indexed _from, address indexed _to, uint256 _value); 
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-
-
-
 
 /*
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -197,9 +197,8 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+
 }
-
-
 
 
 /*
@@ -227,7 +226,6 @@ THE SOFTWARE.
 */
 
 
-
 contract CellBlocksToken is EIP20Interface, Ownable {
 
     uint256 constant private MAX_UINT256 = 2**256 - 1;
@@ -244,8 +242,8 @@ contract CellBlocksToken is EIP20Interface, Ownable {
     string public symbol;                 //An identifier: eg SBX
 
     function CellBlocksToken() public {
-        balances[msg.sender] = 3*(10**26);            // Give the creator all initial tokens
-        totalSupply = 3*(10**26);                     // Update total supply
+        balances[msg.sender] = (10**26);            // Give the creator all initial tokens
+        totalSupply = (10**26);                     // Update total supply
         name = "CellBlocks";                          // Set the name for display purposes
         decimals = 18;                                // Amount of decimals for display purposes
         symbol = "CLBK";                               // Set the symbol for display purposes
@@ -255,7 +253,7 @@ contract CellBlocksToken is EIP20Interface, Ownable {
     //transfer will call halfPercent() and burn() to burn 0.5% of each transaction 
     function transfer(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender] >= _value);
-        if (totalSupply > (10**26) && block.timestamp >= 1529474460) {
+        if (totalSupply > 33*(10**24) && block.timestamp >= 1529474460) {
             uint halfP = halfPercent(_value);
             burn(msg.sender, halfP);
             _value = SafeMath.sub(_value, halfP);
@@ -271,7 +269,7 @@ contract CellBlocksToken is EIP20Interface, Ownable {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         uint256 allowance = allowed[_from][msg.sender];
         require(balances[_from] >= _value && allowance >= _value);
-        if (totalSupply > (10**26) && block.timestamp >= 1529474460) {
+        if (totalSupply > 33*(10**24) && block.timestamp >= 1529474460) {
             uint halfP = halfPercent(_value);
             burn(_from, halfP);
             _value = SafeMath.sub(_value, halfP);
