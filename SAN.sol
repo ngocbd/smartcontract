@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAN at 0xc9e025b5e175563df160e385b6c65a1abb8e1ecf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAN at 0x2d4370400cdcbec8f26ee4face1fa120227271e4
 */
 pragma solidity ^0.4.11;
 
@@ -83,7 +83,7 @@ contract Owned is Base {
 }
 
 
-contract ERC20 is Owned {
+contract ERC20 is Base {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -146,11 +146,11 @@ contract SubscriptionModule {
 
 contract SAN is Owned, ERC20 {
 
-    string public constant name     = "SANtiment TEST token";
-    string public constant symbol   = "SAN.TEST.MAX.1";
+    string public constant name     = "SANtiment network token";
+    string public constant symbol   = "SAN";
     uint8  public constant decimals = 15;
 
-    address CROWDSALE_MINTER = 0x6Be4E8a44C9D22F39DB262cF1A54C1172dA3B864;
+    address CROWDSALE_MINTER = 0xD88E4822687d0F9c73E296296Ed3eCd0a193dd46;
     address public SUBSCRIPTION_MODULE = 0x00000000;
     address public beneficiary;
 
