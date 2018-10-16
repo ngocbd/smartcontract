@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheCoinEconomy at 0xe49c02ae02aefdb1f25a4ac9c89b1d2f2371dc86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheCoinEconomy at 0x51dd5df5a45bd76e7ec9358bb405d424ba02234a
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.13;
 
 
 contract Ownable {
@@ -113,7 +113,7 @@ contract TheCoinEconomy is Ownable, StandardToken {
     string public name = "TheCoinEconomy";          
     string public symbol = "TCE";              
     uint public decimals = 18;                  
-    uint public totalSupply = 1100000000000000000000000;  
+    uint public totalSupply = 110000000000000000000000;  
     function TheCoinEconomy() {
         balances[msg.sender] = totalSupply;
     }   
